@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
-#include <iomanip>
+#include <map>
 #include <numeric>
 #include <optional>
 #include <random>
@@ -19,13 +19,15 @@
 #include "common/init_llvm.h"
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/consumer.h"
@@ -37,22 +39,50 @@
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon::Lex {
-namespace {
 
+// How well recovery did on one trial. See `PrintMetricDefinitions` for what
+// each means.
+namespace {
 enum class TestClassification {
   Correct,
   Partial,
   None,
   Incorrect,
 };
+}  // namespace
 
+// Lex options that discard diagnostics, since a trial only cares about the
+// tokens and the corrections.
+static auto QuietLexOptions() -> LexOptions {
+  LexOptions options;
+  options.consumer = &Diagnostics::NullConsumer();
+  return options;
+}
+
+namespace {
+
+// A deletion level from `--d-values`: how many brackets each trial deletes,
+// either as an absolute count or as a percentage of the file's clean pairs.
 struct DSpec {
+  // The level as written on the command line, used to label it in the report.
   std::string label;
   bool is_percent = false;
   double percent_val = 0.0;
   int count_val = 0;
+
+  // How many of a file's `num_clean_pairs` pairs a trial deletes, at least one
+  // and never more than the file has.
+  auto DeletionCount(int num_clean_pairs) const -> int {
+    int count =
+        is_percent
+            ? std::max(1, static_cast<int>(num_clean_pairs * percent_val))
+            : count_val;
+    return std::min(count, num_clean_pairs);
+  }
 };
 
+// Trial counts by classification, for one file and deletion level or for the
+// whole run.
 struct TrialStats {
   int total = 0;
   int correct = 0;
@@ -78,29 +108,23 @@ struct TrialStats {
     }
   }
 
-  [[nodiscard]] auto CorrectPct() const -> double {
-    return total == 0 ? 0.0 : (100.0 * correct) / total;
-  }
+  auto CorrectPct() const -> double { return Pct(correct); }
+  auto PartialPct() const -> double { return Pct(partial); }
+  auto NonePct() const -> double { return Pct(none); }
+  auto IncorrectPct() const -> double { return Pct(incorrect); }
 
-  [[nodiscard]] auto PartialPct() const -> double {
-    return total == 0 ? 0.0 : (100.0 * partial) / total;
-  }
+  // Percentage of trials with no incorrect suggestion.
+  auto SafetyPct() const -> double { return Pct(correct + partial + none); }
 
-  [[nodiscard]] auto NonePct() const -> double {
-    return total == 0 ? 0.0 : (100.0 * none) / total;
-  }
-
-  [[nodiscard]] auto IncorrectPct() const -> double {
-    return total == 0 ? 0.0 : (100.0 * incorrect) / total;
-  }
-
-  [[nodiscard]] auto SafetyPct() const -> double {
-    return total == 0 ? 0.0 : (100.0 * (correct + partial + none)) / total;
-  }
-
-  [[nodiscard]] auto AccuracyPct() const -> double {
+  // Precision of the suggestions that were made.
+  auto AccuracyPct() const -> double {
     int decisive = correct + incorrect;
     return decisive == 0 ? 100.0 : (100.0 * correct) / decisive;
+  }
+
+ private:
+  auto Pct(int count) const -> double {
+    return total == 0 ? 0.0 : (100.0 * count) / total;
   }
 };
 
@@ -109,18 +133,24 @@ struct BracketPair {
   TokenIndex close_token;
 };
 
+// One bracket the corruption removed, and where recovery would have to put it
+// back for that to count as correct. Offsets are in the corrupted text.
 struct DeletedToken {
   TokenKind kind;
   int32_t byte_offset;
   int32_t length;
   int32_t line;
   int32_t column;
+  // The offset of the first token that survived after this one.
   int32_t next_token_byte_offset;
-  int32_t next_token_line;
-  int32_t next_token_column;
+  // Every offset an insertion could name and still be the same repair: the
+  // surviving members of the run of identical brackets this one belonged to,
+  // plus `next_token_byte_offset`.
   llvm::SmallVector<int32_t, 4> valid_next_token_byte_offsets;
 };
 
+// One bracket recovery inserted, located by the first surviving token it
+// precedes.
 struct Suggestion {
   TokenKind kind;
   int32_t byte_offset;
@@ -129,7 +159,9 @@ struct Suggestion {
   std::string origin;
 };
 
-auto MatchesDeletedToken(const DeletedToken& del, const Suggestion& sugg)
+}  // namespace
+
+static auto MatchesDeletedToken(const DeletedToken& del, const Suggestion& sugg)
     -> bool {
   if (del.kind != sugg.kind) {
     return false;
@@ -138,7 +170,24 @@ auto MatchesDeletedToken(const DeletedToken& del, const Suggestion& sugg)
                             sugg.byte_offset);
 }
 
-auto ParseDSpecs(llvm::StringRef str) -> llvm::SmallVector<DSpec> {
+// Whether any deleted bracket is the one `sugg` puts back, and the same
+// question from the other side.
+static auto AnyDeletionMatches(llvm::ArrayRef<DeletedToken> deleted,
+                               const Suggestion& sugg) -> bool {
+  return llvm::any_of(deleted, [&](const DeletedToken& del) {
+    return MatchesDeletedToken(del, sugg);
+  });
+}
+static auto AnySuggestionMatches(llvm::ArrayRef<Suggestion> suggestions,
+                                 const DeletedToken& del) -> bool {
+  return llvm::any_of(suggestions, [&](const Suggestion& sugg) {
+    return MatchesDeletedToken(del, sugg);
+  });
+}
+
+// Parses the `--d-values` list. Entries that don't parse are dropped; the
+// caller errors out if nothing is left.
+static auto ParseDSpecs(llvm::StringRef str) -> llvm::SmallVector<DSpec> {
   llvm::SmallVector<DSpec> specs;
   llvm::SmallVector<llvm::StringRef> parts;
   str.split(parts, ',');
@@ -169,24 +218,27 @@ auto ParseDSpecs(llvm::StringRef str) -> llvm::SmallVector<DSpec> {
   return specs;
 }
 
-auto GetCleanBracketPairs(const TokenizedBuffer& buffer)
+// The bracket pairs a clean file matched up, which are the pairs a trial can
+// delete an endpoint of.
+static auto GetCleanBracketPairs(const TokenizedBuffer& buffer)
     -> llvm::SmallVector<BracketPair> {
   llvm::SmallVector<BracketPair> pairs;
   for (TokenIndex t : buffer.tokens()) {
-    auto kind = buffer.GetKind(t);
-    if (kind == TokenKind::OpenParen || kind == TokenKind::OpenSquareBracket ||
-        kind == TokenKind::OpenCurlyBrace) {
-      TokenIndex close = buffer.GetMatchedClosingToken(t);
-      if (close != TokenIndex::None) {
-        pairs.push_back({.open_token = t, .close_token = close});
-      }
+    if (!buffer.GetKind(t).is_opening_symbol()) {
+      continue;
+    }
+    TokenIndex close = buffer.GetMatchedClosingToken(t);
+    if (close != TokenIndex::None) {
+      pairs.push_back({.open_token = t, .close_token = close});
     }
   }
   return pairs;
 }
 
-auto ClassifyTrial(llvm::ArrayRef<DeletedToken> deleted_tokens,
-                   llvm::ArrayRef<Suggestion> suggestions)
+// Scores one trial: every suggestion must restore a distinct deleted bracket,
+// and a suggestion that restores none makes the whole trial incorrect.
+static auto ClassifyTrial(llvm::ArrayRef<DeletedToken> deleted_tokens,
+                          llvm::ArrayRef<Suggestion> suggestions)
     -> TestClassification {
   if (deleted_tokens.empty()) {
     return suggestions.empty() ? TestClassification::Correct
@@ -220,6 +272,8 @@ auto ClassifyTrial(llvm::ArrayRef<DeletedToken> deleted_tokens,
   return TestClassification::None;
 }
 
+namespace {
+
 // How a clean file is corrupted for a trial. See `--mode` help for details.
 enum class CorruptionMode {
   // Blank each deleted bracket with a space (byte offsets preserved).
@@ -244,11 +298,21 @@ struct CorruptedCase {
   std::vector<DeletedToken> expected;
 };
 
+}  // namespace
+
+// Whether `mode` corrupts by cutting the file short rather than by deleting
+// individual brackets. Such a mode ignores the deletion level, and its
+// ground-truth insertions land at the new end of the file.
+static auto IsTruncateMode(CorruptionMode mode) -> bool {
+  return mode == CorruptionMode::Truncate ||
+         mode == CorruptionMode::TruncateRegion;
+}
+
 // Remaps a byte offset from original to corrupted coordinates, given sorted,
 // disjoint deleted ranges [begin, end). An offset inside a deleted range maps
 // to where the gap closes.
-auto RemapOffset(int32_t off,
-                 llvm::ArrayRef<std::pair<int32_t, int32_t>> deleted)
+static auto RemapOffset(int32_t off,
+                        llvm::ArrayRef<std::pair<int32_t, int32_t>> deleted)
     -> int32_t {
   int32_t shift = 0;
   for (auto [begin, end] : deleted) {
@@ -264,8 +328,8 @@ auto RemapOffset(int32_t off,
 }
 
 // Returns `text` with the given sorted, disjoint byte ranges removed.
-auto RemoveRanges(llvm::StringRef text,
-                  llvm::ArrayRef<std::pair<int32_t, int32_t>> ranges)
+static auto RemoveRanges(llvm::StringRef text,
+                         llvm::ArrayRef<std::pair<int32_t, int32_t>> ranges)
     -> std::string {
   std::string out;
   int32_t pos = 0;
@@ -279,11 +343,13 @@ auto RemoveRanges(llvm::StringRef text,
 
 // Builds a trial that deletes one endpoint of each of `d_count` random clean
 // pairs, either blanking them or closing the gap.
-auto MakeDeletionCase(const TokenizedBuffer& buffer,
-                      llvm::StringRef source_text,
-                      llvm::ArrayRef<BracketPair> pairs, int d_count,
-                      bool close_gap, std::mt19937_64& rng)
+static auto MakeDeletionCase(const TokenizedBuffer& buffer,
+                             llvm::StringRef source_text,
+                             llvm::ArrayRef<BracketPair> pairs, int d_count,
+                             bool close_gap, std::mt19937_64& rng)
     -> std::optional<CorruptedCase> {
+  CARBON_CHECK(d_count <= static_cast<int>(pairs.size()),
+               "Asked to delete more pairs than the file has.");
   std::vector<int> pair_indices(pairs.size());
   std::iota(pair_indices.begin(), pair_indices.end(), 0);
   std::shuffle(pair_indices.begin(), pair_indices.end(), rng);
@@ -304,6 +370,8 @@ auto MakeDeletionCase(const TokenizedBuffer& buffer,
   for (TokenIndex tok : sampled) {
     TokenKind tok_kind = buffer.GetKind(tok);
 
+    // Any surviving bracket in a run of identical ones is an equally good place
+    // to reinsert this one, so find the whole run.
     int32_t run_start = tok.index;
     while (run_start > 0 &&
            buffer.GetKind(TokenIndex(run_start - 1)) == tok_kind) {
@@ -337,10 +405,6 @@ auto MakeDeletionCase(const TokenizedBuffer& buffer,
         .line = buffer.GetLineNumber(tok),
         .column = buffer.GetColumnNumber(tok),
         .next_token_byte_offset = succ_byte,
-        .next_token_line =
-            (succ.index < buffer.size()) ? buffer.GetLineNumber(succ) : -1,
-        .next_token_column =
-            (succ.index < buffer.size()) ? buffer.GetColumnNumber(succ) : -1,
         .valid_next_token_byte_offsets = std::move(valid_offsets),
     });
   }
@@ -378,8 +442,8 @@ auto MakeDeletionCase(const TokenizedBuffer& buffer,
 
 // Builds a trial that truncates the file at a random token boundary; recovery
 // should close every bracket still open there, at the new EOF.
-auto MakeTruncateCase(const TokenizedBuffer& buffer,
-                      llvm::StringRef source_text, std::mt19937_64& rng)
+static auto MakeTruncateCase(const TokenizedBuffer& buffer,
+                             llvm::StringRef source_text, std::mt19937_64& rng)
     -> std::optional<CorruptedCase> {
   int32_t size = buffer.size();
   if (size <= 2) {
@@ -391,7 +455,7 @@ auto MakeTruncateCase(const TokenizedBuffer& buffer,
   std::string corrupted = source_text.substr(0, cut_byte).str();
 
   llvm::SmallVector<TokenKind> stack;
-  for (int32_t i = 0; i < cut; ++i) {
+  for (int32_t i : llvm::seq(0, cut)) {
     auto kind = buffer.GetKind(TokenIndex(i));
     if (kind.is_opening_symbol()) {
       stack.push_back(kind);
@@ -411,8 +475,6 @@ auto MakeTruncateCase(const TokenizedBuffer& buffer,
         .line = -1,
         .column = -1,
         .next_token_byte_offset = eof,
-        .next_token_line = -1,
-        .next_token_column = -1,
         // Every open bracket must close at EOF: the surviving token each
         // closer precedes is the FileEnd token. (The real FileEnd offset,
         // which excludes trailing whitespace, is added after lexing.)
@@ -426,10 +488,10 @@ auto MakeTruncateCase(const TokenizedBuffer& buffer,
 // Builds a trial that deletes from a region-top-level boundary inside a random
 // pair through that pair's closing bracket. Recovery must reinsert the one
 // closing bracket at the join, where the region should have ended.
-auto MakeTruncateRegionCase(const TokenizedBuffer& buffer,
-                            llvm::StringRef source_text,
-                            llvm::ArrayRef<BracketPair> pairs,
-                            std::mt19937_64& rng)
+static auto MakeTruncateRegionCase(const TokenizedBuffer& buffer,
+                                   llvm::StringRef source_text,
+                                   llvm::ArrayRef<BracketPair> pairs,
+                                   std::mt19937_64& rng)
     -> std::optional<CorruptedCase> {
   if (pairs.empty()) {
     return std::nullopt;
@@ -442,7 +504,7 @@ auto MakeTruncateRegionCase(const TokenizedBuffer& buffer,
   // pair), so that deleting through the close orphans only this one bracket.
   llvm::SmallVector<int32_t> candidates;
   int32_t depth = 0;
-  for (int32_t i = open + 1; i <= close; ++i) {
+  for (int32_t i : llvm::seq(open + 1, close + 1)) {
     if (depth == 0) {
       candidates.push_back(i);
     }
@@ -482,23 +544,155 @@ auto MakeTruncateRegionCase(const TokenizedBuffer& buffer,
       .line = buffer.GetLineNumber(pair.close_token),
       .column = buffer.GetColumnNumber(pair.close_token),
       .next_token_byte_offset = succ_corrupted,
-      .next_token_line = -1,
-      .next_token_column = -1,
       .valid_next_token_byte_offsets = {succ_corrupted},
   }};
   return CorruptedCase{.text = std::move(corrupted),
                        .expected = std::move(expected)};
 }
 
-auto CollectCarbonFiles(llvm::ArrayRef<llvm::StringRef> input_paths)
+// Corrupts a clean file for one trial, per `mode`. Returns nullopt if the file
+// has nothing this mode can corrupt.
+static auto MakeCorruptedCase(CorruptionMode mode,
+                              const TokenizedBuffer& buffer,
+                              llvm::StringRef source_text,
+                              llvm::ArrayRef<BracketPair> pairs, int d_count,
+                              std::mt19937_64& rng)
+    -> std::optional<CorruptedCase> {
+  switch (mode) {
+    case CorruptionMode::Blank:
+    case CorruptionMode::DeleteGap:
+      return MakeDeletionCase(buffer, source_text, pairs, d_count,
+                              /*close_gap=*/mode == CorruptionMode::DeleteGap,
+                              rng);
+    case CorruptionMode::Truncate:
+      return MakeTruncateCase(buffer, source_text, rng);
+    case CorruptionMode::TruncateRegion:
+      return MakeTruncateRegionCase(buffer, source_text, pairs, rng);
+  }
+}
+
+// Accepts the real `FileEnd` offset for any ground-truth insertion at the end
+// of the file. Recovery inserts before `FileEnd`, whose offset excludes
+// trailing whitespace, whereas the ground truth was computed as the text size.
+static auto AcceptFileEndOffset(const TokenizedBuffer& buffer,
+                                llvm::StringRef text,
+                                std::vector<DeletedToken>& deleted) -> void {
+  int32_t eof = buffer.GetByteOffset(TokenIndex(buffer.size() - 1));
+  auto text_size = static_cast<int32_t>(text.size());
+  for (auto& del : deleted) {
+    if (llvm::is_contained(del.valid_next_token_byte_offsets, text_size)) {
+      del.valid_next_token_byte_offsets.push_back(eof);
+    }
+  }
+}
+
+// Whether closing the gap fused two tokens into one (e.g. `f(x)` -> `fx)`),
+// leaving some ground-truth insertion with no token boundary to land on. That
+// both is unrealistic and makes the trial unscoreable, so the caller skips it.
+static auto TokensWereFused(const TokenizedBuffer& buffer, llvm::StringRef text,
+                            llvm::ArrayRef<DeletedToken> deleted) -> bool {
+  llvm::DenseSet<int32_t> token_offsets;
+  for (TokenIndex t : buffer.tokens()) {
+    if (!buffer.IsRecoveryToken(t)) {
+      token_offsets.insert(buffer.GetByteOffset(t));
+    }
+  }
+  token_offsets.insert(static_cast<int32_t>(text.size()));
+  return llvm::any_of(deleted, [&](const DeletedToken& del) {
+    return llvm::none_of(del.valid_next_token_byte_offsets, [&](int32_t off) {
+      return token_offsets.contains(off);
+    });
+  });
+}
+
+// Checks the invariant the origin lookup relies on: corrections name tokens of
+// the buffer recovery produced, so an insertion names the recovery token it
+// inserted. A wrong index would silently lose origins rather than fail.
+static auto CheckCorrectionsNameRealTokens(
+    const TokenizedBuffer& buffer,
+    llvm::ArrayRef<BracketCorrection> corrections) -> void {
+  for (const auto& c : corrections) {
+    CARBON_CHECK(
+        c.fix_token_index.index >= 0 && c.fix_token_index.index < buffer.size(),
+        "Correction names a token outside the buffer.");
+    if (c.fix_action != BracketFixAction::ReplaceWithError && !c.is_tied) {
+      CARBON_CHECK(buffer.IsRecoveryToken(c.fix_token_index),
+                   "Insertion doesn't name the token it inserted.");
+      CARBON_CHECK(buffer.GetKind(c.fix_token_index) == c.fix_token_kind,
+                   "Inserted token has the wrong kind.");
+    }
+  }
+}
+
+// The rule that inserted `token`. Corrections name the tokens of this buffer,
+// so the one that inserted it names it directly. A tied correction was
+// downgraded to an error token and has no rule to report.
+static auto OriginOfInsertion(llvm::ArrayRef<BracketCorrection> corrections,
+                              TokenIndex token) -> std::string {
+  for (const auto& c : corrections) {
+    if (c.fix_action != BracketFixAction::ReplaceWithError && !c.is_tied &&
+        c.fix_token_index == token) {
+      return c.origin;
+    }
+  }
+  return "Unknown";
+}
+
+// Turns the brackets recovery inserted into scoreable suggestions.
+//
+// Structure-equality: a fix is identified by the first *surviving* token it
+// precedes, not its raw offset. Other inserted (recovery) tokens are skipped,
+// so a cascade of closers all point at the same real anchor, and closing among
+// trailing whitespace or a deleted span still resolves to the token that
+// structurally follows.
+static auto CollectSuggestions(const TokenizedBuffer& buffer,
+                               llvm::StringRef text,
+                               llvm::ArrayRef<BracketCorrection> corrections)
+    -> llvm::SmallVector<Suggestion> {
+  llvm::SmallVector<Suggestion> suggestions;
+  for (TokenIndex t : buffer.tokens()) {
+    auto kind = buffer.GetKind(t);
+    if (!buffer.IsRecoveryToken(t) ||
+        !(kind.is_opening_symbol() || kind.is_closing_symbol())) {
+      continue;
+    }
+    TokenIndex succ = TokenIndex(t.index + 1);
+    while (succ.index < buffer.size() && buffer.IsRecoveryToken(succ)) {
+      succ = TokenIndex(succ.index + 1);
+    }
+    bool has_succ = succ.index < buffer.size();
+    suggestions.push_back(Suggestion{
+        .kind = kind,
+        .byte_offset = has_succ ? buffer.GetByteOffset(succ)
+                                : static_cast<int32_t>(text.size()),
+        .line = has_succ ? buffer.GetLineNumber(succ) : -1,
+        .column = has_succ ? buffer.GetColumnNumber(succ) : -1,
+        .origin = OriginOfInsertion(corrections, t),
+    });
+  }
+  return suggestions;
+}
+
+namespace {
+
+// A file worth testing: it lexes cleanly and has at least one matched pair, so
+// a trial can delete a bracket from it.
+struct CandidateFile {
+  std::string filename;
+  int clean_pairs_count = 0;
+};
+
+// The corpus a run evaluates.
+struct Corpus {
+  llvm::SmallVector<CandidateFile> files;
+  int total_clean_pairs = 0;
+};
+
+}  // namespace
+
+static auto CollectCarbonFiles(llvm::ArrayRef<llvm::StringRef> input_paths)
     -> llvm::SmallVector<std::string> {
   llvm::SmallVector<std::string> files;
-
-  auto add_path_if_carbon = [&](llvm::StringRef path) {
-    if (path.ends_with(".carbon")) {
-      files.push_back(path.str());
-    }
-  };
 
   auto scan_directory = [&](llvm::StringRef dir_path) {
     std::error_code ec;
@@ -517,169 +711,22 @@ auto CollectCarbonFiles(llvm::ArrayRef<llvm::StringRef> input_paths)
     for (llvm::StringRef path : input_paths) {
       if (llvm::sys::fs::is_directory(path)) {
         scan_directory(path);
-      } else {
-        add_path_if_carbon(path);
+      } else if (path.ends_with(".carbon")) {
+        files.push_back(path.str());
       }
     }
   }
 
-  std::sort(files.begin(), files.end());
+  llvm::sort(files);
   files.erase(std::unique(files.begin(), files.end()), files.end());
   return files;
 }
 
-constexpr CommandLine::CommandInfo CommandInfo = {
-    .name = "mismatched_brackets_eval",
-    .help = R"""(
-A measurement and benchmarking tool for Carbon bracket recovery.
-
-Evaluates how accurately and safely the bracket error recovery algorithm
-recovers deleted subsets of brackets across Carbon source files.
-)""",
-};
-
-auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  llvm::SmallVector<llvm::StringRef> input_files;
-  llvm::StringRef d_values_str = "1,2,5,10%,25%";
-  llvm::StringRef mode_str = "blank";
-  int total_trials = 1000;
-  int base_seed = 42;
-  bool verbose = false;
-  bool json_output = false;
-  int dump_incorrect = 0;
-  int dump_none = 0;
-
-  auto parse_result = CommandLine::Parse(
-      args, llvm::outs(), CommandInfo, [&](CommandLine::CommandBuilder& b) {
-        b.AddStringPositionalArg(
-            {
-                .name = "FILE",
-                .help = "Input Carbon source file(s) or directories to test.",
-            },
-            [&](auto& arg_b) { arg_b.Append(&input_files); });
-
-        b.AddStringOption(
-            {
-                .name = "d-values",
-                .value_name = "LIST",
-                .help =
-                    "Comma-separated deletion levels (e.g. '1,2,5,10%,25%'). "
-                    "Ignored by the truncate modes.",
-            },
-            [&](auto& arg_b) { arg_b.Set(&d_values_str); });
-
-        b.AddStringOption(
-            {
-                .name = "mode",
-                .value_name = "MODE",
-                .help =
-                    "How to corrupt each file: 'blank' (replace brackets with "
-                    "spaces; the default), 'gap' (delete bracket characters, "
-                    "closing the gap), 'truncate' (cut the file at a random "
-                    "token; recovery should close all open brackets at EOF), "
-                    "or 'truncate-region' (delete from inside a random pair "
-                    "through its close, as when typing new code in an existing "
-                    "class).",
-            },
-            [&](auto& arg_b) { arg_b.Set(&mode_str); });
-
-        b.AddIntegerOption(
-            {
-                .name = "trials",
-                .value_name = "N",
-                .help = "Total number of trials per D configuration.",
-            },
-            [&](auto& arg_b) { arg_b.Set(&total_trials); });
-
-        b.AddIntegerOption(
-            {
-                .name = "seed",
-                .value_name = "N",
-                .help = "Random seed for deterministic sampling.",
-            },
-            [&](auto& arg_b) { arg_b.Set(&base_seed); });
-
-        b.AddFlag(
-            {
-                .name = "verbose",
-                .help = "Print detailed per-file results.",
-            },
-            [&](auto& arg_b) { arg_b.Set(&verbose); });
-
-        b.AddFlag(
-            {
-                .name = "json",
-                .help = "Output results in JSON format.",
-            },
-            [&](auto& arg_b) { arg_b.Set(&json_output); });
-
-        b.AddIntegerOption(
-            {
-                .name = "dump-incorrect",
-                .value_name = "N",
-                .help = "Print details for up to N incorrect trials.",
-            },
-            [&](auto& arg_b) { arg_b.Set(&dump_incorrect); });
-
-        b.AddIntegerOption(
-            {
-                .name = "dump-none",
-                .value_name = "N",
-                .help = "Print details for up to N trials classified None.",
-            },
-            [&](auto& arg_b) { arg_b.Set(&dump_none); });
-
-        b.Do([] {});
-      });
-
-  if (!parse_result.ok()) {
-    llvm::errs() << "error: " << *parse_result << "\n";
-    return false;
-  } else if (*parse_result == CommandLine::ParseResult::MetaSuccess) {
-    return true;
-  }
-
-  auto d_specs = ParseDSpecs(d_values_str);
-  if (d_specs.empty()) {
-    llvm::errs() << "error: No valid D deletion specifications provided.\n";
-    return false;
-  }
-
-  CorruptionMode mode = CorruptionMode::Blank;
-  if (mode_str == "blank") {
-    mode = CorruptionMode::Blank;
-  } else if (mode_str == "gap") {
-    mode = CorruptionMode::DeleteGap;
-  } else if (mode_str == "truncate") {
-    mode = CorruptionMode::Truncate;
-  } else if (mode_str == "truncate-region") {
-    mode = CorruptionMode::TruncateRegion;
-  } else {
-    llvm::errs() << "error: Unknown --mode '" << mode_str << "'.\n";
-    return false;
-  }
-  // The truncate modes don't delete a set number of brackets, so collapse the
-  // D configurations to a single pass.
-  if (mode == CorruptionMode::Truncate ||
-      mode == CorruptionMode::TruncateRegion) {
-    d_specs.resize(1);
-    d_specs[0].label = mode_str.str();
-  }
-
-  auto files = CollectCarbonFiles(input_files);
-  if (files.empty()) {
-    llvm::errs() << "error: No Carbon source files found to test.\n";
-    return false;
-  }
-
-  struct CandidateFile {
-    std::string filename;
-    int clean_pairs_count = 0;
-  };
-
-  std::vector<CandidateFile> valid_files;
-  int total_clean_pairs = 0;
-
+// Lexes each of `files` and keeps the ones a trial can be built from, which is
+// what makes the corpus. A file that fails to lex cleanly can't serve as ground
+// truth, and one with no matched pairs has no bracket to delete.
+static auto FindCandidateFiles(llvm::ArrayRef<std::string> files) -> Corpus {
+  Corpus corpus;
   for (const auto& filepath : files) {
     auto source = SourceBuffer::MakeFromFile(
         *llvm::vfs::getRealFileSystem(), filepath, Diagnostics::NullConsumer());
@@ -688,10 +735,7 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     }
 
     SharedValueStores value_stores;
-    LexOptions lex_options;
-    lex_options.consumer = &Diagnostics::NullConsumer();
-    auto clean_buffer = Lex::Lex(value_stores, *source, lex_options);
-
+    auto clean_buffer = Lex::Lex(value_stores, *source, QuietLexOptions());
     if (clean_buffer.has_errors()) {
       continue;
     }
@@ -701,485 +745,514 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
       continue;
     }
 
-    total_clean_pairs += clean_pairs.size();
-    valid_files.push_back({
-        .filename = filepath,
-        .clean_pairs_count = static_cast<int>(clean_pairs.size()),
-    });
+    auto num_pairs = static_cast<int>(clean_pairs.size());
+    corpus.total_clean_pairs += num_pairs;
+    corpus.files.push_back(
+        {.filename = filepath, .clean_pairs_count = num_pairs});
+  }
+  return corpus;
+}
+
+// Apportions `total_trials` across the corpus for one deletion level, returning
+// each file's share.
+//
+// A percentage level tests every file equally; an absolute level weights each
+// file by its clean pair count, so that every pair in the corpus is equally
+// likely to be picked. Fractional quotas are handed out
+// largest-remainder-first, with ties broken by filename to keep the allocation
+// deterministic.
+static auto AllocateTrials(const Corpus& corpus, const DSpec& spec,
+                           int total_trials) -> std::vector<int> {
+  std::vector<int> allocation(corpus.files.size(), 0);
+  if (total_trials <= 0) {
+    return allocation;
   }
 
-  if (valid_files.empty() || total_clean_pairs == 0) {
-    llvm::errs()
-        << "error: No Carbon source files with bracket pairs found to test.\n";
+  double total_weight = spec.is_percent
+                            ? static_cast<double>(corpus.files.size())
+                            : static_cast<double>(corpus.total_clean_pairs);
+  int allocated = 0;
+  std::vector<std::pair<double, size_t>> remainders;
+  remainders.reserve(corpus.files.size());
+  for (auto [i, file] : llvm::enumerate(corpus.files)) {
+    double weight =
+        spec.is_percent ? 1.0 : static_cast<double>(file.clean_pairs_count);
+    double exact_quota =
+        static_cast<double>(total_trials) * weight / total_weight;
+    auto base_count = static_cast<int>(exact_quota);
+    allocation[i] = base_count;
+    allocated += base_count;
+    remainders.push_back({exact_quota - base_count, i});
+  }
+
+  std::sort(remainders.begin(), remainders.end(),
+            [&](const auto& a, const auto& b) {
+              if (a.first != b.first) {
+                return a.first > b.first;
+              }
+              return corpus.files[a.second].filename <
+                     corpus.files[b.second].filename;
+            });
+  int remainder_trials = total_trials - allocated;
+  for (int i = 0;
+       i < remainder_trials && i < static_cast<int>(remainders.size()); ++i) {
+    ++allocation[remainders[i].second];
+  }
+  return allocation;
+}
+
+namespace {
+
+struct FileResult {
+  std::string filename;
+  int clean_pairs_count = 0;
+  // Indexed as the deletion levels.
+  std::vector<TrialStats> stats_by_level;
+};
+
+// How often the rule named by an origin was right.
+struct OriginStat {
+  int correct = 0;
+  int incorrect = 0;
+};
+
+// For incorrect trials: how far (in tokens, signed; + = closed later /
+// swallowing following code) the wrong close is from the correct anchor.
+struct DistStat {
+  int later = 0;
+  int earlier = 0;
+  int no_close = 0;
+  std::map<int, int> token_dist_hist;
+};
+
+// The shape of a distance histogram, for the report.
+struct DistanceSummary {
+  int median = 0;
+  int p90 = 0;
+  int max_abs = 0;
+};
+
+// Everything the trials measured.
+struct Report {
+  // Indexed as the deletion levels.
+  std::vector<TrialStats> stats_by_level;
+  std::vector<FileResult> results_by_file;
+  std::map<std::string, OriginStat> stats_by_origin;
+  std::map<std::string, DistStat> wrong_close_by_kind;
+  // Trials skipped because closing the gap fused two tokens.
+  int merged_skips = 0;
+};
+
+// The evaluation configuration. `d_values` and `mode_name` hold what the
+// command line said; `d_specs` and `mode` are the parsed forms that `Resolve`
+// fills in.
+struct EvalOptions {
+  llvm::SmallVector<llvm::StringRef> input_files;
+  llvm::StringRef d_values = "1,2,5,10%,25%";
+  llvm::StringRef mode_name = "blank";
+  int total_trials = 1000;
+  int base_seed = 42;
+  bool verbose = false;
+  bool json_output = false;
+  int dump_incorrect = 0;
+  int dump_none = 0;
+
+  llvm::SmallVector<DSpec> d_specs;
+  CorruptionMode mode = CorruptionMode::Blank;
+
+  // Parses `d_values` and `mode_name`, reporting to stderr and returning false
+  // if either is invalid.
+  auto Resolve() -> bool;
+
+  // The one deletion level the origin table reports on, so that its precisions
+  // aren't a blend of easy and hard configurations. The truncate modes have
+  // only the single level; otherwise it's D=1, if that was asked for.
+  auto OriginLevelLabel() const -> llvm::StringRef {
+    return IsTruncateMode(mode) ? llvm::StringRef(d_specs.front().label) : "1";
+  }
+};
+
+}  // namespace
+
+auto EvalOptions::Resolve() -> bool {
+  d_specs = ParseDSpecs(d_values);
+  if (d_specs.empty()) {
+    llvm::errs() << "error: No valid D deletion specifications provided.\n";
     return false;
   }
 
-  std::vector<std::vector<int>> scenario_file_trials(
-      d_specs.size(), std::vector<int>(valid_files.size(), 0));
+  if (mode_name == "blank") {
+    mode = CorruptionMode::Blank;
+  } else if (mode_name == "gap") {
+    mode = CorruptionMode::DeleteGap;
+  } else if (mode_name == "truncate") {
+    mode = CorruptionMode::Truncate;
+  } else if (mode_name == "truncate-region") {
+    mode = CorruptionMode::TruncateRegion;
+  } else {
+    llvm::errs() << "error: Unknown --mode '" << mode_name << "'.\n";
+    return false;
+  }
 
-  if (total_trials > 0) {
-    for (size_t s_idx = 0; s_idx < d_specs.size(); ++s_idx) {
-      const auto& spec = d_specs[s_idx];
-      double total_weight = spec.is_percent
-                                ? static_cast<double>(valid_files.size())
-                                : static_cast<double>(total_clean_pairs);
+  // The truncate modes don't delete a set number of brackets, so collapse the
+  // D configurations to a single pass.
+  if (IsTruncateMode(mode)) {
+    d_specs.resize(1);
+    d_specs[0].label = mode_name.str();
+  }
+  return true;
+}
 
-      int allocated = 0;
-      std::vector<std::pair<double, size_t>> remainders;
-      remainders.reserve(valid_files.size());
+// The seed for one trial, mixed from the file, level, and trial number so that
+// any single trial can be reproduced on its own.
+static auto TrialSeed(int base_seed, const std::string& filename,
+                      const std::string& spec_label, int trial) -> uint64_t {
+  uint64_t file_hash = llvm::hash_value(filename);
+  uint64_t spec_hash = llvm::hash_value(spec_label);
+  return static_cast<uint64_t>(base_seed) ^ file_hash ^ (spec_hash << 16) ^
+         (static_cast<uint64_t>(trial) * 0x9e3779b97f4a7c15ULL);
+}
 
-      for (size_t i = 0; i < valid_files.size(); ++i) {
-        double weight =
-            spec.is_percent
-                ? 1.0
-                : static_cast<double>(valid_files[i].clean_pairs_count);
-        double exact_quota =
-            static_cast<double>(total_trials) * weight / total_weight;
-        int base_count = static_cast<int>(exact_quota);
-        scenario_file_trials[s_idx][i] = base_count;
-        allocated += base_count;
-        remainders.push_back({exact_quota - base_count, i});
+namespace {
+
+// Runs the trials over a corpus and accumulates the measurements the report is
+// built from.
+class Evaluator {
+ public:
+  Evaluator(const EvalOptions& options, const Corpus& corpus)
+      : options_(options),
+        corpus_(corpus),
+        dump_incorrect_(options.dump_incorrect),
+        dump_none_(options.dump_none) {}
+
+  // Runs every trial and returns what they measured.
+  auto Run() -> Report;
+
+ private:
+  // The clean file a trial corrupts, lexed once and shared by all its trials.
+  struct FileContext {
+    const CandidateFile& candidate;
+    const TokenizedBuffer& clean_buffer;
+    llvm::StringRef source_text;
+    llvm::ArrayRef<BracketPair> clean_pairs;
+  };
+
+  // Runs every trial allocated to one file, appending its statistics to the
+  // report.
+  auto RunFile(size_t file_index, const CandidateFile& candidate) -> void;
+
+  // Runs one trial, returning how it scored, or nullopt if it had to be
+  // skipped.
+  auto RunTrial(const FileContext& file, const DSpec& spec, int d_count,
+                std::mt19937_64& rng) -> std::optional<TestClassification>;
+
+  // Credits or blames the rule behind each suggestion, for the origin table.
+  auto RecordOrigins(llvm::ArrayRef<DeletedToken> deleted_tokens,
+                     llvm::ArrayRef<Suggestion> suggestions) -> void;
+
+  // Records, for each deleted bracket recovery failed to restore, how far the
+  // nearest same-kind close it did suggest is from where the bracket belonged.
+  auto RecordWrongCloseDistances(const TokenizedBuffer& buffer,
+                                 llvm::ArrayRef<DeletedToken> deleted_tokens,
+                                 llvm::ArrayRef<Suggestion> suggestions)
+      -> void;
+
+  // Prints a trial in full if the `--dump-*` budget for its classification
+  // allows, spending one from that budget.
+  auto MaybeDumpTrial(const FileContext& file, const DSpec& spec,
+                      TestClassification classification,
+                      llvm::StringRef corrupted_text,
+                      llvm::ArrayRef<DeletedToken> deleted_tokens,
+                      llvm::ArrayRef<Suggestion> suggestions,
+                      llvm::ArrayRef<BracketCorrection> corrections) -> void;
+
+  const EvalOptions& options_;
+  const Corpus& corpus_;
+  // Remaining `--dump-incorrect` and `--dump-none` budget.
+  int dump_incorrect_;
+  int dump_none_;
+  // Trial counts indexed by [deletion level][file].
+  std::vector<std::vector<int>> trials_;
+  Report report_;
+};
+
+}  // namespace
+
+auto Evaluator::Run() -> Report {
+  report_.stats_by_level.resize(options_.d_specs.size());
+  for (const DSpec& spec : options_.d_specs) {
+    trials_.push_back(AllocateTrials(corpus_, spec, options_.total_trials));
+  }
+  for (auto [file_index, candidate] : llvm::enumerate(corpus_.files)) {
+    RunFile(file_index, candidate);
+  }
+  return std::move(report_);
+}
+
+auto Evaluator::RunFile(size_t file_index, const CandidateFile& candidate)
+    -> void {
+  // Without `--verbose` a file with no trials has nothing to report, so don't
+  // spend the time lexing it.
+  bool has_any_trials =
+      llvm::any_of(trials_, [&](const std::vector<int>& level_trials) {
+        return level_trials[file_index] > 0;
+      });
+  if (!options_.verbose && !has_any_trials) {
+    return;
+  }
+
+  auto source = SourceBuffer::MakeFromFile(*llvm::vfs::getRealFileSystem(),
+                                           candidate.filename,
+                                           Diagnostics::NullConsumer());
+  if (!source) {
+    return;
+  }
+  SharedValueStores value_stores;
+  auto clean_buffer = Lex::Lex(value_stores, *source, QuietLexOptions());
+  auto clean_pairs = GetCleanBracketPairs(clean_buffer);
+  FileContext file = {.candidate = candidate,
+                      .clean_buffer = clean_buffer,
+                      .source_text = source->text(),
+                      .clean_pairs = clean_pairs};
+
+  FileResult result = {
+      .filename = candidate.filename,
+      .clean_pairs_count = candidate.clean_pairs_count,
+      .stats_by_level = std::vector<TrialStats>(options_.d_specs.size())};
+
+  for (auto [level, spec] : llvm::enumerate(options_.d_specs)) {
+    int d_count = spec.DeletionCount(static_cast<int>(clean_pairs.size()));
+    for (int trial : llvm::seq(0, trials_[level][file_index])) {
+      std::mt19937_64 rng(
+          TrialSeed(options_.base_seed, candidate.filename, spec.label, trial));
+      auto classification = RunTrial(file, spec, d_count, rng);
+      if (!classification) {
+        continue;
       }
-
-      std::sort(remainders.begin(), remainders.end(),
-                [&](const auto& a, const auto& b) {
-                  if (a.first != b.first) {
-                    return a.first > b.first;
-                  }
-                  return valid_files[a.second].filename <
-                         valid_files[b.second].filename;
-                });
-
-      int remainder_trials = total_trials - allocated;
-      for (int i = 0;
-           i < remainder_trials && i < static_cast<int>(remainders.size());
-           ++i) {
-        ++scenario_file_trials[s_idx][remainders[i].second];
-      }
+      result.stats_by_level[level].Add(*classification);
+      report_.stats_by_level[level].Add(*classification);
     }
   }
 
-  struct FileResult {
-    std::string filename;
-    int clean_pairs_count = 0;
-    std::vector<TrialStats> scenario_stats;
+  report_.results_by_file.push_back(std::move(result));
+}
+
+auto Evaluator::RunTrial(const FileContext& file, const DSpec& spec,
+                         int d_count, std::mt19937_64& rng)
+    -> std::optional<TestClassification> {
+  auto corrupted_case =
+      MakeCorruptedCase(options_.mode, file.clean_buffer, file.source_text,
+                        file.clean_pairs, d_count, rng);
+  if (!corrupted_case) {
+    return std::nullopt;
+  }
+  std::string corrupted_text = std::move(corrupted_case->text);
+  std::vector<DeletedToken> deleted_tokens =
+      std::move(corrupted_case->expected);
+
+  auto corrupted_source = SourceBuffer::MakeFromStringCopy(
+      file.candidate.filename, corrupted_text, Diagnostics::NullConsumer());
+  if (!corrupted_source) {
+    return std::nullopt;
+  }
+
+  SharedValueStores value_stores;
+  LexOptions lex_options = QuietLexOptions();
+  llvm::SmallVector<BracketCorrection> corrections;
+  lex_options.bracket_corrections = &corrections;
+  auto buffer = Lex::Lex(value_stores, *corrupted_source, lex_options);
+
+  if (IsTruncateMode(options_.mode)) {
+    AcceptFileEndOffset(buffer, corrupted_text, deleted_tokens);
+  }
+  if ((options_.mode == CorruptionMode::DeleteGap ||
+       options_.mode == CorruptionMode::TruncateRegion) &&
+      TokensWereFused(buffer, corrupted_text, deleted_tokens)) {
+    ++report_.merged_skips;
+    return std::nullopt;
+  }
+
+  CheckCorrectionsNameRealTokens(buffer, corrections);
+  auto suggestions = CollectSuggestions(buffer, corrupted_text, corrections);
+
+  if (spec.label == options_.OriginLevelLabel()) {
+    RecordOrigins(deleted_tokens, suggestions);
+  }
+
+  TestClassification classification =
+      ClassifyTrial(deleted_tokens, suggestions);
+  if (classification == TestClassification::Incorrect) {
+    RecordWrongCloseDistances(buffer, deleted_tokens, suggestions);
+  }
+  MaybeDumpTrial(file, spec, classification, corrupted_text, deleted_tokens,
+                 suggestions, corrections);
+  return classification;
+}
+
+auto Evaluator::RecordOrigins(llvm::ArrayRef<DeletedToken> deleted_tokens,
+                              llvm::ArrayRef<Suggestion> suggestions) -> void {
+  for (const auto& sugg : suggestions) {
+    auto& stat = report_.stats_by_origin[sugg.origin];
+    ++(AnyDeletionMatches(deleted_tokens, sugg) ? stat.correct
+                                                : stat.incorrect);
+  }
+}
+
+auto Evaluator::RecordWrongCloseDistances(
+    const TokenizedBuffer& buffer, llvm::ArrayRef<DeletedToken> deleted_tokens,
+    llvm::ArrayRef<Suggestion> suggestions) -> void {
+  // Ground truth and suggestions meet in byte offsets, but distances are
+  // measured in tokens, so map back. An offset that isn't a token boundary is
+  // treated as the end of the file.
+  llvm::DenseMap<int32_t, int32_t> offset_to_token;
+  for (TokenIndex t : buffer.tokens()) {
+    offset_to_token[buffer.GetByteOffset(t)] = t.index;
+  }
+  int32_t eof_index = buffer.size() - 1;
+  auto to_token = [&](int32_t offset) -> int32_t {
+    auto it = offset_to_token.find(offset);
+    return it != offset_to_token.end() ? it->second : eof_index;
   };
 
-  struct OriginStat {
-    int correct = 0;
-    int incorrect = 0;
-  };
-  std::map<std::string, OriginStat> origin_stats;
-  int merged_skips = 0;
-
-  // For incorrect trials: how far (in tokens, signed; + = closed later /
-  // swallowing following code) is the wrong close from the correct anchor,
-  // bucketed by the deleted bracket's kind.
-  struct DistStat {
-    int later = 0;
-    int earlier = 0;
-    int no_close = 0;
-    std::map<int, int> token_dist_hist;
-    std::map<int, int> line_dist_hist;
-  };
-  std::map<std::string, DistStat> dist_by_kind;
-
-  std::vector<FileResult> file_results;
-  std::vector<TrialStats> overall_scenario_stats(d_specs.size());
-
-  for (size_t f_idx = 0; f_idx < valid_files.size(); ++f_idx) {
-    const auto& candidate = valid_files[f_idx];
-
-    bool has_any_trials = false;
-    for (size_t s_idx = 0; s_idx < d_specs.size(); ++s_idx) {
-      if (scenario_file_trials[s_idx][f_idx] > 0) {
-        has_any_trials = true;
-        break;
-      }
-    }
-
-    if (!verbose && !has_any_trials) {
+  for (const auto& del : deleted_tokens) {
+    if (AnySuggestionMatches(suggestions, del)) {
       continue;
     }
-
-    auto source = SourceBuffer::MakeFromFile(*llvm::vfs::getRealFileSystem(),
-                                             candidate.filename,
-                                             Diagnostics::NullConsumer());
-    if (!source) {
+    auto& stat = report_.wrong_close_by_kind[del.kind.name().str()];
+    // Blame the nearest same-kind close, as the suggestion that most likely
+    // ended the group in the wrong place.
+    int32_t expected = to_token(del.next_token_byte_offset);
+    const Suggestion* best = nullptr;
+    for (const auto& sugg : suggestions) {
+      if (sugg.kind != del.kind) {
+        continue;
+      }
+      if (best == nullptr ||
+          std::abs(to_token(sugg.byte_offset) - expected) <
+              std::abs(to_token(best->byte_offset) - expected)) {
+        best = &sugg;
+      }
+    }
+    if (best == nullptr) {
+      ++stat.no_close;
       continue;
     }
+    int32_t token_dist = to_token(best->byte_offset) - expected;
+    ++(token_dist > 0 ? stat.later : stat.earlier);
+    ++stat.token_dist_hist[token_dist];
+  }
+}
 
-    SharedValueStores value_stores;
-    LexOptions lex_options;
-    lex_options.consumer = &Diagnostics::NullConsumer();
-    auto clean_buffer = Lex::Lex(value_stores, *source, lex_options);
-    auto clean_pairs = GetCleanBracketPairs(clean_buffer);
-
-    FileResult f_res;
-    f_res.filename = candidate.filename;
-    f_res.clean_pairs_count = candidate.clean_pairs_count;
-    f_res.scenario_stats.resize(d_specs.size());
-
-    llvm::StringRef source_text = source->text();
-
-    for (size_t s_idx = 0; s_idx < d_specs.size(); ++s_idx) {
-      const auto& spec = d_specs[s_idx];
-      int num_trials = scenario_file_trials[s_idx][f_idx];
-
-      int d_count = 0;
-      if (spec.is_percent) {
-        d_count = std::max(
-            1, static_cast<int>(clean_pairs.size() * spec.percent_val));
-      } else {
-        d_count = spec.count_val;
-      }
-      d_count = std::min(d_count, static_cast<int>(clean_pairs.size()));
-
-      for (int trial = 0; trial < num_trials; ++trial) {
-        uint64_t file_hash = llvm::hash_value(candidate.filename);
-        uint64_t spec_hash = llvm::hash_value(spec.label);
-        uint64_t trial_seed =
-            static_cast<uint64_t>(base_seed) ^ file_hash ^ (spec_hash << 16) ^
-            (static_cast<uint64_t>(trial) * 0x9e3779b97f4a7c15ULL);
-
-        std::mt19937_64 rng(trial_seed);
-
-        std::optional<CorruptedCase> corrupted_case;
-        switch (mode) {
-          case CorruptionMode::Blank:
-          case CorruptionMode::DeleteGap:
-            corrupted_case = MakeDeletionCase(
-                clean_buffer, source_text, clean_pairs, d_count,
-                /*close_gap=*/mode == CorruptionMode::DeleteGap, rng);
-            break;
-          case CorruptionMode::Truncate:
-            corrupted_case = MakeTruncateCase(clean_buffer, source_text, rng);
-            break;
-          case CorruptionMode::TruncateRegion:
-            corrupted_case = MakeTruncateRegionCase(clean_buffer, source_text,
-                                                    clean_pairs, rng);
-            break;
-        }
-        if (!corrupted_case) {
-          continue;
-        }
-        std::string corrupted_text = std::move(corrupted_case->text);
-        std::vector<DeletedToken> deleted_tokens =
-            std::move(corrupted_case->expected);
-
-        auto corrupted_source = SourceBuffer::MakeFromStringCopy(
-            candidate.filename, corrupted_text, Diagnostics::NullConsumer());
-        if (!corrupted_source) {
-          continue;
-        }
-
-        SharedValueStores c_value_stores;
-        LexOptions c_lex_options;
-        c_lex_options.consumer = &Diagnostics::NullConsumer();
-        llvm::SmallVector<BracketCorrection> corrections;
-        c_lex_options.bracket_corrections = &corrections;
-        auto corrupted_buffer =
-            Lex::Lex(c_value_stores, *corrupted_source, c_lex_options);
-
-        // Ground-truth "at EOF" offsets are computed as the corrupted text
-        // size, but recovery inserts before the FileEnd token, whose offset
-        // excludes trailing whitespace. Accept the real FileEnd offset too.
-        if (mode == CorruptionMode::Truncate ||
-            mode == CorruptionMode::TruncateRegion) {
-          int32_t eof = corrupted_buffer.GetByteOffset(
-              TokenIndex(corrupted_buffer.size() - 1));
-          int32_t text_size = static_cast<int32_t>(corrupted_text.size());
-          for (auto& del : deleted_tokens) {
-            if (llvm::is_contained(del.valid_next_token_byte_offsets,
-                                   text_size)) {
-              del.valid_next_token_byte_offsets.push_back(eof);
-            }
-          }
-        }
-
-        // Closing the gap can fuse two tokens into one (e.g. `f(x)` -> `fx)`),
-        // which both is unrealistic and leaves no boundary to reinsert the
-        // bracket at. Detect this by checking each ground-truth insertion still
-        // has a real token boundary to land on, and skip the trial if not.
-        if (mode == CorruptionMode::DeleteGap ||
-            mode == CorruptionMode::TruncateRegion) {
-          llvm::DenseSet<int32_t> token_offsets;
-          for (TokenIndex t : corrupted_buffer.tokens()) {
-            if (!corrupted_buffer.IsRecoveryToken(t)) {
-              token_offsets.insert(corrupted_buffer.GetByteOffset(t));
-            }
-          }
-          token_offsets.insert(static_cast<int32_t>(corrupted_text.size()));
-          bool merged = false;
-          for (const auto& del : deleted_tokens) {
-            if (llvm::none_of(
-                    del.valid_next_token_byte_offsets,
-                    [&](int32_t off) { return token_offsets.contains(off); })) {
-              merged = true;
-              break;
-            }
-          }
-          if (merged) {
-            ++merged_skips;
-            continue;
-          }
-        }
-
-        // Corrections name tokens of this buffer, so an insertion must name a
-        // recovery token of the kind it inserted. The origin lookup below
-        // relies on that, and a wrong index would silently lose origins.
-        for (const auto& c : corrections) {
-          CARBON_CHECK(c.fix_token_index.index >= 0 &&
-                           c.fix_token_index.index < corrupted_buffer.size(),
-                       "Correction names a token outside the buffer.");
-          if (c.fix_action != BracketFixAction::ReplaceWithError &&
-              !c.is_tied) {
-            CARBON_CHECK(corrupted_buffer.IsRecoveryToken(c.fix_token_index),
-                         "Insertion doesn't name the token it inserted.");
-            CARBON_CHECK(
-                corrupted_buffer.GetKind(c.fix_token_index) == c.fix_token_kind,
-                "Inserted token has the wrong kind.");
-          }
-        }
-
-        llvm::SmallVector<Suggestion> suggestions;
-        for (TokenIndex t : corrupted_buffer.tokens()) {
-          if (corrupted_buffer.IsRecoveryToken(t)) {
-            auto kind = corrupted_buffer.GetKind(t);
-            if (kind.is_opening_symbol() || kind.is_closing_symbol()) {
-              // Structure-equality: a fix is identified by the first
-              // *surviving* token it precedes, not its raw offset. Skip other
-              // inserted (recovery) tokens so a cascade of closers all point at
-              // the same real anchor, and closing among trailing whitespace or
-              // a deleted span still resolves to the token that structurally
-              // follows.
-              TokenIndex succ = TokenIndex(t.index + 1);
-              while (succ.index < corrupted_buffer.size() &&
-                     corrupted_buffer.IsRecoveryToken(succ)) {
-                succ = TokenIndex(succ.index + 1);
-              }
-              int32_t byte_off =
-                  (succ.index < corrupted_buffer.size())
-                      ? corrupted_buffer.GetByteOffset(succ)
-                      : static_cast<int32_t>(corrupted_text.size());
-              int32_t line_num = (succ.index < corrupted_buffer.size())
-                                     ? corrupted_buffer.GetLineNumber(succ)
-                                     : -1;
-              int32_t col_num = (succ.index < corrupted_buffer.size())
-                                    ? corrupted_buffer.GetColumnNumber(succ)
-                                    : -1;
-              // Corrections name the tokens of this buffer, so the one that
-              // inserted this token names it directly.
-              std::string origin = "Unknown";
-              for (const auto& c : corrections) {
-                if (c.fix_action != BracketFixAction::ReplaceWithError &&
-                    !c.is_tied && c.fix_token_index == t) {
-                  origin = c.origin;
-                  break;
-                }
-              }
-              suggestions.push_back(Suggestion{
-                  .kind = kind,
-                  .byte_offset = byte_off,
-                  .line = line_num,
-                  .column = col_num,
-                  .origin = origin,
-              });
-            }
-          }
-        }
-
-        if (spec.label == "1" || mode == CorruptionMode::Truncate ||
-            mode == CorruptionMode::TruncateRegion) {
-          for (const auto& s : suggestions) {
-            bool matched = false;
-            for (const auto& del : deleted_tokens) {
-              if (MatchesDeletedToken(del, s)) {
-                matched = true;
-                break;
-              }
-            }
-            if (matched) {
-              ++origin_stats[s.origin].correct;
-            } else {
-              ++origin_stats[s.origin].incorrect;
-            }
-          }
-        }
-
-        TestClassification classification =
-            ClassifyTrial(deleted_tokens, suggestions);
-
-        // Measure how far off each unmatched expected close is.
-        if (classification == TestClassification::Incorrect) {
-          llvm::DenseMap<int32_t, int32_t> off_to_tok;
-          for (TokenIndex t : corrupted_buffer.tokens()) {
-            off_to_tok[corrupted_buffer.GetByteOffset(t)] = t.index;
-          }
-          int32_t eof_idx = corrupted_buffer.size() - 1;
-          auto to_tok = [&](int32_t off) -> int32_t {
-            auto it = off_to_tok.find(off);
-            return it != off_to_tok.end() ? it->second : eof_idx;
-          };
-          for (const auto& del : deleted_tokens) {
-            bool matched = false;
-            for (const auto& s : suggestions) {
-              if (MatchesDeletedToken(del, s)) {
-                matched = true;
-                break;
-              }
-            }
-            if (matched) {
-              continue;
-            }
-            auto& stat = dist_by_kind[del.kind.name().str()];
-            // Find the nearest same-kind close.
-            int32_t exp_tok = to_tok(del.next_token_byte_offset);
-            const Suggestion* best = nullptr;
-            for (const auto& s : suggestions) {
-              if (s.kind != del.kind) {
-                continue;
-              }
-              if (best == nullptr ||
-                  std::abs(to_tok(s.byte_offset) - exp_tok) <
-                      std::abs(to_tok(best->byte_offset) - exp_tok)) {
-                best = &s;
-              }
-            }
-            if (best == nullptr) {
-              ++stat.no_close;
-              continue;
-            }
-            int32_t token_dist = to_tok(best->byte_offset) - exp_tok;
-            (token_dist > 0 ? stat.later : stat.earlier)++;
-            ++stat.token_dist_hist[token_dist];
-            ++stat.line_dist_hist[best->line -
-                                  corrupted_buffer.GetLineNumber(
-                                      TokenIndex(std::min(exp_tok, eof_idx)))];
-          }
-        }
-
-        bool do_dump = false;
-        const char* dump_label = "";
-        if (classification == TestClassification::Incorrect &&
-            dump_incorrect > 0) {
-          --dump_incorrect;
-          do_dump = true;
-          dump_label = "INCORRECT";
-        } else if ((classification == TestClassification::None ||
-                    classification == TestClassification::Partial) &&
-                   dump_none > 0) {
-          --dump_none;
-          do_dump = true;
-          dump_label =
-              classification == TestClassification::None ? "NONE" : "PARTIAL";
-        }
-        if (do_dump) {
-          llvm::errs() << "\n=== " << dump_label << " TRIAL in "
-                       << candidate.filename << " (D=" << spec.label
-                       << ") ===\n";
-          for (const auto& del : deleted_tokens) {
-            llvm::errs() << "  Deleted token: kind=" << del.kind.name()
-                         << " at byte=" << del.byte_offset
-                         << " (line=" << del.line << ", col=" << del.column
-                         << ")\n";
-          }
-          llvm::errs() << "  Suggestions (" << suggestions.size() << "):\n";
-          for (const auto& s : suggestions) {
-            llvm::errs() << "    Suggestion (" << s.origin
-                         << "): kind=" << s.kind.name()
-                         << " at byte=" << s.byte_offset << " (line=" << s.line
-                         << ", col=" << s.column << ")\n";
-          }
-          llvm::errs() << "  Raw corrections (" << corrections.size() << "):\n";
-          for (const auto& c : corrections) {
-            llvm::errs() << "    "
-                         << (c.fix_action == BracketFixAction::InsertBefore
-                                 ? "InsertBefore"
-                             : c.fix_action == BracketFixAction::InsertAfter
-                                 ? "InsertAfter"
-                                 : "ReplaceWithError")
-                         << " kind=" << c.fix_token_kind.name()
-                         << " tok=" << c.fix_token_index.index
-                         << (c.is_tied ? " TIED" : "") << " origin=" << c.origin
-                         << "\n";
-          }
-          llvm::errs() << "--- Corrupted Text Sample ---\n";
-          int32_t print_start =
-              std::max(0, deleted_tokens[0].byte_offset - 100);
-          int32_t print_end = std::min<int32_t>(
-              corrupted_text.size(), deleted_tokens[0].byte_offset + 100);
-          llvm::errs() << corrupted_text.substr(print_start,
-                                                print_end - print_start)
-                       << "\n";
-          llvm::errs() << "===============================\n\n";
-        }
-        f_res.scenario_stats[s_idx].Add(classification);
-        overall_scenario_stats[s_idx].Add(classification);
-      }
-    }
-
-    file_results.push_back(std::move(f_res));
+auto Evaluator::MaybeDumpTrial(const FileContext& file, const DSpec& spec,
+                               TestClassification classification,
+                               llvm::StringRef corrupted_text,
+                               llvm::ArrayRef<DeletedToken> deleted_tokens,
+                               llvm::ArrayRef<Suggestion> suggestions,
+                               llvm::ArrayRef<BracketCorrection> corrections)
+    -> void {
+  const char* dump_label = nullptr;
+  if (classification == TestClassification::Incorrect && dump_incorrect_ > 0) {
+    --dump_incorrect_;
+    dump_label = "INCORRECT";
+  } else if ((classification == TestClassification::None ||
+              classification == TestClassification::Partial) &&
+             dump_none_ > 0) {
+    --dump_none_;
+    dump_label =
+        classification == TestClassification::None ? "NONE" : "PARTIAL";
+  }
+  if (dump_label == nullptr) {
+    return;
   }
 
-  if (json_output) {
-    llvm::outs() << "{\n";
-    llvm::outs() << "  \"seed\": " << base_seed << ",\n";
-    llvm::outs() << "  \"total_trials\": " << total_trials << ",\n";
-    llvm::outs() << "  \"files_tested\": " << valid_files.size() << ",\n";
-    llvm::outs() << "  \"total_bracket_pairs\": " << total_clean_pairs << ",\n";
-    llvm::outs() << "  \"scenarios\": [\n";
-    for (size_t i = 0; i < d_specs.size(); ++i) {
-      const auto& spec = d_specs[i];
-      const auto& stats = overall_scenario_stats[i];
-      llvm::outs() << "    {\n";
-      llvm::outs() << "      \"d_spec\": \"" << spec.label << "\",\n";
-      llvm::outs() << "      \"total\": " << stats.total << ",\n";
-      llvm::outs() << "      \"correct\": " << stats.correct << ",\n";
-      llvm::outs() << "      \"partial\": " << stats.partial << ",\n";
-      llvm::outs() << "      \"none\": " << stats.none << ",\n";
-      llvm::outs() << "      \"incorrect\": " << stats.incorrect << ",\n";
-      llvm::outs() << llvm::formatv("      \"correct_pct\": {0:F1},\n",
-                                    stats.CorrectPct());
-      llvm::outs() << llvm::formatv("      \"partial_pct\": {0:F1},\n",
-                                    stats.PartialPct());
-      llvm::outs() << llvm::formatv("      \"none_pct\": {0:F1},\n",
-                                    stats.NonePct());
-      llvm::outs() << llvm::formatv("      \"incorrect_pct\": {0:F1},\n",
-                                    stats.IncorrectPct());
-      llvm::outs() << llvm::formatv("      \"safety_pct\": {0:F1},\n",
-                                    stats.SafetyPct());
-      llvm::outs() << llvm::formatv("      \"accuracy_pct\": {0:F1}\n",
-                                    stats.AccuracyPct());
-      llvm::outs() << (i + 1 < d_specs.size() ? "    },\n" : "    }\n");
-    }
-    llvm::outs() << "  ]\n";
-    llvm::outs() << "}\n";
-    return true;
+  llvm::errs() << "\n=== " << dump_label << " TRIAL in "
+               << file.candidate.filename << " (D=" << spec.label << ") ===\n";
+  for (const auto& del : deleted_tokens) {
+    llvm::errs() << "  Deleted token: kind=" << del.kind.name()
+                 << " at byte=" << del.byte_offset << " (line=" << del.line
+                 << ", col=" << del.column << ")\n";
   }
-
-  // Markdown Report Output
-  llvm::outs() << "# Bracket Recovery Measurement Report\n\n";
-  llvm::outs() << "- **Corruption mode**: " << mode_str << "\n";
-  llvm::outs() << "- **Files tested**: " << valid_files.size() << " files ("
-               << total_clean_pairs << " clean matched bracket pairs)\n";
-  llvm::outs() << "- **Total trials per configuration**: " << total_trials
-               << "\n";
-  llvm::outs() << "- **Random seed**: " << base_seed << "\n";
-  if (merged_skips > 0) {
-    llvm::outs() << "- **Trials skipped (token fusion)**: " << merged_skips
+  llvm::errs() << "  Suggestions (" << suggestions.size() << "):\n";
+  for (const auto& s : suggestions) {
+    llvm::errs() << "    Suggestion (" << s.origin
+                 << "): kind=" << s.kind.name() << " at byte=" << s.byte_offset
+                 << " (line=" << s.line << ", col=" << s.column << ")\n";
+  }
+  llvm::errs() << "  Raw corrections (" << corrections.size() << "):\n";
+  for (const auto& c : corrections) {
+    llvm::errs() << "    "
+                 << (c.fix_action == BracketFixAction::InsertBefore
+                         ? "InsertBefore"
+                     : c.fix_action == BracketFixAction::InsertAfter
+                         ? "InsertAfter"
+                         : "ReplaceWithError")
+                 << " kind=" << c.fix_token_kind.name()
+                 << " tok=" << c.fix_token_index.index
+                 << (c.is_tied ? " TIED" : "") << " origin=" << c.origin
                  << "\n";
   }
-  llvm::outs() << "\n";
+  // Center the excerpt on the first deletion, or on the first suggestion when
+  // there was nothing to delete (a truncation with nothing left open) yet
+  // recovery suggested something anyway.
+  int32_t center = 0;
+  if (!deleted_tokens.empty()) {
+    center = deleted_tokens.front().byte_offset;
+  } else if (!suggestions.empty()) {
+    center = suggestions.front().byte_offset;
+  }
+  llvm::errs() << "--- Corrupted Text Sample ---\n";
+  int32_t print_start = std::max(0, center - 100);
+  int32_t print_end =
+      std::min(static_cast<int32_t>(corrupted_text.size()), center + 100);
+  llvm::errs() << corrupted_text.substr(print_start, print_end - print_start)
+               << "\n";
+  llvm::errs() << "===============================\n\n";
+}
 
+static auto PrintJsonReport(const EvalOptions& options, const Corpus& corpus,
+                            const Report& report) -> void {
+  llvm::outs() << "{\n";
+  llvm::outs() << "  \"seed\": " << options.base_seed << ",\n";
+  llvm::outs() << "  \"total_trials\": " << options.total_trials << ",\n";
+  llvm::outs() << "  \"files_tested\": " << corpus.files.size() << ",\n";
+  llvm::outs() << "  \"total_bracket_pairs\": " << corpus.total_clean_pairs
+               << ",\n";
+  llvm::outs() << "  \"scenarios\": [\n";
+  for (auto [i, spec] : llvm::enumerate(options.d_specs)) {
+    const auto& stats = report.stats_by_level[i];
+    llvm::outs() << "    {\n";
+    llvm::outs() << "      \"d_spec\": \"" << spec.label << "\",\n";
+    llvm::outs() << "      \"total\": " << stats.total << ",\n";
+    llvm::outs() << "      \"correct\": " << stats.correct << ",\n";
+    llvm::outs() << "      \"partial\": " << stats.partial << ",\n";
+    llvm::outs() << "      \"none\": " << stats.none << ",\n";
+    llvm::outs() << "      \"incorrect\": " << stats.incorrect << ",\n";
+    llvm::outs() << llvm::formatv("      \"correct_pct\": {0:F1},\n",
+                                  stats.CorrectPct());
+    llvm::outs() << llvm::formatv("      \"partial_pct\": {0:F1},\n",
+                                  stats.PartialPct());
+    llvm::outs() << llvm::formatv("      \"none_pct\": {0:F1},\n",
+                                  stats.NonePct());
+    llvm::outs() << llvm::formatv("      \"incorrect_pct\": {0:F1},\n",
+                                  stats.IncorrectPct());
+    llvm::outs() << llvm::formatv("      \"safety_pct\": {0:F1},\n",
+                                  stats.SafetyPct());
+    llvm::outs() << llvm::formatv("      \"accuracy_pct\": {0:F1}\n",
+                                  stats.AccuracyPct());
+    llvm::outs() << (i + 1 < options.d_specs.size() ? "    },\n" : "    }\n");
+  }
+  llvm::outs() << "  ]\n";
+  llvm::outs() << "}\n";
+}
+
+static auto PrintLevelTable(const EvalOptions& options, const Report& report)
+    -> void {
   llvm::outs() << "## Overall Performance by Deletion Level (D)\n\n";
   llvm::outs() << "| Deletion Level (D) | Total Trials | Correct | Partial | "
                   "None | Incorrect | Safety (%) | Accuracy (%) |\n";
   llvm::outs() << "|:---|---:|---:|---:|---:|---:|---:|---:|\n";
-
-  for (size_t i = 0; i < d_specs.size(); ++i) {
-    const auto& spec = d_specs[i];
-    const auto& stats = overall_scenario_stats[i];
+  for (auto [i, spec] : llvm::enumerate(options.d_specs)) {
+    const auto& stats = report.stats_by_level[i];
     llvm::outs() << llvm::formatv(
         "| D = {0,-6} | {1,12} | {2,5} ({3,4:F1}%) | {4,5} ({5,4:F1}%) | {6,5} "
         "({7,4:F1}%) | {8,5} ({9,4:F1}%) | {10,9:F1}% | {11,11:F1}% |\n",
@@ -1189,12 +1262,16 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
         stats.AccuracyPct());
   }
   llvm::outs() << "\n";
+}
 
-  llvm::outs() << "## Suggestion Origin Breakdown (D = 1)\n\n";
+static auto PrintOriginTable(const EvalOptions& options, const Report& report)
+    -> void {
+  llvm::outs() << "## Suggestion Origin Breakdown (D = "
+               << options.OriginLevelLabel() << ")\n\n";
   llvm::outs() << "| Origin Transition | Total | Correct | Incorrect | "
                   "Precision (%) |\n";
   llvm::outs() << "|:---|---:|---:|---:|---:|\n";
-  for (const auto& [name, stat] : origin_stats) {
+  for (const auto& [name, stat] : report.stats_by_origin) {
     int total = stat.correct + stat.incorrect;
     double prec = total == 0 ? 100.0 : (100.0 * stat.correct) / total;
     llvm::outs() << llvm::formatv(
@@ -1202,72 +1279,78 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
         stat.correct, stat.incorrect, prec);
   }
   llvm::outs() << "\n";
+}
 
-  if (verbose) {
-    llvm::outs() << "## Per-File Breakdown\n\n";
-    for (const auto& fres : file_results) {
-      llvm::outs() << "### `" << fres.filename << "` ("
-                   << fres.clean_pairs_count << " pairs)\n\n";
-      llvm::outs() << "| D | Total | Correct | Partial | None | Incorrect | "
-                      "Safety | Accuracy |\n";
-      llvm::outs() << "|:---|---:|---:|---:|---:|---:|---:|---:|\n";
-      for (size_t i = 0; i < d_specs.size(); ++i) {
-        const auto& spec = d_specs[i];
-        const auto& stats = fres.scenario_stats[i];
-        llvm::outs() << llvm::formatv(
-            "| {0} | {1} | {2} ({3:F1}%) | {4} ({5:F1}%) | {6} ({7:F1}%) | {8} "
-            "({9:F1}%) | {10:F1}% | {11:F1}% |\n",
-            spec.label, stats.total, stats.correct, stats.CorrectPct(),
-            stats.partial, stats.PartialPct(), stats.none, stats.NonePct(),
-            stats.incorrect, stats.IncorrectPct(), stats.SafetyPct(),
-            stats.AccuracyPct());
-      }
-      llvm::outs() << "\n";
-    }
-  }
-
-  if (!dist_by_kind.empty()) {
-    llvm::outs() << "## Wrong-Close Distance (incorrect trials)\n\n";
-    llvm::outs()
-        << "Signed token distance from the correct anchor to the "
-           "nearest same-kind close (+ = closed later / swallowing).\n\n";
-    llvm::outs() << "| Deleted kind | Wrong | Later | Earlier | No close | "
-                    "Median | P90 | Max |\n";
+static auto PrintPerFileTables(const EvalOptions& options, const Report& report)
+    -> void {
+  llvm::outs() << "## Per-File Breakdown\n\n";
+  for (const auto& file : report.results_by_file) {
+    llvm::outs() << "### `" << file.filename << "` (" << file.clean_pairs_count
+                 << " pairs)\n\n";
+    llvm::outs() << "| D | Total | Correct | Partial | None | Incorrect | "
+                    "Safety | Accuracy |\n";
     llvm::outs() << "|:---|---:|---:|---:|---:|---:|---:|---:|\n";
-    for (const auto& [kind, stat] : dist_by_kind) {
-      int total = stat.later + stat.earlier + stat.no_close;
-      // Median token distance.
-      int median = 0;
-      int seen = 0;
-      int half = (stat.later + stat.earlier) / 2;
-      for (const auto& [d, c] : stat.token_dist_hist) {
-        seen += c;
-        if (seen > half) {
-          median = d;
-          break;
-        }
-      }
-      // 90th percentile and max token distance.
-      int p90 = 0;
-      int ninety = (stat.later + stat.earlier) * 9 / 10;
-      seen = 0;
-      int max_dist = 0;
-      for (const auto& [d, c] : stat.token_dist_hist) {
-        seen += c;
-        if (seen <= ninety) {
-          p90 = d;
-        }
-        max_dist = std::max(max_dist, std::abs(d));
-      }
+    for (auto [i, spec] : llvm::enumerate(options.d_specs)) {
+      const auto& stats = file.stats_by_level[i];
       llvm::outs() << llvm::formatv(
-          "| {0,-18} | {1,5} | {2,5} | {3,7} | {4,8} | {5,6} | {6,4} | {7,4} "
-          "|\n",
-          kind, total, stat.later, stat.earlier, stat.no_close, median, p90,
-          max_dist);
+          "| {0} | {1} | {2} ({3:F1}%) | {4} ({5:F1}%) | {6} ({7:F1}%) | {8} "
+          "({9:F1}%) | {10:F1}% | {11:F1}% |\n",
+          spec.label, stats.total, stats.correct, stats.CorrectPct(),
+          stats.partial, stats.PartialPct(), stats.none, stats.NonePct(),
+          stats.incorrect, stats.IncorrectPct(), stats.SafetyPct(),
+          stats.AccuracyPct());
     }
     llvm::outs() << "\n";
   }
+}
 
+// Summarizes a distance histogram. The median is the first distance past the
+// halfway point and the 90th percentile the last one at or below the 90% mark,
+// so both name an observed distance rather than an interpolated one.
+static auto SummarizeDistances(const std::map<int, int>& hist)
+    -> DistanceSummary {
+  int count = 0;
+  DistanceSummary summary;
+  for (const auto& [dist, n] : hist) {
+    count += n;
+    summary.max_abs = std::max(summary.max_abs, std::abs(dist));
+  }
+  bool have_median = false;
+  int seen = 0;
+  for (const auto& [dist, n] : hist) {
+    seen += n;
+    if (!have_median && seen > count / 2) {
+      summary.median = dist;
+      have_median = true;
+    }
+    if (seen <= count * 9 / 10) {
+      summary.p90 = dist;
+    }
+  }
+  return summary;
+}
+
+static auto PrintWrongCloseTable(const Report& report) -> void {
+  llvm::outs() << "## Wrong-Close Distance (incorrect trials)\n\n";
+  llvm::outs()
+      << "Signed token distance from the correct anchor to the "
+         "nearest same-kind close (+ = closed later / swallowing).\n\n";
+  llvm::outs() << "| Deleted kind | Wrong | Later | Earlier | No close | "
+                  "Median | P90 | Max |\n";
+  llvm::outs() << "|:---|---:|---:|---:|---:|---:|---:|---:|\n";
+  for (const auto& [kind, stat] : report.wrong_close_by_kind) {
+    int total = stat.later + stat.earlier + stat.no_close;
+    DistanceSummary dist = SummarizeDistances(stat.token_dist_hist);
+    llvm::outs() << llvm::formatv(
+        "| {0,-18} | {1,5} | {2,5} | {3,7} | {4,8} | {5,6} | {6,4} | {7,4} "
+        "|\n",
+        kind, total, stat.later, stat.earlier, stat.no_close, dist.median,
+        dist.p90, dist.max_abs);
+  }
+  llvm::outs() << "\n";
+}
+
+static auto PrintMetricDefinitions() -> void {
   llvm::outs() << "## Metric Definitions\n\n";
   llvm::outs()
       << "- **Correct**: Suggested correct locations for all removed tokens.\n";
@@ -1282,11 +1365,163 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
                   "suggestions `(Correct + Partial + None) / Total`.\n";
   llvm::outs() << "- **Accuracy**: Precision of suggestions when suggestions "
                   "were made `Correct / (Correct + Incorrect)`.\n";
+}
 
+static auto PrintMarkdownReport(const EvalOptions& options,
+                                const Corpus& corpus, const Report& report)
+    -> void {
+  llvm::outs() << "# Bracket Recovery Measurement Report\n\n";
+  llvm::outs() << "- **Corruption mode**: " << options.mode_name << "\n";
+  llvm::outs() << "- **Files tested**: " << corpus.files.size() << " files ("
+               << corpus.total_clean_pairs << " clean matched bracket pairs)\n";
+  llvm::outs() << "- **Total trials per configuration**: "
+               << options.total_trials << "\n";
+  llvm::outs() << "- **Random seed**: " << options.base_seed << "\n";
+  if (report.merged_skips > 0) {
+    llvm::outs() << "- **Trials skipped (token fusion)**: "
+                 << report.merged_skips << "\n";
+  }
+  llvm::outs() << "\n";
+
+  PrintLevelTable(options, report);
+  PrintOriginTable(options, report);
+  if (options.verbose) {
+    PrintPerFileTables(options, report);
+  }
+  if (!report.wrong_close_by_kind.empty()) {
+    PrintWrongCloseTable(report);
+  }
+  PrintMetricDefinitions();
+}
+
+constexpr CommandLine::CommandInfo CommandInfo = {
+    .name = "mismatched_brackets_eval",
+    .help = R"""(
+A measurement and benchmarking tool for Carbon bracket recovery.
+
+Evaluates how accurately and safely the bracket error recovery algorithm
+recovers deleted subsets of brackets across Carbon source files.
+)""",
+};
+
+static auto AddOptions(CommandLine::CommandBuilder& b, EvalOptions& options)
+    -> void {
+  b.AddStringPositionalArg(
+      {
+          .name = "FILE",
+          .help = "Input Carbon source file(s) or directories to test.",
+      },
+      [&](auto& arg_b) { arg_b.Append(&options.input_files); });
+
+  b.AddStringOption(
+      {
+          .name = "d-values",
+          .value_name = "LIST",
+          .help = "Comma-separated deletion levels (e.g. '1,2,5,10%,25%'). "
+                  "Ignored by the truncate modes.",
+      },
+      [&](auto& arg_b) { arg_b.Set(&options.d_values); });
+
+  b.AddStringOption(
+      {
+          .name = "mode",
+          .value_name = "MODE",
+          .help = "How to corrupt each file: 'blank' (replace brackets with "
+                  "spaces; the default), 'gap' (delete bracket characters, "
+                  "closing the gap), 'truncate' (cut the file at a random "
+                  "token; recovery should close all open brackets at EOF), "
+                  "or 'truncate-region' (delete from inside a random pair "
+                  "through its close, as when typing new code in an existing "
+                  "class).",
+      },
+      [&](auto& arg_b) { arg_b.Set(&options.mode_name); });
+
+  b.AddIntegerOption(
+      {
+          .name = "trials",
+          .value_name = "N",
+          .help = "Total number of trials per D configuration.",
+      },
+      [&](auto& arg_b) { arg_b.Set(&options.total_trials); });
+
+  b.AddIntegerOption(
+      {
+          .name = "seed",
+          .value_name = "N",
+          .help = "Random seed for deterministic sampling.",
+      },
+      [&](auto& arg_b) { arg_b.Set(&options.base_seed); });
+
+  b.AddFlag(
+      {
+          .name = "verbose",
+          .help = "Print detailed per-file results.",
+      },
+      [&](auto& arg_b) { arg_b.Set(&options.verbose); });
+
+  b.AddFlag(
+      {
+          .name = "json",
+          .help = "Output results in JSON format.",
+      },
+      [&](auto& arg_b) { arg_b.Set(&options.json_output); });
+
+  b.AddIntegerOption(
+      {
+          .name = "dump-incorrect",
+          .value_name = "N",
+          .help = "Print details for up to N incorrect trials.",
+      },
+      [&](auto& arg_b) { arg_b.Set(&options.dump_incorrect); });
+
+  b.AddIntegerOption(
+      {
+          .name = "dump-none",
+          .value_name = "N",
+          .help = "Print details for up to N trials classified None.",
+      },
+      [&](auto& arg_b) { arg_b.Set(&options.dump_none); });
+
+  b.Do([] {});
+}
+
+static auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+  EvalOptions options;
+  auto parse_result = CommandLine::Parse(
+      args, llvm::outs(), CommandInfo,
+      [&](CommandLine::CommandBuilder& b) { AddOptions(b, options); });
+  if (!parse_result.ok()) {
+    llvm::errs() << "error: " << *parse_result << "\n";
+    return false;
+  }
+  if (*parse_result == CommandLine::ParseResult::MetaSuccess) {
+    return true;
+  }
+  if (!options.Resolve()) {
+    return false;
+  }
+
+  auto files = CollectCarbonFiles(options.input_files);
+  if (files.empty()) {
+    llvm::errs() << "error: No Carbon source files found to test.\n";
+    return false;
+  }
+  Corpus corpus = FindCandidateFiles(files);
+  if (corpus.files.empty() || corpus.total_clean_pairs == 0) {
+    llvm::errs()
+        << "error: No Carbon source files with bracket pairs found to test.\n";
+    return false;
+  }
+
+  Report report = Evaluator(options, corpus).Run();
+  if (options.json_output) {
+    PrintJsonReport(options, corpus, report);
+  } else {
+    PrintMarkdownReport(options, corpus, report);
+  }
   return true;
 }
 
-}  // namespace
 }  // namespace Carbon::Lex
 
 auto main(int argc, char** argv) -> int {
