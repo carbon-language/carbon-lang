@@ -2029,6 +2029,71 @@ static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
   return input_tokens;
 }
 
+// The source position where `token` starts. Note that this can't go through
+// `GetTokenText`, which returns the kind's fixed spelling rather than a pointer
+// into the source for most token kinds.
+static auto TokenStartPosition(const TokenizedBuffer& buffer, TokenIndex token)
+    -> const char* {
+  return buffer.source().text().begin() + buffer.GetByteOffset(token);
+}
+
+// The source position just past the end of `token`.
+static auto TokenEndPosition(const TokenizedBuffer& buffer, TokenIndex token)
+    -> const char* {
+  return TokenStartPosition(buffer, token) + buffer.GetTokenText(token).size();
+}
+
+// Where in the source a bracket that `correction` proposes would be written:
+// just past the end of the token it goes after, rather than at the start of the
+// token it goes before. For `f(x` on one line and `;` on the next, that points
+// the suggestion at the position directly after the `x`, where the `)` belongs,
+// instead of down at the `;`. Where the two tokens are separated, the bracket
+// is then placed on the side that matches how it would be written.
+static auto BracketInsertionPosition(const TokenizedBuffer& buffer,
+                                     const BracketCorrection& correction)
+    -> const char* {
+  TokenIndex insert_after =
+      correction.fix_action == BracketFixAction::InsertAfter
+          ? correction.fix_token_index
+          : TokenIndex(correction.fix_token_index.index - 1);
+  // Nothing precedes the first token, so an insertion before it goes at the
+  // very start of the file.
+  if (!insert_after.has_value()) {
+    return TokenStartPosition(buffer, correction.fix_token_index);
+  }
+
+  const char* pos = TokenEndPosition(buffer, insert_after);
+  const char* end = buffer.source().text().end();
+
+  // Advances over the spaces starting at `from`, up to `limit` of them.
+  auto skip_spaces = [end](const char* from, int32_t limit) {
+    for (; limit > 0 && from != end && *from == ' '; --limit) {
+      ++from;
+    }
+    return from;
+  };
+  constexpr int32_t NoLimit = std::numeric_limits<int32_t>::max();
+
+  if (correction.fix_token_kind == TokenKind::CloseCurlyBrace) {
+    // A `}` closing a multi-line scope goes on a line of its own, indented to
+    // line up with the `{` it closes. Point at that column when the next line
+    // is indented far enough to have a position there, and otherwise at the
+    // start of it: a diagnostic can't name the virtual space to the right of
+    // the end of a line, so this is as close as the source gets.
+    if (const char* line_end = skip_spaces(pos, NoLimit);
+        line_end != end && *line_end == '\n') {
+      auto open_line = buffer.GetLine(correction.diagnostic_token_index);
+      pos = skip_spaces(line_end + 1,
+                        buffer.GetIndentColumnNumber(open_line) - 1);
+    }
+  } else if (correction.fix_token_kind.is_opening_symbol()) {
+    // An opening bracket binds to what comes after it, so it belongs on the far
+    // side of any space separating it from the token it follows.
+    pos = skip_spaces(pos, NoLimit);
+  }
+  return pos;
+}
+
 // If brackets didn't pair or nest properly, find a set of places to insert
 // brackets to fix the nesting, issue suitable diagnostics, and update the
 // token list to describe the fixes.
@@ -2050,32 +2115,29 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
     CARBON_DIAGNOSTIC(PossiblyMissingBracketHere, Note,
                       "possibly missing `{0}` here", Lex::TokenKind);
 
-    auto builder = token_emitter_.Build(
-        correction.diagnostic_token_index,
+    // The note names a position between two tokens, which only the source
+    // pointer emitter can express.
+    auto builder = emitter_.Build(
+        TokenStartPosition(buffer_, correction.diagnostic_token_index),
         correction.diagnostic_kind == BracketDiagnosticKind::UnmatchedOpening
             ? UnmatchedOpening
             : UnmatchedClosing);
 
-    if (correction.fix_action == BracketFixAction::InsertBefore) {
-      if (!correction.is_tied) {
-        builder.Note(correction.fix_token_index, PossiblyMissingBracketHere,
-                     correction.fix_token_kind);
-        insertion_ids[correction_index] = fixes.InsertBefore(
-            correction.fix_token_index, correction.fix_token_kind);
-      } else {
-        fixes.ReplaceWithError(correction.diagnostic_token_index);
-      }
-    } else if (correction.fix_action == BracketFixAction::InsertAfter) {
-      if (!correction.is_tied) {
-        builder.Note(correction.fix_token_index, PossiblyMissingBracketHere,
-                     correction.fix_token_kind);
-        insertion_ids[correction_index] = fixes.InsertAfter(
-            correction.fix_token_index, correction.fix_token_kind);
-      } else {
-        fixes.ReplaceWithError(correction.diagnostic_token_index);
-      }
-    } else if (correction.fix_action == BracketFixAction::ReplaceWithError) {
+    if (correction.fix_action == BracketFixAction::ReplaceWithError) {
       fixes.ReplaceWithError(correction.fix_token_index);
+    } else if (correction.is_tied) {
+      // The cheapest repairs disagree about where this bracket goes, so give up
+      // on the bracket rather than suggest one of them.
+      fixes.ReplaceWithError(correction.diagnostic_token_index);
+    } else {
+      builder.Note(BracketInsertionPosition(buffer_, correction),
+                   PossiblyMissingBracketHere, correction.fix_token_kind);
+      insertion_ids[correction_index] =
+          correction.fix_action == BracketFixAction::InsertBefore
+              ? fixes.InsertBefore(correction.fix_token_index,
+                                   correction.fix_token_kind)
+              : fixes.InsertAfter(correction.fix_token_index,
+                                  correction.fix_token_kind);
     }
 
     builder.Emit();

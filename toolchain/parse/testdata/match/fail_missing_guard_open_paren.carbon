@@ -15,7 +15,7 @@ fn f() -> i32 {
     // CHECK:STDERR:                          ^
     // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+4]]:21: note: possibly missing `(` here [PossiblyMissingBracketHere]
     // CHECK:STDERR:     case x: bool if false) => { return 1; }
-    // CHECK:STDERR:                     ^~~~~
+    // CHECK:STDERR:                     ^
     // CHECK:STDERR:
     case x: bool if false) => { return 1; }
   }

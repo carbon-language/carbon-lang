@@ -20,8 +20,8 @@ fn run(String program) {
 // CHECK:STDERR: fail_errors_streamed.carbon:[[@LINE-7]]:24: error: opening symbol without a corresponding closing symbol
 // CHECK:STDERR: fn run(String program) {
 // CHECK:STDERR:                        ^
-// CHECK:STDERR: fail_errors_streamed.carbon:[[@LINE+4]]:1: note: possibly missing `}` here
-// CHECK:STDERR: var x = 3a;
-// CHECK:STDERR: ^~~
+// CHECK:STDERR: fail_errors_streamed.carbon:[[@LINE-8]]:1: note: possibly missing `}` here
+// CHECK:STDERR:
+// CHECK:STDERR: ^
 // CHECK:STDERR:
 var x = 3a;
