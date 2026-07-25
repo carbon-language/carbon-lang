@@ -16,6 +16,8 @@
 #include "common/hashing.h"
 #include "common/map.h"
 #include "llvm/ADT/BitmaskEnum.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 
 namespace Carbon::Lex {
 namespace {
@@ -586,8 +588,8 @@ auto MatchesDeeperOpener(llvm::ArrayRef<OpenBracketInfo> stack,
     return false;
   }
   auto req = MatchingOpeningKind(closing_kind);
-  for (size_t s = 0; s + 1 < stack.size(); ++s) {
-    if (stack[s].kind == req) {
+  for (const OpenBracketKey& entry : stack.drop_back()) {
+    if (entry.kind == req) {
       return true;
     }
   }
@@ -1004,7 +1006,7 @@ static_assert(std::size(CloserRules) <= 64);
 
 // Maps each (context class, token kind) bucket to the bit-set of rules that can
 // apply in it, so a lookup tests only those rules, in table order.
-using RuleIndex = std::array<uint64_t, NumContextClasses * NumKinds>;
+using RuleIndex = std::array<std::array<uint64_t, NumKinds>, NumContextClasses>;
 
 template <size_t N>
 constexpr auto BuildRuleIndex(const BracketRule (&rules)[N]) -> RuleIndex {
@@ -1019,7 +1021,7 @@ constexpr auto BuildRuleIndex(const BracketRule (&rules)[N]) -> RuleIndex {
             KindSet::None) {
           continue;
         }
-        index[t * NumKinds + k] |= uint64_t{1} << r;
+        index[t][k] |= uint64_t{1} << r;
       }
     }
   }
@@ -1031,7 +1033,7 @@ constexpr auto BuildRuleIndex(const BracketRule (&rules)[N]) -> RuleIndex {
 // from lowest to highest visits the rules in table order.
 constexpr auto CandidateRules(const RuleIndex& index, int32_t ctx_class,
                               Kind kind) -> uint64_t {
-  return index[ctx_class * NumKinds + static_cast<int32_t>(kind)];
+  return index[ctx_class][static_cast<int32_t>(kind)];
 }
 
 // Returns the first rule that applies, for a first-match table, or null if
@@ -1495,9 +1497,9 @@ auto ReconstructCorrections(
       return false;
     }
     auto [lo, hi] = std::minmax(*a_item, *b_item);
-    for (int32_t p = lo; p < hi; ++p) {
-      if (items[p].Has(Cue::CollapsedBlock) ||
-          ToTokenKind(items[p].token.kind) != a.fix_token_kind) {
+    for (const Item& between : items.slice(lo, hi - lo)) {
+      if (between.Has(Cue::CollapsedBlock) ||
+          ToTokenKind(between.token.kind) != a.fix_token_kind) {
         return false;
       }
     }
@@ -1625,8 +1627,8 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
   llvm::SmallVector<int32_t> current_layer = {0};
   Map<uint64_t, int32_t> layer_map;
 
-  for (int32_t i = 0; i < static_cast<int32_t>(items.size()); ++i) {
-    const auto& item = items[i];
+  for (auto [item_index, item] : llvm::enumerate(items)) {
+    auto i = static_cast<int32_t>(item_index);
     auto kind = item.token.kind;
 
     // Step 1: Epsilon moves within layer `i` (insertions before token `i`).
@@ -1704,8 +1706,8 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
 
       // Phase 1b: Synthetic openers. Iterate only over the states present
       // after Phase 1a, without chaining synthetic openers onto each other.
-      size_t num_states_after_1a = current_layer.size();
-      for (size_t idx = 0; idx < num_states_after_1a; ++idx) {
+      // The bound is taken before the loop because it appends to the layer.
+      for (size_t idx : llvm::seq<size_t>(0, current_layer.size())) {
         int32_t node_idx = current_layer[idx];
         const SearchState current = Snapshot(arena[node_idx]);
         if (current.cost > min_goal_cost ||
@@ -1970,7 +1972,7 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
   llvm::SmallVector<int32_t> match_partner(num_tokens, -1);
   llvm::SmallVector<bool> is_clean_range(num_tokens, false);
 
-  for (int32_t i = 0; i < num_tokens; ++i) {
+  for (int32_t i : llvm::seq(0, num_tokens)) {
     auto kind = tokens[i].kind;
     if (IsOpeningBracket(kind)) {
       open_stack.push_back(i);
@@ -2013,7 +2015,7 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
   // `;`, `{`, and `}`), associated indentation, and header relationships.
   llvm::SmallVector<int32_t> seg_id(num_tokens, 0);
   llvm::SmallVector<int32_t> seg_first(num_tokens, 0);
-  for (int32_t i = 1; i < num_tokens; ++i) {
+  for (int32_t i : llvm::seq(1, num_tokens)) {
     auto prev_kind = tokens[i - 1].kind;
     bool new_seg = prev_kind == Kind::Semi ||
                    prev_kind == Kind::OpenCurlyBrace ||
@@ -2028,7 +2030,7 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
   llvm::SmallVector<int32_t> unmatched_open_squares;
   llvm::SmallVector<int32_t> unmatched_close_parens;
   llvm::SmallVector<int32_t> unmatched_close_squares;
-  for (int32_t i = 0; i < num_tokens; ++i) {
+  for (int32_t i : llvm::seq(0, num_tokens)) {
     if (match_partner[i] != -1) {
       continue;
     }
@@ -2055,7 +2057,7 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
   llvm::SmallVector<bool> follows_statement_header(num_tokens, false);
   llvm::SmallVector<bool> header_has_open_curly_brace(num_tokens, false);
 
-  for (int32_t i = 0; i < num_tokens; ++i) {
+  for (int32_t i : llvm::seq(0, num_tokens)) {
     is_first_on_line[i] = (i == 0 || tokens[i].line != tokens[i - 1].line);
     effective_header_indent[i] =
         ComputeAssociatedLineIndent(tokens, match_partner, i);
@@ -2076,7 +2078,7 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
 
   // 3. Mark clean subranges for safe collapsing (processed in reverse order
   // so inner ranges are evaluated before enclosing outer ranges).
-  for (int32_t i = num_tokens - 1; i >= 0; --i) {
+  for (int32_t i : llvm::reverse(llvm::seq(0, num_tokens))) {
     auto kind = tokens[i].kind;
     if (match_partner[i] == -1 || match_partner[i] <= i) {
       continue;
@@ -2101,7 +2103,7 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
       if (clean) {
         auto bad_kind = tokens[i].is_struct_brace ? Kind::Semi : Kind::Comma;
         int32_t depth = 0;
-        for (int32_t j = i + 1; j < close_idx; ++j) {
+        for (int32_t j : llvm::seq(i + 1, close_idx)) {
           if (IsOpeningBracket(tokens[j].kind)) {
             ++depth;
           } else if (IsClosingBracket(tokens[j].kind)) {
@@ -2144,7 +2146,7 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
     // regions that are already unbalanced.
 
     if (clean) {
-      for (int32_t j = i + 1; j < close_idx; ++j) {
+      for (int32_t j : llvm::seq(i + 1, close_idx)) {
         if (match_partner[j] != -1 &&
             (match_partner[j] < i || match_partner[j] > close_idx)) {
           clean = false;
@@ -2199,7 +2201,7 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
     if (is_clean_range[i] && match_partner[i] != -1) {
       int32_t close_idx = match_partner[i];
       bool has_scope = false;
-      for (int32_t j = i; j <= close_idx; ++j) {
+      for (int32_t j : llvm::seq(i, close_idx + 1)) {
         if (tokens[j].kind == Kind::OpenCurlyBrace &&
             !tokens[j].is_struct_brace) {
           has_scope = true;
@@ -2224,8 +2226,8 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
   llvm::SmallVector<int32_t> region_boundaries;
   region_boundaries.push_back(0);
 
-  for (int32_t i = 0; i < static_cast<int32_t>(items.size()); ++i) {
-    const auto& item = items[i];
+  for (auto [item_index, item] : llvm::enumerate(items)) {
+    auto i = static_cast<int32_t>(item_index);
     // Note: line_indent is a 1-based column number, so top-level tokens have
     // line_indent 1.
     if (i > 0 && !item.Has(Cue::CollapsedBlock) &&
@@ -2244,9 +2246,9 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
     region_boundaries.push_back(static_cast<int32_t>(items.size()));
   }
 
-  for (size_t b = 0; b + 1 < region_boundaries.size(); ++b) {
-    int32_t start = region_boundaries[b];
-    int32_t end = region_boundaries[b + 1];
+  // Each region runs between consecutive boundaries.
+  for (auto [start, end] :
+       llvm::zip(region_boundaries, llvm::drop_begin(region_boundaries))) {
     if (start >= end) {
       continue;
     }
