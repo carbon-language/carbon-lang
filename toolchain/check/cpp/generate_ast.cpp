@@ -739,9 +739,8 @@ auto InitializeCppDomain(
 
   // Ensure any diagnostics emitted in this function are flushed before we
   // return.
-  auto on_exit = llvm::scope_exit([&]() {
-    FlushDiagnosticConsumer(*diags->getClient());
-  });
+  auto on_exit =
+      llvm::scope_exit([&]() { FlushDiagnosticConsumer(*diags->getClient()); });
 
   // Extract the input from the frontend invocation and make sure it makes
   // sense.
