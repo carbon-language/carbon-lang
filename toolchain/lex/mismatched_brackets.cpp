@@ -1040,15 +1040,15 @@ constexpr BracketRule CloserRules[] = {
     Rule(Top::Struct).Cost(40, "Close_StructBaseline"),
 
     // Scope `{`.
-    Rule(Top::Scope)
-        .When(Cue::FirstOnLine, Cue::DedentToHeader)
-        .Cost(6, "Close_ScopeAtDedent"),
-    // A first-on-line `else` normally directly follows a `}` on the same line,
-    // so one was likely deleted before it. Priced below Close_ScopeAtDedent so
-    // this wins over closing the else block early.
+    // A first-on-line `else` must have been preceded by the `}` closing the
+    // branch before it. Ordered ahead of Close_ScopeAtDedent, which would
+    // otherwise match first and charge more for the same insertion.
     Rule(Top::Scope)
         .When(Cue::ElseKeyword, Cue::FirstOnLine)
         .Cost(4, "Close_ScopeBeforeElse"),
+    Rule(Top::Scope)
+        .When(Cue::FirstOnLine, Cue::DedentToHeader)
+        .Cost(6, "Close_ScopeAtDedent"),
     Rule(Top::Scope).When(Cue::Cascade).Cost(6, "Close_ScopeCascade"),
     Rule(Top::Scope, Kind::FileEnd)
         .Cost(CostCloseAtEnd, "Close_ScopeAtFileEnd"),
