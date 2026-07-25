@@ -25,6 +25,21 @@ fn F() {
   bar();
 }
 
+// --- fail_missing_brace_before_else.carbon
+
+// A first-on-line `else` should have had a `}` before it. Only one is inserted:
+// the `else` block's own `}` still lines up, because the block's header
+// indentation is taken from the `if` it continues rather than from the `else`'s
+// own column, which is wherever the author left it once the `}` went missing.
+
+fn F() {
+  if (C) {
+    G();
+  else {
+    H();
+  }
+}
+
 // --- fail_missing_brace_in_class.carbon
 
 // As above for a class body, whose `}` is missing entirely rather than
@@ -51,6 +66,13 @@ fn F() {
 // CHECK:STDERR:          ^
 // CHECK:STDERR: fail_dedent_inside_scope.carbon:9:3: note: possibly missing `}` here [PossiblyMissingBracketHere]
 // CHECK:STDERR:   bar();
+// CHECK:STDERR:   ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_missing_brace_before_else.carbon:8:10: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+// CHECK:STDERR:   if (C) {
+// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_missing_brace_before_else.carbon:10:3: note: possibly missing `}` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:   else {
 // CHECK:STDERR:   ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_missing_brace_in_class.carbon:5:9: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
@@ -89,6 +111,31 @@ fn F() {
 // CHECK:STDOUT:   - { index: 18, kind:      "CloseParen", line: {{ *}}9, column:  7, indent: 3, spelling: ")", opening_token: 17 }
 // CHECK:STDOUT:   - { index: 19, kind:            "Semi", line: {{ *}}9, column:  8, indent: 3, spelling: ";" }
 // CHECK:STDOUT:   - { index: 20, kind: "CloseCurlyBrace", line: {{ *}}10, column:  1, indent: 1, spelling: "}", opening_token: 5, has_leading_space: true }
+// CHECK:STDOUT: - filename: fail_missing_brace_before_else.carbon
+// CHECK:STDOUT:   tokens:
+// CHECK:STDOUT:   - { index:  1, kind:              "Fn", line: {{ *}}7, column:  1, indent: 1, spelling: "fn", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  2, kind:      "Identifier", line: {{ *}}7, column:  4, indent: 1, spelling: "F", identifier: 0, has_leading_space: true }
+// CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}7, column:  5, indent: 1, spelling: "(", closing_token: 4 }
+// CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}7, column:  6, indent: 1, spelling: ")", opening_token: 3 }
+// CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}7, column:  8, indent: 1, spelling: "{", closing_token: 23, has_leading_space: true }
+// CHECK:STDOUT:   - { index:  6, kind:              "If", line: {{ *}}8, column:  3, indent: 3, spelling: "if", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  7, kind:       "OpenParen", line: {{ *}}8, column:  6, indent: 3, spelling: "(", closing_token: 9, has_leading_space: true }
+// CHECK:STDOUT:   - { index:  8, kind:      "Identifier", line: {{ *}}8, column:  7, indent: 3, spelling: "C", identifier: 1 }
+// CHECK:STDOUT:   - { index:  9, kind:      "CloseParen", line: {{ *}}8, column:  8, indent: 3, spelling: ")", opening_token: 7 }
+// CHECK:STDOUT:   - { index: 10, kind:  "OpenCurlyBrace", line: {{ *}}8, column: 10, indent: 3, spelling: "{", closing_token: 15, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 11, kind:      "Identifier", line: {{ *}}9, column:  5, indent: 5, spelling: "G", identifier: 2, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 12, kind:       "OpenParen", line: {{ *}}9, column:  6, indent: 5, spelling: "(", closing_token: 13 }
+// CHECK:STDOUT:   - { index: 13, kind:      "CloseParen", line: {{ *}}9, column:  7, indent: 5, spelling: ")", opening_token: 12 }
+// CHECK:STDOUT:   - { index: 14, kind:            "Semi", line: {{ *}}9, column:  8, indent: 5, spelling: ";" }
+// CHECK:STDOUT:   - { index: 15, kind: "CloseCurlyBrace", line: {{ *}}9, column:  9, indent: 5, spelling: "}", opening_token: 10, has_leading_space: true, recovery: true }
+// CHECK:STDOUT:   - { index: 16, kind:            "Else", line: {{ *}}10, column:  3, indent: 3, spelling: "else" }
+// CHECK:STDOUT:   - { index: 17, kind:  "OpenCurlyBrace", line: {{ *}}10, column:  8, indent: 3, spelling: "{", closing_token: 22, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 18, kind:      "Identifier", line: {{ *}}11, column:  5, indent: 5, spelling: "H", identifier: 3, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 19, kind:       "OpenParen", line: {{ *}}11, column:  6, indent: 5, spelling: "(", closing_token: 20 }
+// CHECK:STDOUT:   - { index: 20, kind:      "CloseParen", line: {{ *}}11, column:  7, indent: 5, spelling: ")", opening_token: 19 }
+// CHECK:STDOUT:   - { index: 21, kind:            "Semi", line: {{ *}}11, column:  8, indent: 5, spelling: ";" }
+// CHECK:STDOUT:   - { index: 22, kind: "CloseCurlyBrace", line: {{ *}}12, column:  3, indent: 3, spelling: "}", opening_token: 17, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 23, kind: "CloseCurlyBrace", line: {{ *}}13, column:  1, indent: 1, spelling: "}", opening_token: 5, has_leading_space: true }
 // CHECK:STDOUT: - filename: fail_missing_brace_in_class.carbon
 // CHECK:STDOUT:   tokens:
 // CHECK:STDOUT:   - { index:  1, kind:           "Class", line: {{ *}}5, column:  1, indent: 1, spelling: "class", has_leading_space: true }

@@ -276,6 +276,27 @@ struct OpenBracketInfo : OpenBracketKey {
 
 }  // namespace
 
+// The `{` opening the branch that the first-on-line `else` at `else_index`
+// continues. Such an `else` should have been preceded by the `}` closing that
+// branch, so with the `}` missing the `else` is still inside it: the brace is
+// the innermost one that nothing has closed yet. Returns -1 if there is no
+// enclosing brace.
+static auto FindBranchBrace(llvm::ArrayRef<MismatchedBracketToken> tokens,
+                            int32_t else_index) -> int32_t {
+  int32_t depth = 0;
+  for (int32_t j : llvm::reverse(llvm::seq(0, else_index))) {
+    if (tokens[j].kind == Kind::CloseCurlyBrace) {
+      ++depth;
+    } else if (tokens[j].kind == Kind::OpenCurlyBrace) {
+      if (depth == 0) {
+        return j;
+      }
+      --depth;
+    }
+  }
+  return -1;
+}
+
 // Computes the associated line indentation for a token by scanning backwards,
 // skipping matched parens/brackets, looking for a statement introducer.
 static auto GetOuterStatementIntroducerIndent(
@@ -283,6 +304,19 @@ static auto GetOuterStatementIntroducerIndent(
     llvm::ArrayRef<int32_t> match_partner, int32_t j) -> int32_t {
   int32_t result_indent = tokens[j].line_indent;
   while (j > 0) {
+    // An `else` continues the statement its `if` introduced, and the `}`
+    // closing its block lines up with that `if`, so keep walking out from the
+    // brace of the branch before it. A first-on-line `else`'s own column says
+    // nothing about where the statement starts: the `}` that should precede it
+    // is missing, so the `else` sits wherever the author left it.
+    if (tokens[j].is_else_keyword && tokens[j].line != tokens[j - 1].line) {
+      int32_t brace = FindBranchBrace(tokens, j);
+      if (brace > 0) {
+        j = brace;
+        result_indent = tokens[j].line_indent;
+        continue;
+      }
+    }
     int32_t p = j - 1;
     if ((tokens[p].kind == Kind::CloseParen ||
          tokens[p].kind == Kind::CloseSquareBracket) &&
@@ -304,13 +338,6 @@ static auto GetOuterStatementIntroducerIndent(
       }
     }
     break;
-  }
-  // A first-on-line `else` normally directly follows a deleted `}` whose
-  // indentation the statement really starts at: `} else {` puts `else` two
-  // columns past the brace.
-  if (tokens[j].is_else_keyword &&
-      (j == 0 || tokens[j].line != tokens[j - 1].line)) {
-    result_indent = std::max(1, result_indent - 2);
   }
   return result_indent;
 }
