@@ -234,8 +234,7 @@ auto ComputeFollowsStatementHeader(
   bool is_first_on_line =
       tokens[token_index].line != tokens[token_index - 1].line;
   auto prev_kind = tokens[token_index - 1].kind;
-  if (!is_first_on_line &&
-      curr_kind != BracketTokenKind::StatementIntroducer &&
+  if (!is_first_on_line && curr_kind != BracketTokenKind::StatementIntroducer &&
       prev_kind != BracketTokenKind::CloseParen) {
     return false;
   }
@@ -352,8 +351,8 @@ auto Snapshot(const BeamNode& node) -> SearchState {
 // A correction that replaces a bracket token with an error token (the "give
 // up on this bracket" repair).
 auto ReplaceWithError(const MismatchedBracketToken& token,
-                      BracketDiagnosticKind diagnostic_kind,
-                      const char* origin) -> BracketCorrection {
+                      BracketDiagnosticKind diagnostic_kind, const char* origin)
+    -> BracketCorrection {
   return BracketCorrection{
       .diagnostic_kind = diagnostic_kind,
       .diagnostic_token_index = token.token_index,
@@ -419,21 +418,21 @@ auto SolveNaive(llvm::ArrayRef<Item> items,
   }
 
   for (const auto& open : llvm::reverse(open_stack)) {
-    corrections.push_back(ReplaceWithError(
-        open.token, BracketDiagnosticKind::UnmatchedOpening,
-        "Naive_UnclosedAtEnd"));
+    corrections.push_back(
+        ReplaceWithError(open.token, BracketDiagnosticKind::UnmatchedOpening,
+                         "Naive_UnclosedAtEnd"));
   }
 }
 
 auto HashStack(llvm::ArrayRef<OpenBracketInfo> stack) -> uint64_t {
   uint64_t h = stack.size();
   for (const auto& info : stack) {
-    uint64_t k = (static_cast<uint64_t>(info.token_index.index) << 32) ^
-                 (static_cast<uint64_t>(info.insertion_token_index.index)
-                  << 8) ^
-                 static_cast<uint64_t>(info.kind) ^
-                 (static_cast<uint64_t>(info.is_struct_brace) << 7) ^
-                 (static_cast<uint64_t>(info.line_indent) << 16);
+    uint64_t k =
+        (static_cast<uint64_t>(info.token_index.index) << 32) ^
+        (static_cast<uint64_t>(info.insertion_token_index.index) << 8) ^
+        static_cast<uint64_t>(info.kind) ^
+        (static_cast<uint64_t>(info.is_struct_brace) << 7) ^
+        (static_cast<uint64_t>(info.line_indent) << 16);
     h ^= k + 0x9e3779b9 + (h << 6) + (h >> 2);
   }
   return h;
@@ -692,12 +691,11 @@ constexpr uint32_t Opener = OpenParen | OpenSquare | OpenCurly;
 constexpr uint32_t NonOpener = Any & ~Opener;
 // The kinds a dedent penalty can apply to: a closer is expected to dedent,
 // and `FileEnd` isn't content.
-constexpr uint32_t Dedentable =
-    Any & ~(CloseGroup | CloseCurly) & ~FileEnd;
+constexpr uint32_t Dedentable = Any & ~(CloseGroup | CloseCurly) & ~FileEnd;
 }  // namespace Kind
 
 // A rule's `cost` when the move should not be considered at all.
-constexpr int32_t Decline = -1;
+constexpr int32_t DeclineCost = -1;
 
 // A rule in a bracket-insertion table. The rule applies when the context class
 // is in `ctx`, the current token's kind is in `kinds`, and all four cue
@@ -722,7 +720,46 @@ struct BracketRule {
   int32_t cost;
   // Name of the rule, reported for diagnostics and evaluation.
   const char* origin = "";
+
+  // Builders, so a rule reads as one sentence. Each returns an updated copy,
+  // and `Cost` or `Decline` finishes the rule.
+  constexpr auto When(uint64_t cues) const -> BracketRule {
+    auto result = *this;
+    result.when = cues;
+    return result;
+  }
+  constexpr auto Unless(uint64_t cues) const -> BracketRule {
+    auto result = *this;
+    result.unless = cues;
+    return result;
+  }
+  constexpr auto NotAll(uint64_t cues) const -> BracketRule {
+    auto result = *this;
+    result.not_all = cues;
+    return result;
+  }
+  constexpr auto AnyOf(uint64_t cues) const -> BracketRule {
+    auto result = *this;
+    result.any_of = cues;
+    return result;
+  }
+  constexpr auto Cost(int32_t cost, const char* origin) const -> BracketRule {
+    auto result = *this;
+    result.cost = cost;
+    result.origin = origin;
+    return result;
+  }
+  constexpr auto Decline() const -> BracketRule {
+    auto result = *this;
+    result.cost = DeclineCost;
+    return result;
+  }
 };
+
+// Starts a rule that applies to context classes `ctx` and token kinds `kinds`.
+constexpr auto Rule(uint8_t ctx, uint32_t kinds = Kind::Any) -> BracketRule {
+  return BracketRule{.ctx = ctx, .kinds = kinds, .cost = DeclineCost};
+}
 
 // Whether `rule`'s cue conditions hold for the cue bit-set `cues`.
 constexpr auto Matches(const BracketRule& rule, uint64_t cues) -> bool {
@@ -742,30 +779,19 @@ constexpr BracketRule CloserRules[] = {
     // binary connector like `as`/`->`/`==`, which needs a left operand
     // (`f() as T` becoming `f( as T`); or a spaced `.`, which as group content
     // would be written unspaced (`f(.a = 1)`).
-    {.ctx = Top::ParenLike,
-     .kinds = Kind::Comma,
-     .when = Cue::AfterOpenTop,
-     .cost = 8,
-     .origin = "Close_EmptyGroup"},
-    {.ctx = Top::ParenLike,
-     .when = Cue::AfterOpenTop,
-     .any_of = Cue::StructuralOp | Cue::ComparisonOp,
-     .cost = 8,
-     .origin = "Close_EmptyGroup"},
-    {.ctx = Top::ParenLike,
-     .kinds = Kind::Period,
-     .when = Cue::AfterOpenTop | Cue::LeadingSpace,
-     .cost = 8,
-     .origin = "Close_EmptyGroup"},
+    Rule(Top::ParenLike, Kind::Comma)
+        .When(Cue::AfterOpenTop)
+        .Cost(8, "Close_EmptyGroup"),
+    Rule(Top::ParenLike)
+        .When(Cue::AfterOpenTop)
+        .AnyOf(Cue::StructuralOp | Cue::ComparisonOp)
+        .Cost(8, "Close_EmptyGroup"),
+    Rule(Top::ParenLike, Kind::Period)
+        .When(Cue::AfterOpenTop | Cue::LeadingSpace)
+        .Cost(8, "Close_EmptyGroup"),
     // A `;` can't appear inside parens or square brackets at all.
-    {.ctx = Top::ParenLike,
-     .kinds = Kind::Semi,
-     .cost = 6,
-     .origin = "Close_ParenBeforeSemi"},
-    {.ctx = Top::ParenLike,
-     .when = Cue::Cascade,
-     .cost = 6,
-     .origin = "Close_ParenCascade"},
+    Rule(Top::ParenLike, Kind::Semi).Cost(6, "Close_ParenBeforeSemi"),
+    Rule(Top::ParenLike).When(Cue::Cascade).Cost(6, "Close_ParenCascade"),
     // A `{` starting a block means the paren should have closed: `if (c) {`,
     // `while (c) {`. A struct-literal `{...}` can legitimately sit inside a
     // *call* paren (`f({.x = 1})`), but not inside a keyword or grouping paren
@@ -773,160 +799,119 @@ constexpr BracketRule CloserRules[] = {
     // is not a cue for `[`: a `]` is essentially never immediately followed by
     // `{` (only in `fn [captures] {...}`, which is unimplemented), so a `[`
     // should close at an earlier cue, or not here at all.
-    {.ctx = Top::Paren,
-     .kinds = Kind::OpenCurly,
-     .not_all = Cue::StructBrace | Cue::CallParenTop,
-     .cost = 8,
-     .origin = "Close_ParenBeforeBrace"},
+    Rule(Top::Paren, Kind::OpenCurly)
+        .NotAll(Cue::StructBrace | Cue::CallParenTop)
+        .Cost(8, "Close_ParenBeforeBrace"),
     // `=` can directly follow both `)` and `]`, but `->` and `as` only
     // plausibly follow `)`. An unspaced structural operator is not a cue:
     // formatted code spaces these operators, and an unspaced `->` is a
     // pointer member access (`p->x`).
-    {.ctx = Top::Paren,
-     .when = Cue::StructuralOp | Cue::LeadingSpace,
-     .cost = 8,
-     .origin = "Close_ParenBeforeStructuralOp"},
-    {.ctx = Top::Square,
-     .when = Cue::StructuralOp | Cue::LeadingSpace | Cue::AssignmentOp,
-     .cost = 8,
-     .origin = "Close_ParenBeforeStructuralOp"},
+    Rule(Top::Paren)
+        .When(Cue::StructuralOp | Cue::LeadingSpace)
+        .Cost(8, "Close_ParenBeforeStructuralOp"),
+    Rule(Top::Square)
+        .When(Cue::StructuralOp | Cue::LeadingSpace | Cue::AssignmentOp)
+        .Cost(8, "Close_ParenBeforeStructuralOp"),
     // A leaf directly following a value-ending token is illegal, and a `]`
     // between them fixes the adjacency (unlike `)`, `]` can be directly
     // followed by a leaf, as in `impl forall [...] T as ...`).
-    {.ctx = Top::Square,
-     .kinds = Kind::Leaf,
-     .when = Cue::PrevValueEnding,
-     .cost = 4,
-     .origin = "Close_SquareAtLeafAdjacency"},
+    Rule(Top::Square, Kind::Leaf)
+        .When(Cue::PrevValueEnding)
+        .Cost(4, "Close_SquareAtLeafAdjacency"),
     // A `.` with whitespace before it mid-line suggests a closer was deleted
     // right before it: member access is written without spaces, `x.y`.
-    {.ctx = Top::ParenLike,
-     .kinds = Kind::Period,
-     .when = Cue::LeadingSpace | Cue::PrevValueLike,
-     .unless = Cue::FirstOnLine,
-     .cost = 6,
-     .origin = "Close_ParenBeforeSpacedPeriod"},
+    Rule(Top::ParenLike, Kind::Period)
+        .When(Cue::LeadingSpace | Cue::PrevValueLike)
+        .Unless(Cue::FirstOnLine)
+        .Cost(6, "Close_ParenBeforeSpacedPeriod"),
     // Similarly, a `(` or `[` with whitespace before it directly following a
     // value-ending token: calls and indexing are written without spaces.
-    {.ctx = Top::ParenLike,
-     .kinds = Kind::OpenGroup,
-     .when = Cue::LeadingSpace | Cue::PrevValueLike,
-     .unless = Cue::FirstOnLine,
-     .cost = 6,
-     .origin = "Close_ParenBeforeSpacedOpen"},
+    Rule(Top::ParenLike, Kind::OpenGroup)
+        .When(Cue::LeadingSpace | Cue::PrevValueLike)
+        .Unless(Cue::FirstOnLine)
+        .Cost(6, "Close_ParenBeforeSpacedOpen"),
     // A comparison or logical operator is unlikely inside square brackets or
     // call/index argument lists (but common in `if (...)` etc.).
-    {.ctx = Top::Square,
-     .when = Cue::ComparisonOp,
-     .cost = 8,
-     .origin = "Close_ParenBeforeComparison"},
-    {.ctx = Top::Paren,
-     .when = Cue::ComparisonOp | Cue::CallParenTop,
-     .cost = 8,
-     .origin = "Close_ParenBeforeComparison"},
+    Rule(Top::Square)
+        .When(Cue::ComparisonOp)
+        .Cost(8, "Close_ParenBeforeComparison"),
+    Rule(Top::Paren)
+        .When(Cue::ComparisonOp | Cue::CallParenTop)
+        .Cost(8, "Close_ParenBeforeComparison"),
     // A `,` with whitespace before it: formatted code has no space before a
     // comma, so a closer was likely deleted in the gap.
-    {.ctx = Top::ParenLike,
-     .kinds = Kind::Comma,
-     .when = Cue::LeadingSpace | Cue::PrevValueLike,
-     .unless = Cue::FirstOnLine,
-     .cost = 6,
-     .origin = "Close_BeforeSpacedComma"},
+    Rule(Top::ParenLike, Kind::Comma)
+        .When(Cue::LeadingSpace | Cue::PrevValueLike)
+        .Unless(Cue::FirstOnLine)
+        .Cost(6, "Close_BeforeSpacedComma"),
     // Likewise a `)` or `]` with whitespace before it: formatted code has no
     // space before closers either.
-    {.ctx = Top::ParenLike,
-     .kinds = Kind::CloseGroup,
-     .when = Cue::LeadingSpace | Cue::PrevValueLike,
-     .unless = Cue::FirstOnLine,
-     .cost = 6,
-     .origin = "Close_BeforeSpacedCloser"},
-    {.ctx = Top::ParenLike,
-     .kinds = Kind::FileEnd,
-     .cost = CostCloseAtEnd,
-     .origin = "Close_ParenAtFileEnd"},
+    Rule(Top::ParenLike, Kind::CloseGroup)
+        .When(Cue::LeadingSpace | Cue::PrevValueLike)
+        .Unless(Cue::FirstOnLine)
+        .Cost(6, "Close_BeforeSpacedCloser"),
+    Rule(Top::ParenLike, Kind::FileEnd)
+        .Cost(CostCloseAtEnd, "Close_ParenAtFileEnd"),
     // A wide whitespace gap mid-line suggests a deleted token in the gap.
-    {.ctx = Top::ParenLike,
-     .when = Cue::WideGap,
-     .unless = Cue::FirstOnLine,
-     .cost = CostCloseAtWideGap,
-     .origin = "Close_ParenAtWideGap"},
+    Rule(Top::ParenLike)
+        .When(Cue::WideGap)
+        .Unless(Cue::FirstOnLine)
+        .Cost(CostCloseAtWideGap, "Close_ParenAtWideGap"),
     // A `[` group rarely spans lines except in wrapped declaration headers
     // (`impl forall [...]` etc.), where the line break follows the `]`.
-    {.ctx = Top::Square,
-     .when = Cue::FirstOnLine | Cue::NewLineFromTop,
-     .cost = 10,
-     .origin = "Close_SquareAtContinuation"},
+    Rule(Top::Square)
+        .When(Cue::FirstOnLine | Cue::NewLineFromTop)
+        .Cost(10, "Close_SquareAtContinuation"),
     // A block `{` can't be content of a header/grouping `[` (only an index
     // `arr[...]` could hold a lambda block, but a `[` after a keyword can't):
     // the `]` must close before it. A last-resort bound, below the precise
     // cues above, that stops the `[` from swallowing the block. Priced above
     // the precise cues (so they win) but below closing at the region end, so
     // an unclosed group can't swallow a whole block.
-    {.ctx = Top::Square,
-     .kinds = Kind::OpenCurly,
-     .unless = Cue::StructBrace | Cue::CallParenTop,
-     .cost = 14,
-     .origin = "Close_SquareBeforeBlock"},
+    Rule(Top::Square, Kind::OpenCurly)
+        .Unless(Cue::StructBrace | Cue::CallParenTop)
+        .Cost(14, "Close_SquareBeforeBlock"),
     // No positive cue that a `(`/`[` closes here. Closing before a bare
     // dedent, statement introducer, or arbitrary token was never a correct
     // guess in practice (it just closes too early), so decline: the search
     // will close at a real cue, at the region end, or, failing both, replace
     // the unmatched opener with an error token.
-    {.ctx = Top::ParenLike, .cost = Decline},
+    Rule(Top::ParenLike).Decline(),
 
     // Struct `{`.
-    {.ctx = Top::Struct,
-     .kinds = Kind::Semi,
-     .cost = 6,
-     .origin = "Close_StructBeforeSemi"},
-    {.ctx = Top::Struct,
-     .when = Cue::Cascade,
-     .cost = 6,
-     .origin = "Close_StructCascade"},
+    Rule(Top::Struct, Kind::Semi).Cost(6, "Close_StructBeforeSemi"),
+    Rule(Top::Struct).When(Cue::Cascade).Cost(6, "Close_StructCascade"),
     // A block `{` can't be content of a struct literal/type `{...}` (a struct
     // field is `.name = value`, and a bare `{` isn't a value here): the struct
     // must close before it, as in `-> {.x: i32} { body }`.
-    {.ctx = Top::Struct,
-     .kinds = Kind::OpenCurly,
-     .unless = Cue::StructBrace,
-     .cost = 14,
-     .origin = "Close_StructBeforeBlock"},
-    {.ctx = Top::Struct,
-     .when = Cue::WideGap,
-     .unless = Cue::FirstOnLine,
-     .cost = CostCloseAtWideGap,
-     .origin = "Close_StructAtWideGap"},
-    {.ctx = Top::Struct,
-     .kinds = Kind::FileEnd,
-     .cost = CostCloseAtEnd,
-     .origin = "Close_StructAtFileEnd"},
-    {.ctx = Top::Struct,
-     .when = Cue::FirstOnLine | Cue::DedentToHeader,
-     .cost = 12,
-     .origin = "Close_StructAtDedent"},
-    {.ctx = Top::Struct, .cost = 40, .origin = "Close_StructBaseline"},
+    Rule(Top::Struct, Kind::OpenCurly)
+        .Unless(Cue::StructBrace)
+        .Cost(14, "Close_StructBeforeBlock"),
+    Rule(Top::Struct)
+        .When(Cue::WideGap)
+        .Unless(Cue::FirstOnLine)
+        .Cost(CostCloseAtWideGap, "Close_StructAtWideGap"),
+    Rule(Top::Struct, Kind::FileEnd)
+        .Cost(CostCloseAtEnd, "Close_StructAtFileEnd"),
+    Rule(Top::Struct)
+        .When(Cue::FirstOnLine | Cue::DedentToHeader)
+        .Cost(12, "Close_StructAtDedent"),
+    Rule(Top::Struct).Cost(40, "Close_StructBaseline"),
 
     // Scope `{`.
-    {.ctx = Top::Scope,
-     .when = Cue::FirstOnLine | Cue::DedentToHeader,
-     .cost = 6,
-     .origin = "Close_ScopeAtDedent"},
+    Rule(Top::Scope)
+        .When(Cue::FirstOnLine | Cue::DedentToHeader)
+        .Cost(6, "Close_ScopeAtDedent"),
     // A first-on-line `else` normally directly follows a `}` on the same line,
     // so one was likely deleted before it. Priced below Close_ScopeAtDedent so
     // this wins over closing the else block early.
-    {.ctx = Top::Scope,
-     .when = Cue::ElseKeyword | Cue::FirstOnLine,
-     .cost = 4,
-     .origin = "Close_ScopeBeforeElse"},
-    {.ctx = Top::Scope,
-     .when = Cue::Cascade,
-     .cost = 6,
-     .origin = "Close_ScopeCascade"},
-    {.ctx = Top::Scope,
-     .kinds = Kind::FileEnd,
-     .cost = CostCloseAtEnd,
-     .origin = "Close_ScopeAtFileEnd"},
-    {.ctx = Top::Scope, .cost = 45, .origin = "Close_ScopeBaseline"},
+    Rule(Top::Scope)
+        .When(Cue::ElseKeyword | Cue::FirstOnLine)
+        .Cost(4, "Close_ScopeBeforeElse"),
+    Rule(Top::Scope).When(Cue::Cascade).Cost(6, "Close_ScopeCascade"),
+    Rule(Top::Scope, Kind::FileEnd)
+        .Cost(CostCloseAtEnd, "Close_ScopeAtFileEnd"),
+    Rule(Top::Scope).Cost(45, "Close_ScopeBaseline"),
 };
 
 // A bucket index: rules are identified by a bit in a `uint64_t`.
@@ -1016,8 +1001,7 @@ auto ComputeTopCues(const OpenBracketInfo& top, const Item& item,
   const auto& token = item.token;
   return CueIf(top.is_call_paren, Cue::CallParenTop) |
          CueIf(MatchesDeeperOpener(stack, token.kind), Cue::Cascade) |
-         CueIf(top.token_pos == item.token_start_index - 1,
-               Cue::AfterOpenTop) |
+         CueIf(top.token_pos == item.token_start_index - 1, Cue::AfterOpenTop) |
          CueIf(token.line_indent <= top.effective_header_indent,
                Cue::DedentToHeader) |
          CueIf(token.line != top.line, Cue::NewLineFromTop);
@@ -1030,14 +1014,13 @@ auto ClassifyCloserInsertion(const OpenBracketInfo& top, const Item& item,
                              llvm::ArrayRef<OpenBracketInfo> stack,
                              const char*& origin) -> std::optional<int32_t> {
   uint64_t cues = item.cues | ComputeTopCues(top, item, stack);
-  uint64_t candidates =
-      CloserRuleIndex[TopClassOf(top) * NumBracketTokenKinds +
-                      static_cast<int32_t>(item.token.kind)];
+  uint64_t candidates = CloserRuleIndex[TopClassOf(top) * NumBracketTokenKinds +
+                                        static_cast<int32_t>(item.token.kind)];
   while (candidates != 0) {
     const auto& rule = CloserRules[std::countr_zero(candidates)];
     candidates &= candidates - 1;
     if (Matches(rule, cues)) {
-      if (rule.cost == Decline) {
+      if (rule.cost == DeclineCost) {
         break;
       }
       origin = rule.origin;
@@ -1047,134 +1030,107 @@ auto ClassifyCloserInsertion(const OpenBracketInfo& top, const Item& item,
   return std::nullopt;
 }
 
-// Where to insert a synthetic opening bracket, and what that costs. Unlike
-// the closer table, every rule here matches, ending in a baseline: an opener
-// can always be synthesized, it's just expensive without a cue.
+// Where to insert a synthetic opening bracket, and what that costs. A `(` or
+// `[` can always be synthesized, just expensively without a cue, so those end
+// in a baseline; a brace is only proposed where a cue supports it.
 constexpr BracketRule OpenerRules[] = {
     // `if`/`while`/`for`/`match` (statement introducers) require a following
     // `(`; `forall` (an Other token) requires a following `[`.
-    {.ctx = Ins::Paren,
-     .kinds = Kind::NonOpener,
-     .when = Cue::PrevKeywordWantsParen,
-     .cost = 3,
-     .origin = "Open_AfterParenKeyword"},
-    {.ctx = Ins::Square,
-     .kinds = Kind::NonOpener,
-     .when = Cue::PrevKeywordWantsSquare,
-     .cost = 3,
-     .origin = "Open_AfterParenKeyword"},
+    Rule(Ins::Paren, Kind::NonOpener)
+        .When(Cue::PrevKeywordWantsParen)
+        .Cost(3, "Open_AfterParenKeyword"),
+    Rule(Ins::Square, Kind::NonOpener)
+        .When(Cue::PrevKeywordWantsSquare)
+        .Cost(3, "Open_AfterParenKeyword"),
     // A leaf or binding modifier directly following a value-ending token is
     // illegal; an opener here fixes the adjacency.
-    {.ctx = Ins::ParenLike,
-     .kinds = Kind::Leaf,
-     .when = Cue::PrevValueEnding,
-     .cost = 3,
-     .origin = "Open_AtLeafAdjacency"},
-    {.ctx = Ins::ParenLike,
-     .when = Cue::PrevValueEnding | Cue::ModifierKeyword,
-     .cost = 3,
-     .origin = "Open_AtLeafAdjacency"},
+    Rule(Ins::ParenLike, Kind::Leaf)
+        .When(Cue::PrevValueEnding)
+        .Cost(3, "Open_AtLeafAdjacency"),
+    Rule(Ins::ParenLike)
+        .When(Cue::PrevValueEnding | Cue::ModifierKeyword)
+        .Cost(3, "Open_AtLeafAdjacency"),
     // A `.` with whitespace before it directly following a value-ending
     // token: likely a designator argument that lost its `(`, as in
     // `ImplicitAs(.Self)`.
-    {.ctx = Ins::Paren,
-     .kinds = Kind::Period,
-     .when = Cue::LeadingSpace | Cue::PrevValueEnding,
-     .unless = Cue::FirstOnLine,
-     .cost = CostCloseParenBeforeSpacedPeriod,
-     .origin = "Open_BeforeSpacedPeriod"},
+    Rule(Ins::Paren, Kind::Period)
+        .When(Cue::LeadingSpace | Cue::PrevValueEnding)
+        .Unless(Cue::FirstOnLine)
+        .Cost(CostCloseParenBeforeSpacedPeriod, "Open_BeforeSpacedPeriod"),
     // A mid-line leaf with whitespace before it directly following an
     // unspaced `.`: member access is written without spaces, `x.y`, so a
     // bracket was likely deleted in the gap.
-    {.ctx = Ins::ParenLike,
-     .kinds = Kind::Leaf,
-     .when = Cue::LeadingSpace | Cue::PrevIsPeriod,
-     .unless = Cue::FirstOnLine | Cue::PrevHasLeadingSpace,
-     .cost = 4,
-     .origin = "Open_AfterPeriodGap"},
+    Rule(Ins::ParenLike, Kind::Leaf)
+        .When(Cue::LeadingSpace | Cue::PrevIsPeriod)
+        .Unless(Cue::FirstOnLine | Cue::PrevHasLeadingSpace)
+        .Cost(4, "Open_AfterPeriodGap"),
     // A mid-line leaf with whitespace before it directly following an
     // opener: formatted code has no space after `(` or `[`, so a bracket was
     // likely deleted in the gap.
-    {.ctx = Ins::ParenLike,
-     .kinds = Kind::Leaf,
-     .when = Cue::LeadingSpace | Cue::PrevIsOpenBracket,
-     .unless = Cue::FirstOnLine,
-     .cost = 4,
-     .origin = "Open_AfterOpenGap"},
+    Rule(Ins::ParenLike, Kind::Leaf)
+        .When(Cue::LeadingSpace | Cue::PrevIsOpenBracket)
+        .Unless(Cue::FirstOnLine)
+        .Cost(4, "Open_AfterOpenGap"),
     // A wide whitespace gap before a token that could start a group suggests
     // an opener was deleted in the gap.
-    {.ctx = Ins::ParenLike,
-     .kinds = Kind::Opener | Kind::Leaf | Kind::Period,
-     .when = Cue::WideGap,
-     .unless = Cue::FirstOnLine,
-     .cost = CostCloseAtWideGap,
-     .origin = "Open_AtWideGap"},
-    {.ctx = Ins::ParenLike,
-     .when = Cue::WideGap | Cue::ModifierKeyword,
-     .unless = Cue::FirstOnLine,
-     .cost = CostCloseAtWideGap,
-     .origin = "Open_AtWideGap"},
+    Rule(Ins::ParenLike, Kind::Opener | Kind::Leaf | Kind::Period)
+        .When(Cue::WideGap)
+        .Unless(Cue::FirstOnLine)
+        .Cost(CostCloseAtWideGap, "Open_AtWideGap"),
+    Rule(Ins::ParenLike)
+        .When(Cue::WideGap | Cue::ModifierKeyword)
+        .Unless(Cue::FirstOnLine)
+        .Cost(CostCloseAtWideGap, "Open_AtWideGap"),
     // An empty group directly after a name: `Op()`. Only applies after a
     // leaf (a call of a just-computed value, `f(x)()`, is much rarer than a
     // call of a name), and not when the name is a type after `as` or `->`,
     // where a parenthesized group is more plausible than an empty call.
-    {.ctx = Ins::Paren,
-     .kinds = Kind::CloseParen,
-     .when = Cue::PrevItemIsLeaf | Cue::LeadingSpace,
-     .unless = Cue::PrevItemIsTypeName,
-     .cost = 5,
-     .origin = "Open_EmptyParens"},
+    Rule(Ins::Paren, Kind::CloseParen)
+        .When(Cue::PrevItemIsLeaf | Cue::LeadingSpace)
+        .Unless(Cue::PrevItemIsTypeName)
+        .Cost(5, "Open_EmptyParens"),
     // An empty `[]` is rarer than empty parens.
-    {.ctx = Ins::Square,
-     .kinds = Kind::CloseSquare,
-     .when = Cue::PrevItemIsLeaf | Cue::LeadingSpace,
-     .unless = Cue::PrevItemIsTypeName,
-     .cost = 12,
-     .origin = "Open_EmptySquares"},
+    Rule(Ins::Square, Kind::CloseSquare)
+        .When(Cue::PrevItemIsLeaf | Cue::LeadingSpace)
+        .Unless(Cue::PrevItemIsTypeName)
+        .Cost(12, "Open_EmptySquares"),
     // An empty call of a just-computed value: `T.(Default.Op)()`. Only
     // trusted when the `)` is spaced, marking the deletion gap. This looks at
     // the last token of the previous item, so it fires after a collapsed
     // `(...)` block too.
-    {.ctx = Ins::Paren,
-     .kinds = Kind::CloseParen,
-     .when = Cue::PrevIsCloseParen | Cue::LeadingSpace,
-     .unless = Cue::FirstOnLine,
-     .cost = 8,
-     .origin = "Open_EmptyParensAfterClose"},
+    Rule(Ins::Paren, Kind::CloseParen)
+        .When(Cue::PrevIsCloseParen | Cue::LeadingSpace)
+        .Unless(Cue::FirstOnLine)
+        .Cost(8, "Open_EmptyParensAfterClose"),
     // A `(` or `[` anywhere else an expression could start.
-    {.ctx = Ins::ParenLike, .cost = 35, .origin = "Open_ParenBaseline"},
+    Rule(Ins::ParenLike).Cost(35, "Open_ParenBaseline"),
     // A scope `{` is never inserted directly before another opener: the body
     // it would open starts with that opener, so the `{` belongs before it only
     // via one of the rules above.
-    {.ctx = Ins::ScopeBrace, .kinds = Kind::Opener, .cost = Decline},
+    Rule(Ins::ScopeBrace, Kind::Opener).Decline(),
     // A scope `{` between an unbraced declaration or statement header and its
     // body, as in `if (c) return;`.
-    {.ctx = Ins::ScopeBrace,
-     .when = Cue::FollowsStatementHeader,
-     .unless = Cue::HeaderHasOpenCurly,
-     .cost = 8,
-     .origin = "Open_ScopeAfterHeader"},
-    {.ctx = Ins::ScopeBrace, .cost = 60, .origin = "Open_ScopeBaseline"},
+    Rule(Ins::ScopeBrace)
+        .When(Cue::FollowsStatementHeader)
+        .Unless(Cue::HeaderHasOpenCurly)
+        .Cost(8, "Open_ScopeAfterHeader"),
+    Rule(Ins::ScopeBrace).Cost(60, "Open_ScopeBaseline"),
     // A struct `{` before a `.` designator that isn't a member access.
-    {.ctx = Ins::StructBrace,
-     .kinds = Kind::Period,
-     .unless = Cue::PrevValueEnding,
-     .cost = 5,
-     .origin = "Open_StructBeforeDesignator"},
+    Rule(Ins::StructBrace, Kind::Period)
+        .Unless(Cue::PrevValueEnding)
+        .Cost(5, "Open_StructBeforeDesignator"),
     // A struct literal `{...}` that lost its `{`, leaving content directly
     // before the `}`. Real content is required, so a stray `}` is reported as
     // an error instead. Priced above Open_ScopeAfterHeader: when a single-line
     // body lost its `{`, inserting it before the body beats making empty
     // braces at the `}`.
-    {.ctx = Ins::StructBrace,
-     .kinds = Kind::CloseCurly,
-     .unless = Cue::FirstOnLine,
-     .any_of = Cue::PrevValueEnding | Cue::PrevIsCloseCurly |
-               Cue::PrevIsCloseSquare | Cue::PrevIsComma,
-     .cost = 10,
-     .origin = "Open_StructEmptyBraces"},
+    Rule(Ins::StructBrace, Kind::CloseCurly)
+        .Unless(Cue::FirstOnLine)
+        .AnyOf(Cue::PrevValueEnding | Cue::PrevIsCloseCurly |
+               Cue::PrevIsCloseSquare | Cue::PrevIsComma)
+        .Cost(10, "Open_StructEmptyBraces"),
     // Any other struct brace has no cue at all, and isn't worth proposing.
-    {.ctx = Ins::StructBrace, .cost = Decline},
+    Rule(Ins::StructBrace).Decline(),
 };
 
 static_assert(std::size(OpenerRules) <= 64);
@@ -1194,7 +1150,7 @@ auto ClassifyOpenerInsertion(BracketTokenKind kind, bool is_struct_brace,
     const auto& rule = OpenerRules[std::countr_zero(candidates)];
     candidates &= candidates - 1;
     if (Matches(rule, item.cues)) {
-      if (rule.cost == Decline) {
+      if (rule.cost == DeclineCost) {
         break;
       }
       origin = rule.origin;
@@ -1214,143 +1170,114 @@ constexpr BracketRule AdvanceRules[] = {
     // the bracket is still open. Closing brackets are excluded, since a `}`
     // that closes its group is expected to dedent, and `FileEnd` isn't
     // content at all.
-    {.ctx = Top::Struct | Top::Scope,
-     .kinds = Kind::Dedentable,
-     .when = Cue::FirstOnLine | Cue::DedentToHeader,
-     .cost = 40,
-     .origin = "Adv_DedentInScope"},
-    {.ctx = Top::ParenLike,
-     .kinds = Kind::Dedentable,
-     .when = Cue::FirstOnLine | Cue::DedentToOpenerLine,
-     .cost = 25,
-     .origin = "Adv_DedentInParen"},
+    Rule(Top::Struct | Top::Scope, Kind::Dedentable)
+        .When(Cue::FirstOnLine | Cue::DedentToHeader)
+        .Cost(40, "Adv_DedentInScope"),
+    Rule(Top::ParenLike, Kind::Dedentable)
+        .When(Cue::FirstOnLine | Cue::DedentToOpenerLine)
+        .Cost(25, "Adv_DedentInParen"),
     // A scope `{` inside parens or a struct brace is a lambda, which is rare;
     // a struct `{` there is a struct literal argument, which is common. The
     // first rule covers a collapsed block that contains a scope brace.
-    {.ctx = Top::ParenLike | Top::Struct,
-     .kinds = Kind::Opener,
-     .when = Cue::CollapsedBlock | Cue::ContainsScopeBrace,
-     .cost = 40,
-     .origin = "Adv_ScopeBlockInParen"},
-    {.ctx = Top::ParenLike | Top::Struct,
-     .kinds = Kind::OpenCurly,
-     .unless = Cue::CollapsedBlock | Cue::StructBrace,
-     .cost = 40,
-     .origin = "Adv_ScopeBraceInParen"},
-    {.ctx = Top::ParenLike | Top::Struct,
-     .kinds = Kind::OpenCurly,
-     .when = Cue::StructBrace,
-     .unless = Cue::CollapsedBlock,
-     .cost = 5,
-     .origin = "Adv_StructBraceInParen"},
+    Rule(Top::ParenLike | Top::Struct, Kind::Opener)
+        .When(Cue::CollapsedBlock | Cue::ContainsScopeBrace)
+        .Cost(40, "Adv_ScopeBlockInParen"),
+    Rule(Top::ParenLike | Top::Struct, Kind::OpenCurly)
+        .Unless(Cue::CollapsedBlock | Cue::StructBrace)
+        .Cost(40, "Adv_ScopeBraceInParen"),
+    Rule(Top::ParenLike | Top::Struct, Kind::OpenCurly)
+        .When(Cue::StructBrace)
+        .Unless(Cue::CollapsedBlock)
+        .Cost(5, "Adv_StructBraceInParen"),
     // A spaced `(` or `[` directly after a value: calls and indexing are
     // written without spaces, so a bracket was likely deleted in the gap —
     // unless this path already inserted a closer there.
-    {.ctx = Top::Any,
-     .kinds = Kind::OpenGroup,
-     .when = Cue::LeadingSpace | Cue::PrevValueLike,
-     .unless = Cue::FirstOnLine | Cue::CollapsedBlock | Cue::CloserInserted,
-     .cost = 10,
-     .origin = "Adv_SpacedOpenAfterValue"},
+    Rule(Top::Any, Kind::OpenGroup)
+        .When(Cue::LeadingSpace | Cue::PrevValueLike)
+        .Unless(Cue::FirstOnLine | Cue::CollapsedBlock | Cue::CloserInserted)
+        .Cost(10, "Adv_SpacedOpenAfterValue"),
     // Formatted code has no space before a closer either.
-    {.ctx = Top::Any,
-     .kinds = Kind::CloseGroup,
-     .when = Cue::LeadingSpace | Cue::PrevValueLike,
-     .unless = Cue::FirstOnLine | Cue::BracketInsertedHere,
-     .cost = 8,
-     .origin = "Adv_SpacedCloserUnexplained"},
+    Rule(Top::Any, Kind::CloseGroup)
+        .When(Cue::LeadingSpace | Cue::PrevValueLike)
+        .Unless(Cue::FirstOnLine | Cue::BracketInsertedHere)
+        .Cost(8, "Adv_SpacedCloserUnexplained"),
     // A `;` can't appear inside parens, square brackets, or a struct brace.
-    {.ctx = Top::ParenLike | Top::Struct,
-     .kinds = Kind::Semi,
-     .cost = 100,
-     .origin = "Adv_SemiInParen"},
+    Rule(Top::ParenLike | Top::Struct, Kind::Semi).Cost(100, "Adv_SemiInParen"),
     // A `,` at statement level: directly in a scope brace or at the top level.
-    {.ctx = Top::None | Top::Scope,
-     .kinds = Kind::Comma,
-     .cost = 50,
-     .origin = "Adv_CommaAtStatementLevel"},
+    Rule(Top::None | Top::Scope, Kind::Comma)
+        .Cost(50, "Adv_CommaAtStatementLevel"),
     // A `,` directly following a still-open `(`/`[` is illegal.
-    {.ctx = Top::ParenLike | Top::Struct,
-     .kinds = Kind::Comma,
-     .when = Cue::AfterOpenTop,
-     .cost = 50,
-     .origin = "Adv_CommaAfterOpen"},
+    Rule(Top::ParenLike | Top::Struct, Kind::Comma)
+        .When(Cue::AfterOpenTop)
+        .Cost(50, "Adv_CommaAfterOpen"),
     // Formatted code has no space before a `,`, so a bracket was likely
     // deleted in the gap.
-    {.ctx = Top::ParenLike | Top::Struct,
-     .kinds = Kind::Comma,
-     .when = Cue::LeadingSpace | Cue::PrevValueLike,
-     .unless = Cue::FirstOnLine | Cue::CloserInserted | Cue::AfterOpenTop,
-     .cost = 8,
-     .origin = "Adv_SpacedCommaInParen"},
+    Rule(Top::ParenLike | Top::Struct, Kind::Comma)
+        .When(Cue::LeadingSpace | Cue::PrevValueLike)
+        .Unless(Cue::FirstOnLine | Cue::CloserInserted | Cue::AfterOpenTop)
+        .Cost(8, "Adv_SpacedCommaInParen"),
     // A statement introducer keyword inside parens or a struct brace.
-    {.ctx = Top::ParenLike | Top::Struct,
-     .kinds = Kind::Introducer,
-     .cost = 60,
-     .origin = "Adv_IntroducerInParen"},
+    Rule(Top::ParenLike | Top::Struct, Kind::Introducer)
+        .Cost(60, "Adv_IntroducerInParen"),
     // A leaf, or a binding modifier keyword, directly following a value-ending
     // token is an illegal adjacency — unless an opener synthesized here, or a
     // `]`/`}` inserted here, repairs it.
-    {.ctx = Top::Any,
-     .kinds = Kind::Leaf,
-     .when = Cue::PrevValueEnding,
-     .unless = Cue::OpenerHere | Cue::CloserFixesAdjacency,
-     .cost = 60,
-     .origin = "Adv_LeafAdjacency"},
-    {.ctx = Top::Any,
-     .kinds = Kind::Other,
-     .when = Cue::ModifierKeyword | Cue::PrevValueEnding,
-     .unless = Cue::OpenerHere | Cue::CloserFixesAdjacency,
-     .cost = 60,
-     .origin = "Adv_LeafAdjacency"},
+    Rule(Top::Any, Kind::Leaf)
+        .When(Cue::PrevValueEnding)
+        .Unless(Cue::OpenerHere | Cue::CloserFixesAdjacency)
+        .Cost(60, "Adv_LeafAdjacency"),
+    Rule(Top::Any, Kind::Other)
+        .When(Cue::ModifierKeyword | Cue::PrevValueEnding)
+        .Unless(Cue::OpenerHere | Cue::CloserFixesAdjacency)
+        .Cost(60, "Adv_LeafAdjacency"),
     // `=`, `->`, or `as` inside parens or square brackets. These *can* occur
     // there (default arguments, function types, casts), so this is mild; it
     // serves to prefer the earliest sensible close point. Casts `(x as T)` are
     // common enough that `as` keeps only a nominal preference.
-    {.ctx = Top::ParenLike,
-     .kinds = Kind::Other,
-     .when = Cue::StructuralOp | Cue::LeadingSpace,
-     .unless = Cue::AsOp,
-     .cost = 10,
-     .origin = "Adv_StructuralOpInParen"},
-    {.ctx = Top::ParenLike,
-     .kinds = Kind::Other,
-     .when = Cue::StructuralOp | Cue::LeadingSpace | Cue::AsOp,
-     .cost = 1,
-     .origin = "Adv_AsOpInParen"},
+    Rule(Top::ParenLike, Kind::Other)
+        .When(Cue::StructuralOp | Cue::LeadingSpace)
+        .Unless(Cue::AsOp)
+        .Cost(10, "Adv_StructuralOpInParen"),
+    Rule(Top::ParenLike, Kind::Other)
+        .When(Cue::StructuralOp | Cue::LeadingSpace | Cue::AsOp)
+        .Cost(1, "Adv_AsOpInParen"),
     // A comparison or logical operator inside square brackets or a call.
-    {.ctx = Top::Square,
-     .kinds = Kind::Other,
-     .when = Cue::ComparisonOp,
-     .cost = 8,
-     .origin = "Adv_ComparisonInSquare"},
-    {.ctx = Top::Paren,
-     .kinds = Kind::Other,
-     .when = Cue::ComparisonOp | Cue::CallParenTop,
-     .cost = 8,
-     .origin = "Adv_ComparisonInSquare"},
+    Rule(Top::Square, Kind::Other)
+        .When(Cue::ComparisonOp)
+        .Cost(8, "Adv_ComparisonInSquare"),
+    Rule(Top::Paren, Kind::Other)
+        .When(Cue::ComparisonOp | Cue::CallParenTop)
+        .Cost(8, "Adv_ComparisonInSquare"),
     // A wide mid-line whitespace gap suggests a deleted bracket that this path
     // hasn't repaired.
-    {.ctx = Top::Any,
-     .kinds = Kind::Other,
-     .when = Cue::WideGap,
-     .unless = Cue::FirstOnLine | Cue::BracketInsertedHere,
-     .cost = 10,
-     .origin = "Adv_WideGapUnexplained"},
+    Rule(Top::Any, Kind::Other)
+        .When(Cue::WideGap)
+        .Unless(Cue::FirstOnLine | Cue::BracketInsertedHere)
+        .Cost(10, "Adv_WideGapUnexplained"),
     // A mid-line `.` with whitespace before it suggests a deleted bracket:
     // member access is written without spaces. Prefer closing an open group
     // before it, or opening one.
-    {.ctx = Top::Any,
-     .kinds = Kind::Period,
-     .when = Cue::LeadingSpace,
-     .unless = Cue::FirstOnLine | Cue::BracketInsertedHere,
-     .any_of = Cue::PrevValueLike | Cue::PrevIsOpenBracket |
-               Cue::PrevIsOpenCurly,
-     .cost = 10,
-     .origin = "Adv_SpacedPeriodInParen"},
+    Rule(Top::Any, Kind::Period)
+        .When(Cue::LeadingSpace)
+        .Unless(Cue::FirstOnLine | Cue::BracketInsertedHere)
+        .AnyOf(Cue::PrevValueLike | Cue::PrevIsOpenBracket |
+               Cue::PrevIsOpenCurly)
+        .Cost(10, "Adv_SpacedPeriodInParen"),
 };
 
 static_assert(std::size(AdvanceRules) <= 64);
+
+// Declining is meaningless in an additive table: every matching rule
+// contributes its cost, so a declining rule would subtract from the penalty.
+// This also catches a rule that forgot its `Cost`.
+static_assert([] {
+  for (const BracketRule& rule : AdvanceRules) {
+    if (rule.cost == DeclineCost) {
+      return false;
+    }
+  }
+  return true;
+}());
 
 constexpr auto AdvanceRuleIndex = BuildRuleIndex(AdvanceRules);
 
@@ -1450,8 +1377,7 @@ auto ReconstructCorrections(
   // disagree about the repair.
   auto corrections_equivalent = [&](const BracketCorrection& a,
                                     const BracketCorrection& b) -> bool {
-    if (a.fix_action != b.fix_action ||
-        a.fix_token_kind != b.fix_token_kind) {
+    if (a.fix_action != b.fix_action || a.fix_token_kind != b.fix_token_kind) {
       return false;
     }
     if (a.fix_token_index == b.fix_token_index) {
@@ -1538,10 +1464,9 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
               worklist->push_back(idx);
             }
           } else if (next_cost == exist_node.cost) {
-            if (llvm::none_of(exist_node.parent_edges,
-                              [&](const ParentEdge& e) {
-                                return EdgesEqual(e, edge);
-                              })) {
+            if (llvm::none_of(
+                    exist_node.parent_edges,
+                    [&](const ParentEdge& e) { return EdgesEqual(e, edge); })) {
               exist_node.parent_edges.push_back(edge);
             }
           }
@@ -1639,10 +1564,10 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
               item.token.line_indent < top.effective_header_indent) {
             direct_match_ok = false;
           }
-          bool spaced_suspicious =
-              kind != BracketTokenKind::CloseCurlyBrace &&
-              !item.is_first_on_line && item.token.has_leading_space &&
-              PrevIsValueLike(item);
+          bool spaced_suspicious = kind != BracketTokenKind::CloseCurlyBrace &&
+                                   !item.is_first_on_line &&
+                                   item.token.has_leading_space &&
+                                   PrevIsValueLike(item);
           if (direct_match_ok && !spaced_suspicious) {
             continue;
           }
@@ -1791,7 +1716,8 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
         // Advance without pushing (replace unmatched opener with Error token).
         try_enqueue_advance(
             current.stack, CostReplaceOpening,
-            ReplaceWithError(item.token, BracketDiagnosticKind::UnmatchedOpening,
+            ReplaceWithError(item.token,
+                             BracketDiagnosticKind::UnmatchedOpening,
                              "Adv_ReplaceOpener"),
             /*has_correction=*/true);
         continue;
@@ -1811,11 +1737,10 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
               allow_match = false;
             } else if (item.is_first_on_line &&
                        item.token.line_indent != top.effective_header_indent) {
-              penalty +=
-                  CostBraceIndentMismatchBase +
-                  CostBraceIndentMismatchPerColumn *
-                      std::abs(top.effective_header_indent -
-                               item.token.line_indent);
+              penalty += CostBraceIndentMismatchBase +
+                         CostBraceIndentMismatchPerColumn *
+                             std::abs(top.effective_header_indent -
+                                      item.token.line_indent);
             }
           }
           if (allow_match) {
@@ -1844,7 +1769,8 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
         // Error token).
         try_enqueue_advance(
             current.stack, CostReplaceClosing,
-            ReplaceWithError(item.token, BracketDiagnosticKind::UnmatchedClosing,
+            ReplaceWithError(item.token,
+                             BracketDiagnosticKind::UnmatchedClosing,
                              "Adv_ReplaceCloser"),
             /*has_correction=*/true);
         continue;
@@ -1898,8 +1824,8 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
               .parent_node_index = parent,
               .correction =
                   BracketCorrection{
-                      .diagnostic_kind = BracketDiagnosticKind::
-                          UnmatchedOpening,
+                      .diagnostic_kind =
+                          BracketDiagnosticKind::UnmatchedOpening,
                       .diagnostic_token_index = entry.token_index,
                       .fix_action = BracketFixAction::InsertBefore,
                       .fix_token_index = region_end_token,
@@ -2071,8 +1997,7 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
              effective_header_indent[i] != tokens[close_idx].line_indent)) {
           clean = false;
         } else if (tokens[i].is_struct_brace &&
-                   tokens[close_idx].line_indent <
-                       effective_header_indent[i]) {
+                   tokens[close_idx].line_indent < effective_header_indent[i]) {
           clean = false;
         }
       }
@@ -2099,12 +2024,12 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
       // the same statement segment could really own our closer, and an
       // unmatched closer of the same kind later in the same segment could
       // really own our opener; both make the pairing suspect.
-      const auto& unmatched_openers =
-          kind == BracketTokenKind::OpenParen ? unmatched_open_parens
-                                              : unmatched_open_squares;
-      const auto& unmatched_closers =
-          kind == BracketTokenKind::OpenParen ? unmatched_close_parens
-                                              : unmatched_close_squares;
+      const auto& unmatched_openers = kind == BracketTokenKind::OpenParen
+                                          ? unmatched_open_parens
+                                          : unmatched_open_squares;
+      const auto& unmatched_closers = kind == BracketTokenKind::OpenParen
+                                          ? unmatched_close_parens
+                                          : unmatched_close_squares;
       if (contains_in_range(unmatched_openers, seg_first[i], i - 1)) {
         clean = false;
       }
@@ -2114,8 +2039,7 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
       if (clean && !unmatched_closers.empty()) {
         const auto* it = std::upper_bound(unmatched_closers.begin(),
                                           unmatched_closers.end(), close_idx);
-        if (it != unmatched_closers.end() &&
-            seg_id[*it] == seg_id[close_idx]) {
+        if (it != unmatched_closers.end() && seg_id[*it] == seg_id[close_idx]) {
           clean = false;
         }
       }
@@ -2230,7 +2154,6 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
         region_boundaries.push_back(i);
       }
     }
-
   }
   if (region_boundaries.back() != static_cast<int32_t>(items.size())) {
     region_boundaries.push_back(static_cast<int32_t>(items.size()));
