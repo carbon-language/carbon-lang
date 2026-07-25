@@ -317,9 +317,6 @@ TEST_F(MismatchedBracketsTest, FixesMissingCloseParenBeforeSemi) {
       MakeToken(8, BracketTokenKind::CloseCurlyBrace, 3, 1,
                 /*is_at_end_of_line=*/true),
   };
-  // `G(` is a call: the `(` directly follows a value-ending token.
-  tokens[5].prev_is_value_ending = true;
-
   // A `;` can't appear inside parens, so the `)` belongs directly before it.
   auto corrections = FixMismatchedBrackets(tokens);
   ASSERT_THAT(corrections, SizeIs(1));

@@ -279,7 +279,8 @@ auto RemoveRanges(llvm::StringRef text,
 
 // Builds a trial that deletes one endpoint of each of `d_count` random clean
 // pairs, either blanking them or closing the gap.
-auto MakeDeletionCase(const TokenizedBuffer& buffer, llvm::StringRef source_text,
+auto MakeDeletionCase(const TokenizedBuffer& buffer,
+                      llvm::StringRef source_text,
                       llvm::ArrayRef<BracketPair> pairs, int d_count,
                       bool close_gap, std::mt19937_64& rng)
     -> std::optional<CorruptedCase> {
@@ -336,12 +337,10 @@ auto MakeDeletionCase(const TokenizedBuffer& buffer, llvm::StringRef source_text
         .line = buffer.GetLineNumber(tok),
         .column = buffer.GetColumnNumber(tok),
         .next_token_byte_offset = succ_byte,
-        .next_token_line = (succ.index < buffer.size())
-                               ? buffer.GetLineNumber(succ)
-                               : -1,
-        .next_token_column = (succ.index < buffer.size())
-                                 ? buffer.GetColumnNumber(succ)
-                                 : -1,
+        .next_token_line =
+            (succ.index < buffer.size()) ? buffer.GetLineNumber(succ) : -1,
+        .next_token_column =
+            (succ.index < buffer.size()) ? buffer.GetColumnNumber(succ) : -1,
         .valid_next_token_byte_offsets = std::move(valid_offsets),
     });
   }
@@ -367,7 +366,8 @@ auto MakeDeletionCase(const TokenizedBuffer& buffer, llvm::StringRef source_text
   std::string corrupted = RemoveRanges(source_text, ranges);
   for (auto& del : deleted) {
     del.byte_offset = RemapOffset(del.byte_offset, ranges);
-    del.next_token_byte_offset = RemapOffset(del.next_token_byte_offset, ranges);
+    del.next_token_byte_offset =
+        RemapOffset(del.next_token_byte_offset, ranges);
     for (auto& off : del.valid_next_token_byte_offsets) {
       off = RemapOffset(off, ranges);
     }
@@ -378,8 +378,9 @@ auto MakeDeletionCase(const TokenizedBuffer& buffer, llvm::StringRef source_text
 
 // Builds a trial that truncates the file at a random token boundary; recovery
 // should close every bracket still open there, at the new EOF.
-auto MakeTruncateCase(const TokenizedBuffer& buffer, llvm::StringRef source_text,
-                      std::mt19937_64& rng) -> std::optional<CorruptedCase> {
+auto MakeTruncateCase(const TokenizedBuffer& buffer,
+                      llvm::StringRef source_text, std::mt19937_64& rng)
+    -> std::optional<CorruptedCase> {
   int32_t size = buffer.size();
   if (size <= 2) {
     return std::nullopt;
@@ -463,7 +464,8 @@ auto MakeTruncateRegionCase(const TokenizedBuffer& buffer,
   int32_t del_end =
       buffer.GetByteOffset(pair.close_token) +
       static_cast<int32_t>(buffer.GetTokenText(pair.close_token).size());
-  llvm::SmallVector<std::pair<int32_t, int32_t>> ranges = {{del_begin, del_end}};
+  llvm::SmallVector<std::pair<int32_t, int32_t>> ranges = {
+      {del_begin, del_end}};
   std::string corrupted = RemoveRanges(source_text, ranges);
 
   int32_t succ = close + 1;
@@ -910,10 +912,9 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
           token_offsets.insert(static_cast<int32_t>(corrupted_text.size()));
           bool merged = false;
           for (const auto& del : deleted_tokens) {
-            if (llvm::none_of(del.valid_next_token_byte_offsets,
-                              [&](int32_t off) {
-                                return token_offsets.contains(off);
-                              })) {
+            if (llvm::none_of(
+                    del.valid_next_token_byte_offsets,
+                    [&](int32_t off) { return token_offsets.contains(off); })) {
               merged = true;
               break;
             }
@@ -924,16 +925,34 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
           }
         }
 
+        // Corrections name tokens of this buffer, so an insertion must name a
+        // recovery token of the kind it inserted. The origin lookup below
+        // relies on that, and a wrong index would silently lose origins.
+        for (const auto& c : corrections) {
+          CARBON_CHECK(c.fix_token_index.index >= 0 &&
+                           c.fix_token_index.index < corrupted_buffer.size(),
+                       "Correction names a token outside the buffer.");
+          if (c.fix_action != BracketFixAction::ReplaceWithError &&
+              !c.is_tied) {
+            CARBON_CHECK(corrupted_buffer.IsRecoveryToken(c.fix_token_index),
+                         "Insertion doesn't name the token it inserted.");
+            CARBON_CHECK(
+                corrupted_buffer.GetKind(c.fix_token_index) == c.fix_token_kind,
+                "Inserted token has the wrong kind.");
+          }
+        }
+
         llvm::SmallVector<Suggestion> suggestions;
         for (TokenIndex t : corrupted_buffer.tokens()) {
           if (corrupted_buffer.IsRecoveryToken(t)) {
             auto kind = corrupted_buffer.GetKind(t);
             if (kind.is_opening_symbol() || kind.is_closing_symbol()) {
-              // Structure-equality: a fix is identified by the first *surviving*
-              // token it precedes, not its raw offset. Skip other inserted
-              // (recovery) tokens so a cascade of closers all point at the same
-              // real anchor, and closing among trailing whitespace or a deleted
-              // span still resolves to the token that structurally follows.
+              // Structure-equality: a fix is identified by the first
+              // *surviving* token it precedes, not its raw offset. Skip other
+              // inserted (recovery) tokens so a cascade of closers all point at
+              // the same real anchor, and closing among trailing whitespace or
+              // a deleted span still resolves to the token that structurally
+              // follows.
               TokenIndex succ = TokenIndex(t.index + 1);
               while (succ.index < corrupted_buffer.size() &&
                      corrupted_buffer.IsRecoveryToken(succ)) {
@@ -949,15 +968,14 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
               int32_t col_num = (succ.index < corrupted_buffer.size())
                                     ? corrupted_buffer.GetColumnNumber(succ)
                                     : -1;
+              // Corrections name the tokens of this buffer, so the one that
+              // inserted this token names it directly.
               std::string origin = "Unknown";
               for (const auto& c : corrections) {
-                if ((c.fix_action == BracketFixAction::InsertBefore ||
-                     c.fix_action == BracketFixAction::InsertAfter) &&
-                    !c.is_tied && c.fix_token_kind == kind) {
-                  if (c.fix_byte_offset == byte_off) {
-                    origin = c.origin;
-                    break;
-                  }
+                if (c.fix_action != BracketFixAction::ReplaceWithError &&
+                    !c.is_tied && c.fix_token_index == t) {
+                  origin = c.origin;
+                  break;
                 }
               }
               suggestions.push_back(Suggestion{
@@ -1053,8 +1071,8 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
                    dump_none > 0) {
           --dump_none;
           do_dump = true;
-          dump_label = classification == TestClassification::None ? "NONE"
-                                                                  : "PARTIAL";
+          dump_label =
+              classification == TestClassification::None ? "NONE" : "PARTIAL";
         }
         if (do_dump) {
           llvm::errs() << "\n=== " << dump_label << " TRIAL in "
@@ -1083,7 +1101,6 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
                                  : "ReplaceWithError")
                          << " kind=" << c.fix_token_kind.name()
                          << " tok=" << c.fix_token_index.index
-                         << " byte=" << c.fix_byte_offset
                          << (c.is_tied ? " TIED" : "") << " origin=" << c.origin
                          << "\n";
           }
@@ -1211,8 +1228,9 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
   if (!dist_by_kind.empty()) {
     llvm::outs() << "## Wrong-Close Distance (incorrect trials)\n\n";
-    llvm::outs() << "Signed token distance from the correct anchor to the "
-                    "nearest same-kind close (+ = closed later / swallowing).\n\n";
+    llvm::outs()
+        << "Signed token distance from the correct anchor to the "
+           "nearest same-kind close (+ = closed later / swallowing).\n\n";
     llvm::outs() << "| Deleted kind | Wrong | Later | Earlier | No close | "
                     "Median | P90 | Max |\n";
     llvm::outs() << "|:---|---:|---:|---:|---:|---:|---:|---:|\n";
@@ -1242,7 +1260,8 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
         max_dist = std::max(max_dist, std::abs(d));
       }
       llvm::outs() << llvm::formatv(
-          "| {0,-18} | {1,5} | {2,5} | {3,7} | {4,8} | {5,6} | {6,4} | {7,4} |\n",
+          "| {0,-18} | {1,5} | {2,5} | {3,7} | {4,8} | {5,6} | {6,4} | {7,4} "
+          "|\n",
           kind, total, stat.later, stat.earlier, stat.no_close, median, p90,
           max_dist);
     }

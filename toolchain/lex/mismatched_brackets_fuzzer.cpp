@@ -128,10 +128,10 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   static_assert(static_cast<int32_t>(BracketTokenKind::FileEnd) ==
                 NumGeneratedKinds - 1);
 
-  // Bytes per generated token: kind, indentation, line advance, and two bytes
-  // of flags. Most recovery cues come from the flags, so leaving them out
+  // Bytes per generated token: kind, indentation, line advance, and flags. Most
+  // recovery cues come from the kind and the flags, so leaving either coarse
   // would make most of the rules unreachable.
-  constexpr size_t BytesPerToken = 5;
+  constexpr size_t BytesPerToken = 4;
 
   llvm::SmallVector<MismatchedBracketToken> tokens;
   tokens.reserve(size / BytesPerToken);
@@ -139,14 +139,12 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   size_t i = 0;
   int32_t token_idx = 0;
   int32_t current_line = 1;
-  int32_t byte_offset = 0;
 
   while (i + BytesPerToken <= size) {
     uint8_t kind_byte = data[i++];
     uint8_t indent_byte = data[i++];
     uint8_t line_delta = data[i++];
     uint8_t flags_byte = data[i++];
-    uint8_t op_byte = data[i++];
 
     auto kind = static_cast<BracketTokenKind>(kind_byte % NumGeneratedKinds);
     if (kind == BracketTokenKind::FileEnd) {
@@ -154,7 +152,6 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
     }
     int32_t indent = (indent_byte % 32) * 2;
     current_line += line_delta % 3;
-    byte_offset += 1 + (indent_byte % 4);
 
     tokens.push_back(MismatchedBracketToken{
         .token_index = TokenIndex(token_idx++),
@@ -163,17 +160,10 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
         .line_indent = indent,
         .is_at_end_of_line = (flags_byte & 1) != 0,
         .is_struct_brace = (flags_byte & 2) != 0,
-        .prev_is_value_ending = (flags_byte & 4) != 0,
         .is_paren_keyword = (flags_byte & 8) != 0,
         .is_else_keyword = (flags_byte & 16) != 0,
-        .is_structural_op = (op_byte & 1) != 0,
-        .is_assignment_op = (op_byte & 2) != 0,
-        .is_as_op = (op_byte & 4) != 0,
-        .is_comparison_op = (op_byte & 8) != 0,
-        .is_modifier_keyword = (op_byte & 16) != 0,
         .has_leading_space = (flags_byte & 32) != 0,
         .has_wide_leading_space = (flags_byte & 64) != 0,
-        .byte_offset = byte_offset,
     });
   }
 
@@ -183,7 +173,6 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
       .line = current_line,
       .line_indent = 0,
       .is_at_end_of_line = true,
-      .byte_offset = byte_offset + 1,
   });
 
   auto corrections = FixMismatchedBrackets(tokens);

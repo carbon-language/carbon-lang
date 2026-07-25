@@ -29,7 +29,9 @@ struct LexOptions {
   // When dumping, whether to omit `FileStart` and `FileEnd` in output.
   bool omit_file_boundary_tokens = false;
 
-  // If set, populated with bracket corrections.
+  // If set, populated with the bracket corrections recovery made. Their token
+  // indexes refer to the returned buffer, so a correction that inserted a
+  // bracket names the inserted token itself.
   llvm::SmallVector<BracketCorrection>* bracket_corrections = nullptr;
 };
 

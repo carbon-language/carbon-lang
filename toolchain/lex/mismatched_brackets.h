@@ -33,9 +33,43 @@ enum class BracketTokenKind : int8_t {
   // such an adjacent pair is evidence that a bracket is missing between them.
   Leaf,
 
+  // The statement-structuring operators, which usually appear outside parens
+  // and square brackets, so are a cue that an unclosed one should close before
+  // them. `Assignment` (`=`) can also directly follow a `]` (`a[i] = v;`) and
+  // `As` commonly appears inside parens as a cast (`(x as T)`), unlike
+  // `StructuralOp` (`->` and `where`), so they are distinguished.
+  Assignment,
+  As,
+  StructuralOp,
+
+  // A comparison or logical operator (`==`, `<`, `and`, ...), which is unlikely
+  // to appear inside square brackets.
+  ComparisonOp,
+
+  // A binding modifier keyword (`ref`, `unused`, `template`), which like a leaf
+  // cannot directly follow a value-ending token.
+  ModifierKeyword,
+
   FileEnd,
+
+  // Anything else. Must stay last: it bounds the kinds.
   Other,
 };
+
+// Returns true if a token of this kind can be the last token of a primary
+// expression. A leaf directly following a value-ending token is an illegal
+// adjacency in a well-formed program, and so is a strong cue that an opening
+// bracket is missing between them. Note that `]` is not value-ending: a type
+// can directly follow one, as in `impl forall [T: Copy] T as ...`.
+constexpr auto IsValueEndingKind(BracketTokenKind kind) -> bool {
+  return kind == BracketTokenKind::Leaf || kind == BracketTokenKind::CloseParen;
+}
+
+// Returns true if this kind is one of the statement-structuring operators.
+constexpr auto IsStructuralOpKind(BracketTokenKind kind) -> bool {
+  return kind == BracketTokenKind::Assignment || kind == BracketTokenKind::As ||
+         kind == BracketTokenKind::StructuralOp;
+}
 
 // Returns true if the token kind is an opening bracket.
 constexpr auto IsOpeningBracket(BracketTokenKind kind) -> bool {
@@ -115,12 +149,6 @@ struct MismatchedBracketToken {
   // '}', or ':').
   bool is_struct_brace = false;
 
-  // Whether the immediately preceding token in the source (ignoring comments)
-  // is "value-ending": a leaf, `)`, or `]`. A leaf token whose predecessor is
-  // value-ending is an illegal adjacency in a well-formed program, and is a
-  // strong cue that an opening bracket is missing right before this token.
-  bool prev_is_value_ending = false;
-
   // For StatementIntroducer, whether this is a keyword that must be directly
   // followed by an opening bracket: `if`, `while`, `for`, `match` (which
   // require `(`), or `forall` (which requires `[`).
@@ -130,29 +158,6 @@ struct MismatchedBracketToken {
   // normally directly follows a `}` on the same line.
   bool is_else_keyword = false;
 
-  // For Other, whether this is a statement-structuring operator (`=`, `->`,
-  // `as`) that usually appears outside parens and square brackets, so is a
-  // cue that an unclosed paren or square bracket should be closed before it.
-  bool is_structural_op = false;
-
-  // For Other, whether this is specifically an `=`, which can also directly
-  // follow a `]` (`a[i] = v;`), unlike the other structural operators.
-  bool is_assignment_op = false;
-
-  // For Other, whether this is specifically an `as`, which commonly appears
-  // inside parens as a cast (`(x as T)`), unlike the other structural
-  // operators.
-  bool is_as_op = false;
-
-  // For Other, whether this is a comparison or logical operator (`==`, `<`,
-  // `and`, ...), which is unlikely to appear inside square brackets.
-  bool is_comparison_op = false;
-
-  // For Other, whether this is a binding modifier keyword (`ref`, `unused`,
-  // `template`), which, like a leaf, cannot directly follow a value-ending
-  // token.
-  bool is_modifier_keyword = false;
-
   // Whether this token has whitespace (or a comment) directly before it.
   bool has_leading_space = false;
 
@@ -160,9 +165,6 @@ struct MismatchedBracketToken {
   // before it. Formatted code separates mid-line tokens by at most one
   // space, so a wide gap suggests something was deleted in it.
   bool has_wide_leading_space = false;
-
-  // Byte offset of this token in source.
-  int32_t byte_offset = 0;
 };
 
 // An action to fix mismatched brackets in the token stream.
@@ -185,6 +187,11 @@ enum class BracketDiagnosticKind : int8_t {
 
 // Represents a single correction made to recover from a mismatched bracket,
 // pairing the diagnostic to report with the token-stream fix to apply.
+//
+// The token indexes are those of the stream `FixMismatchedBrackets` was given.
+// A caller that applies the fixes renumbers that stream, so it is responsible
+// for updating them before handing corrections on; see `LexOptions::
+// bracket_corrections`.
 struct BracketCorrection {
   // The diagnostic to report for this bracket error.
   BracketDiagnosticKind diagnostic_kind;
@@ -194,7 +201,6 @@ struct BracketCorrection {
   BracketFixAction fix_action;
   TokenIndex fix_token_index = TokenIndex::None;
   TokenKind fix_token_kind;
-  int32_t fix_byte_offset = -1;
 
   // Set to true if multiple optimal paths tie/disagree on the repair.
   bool is_tied = false;

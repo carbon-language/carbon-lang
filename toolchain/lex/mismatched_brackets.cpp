@@ -90,26 +90,15 @@ constexpr uint64_t LeadingSpace = FirstOnLine << 1;
 constexpr uint64_t WideGap = LeadingSpace << 1;
 // The current token is a `{` with struct-literal cues.
 constexpr uint64_t StructBrace = WideGap << 1;
-// The current token is `=`, `->`, or `as`.
-constexpr uint64_t StructuralOp = StructBrace << 1;
-// The current token is specifically `=`.
-constexpr uint64_t AssignmentOp = StructuralOp << 1;
-// The current token is specifically `as`.
-constexpr uint64_t AsOp = AssignmentOp << 1;
-// The current token is a comparison or logical operator.
-constexpr uint64_t ComparisonOp = AsOp << 1;
 // The current token is `else`.
-constexpr uint64_t ElseKeyword = ComparisonOp << 1;
-// The current token is a binding modifier keyword (`ref`, `unused`,
-// `template`), which like a leaf can't directly follow a value.
-constexpr uint64_t ModifierKeyword = ElseKeyword << 1;
+constexpr uint64_t ElseKeyword = StructBrace << 1;
 
 // Properties of the token directly before the current one. All are false at
 // the start of the input.
 //
-// The previous token is a leaf, `)`, or `]` — an adjacency that is illegal
-// before a leaf.
-constexpr uint64_t PrevValueEnding = ModifierKeyword << 1;
+// The previous token is value-ending, an adjacency that is illegal before a
+// leaf.
+constexpr uint64_t PrevValueEnding = ElseKeyword << 1;
 // As `PrevValueEnding`, but also counting `]` and `}`: the previous token ends
 // a value, whether or not a leaf may follow it.
 constexpr uint64_t PrevValueLike = PrevValueEnding << 1;
@@ -119,13 +108,12 @@ constexpr uint64_t PrevHasLeadingSpace = PrevValueLike << 1;
 // `for`, `match`), or one that must be followed by `[` (`forall`).
 constexpr uint64_t PrevKeywordWantsParen = PrevHasLeadingSpace << 1;
 constexpr uint64_t PrevKeywordWantsSquare = PrevKeywordWantsParen << 1;
-// The previous token is `=`, `->`, or `as`.
-constexpr uint64_t PrevIsStructuralOp = PrevKeywordWantsSquare << 1;
-// The previous token is specifically `=`.
-constexpr uint64_t PrevIsAssignmentOp = PrevIsStructuralOp << 1;
+// The previous token is `as`, `->`, or `where`, so what follows it is a type
+// rather than something callable. (Not `=`, which is followed by a value.)
+constexpr uint64_t PrevIntroducesType = PrevKeywordWantsSquare << 1;
 // The previous token's kind, for the kinds any rule distinguishes. At most one
 // of these holds at a time.
-constexpr uint64_t PrevIsPeriod = PrevIsAssignmentOp << 1;
+constexpr uint64_t PrevIsPeriod = PrevIntroducesType << 1;
 constexpr uint64_t PrevIsComma = PrevIsPeriod << 1;
 // `PrevIsOpenBracket` covers `(` and `[` together, which no rule separates.
 constexpr uint64_t PrevIsOpenBracket = PrevIsComma << 1;
@@ -234,7 +222,6 @@ struct OpenBracketInfo {
   bool is_call_paren = false;
   // For a synthetic opener, where it would be inserted.
   TokenIndex insertion_token_index = TokenIndex::None;
-  int32_t insertion_byte_offset = 0;
   // For a synthetic opener, the rule that proposed it, for diagnostics.
   const char* origin = "";
 
@@ -246,8 +233,7 @@ struct OpenBracketInfo {
            a.effective_header_indent == b.effective_header_indent &&
            a.is_synthetic == b.is_synthetic &&
            a.is_struct_brace == b.is_struct_brace &&
-           a.insertion_token_index == b.insertion_token_index &&
-           a.insertion_byte_offset == b.insertion_byte_offset;
+           a.insertion_token_index == b.insertion_token_index;
   }
 };
 
@@ -362,8 +348,8 @@ auto ComputeFollowsStatementHeader(
   }
   // A body can't start with an operator like `as` or `==`, or with a `.`
   // designator (a `where`-clause continuation line).
-  if (tokens[token_index].is_structural_op ||
-      tokens[token_index].is_comparison_op ||
+  if (IsStructuralOpKind(curr_kind) ||
+      curr_kind == BracketTokenKind::ComparisonOp ||
       curr_kind == BracketTokenKind::Period) {
     return false;
   }
@@ -481,7 +467,6 @@ auto ReplaceWithError(const MismatchedBracketToken& token,
       .fix_action = BracketFixAction::ReplaceWithError,
       .fix_token_index = token.token_index,
       .fix_token_kind = ToTokenKind(token.kind),
-      .fix_byte_offset = token.byte_offset,
       .origin = origin,
   };
 }
@@ -596,16 +581,15 @@ auto MatchesDeeperOpener(llvm::ArrayRef<OpenBracketInfo> stack,
   return false;
 }
 
-// Whether the token before `token` ends a value. Unlike `prev_is_value_ending`
-// (used for the leaf-adjacency rule), this also counts `]` and `}`, which end
-// a value but can be followed by a leaf. `prev_token` is null at the start of
-// the input.
-auto PrevIsValueLike(const MismatchedBracketToken& token,
-                     const MismatchedBracketToken* prev_token) -> bool {
-  return token.prev_is_value_ending ||
-         (prev_token != nullptr &&
-          (prev_token->kind == BracketTokenKind::CloseSquareBracket ||
-           prev_token->kind == BracketTokenKind::CloseCurlyBrace));
+// Whether the token before the current one ends a value. Unlike
+// `IsValueEndingKind`, which the leaf-adjacency rules use, this also counts `]`
+// and `}`, which end a value but can be followed by a leaf. `prev_token` is
+// null at the start of the input.
+auto PrevIsValueLike(const MismatchedBracketToken* prev_token) -> bool {
+  return prev_token != nullptr &&
+         (IsValueEndingKind(prev_token->kind) ||
+          prev_token->kind == BracketTokenKind::CloseSquareBracket ||
+          prev_token->kind == BracketTokenKind::CloseCurlyBrace);
 }
 
 // Whether the top of `stack` is a synthetic opener inserted directly before
@@ -721,6 +705,16 @@ constexpr uint32_t Comma = Bit(BracketTokenKind::Comma);
 constexpr uint32_t Period = Bit(BracketTokenKind::Period);
 constexpr uint32_t Leaf = Bit(BracketTokenKind::Leaf);
 constexpr uint32_t Other = Bit(BracketTokenKind::Other);
+constexpr uint32_t Assignment = Bit(BracketTokenKind::Assignment);
+constexpr uint32_t As = Bit(BracketTokenKind::As);
+constexpr uint32_t StructuralOp = Bit(BracketTokenKind::StructuralOp);
+constexpr uint32_t ComparisonOp = Bit(BracketTokenKind::ComparisonOp);
+constexpr uint32_t ModifierKeyword = Bit(BracketTokenKind::ModifierKeyword);
+// The statement-structuring operators together, and everything that carries no
+// bracket structure of its own: `Other` plus the classifications split from it.
+constexpr uint32_t AnyStructural = Assignment | As | StructuralOp;
+constexpr uint32_t AnyOther =
+    Other | AnyStructural | ComparisonOp | ModifierKeyword;
 constexpr uint32_t FileEnd = Bit(BracketTokenKind::FileEnd);
 constexpr uint32_t Introducer = Bit(BracketTokenKind::StatementIntroducer);
 constexpr uint32_t OpenParen = Bit(BracketTokenKind::OpenParen);
@@ -830,9 +824,8 @@ constexpr BracketRule CloserRules[] = {
     Rule(Top::ParenLike, Kind::Comma)
         .When(Cue::AfterOpenTop)
         .Cost(8, "Close_EmptyGroup"),
-    Rule(Top::ParenLike)
+    Rule(Top::ParenLike, Kind::AnyStructural | Kind::ComparisonOp)
         .When(Cue::AfterOpenTop)
-        .AnyOf(Cue::StructuralOp | Cue::ComparisonOp)
         .Cost(8, "Close_EmptyGroup"),
     Rule(Top::ParenLike, Kind::Period)
         .When(Cue::AfterOpenTop | Cue::LeadingSpace)
@@ -854,11 +847,11 @@ constexpr BracketRule CloserRules[] = {
     // plausibly follow `)`. An unspaced structural operator is not a cue:
     // formatted code spaces these operators, and an unspaced `->` is a
     // pointer member access (`p->x`).
-    Rule(Top::Paren)
-        .When(Cue::StructuralOp | Cue::LeadingSpace)
+    Rule(Top::Paren, Kind::AnyStructural)
+        .When(Cue::LeadingSpace)
         .Cost(8, "Close_ParenBeforeStructuralOp"),
-    Rule(Top::Square)
-        .When(Cue::StructuralOp | Cue::LeadingSpace | Cue::AssignmentOp)
+    Rule(Top::Square, Kind::Assignment)
+        .When(Cue::LeadingSpace)
         .Cost(8, "Close_ParenBeforeStructuralOp"),
     // A leaf directly following a value-ending token is illegal, and a `]`
     // between them fixes the adjacency (unlike `)`, `]` can be directly
@@ -880,11 +873,10 @@ constexpr BracketRule CloserRules[] = {
         .Cost(6, "Close_ParenBeforeSpacedOpen"),
     // A comparison or logical operator is unlikely inside square brackets or
     // call/index argument lists (but common in `if (...)` etc.).
-    Rule(Top::Square)
-        .When(Cue::ComparisonOp)
+    Rule(Top::Square, Kind::ComparisonOp)
         .Cost(8, "Close_ParenBeforeComparison"),
-    Rule(Top::Paren)
-        .When(Cue::ComparisonOp | Cue::CallParenTop)
+    Rule(Top::Paren, Kind::ComparisonOp)
+        .When(Cue::CallParenTop)
         .Cost(8, "Close_ParenBeforeComparison"),
     // A `,` with whitespace before it: formatted code has no space before a
     // comma, so a closer was likely deleted in the gap.
@@ -1070,18 +1062,12 @@ constexpr auto CueIf(bool holds, uint64_t bit) -> uint64_t {
 auto ComputeItemCues(const MismatchedBracketToken& token,
                      const MismatchedBracketToken* prev_token,
                      const Item* prev_item, uint64_t context_cues) -> uint64_t {
-  uint64_t cues =
-      context_cues | CueIf(token.has_leading_space, Cue::LeadingSpace) |
-      CueIf(token.has_wide_leading_space, Cue::WideGap) |
-      CueIf(token.prev_is_value_ending, Cue::PrevValueEnding) |
-      CueIf(PrevIsValueLike(token, prev_token), Cue::PrevValueLike) |
-      CueIf(token.is_structural_op, Cue::StructuralOp) |
-      CueIf(token.is_assignment_op, Cue::AssignmentOp) |
-      CueIf(token.is_as_op, Cue::AsOp) |
-      CueIf(token.is_comparison_op, Cue::ComparisonOp) |
-      CueIf(token.is_else_keyword, Cue::ElseKeyword) |
-      CueIf(token.is_struct_brace, Cue::StructBrace) |
-      CueIf(token.is_modifier_keyword, Cue::ModifierKeyword);
+  uint64_t cues = context_cues |
+                  CueIf(token.has_leading_space, Cue::LeadingSpace) |
+                  CueIf(token.has_wide_leading_space, Cue::WideGap) |
+                  CueIf(token.is_else_keyword, Cue::ElseKeyword) |
+                  CueIf(token.is_struct_brace, Cue::StructBrace) |
+                  CueIf(PrevIsValueLike(prev_token), Cue::PrevValueLike);
   if (prev_token != nullptr) {
     // `forall` requires a following `[`; the other paren keywords (`if`,
     // `while`, `for`, `match`) are statement introducers and require a `(`.
@@ -1092,18 +1078,19 @@ auto ComputeItemCues(const MismatchedBracketToken& token,
             CueIf(prev_token->is_paren_keyword && !wants_paren,
                   Cue::PrevKeywordWantsSquare) |
             CueIf(prev_token->has_leading_space, Cue::PrevHasLeadingSpace) |
-            CueIf(prev_token->is_structural_op, Cue::PrevIsStructuralOp) |
-            CueIf(prev_token->is_assignment_op, Cue::PrevIsAssignmentOp) |
+            CueIf(IsValueEndingKind(prev_token->kind), Cue::PrevValueEnding) |
+            CueIf(prev_token->kind == BracketTokenKind::As ||
+                      prev_token->kind == BracketTokenKind::StructuralOp,
+                  Cue::PrevIntroducesType) |
             PrevKindCue(prev_token->kind);
   }
   if (prev_item != nullptr) {
     // A name directly following `as` or `->` is a type, not something
     // callable, so empty parens after it are implausible.
-    cues |= CueIf(prev_item->token.kind == BracketTokenKind::Leaf,
-                  Cue::PrevItemIsLeaf) |
-            CueIf(prev_item->Has(Cue::PrevIsStructuralOp) &&
-                      !prev_item->Has(Cue::PrevIsAssignmentOp),
-                  Cue::PrevItemIsTypeName);
+    cues |=
+        CueIf(prev_item->token.kind == BracketTokenKind::Leaf,
+              Cue::PrevItemIsLeaf) |
+        CueIf(prev_item->Has(Cue::PrevIntroducesType), Cue::PrevItemIsTypeName);
   }
   return cues;
 }
@@ -1151,11 +1138,8 @@ constexpr BracketRule OpenerRules[] = {
         .Cost(3, "Open_AfterParenKeyword"),
     // A leaf or binding modifier directly following a value-ending token is
     // illegal; an opener here fixes the adjacency.
-    Rule(Ins::ParenLike, Kind::Leaf)
+    Rule(Ins::ParenLike, Kind::Leaf | Kind::ModifierKeyword)
         .When(Cue::PrevValueEnding)
-        .Cost(3, "Open_AtLeafAdjacency"),
-    Rule(Ins::ParenLike)
-        .When(Cue::PrevValueEnding | Cue::ModifierKeyword)
         .Cost(3, "Open_AtLeafAdjacency"),
     // A `.` with whitespace before it directly following a value-ending
     // token: likely a designator argument that lost its `(`, as in
@@ -1180,12 +1164,9 @@ constexpr BracketRule OpenerRules[] = {
         .Cost(4, "Open_AfterOpenGap"),
     // A wide whitespace gap before a token that could start a group suggests
     // an opener was deleted in the gap.
-    Rule(Ins::ParenLike, Kind::Opener | Kind::Leaf | Kind::Period)
+    Rule(Ins::ParenLike,
+         Kind::Opener | Kind::Leaf | Kind::Period | Kind::ModifierKeyword)
         .When(Cue::WideGap)
-        .Unless(Cue::FirstOnLine)
-        .Cost(CostCloseAtWideGap, "Open_AtWideGap"),
-    Rule(Ins::ParenLike)
-        .When(Cue::WideGap | Cue::ModifierKeyword)
         .Unless(Cue::FirstOnLine)
         .Cost(CostCloseAtWideGap, "Open_AtWideGap"),
     // An empty group directly after a name: `Op()`. Only applies after a
@@ -1322,35 +1303,28 @@ constexpr BracketRule AdvanceRules[] = {
     // A leaf, or a binding modifier keyword, directly following a value-ending
     // token is an illegal adjacency — unless an opener synthesized here, or a
     // `]`/`}` inserted here, repairs it.
-    Rule(Top::Any, Kind::Leaf)
+    Rule(Top::Any, Kind::Leaf | Kind::ModifierKeyword)
         .When(Cue::PrevValueEnding)
-        .Unless(Cue::OpenerHere | Cue::CloserFixesAdjacency)
-        .Cost(60, "Adv_LeafAdjacency"),
-    Rule(Top::Any, Kind::Other)
-        .When(Cue::ModifierKeyword | Cue::PrevValueEnding)
         .Unless(Cue::OpenerHere | Cue::CloserFixesAdjacency)
         .Cost(60, "Adv_LeafAdjacency"),
     // `=`, `->`, or `as` inside parens or square brackets. These *can* occur
     // there (default arguments, function types, casts), so this is mild; it
     // serves to prefer the earliest sensible close point. Casts `(x as T)` are
     // common enough that `as` keeps only a nominal preference.
-    Rule(Top::ParenLike, Kind::Other)
-        .When(Cue::StructuralOp | Cue::LeadingSpace)
-        .Unless(Cue::AsOp)
+    Rule(Top::ParenLike, Kind::Assignment | Kind::StructuralOp)
+        .When(Cue::LeadingSpace)
         .Cost(10, "Adv_StructuralOpInParen"),
-    Rule(Top::ParenLike, Kind::Other)
-        .When(Cue::StructuralOp | Cue::LeadingSpace | Cue::AsOp)
+    Rule(Top::ParenLike, Kind::As)
+        .When(Cue::LeadingSpace)
         .Cost(1, "Adv_AsOpInParen"),
     // A comparison or logical operator inside square brackets or a call.
-    Rule(Top::Square, Kind::Other)
-        .When(Cue::ComparisonOp)
-        .Cost(8, "Adv_ComparisonInSquare"),
-    Rule(Top::Paren, Kind::Other)
-        .When(Cue::ComparisonOp | Cue::CallParenTop)
+    Rule(Top::Square, Kind::ComparisonOp).Cost(8, "Adv_ComparisonInSquare"),
+    Rule(Top::Paren, Kind::ComparisonOp)
+        .When(Cue::CallParenTop)
         .Cost(8, "Adv_ComparisonInCall"),
     // A wide mid-line whitespace gap suggests a deleted bracket that this path
     // hasn't repaired.
-    Rule(Top::Any, Kind::Other)
+    Rule(Top::Any, Kind::AnyOther)
         .When(Cue::WideGap)
         .Unless(Cue::FirstOnLine | Cue::BracketInsertedHere)
         .Cost(10, "Adv_WideGapUnexplained"),
@@ -1519,10 +1493,10 @@ auto ReconstructCorrections(
 }
 
 // Solve a damaged region using layered beam search with tie detection.
-// `region_end_token` and `region_end_byte` identify the token directly after
-// the region, where any still-unclosed brackets are closed.
+// `region_end_token` is the token directly after the region, where any
+// still-unclosed brackets are closed.
 auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
-                          TokenIndex region_end_token, int32_t region_end_byte,
+                          TokenIndex region_end_token,
                           llvm::SmallVectorImpl<BracketCorrection>& corrections)
     -> void {
   if (items.size() > static_cast<size_t>(MaxRegionItemsForSearch)) {
@@ -1681,7 +1655,6 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                     .fix_action = BracketFixAction::InsertBefore,
                     .fix_token_index = item.token.token_index,
                     .fix_token_kind = ToTokenKind(closer_kind),
-                    .fix_byte_offset = item.token.byte_offset,
                     .origin = origin,
                 },
             .has_correction = true,
@@ -1716,7 +1689,6 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
               .is_synthetic = true,
               .is_struct_brace = is_struct_brace,
               .insertion_token_index = item.token.token_index,
-              .insertion_byte_offset = item.token.byte_offset,
               .origin = origin,
           });
           ParentEdge edge{
@@ -1797,8 +1769,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
               .effective_header_indent = item.effective_header_indent,
               .is_synthetic = false,
               .is_struct_brace = item.token.is_struct_brace,
-              .is_call_paren = item.token.prev_is_value_ending,
-              .insertion_byte_offset = item.token.byte_offset,
+              .is_call_paren = item.Has(Cue::PrevValueEnding),
           });
           try_enqueue_advance(std::move(next_stack), penalty);
         }
@@ -1845,7 +1816,6 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                   .fix_action = BracketFixAction::InsertBefore,
                   .fix_token_index = popped.insertion_token_index,
                   .fix_token_kind = ToTokenKind(popped.kind),
-                  .fix_byte_offset = popped.insertion_byte_offset,
                   .origin = popped.origin,
               };
               has_corr = true;
@@ -1921,7 +1891,6 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                       .fix_token_index = region_end_token,
                       .fix_token_kind =
                           ToTokenKind(MatchingClosingKind(entry.kind)),
-                      .fix_byte_offset = region_end_byte,
                       .origin = "Close_RegionEnd"},
               .has_correction = true,
           }},
@@ -2277,12 +2246,8 @@ auto FixMismatchedBrackets(llvm::ArrayRef<MismatchedBracketToken> tokens)
       TokenIndex region_end_token = (end < static_cast<int32_t>(items.size()))
                                         ? items[end].token.token_index
                                         : tokens.back().token_index;
-      int32_t region_end_byte = (end < static_cast<int32_t>(items.size()))
-                                    ? items[end].token.byte_offset
-                                    : tokens.back().byte_offset;
       auto slice = llvm::ArrayRef<Item>(items).slice(start, end - start);
-      SolveRegionCostBased(slice, region_end_token, region_end_byte,
-                           corrections);
+      SolveRegionCostBased(slice, region_end_token, corrections);
     }
   }
 

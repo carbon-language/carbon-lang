@@ -4,6 +4,7 @@
 
 #include "toolchain/lex/lex.h"
 
+#include <algorithm>
 #include <array>
 #include <limits>
 #include <optional>
@@ -1639,16 +1640,17 @@ class Lexer::ErrorRecoveryBuffer {
 
   // Insert a recovery token of kind `kind` before `insert_before`. Multiple
   // insertions before the same token are applied in reverse of the order they
-  // were requested (LIFO).
-  auto InsertBefore(TokenIndex insert_before, TokenKind kind) -> void {
-    AddInsertion(insert_before, kind, /*is_after=*/false);
+  // were requested (LIFO). Returns an id that `GetInsertedTokenIndex` maps to
+  // the inserted token, once `Apply` has run.
+  auto InsertBefore(TokenIndex insert_before, TokenKind kind) -> int {
+    return AddInsertion(insert_before, kind, /*is_after=*/false);
   }
 
   // Insert a recovery token of kind `kind` after `insert_after`. Multiple
   // insertions after the same token are applied in the order they were
-  // requested (FIFO).
-  auto InsertAfter(TokenIndex insert_after, TokenKind kind) -> void {
-    AddInsertion(insert_after, kind, /*is_after=*/true);
+  // requested (FIFO). Returns an id as `InsertBefore` does.
+  auto InsertAfter(TokenIndex insert_after, TokenKind kind) -> int {
+    return AddInsertion(insert_after, kind, /*is_after=*/true);
   }
 
   // Replace the given token with an error token. We do this immediately,
@@ -1663,12 +1665,8 @@ class Lexer::ErrorRecoveryBuffer {
   // Merge the recovery tokens into the token list of the tokenized buffer.
   auto Apply() -> void {
     llvm::stable_sort(insertions_, [](const Insertion& a, const Insertion& b) {
-      TokenIndex a_target =
-          a.is_after ? TokenIndex(a.anchor.index + 1) : a.anchor;
-      TokenIndex b_target =
-          b.is_after ? TokenIndex(b.anchor.index + 1) : b.anchor;
-      if (a_target != b_target) {
-        return a_target < b_target;
+      if (a.target() != b.target()) {
+        return a.target() < b.target();
       }
       if (a.is_after != b.is_after) {
         return a.is_after;
@@ -1690,32 +1688,25 @@ class Lexer::ErrorRecoveryBuffer {
     int new_size = old_tokens.size() + insertions_.size();
     buffer_->token_infos_.Reserve(new_size);
     buffer_->recovery_tokens_.resize(new_size);
+    inserted_token_index_.assign(insertions_.size(), TokenIndex::None);
 
     size_t ins_idx = 0;
     for (TokenIndex old_idx(0);
          old_idx.index < static_cast<int>(old_tokens.size()); ++old_idx.index) {
-      bool has_insertions =
-          (ins_idx < insertions_.size() &&
-           (insertions_[ins_idx].is_after
-                ? TokenIndex(insertions_[ins_idx].anchor.index + 1)
-                : insertions_[ins_idx].anchor) == old_idx);
+      bool has_insertions = ins_idx < insertions_.size() &&
+                            insertions_[ins_idx].target() == old_idx;
 
       if (has_insertions) {
         bool orig_leading_space = old_tokens.Get(old_idx).has_leading_space();
         bool is_first = true;
-        while (ins_idx < insertions_.size()) {
-          TokenIndex target =
-              insertions_[ins_idx].is_after
-                  ? TokenIndex(insertions_[ins_idx].anchor.index + 1)
-                  : insertions_[ins_idx].anchor;
-          if (target != old_idx) {
-            break;
-          }
+        while (ins_idx < insertions_.size() &&
+               insertions_[ins_idx].target() == old_idx) {
           TokenInfo info = insertions_[ins_idx].info.WithLeadingSpace(
               is_first ? orig_leading_space : false);
           is_first = false;
           TokenIndex added = buffer_->AddToken(info);
           buffer_->recovery_tokens_.set(added.index);
+          inserted_token_index_[insertions_[ins_idx].order] = added;
           ++ins_idx;
         }
         buffer_->token_infos_.Add(
@@ -1724,6 +1715,26 @@ class Lexer::ErrorRecoveryBuffer {
         buffer_->token_infos_.Add(old_tokens.Get(old_idx));
       }
     }
+  }
+
+  // Maps a token index from before `Apply` to the same token's index after it.
+  // Each insertion placed before the token shifted it up by one, so count those
+  // in the insertion list, which `Apply` leaves sorted by target. Must be
+  // called after `Apply`, except that with nothing to apply it is the identity
+  // either way.
+  auto GetNewTokenIndex(TokenIndex old_index) const -> TokenIndex {
+    const auto* first_after =
+        std::upper_bound(insertions_.begin(), insertions_.end(), old_index,
+                         [](TokenIndex index, const Insertion& insertion) {
+                           return index < insertion.target();
+                         });
+    return TokenIndex(old_index.index + (first_after - insertions_.begin()));
+  }
+
+  // Maps an id returned by `InsertBefore` or `InsertAfter` to the token that
+  // insertion added. `Apply` must have run.
+  auto GetInsertedTokenIndex(int insertion_id) const -> TokenIndex {
+    return inserted_token_index_[insertion_id];
   }
 
   // Perform bracket matching to fix cross-references between tokens. This must
@@ -1757,9 +1768,15 @@ class Lexer::ErrorRecoveryBuffer {
     bool is_after;
     int order;
     TokenInfo info;
+
+    // The token this insertion goes before, indexed in the stream as it was
+    // before `Apply`. `Apply` sorts insertions by this.
+    auto target() const -> TokenIndex {
+      return is_after ? TokenIndex(anchor.index + 1) : anchor;
+    }
   };
 
-  auto AddInsertion(TokenIndex anchor, TokenKind kind, bool is_after) -> void {
+  auto AddInsertion(TokenIndex anchor, TokenKind kind, bool is_after) -> int {
     CARBON_CHECK(anchor.index >= 0, "Invalid anchor token index.");
     CARBON_CHECK(anchor.index < static_cast<int>(buffer_->token_infos_.size()),
                  "Cannot insert past the end of file token.");
@@ -1794,11 +1811,16 @@ class Lexer::ErrorRecoveryBuffer {
         .order = order,
         .info = TokenInfo(kind, insert_leading_space, byte_offset),
     });
+    return order;
   }
 
   TokenizedBuffer* buffer_;
   llvm::SmallVector<Insertion> insertions_;
   bool any_error_tokens_ = false;
+
+  // Filled in by `Apply`: which token each insertion added, indexed by the id
+  // `AddInsertion` handed out.
+  llvm::SmallVector<TokenIndex> inserted_token_index_;
 };
 
 // Returns true if the token kind forms a complete primary expression on its
@@ -1832,32 +1854,19 @@ static auto IsLeafTokenKind(TokenKind kind) -> bool {
   }
 }
 
-// Returns true if the token kind is "value-ending": it can be the final token
-// of a primary expression. A leaf immediately following a value-ending token is
-// an illegal adjacency in a well-formed program. Note that `]` is not included:
-// a type can directly follow `]` in declarations such as
-// `impl forall [T: Copy] T as ...`.
-static auto IsValueEndingTokenKind(TokenKind kind) -> bool {
-  return IsLeafTokenKind(kind) || kind == TokenKind::CloseParen;
-}
-
 static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
     -> llvm::SmallVector<MismatchedBracketToken> {
   llvm::SmallVector<MismatchedBracketToken> input_tokens;
   input_tokens.reserve(buffer.size());
 
-  // Whether the previous token in the full stream (ignoring comments, which
-  // are not tokens) is value-ending, and where it ended.
-  bool prev_is_value_ending = false;
+  // Where the previous token in the full stream ended (comments are not
+  // tokens, so they don't interrupt this).
   int32_t prev_end_byte = -1;
   int32_t prev_line_index = -1;
 
   for (auto it = buffer.tokens().begin(); it != buffer.tokens().end(); ++it) {
     TokenIndex token = *it;
     auto kind = buffer.GetKind(token);
-    bool this_prev_is_value_ending = prev_is_value_ending;
-    prev_is_value_ending = IsValueEndingTokenKind(kind);
-
     int32_t byte_offset = buffer.GetByteOffset(token);
     auto token_line = buffer.GetLine(token);
     bool has_wide_leading_space = prev_end_byte >= 0 &&
@@ -1869,11 +1878,6 @@ static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
 
     bool is_paren_keyword = false;
     bool is_else_keyword = false;
-    bool is_structural_op = false;
-    bool is_assignment_op = false;
-    bool is_as_op = false;
-    bool is_comparison_op = false;
-    bool is_modifier_keyword = false;
     BracketTokenKind bracket_kind;
     switch (kind) {
       case TokenKind::OpenParen:
@@ -1949,20 +1953,20 @@ static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
         is_paren_keyword = true;
         break;
       case TokenKind::Equal:
-      case TokenKind::MinusGreater:
+        bracket_kind = BracketTokenKind::Assignment;
+        break;
       case TokenKind::As:
+        bracket_kind = BracketTokenKind::As;
+        break;
+      case TokenKind::MinusGreater:
       case TokenKind::Where:
-        bracket_kind = BracketTokenKind::Other;
-        is_structural_op = true;
-        is_assignment_op = kind == TokenKind::Equal;
-        is_as_op = kind == TokenKind::As;
+        bracket_kind = BracketTokenKind::StructuralOp;
         break;
       case TokenKind::Ref:
       case TokenKind::Unused:
       case TokenKind::Template:
       case TokenKind::Const:
-        bracket_kind = BracketTokenKind::Other;
-        is_modifier_keyword = true;
+        bracket_kind = BracketTokenKind::ModifierKeyword;
         break;
       case TokenKind::EqualEqual:
       case TokenKind::ExclaimEqual:
@@ -1972,8 +1976,7 @@ static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
       case TokenKind::GreaterEqual:
       case TokenKind::And:
       case TokenKind::Or:
-        bracket_kind = BracketTokenKind::Other;
-        is_comparison_op = true;
+        bracket_kind = BracketTokenKind::ComparisonOp;
         break;
       case TokenKind::FileEnd:
         bracket_kind = BracketTokenKind::FileEnd;
@@ -2016,17 +2019,10 @@ static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
         .line_indent = line_indent,
         .is_at_end_of_line = is_at_end_of_line,
         .is_struct_brace = is_struct_brace,
-        .prev_is_value_ending = this_prev_is_value_ending,
         .is_paren_keyword = is_paren_keyword,
         .is_else_keyword = is_else_keyword,
-        .is_structural_op = is_structural_op,
-        .is_assignment_op = is_assignment_op,
-        .is_as_op = is_as_op,
-        .is_comparison_op = is_comparison_op,
-        .is_modifier_keyword = is_modifier_keyword,
         .has_leading_space = buffer.HasLeadingWhitespace(token),
         .has_wide_leading_space = has_wide_leading_space,
-        .byte_offset = byte_offset,
     });
   }
 
@@ -2041,11 +2037,12 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
   auto input_tokens = CollectMismatchedBracketTokens(buffer_);
   auto corrections = FixMismatchedBrackets(input_tokens);
 
-  if (options_.bracket_corrections) {
-    *options_.bracket_corrections = corrections;
-  }
+  // For each correction, the insertion it requested, or -1 if it made none.
+  // Applying the fixes renumbers the token stream, so this is what lets the
+  // corrections be reported against the indexes the caller will see.
+  llvm::SmallVector<int> insertion_ids(corrections.size(), -1);
 
-  for (const auto& correction : corrections) {
+  for (auto [correction_index, correction] : llvm::enumerate(corrections)) {
     CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
                       "opening symbol without a corresponding closing symbol");
     CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
@@ -2063,8 +2060,8 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
       if (!correction.is_tied) {
         builder.Note(correction.fix_token_index, PossiblyMissingBracketHere,
                      correction.fix_token_kind);
-        fixes.InsertBefore(correction.fix_token_index,
-                           correction.fix_token_kind);
+        insertion_ids[correction_index] = fixes.InsertBefore(
+            correction.fix_token_index, correction.fix_token_kind);
       } else {
         fixes.ReplaceWithError(correction.diagnostic_token_index);
       }
@@ -2072,8 +2069,8 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
       if (!correction.is_tied) {
         builder.Note(correction.fix_token_index, PossiblyMissingBracketHere,
                      correction.fix_token_kind);
-        fixes.InsertAfter(correction.fix_token_index,
-                          correction.fix_token_kind);
+        insertion_ids[correction_index] = fixes.InsertAfter(
+            correction.fix_token_index, correction.fix_token_kind);
       } else {
         fixes.ReplaceWithError(correction.diagnostic_token_index);
       }
@@ -2086,11 +2083,27 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
 
   buffer_.has_errors_ = true;
 
-  if (fixes.empty()) {
-    return;
+  if (!fixes.empty()) {
+    fixes.Apply();
+    fixes.FixTokenCrossReferences();
   }
-  fixes.Apply();
-  fixes.FixTokenCrossReferences();
+
+  if (options_.bracket_corrections) {
+    // Report the corrections against the token stream the caller sees, rather
+    // than the one recovery started from, which no longer exists. A correction
+    // that inserted a bracket names the inserted token itself; one that only
+    // proposed a bracket, or replaced one with an error, names the token it
+    // still refers to.
+    for (auto [correction_index, correction] : llvm::enumerate(corrections)) {
+      correction.diagnostic_token_index =
+          fixes.GetNewTokenIndex(correction.diagnostic_token_index);
+      correction.fix_token_index =
+          insertion_ids[correction_index] >= 0
+              ? fixes.GetInsertedTokenIndex(insertion_ids[correction_index])
+              : fixes.GetNewTokenIndex(correction.fix_token_index);
+    }
+    *options_.bracket_corrections = std::move(corrections);
+  }
 }
 
 auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
