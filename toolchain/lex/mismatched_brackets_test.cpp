@@ -22,7 +22,6 @@ class MismatchedBracketsTest : public ::testing::Test {
         .kind = kind,
         .line = line,
         .line_indent = indent,
-        .column = indent + 1,
         .is_at_end_of_line = is_at_end_of_line,
         .is_struct_brace = is_struct_brace,
     };
@@ -245,14 +244,89 @@ TEST_F(MismatchedBracketsTest, MissingClosingBraceBeforeSiblingFunction) {
             8);  // Should insert before token 8 (fn Check3).
 }
 
-TEST_F(MismatchedBracketsTest, PathologicalInputFallsBackSafely) {
-  llvm::SmallVector<MismatchedBracketToken> tokens;
-  for (int32_t i = 0; i < 200; ++i) {
-    tokens.push_back(MakeToken(i,
-                               (i % 2 == 0) ? BracketTokenKind::OpenParen
-                                            : BracketTokenKind::CloseCurlyBrace,
-                               i + 1, (i % 4) * 2));
+TEST_F(MismatchedBracketsTest, PathologicalInputRecoversSafely) {
+  // Alternating `(` and `}`, so no bracket can ever match. The small case runs
+  // through the search; the large one exceeds the region size limit and takes
+  // the naive fallback. Either way recovery has to account for every bracket
+  // exactly once, and must not invent an out-of-range fix.
+  for (int32_t num_tokens : {200, 2000}) {
+    llvm::SmallVector<MismatchedBracketToken> tokens;
+    for (int32_t i = 0; i < num_tokens; ++i) {
+      tokens.push_back(MakeToken(i,
+                                 (i % 2 == 0)
+                                     ? BracketTokenKind::OpenParen
+                                     : BracketTokenKind::CloseCurlyBrace,
+                                 i + 1, (i % 4) * 2));
+    }
+
+    auto corrections = FixMismatchedBrackets(tokens);
+    EXPECT_THAT(corrections, SizeIs(num_tokens));
+    llvm::SmallVector<bool> diagnosed(num_tokens, false);
+    for (const auto& correction : corrections) {
+      ASSERT_GE(correction.diagnostic_token_index.index, 0);
+      ASSERT_LT(correction.diagnostic_token_index.index, num_tokens);
+      ASSERT_GE(correction.fix_token_index.index, 0);
+      ASSERT_LT(correction.fix_token_index.index, num_tokens);
+      EXPECT_FALSE(diagnosed[correction.diagnostic_token_index.index]);
+      diagnosed[correction.diagnostic_token_index.index] = true;
+    }
   }
+}
+
+TEST_F(MismatchedBracketsTest, FixesMissingOpenParenAfterIf) {
+  // 1  if x) {
+  // 2    y;
+  // 3  }
+  llvm::SmallVector<MismatchedBracketToken> tokens = {
+      MakeToken(0, BracketTokenKind::StatementIntroducer, 1, 1),
+      MakeToken(1, BracketTokenKind::Leaf, 1, 1),
+      MakeToken(2, BracketTokenKind::CloseParen, 1, 1),
+      MakeToken(3, BracketTokenKind::OpenCurlyBrace, 1, 1,
+                /*is_at_end_of_line=*/true),
+      MakeToken(4, BracketTokenKind::Leaf, 2, 3),
+      MakeToken(5, BracketTokenKind::Semi, 2, 3, /*is_at_end_of_line=*/true),
+      MakeToken(6, BracketTokenKind::CloseCurlyBrace, 3, 1,
+                /*is_at_end_of_line=*/true),
+  };
+  // `if` must be directly followed by `(`.
+  tokens[0].is_paren_keyword = true;
+  tokens[1].has_leading_space = true;
+
+  auto corrections = FixMismatchedBrackets(tokens);
+  ASSERT_THAT(corrections, SizeIs(1));
+  EXPECT_EQ(corrections[0].fix_action, BracketFixAction::InsertBefore);
+  EXPECT_EQ(corrections[0].fix_token_kind, TokenKind::OpenParen);
+  EXPECT_EQ(corrections[0].fix_token_index.index, 1);
+  EXPECT_FALSE(corrections[0].is_tied);
+}
+
+TEST_F(MismatchedBracketsTest, FixesMissingCloseParenBeforeSemi) {
+  // 1  fn F() {
+  // 2    G(x;
+  // 3  }
+  llvm::SmallVector<MismatchedBracketToken> tokens = {
+      MakeToken(0, BracketTokenKind::StatementIntroducer, 1, 1),
+      MakeToken(1, BracketTokenKind::OpenParen, 1, 1),
+      MakeToken(2, BracketTokenKind::CloseParen, 1, 1),
+      MakeToken(3, BracketTokenKind::OpenCurlyBrace, 1, 1,
+                /*is_at_end_of_line=*/true),
+      MakeToken(4, BracketTokenKind::Leaf, 2, 3),
+      MakeToken(5, BracketTokenKind::OpenParen, 2, 3),
+      MakeToken(6, BracketTokenKind::Leaf, 2, 3),
+      MakeToken(7, BracketTokenKind::Semi, 2, 3, /*is_at_end_of_line=*/true),
+      MakeToken(8, BracketTokenKind::CloseCurlyBrace, 3, 1,
+                /*is_at_end_of_line=*/true),
+  };
+  // `G(` is a call: the `(` directly follows a value-ending token.
+  tokens[5].prev_is_value_ending = true;
+
+  // A `;` can't appear inside parens, so the `)` belongs directly before it.
+  auto corrections = FixMismatchedBrackets(tokens);
+  ASSERT_THAT(corrections, SizeIs(1));
+  EXPECT_EQ(corrections[0].fix_action, BracketFixAction::InsertBefore);
+  EXPECT_EQ(corrections[0].fix_token_kind, TokenKind::CloseParen);
+  EXPECT_EQ(corrections[0].fix_token_index.index, 7);
+  EXPECT_FALSE(corrections[0].is_tied);
 }
 
 }  // namespace

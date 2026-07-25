@@ -1987,7 +1987,6 @@ static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
     auto line = token_line;
     int32_t line_indent =
         (kind == TokenKind::FileEnd) ? 0 : buffer.GetIndentColumnNumber(line);
-    int32_t column = buffer.GetColumnNumber(token);
 
     auto next_it = std::next(it);
     bool is_at_end_of_line =
@@ -2015,7 +2014,6 @@ static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
         .kind = bracket_kind,
         .line = line.index,
         .line_indent = line_indent,
-        .column = column,
         .is_at_end_of_line = is_at_end_of_line,
         .is_struct_brace = is_struct_brace,
         .prev_is_value_ending = this_prev_is_value_ending,

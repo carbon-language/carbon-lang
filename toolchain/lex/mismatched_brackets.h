@@ -107,7 +107,6 @@ struct MismatchedBracketToken {
   BracketTokenKind kind;
   int32_t line;
   int32_t line_indent;
-  int32_t column;
 
   // Whether this token is the last non-comment token on its line.
   bool is_at_end_of_line = false;

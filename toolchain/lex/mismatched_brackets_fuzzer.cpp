@@ -122,33 +122,58 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
     return 0;
   }
 
+  // Every kind except `FileEnd`, which only ever appears as the final token.
+  constexpr int32_t NumGeneratedKinds =
+      static_cast<int32_t>(BracketTokenKind::Other);
+  static_assert(static_cast<int32_t>(BracketTokenKind::FileEnd) ==
+                NumGeneratedKinds - 1);
+
+  // Bytes per generated token: kind, indentation, line advance, and two bytes
+  // of flags. Most recovery cues come from the flags, so leaving them out
+  // would make most of the rules unreachable.
+  constexpr size_t BytesPerToken = 5;
+
   llvm::SmallVector<MismatchedBracketToken> tokens;
-  tokens.reserve(size / 4);
+  tokens.reserve(size / BytesPerToken);
 
   size_t i = 0;
   int32_t token_idx = 0;
   int32_t current_line = 1;
+  int32_t byte_offset = 0;
 
-  while (i + 4 <= size) {
+  while (i + BytesPerToken <= size) {
     uint8_t kind_byte = data[i++];
     uint8_t indent_byte = data[i++];
-    uint8_t flags_byte = data[i++];
     uint8_t line_delta = data[i++];
+    uint8_t flags_byte = data[i++];
+    uint8_t op_byte = data[i++];
 
-    auto kind = static_cast<BracketTokenKind>(kind_byte % 9);
+    auto kind = static_cast<BracketTokenKind>(kind_byte % NumGeneratedKinds);
+    if (kind == BracketTokenKind::FileEnd) {
+      kind = BracketTokenKind::Other;
+    }
     int32_t indent = (indent_byte % 32) * 2;
-    bool is_eol = (flags_byte & 1) != 0;
-    bool is_struct = (flags_byte & 2) != 0;
-    current_line += (line_delta % 3);
+    current_line += line_delta % 3;
+    byte_offset += 1 + (indent_byte % 4);
 
     tokens.push_back(MismatchedBracketToken{
         .token_index = TokenIndex(token_idx++),
         .kind = kind,
         .line = current_line,
         .line_indent = indent,
-        .column = indent + 1,
-        .is_at_end_of_line = is_eol,
-        .is_struct_brace = is_struct,
+        .is_at_end_of_line = (flags_byte & 1) != 0,
+        .is_struct_brace = (flags_byte & 2) != 0,
+        .prev_is_value_ending = (flags_byte & 4) != 0,
+        .is_paren_keyword = (flags_byte & 8) != 0,
+        .is_else_keyword = (flags_byte & 16) != 0,
+        .is_structural_op = (op_byte & 1) != 0,
+        .is_assignment_op = (op_byte & 2) != 0,
+        .is_as_op = (op_byte & 4) != 0,
+        .is_comparison_op = (op_byte & 8) != 0,
+        .is_modifier_keyword = (op_byte & 16) != 0,
+        .has_leading_space = (flags_byte & 32) != 0,
+        .has_wide_leading_space = (flags_byte & 64) != 0,
+        .byte_offset = byte_offset,
     });
   }
 
@@ -157,9 +182,8 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
       .kind = BracketTokenKind::FileEnd,
       .line = current_line,
       .line_indent = 0,
-      .column = 1,
       .is_at_end_of_line = true,
-      .is_struct_brace = false,
+      .byte_offset = byte_offset + 1,
   });
 
   auto corrections = FixMismatchedBrackets(tokens);
