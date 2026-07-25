@@ -214,6 +214,8 @@ cc_library(
         ":token_index",
         ":token_kind",
         "//common:check",
+        "//common:hashing",
+        "//common:map",
         "@llvm-project//llvm:Support",
     ],
 )

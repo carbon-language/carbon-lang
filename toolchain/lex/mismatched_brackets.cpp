@@ -13,9 +13,9 @@
 #include <optional>
 
 #include "common/check.h"
+#include "common/hashing.h"
+#include "common/map.h"
 #include "llvm/ADT/BitmaskEnum.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Hashing.h"
 
 namespace Carbon::Lex {
 namespace {
@@ -220,40 +220,50 @@ struct Item {
   }
 };
 
-// Represents an unclosed opening bracket on the search stack.
-struct OpenBracketInfo {
+// The parts of an unclosed opening bracket that make a search state distinct.
+// Compared and hashed as a whole, so everything here must matter to the search:
+// two stacks that agree on these are interchangeable.
+//
+// Fields are ordered so the type has no padding, which
+// `has_unique_object_representations` requires and `Carbon::Map` relies on to
+// hash and compare every byte.
+struct OpenBracketKey {
   // The real opener token, or None for a synthetic opener.
   TokenIndex token_index = TokenIndex::None;
+  // For a synthetic opener, where it would be inserted.
+  TokenIndex insertion_token_index = TokenIndex::None;
   // Index of the real opener in the input token array, or -1 if synthetic.
   int32_t token_pos = -1;
-  Kind kind;
   int32_t line = -1;
   // Indentation of the line containing the opener.
   int32_t line_indent = 0;
   // Indentation of the start of the statement or declaration containing the
   // opener.
   int32_t effective_header_indent = 0;
+  BracketTokenKind kind;
   bool is_synthetic = false;
   bool is_struct_brace = false;
   // Whether this is a paren/square bracket directly following a value-ending
-  // token (a call or index), rather than following a keyword like `if`.
-  // Derived from the opener token, so not part of equality.
+  // token (a call or index), rather than following a keyword like `if`. This is
+  // a function of the opener token, so comparing it is redundant with
+  // `token_index` for a real opener, and it is always false for a synthetic
+  // one; it's included only because excluding it would cost more than it saves.
   bool is_call_paren = false;
-  // For a synthetic opener, where it would be inserted.
-  TokenIndex insertion_token_index = TokenIndex::None;
-  // For a synthetic opener, the rule that proposed it, for diagnostics.
-  const char* origin = "";
 
-  friend auto operator==(const OpenBracketInfo& a, const OpenBracketInfo& b)
-      -> bool {
-    return a.token_index == b.token_index && a.token_pos == b.token_pos &&
-           a.kind == b.kind && a.line == b.line &&
-           a.line_indent == b.line_indent &&
-           a.effective_header_indent == b.effective_header_indent &&
-           a.is_synthetic == b.is_synthetic &&
-           a.is_struct_brace == b.is_struct_brace &&
-           a.insertion_token_index == b.insertion_token_index;
-  }
+  friend auto operator==(const OpenBracketKey& lhs, const OpenBracketKey& rhs)
+      -> bool = default;
+};
+
+static_assert(std::has_unique_object_representations_v<OpenBracketKey>,
+              "Padding would leave indeterminate bytes for hashing.");
+
+// An unclosed opening bracket on the search stack, plus the bookkeeping that
+// says nothing about which state this is.
+struct OpenBracketInfo : OpenBracketKey {
+  // For a synthetic opener, the rule that proposed it, for diagnostics. Two
+  // openers that differ only in which rule proposed them are the same state, so
+  // this is deliberately outside the key.
+  const char* origin = "";
 };
 
 // Computes the associated line indentation for a token by scanning backwards,
@@ -536,18 +546,14 @@ auto SolveNaive(llvm::ArrayRef<Item> items,
   }
 }
 
+// Hashes the whole of each entry's key, so that equal stacks always hash equal:
+// the search relies on that to find a state to merge into.
 auto HashStack(llvm::ArrayRef<OpenBracketInfo> stack) -> uint64_t {
-  uint64_t h = stack.size();
-  for (const auto& info : stack) {
-    uint64_t k =
-        (static_cast<uint64_t>(info.token_index.index) << 32) ^
-        (static_cast<uint64_t>(info.insertion_token_index.index) << 8) ^
-        static_cast<uint64_t>(info.kind) ^
-        (static_cast<uint64_t>(info.is_struct_brace) << 7) ^
-        (static_cast<uint64_t>(info.line_indent) << 16);
-    h ^= k + 0x9e3779b9 + (h << 6) + (h >> 2);
+  auto hash = static_cast<uint64_t>(stack.size());
+  for (const OpenBracketKey& key : stack) {
+    hash = static_cast<uint64_t>(HashValue(key, hash));
   }
-  return h;
+  return hash;
 }
 
 // A search state is identified by its open-bracket stack plus which closer (if
@@ -555,8 +561,7 @@ auto HashStack(llvm::ArrayRef<OpenBracketInfo> stack) -> uint64_t {
 // per-layer dedup map.
 auto StateHash(llvm::ArrayRef<OpenBracketInfo> stack, Kind closer_inserted)
     -> uint64_t {
-  return HashStack(stack) ^
-         (static_cast<uint64_t>(closer_inserted) * 0x5bd1e995);
+  return static_cast<uint64_t>(HashValue(closer_inserted, HashStack(stack)));
 }
 
 // Whether two parent edges represent the same predecessor and the same repair,
@@ -1463,12 +1468,13 @@ auto ReconstructCorrections(
   // Two insertions of the same bracket kind are equivalent if every token
   // between their insertion points is that same kind: inserting a `)` on
   // either side of an existing `)` produces the same token sequence.
-  llvm::DenseMap<int32_t, int32_t> token_to_item;
+  Map<int32_t, int32_t> token_to_item;
   for (auto [idx, region_item] : llvm::enumerate(items)) {
-    token_to_item[region_item.token.token_index.index] =
-        static_cast<int32_t>(idx);
+    token_to_item.Update(region_item.token.token_index.index,
+                         static_cast<int32_t>(idx));
   }
-  token_to_item[region_end_token.index] = static_cast<int32_t>(items.size());
+  token_to_item.Update(region_end_token.index,
+                       static_cast<int32_t>(items.size()));
   // Compares only the fixes, not the diagnosed brackets: two paths that
   // blame different brackets but repair the token stream identically don't
   // disagree about the repair.
@@ -1483,12 +1489,12 @@ auto ReconstructCorrections(
     if (a.fix_action != BracketFixAction::InsertBefore) {
       return false;
     }
-    auto a_it = token_to_item.find(a.fix_token_index.index);
-    auto b_it = token_to_item.find(b.fix_token_index.index);
-    if (a_it == token_to_item.end() || b_it == token_to_item.end()) {
+    int32_t* a_item = token_to_item[a.fix_token_index.index];
+    int32_t* b_item = token_to_item[b.fix_token_index.index];
+    if (a_item == nullptr || b_item == nullptr) {
       return false;
     }
-    auto [lo, hi] = std::minmax(a_it->second, b_it->second);
+    auto [lo, hi] = std::minmax(*a_item, *b_item);
     for (int32_t p = lo; p < hi; ++p) {
       if (items[p].Has(Cue::CollapsedBlock) ||
           ToTokenKind(items[p].token.kind) != a.fix_token_kind) {
@@ -1544,7 +1550,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
 
   auto try_add_to_layer =
       [&](llvm::SmallVectorImpl<int32_t>& layer_indices,
-          llvm::DenseMap<uint64_t, int32_t>& layer_map, int32_t next_item_idx,
+          Map<uint64_t, int32_t>& layer_map, int32_t next_item_idx,
           llvm::SmallVector<OpenBracketInfo, 4> next_stack,
           Kind closer_inserted, int32_t next_cost, ParentEdge edge,
           llvm::SmallVectorImpl<int32_t>* worklist = nullptr) {
@@ -1569,11 +1575,11 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
           }
         };
         uint64_t stack_hash = StateHash(next_stack, closer_inserted);
-        auto map_it = layer_map.find(stack_hash);
-        if (map_it != layer_map.end()) {
-          if (arena[map_it->second].stack == next_stack &&
-              arena[map_it->second].closer_inserted == closer_inserted) {
-            merge_into(map_it->second);
+        int32_t* hash_match = layer_map[stack_hash];
+        if (hash_match != nullptr) {
+          if (arena[*hash_match].stack == next_stack &&
+              arena[*hash_match].closer_inserted == closer_inserted) {
+            merge_into(*hash_match);
             return;
           }
           // On hash collision, fall back to a linear scan over the layer.
@@ -1594,7 +1600,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
             .parent_edges = {edge},
         });
         layer_indices.push_back(new_idx);
-        layer_map[stack_hash] = new_idx;
+        layer_map.Update(stack_hash, new_idx);
         if (worklist) {
           worklist->push_back(new_idx);
         }
@@ -1617,7 +1623,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
       .parent_edges = {},
   });
   llvm::SmallVector<int32_t> current_layer = {0};
-  llvm::DenseMap<uint64_t, int32_t> layer_map;
+  Map<uint64_t, int32_t> layer_map;
 
   for (int32_t i = 0; i < static_cast<int32_t>(items.size()); ++i) {
     const auto& item = items[i];
@@ -1626,8 +1632,8 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
     // Step 1: Epsilon moves within layer `i` (insertions before token `i`).
     if (kind != Kind::FileEnd) {
       for (int32_t idx : current_layer) {
-        layer_map[StateHash(arena[idx].stack, arena[idx].closer_inserted)] =
-            idx;
+        layer_map.Update(
+            StateHash(arena[idx].stack, arena[idx].closer_inserted), idx);
       }
 
       // Phase 1a: Synthetic closers. Uses a worklist so that several groups
@@ -1711,16 +1717,16 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                                   int32_t add_cost, const char* origin) {
           auto next_stack = current.stack;
           next_stack.push_back(OpenBracketInfo{
-              .token_index = TokenIndex::None,
-              .token_pos = -1,
-              .kind = open_kind,
-              .line = item.token.line,
-              .line_indent = item.token.line_indent,
-              .effective_header_indent = item.effective_header_indent,
-              .is_synthetic = true,
-              .is_struct_brace = is_struct_brace,
-              .insertion_token_index = item.token.token_index,
-              .origin = origin,
+              OpenBracketKey{
+                  .insertion_token_index = item.token.token_index,
+                  .line = item.token.line,
+                  .line_indent = item.token.line_indent,
+                  .effective_header_indent = item.effective_header_indent,
+                  .kind = open_kind,
+                  .is_synthetic = true,
+                  .is_struct_brace = is_struct_brace,
+              },
+              origin,
           });
           ParentEdge edge{
               .parent_node_index = node_idx,
@@ -1749,7 +1755,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
                        /*is_struct_brace=*/true);
       }
 
-      layer_map.clear();
+      layer_map.Clear();
       prune_beam(current_layer);
     }
 
@@ -1790,17 +1796,16 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
         // Advance and push opener onto stack.
         if (current.stack.size() < MaxSearchStackDepth) {
           auto next_stack = current.stack;
-          next_stack.push_back(OpenBracketInfo{
+          next_stack.push_back(OpenBracketInfo{OpenBracketKey{
               .token_index = item.token.token_index,
               .token_pos = item.token_start_index,
-              .kind = kind,
               .line = item.token.line,
               .line_indent = item.token.line_indent,
               .effective_header_indent = item.effective_header_indent,
-              .is_synthetic = false,
+              .kind = kind,
               .is_struct_brace = item.token.is_struct_brace,
               .is_call_paren = item.Has(Cue::PrevValueEnding),
-          });
+          }});
           try_enqueue_advance(std::move(next_stack), penalty);
         }
 
@@ -1871,7 +1876,7 @@ auto SolveRegionCostBased(llvm::ArrayRef<Item> items,
     }
 
     // Step 3: Beam Pruning.
-    layer_map.clear();
+    layer_map.Clear();
     prune_beam(next_layer);
     current_layer = std::move(next_layer);
   }
