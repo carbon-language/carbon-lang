@@ -80,15 +80,11 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
         rebuild_callback_(rebuild) {}
 
   auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
-    // FacetTypes are concrete even if they have `.Self` inside them, but we
-    // don't recurse into FacetTypes, so we can use this as a base case. This
-    // avoids infinite recursion on TypeType and ErrorInst.
-    if (context().constant_values().Get(inst_id).is_concrete()) {
-      return FullySubstituted;
-    }
-    // Don't recurse into nested facet types, even if they are symbolic. Leave
-    // their `.Self` as is.
-    if (context().insts().Is<SemIR::FacetType>(inst_id)) {
+    // We need to recurse into facet types that are concrete to find `.Self`,
+    // because the top level instruction being substituted could be such a facet
+    // type. So we can't early out if the inst has a concrete constant value.
+    if (inst_id == SemIR::TypeType::TypeInstId ||
+        inst_id == SemIR::ErrorInst::InstId) {
       return FullySubstituted;
     }
 
@@ -103,7 +99,7 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
       return FullySubstituted;
     }
 
-    return SubstOperands;
+    return SubstOperandsSkipType;
   }
 
   auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)

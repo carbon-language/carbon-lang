@@ -5,12 +5,12 @@
 #include <initializer_list>
 #include <optional>
 #include <tuple>
-#include <typeinfo>
 #include <utility>
 
 #include "common/error.h"
 #include "common/find.h"
 #include "common/struct_reflection.h"
+#include "llvm/Support/TypeName.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/parse/typed_nodes.h"
@@ -288,13 +288,13 @@ template <typename T>
 struct Extractable<std::optional<T>> {
   static auto Extract(NodeExtractor& extractor)
       -> std::optional<std::optional<T>> {
-    extractor.MaybeTrace("Optional {0}: begin\n", typeid(T).name());
+    extractor.MaybeTrace("Optional {0}: begin\n", llvm::getTypeName<T>());
     auto checkpoint = extractor.Checkpoint();
     std::optional<T> value = Extractable<T>::Extract(extractor);
     if (value) {
-      extractor.MaybeTrace("Optional {0}: found\n", typeid(T).name());
+      extractor.MaybeTrace("Optional {0}: found\n", llvm::getTypeName<T>());
     } else {
-      extractor.MaybeTrace("Optional {0}: missing\n", typeid(T).name());
+      extractor.MaybeTrace("Optional {0}: missing\n", llvm::getTypeName<T>());
       extractor.RestoreCheckpoint(checkpoint);
     }
     return value;
@@ -349,7 +349,7 @@ auto NodeExtractor::ExtractTupleLikeType(
     std::index_sequence<Index...> /*indices*/, std::tuple<U...>* /*type*/)
     -> std::optional<T> {
   std::tuple<std::optional<U>...> fields;
-  MaybeTrace("Aggregate {0}: begin\n", typeid(T).name());
+  MaybeTrace("Aggregate {0}: begin\n", llvm::getTypeName<T>());
   // Use a fold over the `=` operator to parse fields from right to left.
   [[maybe_unused]] int unused;
   bool ok = true;
@@ -358,11 +358,11 @@ auto NodeExtractor::ExtractTupleLikeType(
                         .has_value()),
         unused) = ... = 0));
   if (!ok) {
-    MaybeTrace("Aggregate {0}: error\n", typeid(T).name());
+    MaybeTrace("Aggregate {0}: error\n", llvm::getTypeName<T>());
     return std::nullopt;
   }
 
-  MaybeTrace("Aggregate {0}: success\n", typeid(T).name());
+  MaybeTrace("Aggregate {0}: success\n", llvm::getTypeName<T>());
   return T{std::move(std::get<Index>(fields).value())...};
 }
 

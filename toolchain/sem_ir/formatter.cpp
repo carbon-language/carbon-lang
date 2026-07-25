@@ -11,6 +11,7 @@
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Support/TypeName.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
@@ -1086,7 +1087,7 @@ auto Formatter::FormatInstArgAndKind(IdAndKind arg_and_kind) -> void {
     } else if constexpr (std::is_same_v<IdT, IdAndKind::NoneType>) {
       // Do nothing
     } else {
-      CARBON_FATAL("Missing FormatArg for {0}", typeid(IdT).name());
+      CARBON_FATAL("Missing FormatArg for {0}", llvm::getTypeName<IdT>());
     }
   });
 }

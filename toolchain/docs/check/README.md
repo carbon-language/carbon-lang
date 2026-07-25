@@ -137,6 +137,9 @@ listed in the `SemIR::IdKind` enumeration defined in
 -   `SemIR::InstId`: Refers to a specific instance of an instruction. For
     example, this should be used if the operand may have side-effects or a
     meaningful location.
+-   `SemIR::TypeInstId`: Refers to a specific instance of an instruction of type
+    `type`. This should be used instead of `InstId` if you know that the type of
+    the instruction is always `type` (or the "error" type).
 -   `SemIR::ConstantId`: An abstract reference to a known constant value. This
     should be used instead of `InstId` if you care only about the identity of
     the value and not how it was formed.
