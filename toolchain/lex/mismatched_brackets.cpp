@@ -51,7 +51,7 @@ constexpr size_t MaxOptimalPaths = 100;
 // "give up on this bracket" fallbacks; a good targeted repair should beat
 // them, and a dubious one should lose to them.
 constexpr int32_t CostReplaceClosing = 30;
-constexpr int32_t CostReplaceOpening = 100;
+constexpr int32_t CostReplaceOpening = 50;
 
 // Costs of inserting a synthetic closing bracket in front of the current
 // token live in the `CloserRules` table below, which is keyed by how strongly
@@ -924,16 +924,16 @@ constexpr BracketRule CloserRules[] = {
     // would be written unspaced (`f(.a = 1)`).
     Rule(Top::ParenLike, Kind::Comma)
         .When(Cue::AfterOpenTop)
-        .Cost(8, "Close_EmptyGroup"),
+        .Cost(4, "Close_EmptyGroup"),
     Rule(Top::ParenLike, Kinds::BinaryConnector)
         .When(Cue::AfterOpenTop)
-        .Cost(8, "Close_EmptyGroup"),
+        .Cost(4, "Close_EmptyGroup"),
     Rule(Top::ParenLike, Kind::Period)
         .When(Cue::AfterOpenTop, Cue::LeadingSpace)
-        .Cost(8, "Close_EmptyGroup"),
+        .Cost(4, "Close_EmptyGroup"),
     // A `;` can't appear inside parens or square brackets at all.
     Rule(Top::ParenLike, Kind::Semi).Cost(6, "Close_ParenBeforeSemi"),
-    Rule(Top::ParenLike).When(Cue::Cascade).Cost(6, "Close_ParenCascade"),
+    Rule(Top::ParenLike).When(Cue::Cascade).Cost(3, "Close_ParenCascade"),
     // A `{` starting a block means the paren should have closed: `if (c) {`,
     // `while (c) {`. A struct-literal `{...}` can legitimately sit inside a
     // *call* paren (`f({.x = 1})`), but not inside a keyword or grouping paren
@@ -943,7 +943,7 @@ constexpr BracketRule CloserRules[] = {
     // should close at an earlier cue, or not here at all.
     Rule(Top::Paren, Kind::OpenCurlyBrace)
         .NotAll(Cue::StructBrace, Cue::CallParenTop)
-        .Cost(8, "Close_ParenBeforeBrace"),
+        .Cost(11, "Close_ParenBeforeBrace"),
     // `=` can directly follow both `)` and `]`, but `->` and `as` only
     // plausibly follow `)`. An unspaced structural operator is not a cue:
     // formatted code spaces these operators, and an unspaced `->` is a
@@ -975,10 +975,10 @@ constexpr BracketRule CloserRules[] = {
     // A comparison or logical operator is unlikely inside square brackets or
     // call/index argument lists (but common in `if (...)` etc.).
     Rule(Top::Square, Kind::ComparisonOp)
-        .Cost(8, "Close_ParenBeforeComparison"),
+        .Cost(11, "Close_ParenBeforeComparison"),
     Rule(Top::Paren, Kind::ComparisonOp)
         .When(Cue::CallParenTop)
-        .Cost(8, "Close_ParenBeforeComparison"),
+        .Cost(11, "Close_ParenBeforeComparison"),
     // A `,` with whitespace before it: formatted code has no space before a
     // comma, so a closer was likely deleted in the gap.
     Rule(Top::ParenLike, Kind::Comma)
@@ -1292,7 +1292,7 @@ constexpr BracketRule OpenerRules[] = {
         .Unless(Cue::FirstOnLine)
         .Cost(8, "Open_EmptyParensAfterClose"),
     // A `(` or `[` anywhere else an expression could start.
-    Rule(Ins::ParenLike).Cost(35, "Open_ParenBaseline"),
+    Rule(Ins::ParenLike).Cost(70, "Open_ParenBaseline"),
     // A scope `{` is never inserted directly before another opener: the body
     // it would open starts with that opener, so the `{` belongs before it only
     // via one of the rules above.
@@ -1303,7 +1303,7 @@ constexpr BracketRule OpenerRules[] = {
         .When(Cue::FollowsStatementHeader)
         .Unless(Cue::HeaderHasOpenCurly)
         .Cost(8, "Open_ScopeAfterHeader"),
-    Rule(Ins::ScopeBrace).Cost(60, "Open_ScopeBaseline"),
+    Rule(Ins::ScopeBrace).Cost(30, "Open_ScopeBaseline"),
     // A struct `{` before a `.` designator that isn't a member access.
     Rule(Ins::StructBrace, Kind::Period)
         .Unless(Cue::PrevValueEnding)
@@ -1414,7 +1414,7 @@ constexpr BracketRule AdvanceRules[] = {
     // common enough that `as` keeps only a nominal preference.
     Rule(Top::ParenLike, Kind::Assignment, Kind::StructuralOp)
         .When(Cue::LeadingSpace)
-        .Cost(10, "Adv_StructuralOpInParen"),
+        .Cost(5, "Adv_StructuralOpInParen"),
     Rule(Top::ParenLike, Kind::As)
         .When(Cue::LeadingSpace)
         .Cost(1, "Adv_AsOpInParen"),
