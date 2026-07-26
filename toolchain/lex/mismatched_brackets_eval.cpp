@@ -278,10 +278,10 @@ namespace {
 enum class CorruptionMode {
   // Blank each deleted bracket with a space (byte offsets preserved).
   Blank,
-  // Delete each bracket character, closing the gap (no leftover space). More
-  // realistic, and doesn't leave the whitespace artifacts the algorithm can
-  // key on.
-  DeleteGap,
+  // Delete each bracket character, closing the gap so that no space is left
+  // behind. More realistic, and doesn't leave the whitespace artifacts the
+  // algorithm can key on.
+  Gapless,
   // Truncate the file at a random token (models incomplete, in-development
   // code); recovery should close all still-open brackets at the new EOF.
   Truncate,
@@ -560,9 +560,9 @@ static auto MakeCorruptedCase(CorruptionMode mode,
     -> std::optional<CorruptedCase> {
   switch (mode) {
     case CorruptionMode::Blank:
-    case CorruptionMode::DeleteGap:
+    case CorruptionMode::Gapless:
       return MakeDeletionCase(buffer, source_text, pairs, d_count,
-                              /*close_gap=*/mode == CorruptionMode::DeleteGap,
+                              /*close_gap=*/mode == CorruptionMode::Gapless,
                               rng);
     case CorruptionMode::Truncate:
       return MakeTruncateCase(buffer, source_text, rng);
@@ -883,8 +883,8 @@ auto EvalOptions::Resolve() -> bool {
 
   if (mode_name == "blank") {
     mode = CorruptionMode::Blank;
-  } else if (mode_name == "gap") {
-    mode = CorruptionMode::DeleteGap;
+  } else if (mode_name == "gapless") {
+    mode = CorruptionMode::Gapless;
   } else if (mode_name == "truncate") {
     mode = CorruptionMode::Truncate;
   } else if (mode_name == "truncate-region") {
@@ -1065,7 +1065,7 @@ auto Evaluator::RunTrial(const FileContext& file, const DSpec& spec,
   if (IsTruncateMode(options_.mode)) {
     AcceptFileEndOffset(buffer, corrupted_text, deleted_tokens);
   }
-  if ((options_.mode == CorruptionMode::DeleteGap ||
+  if ((options_.mode == CorruptionMode::Gapless ||
        options_.mode == CorruptionMode::TruncateRegion) &&
       TokensWereFused(buffer, corrupted_text, deleted_tokens)) {
     ++report_.merged_skips;
@@ -1427,12 +1427,12 @@ static auto AddOptions(CommandLine::CommandBuilder& b, EvalOptions& options)
           .name = "mode",
           .value_name = "MODE",
           .help = "How to corrupt each file: 'blank' (replace brackets with "
-                  "spaces; the default), 'gap' (delete bracket characters, "
-                  "closing the gap), 'truncate' (cut the file at a random "
-                  "token; recovery should close all open brackets at EOF), "
-                  "or 'truncate-region' (delete from inside a random pair "
-                  "through its close, as when typing new code in an existing "
-                  "class).",
+                  "spaces; the default), 'gapless' (delete bracket characters, "
+                  "leaving no space behind), 'truncate' (cut the file at a "
+                  "random token; recovery should close all open brackets at "
+                  "EOF), or 'truncate-region' (delete from inside a random "
+                  "pair through its close, as when typing new code in an "
+                  "existing class).",
       },
       [&](auto& arg_b) { arg_b.Set(&options.mode_name); });
 
