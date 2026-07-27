@@ -504,7 +504,7 @@ auto CheckParseTrees(
   if (options.share_cpp_ast) {
     // TODO: Remove dependence on properties of the first unit here.
     auto shared_cpp_domain = InitializeCppDomain(
-        *unit_infos.front().unit->consumer,
+        unit_infos.front().err_tracker,
         unit_infos.front().unit->sem_ir->filename(), fs,
         unit_infos.front().unit->llvm_context, clang_invocation);
     if (shared_cpp_domain) {
@@ -515,14 +515,15 @@ auto CheckParseTrees(
     }
   } else {
     for (auto& unit_info : unit_infos) {
-      auto cpp_domain = InitializeCppDomain(
-          *unit_info.unit->consumer, unit_info.unit->sem_ir->filename(), fs,
-          unit_info.unit->llvm_context, clang_invocation);
-      if (!cpp_domain) {
-        break;
+      if (unit_info.cpp_imports.empty()) {
+        continue;
       }
-      unit_info.cpp_domain = cpp_domain;
-      cpp_domains.push_back(cpp_domain);
+      unit_info.cpp_domain = InitializeCppDomain(
+          unit_info.err_tracker, unit_info.unit->sem_ir->filename(), fs,
+          unit_info.unit->llvm_context, clang_invocation);
+      if (unit_info.cpp_domain) {
+        cpp_domains.push_back(unit_info.cpp_domain);
+      }
     }
   }
 
