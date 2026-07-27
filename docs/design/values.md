@@ -349,7 +349,8 @@ private interface SubobjectDestroy {
 A type has _trivial destruction_ if, and only if, the type and all of its
 subobjects use the default implementation for `Core.Destroy`. Types with trivial
 destruction do not need to call `SelfDestruct` at the end of their lifetime. The
-toolchain does not call `SelfDestruct` in this case.
+toolchain does not automatically call `SelfDestruct` for types with trivial
+destruction.
 
 The interface `TrivialDestroy` represents types that have trivial destruction.
 
