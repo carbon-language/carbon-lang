@@ -2,7 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-import Core library "io";
 import Cpp library "<memory>";
 
 class C {
@@ -16,10 +15,8 @@ class C {
 fn Run() -> i32 {
   var ptr: Cpp.std.unique_ptr(C) = Cpp.std.make_unique(C, 42);
   if (not ptr.get().HasValue()) {
-    Core.PrintStr("Unexpected null ptr\n");
     return 1;
   }
   let ref c: C = *ptr.get().Get();
-  Core.Print(c.i);
   return if c.i == 42 then 0 else 1;
 }
