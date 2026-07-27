@@ -169,14 +169,16 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
     using Step = SemIR::TypeIterator::Step;
     CARBON_KIND_SWITCH(step.any) {
       case CARBON_KIND(Step::ClassStart start): {
-        auto inst_id = context.classes().Get(start.class_id).definition_id;
+        auto inst_id =
+            context.classes().Get(start.class_id).first_owning_decl_id;
         if (IsSameLibrary(context, inst_id)) {
           return true;
         }
         break;
       }
       case CARBON_KIND(Step::ClassStartOnly start): {
-        auto inst_id = context.classes().Get(start.class_id).definition_id;
+        auto inst_id =
+            context.classes().Get(start.class_id).first_owning_decl_id;
         if (IsSameLibrary(context, inst_id)) {
           return true;
         }
@@ -191,7 +193,7 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
         CARBON_KIND_SWITCH(context.types().GetAsInst(type.type_id)) {
           case CARBON_KIND(SemIR::GenericClassType class_type): {
             auto class_id = class_type.class_id;
-            auto inst_id = context.classes().Get(class_id).definition_id;
+            auto inst_id = context.classes().Get(class_id).first_owning_decl_id;
             if (IsSameLibrary(context, inst_id)) {
               return true;
             }
@@ -199,7 +201,8 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
           }
           case CARBON_KIND(SemIR::GenericInterfaceType interface_type): {
             auto interface_id = interface_type.interface_id;
-            auto inst_id = context.interfaces().Get(interface_id).definition_id;
+            auto inst_id =
+                context.interfaces().Get(interface_id).first_owning_decl_id;
             if (IsSameLibrary(context, inst_id)) {
               return true;
             }
@@ -207,8 +210,9 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
           }
           case CARBON_KIND(SemIR::GenericNamedConstraintType constraint_type): {
             auto constraint_id = constraint_type.named_constraint_id;
-            auto inst_id =
-                context.named_constraints().Get(constraint_id).definition_id;
+            auto inst_id = context.named_constraints()
+                               .Get(constraint_id)
+                               .first_owning_decl_id;
             if (IsSameLibrary(context, inst_id)) {
               return true;
             }
