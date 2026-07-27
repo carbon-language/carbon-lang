@@ -29,14 +29,7 @@ class Consumer;
 
 namespace Carbon::Check {
 
-// A C++ compilation domain, including a live Clang instance that can be used to
-// parse more code into that domain. May be shared across multiple Carbon files.
-struct CppDomain {
-  std::shared_ptr<clang::CompilerInstance> clang_instance;
-  std::shared_ptr<clang::Parser> parser;
-  clang::CodeGenerator* code_generator = nullptr;
-  llvm::LLVMContext* llvm_context = nullptr;
-};
+class CppDomain;
 
 // Initializes a Clang compilation instance, which can be used to parse C++ code
 // within one or more Carbon files. Returns the initialized state, or null on
@@ -53,7 +46,7 @@ auto InitializeCppDomain(
 // whether compilation was successful.
 auto GenerateAst(Context& context,
                  llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                 CppDomain& domain) -> bool;
+                 std::shared_ptr<CppDomain> domain) -> bool;
 
 // Injects C++ code from `inline Cpp` into the active Clang AST context.
 // Returns a bool representing whether parsing was successful.

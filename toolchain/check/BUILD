@@ -93,6 +93,7 @@ cc_library(
         "cpp/custom_type_mapping.h",
         "cpp/diagnostic_consumer.h",
         "cpp/diagnostic_listener.h",
+        "cpp/domain.h",
         "cpp/export.h",
         "cpp/generate_ast.h",
         "cpp/impl_lookup.h",

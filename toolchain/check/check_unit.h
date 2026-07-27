@@ -20,7 +20,7 @@ class CompilerInvocation;
 namespace Carbon::Check {
 
 struct UnitAndImports;
-struct CppDomain;
+class CppDomain;
 
 // A file's imports corresponding to a single package, for
 // `UnitAndImports::package_imports`.

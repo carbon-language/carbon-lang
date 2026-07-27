@@ -16,6 +16,7 @@
 #include "common/pretty_stack_trace_function.h"
 #include "toolchain/check/check_unit.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/cpp/domain.h"
 #include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/diagnostic_emitter.h"

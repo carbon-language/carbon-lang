@@ -39,6 +39,7 @@
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/custom_type_mapping.h"
+#include "toolchain/check/cpp/domain.h"
 #include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/macros.h"
@@ -118,7 +119,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-               CppDomain* domain) -> void {
+               std::shared_ptr<CppDomain> domain) -> void {
   if (imports.empty()) {
     // TODO: Consider always having a (non-null) AST even if there are no Cpp
     // imports.
@@ -135,7 +136,7 @@ auto ImportCpp(Context& context,
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
 
-  if (domain && GenerateAst(context, imports, *domain)) {
+  if (domain && GenerateAst(context, imports, domain)) {
     name_scope.set_clang_decl_context_id(
         context.clang_decls().Add(
             {.key = SemIR::ClangDeclKey(

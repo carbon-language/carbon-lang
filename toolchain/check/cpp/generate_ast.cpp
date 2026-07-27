@@ -33,6 +33,7 @@
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/diagnostic_consumer.h"
 #include "toolchain/check/cpp/diagnostic_listener.h"
+#include "toolchain/check/cpp/domain.h"
 #include "toolchain/check/cpp/export.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
@@ -805,18 +806,17 @@ auto InitializeCppDomain(
   auto parser = action.TakeParser();
   CARBON_CHECK(parser);
 
-  return std::make_shared<CppDomain>(
-      CppDomain{.clang_instance = std::move(clang_instance),
-                .parser = std::move(parser),
-                .code_generator = action.code_generator(),
-                .llvm_context = llvm_context});
+  return std::make_shared<CppDomain>(std::move(clang_instance),
+                                     std::move(parser), action.code_generator(),
+                                     llvm_context);
 }
 
 auto GenerateAst(Context& context,
                  llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                 CppDomain& domain) -> bool {
+                 std::shared_ptr<CppDomain> domain) -> bool {
   CARBON_CHECK(!context.cpp_context());
   CARBON_CHECK(!context.sem_ir().cpp_file());
+  CARBON_CHECK(domain);
 
   // Register an annotation scope to flush any Clang diagnostics when we
   // return. This ensures C++ diagnostics get flushed before `diags` is
@@ -825,22 +825,21 @@ auto GenerateAst(Context& context,
   Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
                                                     [](auto& /*builder*/) {});
 
-  auto clang_instance = domain.clang_instance;
-  auto parser = domain.parser;
+  auto clang_instance = domain->clang_instance_ptr();
+  auto parser = domain->parser_ptr();
 
   // Set up CppFile for the current SemIR::File.
   auto cpp_file =
-      std::make_unique<SemIR::CppFile>(clang_instance, domain.llvm_context);
-  if (domain.code_generator) {
-    cpp_file->SetCodeGenerator(domain.code_generator);
+      std::make_unique<SemIR::CppFile>(clang_instance, domain->llvm_context());
+  if (domain->code_generator()) {
+    cpp_file->SetCodeGenerator(domain->code_generator());
   }
   context.sem_ir().set_cpp_file(std::move(cpp_file));
 
   // Set up CppContext for the current Context.
   context.set_cpp_context(std::make_unique<CppContext>(
-      *clang_instance, parser,
-      MakeContextDiagnosticListener(
-          *clang_instance->getDiagnostics().getClient(), context)));
+      domain, MakeContextDiagnosticListener(
+                  *clang_instance->getDiagnostics().getClient(), context)));
 
   // The AST context is now available, so the mangle context (used to compute
   // stable identities for imported C++ types) can be created.
@@ -912,10 +911,10 @@ auto FinishAst(Context& context) -> void {
 }
 
 auto FinalizeCppDomain(CppDomain& domain) -> void {
-  if (domain.clang_instance) {
-    domain.clang_instance->getSema().ActOnEndOfTranslationUnit();
+  if (domain.clang_instance_ptr()) {
+    domain.clang_instance().getSema().ActOnEndOfTranslationUnit();
     FlushDiagnosticConsumer(
-        *domain.clang_instance->getDiagnostics().getClient());
+        *domain.clang_instance().getDiagnostics().getClient());
   }
 }
 
