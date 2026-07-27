@@ -260,6 +260,44 @@ static auto ExportGenericBindings(Context& context, SemIR::LocId loc_id,
                                               /*RequiresClause=*/nullptr);
 }
 
+/// Create a Specific for the given generic using the given template args.
+///
+/// Returns `SemIR::SpecificId::None` if an error occurs.
+static auto MakeSpecificForTemplateArgs(
+    Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
+    llvm::ArrayRef<clang::TemplateArgument> template_args)
+    -> SemIR::SpecificId {
+  const auto& generic = context.generics().Get(generic_id);
+
+  auto bindings = context.inst_blocks().Get(generic.bindings_id);
+  CARBON_CHECK(bindings.size() == template_args.size());
+
+  // Map the `clang::TemplateArgument`s into Carbon types suitable for
+  // passing into `MakeSpecific`.
+  llvm::SmallVector<SemIR::InstId> specific_arg_ids;
+  for (auto [binding_inst_id, clang_template_arg] :
+       llvm::zip(bindings, template_args)) {
+    auto type_expr =
+        ImportCppType(context, loc_id, clang_template_arg.getAsType());
+    if (type_expr.type_id == SemIR::ErrorInst::TypeId) {
+      return SemIR::SpecificId::None;
+    }
+    if (!type_expr.type_id.has_value()) {
+      context.TODO(loc_id, "failed to import C++ type");
+      return SemIR::SpecificId::None;
+    }
+
+    auto binding_const_inst_id =
+        context.constant_values().GetConstantInstId(binding_inst_id);
+
+    specific_arg_ids.push_back(ConvertToValueOfType(
+        context, loc_id, type_expr.inst_id,
+        context.insts().Get(binding_const_inst_id).type_id()));
+  }
+
+  return MakeSpecific(context, loc_id, generic_id, specific_arg_ids);
+}
+
 static auto SetCppClassMemberAccess(const SemIR::NameScope& class_scope,
                                     SemIR::NameId member_name_id,
                                     clang::Decl* member) -> void {
@@ -1196,37 +1234,13 @@ auto ExportFunctionSpecializationToCpp(
                           function_template_decl->getTemplatedDecl()));
   SemIR::LocId loc_id(target.function.first_decl_id());
 
-  const auto& generic = context.generics().Get(target.function.generic_id);
-  auto bindings = context.inst_blocks().Get(generic.bindings_id);
-  CARBON_CHECK(bindings.size() == template_args.size());
-
-  // Map the `clang::TemplateArgument`s into Carbon types suitable for
-  // passing into `MakeSpecific`.
-  llvm::SmallVector<SemIR::InstId> specific_arg_ids;
-  for (auto [binding_inst_id, clang_template_arg] :
-       llvm::zip(bindings, template_args)) {
-    auto type_expr =
-        ImportCppType(context, loc_id, clang_template_arg.getAsType());
-    if (type_expr.type_id == SemIR::ErrorInst::TypeId) {
-      return false;
-    }
-    if (!type_expr.type_id.has_value()) {
-      context.TODO(loc_id, "failed to import C++ type");
-      return false;
-    }
-
-    auto binding_const_inst_id =
-        context.constant_values().GetConstantInstId(binding_inst_id);
-
-    specific_arg_ids.push_back(ConvertToValueOfType(
-        context, loc_id, type_expr.inst_id,
-        context.insts().Get(binding_const_inst_id).type_id()));
-  }
-
   // Create a specific, and use that to convert return type and
   // parameters with symbolic types to concrete types.
-  auto specific_id = MakeSpecific(context, loc_id, target.function.generic_id,
-                                  specific_arg_ids);
+  auto specific_id = MakeSpecificForTemplateArgs(
+      context, loc_id, target.function.generic_id, template_args);
+  if (specific_id == SemIR::SpecificId::None) {
+    return false;
+  }
   // This name is appended to the thunk name to disambiguate between
   // specializations.
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
