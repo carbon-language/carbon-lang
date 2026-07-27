@@ -197,6 +197,7 @@ cc_library(
         "@llvm-project//clang:parse",
         "@llvm-project//clang:sema",
         "@llvm-project//clang:tooling",
+        "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],
 )

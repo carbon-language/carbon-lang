@@ -8,8 +8,10 @@
 #include <string_view>
 
 #include "clang/AST/ASTConsumer.h"
+#include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
 #include "clang/Sema/Sema.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/Casting.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/import.h"
@@ -584,10 +586,18 @@ static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
       cpp_param_types, cpp_return_type, target.export_as_constructor);
 
   // Mangle the function name and attach it to the `FunctionDecl`.
+  std::string mangled_name;
+  if (char prefix = context.sem_ir()
+                        .cpp_file()
+                        ->GetCodeGenerator()
+                        ->GetModule()
+                        ->getDataLayout()
+                        .getGlobalPrefix()) {
+    mangled_name += prefix;
+  }
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
                    context.mangle_string_fingerprint());
-  std::string mangled_name =
-      m.Mangle(target.function_id, SemIR::SpecificId::None);
+  mangled_name += m.Mangle(target.function_id, SemIR::SpecificId::None);
   function_decl->addAttr(
       clang::AsmLabelAttr::Create(context.ast_context(), mangled_name));
 
