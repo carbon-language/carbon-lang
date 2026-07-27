@@ -481,9 +481,8 @@ class Stringifier {
     auto specific_interface = SemIR::SpecificInterface::None;
     if (auto self_witness =
             sem_ir_->insts().TryGetAs<ImplSelfWitness>(witness_inst_id)) {
-      const auto& deferred =
-          sem_ir_->deferred_impl_witnesses().Get(self_witness->deferred_id);
-      specific_interface = deferred.specific_interface;
+      specific_interface = sem_ir_->specific_interfaces().Get(
+          self_witness->specific_interface_id);
     } else {
       auto lookup = sem_ir_->insts().GetAs<LookupImplWitness>(witness_inst_id);
       specific_interface = sem_ir_->specific_interfaces().Get(

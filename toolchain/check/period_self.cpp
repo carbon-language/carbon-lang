@@ -136,14 +136,16 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
     }
 
     // Convert the replacement facet to the type of `.Self`.
-    cached_replacement_id_ = ConvertReplacement(
-        replacement_self_inst_id, replacement_type_id, period_self_type_id);
+    cached_replacement_id_ =
+        ConvertReplacement(replacement_self_inst_id, replacement_type_id,
+                           period_self, period_self_type_id);
     cached_replacement_type_id_ = period_self_type_id;
     return cached_replacement_id_;
   }
 
   auto ConvertReplacement(SemIR::InstId replacement_self_inst_id,
                           SemIR::TypeId replacement_type_id,
+                          SemIR::InstId period_self_inst_id,
                           SemIR::TypeId period_self_type_id) -> SemIR::InstId {
     // TODO: Replace all empty facet types with TypeType.
     if (period_self_type_id == GetEmptyFacetType(context())) {
@@ -170,30 +172,12 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
                .facet_value_inst_id = replacement_self_inst_id}));
     }
 
-    auto identified_period_self_type_id = RequireIdentifiedFacetType(
+    auto witnesses = MakeWitnessesForPeriodSelfTypeWithoutLookup(
         context(), loc_id_,
         context().constant_values().Get(replacement_self_inst_id),
-        context().types().GetTypeInstId(period_self_type_id),
-        [&](auto& /*builder*/) {
-          // Given `I where .Self == ()`, the type of `.Self` is `I` and we're
-          // replacing `.Self` with some `T` that must also implement `I`.
-          // However `I` can be a generic with arbitrary complexity and the
-          // replacement with `T` may fail monomorphization.
-          //
-          // We don't have any better context to add here really, but we
-          // need to accept that errors happen rather than CHECKing that
-          // they don't.
-        });
-    if (!identified_period_self_type_id.has_value()) {
+        context().constant_values().Get(period_self_inst_id));
+    if (witnesses.has_error_value()) {
       return SemIR::ErrorInst::InstId;
-    }
-    const auto& identified_period_self_type =
-        context().identified_facet_types().Get(identified_period_self_type_id);
-    auto required_impls = identified_period_self_type.required_impls();
-    llvm::SmallVector<SemIR::InstId> witnesses;
-    witnesses.reserve(required_impls.size());
-    for (const auto& req : required_impls) {
-      witnesses.push_back(MakeWitnessWithoutLookup(context(), loc_id_, req));
     }
     return context().constant_values().GetInstId(
         EvalOrAddInst<SemIR::FacetValue>(
@@ -202,7 +186,7 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
                 .type_id = period_self_type_id,
                 .type_inst_id =
                     context().types().GetAsTypeInstId(replacement_self_inst_id),
-                .witnesses_block_id = context().inst_blocks().Add(witnesses),
+                .witnesses_block_id = witnesses.inst_block_id(),
             }));
   }
 

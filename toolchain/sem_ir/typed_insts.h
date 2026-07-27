@@ -959,7 +959,7 @@ struct ImplDecl {
 
 // A witness that `.Self` implements an interface, which is currently being
 // implemented. Only appears inside an `impl ... as` declaration, and acts as a
-// placeholder that is updated to point to the `ImplWitness` once it is
+// placeholder that is substituted to point to the `ImplWitness` once it is
 // constructed.
 struct ImplSelfWitness {
   static constexpr auto Kind = InstKind::ImplSelfWitness.Define<Parse::NodeId>(
@@ -970,11 +970,8 @@ struct ImplSelfWitness {
   TypeId type_id;
   // Initially the `.Self` facet value used in the impl lookup query.
   InstId period_self;
-  // Pointer to storage for the InstId of the ImplWitness. Once it's available,
-  // the `deferred_id` will be replaced in order to trigger evaluation so
-  // that accesses through the witness can resolve to a value from the witness
-  // table.
-  DeferredImplWitnessId deferred_id;
+  // The interface of the impl being declared.
+  SpecificInterfaceId specific_interface_id;
 };
 
 // A witness that a type implements an interface.

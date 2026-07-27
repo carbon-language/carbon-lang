@@ -71,12 +71,6 @@ LLVM_DUMP_METHOD static auto Dump(
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,
-                                  SemIR::DeferredImplWitnessId deferred_id)
-    -> std::string {
-  return SemIR::Dump(context.sem_ir(), deferred_id);
-}
-
-LLVM_DUMP_METHOD static auto Dump(const Context& context,
                                   SemIR::FunctionId function_id)
     -> std::string {
   return SemIR::Dump(context.sem_ir(), function_id);

@@ -288,24 +288,6 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
   return out.TakeStr();
 }
 
-LLVM_DUMP_METHOD auto Dump(const File& file, DeferredImplWitnessId deferred_id)
-    -> std::string {
-  RawStringOstream out;
-  out << deferred_id;
-  if (!deferred_id.has_value()) {
-    return out.TakeStr();
-  }
-  const auto& deferred = file.deferred_impl_witnesses().Get(deferred_id);
-  out << "  - interface: "
-      << DumpInterfaceSummary(file, deferred.specific_interface.interface_id)
-      << "\n";
-  out << "  - specific: "
-      << DumpSpecificSummary(file, deferred.specific_interface.specific_id)
-      << "\n";
-  out << "  - impl witness:" << DumpInstSummary(file, deferred.impl_witness);
-  return out.TakeStr();
-}
-
 LLVM_DUMP_METHOD auto Dump(const File& file, FieldId field_id) -> std::string {
   RawStringOstream out;
   out << field_id;
@@ -649,10 +631,6 @@ LLVM_DUMP_METHOD static auto MakeEntityNameId(int id) -> EntityNameId {
 LLVM_DUMP_METHOD static auto MakeDeclaredFacetTypeId(int id)
     -> DeclaredFacetTypeId {
   return DeclaredFacetTypeId(id);
-}
-LLVM_DUMP_METHOD static auto MakeDeferredImplWitnessId(int id)
-    -> DeferredImplWitnessId {
-  return DeferredImplWitnessId(id);
 }
 LLVM_DUMP_METHOD static auto MakeFunctionId(int id) -> FunctionId {
   return FunctionId(id);

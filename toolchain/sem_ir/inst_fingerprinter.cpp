@@ -367,16 +367,6 @@ struct Worklist {
     }
   }
 
-  auto Add(DeferredImplWitnessId deferred_id) -> void {
-    if (!deferred_id.has_value()) {
-      AddInvalid();
-      return;
-    }
-    const auto& deferred = sem_ir->deferred_impl_witnesses().Get(deferred_id);
-    Add(deferred.specific_interface);
-    Add(deferred.impl_witness);
-  }
-
   auto AddPackage(NameScopeId name_scope_id) -> void {
     CARBON_CHECK(sem_ir->name_scopes().IsPackage(name_scope_id));
     Add(name_scope_id == NameScopeId::Package

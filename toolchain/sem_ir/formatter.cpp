@@ -1637,11 +1637,6 @@ auto Formatter::FormatArg(DeclaredFacetTypeId id) -> void {
   out() << ">";
 }
 
-auto Formatter::FormatArg(DeferredImplWitnessId id) -> void {
-  const auto& deferred = sem_ir_->deferred_impl_witnesses().Get(id);
-  out() << "<" << deferred.specific_interface << ">";
-}
-
 auto Formatter::FormatArg(FieldId id) -> void {
   const auto& field = sem_ir_->fields().Get(id);
   out() << field.index;

@@ -2538,48 +2538,48 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [concrete]
 // CHECK:STDOUT:   %Negate.impl_witness: <witness> = impl_witness imports.%Negate.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value %Cpp.long, (%Negate.impl_witness) [concrete]
-// CHECK:STDOUT:   %Negate.WithSelf.Op.type.99b: type = fn_type @Negate.WithSelf.Op, @Negate.WithSelf(%Negate.facet) [concrete]
-// CHECK:STDOUT:   %.a49: type = fn_type_with_self_type %Negate.WithSelf.Op.type.99b, %Negate.facet [concrete]
+// CHECK:STDOUT:   %Negate.WithSelf.Op.type.593: type = fn_type @Negate.WithSelf.Op, @Negate.WithSelf(%Negate.facet) [concrete]
+// CHECK:STDOUT:   %.39a: type = fn_type_with_self_type %Negate.WithSelf.Op.type.593, %Negate.facet [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.Negate.impl.Op.type: type = fn_type @Cpp.long.as.Negate.impl.Op [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.Negate.impl.Op: %Cpp.long.as.Negate.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.25e = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   %AddWith.type.5d0: type = facet_type <@AddWith, @AddWith(%Cpp.long)> [concrete]
-// CHECK:STDOUT:   %AddWith.impl_witness.cfe: <witness> = impl_witness imports.%AddWith.impl_witness_table.0d4 [concrete]
-// CHECK:STDOUT:   %AddWith.facet.c10: %AddWith.type.5d0 = facet_value %Cpp.long, (%AddWith.impl_witness.cfe) [concrete]
-// CHECK:STDOUT:   %AddWith.WithSelf.Op.type.edc: type = fn_type @AddWith.WithSelf.Op, @AddWith.WithSelf(%Cpp.long, %AddWith.facet.c10) [concrete]
-// CHECK:STDOUT:   %.6d0: type = fn_type_with_self_type %AddWith.WithSelf.Op.type.edc, %AddWith.facet.c10 [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness.d48: <witness> = impl_witness imports.%AddWith.impl_witness_table.893 [concrete]
+// CHECK:STDOUT:   %AddWith.facet.3cb: %AddWith.type.5d0 = facet_value %Cpp.long, (%AddWith.impl_witness.d48) [concrete]
+// CHECK:STDOUT:   %AddWith.WithSelf.Op.type.2e8: type = fn_type @AddWith.WithSelf.Op, @AddWith.WithSelf(%Cpp.long, %AddWith.facet.3cb) [concrete]
+// CHECK:STDOUT:   %.b62: type = fn_type_with_self_type %AddWith.WithSelf.Op.type.2e8, %AddWith.facet.3cb [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.type.43d: type = fn_type @Cpp.long.as.AddWith.impl.Op.3 [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.cc7: %Cpp.long.as.AddWith.impl.Op.type.43d = struct_value () [concrete]
 // CHECK:STDOUT:   %c.patt: %pattern_type.25e = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   %SubWith.type.238: type = facet_type <@SubWith, @SubWith(%Cpp.long)> [concrete]
-// CHECK:STDOUT:   %SubWith.impl_witness.9f3: <witness> = impl_witness imports.%SubWith.impl_witness_table.cdd [concrete]
-// CHECK:STDOUT:   %SubWith.facet.5ff: %SubWith.type.238 = facet_value %Cpp.long, (%SubWith.impl_witness.9f3) [concrete]
-// CHECK:STDOUT:   %SubWith.WithSelf.Op.type.087: type = fn_type @SubWith.WithSelf.Op, @SubWith.WithSelf(%Cpp.long, %SubWith.facet.5ff) [concrete]
-// CHECK:STDOUT:   %.d86: type = fn_type_with_self_type %SubWith.WithSelf.Op.type.087, %SubWith.facet.5ff [concrete]
+// CHECK:STDOUT:   %SubWith.impl_witness.6d0: <witness> = impl_witness imports.%SubWith.impl_witness_table.23a [concrete]
+// CHECK:STDOUT:   %SubWith.facet.74e: %SubWith.type.238 = facet_value %Cpp.long, (%SubWith.impl_witness.6d0) [concrete]
+// CHECK:STDOUT:   %SubWith.WithSelf.Op.type.eac: type = fn_type @SubWith.WithSelf.Op, @SubWith.WithSelf(%Cpp.long, %SubWith.facet.74e) [concrete]
+// CHECK:STDOUT:   %.a76: type = fn_type_with_self_type %SubWith.WithSelf.Op.type.eac, %SubWith.facet.74e [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.type.43d: type = fn_type @Cpp.long.as.SubWith.impl.Op.3 [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.cc7: %Cpp.long.as.SubWith.impl.Op.type.43d = struct_value () [concrete]
 // CHECK:STDOUT:   %d.patt: %pattern_type.25e = value_binding_pattern d [concrete]
 // CHECK:STDOUT:   %MulWith.type.567: type = facet_type <@MulWith, @MulWith(%Cpp.long)> [concrete]
-// CHECK:STDOUT:   %MulWith.impl_witness.f94: <witness> = impl_witness imports.%MulWith.impl_witness_table.cd7 [concrete]
-// CHECK:STDOUT:   %MulWith.facet.664: %MulWith.type.567 = facet_value %Cpp.long, (%MulWith.impl_witness.f94) [concrete]
-// CHECK:STDOUT:   %MulWith.WithSelf.Op.type.a21: type = fn_type @MulWith.WithSelf.Op, @MulWith.WithSelf(%Cpp.long, %MulWith.facet.664) [concrete]
-// CHECK:STDOUT:   %.1bc: type = fn_type_with_self_type %MulWith.WithSelf.Op.type.a21, %MulWith.facet.664 [concrete]
+// CHECK:STDOUT:   %MulWith.impl_witness.377: <witness> = impl_witness imports.%MulWith.impl_witness_table.6d7 [concrete]
+// CHECK:STDOUT:   %MulWith.facet.080: %MulWith.type.567 = facet_value %Cpp.long, (%MulWith.impl_witness.377) [concrete]
+// CHECK:STDOUT:   %MulWith.WithSelf.Op.type.788: type = fn_type @MulWith.WithSelf.Op, @MulWith.WithSelf(%Cpp.long, %MulWith.facet.080) [concrete]
+// CHECK:STDOUT:   %.c1f: type = fn_type_with_self_type %MulWith.WithSelf.Op.type.788, %MulWith.facet.080 [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.type.43d: type = fn_type @Cpp.long.as.MulWith.impl.Op.3 [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.cc7: %Cpp.long.as.MulWith.impl.Op.type.43d = struct_value () [concrete]
 // CHECK:STDOUT:   %e.patt: %pattern_type.25e = value_binding_pattern e [concrete]
 // CHECK:STDOUT:   %DivWith.type.204: type = facet_type <@DivWith, @DivWith(%Cpp.long)> [concrete]
-// CHECK:STDOUT:   %DivWith.impl_witness.dbb: <witness> = impl_witness imports.%DivWith.impl_witness_table.e22 [concrete]
-// CHECK:STDOUT:   %DivWith.facet.739: %DivWith.type.204 = facet_value %Cpp.long, (%DivWith.impl_witness.dbb) [concrete]
-// CHECK:STDOUT:   %DivWith.WithSelf.Op.type.624: type = fn_type @DivWith.WithSelf.Op, @DivWith.WithSelf(%Cpp.long, %DivWith.facet.739) [concrete]
-// CHECK:STDOUT:   %.d15: type = fn_type_with_self_type %DivWith.WithSelf.Op.type.624, %DivWith.facet.739 [concrete]
+// CHECK:STDOUT:   %DivWith.impl_witness.b70: <witness> = impl_witness imports.%DivWith.impl_witness_table.bd2 [concrete]
+// CHECK:STDOUT:   %DivWith.facet.d86: %DivWith.type.204 = facet_value %Cpp.long, (%DivWith.impl_witness.b70) [concrete]
+// CHECK:STDOUT:   %DivWith.WithSelf.Op.type.81a: type = fn_type @DivWith.WithSelf.Op, @DivWith.WithSelf(%Cpp.long, %DivWith.facet.d86) [concrete]
+// CHECK:STDOUT:   %.918: type = fn_type_with_self_type %DivWith.WithSelf.Op.type.81a, %DivWith.facet.d86 [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.type.43d: type = fn_type @Cpp.long.as.DivWith.impl.Op.3 [concrete]
-// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.cc70: %Cpp.long.as.DivWith.impl.Op.type.43d = struct_value () [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.cc7: %Cpp.long.as.DivWith.impl.Op.type.43d = struct_value () [concrete]
 // CHECK:STDOUT:   %f.patt: %pattern_type.25e = value_binding_pattern f [concrete]
 // CHECK:STDOUT:   %ModWith.type.d81: type = facet_type <@ModWith, @ModWith(%Cpp.long)> [concrete]
-// CHECK:STDOUT:   %ModWith.impl_witness.aee: <witness> = impl_witness imports.%ModWith.impl_witness_table.628 [concrete]
-// CHECK:STDOUT:   %ModWith.facet.58a: %ModWith.type.d81 = facet_value %Cpp.long, (%ModWith.impl_witness.aee) [concrete]
-// CHECK:STDOUT:   %ModWith.WithSelf.Op.type.29c: type = fn_type @ModWith.WithSelf.Op, @ModWith.WithSelf(%Cpp.long, %ModWith.facet.58a) [concrete]
-// CHECK:STDOUT:   %.fff: type = fn_type_with_self_type %ModWith.WithSelf.Op.type.29c, %ModWith.facet.58a [concrete]
+// CHECK:STDOUT:   %ModWith.impl_witness.826: <witness> = impl_witness imports.%ModWith.impl_witness_table.67c [concrete]
+// CHECK:STDOUT:   %ModWith.facet.7dd: %ModWith.type.d81 = facet_value %Cpp.long, (%ModWith.impl_witness.826) [concrete]
+// CHECK:STDOUT:   %ModWith.WithSelf.Op.type.352: type = fn_type @ModWith.WithSelf.Op, @ModWith.WithSelf(%Cpp.long, %ModWith.facet.7dd) [concrete]
+// CHECK:STDOUT:   %.a96: type = fn_type_with_self_type %ModWith.WithSelf.Op.type.352, %ModWith.facet.7dd [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.type.43d: type = fn_type @Cpp.long.as.ModWith.impl.Op.3 [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.cc7: %Cpp.long.as.ModWith.impl.Op.type.43d = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -2596,19 +2596,19 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Negate.impl_witness_table = impl_witness_table (%Core.import_ref.099f8c.1, %Core.import_ref.9c3475.1), @Cpp.long.as.Negate.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.099f8c.4 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.9c3475.2: %Cpp.long.as.AddWith.impl.Op.type.43d = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.AddWith.impl.Op.cc7]
-// CHECK:STDOUT:   %AddWith.impl_witness_table.0d4 = impl_witness_table (%Core.import_ref.099f8c.4, %Core.import_ref.9c3475.2), @Cpp.long.as.AddWith.impl.882 [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness_table.893 = impl_witness_table (%Core.import_ref.099f8c.4, %Core.import_ref.9c3475.2), @Cpp.long.as.AddWith.impl.d5a [concrete]
 // CHECK:STDOUT:   %Core.import_ref.099f8c.7 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.9c3475.3: %Cpp.long.as.SubWith.impl.Op.type.43d = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.SubWith.impl.Op.cc7]
-// CHECK:STDOUT:   %SubWith.impl_witness_table.cdd = impl_witness_table (%Core.import_ref.099f8c.7, %Core.import_ref.9c3475.3), @Cpp.long.as.SubWith.impl.950 [concrete]
+// CHECK:STDOUT:   %SubWith.impl_witness_table.23a = impl_witness_table (%Core.import_ref.099f8c.7, %Core.import_ref.9c3475.3), @Cpp.long.as.SubWith.impl.28c [concrete]
 // CHECK:STDOUT:   %Core.import_ref.099f8c.10 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.9c3475.4: %Cpp.long.as.MulWith.impl.Op.type.43d = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.MulWith.impl.Op.cc7]
-// CHECK:STDOUT:   %MulWith.impl_witness_table.cd7 = impl_witness_table (%Core.import_ref.099f8c.10, %Core.import_ref.9c3475.4), @Cpp.long.as.MulWith.impl.eb8 [concrete]
+// CHECK:STDOUT:   %MulWith.impl_witness_table.6d7 = impl_witness_table (%Core.import_ref.099f8c.10, %Core.import_ref.9c3475.4), @Cpp.long.as.MulWith.impl.290 [concrete]
 // CHECK:STDOUT:   %Core.import_ref.099f8c.13 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.9c3475.5: %Cpp.long.as.DivWith.impl.Op.type.43d = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.DivWith.impl.Op.cc70]
-// CHECK:STDOUT:   %DivWith.impl_witness_table.e22 = impl_witness_table (%Core.import_ref.099f8c.13, %Core.import_ref.9c3475.5), @Cpp.long.as.DivWith.impl.d8f [concrete]
+// CHECK:STDOUT:   %Core.import_ref.9c3475.5: %Cpp.long.as.DivWith.impl.Op.type.43d = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.DivWith.impl.Op.cc7]
+// CHECK:STDOUT:   %DivWith.impl_witness_table.bd2 = impl_witness_table (%Core.import_ref.099f8c.13, %Core.import_ref.9c3475.5), @Cpp.long.as.DivWith.impl.39d [concrete]
 // CHECK:STDOUT:   %Core.import_ref.099f8c.16 = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.9c3475.6: %Cpp.long.as.ModWith.impl.Op.type.43d = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.ModWith.impl.Op.cc7]
-// CHECK:STDOUT:   %ModWith.impl_witness_table.628 = impl_witness_table (%Core.import_ref.099f8c.16, %Core.import_ref.9c3475.6), @Cpp.long.as.ModWith.impl.8a5 [concrete]
+// CHECK:STDOUT:   %ModWith.impl_witness_table.67c = impl_witness_table (%Core.import_ref.099f8c.16, %Core.import_ref.9c3475.6), @Cpp.long.as.ModWith.impl.58b [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ArithmeticHomogeneousLong() {
@@ -2642,7 +2642,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %y.patt: %pattern_type.25e = value_binding_pattern y [concrete = constants.%y.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref.loc11: %Cpp.long = name_ref x, %x
-// CHECK:STDOUT:   %impl.elem1.loc11: %.a49 = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%Cpp.long.as.Negate.impl.Op]
+// CHECK:STDOUT:   %impl.elem1.loc11: %.39a = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%Cpp.long.as.Negate.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %x.ref.loc11, %impl.elem1.loc11
 // CHECK:STDOUT:   %Cpp.long.as.Negate.impl.Op.call: init %Cpp.long = call %bound_method.loc11(%x.ref.loc11)
 // CHECK:STDOUT:   %.loc11_28.1: %Cpp.long = value_of_initializer %Cpp.long.as.Negate.impl.Op.call
@@ -2657,7 +2657,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref.loc12: %Cpp.long = name_ref x, %x
 // CHECK:STDOUT:   %y.ref.loc12: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc12: %.6d0 = impl_witness_access constants.%AddWith.impl_witness.cfe, element1 [concrete = constants.%Cpp.long.as.AddWith.impl.Op.cc7]
+// CHECK:STDOUT:   %impl.elem1.loc12: %.b62 = impl_witness_access constants.%AddWith.impl_witness.d48, element1 [concrete = constants.%Cpp.long.as.AddWith.impl.Op.cc7]
 // CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %x.ref.loc12, %impl.elem1.loc12
 // CHECK:STDOUT:   %Cpp.long.as.AddWith.impl.Op.call: init %Cpp.long = call %bound_method.loc12(%x.ref.loc12, %y.ref.loc12)
 // CHECK:STDOUT:   %.loc12_30.1: %Cpp.long = value_of_initializer %Cpp.long.as.AddWith.impl.Op.call
@@ -2672,7 +2672,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref.loc13: %Cpp.long = name_ref x, %x
 // CHECK:STDOUT:   %y.ref.loc13: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc13: %.d86 = impl_witness_access constants.%SubWith.impl_witness.9f3, element1 [concrete = constants.%Cpp.long.as.SubWith.impl.Op.cc7]
+// CHECK:STDOUT:   %impl.elem1.loc13: %.a76 = impl_witness_access constants.%SubWith.impl_witness.6d0, element1 [concrete = constants.%Cpp.long.as.SubWith.impl.Op.cc7]
 // CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %x.ref.loc13, %impl.elem1.loc13
 // CHECK:STDOUT:   %Cpp.long.as.SubWith.impl.Op.call: init %Cpp.long = call %bound_method.loc13(%x.ref.loc13, %y.ref.loc13)
 // CHECK:STDOUT:   %.loc13_30.1: %Cpp.long = value_of_initializer %Cpp.long.as.SubWith.impl.Op.call
@@ -2687,7 +2687,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref.loc14: %Cpp.long = name_ref x, %x
 // CHECK:STDOUT:   %y.ref.loc14: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc14: %.1bc = impl_witness_access constants.%MulWith.impl_witness.f94, element1 [concrete = constants.%Cpp.long.as.MulWith.impl.Op.cc7]
+// CHECK:STDOUT:   %impl.elem1.loc14: %.c1f = impl_witness_access constants.%MulWith.impl_witness.377, element1 [concrete = constants.%Cpp.long.as.MulWith.impl.Op.cc7]
 // CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %x.ref.loc14, %impl.elem1.loc14
 // CHECK:STDOUT:   %Cpp.long.as.MulWith.impl.Op.call: init %Cpp.long = call %bound_method.loc14(%x.ref.loc14, %y.ref.loc14)
 // CHECK:STDOUT:   %.loc14_30.1: %Cpp.long = value_of_initializer %Cpp.long.as.MulWith.impl.Op.call
@@ -2702,7 +2702,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref.loc15: %Cpp.long = name_ref x, %x
 // CHECK:STDOUT:   %y.ref.loc15: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc15: %.d15 = impl_witness_access constants.%DivWith.impl_witness.dbb, element1 [concrete = constants.%Cpp.long.as.DivWith.impl.Op.cc70]
+// CHECK:STDOUT:   %impl.elem1.loc15: %.918 = impl_witness_access constants.%DivWith.impl_witness.b70, element1 [concrete = constants.%Cpp.long.as.DivWith.impl.Op.cc7]
 // CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %x.ref.loc15, %impl.elem1.loc15
 // CHECK:STDOUT:   %Cpp.long.as.DivWith.impl.Op.call: init %Cpp.long = call %bound_method.loc15(%x.ref.loc15, %y.ref.loc15)
 // CHECK:STDOUT:   %.loc15_30.1: %Cpp.long = value_of_initializer %Cpp.long.as.DivWith.impl.Op.call
@@ -2717,7 +2717,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref.loc16: %Cpp.long = name_ref x, %x
 // CHECK:STDOUT:   %y.ref.loc16: %Cpp.long = name_ref y, %y
-// CHECK:STDOUT:   %impl.elem1.loc16: %.fff = impl_witness_access constants.%ModWith.impl_witness.aee, element1 [concrete = constants.%Cpp.long.as.ModWith.impl.Op.cc7]
+// CHECK:STDOUT:   %impl.elem1.loc16: %.a96 = impl_witness_access constants.%ModWith.impl_witness.826, element1 [concrete = constants.%Cpp.long.as.ModWith.impl.Op.cc7]
 // CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %x.ref.loc16, %impl.elem1.loc16
 // CHECK:STDOUT:   %Cpp.long.as.ModWith.impl.Op.call: init %Cpp.long = call %bound_method.loc16(%x.ref.loc16, %y.ref.loc16)
 // CHECK:STDOUT:   %.loc16_30.1: %Cpp.long = value_of_initializer %Cpp.long.as.ModWith.impl.Op.call

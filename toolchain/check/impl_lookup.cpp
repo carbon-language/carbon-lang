@@ -976,32 +976,26 @@ static auto FindNonFinalWitness(
 // yet exist.
 static auto GetImplSelfWitnessInsideImplDecl(
     Context& context, SemIR::LocId loc_id,
-    const SemIR::IdentifiedFacetType::RequiredImpl& req_impl) -> SemIR::InstId {
-  if (context.declaring_impl_decls().empty()) {
+    const SemIR::IdentifiedFacetType::RequiredImpl& req_impl,
+    bool require_period_self) -> SemIR::InstId {
+  if (req_impl.specific_interface != context.declaring_impl_for_interface()) {
     return SemIR::InstId::None;
   }
-  if (req_impl.specific_interface != context.declaring_impl_decls().back()) {
-    return SemIR::InstId::None;
-  }
-  if (!IsPeriodSelf(context, context.constant_values().GetInstId(
+  if (require_period_self &&
+      !IsPeriodSelf(context, context.constant_values().GetInstId(
                                  req_impl.self_facet_value))) {
     return SemIR::InstId::None;
   }
 
   // We are inside an impl decl, and doing a lookup into the impl being
   // constructed.
-  auto deferred_id = context.deferred_impl_witnesses().Add({
-      .specific_interface = req_impl.specific_interface,
-      // This is filled in, and the DeferredImplWitnessId replaced, once the
-      // impl decl is complete.
-      .impl_witness = SemIR::InstId::None,
-  });
   auto const_id = EvalOrAddInst<SemIR::ImplSelfWitness>(
       context, loc_id,
       {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
        .period_self =
            context.constant_values().GetInstId(req_impl.self_facet_value),
-       .deferred_id = deferred_id});
+       .specific_interface_id =
+           context.specific_interfaces().Add(req_impl.specific_interface)});
   return context.constant_values().GetInstId(const_id);
 }
 
@@ -1066,8 +1060,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   for (const auto& req_impl : req_impls) {
     // If the lookup comes from inside an impl decl and is for that impl, get a
     // witness for that impl even though it does not yet exist.
-    auto result_witness_id =
-        GetImplSelfWitnessInsideImplDecl(context, loc_id, req_impl);
+    auto result_witness_id = GetImplSelfWitnessInsideImplDecl(
+        context, loc_id, req_impl, /*require_period_self=*/true);
     if (result_witness_id.has_value()) {
       // Found a final witness from inside an impl being declared, for itself.
       result_witness_ids.push_back(result_witness_id);
@@ -1366,23 +1360,54 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
   return lookup_result.witness_id;
 }
 
-auto MakeWitnessWithoutLookup(
-    Context& context, SemIR::LocId loc_id,
-    const SemIR::IdentifiedFacetType::RequiredImpl& req_impl) -> SemIR::InstId {
-  auto witness_inst_id =
-      GetImplSelfWitnessInsideImplDecl(context, loc_id, req_impl);
-  if (witness_inst_id.has_value()) {
-    return witness_inst_id;
-  }
+auto MakeWitnessesForPeriodSelfTypeWithoutLookup(Context& context,
+                                                 SemIR::LocId loc_id,
+                                                 SemIR::ConstantId facet_value,
+                                                 SemIR::ConstantId period_self)
+    -> SemIR::InstBlockIdOrError {
+  auto period_self_type_id =
+      context.constant_values().GetInst(period_self).type_id();
 
-  auto witness_const_id = EvalOrAddInst<SemIR::LookupImplWitness>(
-      context, loc_id,
-      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .query_self_inst_id =
-           context.constant_values().GetInstId(req_impl.self_facet_value),
-       .query_specific_interface_id =
-           context.specific_interfaces().Add(req_impl.specific_interface)});
-  return context.constant_values().GetInstId(witness_const_id);
+  auto identified_period_self_type_id = RequireIdentifiedFacetType(
+      context, loc_id, facet_value,
+      context.types().GetTypeInstId(period_self_type_id),
+      [&](auto& /*builder*/) {
+        // The facet type of `.Self` may refer to generic interfaces that use
+        // `.Self` in their arguments. And when `.Self` is replaced by
+        // `facet_value`, we may fail with a monomorphization error. We pass it
+        // along without adding additional context.
+      });
+  if (!identified_period_self_type_id.has_value()) {
+    return SemIR::InstBlockIdOrError::MakeError();
+  }
+  const auto& identified_period_self_type =
+      context.identified_facet_types().Get(identified_period_self_type_id);
+  auto required_impls = identified_period_self_type.required_impls();
+  llvm::SmallVector<SemIR::InstId> witness_ids;
+  witness_ids.reserve(required_impls.size());
+  for (const auto& req_impl : required_impls) {
+    // We don't `require_period_self` because we are building witnesses for a
+    // `facet_value` that is replacing `.Self`. The identify was done with the
+    // `facet_value` which replaces `.Self`. But we know these witnesses should
+    // point to the impl being declared if they are for its target interface.
+    auto result_witness_id = GetImplSelfWitnessInsideImplDecl(
+        context, loc_id, req_impl, /*require_period_self=*/false);
+    if (result_witness_id.has_value()) {
+      witness_ids.push_back(result_witness_id);
+      continue;
+    }
+
+    auto witness_const_id = EvalOrAddInst<SemIR::LookupImplWitness>(
+        context, loc_id,
+        {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+         .query_self_inst_id =
+             context.constant_values().GetInstId(req_impl.self_facet_value),
+         .query_specific_interface_id =
+             context.specific_interfaces().Add(req_impl.specific_interface)});
+    witness_ids.push_back(
+        context.constant_values().GetInstId(witness_const_id));
+  }
+  return context.inst_blocks().AddCanonical(witness_ids);
 }
 
 auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,

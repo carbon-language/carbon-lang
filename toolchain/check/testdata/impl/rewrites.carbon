@@ -175,3 +175,42 @@ impl () as J(()) {}
 // We don't see the rewrite until later, but when we look at the constraints
 // required, we still need to see that we need `() impls J(())`.
 impl forall [T: type] T as I where .X impls J(.X) and .X = () {}
+
+// --- impl_lookups_in_definition_find_own_impl.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+class G(T: type) {}
+
+interface Z(R: type) {
+  let Result: type;
+}
+interface Y(S: type) {}
+
+impl forall [T: type] () as Y(G(T)) {}
+impl forall [T: type] {} as Y(G(T)) {}
+
+// This is a blanket impl that overlaps with (but is less specific) `G(C) as
+// Z(G(C))`, which is the next impl below.
+impl forall [T: type, U: type] G(T) as Z(U) where .Result impls Y(G(T)) and .Result = {} {}
+
+// The query `G(C) as Z(G(C))` is concrete so any lookups will result in a final
+// witness. The constraint facet type contains `.Result` which causes a lookup
+// for `G(C) as Z(G(C))`. But this lookup occurs before the impl declaration is
+// even completed, so the impl does not yet exist according to check.
+//
+// The naive result is that the lookup finds overlapping impl above, and
+// `.Result` evaluates to `{}` which is incorrect. Then a later query finds this
+// impl and `.Result` evaluates to `()`. We diagnose this a poisoning error,
+// where this impl changes the possible value of `.Result` after a concrete
+// query was made for it.
+//
+// The correct result is for the witness of `G(C) as Z(G(C))` to point to this
+// impl, even though it does not yet exist. No impl lookup should occur for the
+// interface being impl'd from within the declaration. Then `.Result` consistent
+// evalutes to `()`.
+impl G(C) as Z(G(C)) where .Result impls Y(G(C)) and .Result = () {}
+
+fn F() {
+  G(C) as Z(G(C));
+}

@@ -32,7 +32,6 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
-#include "toolchain/sem_ir/deferred_impl_witness.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
@@ -311,6 +310,14 @@ class Context {
   auto declaring_impl_decls() -> llvm::SmallVector<SemIR::SpecificInterface>& {
     return declaring_impl_decls_;
   }
+  // Returns the interface of the `impl` being declared, that `.Self` refers to,
+  // if any.
+  auto declaring_impl_for_interface() -> SemIR::SpecificInterface {
+    if (declaring_impl_decls_.empty()) {
+      return SemIR::SpecificInterface::None;
+    }
+    return declaring_impl_decls_.back();
+  }
 
   // Data about a form expression.
   //
@@ -395,9 +402,6 @@ class Context {
   }
   auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();
-  }
-  auto deferred_impl_witnesses() -> SemIR::DeferredImplWitnessStore& {
-    return sem_ir().deferred_impl_witnesses();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto specific_interfaces() -> SemIR::SpecificInterfaceStore& {

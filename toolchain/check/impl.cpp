@@ -768,14 +768,13 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 }
 
-// Fill in the connection to `ImplWitness` in any `DeferredImplWitness`.
-//
-// This replaces the `DeferredImplWitnessId` in any `ImplSelfWitness`
-// instructions which causes them to be re-evaluated and resolves any enclosing
-// ImplWitnessAccess to the corresponding value from the impl's witness table.
-static auto SubstDeferredIds(Context& context, SemIR::LocId loc_id,
-                             SemIR::ConstantId const_id,
-                             SemIR::InstId witness_id) -> SemIR::ConstantId {
+// Replace any `ImplSelfWitness` with the final `ImplWitness`. This causes any
+// enclosing ImplWitnessAccess be resolved to the corresponding value from the
+// impl's witness table.
+static auto SubstImplSelfWitnesses(Context& context, SemIR::LocId loc_id,
+                                   SemIR::ConstantId const_id,
+                                   SemIR::InstId witness_id)
+    -> SemIR::ConstantId {
   class Callbacks : public SubstInstCallbacks {
    public:
     explicit Callbacks(Context* context, SemIR::LocId loc_id,
@@ -796,13 +795,7 @@ static auto SubstDeferredIds(Context& context, SemIR::LocId loc_id,
       if (!self_witness) {
         return SubstOperands;
       }
-
-      auto deferred =
-          context().deferred_impl_witnesses().Get(self_witness->deferred_id);
-      deferred.impl_witness = witness_id_;
-      auto inst = *self_witness;
-      inst.deferred_id = context().deferred_impl_witnesses().Add(deferred);
-      inst_id = RebuildNewInst(loc_id_, inst);
+      inst_id = witness_id_;
       return FullySubstituted;
     }
 
@@ -842,7 +835,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
   // Resolve any accesses in the declaration by using the impl's witness table,
   // now that it exists. Since these accesses are in the declaration, they were
   // originally checked before the `impl` existed.
-  auto subst_constraint_id = SubstDeferredIds(
+  auto subst_constraint_id = SubstImplSelfWitnesses(
       context, loc_id, context.constant_values().Get(impl.constraint_id),
       impl.witness_id);
   // Any errors in the facet type will result in an error in the canonical value

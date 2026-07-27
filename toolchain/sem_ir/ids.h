@@ -261,14 +261,6 @@ struct ConstantId : public IdBase<ConstantId> {
 inline constexpr ConstantId ConstantId::NotConstant =
     ConstantId(NotConstantIndex);
 
-// The ID of a deferred `ImplWitness`. This is used to point to an ImplWitness
-// instruction that is created later.
-struct DeferredImplWitnessId : public IdBase<DeferredImplWitnessId> {
-  static constexpr llvm::StringLiteral Label = "deferred_impl_witness";
-
-  using IdBase::IdBase;
-};
-
 // The ID of a `EntityName`.
 struct EntityNameId : public IdBase<EntityNameId> {
   static constexpr llvm::StringLiteral Label = "entity_name";

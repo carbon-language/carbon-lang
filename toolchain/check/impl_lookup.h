@@ -40,18 +40,18 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_facet_type_const_id,
                        bool diagnose = true) -> SemIR::InstBlockIdOrError;
 
-// Construct a witness for a requirement from an IdentifiedFacetType that some
-// facet implements some interface.
+// Construct witnesses for a `facet_value` from the facet type of a `.Self`.
 //
-// This does not actually perform lookup, so can't be used in most cases. This
-// can only be used when we have already guaranteed that the facet does
-// implement the interface, but don't have a witness. Which is indeed a strange
-// scenario. One such case is when replacing `.Self` with a facet, as the
-// replacement must already be known to implement the type of `.Self` so we can
-// construct a witness for it.
-auto MakeWitnessWithoutLookup(
-    Context& context, SemIR::LocId loc_id,
-    const SemIR::IdentifiedFacetType::RequiredImpl& req_impl) -> SemIR::InstId;
+// This does not actually perform lookup, but constructs witnesses anyways, so
+// can't be used in most cases. This is specifically for the case where we are
+// replacing `.Self` with another facet. Since it is replacing `.Self` we know
+// that it implements the facet type of the `.Self`. So we can construct
+// witnesses for the interfaces in that facet type.
+auto MakeWitnessesForPeriodSelfTypeWithoutLookup(Context& context,
+                                                 SemIR::LocId loc_id,
+                                                 SemIR::ConstantId facet_value,
+                                                 SemIR::ConstantId period_self)
+    -> SemIR::InstBlockIdOrError;
 
 // Returns whether the query matches against the given impl. This is like a
 // `LookupImplWitness` operation but for a single interface, and against only

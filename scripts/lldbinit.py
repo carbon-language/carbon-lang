@@ -83,7 +83,6 @@ Example usage:
         "symbolic_constant": "SemIR::MakeSymbolicConstantId",
         "entity_name": "SemIR::MakeEntityNameId",
         "declared_facet_type": "SemIR::MakeDeclaredFacetTypeId",
-        "deferred_impl_witness": "SemIR::MakeDeferredImplWitnessId",
         "function": "SemIR::MakeFunctionId",
         "generic": "SemIR::MakeGenericId",
         "impl": "SemIR::MakeImplId",
