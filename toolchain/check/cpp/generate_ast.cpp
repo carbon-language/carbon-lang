@@ -651,7 +651,9 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     return code_generator_;
   }
 
-  auto parser() const -> std::shared_ptr<clang::Parser> { return parser_; }
+  auto TakeParser() -> std::unique_ptr<clang::Parser> {
+    return std::move(parser_);
+  }
 
  protected:
   auto CreateASTConsumer(clang::CompilerInstance& clang_instance,
@@ -687,7 +689,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     clang_instance.createSema(getTranslationUnitKind(),
                               /*CompletionConsumer=*/nullptr);
 
-    parser_ = std::make_shared<clang::Parser>(clang_instance.getPreprocessor(),
+    parser_ = std::make_unique<clang::Parser>(clang_instance.getPreprocessor(),
                                               clang_instance.getSema(),
                                               /*SkipFunctionBodies=*/false);
 
@@ -707,7 +709,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
   std::string filename_;
   llvm::LLVMContext* llvm_context_;
   clang::CodeGenerator* code_generator_ = nullptr;
-  std::shared_ptr<clang::Parser> parser_;
+  std::unique_ptr<clang::Parser> parser_;
 };
 
 }  // namespace
@@ -800,7 +802,7 @@ auto InitializeCppDomain(
                  llvm::toString(std::move(error)));
   }
 
-  auto parser = action.parser();
+  auto parser = action.TakeParser();
   CARBON_CHECK(parser);
 
   return std::make_shared<CppDomain>(
