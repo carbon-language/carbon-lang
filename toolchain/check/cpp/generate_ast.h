@@ -29,8 +29,8 @@ class Consumer;
 
 namespace Carbon::Check {
 
-// Clang state used when compiling C++ code. May be shared across files when
-// compiling with a single ASTContext.
+// A C++ compilation domain, including a live Clang instance that can be used to
+// parse more code into that domain. May be shared across multiple Carbon files.
 struct CppDomain {
   std::shared_ptr<clang::CompilerInstance> clang_instance;
   std::shared_ptr<clang::Parser> parser;
@@ -38,9 +38,9 @@ struct CppDomain {
   llvm::LLVMContext* llvm_context = nullptr;
 };
 
-// Initializes the Clang state by building a new compiler invocation,
-// creating a diagnostics engine, and parsing a dummy main file containing a
-// semicolon. Returns the initialized state, or null on failure.
+// Initializes a Clang compilation instance, which can be used to parse C++ code
+// within one or more Carbon files. Returns the initialized state, or null on
+// failure.
 auto InitializeCppDomain(
     Diagnostics::Consumer& consumer, llvm::StringRef filename,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
