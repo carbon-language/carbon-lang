@@ -132,7 +132,7 @@ fn Run() {
 // CHECK:STDOUT: define internal void @_ZN6CarbonL1FENS_1AE() #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %0 = alloca %"class.Carbon::A", align 1
-// CHECK:STDOUT:   call void @_CF__carbon_thunkinst70000035.Main(ptr noundef nonnull align 1 %0)
+// CHECK:STDOUT:   call void @_CF__carbon_thunk_specific70000017.Main(ptr noundef nonnull align 1 %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -152,7 +152,7 @@ fn Run() {
 // CHECK:STDOUT: define internal void @_ZN6CarbonL1FENS_1BE() #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %0 = alloca %"class.Carbon::B", align 1
-// CHECK:STDOUT:   call void @_CF__carbon_thunkinst70000050.Main(ptr noundef nonnull align 1 %0)
+// CHECK:STDOUT:   call void @_CF__carbon_thunk_specific70000019.Main(ptr noundef nonnull align 1 %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -208,14 +208,14 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunkinst70000035.Main(ptr %_) #4 !dbg !44 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk_specific70000017.Main(ptr %_) #4 !dbg !44 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main.3e1f7ed08cd9ee58(ptr %_), !dbg !47
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunkinst70000050.Main(ptr %_) #4 !dbg !48 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk_specific70000019.Main(ptr %_) #4 !dbg !48 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main.bd1b6d59f703c190(ptr %_), !dbg !51
 // CHECK:STDOUT:   ret void, !dbg !51
@@ -303,11 +303,11 @@ fn Run() {
 // CHECK:STDOUT: !41 = !{!42}
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !40, type: !20)
 // CHECK:STDOUT: !43 = !DILocation(line: 13, column: 1, scope: !40)
-// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "F__carbon_thunkinst70000035", linkageName: "_CF__carbon_thunkinst70000035.Main", scope: null, file: !1, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !45)
+// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "F__carbon_thunk_specific70000017", linkageName: "_CF__carbon_thunk_specific70000017.Main", scope: null, file: !1, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !45)
 // CHECK:STDOUT: !45 = !{!46}
 // CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !44, type: !20)
 // CHECK:STDOUT: !47 = !DILocation(line: 19, column: 1, scope: !44)
-// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "F__carbon_thunkinst70000050", linkageName: "_CF__carbon_thunkinst70000050.Main", scope: null, file: !1, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !49)
+// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "F__carbon_thunk_specific70000019", linkageName: "_CF__carbon_thunk_specific70000019.Main", scope: null, file: !1, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !49)
 // CHECK:STDOUT: !49 = !{!50}
 // CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !48, type: !20)
 // CHECK:STDOUT: !51 = !DILocation(line: 19, column: 1, scope: !48)
