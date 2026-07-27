@@ -30,6 +30,13 @@ class Mangler {
   auto Mangle(SemIR::FunctionId function_id, SemIR::SpecificId specific_id)
       -> std::string;
 
+  // Equivalent to Mangle(), but produces a name that has also gone through
+  // the platform's mangling. This is needed when the resulting name will be
+  // used as the value of an `asm` label attribute, because platform mangling
+  // is not applied in that context.
+  auto MangleForAttr(SemIR::FunctionId function_id,
+                     SemIR::SpecificId specific_id) -> std::string;
+
   // Produce a deterministically unique mangled name for the given global
   // variable pattern, or an empty string if the variable doesn't bind any
   // names, in which case it can't be referenced from another file and should be
@@ -42,6 +49,9 @@ class Mangler {
                     SemIR::SpecificId specific_id) -> std::string;
 
  private:
+  auto MangleImpl(SemIR::FunctionId function_id, SemIR::SpecificId specific_id,
+                  llvm::raw_ostream& os) -> void;
+
   // Mangle this `NameId` as an individual name component.
   auto MangleNameId(llvm::raw_ostream& os, SemIR::NameId name_id) -> void;
 
