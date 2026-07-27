@@ -12,6 +12,7 @@ var test_i32: i32 = 0;
 var test_f64: f64 = 0.1;
 var test_char: char = 'c';
 var test_str: str = "Test";
+var test_slice: slice(i32);
 
 // CHECK:STDOUT: - filename: type_literals.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -48,5 +49,14 @@ var test_str: str = "Test";
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:       {kind: 'StringLiteral', text: '"Test"'},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'test_slice'},
+// CHECK:STDOUT:               {kind: 'SliceTypeLiteral', text: 'slice'},
+// CHECK:STDOUT:             {kind: 'CallExprStart', text: '(', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'CallExpr', text: ')', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
