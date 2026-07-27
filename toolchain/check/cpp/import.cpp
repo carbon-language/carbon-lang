@@ -2501,9 +2501,10 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
 // TODO: Add support for other macro types and non-integer literal values.
 static auto ImportMacro(Context& context, SemIR::LocId loc_id,
                         SemIR::NameScopeId scope_id, SemIR::NameId name_id,
+                        clang::IdentifierInfo* identifier_info,
                         clang::MacroInfo* macro_info)
     -> SemIR::ScopeLookupResult {
-  auto inst_id = TryEvaluateMacro(context, loc_id, name_id, macro_info);
+  auto inst_id = TryEvaluateMacro(context, loc_id, identifier_info, macro_info);
   if (inst_id == SemIR::ErrorInst::InstId) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
@@ -2569,7 +2570,8 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
   if (clang::MacroInfo* macro_info =
           LookupMacro(context, scope_id, identifier_info)) {
-    return ImportMacro(context, loc_id, scope_id, name_id, macro_info);
+    return ImportMacro(context, loc_id, scope_id, name_id, identifier_info,
+                       macro_info);
   }
   auto lookup = ClangLookupName(context, scope_id, identifier_info);
   if (!lookup) {
