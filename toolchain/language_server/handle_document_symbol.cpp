@@ -63,14 +63,26 @@ class SymbolStore {
   auto HasOpenSymbol() const -> bool { return !open_symbols_.empty(); }
 
   // Completes a symbol, appending to parent list.
-  auto EndSymbol() -> void {
+  auto EndSymbol(const Lex::TokenizedBuffer* tokens = nullptr,
+                 std::optional<Lex::TokenIndex> end_token = std::nullopt)
+      -> void {
     CARBON_CHECK(HasOpenSymbol());
+    // Extend the range of the symbol to include the `end_token`, if one is
+    // provided. For example, this extends function definitions to the `}` or,
+    // for a terse function body, `;`.
+    if (tokens && end_token) {
+      auto [end_line, end_col] = tokens->GetEndLoc(*end_token);
+      open_symbols_.back().range.end = {.line = end_line.index,
+                                        .character = end_col - 1};
+    }
     AddSymbol(open_symbols_.pop_back_val());
   }
 
   // Returns final top level symbols.
   auto Collect() -> std::vector<clang::clangd::DocumentSymbol> {
-    CARBON_CHECK(!HasOpenSymbol());
+    while (HasOpenSymbol()) {
+      EndSymbol();
+    }
     return std::move(top_level_symbols_);
   }
 
@@ -93,8 +105,7 @@ static auto GetTokenRange(const Lex::TokenizedBuffer& tokens,
   };
 }
 
-// Finds a spanning range for the provided definition / declaration ast node.
-// In the case of a definition start, will include the body as well.
+// Finds a spanning range for the provided parse node.
 static auto GetSymbolRange(const Parse::TreeAndSubtrees& tree_and_subtrees,
                            const Parse::NodeId& ast_node)
     -> clang::clangd::Range {
@@ -105,14 +116,7 @@ static auto GetSymbolRange(const Parse::TreeAndSubtrees& tree_and_subtrees,
 
   auto start_token = tree_and_subtrees.tree().node_token(start_node);
   auto end_token = tree_and_subtrees.tree().node_token(ast_node);
-  if (tokens.GetKind(end_token).is_opening_symbol()) {
-    // DefinitionStart nodes use an opening token, so find its closing token to
-    // span the entire class/function body.
-    return GetTokenRange(tokens, start_token,
-                         tokens.GetMatchedClosingToken(end_token));
-  } else {
-    return GetTokenRange(tokens, start_token, end_token);
-  }
+  return GetTokenRange(tokens, start_token, end_token);
 }
 
 auto HandleDocumentSymbol(
@@ -140,10 +144,17 @@ auto HandleDocumentSymbol(
         symbol_kind = clang::clangd::SymbolKind::Function;
         break;
       case Parse::NodeKind::FunctionDefinitionStart:
+      case Parse::NodeKind::BuiltinFunctionDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Function;
         break;
       case Parse::NodeKind::Namespace:
+        is_leaf = true;
         symbol_kind = clang::clangd::SymbolKind::Namespace;
+        break;
+      case Parse::NodeKind::InterfaceDecl:
+      case Parse::NodeKind::NamedConstraintDecl:
+        is_leaf = true;
+        symbol_kind = clang::clangd::SymbolKind::Interface;
         break;
       case Parse::NodeKind::InterfaceDefinitionStart:
       case Parse::NodeKind::NamedConstraintDefinitionStart:
@@ -156,15 +167,21 @@ auto HandleDocumentSymbol(
       case Parse::NodeKind::ClassDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Class;
         break;
+      case Parse::NodeKind::ChoiceDefinitionStart:
+        symbol_kind = clang::clangd::SymbolKind::Enum;
+        break;
 
       case Parse::NodeKind::FunctionDefinition:
+      case Parse::NodeKind::FunctionTerseDefinition:
+      case Parse::NodeKind::BuiltinFunctionDefinition:
       case Parse::NodeKind::NamedConstraintDefinition:
       case Parse::NodeKind::InterfaceDefinition:
-      case Parse::NodeKind::ClassDefinition: {
+      case Parse::NodeKind::ClassDefinition:
+      case Parse::NodeKind::ChoiceDefinition: {
         if (symbols.HasOpenSymbol()) {
           // Symbols definition has completed, pop it from stack and add to
           // parent/root.
-          symbols.EndSymbol();
+          symbols.EndSymbol(&tokens, tree.node_token(node_id));
         }
         continue;
       }
