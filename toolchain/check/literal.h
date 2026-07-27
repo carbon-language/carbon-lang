@@ -51,6 +51,10 @@ auto MakeFloatTypeLiteral(Context& context, Parse::NodeId node_id,
 auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
                        StringLiteralValueId value_id) -> SemIR::InstId;
 
+// Forms a slice type expression for a `slice` literal keyword.
+auto MakeSliceTypeLiteral(Context& context, Parse::SliceTypeLiteralId node_id)
+    -> SemIR::InstId;
+
 // Forms a string literal type expression for a `str` literal.
 auto MakeStringTypeLiteral(Context& context, Parse::StringTypeLiteralId node_id)
     -> SemIR::TypeInstId;

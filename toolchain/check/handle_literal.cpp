@@ -132,6 +132,13 @@ auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::SliceTypeLiteralId node_id)
+    -> bool {
+  auto type_inst_id = MakeSliceTypeLiteral(context, node_id);
+  context.node_stack().Push(node_id, type_inst_id);
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::StringTypeLiteralId node_id)
     -> bool {
   auto type_inst_id = MakeStringTypeLiteral(context, node_id);

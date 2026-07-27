@@ -226,6 +226,18 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
       {.type_id = str_type.type_id, .elements_id = elements_id});
 }
 
+// Returns an instruction with the value `Core.Slice`.
+static auto GetOrAddSliceTypeInst(Context& context, SemIR::LocId loc_id)
+    -> SemIR::InstId {
+  return LookupNameInCore(context, loc_id, CoreIdentifier::Slice);
+}
+
+auto MakeSliceTypeLiteral(Context& context, Parse::SliceTypeLiteralId node_id)
+    -> SemIR::InstId {
+  auto desugared_loc_id = SemIR::LocId(node_id).AsDesugared();
+  return GetOrAddSliceTypeInst(context, desugared_loc_id);
+}
+
 // Returns an instruction with the value `str`.
 static auto GetOrAddStringTypeInst(Context& context, SemIR::LocId loc_id)
     -> SemIR::InstId {
