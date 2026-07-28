@@ -1011,7 +1011,7 @@ CARBON_PARSE_STATE(AliasFinish)
 //   2. StructPatternFieldAfterDesignator
 //   3  PatternListElementFinishAsStruct
 //
-//  _ ...
+//  _ ... (variant is Struct)
 // ^
 //  1. StructPatternUnderscore
 //  2. PatternListElementFinishAsStruct
@@ -1088,9 +1088,13 @@ CARBON_PARSE_STATE_VARIANTS5(PatternListFinish, Paren, Tuple, Struct, Explicit,
                              Implicit)
 
 //
-// { .foo = ... , }
-//             ^
-//   1. Pattern
+// ... ,
+//    ^
+//   (state done)
+//
+// ... }
+//    ^
+//   (state done)
 CARBON_PARSE_STATE(StructPatternDesignatedFieldFinish)
 
 // Handles a struct pattern parameter after the initial designator.
@@ -1100,12 +1104,16 @@ CARBON_PARSE_STATE(StructPatternDesignatedFieldFinish)
 //   2. StructPatternDesignatedFieldFinish
 //
 // .foo ??? = ...
-//      ^
+//      ^~~~~
 //   1. Pattern
 //   2. StructPatternDesignatedFieldFinish
 //
-// .foo ??? [,|}], ...
-//      ^~~
+// .foo ??? , ...
+//      ^~~~
+//   1. StructPatternDesignatedFieldFinish
+//
+// .foo ??? } ...
+//      ^~~~
 //   1. StructPatternDesignatedFieldFinish
 CARBON_PARSE_STATE(StructPatternFieldAfterDesignator)
 
@@ -1114,7 +1122,11 @@ CARBON_PARSE_STATE(StructPatternFieldAfterDesignator)
 //  ^
 //   (state done)
 //
-// _ [:|:!|:?] ...
+//  _ : ???
+// ^
+// 1. BindingPattern
+//
+//  _ :? ???
 // ^
 // 1. BindingPattern
 CARBON_PARSE_STATE(StructPatternUnderscore)
