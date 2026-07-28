@@ -13,25 +13,25 @@ auto HandlePattern(Context& context) -> void {
     case Lex::TokenKind::OpenParen:
       context.PushStateForPattern(
           StateKind::PatternListAsTuple, state.in_var_pattern,
-          state.in_unused_pattern, state.in_struct_pattern,
+          state.in_unused_pattern, state.in_field_shorthand_pattern,
           state.binding_context, state.ambient_precedence);
       break;
     case Lex::TokenKind::OpenCurlyBrace:
       context.PushStateForPattern(
           StateKind::PatternListAsStruct, state.in_var_pattern,
-          state.in_unused_pattern, state.in_struct_pattern,
+          state.in_unused_pattern, state.in_field_shorthand_pattern,
           state.binding_context, state.ambient_precedence);
       break;
     case Lex::TokenKind::Var:
       context.PushStateForPattern(
           StateKind::VariablePattern, state.in_var_pattern,
-          state.in_unused_pattern, state.in_struct_pattern,
+          state.in_unused_pattern, state.in_field_shorthand_pattern,
           state.binding_context, state.ambient_precedence);
       break;
     case Lex::TokenKind::Unused:
       context.PushStateForPattern(
           StateKind::UnusedPattern, state.in_var_pattern,
-          state.in_unused_pattern, state.in_struct_pattern,
+          state.in_unused_pattern, state.in_field_shorthand_pattern,
           state.binding_context, state.ambient_precedence);
       break;
     case Lex::TokenKind::Template:
@@ -43,7 +43,7 @@ auto HandlePattern(Context& context) -> void {
     case Lex::TokenKind::SelfValueIdentifier:
       context.PushStateForPattern(
           StateKind::BindingPattern, state.in_var_pattern,
-          state.in_unused_pattern, state.in_struct_pattern,
+          state.in_unused_pattern, state.in_field_shorthand_pattern,
           state.binding_context, state.ambient_precedence);
       break;
     default:
@@ -52,13 +52,13 @@ auto HandlePattern(Context& context) -> void {
               .is_binding_pattern_operator()) {
         context.PushStateForPattern(
             StateKind::BindingPattern, state.in_var_pattern,
-            state.in_unused_pattern, state.in_struct_pattern,
+            state.in_unused_pattern, state.in_field_shorthand_pattern,
             state.binding_context, state.ambient_precedence);
         break;
       }
       context.PushStateForPattern(
           StateKind::ExprPattern, state.in_var_pattern, state.in_unused_pattern,
-          state.in_struct_pattern, state.binding_context,
+          state.in_field_shorthand_pattern, state.binding_context,
           state.ambient_precedence);
       context.PushStateForExpr(state.ambient_precedence);
       break;
@@ -67,16 +67,6 @@ auto HandlePattern(Context& context) -> void {
 
 auto HandleExprPattern(Context& context) -> void {
   auto state = context.PopState();
-
-  // TODO: Allow ExprPatterns in StructPatterns
-  if (!state.has_error) {
-    if (state.in_struct_pattern) {
-      CARBON_DIAGNOSTIC(ExprPatternInStructPattern, Error,
-                        "Expression pattern nested within a struct pattern");
-      context.emitter().Emit(*context.position(), ExprPatternInStructPattern);
-      state.has_error = true;
-    }
-  }
 
   // If we parsed an expression followed by a binding operator, we most likely
   // have a malformed attempt to introduce a binding pattern that we interpreted

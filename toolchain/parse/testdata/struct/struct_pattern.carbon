@@ -25,15 +25,7 @@ let {.x = y: i32,} = {.x = 1};
 let {.x = y: i32, .m = n: i32} = {.x = 1, .m = 2};
 
 // --- struct_value_literal_as_pattern.carbon
-// TODO: Allow ExprPatterns inside a StructPattern
-// CHECK:STDERR: struct_value_literal_as_pattern.carbon:[[@LINE+8]]:12: error: Expression pattern nested within a struct pattern [ExprPatternInStructPattern]
-// CHECK:STDERR: let {.x = 1, .y = 2};
-// CHECK:STDERR:            ^
-// CHECK:STDERR:
-// CHECK:STDERR: struct_value_literal_as_pattern.carbon:[[@LINE+4]]:20: error: Expression pattern nested within a struct pattern [ExprPatternInStructPattern]
-// CHECK:STDERR: let {.x = 1, .y = 2};
-// CHECK:STDERR:                    ^
-// CHECK:STDERR:
+
 let {.x = 1, .y = 2};
 
 // --- struct_pattern_discard.carbon
@@ -41,11 +33,7 @@ let {.x = 1, .y = 2};
 let {.x = y: i32, _} = {.x = 1, .m = 2};
 
 // --- struct_pattern_unnamed.carbon
-// TODO: should be allowed in the presence of a designator
-// CHECK:STDERR: struct_pattern_unnamed.carbon:[[@LINE+4]]:12: error: Anonymous binding found in struct pattern. Use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
-// CHECK:STDERR: let {.x = _: i32} = {.x = 1};
-// CHECK:STDERR:            ^
-// CHECK:STDERR:
+
 let {.x = _: i32} = {.x = 1};
 
 // --- struct_pattern_shorthand.carbon
@@ -182,7 +170,7 @@ let {.x = x: i32 foo, .y = y: i32} = {.x = 1, .y = 2};
 
 // --- fail_struct_pattern_extra_token_start.carbon
 
-// CHECK:STDERR: fail_struct_pattern_extra_token_start.carbon:[[@LINE+4]]:26: error: Expression pattern nested within a struct pattern [ExprPatternInStructPattern]
+// CHECK:STDERR: fail_struct_pattern_extra_token_start.carbon:[[@LINE+4]]:26: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
 // CHECK:STDERR: let {.x = x: i32, foo .y = y: i32} = {.x = 1, .y = 2};
 // CHECK:STDERR:                          ^
 // CHECK:STDERR:
@@ -198,7 +186,7 @@ let {x: i32 foo, y: i32} = {.x = 1, .y = 2};
 
 // --- file_struct_pattern_shorthand_extra_token_start.carbon
 
-// CHECK:STDERR: file_struct_pattern_shorthand_extra_token_start.carbon:[[@LINE+4]]:18: error: Expression pattern nested within a struct pattern [ExprPatternInStructPattern]
+// CHECK:STDERR: file_struct_pattern_shorthand_extra_token_start.carbon:[[@LINE+4]]:18: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
 // CHECK:STDERR: let {x: i32, foo y: i32} = {.x = 1, .y = 2};
 // CHECK:STDERR:                  ^
 // CHECK:STDERR:
@@ -244,7 +232,7 @@ let {.x foo x: (), .y = y: ()} = {.x = (), .y = ()};
 
 // --- fail_struct_pattern_invalid_field.carbon
 
-// CHECK:STDERR: fail_struct_pattern_invalid_field.carbon:[[@LINE+4]]:12: error: Expression pattern nested within a struct pattern [ExprPatternInStructPattern]
+// CHECK:STDERR: fail_struct_pattern_invalid_field.carbon:[[@LINE+4]]:12: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
 // CHECK:STDERR: let {"foo" = , .x = x:()} = {.foo = 1, .x = ()};
 // CHECK:STDERR:            ^
 // CHECK:STDERR:
@@ -391,12 +379,12 @@ let {var _: i32} = ();
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'StructPatternDesignatedField', text: '=', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'StructPatternDesignatedField', text: '=', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '2'},
-// CHECK:STDOUT:         {kind: 'StructPatternDesignatedField', text: '=', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'StructPatternDesignatedField', text: '=', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'StructPattern', text: '}', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 13},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
@@ -439,8 +427,8 @@ let {var _: i32} = ();
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'UnderscoreName', text: '_'},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'StructPatternDesignatedField', text: '=', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'StructPatternDesignatedField', text: '=', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'StructPattern', text: '}', subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},

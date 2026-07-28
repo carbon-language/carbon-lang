@@ -2,7 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 
@@ -14,10 +13,12 @@ static auto HandlePatternListElement(Context& context, StateKind pattern_state,
   auto state = context.PopState();
 
   context.PushStateForPattern(finish_state_kind, state.in_var_pattern,
-                              state.in_unused_pattern, state.in_struct_pattern,
+                              state.in_unused_pattern,
+                              state.in_field_shorthand_pattern,
                               state.binding_context, state.ambient_precedence);
   context.PushStateForPattern(pattern_state, state.in_var_pattern,
-                              state.in_unused_pattern, state.in_struct_pattern,
+                              state.in_unused_pattern,
+                              state.in_field_shorthand_pattern,
                               state.binding_context, state.ambient_precedence);
 }
 
@@ -35,10 +36,16 @@ auto HandlePatternListElementAsStruct(Context& context) -> void {
       context.PushState(StateKind::PeriodAsStruct);
       break;
     case Lex::TokenKind::Underscore:
+      // If this ends up as part of a binding pattern, it will look like a
+      // shorthand pattern such as `{_: i32}`.
+      // Set flag on state which will be popped in HandlePatternListElement.
+      context.state_stack().back().in_field_shorthand_pattern = true;
       HandlePatternListElement(context, StateKind::StructPatternUnderscore,
                                StateKind::PatternListElementFinishAsStruct);
       break;
     default:
+      // Set flag on state which will be popped in HandlePatternListElement.
+      context.state_stack().back().in_field_shorthand_pattern = true;
       HandlePatternListElement(context, StateKind::Pattern,
                                StateKind::PatternListElementFinishAsStruct);
       break;
@@ -104,7 +111,8 @@ auto HandleStructPatternFieldAfterDesignator(Context& context) -> void {
 
   context.PushState(state, StateKind::StructPatternDesignatedFieldFinish);
   context.PushStateForPattern(StateKind::Pattern, state.in_var_pattern,
-                              state.in_unused_pattern, state.in_struct_pattern,
+                              state.in_unused_pattern,
+                              state.in_field_shorthand_pattern,
                               state.binding_context, state.ambient_precedence);
 }
 
@@ -113,10 +121,10 @@ auto HandleStructPatternUnderscore(Context& context) -> void {
 
   if (context.PositionKind(Lookahead::NextToken)
           .is_binding_pattern_operator()) {
-    context.PushStateForPattern(StateKind::BindingPattern, state.in_var_pattern,
-                                state.in_unused_pattern,
-                                state.in_struct_pattern, state.binding_context,
-                                state.ambient_precedence);
+    context.PushStateForPattern(
+        StateKind::BindingPattern, state.in_var_pattern,
+        state.in_unused_pattern, state.in_field_shorthand_pattern,
+        state.binding_context, state.ambient_precedence);
 
     return;
   }
@@ -166,10 +174,10 @@ static auto HandlePatternListElementFinish(Context& context,
   }
 
   if (list_token_kind == Context::ListTokenKind::Comma) {
-    context.PushStateForPattern(param_state_kind, state.in_var_pattern,
-                                state.in_unused_pattern,
-                                state.in_struct_pattern, state.binding_context,
-                                state.ambient_precedence);
+    context.PushStateForPattern(
+        param_state_kind, state.in_var_pattern, state.in_unused_pattern,
+        /*in_field_shorthand_pattern=*/false, state.binding_context,
+        state.ambient_precedence);
   }
 }
 
@@ -202,23 +210,24 @@ static auto HandlePatternList(Context& context, NodeKind node_kind,
                               StateKind finish_state_nonempty) -> void {
   auto state = context.PopState();
 
-  if (state.in_struct_pattern) {
-    if (node_kind == NodeKind::TuplePatternStart ||
-        node_kind == NodeKind::StructPatternStart) {
-      CARBON_DIAGNOSTIC(
-          NestedPatternListInStructPattern, Error,
-          "{0:Tuple|Struct} pattern nested within a struct pattern",
-          Diagnostics::BoolAsSelect);
+  if (state.in_field_shorthand_pattern) {
+    if (node_kind == NodeKind::TuplePatternStart) {
+      CARBON_DIAGNOSTIC(NestedTuplePatternInStructPatternShortField, Error,
+                        "Tuple pattern in shorthand struct pattern field. Use "
+                        "`.field = (...)` instead");
       context.emitter().Emit(*context.position(),
-                             NestedPatternListInStructPattern,
-                             node_kind == NodeKind::TuplePatternStart);
+                             NestedTuplePatternInStructPatternShortField);
+
+      context.ReturnErrorOnState();
+    } else if (node_kind == NodeKind::StructPatternStart) {
+      CARBON_DIAGNOSTIC(NestedStructPatternStructPatternShortField, Error,
+                        "Struct pattern in shorthand struct pattern field. Use "
+                        "`.field = {{...}` instead");
+      context.emitter().Emit(*context.position(),
+                             NestedStructPatternStructPatternShortField);
 
       context.ReturnErrorOnState();
     }
-  }
-
-  if (node_kind == NodeKind::StructPatternStart) {
-    state.in_struct_pattern = true;
   }
 
   auto open_token = context.ConsumeChecked(open_token_kind);
@@ -226,15 +235,15 @@ static auto HandlePatternList(Context& context, NodeKind node_kind,
 
   context.PushStateForPattern(
       empty ? finish_state_empty : finish_state_nonempty, state.in_var_pattern,
-      state.in_unused_pattern, state.in_struct_pattern, state.binding_context,
-      state.ambient_precedence);
+      state.in_unused_pattern, state.in_field_shorthand_pattern,
+      state.binding_context, state.ambient_precedence);
   context.AddLeafNode(node_kind, open_token);
 
   if (!empty) {
-    context.PushStateForPattern(param_state, state.in_var_pattern,
-                                state.in_unused_pattern,
-                                state.in_struct_pattern, state.binding_context,
-                                PrecedenceGroup::ForTopLevelExpr());
+    context.PushStateForPattern(
+        param_state, state.in_var_pattern, state.in_unused_pattern,
+        state.in_field_shorthand_pattern, state.binding_context,
+        PrecedenceGroup::ForTopLevelExpr());
   }
 }
 

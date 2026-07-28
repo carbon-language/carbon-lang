@@ -125,7 +125,7 @@ auto HandleBindingPattern(Context& context) -> void {
     self_token = *self;
     context.AddLeafNode(NodeKind::SelfValueName, *self);
   } else if (auto underscore = context.ConsumeIf(Lex::TokenKind::Underscore)) {
-    if (state.in_struct_pattern) {
+    if (state.in_field_shorthand_pattern) {
       CARBON_DIAGNOSTIC(
           AnonymousBindingInStructPattern, Error,
           "Anonymous binding found in struct pattern. Use `.field = "

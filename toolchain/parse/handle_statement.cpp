@@ -120,7 +120,7 @@ auto HandleStatementForHeader(Context& context) -> void {
   context.PushState(state);
   context.PushStateForPattern(
       StateKind::Pattern, /*in_var_pattern=*/false,
-      /*in_unused_pattern=*/false, /*in_struct_pattern=*/false,
+      /*in_unused_pattern=*/false, /*in_field_shorthand_pattern=*/false,
       BindingContext::ExplicitParam, PrecedenceGroup::ForTopLevelPattern());
 }
 
