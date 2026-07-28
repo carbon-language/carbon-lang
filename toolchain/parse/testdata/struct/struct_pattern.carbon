@@ -48,6 +48,14 @@ let {ref x: i32, y: i32} = {.x = 1, .y = 2};
 
 let {.x = y: i32, m: i32} = {.x = 1, .m = 2};
 
+// --- struct_pattern_designated_tuple.carbon
+
+let{x: i32, .y = (a: i32, b: i32)} = {};
+
+// --- struct_pattern_designated_struct.carbon
+
+let{x: i32, .y = {a: i32, b: i32}} = {};
+
 // --- fail_struct_pattern_comma_only.carbon
 
 // CHECK:STDERR: fail_struct_pattern_comma_only.carbon:[[@LINE+4]]:6: error: expected pattern [ExpectedPattern]
@@ -159,6 +167,14 @@ let {.x x:i32} = {.x=0};
 // CHECK:STDERR:                    ^
 // CHECK:STDERR:
 let {.x = x: i32, _,} = {.x=1, .y = 2};
+
+// --- fail_struct_pattern_underscore_not_last.carbon
+
+// CHECK:STDERR: fail_struct_pattern_underscore_not_last.carbon:[[@LINE+4]]:6: error: unexpected token `,` after `_` in struct pattern, expected `}` [ExpectedCloseAfterUnderscore]
+// CHECK:STDERR: let{_, .x = x: i32} = {};
+// CHECK:STDERR:      ^
+// CHECK:STDERR:
+let{_, .x = x: i32} = {};
 
 // --- fail_struct_pattern_extra_token_end.carbon
 
@@ -528,6 +544,62 @@ let {var _: i32} = ();
 // CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 26},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: struct_pattern_designated_tuple.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
+// CHECK:STDOUT:         {kind: 'StructPatternStart', text: '{'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
+// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
+// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'PatternListComma', text: ','},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
+// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'TuplePattern', text: ')', subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'StructPatternDesignatedField', text: '=', subtree_size: 12},
+// CHECK:STDOUT:       {kind: 'StructPattern', text: '}', subtree_size: 18},
+// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 23},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: struct_pattern_designated_struct.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
+// CHECK:STDOUT:         {kind: 'StructPatternStart', text: '{'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
+// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'StructPatternStart', text: '{'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
+// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'PatternListComma', text: ','},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
+// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'StructPattern', text: '}', subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'StructPatternDesignatedField', text: '=', subtree_size: 12},
+// CHECK:STDOUT:       {kind: 'StructPattern', text: '}', subtree_size: 18},
+// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 23},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_struct_pattern_comma_only.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -819,6 +891,26 @@ let {var _: i32} = ();
 // CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 25},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_struct_pattern_underscore_not_last.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
+// CHECK:STDOUT:         {kind: 'StructPatternStart', text: '{'},
+// CHECK:STDOUT:         {kind: 'UnderscoreName', text: '_', has_error: yes},
+// CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'StructPatternDesignatedField', text: '=', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'StructPattern', text: '}', has_error: yes, subtree_size: 10},
+// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 15},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_struct_pattern_extra_token_end.carbon
