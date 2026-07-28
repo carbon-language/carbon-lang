@@ -53,6 +53,20 @@ void F() {
 }
 ''';
 
+// --- method_const_lvalue.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class C {
+  fn M(self);
+}
+
+inline Cpp '''
+void F(const Carbon::C& c) {
+  c.M();
+}
+''';
+
 // --- ref_method_lvalue.carbon
 library "[[@TEST_NAME]]";
 import Cpp;
@@ -86,6 +100,27 @@ void F() {
   // CHECK:STDERR:       |                 ^
   // CHECK:STDERR:
   Carbon::C().M();
+}
+''';
+
+// --- fail_ref_method_const_lvalue.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class C {
+  fn M(ref self);
+}
+
+inline Cpp '''
+void F(const Carbon::C& c) {
+  // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE+7]]:3: error: 'this' argument to member function 'M' has type 'const Carbon::C', but function is not marked const [CppInteropParseError]
+  // CHECK:STDERR:    17 |   c.M();
+  // CHECK:STDERR:       |   ^
+  // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE-8]]:17: note: 'M' declared here [CppInteropParseNote]
+  // CHECK:STDERR:     5 |   fn M(ref self);
+  // CHECK:STDERR:       |                 ^
+  // CHECK:STDERR:
+  c.M();
 }
 ''';
 
