@@ -28,7 +28,7 @@ namespace Carbon::SemIR {
 // imported C++ headers and any inline C++ fragments.
 class CppFile {
  public:
-  explicit CppFile(std::unique_ptr<clang::CompilerInstance> clang,
+  explicit CppFile(std::shared_ptr<clang::CompilerInstance> clang,
                    llvm::LLVMContext* llvm_context);
   ~CppFile();
 
@@ -64,7 +64,7 @@ class CppFile {
   }
 
  private:
-  std::unique_ptr<clang::CompilerInstance> clang_;
+  std::shared_ptr<clang::CompilerInstance> clang_;
   llvm::LLVMContext* llvm_context_;
   clang::CodeGenerator* code_generator_ = nullptr;
   // Created by `CreateMangleContext()` once the AST context is available.

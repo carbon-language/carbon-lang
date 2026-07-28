@@ -11,6 +11,10 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/ArrayRef.h"
 
+namespace clang {
+class SourceManager;
+}  // namespace clang
+
 namespace Carbon::Check {
 
 class CarbonClangDiagnosticConsumer;
@@ -25,6 +29,7 @@ class CppDiagnosticListener {
   struct Diagnostic {
     clang::DiagnosticsEngine::Level level;
     clang::SourceLocation location;
+    const clang::SourceManager* source_manager = nullptr;
     std::string message;
     std::string snippet;
   };
