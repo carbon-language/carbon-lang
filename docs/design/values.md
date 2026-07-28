@@ -203,7 +203,9 @@ are also destructible.
 ```carbon
 interface Destroy {
   require impls SubobjectDestroy;
-  private fn Op(ref self: partial Self) = "destroy.op";
+  friend fn SelfDestruct(ref Self);
+
+  private fn Op(ref self: partial Self) = "no_op";
 }
 
 final impl forall [T: Destroy] partial T as Destroy {
@@ -247,6 +249,8 @@ unsafe fn SelfDestruct[T: Destroy](ref x: T) {
   x.Op();
   x.(SubobjectDestroy.Op)();
 }
+
+unsafe fn SelfDestruct[T: TrivialDestroy](ref x: T) = "no_op";
 ```
 
 `SelfDestruct` destroys a complete object, including all subobjects, and ends
@@ -258,9 +262,9 @@ The behavior for `SelfDestruct` cannot be customized. Types requiring control
 over how their subobjects are destroyed must use a raw storage type for their
 subobjects.
 
-`SelfDestruct` is automatically called for objects that go out of scope. For
-example, the toolchain treats the first `F` as if it were the second in the
-snippet below:
+The toolchain automatically calls `SelfDestruct` for all destructible objects
+that go out of scope. For example, the toolchain treats the first `F` as if it
+were the second in the snippet below:
 
 ```carbon
 // What the user writes
@@ -334,7 +338,8 @@ implement `SubobjectDestroy` unless they:
 
 ```carbon
 private interface SubobjectDestroy {
-  private fn Op(ref self: Self) = "destroy.subobjects.op";
+  private fn Op(ref self: Self) = "destroy.subobjects";
+  friend fn SelfDestruct(ref Self);
 }
 ```
 
@@ -372,17 +377,21 @@ A type has _dynamic destruction_ if it:
 
 Dynamic destruction dispatches destruction to the object that is being pointed
 to. Dynamic destruction is the Carbon analogue for C++ [virtual destructors].
+
+> [!NOTE]
+Final types can have both trivial destruction and dynamic destruction.
+
 The interface `Core.DynamicDestroy` represents types that have dynamic destruction.
 
 ```carbon
 interface DynamicDestroy {
-  final fn Op(ref self) = "destroy.dynamic.op";
+  final fn Op(ref self) = "destroy.dynamic";
 }
 ```
 
 `DynamicDestroy.Op` is defined by the toolchain. Types that have dynamic
-destruction automatically implement this interface. It is a compile-time error
-to manually implement `DynamicDestroy`.
+destruction automatically implement this interface. Users must not manually
+implement `DynamicDestroy`.
 
 `DynamicDestroy.Op`'s behaviour:
 
@@ -391,7 +400,7 @@ to manually implement `DynamicDestroy`.
     to the `SubobjectDestroy` entry in the type's vtable.
 
 > [!NOTE]
-`Core.DynamicDestroy.Op` is a safe function.
+Calling `DynamicDestroy.Op` is safe.
 
 ### Proposals
 
