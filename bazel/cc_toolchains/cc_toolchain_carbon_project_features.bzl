@@ -32,62 +32,51 @@ carbon_project_fastbuild_feature = feature(
     ],
 )
 
-def carbon_project_features(cache_key, toolchain_internals):
-    flag_sets = [
-        flag_set(
-            actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
-            flag_groups = [flag_group(flags = [
-                # Don't warn on external code as we can't
-                # necessarily patch it easily. Note that these have
-                # to be initial directories in the `#include` line.
-                "--system-header-prefix=absl/",
-                "--system-header-prefix=benchmark/",
-                "--system-header-prefix=boost/",
-                "--system-header-prefix=clang-tools-extra/",
-                "--system-header-prefix=clang/",
-                "--system-header-prefix=gmock/",
-                "--system-header-prefix=gtest/",
-                "--system-header-prefix=libfuzzer/",
-                "--system-header-prefix=llvm/",
-                "--system-header-prefix=re2/",
-                "--system-header-prefix=tools/cpp/",
-                "--system-header-prefix=tree_sitter/",
-            ])],
-        ),
-        flag_set(
-            actions = preprocessor_compile_actions,
-            flag_groups = [flag_group(flags = [
-                # Pass a cache key as a `-D` flag to avoid unintended Bazel
-                # cache hits when the underlying toolchain changes.
-                # TODO: We should consider replacing this by causing changes
-                # to the installed toolchain to more reliably end up as part
-                # of the action digest.
-                "-DBAZEL_COMPILE_CACHE_KEY=\"%s\"" % cache_key,
-            ])],
-        ),
-        flag_set(
-            actions = [
-                ACTION_NAMES.c_compile,
-                ACTION_NAMES.cpp_compile,
-                ACTION_NAMES.cpp_header_parsing,
-                ACTION_NAMES.cpp_module_compile,
-            ],
-            flag_groups = [flag_group(flags = ["-DHAVE_MALLCTL"])],
-            with_features = [with_feature_set(["freebsd_target"])],
-        ),
-    ]
-    if toolchain_internals:
-        flag_sets.append(
-            flag_set(
-                actions = [
-                    ACTION_NAMES.cpp_compile,
-                ],
-                flag_groups = [flag_group(flags = ["-fno-exceptions"])],
-            ),
-        )
-
+def carbon_project_features(cache_key):
     return [carbon_project_fastbuild_feature, feature(
         name = "project_flags",
         enabled = True,
-        flag_sets = flag_sets,
+        flag_sets = [
+            flag_set(
+                actions = ACTION_NAME_GROUPS.all_cc_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    # Don't warn on external code as we can't
+                    # necessarily patch it easily. Note that these have
+                    # to be initial directories in the `#include` line.
+                    "--system-header-prefix=absl/",
+                    "--system-header-prefix=benchmark/",
+                    "--system-header-prefix=boost/",
+                    "--system-header-prefix=clang-tools-extra/",
+                    "--system-header-prefix=clang/",
+                    "--system-header-prefix=gmock/",
+                    "--system-header-prefix=gtest/",
+                    "--system-header-prefix=libfuzzer/",
+                    "--system-header-prefix=llvm/",
+                    "--system-header-prefix=re2/",
+                    "--system-header-prefix=tools/cpp/",
+                    "--system-header-prefix=tree_sitter/",
+                ])],
+            ),
+            flag_set(
+                actions = preprocessor_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    # Pass a cache key as a `-D` flag to avoid unintended Bazel
+                    # cache hits when the underlying toolchain changes.
+                    # TODO: We should consider replacing this by causing changes
+                    # to the installed toolchain to more reliably end up as part
+                    # of the action digest.
+                    "-DBAZEL_COMPILE_CACHE_KEY=\"%s\"" % cache_key,
+                ])],
+            ),
+            flag_set(
+                actions = [
+                    ACTION_NAMES.c_compile,
+                    ACTION_NAMES.cpp_compile,
+                    ACTION_NAMES.cpp_header_parsing,
+                    ACTION_NAMES.cpp_module_compile,
+                ],
+                flag_groups = [flag_group(flags = ["-DHAVE_MALLCTL"])],
+                with_features = [with_feature_set(["freebsd_target"])],
+            ),
+        ],
     )]

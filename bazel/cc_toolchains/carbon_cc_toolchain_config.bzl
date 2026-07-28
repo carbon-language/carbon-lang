@@ -177,7 +177,7 @@ def _carbon_cc_toolchain_config_impl(ctx):
             # project-specific flags are largely harmless at the moment. We also
             # omit a meaningful cache key as when using the Carbon toolchain we
             # don't need it as it is a hermetic part of Bazel.
-            project_features = carbon_project_features(cache_key = "", toolchain_internals = False),
+            project_features = carbon_project_features(cache_key = ""),
         ),
         action_configs = _make_action_configs(tools, runtimes_path),
         cxx_builtin_include_directories = [
