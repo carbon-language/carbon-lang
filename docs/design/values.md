@@ -1227,7 +1227,7 @@ Each of the conversions described in this section is explicit if and only if it
 invokes another explicit type conversion. Otherwise, it is implicit.
 
 A type conversion of an expression with primitive extended type to a
-[compatible type](generics/terminology.md#compatible-types) just re-interprets
+[compatible type](classes.md#compatible-types) just re-interprets
 the expression's result with a new type, so it requires no run-time work, and
 has the same category as the input expression.
 

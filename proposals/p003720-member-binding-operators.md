@@ -187,8 +187,8 @@ class C {
 Each member of `C` with a distinct name will have a corresponding type (like
 `__TypeOf_C_F`) and value of that type (like `__C_F`). There are two more types
 for each member function (either static class function or method), though, that
-[adapt](/docs/design/generics/terminology.md#adapting-a-type) `C` and represent
-the type of binding that member with either a `C` value or variable.
+[adapt](/docs/design/classes.md#adapters) `C` and represent the type of binding
+that member with either a `C` value or variable.
 
 ```carbon
 class __TypeOf_C_F {}

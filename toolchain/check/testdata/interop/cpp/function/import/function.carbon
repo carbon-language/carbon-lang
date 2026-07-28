@@ -129,23 +129,22 @@ fn F() {
 
 // --- static.h
 
+// TODO: Promote this warning to an error by default.
+// CHECK:STDERR: ./static.h:[[@LINE+3]]:13: warning: function 'foo' has internal linkage but is not defined [CppInteropParseWarning]
+// CHECK:STDERR:     6 | static auto foo() -> void;
+// CHECK:STDERR:       |             ^
 static auto foo() -> void;
 
 // --- todo_fail_import_static.carbon
 
 library "[[@TEST_NAME]]";
 
-// TODO: Promote this warning to an error by default.
-// CHECK:STDERR: todo_fail_import_static.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./static.h:2:13: warning: function 'foo' has internal linkage but is not defined [CppInteropParseWarning]
-// CHECK:STDERR:     2 | static auto foo() -> void;
-// CHECK:STDERR:       |             ^
 import Cpp library "static.h";
 
 fn F() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: todo_fail_import_static.carbon:[[@LINE+4]]:11: note: used here [CppInteropParseNote]
-  // CHECK:STDERR:    17 |   Cpp.foo();
+  // CHECK:STDERR:    12 |   Cpp.foo();
   // CHECK:STDERR:       |           ^
   // CHECK:STDERR:
   Cpp.foo();

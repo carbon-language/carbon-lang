@@ -18,6 +18,7 @@ contributions.
         -   [Installing Bazelisk](#installing-bazelisk)
         -   [Old `clang` versions](#old-clang-versions)
     -   [macOS](#macos)
+    -   [Windows](#windows)
 -   [Tools](#tools)
     -   [Main tools](#main-tools)
         -   [Running prek](#running-prek)
@@ -58,14 +59,12 @@ sudo apt install \
   gh \
   libc++-dev \
   libc++abi-dev \
+  libunwind-dev \
   lld \
   lldb
 
-# Install `uv` for Python scripts.
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install `prek` for Git hooks.
-cargo install --locked prek
+# Install `uv` for Python scripts and `prek` for Git hooks.
+cargo install --locked uv prek
 
 # Set up git.
 # If you don't already have a fork:
@@ -149,6 +148,15 @@ bazel test //...:all
 > ```
 
 <!-- google-doc-style-resume -->
+
+### Windows
+
+The easiest way to build Carbon on Windows is using WSL. Use `wsl --install` to
+install Ubuntu, and then follow the [Debian or Ubuntu](#debian-or-ubuntu) setup
+instructions.
+
+See [the VS Code documentation](https://code.visualstudio.com/docs/remote/wsl)
+for instructions on how to configure VS Code to work with WSL.
 
 ## Tools
 

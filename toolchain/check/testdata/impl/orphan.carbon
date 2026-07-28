@@ -23,7 +23,7 @@ constraint ImportedN(T: type) {}
 
 class ImportedAnyParam[T: type](X: T) {}
 
-// --- fail_todo_class_definition_missing.carbon
+// --- class_definition_missing.carbon
 library "[[@TEST_NAME]]";
 
 import library "imports";
@@ -31,14 +31,9 @@ import library "imports";
 // This is the first owning decl of C, so it can be an anchor name.
 class C;
 
-// TODO: This should be accepted.
-// CHECK:STDERR: fail_todo_class_definition_missing.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl C as ImportedY {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl C as ImportedY {}
 
-// --- fail_todo_class_definition_missing_for_self_specific.carbon
+// --- class_definition_missing_for_self_specific.carbon
 library "[[@TEST_NAME]]";
 
 import library "imports";
@@ -46,14 +41,9 @@ import library "imports";
 // This is the first owning decl of C, so it can be an anchor name.
 class C;
 
-// TODO: This should be accepted.
-// CHECK:STDERR: fail_todo_class_definition_missing_for_self_specific.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl ImportedD(C) as ImportedY {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl ImportedD(C) as ImportedY {}
 
-// --- fail_todo_class_definition_missing_for_interface_specific.carbon
+// --- class_definition_missing_for_interface_specific.carbon
 library "[[@TEST_NAME]]";
 
 import library "imports";
@@ -61,11 +51,6 @@ import library "imports";
 // This is the first owning decl of C, so it can be an anchor name.
 class C;
 
-// TODO: This should be accepted.
-// CHECK:STDERR: fail_todo_class_definition_missing_for_interface_specific.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl ImportedC as ImportedZ(C) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl ImportedC as ImportedZ(C) {}
 
 // --- fail_imported_class.carbon
@@ -402,10 +387,9 @@ import library "imports";
 // CHECK:STDERR:
 extern library "extern_class" class C;
 
-// CHECK:STDERR: fail_use_extern_class.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl C as ImportedY {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
+// TODO: This should be an orphan `impl`. `C` is owned by `extern_class`, so it
+// can't be an anchor name. No error will be emitted until `extern library` is
+// implemented for classes.
 impl C as ImportedY {}
 
 // --- imported_first_owning_decl.carbon

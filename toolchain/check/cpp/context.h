@@ -10,6 +10,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/check/cpp/diagnostic_listener.h"
 
 namespace clang {
 class ASTContext;
@@ -30,12 +31,14 @@ namespace Carbon::Check {
 class CppContext {
  public:
   explicit CppContext(clang::CompilerInstance& instance,
-                      std::unique_ptr<clang::Parser> parser);
+                      std::shared_ptr<clang::Parser> parser,
+                      std::unique_ptr<CppDiagnosticListener> listener);
   ~CppContext();
 
   auto ast_context() -> clang::ASTContext& { return *ast_context_; }
   auto sema() -> clang::Sema& { return *sema_; }
   auto parser() -> clang::Parser& { return *parser_; }
+  auto parser_ptr() const -> std::shared_ptr<clang::Parser> { return parser_; }
 
   auto clang_mangle_context() -> clang::MangleContext&;
 
@@ -58,7 +61,7 @@ class CppContext {
   clang::Sema* sema_;
 
   // The Clang parser.
-  std::unique_ptr<clang::Parser> parser_;
+  std::shared_ptr<clang::Parser> parser_;
 
   // Per-Carbon-file start locations for corresponding Clang source buffers.
   // Owned and managed by code in location.cpp.
@@ -69,6 +72,9 @@ class CppContext {
 
   // The cached placement new function declaration.
   clang::FunctionDecl* placement_new_decl_ = nullptr;
+
+  // Listener for Clang diagnostics while checking this Carbon context.
+  std::unique_ptr<CppDiagnosticListener> diagnostic_listener_;
 };
 
 }  // namespace Carbon::Check

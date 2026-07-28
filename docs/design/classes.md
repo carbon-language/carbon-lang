@@ -57,6 +57,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [Partial class type](#partial-class-type)
             -   [Usage](#usage)
         -   [Assignment with inheritance](#assignment-with-inheritance)
+    -   [Compatible types](#compatible-types)
+        -   [Adapters](#adapters)
     -   [Access control](#access-control)
         -   [Private access](#private-access)
         -   [Protected access](#protected-access)
@@ -1647,6 +1649,274 @@ implement it for final types. However, following the
 we allow users to also implement assignment on extensible classes, even though
 it can lead to [slicing](https://en.wikipedia.org/wiki/Object_slicing).
 
+### Compatible types
+
+Two types are compatible if they have the same notional set of values and
+represent those values in the same way, even if they expose different APIs. The
+representation of a type describes how the values of that type are represented
+as a sequence of bits in memory. The set of values of a type includes properties
+that the compiler can't directly see, such as invariants that the type
+maintains.
+
+We can't just say two types are compatible based on structural reasons. Instead,
+we have specific constructs that create compatible types from existing types in
+ways that encourage preserving the programmer's intended semantics and
+invariants, such as implementing the API of the new type by calling (public)
+methods of the original API, instead of accessing any private implementation
+details.
+
+Casting a value between compatible types is safe without any dynamic checks or
+danger of [object slicing](https://en.wikipedia.org/wiki/Object_slicing).
+
+#### Adapters
+
+An adapter creates a new type compatible with an existing type, but with a
+different API. Adapters are defined by using the `adapt` keyword inside a
+`class` definition:
+
+```carbon
+class Song {
+  fn Title(self) -> String;
+}
+class SongByTitle {
+  adapt Song;
+}
+```
+
+The rules for adapters are:
+
+-   You can add any declaration that you could add to a class except for
+    declarations that would change the representation of the type. This means
+    you can add methods, functions, interface implementations, and aliases, but
+    not fields, base classes, or virtual functions. The specific implementations
+    of virtual functions are part of the type representation, and so no virtual
+    functions may be overridden in an adapter either.
+-   The adapted type is compatible with the original type, and that relationship
+    is an equivalence class, so `Song`, `SongByTitle`, and any other adapters of
+    `Song` end up compatible with each other.
+-   Since adapted types are compatible with the original type, you may
+    explicitly cast between them, but there is no implicit conversion between
+    these types.
+
+Inside an adapter, the `Self` type matches the adapter. Members of the original
+type may be accessed by a cast:
+
+```carbon
+class SongByTitle {
+  adapt Song;
+  fn Less(self, rhs: Self) -> bool {
+    return (self as Song).Title() < (rhs as Song).Title();
+  }
+}
+```
+
+An adapter can also preserve the API and interface implementations of the original
+type using `extend adapt`. For details on how an extending adapter implements
+interfaces that are implemented for the adapted type, as well as applications of adapters to generics, see
+[Adapting types](/docs/design/generics/details.md#adapting-types) in the generics
+design.
+
+**Comparison with other languages:** This is similar to the Rust idiom called
+"newtype", which is used to implement traits on types while avoiding
+[coherence](/docs/design/generics/terminology.md#coherence) problems, see
+[here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
+and
+[here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
+Rust's mechanism doesn't directly support reusing implementations, though some
+of that is provided by macros defined in libraries.
+
+Rust also uses the newtype idiom to create types with additional invariants or
+other information encoded in the type
+([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
+[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
+[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
+This is used to record in the type system that some data has passed validation
+checks, like `ValidDate` with the same data layout as `Date`. Or to record the
+units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
+versus `Meters`.
+
+> **Future work:** We should have some way of restricting the casts between a type
+> and an adapter to address this use case. One possibility would be to add the
+> keyword `private` before `adapt`, so you might write
+> `extend private adapt Date;`.
+
+Haskell has a [`newtype` feature](https://wiki.haskell.org/Newtype) as well.
+Haskell's feature doesn't directly support reusing implementations either, but
+the most popular compiler provides it as
+[an extension](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/newtype_deriving.html).
+
+### Destructors
+
+Every non-abstract type is _destructible_, meaning has a defined destructor
+method called when the lifetime of a value of that type ends, such as when a
+variable goes out of scope. The destructor for a class may be customized using
+the `destroy` method:
+
+```carbon
+class MyClass {
+  fn destroy(self) { ... }
+}
+```
+
+or:
+
+```carbon
+class MyClass {
+  // Can modify `self` in the body.
+  fn destroy(ref self) { ... }
+}
+```
+
+If a class has no `destroy` method, it gets the default destructor, which is
+equivalent to `fn destroy(self) { }`.
+
+The destructor for a class is run before the destructors of its data members.
+The data members are destroyed in reverse order of declaration. Derived classes
+are destroyed before their base classes, so the order of operations is:
+
+-   derived class' destructor runs,
+-   the data members of the derived class are destroyed, in reverse order of
+    declaration,
+-   the immediate base class' destructor runs,
+-   the data members of the immediate base class are destroyed, in reverse order
+    of declaration,
+-   and so on.
+
+Destructors may be declared in class scope and then defined out-of-line:
+
+```carbon
+class MyClass {
+  fn destroy(ref self);
+}
+fn MyClass.destroy(ref self) { ... }
+```
+
+It is illegal to delete an instance of a derived class through a pointer to one
+of its base classes unless it has a
+[virtual destructor](https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors).
+An abstract or base class' destructor may be declared virtual using the
+`virtual` introducer, in which case any derived class destructor declaration
+must be `override`:
+
+```carbon
+base class MyBaseClass {
+  virtual fn destroy(ref self) { ... }
+}
+
+class MyDerivedClass {
+  extend base: MyBaseClass;
+  override fn destroy(ref self) { ... }
+}
+```
+
+The properties of a type, whether type is abstract, base, or final, and whether
+the destructor is virtual or non-virtual, determines which
+[facet types](/docs/design/generics/terminology.md#facet-type) it satisfies.
+
+-   Non-abstract classes are `Concrete`. This means you can create local and
+    member variables of this type. `Concrete` types have destructors that are
+    called when the local variable goes out of scope or the containing object of
+    the member variable is destroyed.
+-   Final classes and classes with a virtual destructor are `Deletable`. These
+    may be safely deleted through a pointer.
+-   Classes that are `Concrete`, `Deletable`, or both are `Destructible`. These
+    are types that may be deleted through a pointer, but it might not be safe.
+    The concerning situation is when you have a pointer to a base class without
+    a virtual destructor. It is unsafe to delete that pointer when it is
+    actually pointing to a derived class.
+
+**Note:** The names `Deletable` and `Destructible` are
+[**placeholders**](/proposals/p001154-destructors.md#type-of-type-naming) since
+they do not conform to the decision on
+[question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
+
+| Class    | Destructor  | `Concrete` | `Deletable` | `Destructible` |
+| -------- | ----------- | ---------- | ----------- | -------------- |
+| abstract | non-virtual | no         | no          | no             |
+| abstract | virtual     | no         | yes         | yes            |
+| base     | non-virtual | yes        | no          | yes            |
+| base     | virtual     | yes        | yes         | yes            |
+| final    | any         | yes        | yes         | yes            |
+
+The compiler automatically determines which of these
+[facet types](/docs/design/generics/terminology.md#facet-type) a given type
+satisfies. It is illegal to directly implement `Concrete`, `Deletable`, or
+`Destructible`. For more about these constraints, see
+["destructor constraints" in the detailed generics design](/docs/design/generics/details.md#destructor-constraints).
+
+A pointer to `Deletable` types may be passed to the `Delete` method of the
+`Allocator` [interface](/docs/design/generics/terminology.md#interface). To
+deallocate a pointer to a base class without a virtual destructor, which may
+only be done when it is not actually pointing to a value with a derived type,
+call the `UnsafeDelete` method instead. Note that you may not call
+`UnsafeDelete` on abstract types without virtual destructors, it requires
+`Destructible`.
+
+```
+interface Allocator {
+  // ...
+  fn Delete[T: Deletable](ref self, p: T*);
+  fn UnsafeDelete[T: Destructible](ref self, p: T*);
+}
+```
+
+To pass a pointer to a base class without a virtual destructor to a
+checked-generic function expecting a `Deletable` type, use the
+`UnsafeAllowDelete` [type adapter](#adapters).
+
+```
+class UnsafeAllowDelete(T: Concrete) {
+  extend adapt T;
+  impl as Deletable {}
+}
+
+// Example usage:
+fn RequiresDeletable[T: Deletable](p: T*);
+var x: MyExtensible;
+RequiresDeletable(&x as UnsafeAllowDelete(MyExtensible)*);
+```
+
+If a virtual method is transitively called from inside a destructor, the
+implementation from the current class is used, not any overrides from derived
+classes. It will abort the execution of the program if that method is abstract
+and not implemented in the current class.
+
+**Future work:** Allow or require destructors to be declared as taking
+`partial Self` in order to prove no use of virtual methods.
+
+Types satisfy the
+[`TrivialDestructor`](/docs/design/generics/details.md#destructor-constraints)
+facet type if:
+
+-   the class declaration does not define a destructor or the class defines the
+    destructor with an empty body `{ }`,
+-   all data members implement `TrivialDestructor`, and
+-   all base classes implement `TrivialDestructor`.
+
+For example, a [struct type](#struct-types) implements `TrivialDestructor` if
+all its members do.
+
+`TrivialDestructor` implies that their destructor does nothing, which may be
+used to generate optimized specializations.
+
+There is no provision for handling failure in a destructor. All operations that
+could potentially fail must be performed before the destructor is called.
+Unhandled failure during a destructor call will abort the program.
+
+**Future work:** Allow or require destructors to be declared as taking
+`(var self: Self)`.
+
+**Alternatives considered:**
+
+-   [Types implement destructor interface](/proposals/p001154-destructors.md#types-implement-destructor-interface)
+-   [Prevent virtual function calls in destructors](/proposals/p001154-destructors.md#prevent-virtual-function-calls-in-destructors)
+-   [Allow functions to act as destructors](/proposals/p001154-destructors.md#allow-functions-to-act-as-destructors)
+-   [Allow private destructors](/proposals/p001154-destructors.md#allow-private-destructors)
+-   [Allow multiple conditional destructors](/proposals/p001154-destructors.md#allow-multiple-conditional-destructors)
+-   [Don't distinguish safe and unsafe delete operations](/proposals/p001154-destructors.md#dont-distinguish-safe-and-unsafe-delete-operations)
+-   [Don't allow unsafe delete](/proposals/p001154-destructors.md#dont-allow-unsafe-delete)
+-   [Allow final destructors](/proposals/p001154-destructors.md#allow-final-destructors)
+
 ### Access control
 
 By default, all members of a class are fully publicly accessible. Access can be
@@ -2149,6 +2419,10 @@ the type of `U.x`."
     -   [Nominal data class](/proposals/p000722-nominal-classes-and-methods.md#nominal-data-class)
     -   [Let constants](/proposals/p000722-nominal-classes-and-methods.md#let-constants)
 
+-   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+
+    -   [`adaptor` instead of `adapter`](/proposals/p000731-generics-details-2-adapters-associated-types-parameterized-interfaces.md#adaptor-instead-of-adapter)
+
 -   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 
     -   [Classes are final by default](/proposals/p000777-inheritance.md#classes-are-final-by-default)
@@ -2202,6 +2476,8 @@ the type of `U.x`."
 
     -   [Use `extends` instead of `extend`](/proposals/p002760-consistent-class-and-interface-syntax.md#use-extends-instead-of-extend)
     -   [List base class in class declaration](/proposals/p002760-consistent-class-and-interface-syntax.md#list-base-class-in-class-declaration)
+    -   [Continue to use `adapter` or `adaptor` instead of `adapt`](/proposals/p002760-consistent-class-and-interface-syntax.md#continue-to-use-adapter-or-adaptor-instead-of-adapt)
+    -   [Use some other syntax for extending adapters](/proposals/p002760-consistent-class-and-interface-syntax.md#use-some-other-syntax-for-extending-adapters)
 
 -   [#5017: Destructor syntax](https://github.com/carbon-language/carbon-lang/pull/5017)
 
@@ -2227,6 +2503,7 @@ the type of `U.x`."
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
 -   [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
 -   [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
+-   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
 -   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 -   [#875: Principle: Information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
 -   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
