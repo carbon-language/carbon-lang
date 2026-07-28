@@ -263,8 +263,8 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   return os.TakeStr();
 }
 
-auto Mangler::MangleForAttr(SemIR::FunctionId function_id,
-                            SemIR::SpecificId specific_id) -> std::string {
+auto Mangler::MangleWithPlatform(SemIR::FunctionId function_id,
+                                 SemIR::SpecificId specific_id) -> std::string {
   RawStringOstream os;
 
   // The only platform mangling that's relevant for us is applying a global

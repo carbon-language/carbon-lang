@@ -587,7 +587,7 @@ static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
                    context.mangle_string_fingerprint());
   std::string mangled_name =
-      m.MangleForAttr(target.function_id, SemIR::SpecificId::None);
+      m.MangleWithPlatform(target.function_id, SemIR::SpecificId::None);
   function_decl->addAttr(
       clang::AsmLabelAttr::Create(context.ast_context(), mangled_name));
 
