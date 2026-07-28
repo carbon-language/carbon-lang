@@ -31,7 +31,7 @@ namespace Carbon::Check {
 // declarations, and similar values.
 class CppContext {
  public:
-  explicit CppContext(std::shared_ptr<CppDomain> domain,
+  explicit CppContext(CppDomain& domain,
                       std::unique_ptr<CppDiagnosticListener> listener);
   ~CppContext();
 
@@ -41,7 +41,6 @@ class CppContext {
 
   auto domain() -> CppDomain& { return *domain_; }
   auto domain() const -> const CppDomain& { return *domain_; }
-  auto domain_ptr() const -> std::shared_ptr<CppDomain> { return domain_; }
 
   auto clang_mangle_context() -> clang::MangleContext&;
 
@@ -58,7 +57,7 @@ class CppContext {
 
  private:
   // The C++ compilation domain.
-  std::shared_ptr<CppDomain> domain_;
+  CppDomain* domain_;
 
   // TODO: All of the below state that is not specific to a particular
   // Check::Context or SemIR::File should be moved into CppDomain.

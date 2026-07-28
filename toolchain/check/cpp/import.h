@@ -39,7 +39,7 @@ auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool;
 // non-null unless there was an error initializing Clang.
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-               std::shared_ptr<CppDomain> domain) -> void;
+               CppDomain* domain) -> void;
 
 // Given a clang declaration ID that was previously imported into another file,
 // returns the corresponding clang declaration key in the current context.

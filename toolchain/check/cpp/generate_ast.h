@@ -39,14 +39,14 @@ auto InitializeCppDomain(
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::LLVMContext* llvm_context,
     std::shared_ptr<clang::CompilerInvocation> base_invocation)
-    -> std::shared_ptr<CppDomain>;
+    -> std::unique_ptr<CppDomain>;
 
 // Generates a Clang AST for the given C++ imports and sets it as the context's
 // `cpp_context` and the SemIR's `cpp_file`. Returns a bool that represents
 // whether compilation was successful.
 auto GenerateAst(Context& context,
                  llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                 std::shared_ptr<CppDomain> domain) -> bool;
+                 CppDomain& domain) -> bool;
 
 // Injects C++ code from `inline Cpp` into the active Clang AST context.
 // Returns a bool representing whether parsing was successful.

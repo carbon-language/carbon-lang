@@ -10,9 +10,9 @@
 
 namespace Carbon::Check {
 
-CppContext::CppContext(std::shared_ptr<CppDomain> domain,
+CppContext::CppContext(CppDomain& domain,
                        std::unique_ptr<CppDiagnosticListener> listener)
-    : domain_(std::move(domain)), diagnostic_listener_(std::move(listener)) {}
+    : domain_(&domain), diagnostic_listener_(std::move(listener)) {}
 
 CppContext::~CppContext() = default;
 

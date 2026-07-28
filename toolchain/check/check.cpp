@@ -417,6 +417,12 @@ auto CheckParseTrees(
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const CheckParseTreesOptions& options,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void {
+  // C++ domains used across files. When compiling with a single ASTContext
+  // (`options.share_cpp_ast`), there is only a single shared domain. This
+  // variable is created early so the domains outlive the `UnitAndImports` that
+  // reference them.
+  llvm::SmallVector<std::unique_ptr<CppDomain>> cpp_domains;
+
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos(
@@ -499,19 +505,16 @@ auto CheckParseTrees(
     }
   }
 
-  // C++ domains used across files. When compiling with a single ASTContext
-  // (`options.share_cpp_ast`), there is only a single shared domain.
-  llvm::SmallVector<std::shared_ptr<CppDomain>> cpp_domains;
+  // Create C++ domains for Cpp imports.
   if (options.share_cpp_ast) {
     // TODO: Remove dependence on properties of the first unit here.
-    auto shared_cpp_domain = InitializeCppDomain(
-        unit_infos.front().err_tracker,
-        unit_infos.front().unit->sem_ir->filename(), fs,
-        unit_infos.front().unit->llvm_context, clang_invocation);
-    if (shared_cpp_domain) {
-      cpp_domains.push_back(shared_cpp_domain);
+    if (auto shared_cpp_domain = InitializeCppDomain(
+            unit_infos.front().err_tracker,
+            unit_infos.front().unit->sem_ir->filename(), fs,
+            unit_infos.front().unit->llvm_context, clang_invocation)) {
+      cpp_domains.push_back(std::move(shared_cpp_domain));
       for (auto& target_info : unit_infos) {
-        target_info.cpp_domain = shared_cpp_domain;
+        target_info.cpp_domain = cpp_domains.back().get();
       }
     }
   } else {
@@ -519,11 +522,11 @@ auto CheckParseTrees(
       if (unit_info.cpp_imports.empty()) {
         continue;
       }
-      unit_info.cpp_domain = InitializeCppDomain(
-          unit_info.err_tracker, unit_info.unit->sem_ir->filename(), fs,
-          unit_info.unit->llvm_context, clang_invocation);
-      if (unit_info.cpp_domain) {
-        cpp_domains.push_back(unit_info.cpp_domain);
+      if (auto cpp_domain = InitializeCppDomain(
+              unit_info.err_tracker, unit_info.unit->sem_ir->filename(), fs,
+              unit_info.unit->llvm_context, clang_invocation)) {
+        cpp_domains.push_back(std::move(cpp_domain));
+        unit_info.cpp_domain = cpp_domains.back().get();
       }
     }
   }
