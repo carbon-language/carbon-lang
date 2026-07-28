@@ -214,3 +214,32 @@ impl G(C) as Z(G(C)) where .Result impls Y(G(C)) and .Result = () {}
 fn F() {
   G(C) as Z(G(C));
 }
+
+// --- impl_lookups_in_definition_find_own_impl_with_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+class G(T: type) {}
+
+interface Z(R: type) {
+  let Result: type;
+}
+interface Y(S: type) {}
+
+impl forall [T: type] () as Y(G(T)) {}
+impl forall [T: type] {} as Y(G(T)) {}
+
+impl forall [T: type, U: type] G(T) as Z(U) where .Result impls Y(G(T)) and .Result = {} {}
+
+constraint N(T: type) {
+  extend require impls Z(G(T));
+}
+
+// See impl_lookups_in_definition_find_own_impl.carbon for an explanation of
+// this test. We are testing the same things, except we put the impl's target
+// interface into a named constraint.
+impl G(C) as N(C) where .Result impls Y(G(C)) and .Result = () {}
+
+fn F() {
+  G(C) as Z(G(C));
+}
