@@ -1999,7 +1999,7 @@ that type ends. They are defined by implementing `Core.Destroy`:
 
 ```carbon
 class MyClass {
-  impl Core.Destroy { 
+  impl Core.Destroy {
     fn Op(self) { ... }
   }
 }
