@@ -150,27 +150,20 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-inline Cpp '''
-struct VirtualDestructor {
-  virtual ~VirtualDestructor() {}
-};
-''';
-
 // CHECK:STDERR: fail_abstract_method.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: abstract class Abstract {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 abstract class Abstract {
-  extend base: Cpp.VirtualDestructor;
   abstract fn F(self);
 }
 
 inline Cpp '''
 // CHECK:STDERR: fail_abstract_method.carbon:[[@LINE+7]]:18: error: variable type 'Carbon::Abstract' is an abstract class [CppInteropParseError]
-// CHECK:STDERR:    28 | Carbon::Abstract x;
+// CHECK:STDERR:    21 | Carbon::Abstract x;
 // CHECK:STDERR:       |                  ^
 // CHECK:STDERR: fail_abstract_method.carbon:[[@LINE-7]]:22: note: unimplemented pure virtual method 'F' in 'Abstract' [CppInteropParseNote]
-// CHECK:STDERR:    17 |   abstract fn F(self);
+// CHECK:STDERR:    10 |   abstract fn F(self);
 // CHECK:STDERR:       |                      ^
 // CHECK:STDERR:
 Carbon::Abstract x;
@@ -181,18 +174,11 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-inline Cpp '''
-struct VirtualDestructor {
-  virtual ~VirtualDestructor() {}
-};
-''';
-
 // CHECK:STDERR: fail_todo_abstract_method_overridden_in_cpp.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: abstract class Abstract {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 abstract class Abstract {
-  extend base: Cpp.VirtualDestructor;
   abstract fn F(ref self);
 }
 
