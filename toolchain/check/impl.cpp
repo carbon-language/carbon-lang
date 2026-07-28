@@ -416,10 +416,11 @@ static auto WitnessQueryMatchesInterface(
 
 auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
                                   const SemIR::Impl& impl,
+                                  SemIR::TypeInstId full_constraint_id,
                                   SemIR::SpecificId self_specific_id)
     -> SemIR::InstId {
   auto facet_type_id =
-      context.types().GetTypeIdForTypeInstId(impl.constraint_id);
+      context.types().GetTypeIdForTypeInstId(full_constraint_id);
   CARBON_CHECK(facet_type_id != SemIR::ErrorInst::TypeId);
   auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
   // TODO: We need to collect rewrites from named constraints too, so we will
@@ -533,7 +534,7 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       CARBON_DIAGNOSTIC(RewriteForAssociatedFunction, Error,
                         "rewrite specified for associated function {0}",
                         SemIR::NameId);
-      context.emitter().Emit(impl.constraint_id, RewriteForAssociatedFunction,
+      context.emitter().Emit(full_constraint_id, RewriteForAssociatedFunction,
                              fn.name_id);
       table_entry = SemIR::ErrorInst::InstId;
       continue;
@@ -561,7 +562,7 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       // forming the facet type because the type of the associated constant
       // was symbolic.
       auto converted_inst_id =
-          ConvertToValueOfType(context, SemIR::LocId(impl.constraint_id),
+          ConvertToValueOfType(context, SemIR::LocId(full_constraint_id),
                                rewrite_inst_id, assoc_const_type_id);
       // Canonicalize the converted constant value.
       converted_inst_id =
@@ -579,7 +580,7 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
             "after conversion to {2}",
             SemIR::NameId, InstIdAsConstant, SemIR::TypeId);
         context.emitter().Emit(
-            impl.constraint_id, AssociatedConstantNotConstantAfterConversion,
+            full_constraint_id, AssociatedConstantNotConstantAfterConversion,
             assoc_const.name_id, rewrite_inst_id, assoc_const_type_id);
         rewrite_inst_id = SemIR::ErrorInst::InstId;
       }
@@ -816,7 +817,8 @@ static auto SubstImplSelfWitnesses(Context& context, SemIR::LocId loc_id,
 }
 
 auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
-                                SemIR::Impl& impl) -> void {
+                                SemIR::Impl& impl,
+                                SemIR::TypeInstId full_constraint_id) -> void {
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
   }
@@ -836,7 +838,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
   // now that it exists. Since these accesses are in the declaration, they were
   // originally checked before the `impl` existed.
   auto subst_constraint_id = SubstImplSelfWitnesses(
-      context, loc_id, context.constant_values().Get(impl.constraint_id),
+      context, loc_id, context.constant_values().Get(full_constraint_id),
       impl.witness_id);
   // Any errors in the facet type will result in an error in the canonical value
   // here. Don't diagnose anything more in the facet type.
@@ -876,7 +878,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
           context.insts()
               .GetAs<SemIR::FacetType>(
                   context.constant_values().GetConstantInstId(
-                      impl.constraint_id))
+                      full_constraint_id))
               .declared_facet_type_id,
           context.constant_values().GetInstId(req.self_facet_value),
           req.specific_interface);

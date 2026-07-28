@@ -55,7 +55,7 @@ impl forall [T: type] T as I where .U = C {
 // CHECK:STDOUT:   %T.as.I.impl.F.type: type = fn_type @T.as.I.impl.F, @T.as.I.impl(%T.loc10_15.1) [symbolic = %T.as.I.impl.F.type (constants.%T.as.I.impl.F.type)]
 // CHECK:STDOUT:   %T.as.I.impl.F: @T.as.I.impl.%T.as.I.impl.F.type (%T.as.I.impl.F.type) = struct_value () [symbolic = %T.as.I.impl.F (constants.%T.as.I.impl.F)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.ref as %.loc10_30 {
+// CHECK:STDOUT:   impl: %T.ref as %I.ref {
 // CHECK:STDOUT:     %T.as.I.impl.F.decl: @T.as.I.impl.%T.as.I.impl.F.type (%T.as.I.impl.F.type) = fn_decl @T.as.I.impl.F [symbolic = @T.as.I.impl.%T.as.I.impl.F (constants.%T.as.I.impl.F)] {
 // CHECK:STDOUT:       %return.param_patt: %pattern_type.98b = out_param_pattern [concrete = constants.%return.param_patt.89a]
 // CHECK:STDOUT:       %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %U.ref [concrete = constants.%return.patt.e4a]
@@ -74,7 +74,7 @@ impl forall [T: type] T as I where .U = C {
 // CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:     .F = %T.as.I.impl.F.decl
 // CHECK:STDOUT:     .C = <poisoned>
-// CHECK:STDOUT:     extend %.loc10_30
+// CHECK:STDOUT:     extend %I.ref
 // CHECK:STDOUT:     witness = %I.impl_witness.loc10_43.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -243,3 +243,29 @@ impl G(C) as N(C) where .Result impls Y(G(C)) and .Result = () {}
 fn F() {
   G(C) as Z(G(C));
 }
+
+// --- lookup_for_impl_with_period_self_in_constraint.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+class G(T: type) {}
+
+interface Z(R: type) {
+  let Result: type;
+}
+interface Y(S: type) {}
+
+impl forall [T: type] () as Y(G(T)) {}
+
+// We don't want `.Self` references to escape the `impl` decl, so this tests a
+// scenario where they used to escape and cause an infinite cycle.
+//
+// The impl lookup in `F()` finds this impl, which has a `.Self` in its set of
+// constraints (in `.Result impls ...`). The lookup operation can't identify the
+// constraint and replace `.Self` without creating a new witness that causes a
+// lookup for this impl again.
+impl forall [T: type, U: type] G(T) as Z(U) where .Result impls Y(G(T)) and .Result = () {}
+
+fn F() {
+  G(C) as Z(G(C));
+}

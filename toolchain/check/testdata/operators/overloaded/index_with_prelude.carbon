@@ -115,7 +115,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %subscript.param_patt.5ee: %pattern_type.ea5 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %subscript.patt.a6f: %pattern_type.ea5 = at_binding_pattern subscript, %subscript.param_patt.5ee [concrete]
 // CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.d74 = facet_value %C, (%IndexWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.9bf: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%SubscriptType.f8f, %IndexWith.facet) [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.a63: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%SubscriptType.f8f, %IndexWith.facet) [concrete]
 // CHECK:STDOUT:   %.4d0: Core.Form = init_form %ElementType [concrete]
 // CHECK:STDOUT:   %pattern_type.67c: type = pattern_type %ElementType [concrete]
 // CHECK:STDOUT:   %return.param_patt.41c: %pattern_type.67c = out_param_pattern [concrete]
@@ -131,7 +131,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %.115: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %x.patt: %pattern_type.67c = value_binding_pattern x [concrete]
-// CHECK:STDOUT:   %.bb5: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.9bf, %IndexWith.facet [concrete]
+// CHECK:STDOUT:   %.182: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.a63, %IndexWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -213,7 +213,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %.loc8_41 {
+// CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %IndexWith.type {
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.decl: %C.as.IndexWith.impl.At.type = fn_decl @C.as.IndexWith.impl.At [concrete = constants.%C.as.IndexWith.impl.At] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.98b = value_param_pattern [concrete = constants.%self.param_patt.303]
 // CHECK:STDOUT:     %self.patt: %pattern_type.98b = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.49a]
@@ -244,7 +244,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   .SubscriptType = <poisoned>
 // CHECK:STDOUT:   .ElementType = <poisoned>
 // CHECK:STDOUT:   .At = %C.as.IndexWith.impl.At.decl
-// CHECK:STDOUT:   extend %.loc8_41
+// CHECK:STDOUT:   extend %IndexWith.type
 // CHECK:STDOUT:   witness = %IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -286,7 +286,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc15: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, file.%c
 // CHECK:STDOUT:   %s.ref: %SubscriptType.f8f = name_ref s, file.%s
-// CHECK:STDOUT:   %impl.elem1: %.bb5 = impl_witness_access constants.%IndexWith.impl_witness, element1 [concrete = constants.%C.as.IndexWith.impl.At]
+// CHECK:STDOUT:   %impl.elem1: %.182 = impl_witness_access constants.%IndexWith.impl_witness, element1 [concrete = constants.%C.as.IndexWith.impl.At]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem1
 // CHECK:STDOUT:   %.loc16: ref %ElementType = temporary_storage
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.call: init %ElementType to %.loc16 = call %bound_method(%c.ref, %s.ref)
@@ -333,13 +333,13 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %tuple.type.as.IndexWith.impl.At.type: type = fn_type @tuple.type.as.IndexWith.impl.At [concrete]
 // CHECK:STDOUT:   %tuple.type.as.IndexWith.impl.At: %tuple.type.as.IndexWith.impl.At.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.385 = facet_value %tuple.type.748, (%IndexWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.a09: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(Core.IntLiteral, %IndexWith.facet) [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.ef2: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(Core.IntLiteral, %IndexWith.facet) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %empty_tuple.4db: %C = tuple_value () [concrete]
 // CHECK:STDOUT:   %s.patt: %pattern_type.8b4 = value_binding_pattern s [concrete]
 // CHECK:STDOUT:   %tuple.adf: %tuple.type.748 = tuple_value (%empty_tuple.4db, %empty_tuple.4db) [concrete]
 // CHECK:STDOUT:   %e.patt: %pattern_type.98b = value_binding_pattern e [concrete]
-// CHECK:STDOUT:   %.885: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.a09, %IndexWith.facet [concrete]
+// CHECK:STDOUT:   %.f74: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.ef2, %IndexWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -418,7 +418,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @tuple.type.as.IndexWith.impl: %.loc8_11.2 as %.loc8_48 {
+// CHECK:STDOUT: impl @tuple.type.as.IndexWith.impl: %.loc8_11.2 as %IndexWith.type {
 // CHECK:STDOUT:   %tuple.type.as.IndexWith.impl.At.decl: %tuple.type.as.IndexWith.impl.At.type = fn_decl @tuple.type.as.IndexWith.impl.At [concrete = constants.%tuple.type.as.IndexWith.impl.At] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.8b4 = value_param_pattern [concrete = constants.%self.param_patt.284]
 // CHECK:STDOUT:     %self.patt: %pattern_type.8b4 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.dd1]
@@ -448,7 +448,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .At = %tuple.type.as.IndexWith.impl.At.decl
-// CHECK:STDOUT:   extend %.loc8_48
+// CHECK:STDOUT:   extend %IndexWith.type
 // CHECK:STDOUT:   witness = %IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -490,7 +490,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc14_34: %tuple.type.748 = tuple_literal (%.loc14_21.2, %.loc14_30.2) [concrete = constants.%tuple.adf]
 // CHECK:STDOUT:   %s.ref: %tuple.type.748 = name_ref s, file.%s
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %impl.elem1: %.885 = impl_witness_access constants.%IndexWith.impl_witness, element1 [concrete = constants.%tuple.type.as.IndexWith.impl.At]
+// CHECK:STDOUT:   %impl.elem1: %.f74 = impl_witness_access constants.%IndexWith.impl_witness, element1 [concrete = constants.%tuple.type.as.IndexWith.impl.At]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.ref, %impl.elem1
 // CHECK:STDOUT:   %tuple.type.as.IndexWith.impl.At.call: init %C = call %bound_method(%s.ref, %int_0)
 // CHECK:STDOUT:   return
@@ -609,7 +609,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %.loc8_41 {
+// CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %IndexWith.type {
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.decl: %C.as.IndexWith.impl.At.type = fn_decl @C.as.IndexWith.impl.At [concrete = constants.%C.as.IndexWith.impl.At] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.98b = value_param_pattern [concrete = constants.%self.param_patt.303]
 // CHECK:STDOUT:     %self.patt: %pattern_type.98b = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.49a]
@@ -640,7 +640,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   .SubscriptType = <poisoned>
 // CHECK:STDOUT:   .ElementType = <poisoned>
 // CHECK:STDOUT:   .At = %C.as.IndexWith.impl.At.decl
-// CHECK:STDOUT:   extend %.loc8_41
+// CHECK:STDOUT:   extend %IndexWith.type
 // CHECK:STDOUT:   witness = %IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
