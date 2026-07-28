@@ -37,12 +37,12 @@ let var (x: (), unused y: ()) = ((), ());
 let var unused (x: (), y: ()) = ((), ());
 
 // --- unused_struct.carbon
-let {.x = x: i32, var unused y: i32} = {.x = 1, .y = 2};
-let {.x = x: i32, unused var y: i32} = {.x = 1, .y = 2};
+let {.x = x: i32, var unused y: i32} = {};
+let {.x = x: i32, unused var y: i32} = {};
 
-let unused {x: i32, y: i32} = {.x = 1, .y = 1};
-let var {x: i32, unused y: i32} = {.x = 1, .y = 1};
-let var unused {x: i32, y: i32} = {.x = 1, .y = 1};
+let unused {x: i32, y: i32} = {};
+let var {x: i32, unused y: i32} = {};
+let var unused {x: i32, y: i32} = {};
 
 // --- var_unused_function.carbon
 fn F(x: (), var unused y: ());
@@ -332,17 +332,8 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:       {kind: 'StructPattern', text: '}', subtree_size: 14},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'StructLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '2'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 28},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 19},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:         {kind: 'StructPatternStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
@@ -360,17 +351,8 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:       {kind: 'StructPattern', text: '}', subtree_size: 14},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'StructLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '2'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 28},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 19},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:           {kind: 'StructPatternStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
@@ -384,17 +366,8 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:       {kind: 'UnusedPattern', text: 'unused', subtree_size: 10},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'StructLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 24},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 15},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:           {kind: 'StructPatternStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
@@ -409,17 +382,8 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 11},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'StructLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 25},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 16},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:             {kind: 'StructPatternStart', text: '{'},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
@@ -434,17 +398,8 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 11},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'StructLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 25},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 16},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: var_unused_function.carbon
