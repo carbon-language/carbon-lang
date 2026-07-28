@@ -267,6 +267,7 @@ auto Mangler::MangleWithPlatform(SemIR::FunctionId function_id,
                                  SemIR::SpecificId specific_id) -> std::string {
   RawStringOstream os;
 
+  CARBON_CHECK(sem_ir_.cpp_file());
   // The only platform mangling that's relevant for us is applying a global
   // prefix, if the platform has one.
   if (char prefix = sem_ir_.cpp_file()
