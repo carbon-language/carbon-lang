@@ -6,7 +6,6 @@
 
 #include "clang/AST/Mangle.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/Parse/Parser.h"
 #include "toolchain/check/cpp/domain.h"
 
 namespace Carbon::Check {

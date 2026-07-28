@@ -826,7 +826,6 @@ auto GenerateAst(Context& context,
                                                     [](auto& /*builder*/) {});
 
   auto clang_instance = domain->clang_instance_ptr();
-  auto parser = domain->parser_ptr();
 
   // Set up CppFile for the current SemIR::File.
   auto cpp_file =

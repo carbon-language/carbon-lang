@@ -27,6 +27,7 @@ cc_library(
         "cpp/context.cpp",
         "cpp/custom_type_mapping.cpp",
         "cpp/diagnostic_consumer.cpp",
+        "cpp/domain.cpp",
         "cpp/export.cpp",
         "cpp/generate_ast.cpp",
         "cpp/impl_lookup.cpp",

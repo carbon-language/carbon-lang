@@ -38,9 +38,6 @@ class CppContext {
   auto ast_context() -> clang::ASTContext&;
   auto sema() -> clang::Sema&;
   auto parser() -> clang::Parser& { return domain_->parser(); }
-  auto parser_ptr() const -> std::shared_ptr<clang::Parser> {
-    return domain_->parser_ptr();
-  }
 
   auto domain() -> CppDomain& { return *domain_; }
   auto domain() const -> const CppDomain& { return *domain_; }

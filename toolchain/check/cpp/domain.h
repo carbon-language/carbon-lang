@@ -24,13 +24,10 @@ namespace Carbon::Check {
 class CppDomain {
  public:
   explicit CppDomain(std::shared_ptr<clang::CompilerInstance> clang_instance,
-                     std::shared_ptr<clang::Parser> parser,
+                     std::unique_ptr<clang::Parser> parser,
                      clang::CodeGenerator* code_generator,
-                     llvm::LLVMContext* llvm_context)
-      : clang_instance_(std::move(clang_instance)),
-        parser_(std::move(parser)),
-        code_generator_(code_generator),
-        llvm_context_(llvm_context) {}
+                     llvm::LLVMContext* llvm_context);
+  ~CppDomain();
 
   auto clang_instance() const -> clang::CompilerInstance& {
     return *clang_instance_;
@@ -39,7 +36,6 @@ class CppDomain {
     return clang_instance_;
   }
   auto parser() const -> clang::Parser& { return *parser_; }
-  auto parser_ptr() const -> std::shared_ptr<clang::Parser> { return parser_; }
   auto code_generator() const -> clang::CodeGenerator* {
     return code_generator_;
   }
@@ -47,7 +43,7 @@ class CppDomain {
 
  private:
   std::shared_ptr<clang::CompilerInstance> clang_instance_;
-  std::shared_ptr<clang::Parser> parser_;
+  std::unique_ptr<clang::Parser> parser_;
   clang::CodeGenerator* code_generator_ = nullptr;
   llvm::LLVMContext* llvm_context_ = nullptr;
 };
