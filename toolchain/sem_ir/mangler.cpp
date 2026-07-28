@@ -275,7 +275,8 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
     return std::string();
   }
 
-  if (const auto* clang_decl = sem_ir().clang_decls().Lookup(pattern_id)) {
+  if (const auto* clang_decl =
+          sem_ir().clang_decls().LookupByPatternInstId(pattern_id)) {
     CARBON_CHECK(!clang_decl->is_imported, "Mangling a C++ variable");
   }
 

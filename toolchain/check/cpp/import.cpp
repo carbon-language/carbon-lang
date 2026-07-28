@@ -2143,10 +2143,10 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   context.imports().push_back(var_storage_inst_id);
 
   // Register the variable so we don't create it again.
-  context.clang_decls().AddVar({.key = SemIR::ClangDeclKey(var_decl),
-                                .inst_id = var_storage_inst_id,
-                                .is_imported = true},
-                               pattern_id);
+  context.clang_decls().Add({.key = SemIR::ClangDeclKey(var_decl),
+                             .inst_id = var_storage_inst_id,
+                             .pattern_inst_id = pattern_id,
+                             .is_imported = true});
 
   // Inform Clang that the variable has been referenced.
   context.clang_sema().MarkVariableReferenced(GetCppLocation(context, loc_id),
@@ -2647,8 +2647,8 @@ auto GetAsClangVarDecl(Context& context, SemIR::InstId inst_id)
     -> clang::VarDecl* {
   if (const auto& var_storage =
           context.insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
-    if (const auto* clang_decl =
-            context.clang_decls().Lookup(var_storage->pattern_id)) {
+    if (const auto* clang_decl = context.clang_decls().LookupByPatternInstId(
+            var_storage->pattern_id)) {
       return cast<clang::VarDecl>(clang_decl->decl());
     }
   }

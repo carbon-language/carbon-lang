@@ -722,8 +722,8 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
   // happens when a Carbon variable is exported and used from C++; code
   // generation for the C++ code may have already created an
   // llvm::GlobalVariable.
-  if (const auto* clang_decl =
-          sem_ir().clang_decls().Lookup(var_storage.pattern_id)) {
+  if (const auto* clang_decl = sem_ir().clang_decls().LookupByPatternInstId(
+          var_storage.pattern_id)) {
     auto* constant = cpp_code_generator_->GetAddrOfGlobal(
         CreateGlobalDecl(cast<clang::NamedDecl>(clang_decl->decl())),
         /*isForDefinition=*/false);
