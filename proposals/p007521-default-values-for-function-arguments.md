@@ -17,7 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Background](#background)
     -   [General Knowledge](#general-knowledge)
     -   [Vocabulary](#vocabulary)
-        -   [Syntactic and Semantic Parameters](#syntactic-and-semantic-parameters)
+        -   [Syntactic, Semantic, and Binding Parameters](#syntactic-semantic-and-binding-parameters)
     -   [Documentation](#documentation)
         -   [Relevant Prior Proposals](#relevant-prior-proposals)
         -   [Meeting Discussions](#meeting-discussions)
@@ -33,7 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Out-Of-Order Elision](#out-of-order-elision)
         -   [Interaction Between Defaults and Unspecified Structure Members](#interaction-between-defaults-and-unspecified-structure-members)
         -   [Pattern Matching](#pattern-matching-1)
-    -   [Semantic Parameter Defaults](#semantic-parameter-defaults)
+    -   [Nesting Parameter Defaults](#nesting-parameter-defaults)
     -   [Interaction with Function Overloading](#interaction-with-function-overloading)
     -   [Interaction with Generics](#interaction-with-generics)
     -   [Interaction with `unused`](#interaction-with-unused)
@@ -114,25 +114,33 @@ For the scope of this document we define certain terms as follows.
 -   **Default Argument Values**, sometimes shortened to default arguments or even defaults,
     are values for function parameters defined in the function declaration that will be provided
     by the compiler at the function call site when those arguments are not provided by the
-    programmer.
+    developer.
+
+#### Syntactic, Semantic, and Binding Parameters
+
 -   **Syntactic Parameters** are the outermost _pattern_ forms contained in the parenthesis-bound
     _tuple-pattern_ for parameters in the function declaration syntax. They are the parameters at
     the highest level of scope inside the function body.
--   **Semantic Parameters** are the leaves of any pattern matching statements in the parameters list,
-    and are named left-to-right in the parameters list, regardless of depth of scope.
-
-#### Syntactic and Semantic Parameters
+-   **Semantic Parameters** represent a meaningful grouping of one or more bindings into a single
+    complete object. The can be thought of as any collection of patterns that could be correctly
+    contained by a single `var` keyword, per
+    [p5164](/proposals/p005164-updates-to-pattern-matching-for-objects.md).
+-   **Binding Parameters** are the individual bindings of names in the overall pattern, representing
+    the leaves of the nested pattern tree.
 
 Consider the following Carbon function declaration:
 
 ```carbon
-fn S(a: i32, {b: i32, c: i32});
+fn F((a: i32, var (b: i32, c: i32))) {}
 ```
 
-In this function call we have two syntactic parameters, the outer-most pattern declarations in the
-list `a` and `{b, c}`, and 3 semantic parameters, namely `a`, `b`, and `c`.
+This function call has:
 
-See the [design details](#semantic-parameter-defaults) for more.
+-   One syntactic parameter, the tuple represented by `(a: i32, var (b: i32, c: i32))`
+-   Two semantic parameters, `a: i32` and `var (b: i32, c: i32)`
+-   Three binding parameters, `a: i32`, `b: i32`, `c: i32`
+
+See the [design details](#nesting-parameter-defaults) for more.
 
 ### Documentation
 
@@ -140,6 +148,9 @@ See the [design details](#semantic-parameter-defaults) for more.
 
 -   [p5164](/proposals/p005164-updates-to-pattern-matching-for-objects.md) affirmed that
     `var` must declare a single complete object.
+-   [p1084](/proposals/p001084-generics-details-9-forward-declarations.md) in the associated
+    [PR](https://github.com/carbon-language/carbon-lang/pull/1084) added support for the
+    `where _` syntax when redeclaring constants in generics.
 
 #### Meeting Discussions
 
@@ -179,8 +190,8 @@ We propose adding initial support for default values for function arguments to C
 require modification to the [_tuple-pattern_](/docs/design/pattern_matching.md#tuple-patterns) and
 [_struct-pattern_](/docs/design/pattern_matching.md#struct-patterns) elements of pattern matching.
 
-Following a _name-binding-pattern_ in either pattern, the programmer can declare a default value
-for named bindings with the addition of an optional assignment symbol `=` followed by a required
+Following any subpattern in either _struct-pattern_ or _tuple-pattern_, the programmer can declare
+a default value with the addition of an optional assignment symbol `=` followed by a required
 _value-expression_.
 
 In addition, we propose adding limited interoperation support with C++ for specifying default
@@ -218,27 +229,32 @@ a non-exhaustive list of elements we will not consider for change here:
 -   Defaults for function positional parameters
 -   Defaults for variadic functions
 -   Implicit conversions during pattern matching
--   Default values for local bindings
--   Default values for `match` alternative arms
+-   Default values for local bindings, for now the compiler will reject
+-   Default values for `match` alternative arms, for now the compiler will reject
 
 ## Details
 
 This proposal evolved out of the goal of providing interoperability with C++ code expecting default
 values for function arguments, including with function overloading, and as such, we've designed the
-proposed syntax changes to be largely unsurprising to C++ programmers.
+proposed syntax changes to be largely unsurprising to C++ developers.
 
 Both _struct-pattern_ and _tuple-pattern_ accept nesting of each other, and so both will need to be
 modified to accept defaults in this context.
 
-Like in C++, defaults can be specified in a Carbon function declaration and then do not need to be
-repeated in a function definition, but if they are repeated they must be identical to those in the
-declaration.
+Like in C++, defaults can be specified in a Carbon function declaration or definition. Unlike in C++,
+Carbon requires defaults to be specified in the first declaration. Subsequent declarations must
+either repeat the defaults exactly or provide a `= _` in every place a default value was specified
+in the first declaration, following the convention of `where _` for constants established by
+[p1084](https://github.com/carbon-language/carbon-lang/pull/1084).
 
 ### Tuple Patterns
 
 Function parameters are declared in a _tuple-pattern_ surrounded by parenthesis. Defaults may be
 specified as an optional addition for any, all, or none of the named bindings in a tuple in the
-function parameters list, at any level of nesting.
+function parameters list, at any level of nesting. However, at any particular level of nesting,
+if a certain element within the _tuple-pattern_ provides a default value, the developers must
+provide default values for every element to the right of that element, or the compiler will issue
+a diagnostic.
 
 #### Right-To-Left Value Elision
 
@@ -345,26 +361,27 @@ For _struct-pattern_, the compiler will supply the extended type for default val
 pattern for any member names that are missing from the scrutinee. As with _tuple-pattern_, we expect
 the rest of the pattern matching process to proceed as designed.
 
-### Semantic Parameter Defaults
+### Nesting Parameter Defaults
 
-For nested patterns, there was a consideration of providing default value support only for the
-patterns in the top-level _tuple-pattern_ of the function declaration, for example:
+Defaults supplied at different levels of nesting have different implications for pattern matching.
+For example:
 
 ```carbon
-fn Semantic((i: i32 = 1, {j: i32 = 2, k: i32 = 3}));
+// Accepts 0 or 1 tuple argument. The supplied tuple can have 0-2 elements, the struct in the
+// second position can have 0-2 members but they must be named `j` and/or `k`.
+fn Binding((i: i32 = 1, {j: i32 = 2, k: i32 = 3}));
+
+// Accepts 0 or 1 tuple argument. The supplied tuple can have 0-2 elements. The supplied struct
+// must have a `j` and `k` member.
+fn Semantic((i: i32 = 1, {j: i32, k: i32} = {.j = 2, .k = 3}));
+
+// Accepts 0 or 1 tuple argument. If the tuple is supplied it must be fully-formed, and the struct
+// in the second position must provide a `j` and `k` member and have no other members.
 fn Syntactic((i: i32, {j: i32, k: i32}) = (1, {.j = 2, .k = 3}));
 ```
 
-For nested patterns with fully-specified defaults, both of these styles should work. We have a
-stylistic preference for the `Semantic`, but the compiler should support both styles.
-
-However, for nested patterns that do not fully specify defaults for every member, the syntactic
-style has no obvious syntax to spell defaults for only partial members. For example:
-
-```carbon
-fn SemPartial({i: i32, j: i32 = 2});  // OK
-fn SynPartial({i: i32, j: i32} = {.j = 2, _});  // ERROR: pattern symbol `_` in struct literal
-```
+We require that at most one default be provided for each binding, and will reject code providing
+multiple defaults for a name binding.
 
 ### Interaction with Function Overloading
 
@@ -381,21 +398,24 @@ specifying the interaction between these two moving components.
 
 ### Interaction with Generics
 
-Default values should work as expected with generics, affording the programmer the same type
+Default values should work as expected with generics, affording the developer the same type
 programming and flexibility they have in the rest of a generic programming. The `must-eval`
 requirement still applies, meaning that, after monomorphization, the default value bound to each
 name must be computable at compile time.
 
 ### Interaction with `unused`
 
-Providing a default value for a function parameter marked with `unused` sends a mixed message
-about the intent of the author, and we propose issuing a diagnostic when detecting this state.
+Although the developer may be sending a mixed message when providing a default value for an
+unused parameter, we can imagine situations in code evolution where the combination of the two
+are required.
 
-There is a possible future for the `unused` keyword where, because of generic code, the meaning of
-`unused` may evolve from "must be unused" to "may be unused." For example, certain specializations
-of generic code may not use a certain parameter while others may not. In that situation, we'll
-revisit the logic around issuing a diagnostic for `unused` defaults, perhaps by not issuing the
-diagnostic for generic code.
+One can also argue that `unused` is a property of the implementation, while defaults are more of
+a property of the interface for the function.
+
+Therefore we will not issue a diagnostic when detecting these two in combination.
+
+For future work, we may want to consider the use case in C++ for unused variables in a function
+declaration whose default initializers have side effects intended to run in the callee scope.
 
 ## Rationale
 
@@ -417,4 +437,4 @@ This proposal advances the following Carbon goals:
 
 -   We considered an implementation of syntactic parameter defaults, for the possibility it might be
     simpler to implement. We agreed that we preferred the semantic default parameter style, and so
-    deferred further inquiry. See the [design details](#semantic-parameter-defaults) for more.
+    deferred further inquiry. See the [design details](#nesting-parameter-defaults) for more.
