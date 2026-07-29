@@ -17,7 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Background](#background)
     -   [General Knowledge](#general-knowledge)
     -   [Vocabulary](#vocabulary)
-        -   [Syntactic and Semantic Parameters Example](#syntactic-and-semantic-parameters-example)
+        -   [Syntactic and Semantic Parameters](#syntactic-and-semantic-parameters)
     -   [Documentation](#documentation)
         -   [Relevant Prior Proposals](#relevant-prior-proposals)
         -   [Meeting Discussions](#meeting-discussions)
@@ -33,6 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Out-Of-Order Elision](#out-of-order-elision)
         -   [Interaction Between Defaults and Unspecified Structure Members](#interaction-between-defaults-and-unspecified-structure-members)
         -   [Pattern Matching](#pattern-matching-1)
+    -   [Semantic Parameter Defaults](#semantic-parameter-defaults)
     -   [Interaction with Function Overloading](#interaction-with-function-overloading)
     -   [Interaction with Generics](#interaction-with-generics)
     -   [Interaction with `unused`](#interaction-with-unused)
@@ -116,20 +117,22 @@ For the scope of this document we define certain terms as follows.
     programmer.
 -   **Syntactic Parameters** are the outermost _pattern_ forms contained in the parenthesis-bound
     _tuple-pattern_ for parameters in the function declaration syntax. They are the parameters at
-    the highest level of scope inside the function body. (see example below),
+    the highest level of scope inside the function body.
 -   **Semantic Parameters** are the leaves of any pattern matching statements in the parameters list,
     and are named left-to-right in the parameters list, regardless of depth of scope.
 
-#### Syntactic and Semantic Parameters Example
+#### Syntactic and Semantic Parameters
 
 Consider the following Carbon function declaration:
 
 ```carbon
-fn Syn(a: i32, {b: i32, c: i32});
+fn S(a: i32, {b: i32, c: i32});
 ```
 
 In this function call we have two syntactic parameters, the outer-most pattern declarations in the
 list `a` and `{b, c}`, and 3 semantic parameters, namely `a`, `b`, and `c`.
+
+See the [design details](#semantic-parameter-defaults) for more.
 
 ### Documentation
 
@@ -165,8 +168,8 @@ minutes for each date and a short summary of the discussions follow:
 
 The work on this proposal exposed a few questions for Carbon Leads, enumerated here:
 
--   [#7529](https://github.com/carbon-language/carbon-lang/issues/7529) Do we need to say `= {}` on
-    the last syntactic parameter default to make it entirely optional?
+-   [#7529](https://github.com/carbon-language/carbon-lang/issues/7529) Do nested patterns with
+    entirely specified default values also need to specify a default value to accept callee elision?
 -   [#7530](https://github.com/carbon-language/carbon-lang/issues/7530) Which de-structured name
     binding form should accept defaults?
 
@@ -206,7 +209,7 @@ fn Main() {
 ## Out of Scope
 
 In order to expedite the implementation work of the C++ interoperability requirements, this
-proposal is deliberately scoped to focus on default values for function arguments,. What follows is
+proposal is deliberately scoped to focus on default values for function arguments. What follows is
 a non-exhaustive list of elements we will not consider for change here:
 
 -   Function overloading
@@ -274,9 +277,8 @@ in the match process.
 
 It is possible to nest a _struct-pattern_ inside of a _tuple-pattern_ in function parameter lists,
 so we must also extend default values to name bindings inside of the _struct-pattern_. Since the
-syntax is a bit more complex we have a leads question
-[#7530](https://github.com/carbon-language/carbon-lang/issues/7530) about the syntax of the
-"long form" of mapping structure members to binding names.
+syntax is a bit more complex, particularly in the case of the long form, we have a leads question
+[#7530](https://github.com/carbon-language/carbon-lang/issues/7530) about this.
 
 The current proposed syntax for both short and long form is to use the same optional assignment `=`
 and value pair as proposed for _tuple-pattern_, for example:
@@ -321,8 +323,7 @@ This can combine with the default values support to create a range of different 
 which is in part the subject of leads question
 [#7529](https://github.com/carbon-language/carbon-lang/issues/7529).
 
-Assuming we require the `= {}` to indicate that the specification of the structure itself is
-optional, these are examples of some of the possible combinations:
+Here are examples of the possible combinations:
 
 ```carbon
 // Requires a struct with exactly 2 members, named `key` and `value`.
@@ -331,30 +332,39 @@ fn D(index: i32, {key: i32, value: i32});
 // Requires a struct with 2 or more members, two members must be named `key` and `value`.
 fn E(index: i32, {key: i32, value: i32, _});
 
-// Requires a struct with zero to two members, names must match `key` and `value`.
+// Accepts a struct with zero to two members, names must match `key` and `value`.
 fn F(index: i32, {key: i32 = 0, value: i32 = 0});
 
-// Requires a struct with any number of members and names.
+// Accepts a struct with any number of members and names.
 fn G(index: i32, {key: i32 = 0, value: i32 = 0, _});
-
-// Invalid syntax, default values are not specified for `key` or `value`.
-fn H(index: i32, {key: i32, value: i32} = {});  // ERROR
-
-// Invalid syntax, default values are not specified for `key` or `value`.
-fn I(index: i32, {key: i32, value: i32, _} = {});  // ERROR
-
-// Accepts an optional struct with zero to two members, names must match `key` and `value`
-fn J(index: i32, {key: i32 = 0, value: i32 = 0} = {});
-
-// Accepts an optional struct with any numbers of members and names.
-fn K(index: i32, {key: i32 = 0, value: i32 = 0, _} = {});
 ```
 
 #### Pattern Matching
 
-For _struct-pattern_, the compiler will insert the extended type for default values provided by the
+For _struct-pattern_, the compiler will supply the extended type for default values provided by the
 pattern for any member names that are missing from the scrutinee. As with _tuple-pattern_, we expect
 the rest of the pattern matching process to proceed as designed.
+
+### Semantic Parameter Defaults
+
+For nested patterns, there was a consideration of providing default value support only for the
+patterns in the top-level _tuple-pattern_ of the function declaration, for example:
+
+```carbon
+fn Semantic((i: i32 = 1, {j: i32 = 2, k: i32 = 3}));
+fn Syntactic((i: i32, {j: i32, k: i32}) = (1, {.j = 2, .k = 3}));
+```
+
+For nested patterns with fully-specified defaults, both of these styles should work. We have a
+stylistic preference for the `Semantic`, but the compiler should support both styles.
+
+However, for nested patterns that do not fully specify defaults for every member, the syntactic
+style has no obvious syntax to spell defaults for only partial members. For example:
+
+```carbon
+fn SemPartial({i: i32, j: i32 = 2});  // OK
+fn SynPartial({i: i32, j: i32} = {.j = 2, _});  // ERROR: pattern symbol `_` in struct literal
+```
 
 ### Interaction with Function Overloading
 
@@ -404,3 +414,7 @@ This proposal advances the following Carbon goals:
 ## Alternatives considered
 
 **TBD** leads questions resolution, further feedback on this proposal.
+
+-   We considered an implementation of syntactic parameter defaults, for the possibility it might be
+    simpler to implement. We agreed that we preferred the semantic default parameter style, and so
+    deferred further inquiry. See the [design details](#semantic-parameter-defaults) for more.
