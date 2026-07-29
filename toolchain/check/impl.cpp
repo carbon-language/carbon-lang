@@ -1029,6 +1029,7 @@ auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
   }
   return identified.impl_as_target_interface();
 }
+
 auto GetImplInterfaceInSpecific(Context& context, const SemIR::Impl& impl,
                                 SemIR::SpecificId specific_id)
     -> SemIR::SpecificInterface {

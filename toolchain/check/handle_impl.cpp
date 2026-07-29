@@ -251,6 +251,18 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   if (!specific_interface.interface_id.has_value()) {
     full_constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }
+
+  // Store an instruction in the decl's eval block that contains the target
+  // interface's specific, whose constant value will be updated when specifics
+  // are applied to the impl.
+  //
+  // We can use ImplSelfWitness for this because it contains a
+  // SpecificInterfaceId operand, and it has a constant_kind of `Always` so it
+  // never evaluates to some other type of inst.
+  //
+  // TODO: We could avoid the extra indirection through a SpecificInterfaceId if
+  // we introduced a new instruction with a SpecificId operand instead of
+  // reusing ImplSelfWitness for this.
   auto interface_inst_id =
       specific_interface.interface_id.has_value()
           ? AddInst<SemIR::ImplSelfWitness>(
