@@ -15,6 +15,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/UnresolvedSet.h"
 #include "clang/AST/VTableBuilder.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
@@ -1100,6 +1101,50 @@ static auto MapBuiltinCppCompatIntegerType(Context& context,
   return MakeCppCompatType(context, Parse::NodeId::None, cpp_compat_name);
 }
 
+auto GetIntNType(const clang::ASTContext& ast_context, unsigned width,
+                 bool is_signed) -> clang::QualType {
+  const auto& target_info = ast_context.getTargetInfo();
+
+  // Work around Clang's getIntTypeForBitwidth being broken in various targets.
+  auto target_type = clang::TargetInfo::IntType::NoInt;
+  if (width == 64) {
+    target_type =
+        is_signed ? target_info.getInt64Type() : target_info.getUInt64Type();
+  } else if (width == 16) {
+    target_type =
+        is_signed ? target_info.getInt16Type() : target_info.getUInt16Type();
+  } else {
+    target_type = target_info.getIntTypeByWidth(width, is_signed);
+  }
+
+  switch (target_type) {
+    case clang::TargetInfo::NoInt:
+      // Call getIntTypeForBitwidth to pick up its i128 handling.
+      return ast_context.getIntTypeForBitwidth(width, is_signed);
+
+    case clang::TargetInfo::SignedChar:
+      return ast_context.SignedCharTy;
+    case clang::TargetInfo::UnsignedChar:
+      return ast_context.UnsignedCharTy;
+    case clang::TargetInfo::SignedShort:
+      return ast_context.ShortTy;
+    case clang::TargetInfo::UnsignedShort:
+      return ast_context.UnsignedShortTy;
+    case clang::TargetInfo::SignedInt:
+      return ast_context.IntTy;
+    case clang::TargetInfo::UnsignedInt:
+      return ast_context.UnsignedIntTy;
+    case clang::TargetInfo::SignedLong:
+      return ast_context.LongTy;
+    case clang::TargetInfo::UnsignedLong:
+      return ast_context.UnsignedLongTy;
+    case clang::TargetInfo::SignedLongLong:
+      return ast_context.LongLongTy;
+    case clang::TargetInfo::UnsignedLongLong:
+      return ast_context.UnsignedLongLongTy;
+  }
+}
+
 // Maps a C++ builtin integer type to a Carbon type.
 // TODO: Handle integer types that map to named aliases.
 static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
@@ -1108,7 +1153,7 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
   clang::ASTContext& ast_context = context.ast_context();
   unsigned width = ast_context.getIntWidth(qual_type);
   bool is_signed = type.isSignedInteger();
-  auto int_n_type = ast_context.getIntTypeForBitwidth(width, is_signed);
+  auto int_n_type = GetIntNType(ast_context, width, is_signed);
   if (clang::ASTContext::hasSameType(qual_type, int_n_type)) {
     TypeExpr type_expr =
         MakeIntType(context, context.ints().Add(width), is_signed);
@@ -1127,12 +1172,22 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
                       MakeCharTypeLiteral(context, Parse::NodeId::None));
   }
   if (clang::ASTContext::hasSameType(qual_type, ast_context.LongTy)) {
-    return MapBuiltinCppCompatIntegerType(context, width, 32,
-                                          CoreIdentifier::Long32);
+    if (auto type = MapBuiltinCppCompatIntegerType(context, width, 32,
+                                                   CoreIdentifier::Long32);
+        type.type_id.has_value()) {
+      return type;
+    }
+    return MapBuiltinCppCompatIntegerType(context, width, 64,
+                                          CoreIdentifier::Long64);
   }
   if (clang::ASTContext::hasSameType(qual_type, ast_context.UnsignedLongTy)) {
-    return MapBuiltinCppCompatIntegerType(context, width, 32,
-                                          CoreIdentifier::ULong32);
+    if (auto type = MapBuiltinCppCompatIntegerType(context, width, 32,
+                                                   CoreIdentifier::ULong32);
+        type.type_id.has_value()) {
+      return type;
+    }
+    return MapBuiltinCppCompatIntegerType(context, width, 64,
+                                          CoreIdentifier::ULong64);
   }
   if (clang::ASTContext::hasSameType(qual_type, ast_context.LongLongTy)) {
     return MapBuiltinCppCompatIntegerType(context, width, 64,

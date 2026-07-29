@@ -18,6 +18,7 @@
 #include "toolchain/sem_ir/ids.h"
 
 namespace clang {
+class ASTContext;
 class CompilerInvocation;
 class IdentifierInfo;
 class VarDecl;
@@ -79,6 +80,10 @@ inline auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
       context, loc_id,
       SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature_id));
 }
+
+// Returns the type that intN_t or uintN_t is an alias for.
+auto GetIntNType(const clang::ASTContext& ast_context, unsigned width,
+                 bool is_signed) -> clang::QualType;
 
 // Imports a type from Clang to Carbon. Returns a `TypeExpr` which contains
 // both a `TypeId` and `TypeInstId`. All unimported dependencies are imported
