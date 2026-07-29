@@ -587,7 +587,7 @@ static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
                    context.mangle_string_fingerprint());
   std::string mangled_name =
-      m.Mangle(target.function_id, SemIR::SpecificId::None);
+      m.MangleWithPlatform(target.function_id, SemIR::SpecificId::None);
   function_decl->addAttr(
       clang::AsmLabelAttr::Create(context.ast_context(), mangled_name));
 
@@ -1415,6 +1415,8 @@ auto ExportVarToCpp(Context& context, SemIR::InstId inst_id,
   }
 
   // Set the Carbon mangled variable name.
+  // TODO: do we need to apply the platform mangling, like we do for exported
+  // functions?
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
                    context.mangle_string_fingerprint());
   std::string mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);
