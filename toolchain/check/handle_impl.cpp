@@ -58,10 +58,6 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
   // consistent to imagine that it does. This also gives us a scope for implicit
   // parameters.
   context.decl_name_stack().PushScopeAndStartName();
-
-  // The value in here, if any, is populated by the `where` expression that
-  // introduces a `.Self` in the impl's constraint facet type.
-  context.declaring_impl_decls().push_back(SemIR::SpecificInterface::None);
   return true;
 }
 
@@ -112,6 +108,10 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
   // TODO: Revisit this once #3714 is resolved.
   AddNameToLookup(context, SemIR::NameId::SelfType, self_type.inst_id);
   context.node_stack().Push(node_id, self_type.inst_id);
+
+  // The value in here, if any, is populated by the `where` expression that
+  // introduces a `.Self` in the impl's constraint facet type.
+  context.declaring_impl_decls().push_back(SemIR::SpecificInterface::None);
   return true;
 }
 
@@ -144,6 +144,10 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
   // There's no need to push `Self` into scope here, because we can find it in
   // the parent class scope.
   context.node_stack().Push(node_id, self_inst_id);
+
+  // The value in here, if any, is populated by the `where` expression that
+  // introduces a `.Self` in the impl's constraint facet type.
+  context.declaring_impl_decls().push_back(SemIR::SpecificInterface::None);
   return true;
 }
 

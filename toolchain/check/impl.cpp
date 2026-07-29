@@ -774,14 +774,17 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
 // impl's witness table.
 static auto SubstImplSelfWitnesses(Context& context, SemIR::LocId loc_id,
                                    SemIR::ConstantId const_id,
+                                   SemIR::InterfaceId impl_interface_id,
                                    SemIR::InstId witness_id)
     -> SemIR::ConstantId {
   class Callbacks : public SubstInstCallbacks {
    public:
     explicit Callbacks(Context* context, SemIR::LocId loc_id,
+                       SemIR::InterfaceId impl_interface_id,
                        SemIR::InstId witness_id)
         : SubstInstCallbacks(context),
           loc_id_(loc_id),
+          impl_interface_id_(impl_interface_id),
           witness_id_(witness_id) {}
     auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
       auto const_inst_id =
@@ -796,6 +799,18 @@ static auto SubstImplSelfWitnesses(Context& context, SemIR::LocId loc_id,
       if (!self_witness) {
         return SubstOperands;
       }
+      // It would be nice to check the full specific interface. But the witness
+      // has an interface with `.Self` references unresolved, and the impl's
+      // specific interface has them resolved. It doesn't seem worth identifying
+      // the witness's interface to substitute in the impl's self type just for
+      // this CHECK.
+      CARBON_CHECK(
+          context()
+                  .specific_interfaces()
+                  .Get(self_witness->specific_interface_id)
+                  .interface_id == impl_interface_id_,
+          "found incorrect ImplSelfWitness that is not a witness for the "
+          "impl's target interface; expected a LookupImplWitness");
       inst_id = witness_id_;
       return FullySubstituted;
     }
@@ -807,10 +822,11 @@ static auto SubstImplSelfWitnesses(Context& context, SemIR::LocId loc_id,
 
    private:
     SemIR::LocId loc_id_;
+    SemIR::InterfaceId impl_interface_id_;
     SemIR::InstId witness_id_;
   };
 
-  Callbacks callbacks(&context, loc_id, witness_id);
+  Callbacks callbacks(&context, loc_id, impl_interface_id, witness_id);
   auto inst_id = context.constant_values().GetInstId(const_id);
   inst_id = SubstInst(context, inst_id, callbacks);
   return context.constant_values().Get(inst_id);
@@ -839,7 +855,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
   // originally checked before the `impl` existed.
   auto subst_constraint_id = SubstImplSelfWitnesses(
       context, loc_id, context.constant_values().Get(full_constraint_id),
-      impl.witness_id);
+      impl.interface.interface_id, impl.witness_id);
   // Any errors in the facet type will result in an error in the canonical value
   // here. Don't diagnose anything more in the facet type.
   if (subst_constraint_id == SemIR::ErrorInst::ConstantId) {

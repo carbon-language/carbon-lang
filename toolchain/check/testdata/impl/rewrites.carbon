@@ -269,3 +269,33 @@ impl forall [T: type, U: type] G(T) as Z(U) where .Result impls Y(G(T)) and .Res
 fn F() {
   G(C) as Z(G(C));
 }
+
+// --- where_that_does_not_constrain_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+}
+interface Y(T: type) {}
+
+interface Tuple {}
+impl () as Tuple {}
+
+// This test puts a `where` expression in two problematic places:
+// - The `where` in the generic constraint for the impl should _not_ refer to
+//   the impl. It should have a non-final witness for the `.Z1` access.
+// - The `where` in the generic argument to `Y` does not constrain the impl's
+//   self type so the access `.Z1` should also have a symbolic witness, not a
+//   witness for the impl itself.
+//
+// If done incorrectly, either of the above may become a witness for the impl
+// itself, which is incorrect and results in a lookup into an empty witness
+// table (for `Y`) when looking for `.Z1`.
+//
+// Also if done incorrectly, we may declare that lookups in `Z` are for the
+// current impl, because of the `Z where ...` in the argument for `Y` if we
+// mistake that as being `impl as Z where ...`. That would result in the later
+// access `.Self.(Z.Z1)` becoming a witness for the impl itself, which would try
+// to find a value for `.Z1` in the empty witness table for `Y`.
+impl forall [T: Z where .Z1 = ()] T as Y(Z where .Z1 = ())
+  where .Self impls Z and .Self.(Z.Z1) impls Tuple {}
