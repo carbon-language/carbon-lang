@@ -716,8 +716,15 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
   }
 
   auto ext_proto_info = clang::FunctionProtoType::ExtProtoInfo();
-  if (target.self_param && target.self_param->kind == ParamPatternKind::Ref) {
-    ext_proto_info.RefQualifier = clang::RQ_LValue;
+  if (target.self_param) {
+    if (target.self_param->kind == ParamPatternKind::Ref) {
+      ext_proto_info.RefQualifier = clang::RQ_LValue;
+    } else {
+      // A method with `self` doesn't modify the object, so export it as
+      // `const`. Unlike `ref self`, `self` doesn't require a reference
+      // expression, so no ref-qualifier is added.
+      ext_proto_info.TypeQuals.addConst();
+    }
   }
   return context.ast_context()
       .getFunctionType(cpp_return_type, thunk_param_types, ext_proto_info)
@@ -821,11 +828,11 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
 
 // Get an expr for accessing `this` in a method.
 static auto GetThisArg(clang::Sema& sema, clang::SourceLocation clang_loc,
-                       clang::CXXRecordDecl* record_decl) -> clang::Expr* {
-  clang::QualType class_type =
-      sema.getASTContext().getCanonicalTagType(record_decl);
-  auto class_ptr_type = sema.getASTContext().getPointerType(class_type);
-  auto* this_expr = sema.BuildCXXThisExpr(clang_loc, class_ptr_type,
+                       const clang::CXXMethodDecl* method_decl)
+    -> clang::Expr* {
+  // These pick up the method's `const` qualifier, if any.
+  clang::QualType class_type = method_decl->getFunctionObjectParameterType();
+  auto* this_expr = sema.BuildCXXThisExpr(clang_loc, method_decl->getThisType(),
                                           /*IsImplicit=*/true);
   return clang::UnaryOperator::Create(
       sema.getASTContext(), this_expr, clang::UO_Deref, class_type,
@@ -874,8 +881,8 @@ static auto BuildCppToCarbonThunkBody(Context& context,
   llvm::SmallVector<clang::Expr*> call_args;
   // For methods, pass the `this` pointer as the first argument to the callee.
   if (target.self_param) {
-    auto* parent_class = cast<clang::CXXRecordDecl>(target.decl_context);
-    call_args.push_back(GetThisArg(sema, clang_loc, parent_class));
+    call_args.push_back(
+        GetThisArg(sema, clang_loc, cast<clang::CXXMethodDecl>(function_decl)));
   }
   for (auto* param : function_decl->parameters()) {
     clang::Expr* call_arg =
@@ -1354,7 +1361,7 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
       sema.BuildDeclRefExpr(cpp_function_decl, cpp_function_decl->getType(),
                             clang::VK_PRValue, clang_loc);
   llvm::SmallVector<clang::Expr*> call_args;
-  call_args.push_back(GetThisArg(sema, clang_loc, record_decl));
+  call_args.push_back(GetThisArg(sema, clang_loc, cpp_destructor_decl));
   clang::ExprResult call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc,
                                               call_args, clang_loc);
 
