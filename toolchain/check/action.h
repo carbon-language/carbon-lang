@@ -19,6 +19,10 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::AccessOptionalMemberAction action) -> SemIR::InstId;
 
+// Performs a C++ template call action. Defined in cpp/call.cpp.
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::CallCppTemplateAction action) -> SemIR::InstId;
+
 // Performs a conversion action. Defined in convert.cpp.
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::ConvertAction action) -> SemIR::InstId;

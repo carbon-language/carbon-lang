@@ -390,6 +390,21 @@ struct Call {
   InstBlockId args_id;
 };
 
+// An action that performs a C++ template call.
+struct CallCppTemplateAction {
+  static constexpr auto Kind =
+      InstKind::CallCppTemplateAction.Define<Parse::NodeId>(
+          {.ir_name = "call_template_action",
+           .expr_category = ActionExprCategory(ExprCategory::Value),
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+  ClangDeclId template_decl_id;
+  // Template arguments.
+  InstBlockId args_id;
+};
+
 // An action that performs callee-side pattern matching for a single syntactic
 // parameter.
 struct CalleePatternMatchAction {

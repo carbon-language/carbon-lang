@@ -119,6 +119,18 @@ static auto OperandDependence(Context& context, SemIR::IdAndKind arg)
 }
 
 auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool {
+  if (auto action = action_inst.TryAs<SemIR::CallCppTemplateAction>()) {
+    auto args = context.inst_blocks().Get(action->args_id);
+    for (auto arg : args) {
+      auto const_id = context.constant_values().Get(arg);
+      if (const_id.is_symbolic()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   if (auto refine_action = action_inst.TryAs<SemIR::RefineTypeAction>()) {
     // `RefineTypeAction` can be performed whenever the type is not template-
     // dependent, even if we don't know the instruction yet.
