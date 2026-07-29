@@ -963,6 +963,8 @@ static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
       context, context.types().GetAsTypeInstId(self_inst_id));
 }
 
+// Identifies the facet type in the `facet_type_inst_id`. Returns None if an
+// error is encountered or diagnosed.
 static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
                               SemIR::ConstantId initial_self_const_id,
                               SemIR::TypeInstId facet_type_inst_id,

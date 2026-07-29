@@ -2442,10 +2442,10 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of `ImplSelfWitness`, `ImplWitness`, `CustomWitness`, and
+// The type of `ImplWitness`, `CustomWitness`,  `ImplSelfWitness`, and
 // `LookupImplWitness` instructions. The latter will evaluate at some point
-// during specific computation into one of the former two, and their types
-// should not change in the process.
+// during specific computation into one of first two, and their types should not
+// change in the process.
 //
 // Also the type of `RequireCompleteType` instructions.
 //
