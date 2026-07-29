@@ -261,7 +261,7 @@ static auto CreateInvalidFieldDecl(Context& context,
   auto* identifier_info =
       context.clang_sema().getPreprocessor().getIdentifierInfo("invalid_field");
   auto cpp_type = context.ast_context().IntTy;
-  auto field_decl = clang::FieldDecl::Create(
+  auto* field_decl = clang::FieldDecl::Create(
       context.ast_context(), decl_context, /*StartLoc=*/clang_loc,
       /*IdLoc=*/clang_loc, identifier_info, cpp_type, /*TInfo=*/nullptr,
       /*BW=*/nullptr,
