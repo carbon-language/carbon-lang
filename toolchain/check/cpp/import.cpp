@@ -441,7 +441,12 @@ static auto LookupClangDeclInstId(Context& context, SemIR::ClangDeclKey key)
   const auto& clang_decls = context.clang_decls();
   if (auto context_clang_decl_id = clang_decls.LookupId(key);
       context_clang_decl_id.has_value()) {
-    return clang_decls.Get(context_clang_decl_id).inst_id;
+    const auto& clang_decl = clang_decls.Get(context_clang_decl_id);
+    if (clang_decl.var_storage_inst_id.has_value()) {
+      return clang_decl.var_storage_inst_id;
+    } else {
+      return clang_decls.Get(context_clang_decl_id).inst_id;
+    }
   }
   return SemIR::InstId::None;
 }
@@ -2144,8 +2149,8 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
 
   // Register the variable so we don't create it again.
   context.clang_decls().Add({.key = SemIR::ClangDeclKey(var_decl),
-                             .inst_id = var_storage_inst_id,
-                             .pattern_inst_id = pattern_id,
+                             .inst_id = pattern_id,
+                             .var_storage_inst_id = var_storage_inst_id,
                              .is_imported = true});
 
   // Inform Clang that the variable has been referenced.
@@ -2647,8 +2652,8 @@ auto GetAsClangVarDecl(Context& context, SemIR::InstId inst_id)
     -> clang::VarDecl* {
   if (const auto& var_storage =
           context.insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
-    if (const auto* clang_decl = context.clang_decls().LookupByPatternInstId(
-            var_storage->pattern_id)) {
+    if (const auto* clang_decl =
+            context.clang_decls().Lookup(var_storage->pattern_id)) {
       return cast<clang::VarDecl>(clang_decl->decl());
     }
   }

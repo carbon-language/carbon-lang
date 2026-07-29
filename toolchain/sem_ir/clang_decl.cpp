@@ -100,7 +100,6 @@ class ClangDeclStore::KeyContext : public TranslatingKeyContext<KeyContext> {
   struct Key {
     InstId inst_id;
     SpecificId specific_id;
-    InstId pattern_inst_id;
 
     friend auto operator==(const Key&, const Key&) -> bool = default;
   };
@@ -109,15 +108,8 @@ class ClangDeclStore::KeyContext : public TranslatingKeyContext<KeyContext> {
 
   auto TranslateKey(ClangDeclId id) const -> Key {
     const auto& clang_decl = store_->Get(id);
-    if (clang_decl.pattern_inst_id.has_value()) {
-      return {.inst_id = InstId::None,
-              .specific_id = clang_decl.specific_id,
-              .pattern_inst_id = clang_decl.pattern_inst_id};
-    } else {
-      return {.inst_id = clang_decl.inst_id,
-              .specific_id = clang_decl.specific_id,
-              .pattern_inst_id = clang_decl.pattern_inst_id};
-    }
+    return {.inst_id = clang_decl.inst_id,
+            .specific_id = clang_decl.specific_id};
   }
 
  private:
@@ -128,19 +120,10 @@ ClangDeclStore::ClangDeclStore(CheckIRId check_ir_id) : values_(check_ir_id) {}
 
 auto ClangDeclStore::Add(ClangDecl value) -> ClangDeclId {
   auto id = values_.Add(value);
-  auto key = KeyContext::Key{.inst_id = value.inst_id,
-                             .specific_id = value.specific_id,
-                             .pattern_inst_id = value.pattern_inst_id};
-
-  // For `VarDecl`s, the reverse lookup key only uses the `pattern_inst_id`.
-  // See the doc on `ClangDecl::pattern_inst_id` for more.
-  CARBON_CHECK(key.pattern_inst_id.has_value() ==
-               isa<clang::VarDecl>(value.decl()));
-  if (key.pattern_inst_id.has_value()) {
-    key.inst_id = SemIR::InstId::None;
-  }
-
-  reverse_lookup_.Insert(key, [&] { return id; }, KeyContext(this));
+  reverse_lookup_.Insert(
+      KeyContext::Key{.inst_id = value.inst_id,
+                      .specific_id = value.specific_id},
+      [&] { return id; }, KeyContext(this));
   return id;
 }
 
@@ -151,21 +134,7 @@ auto ClangDeclStore::LookupId(ClangDeclKey key) const -> ClangDeclId {
 auto ClangDeclStore::Lookup(InstId inst_id, SpecificId specific_id) const
     -> const ClangDecl* {
   if (auto result = reverse_lookup_.Lookup(
-          KeyContext::Key{.inst_id = inst_id,
-                          .specific_id = specific_id,
-                          .pattern_inst_id = InstId::None},
-          KeyContext(this))) {
-    return &Get(result.key());
-  }
-  return nullptr;
-}
-
-auto ClangDeclStore::LookupByPatternInstId(InstId pattern_inst_id) const
-    -> const ClangDecl* {
-  if (auto result = reverse_lookup_.Lookup(
-          KeyContext::Key{.inst_id = InstId::None,
-                          .specific_id = SpecificId::None,
-                          .pattern_inst_id = pattern_inst_id},
+          KeyContext::Key{.inst_id = inst_id, .specific_id = specific_id},
           KeyContext(this))) {
     return &Get(result.key());
   }

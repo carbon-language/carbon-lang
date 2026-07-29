@@ -182,12 +182,12 @@ struct ClangDecl : public Printable<ClangDecl> {
   // The specific the Clang declaration is mapped to.
   SpecificId specific_id = SpecificId::None;
 
-  // If `inst_id` is for a `VarStorage`, this must be set to the `pattern_id`
-  // of the `VarStorage`. The pattern is used as a more stable lookup key than
-  // the `VarStorage` `InstId`. For example, a call to `Convert` may cause a
-  // new `VarStorage` instruction to be created, but the pattern will remain
-  // the same.
-  InstId pattern_inst_id = InstId::None;
+  // When exporting a `VarStorage`, its `InstId` is needed in some cases, but
+  // its pattern is used as the primary `inst_id`. The pattern provides a more
+  // stable lookup key than the `VarStorage` `InstId`. For example, a call to
+  // `Convert` may cause a new `VarStorage` instruction to be created, but the
+  // pattern will remain the same.
+  InstId var_storage_inst_id = InstId::None;
 
   // True if this declaration originated from C++. False if this declaration was
   // created by exporting some Carbon declaration to C++.
@@ -218,9 +218,6 @@ class ClangDeclStore {
   // nullptr if not found.
   auto Lookup(InstId inst_id, SpecificId specific_id = SpecificId::None) const
       -> const ClangDecl*;
-
-  // Looks up a `ClangDecl` by a pattern `InstId`.
-  auto LookupByPatternInstId(InstId pattern_inst_id) const -> const ClangDecl*;
 
   auto OutputYaml() const -> Yaml::OutputMapping;
 

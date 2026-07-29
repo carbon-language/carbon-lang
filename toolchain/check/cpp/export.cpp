@@ -1407,8 +1407,8 @@ auto ExportVarToCpp(Context& context, SemIR::InstId inst_id,
       /*TInfo=*/nullptr, clang::SC_Extern);
   context.clang_decls().Add(
       {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(var_decl),
-       .inst_id = inst_id,
-       .pattern_inst_id = var_storage.pattern_id});
+       .inst_id = var_storage.pattern_id,
+       .var_storage_inst_id = inst_id});
 
   if (scope_inst.Is<SemIR::ClassDecl>()) {
     SetCppClassMemberAccess(name_scope, entity_name.name_id, var_decl);
