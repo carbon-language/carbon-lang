@@ -59,7 +59,7 @@ filegroup(
 
 carbon_library(
     name = "io",
-    api = "io.carbon",
-    impls = ["io.impl.carbon"],
+    srcs = ["io.impl.carbon"],
+    hdrs = ["io.carbon"],
     visibility = ["//visibility:public"],
 )
