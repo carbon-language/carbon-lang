@@ -145,12 +145,15 @@ class Derived : public Carbon::Abstract {
 };
 ''';
 
-// --- fail_abstract_method.carbon
+// --- fail_variable_with_abstract_method.carbon
 library "[[@TEST_NAME]]";
 
 import Cpp;
 
-// CHECK:STDERR: fail_abstract_method.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
+// TODO: We should support generating a base subobject destructor for an
+// abstract class, even though we refuse to generate a complete object
+// destructor.
+// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: abstract class Abstract {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -159,11 +162,11 @@ abstract class Abstract {
 }
 
 inline Cpp '''
-// CHECK:STDERR: fail_abstract_method.carbon:[[@LINE+7]]:18: error: variable type 'Carbon::Abstract' is an abstract class [CppInteropParseError]
-// CHECK:STDERR:    21 | Carbon::Abstract x;
+// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+7]]:18: error: variable type 'Carbon::Abstract' is an abstract class [CppInteropParseError]
+// CHECK:STDERR:    24 | Carbon::Abstract x;
 // CHECK:STDERR:       |                  ^
-// CHECK:STDERR: fail_abstract_method.carbon:[[@LINE-7]]:22: note: unimplemented pure virtual method 'F' in 'Abstract' [CppInteropParseNote]
-// CHECK:STDERR:    10 |   abstract fn F(self);
+// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE-7]]:22: note: unimplemented pure virtual method 'F' in 'Abstract' [CppInteropParseNote]
+// CHECK:STDERR:    13 |   abstract fn F(self);
 // CHECK:STDERR:       |                      ^
 // CHECK:STDERR:
 Carbon::Abstract x;
@@ -174,6 +177,9 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
+// TODO: We should support generating a base subobject destructor for an
+// abstract class, even though we refuse to generate a complete object
+// destructor.
 // CHECK:STDERR: fail_todo_abstract_method_overridden_in_cpp.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: abstract class Abstract {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
