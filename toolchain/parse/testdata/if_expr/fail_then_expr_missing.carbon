@@ -17,27 +17,26 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: fail_then_expr_missing.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'n'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:             {kind: 'BoolLiteralTrue', text: 'true'},
-// CHECK:STDOUT:           {kind: 'IfExprIf', text: 'if', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:           {kind: 'IfExprThen', text: 'then', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:         {kind: 'IfExprElse', text: 'if', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 14},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 20},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'n'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ │   ╭─BoolLiteralTrue 'true'
+// CHECK:STDOUT:   │ │ │ ╭─IfExprIf 'if'
+// CHECK:STDOUT:   │ │ │ │ ╭─InvalidParse ';' ❌
+// CHECK:STDOUT:   │ │ │ ├─IfExprThen 'then' ❌
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' ❌
+// CHECK:STDOUT:   │ │ ├─IfExprElse 'if' ❌
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

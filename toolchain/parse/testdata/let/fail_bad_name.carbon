@@ -15,12 +15,11 @@
 let ? = 4;
 
 // CHECK:STDOUT: - filename: fail_bad_name.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '?', has_error: yes},
-// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IntLiteral', text: '4'},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ ├─InvalidParse '?' ❌
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ ├─IntLiteral '4'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

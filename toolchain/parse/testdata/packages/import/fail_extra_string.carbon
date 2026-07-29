@@ -15,12 +15,11 @@
 import Foo library "bar" "baz";
 
 // CHECK:STDOUT: - filename: fail_extra_string.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Foo'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: '"bar"'},
-// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'Foo'
+// CHECK:STDOUT:   │ │ ╭─LibraryName '"bar"'
+// CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
+// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

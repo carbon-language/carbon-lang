@@ -34,24 +34,23 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: fail_missing_cond.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ForHeaderStart', text: 'for', has_error: yes},
-// CHECK:STDOUT:               {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'ForIn', text: 'for', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: '}', has_error: yes},
-// CHECK:STDOUT:         {kind: 'ForHeader', text: 'for', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '}', has_error: yes},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: '}', has_error: yes},
-// CHECK:STDOUT:           {kind: 'ExprStatement', text: '}', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ForStatement', text: 'for', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 17},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─ForHeaderStart 'for' ❌
+// CHECK:STDOUT:   │ │   │   ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │   │ ╭─StructLiteral '}'
+// CHECK:STDOUT:   │ │   ├─ForIn 'for' ❌
+// CHECK:STDOUT:   │ │   ├─InvalidParse '}' ❌
+// CHECK:STDOUT:   │ │ ╭─ForHeader 'for' ❌
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '}' ❌
+// CHECK:STDOUT:   │ │ │ │ ╭─InvalidParse '}' ❌
+// CHECK:STDOUT:   │ │ │ ├─ExprStatement '}' ❌
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}' ❌
+// CHECK:STDOUT:   │ ├─ForStatement 'for'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

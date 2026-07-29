@@ -33,44 +33,41 @@ fn C(template);
 fn E(generic template: i32);
 
 // CHECK:STDOUT: - filename: fail_template_before_type.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'A'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'i32', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'i32', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'i32', has_error: yes},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: 'template', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'A'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'i32' ❌
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse 'i32' ❌
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse 'i32' ❌
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'template' ❌
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_template_no_name.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'C'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: ')', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ')', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ')', has_error: yes},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: 'template', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'C'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature ')' ❌
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ')' ❌
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ')' ❌
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'template' ❌
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_reserved_word_after_generic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'E'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'template'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'E'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'template'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

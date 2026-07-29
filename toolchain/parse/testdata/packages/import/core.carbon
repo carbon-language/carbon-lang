@@ -13,15 +13,14 @@ import Core;
 import Core library "prelude";
 
 // CHECK:STDOUT: - filename: core.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'CorePackageName', text: 'Core'},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'CorePackageName', text: 'Core'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: '"prelude"'},
-// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─CorePackageName 'Core'
+// CHECK:STDOUT:   ├─ImportDecl ';'
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─CorePackageName 'Core'
+// CHECK:STDOUT:   │ │ ╭─LibraryName '"prelude"'
+// CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
+// CHECK:STDOUT:   ├─ImportDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

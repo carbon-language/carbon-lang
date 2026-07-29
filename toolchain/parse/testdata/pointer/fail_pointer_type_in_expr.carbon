@@ -17,20 +17,19 @@ fn F() -> i32 {
 }
 
 // CHECK:STDOUT: - filename: fail_pointer_type_in_expr.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'PrefixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'PostfixOperatorStar', text: '*', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 13},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │   ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ╭─PrefixOperatorStar '*'
+// CHECK:STDOUT:   │ │ ├─PostfixOperatorStar '*' ❌
+// CHECK:STDOUT:   │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

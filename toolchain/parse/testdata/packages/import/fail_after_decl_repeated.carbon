@@ -44,27 +44,26 @@ import F;
 import G;
 
 // CHECK:STDOUT: - filename: fail_after_decl_repeated.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'A'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'E'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'A'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   ├─PackageDecl ';' ❌
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'E'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -21,13 +21,12 @@ choice InvalidBraces |
 |
 
 // CHECK:STDOUT: - filename: fail_invalid_braces.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ChoiceIntroducer', text: 'choice'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'InvalidBraces'},
-// CHECK:STDOUT:       {kind: 'ChoiceDefinitionStart', text: '|', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ChoiceDefinition', text: '|', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: '|', has_error: yes},
-// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: '|', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ChoiceIntroducer 'choice'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'InvalidBraces'
+// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart '|' ❌
+// CHECK:STDOUT:   ├─ChoiceDefinition '|' ❌
+// CHECK:STDOUT:   │ ╭─InvalidParseStart '|' ❌
+// CHECK:STDOUT:   ├─InvalidParseSubtree '|' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

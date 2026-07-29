@@ -35,19 +35,18 @@ interface I {
 }
 
 // CHECK:STDOUT: - filename: fail_in_interface.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'InvalidParseStart', text: 'var', has_error: yes},
-// CHECK:STDOUT:       {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'InvalidParseStart', text: 'var', has_error: yes},
-// CHECK:STDOUT:       {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
+// CHECK:STDOUT:   │ │ ╭─InvalidParseStart 'var' ❌
+// CHECK:STDOUT:   │ ├─InvalidParseSubtree ';' ❌
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
+// CHECK:STDOUT:   │ │ ╭─InvalidParseStart 'var' ❌
+// CHECK:STDOUT:   │ ├─InvalidParseSubtree ';' ❌
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

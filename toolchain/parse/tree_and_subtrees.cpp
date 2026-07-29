@@ -167,9 +167,56 @@ auto TreeAndSubtrees::PrintNode(llvm::raw_ostream& output, NodeId n, int depth,
   return false;
 }
 
-auto TreeAndSubtrees::Print(llvm::raw_ostream& output) const -> void {
-  output << "- filename: " << tokens_->source().filename() << "\n"
-         << "  parse_tree: [\n";
+auto TreeAndSubtrees::PrettyPrintNode(llvm::raw_ostream& output, NodeId n,
+                                      int depth,
+                                      llvm::BitVector& pending_parents) const
+    -> void {
+  output.indent(2);
+  // In this mode we treat all nodes as nested under the parse tree root.
+  ++depth;
+  CARBON_CHECK(pending_parents.find_last() <= depth,
+               "Node interleaved between a non-ancestor and its child");
+  pending_parents.resize(depth);
+
+  for (int i = 0; i < depth; ++i) {
+    if (i == depth - 1) {
+      if (pending_parents.test(i)) {
+        output << "├─";
+      } else {
+        output << "╭─";
+        pending_parents.set(i);
+      }
+    } else {
+      if (pending_parents.test(i)) {
+        output << "│ ";
+      } else {
+        output << "  ";
+      }
+    }
+  }
+  output << tree_->node_kind(n) << " '"
+         << tokens_->GetTokenText(tree_->node_token(n)) << "'";
+
+  if (tree_->node_has_error(n)) {
+    output << " ❌";
+  }
+}
+
+auto TreeAndSubtrees::PrintYamlPostorder(llvm::raw_ostream& output) const
+    -> void {
+  PrintPostorder(output, /*yaml=*/true);
+}
+
+auto TreeAndSubtrees::PrettyPrint(llvm::raw_ostream& output) const -> void {
+  PrintPostorder(output, /*yaml=*/false);
+}
+
+auto TreeAndSubtrees::PrintPostorder(llvm::raw_ostream& output, bool yaml) const
+    -> void {
+  output << "- filename: " << tokens_->source().filename() << "\n";
+  if (yaml) {
+    output << "  parse_tree: [\n";
+  }
 
   // Walk the tree in reverse, just to calculate depths for each node.
   llvm::SmallVector<int> depths(tree_->size(), 0);
@@ -180,14 +227,25 @@ auto TreeAndSubtrees::Print(llvm::raw_ostream& output) const -> void {
     }
   }
 
+  llvm::BitVector pending_parents;
   for (auto [n, depth] : llvm::zip_equal(tree_->postorder(), depths)) {
-    PrintNode(output, n, depth, /*preorder=*/false);
-    output << ",\n";
+    if (yaml) {
+      PrintNode(output, n, depth, /*preorder=*/false);
+      output << ",\n";
+    } else {
+      PrettyPrintNode(output, n, depth, pending_parents);
+      output << "\n";
+    }
   }
-  output << "  ]\n";
+  if (yaml) {
+    output << "  ]\n";
+  } else {
+    output << "  (root)\n";
+  }
 }
 
-auto TreeAndSubtrees::PrintPreorder(llvm::raw_ostream& output) const -> void {
+auto TreeAndSubtrees::PrintYamlPreorder(llvm::raw_ostream& output) const
+    -> void {
   output << "- filename: " << tokens_->source().filename() << "\n"
          << "  parse_tree: [\n";
 

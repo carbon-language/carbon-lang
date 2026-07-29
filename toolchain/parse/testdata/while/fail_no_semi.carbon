@@ -28,35 +28,34 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'WhileConditionStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:         {kind: 'WhileCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:               {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:             {kind: 'IfCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:               {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:                 {kind: 'BreakStatementStart', text: 'break'},
-// CHECK:STDOUT:               {kind: 'BreakStatement', text: 'break', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'CodeBlock', text: '}', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'IfStatement', text: 'if', subtree_size: 8},
-// CHECK:STDOUT:               {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:             {kind: 'IfCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:               {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:                 {kind: 'ContinueStatementStart', text: 'continue'},
-// CHECK:STDOUT:               {kind: 'ContinueStatement', text: 'continue', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'CodeBlock', text: '}', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'IfStatement', text: 'if', subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 18},
-// CHECK:STDOUT:       {kind: 'WhileStatement', text: 'while', subtree_size: 22},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 28},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─WhileConditionStart '('
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │ ╭─WhileCondition ')'
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │ │ │   ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ │ │ ╭─IfCondition ')'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ │ │ │ │ ╭─BreakStatementStart 'break'
+// CHECK:STDOUT:   │ │ │ │ │ ├─BreakStatement 'break' ❌
+// CHECK:STDOUT:   │ │ │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ │ │ ├─IfStatement 'if'
+// CHECK:STDOUT:   │ │ │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │ │ │   ├─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ │ │ │ ╭─IfCondition ')'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ │ │ │ │ ╭─ContinueStatementStart 'continue'
+// CHECK:STDOUT:   │ │ │ │ │ ├─ContinueStatement 'continue' ❌
+// CHECK:STDOUT:   │ │ │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ │ │ ├─IfStatement 'if'
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ ├─WhileStatement 'while'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

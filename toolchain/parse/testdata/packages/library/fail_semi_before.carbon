@@ -20,10 +20,9 @@
 library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: - filename: fail_semi_before.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:     {kind: 'EmptyDecl', text: ';'},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   ├─EmptyDecl ';'
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -98,7 +98,9 @@ class TreeAndSubtrees {
   // This can be parsed as YAML using tools like `python-yq` combined with `jq`
   // on the command line. The format is also reasonably amenable to other
   // line-oriented shell tools from `grep` to `awk`.
-  auto Print(llvm::raw_ostream& output) const -> void;
+  auto PrintYamlPostorder(llvm::raw_ostream& output) const -> void;
+
+  auto PrettyPrint(llvm::raw_ostream& output) const -> void;
 
   // Prints the parse tree in preorder. The format is YAML, and similar to
   // Print. However, nodes are marked as children with postorder (storage)
@@ -108,7 +110,7 @@ class TreeAndSubtrees {
   //     {node_index: 0, kind: 'bar', text: '...', has_error: yes},
   //     {node_index: 1, kind: 'baz', text: '...'}]}
   //   ```
-  auto PrintPreorder(llvm::raw_ostream& output) const -> void;
+  auto PrintYamlPreorder(llvm::raw_ostream& output) const -> void;
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
@@ -168,10 +170,20 @@ class TreeAndSubtrees {
   auto VerifyExtract(NodeId node_id, NodeKind kind, ErrorBuilder* trace) const
       -> bool;
 
+  auto PrintPostorder(llvm::raw_ostream& output, bool yaml) const -> void;
+
   // Prints a single node for Print(). Returns true when preorder and there are
-  // children.
+  // children. If `PrettyPrintState` is null, the output will be YAML. If it
+  // is non-null, the output will be pretty-printed
+  // `PostorderState` should be null. For a postorder traversal, all calls to
+  // this function should be passed a pointer to the same `PostorderState`,
+  // which should be default-constructed before the first call.
+  // FIXME comment is in shambles
   auto PrintNode(llvm::raw_ostream& output, NodeId n, int depth,
                  bool preorder) const -> bool;
+
+  auto PrettyPrintNode(llvm::raw_ostream& output, NodeId n, int depth,
+                       llvm::BitVector& pending_parents) const -> void;
 
   // The associated tokens.
   const Lex::TokenizedBuffer* tokens_;

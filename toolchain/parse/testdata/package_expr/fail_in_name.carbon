@@ -39,25 +39,24 @@ class package.C {
 }
 
 // CHECK:STDOUT: - filename: fail_in_name.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'PackageExpr', text: 'package'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'n'},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'PackageExpr', text: 'package'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'val'},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: 'package', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Namespace', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: 'package', has_error: yes},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: '}', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─PackageExpr 'package'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'n'
+// CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var' ❌
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─PackageExpr 'package'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'val'
+// CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var' ❌
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ ├─InvalidParse 'package' ❌
+// CHECK:STDOUT:   ├─Namespace ';' ❌
+// CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ ├─InvalidParse 'package' ❌
+// CHECK:STDOUT:   ├─ClassDecl '}' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

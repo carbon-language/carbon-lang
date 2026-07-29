@@ -35,33 +35,30 @@ class C {
 }
 
 // CHECK:STDOUT: - filename: fail_virtual_class.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'VirtualModifier', text: 'virtual'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'B'},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: 'B', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ ├─VirtualModifier 'virtual'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'B'
+// CHECK:STDOUT:   ├─ClassDecl 'B' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_impl_class.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '', has_error: yes},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: 'class', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ ├─ImplModifier 'impl'
+// CHECK:STDOUT:   │ ├─InvalidParse '' ❌
+// CHECK:STDOUT:   ├─ClassDecl 'class' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_extend_adapt_base.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:         {kind: 'ExtendModifier', text: 'extend'},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: 'base', has_error: yes},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ ├─ExtendModifier 'extend'
+// CHECK:STDOUT:   │ │ ├─InvalidParse 'base' ❌
+// CHECK:STDOUT:   │ ├─AdaptDecl ';' ❌
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

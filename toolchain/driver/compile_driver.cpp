@@ -129,7 +129,7 @@ auto CompilationUnit::RunParse() -> void {
     options.vlog_stream = vlog_stream_;
     if (options_->dump_parse_tree && IncludeInDumps()) {
       options.dump_stream = driver_env_->output_stream;
-      options.dump_preorder_parse_tree = options_->preorder_parse_tree;
+      options.dump_format = options_->parse_dump_format;
     }
     parse_tree_ = Parse::Parse(*tokens_, options);
   });

@@ -72,102 +72,100 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: adapt.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'A'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:           {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'B'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'A'},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'D'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:         {kind: 'ExtendModifier', text: 'extend'},
-// CHECK:STDOUT:           {kind: 'StructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'StructTypeLiteralField', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'StructTypeLiteralComma', text: ','},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'StructTypeLiteralField', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'StructTypeLiteral', text: '}', subtree_size: 11},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', subtree_size: 14},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 18},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'E'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'GetType'},
-// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '42'},
-// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 10},
-// CHECK:STDOUT:       {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:       {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:     {kind: 'AdaptDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'A'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ ├─AdaptDecl ';'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'B'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'A'
+// CHECK:STDOUT:   │ ├─AdaptDecl ';'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ ├─AdaptDecl ';'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'D'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ ├─ExtendModifier 'extend'
+// CHECK:STDOUT:   │ │ │ ╭─StructTypeLiteralStart '{'
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ├─StructTypeLiteralField ':'
+// CHECK:STDOUT:   │ │ │ ├─StructTypeLiteralComma ','
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ├─StructTypeLiteralField ':'
+// CHECK:STDOUT:   │ │ ├─StructTypeLiteral '}'
+// CHECK:STDOUT:   │ ├─AdaptDecl ';'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'E'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameExpr 'GetType'
+// CHECK:STDOUT:   │ │ │ ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '42'
+// CHECK:STDOUT:   │ │ ├─CallExpr ')'
+// CHECK:STDOUT:   │ ├─AdaptDecl ';'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   ├─AdaptDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_bad_syntax.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'A'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'B'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: '}', has_error: yes},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: 'adapt', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'D'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: 'class', has_error: yes},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'A'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ ├─IntLiteral '1'
+// CHECK:STDOUT:   │ ├─AdaptDecl ';' ❌
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'B'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ ├─InvalidParse ';' ❌
+// CHECK:STDOUT:   │ ├─AdaptDecl ';' ❌
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ ├─InvalidParse '}' ❌
+// CHECK:STDOUT:   │ ├─AdaptDecl 'adapt' ❌
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'D'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ ├─InvalidParse 'class' ❌
+// CHECK:STDOUT:   │ ├─AdaptDecl ';' ❌
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ ├─AdaptDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

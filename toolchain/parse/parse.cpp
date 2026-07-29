@@ -56,10 +56,16 @@ auto Parse(Lex::TokenizedBuffer& tokens, ParseOptions options) -> Tree {
   CARBON_VLOG_TO(options.vlog_stream, "*** Parse::Tree ***\n{0}", tree);
   if (options.dump_stream) {
     Parse::TreeAndSubtrees tree_and_subtrees(tokens, tree);
-    if (options.dump_preorder_parse_tree) {
-      tree_and_subtrees.PrintPreorder(*options.dump_stream);
-    } else {
-      tree_and_subtrees.Print(*options.dump_stream);
+    switch (options.dump_format) {
+      case ParseOptions::DumpFormat::kPrettyPostorder:
+        tree_and_subtrees.PrettyPrint(*options.dump_stream);
+        break;
+      case ParseOptions::DumpFormat::kYamlPostorder:
+        tree_and_subtrees.PrintYamlPostorder(*options.dump_stream);
+        break;
+      case ParseOptions::DumpFormat::kYamlPreorder:
+        tree_and_subtrees.PrintYamlPreorder(*options.dump_stream);
+        break;
     }
   }
 

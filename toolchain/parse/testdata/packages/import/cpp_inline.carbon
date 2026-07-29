@@ -129,121 +129,112 @@ int n;
 // the last CHECK:STDOUT line below.
 
 // CHECK:STDOUT: - filename: fail_bad_syntax.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'CppPackageName', text: 'Cpp'},
-// CHECK:STDOUT:         {kind: 'InlineImportBody', text: ';', has_error: yes},
-// CHECK:STDOUT:       {kind: 'InlineImportSpecifier', text: 'inline', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'CppPackageName', text: 'Cpp'},
-// CHECK:STDOUT:         {kind: 'InlineImportBody', text: 'library', has_error: yes},
-// CHECK:STDOUT:       {kind: 'InlineImportSpecifier', text: 'inline', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'CppPackageName', text: 'Cpp'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: '"foo.h"'},
-// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: '"foo.h"'},
-// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─CppPackageName 'Cpp'
+// CHECK:STDOUT:   │ │ ╭─InlineImportBody ';' ❌
+// CHECK:STDOUT:   │ ├─InlineImportSpecifier 'inline'
+// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─CppPackageName 'Cpp'
+// CHECK:STDOUT:   │ │ ╭─InlineImportBody 'library' ❌
+// CHECK:STDOUT:   │ ├─InlineImportSpecifier 'inline'
+// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─CppPackageName 'Cpp'
+// CHECK:STDOUT:   │ │ ╭─LibraryName '"foo.h"'
+// CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
+// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ │ ╭─LibraryName '"foo.h"'
+// CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
+// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_no_semi_at_eof.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'CppPackageName', text: 'Cpp'},
-// CHECK:STDOUT:         {kind: 'InlineImportBody', text: '', has_error: yes},
-// CHECK:STDOUT:       {kind: 'InlineImportSpecifier', text: 'inline', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: 'inline', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─CppPackageName 'Cpp'
+// CHECK:STDOUT:   │ │ ╭─InlineImportBody '' ❌
+// CHECK:STDOUT:   │ ├─InlineImportSpecifier 'inline'
+// CHECK:STDOUT:   ├─ImportDecl 'inline' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_package_inline.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'NotCpp'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'NotCpp'
+// CHECK:STDOUT:   ├─PackageDecl ';' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_library_inline.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"foo.h"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"foo.h"'
+// CHECK:STDOUT:   ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: wrong_package.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'NotCpp'},
-// CHECK:STDOUT:         {kind: 'InlineImportBody', text: '"bar"'},
-// CHECK:STDOUT:       {kind: 'InlineImportSpecifier', text: 'inline', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'NotCpp'
+// CHECK:STDOUT:   │ │ ╭─InlineImportBody '"bar"'
+// CHECK:STDOUT:   │ ├─InlineImportSpecifier 'inline'
+// CHECK:STDOUT:   ├─ImportDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: valid_syntax.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'CppPackageName', text: 'Cpp'},
-// CHECK:STDOUT:         {kind: 'InlineImportBody', text: '"int m;"'},
-// CHECK:STDOUT:       {kind: 'InlineImportSpecifier', text: 'inline', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'CppPackageName', text: 'Cpp'},
-// CHECK:STDOUT:         {kind: 'InlineImportBody', text: ''''
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─CppPackageName 'Cpp'
+// CHECK:STDOUT:   │ │ ╭─InlineImportBody '"int m;"'
+// CHECK:STDOUT:   │ ├─InlineImportSpecifier 'inline'
+// CHECK:STDOUT:   ├─ImportDecl ';'
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─CppPackageName 'Cpp'
+// CHECK:STDOUT:   │ │ ╭─InlineImportBody ''''
 // CHECK:STDOUT: // C++ comment.
 // CHECK:STDOUT: int n;
-// CHECK:STDOUT: ''''},
-// CHECK:STDOUT:       {kind: 'InlineImportSpecifier', text: 'inline', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT: ''''
+// CHECK:STDOUT:   │ ├─InlineImportSpecifier 'inline'
+// CHECK:STDOUT:   ├─ImportDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: inline_cpp.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
-// CHECK:STDOUT:       {kind: 'CppNameExpr', text: 'Cpp'},
-// CHECK:STDOUT:       {kind: 'InlineImportBody', text: ''''
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
+// CHECK:STDOUT:   │ ├─CppNameExpr 'Cpp'
+// CHECK:STDOUT:   │ ├─InlineImportBody ''''
 // CHECK:STDOUT: int n;
-// CHECK:STDOUT: ''''},
-// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT: ''''
+// CHECK:STDOUT:   ├─InlineCppDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_inline_cpp_syntax_errors.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
-// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
-// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
-// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
-// CHECK:STDOUT:       {kind: 'CppNameExpr', text: 'Cpp'},
-// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
-// CHECK:STDOUT:       {kind: 'CppNameExpr', text: 'Cpp'},
-// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'InlineIntroducer', text: 'inline'},
-// CHECK:STDOUT:       {kind: 'CppNameExpr', text: 'Cpp'},
-// CHECK:STDOUT:       {kind: 'InlineImportBody', text: ''''
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
+// CHECK:STDOUT:   ├─InlineCppDecl ';' ❌
+// CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
+// CHECK:STDOUT:   ├─InlineCppDecl ';' ❌
+// CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
+// CHECK:STDOUT:   ├─InlineCppDecl ';' ❌
+// CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
+// CHECK:STDOUT:   │ ├─CppNameExpr 'Cpp'
+// CHECK:STDOUT:   ├─InlineCppDecl ';' ❌
+// CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
+// CHECK:STDOUT:   │ ├─CppNameExpr 'Cpp'
+// CHECK:STDOUT:   ├─InlineCppDecl ';' ❌
+// CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
+// CHECK:STDOUT:   │ ├─CppNameExpr 'Cpp'
+// CHECK:STDOUT:   │ ├─InlineImportBody ''''
 // CHECK:STDOUT: int n;
-// CHECK:STDOUT: ''''},
-// CHECK:STDOUT:     {kind: 'InlineCppDecl', text: ''''
+// CHECK:STDOUT: ''''
+// CHECK:STDOUT:   ├─InlineCppDecl ''''
 // CHECK:STDOUT: int n;
-// CHECK:STDOUT: '''', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT: '''' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: eof.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

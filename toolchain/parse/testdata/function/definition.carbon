@@ -79,165 +79,155 @@ fn SpuriousEquals() = { }
 fn TestRecoveryFromSpuriousEquals();
 
 // CHECK:STDOUT: - filename: basic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: with_params.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'bar'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i64'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'baz'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i64'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 11},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 14},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'foo'},
-// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'baz'},
-// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'bar'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'baz'},
-// CHECK:STDOUT:           {kind: 'InfixOperatorPlus', text: '+', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 24},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'foo'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'bar'
+// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─IntTypeLiteral 'i64'
+// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │   │ ├─PatternListComma ','
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'baz'
+// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─IntTypeLiteral 'i64'
+// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'foo'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'baz'
+// CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'bar'
+// CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'baz'
+// CHECK:STDOUT:   │ │   ├─InfixOperatorPlus '+'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: with_return_type.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'FloatTypeLiteral', text: 'f64'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '42'},
-// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'foo'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   │ ╭─FloatTypeLiteral 'f64'
+// CHECK:STDOUT:   │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ ├─IntLiteral '42'
+// CHECK:STDOUT:   │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_identifier_in_statements.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'bar'},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: 'bar', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'bar'
+// CHECK:STDOUT:   │ ├─ExprStatement 'bar' ❌
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: nested.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'NamedParams'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:               {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 10},
-// CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'PositionalParams'},
-// CHECK:STDOUT:         {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 20},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameMaybeBeforeSignature 'NamedParams'
+// CHECK:STDOUT:   │ │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─FunctionDefinition '}'
+// CHECK:STDOUT:   │ │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'PositionalParams'
+// CHECK:STDOUT:   │ │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: builtin.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'BuiltinFunctionDefinitionStart', text: '=', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'BuiltinName', text: '"builtin"'},
-// CHECK:STDOUT:     {kind: 'BuiltinFunctionDefinition', text: ';', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─BuiltinFunctionDefinitionStart '='
+// CHECK:STDOUT:   │ ├─BuiltinName '"builtin"'
+// CHECK:STDOUT:   ├─BuiltinFunctionDefinition ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: builtin_nested.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:         {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'I'},
-// CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Op'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'BuiltinFunctionDefinitionStart', text: '=', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'BuiltinName', text: '"builtin"'},
-// CHECK:STDOUT:       {kind: 'BuiltinFunctionDefinition', text: ';', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 13},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   ├─IdentifierNameExpr 'I'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameMaybeBeforeSignature 'Op'
+// CHECK:STDOUT:   │ │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ ╭─BuiltinFunctionDefinitionStart '='
+// CHECK:STDOUT:   │ │ ├─BuiltinName '"builtin"'
+// CHECK:STDOUT:   │ ├─BuiltinFunctionDefinition ';'
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_builtin_identifier.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'NotString'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'BuiltinFunctionDefinitionStart', text: '=', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'BuiltinFunctionDefinition', text: ';', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'NotString'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─BuiltinFunctionDefinitionStart '='
+// CHECK:STDOUT:   ├─BuiltinFunctionDefinition ';' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_builtin_two_strings.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'JunkAfterString'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'BuiltinFunctionDefinitionStart', text: '=', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'BuiltinName', text: '"hello"'},
-// CHECK:STDOUT:     {kind: 'BuiltinFunctionDefinition', text: ';', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'JunkAfterString'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─BuiltinFunctionDefinitionStart '='
+// CHECK:STDOUT:   │ ├─BuiltinName '"hello"'
+// CHECK:STDOUT:   ├─BuiltinFunctionDefinition ';' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_builtin_spurious_equals.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'SpuriousEquals'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'BuiltinFunctionDefinitionStart', text: '=', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'BuiltinFunctionDefinition', text: '}', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'TestRecoveryFromSpuriousEquals'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'SpuriousEquals'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─BuiltinFunctionDefinitionStart '='
+// CHECK:STDOUT:   ├─BuiltinFunctionDefinition '}' ❌
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'TestRecoveryFromSpuriousEquals'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

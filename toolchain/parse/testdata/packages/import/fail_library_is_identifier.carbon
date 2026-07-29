@@ -15,12 +15,11 @@
 import Geometry library Shapes;
 
 // CHECK:STDOUT: - filename: fail_library_is_identifier.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Geometry'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: 'Shapes', has_error: yes},
-// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'Geometry'
+// CHECK:STDOUT:   │ │ ╭─LibraryName 'Shapes' ❌
+// CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
+// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

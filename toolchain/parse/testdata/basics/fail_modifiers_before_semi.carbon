@@ -15,11 +15,10 @@
 protected virtual;
 
 // CHECK:STDOUT: - filename: fail_modifiers_before_semi.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: ';', has_error: yes},
-// CHECK:STDOUT:       {kind: 'ProtectedModifier', text: 'protected'},
-// CHECK:STDOUT:       {kind: 'VirtualModifier', text: 'virtual'},
-// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─InvalidParseStart ';' ❌
+// CHECK:STDOUT:   │ ├─ProtectedModifier 'protected'
+// CHECK:STDOUT:   │ ├─VirtualModifier 'virtual'
+// CHECK:STDOUT:   ├─InvalidParseSubtree ';' ❌
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
