@@ -251,6 +251,16 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   if (!specific_interface.interface_id.has_value()) {
     full_constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }
+  auto interface_inst_id =
+      specific_interface.interface_id.has_value()
+          ? AddInst<SemIR::ImplSelfWitness>(
+                context, node_id,
+                {.type_id =
+                     GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+                 .period_self = self_type_inst_id,
+                 .specific_interface_id =
+                     context.specific_interfaces().Add(specific_interface)})
+          : SemIR::ErrorInst::InstId;
 
   // Strip off anything on the RHS of `where`, as they are not part of the
   // constraint being implemented, they just represent requirements that must be
@@ -282,7 +292,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                          .is_final = is_final,
                          .self_id = self_type_inst_id,
                          .constraint_id = extend_constraint_type_inst_id,
-                         .interface = specific_interface}};
+                         .interface = specific_interface,
+                         .interface_inst_id = interface_inst_id}};
     if (has_definition) {
       impl.definition_id = impl_decl_id;
     }

@@ -2766,6 +2766,7 @@ static auto ImportImplDecl(ImportContext& context,
         .self_id = SemIR::TypeInstId::None,
         .constraint_id = SemIR::TypeInstId::None,
         .interface = SemIR::SpecificInterface::None,
+        .interface_inst_id = SemIR::InstId::None,
         .witness_id = witness_id,
         .scope_id = import_impl.is_complete() ? AddPlaceholderNameScope(context)
                                               : SemIR::NameScopeId::None}});
@@ -2838,6 +2839,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     impl_id = impl_const_inst.impl_id;
   }
 
+  CARBON_CHECK(resolver.import_types().Is<SemIR::WitnessType>(
+      resolver.import_insts().Get(import_impl.interface_inst_id).type_id()));
+
   // Load constants for the definition.
   auto implicit_param_patterns = GetLocalBlockImportRefInfo(
       resolver, import_impl.implicit_param_patterns_id);
@@ -2847,6 +2851,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       GetLocalConstantId(resolver, import_impl.constraint_id);
   auto match_first_inst_id =
       GetLocalConstantInstId(resolver, import_impl.match_first_id);
+  auto interface_inst_const_id =
+      GetLocalConstantId(resolver, import_impl.interface_inst_id);
   auto& new_impl = resolver.local_impls().Get(impl_id);
   // Go directly to the simpler GetLocalConstantInstId to get an inst of the
   // same type locally. This does not handle symbolic values in a way that they
@@ -2870,6 +2876,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_impl.constraint_id, constraint_const_id);
   new_impl.interface = GetLocalSpecificInterface(
       resolver, import_impl.interface, specific_interface_data);
+  new_impl.interface_inst_id = AddLoadedImportRef(
+      resolver,
+      GetSingletonType(resolver.local_context(),
+                       SemIR::WitnessType::TypeInstId),
+      import_impl.interface_inst_id, interface_inst_const_id);
   // The MatchFirstDecl can't be symbolic, so we don't need to make a
   // LoadedImportRef instruction for it.
   new_impl.match_first_id = match_first_inst_id;
