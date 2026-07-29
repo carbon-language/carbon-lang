@@ -190,8 +190,8 @@ interface Y(S: type) {}
 impl forall [T: type] () as Y(G(T)) {}
 impl forall [T: type] {} as Y(G(T)) {}
 
-// This is a blanket impl that overlaps with (but is less specific) `G(C) as
-// Z(G(C))`, which is the next impl below.
+// This is a blanket impl that overlaps with (but is less specific than)
+// `G(C) as Z(G(C))`, which is the next impl below.
 impl forall [T: type, U: type] G(T) as Z(U) where .Result impls Y(G(T)) and .Result = {} {}
 
 // The query `G(C) as Z(G(C))` is concrete so any lookups will result in a final
