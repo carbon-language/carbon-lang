@@ -23,47 +23,23 @@ class A {};
 class B {};
 
 void F() {
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+15]]:11: error: no member named 'C' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    28 |   Carbon::C<A> c1;
-  // CHECK:STDERR:       |           ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+11]]:13: error: 'A' does not refer to a value [CppInteropParseError]
-  // CHECK:STDERR:    28 |   Carbon::C<A> c1;
-  // CHECK:STDERR:       |             ^
-  // CHECK:STDERR: generic_class.carbon:[[@LINE-11]]:7: note: declared here [CppInteropParseNote]
-  // CHECK:STDERR:     9 | class A {};
-  // CHECK:STDERR:       |       ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+4]]:16: error: use of undeclared identifier 'c1' [CppInteropParseError]
-  // CHECK:STDERR:    28 |   Carbon::C<A> c1;
-  // CHECK:STDERR:       |                ^~
+  // CHECK:STDERR: generic_class.carbon:[[@LINE+7]]:16: error: implicit instantiation of undefined template 'Carbon::C<A>' [CppInteropParseError]
+  // CHECK:STDERR:    20 |   Carbon::C<A> c1;
+  // CHECK:STDERR:       |                ^
+  // CHECK:STDERR: generic_class.carbon:[[@LINE-12]]:18: note: template is declared here [CppInteropParseNote]
+  // CHECK:STDERR:     4 | class C(T: type) {
+  // CHECK:STDERR:       |                  ^
   // CHECK:STDERR:
   Carbon::C<A> c1;
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+4]]:3: error: use of undeclared identifier 'c1' [CppInteropParseError]
-  // CHECK:STDERR:    33 |   c1.t = A();
-  // CHECK:STDERR:       |   ^~
-  // CHECK:STDERR:
   c1.t = A();
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+15]]:11: error: no member named 'C' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    49 |   Carbon::C<B> c2;
-  // CHECK:STDERR:       |           ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+11]]:13: error: 'B' does not refer to a value [CppInteropParseError]
-  // CHECK:STDERR:    49 |   Carbon::C<B> c2;
-  // CHECK:STDERR:       |             ^
-  // CHECK:STDERR: generic_class.carbon:[[@LINE-31]]:7: note: declared here [CppInteropParseNote]
-  // CHECK:STDERR:    10 | class B {};
-  // CHECK:STDERR:       |       ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+4]]:16: error: use of undeclared identifier 'c2' [CppInteropParseError]
-  // CHECK:STDERR:    49 |   Carbon::C<B> c2;
-  // CHECK:STDERR:       |                ^~
+  // CHECK:STDERR: generic_class.carbon:[[@LINE+7]]:16: error: implicit instantiation of undefined template 'Carbon::C<B>' [CppInteropParseError]
+  // CHECK:STDERR:    29 |   Carbon::C<B> c2;
+  // CHECK:STDERR:       |                ^
+  // CHECK:STDERR: generic_class.carbon:[[@LINE-21]]:18: note: template is declared here [CppInteropParseNote]
+  // CHECK:STDERR:     4 | class C(T: type) {
+  // CHECK:STDERR:       |                  ^
   // CHECK:STDERR:
   Carbon::C<B> c2;
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+4]]:3: error: use of undeclared identifier 'c2' [CppInteropParseError]
-  // CHECK:STDERR:    54 |   c2.t = B();
-  // CHECK:STDERR:       |   ^~
-  // CHECK:STDERR:
   c2.t = B();
 }
 ''';

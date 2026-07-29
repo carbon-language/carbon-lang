@@ -156,16 +156,11 @@ class GenericClass(T: type) {
 
 inline Cpp '''
 void f() {
-  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE+12]]:11: error: no member named 'GenericClass' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    25 |   Carbon::GenericClass<int> c(0);
-  // CHECK:STDERR:       |           ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE+8]]:27: error: expected '(' for function-style cast or type construction [CppInteropParseError]
-  // CHECK:STDERR:    25 |   Carbon::GenericClass<int> c(0);
-  // CHECK:STDERR:       |                        ~~~^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE+4]]:29: error: use of undeclared identifier 'c' [CppInteropParseError]
-  // CHECK:STDERR:    25 |   Carbon::GenericClass<int> c(0);
+  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE+7]]:29: error: implicit instantiation of undefined template 'Carbon::GenericClass<int>' [CppInteropParseError]
+  // CHECK:STDERR:    20 |   Carbon::GenericClass<int> c(0);
+  // CHECK:STDERR:       |                             ^
+  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE-11]]:29: note: template is declared here [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class GenericClass(T: type) {
   // CHECK:STDERR:       |                             ^
   // CHECK:STDERR:
   Carbon::GenericClass<int> c(0);

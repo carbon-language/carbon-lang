@@ -302,11 +302,40 @@ static auto MakeSpecificForTemplateArgs(
 auto ExportGenericClassToCpp(Context& context, SemIR::InstId inst_id,
                              SemIR::GenericClassType generic_class_type)
     -> clang::ClassTemplateDecl* {
-  // TODO
-  (void)context;
-  (void)inst_id;
-  (void)generic_class_type;
-  return nullptr;
+  // Use existing export if possible.
+  const auto& class_info = context.classes().Get(generic_class_type.class_id);
+  if (const auto* clang_decl =
+          context.clang_decls().Lookup(class_info.first_decl_id())) {
+    return cast<clang::ClassTemplateDecl>(clang_decl->decl());
+  }
+
+  // Map the parent scope into the C++ AST.
+  SemIR::LocId loc_id(inst_id);
+  auto* decl_context =
+      ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
+  if (!decl_context) {
+    return nullptr;
+  }
+
+  auto* template_param_list = ExportGenericBindings(
+      context, loc_id, class_info.generic_id, decl_context);
+  if (!template_param_list) {
+    return nullptr;
+  }
+
+  auto clang_loc = GetCppLocation(context, loc_id);
+  auto* record_decl = ExportClassToCppInDeclContext(
+      context, decl_context, class_info, SemIR::SpecificId::None);
+  auto* class_template_decl = clang::ClassTemplateDecl::Create(
+      context.ast_context(), decl_context,
+      /*L=*/clang_loc, record_decl->getDeclName(), template_param_list,
+      record_decl);
+
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
+      cast<clang::Decl>(class_template_decl));
+  context.clang_decls().Add({.key = key, .inst_id = inst_id});
+
+  return class_template_decl;
 }
 
 static auto SetCppClassMemberAccess(const SemIR::NameScope& class_scope,

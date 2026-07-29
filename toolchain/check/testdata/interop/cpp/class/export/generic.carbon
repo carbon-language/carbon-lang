@@ -20,23 +20,14 @@ class C(T: type) {
 
 inline Cpp '''
 void F() {
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+12]]:11: error: no member named 'C' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    22 |   Carbon::C<int> c;
-  // CHECK:STDERR:       |           ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+8]]:16: error: expected '(' for function-style cast or type construction [CppInteropParseError]
-  // CHECK:STDERR:    22 |   Carbon::C<int> c;
-  // CHECK:STDERR:       |             ~~~^
-  // CHECK:STDERR:
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+4]]:18: error: use of undeclared identifier 'c' [CppInteropParseError]
-  // CHECK:STDERR:    22 |   Carbon::C<int> c;
+  // CHECK:STDERR: generic_class.carbon:[[@LINE+7]]:18: error: implicit instantiation of undefined template 'Carbon::C<int>' [CppInteropParseError]
+  // CHECK:STDERR:    17 |   Carbon::C<int> c;
+  // CHECK:STDERR:       |                  ^
+  // CHECK:STDERR: generic_class.carbon:[[@LINE-9]]:18: note: template is declared here [CppInteropParseNote]
+  // CHECK:STDERR:     4 | class C(T: type) {
   // CHECK:STDERR:       |                  ^
   // CHECK:STDERR:
   Carbon::C<int> c;
-  // CHECK:STDERR: generic_class.carbon:[[@LINE+4]]:3: error: use of undeclared identifier 'c' [CppInteropParseError]
-  // CHECK:STDERR:    27 |   c.t = 123;
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR:
   c.t = 123;
 }
 ''';
@@ -83,23 +74,14 @@ class C(T: type) {
 
 inline Cpp '''
 void F() {
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+12]]:11: error: no member named 'C' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    22 |   Carbon::C<int> c;
-  // CHECK:STDERR:       |           ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+8]]:16: error: expected '(' for function-style cast or type construction [CppInteropParseError]
-  // CHECK:STDERR:    22 |   Carbon::C<int> c;
-  // CHECK:STDERR:       |             ~~~^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:18: error: use of undeclared identifier 'c' [CppInteropParseError]
-  // CHECK:STDERR:    22 |   Carbon::C<int> c;
+  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+7]]:18: error: implicit instantiation of undefined template 'Carbon::C<int>' [CppInteropParseError]
+  // CHECK:STDERR:    17 |   Carbon::C<int> c;
+  // CHECK:STDERR:       |                  ^
+  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE-9]]:18: note: template is declared here [CppInteropParseNote]
+  // CHECK:STDERR:     4 | class C(T: type) {
   // CHECK:STDERR:       |                  ^
   // CHECK:STDERR:
   Carbon::C<int> c;
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:3: error: use of undeclared identifier 'c' [CppInteropParseError]
-  // CHECK:STDERR:    27 |   c.M();
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR:
   c.M();
 }
 ''';
