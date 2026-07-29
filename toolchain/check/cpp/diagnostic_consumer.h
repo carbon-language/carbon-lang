@@ -29,6 +29,10 @@ auto MakeDiagnosticConsumer(
     std::shared_ptr<clang::CompilerInvocation> invocation)
     -> std::unique_ptr<clang::DiagnosticConsumer>;
 
+// Flushes any pending diagnostics in the given consumer, which must have been
+// created by `MakeDiagnosticConsumer`.
+auto FlushDiagnosticConsumer(clang::DiagnosticConsumer& consumer) -> void;
+
 // Creates a diagnostic listener attached to the given Carbon context. The
 // returned listener must not outlive the context.
 auto MakeContextDiagnosticListener(clang::DiagnosticConsumer& consumer,

@@ -403,6 +403,17 @@ the `prelude_import` flag is set to false, this is also silently set to false.
         arg_b.Default(true);
         arg_b.Set(&include_carbon_core);
       });
+  b.AddFlag(
+      {
+          .name = "share-cpp-ast",
+          .help = R"""(
+Share a single Clang ASTContext across all compiled files.
+
+TODO: This is a temporary measure and will be enabled by default and removed
+once this mode is fully implemented.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&share_cpp_ast); });
 }
 
 auto CompileOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b,

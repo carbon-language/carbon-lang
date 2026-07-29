@@ -11,7 +11,7 @@
 
 namespace Carbon::SemIR {
 
-CppFile::CppFile(std::unique_ptr<clang::CompilerInstance> clang,
+CppFile::CppFile(std::shared_ptr<clang::CompilerInstance> clang,
                  llvm::LLVMContext* llvm_context)
     : clang_(std::move(clang)), llvm_context_(llvm_context) {}
 

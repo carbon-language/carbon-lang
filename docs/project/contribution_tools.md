@@ -53,13 +53,15 @@ sudo apt update
 # the number of the `:` in the output to be over 19. For example, `1:19.0-1`.
 apt-cache show clang | grep 'Version:'
 
-# Install tools.
+# Install tools. Use the same version as the Clang version you found above. Do
+# not install `libunwind-dev`; that is a different implementation that will not
+# work.
 sudo apt install \
   clang \
   gh \
   libc++-dev \
   libc++abi-dev \
-  libunwind-dev \
+  libunwind-21-dev \
   lld \
   lldb
 

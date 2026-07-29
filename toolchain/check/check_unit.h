@@ -20,6 +20,7 @@ class CompilerInvocation;
 namespace Carbon::Check {
 
 struct UnitAndImports;
+struct CppDomain;
 
 // A file's imports corresponding to a single package, for
 // `UnitAndImports::package_imports`.
@@ -101,6 +102,9 @@ struct UnitAndImports {
   // List of the `import Cpp` imports.
   llvm::SmallVector<Parse::Tree::PackagingNames> cpp_imports;
 
+  // The C++ domain for this unit.
+  std::shared_ptr<CppDomain> cpp_domain;
+
   // The remaining number of imports which must be checked before this unit can
   // be processed.
   int32_t imports_remaining = 0;
@@ -129,9 +133,6 @@ class CheckUnit {
   explicit CheckUnit(
       UnitAndImports* unit_and_imports,
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-      llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-      llvm::LLVMContext* llvm_context,
-      std::shared_ptr<clang::CompilerInvocation> clang_invocation,
       llvm::raw_ostream* vlog_stream, bool mangle_string_fingerprint = false);
 
   // Produces and checks the IR for the provided unit.
@@ -192,9 +193,6 @@ class CheckUnit {
 
   UnitAndImports* unit_and_imports_;
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
-  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
-  llvm::LLVMContext* llvm_context_;
-  std::shared_ptr<clang::CompilerInvocation> clang_invocation_;
 
   DiagnosticEmitter emitter_;
   Context context_;

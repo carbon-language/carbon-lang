@@ -122,6 +122,7 @@ struct CompileOptions {
   llvm::StringRef sem_ir_crash_dump;
 
   bool mangle_string_fingerprint = false;
+  bool share_cpp_ast = false;
 
   // Get the LLVM optimization level corresponding to a Carbon optimization
   // level.
