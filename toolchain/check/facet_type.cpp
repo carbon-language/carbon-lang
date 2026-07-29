@@ -9,6 +9,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/generic.h"
@@ -317,6 +318,47 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
   bool found_cycle_ = false;
 };
 
+static auto IsPeriodSelfAccess(Context& context, SemIR::InstId inst_id)
+    -> bool {
+  auto access = context.insts().TryGetAs<SemIR::ImplWitnessAccess>(inst_id);
+  if (!access) {
+    return false;
+  }
+
+  if (context.insts().TryGetAs<SemIR::ImplSelfWitness>(access->witness_id)) {
+    // ImplSelfWitness represents a witness for `.Self as I` inside the
+    // declaration of `impl ... as I`.
+    return true;
+  }
+  if (auto lookup = context.insts().TryGetAs<SemIR::LookupImplWitness>(
+          access->witness_id)) {
+    return IsPeriodSelf(context, lookup->query_self_inst_id);
+  }
+
+  return false;
+}
+
+static auto TryGetRewriteAccess(Context& context, SemIR::InstId inst_id)
+    -> std::optional<SemIR::KnownInstId<SemIR::ImplWitnessAccess>> {
+  auto access_without_subst_id =
+      GetImplWitnessAccessWithoutSubstitution(context, inst_id);
+
+  // When a facet type is first constructed, the LHS of every rewrite is an
+  // access into `.Self`. But because we resolve rewrites on every evaluation,
+  // when we substitute `.Self` we can end up with other values on the LHS of
+  // the rewrite constraint. Just ignore those. The constraint has already been
+  // resolved when the facet type was constructed.
+  //
+  // TODO: We want to try move rewrite resolution into the process of
+  // identifying a facet type instead of in eval. Then we can do resolution
+  // before `.Self` is substituted and we don't need this condition.
+  if (!IsPeriodSelfAccess(context, access_without_subst_id)) {
+    return std::nullopt;
+  }
+  return context.insts().GetAsKnownInstId<SemIR::ImplWitnessAccess>(
+      access_without_subst_id);
+}
+
 auto ResolveFacetTypeRewriteConstraints(
     Context& context, SemIR::LocId loc_id,
     llvm::SmallVector<SemIR::DeclaredFacetType::RewriteConstraint>& rewrites)
@@ -328,25 +370,21 @@ auto ResolveFacetTypeRewriteConstraints(
   AccessRewriteValues rewrite_values;
 
   for (auto& constraint : rewrites) {
-    auto lhs_access = context.insts().TryGetAsWithId<SemIR::ImplWitnessAccess>(
-        GetImplWitnessAccessWithoutSubstitution(context, constraint.lhs_id));
-    if (!lhs_access) {
+    auto lhs_access = TryGetRewriteAccess(context, constraint.lhs_id);
+    if (!lhs_access.has_value()) {
       continue;
     }
 
-    rewrite_values.InsertNotRewritten(context, lhs_access->inst_id,
-                                      constraint.rhs_id);
+    rewrite_values.InsertNotRewritten(context, *lhs_access, constraint.rhs_id);
   }
 
   for (auto& constraint : rewrites) {
-    auto lhs_access = context.insts().TryGetAsWithId<SemIR::ImplWitnessAccess>(
-        GetImplWitnessAccessWithoutSubstitution(context, constraint.lhs_id));
-    if (!lhs_access) {
+    auto lhs_access = TryGetRewriteAccess(context, constraint.lhs_id);
+    if (!lhs_access.has_value()) {
       continue;
     }
 
-    auto* lhs_rewrite_value =
-        rewrite_values.FindRef(context, lhs_access->inst_id);
+    auto* lhs_rewrite_value = rewrite_values.FindRef(context, *lhs_access);
     // Every LHS was added with InsertNotRewritten above.
     CARBON_CHECK(lhs_rewrite_value);
     rewrite_values.SetBeingRewritten(*lhs_rewrite_value);
@@ -408,14 +446,13 @@ auto ResolveFacetTypeRewriteConstraints(
   for (size_t i = 0; i < keep_size;) {
     auto& constraint = rewrites[i];
 
-    auto lhs_access = context.insts().TryGetAsWithId<SemIR::ImplWitnessAccess>(
-        GetImplWitnessAccessWithoutSubstitution(context, constraint.lhs_id));
-    if (!lhs_access) {
+    auto lhs_access = TryGetRewriteAccess(context, constraint.lhs_id);
+    if (!lhs_access.has_value()) {
       ++i;
       continue;
     }
 
-    auto& rewrite_value = *rewrite_values.FindRef(context, lhs_access->inst_id);
+    auto& rewrite_value = *rewrite_values.FindRef(context, *lhs_access);
     auto rhs_id = std::exchange(rewrite_value.inst_id, SemIR::InstId::None);
     if (rhs_id == SemIR::InstId::None) {
       std::swap(rewrites[i], rewrites[keep_size - 1]);

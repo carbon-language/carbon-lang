@@ -25,6 +25,7 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/dump.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 

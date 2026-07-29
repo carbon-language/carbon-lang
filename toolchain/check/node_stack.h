@@ -481,7 +481,6 @@ class NodeStack {
       case Parse::NodeKind::VariableIntroducer:
       case Parse::NodeKind::InlineImportBody:
       case Parse::NodeKind::InlineIntroducer:
-      case Parse::NodeKind::WhereOperand:
         return Id::Kind::None;
       case Parse::NodeKind::AdaptIntroducer:
       case Parse::NodeKind::AliasInitializer:
@@ -543,6 +542,7 @@ class NodeStack {
       case Parse::NodeKind::StructTypeLiteralComma:
       case Parse::NodeKind::TerseBodyArrow:
       case Parse::NodeKind::TupleLiteralComma:
+      case Parse::NodeKind::WhereOperand:
       case Parse::NodeKind::WhileCondition:
         return Id::Kind::Invalid;
       default:

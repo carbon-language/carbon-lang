@@ -910,7 +910,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %C.as.I.impl.F.4c1488.2: %C.as.I.impl.F.type.a24f58.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.I.impl: %Self.ref as %.loc9_13 {
+// CHECK:STDOUT: impl @C.as.I.impl: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %C.as.I.impl.F.decl.loc11_48.1: %C.as.I.impl.F.type.a24f58.1 = fn_decl @C.as.I.impl.F.loc11_48.1 [concrete = constants.%C.as.I.impl.F.4c1488.1] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = ref_param_pattern [concrete = constants.%x.param_patt.363cc0.1]
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.b18d0b.1]
@@ -944,7 +944,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %C.as.I.impl.F.decl.loc11_48.1
-// CHECK:STDOUT:   extend %.loc9_13
+// CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

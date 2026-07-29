@@ -45,7 +45,10 @@ struct ImplFields {
 
   // The type for which the impl is implementing a constraint.
   TypeInstId self_id;
-  // The constraint that the impl implements.
+  // The constraint that the impl implements, which only contains extended
+  // interfaces or named constraints. Other constraints such as rewrites are not
+  // preserved in this instruction, as they contain `.Self` and thus only make
+  // sense internally.
   TypeInstId constraint_id;
 
   // The single interface to implement from `constraint_id`.

@@ -3801,6 +3801,34 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::ImplSelfWitness inst) -> ResolveResult {
+  CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
+               SemIR::WitnessType::TypeInstId);
+
+  auto period_self = GetLocalConstantInstId(resolver, inst.period_self);
+
+  auto import_specific_interface =
+      resolver.import_specific_interfaces().Get(inst.specific_interface_id);
+  auto specific_interface_data =
+      GetLocalSpecificInterfaceData(resolver, import_specific_interface);
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto specific_interface = GetLocalSpecificInterface(
+      resolver, import_specific_interface, specific_interface_data);
+  auto specific_interface_id =
+      resolver.local_specific_interfaces().Add(specific_interface);
+
+  return ResolveResult::Deduplicated<SemIR::ImplSelfWitness>(
+      resolver, {.type_id = GetSingletonType(resolver.local_context(),
+                                             SemIR::WitnessType::TypeInstId),
+                 .period_self = period_self,
+                 .specific_interface_id = specific_interface_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplWitness inst) -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
                SemIR::WitnessType::TypeInstId);
@@ -4476,6 +4504,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::GenericNamedConstraintType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::ImplSelfWitness inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImplWitness inst): {

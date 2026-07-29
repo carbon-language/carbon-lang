@@ -469,7 +469,6 @@ interface Y {}
 // CHECK:STDERR:
 fn F(_:? Z(type where .Self impls Y)) {}
 
-
 // --- fail_where_nested_inside_var_binding.carbon
 library "[[@TEST_NAME]]";
 
