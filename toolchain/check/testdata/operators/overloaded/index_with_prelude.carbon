@@ -106,7 +106,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.Self: %IndexWith.type.d74 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.300: <witness> = impl_self_witness %.Self, @IndexWith, @IndexWith(%SubscriptType.f8f) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.55a: type = impl_witness_access %.300, element0 [symbolic_self]
-// CHECK:STDOUT:   %IndexWith_where.type.192: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.f8f) where %impl.elem0.55a = %ElementType> [concrete]
+// CHECK:STDOUT:   %IndexWith_where.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.f8f) where %impl.elem0.55a = %ElementType> [concrete]
 // CHECK:STDOUT:   %.769: <witness> = impl_self_witness %C, @IndexWith, @IndexWith(%SubscriptType.f8f) [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
@@ -180,7 +180,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %rewrite.loc8_60.1 = requirement_rewrite %impl.elem0.loc8_47.1, %ElementType.ref.loc8_62 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc8_47.2: type = impl_witness_access constants.%.300, element0 [symbolic_self = constants.%impl.elem0.55a]
 // CHECK:STDOUT:     %rewrite.loc8_60.2 = requirement_rewrite %impl.elem0.loc8_47.2, %ElementType.ref.loc8_62 [concrete]
-// CHECK:STDOUT:     %.loc8_41: type = where_expr [concrete = constants.%IndexWith_where.type.192] {
+// CHECK:STDOUT:     %.loc8_41: type = where_expr [concrete = constants.%IndexWith_where.type] {
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %IndexWith.type [concrete]
 // CHECK:STDOUT:       %rewrite.loc8_60.2 = requirement_rewrite %impl.elem0.loc8_47.2, %ElementType.ref.loc8_62 [concrete]
 // CHECK:STDOUT:     }
@@ -320,7 +320,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.Self: %IndexWith.type.385 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.a93: <witness> = impl_self_witness %.Self, @IndexWith, @IndexWith(Core.IntLiteral) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.d9e: type = impl_witness_access %.a93, element0 [symbolic_self]
-// CHECK:STDOUT:   %IndexWith_where.type.4f3: type = facet_type <@IndexWith, @IndexWith(Core.IntLiteral) where %impl.elem0.d9e = %C> [concrete]
+// CHECK:STDOUT:   %IndexWith_where.type: type = facet_type <@IndexWith, @IndexWith(Core.IntLiteral) where %impl.elem0.d9e = %C> [concrete]
 // CHECK:STDOUT:   %.291: <witness> = impl_self_witness %tuple.type.748, @IndexWith, @IndexWith(Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @tuple.type.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.8b4: type = pattern_type %tuple.type.748 [concrete]
@@ -391,7 +391,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %rewrite.loc8_67.1 = requirement_rewrite %impl.elem0.loc8_54.1, %C.ref.loc8_69 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc8_54.2: type = impl_witness_access constants.%.a93, element0 [symbolic_self = constants.%impl.elem0.d9e]
 // CHECK:STDOUT:     %rewrite.loc8_67.2 = requirement_rewrite %impl.elem0.loc8_54.2, %C.ref.loc8_69 [concrete]
-// CHECK:STDOUT:     %.loc8_48: type = where_expr [concrete = constants.%IndexWith_where.type.4f3] {
+// CHECK:STDOUT:     %.loc8_48: type = where_expr [concrete = constants.%IndexWith_where.type] {
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %IndexWith.type [concrete]
 // CHECK:STDOUT:       %rewrite.loc8_67.2 = requirement_rewrite %impl.elem0.loc8_54.2, %C.ref.loc8_69 [concrete]
 // CHECK:STDOUT:     }
@@ -523,7 +523,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.Self: %IndexWith.type.d74 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.300: <witness> = impl_self_witness %.Self, @IndexWith, @IndexWith(%SubscriptType.f8f) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.55a: type = impl_witness_access %.300, element0 [symbolic_self]
-// CHECK:STDOUT:   %IndexWith_where.type.192: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.f8f) where %impl.elem0.55a = %ElementType> [concrete]
+// CHECK:STDOUT:   %IndexWith_where.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.f8f) where %impl.elem0.55a = %ElementType> [concrete]
 // CHECK:STDOUT:   %.769: <witness> = impl_self_witness %C, @IndexWith, @IndexWith(%SubscriptType.f8f) [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
@@ -592,7 +592,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %rewrite.loc8_60.1 = requirement_rewrite %impl.elem0.loc8_47.1, %ElementType.ref.loc8_62 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc8_47.2: type = impl_witness_access constants.%.300, element0 [symbolic_self = constants.%impl.elem0.55a]
 // CHECK:STDOUT:     %rewrite.loc8_60.2 = requirement_rewrite %impl.elem0.loc8_47.2, %ElementType.ref.loc8_62 [concrete]
-// CHECK:STDOUT:     %.loc8_41: type = where_expr [concrete = constants.%IndexWith_where.type.192] {
+// CHECK:STDOUT:     %.loc8_41: type = where_expr [concrete = constants.%IndexWith_where.type] {
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %IndexWith.type [concrete]
 // CHECK:STDOUT:       %rewrite.loc8_60.2 = requirement_rewrite %impl.elem0.loc8_47.2, %ElementType.ref.loc8_62 [concrete]
 // CHECK:STDOUT:     }

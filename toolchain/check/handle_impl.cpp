@@ -109,9 +109,11 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
   AddNameToLookup(context, SemIR::NameId::SelfType, self_type.inst_id);
   context.node_stack().Push(node_id, self_type.inst_id);
 
-  // The value in here, if any, is populated by the `where` expression that
-  // introduces a `.Self` in the impl's constraint facet type.
-  context.declaring_impl_decls().push_back(SemIR::SpecificInterface::None);
+  // The specific interface in here, if any, is populated by the `where`
+  // expression that introduces a `.Self` in the impl's constraint facet type.
+  context.declaring_impl_decls().push_back(
+      {.self_id = self_type.type_id.AsConstantId(),
+       .specific_interface = SemIR::SpecificInterface::None});
   return true;
 }
 
@@ -145,9 +147,11 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
   // the parent class scope.
   context.node_stack().Push(node_id, self_inst_id);
 
-  // The value in here, if any, is populated by the `where` expression that
-  // introduces a `.Self` in the impl's constraint facet type.
-  context.declaring_impl_decls().push_back(SemIR::SpecificInterface::None);
+  // The specific interface in here, if any, is populated by the `where`
+  // expression that introduces a `.Self` in the impl's constraint facet type.
+  context.declaring_impl_decls().push_back(
+      {.self_id = context.constant_values().Get(self_inst_id),
+       .specific_interface = SemIR::SpecificInterface::None});
   return true;
 }
 

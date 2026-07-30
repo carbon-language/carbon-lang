@@ -307,16 +307,12 @@ class Context {
     return binding_type_where_count_;
   }
 
-  auto declaring_impl_decls() -> llvm::SmallVector<SemIR::SpecificInterface>& {
+  struct DeclaringImplDecl {
+    SemIR::ConstantId self_id;
+    SemIR::SpecificInterface specific_interface;
+  };
+  auto declaring_impl_decls() -> llvm::SmallVector<DeclaringImplDecl>& {
     return declaring_impl_decls_;
-  }
-  // Returns the interface of the `impl` being declared, that `.Self` refers to,
-  // if any.
-  auto declaring_impl_for_interface() -> SemIR::SpecificInterface {
-    if (declaring_impl_decls_.empty()) {
-      return SemIR::SpecificInterface::None;
-    }
-    return declaring_impl_decls_.back();
   }
 
   // Data about a form expression.
@@ -616,10 +612,9 @@ class Context {
   int32_t binding_type_where_count_ = 0;
 
   // Track impl declarations that are underway. If we're declaring an impl for
-  // interface `I`, an impl lookup query for `.Self as I` should find that impl
-  // being declared (even though it does not yet exist). Since there can only be
-  // one `.Self` in scope, only the back of the vector needs to be consulted.
-  llvm::SmallVector<SemIR::SpecificInterface> declaring_impl_decls_;
+  // `C as I`, an impl lookup query for `C as I` or `.Self as I` should find
+  // that impl being declared (even though it does not yet exist).
+  llvm::SmallVector<DeclaringImplDecl> declaring_impl_decls_;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;

@@ -105,7 +105,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %.Self: %I.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.00f: <witness> = impl_self_witness %.Self, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.b6e: %struct_type.a.b.486 = impl_witness_access %.00f, element0 [symbolic_self]
-// CHECK:STDOUT:   %I_where.type.58a: type = facet_type <@I where %impl.elem0.b6e = %struct.247> [concrete]
+// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0.b6e = %struct.247> [concrete]
 // CHECK:STDOUT:   %.2ef: <witness> = impl_self_witness %empty_tuple.type, @I [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @empty_tuple.type.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %empty_tuple.type, (%I.impl_witness) [concrete]
@@ -226,7 +226,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %impl.elem0.loc6_54.2: %struct_type.a.b.486 = impl_witness_access constants.%.00f, element0 [symbolic_self = constants.%impl.elem0.b6e]
 // CHECK:STDOUT:     %impl.elem0.subst.loc6_54.2: %struct_type.a.b.486 = impl_witness_access_substituted %impl.elem0.loc6_54.2, %.loc6_48.3 [concrete = constants.%struct.247]
 // CHECK:STDOUT:     %rewrite.loc6_57.2 = requirement_rewrite %impl.elem0.subst.loc6_54.2, %.loc6_95.3 [concrete]
-// CHECK:STDOUT:     %.loc6_14: type = where_expr [concrete = constants.%I_where.type.58a] {
+// CHECK:STDOUT:     %.loc6_14: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
 // CHECK:STDOUT:       %rewrite.loc6_23.2 = requirement_rewrite %impl.elem0.loc6_20.2, %.loc6_48.3 [concrete]
 // CHECK:STDOUT:       %rewrite.loc6_57.2 = requirement_rewrite %impl.elem0.subst.loc6_54.2, %.loc6_95.3 [concrete]
