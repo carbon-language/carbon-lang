@@ -31,6 +31,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import argparse
 import json
 import os
+import pathlib
 import subprocess
 import sys
 from typing import Any, Dict
@@ -62,7 +63,7 @@ _CPP_EXTENSIONS = {
 def _is_cpp_source_or_header(path: pathlib.Path) -> bool:
     """Returns True if path is a C/C++/Assembly source or header file."""
     if path.suffix:
-      return path.suffix in _CPP_EXTENSIONS
+        return path.suffix in _CPP_EXTENSIONS
     # Extensionless files (e.g. C++ standard library headers like <vector>,
     # <string>, or CUDA/OpenMP wrappers) are headers only if located within an
     # include directory.
@@ -81,7 +82,7 @@ def _filter_compile_commands(
     filtered = [
         entry
         for entry in data
-        if _is_cpp_source_or_header(entry.get("file", ""))
+        if _is_cpp_source_or_header(pathlib.Path(entry.get("file", "")))
     ]
     removed_count = len(data) - len(filtered)
     if removed_count > 0:
