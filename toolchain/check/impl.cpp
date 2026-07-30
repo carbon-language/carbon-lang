@@ -395,25 +395,6 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
   return impl_id;
 }
 
-// Returns whether the `LookupImplWitness` of `witness_id` is for the same
-// specific interface as the impl decl's `impl_interface`.
-static auto WitnessQueryMatchesInterface(
-    Context& context, SemIR::InstId access_witness_id,
-    const SemIR::SpecificInterface& impl_interface) -> bool {
-  // This condition catches witnesses from inside the impl declaration.
-  if (context.insts().Is<SemIR::ImplSelfWitness>(access_witness_id)) {
-    return true;
-  }
-
-  // We also need to find witnesses for rewrites acquired through a named
-  // constraint.
-  auto lookup =
-      context.insts().GetAs<SemIR::LookupImplWitness>(access_witness_id);
-  auto access_interface =
-      context.specific_interfaces().Get(lookup.query_specific_interface_id);
-  return access_interface == impl_interface;
-}
-
 auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
                                   const SemIR::Impl& impl,
                                   SemIR::TypeInstId full_constraint_id,
@@ -437,8 +418,7 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       [&](const SemIR::DeclaredFacetType::RewriteConstraint& rewrite) {
         auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(
             GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
-        return WitnessQueryMatchesInterface(context, access.witness_id,
-                                            impl.interface);
+        return context.insts().Is<SemIR::ImplSelfWitness>(access.witness_id);
       });
 
   if (rewrites_into_interface_to_witness.empty()) {
