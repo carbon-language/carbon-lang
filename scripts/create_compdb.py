@@ -59,16 +59,14 @@ _CPP_EXTENSIONS = {
 }
 
 
-def _is_cpp_source_or_header(path: str) -> bool:
+def _is_cpp_source_or_header(path: pathlib.Path) -> bool:
     """Returns True if path is a C/C++/Assembly source or header file."""
-    basename = path.rsplit("/", 1)[-1]
-    if "." in basename:
-        ext = basename.rsplit(".", 1)[-1]
-        return ext in _CPP_EXTENSIONS
+    if path.suffix:
+      return path.suffix in _CPP_EXTENSIONS
     # Extensionless files (e.g. C++ standard library headers like <vector>,
     # <string>, or CUDA/OpenMP wrappers) are headers only if located within an
     # include directory.
-    return "/include/" in path or path.startswith("include/")
+    return "include" in path.parts
 
 
 def _filter_compile_commands(
