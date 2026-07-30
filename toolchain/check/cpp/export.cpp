@@ -370,11 +370,13 @@ static auto CreateCppFieldDecl(Context& context,
                                const SemIR::NameScope& class_scope,
                                clang::CXXRecordDecl* record_decl,
                                SemIR::InstId field_inst_id,
-                               const SemIR::FieldDecl& field_decl)
+                               const SemIR::FieldDecl& field_decl,
+                               SemIR::SpecificId specific_id)
     -> clang::FieldDecl* {
   // Get the field's C++ type.
-  auto unbound_element_type =
-      context.types().GetAs<SemIR::UnboundElementType>(field_decl.type_id);
+  auto unbound_element_type = context.types().GetAs<SemIR::UnboundElementType>(
+      SemIR::GetTypeOfInstInSpecific(context.sem_ir(), specific_id,
+                                     field_inst_id));
   auto cpp_type =
       MapToCppType(context, context.types().GetTypeIdForTypeInstId(
                                 unbound_element_type.element_type_inst_id));
@@ -452,7 +454,7 @@ auto ExportAllFieldsToCpp(Context& context,
 
     auto* cpp_field_decl = CreateCppFieldDecl(
         context, class_scope, cast<clang::CXXRecordDecl>(decl_context),
-        class_field->inst_id, class_field->inst);
+        class_field->inst_id, class_field->inst, class_type.specific_id);
 
     // If the field cannot be exported, create an invalid `FieldDecl` to store
     // in `clang_decls`. This marks the field as unsuccessfully exported, so
