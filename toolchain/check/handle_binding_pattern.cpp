@@ -578,6 +578,18 @@ auto HandleParseNode(Context& context, Parse::LetBindingPatternId node_id)
                                  Parse::NodeKind::BindingPatternTypeStart);
 }
 
+auto HandleParseNode(Context& context,
+                     Parse::StructPatternFieldLetBindingPatternId node_id)
+    -> bool {
+  return context.TODO(node_id, "Handle shorthand struct pattern let binding");
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::StructPatternFieldVarBindingPatternId node_id)
+    -> bool {
+  return context.TODO(node_id, "Handle shorthand struct pattern var binding");
+}
+
 auto HandleParseNode(Context& context, Parse::SelfBindingPatternId node_id)
     -> bool {
   // A `self` binding with an omitted type behaves like `self: Self`. There is

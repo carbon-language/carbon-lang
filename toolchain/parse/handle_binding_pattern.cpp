@@ -285,7 +285,9 @@ static auto HandleBindingPatternFinish(Context& context, StateKind finish_kind)
 
   auto node_kind = NodeKind::InvalidParse;
   if (state.in_var_pattern) {
-    node_kind = NodeKind::VarBindingPattern;
+    node_kind = state.in_field_shorthand_pattern
+                    ? NodeKind::StructPatternFieldVarBindingPattern
+                    : NodeKind::VarBindingPattern;
     if (finish_kind != StateKind::BindingPatternFinishAsRegular) {
       CARBON_DIAGNOSTIC(NonRegularBindingInVarDecl, Error,
                         "found {0:generic|`:?`} binding inside `var` pattern",
@@ -301,7 +303,9 @@ static auto HandleBindingPatternFinish(Context& context, StateKind finish_kind)
         node_kind = NodeKind::CompileTimeBindingPattern;
         break;
       case StateKind::BindingPatternFinishAsRegular:
-        node_kind = NodeKind::LetBindingPattern;
+        node_kind = state.in_field_shorthand_pattern
+                        ? NodeKind::StructPatternFieldLetBindingPattern
+                        : NodeKind::LetBindingPattern;
         break;
       case StateKind::BindingPatternFinishAsForm:
         node_kind = NodeKind::FormBindingPattern;
