@@ -14,6 +14,7 @@ import library "prelude/types/uint";
 private fn PointerOffset[T: type](p: T*, offset: u64) -> T* = "pointer.offset";
 
 class Slice(T: type) {
+  // TODO: Make this unsafe.
   fn Make(ptr: T*, size: u64) -> Self {
     return {.ptr = ptr, .size = size};
   }
