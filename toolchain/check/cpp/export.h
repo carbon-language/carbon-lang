@@ -46,6 +46,14 @@ auto ExportGenericClassToCpp(Context& context, SemIR::InstId inst_id,
                              SemIR::GenericClassType generic_class_type)
     -> clang::ClassTemplateDecl*;
 
+// Creates a C++ class template specialization for a generic Carbon
+// class.
+//
+// Returns true if a specialization was added, false otherwise.
+auto ExportClassSpecializationToCpp(
+    Context& context, clang::ClassTemplateDecl* class_template_decl,
+    llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool;
+
 // Export all `SemIR::FieldDecl`s in the class body as `clang::FieldDecl`s.
 auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void;
 

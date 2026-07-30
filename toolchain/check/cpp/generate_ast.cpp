@@ -150,16 +150,22 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
   auto LoadExternalSpecializations(
       const clang::Decl* decl,
       llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool override {
-    const auto* function_template_decl =
-        llvm::dyn_cast<clang::FunctionTemplateDecl>(decl);
-    if (!function_template_decl) {
-      return false;
+    if (const auto* function_template_decl =
+            llvm::dyn_cast<clang::FunctionTemplateDecl>(decl)) {
+      return ExportFunctionSpecializationToCpp(
+          *context_,
+          const_cast<clang::FunctionTemplateDecl*>(function_template_decl),
+          template_args);
     }
 
-    return ExportFunctionSpecializationToCpp(
-        *context_,
-        const_cast<clang::FunctionTemplateDecl*>(function_template_decl),
-        template_args);
+    if (const auto* class_template_decl =
+            llvm::dyn_cast<clang::ClassTemplateDecl>(decl)) {
+      return ExportClassSpecializationToCpp(
+          *context_, const_cast<clang::ClassTemplateDecl*>(class_template_decl),
+          template_args);
+    }
+
+    return false;
   }
 
   auto CompleteType(clang::TagDecl* tag_decl) -> void override;

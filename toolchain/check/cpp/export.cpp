@@ -338,6 +338,16 @@ auto ExportGenericClassToCpp(Context& context, SemIR::InstId inst_id,
   return class_template_decl;
 }
 
+auto ExportClassSpecializationToCpp(
+    Context& context, clang::ClassTemplateDecl* class_template_decl,
+    llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool {
+  // TODO
+  (void)context;
+  (void)class_template_decl;
+  (void)template_args;
+  return false;
+}
+
 static auto SetCppClassMemberAccess(const SemIR::NameScope& class_scope,
                                     SemIR::NameId member_name_id,
                                     clang::Decl* member) -> void {
