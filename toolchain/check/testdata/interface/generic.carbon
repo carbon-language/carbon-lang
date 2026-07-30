@@ -106,10 +106,12 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   %assoc0.f49: %WithAssocFn.assoc_type.b11 = assoc_entity element0, @WithAssocFn.WithSelf.%WithAssocFn.WithSelf.F.decl [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %Simple.type.d50: type = facet_type <@Simple, @Simple(%C)> [concrete]
+// CHECK:STDOUT:   %.b0f: <witness> = impl_self_witness %C, @Simple, @Simple(%C) [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness @C.as.Simple.impl.%Simple.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.e0f: %Simple.type.d50 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type.d50 = facet_value %C, (%Simple.impl_witness) [concrete]
 // CHECK:STDOUT:   %WithAssocFn.type.5fd: type = facet_type <@WithAssocFn, @WithAssocFn(%C)> [concrete]
+// CHECK:STDOUT:   %.fce: <witness> = impl_self_witness %C, @WithAssocFn, @WithAssocFn(%C) [concrete]
 // CHECK:STDOUT:   %WithAssocFn.impl_witness: <witness> = impl_witness @C.as.WithAssocFn.impl.%WithAssocFn.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.925: %WithAssocFn.type.5fd = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.8f1: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn.WithSelf(%C, %Self.e5d) [symbolic]
@@ -317,12 +319,14 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Simple.type: type = facet_type <@Simple, @Simple(constants.%C)> [concrete = constants.%Simple.type.d50]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc14: <witness> = impl_self_witness @C.as.Simple.impl.%Self.ref, @Simple, @Simple(constants.%C) [concrete = constants.%.b0f]
 // CHECK:STDOUT:   impl_decl @C.as.WithAssocFn.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %WithAssocFn.ref: %WithAssocFn.type.0a6 = name_ref WithAssocFn, file.%WithAssocFn.decl [concrete = constants.%WithAssocFn.generic]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %WithAssocFn.type: type = facet_type <@WithAssocFn, @WithAssocFn(constants.%C)> [concrete = constants.%WithAssocFn.type.5fd]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc15: <witness> = impl_self_witness @C.as.WithAssocFn.impl.%Self.ref, @WithAssocFn, @WithAssocFn(constants.%C) [concrete = constants.%.fce]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

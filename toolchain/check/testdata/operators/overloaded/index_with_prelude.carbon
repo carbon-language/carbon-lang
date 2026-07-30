@@ -107,6 +107,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.300: <witness> = impl_self_witness %.Self, @IndexWith, @IndexWith(%SubscriptType.f8f) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.55a: type = impl_witness_access %.300, element0 [symbolic_self]
 // CHECK:STDOUT:   %IndexWith_where.type.192: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.f8f) where %impl.elem0.55a = %ElementType> [concrete]
+// CHECK:STDOUT:   %.769: <witness> = impl_self_witness %C, @IndexWith, @IndexWith(%SubscriptType.f8f) [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt.303: %pattern_type.98b = value_param_pattern [concrete]
@@ -184,6 +185,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:       %rewrite.loc8_60.2 = requirement_rewrite %impl.elem0.loc8_47.2, %ElementType.ref.loc8_62 [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.IndexWith.impl.%C.ref, @IndexWith, @IndexWith(constants.%SubscriptType.f8f) [concrete = constants.%.769]
 // CHECK:STDOUT:   %.loc14_25.1: ref %SubscriptType.f8f = temporary_storage
 // CHECK:STDOUT:   %.loc14_25.2: init %SubscriptType.f8f to %.loc14_25.1 = class_init () [concrete = constants.%SubscriptType.val]
 // CHECK:STDOUT:   %.loc14_25.3: init %SubscriptType.f8f = converted @__global_init.%.loc14, %.loc14_25.2 [concrete = constants.%SubscriptType.val]
@@ -319,6 +321,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.a93: <witness> = impl_self_witness %.Self, @IndexWith, @IndexWith(Core.IntLiteral) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.d9e: type = impl_witness_access %.a93, element0 [symbolic_self]
 // CHECK:STDOUT:   %IndexWith_where.type.4f3: type = facet_type <@IndexWith, @IndexWith(Core.IntLiteral) where %impl.elem0.d9e = %C> [concrete]
+// CHECK:STDOUT:   %.291: <witness> = impl_self_witness %tuple.type.748, @IndexWith, @IndexWith(Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @tuple.type.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.8b4: type = pattern_type %tuple.type.748 [concrete]
 // CHECK:STDOUT:   %self.param_patt.284: %pattern_type.8b4 = value_param_pattern [concrete]
@@ -393,6 +396,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:       %rewrite.loc8_67.2 = requirement_rewrite %impl.elem0.loc8_54.2, %C.ref.loc8_69 [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @tuple.type.as.IndexWith.impl.%.loc8_11.2, @IndexWith, @IndexWith(Core.IntLiteral) [concrete = constants.%.291]
 // CHECK:STDOUT:   %tuple.loc14: %tuple.type.748 = tuple_value (@__global_init.%.loc14_21.2, @__global_init.%.loc14_30.2) [concrete = constants.%tuple.adf]
 // CHECK:STDOUT:   %.loc14_34: %tuple.type.748 = converted @__global_init.%.loc14_34, %tuple.loc14 [concrete = constants.%tuple.adf]
 // CHECK:STDOUT:   %.loc14_13.1: type = splice_block %.loc14_13.3 [concrete = constants.%tuple.type.748] {
@@ -520,6 +524,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.300: <witness> = impl_self_witness %.Self, @IndexWith, @IndexWith(%SubscriptType.f8f) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.55a: type = impl_witness_access %.300, element0 [symbolic_self]
 // CHECK:STDOUT:   %IndexWith_where.type.192: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.f8f) where %impl.elem0.55a = %ElementType> [concrete]
+// CHECK:STDOUT:   %.769: <witness> = impl_self_witness %C, @IndexWith, @IndexWith(%SubscriptType.f8f) [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt.303: %pattern_type.98b = value_param_pattern [concrete]
@@ -592,6 +597,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:       %rewrite.loc8_60.2 = requirement_rewrite %impl.elem0.loc8_47.2, %ElementType.ref.loc8_62 [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.IndexWith.impl.%C.ref, @IndexWith, @IndexWith(constants.%SubscriptType.f8f) [concrete = constants.%.769]
 // CHECK:STDOUT:   %.loc14_13.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc14_13.2: init %C to %.loc14_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc14_13.3: init %C = converted @__global_init.%.loc14, %.loc14_13.2 [concrete = constants.%C.val]

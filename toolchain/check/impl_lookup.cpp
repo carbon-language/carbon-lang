@@ -274,41 +274,12 @@ static auto TryGetSpecificWitnessIdForImpl(
     return SemIR::ConstantId::None;
   }
 
-  // The impl's constraint is a facet type which it is implementing for the self
-  // type: the `I` in `impl ... as I`. The deduction step may be unable to be
-  // fully applied to the types in the constraint and result in an error here,
-  // in which case it does not match the query.
-  auto deduced_constraint_id = SemIR::GetConstantValueInSpecific(
-      context.sem_ir(), specific_id, impl.constraint_id);
-  if (deduced_constraint_id == SemIR::ErrorInst::ConstantId) {
-    return SemIR::ConstantId::None;
-  }
-
-  // Get the identified facet type of the deduced impl's constraint, so we can
-  // get the specific interface being implemented after deduction.
-  auto deduced_constrant_type_inst_id =
-      context.types().GetTypeInstIdForTypeConstantId(deduced_constraint_id);
-  auto deduced_constraint_identified_facet_type_id =
-      TryToIdentifyFacetType(context, loc_id, deduced_self_const_id,
-                             deduced_constrant_type_inst_id, false);
-  if (!deduced_constraint_identified_facet_type_id.has_value()) {
-    return SemIR::ConstantId::None;
-  }
-
-  const auto& deduced_constraint_identified_facet_type =
-      context.identified_facet_types().Get(
-          deduced_constraint_identified_facet_type_id);
-  // We only find valid impls in impl lookup, which implement a single specific
-  // interface.
-  CARBON_CHECK(
-      deduced_constraint_identified_facet_type.is_valid_impl_as_target());
-
   // The specifics in the queried interface must match the deduced specifics in
   // the impl's constraint facet type.
-  auto impl_interface_specific_id =
-      deduced_constraint_identified_facet_type.impl_as_target_interface()
-          .specific_id;
-  if (impl_interface_specific_id != query_specific_interface.specific_id) {
+  auto deduced_specific_interface =
+      GetImplInterfaceInSpecific(context, impl, specific_id);
+  if (deduced_specific_interface.specific_id !=
+      query_specific_interface.specific_id) {
     return SemIR::ConstantId::None;
   }
 
