@@ -482,14 +482,14 @@ void G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F__carbon_thunk_specific64000017(%_.param.loc24_23.1: ref %A, %_.param.loc24_23.2: ref %A) {
+// CHECK:STDOUT: fn @F__carbon_thunk.83afdff581006d1a(%_.param.loc24_23.1: ref %A, %_.param.loc24_23.2: ref %A) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F__carbon_thunk_specific64000017.ref: %F.type = name_ref F__carbon_thunk_specific64000017, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %F__carbon_thunk.83afdff581006d1a.ref: %F.type = name_ref F__carbon_thunk.83afdff581006d1a, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %I.facet.loc24_23.1: %I.type = facet_value constants.%A, (constants.%I.impl_witness.6ad) [concrete = constants.%I.facet.64b]
 // CHECK:STDOUT:   %.loc24_23.1: %I.type = converted constants.%A, %I.facet.loc24_23.1 [concrete = constants.%I.facet.64b]
 // CHECK:STDOUT:   %I.facet.loc24_23.2: %I.type = facet_value constants.%A, (constants.%I.impl_witness.6ad) [concrete = constants.%I.facet.64b]
 // CHECK:STDOUT:   %.loc24_23.2: %I.type = converted constants.%A, %I.facet.loc24_23.2 [concrete = constants.%I.facet.64b]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F__carbon_thunk_specific64000017.ref, @F(constants.%I.facet.64b) [concrete = constants.%F.specific_fn.f33]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F__carbon_thunk.83afdff581006d1a.ref, @F(constants.%I.facet.64b) [concrete = constants.%F.specific_fn.f33]
 // CHECK:STDOUT:   %.loc24_23.3: ref %A = splice_block %_.param.loc24_23.2 {}
 // CHECK:STDOUT:   %.loc24_23.4: %A = acquire_value %_.param.loc24_23.1
 // CHECK:STDOUT:   %F.call: init %A to %.loc24_23.3 = call %F.specific_fn(%.loc24_23.4)
@@ -497,14 +497,14 @@ void G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F__carbon_thunk_specific64000019(%_.param.loc24_23.1: ref %B, %_.param.loc24_23.2: ref %B) {
+// CHECK:STDOUT: fn @F__carbon_thunk.36f470e96b413347(%_.param.loc24_23.1: ref %B, %_.param.loc24_23.2: ref %B) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F__carbon_thunk_specific64000019.ref: %F.type = name_ref F__carbon_thunk_specific64000019, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %F__carbon_thunk.36f470e96b413347.ref: %F.type = name_ref F__carbon_thunk.36f470e96b413347, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %I.facet.loc24_23.1: %I.type = facet_value constants.%B, (constants.%I.impl_witness.5b8) [concrete = constants.%I.facet.9f8]
 // CHECK:STDOUT:   %.loc24_23.1: %I.type = converted constants.%B, %I.facet.loc24_23.1 [concrete = constants.%I.facet.9f8]
 // CHECK:STDOUT:   %I.facet.loc24_23.2: %I.type = facet_value constants.%B, (constants.%I.impl_witness.5b8) [concrete = constants.%I.facet.9f8]
 // CHECK:STDOUT:   %.loc24_23.2: %I.type = converted constants.%B, %I.facet.loc24_23.2 [concrete = constants.%I.facet.9f8]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F__carbon_thunk_specific64000019.ref, @F(constants.%I.facet.9f8) [concrete = constants.%F.specific_fn.db2]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F__carbon_thunk.36f470e96b413347.ref, @F(constants.%I.facet.9f8) [concrete = constants.%F.specific_fn.db2]
 // CHECK:STDOUT:   %.loc24_23.3: ref %B = splice_block %_.param.loc24_23.2 {}
 // CHECK:STDOUT:   %.loc24_23.4: %B = acquire_value %_.param.loc24_23.1
 // CHECK:STDOUT:   %F.call: init %B to %.loc24_23.3 = call %F.specific_fn(%.loc24_23.4)

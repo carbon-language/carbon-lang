@@ -1170,7 +1170,9 @@ auto ExportFunctionSpecializationToCpp(
                                   specific_arg_ids);
   // This name is appended to the thunk name to disambiguate between
   // specializations.
-  std::string extra_name(llvm::formatv("_{}", specific_id));
+  SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
+                   context.mangle_string_fingerprint());
+  auto extra_name = m.MangleSpecificId(specific_id);
   target.return_type_id =
       target.function.GetDeclaredReturnType(context.sem_ir(), specific_id);
   for (auto& param : target.explicit_params) {
