@@ -507,7 +507,8 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
     }
   }
 
-  ExportAllFieldsToCpp(*context_, class_info);
+  ExportAllFieldsToCpp(*context_,
+                       context_->types().GetTypeInstId(class_type_id));
 
   // TODO: support exporting destructors for generic classes.
   if (!llvm::isa<clang::ClassTemplateSpecializationDecl>(class_decl)) {
@@ -600,8 +601,8 @@ auto CarbonExternalASTSource::layoutRecordType(
   // general.
   CompleteTypeOrCheckFail(*context_, class_type_id);
 
-  auto& class_info = context_->classes().Get(class_type.class_id);
-  ExportAllFieldsToCpp(*context_, class_info);
+  ExportAllFieldsToCpp(*context_,
+                       context_->types().GetTypeInstId(class_type_id));
 
   return ReadOnlyASTSource::layoutRecordType(
       record_decl, size, alignment, field_offsets, base_offsets, vbase_offsets);

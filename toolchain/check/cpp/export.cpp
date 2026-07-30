@@ -338,6 +338,13 @@ auto ExportGenericClassToCpp(Context& context, SemIR::InstId inst_id,
   return class_template_decl;
 }
 
+static auto GetClassTypeInstId(Context& context, SemIR::ClassId class_id,
+                               SemIR::SpecificId specific_id)
+    -> SemIR::TypeInstId {
+  auto type_id = GetClassType(context, class_id, specific_id);
+  return context.types().GetTypeInstId(type_id);
+}
+
 auto ExportClassSpecializationToCpp(
     Context& context, clang::ClassTemplateDecl* class_template_decl,
     llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool {
@@ -414,7 +421,11 @@ static auto CreateInvalidFieldDecl(Context& context,
   return field_decl;
 }
 
-auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
+auto ExportAllFieldsToCpp(Context& context,
+                          SemIR::TypeInstId class_type_inst_id) -> void {
+  auto class_type = context.insts().GetAs<SemIR::ClassType>(class_type_inst_id);
+  auto& class_info = context.classes().Get(class_type.class_id);
+
   const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
 
   for (const auto& struct_field : class_info.GetStructTypeFields(
@@ -466,11 +477,11 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
   SemIR::TypeId class_type_id = context.types().GetTypeIdForTypeInstId(
       unbound_element_type.class_type_inst_id);
   auto class_type = context.types().GetAs<SemIR::ClassType>(class_type_id);
-  auto& class_info = context.classes().Get(class_type.class_id);
 
   // If the class's fields haven't already been exported, do so now.
-  (void)specific_id;  // TODO
-  ExportAllFieldsToCpp(context, class_info);
+  auto class_type_inst_id =
+      GetClassTypeInstId(context, class_type.class_id, specific_id);
+  ExportAllFieldsToCpp(context, class_type_inst_id);
 
   // Get the exported `clang::FieldDecl`.
   if (const auto* clang_decl = context.clang_decls().Lookup(field_inst_id)) {

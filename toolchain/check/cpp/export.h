@@ -55,7 +55,8 @@ auto ExportClassSpecializationToCpp(
     llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool;
 
 // Export all `SemIR::FieldDecl`s in the class body as `clang::FieldDecl`s.
-auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void;
+auto ExportAllFieldsToCpp(Context& context,
+                          SemIR::TypeInstId class_type_inst_id) -> void;
 
 // Exports a Carbon class field into C++.
 //
