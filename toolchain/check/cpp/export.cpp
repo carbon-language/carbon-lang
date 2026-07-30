@@ -458,7 +458,8 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
 }
 
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
-                      SemIR::FieldDecl field_decl) -> clang::FieldDecl* {
+                      SemIR::FieldDecl field_decl,
+                      SemIR::SpecificId specific_id) -> clang::FieldDecl* {
   // Get the `SemIR::Class` that contains the `field_decl`.
   auto unbound_element_type =
       context.types().GetAs<SemIR::UnboundElementType>(field_decl.type_id);
@@ -468,6 +469,7 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
   auto& class_info = context.classes().Get(class_type.class_id);
 
   // If the class's fields haven't already been exported, do so now.
+  (void)specific_id;  // TODO
   ExportAllFieldsToCpp(context, class_info);
 
   // Get the exported `clang::FieldDecl`.

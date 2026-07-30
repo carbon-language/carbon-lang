@@ -68,7 +68,8 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void;
 // Returns nullptr if the class could not be exported and an error was
 // diagnosed.
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
-                      SemIR::FieldDecl field_decl) -> clang::FieldDecl*;
+                      SemIR::FieldDecl field_decl,
+                      SemIR::SpecificId specific_id) -> clang::FieldDecl*;
 
 // Get a `clang::FunctionDecl` that can be used to call a Carbon function.
 // If the function is generic, a `clang::FunctionTemplateDecl` will be
