@@ -23,6 +23,13 @@ namespace Carbon::Check {
 auto TryToCompleteType(Context& context, SemIR::TypeId type_id,
                        SemIR::LocId loc_id, bool diagnose = false) -> bool;
 
+// Attempts to complete any class types in `type_id`, and types that contain the
+// class types. Types that are not a class and do not contain a class type are
+// ignored.
+auto TryToCompleteClassTypes(Context& context, SemIR::TypeId type_id,
+                             SemIR::LocId loc_id, bool diagnose = false)
+    -> bool;
+
 // Completes the type `type_id`. CHECK-fails if it can't be completed.
 auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void;
 

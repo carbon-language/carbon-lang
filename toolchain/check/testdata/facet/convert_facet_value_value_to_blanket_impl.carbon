@@ -228,9 +228,7 @@ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.as_type.as.Eats.impl(constants.%A) {
 // CHECK:STDOUT:   %A.patt.loc18_15.2 => constants.%A.patt

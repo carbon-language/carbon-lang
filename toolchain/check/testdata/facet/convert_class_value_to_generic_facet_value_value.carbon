@@ -134,11 +134,6 @@ fn B() {
 // CHECK:STDOUT:   %pattern_type.4e0: type = pattern_type %Generic.type.ee14e9.2 [symbolic]
 // CHECK:STDOUT:   %U.patt.8a6: %pattern_type.4e0 = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %U: %Generic.type.ee14e9.2 = symbolic_binding U, 1 [symbolic]
-// CHECK:STDOUT:   %Self.8ea1ea.2: %Generic.type.ee14e9.2 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %Generic.WithSelf.F.type.390775.2: type = fn_type @Generic.WithSelf.F, @Generic.WithSelf(%T, %Self.8ea1ea.1) [symbolic]
-// CHECK:STDOUT:   %Generic.WithSelf.F.b85a66.2: %Generic.WithSelf.F.type.390775.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Generic.assoc_type.d7021d.2: type = assoc_entity_type @Generic, @Generic(%T) [symbolic]
-// CHECK:STDOUT:   %assoc0.31052a.2: %Generic.assoc_type.d7021d.2 = assoc_entity element0, @Generic.WithSelf.%Generic.WithSelf.F.decl [symbolic]
 // CHECK:STDOUT:   %U.as_type: type = facet_access_type %U [symbolic]
 // CHECK:STDOUT:   %pattern_type.70f: type = pattern_type %U.as_type [symbolic]
 // CHECK:STDOUT:   %a.param_patt.98a: %pattern_type.70f = value_param_pattern [symbolic]
@@ -150,6 +145,11 @@ fn B() {
 // CHECK:STDOUT:   %CallGenericMethod: %CallGenericMethod.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.096: <witness> = require_complete_type %U.as_type [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %Self.8ea1ea.2: %Generic.type.ee14e9.2 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Generic.WithSelf.F.type.390775.2: type = fn_type @Generic.WithSelf.F, @Generic.WithSelf(%T, %Self.8ea1ea.1) [symbolic]
+// CHECK:STDOUT:   %Generic.WithSelf.F.b85a66.2: %Generic.WithSelf.F.type.390775.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Generic.assoc_type.d7021d.2: type = assoc_entity_type @Generic, @Generic(%T) [symbolic]
+// CHECK:STDOUT:   %assoc0.31052a.2: %Generic.assoc_type.d7021d.2 = assoc_entity element0, @Generic.WithSelf.%Generic.WithSelf.F.decl [symbolic]
 // CHECK:STDOUT:   %require_complete.13f: <witness> = require_complete_type %Generic.type.ee14e9.2 [symbolic]
 // CHECK:STDOUT:   %Generic.WithSelf.F.type.a70: type = fn_type @Generic.WithSelf.F, @Generic.WithSelf(%T, %U) [symbolic]
 // CHECK:STDOUT:   %Generic.WithSelf.F.5e8: %Generic.WithSelf.F.type.a70 = struct_value () [symbolic]
@@ -446,17 +446,6 @@ fn B() {
 // CHECK:STDOUT:   %Self.loc4_33.2 => constants.%Self.8ea1ea.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic.WithSelf(constants.%T, constants.%Self.8ea1ea.1) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Scalar => constants.%T
-// CHECK:STDOUT:   %Generic.type => constants.%Generic.type.ee14e9.2
-// CHECK:STDOUT:   %Self => constants.%Self.8ea1ea.1
-// CHECK:STDOUT:   %Generic.WithSelf.F.type => constants.%Generic.WithSelf.F.type.390775.2
-// CHECK:STDOUT:   %Generic.WithSelf.F => constants.%Generic.WithSelf.F.b85a66.2
-// CHECK:STDOUT:   %Generic.assoc_type => constants.%Generic.assoc_type.d7021d.2
-// CHECK:STDOUT:   %assoc0.loc5_9.2 => constants.%assoc0.31052a.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericMethod(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.patt.loc15_23.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc15_23.1 => constants.%T
@@ -471,6 +460,17 @@ fn B() {
 // CHECK:STDOUT:   %pattern_type.loc15_67 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %s.param_patt.loc15_67.2 => constants.%s.param_patt.cb5
 // CHECK:STDOUT:   %s.patt.loc15_67.2 => constants.%s.patt.a4f
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Generic.WithSelf(constants.%T, constants.%Self.8ea1ea.1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Scalar => constants.%T
+// CHECK:STDOUT:   %Generic.type => constants.%Generic.type.ee14e9.2
+// CHECK:STDOUT:   %Self => constants.%Self.8ea1ea.1
+// CHECK:STDOUT:   %Generic.WithSelf.F.type => constants.%Generic.WithSelf.F.type.390775.2
+// CHECK:STDOUT:   %Generic.WithSelf.F => constants.%Generic.WithSelf.F.b85a66.2
+// CHECK:STDOUT:   %Generic.assoc_type => constants.%Generic.assoc_type.d7021d.2
+// CHECK:STDOUT:   %assoc0.loc5_9.2 => constants.%assoc0.31052a.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.WithSelf(constants.%T, constants.%U) {
@@ -546,7 +546,6 @@ fn B() {
 // CHECK:STDOUT:   %pattern_type.bd4: type = pattern_type %I.type.722 [concrete]
 // CHECK:STDOUT:   %T.patt.be3: %pattern_type.bd4 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.a08: %I.type.722 = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %Self.9e2: %I.type.722 = symbolic_binding Self, 2 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.a08 [symbolic]
 // CHECK:STDOUT:   %pattern_type.d7b: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %t.param_patt.be8: %pattern_type.d7b = value_param_pattern [symbolic]
@@ -559,6 +558,7 @@ fn B() {
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %.793: <witness> = impl_self_witness %C, @I, @I(%empty_struct_type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %I.impl_witness.a7c: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table, @C.as.I.impl(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %Self.9e2: %I.type.722 = symbolic_binding Self, 2 [symbolic]
 // CHECK:STDOUT:   %complete_type.dfa: <witness> = complete_type_witness %I.type.722 [concrete]
 // CHECK:STDOUT:   %I.facet.831: %I.type.722 = facet_value %C, (%I.impl_witness.a7c) [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
@@ -789,10 +789,6 @@ fn B() {
 // CHECK:STDOUT:   %Self.loc3_31.2 => constants.%Self.9e2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%empty_struct_type, constants.%empty_tuple.type, constants.%Self.299) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T.a08) {
 // CHECK:STDOUT:   %T.patt.loc9_7.2 => constants.%T.patt.be3
 // CHECK:STDOUT:   %T.loc9_7.1 => constants.%T.a08
@@ -811,6 +807,10 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.dfa
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%empty_struct_type, constants.%empty_tuple.type, constants.%Self.299) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%I.facet.831) {
@@ -857,7 +857,6 @@ fn B() {
 // CHECK:STDOUT:   %pattern_type.5c6: type = pattern_type %I.type.6c0 [concrete]
 // CHECK:STDOUT:   %T.patt.c4c: %pattern_type.5c6 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.b75: %I.type.6c0 = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %Self.136: %I.type.6c0 = symbolic_binding Self, 2 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.b75 [symbolic]
 // CHECK:STDOUT:   %pattern_type.67d: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %t.param_patt: %pattern_type.67d = value_param_pattern [symbolic]
@@ -1063,14 +1062,6 @@ fn B() {
 // CHECK:STDOUT:   %V.loc3_14.1 => constants.%empty_struct_type
 // CHECK:STDOUT:   %W.patt.loc3_23.2 => constants.%W.patt
 // CHECK:STDOUT:   %W.loc3_23.1 => constants.%empty_struct_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.type => constants.%I.type.6c0
-// CHECK:STDOUT:   %Self.loc3_31.2 => constants.%Self.136
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%empty_struct_type, constants.%empty_struct_type, constants.%Self.299) {
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T.b75) {
