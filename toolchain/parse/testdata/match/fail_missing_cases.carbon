@@ -32,7 +32,7 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │ │   │ ├─IntLiteral '3'
 // CHECK:STDOUT:   │ │   ├─MatchCondition ')'
 // CHECK:STDOUT:   │ │ ╭─MatchStatementStart '{'
-// CHECK:STDOUT:   │ ├─MatchStatement '}' ❌
+// CHECK:STDOUT:   │ ├─MatchStatement '}' has_error
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '0'
 // CHECK:STDOUT:   │ ├─ReturnStatement ';'

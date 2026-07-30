@@ -61,7 +61,7 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │ │ │ │ ├─IntLiteral '1'
 // CHECK:STDOUT:   │ │ │ ├─ReturnStatement ';'
 // CHECK:STDOUT:   │ │ ├─MatchHandler '}'
-// CHECK:STDOUT:   │ ├─MatchStatement '}' ❌
+// CHECK:STDOUT:   │ ├─MatchStatement '}' has_error
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '0'
 // CHECK:STDOUT:   │ ├─ReturnStatement ';'

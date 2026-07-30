@@ -34,8 +34,8 @@ fn F() {
 // CHECK:STDOUT:   │ │ │ ╭─IfExprIf 'if'
 // CHECK:STDOUT:   │ │ │ │ ╭─IntLiteral '1'
 // CHECK:STDOUT:   │ │ │ ├─IfExprThen 'then'
-// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ │ ├─IfExprElse 'else' ❌
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ├─IfExprElse 'else' has_error
 // CHECK:STDOUT:   │ ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

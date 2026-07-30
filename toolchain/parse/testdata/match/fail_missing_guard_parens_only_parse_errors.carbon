@@ -49,22 +49,22 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │ │ │     │ │ ╭─IdentifierNameExpr 'x'
 // CHECK:STDOUT:   │ │ │     │ │ ├─BoolLiteralFalse 'false'
 // CHECK:STDOUT:   │ │ │     │ ├─InfixOperatorEqualEqual '=='
-// CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard '=>' ❌
-// CHECK:STDOUT:   │ │ │   ╭─MatchCase 'case' ❌
-// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart 'case' ❌
-// CHECK:STDOUT:   │ │ ├─MatchHandler 'case' ❌
+// CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard '=>' has_error
+// CHECK:STDOUT:   │ │ │   ╭─MatchCase 'case' has_error
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart 'case' has_error
+// CHECK:STDOUT:   │ │ ├─MatchHandler 'case' has_error
 // CHECK:STDOUT:   │ │ │     ╭─MatchCaseIntroducer 'case'
 // CHECK:STDOUT:   │ │ │     │ ╭─IdentifierNameNotBeforeSignature 'z'
 // CHECK:STDOUT:   │ │ │     │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │     │ ├─BoolTypeLiteral 'bool'
 // CHECK:STDOUT:   │ │ │     ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │ │     │ ╭─MatchCaseGuardIntroducer 'if'
-// CHECK:STDOUT:   │ │ │     │ ├─MatchCaseGuardStart 'true' ❌
-// CHECK:STDOUT:   │ │ │     │ ├─InvalidParse 'true' ❌
-// CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard 'true' ❌
-// CHECK:STDOUT:   │ │ │   ╭─MatchCase 'true' ❌
-// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart 'true' ❌
-// CHECK:STDOUT:   │ │ ├─MatchHandler 'true' ❌
+// CHECK:STDOUT:   │ │ │     │ ├─MatchCaseGuardStart 'true' has_error
+// CHECK:STDOUT:   │ │ │     │ ├─InvalidParse 'true' has_error
+// CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard 'true' has_error
+// CHECK:STDOUT:   │ │ │   ╭─MatchCase 'true' has_error
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart 'true' has_error
+// CHECK:STDOUT:   │ │ ├─MatchHandler 'true' has_error
 // CHECK:STDOUT:   │ ├─MatchStatement '}'
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '0'

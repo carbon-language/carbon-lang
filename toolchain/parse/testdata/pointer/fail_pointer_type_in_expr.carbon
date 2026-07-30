@@ -28,7 +28,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ │   ╭─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │ │ ╭─PrefixOperatorStar '*'
-// CHECK:STDOUT:   │ │ ├─PostfixOperatorStar '*' ❌
+// CHECK:STDOUT:   │ │ ├─PostfixOperatorStar '*' has_error
 // CHECK:STDOUT:   │ ├─ReturnStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

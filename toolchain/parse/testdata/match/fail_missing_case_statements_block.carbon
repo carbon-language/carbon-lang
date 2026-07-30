@@ -40,8 +40,8 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │ │ │     │ ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │ │     ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │ │   ╭─MatchCase '=>'
-// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart 'default' ❌
-// CHECK:STDOUT:   │ │ ├─MatchHandler 'default' ❌
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart 'default' has_error
+// CHECK:STDOUT:   │ │ ├─MatchHandler 'default' has_error
 // CHECK:STDOUT:   │ ├─MatchStatement '}'
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '0'

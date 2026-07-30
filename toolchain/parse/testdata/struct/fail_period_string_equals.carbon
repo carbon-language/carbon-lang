@@ -20,16 +20,16 @@ var x: {."hello" = 0, .y = 4} = {};
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ╭─StructLiteralStart '{'
-// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature '"hello"' ❌
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature '"hello"' has_error
 // CHECK:STDOUT:   │ │   │ ├─StructFieldDesignator '.'
 // CHECK:STDOUT:   │ │   │ ├─IntLiteral '0'
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse '=' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse '=' has_error
 // CHECK:STDOUT:   │ │   │ ├─StructLiteralComma ','
 // CHECK:STDOUT:   │ │   │ │   ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │   │ │ ╭─StructFieldDesignator '.'
 // CHECK:STDOUT:   │ │   │ │ ├─IntLiteral '4'
 // CHECK:STDOUT:   │ │   │ ├─StructLiteralField '='
-// CHECK:STDOUT:   │ │   ├─StructLiteral '}' ❌
+// CHECK:STDOUT:   │ │   ├─StructLiteral '}' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='

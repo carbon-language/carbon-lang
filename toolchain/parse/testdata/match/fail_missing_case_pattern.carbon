@@ -34,10 +34,10 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │ │   ├─MatchCondition ')'
 // CHECK:STDOUT:   │ │ ╭─MatchStatementStart '{'
 // CHECK:STDOUT:   │ │ │     ╭─MatchCaseIntroducer 'case'
-// CHECK:STDOUT:   │ │ │     ├─InvalidParse '=>' ❌
-// CHECK:STDOUT:   │ │ │   ╭─MatchCase '=>' ❌
-// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart '=>' ❌
-// CHECK:STDOUT:   │ │ ├─MatchHandler '=>' ❌
+// CHECK:STDOUT:   │ │ │     ├─InvalidParse '=>' has_error
+// CHECK:STDOUT:   │ │ │   ╭─MatchCase '=>' has_error
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart '=>' has_error
+// CHECK:STDOUT:   │ │ ├─MatchHandler '=>' has_error
 // CHECK:STDOUT:   │ ├─MatchStatement '}'
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '0'

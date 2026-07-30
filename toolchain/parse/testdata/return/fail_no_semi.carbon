@@ -28,8 +28,8 @@ fn F() {
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
-// CHECK:STDOUT:   │ │ ├─InvalidParse '}' ❌
-// CHECK:STDOUT:   │ ├─ReturnStatement 'return' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse '}' has_error
+// CHECK:STDOUT:   │ ├─ReturnStatement 'return' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

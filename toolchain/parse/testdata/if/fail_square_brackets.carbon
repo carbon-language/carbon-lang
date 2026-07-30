@@ -35,13 +35,13 @@ fn F() {
 // CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ │   ╭─IfConditionStart 'if' ❌
-// CHECK:STDOUT:   │ │   ├─InvalidParse '[' ❌
-// CHECK:STDOUT:   │ │ ╭─IfCondition 'if' ❌
-// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '[' ❌
-// CHECK:STDOUT:   │ │ │ │ ╭─InvalidParse '[' ❌
-// CHECK:STDOUT:   │ │ │ ├─ExprStatement '}' ❌
-// CHECK:STDOUT:   │ │ ├─CodeBlock '[' ❌
+// CHECK:STDOUT:   │ │   ╭─IfConditionStart 'if' has_error
+// CHECK:STDOUT:   │ │   ├─InvalidParse '[' has_error
+// CHECK:STDOUT:   │ │ ╭─IfCondition 'if' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '[' has_error
+// CHECK:STDOUT:   │ │ │ │ ╭─InvalidParse '[' has_error
+// CHECK:STDOUT:   │ │ │ ├─ExprStatement '}' has_error
+// CHECK:STDOUT:   │ │ ├─CodeBlock '[' has_error
 // CHECK:STDOUT:   │ ├─IfStatement 'if'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

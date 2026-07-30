@@ -17,6 +17,6 @@ package library "Shapes";
 // CHECK:STDOUT: - filename: fail_library_skips_name.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
-// CHECK:STDOUT:   ├─PackageDecl ';' ❌
+// CHECK:STDOUT:   ├─PackageDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

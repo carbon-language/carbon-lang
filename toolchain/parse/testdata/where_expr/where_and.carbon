@@ -98,10 +98,10 @@ fn AndEarly(generic Z: L where .M and N);
 // CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ │   ╭─TypeTypeLiteral 'type'
 // CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │ ├─InvalidParse 'and' ❌
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ │ ├─InvalidParse 'and' has_error
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -119,10 +119,10 @@ fn AndEarly(generic Z: L where .M and N);
 // CHECK:STDOUT:   │ │ │ │ │ ├─IdentifierNameExpr 'K'
 // CHECK:STDOUT:   │ │ │ │ ├─RequirementImpls 'impls'
 // CHECK:STDOUT:   │ │ │ │ ├─RequirementAnd 'and'
-// CHECK:STDOUT:   │ │ │ │ ├─InvalidParse ')' ❌
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -137,9 +137,9 @@ fn AndEarly(generic Z: L where .M and N);
 // CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
 // CHECK:STDOUT:   │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'M'
 // CHECK:STDOUT:   │ │ │ │ ├─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

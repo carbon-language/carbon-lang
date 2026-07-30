@@ -28,10 +28,10 @@ fn F() {
 // CHECK:STDOUT:   │ │   ╭─WhileConditionStart '('
 // CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'a'
 // CHECK:STDOUT:   │ │ ╭─WhileCondition ')'
-// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart 'break' ❌
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart 'break' has_error
 // CHECK:STDOUT:   │ │ │ │ ╭─BreakStatementStart 'break'
 // CHECK:STDOUT:   │ │ │ ├─BreakStatement ';'
-// CHECK:STDOUT:   │ │ ├─CodeBlock 'break' ❌
+// CHECK:STDOUT:   │ │ ├─CodeBlock 'break' has_error
 // CHECK:STDOUT:   │ ├─WhileStatement 'while'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

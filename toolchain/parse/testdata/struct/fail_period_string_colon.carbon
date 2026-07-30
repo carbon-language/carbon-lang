@@ -20,16 +20,16 @@ var x: {."hello": i32, .y: i32} = {};
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ╭─StructTypeLiteralStart '{'
-// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature '"hello"' ❌
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature '"hello"' has_error
 // CHECK:STDOUT:   │ │   │ ├─StructFieldDesignator '.'
 // CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse ':' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ':' has_error
 // CHECK:STDOUT:   │ │   │ ├─StructTypeLiteralComma ','
 // CHECK:STDOUT:   │ │   │ │   ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │   │ │ ╭─StructFieldDesignator '.'
 // CHECK:STDOUT:   │ │   │ │ ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │   │ ├─StructTypeLiteralField ':'
-// CHECK:STDOUT:   │ │   ├─StructTypeLiteral '}' ❌
+// CHECK:STDOUT:   │ │   ├─StructTypeLiteral '}' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='

@@ -51,19 +51,19 @@ import G;
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')'
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
-// CHECK:STDOUT:   ├─PackageDecl ';' ❌
+// CHECK:STDOUT:   ├─PackageDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'E'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')'
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

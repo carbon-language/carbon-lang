@@ -39,15 +39,15 @@ class C {
 // CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
 // CHECK:STDOUT:   │ ├─VirtualModifier 'virtual'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'B'
-// CHECK:STDOUT:   ├─ClassDecl 'B' ❌
+// CHECK:STDOUT:   ├─ClassDecl 'B' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_impl_class.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
 // CHECK:STDOUT:   │ ├─ImplModifier 'impl'
-// CHECK:STDOUT:   │ ├─InvalidParse '' ❌
-// CHECK:STDOUT:   ├─ClassDecl 'class' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '' has_error
+// CHECK:STDOUT:   ├─ClassDecl 'class' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_extend_adapt_base.carbon
@@ -57,8 +57,8 @@ class C {
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
 // CHECK:STDOUT:   │ │ ├─ExtendModifier 'extend'
-// CHECK:STDOUT:   │ │ ├─InvalidParse 'base' ❌
-// CHECK:STDOUT:   │ ├─AdaptDecl ';' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse 'base' has_error
+// CHECK:STDOUT:   │ ├─AdaptDecl ';' has_error
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -52,16 +52,16 @@ impl forall [T: J] T as Interface {
 // CHECK:STDOUT: - filename: fail_missing_braces.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │   ╭─MatchFirstIntroducer 'match_first'
-// CHECK:STDOUT:   │ ╭─MatchFirstDefinitionStart 'match_first' ❌
-// CHECK:STDOUT:   ├─MatchFirst 'match_first' ❌
+// CHECK:STDOUT:   │ ╭─MatchFirstDefinitionStart 'match_first' has_error
+// CHECK:STDOUT:   ├─MatchFirst 'match_first' has_error
 // CHECK:STDOUT:   ├─EmptyDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_eof.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │   ╭─MatchFirstIntroducer 'match_first'
-// CHECK:STDOUT:   │ ╭─MatchFirstDefinitionStart 'match_first' ❌
-// CHECK:STDOUT:   ├─MatchFirst 'match_first' ❌
+// CHECK:STDOUT:   │ ╭─MatchFirstDefinitionStart 'match_first' has_error
+// CHECK:STDOUT:   ├─MatchFirst 'match_first' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: with_impls.carbon

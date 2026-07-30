@@ -25,9 +25,9 @@ var x: {.a: i32,,} = {};
 // CHECK:STDOUT:   │ │   │ │ ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │   │ ├─StructTypeLiteralField ':'
 // CHECK:STDOUT:   │ │   │ ├─StructTypeLiteralComma ','
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse ',' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ',' has_error
 // CHECK:STDOUT:   │ │   │ ├─StructTypeLiteralComma ','
-// CHECK:STDOUT:   │ │   ├─StructTypeLiteral '}' ❌
+// CHECK:STDOUT:   │ │   ├─StructTypeLiteral '}' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='

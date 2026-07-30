@@ -45,7 +45,7 @@ fn F() {
 // CHECK:STDOUT:   │ │     ├─IdentifierNameExpr 'b'
 // CHECK:STDOUT:   │ │   ╭─InfixOperatorEqual '='
 // CHECK:STDOUT:   │ │   ├─IntLiteral '1'
-// CHECK:STDOUT:   │ │ ╭─InfixOperatorEqual '=' ❌
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorEqual '=' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

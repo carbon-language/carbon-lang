@@ -24,7 +24,7 @@ fn F() {
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─PackageExpr 'package'
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -29,9 +29,9 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │   ├─ReturnType '->'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │   ╭─MatchIntroducer 'match'
-// CHECK:STDOUT:   │ │   │ ╭─MatchConditionStart 'match' ❌
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse '{' ❌
-// CHECK:STDOUT:   │ │   ├─MatchCondition 'match' ❌
+// CHECK:STDOUT:   │ │   │ ╭─MatchConditionStart 'match' has_error
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse '{' has_error
+// CHECK:STDOUT:   │ │   ├─MatchCondition 'match' has_error
 // CHECK:STDOUT:   │ │ ╭─MatchStatementStart '{'
 // CHECK:STDOUT:   │ │ │     ╭─MatchDefaultIntroducer 'default'
 // CHECK:STDOUT:   │ │ │   ╭─MatchDefault '=>'

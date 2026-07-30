@@ -40,16 +40,16 @@ fn F() {
 // CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ │   ╭─ForHeaderStart 'for' ❌
+// CHECK:STDOUT:   │ │   ╭─ForHeaderStart 'for' has_error
 // CHECK:STDOUT:   │ │   │   ╭─StructLiteralStart '{'
 // CHECK:STDOUT:   │ │   │ ╭─StructLiteral '}'
-// CHECK:STDOUT:   │ │   ├─ForIn 'for' ❌
-// CHECK:STDOUT:   │ │   ├─InvalidParse '}' ❌
-// CHECK:STDOUT:   │ │ ╭─ForHeader 'for' ❌
-// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '}' ❌
-// CHECK:STDOUT:   │ │ │ │ ╭─InvalidParse '}' ❌
-// CHECK:STDOUT:   │ │ │ ├─ExprStatement '}' ❌
-// CHECK:STDOUT:   │ │ ├─CodeBlock '}' ❌
+// CHECK:STDOUT:   │ │   ├─ForIn 'for' has_error
+// CHECK:STDOUT:   │ │   ├─InvalidParse '}' has_error
+// CHECK:STDOUT:   │ │ ╭─ForHeader 'for' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '}' has_error
+// CHECK:STDOUT:   │ │ │ │ ╭─InvalidParse '}' has_error
+// CHECK:STDOUT:   │ │ │ ├─ExprStatement '}' has_error
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}' has_error
 // CHECK:STDOUT:   │ ├─ForStatement 'for'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

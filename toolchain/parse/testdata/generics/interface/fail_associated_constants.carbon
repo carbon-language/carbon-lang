@@ -126,7 +126,7 @@ interface I {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -140,7 +140,7 @@ interface I {
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
 // CHECK:STDOUT:   │ │ ├─DefaultModifier 'default'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -153,7 +153,7 @@ interface I {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -167,7 +167,7 @@ interface I {
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
 // CHECK:STDOUT:   │ │ ├─DefaultModifier 'default'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -180,7 +180,7 @@ interface I {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -193,7 +193,7 @@ interface I {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -206,7 +206,7 @@ interface I {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -219,7 +219,7 @@ interface I {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -232,7 +232,7 @@ interface I {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

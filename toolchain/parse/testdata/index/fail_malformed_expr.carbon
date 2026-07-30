@@ -26,7 +26,7 @@ var v: i32 = t[0,];
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 't'
 // CHECK:STDOUT:   │ │ ╭─IndexExprStart '['
 // CHECK:STDOUT:   │ │ ├─IntLiteral '0'
-// CHECK:STDOUT:   │ ├─IndexExpr ']' ❌
+// CHECK:STDOUT:   │ ├─IndexExpr ']' has_error
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

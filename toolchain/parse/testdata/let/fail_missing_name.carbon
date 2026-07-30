@@ -27,7 +27,7 @@ let generic : bool = true;
 // CHECK:STDOUT: - filename: fail_runtime_binding.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
-// CHECK:STDOUT:   │ ├─InvalidParse ':' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse ':' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ ├─IntLiteral '4'
 // CHECK:STDOUT:   ├─LetDecl ';'
@@ -36,10 +36,10 @@ let generic : bool = true;
 // CHECK:STDOUT: - filename: fail_compiletime_binding.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
-// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature ':' ❌
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPatternTypeStart ':' ❌
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature ':' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │ ├─BoolTypeLiteral 'bool'
-// CHECK:STDOUT:   │ ├─CompileTimeBindingPattern ':' ❌
+// CHECK:STDOUT:   │ ├─CompileTimeBindingPattern ':' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ ├─BoolLiteralTrue 'true'
 // CHECK:STDOUT:   ├─LetDecl ';'

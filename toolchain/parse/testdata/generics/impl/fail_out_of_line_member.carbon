@@ -59,8 +59,8 @@ fn C.(Self as Interface).F() {}
 // CHECK:STDOUT:   │ ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─ImplDefinition '}'
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─InvalidParse '(' ❌
-// CHECK:STDOUT:   ├─FunctionDecl '}' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   ├─FunctionDecl '}' has_error
 // CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
@@ -79,7 +79,7 @@ fn C.(Self as Interface).F() {}
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'C'
 // CHECK:STDOUT:   │ ├─IdentifierNameQualifierWithoutParams '.'
-// CHECK:STDOUT:   │ ├─InvalidParse '(' ❌
-// CHECK:STDOUT:   ├─FunctionDecl '}' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   ├─FunctionDecl '}' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -20,6 +20,6 @@ import Foo library "bar" "baz";
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Foo'
 // CHECK:STDOUT:   │ │ ╭─LibraryName '"bar"'
 // CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -27,9 +27,9 @@ fn F() {
 // CHECK:STDOUT:   │ │       ╭─ShortCircuitOperandOr 'or'
 // CHECK:STDOUT:   │ │       ├─IdentifierNameExpr 'b'
 // CHECK:STDOUT:   │ │     ╭─ShortCircuitOperatorOr 'or'
-// CHECK:STDOUT:   │ │   ╭─ShortCircuitOperandAnd 'and' ❌
+// CHECK:STDOUT:   │ │   ╭─ShortCircuitOperandAnd 'and' has_error
 // CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'c'
-// CHECK:STDOUT:   │ │ ╭─ShortCircuitOperatorAnd 'and' ❌
+// CHECK:STDOUT:   │ │ ╭─ShortCircuitOperatorAnd 'and' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

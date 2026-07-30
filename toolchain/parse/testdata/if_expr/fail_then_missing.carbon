@@ -32,9 +32,9 @@ fn F() {
 // CHECK:STDOUT:   │ │ ├─VariableInitializer '='
 // CHECK:STDOUT:   │ │ │   ╭─BoolLiteralTrue 'true'
 // CHECK:STDOUT:   │ │ │ ╭─IfExprIf 'if'
-// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ │ ├─IfExprElse 'if' ❌
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ├─IfExprElse 'if' has_error
 // CHECK:STDOUT:   │ ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

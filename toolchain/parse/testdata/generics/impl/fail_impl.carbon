@@ -100,48 +100,48 @@ impl
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
 // CHECK:STDOUT:   │ ├─IdentifierNameExpr 'foo'
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
 // CHECK:STDOUT:   │ │ ╭─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ ├─ImplTypeAs 'as'
-// CHECK:STDOUT:   │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
 // CHECK:STDOUT:   │ │ ╭─BoolTypeLiteral 'bool'
 // CHECK:STDOUT:   │ ├─ImplTypeAs 'as'
 // CHECK:STDOUT:   │ ├─IdentifierNameExpr 'bar'
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
-// CHECK:STDOUT:   │ ├─InvalidParse 'return' ❌
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse 'return' has_error
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
-// CHECK:STDOUT:   │ ├─InvalidParse 'return' ❌
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse 'return' has_error
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
 // CHECK:STDOUT:   │ ├─Forall 'forall'
-// CHECK:STDOUT:   │ ├─InvalidParse 'f32' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse 'f32' has_error
 // CHECK:STDOUT:   │ ├─FloatTypeLiteral 'f32'
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
 // CHECK:STDOUT:   │ ├─Forall 'forall'
 // CHECK:STDOUT:   │ │ ╭─ImplicitParamListStart '['
 // CHECK:STDOUT:   │ ├─ImplicitParamList ']'
 // CHECK:STDOUT:   │ ├─UnsignedIntTypeLiteral 'u32'
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
 // CHECK:STDOUT:   │ ├─Forall 'forall'
 // CHECK:STDOUT:   │ │ ╭─ImplicitParamListStart '['
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'invalid'
 // CHECK:STDOUT:   │ ├─ImplicitParamList ']'
 // CHECK:STDOUT:   │ ├─IntTypeLiteral 'i8'
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
 // CHECK:STDOUT:   │ ├─Forall 'forall'
-// CHECK:STDOUT:   │ ├─InvalidParse 'f16' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse 'f16' has_error
 // CHECK:STDOUT:   │ │ ╭─FloatTypeLiteral 'f16'
 // CHECK:STDOUT:   │ ├─ImplTypeAs 'as'
 // CHECK:STDOUT:   │ ├─IdentifierNameExpr 'Quux'
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
 // CHECK:STDOUT:   │ ├─Forall 'forall'
 // CHECK:STDOUT:   │ │ ╭─ImplicitParamListStart '['
@@ -151,7 +151,7 @@ impl
 // CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':'
 // CHECK:STDOUT:   │ ├─ImplicitParamList ']'
 // CHECK:STDOUT:   │ ├─StringTypeLiteral 'str'
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
 // CHECK:STDOUT:   │ ├─Forall 'forall'
 // CHECK:STDOUT:   │ │ ╭─ImplicitParamListStart '['
@@ -161,7 +161,7 @@ impl
 // CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':'
 // CHECK:STDOUT:   │ ├─ImplicitParamList ']'
 // CHECK:STDOUT:   │ ├─IdentifierNameExpr 'T'
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
 // CHECK:STDOUT:   │ ├─Forall 'forall'
 // CHECK:STDOUT:   │ │ ╭─ImplicitParamListStart '['
@@ -173,12 +173,12 @@ impl
 // CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'T'
 // CHECK:STDOUT:   │ ├─ImplTypeAs 'as'
 // CHECK:STDOUT:   │ ├─IdentifierNameExpr 'Interface'
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
-// CHECK:STDOUT:   │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   ├─ImplDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   ├─ImplDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
-// CHECK:STDOUT:   │ ├─InvalidParse '' ❌
-// CHECK:STDOUT:   ├─ImplDecl 'impl' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '' has_error
+// CHECK:STDOUT:   ├─ImplDecl 'impl' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -25,12 +25,11 @@ struct ParseOptions {
   // If set, the parse tree will be dumped to this.
   llvm::raw_ostream* dump_stream = nullptr;
 
-  // FIXME comments
+  // The format to dump the parse tree in if `dump_stream` is set.
   enum class DumpFormat {
-    // FIXME drop k's
-    kPrettyPostorder,
-    kYamlPostorder,
-    kYamlPreorder,
+    PrettyPostorder,
+    YamlPostorder,
+    YamlPreorder,
   };
   DumpFormat dump_format;
 };

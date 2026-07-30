@@ -18,6 +18,6 @@ import Geometry "Shapes";
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Geometry'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

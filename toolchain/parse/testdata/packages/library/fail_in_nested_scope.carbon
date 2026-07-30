@@ -62,7 +62,7 @@ fn F() {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─LibraryIntroducer 'library'
-// CHECK:STDOUT:   │ ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   │ ├─LibraryDecl ';' has_error
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
@@ -70,14 +70,14 @@ fn F() {
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─LibraryIntroducer 'library'
-// CHECK:STDOUT:   │ ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   │ ├─LibraryDecl ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─LibraryIntroducer 'library'
 // CHECK:STDOUT:   │ │ ├─ImplModifier 'impl'
-// CHECK:STDOUT:   │ ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   │ ├─LibraryDecl ';' has_error
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
@@ -86,7 +86,7 @@ fn F() {
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─LibraryIntroducer 'library'
 // CHECK:STDOUT:   │ │ ├─ImplModifier 'impl'
-// CHECK:STDOUT:   │ ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   │ ├─LibraryDecl ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

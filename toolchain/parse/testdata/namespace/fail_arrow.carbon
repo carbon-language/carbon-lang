@@ -23,6 +23,6 @@ class Foo->Bar {}
 // CHECK:STDOUT:   ├─Namespace ';'
 // CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'Foo'
-// CHECK:STDOUT:   ├─ClassDecl '}' ❌
+// CHECK:STDOUT:   ├─ClassDecl '}' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

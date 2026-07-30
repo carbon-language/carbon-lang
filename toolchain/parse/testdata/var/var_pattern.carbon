@@ -114,8 +114,8 @@ let (x: (), var (y: (), var z: ())) = ((), ((), ()));
 // CHECK:STDOUT:   │ │ │   │   │ ╭─TupleLiteralStart '('
 // CHECK:STDOUT:   │ │ │   │   ├─TupleLiteral ')'
 // CHECK:STDOUT:   │ │ │   │ ╭─VarBindingPattern ':'
-// CHECK:STDOUT:   │ │ │   ├─VariablePattern 'var' ❌
-// CHECK:STDOUT:   │ │ │ ╭─TuplePattern ')' ❌
+// CHECK:STDOUT:   │ │ │   ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   │ │ │ ╭─TuplePattern ')' has_error
 // CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─TuplePattern ')'
 // CHECK:STDOUT:   │ ├─LetInitializer '='

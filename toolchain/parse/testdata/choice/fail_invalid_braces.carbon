@@ -24,9 +24,9 @@ choice InvalidBraces |
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │   ╭─ChoiceIntroducer 'choice'
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'InvalidBraces'
-// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart '|' ❌
-// CHECK:STDOUT:   ├─ChoiceDefinition '|' ❌
-// CHECK:STDOUT:   │ ╭─InvalidParseStart '|' ❌
-// CHECK:STDOUT:   ├─InvalidParseSubtree '|' ❌
+// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart '|' has_error
+// CHECK:STDOUT:   ├─ChoiceDefinition '|' has_error
+// CHECK:STDOUT:   │ ╭─InvalidParseStart '|' has_error
+// CHECK:STDOUT:   ├─InvalidParseSubtree '|' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

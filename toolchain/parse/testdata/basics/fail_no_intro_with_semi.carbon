@@ -16,7 +16,7 @@ foo;
 
 // CHECK:STDOUT: - filename: fail_no_intro_with_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
-// CHECK:STDOUT:   │ ╭─InvalidParseStart 'foo' ❌
-// CHECK:STDOUT:   ├─InvalidParseSubtree ';' ❌
+// CHECK:STDOUT:   │ ╭─InvalidParseStart 'foo' has_error
+// CHECK:STDOUT:   ├─InvalidParseSubtree ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

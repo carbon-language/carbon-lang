@@ -20,6 +20,6 @@ package Foo library "bar" "baz";
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Foo'
 // CHECK:STDOUT:   │ │ ╭─LibraryName '"bar"'
 // CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
-// CHECK:STDOUT:   ├─PackageDecl ';' ❌
+// CHECK:STDOUT:   ├─PackageDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

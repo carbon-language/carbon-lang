@@ -43,7 +43,7 @@ fn F() {
 // CHECK:STDOUT:   │ │ │ │ ╭─IfCondition ')'
 // CHECK:STDOUT:   │ │ │ │ │ ╭─CodeBlockStart '{'
 // CHECK:STDOUT:   │ │ │ │ │ │ ╭─BreakStatementStart 'break'
-// CHECK:STDOUT:   │ │ │ │ │ ├─BreakStatement 'break' ❌
+// CHECK:STDOUT:   │ │ │ │ │ ├─BreakStatement 'break' has_error
 // CHECK:STDOUT:   │ │ │ │ ├─CodeBlock '}'
 // CHECK:STDOUT:   │ │ │ ├─IfStatement 'if'
 // CHECK:STDOUT:   │ │ │ │   ╭─IfConditionStart '('
@@ -51,7 +51,7 @@ fn F() {
 // CHECK:STDOUT:   │ │ │ │ ╭─IfCondition ')'
 // CHECK:STDOUT:   │ │ │ │ │ ╭─CodeBlockStart '{'
 // CHECK:STDOUT:   │ │ │ │ │ │ ╭─ContinueStatementStart 'continue'
-// CHECK:STDOUT:   │ │ │ │ │ ├─ContinueStatement 'continue' ❌
+// CHECK:STDOUT:   │ │ │ │ │ ├─ContinueStatement 'continue' has_error
 // CHECK:STDOUT:   │ │ │ │ ├─CodeBlock '}'
 // CHECK:STDOUT:   │ │ │ ├─IfStatement 'if'
 // CHECK:STDOUT:   │ │ ├─CodeBlock '}'

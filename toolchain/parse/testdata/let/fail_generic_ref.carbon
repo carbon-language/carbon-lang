@@ -18,9 +18,9 @@ let generic ref X: i32 = 0;
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
 // CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'X'
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPatternTypeStart ':' ❌
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ ├─CompileTimeBindingPattern ':' ❌
+// CHECK:STDOUT:   │ ├─CompileTimeBindingPattern ':' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ ├─IntLiteral '0'
 // CHECK:STDOUT:   ├─LetDecl ';'

@@ -73,7 +73,7 @@ export import library "lib";
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
 // CHECK:STDOUT:   │ ├─ExportModifier 'export'
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Bar'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: default.carbon
@@ -115,7 +115,7 @@ export import library "lib";
 // CHECK:STDOUT:   ├─ClassDecl ';'
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
 // CHECK:STDOUT:   │ ├─ExportModifier 'export'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_in_default_library.carbon
@@ -124,7 +124,7 @@ export import library "lib";
 // CHECK:STDOUT:   │ ├─ExportModifier 'export'
 // CHECK:STDOUT:   │ │ ╭─LibraryName '"lib"'
 // CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_in_impl.carbon
@@ -137,6 +137,6 @@ export import library "lib";
 // CHECK:STDOUT:   │ ├─ExportModifier 'export'
 // CHECK:STDOUT:   │ │ ╭─LibraryName '"lib"'
 // CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -29,8 +29,8 @@ var f2: f32;
 // CHECK:STDOUT: - filename: fail_bad_name.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
-// CHECK:STDOUT:   │ │   ╭─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ │ ╭─PrefixOperatorStar '*' ❌
+// CHECK:STDOUT:   │ │   ╭─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ╭─PrefixOperatorStar '*' has_error
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'

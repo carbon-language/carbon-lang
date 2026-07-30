@@ -52,18 +52,18 @@ class B {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'A'
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─BaseIntroducer 'base'
-// CHECK:STDOUT:   │ ├─BaseDecl ';' ❌
+// CHECK:STDOUT:   │ ├─BaseDecl ';' has_error
 // CHECK:STDOUT:   │ │ ╭─BaseIntroducer 'base'
-// CHECK:STDOUT:   │ ├─BaseDecl '}' ❌
+// CHECK:STDOUT:   │ ├─BaseDecl '}' has_error
 // CHECK:STDOUT:   │ │ ╭─BaseIntroducer 'base'
 // CHECK:STDOUT:   │ │ ├─BaseColon ':'
-// CHECK:STDOUT:   │ │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ ├─BaseDecl ';' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ ├─BaseDecl ';' has_error
 // CHECK:STDOUT:   │ │ ╭─BaseIntroducer 'base'
 // CHECK:STDOUT:   │ │ ├─BaseColon ':'
 // CHECK:STDOUT:   │ │ │ ╭─StructLiteralStart '{'
 // CHECK:STDOUT:   │ │ ├─StructLiteral '}'
-// CHECK:STDOUT:   │ ├─BaseDecl ';' ❌
+// CHECK:STDOUT:   │ ├─BaseDecl ';' has_error
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
 // CHECK:STDOUT:   │   ├─BaseModifier 'base'
@@ -75,9 +75,9 @@ class B {
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─BaseIntroducer 'base'
 // CHECK:STDOUT:   │ │ ├─ExtendModifier 'extend'
-// CHECK:STDOUT:   │ │ ├─BaseColon 'Foo' ❌
+// CHECK:STDOUT:   │ │ ├─BaseColon 'Foo' has_error
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'Foo'
-// CHECK:STDOUT:   │ ├─BaseDecl ';' ❌
+// CHECK:STDOUT:   │ ├─BaseDecl ';' has_error
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

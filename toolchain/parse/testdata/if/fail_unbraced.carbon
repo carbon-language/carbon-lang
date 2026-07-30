@@ -38,22 +38,22 @@ fn F() {
 // CHECK:STDOUT:   │ │   ╭─IfConditionStart '('
 // CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'a'
 // CHECK:STDOUT:   │ │ ╭─IfCondition ')'
-// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart 'if' ❌
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart 'if' has_error
 // CHECK:STDOUT:   │ │ │ │   ╭─IfConditionStart '('
 // CHECK:STDOUT:   │ │ │ │   ├─IdentifierNameExpr 'b'
 // CHECK:STDOUT:   │ │ │ │ ╭─IfCondition ')'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─CodeBlockStart 'if' ❌
+// CHECK:STDOUT:   │ │ │ │ │ ╭─CodeBlockStart 'if' has_error
 // CHECK:STDOUT:   │ │ │ │ │ │   ╭─IfConditionStart '('
 // CHECK:STDOUT:   │ │ │ │ │ │   ├─IdentifierNameExpr 'c'
 // CHECK:STDOUT:   │ │ │ │ │ │ ╭─IfCondition ')'
-// CHECK:STDOUT:   │ │ │ │ │ │ │ ╭─CodeBlockStart 'd' ❌
+// CHECK:STDOUT:   │ │ │ │ │ │ │ ╭─CodeBlockStart 'd' has_error
 // CHECK:STDOUT:   │ │ │ │ │ │ │ │ ╭─IdentifierNameExpr 'd'
 // CHECK:STDOUT:   │ │ │ │ │ │ │ ├─ExprStatement ';'
-// CHECK:STDOUT:   │ │ │ │ │ │ ├─CodeBlock 'd' ❌
+// CHECK:STDOUT:   │ │ │ │ │ │ ├─CodeBlock 'd' has_error
 // CHECK:STDOUT:   │ │ │ │ │ ├─IfStatement 'if'
-// CHECK:STDOUT:   │ │ │ │ ├─CodeBlock 'if' ❌
+// CHECK:STDOUT:   │ │ │ │ ├─CodeBlock 'if' has_error
 // CHECK:STDOUT:   │ │ │ ├─IfStatement 'if'
-// CHECK:STDOUT:   │ │ ├─CodeBlock 'if' ❌
+// CHECK:STDOUT:   │ │ ├─CodeBlock 'if' has_error
 // CHECK:STDOUT:   │ ├─IfStatement 'if'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

@@ -17,8 +17,8 @@ var;
 // CHECK:STDOUT: - filename: fail_empty.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
-// CHECK:STDOUT:   │ │ ╭─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ ├─VariablePattern 'var' ❌
+// CHECK:STDOUT:   │ │ ╭─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ ├─VariablePattern 'var' has_error
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

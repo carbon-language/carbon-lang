@@ -42,31 +42,31 @@ fn F() {
 // CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ │   ╭─IfConditionStart 'if' ❌
+// CHECK:STDOUT:   │ │   ╭─IfConditionStart 'if' has_error
 // CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'a'
-// CHECK:STDOUT:   │ │ ╭─IfCondition 'if' ❌
+// CHECK:STDOUT:   │ │ ╭─IfCondition 'if' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
 // CHECK:STDOUT:   │ │ ├─CodeBlock '}'
 // CHECK:STDOUT:   │ ├─IfStatement 'if'
 // CHECK:STDOUT:   │ │   ╭─IfConditionStart '('
-// CHECK:STDOUT:   │ │   ├─InvalidParse ')' ❌
-// CHECK:STDOUT:   │ │ ╭─IfCondition ')' ❌
+// CHECK:STDOUT:   │ │   ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │ ╭─IfCondition ')' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
 // CHECK:STDOUT:   │ │ ├─CodeBlock '}'
 // CHECK:STDOUT:   │ ├─IfStatement 'if'
 // CHECK:STDOUT:   │ │   ╭─IfConditionStart '('
 // CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'b'
-// CHECK:STDOUT:   │ │ ╭─IfCondition ')' ❌
+// CHECK:STDOUT:   │ │ ╭─IfCondition ')' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
 // CHECK:STDOUT:   │ │ ├─CodeBlock '}'
 // CHECK:STDOUT:   │ ├─IfStatement 'if'
 // CHECK:STDOUT:   │ │   ╭─IfConditionStart '('
 // CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'd'
 // CHECK:STDOUT:   │ │ ╭─IfCondition ')'
-// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '}' ❌
-// CHECK:STDOUT:   │ │ │ │ ╭─InvalidParse '}' ❌
-// CHECK:STDOUT:   │ │ │ ├─ExprStatement ')' ❌
-// CHECK:STDOUT:   │ │ ├─CodeBlock '}' ❌
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '}' has_error
+// CHECK:STDOUT:   │ │ │ │ ╭─InvalidParse '}' has_error
+// CHECK:STDOUT:   │ │ │ ├─ExprStatement ')' has_error
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}' has_error
 // CHECK:STDOUT:   │ ├─IfStatement 'if'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

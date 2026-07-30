@@ -67,45 +67,45 @@ fn F(n: i32) {
 // CHECK:STDOUT:   │ │     ╭─BoolLiteralTrue 'true'
 // CHECK:STDOUT:   │ │   ╭─PrefixOperatorNot 'not'
 // CHECK:STDOUT:   │ │   ├─BoolTypeLiteral 'bool'
-// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as' ❌
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │     ╭─IntLiteral '1'
 // CHECK:STDOUT:   │ │     ├─IntLiteral '1'
 // CHECK:STDOUT:   │ │   ╭─InfixOperatorPlus '+'
 // CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as' ❌
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │     ╭─IntLiteral '5'
 // CHECK:STDOUT:   │ │     ├─IntLiteral '2'
 // CHECK:STDOUT:   │ │   ╭─InfixOperatorPercent '%'
 // CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as' ❌
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │       ╭─IntLiteral '3'
 // CHECK:STDOUT:   │ │       ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │     ╭─InfixOperatorAs 'as'
-// CHECK:STDOUT:   │ │   ╭─ShortCircuitOperandAnd 'and' ❌
+// CHECK:STDOUT:   │ │   ╭─ShortCircuitOperandAnd 'and' has_error
 // CHECK:STDOUT:   │ │   ├─BoolLiteralTrue 'true'
-// CHECK:STDOUT:   │ │ ╭─ShortCircuitOperatorAnd 'and' ❌
+// CHECK:STDOUT:   │ │ ╭─ShortCircuitOperatorAnd 'and' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │       ╭─BoolLiteralFalse 'false'
 // CHECK:STDOUT:   │ │     ╭─ShortCircuitOperandOr 'or'
 // CHECK:STDOUT:   │ │     ├─IntLiteral '4'
 // CHECK:STDOUT:   │ │   ╭─ShortCircuitOperatorOr 'or'
 // CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as' ❌
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │     ╭─IntLiteral '6'
 // CHECK:STDOUT:   │ │     ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │   ╭─InfixOperatorAs 'as'
 // CHECK:STDOUT:   │ │   ├─IntLiteral '7'
-// CHECK:STDOUT:   │ │ ╭─InfixOperatorEqualEqual '==' ❌
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorEqualEqual '==' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │     ╭─IntLiteral '8'
 // CHECK:STDOUT:   │ │     ├─IntLiteral '9'
 // CHECK:STDOUT:   │ │   ╭─InfixOperatorLessEqual '<='
 // CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as' ❌
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

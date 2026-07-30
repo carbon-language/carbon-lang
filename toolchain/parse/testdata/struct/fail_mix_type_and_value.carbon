@@ -27,8 +27,8 @@ var x: {.a: i32, .b = 0} = {};
 // CHECK:STDOUT:   │ │   │ ├─StructTypeLiteralComma ','
 // CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature 'b'
 // CHECK:STDOUT:   │ │   │ ├─StructFieldDesignator '.'
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse '.' ❌
-// CHECK:STDOUT:   │ │   ├─StructTypeLiteral '}' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse '.' has_error
+// CHECK:STDOUT:   │ │   ├─StructTypeLiteral '}' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='

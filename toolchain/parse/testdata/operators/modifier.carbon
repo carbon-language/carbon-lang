@@ -76,26 +76,26 @@ fn G() {
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'a'
-// CHECK:STDOUT:   │ │   ╭─ShortCircuitOperandOr 'or' ❌
+// CHECK:STDOUT:   │ │   ╭─ShortCircuitOperandOr 'or' has_error
 // CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'b'
-// CHECK:STDOUT:   │ │ ╭─ShortCircuitOperatorOr 'or' ❌
+// CHECK:STDOUT:   │ │ ╭─ShortCircuitOperatorOr 'or' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'a'
 // CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'b'
-// CHECK:STDOUT:   │ │ ╭─InfixOperatorStar '*' ❌
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorStar '*' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'a'
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
-// CHECK:STDOUT:   │ │ ╭─InvalidParse 'unsafe' ❌
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
+// CHECK:STDOUT:   │ │ ╭─InvalidParse 'unsafe' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   │ │         ╭─IdentifierNameExpr 'a'
 // CHECK:STDOUT:   │ │         ├─IdentifierNameExpr 'b'
 // CHECK:STDOUT:   │ │       ╭─InfixOperatorPlus '+'
-// CHECK:STDOUT:   │ │     ╭─UnsafeModifier 'unsafe' ❌
+// CHECK:STDOUT:   │ │     ╭─UnsafeModifier 'unsafe' has_error
 // CHECK:STDOUT:   │ │     ├─IdentifierNameExpr 'c'
-// CHECK:STDOUT:   │ │   ╭─InfixOperatorAs 'as' ❌
+// CHECK:STDOUT:   │ │   ╭─InfixOperatorAs 'as' has_error
 // CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'd'
-// CHECK:STDOUT:   │ │ ╭─InfixOperatorStar '*' ❌
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorStar '*' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

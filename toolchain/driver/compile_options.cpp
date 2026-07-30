@@ -253,10 +253,10 @@ prints the tree as structured yaml (with children nested under parents).
         using DumpFormat = Parse::ParseOptions::DumpFormat;
         arg_b.SetOneOf(
             {
-                arg_b.OneOfValue("pretty", DumpFormat::kPrettyPostorder)
+                arg_b.OneOfValue("pretty", DumpFormat::PrettyPostorder)
                     .Default(true),
-                arg_b.OneOfValue("yaml-postorder", DumpFormat::kYamlPostorder),
-                arg_b.OneOfValue("yaml-preorder", DumpFormat::kYamlPreorder),
+                arg_b.OneOfValue("yaml-postorder", DumpFormat::YamlPostorder),
+                arg_b.OneOfValue("yaml-preorder", DumpFormat::YamlPreorder),
             },
             &parse_dump_format);
       });

@@ -77,9 +77,9 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │ │   ╭─TypeTypeLiteral 'type'
 // CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
 // CHECK:STDOUT:   │ │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -96,9 +96,9 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'J'
 // CHECK:STDOUT:   │ │ │ │ │ ├─DesignatorExpr '.'
 // CHECK:STDOUT:   │ │ │ │ ├─ParenExpr ')'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -113,9 +113,9 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
 // CHECK:STDOUT:   │ │ │ │ │ ╭─SelfTypeName 'Self'
 // CHECK:STDOUT:   │ │ │ │ ├─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -128,11 +128,11 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameExpr 'K'
 // CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'and' ❌
-// CHECK:STDOUT:   │ │ │ │ ├─DesignatorExpr '.' ❌
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'and' has_error
+// CHECK:STDOUT:   │ │ │ │ ├─DesignatorExpr '.' has_error
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -148,9 +148,9 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'M'
 // CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
 // CHECK:STDOUT:   │ │ │ │ ├─PostfixOperatorStar '*'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -168,9 +168,9 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'P'
 // CHECK:STDOUT:   │ │ │ │ │ ├─DesignatorExpr '.'
 // CHECK:STDOUT:   │ │ │ │ ├─InfixOperatorPlus '+'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -190,9 +190,9 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │ │ ├─RequirementAnd 'and'
 // CHECK:STDOUT:   │ │ │ │ │ ╭─TupleLiteralStart '('
 // CHECK:STDOUT:   │ │ │ │ ├─TupleLiteral ')'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

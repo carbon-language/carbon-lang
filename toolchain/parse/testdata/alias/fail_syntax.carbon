@@ -79,53 +79,53 @@ alias a = b
 // CHECK:STDOUT: - filename: fail_syntax.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
-// CHECK:STDOUT:   │ ├─InvalidParse '=' ❌
-// CHECK:STDOUT:   ├─Alias ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '=' has_error
+// CHECK:STDOUT:   ├─Alias ';' has_error
 // CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
-// CHECK:STDOUT:   ├─Alias ';' ❌
+// CHECK:STDOUT:   ├─Alias ';' has_error
 // CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
 // CHECK:STDOUT:   │ ├─AliasInitializer '='
-// CHECK:STDOUT:   │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   ├─Alias ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   ├─Alias ';' has_error
 // CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
-// CHECK:STDOUT:   ├─Alias ';' ❌
+// CHECK:STDOUT:   ├─Alias ';' has_error
 // CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
-// CHECK:STDOUT:   │ ├─InvalidParse '=' ❌
-// CHECK:STDOUT:   ├─Alias ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '=' has_error
+// CHECK:STDOUT:   ├─Alias ';' has_error
 // CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
-// CHECK:STDOUT:   ├─Alias ';' ❌
+// CHECK:STDOUT:   ├─Alias ';' has_error
 // CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
 // CHECK:STDOUT:   │ ├─AliasInitializer '='
 // CHECK:STDOUT:   │ ├─IdentifierNameExpr 'b'
-// CHECK:STDOUT:   ├─Alias ';' ❌
+// CHECK:STDOUT:   ├─Alias ';' has_error
 // CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
 // CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AliasIntroducer 'alias'
-// CHECK:STDOUT:   │ │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ ├─Alias ';' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ ├─Alias ';' has_error
 // CHECK:STDOUT:   │ │ ╭─AliasIntroducer 'alias'
 // CHECK:STDOUT:   │ │ ├─IdentifierNameNotBeforeSignature 'a'
 // CHECK:STDOUT:   │ │ ├─AliasInitializer '='
-// CHECK:STDOUT:   │ │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ ├─Alias ';' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ ├─Alias ';' has_error
 // CHECK:STDOUT:   │ │ ╭─AliasIntroducer 'alias'
 // CHECK:STDOUT:   │ │ ├─IdentifierNameNotBeforeSignature 'a'
 // CHECK:STDOUT:   │ │ ├─AliasInitializer '='
-// CHECK:STDOUT:   │ │ ├─InvalidParse '}' ❌
-// CHECK:STDOUT:   │ ├─Alias '=' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse '}' has_error
+// CHECK:STDOUT:   │ ├─Alias '=' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
 // CHECK:STDOUT:   │ ├─AliasInitializer '='
 // CHECK:STDOUT:   │ ├─IdentifierNameExpr 'b'
-// CHECK:STDOUT:   ├─Alias 'b' ❌
+// CHECK:STDOUT:   ├─Alias 'b' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

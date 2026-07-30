@@ -100,6 +100,8 @@ class TreeAndSubtrees {
   // line-oriented shell tools from `grep` to `awk`.
   auto PrintYamlPostorder(llvm::raw_ostream& output) const -> void;
 
+  // Prints the parse tree in postorder, in a human-readable format that uses
+  // box-drawing characters to visualize the tree structure.
   auto PrettyPrint(llvm::raw_ostream& output) const -> void;
 
   // Prints the parse tree in preorder. The format is YAML, and similar to
@@ -170,18 +172,17 @@ class TreeAndSubtrees {
   auto VerifyExtract(NodeId node_id, NodeKind kind, ErrorBuilder* trace) const
       -> bool;
 
+  // Prints the tree in postorder, in either YAML or human-readable format.
   auto PrintPostorder(llvm::raw_ostream& output, bool yaml) const -> void;
 
-  // Prints a single node for Print(). Returns true when preorder and there are
-  // children. If `PrettyPrintState` is null, the output will be YAML. If it
-  // is non-null, the output will be pretty-printed
-  // `PostorderState` should be null. For a postorder traversal, all calls to
-  // this function should be passed a pointer to the same `PostorderState`,
-  // which should be default-constructed before the first call.
-  // FIXME comment is in shambles
-  auto PrintNode(llvm::raw_ostream& output, NodeId n, int depth,
-                 bool preorder) const -> bool;
+  // Prints a single node in YAML format. Returns true when preorder and there
+  // are children.
+  auto YamlPrintNode(llvm::raw_ostream& output, NodeId n, int depth,
+                     bool preorder) const -> bool;
 
+  // Prints a single node in human-readable format. `pending_parents[i]`
+  // should be true if and only if there is a node at depth i that we haven't
+  // yet printed, but we have printed one of its children.
   auto PrettyPrintNode(llvm::raw_ostream& output, NodeId n, int depth,
                        llvm::BitVector& pending_parents) const -> void;
 

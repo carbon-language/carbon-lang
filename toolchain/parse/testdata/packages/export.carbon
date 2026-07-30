@@ -170,8 +170,8 @@ export Foo;
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Pkg'
 // CHECK:STDOUT:   ├─PackageDecl ';'
 // CHECK:STDOUT:   │ ╭─ExportIntroducer 'export'
-// CHECK:STDOUT:   │ ├─InvalidParse '(' ❌
-// CHECK:STDOUT:   ├─ExportDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   ├─ExportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_package_in_name.carbon
@@ -180,8 +180,8 @@ export Foo;
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Pkg'
 // CHECK:STDOUT:   ├─PackageDecl ';'
 // CHECK:STDOUT:   │ ╭─ExportIntroducer 'export'
-// CHECK:STDOUT:   │ ├─InvalidParse 'package' ❌
-// CHECK:STDOUT:   ├─ExportDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse 'package' has_error
+// CHECK:STDOUT:   ├─ExportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_keyword_only
@@ -190,8 +190,8 @@ export Foo;
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Pkg'
 // CHECK:STDOUT:   ├─PackageDecl ';'
 // CHECK:STDOUT:   │ ╭─ExportIntroducer 'export'
-// CHECK:STDOUT:   │ ├─InvalidParse '' ❌
-// CHECK:STDOUT:   ├─ExportDecl 'export' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '' has_error
+// CHECK:STDOUT:   ├─ExportDecl 'export' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_no_name.carbon
@@ -200,8 +200,8 @@ export Foo;
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Pkg'
 // CHECK:STDOUT:   ├─PackageDecl ';'
 // CHECK:STDOUT:   │ ╭─ExportIntroducer 'export'
-// CHECK:STDOUT:   │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   ├─ExportDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   ├─ExportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
@@ -211,7 +211,7 @@ export Foo;
 // CHECK:STDOUT:   ├─PackageDecl ';'
 // CHECK:STDOUT:   │ ╭─ExportIntroducer 'export'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Foo'
-// CHECK:STDOUT:   ├─ExportDecl 'Foo' ❌
+// CHECK:STDOUT:   ├─ExportDecl 'Foo' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_incomplete_qual_name.carbon
@@ -222,8 +222,8 @@ export Foo;
 // CHECK:STDOUT:   │ ╭─ExportIntroducer 'export'
 // CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'Foo'
 // CHECK:STDOUT:   │ ├─IdentifierNameQualifierWithoutParams '.'
-// CHECK:STDOUT:   │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   ├─ExportDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   ├─ExportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_incomplete_qual_name2.carbon
@@ -232,8 +232,8 @@ export Foo;
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Pkg'
 // CHECK:STDOUT:   ├─PackageDecl ';'
 // CHECK:STDOUT:   │ ╭─ExportIntroducer 'export'
-// CHECK:STDOUT:   │ ├─InvalidParse '.' ❌
-// CHECK:STDOUT:   ├─ExportDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '.' has_error
+// CHECK:STDOUT:   ├─ExportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: after_decl.carbon
@@ -258,14 +258,14 @@ export Foo;
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Foo'
 // CHECK:STDOUT:   ├─ExportDecl ';'
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_in_default_library.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─ExportIntroducer 'export'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Foo'
-// CHECK:STDOUT:   ├─ExportDecl ';' ❌
+// CHECK:STDOUT:   ├─ExportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_in_impl.carbon
@@ -276,6 +276,6 @@ export Foo;
 // CHECK:STDOUT:   ├─PackageDecl ';'
 // CHECK:STDOUT:   │ ╭─ExportIntroducer 'export'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Foo'
-// CHECK:STDOUT:   ├─ExportDecl ';' ❌
+// CHECK:STDOUT:   ├─ExportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

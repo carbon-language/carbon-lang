@@ -140,7 +140,7 @@ auto TreeAndSubtrees::roots() const -> llvm::iterator_range<SiblingIterator> {
       SiblingIterator(*this, NodeId(-1)));
 }
 
-auto TreeAndSubtrees::PrintNode(llvm::raw_ostream& output, NodeId n, int depth,
+auto TreeAndSubtrees::YamlPrintNode(llvm::raw_ostream& output, NodeId n, int depth,
                                 bool preorder) const -> bool {
   output.indent(2 * (depth + 2));
   output << "{";
@@ -198,7 +198,7 @@ auto TreeAndSubtrees::PrettyPrintNode(llvm::raw_ostream& output, NodeId n,
          << tokens_->GetTokenText(tree_->node_token(n)) << "'";
 
   if (tree_->node_has_error(n)) {
-    output << " ❌";
+    output << " has_error";
   }
 }
 
@@ -230,7 +230,7 @@ auto TreeAndSubtrees::PrintPostorder(llvm::raw_ostream& output, bool yaml) const
   llvm::BitVector pending_parents;
   for (auto [n, depth] : llvm::zip_equal(tree_->postorder(), depths)) {
     if (yaml) {
-      PrintNode(output, n, depth, /*preorder=*/false);
+      YamlPrintNode(output, n, depth, /*preorder=*/false);
       output << ",\n";
     } else {
       PrettyPrintNode(output, n, depth, pending_parents);
@@ -266,7 +266,7 @@ auto TreeAndSubtrees::PrintYamlPreorder(llvm::raw_ostream& output) const
     int depth;
     std::tie(n, depth) = node_stack.pop_back_val();
 
-    if (PrintNode(output, n, depth, /*preorder=*/true)) {
+    if (YamlPrintNode(output, n, depth, /*preorder=*/true)) {
       // Has children, so we descend. We append the children in order here as
       // well because they will get reversed when popped off the stack.
       for (NodeId sibling_n : children(n)) {

@@ -21,7 +21,7 @@ let
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
-// CHECK:STDOUT:   │ ├─InvalidParse '' ❌
-// CHECK:STDOUT:   ├─LetDecl 'let' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '' has_error
+// CHECK:STDOUT:   ├─LetDecl 'let' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

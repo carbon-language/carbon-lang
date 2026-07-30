@@ -311,49 +311,49 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'foo'
-// CHECK:STDOUT:   ├─FunctionDecl ';' ❌
+// CHECK:STDOUT:   ├─FunctionDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_missing_implicit_close.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Div'
-// CHECK:STDOUT:   ├─FunctionDecl ';' ❌
+// CHECK:STDOUT:   ├─FunctionDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_missing_name.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─InvalidParse '(' ❌
-// CHECK:STDOUT:   ├─FunctionDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_no_sig_or_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'foo'
-// CHECK:STDOUT:   ├─FunctionDecl 'fn' ❌
+// CHECK:STDOUT:   ├─FunctionDecl 'fn' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_only_fn_and_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   ├─FunctionDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_repeated_fn_and_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─InvalidParse 'fn' ❌
-// CHECK:STDOUT:   ├─FunctionDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse 'fn' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_skip_indented_newline_until_outdent.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─InvalidParse '(' ❌
-// CHECK:STDOUT:   ├─FunctionDecl ')' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ')' has_error
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
@@ -364,8 +364,8 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT: - filename: fail_skip_indented_newline_with_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─InvalidParse '(' ❌
-// CHECK:STDOUT:   ├─FunctionDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
@@ -376,8 +376,8 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT: - filename: fail_skip_indented_newline_without_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─InvalidParse '(' ❌
-// CHECK:STDOUT:   ├─FunctionDecl ')' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ')' has_error
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
@@ -388,8 +388,8 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT: - filename: fail_skip_to_newline_without_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─InvalidParse '(' ❌
-// CHECK:STDOUT:   ├─FunctionDecl ')' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ')' has_error
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
@@ -399,8 +399,8 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_skip_without_semi_to_curly.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
-// CHECK:STDOUT:   │ ╭─InvalidParseStart 'struct' ❌
-// CHECK:STDOUT:   ├─InvalidParseSubtree '}' ❌
+// CHECK:STDOUT:   │ ╭─InvalidParseStart 'struct' has_error
+// CHECK:STDOUT:   ├─InvalidParseSubtree '}' has_error
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
@@ -421,8 +421,8 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT: - filename: fail_without_name_and_many_tokens_in_params.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─InvalidParse '(' ❌
-// CHECK:STDOUT:   ├─FunctionDecl ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: form_parameter.carbon
@@ -458,10 +458,10 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
-// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':?' ❌
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':?' has_error
 // CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'Form'
-// CHECK:STDOUT:   │ │ ├─FormBindingPattern ':?' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ ├─FormBindingPattern ':?' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -473,9 +473,9 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':?'
 // CHECK:STDOUT:   │ │ │   ├─IdentifierNameExpr 'Form'
-// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':?' ❌
-// CHECK:STDOUT:   │ │ ├─VariablePattern 'var' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':?' has_error
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

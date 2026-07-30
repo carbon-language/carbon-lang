@@ -25,7 +25,7 @@ fn F() {
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'x'
-// CHECK:STDOUT:   │ ├─ReturnStatement 'x' ❌
+// CHECK:STDOUT:   │ ├─ReturnStatement 'x' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

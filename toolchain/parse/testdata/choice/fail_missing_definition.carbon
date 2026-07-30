@@ -18,7 +18,7 @@ choice MissingDefinition;
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │   ╭─ChoiceIntroducer 'choice'
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'MissingDefinition'
-// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart ';' ❌
-// CHECK:STDOUT:   ├─ChoiceDefinition ';' ❌
+// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart ';' has_error
+// CHECK:STDOUT:   ├─ChoiceDefinition ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

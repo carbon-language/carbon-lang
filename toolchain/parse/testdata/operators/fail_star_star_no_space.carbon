@@ -30,6 +30,6 @@ var n: i8 = n**p;
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'n'
 // CHECK:STDOUT:   │ │ ╭─PostfixOperatorStar '*'
 // CHECK:STDOUT:   │ ├─PostfixOperatorStar '*'
-// CHECK:STDOUT:   ├─VariableDecl ';' ❌
+// CHECK:STDOUT:   ├─VariableDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

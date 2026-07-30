@@ -27,7 +27,7 @@ interface Foo {
 // CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'Sub'
 // CHECK:STDOUT:   │ │ │ ╭─ImplicitParamListStart '['
 // CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'me'
-// CHECK:STDOUT:   │ │ ├─ImplicitParamList ']' ❌
+// CHECK:STDOUT:   │ │ ├─ImplicitParamList ']' has_error
 // CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'b'
 // CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'

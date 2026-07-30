@@ -18,7 +18,7 @@ interface {
 // CHECK:STDOUT: - filename: fail_missing_name.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─InterfaceIntroducer 'interface'
-// CHECK:STDOUT:   │ ├─InvalidParse '{' ❌
-// CHECK:STDOUT:   ├─InterfaceDecl '}' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '{' has_error
+// CHECK:STDOUT:   ├─InterfaceDecl '}' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

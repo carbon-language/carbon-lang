@@ -19,7 +19,7 @@ namespace Foo.;
 // CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
 // CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'Foo'
 // CHECK:STDOUT:   │ ├─IdentifierNameQualifierWithoutParams '.'
-// CHECK:STDOUT:   │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   ├─Namespace ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   ├─Namespace ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

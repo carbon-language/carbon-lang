@@ -35,8 +35,8 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │ │ ╭─MatchStatementStart '{'
 // CHECK:STDOUT:   │ │ │     ╭─MatchDefaultIntroducer 'default'
 // CHECK:STDOUT:   │ │ │   ╭─MatchDefault '=>'
-// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart '}' ❌
-// CHECK:STDOUT:   │ │ ├─MatchHandler '}' ❌
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart '}' has_error
+// CHECK:STDOUT:   │ │ ├─MatchHandler '}' has_error
 // CHECK:STDOUT:   │ ├─MatchStatement '}'
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '0'

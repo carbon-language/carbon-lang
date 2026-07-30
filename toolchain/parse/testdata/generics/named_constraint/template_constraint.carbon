@@ -28,9 +28,9 @@ template constraint ForwardDeclared;
 
 // CHECK:STDOUT: - filename: fail_todo_template_constraint.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
-// CHECK:STDOUT:   │ ╭─InvalidParseStart 'template' ❌
-// CHECK:STDOUT:   ├─InvalidParseSubtree '}' ❌
-// CHECK:STDOUT:   │ ╭─InvalidParseStart 'template' ❌
-// CHECK:STDOUT:   ├─InvalidParseSubtree ';' ❌
+// CHECK:STDOUT:   │ ╭─InvalidParseStart 'template' has_error
+// CHECK:STDOUT:   ├─InvalidParseSubtree '}' has_error
+// CHECK:STDOUT:   │ ╭─InvalidParseStart 'template' has_error
+// CHECK:STDOUT:   ├─InvalidParseSubtree ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

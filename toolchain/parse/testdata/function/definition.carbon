@@ -139,7 +139,7 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'bar'
-// CHECK:STDOUT:   │ ├─ExprStatement 'bar' ❌
+// CHECK:STDOUT:   │ ├─ExprStatement 'bar' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -202,7 +202,7 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─BuiltinFunctionDefinitionStart '='
-// CHECK:STDOUT:   ├─BuiltinFunctionDefinition ';' ❌
+// CHECK:STDOUT:   ├─BuiltinFunctionDefinition ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_builtin_two_strings.carbon
@@ -213,7 +213,7 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─BuiltinFunctionDefinitionStart '='
 // CHECK:STDOUT:   │ ├─BuiltinName '"hello"'
-// CHECK:STDOUT:   ├─BuiltinFunctionDefinition ';' ❌
+// CHECK:STDOUT:   ├─BuiltinFunctionDefinition ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_builtin_spurious_equals.carbon
@@ -223,7 +223,7 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─BuiltinFunctionDefinitionStart '='
-// CHECK:STDOUT:   ├─BuiltinFunctionDefinition '}' ❌
+// CHECK:STDOUT:   ├─BuiltinFunctionDefinition '}' has_error
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'TestRecoveryFromSpuriousEquals'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('

@@ -132,46 +132,46 @@ int n;
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
 // CHECK:STDOUT:   │ ├─CppPackageName 'Cpp'
-// CHECK:STDOUT:   │ │ ╭─InlineImportBody ';' ❌
+// CHECK:STDOUT:   │ │ ╭─InlineImportBody ';' has_error
 // CHECK:STDOUT:   │ ├─InlineImportSpecifier 'inline'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
 // CHECK:STDOUT:   │ ├─CppPackageName 'Cpp'
-// CHECK:STDOUT:   │ │ ╭─InlineImportBody 'library' ❌
+// CHECK:STDOUT:   │ │ ╭─InlineImportBody 'library' has_error
 // CHECK:STDOUT:   │ ├─InlineImportSpecifier 'inline'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
 // CHECK:STDOUT:   │ ├─CppPackageName 'Cpp'
 // CHECK:STDOUT:   │ │ ╭─LibraryName '"foo.h"'
 // CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
 // CHECK:STDOUT:   │ │ ╭─LibraryName '"foo.h"'
 // CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
-// CHECK:STDOUT:   ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_no_semi_at_eof.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
 // CHECK:STDOUT:   │ ├─CppPackageName 'Cpp'
-// CHECK:STDOUT:   │ │ ╭─InlineImportBody '' ❌
+// CHECK:STDOUT:   │ │ ╭─InlineImportBody '' has_error
 // CHECK:STDOUT:   │ ├─InlineImportSpecifier 'inline'
-// CHECK:STDOUT:   ├─ImportDecl 'inline' ❌
+// CHECK:STDOUT:   ├─ImportDecl 'inline' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_package_inline.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'NotCpp'
-// CHECK:STDOUT:   ├─PackageDecl ';' ❌
+// CHECK:STDOUT:   ├─PackageDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_library_inline.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
 // CHECK:STDOUT:   │ ├─LibraryName '"foo.h"'
-// CHECK:STDOUT:   ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   ├─LibraryDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: wrong_package.carbon
@@ -213,17 +213,17 @@ int n;
 // CHECK:STDOUT: - filename: fail_inline_cpp_syntax_errors.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
-// CHECK:STDOUT:   ├─InlineCppDecl ';' ❌
+// CHECK:STDOUT:   ├─InlineCppDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
-// CHECK:STDOUT:   ├─InlineCppDecl ';' ❌
+// CHECK:STDOUT:   ├─InlineCppDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
-// CHECK:STDOUT:   ├─InlineCppDecl ';' ❌
-// CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
-// CHECK:STDOUT:   │ ├─CppNameExpr 'Cpp'
-// CHECK:STDOUT:   ├─InlineCppDecl ';' ❌
+// CHECK:STDOUT:   ├─InlineCppDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
 // CHECK:STDOUT:   │ ├─CppNameExpr 'Cpp'
-// CHECK:STDOUT:   ├─InlineCppDecl ';' ❌
+// CHECK:STDOUT:   ├─InlineCppDecl ';' has_error
+// CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
+// CHECK:STDOUT:   │ ├─CppNameExpr 'Cpp'
+// CHECK:STDOUT:   ├─InlineCppDecl ';' has_error
 // CHECK:STDOUT:   │ ╭─InlineIntroducer 'inline'
 // CHECK:STDOUT:   │ ├─CppNameExpr 'Cpp'
 // CHECK:STDOUT:   │ ├─InlineImportBody ''''
@@ -231,7 +231,7 @@ int n;
 // CHECK:STDOUT: ''''
 // CHECK:STDOUT:   ├─InlineCppDecl ''''
 // CHECK:STDOUT: int n;
-// CHECK:STDOUT: '''' ❌
+// CHECK:STDOUT: '''' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: eof.carbon

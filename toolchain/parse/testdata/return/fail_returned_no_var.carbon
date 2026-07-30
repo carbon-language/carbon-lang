@@ -25,7 +25,7 @@ fn F() -> str {
 // CHECK:STDOUT:   │   │ ╭─StringTypeLiteral 'str'
 // CHECK:STDOUT:   │   ├─ReturnType '->'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ ├─EmptyDecl ';' ❌
+// CHECK:STDOUT:   │ ├─EmptyDecl ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

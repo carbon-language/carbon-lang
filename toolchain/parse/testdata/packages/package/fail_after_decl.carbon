@@ -27,6 +27,6 @@ package B;
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')'
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
-// CHECK:STDOUT:   ├─PackageDecl ';' ❌
+// CHECK:STDOUT:   ├─PackageDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -31,8 +31,8 @@ fn foo() {
 // CHECK:STDOUT:   │ │   │     ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │   │   ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ │   │ ╭─VariablePattern 'var'
-// CHECK:STDOUT:   │ │   ├─ForIn '(' ❌
-// CHECK:STDOUT:   │ │ ╭─ForHeader ')' ❌
+// CHECK:STDOUT:   │ │   ├─ForIn '(' has_error
+// CHECK:STDOUT:   │ │ ╭─ForHeader ')' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
 // CHECK:STDOUT:   │ │ │ │     ╭─IdentifierNameExpr 'Print'
 // CHECK:STDOUT:   │ │ │ │   ╭─CallExprStart '('

@@ -28,6 +28,6 @@ choice InvalidAlternativeIdentifier {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'InvalidAlternativeIdentifier'
 // CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart '{'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Other'
-// CHECK:STDOUT:   ├─ChoiceDefinition '}' ❌
+// CHECK:STDOUT:   ├─ChoiceDefinition '}' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

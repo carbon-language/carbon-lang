@@ -23,10 +23,10 @@ constraint
 // CHECK:STDOUT: - filename: fail_incomplete.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─NamedConstraintIntroducer 'constraint'
-// CHECK:STDOUT:   │ ├─InvalidParse '"Foo"' ❌
-// CHECK:STDOUT:   ├─NamedConstraintDecl '"Foo"' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '"Foo"' has_error
+// CHECK:STDOUT:   ├─NamedConstraintDecl '"Foo"' has_error
 // CHECK:STDOUT:   │ ╭─NamedConstraintIntroducer 'constraint'
-// CHECK:STDOUT:   │ ├─InvalidParse '' ❌
-// CHECK:STDOUT:   ├─NamedConstraintDecl 'constraint' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '' has_error
+// CHECK:STDOUT:   ├─NamedConstraintDecl 'constraint' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -23,6 +23,6 @@ package Geometry;
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   ├─EmptyDecl ';'
 // CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
-// CHECK:STDOUT:   ├─PackageDecl ';' ❌
+// CHECK:STDOUT:   ├─PackageDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

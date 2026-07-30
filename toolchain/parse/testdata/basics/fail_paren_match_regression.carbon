@@ -25,12 +25,12 @@ var = (foo {})
 // CHECK:STDOUT: - filename: fail_paren_match_regression.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
-// CHECK:STDOUT:   │ │ ╭─InvalidParse '=' ❌
-// CHECK:STDOUT:   │ ├─VariablePattern 'var' ❌
+// CHECK:STDOUT:   │ │ ╭─InvalidParse '=' has_error
+// CHECK:STDOUT:   │ ├─VariablePattern 'var' has_error
 // CHECK:STDOUT:   │ ├─VariableInitializer '='
 // CHECK:STDOUT:   │ │ ╭─ParenExprStart '('
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'foo'
-// CHECK:STDOUT:   │ ├─ParenExpr ')' ❌
-// CHECK:STDOUT:   ├─VariableDecl ')' ❌
+// CHECK:STDOUT:   │ ├─ParenExpr ')' has_error
+// CHECK:STDOUT:   ├─VariableDecl ')' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

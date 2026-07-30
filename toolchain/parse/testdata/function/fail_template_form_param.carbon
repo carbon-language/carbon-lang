@@ -21,10 +21,10 @@ fn F(template x:? Form);
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
-// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':?' ❌
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':?' has_error
 // CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'Form'
-// CHECK:STDOUT:   │ │ ├─FormBindingPattern ':?' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ ├─FormBindingPattern ':?' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -18,6 +18,6 @@ package Geometry
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Geometry'
-// CHECK:STDOUT:   ├─PackageDecl 'Geometry' ❌
+// CHECK:STDOUT:   ├─PackageDecl 'Geometry' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -59,38 +59,38 @@ library "[[@TEST_NAME]]"
 // CHECK:STDOUT: - filename: fail_identifier.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
-// CHECK:STDOUT:   ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   ├─LibraryDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_raw_identifier.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
-// CHECK:STDOUT:   ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   ├─LibraryDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_missing.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
-// CHECK:STDOUT:   ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   ├─LibraryDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_missing_with_api.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
-// CHECK:STDOUT:   ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   ├─LibraryDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_trailing_impl.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
 // CHECK:STDOUT:   │ ├─LibraryName '"trailing_impl"'
-// CHECK:STDOUT:   ├─LibraryDecl 'impl' ❌
+// CHECK:STDOUT:   ├─LibraryDecl 'impl' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
 // CHECK:STDOUT:   │ ├─LibraryName '"no_semi"'
-// CHECK:STDOUT:   ├─LibraryDecl '"no_semi"' ❌
+// CHECK:STDOUT:   ├─LibraryDecl '"no_semi"' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

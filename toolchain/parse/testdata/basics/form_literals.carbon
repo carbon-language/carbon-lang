@@ -128,44 +128,44 @@ fn F() {
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
-// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen 'form' ❌
-// CHECK:STDOUT:   │ │   ├─InvalidParse 'form' ❌
-// CHECK:STDOUT:   │ │ ╭─FormLiteral 'form' ❌
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen 'form' has_error
+// CHECK:STDOUT:   │ │   ├─InvalidParse 'form' has_error
+// CHECK:STDOUT:   │ │ ╭─FormLiteral 'form' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
 // CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen '('
-// CHECK:STDOUT:   │ │   │ ╭─InvalidParse ')' ❌
-// CHECK:STDOUT:   │ │   ├─ValPrimitiveForm 'form' ❌
+// CHECK:STDOUT:   │ │   │ ╭─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │   ├─ValPrimitiveForm 'form' has_error
 // CHECK:STDOUT:   │ │ ╭─FormLiteral ')'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
 // CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen '('
 // CHECK:STDOUT:   │ │   │ ╭─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │   ├─ValPrimitiveForm 'form' ❌
+// CHECK:STDOUT:   │ │   ├─ValPrimitiveForm 'form' has_error
 // CHECK:STDOUT:   │ │ ╭─FormLiteral ')'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
 // CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen '('
 // CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'whole'
-// CHECK:STDOUT:   │ │   ├─ValPrimitiveForm 'form' ❌
-// CHECK:STDOUT:   │ │ ╭─FormLiteral ')' ❌
+// CHECK:STDOUT:   │ │   ├─ValPrimitiveForm 'form' has_error
+// CHECK:STDOUT:   │ │ ╭─FormLiteral ')' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
 // CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen '('
 // CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'whole'
 // CHECK:STDOUT:   │ │   ├─VarPrimitiveForm 'var'
-// CHECK:STDOUT:   │ │ ╭─FormLiteral ')' ❌
+// CHECK:STDOUT:   │ │ ╭─FormLiteral ')' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
-// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen 'form' ❌
-// CHECK:STDOUT:   │ │   ├─InvalidParse 'form' ❌
-// CHECK:STDOUT:   │ │ ╭─FormLiteral 'form' ❌
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen 'form' has_error
+// CHECK:STDOUT:   │ │   ├─InvalidParse 'form' has_error
+// CHECK:STDOUT:   │ │ ╭─FormLiteral 'form' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
-// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen 'form' ❌
-// CHECK:STDOUT:   │ │   ├─InvalidParse 'form' ❌
-// CHECK:STDOUT:   │ │ ╭─FormLiteral 'form' ❌
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen 'form' has_error
+// CHECK:STDOUT:   │ │   ├─InvalidParse 'form' has_error
+// CHECK:STDOUT:   │ │ ╭─FormLiteral 'form' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

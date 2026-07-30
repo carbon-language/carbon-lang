@@ -37,11 +37,11 @@ fn E(generic template: i32);
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'A'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'i32' ❌
-// CHECK:STDOUT:   │ │ │ ├─InvalidParse 'i32' ❌
-// CHECK:STDOUT:   │ │ │ ├─InvalidParse 'i32' ❌
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'template' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'i32' has_error
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse 'i32' has_error
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse 'i32' has_error
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'template' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -50,11 +50,11 @@ fn E(generic template: i32);
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'C'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature ')' ❌
-// CHECK:STDOUT:   │ │ │ ├─InvalidParse ')' ❌
-// CHECK:STDOUT:   │ │ │ ├─InvalidParse ')' ❌
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'template' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature ')' has_error
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'template' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

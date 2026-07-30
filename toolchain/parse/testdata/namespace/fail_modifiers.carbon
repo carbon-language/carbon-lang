@@ -21,6 +21,6 @@ impl namespace
 // CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
 // CHECK:STDOUT:   │ ├─VirtualModifier 'virtual'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'B'
-// CHECK:STDOUT:   ├─Namespace 'namespace' ❌
+// CHECK:STDOUT:   ├─Namespace 'namespace' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

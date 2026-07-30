@@ -24,9 +24,9 @@ hello
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─InvalidParseStart ''''
 // CHECK:STDOUT: hello
-// CHECK:STDOUT: '''' ❌
+// CHECK:STDOUT: '''' has_error
 // CHECK:STDOUT:   ├─InvalidParseSubtree ''''
 // CHECK:STDOUT: hello
-// CHECK:STDOUT: '''' ❌
+// CHECK:STDOUT: '''' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

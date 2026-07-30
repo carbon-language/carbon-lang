@@ -44,19 +44,19 @@ class package.C {
 // CHECK:STDOUT:   │ │   ╭─PackageExpr 'package'
 // CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'n'
 // CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
-// CHECK:STDOUT:   │ ├─VariablePattern 'var' ❌
+// CHECK:STDOUT:   │ ├─VariablePattern 'var' has_error
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
 // CHECK:STDOUT:   │ │   ╭─PackageExpr 'package'
 // CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'val'
 // CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
-// CHECK:STDOUT:   │ ├─VariablePattern 'var' ❌
+// CHECK:STDOUT:   │ ├─VariablePattern 'var' has_error
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
-// CHECK:STDOUT:   │ ├─InvalidParse 'package' ❌
-// CHECK:STDOUT:   ├─Namespace ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse 'package' has_error
+// CHECK:STDOUT:   ├─Namespace ';' has_error
 // CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
-// CHECK:STDOUT:   │ ├─InvalidParse 'package' ❌
-// CHECK:STDOUT:   ├─ClassDecl '}' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse 'package' has_error
+// CHECK:STDOUT:   ├─ClassDecl '}' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

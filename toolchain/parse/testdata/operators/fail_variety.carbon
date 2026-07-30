@@ -52,13 +52,13 @@ fn F() {
 // CHECK:STDOUT:   │ │   │       ├─IdentifierNameExpr 'd'
 // CHECK:STDOUT:   │ │   │     ╭─InfixOperatorStar '*'
 // CHECK:STDOUT:   │ │   │     ├─IdentifierNameExpr 'e'
-// CHECK:STDOUT:   │ │   │   ╭─InfixOperatorLessLess '<<' ❌
+// CHECK:STDOUT:   │ │   │   ╭─InfixOperatorLessLess '<<' has_error
 // CHECK:STDOUT:   │ │   │   ├─IdentifierNameExpr 'f'
-// CHECK:STDOUT:   │ │   │ ╭─InfixOperatorAmp '&' ❌
+// CHECK:STDOUT:   │ │   │ ╭─InfixOperatorAmp '&' has_error
 // CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameExpr 'g'
 // CHECK:STDOUT:   │ │   │ ├─PrefixOperatorNot 'not'
-// CHECK:STDOUT:   │ │   ├─InfixOperatorMinus '-' ❌
-// CHECK:STDOUT:   │ │ ╭─InfixOperatorEqual '=' ❌
+// CHECK:STDOUT:   │ │   ├─InfixOperatorMinus '-' has_error
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorEqual '=' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

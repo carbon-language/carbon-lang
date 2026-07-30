@@ -57,13 +57,13 @@ auto Parse(Lex::TokenizedBuffer& tokens, ParseOptions options) -> Tree {
   if (options.dump_stream) {
     Parse::TreeAndSubtrees tree_and_subtrees(tokens, tree);
     switch (options.dump_format) {
-      case ParseOptions::DumpFormat::kPrettyPostorder:
+      case ParseOptions::DumpFormat::PrettyPostorder:
         tree_and_subtrees.PrettyPrint(*options.dump_stream);
         break;
-      case ParseOptions::DumpFormat::kYamlPostorder:
+      case ParseOptions::DumpFormat::YamlPostorder:
         tree_and_subtrees.PrintYamlPostorder(*options.dump_stream);
         break;
-      case ParseOptions::DumpFormat::kYamlPreorder:
+      case ParseOptions::DumpFormat::YamlPreorder:
         tree_and_subtrees.PrintYamlPreorder(*options.dump_stream);
         break;
     }

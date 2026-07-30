@@ -40,13 +40,13 @@ interface I {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
-// CHECK:STDOUT:   │ │ ╭─InvalidParseStart 'var' ❌
-// CHECK:STDOUT:   │ ├─InvalidParseSubtree ';' ❌
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   │ │ ╭─InvalidParseStart 'var' has_error
+// CHECK:STDOUT:   │ ├─InvalidParseSubtree ';' has_error
 // CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' ❌
-// CHECK:STDOUT:   │ │ ╭─InvalidParseStart 'var' ❌
-// CHECK:STDOUT:   │ ├─InvalidParseSubtree ';' ❌
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   │ │ ╭─InvalidParseStart 'var' has_error
+// CHECK:STDOUT:   │ ├─InvalidParseSubtree ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

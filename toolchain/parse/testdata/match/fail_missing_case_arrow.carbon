@@ -43,9 +43,9 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │ │ │     │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │     │ ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │ │     ├─LetBindingPattern ':'
-// CHECK:STDOUT:   │ │ │   ╭─MatchCase '{' ❌
-// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart '{' ❌
-// CHECK:STDOUT:   │ │ ├─MatchHandler '{' ❌
+// CHECK:STDOUT:   │ │ │   ╭─MatchCase '{' has_error
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart '{' has_error
+// CHECK:STDOUT:   │ │ ├─MatchHandler '{' has_error
 // CHECK:STDOUT:   │ │ │     ╭─MatchCaseIntroducer 'case'
 // CHECK:STDOUT:   │ │ │     │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │     │ ├─BindingPatternTypeStart ':'
@@ -57,9 +57,9 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │ │ │     │ │ ├─IntLiteral '3'
 // CHECK:STDOUT:   │ │ │     │ ├─InfixOperatorEqualEqual '=='
 // CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard ')'
-// CHECK:STDOUT:   │ │ │   ╭─MatchCase '{' ❌
-// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart '{' ❌
-// CHECK:STDOUT:   │ │ ├─MatchHandler '{' ❌
+// CHECK:STDOUT:   │ │ │   ╭─MatchCase '{' has_error
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart '{' has_error
+// CHECK:STDOUT:   │ │ ├─MatchHandler '{' has_error
 // CHECK:STDOUT:   │ ├─MatchStatement '}'
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '0'

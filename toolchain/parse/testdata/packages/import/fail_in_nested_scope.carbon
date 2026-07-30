@@ -36,7 +36,7 @@ fn F() {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'A'
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─ImportIntroducer 'import'
-// CHECK:STDOUT:   │ ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   │ ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
@@ -44,7 +44,7 @@ fn F() {
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─ImportIntroducer 'import'
-// CHECK:STDOUT:   │ ├─ImportDecl ';' ❌
+// CHECK:STDOUT:   │ ├─ImportDecl ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -20,11 +20,11 @@ var x: {.(a) = 1};
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ╭─StructLiteralStart '{'
-// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature '(' ❌
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature '(' has_error
 // CHECK:STDOUT:   │ │   │ ├─StructFieldDesignator '.'
 // CHECK:STDOUT:   │ │   │ ├─IntLiteral '1'
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse '=' ❌
-// CHECK:STDOUT:   │ │   ├─StructLiteral '}' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse '=' has_error
+// CHECK:STDOUT:   │ │   ├─StructLiteral '}' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   ├─VariableDecl ';'

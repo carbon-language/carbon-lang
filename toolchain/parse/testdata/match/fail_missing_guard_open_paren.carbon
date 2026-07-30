@@ -43,12 +43,12 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │ │ │     │ ├─BoolTypeLiteral 'bool'
 // CHECK:STDOUT:   │ │ │     ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │ │     │ ╭─MatchCaseGuardIntroducer 'if'
-// CHECK:STDOUT:   │ │ │     │ ├─MatchCaseGuardStart 'false' ❌
-// CHECK:STDOUT:   │ │ │     │ ├─InvalidParse 'false' ❌
-// CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard 'false' ❌
-// CHECK:STDOUT:   │ │ │   ╭─MatchCase 'false' ❌
-// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart 'false' ❌
-// CHECK:STDOUT:   │ │ ├─MatchHandler 'false' ❌
+// CHECK:STDOUT:   │ │ │     │ ├─MatchCaseGuardStart 'false' has_error
+// CHECK:STDOUT:   │ │ │     │ ├─InvalidParse 'false' has_error
+// CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard 'false' has_error
+// CHECK:STDOUT:   │ │ │   ╭─MatchCase 'false' has_error
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart 'false' has_error
+// CHECK:STDOUT:   │ │ ├─MatchHandler 'false' has_error
 // CHECK:STDOUT:   │ ├─MatchStatement '}'
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '0'

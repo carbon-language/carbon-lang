@@ -98,7 +98,7 @@ fn I() {
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'a'
-// CHECK:STDOUT:   │ ├─LetDecl ';' ❌
+// CHECK:STDOUT:   │ ├─LetDecl ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -111,7 +111,7 @@ fn I() {
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'a'
-// CHECK:STDOUT:   │ ├─LetDecl ';' ❌
+// CHECK:STDOUT:   │ ├─LetDecl ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

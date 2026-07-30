@@ -90,9 +90,9 @@ var x: i32 = .
 // CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ │   ╭─InvalidParse '1' ❌
-// CHECK:STDOUT:   │ │ ╭─DesignatorExpr '.' ❌
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ │   ╭─InvalidParse '1' has_error
+// CHECK:STDOUT:   │ │ ╭─DesignatorExpr '.' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -103,9 +103,9 @@ var x: i32 = .
 // CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'base' ❌
-// CHECK:STDOUT:   │ │ ╭─DesignatorExpr '.' ❌
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'base' has_error
+// CHECK:STDOUT:   │ │ ╭─DesignatorExpr '.' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -116,9 +116,9 @@ var x: i32 = .
 // CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ │   ╭─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ │ ╭─DesignatorExpr '.' ❌
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ │   ╭─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ╭─DesignatorExpr '.' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -129,9 +129,9 @@ var x: i32 = .
 // CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ │     ╭─InvalidParse '*' ❌
-// CHECK:STDOUT:   │ │   ╭─DesignatorExpr '.' ❌
-// CHECK:STDOUT:   │ │ ╭─PostfixOperatorStar '*' ❌
+// CHECK:STDOUT:   │ │     ╭─InvalidParse '*' has_error
+// CHECK:STDOUT:   │ │   ╭─DesignatorExpr '.' has_error
+// CHECK:STDOUT:   │ │ ╭─PostfixOperatorStar '*' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
@@ -145,8 +145,8 @@ var x: i32 = .
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='
-// CHECK:STDOUT:   │ │ ╭─InvalidParse '' ❌
-// CHECK:STDOUT:   │ ├─DesignatorExpr '.' ❌
-// CHECK:STDOUT:   ├─VariableDecl '.' ❌
+// CHECK:STDOUT:   │ │ ╭─InvalidParse '' has_error
+// CHECK:STDOUT:   │ ├─DesignatorExpr '.' has_error
+// CHECK:STDOUT:   ├─VariableDecl '.' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

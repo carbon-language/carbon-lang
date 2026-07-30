@@ -55,7 +55,7 @@ fn F() {
 // CHECK:STDOUT:   │ │   ╭─IntLiteral '1'
 // CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
 // CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'a'
-// CHECK:STDOUT:   │ │   ├─ParenExpr ')' ❌
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─InfixOperatorPlus '+'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─ParenExprStart '('
@@ -63,9 +63,9 @@ fn F() {
 // CHECK:STDOUT:   │ │   │ ╭─IfExprIf 'if'
 // CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameExpr 'a'
 // CHECK:STDOUT:   │ │   │ ├─IfExprThen 'then'
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse '+=' ❌
-// CHECK:STDOUT:   │ │   ├─IfExprElse 'if' ❌
-// CHECK:STDOUT:   │ │ ╭─ParenExpr ')' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse '+=' has_error
+// CHECK:STDOUT:   │ │   ├─IfExprElse 'if' has_error
+// CHECK:STDOUT:   │ │ ╭─ParenExpr ')' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'a'
 // CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'a'

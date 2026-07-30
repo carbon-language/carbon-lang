@@ -23,6 +23,6 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   ├─EmptyDecl ';'
 // CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
-// CHECK:STDOUT:   ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   ├─LibraryDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

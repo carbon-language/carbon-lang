@@ -25,9 +25,9 @@ var x: {.a = 0,,} = {};
 // CHECK:STDOUT:   │ │   │ │ ├─IntLiteral '0'
 // CHECK:STDOUT:   │ │   │ ├─StructLiteralField '='
 // CHECK:STDOUT:   │ │   │ ├─StructLiteralComma ','
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse ',' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ',' has_error
 // CHECK:STDOUT:   │ │   │ ├─StructLiteralComma ','
-// CHECK:STDOUT:   │ │   ├─StructLiteral '}' ❌
+// CHECK:STDOUT:   │ │   ├─StructLiteral '}' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='

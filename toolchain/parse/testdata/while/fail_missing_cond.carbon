@@ -24,9 +24,9 @@ fn F() {
 // CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ │   ╭─WhileConditionStart 'while' ❌
-// CHECK:STDOUT:   │ │   ├─InvalidParse '{' ❌
-// CHECK:STDOUT:   │ │ ╭─WhileCondition 'while' ❌
+// CHECK:STDOUT:   │ │   ╭─WhileConditionStart 'while' has_error
+// CHECK:STDOUT:   │ │   ├─InvalidParse '{' has_error
+// CHECK:STDOUT:   │ │ ╭─WhileCondition 'while' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
 // CHECK:STDOUT:   │ │ ├─CodeBlock '}'
 // CHECK:STDOUT:   │ ├─WhileStatement 'while'

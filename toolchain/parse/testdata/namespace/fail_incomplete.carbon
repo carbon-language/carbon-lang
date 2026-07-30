@@ -47,22 +47,22 @@ namespace
 // CHECK:STDOUT: - filename: fail_incomplete.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
-// CHECK:STDOUT:   │ ├─InvalidParse '123' ❌
-// CHECK:STDOUT:   ├─Namespace '123' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '123' has_error
+// CHECK:STDOUT:   ├─Namespace '123' has_error
 // CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
-// CHECK:STDOUT:   │ ├─InvalidParse '""' ❌
-// CHECK:STDOUT:   ├─Namespace '""' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '""' has_error
+// CHECK:STDOUT:   ├─Namespace '""' has_error
 // CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
-// CHECK:STDOUT:   │ ├─InvalidParse '+' ❌
-// CHECK:STDOUT:   ├─Namespace '+' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '+' has_error
+// CHECK:STDOUT:   ├─Namespace '+' has_error
 // CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
-// CHECK:STDOUT:   │ ├─InvalidParse 'bool' ❌
-// CHECK:STDOUT:   ├─Namespace 'bool' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse 'bool' has_error
+// CHECK:STDOUT:   ├─Namespace 'bool' has_error
 // CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
-// CHECK:STDOUT:   │ ├─InvalidParse 'namespace' ❌
-// CHECK:STDOUT:   ├─Namespace 'namespace' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse 'namespace' has_error
+// CHECK:STDOUT:   ├─Namespace 'namespace' has_error
 // CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
-// CHECK:STDOUT:   │ ├─InvalidParse '' ❌
-// CHECK:STDOUT:   ├─Namespace 'namespace' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '' has_error
+// CHECK:STDOUT:   ├─Namespace 'namespace' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -28,9 +28,9 @@ fn foo() -> i32 {
 // CHECK:STDOUT:   │   ├─ReturnType '->'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │   ╭─ForHeaderStart '('
-// CHECK:STDOUT:   │ │   │ ╭─InvalidParse 'returned' ❌
-// CHECK:STDOUT:   │ │   ├─ForIn '(' ❌
-// CHECK:STDOUT:   │ │ ╭─ForHeader ')' ❌
+// CHECK:STDOUT:   │ │   │ ╭─InvalidParse 'returned' has_error
+// CHECK:STDOUT:   │ │   ├─ForIn '(' has_error
+// CHECK:STDOUT:   │ │ ╭─ForHeader ')' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
 // CHECK:STDOUT:   │ │ │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ │ │ ├─ReturnVarModifier 'var'

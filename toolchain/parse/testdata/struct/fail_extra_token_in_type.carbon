@@ -24,7 +24,7 @@ var x: {.a: i32 banana} = {.a = 0};
 // CHECK:STDOUT:   │ │   │ │ ╭─StructFieldDesignator '.'
 // CHECK:STDOUT:   │ │   │ │ ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │   │ ├─StructTypeLiteralField ':'
-// CHECK:STDOUT:   │ │   ├─StructTypeLiteral '}' ❌
+// CHECK:STDOUT:   │ │   ├─StructTypeLiteral '}' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='

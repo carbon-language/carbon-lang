@@ -38,11 +38,11 @@ fn H(runtime unused x: i32);
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'T'
-// CHECK:STDOUT:   │ │ │   ├─CompileTimeBindingPatternTypeStart ':' ❌
+// CHECK:STDOUT:   │ │ │   ├─CompileTimeBindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │ │   ├─TypeTypeLiteral 'type'
-// CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ │ ├─UnusedPattern 'unused' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ ├─UnusedPattern 'unused' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -53,11 +53,11 @@ fn H(runtime unused x: i32);
 // CHECK:STDOUT:   │ │ ╭─ImplicitParamListStart '['
 // CHECK:STDOUT:   │ │ │     ╭─IdentifierNameNotBeforeSignature 'T'
 // CHECK:STDOUT:   │ │ │   ╭─RuntimeBindingName 'runtime'
-// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':' ❌
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │ │   ├─TypeTypeLiteral 'type'
-// CHECK:STDOUT:   │ │ │ ╭─LetBindingPattern ':' ❌
-// CHECK:STDOUT:   │ │ ├─UnusedPattern 'unused' ❌
-// CHECK:STDOUT:   │ ├─ImplicitParamList ']' ❌
+// CHECK:STDOUT:   │ │ │ ╭─LetBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ ├─UnusedPattern 'unused' has_error
+// CHECK:STDOUT:   │ ├─ImplicitParamList ']' has_error
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')'
 // CHECK:STDOUT:   ├─FunctionDecl ';'

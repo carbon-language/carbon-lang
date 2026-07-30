@@ -43,7 +43,7 @@ str
 // CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ │ ├─VariableInitializer '='
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'bad'
-// CHECK:STDOUT:   │ ├─VariableDecl ';' ❌
+// CHECK:STDOUT:   │ ├─VariableDecl ';' has_error
 // CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'

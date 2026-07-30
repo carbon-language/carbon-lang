@@ -35,25 +35,25 @@ observe T ;
 // CHECK:STDOUT: - filename: fail_missing_expr_after_observe.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─ObserveIntroducer 'observe'
-// CHECK:STDOUT:   │ │ ╭─InvalidParse 'impls' ❌
+// CHECK:STDOUT:   │ │ ╭─InvalidParse 'impls' has_error
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'I'
-// CHECK:STDOUT:   │ ├─ObserveImpls 'impls' ❌
-// CHECK:STDOUT:   ├─ObserveDecl ';' ❌
+// CHECK:STDOUT:   │ ├─ObserveImpls 'impls' has_error
+// CHECK:STDOUT:   ├─ObserveDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_missing_expr_after_impls.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─ObserveIntroducer 'observe'
 // CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'T'
-// CHECK:STDOUT:   │ │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ ├─ObserveImpls 'impls' ❌
-// CHECK:STDOUT:   ├─ObserveDecl ';' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ ├─ObserveImpls 'impls' has_error
+// CHECK:STDOUT:   ├─ObserveDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_missing_impls.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─ObserveIntroducer 'observe'
 // CHECK:STDOUT:   │ ├─IdentifierNameExpr 'T'
-// CHECK:STDOUT:   ├─ObserveDecl ';' ❌
+// CHECK:STDOUT:   ├─ObserveDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

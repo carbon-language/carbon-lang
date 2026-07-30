@@ -222,7 +222,7 @@ interface Z {
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─RequireIntroducer 'require'
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'Y'
-// CHECK:STDOUT:   │ ├─RequireDecl ';' ❌
+// CHECK:STDOUT:   │ ├─RequireDecl ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -236,8 +236,8 @@ interface Z {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Z'
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─RequireIntroducer 'require'
-// CHECK:STDOUT:   │ │ ├─InvalidParse 'as' ❌
-// CHECK:STDOUT:   │ ├─RequireDecl ';' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse 'as' has_error
+// CHECK:STDOUT:   │ ├─RequireDecl ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -252,7 +252,7 @@ interface Z {
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─RequireIntroducer 'require'
 // CHECK:STDOUT:   │ │ ├─SelfTypeNameExpr 'Self'
-// CHECK:STDOUT:   │ ├─RequireDecl ';' ❌
+// CHECK:STDOUT:   │ ├─RequireDecl ';' has_error
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

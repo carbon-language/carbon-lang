@@ -136,9 +136,9 @@ var x: array;
 // CHECK:STDOUT:   │ │   │ ╭─ArrayExprKeyword 'array'
 // CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen '('
 // CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma ')' ❌
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' ❌
-// CHECK:STDOUT:   │ │   ├─ArrayExpr ')' ❌
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma ')' has_error
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │   ├─ArrayExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   ├─VariableDecl ';'
@@ -152,10 +152,10 @@ var x: array;
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ │   ╭─ArrayExprKeyword 'array'
 // CHECK:STDOUT:   │ │   ├─ArrayExprOpenParen '('
-// CHECK:STDOUT:   │ │   ├─InvalidParse ':' ❌
-// CHECK:STDOUT:   │ │   ├─ArrayExprComma ':' ❌
-// CHECK:STDOUT:   │ │   ├─InvalidParse ':' ❌
-// CHECK:STDOUT:   │ │ ╭─ArrayExpr ')' ❌
+// CHECK:STDOUT:   │ │   ├─InvalidParse ':' has_error
+// CHECK:STDOUT:   │ │   ├─ArrayExprComma ':' has_error
+// CHECK:STDOUT:   │ │   ├─InvalidParse ':' has_error
+// CHECK:STDOUT:   │ │ ╭─ArrayExpr ')' has_error
 // CHECK:STDOUT:   │ ├─ReturnType '->'
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
@@ -167,10 +167,10 @@ var x: array;
 // CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ╭─ArrayExprKeyword 'array'
 // CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen '('
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse '`' ❌
-// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma '`' ❌
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse '`' ❌
-// CHECK:STDOUT:   │ │   ├─ArrayExpr ')' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse '`' has_error
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma '`' has_error
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse '`' has_error
+// CHECK:STDOUT:   │ │   ├─ArrayExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   ├─VariableDecl ';'
@@ -182,11 +182,11 @@ var x: array;
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ╭─ArrayExprKeyword 'array'
-// CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen 'array' ❌
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen 'array' has_error
 // CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │   │ ├─ArrayExprComma ','
 // CHECK:STDOUT:   │ │   │ ├─IntLiteral '1'
-// CHECK:STDOUT:   │ │   ├─ArrayExpr 'array' ❌
+// CHECK:STDOUT:   │ │   ├─ArrayExpr 'array' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   ├─VariableDecl ';'
@@ -198,14 +198,14 @@ var x: array;
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ╭─ArrayExprKeyword 'array'
-// CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen 'array' ❌
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse '(' ❌
-// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma '(' ❌
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse '(' ❌
-// CHECK:STDOUT:   │ │   ├─ArrayExpr 'array' ❌
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen 'array' has_error
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma '(' has_error
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   │ │   ├─ArrayExpr 'array' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
-// CHECK:STDOUT:   ├─VariableDecl ';' ❌
+// CHECK:STDOUT:   ├─VariableDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_no_length.carbon
@@ -217,8 +217,8 @@ var x: array;
 // CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen '('
 // CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │   │ ├─ArrayExprComma ','
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' ❌
-// CHECK:STDOUT:   │ │   ├─ArrayExpr ')' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │   ├─ArrayExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   ├─VariableDecl ';'
@@ -231,10 +231,10 @@ var x: array;
 // CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ╭─ArrayExprKeyword 'array'
 // CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen '('
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' ❌
-// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma ')' ❌
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' ❌
-// CHECK:STDOUT:   │ │   ├─ArrayExpr ')' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma ')' has_error
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │   ├─ArrayExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   ├─VariableDecl ';'
@@ -246,11 +246,11 @@ var x: array;
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ╭─ArrayExprKeyword 'array'
-// CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen 'array' ❌
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma ';' ❌
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ │   ├─ArrayExpr 'array' ❌
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen 'array' has_error
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma ';' has_error
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │   ├─ArrayExpr 'array' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   ├─VariableDecl ';'

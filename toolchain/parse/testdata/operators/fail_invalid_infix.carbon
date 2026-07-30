@@ -38,8 +38,8 @@ var c: i32 = == ;
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='
 // CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'n'
-// CHECK:STDOUT:   │ │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ ├─InfixOperatorEqualEqual '==' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ ├─InfixOperatorEqualEqual '==' has_error
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'b'
@@ -48,9 +48,9 @@ var c: i32 = == ;
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='
-// CHECK:STDOUT:   │ │ ╭─InvalidParse '==' ❌
+// CHECK:STDOUT:   │ │ ╭─InvalidParse '==' has_error
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'n'
-// CHECK:STDOUT:   │ ├─InfixOperatorEqualEqual '==' ❌
+// CHECK:STDOUT:   │ ├─InfixOperatorEqualEqual '==' has_error
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'c'
@@ -59,9 +59,9 @@ var c: i32 = == ;
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='
-// CHECK:STDOUT:   │ │ ╭─InvalidParse '==' ❌
-// CHECK:STDOUT:   │ │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ ├─InfixOperatorEqualEqual '==' ❌
+// CHECK:STDOUT:   │ │ ╭─InvalidParse '==' has_error
+// CHECK:STDOUT:   │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ ├─InfixOperatorEqualEqual '==' has_error
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

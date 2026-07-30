@@ -53,29 +53,29 @@ fn foo(ref template a: i32);
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'a'
 // CHECK:STDOUT:   │ │ │ ╭─TemplateBindingName 'template'
-// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':' ❌
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'foo'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'a'
 // CHECK:STDOUT:   │ │ │ ╭─TemplateBindingName 'template'
-// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':' ❌
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'foo'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'template' ❌
-// CHECK:STDOUT:   │ │ │ ├─InvalidParse 'template' ❌
-// CHECK:STDOUT:   │ │ │ ├─InvalidParse 'template' ❌
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'ref' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'template' has_error
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse 'template' has_error
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse 'template' has_error
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'ref' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

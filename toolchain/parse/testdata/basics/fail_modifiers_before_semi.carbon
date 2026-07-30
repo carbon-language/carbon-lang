@@ -16,9 +16,9 @@ protected virtual;
 
 // CHECK:STDOUT: - filename: fail_modifiers_before_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
-// CHECK:STDOUT:   │ ╭─InvalidParseStart ';' ❌
+// CHECK:STDOUT:   │ ╭─InvalidParseStart ';' has_error
 // CHECK:STDOUT:   │ ├─ProtectedModifier 'protected'
 // CHECK:STDOUT:   │ ├─VirtualModifier 'virtual'
-// CHECK:STDOUT:   ├─InvalidParseSubtree ';' ❌
+// CHECK:STDOUT:   ├─InvalidParseSubtree ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -85,7 +85,7 @@ extern library "foo" fn G() {}
 // CHECK:STDOUT: - filename: fail_name_missing.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ │   ╭─LibraryName 'fn' ❌
+// CHECK:STDOUT:   │ │   ╭─LibraryName 'fn' has_error
 // CHECK:STDOUT:   │ │ ╭─LibrarySpecifier 'library'
 // CHECK:STDOUT:   │ ├─ExternModifierWithLibrary 'extern'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'G'
@@ -96,11 +96,11 @@ extern library "foo" fn G() {}
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_identifier.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
-// CHECK:STDOUT:   │ ╭─InvalidParseStart 'foo' ❌
-// CHECK:STDOUT:   │ │   ╭─LibraryName 'foo' ❌
+// CHECK:STDOUT:   │ ╭─InvalidParseStart 'foo' has_error
+// CHECK:STDOUT:   │ │   ╭─LibraryName 'foo' has_error
 // CHECK:STDOUT:   │ │ ╭─LibrarySpecifier 'library'
 // CHECK:STDOUT:   │ ├─ExternModifierWithLibrary 'extern'
-// CHECK:STDOUT:   ├─InvalidParseSubtree ';' ❌
+// CHECK:STDOUT:   ├─InvalidParseSubtree ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: extern_def.carbon

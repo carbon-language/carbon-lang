@@ -45,10 +45,10 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │ │ │     │ ╭─MatchCaseGuardIntroducer 'if'
 // CHECK:STDOUT:   │ │ │     │ ├─MatchCaseGuardStart '('
 // CHECK:STDOUT:   │ │ │     │ ├─BoolLiteralFalse 'false'
-// CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard '=>' ❌
-// CHECK:STDOUT:   │ │ │   ╭─MatchCase '}' ❌
-// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart '}' ❌
-// CHECK:STDOUT:   │ │ ├─MatchHandler '}' ❌
+// CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard '=>' has_error
+// CHECK:STDOUT:   │ │ │   ╭─MatchCase '}' has_error
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart '}' has_error
+// CHECK:STDOUT:   │ │ ├─MatchHandler '}' has_error
 // CHECK:STDOUT:   │ ├─MatchStatement '}'
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '0'

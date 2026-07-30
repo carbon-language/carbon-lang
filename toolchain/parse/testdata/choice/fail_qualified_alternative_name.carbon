@@ -22,6 +22,6 @@ choice X {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'X'
 // CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart '{'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'A'
-// CHECK:STDOUT:   ├─ChoiceDefinition '}' ❌
+// CHECK:STDOUT:   ├─ChoiceDefinition '}' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

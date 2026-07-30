@@ -17,7 +17,7 @@ let;
 // CHECK:STDOUT: - filename: fail_empty.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
-// CHECK:STDOUT:   │ ├─InvalidParse ';' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse ';' has_error
 // CHECK:STDOUT:   ├─LetDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

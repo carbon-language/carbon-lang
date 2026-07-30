@@ -109,13 +109,13 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:   │ │       ╭─ShortCircuitOperandAnd 'and'
 // CHECK:STDOUT:   │ │       ├─IdentifierNameExpr 'T'
 // CHECK:STDOUT:   │ │     ╭─ShortCircuitOperatorAnd 'and'
-// CHECK:STDOUT:   │ │   ╭─WhereOperand 'where' ❌
+// CHECK:STDOUT:   │ │   ╭─WhereOperand 'where' has_error
 // CHECK:STDOUT:   │ │   │   ╭─IdentifierNameNotBeforeSignature 'A'
 // CHECK:STDOUT:   │ │   │ ╭─DesignatorExpr '.'
 // CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'B'
 // CHECK:STDOUT:   │ │   ├─RequirementEqual '='
-// CHECK:STDOUT:   │ │ ╭─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ │ ╭─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -133,7 +133,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'D'
 // CHECK:STDOUT:   │ │   ├─RequirementImpls 'impls'
 // CHECK:STDOUT:   │ │ ╭─WhereExpr 'where'
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -147,13 +147,13 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:   │ │       ╭─IdentifierNameExpr 'e'
 // CHECK:STDOUT:   │ │       ├─IdentifierNameExpr 'V'
 // CHECK:STDOUT:   │ │     ╭─InfixOperatorEqualEqual '=='
-// CHECK:STDOUT:   │ │   ╭─WhereOperand 'where' ❌
+// CHECK:STDOUT:   │ │   ╭─WhereOperand 'where' has_error
 // CHECK:STDOUT:   │ │   │   ╭─IdentifierNameNotBeforeSignature 'G'
 // CHECK:STDOUT:   │ │   │ ╭─DesignatorExpr '.'
 // CHECK:STDOUT:   │ │   │ ├─FloatTypeLiteral 'f32'
 // CHECK:STDOUT:   │ │   ├─RequirementEqualEqual '=='
-// CHECK:STDOUT:   │ │ ╭─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ │ ╭─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -171,7 +171,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:   │ │   │ ├─BoolTypeLiteral 'bool'
 // CHECK:STDOUT:   │ │   ├─RequirementEqual '='
 // CHECK:STDOUT:   │ │ ╭─WhereExpr 'where'
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -186,8 +186,8 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:   │ │   ╭─WhereOperand 'where'
 // CHECK:STDOUT:   │ │   │ ╭─IdentifierNameNotBeforeSignature 'J'
 // CHECK:STDOUT:   │ │   ├─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ ╭─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ │ ╭─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -201,13 +201,13 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:   │ │       ╭─IdentifierNameExpr 'Y'
 // CHECK:STDOUT:   │ │       ├─IdentifierNameExpr 'Z'
 // CHECK:STDOUT:   │ │     ╭─InfixOperatorAs 'as'
-// CHECK:STDOUT:   │ │   ╭─WhereOperand 'where' ❌
+// CHECK:STDOUT:   │ │   ╭─WhereOperand 'where' has_error
 // CHECK:STDOUT:   │ │   │   ╭─IdentifierNameNotBeforeSignature 'L'
 // CHECK:STDOUT:   │ │   │ ╭─DesignatorExpr '.'
 // CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'M'
 // CHECK:STDOUT:   │ │   ├─RequirementImpls 'impls'
-// CHECK:STDOUT:   │ │ ╭─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ │ ╭─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -225,7 +225,7 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │   ├─RequirementEqualEqual '=='
 // CHECK:STDOUT:   │ │ ╭─WhereExpr 'where'
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -240,8 +240,8 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:   │ │   ╭─WhereOperand 'where'
 // CHECK:STDOUT:   │ │   │ ╭─IdentifierNameNotBeforeSignature 'O'
 // CHECK:STDOUT:   │ │   ├─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ ╭─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ │ ╭─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -256,8 +256,8 @@ fn GreaterInArgument() {
 // CHECK:STDOUT:   │ │   ╭─WhereOperand 'where'
 // CHECK:STDOUT:   │ │   │ ╭─IdentifierNameNotBeforeSignature 'AA'
 // CHECK:STDOUT:   │ │   ├─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ ╭─WhereExpr 'where' ❌
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ │ ╭─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

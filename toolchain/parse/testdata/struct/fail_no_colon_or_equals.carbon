@@ -22,8 +22,8 @@ var x: {.a} = {};
 // CHECK:STDOUT:   │ │   │ ╭─StructLiteralStart '{'
 // CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature 'a'
 // CHECK:STDOUT:   │ │   │ ├─StructFieldDesignator '.'
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse '.' ❌
-// CHECK:STDOUT:   │ │   ├─StructLiteral '}' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse '.' has_error
+// CHECK:STDOUT:   │ │   ├─StructLiteral '}' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='

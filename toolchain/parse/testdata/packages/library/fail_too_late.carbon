@@ -25,6 +25,6 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Geometry'
 // CHECK:STDOUT:   ├─ImportDecl ';'
 // CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
-// CHECK:STDOUT:   ├─LibraryDecl ';' ❌
+// CHECK:STDOUT:   ├─LibraryDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

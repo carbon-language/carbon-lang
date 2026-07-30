@@ -20,8 +20,8 @@ var x: {a:} = {};
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ╭─StructLiteralStart '{'
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse 'a' ❌
-// CHECK:STDOUT:   │ │   ├─StructLiteral '}' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse 'a' has_error
+// CHECK:STDOUT:   │ │   ├─StructLiteral '}' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='

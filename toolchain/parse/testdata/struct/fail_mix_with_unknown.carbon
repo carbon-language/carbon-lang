@@ -45,12 +45,12 @@ var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDOUT:   │ │ ├─StructLiteralComma ','
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'b'
 // CHECK:STDOUT:   │ │ ├─StructFieldDesignator '.'
-// CHECK:STDOUT:   │ │ ├─InvalidParse '.' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse '.' has_error
 // CHECK:STDOUT:   │ │ ├─StructLiteralComma ','
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'c'
 // CHECK:STDOUT:   │ │ ├─StructFieldDesignator '.'
-// CHECK:STDOUT:   │ │ ├─InvalidParse '.' ❌
-// CHECK:STDOUT:   │ ├─StructLiteral '}' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse '.' has_error
+// CHECK:STDOUT:   │ ├─StructLiteral '}' has_error
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
@@ -67,12 +67,12 @@ var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDOUT:   │ │ ├─StructTypeLiteralComma ','
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'b'
 // CHECK:STDOUT:   │ │ ├─StructFieldDesignator '.'
-// CHECK:STDOUT:   │ │ ├─InvalidParse '.' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse '.' has_error
 // CHECK:STDOUT:   │ │ ├─StructTypeLiteralComma ','
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'c'
 // CHECK:STDOUT:   │ │ ├─StructFieldDesignator '.'
-// CHECK:STDOUT:   │ │ ├─InvalidParse '.' ❌
-// CHECK:STDOUT:   │ ├─StructTypeLiteral '}' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse '.' has_error
+// CHECK:STDOUT:   │ ├─StructTypeLiteral '}' has_error
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

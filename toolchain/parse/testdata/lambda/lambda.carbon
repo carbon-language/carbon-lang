@@ -133,15 +133,15 @@ fn G() {
 // CHECK:STDOUT:   │ ╭─RequireIntroducer 'require'
 // CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'j'
 // CHECK:STDOUT:   │ │ │   ╭─LambdaIntroducer 'fn'
-// CHECK:STDOUT:   │ │ │   │   ╭─InvalidParse '>' ❌
-// CHECK:STDOUT:   │ │ │   │   ├─InvalidParse '' ❌
-// CHECK:STDOUT:   │ │ │   │ ╭─InfixOperatorGreater '>' ❌
+// CHECK:STDOUT:   │ │ │   │   ╭─InvalidParse '>' has_error
+// CHECK:STDOUT:   │ │ │   │   ├─InvalidParse '' has_error
+// CHECK:STDOUT:   │ │ │   │ ╭─InfixOperatorGreater '>' has_error
 // CHECK:STDOUT:   │ │ │   ├─ReturnType '->'
-// CHECK:STDOUT:   │ │ │   ├─InvalidParse '' ❌
-// CHECK:STDOUT:   │ │ │ ╭─Lambda 'fn' ❌
+// CHECK:STDOUT:   │ │ │   ├─InvalidParse '' has_error
+// CHECK:STDOUT:   │ │ │ ╭─Lambda 'fn' has_error
 // CHECK:STDOUT:   │ │ ├─PrefixOperatorMinus '-'
 // CHECK:STDOUT:   │ ├─InfixOperatorPercent '%'
-// CHECK:STDOUT:   ├─RequireDecl '>' ❌
+// CHECK:STDOUT:   ├─RequireDecl '>' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_expected_body.carbon
@@ -159,8 +159,8 @@ fn G() {
 // CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ │ ├─VariableInitializer '='
 // CHECK:STDOUT:   │ │ │ ╭─LambdaIntroducer 'fn'
-// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ │ ├─Lambda 'fn' ❌
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ├─Lambda 'fn' has_error
 // CHECK:STDOUT:   │ ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
@@ -182,8 +182,8 @@ fn G() {
 // CHECK:STDOUT:   │ │ │ ╭─LambdaIntroducer 'fn'
 // CHECK:STDOUT:   │ │ │ │ ╭─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │ │ ├─ReturnType '->'
-// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ │ ├─Lambda 'fn' ❌
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ├─Lambda 'fn' has_error
 // CHECK:STDOUT:   │ ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

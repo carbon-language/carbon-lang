@@ -24,7 +24,7 @@ choice MissingDefinition(T: type);
 // CHECK:STDOUT:   │   │ │ ├─TypeTypeLiteral 'type'
 // CHECK:STDOUT:   │   │ ├─CompileTimeBindingPattern ':'
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
-// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart ';' ❌
-// CHECK:STDOUT:   ├─ChoiceDefinition ';' ❌
+// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart ';' has_error
+// CHECK:STDOUT:   ├─ChoiceDefinition ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

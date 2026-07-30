@@ -24,11 +24,11 @@ var x: i32 = {.7 = 8};
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature '7' ❌
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature '7' has_error
 // CHECK:STDOUT:   │ │ ├─StructFieldDesignator '.'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '8'
-// CHECK:STDOUT:   │ │ ├─InvalidParse '=' ❌
-// CHECK:STDOUT:   │ ├─StructLiteral '}' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse '=' has_error
+// CHECK:STDOUT:   │ ├─StructLiteral '}' has_error
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

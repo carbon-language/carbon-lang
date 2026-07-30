@@ -25,6 +25,6 @@ package B;
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'A'
 // CHECK:STDOUT:   ├─ImportDecl ';'
 // CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
-// CHECK:STDOUT:   ├─PackageDecl ';' ❌
+// CHECK:STDOUT:   ├─PackageDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -30,9 +30,9 @@ fn F() {
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'a'
-// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature ';' ❌
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature ';' has_error
 // CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'a'
 // CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'fn'
 // CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'

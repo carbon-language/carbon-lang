@@ -33,7 +33,7 @@ var x: {.a: i32} = {.a = 0 banana};
 // CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
 // CHECK:STDOUT:   │ │ │ ├─IntLiteral '0'
 // CHECK:STDOUT:   │ │ ├─StructLiteralField '='
-// CHECK:STDOUT:   │ ├─StructLiteral '}' ❌
+// CHECK:STDOUT:   │ ├─StructLiteral '}' has_error
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

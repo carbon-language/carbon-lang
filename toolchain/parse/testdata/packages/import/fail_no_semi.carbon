@@ -18,6 +18,6 @@ import Geometry
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Geometry'
-// CHECK:STDOUT:   ├─ImportDecl 'Geometry' ❌
+// CHECK:STDOUT:   ├─ImportDecl 'Geometry' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

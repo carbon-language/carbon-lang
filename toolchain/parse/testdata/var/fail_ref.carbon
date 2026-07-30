@@ -18,11 +18,11 @@ var ref x: i32 = 0;
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
 // CHECK:STDOUT:   │ │     ╭─IdentifierNameNotBeforeSignature 'x'
-// CHECK:STDOUT:   │ │   ╭─RefBindingName 'ref' ❌
-// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':' ❌
+// CHECK:STDOUT:   │ │   ╭─RefBindingName 'ref' has_error
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':' ❌
-// CHECK:STDOUT:   │ ├─VariablePattern 'var' ❌
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─VariablePattern 'var' has_error
 // CHECK:STDOUT:   │ ├─VariableInitializer '='
 // CHECK:STDOUT:   │ ├─IntLiteral '0'
 // CHECK:STDOUT:   ├─VariableDecl ';'

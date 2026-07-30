@@ -30,8 +30,8 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │ │   │ ╭─MatchConditionStart '('
 // CHECK:STDOUT:   │ │   │ ├─IntLiteral '1'
 // CHECK:STDOUT:   │ │   ├─MatchCondition ')'
-// CHECK:STDOUT:   │ │ ╭─MatchStatementStart 'return' ❌
-// CHECK:STDOUT:   │ ├─MatchStatement 'return' ❌
+// CHECK:STDOUT:   │ │ ╭─MatchStatementStart 'return' has_error
+// CHECK:STDOUT:   │ ├─MatchStatement 'return' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

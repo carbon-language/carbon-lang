@@ -135,28 +135,28 @@ fn F() {
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '1'
-// CHECK:STDOUT:   │ ├─AdaptDecl ';' ❌
+// CHECK:STDOUT:   │ ├─AdaptDecl ';' has_error
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'B'
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
-// CHECK:STDOUT:   │ │ ├─InvalidParse ';' ❌
-// CHECK:STDOUT:   │ ├─AdaptDecl ';' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ ├─AdaptDecl ';' has_error
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
-// CHECK:STDOUT:   │ │ ├─InvalidParse '}' ❌
-// CHECK:STDOUT:   │ ├─AdaptDecl 'adapt' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse '}' has_error
+// CHECK:STDOUT:   │ ├─AdaptDecl 'adapt' has_error
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'D'
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
-// CHECK:STDOUT:   │ │ ├─InvalidParse 'class' ❌
-// CHECK:STDOUT:   │ ├─AdaptDecl ';' ❌
+// CHECK:STDOUT:   │ │ ├─InvalidParse 'class' has_error
+// CHECK:STDOUT:   │ ├─AdaptDecl ';' has_error
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'

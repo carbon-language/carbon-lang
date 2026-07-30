@@ -80,8 +80,8 @@ var unused (unused y: i32) = (0,);
 
 // CHECK:STDOUT: - filename: fail_unused_does_not_start_declaration.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
-// CHECK:STDOUT:   │ ╭─InvalidParseStart 'unused' ❌
-// CHECK:STDOUT:   ├─InvalidParseSubtree ';' ❌
+// CHECK:STDOUT:   │ ╭─InvalidParseStart 'unused' has_error
+// CHECK:STDOUT:   ├─InvalidParseSubtree ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: let_var_unused.carbon
@@ -450,11 +450,11 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
 // CHECK:STDOUT:   │ │ │     ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │ │   ╭─RefBindingName 'ref'
-// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':' ❌
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │ │   ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │ ╭─LetBindingPattern ':' ❌
-// CHECK:STDOUT:   │ │ ├─UnusedPattern 'unused' ❌
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')' ❌
+// CHECK:STDOUT:   │ │ │ ╭─LetBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ ├─UnusedPattern 'unused' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

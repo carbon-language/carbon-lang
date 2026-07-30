@@ -67,50 +67,50 @@ fn F() {
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'x'
 // CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' ❌
-// CHECK:STDOUT:   │ │   ├─ParenExpr ')' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'y'
 // CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
 // CHECK:STDOUT:   │ │   │ ├─IntLiteral '1'
-// CHECK:STDOUT:   │ │   ├─ParenExpr ')' ❌
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'z'
 // CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
 // CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'a'
-// CHECK:STDOUT:   │ │   ├─ParenExpr ')' ❌
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'w'
 // CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
 // CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'c'
-// CHECK:STDOUT:   │ │   ├─ParenExpr ')' ❌
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'v'
 // CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' ❌
-// CHECK:STDOUT:   │ │   ├─ParenExpr ')' ❌
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─PointerMemberAccessExpr '->'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'u'
 // CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
 // CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'f'
-// CHECK:STDOUT:   │ │   ├─ParenExpr ')' ❌
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─PointerMemberAccessExpr '->'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 't'
 // CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
 // CHECK:STDOUT:   │ │   │ ├─IntLiteral '2'
-// CHECK:STDOUT:   │ │   ├─ParenExpr ')' ❌
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─PointerMemberAccessExpr '->'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 's'
 // CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
 // CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'g'
-// CHECK:STDOUT:   │ │   ├─ParenExpr ')' ❌
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─PointerMemberAccessExpr '->'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'

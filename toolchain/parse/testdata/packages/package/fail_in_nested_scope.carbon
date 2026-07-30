@@ -64,7 +64,7 @@ fn F() {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─PackageIntroducer 'package'
-// CHECK:STDOUT:   │ ├─PackageDecl ';' ❌
+// CHECK:STDOUT:   │ ├─PackageDecl ';' has_error
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
@@ -72,7 +72,7 @@ fn F() {
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─PackageExpr 'package'
-// CHECK:STDOUT:   │ ├─ExprStatement ';' ❌
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
 // CHECK:STDOUT:   │ │   ╭─PackageExpr 'package'
 // CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'P'
 // CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
@@ -83,7 +83,7 @@ fn F() {
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─PackageIntroducer 'package'
 // CHECK:STDOUT:   │ │ ├─ImplModifier 'impl'
-// CHECK:STDOUT:   │ ├─PackageDecl ';' ❌
+// CHECK:STDOUT:   │ ├─PackageDecl ';' has_error
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
@@ -92,7 +92,7 @@ fn F() {
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─PackageIntroducer 'package'
 // CHECK:STDOUT:   │ │ ├─ImplModifier 'impl'
-// CHECK:STDOUT:   │ ├─PackageDecl ';' ❌
+// CHECK:STDOUT:   │ ├─PackageDecl ';' has_error
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

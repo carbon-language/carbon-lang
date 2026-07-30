@@ -24,9 +24,9 @@ interface Foo
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─InterfaceIntroducer 'interface'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Bar'
-// CHECK:STDOUT:   ├─InterfaceDecl '}' ❌
+// CHECK:STDOUT:   ├─InterfaceDecl '}' has_error
 // CHECK:STDOUT:   │ ╭─InterfaceIntroducer 'interface'
 // CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Foo'
-// CHECK:STDOUT:   ├─InterfaceDecl 'Foo' ❌
+// CHECK:STDOUT:   ├─InterfaceDecl 'Foo' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

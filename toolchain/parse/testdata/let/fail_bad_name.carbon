@@ -17,7 +17,7 @@ let ? = 4;
 // CHECK:STDOUT: - filename: fail_bad_name.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
-// CHECK:STDOUT:   │ ├─InvalidParse '?' ❌
+// CHECK:STDOUT:   │ ├─InvalidParse '?' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ ├─IntLiteral '4'
 // CHECK:STDOUT:   ├─LetDecl ';'

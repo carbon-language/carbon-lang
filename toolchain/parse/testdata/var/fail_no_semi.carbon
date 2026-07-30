@@ -21,8 +21,8 @@ var
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
-// CHECK:STDOUT:   │ │ ╭─InvalidParse '' ❌
-// CHECK:STDOUT:   │ ├─VariablePattern 'var' ❌
-// CHECK:STDOUT:   ├─VariableDecl 'var' ❌
+// CHECK:STDOUT:   │ │ ╭─InvalidParse '' has_error
+// CHECK:STDOUT:   │ ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   ├─VariableDecl 'var' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

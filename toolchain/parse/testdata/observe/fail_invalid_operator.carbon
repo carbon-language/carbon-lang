@@ -18,6 +18,6 @@ observe T = U impls I;
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─ObserveIntroducer 'observe'
 // CHECK:STDOUT:   │ ├─IdentifierNameExpr 'T'
-// CHECK:STDOUT:   ├─ObserveDecl ';' ❌
+// CHECK:STDOUT:   ├─ObserveDecl ';' has_error
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
