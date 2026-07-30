@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Go](#go)
 -   [Proposal](#proposal)
 -   [Details](#details)
+    -   [Conversions](#conversions)
     -   [Usage Example](#usage-example)
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
@@ -128,9 +129,26 @@ impl forall [T:! type, Subscript: ImplicitAs(u64)]
   }
 }
 
-
-
 impl forall [T:! type] Slice(T) as UnformedInit {}
+```
+
+### Conversions
+
+An array type `[T; N]` (written as `array(T, N)` in the prelude) can be implicitly converted to a `Slice(T)` (written as `slice(T)`). The resulting slice points to the first element of the array and has a size of `N`.
+
+This conversion is valid if the elements of the array are compatible with the elements of the slice.
+
+This allows passing an array directly to a function taking a slice:
+
+```carbon
+fn PrintSlice(s: slice(i32));
+
+fn Main() -> i32 {
+  var data: array(i32, 5) = (1, 2, 3, 4, 5);
+  // Implicit conversion from Array to Slice:
+  PrintSlice(data);
+  return 0;
+}
 ```
 
 ### Usage Example
@@ -148,7 +166,7 @@ fn PrintSlice(s: slice(i32)) {
 
 fn Main() -> i32 {
   var data: array(i32, 5) = (1, 2, 3, 4, 5);
-  var s: slice(i32) = slice(i32).Make(&data[0], 5);
+  var s: slice(i32) = data;
   PrintSlice(s);
   return 0;
 }
