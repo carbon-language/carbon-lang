@@ -139,7 +139,7 @@ struct Class : public EntityWithParamsBase,
   auto GetObjectRepr(const File& file, SpecificId specific_id) const -> TypeId;
 
   // Get the `StructTypeField`s from a class's object repr.
-  auto GetStructTypeFields(const File& sem_ir) const
+  auto GetStructTypeFields(const File& sem_ir, SpecificId specific_id) const
       -> llvm::ArrayRef<SemIR::StructTypeField>;
 };
 
