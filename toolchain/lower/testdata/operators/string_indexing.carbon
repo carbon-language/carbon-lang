@@ -52,17 +52,17 @@ fn F2(index: i64) -> char {
 // CHECK:STDOUT: !1 = !DIFile(filename: "string_indexing.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !1, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !1, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7}
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_unsigned)
-// CHECK:STDOUT: !8 = !DILocation(line: 15, column: 5, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F2", linkageName: "_CF2.Main", scope: null, file: !1, line: 18, type: !10, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !13)
+// CHECK:STDOUT: !8 = !DILocation(line: 23, column: 5, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F2", linkageName: "_CF2.Main", scope: null, file: !1, line: 26, type: !10, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !13)
 // CHECK:STDOUT: !10 = !DISubroutineType(types: !11)
 // CHECK:STDOUT: !11 = !{!7, !12}
 // CHECK:STDOUT: !12 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !13 = !{!14}
 // CHECK:STDOUT: !14 = !DILocalVariable(arg: 1, scope: !9, type: !12)
-// CHECK:STDOUT: !15 = !DILocation(line: 19, column: 19, scope: !9)
-// CHECK:STDOUT: !16 = !DILocation(line: 20, column: 5, scope: !9)
+// CHECK:STDOUT: !15 = !DILocation(line: 27, column: 19, scope: !9)
+// CHECK:STDOUT: !16 = !DILocation(line: 28, column: 5, scope: !9)
 // CHECK:STDOUT:

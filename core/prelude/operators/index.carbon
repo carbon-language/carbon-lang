@@ -4,6 +4,8 @@
 
 package Core library "prelude/operators/index";
 
+export import library "prelude/copy";
+
 interface IndexWith(SubscriptType: type) {
   let ElementType: type;
   fn At(self, subscript: SubscriptType) -> ElementType;
@@ -11,5 +13,16 @@ interface IndexWith(SubscriptType: type) {
 
 interface IndirectIndexWith(SubscriptType: type) {
   let ElementType: type;
-  fn Addr[me: Self](subscript: SubscriptType) -> ElementType*;
+  fn Addr(self, subscript: SubscriptType) -> ElementType*;
+}
+
+final impl forall [
+        SubscriptType: type,
+        T: IndirectIndexWith(SubscriptType)
+        where .ElementType impls Copy
+    ] T as IndexWith(SubscriptType)
+        where .ElementType = T.ElementType {
+  fn At(self, subscript: SubscriptType) -> ElementType {
+    return *self.Addr(subscript);
+  }
 }
