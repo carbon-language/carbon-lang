@@ -111,6 +111,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %impl.elem1.4a6: %Destroy.type = impl_witness_access %.327, element1 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.188: %facet_type.f48 = impl_witness_access %.327, element0 [symbolic_self]
 // CHECK:STDOUT:   %Iterate_where.type.131: type = facet_type <@Iterate where %impl.elem1.4a6 = %Destroy.facet.7bb and %impl.elem0.188 = %facet_value> [symbolic]
+// CHECK:STDOUT:   %.84c: <witness> = impl_self_witness %IntRange.2c4, @Iterate [symbolic]
 // CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.as.Iterate.impl.%Iterate.impl_witness_table, @IntRange.as.Iterate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %self.param_patt.5cc: %pattern_type.1ea = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.13b: %pattern_type.1ea = at_binding_pattern self, %self.param_patt.5cc [symbolic]
@@ -329,6 +330,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc9_54.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.df6)]
 // CHECK:STDOUT:   %facet_value.loc9_85.1: %facet_type.f48 = facet_value %Int.loc9_54.1, (%Destroy.lookup_impl_witness, %Copy.lookup_impl_witness) [symbolic = %facet_value.loc9_85.1 (constants.%facet_value)]
 // CHECK:STDOUT:   %Iterate_where.type: type = facet_type <@Iterate where constants.%impl.elem1.4a6 = %Destroy.facet.loc9_54.1 and constants.%impl.elem0.188 = %facet_value.loc9_85.1> [symbolic = %Iterate_where.type (constants.%Iterate_where.type.131)]
+// CHECK:STDOUT:   %.loc9_87: <witness> = impl_self_witness %IntRange, @Iterate [symbolic = %.loc9_87 (constants.%.84c)]
 // CHECK:STDOUT:   %Iterate.impl_witness.loc9_87.2: <witness> = impl_witness %Iterate.impl_witness_table, @IntRange.as.Iterate.impl(%N) [symbolic = %Iterate.impl_witness.loc9_87.2 (constants.%Iterate.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -496,6 +498,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:         %rewrite.loc9_73.2 = requirement_rewrite %impl.elem0.loc9_60.2, %.loc9_85.2 [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc9: <witness> = impl_self_witness @IntRange.as.Iterate.impl.%Self.ref, @Iterate [symbolic = @IntRange.as.Iterate.impl.%.loc9_87 (constants.%.84c)]
 // CHECK:STDOUT:     %.loc22: @IntRange.%IntRange.elem (%IntRange.elem.bed) = field_decl start, element0 [concrete]
 // CHECK:STDOUT:     %.loc23: @IntRange.%IntRange.elem (%IntRange.elem.bed) = field_decl end, element1 [concrete]
 // CHECK:STDOUT:     %complete_type.loc24_1.1: <witness> = complete_type_witness constants.%struct_type.start.end.d4d [symbolic = %complete_type.loc24_1.2 (constants.%complete_type.aa1)]
@@ -862,6 +865,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.lookup_impl_witness.df6
 // CHECK:STDOUT:   %facet_value.loc9_85.1 => constants.%facet_value
 // CHECK:STDOUT:   %Iterate_where.type => constants.%Iterate_where.type.131
+// CHECK:STDOUT:   %.loc9_87 => constants.%.84c
 // CHECK:STDOUT:   %Iterate.impl_witness.loc9_87.2 => constants.%Iterate.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

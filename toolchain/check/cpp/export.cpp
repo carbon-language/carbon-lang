@@ -825,7 +825,10 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
             SemIR::Function::VirtualModifier::None &&
         target.function.virtual_modifier !=
             SemIR::Function::VirtualModifier::Override);
-    // TODO: Call setIsPureVirtual if VirtualModifier::Abstract is present.
+    if (target.function.virtual_modifier ==
+        SemIR::Function::VirtualModifier::Abstract) {
+      cast<clang::CXXMethodDecl>(thunk_function_decl)->setIsPureVirtual(true);
+    }
   } else {
     thunk_function_decl = clang::FunctionDecl::Create(
         ast_context, target.decl_context, clang_loc, name_info, thunk_qual_type,
@@ -1435,10 +1438,10 @@ auto ExportVarToCpp(Context& context, SemIR::InstId inst_id,
       context.ast_context(), decl_context,
       /*StartLoc=*/clang_loc, /*IdLoc=*/clang_loc, identifier_info, cpp_type,
       /*TInfo=*/nullptr, clang::SC_Extern);
-  context.clang_decls().AddVar(
+  context.clang_decls().Add(
       {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(var_decl),
-       .inst_id = inst_id},
-      var_storage.pattern_id);
+       .inst_id = var_storage.pattern_id,
+       .var_storage_inst_id = inst_id});
 
   if (scope_inst.Is<SemIR::ClassDecl>()) {
     SetCppClassMemberAccess(name_scope, entity_name.name_id, var_decl);

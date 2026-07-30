@@ -68,6 +68,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %I.WithSelf.F.ec6: %I.WithSelf.F.type.dcc = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0.6c9: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.F.decl [concrete]
+// CHECK:STDOUT:   %.cb2: <witness> = impl_self_witness bool, @I [concrete]
 // CHECK:STDOUT:   %I.impl_witness.020: <witness> = impl_witness @bool.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet.11c: %I.type = facet_value bool, (%I.impl_witness.020) [concrete]
 // CHECK:STDOUT:   %C.071: type = class_type @C, @C(%I.type, %I.facet.11c) [concrete]
@@ -82,6 +83,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %.2a7: <witness> = impl_self_witness %i32, @I [concrete]
 // CHECK:STDOUT:   %I.impl_witness.903: <witness> = impl_witness @i32.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %X.patt.014: %pattern_type.98f = symbolic_binding_pattern X, 1 [symbolic]
 // CHECK:STDOUT:   %C.8dc: type = class_type @C, @C(type, %i32) [concrete]
@@ -156,10 +158,12 @@ impl i32 as I {
 // CHECK:STDOUT:     %.loc24: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc24: <witness> = impl_self_witness @bool.as.I.impl.%.loc24, @I [concrete = constants.%.cb2]
 // CHECK:STDOUT:   impl_decl @i32.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc31: <witness> = impl_self_witness @i32.as.I.impl.%i32, @I [concrete = constants.%.2a7]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

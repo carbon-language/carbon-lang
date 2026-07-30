@@ -9,6 +9,7 @@
 
 #include "common/hashtable_key_context.h"
 #include "common/ostream.h"
+#include "common/set.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -178,6 +179,16 @@ struct ClangDecl : public Printable<ClangDecl> {
   // The instruction the Clang declaration is mapped to.
   InstId inst_id;
 
+  // The specific the Clang declaration is mapped to.
+  SpecificId specific_id = SpecificId::None;
+
+  // When exporting a `VarStorage`, its `InstId` is needed in some cases, but
+  // its pattern is used as the primary `inst_id`. The pattern provides a more
+  // stable lookup key than the `VarStorage` `InstId`. For example, a call to
+  // `Convert` may cause a new `VarStorage` instruction to be created, but the
+  // pattern will remain the same.
+  InstId var_storage_inst_id = InstId::None;
+
   // True if this declaration originated from C++. False if this declaration was
   // created by exporting some Carbon declaration to C++.
   bool is_imported = false;
@@ -197,26 +208,16 @@ class ClangDeclStore {
   // Adds a `ClangDecl`, returning an ID to reference it.
   auto Add(ClangDecl value) -> ClangDeclId;
 
-  // Same as `Add`, but for `VarStorage` that maps to a `clang::VarDecl`.
-  //
-  // When looking up via `InstId`, the pattern's `InstId` must be used
-  // instead of the `InstId` corresponding to the `VarStorage`. Note however
-  // that the `value.inst_id` is still the `VarStorage` `InstId`.
-  //
-  // The pattern's `InstId` is used because it provides a more stable
-  // lookup key than the `VarStorage` `InstId`. For example, a call to
-  // `Convert` may cause a new `VarStorage` instruction to be created,
-  // but the pattern will remain the same.
-  auto AddVar(ClangDecl value, InstId pattern_id) -> ClangDeclId;
-
   // Looks up a `ClangDecl` by `ClangDeclId`.
   auto Get(ClangDeclId id) const -> const ClangDecl& { return values_.Get(id); }
 
   // Looks up a `ClangDeclId` by `ClangDeclKey`.
   auto LookupId(ClangDeclKey key) const -> ClangDeclId;
 
-  // Looks up a `ClangDecl` by `InstId`. Returns nullptr if not found.
-  auto Lookup(InstId inst_id) const -> const ClangDecl*;
+  // Looks up a `ClangDecl` by `InstId` and optional `SpecificId`. Returns
+  // nullptr if not found.
+  auto Lookup(InstId inst_id, SpecificId specific_id = SpecificId::None) const
+      -> const ClangDecl*;
 
   auto OutputYaml() const -> Yaml::OutputMapping;
 
@@ -224,13 +225,15 @@ class ClangDeclStore {
       -> void;
 
  private:
+  class KeyContext;
+
   // Canonical storage for `ClangDecl`s. Allows mapping from a
   // `ClangDeclId` to an `InstId`.
   CanonicalValueStore<ClangDeclId, ClangDeclKey, Tag<CheckIRId>, ClangDecl>
       values_;
 
-  // Map from `InstId` to `ClangDeclId`.
-  Map<InstId, ClangDeclId> inst_id_to_clang_decl_id_;
+  // Provides lookup by `InstId` and `SpecificId`.
+  Set<ClangDeclId, 0, KeyContext> reverse_lookup_;
 };
 
 // A ClangDeclSignature mapped to an ID.

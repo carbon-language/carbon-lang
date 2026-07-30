@@ -35,6 +35,11 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
   return HandlePatternListStart(context, node_id);
 }
 
+auto HandleParseNode(Context& context, Parse::StructPatternStartId node_id)
+    -> bool {
+  return context.TODO(node_id, "struct pattern start");
+}
+
 auto HandleParseNode(Context& context, Parse::ExplicitParamListStartId node_id)
     -> bool {
   context.full_pattern_stack().StartExplicitParamList();
@@ -127,6 +132,15 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   // pending at the end of handling for a pattern.
   BeginExprRegionForPattern(context);
   return true;
+}
+
+auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
+  return context.TODO(node_id, "struct pattern");
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::StructPatternDesignatedFieldId node_id) -> bool {
+  return context.TODO(node_id, "struct pattern field");
 }
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)

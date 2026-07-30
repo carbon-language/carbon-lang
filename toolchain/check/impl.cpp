@@ -1030,4 +1030,29 @@ auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
   return identified.impl_as_target_interface();
 }
 
+auto GetImplInterfaceInSpecific(Context& context, const SemIR::Impl& impl,
+                                SemIR::SpecificId specific_id)
+    -> SemIR::SpecificInterface {
+  if (!specific_id.has_value()) {
+    CARBON_CHECK(!impl.generic_id.has_value());
+    // The impl is not generic, the specific interface will be concrete.
+    return impl.interface;
+  }
+
+  CARBON_CHECK(context.specifics().Get(specific_id).generic_id ==
+               impl.generic_id);
+  // The `interface_inst_id` is an instruction that contains the impl's target
+  // specific interface. We get its constant value to apply the impl's specific
+  // to that target interface.
+  auto interface_in_specific = SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), specific_id, impl.interface_inst_id);
+  if (interface_in_specific == SemIR::ErrorInst::ConstantId) {
+    return SemIR::SpecificInterface::None;
+  }
+  // The `interface_inst_id` is always an `ImplSelfWitness` at this time.
+  auto inst = context.constant_values().GetInstAs<SemIR::ImplSelfWitness>(
+      interface_in_specific);
+  return context.specific_interfaces().Get(inst.specific_interface_id);
+}
+
 }  // namespace Carbon::Check

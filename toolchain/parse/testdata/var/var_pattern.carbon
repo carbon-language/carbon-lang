@@ -20,6 +20,14 @@ let (x: (), var y: ()) = ((), ());
 
 fn F(x: (), var y: ());
 
+// --- struct.carbon
+
+let {.x = var x: ()} = {.x = ()};
+
+// --- struct_shorthand.carbon
+
+let {var y: ()} = {.y = ()};
+
 // --- fail_nested.carbon
 
 // CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:25: error: `var` nested within another `var` [NestedVar]
@@ -93,6 +101,55 @@ let (x: (), var (y: (), var z: ())) = ((), ((), ()));
 // CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 14},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 17},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: struct.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
+// CHECK:STDOUT:         {kind: 'StructPatternStart', text: '{'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:               {kind: 'BindingPatternTypeStart', text: ':'},
+// CHECK:STDOUT:                 {kind: 'TupleLiteralStart', text: '('},
+// CHECK:STDOUT:               {kind: 'TupleLiteral', text: ')', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
+// CHECK:STDOUT:           {kind: 'VariablePattern', text: 'var', subtree_size: 6},
+// CHECK:STDOUT:         {kind: 'StructPatternDesignatedField', text: '=', subtree_size: 9},
+// CHECK:STDOUT:       {kind: 'StructPattern', text: '}', subtree_size: 11},
+// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
+// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
+// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 21},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: struct_shorthand.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
+// CHECK:STDOUT:         {kind: 'StructPatternStart', text: '{'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
+// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
+// CHECK:STDOUT:               {kind: 'TupleLiteralStart', text: '('},
+// CHECK:STDOUT:             {kind: 'TupleLiteral', text: ')', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'StructPattern', text: '}', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
+// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
+// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 18},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_nested.carbon
