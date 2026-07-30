@@ -508,11 +508,11 @@ auto CheckParseTrees(
   // Create C++ domains for Cpp imports.
   if (options.share_cpp_ast) {
     // TODO: Remove dependence on properties of the first unit here.
-    if (auto shared_cpp_domain = InitializeCppDomain(
+    if (auto cpp_domain = InitializeCppDomain(
             unit_infos.front().err_tracker,
             unit_infos.front().unit->sem_ir->filename(), fs,
             unit_infos.front().unit->llvm_context, clang_invocation)) {
-      cpp_domains.push_back(std::move(shared_cpp_domain));
+      cpp_domains.push_back(std::move(cpp_domain));
       for (auto& target_info : unit_infos) {
         target_info.cpp_domain = cpp_domains.back().get();
       }
