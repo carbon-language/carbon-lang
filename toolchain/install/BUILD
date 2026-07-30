@@ -567,6 +567,13 @@ cc_library(
 
         # TODO: Remove this once we are building sanitizer runtime libraries.
         "-fno-sanitize=all",
+
+        # While the toolchain is built without exceptions, libc++ internally
+        # must be built with them enabled. It's explicitly allowed to build the
+        # libc++ and libc++abi library implementations with different flags
+        # than the client (our toolchain) uses, even though they both include
+        # the same headers from the libraries.
+        "-fexceptions",
     ],
     hdrs_check = "strict",
     includes = [

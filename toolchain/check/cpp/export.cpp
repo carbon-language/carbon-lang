@@ -273,8 +273,8 @@ static auto CreateInvalidFieldDecl(Context& context,
 auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
   const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
 
-  for (const auto& struct_field :
-       class_info.GetStructTypeFields(context.sem_ir())) {
+  for (const auto& struct_field : class_info.GetStructTypeFields(
+           context.sem_ir(), SemIR::SpecificId::None)) {
     auto class_field = LookupClassFieldByStructField(context.sem_ir(),
                                                      class_scope, struct_field);
     if (!class_field) {
