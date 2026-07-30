@@ -441,7 +441,8 @@ auto ExportAllFieldsToCpp(Context& context,
     // Return early if the field is already exported. Since fields are always
     // exported as a group, this indicates all fields have been exported so
     // there's no need to continue to the rest.
-    if (context.clang_decls().Lookup(class_field->inst_id)) {
+    if (context.clang_decls().Lookup(class_field->inst_id,
+                                     class_type.specific_id)) {
       return;
     }
 
@@ -466,7 +467,9 @@ auto ExportAllFieldsToCpp(Context& context,
 
     // Create and store the `ClangDeclId`.
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(cpp_field_decl);
-    context.clang_decls().Add({.key = key, .inst_id = class_field->inst_id});
+    context.clang_decls().Add({.key = key,
+                               .inst_id = class_field->inst_id,
+                               .specific_id = class_type.specific_id});
   }
 }
 
@@ -486,7 +489,8 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
   ExportAllFieldsToCpp(context, class_type_inst_id);
 
   // Get the exported `clang::FieldDecl`.
-  if (const auto* clang_decl = context.clang_decls().Lookup(field_inst_id)) {
+  if (const auto* clang_decl =
+          context.clang_decls().Lookup(field_inst_id, specific_id)) {
     if (!clang_decl->decl()->isInvalidDecl()) {
       return cast<clang::FieldDecl>(clang_decl->decl());
     }
