@@ -544,6 +544,11 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
                method_decl,
                MakeVirtualFunctionSignature(*context_, method_decl)),
            .inst_id = function.first_decl_id()});
+      // An abstract function has no definition, so it doesn't need a thunk.
+      if (function.virtual_modifier ==
+          SemIR::Function::VirtualModifier::Abstract) {
+        continue;
+      }
       pending_virtual_functions.push_back(
           {.loc_id = SemIR::LocId(vtable_entry_id),
            .function_id = callee_function.function_id,

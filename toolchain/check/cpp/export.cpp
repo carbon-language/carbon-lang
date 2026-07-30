@@ -825,7 +825,10 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
             SemIR::Function::VirtualModifier::None &&
         target.function.virtual_modifier !=
             SemIR::Function::VirtualModifier::Override);
-    // TODO: Call setIsPureVirtual if VirtualModifier::Abstract is present.
+    if (target.function.virtual_modifier ==
+        SemIR::Function::VirtualModifier::Abstract) {
+      cast<clang::CXXMethodDecl>(thunk_function_decl)->setIsPureVirtual(true);
+    }
   } else {
     thunk_function_decl = clang::FunctionDecl::Create(
         ast_context, target.decl_context, clang_loc, name_info, thunk_qual_type,
