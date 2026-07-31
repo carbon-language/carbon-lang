@@ -486,8 +486,7 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
       bool is_virtual = false;
       bool is_base_of_class = true;
       clang::CXXBaseSpecifier base(
-          clang::SourceRange(base_loc, base_loc), is_virtual, is_base_of_class,
-          clang::AS_public,
+          base_loc, is_virtual, is_base_of_class, clang::AS_public,
           context_->ast_context().getTrivialTypeSourceInfo(base_type, base_loc),
           /*EllipsisLoc=*/clang::SourceLocation());
       clang::CXXBaseSpecifier* bases[1] = {&base};
@@ -617,30 +616,96 @@ static auto ParseTopLevelDecls(clang::Parser& parser,
   }
 }
 
-// Injects the C++ code in `buffer` into the Clang preprocessor and parses it
-// as top-level declarations. Returns true on success, false if entering the
-// source file fails.
-static auto InjectAndParse(Context& context,
-                           std::unique_ptr<llvm::MemoryBuffer> buffer) -> bool {
+// Generate a Clang module corresponding to the current Carbon file.
+static auto CreateModuleForFile(CppDomain& domain, const SemIR::File& file)
+    -> clang::Module* {
+  // TODO: Consider creating a parent module to hold all Carbon modules.
+  // Consider naming the module after the package and library rather than using
+  // the filename.
+  auto& module_map = domain.clang_instance()
+                         .getPreprocessor()
+                         .getHeaderSearchInfo()
+                         .getModuleMap();
+  return module_map.createModule(file.filename(), /*Parent=*/nullptr,
+                                 /*IsFramework=*/false, /*IsExplicit=*/true);
+}
+
+// Parse the tokens that have been injected into the preprocessor in the given
+// context.
+static auto ParseInjectedTokens(CppContext& cpp_context) -> void {
+  clang::Sema& sema = cpp_context.sema();
+  clang::Parser& parser = cpp_context.parser();
+  CARBON_CHECK(parser.getCurToken().is(clang::tok::eof));
+  parser.ConsumeToken();
+  ParseTopLevelDecls(parser, sema.getASTConsumer());
+}
+
+// Injects the C++ code in `buffer` into the Clang preprocessor. Returns the
+// file ID of the injected buffer.
+static auto InjectBuffer(CppContext& cpp_context, llvm::StringRef contents,
+                         llvm::StringRef name, clang::SourceLocation import_loc)
+    -> clang::FileID {
+  auto buffer = llvm::MemoryBuffer::getMemBufferCopy(contents, name);
+
+  clang::Preprocessor& preprocessor = cpp_context.sema().getPreprocessor();
+  clang::FileID file_id =
+      preprocessor.getSourceManager().createFileID(std::move(buffer));
+  if (preprocessor.EnterSourceFile(file_id, nullptr, import_loc)) {
+    CARBON_FATAL("Failed to enter buffer");
+  }
+
+  return file_id;
+}
+
+// Injects code to import the given set of headers into Clang and parses it as
+// top-level declarations.
+static auto ParseImports(Context& context,
+                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
+    -> void {
   auto* cpp_context = context.cpp_context();
   CARBON_CHECK(cpp_context);
 
-  clang::Sema& sema = cpp_context->sema();
-  clang::Preprocessor& preprocessor = sema.getPreprocessor();
-  clang::Parser& parser = cpp_context->parser();
+  // Inject the imports-as-#includes buffer.
+  auto file_id = InjectBuffer(*cpp_context,
+                              GenerateCppIncludesHeaderCode(context, imports),
+                              "<shared cpp imports>", clang::SourceLocation());
 
-  clang::FileID file_id =
-      preprocessor.getSourceManager().createFileID(std::move(buffer));
-  if (preprocessor.EnterSourceFile(file_id, nullptr, clang::SourceLocation())) {
-    return false;
+  // Enter the module for this file.
+  auto& preprocessor = cpp_context->sema().getPreprocessor();
+  auto* mod = CreateModuleForFile(cpp_context->domain(), context.sem_ir());
+  auto loc = preprocessor.getSourceManager().getLocForStartOfFile(file_id);
+  preprocessor.EnterSubmodule(mod, loc, /*ForPragma=*/false);
+  preprocessor.EnterAnnotationToken(loc, clang::tok::annot_module_begin, mod);
+
+  ParseInjectedTokens(*cpp_context);
+}
+
+// Leave the current Clang module.
+static auto LeaveModule(Context& context, clang::SourceLocation loc) -> void {
+  CARBON_CHECK(loc.isValid());
+
+  auto* cpp_context = context.cpp_context();
+  CARBON_CHECK(cpp_context);
+
+  auto& preprocessor = cpp_context->sema().getPreprocessor();
+  auto* mod = preprocessor.LeaveSubmodule(/*ForPragma=*/false);
+  CARBON_CHECK(mod);
+
+  // We *should* only need to enter one annotation token, but Clang has some
+  // error recovery where Sema enters and never leaves an additional module if
+  // it sees a `module;` directive in the source. So recover from this by
+  // leaving modules until we find the preprocessor's module.
+  while (true) {
+    auto* sema_mod = cpp_context->sema().getCurrentModule();
+    CARBON_CHECK(sema_mod, "Sema prematurely exited Carbon module");
+
+    preprocessor.EnterAnnotationToken(loc, clang::tok::annot_module_end,
+                                      sema_mod);
+    ParseInjectedTokens(*cpp_context);
+    if (sema_mod == mod) {
+      break;
+    }
   }
-
-  if (parser.getCurToken().is(clang::tok::eof)) {
-    parser.ConsumeToken();
-  }
-  ParseTopLevelDecls(parser, sema.getASTConsumer());
-
-  return true;
 }
 
 namespace {
@@ -783,6 +848,11 @@ auto InitializeCppDomain(
 
   auto& ast = clang_instance->getASTContext();
 
+  // Create an AST reader before we set up our own source. Clang does this
+  // automatically later if we don't do it now, and will overwrite our external
+  // source with its own when it does so.
+  clang_instance->createASTReader();
+
   // Always build a multiplex source, even if there's only one child
   // source. During lowering, the `CarbonExternalASTSource` can no longer be
   // used (because it uses `Check::Context`), so a `ReadOnlyASTSource` is
@@ -857,11 +927,9 @@ auto GenerateAst(Context& context,
   // Map the package scope to the Carbon namespace.
   ast_source->BuildCarbonNamespace();
 
-  // Inject the imports-as-#includes buffer.
-  std::string includes = GenerateCppIncludesHeaderCode(context, imports);
-  auto buffer =
-      llvm::MemoryBuffer::getMemBufferCopy(includes, "<shared cpp imports>");
-  return InjectAndParse(context, std::move(buffer));
+  // Parse the imports-as-#includes buffer.
+  ParseImports(context, imports);
+  return true;
 }
 
 auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
@@ -874,17 +942,30 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
                    context.parse_tree().node_token(loc_id.node_id()),
                    source_code);
 
-  auto buffer = llvm::MemoryBuffer::getMemBufferCopy(code_stream.TakeStr(),
-                                                     "<inline c++>");
   // Clang will have generated a suitable error if this fails. There's nothing
   // more to do here.
-  InjectAndParse(context, std::move(buffer));
+  InjectBuffer(*cpp_context, code_stream.TakeStr(), "<inline c++>",
+               GetCppLocation(context, loc_id));
+  ParseInjectedTokens(*cpp_context);
 }
 
 auto FinishAst(Context& context) -> void {
   if (!context.cpp_context()) {
     return;
   }
+
+  // Leave the module we entered to encapsulate the contents of this Carbon
+  // file.
+  auto end_loc_id =
+      SemIR::LocId(*(context.sem_ir().parse_tree().postorder().end() - 1));
+  // Shuffle the end of file location back by one character to work around a
+  // Clang bug: if we give Clang the end-of-file location, it will replace the
+  // location with the include location without checking whether the file was
+  // actually included, and then crash because it picked an invalid location!
+  // There is always at least one token in a file with a `Cpp` import, so this
+  // location adjustment is safe.
+  LeaveModule(context,
+              GetCppLocation(context, end_loc_id).getLocWithOffset(-1));
 
   // Finalize the per-Context AST fragment. The final ActOnEndOfTranslationUnit
   // call for the CppDomain is performed in FinalizeCppDomain once all files

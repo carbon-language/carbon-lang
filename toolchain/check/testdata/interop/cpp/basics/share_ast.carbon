@@ -33,12 +33,16 @@ fn CallA() -> i32 {
   return Cpp.GetA();
 }
 
-// --- todo_a_leaks.carbon
+// --- fail_a_does_not_leak.carbon
 library "[[@TEST_NAME]]";
 import Cpp;
 
 fn CallLeakedA() -> i32 {
-  // TODO: This should not be found as we have not imported "a.h".
+  // This should not be found as we have not imported "a.h".
+  // CHECK:STDERR: fail_a_does_not_leak.carbon:[[@LINE+4]]:10: error: member name `GetA` not found in `Cpp`
+  // CHECK:STDERR:   return Cpp.GetA();
+  // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR:
   return Cpp.GetA();
 }
 
