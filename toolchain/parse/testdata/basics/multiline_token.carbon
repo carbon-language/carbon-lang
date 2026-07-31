@@ -21,13 +21,12 @@ hello
 '''
 
 // CHECK:STDOUT: - filename: fail_multiline_token.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: ''''
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─InvalidParseStart ''''
 // CHECK:STDOUT: hello
-// CHECK:STDOUT: '''', has_error: yes},
-// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: ''''
+// CHECK:STDOUT: '''' has_error
+// CHECK:STDOUT:   ├─InvalidParseSubtree ''''
 // CHECK:STDOUT: hello
-// CHECK:STDOUT: '''', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT: '''' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -58,6 +58,7 @@ cc_library(
         "//common:hashtable_key_context",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "//common:set",
         "//toolchain/base:canonical_value_store",
         "//toolchain/base:value_store",
         "@llvm-project//clang:ast",
@@ -384,6 +385,8 @@ cc_library(
         "//common:raw_string_ostream",
         "//toolchain/base:kind_switch",
         "@llvm-project//clang:ast",
+        "@llvm-project//clang:codegen",
+        "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],
 )

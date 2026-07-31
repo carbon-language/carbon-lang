@@ -118,9 +118,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-               llvm::LLVMContext* llvm_context,
-               std::shared_ptr<clang::CompilerInvocation> invocation) -> void {
+               CppDomain* domain) -> void {
   if (imports.empty()) {
     // TODO: Consider always having a (non-null) AST even if there are no Cpp
     // imports.
@@ -137,7 +135,7 @@ auto ImportCpp(Context& context,
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
 
-  if (GenerateAst(context, imports, fs, llvm_context, std::move(invocation))) {
+  if (domain && GenerateAst(context, imports, *domain)) {
     name_scope.set_clang_decl_context_id(
         context.clang_decls().Add(
             {.key = SemIR::ClangDeclKey(
@@ -443,7 +441,12 @@ static auto LookupClangDeclInstId(Context& context, SemIR::ClangDeclKey key)
   const auto& clang_decls = context.clang_decls();
   if (auto context_clang_decl_id = clang_decls.LookupId(key);
       context_clang_decl_id.has_value()) {
-    return clang_decls.Get(context_clang_decl_id).inst_id;
+    const auto& clang_decl = clang_decls.Get(context_clang_decl_id);
+    if (clang_decl.var_storage_inst_id.has_value()) {
+      return clang_decl.var_storage_inst_id;
+    } else {
+      return clang_decls.Get(context_clang_decl_id).inst_id;
+    }
   }
   return SemIR::InstId::None;
 }
@@ -2145,10 +2148,10 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   context.imports().push_back(var_storage_inst_id);
 
   // Register the variable so we don't create it again.
-  context.clang_decls().AddVar({.key = SemIR::ClangDeclKey(var_decl),
-                                .inst_id = var_storage_inst_id,
-                                .is_imported = true},
-                               pattern_id);
+  context.clang_decls().Add({.key = SemIR::ClangDeclKey(var_decl),
+                             .inst_id = pattern_id,
+                             .var_storage_inst_id = var_storage_inst_id,
+                             .is_imported = true});
 
   // Inform Clang that the variable has been referenced.
   context.clang_sema().MarkVariableReferenced(GetCppLocation(context, loc_id),

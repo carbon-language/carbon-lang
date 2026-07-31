@@ -665,25 +665,9 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
     // Set a placeholder value as the decl block ID so we won't attempt to
     // recursively resolve the same specific.
     specific.decl_block_id = SemIR::InstBlockId::Empty;
-
-    // When resolving a specific for an `impl`, we will rebuild and evaluate any
-    // `LookupImplWitness` instructions in the `impl` declaration. These lookups
-    // should not find the `impl` that contains them or they become cyclical.
-    const auto& generic = context.generics().Get(specific.generic_id);
-    bool is_impl_decl = false;
-    if (auto decl =
-            context.insts().TryGetAs<SemIR::ImplDecl>(generic.decl_id)) {
-      is_impl_decl = true;
-      context.forbidden_impls().push_back(decl->impl_id);
-    }
-
     std::tie(specific.decl_block_id, specific.decl_block_has_error) =
         TryEvalBlockForSpecific(context, loc_id, specific_id,
                                 SemIR::GenericInstIndex::Region::Declaration);
-
-    if (is_impl_decl) {
-      context.forbidden_impls().pop_back();
-    }
   }
 }
 

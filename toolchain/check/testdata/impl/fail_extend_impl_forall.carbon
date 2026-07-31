@@ -46,6 +46,7 @@ class C {
 // CHECK:STDOUT:   %GenericInterface.assoc_type: type = assoc_entity_type @GenericInterface, @GenericInterface(%T) [symbolic]
 // CHECK:STDOUT:   %assoc0: %GenericInterface.assoc_type = assoc_entity element0, @GenericInterface.WithSelf.%GenericInterface.WithSelf.F.decl [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %.9b3: <witness> = impl_self_witness %C, @GenericInterface, @GenericInterface(%T) [symbolic]
 // CHECK:STDOUT:   %GenericInterface.impl_witness: <witness> = impl_witness @C.as.GenericInterface.impl.%GenericInterface.impl_witness_table, @C.as.GenericInterface.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.GenericInterface.impl.F.type: type = fn_type @C.as.GenericInterface.impl.F, @C.as.GenericInterface.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.GenericInterface.impl.F: %C.as.GenericInterface.impl.F.type = struct_value () [symbolic]
@@ -109,6 +110,7 @@ class C {
 // CHECK:STDOUT:   %T.patt.loc24_24.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc24_24.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc24_24.1: type = symbolic_binding T, 0 [symbolic = %T.loc24_24.1 (constants.%T)]
 // CHECK:STDOUT:   %GenericInterface.type.loc24_53.1: type = facet_type <@GenericInterface, @GenericInterface(%T.loc24_24.1)> [symbolic = %GenericInterface.type.loc24_53.1 (constants.%GenericInterface.type.4e1)]
+// CHECK:STDOUT:   %.loc24_55: <witness> = impl_self_witness constants.%C, @GenericInterface, @GenericInterface(%T.loc24_24.1) [symbolic = %.loc24_55 (constants.%.9b3)]
 // CHECK:STDOUT:   %GenericInterface.impl_witness.loc24_55.2: <witness> = impl_witness %GenericInterface.impl_witness_table, @C.as.GenericInterface.impl(%T.loc24_24.1) [symbolic = %GenericInterface.impl_witness.loc24_55.2 (constants.%GenericInterface.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -149,6 +151,7 @@ class C {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc24_24.2: type = symbolic_binding T, 0 [symbolic = %T.loc24_24.1 (constants.%T)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc24: <witness> = impl_self_witness @C.as.GenericInterface.impl.%Self.ref, @GenericInterface, @GenericInterface(constants.%T) [symbolic = @C.as.GenericInterface.impl.%.loc24_55 (constants.%.9b3)]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -209,6 +212,7 @@ class C {
 // CHECK:STDOUT:   %T.patt.loc24_24.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc24_24.1 => constants.%T
 // CHECK:STDOUT:   %GenericInterface.type.loc24_53.1 => constants.%GenericInterface.type.4e1
+// CHECK:STDOUT:   %.loc24_55 => constants.%.9b3
 // CHECK:STDOUT:   %GenericInterface.impl_witness.loc24_55.2 => constants.%GenericInterface.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

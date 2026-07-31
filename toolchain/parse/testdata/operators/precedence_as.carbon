@@ -17,39 +17,38 @@ fn F(n: i32) {
 }
 
 // CHECK:STDOUT: - filename: precedence_as.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'n'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 9},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:           {kind: 'PrefixOperatorMinus', text: '-', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'PrefixOperatorConst', text: 'const', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'InfixOperatorAs', text: 'as', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:           {kind: 'PrefixOperatorAmp', text: '&', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'InfixOperatorAs', text: 'as', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:           {kind: 'PrefixOperatorCaret', text: '^', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'InfixOperatorAs', text: 'as', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:           {kind: 'PrefixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'InfixOperatorAs', text: 'as', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 32},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'n'
+// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'n'
+// CHECK:STDOUT:   │ │   ╭─PrefixOperatorMinus '-'
+// CHECK:STDOUT:   │ │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │   ├─PrefixOperatorConst 'const'
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'n'
+// CHECK:STDOUT:   │ │   ╭─PrefixOperatorAmp '&'
+// CHECK:STDOUT:   │ │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │   ├─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'n'
+// CHECK:STDOUT:   │ │   ╭─PrefixOperatorCaret '^'
+// CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'n'
+// CHECK:STDOUT:   │ │   ╭─PrefixOperatorStar '*'
+// CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

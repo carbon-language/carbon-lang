@@ -51,7 +51,7 @@ def _carbon_binary_impl(ctx):
         if CarbonLibraryInfo in dep:
             carbon_info = dep[CarbonLibraryInfo]
             dep_link_inputs += carbon_info.objs.to_list()
-            dep_api_files.append(carbon_info.api)
+            dep_api_files += carbon_info.apis
 
     # Add the dependencies' link flags and inputs to the link flags.
     link_flags += [dep.path for dep in dep_link_inputs]
@@ -132,9 +132,9 @@ def _carbon_binary_impl(ctx):
     return [DefaultInfo(files = depset([bin]), executable = bin)]
 
 CarbonLibraryInfo = provider(
-    doc = "Contains information about a compiled Carbon library.",
+    doc = "Contains information about a linkage unit of one or more compiled Carbon libraries.",
     fields = {
-        "api": "The api source file to provide to library consumers.",
+        "apis": "The api source files to provide to library consumers.",
         "objs": "A depset of one or more compiled library files, including impl and api.",
     },
 )
@@ -166,10 +166,10 @@ def _carbon_library_impl(ctx):
             dep_hdrs.append(cc_info.compilation_context.headers)
         if CarbonLibraryInfo in dep:
             carbon_info = dep[CarbonLibraryInfo]
-            dep_api_srcs.append(carbon_info.api)
+            dep_api_srcs += carbon_info.apis.to_list()
 
     # Build object files for the library impls and api file
-    srcs_and_flags = [(ctx.files.impls + ctx.files.api, dep_flags)]
+    srcs_and_flags = [(ctx.files.srcs + ctx.files.hdrs, dep_flags)]
 
     objs = []
     for (srcs, extra_flags) in srcs_and_flags:
@@ -203,7 +203,7 @@ def _carbon_library_impl(ctx):
                 progress_message = "Compiling " + src.short_path,
             )
 
-    return [CarbonLibraryInfo(api = ctx.files.api[0], objs = depset(objs))]
+    return [CarbonLibraryInfo(apis = ctx.files.hdrs, objs = depset(objs))]
 
 # We synthesize two sets of attributes from mirrored `select`s here
 # because we want to select on an internal property of these attributes
@@ -290,10 +290,9 @@ _carbon_binary_internal = rule(
 _carbon_library_internal = rule(
     implementation = _carbon_library_impl,
     attrs = {
-        "api": attr.label(allow_single_file = True),
         "deps": attr.label_list(allow_files = True),
         "flags": attr.string_list(),
-        "impls": attr.label_list(allow_files = [".carbon"]),
+        "hdrs": attr.label_list(allow_files = [".carbon"]),
 
         # The exec config toolchain attributes. These will be `None` when using
         # the target config and populated when using the exec config. We have to
@@ -328,6 +327,7 @@ _carbon_library_internal = rule(
             executable = True,
             cfg = "target",
         ),
+        "srcs": attr.label_list(allow_files = [".carbon"]),
         "_cc_toolchain": attr.label(default = "//toolchain/install:carbon_stage1_cc_toolchain"),
     },
     executable = False,
@@ -358,13 +358,21 @@ def carbon_binary(name, srcs, deps = [], flags = [], tags = []):
         internal_target_prebuilt_runtimes = _select_internal_target_prebuilt_runtimes,
     )
 
-def carbon_library(name, api, impls = [], deps = [], flags = [], tags = [], visibility = []):
+def carbon_library(name, hdrs = [], srcs = [], deps = [], flags = [], tags = [], visibility = []):
     """Compiles a Carbon library.
+
+    Note: This carbon_library is designed as a _linkage_unit_, and does not necessarily
+    have to correlate the Carbon language library concept. As such it is designed to
+    accommodate more than one api file.
+
+    The arguments `hdrs` and `srcs` are kept for reasons of convention and compatibility
+    with C++ toolchains, particularly build aspects that folks might want to reuse on
+    mixed projects.
 
     Args:
       name: The name of the build target.
-      api: Name of a single api file.
-      impls: List of zero or more implementation files.
+      hdrs: List of one or more api files.
+      srcs: List of zero or more implementation files.
       deps: List of dependencies.
       flags: Extra flags to pass to the Carbon compile command.
       tags: Tags to apply to the rule.
@@ -372,8 +380,8 @@ def carbon_library(name, api, impls = [], deps = [], flags = [], tags = [], visi
     """
     _carbon_library_internal(
         name = name,
-        api = api,
-        impls = impls,
+        hdrs = hdrs,
+        srcs = srcs,
         deps = deps,
         flags = flags,
         tags = tags,

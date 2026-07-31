@@ -97,6 +97,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %D.val: %D = struct_value (%int_0.3c0, %int_0.3c0) [concrete]
 // CHECK:STDOUT:   %C.771: type = class_type @C, @C(%int_0.3c0) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.24d: type = facet_type <@ImplicitAs, @ImplicitAs(%D)> [concrete]
+// CHECK:STDOUT:   %.8ed: <witness> = impl_self_witness %C.771, @ImplicitAs, @ImplicitAs(%D) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.4c1: <witness> = impl_witness @C.as.ImplicitAs.impl.0e1.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.84d: type = pattern_type %C.771 [concrete]
 // CHECK:STDOUT:   %self.param_patt.98b: %pattern_type.84d = value_param_pattern [concrete]
@@ -108,6 +109,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.953: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.0c6: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %C.83b: type = class_type @C, @C(%int_1.0c6) [concrete]
+// CHECK:STDOUT:   %.525: <witness> = impl_self_witness %C.83b, @ImplicitAs, @ImplicitAs(%D) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.c46: <witness> = impl_witness @C.as.ImplicitAs.impl.f6a.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.91a: type = pattern_type %C.83b [concrete]
 // CHECK:STDOUT:   %self.param_patt.327: %pattern_type.91a = value_param_pattern [concrete]
@@ -119,6 +121,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.3cb: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.295: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %C.5ce: type = class_type @C, @C(%int_2.295) [concrete]
+// CHECK:STDOUT:   %.dea: <witness> = impl_self_witness %C.5ce, @ImplicitAs, @ImplicitAs(%D) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.430: <witness> = impl_witness @C.as.ImplicitAs.impl.aab.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.7dd: type = pattern_type %C.5ce [concrete]
 // CHECK:STDOUT:   %self.param_patt.e14: %pattern_type.7dd = value_param_pattern [concrete]
@@ -130,6 +133,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.763: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.410: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %C.b3e: type = class_type @C, @C(%int_3.410) [concrete]
+// CHECK:STDOUT:   %.870: <witness> = impl_self_witness %C.b3e, @ImplicitAs, @ImplicitAs(%D) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.b6d: <witness> = impl_witness @C.as.ImplicitAs.impl.203.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.26a: type = pattern_type %C.b3e [concrete]
 // CHECK:STDOUT:   %self.param_patt.0fc: %pattern_type.26a = value_param_pattern [concrete]
@@ -141,6 +145,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.b7a: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_4.4eb: %i32 = int_value 4 [concrete]
 // CHECK:STDOUT:   %C.8ee: type = class_type @C, @C(%int_4.4eb) [concrete]
+// CHECK:STDOUT:   %.58e: <witness> = impl_self_witness %C.8ee, @ImplicitAs, @ImplicitAs(%D) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.c85: <witness> = impl_witness @C.as.ImplicitAs.impl.371.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.387: type = pattern_type %C.8ee [concrete]
 // CHECK:STDOUT:   %self.param_patt.826: %pattern_type.387 = value_param_pattern [concrete]
@@ -152,6 +157,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.c9d: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_5.eef: %i32 = int_value 5 [concrete]
 // CHECK:STDOUT:   %C.5c1: type = class_type @C, @C(%int_5.eef) [concrete]
+// CHECK:STDOUT:   %.ad5: <witness> = impl_self_witness %C.5c1, @ImplicitAs, @ImplicitAs(%D) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.1af: <witness> = impl_witness @C.as.ImplicitAs.impl.c73.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.05e: type = pattern_type %C.5c1 [concrete]
 // CHECK:STDOUT:   %self.param_patt.f7b: %pattern_type.05e = value_param_pattern [concrete]
@@ -163,6 +169,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.be9: <bound method> = bound_method %int_6.462, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_6.439: %i32 = int_value 6 [concrete]
 // CHECK:STDOUT:   %C.57b: type = class_type @C, @C(%int_6.439) [concrete]
+// CHECK:STDOUT:   %.caf: <witness> = impl_self_witness %C.57b, @ImplicitAs, @ImplicitAs(%D) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.c9c: <witness> = impl_witness @C.as.ImplicitAs.impl.2f3.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.4b0: type = pattern_type %C.57b [concrete]
 // CHECK:STDOUT:   %self.param_patt.e33: %pattern_type.4b0 = value_param_pattern [concrete]
@@ -174,6 +181,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %bound_method.7ff: <bound method> = bound_method %int_7.29f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_7.690: %i32 = int_value 7 [concrete]
 // CHECK:STDOUT:   %C.b0a: type = class_type @C, @C(%int_7.690) [concrete]
+// CHECK:STDOUT:   %.468: <witness> = impl_self_witness %C.b0a, @ImplicitAs, @ImplicitAs(%D) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.642: <witness> = impl_witness @C.as.ImplicitAs.impl.28a.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.bc2: type = pattern_type %C.b0a [concrete]
 // CHECK:STDOUT:   %self.param_patt.21a: %pattern_type.bc2 = value_param_pattern [concrete]
@@ -238,6 +246,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.24d]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.ImplicitAs.impl.0e1.%C, @ImplicitAs, @ImplicitAs(constants.%D) [concrete = constants.%.8ed]
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.f6a [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -254,6 +263,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.24d]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc9: <witness> = impl_self_witness @C.as.ImplicitAs.impl.f6a.%C, @ImplicitAs, @ImplicitAs(constants.%D) [concrete = constants.%.525]
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.aab [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
@@ -270,6 +280,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.24d]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc10: <witness> = impl_self_witness @C.as.ImplicitAs.impl.aab.%C, @ImplicitAs, @ImplicitAs(constants.%D) [concrete = constants.%.dea]
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.203 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -286,6 +297,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.24d]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc11: <witness> = impl_self_witness @C.as.ImplicitAs.impl.203.%C, @ImplicitAs, @ImplicitAs(constants.%D) [concrete = constants.%.870]
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.371 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
@@ -302,6 +314,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.24d]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc12: <witness> = impl_self_witness @C.as.ImplicitAs.impl.371.%C, @ImplicitAs, @ImplicitAs(constants.%D) [concrete = constants.%.58e]
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.c73 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
@@ -318,6 +331,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.24d]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc13: <witness> = impl_self_witness @C.as.ImplicitAs.impl.c73.%C, @ImplicitAs, @ImplicitAs(constants.%D) [concrete = constants.%.ad5]
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.2f3 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6.462]
@@ -334,6 +348,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.24d]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc14: <witness> = impl_self_witness @C.as.ImplicitAs.impl.2f3.%C, @ImplicitAs, @ImplicitAs(constants.%D) [concrete = constants.%.caf]
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.28a [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7.29f]
@@ -350,6 +365,7 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%D)> [concrete = constants.%ImplicitAs.type.24d]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc15: <witness> = impl_self_witness @C.as.ImplicitAs.impl.28a.%C, @ImplicitAs, @ImplicitAs(constants.%D) [concrete = constants.%.468]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.ImplicitAs.impl.0e1: %C as %ImplicitAs.type {

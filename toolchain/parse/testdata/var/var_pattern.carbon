@@ -20,6 +20,14 @@ let (x: (), var y: ()) = ((), ());
 
 fn F(x: (), var y: ());
 
+// --- struct.carbon
+
+let {.x = var x: ()} = {.x = ()};
+
+// --- struct_shorthand.carbon
+
+let {var y: ()} = {.y = ()};
+
 // --- fail_nested.carbon
 
 // CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:25: error: `var` nested within another `var` [NestedVar]
@@ -29,112 +37,155 @@ fn F(x: (), var y: ());
 let (x: (), var (y: (), var z: ())) = ((), ((), ()));
 
 // CHECK:STDOUT: - filename: basic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:       {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │   ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: tuple.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:               {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:             {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 14},
-// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:           {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'TupleLiteral', text: ')', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 24},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─TuplePatternStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─PatternListComma ','
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │   ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─TuplePattern ')'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: function.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:               {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:             {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 14},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 17},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─PatternListComma ','
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │   ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: struct.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │   │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ │   ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ │ ├─StructPatternDesignatedField '='
+// CHECK:STDOUT:   │ ├─StructPattern '}'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: struct_shorthand.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │   ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─StructPattern '}'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_nested.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:               {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:                 {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:               {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'z'},
-// CHECK:STDOUT:                 {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:                   {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'TuplePattern', text: ')', has_error: yes, subtree_size: 14},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 15},
-// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 23},
-// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:           {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'TupleLiteral', text: ')', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 38},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─TuplePatternStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─PatternListComma ','
+// CHECK:STDOUT:   │ │ │   ╭─TuplePatternStart '('
+// CHECK:STDOUT:   │ │ │   │ ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │   │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │   │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │   ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ │   ├─PatternListComma ','
+// CHECK:STDOUT:   │ │ │   │   ╭─IdentifierNameNotBeforeSignature 'z'
+// CHECK:STDOUT:   │ │ │   │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │   │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │   │   ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │   │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ │   ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   │ │ │ ╭─TuplePattern ')' has_error
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─TuplePattern ')'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

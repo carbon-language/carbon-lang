@@ -12,13 +12,14 @@ char ReadOnlyASTSource::id;
 //
 // Returns true on success, false if any error occurs.
 static auto CalculateCppFieldOffsets(
-    const File& sem_ir, SemIR::ClassId class_id,
+    const File& sem_ir, ClassType class_type,
     llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets) -> bool {
-  auto class_info = sem_ir.classes().Get(class_id);
+  auto class_info = sem_ir.classes().Get(class_type.class_id);
   const auto& class_scope = sem_ir.name_scopes().Get(class_info.scope_id);
 
   auto class_layout = SemIR::ObjectLayout::Empty();
-  for (const auto& struct_field : class_info.GetStructTypeFields(sem_ir)) {
+  for (const auto& struct_field :
+       class_info.GetStructTypeFields(sem_ir, class_type.specific_id)) {
     auto field_type_id =
         sem_ir.types().GetTypeIdForTypeInstId(struct_field.type_inst_id);
     auto field_layout =
@@ -30,8 +31,8 @@ static auto CalculateCppFieldOffsets(
     auto class_field =
         LookupClassFieldByStructField(sem_ir, class_scope, struct_field);
     if (class_field) {
-      const auto* clang_decl =
-          sem_ir.clang_decls().Lookup(class_field->inst_id);
+      const auto* clang_decl = sem_ir.clang_decls().Lookup(
+          class_field->inst_id, class_type.specific_id);
       if (!clang_decl) {
         return false;
       }
@@ -67,7 +68,7 @@ auto ReadOnlyASTSource::layoutRecordType(
   alignment = layout.alignment.bits();
 
   // Fill in `field_offsets`.
-  CalculateCppFieldOffsets(sem_ir_, class_type.class_id, field_offsets);
+  CalculateCppFieldOffsets(sem_ir_, class_type, field_offsets);
 
   // Add offset for base class, if any.
   if (const auto* class_decl = dyn_cast<clang::CXXRecordDecl>(record_decl);

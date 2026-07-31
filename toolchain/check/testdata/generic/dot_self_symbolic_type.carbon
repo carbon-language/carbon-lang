@@ -350,6 +350,7 @@ fn H(generic T: type) {
 // CHECK:STDOUT:   %BB.as_type: type = facet_access_type %BB.6ca [symbolic]
 // CHECK:STDOUT:   %ptr.e8f8f9.1: type = ptr_type %AA [symbolic]
 // CHECK:STDOUT:   %B.type.4a0be4.1: type = facet_type <@B, @B(%ptr.e8f8f9.1)> [symbolic]
+// CHECK:STDOUT:   %.a32: <witness> = impl_self_witness %BB.as_type, @B, @B(%ptr.e8f8f9.1) [symbolic]
 // CHECK:STDOUT:   %B.impl_witness.8cc: <witness> = impl_witness @BB.as_type.as.B.impl.%B.impl_witness_table, @BB.as_type.as.B.impl(%AA, %BB.6ca) [symbolic]
 // CHECK:STDOUT:   %require_complete.a5dc9d.1: <witness> = require_complete_type %B.type.4a0be4.1 [symbolic]
 // CHECK:STDOUT:   %DD.patt: %pattern_type.98f = symbolic_binding_pattern DD, 0 [symbolic]
@@ -417,6 +418,7 @@ fn H(generic T: type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %BB.loc9_26.1: @BB.as_type.as.B.impl.%A_where.type (%A_where.type.ce6fa0.1) = symbolic_binding BB, 1 [symbolic = %BB.loc9_26.2 (constants.%BB.6ca)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc9: <witness> = impl_self_witness @BB.as_type.as.B.impl.%.loc9_49, @B, @B(constants.%ptr.e8f8f9.1) [symbolic = @BB.as_type.as.B.impl.%.loc9_62 (constants.%.a32)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @BB.as_type.as.B.impl(%AA.loc9_16.1: type, %BB.loc9_26.1: @BB.as_type.as.B.impl.%A_where.type (%A_where.type.ce6fa0.1)) {
@@ -440,6 +442,7 @@ fn H(generic T: type) {
 // CHECK:STDOUT:   %BB.as_type.loc9_49.2: type = facet_access_type %BB.loc9_26.2 [symbolic = %BB.as_type.loc9_49.2 (constants.%BB.as_type)]
 // CHECK:STDOUT:   %ptr.loc9_59.2: type = ptr_type %AA.loc9_16.2 [symbolic = %ptr.loc9_59.2 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:   %B.type.loc9_60.2: type = facet_type <@B, @B(%ptr.loc9_59.2)> [symbolic = %B.type.loc9_60.2 (constants.%B.type.4a0be4.1)]
+// CHECK:STDOUT:   %.loc9_62: <witness> = impl_self_witness %BB.as_type.loc9_49.2, @B, @B(%ptr.loc9_59.2) [symbolic = %.loc9_62 (constants.%.a32)]
 // CHECK:STDOUT:   %B.impl_witness.loc9_62.2: <witness> = impl_witness %B.impl_witness_table, @BB.as_type.as.B.impl(%AA.loc9_16.2, %BB.loc9_26.2) [symbolic = %B.impl_witness.loc9_62.2 (constants.%B.impl_witness.8cc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -518,6 +521,7 @@ fn H(generic T: type) {
 // CHECK:STDOUT:   %BB.as_type.loc9_49.2 => constants.%BB.as_type
 // CHECK:STDOUT:   %ptr.loc9_59.2 => constants.%ptr.e8f8f9.1
 // CHECK:STDOUT:   %B.type.loc9_60.2 => constants.%B.type.4a0be4.1
+// CHECK:STDOUT:   %.loc9_62 => constants.%.a32
 // CHECK:STDOUT:   %B.impl_witness.loc9_62.2 => constants.%B.impl_witness.8cc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

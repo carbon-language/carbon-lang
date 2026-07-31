@@ -8,6 +8,7 @@
 #include <string_view>
 
 #include "clang/AST/ASTConsumer.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
 #include "clang/Sema/Sema.h"
 #include "llvm/Support/Casting.h"
@@ -251,19 +252,40 @@ static auto CreateCppFieldDecl(Context& context,
   return cpp_field_decl;
 }
 
-auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
-  if (class_info.fields_exported) {
-    return;
-  }
+// Create an invalid `clang::FieldDecl`. This is only used as an error marker
+// to indicate that a Carbon field has already been unsuccessfully exported.
+static auto CreateInvalidFieldDecl(Context& context,
+                                   clang::DeclContext* decl_context)
+    -> clang::FieldDecl* {
+  clang::SourceLocation clang_loc;
+  auto* identifier_info =
+      context.clang_sema().getPreprocessor().getIdentifierInfo("invalid_field");
+  auto cpp_type = context.ast_context().IntTy;
+  auto* field_decl = clang::FieldDecl::Create(
+      context.ast_context(), decl_context, /*StartLoc=*/clang_loc,
+      /*IdLoc=*/clang_loc, identifier_info, cpp_type, /*TInfo=*/nullptr,
+      /*BW=*/nullptr,
+      /*Mutable=*/true, clang::ICIS_NoInit);
+  field_decl->setInvalidDecl();
+  return field_decl;
+}
 
+auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
   const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
 
-  for (const auto& struct_field :
-       class_info.GetStructTypeFields(context.sem_ir())) {
+  for (const auto& struct_field : class_info.GetStructTypeFields(
+           context.sem_ir(), SemIR::SpecificId::None)) {
     auto class_field = LookupClassFieldByStructField(context.sem_ir(),
                                                      class_scope, struct_field);
     if (!class_field) {
       continue;
+    }
+
+    // Return early if the field is already exported. Since fields are always
+    // exported as a group, this indicates all fields have been exported so
+    // there's no need to continue to the rest.
+    if (context.clang_decls().Lookup(class_field->inst_id)) {
+      return;
     }
 
     // Map the parent scope into the C++ AST.
@@ -276,16 +298,19 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
     auto* cpp_field_decl = CreateCppFieldDecl(
         context, class_scope, cast<clang::CXXRecordDecl>(decl_context),
         class_field->inst_id, class_field->inst);
+
+    // If the field cannot be exported, create an invalid `FieldDecl` to store
+    // in `clang_decls`. This marks the field as unsuccessfully exported, so
+    // that we know not to attempt export again (which could create duplicate
+    // error diagnostics).
     if (!cpp_field_decl) {
-      continue;
+      cpp_field_decl = CreateInvalidFieldDecl(context, decl_context);
     }
 
     // Create and store the `ClangDeclId`.
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(cpp_field_decl);
     context.clang_decls().Add({.key = key, .inst_id = class_field->inst_id});
   }
-
-  class_info.fields_exported = true;
 }
 
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
@@ -303,7 +328,9 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
 
   // Get the exported `clang::FieldDecl`.
   if (const auto* clang_decl = context.clang_decls().Lookup(field_inst_id)) {
-    return cast<clang::FieldDecl>(clang_decl->decl());
+    if (!clang_decl->decl()->isInvalidDecl()) {
+      return cast<clang::FieldDecl>(clang_decl->decl());
+    }
   }
   return nullptr;
 }
@@ -587,7 +614,7 @@ static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
                    context.mangle_string_fingerprint());
   std::string mangled_name =
-      m.Mangle(target.function_id, SemIR::SpecificId::None);
+      m.MangleWithPlatform(target.function_id, SemIR::SpecificId::None);
   function_decl->addAttr(
       clang::AsmLabelAttr::Create(context.ast_context(), mangled_name));
 
@@ -716,8 +743,15 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
   }
 
   auto ext_proto_info = clang::FunctionProtoType::ExtProtoInfo();
-  if (target.self_param && target.self_param->kind == ParamPatternKind::Ref) {
-    ext_proto_info.RefQualifier = clang::RQ_LValue;
+  if (target.self_param) {
+    if (target.self_param->kind == ParamPatternKind::Ref) {
+      ext_proto_info.RefQualifier = clang::RQ_LValue;
+    } else {
+      // A method with `self` doesn't modify the object, so export it as
+      // `const`. Unlike `ref self`, `self` doesn't require a reference
+      // expression, so no ref-qualifier is added.
+      ext_proto_info.TypeQuals.addConst();
+    }
   }
   return context.ast_context()
       .getFunctionType(cpp_return_type, thunk_param_types, ext_proto_info)
@@ -791,7 +825,10 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
             SemIR::Function::VirtualModifier::None &&
         target.function.virtual_modifier !=
             SemIR::Function::VirtualModifier::Override);
-    // TODO: Call setIsPureVirtual if VirtualModifier::Abstract is present.
+    if (target.function.virtual_modifier ==
+        SemIR::Function::VirtualModifier::Abstract) {
+      cast<clang::CXXMethodDecl>(thunk_function_decl)->setIsPureVirtual(true);
+    }
   } else {
     thunk_function_decl = clang::FunctionDecl::Create(
         ast_context, target.decl_context, clang_loc, name_info, thunk_qual_type,
@@ -821,11 +858,11 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
 
 // Get an expr for accessing `this` in a method.
 static auto GetThisArg(clang::Sema& sema, clang::SourceLocation clang_loc,
-                       clang::CXXRecordDecl* record_decl) -> clang::Expr* {
-  clang::QualType class_type =
-      sema.getASTContext().getCanonicalTagType(record_decl);
-  auto class_ptr_type = sema.getASTContext().getPointerType(class_type);
-  auto* this_expr = sema.BuildCXXThisExpr(clang_loc, class_ptr_type,
+                       const clang::CXXMethodDecl* method_decl)
+    -> clang::Expr* {
+  // These pick up the method's `const` qualifier, if any.
+  clang::QualType class_type = method_decl->getFunctionObjectParameterType();
+  auto* this_expr = sema.BuildCXXThisExpr(clang_loc, method_decl->getThisType(),
                                           /*IsImplicit=*/true);
   return clang::UnaryOperator::Create(
       sema.getASTContext(), this_expr, clang::UO_Deref, class_type,
@@ -874,8 +911,8 @@ static auto BuildCppToCarbonThunkBody(Context& context,
   llvm::SmallVector<clang::Expr*> call_args;
   // For methods, pass the `this` pointer as the first argument to the callee.
   if (target.self_param) {
-    auto* parent_class = cast<clang::CXXRecordDecl>(target.decl_context);
-    call_args.push_back(GetThisArg(sema, clang_loc, parent_class));
+    call_args.push_back(
+        GetThisArg(sema, clang_loc, cast<clang::CXXMethodDecl>(function_decl)));
   }
   for (auto* param : function_decl->parameters()) {
     clang::Expr* call_arg =
@@ -1354,7 +1391,7 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
       sema.BuildDeclRefExpr(cpp_function_decl, cpp_function_decl->getType(),
                             clang::VK_PRValue, clang_loc);
   llvm::SmallVector<clang::Expr*> call_args;
-  call_args.push_back(GetThisArg(sema, clang_loc, record_decl));
+  call_args.push_back(GetThisArg(sema, clang_loc, cpp_destructor_decl));
   clang::ExprResult call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc,
                                               call_args, clang_loc);
 
@@ -1405,16 +1442,18 @@ auto ExportVarToCpp(Context& context, SemIR::InstId inst_id,
       context.ast_context(), decl_context,
       /*StartLoc=*/clang_loc, /*IdLoc=*/clang_loc, identifier_info, cpp_type,
       /*TInfo=*/nullptr, clang::SC_Extern);
-  context.clang_decls().AddVar(
+  context.clang_decls().Add(
       {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(var_decl),
-       .inst_id = inst_id},
-      var_storage.pattern_id);
+       .inst_id = var_storage.pattern_id,
+       .var_storage_inst_id = inst_id});
 
   if (scope_inst.Is<SemIR::ClassDecl>()) {
     SetCppClassMemberAccess(name_scope, entity_name.name_id, var_decl);
   }
 
   // Set the Carbon mangled variable name.
+  // TODO: do we need to apply the platform mangling, like we do for exported
+  // functions?
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
                    context.mangle_string_fingerprint());
   std::string mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);

@@ -307,8 +307,16 @@ class Context {
     return binding_type_where_count_;
   }
 
-  auto forbidden_impls() -> llvm::SmallVector<SemIR::ImplId>& {
-    return forbidden_impls_;
+  auto declaring_impl_decls() -> llvm::SmallVector<SemIR::SpecificInterface>& {
+    return declaring_impl_decls_;
+  }
+  // Returns the interface of the `impl` being declared, that `.Self` refers to,
+  // if any.
+  auto declaring_impl_for_interface() -> SemIR::SpecificInterface {
+    if (declaring_impl_decls_.empty()) {
+      return SemIR::SpecificInterface::None;
+    }
+    return declaring_impl_decls_.back();
   }
 
   // Data about a form expression.
@@ -607,10 +615,11 @@ class Context {
   // currently being checked.
   int32_t binding_type_where_count_ = 0;
 
-  // Impls that cannot be used in impl lookup. This prevents cycles where a
-  // `LookupImplWitness` instruction inside the impl decl should not be able to
-  // find the containing impl decl.
-  llvm::SmallVector<SemIR::ImplId> forbidden_impls_;
+  // Track impl declarations that are underway. If we're declaring an impl for
+  // interface `I`, an impl lookup query for `.Self as I` should find that impl
+  // being declared (even though it does not yet exist). Since there can only be
+  // one `.Self` in scope, only the back of the vector needs to be consulted.
+  llvm::SmallVector<SemIR::SpecificInterface> declaring_impl_decls_;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;

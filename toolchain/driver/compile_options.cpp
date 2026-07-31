@@ -237,20 +237,35 @@ Dump the parse tree to stdout when parsed.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_parse_tree); });
-  b.AddFlag(
+
+  b.AddOneOfOption(
       {
-          .name = "preorder-parse-tree",
+          .name = "parse-dump-format",
           .help = R"""(
-When dumping the parse tree, reorder it so that it is in preorder rather than
-postorder.
+The format to use for parse tree dumps. 'pretty' (the default) prints the
+tree in postorder, visualizing the tree structure with box-drawing
+characters. 'yaml-postorder' prints the tree in postorder as unstructured yaml
+(a flat list of nodes), indented to suggest the tree structure. 'yaml-preorder'
+prints the tree as structured yaml (with children nested under parents).
 )""",
       },
-      [&](auto& arg_b) { arg_b.Set(&preorder_parse_tree); });
+      [&](auto& arg_b) {
+        using DumpFormat = Parse::ParseOptions::DumpFormat;
+        arg_b.SetOneOf(
+            {
+                arg_b.OneOfValue("pretty", DumpFormat::PrettyPostorder)
+                    .Default(true),
+                arg_b.OneOfValue("yaml-postorder", DumpFormat::YamlPostorder),
+                arg_b.OneOfValue("yaml-preorder", DumpFormat::YamlPreorder),
+            },
+            &parse_dump_format);
+      });
+
   b.AddFlag(
       {
           .name = "dump-raw-sem-ir",
           .help = R"""(
-Dump the raw JSON structure of SemIR to stdout when built.
+Dump the raw YAML structure of SemIR to stdout when built.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_raw_sem_ir); });
@@ -403,6 +418,17 @@ the `prelude_import` flag is set to false, this is also silently set to false.
         arg_b.Default(true);
         arg_b.Set(&include_carbon_core);
       });
+  b.AddFlag(
+      {
+          .name = "share-cpp-ast",
+          .help = R"""(
+Share a single Clang ASTContext across all compiled files.
+
+TODO: This is a temporary measure and will be enabled by default and removed
+once this mode is fully implemented.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&share_cpp_ast); });
 }
 
 auto CompileOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b,

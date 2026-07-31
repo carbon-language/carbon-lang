@@ -800,6 +800,28 @@ interface Z(T: type);
 // CHECK:STDERR:
 fn F(generic _: C(Z(.Self))) {}
 
+// --- fail_todo_period_self_in_generic_argument.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+}
+interface Y(T: type) {
+  // The type here is `Z where .Z1 = ()` with a thawed `.Self` in the access of `.Z1`.
+  let Y1: Z where .Z1 = ();
+  // The type here ends up being `Z where .Z1 = ()` with a frozen `.Self` in the
+  // access of `.Z1`. So it can't convert to the type of `Y1`, which is a bug.
+  eval fn YF() -> T;
+}
+
+// TODO: We crash if this impl is not generic, as the call to `.YF()` produces a
+// symbolic-dependent instruction, but there's no generic eval block for it.
+// CHECK:STDERR: fail_todo_period_self_in_generic_argument.carbon:[[@LINE+4]]:60: error: cannot convert type `<cannot stringify inst5D0000AD: {kind: Call, arg0: inst5D0000AB, arg1: inst_block_empty, type: type(inst5D000088)}>` that implements `Z where .(Z.Z1) = ()` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: impl forall [T: type] T as Y(Z where .Z1 = ()) where .Y1 = .YF() {}
+// CHECK:STDERR:                                                            ^~~~~
+// CHECK:STDERR:
+impl forall [T: type] T as Y(Z where .Z1 = ()) where .Y1 = .YF() {}
+
 // CHECK:STDOUT: --- period_self_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

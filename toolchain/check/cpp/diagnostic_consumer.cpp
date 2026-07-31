@@ -8,6 +8,7 @@
 #include <string>
 
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/TextDiagnostic.h"
 #include "common/check.h"
@@ -24,6 +25,34 @@
 namespace Carbon::Check {
 
 class CarbonClangDiagnosticConsumer;
+
+// A diagnostic emitter that maps Clang SourceLocations to Carbon diagnostic
+// locations.
+class ClangLocDiagnosticEmitter
+    : public Diagnostics::Emitter<clang::SourceLocation> {
+ public:
+  explicit ClangLocDiagnosticEmitter(Diagnostics::Consumer* consumer,
+                                     const clang::SourceManager* source_manager)
+      : Emitter(consumer), source_manager_(source_manager) {}
+
+ protected:
+  auto ConvertLoc(clang::SourceLocation loc, ContextFnT /*context_fn*/) const
+      -> Diagnostics::ConvertedLoc override {
+    Diagnostics::Loc result_loc;
+    if (source_manager_ && loc.isValid()) {
+      clang::PresumedLoc presumed_loc = source_manager_->getPresumedLoc(loc);
+      if (presumed_loc.isValid()) {
+        result_loc.filename = presumed_loc.getFilename();
+        result_loc.line_number = presumed_loc.getLine();
+        result_loc.column_number = presumed_loc.getColumn();
+      }
+    }
+    return {.loc = result_loc, .last_byte_offset = -1};
+  }
+
+ private:
+  const clang::SourceManager* source_manager_;
+};
 
 // Returns the diagnostic to use for a given Clang diagnostic level.
 static auto GetDiagnostic(clang::DiagnosticsEngine::Level level)
@@ -56,27 +85,30 @@ static auto GetDiagnostic(clang::DiagnosticsEngine::Level level)
 // Diagnostics::Consumer when no Carbon Context is active.
 class FallbackDiagnosticListener : public CppDiagnosticListener {
  public:
-  explicit FallbackDiagnosticListener(CarbonClangDiagnosticConsumer& consumer,
-                                      Diagnostics::Consumer& next_consumer)
-      : CppDiagnosticListener(consumer), next_consumer_(&next_consumer) {}
-
-  ~FallbackDiagnosticListener() override;
+  explicit FallbackDiagnosticListener(
+      CarbonClangDiagnosticConsumer& clang_consumer,
+      Diagnostics::Consumer& carbon_consumer)
+      : CppDiagnosticListener(clang_consumer),
+        carbon_consumer_(&carbon_consumer) {}
 
   auto EmitDiagnostics(llvm::ArrayRef<Diagnostic> diags) -> void override {
     if (diags.empty()) {
       return;
     }
-    Diagnostics::NoLocEmitter emitter(next_consumer_);
+    ClangLocDiagnosticEmitter emitter(carbon_consumer_,
+                                      diags[0].source_manager);
     for (size_t i = 0; i != diags.size(); ++i) {
       const Diagnostic& info = diags[i];
       auto builder =
-          emitter.Build(nullptr, GetDiagnostic(info.level), info.message);
+          emitter.Build(info.location, GetDiagnostic(info.level), info.message);
       builder.OverrideSnippet(info.snippet);
       for (; i + 1 < diags.size() &&
              diags[i + 1].level == clang::DiagnosticsEngine::Note;
            ++i) {
         const Diagnostic& note_info = diags[i + 1];
-        builder.Note(nullptr, GetDiagnostic(note_info.level), note_info.message)
+        builder
+            .Note(note_info.location, GetDiagnostic(note_info.level),
+                  note_info.message)
             .OverrideSnippet(note_info.snippet);
       }
       builder.Emit();
@@ -84,7 +116,7 @@ class FallbackDiagnosticListener : public CppDiagnosticListener {
   }
 
  private:
-  Diagnostics::Consumer* next_consumer_;
+  Diagnostics::Consumer* carbon_consumer_;
 };
 
 // A listener that converts Clang diagnostics to Carbon diagnostics using a
@@ -94,8 +126,6 @@ class ContextDiagnosticListener : public CppDiagnosticListener {
   explicit ContextDiagnosticListener(CarbonClangDiagnosticConsumer& consumer,
                                      Context& context)
       : CppDiagnosticListener(consumer), context_(&context) {}
-
-  ~ContextDiagnosticListener() override;
 
   auto EmitDiagnostics(llvm::ArrayRef<Diagnostic> diags) -> void override {
     if (diags.empty()) {
@@ -213,8 +243,11 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
               diag_level, message, info.getRanges(), info.getFixItHints());
     }
 
+    const clang::SourceManager* source_manager =
+        info.hasSourceManager() ? &info.getSourceManager() : nullptr;
     diagnostic_infos_.push_back({.level = diag_level,
                                  .location = info.getLocation(),
+                                 .source_manager = source_manager,
                                  .message = message.str().str(),
                                  .snippet = snippet_stream.TakeStr()});
   }
@@ -257,12 +290,6 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   std::shared_ptr<clang::CompilerInvocation> invocation_;
 };
 
-FallbackDiagnosticListener::~FallbackDiagnosticListener() {
-  consumer().Flush();
-}
-
-ContextDiagnosticListener::~ContextDiagnosticListener() { consumer().Flush(); }
-
 CppDiagnosticListener::CppDiagnosticListener(
     CarbonClangDiagnosticConsumer& consumer)
     : consumer_(&consumer) {
@@ -279,6 +306,10 @@ auto MakeDiagnosticConsumer(
     -> std::unique_ptr<clang::DiagnosticConsumer> {
   return std::make_unique<CarbonClangDiagnosticConsumer>(consumer,
                                                          std::move(invocation));
+}
+
+auto FlushDiagnosticConsumer(clang::DiagnosticConsumer& consumer) -> void {
+  static_cast<CarbonClangDiagnosticConsumer&>(consumer).Flush();
 }
 
 auto MakeContextDiagnosticListener(clang::DiagnosticConsumer& consumer,

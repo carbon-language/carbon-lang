@@ -45,25 +45,24 @@ namespace namespace namespace namespace namespace
 namespace
 
 // CHECK:STDOUT: - filename: fail_incomplete.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '123', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Namespace', text: '123', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '""', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Namespace', text: '""', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '+', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Namespace', text: '+', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: 'bool', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Namespace', text: 'bool', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: 'namespace', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Namespace', text: 'namespace', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Namespace', text: 'namespace', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ ├─InvalidParse '123' has_error
+// CHECK:STDOUT:   ├─Namespace '123' has_error
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ ├─InvalidParse '""' has_error
+// CHECK:STDOUT:   ├─Namespace '""' has_error
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ ├─InvalidParse '+' has_error
+// CHECK:STDOUT:   ├─Namespace '+' has_error
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ ├─InvalidParse 'bool' has_error
+// CHECK:STDOUT:   ├─Namespace 'bool' has_error
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ ├─InvalidParse 'namespace' has_error
+// CHECK:STDOUT:   ├─Namespace 'namespace' has_error
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ ├─InvalidParse '' has_error
+// CHECK:STDOUT:   ├─Namespace 'namespace' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

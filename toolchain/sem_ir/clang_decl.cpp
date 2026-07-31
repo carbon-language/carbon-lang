@@ -6,6 +6,7 @@
 
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/TextNodeDumper.h"
+#include "common/hashtable_key_context.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/canonical_value_store_impl.h"
@@ -93,19 +94,36 @@ auto ClangDecl::Print(llvm::raw_ostream& out) const -> void {
   out << "{key: " << key << ", inst_id: " << inst_id << "}";
 }
 
+class ClangDeclStore::KeyContext : public TranslatingKeyContext<KeyContext> {
+ public:
+  // A lookup key for a clang declaration.
+  struct Key {
+    InstId inst_id;
+    SpecificId specific_id;
+
+    friend auto operator==(const Key&, const Key&) -> bool = default;
+  };
+
+  explicit KeyContext(const ClangDeclStore* store) : store_(store) {}
+
+  auto TranslateKey(ClangDeclId id) const -> Key {
+    const auto& clang_decl = store_->Get(id);
+    return {.inst_id = clang_decl.inst_id,
+            .specific_id = clang_decl.specific_id};
+  }
+
+ private:
+  const ClangDeclStore* store_;
+};
+
 ClangDeclStore::ClangDeclStore(CheckIRId check_ir_id) : values_(check_ir_id) {}
 
 auto ClangDeclStore::Add(ClangDecl value) -> ClangDeclId {
-  CARBON_CHECK(!isa<clang::VarDecl>(value.decl()));
   auto id = values_.Add(value);
-  inst_id_to_clang_decl_id_.Insert(value.inst_id, id);
-  return id;
-}
-
-auto ClangDeclStore::AddVar(ClangDecl value, InstId pattern_id) -> ClangDeclId {
-  CARBON_CHECK(isa<clang::VarDecl>(value.decl()));
-  auto id = values_.Add(value);
-  inst_id_to_clang_decl_id_.Insert(pattern_id, id);
+  reverse_lookup_.Insert(
+      KeyContext::Key{.inst_id = value.inst_id,
+                      .specific_id = value.specific_id},
+      [&] { return id; }, KeyContext(this));
   return id;
 }
 
@@ -113,9 +131,12 @@ auto ClangDeclStore::LookupId(ClangDeclKey key) const -> ClangDeclId {
   return values_.Lookup(key);
 }
 
-auto ClangDeclStore::Lookup(InstId inst_id) const -> const ClangDecl* {
-  if (auto result = inst_id_to_clang_decl_id_.Lookup(inst_id)) {
-    return &Get(result.value());
+auto ClangDeclStore::Lookup(InstId inst_id, SpecificId specific_id) const
+    -> const ClangDecl* {
+  if (auto result = reverse_lookup_.Lookup(
+          KeyContext::Key{.inst_id = inst_id, .specific_id = specific_id},
+          KeyContext(this))) {
+    return &Get(result.key());
   }
   return nullptr;
 }
@@ -127,8 +148,8 @@ auto ClangDeclStore::OutputYaml() const -> Yaml::OutputMapping {
 auto ClangDeclStore::CollectMemUsage(MemUsage& mem_usage,
                                      llvm::StringRef label) const -> void {
   values_.CollectMemUsage(mem_usage, label);
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "inst_id_to_clang_decl_id_"),
-                    inst_id_to_clang_decl_id_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "reverse_lookup_"),
+                    reverse_lookup_, KeyContext(this));
 }
 
 }  // namespace Carbon::SemIR

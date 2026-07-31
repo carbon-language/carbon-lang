@@ -7,6 +7,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/specific_interface.h"
 
 namespace Carbon::Check {
 
@@ -52,6 +53,7 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
 // resulting witness.
 auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
                                   const SemIR::Impl& impl,
+                                  SemIR::TypeInstId full_constraint_id,
                                   SemIR::SpecificId self_specific_id)
     -> SemIR::InstId;
 
@@ -65,7 +67,8 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl_id) -> void;
 // `impl` are satisfied. Otherwise, a diagnostic is issued and the `impl` is
 // made invalid.
 auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
-                                SemIR::Impl& impl) -> void;
+                                SemIR::Impl& impl,
+                                SemIR::TypeInstId full_constraint_id) -> void;
 
 // Sets all unset members of the witness for `impl` to the error instruction and
 // sets the witness id in the `Impl` to an error.
@@ -95,6 +98,13 @@ auto CheckConstraintIsFacetType(Context& context, SemIR::LocId loc_id,
 auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 SemIR::TypeInstId constraint_id)
+    -> SemIR::SpecificInterface;
+
+// Given a specific for the impl, returns the specific interface that the impl
+// declaration is implementing. Returns None in the case of an error being
+// diagnosed while constructing the specific interface.
+auto GetImplInterfaceInSpecific(Context& context, const SemIR::Impl& impl,
+                                SemIR::SpecificId specific_id)
     -> SemIR::SpecificInterface;
 
 }  // namespace Carbon::Check

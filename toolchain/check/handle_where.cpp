@@ -12,10 +12,12 @@
 #include "toolchain/check/period_self.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/check/unused.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -89,6 +91,29 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // expression to the left of `where`, so `MyInterface` in the example above.
   auto period_self =
       MakePeriodSelfFacetValue(context, node_id, period_self_type_id);
+
+  if (context.node_stack().PeekIs(Parse::NodeKind::ImplTypeAs) ||
+      context.node_stack().PeekIs(Parse::NodeKind::ImplDefaultSelfAs)) {
+    // We are in an impl declaration. We want to find the interface being
+    // impl'd, which will have to be on the LHS of the `where`. We want to catch
+    // lookups into that interface with `.Self` so we identify it with `.Self`.
+    auto identified_id = TryToIdentifyFacetType(
+        context, node_id, context.constant_values().Get(period_self),
+        context.types().GetTypeInstId(period_self_type_id),
+        /*allow_partially_identified=*/false);
+    if (identified_id.has_value()) {
+      const auto& identified =
+          context.identified_facet_types().Get(identified_id);
+      if (identified.is_valid_impl_as_target()) {
+        auto& decl_impl_interface = context.declaring_impl_decls().back();
+        if (decl_impl_interface != SemIR::SpecificInterface::None) {
+          CARBON_CHECK(decl_impl_interface ==
+                       identified.impl_as_target_interface());
+        }
+        decl_impl_interface = identified.impl_as_target_interface();
+      }
+    }
+  }
 
   // Going to put each requirement on `args_type_info_stack`, so we can have an
   // inst block with the varying number of requirements but keeping other

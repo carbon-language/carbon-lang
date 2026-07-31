@@ -129,7 +129,7 @@ auto CompilationUnit::RunParse() -> void {
     options.vlog_stream = vlog_stream_;
     if (options_->dump_parse_tree && IncludeInDumps()) {
       options.dump_stream = driver_env_->output_stream;
-      options.dump_preorder_parse_tree = options_->preorder_parse_tree;
+      options.dump_format = options_->parse_dump_format;
     }
     parse_tree_ = Parse::Parse(*tokens_, options);
   });
@@ -608,6 +608,7 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
   options.vlog_stream = driver_env.vlog_stream;
   options.fuzzing = driver_env.fuzzing;
   options.mangle_string_fingerprint = options_->mangle_string_fingerprint;
+  options.share_cpp_ast = options_->share_cpp_ast;
   if (options.vlog_stream || options_->dump_sem_ir || options_->dump_cpp_ast ||
       options_->dump_raw_sem_ir) {
     options.include_in_dumps = &cache_->include_in_dumps();

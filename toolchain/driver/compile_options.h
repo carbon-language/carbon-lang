@@ -17,6 +17,7 @@
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/lower/lower.h"
+#include "toolchain/parse/parse.h"
 
 namespace Carbon {
 
@@ -111,7 +112,7 @@ struct CompileOptions {
   bool dump_mem_usage = false;
   bool dump_timings = false;
   bool stream_errors = false;
-  bool preorder_parse_tree = false;
+  Parse::ParseOptions::DumpFormat parse_dump_format;
   bool builtin_sem_ir = false;
   bool prelude_import = true;
   bool output_last_input_only = false;
@@ -122,6 +123,7 @@ struct CompileOptions {
   llvm::StringRef sem_ir_crash_dump;
 
   bool mangle_string_fingerprint = false;
+  bool share_cpp_ast = false;
 
   // Get the LLVM optimization level corresponding to a Carbon optimization
   // level.
