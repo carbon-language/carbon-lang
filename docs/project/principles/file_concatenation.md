@@ -42,13 +42,18 @@ as well.
 
 When one library imports another within a package, that import can be replaced
 by the contents of the imported library's api file without changing the meaning
-of or diagnostics applied to the importing library.
+of or diagnostics applied to the importing library in isolation.
 
 Then it follows that in a package with at most one impl file, all api files can
 be written together into a single api file. It would be required to order the
 contents of the api files so that dependencies are ordered first, in order to
 maintain the information accumulation principle. Due to rejecting cyclical
 imports, there is always such an ordering.
+
+This rule applies to compiling a single library in isolation, for purposes such
+as building a minimal repro, or collapsing a package into a single library. It
+is not valid to copy imported definitions into multiple libraries and expect
+them to work together.
 
 ## Applications of these principles
 
