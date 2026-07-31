@@ -268,10 +268,12 @@ auto Mangler::MangleWithPlatform(SemIR::FunctionId function_id,
   RawStringOstream os;
 
   CARBON_CHECK(sem_ir_.cpp_file());
+  CARBON_CHECK(sem_ir_.cpp_file()->code_generator());
+  CARBON_CHECK(sem_ir_.cpp_file()->code_generator()->GetModule());
   // The only platform mangling that's relevant for us is applying a global
   // prefix, if the platform has one.
   if (char prefix = sem_ir_.cpp_file()
-                        ->GetCodeGenerator()
+                        ->code_generator()
                         ->GetModule()
                         ->getDataLayout()
                         .getGlobalPrefix()) {

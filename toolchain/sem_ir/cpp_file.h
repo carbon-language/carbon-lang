@@ -29,7 +29,9 @@ namespace Carbon::SemIR {
 class CppFile {
  public:
   explicit CppFile(std::shared_ptr<clang::CompilerInstance> clang,
-                   llvm::LLVMContext* llvm_context);
+                   std::unique_ptr<clang::MangleContext> mangle_context,
+                   llvm::LLVMContext* llvm_context,
+                   clang::CodeGenerator* code_generator);
   ~CppFile();
 
   // Access to compilation options.
@@ -47,28 +49,18 @@ class CppFile {
   auto ast_context() -> clang::ASTContext&;
   auto ast_context() const -> const clang::ASTContext&;
 
-  // Creates the mangle context for this file's C++ AST. Must be called once the
-  // AST context is available (after the frontend begins the source file) and
-  // before `mangle_context()` is used.
-  auto CreateMangleContext() -> void;
   auto mangle_context() const -> clang::MangleContext&;
 
   auto llvm_context() const -> llvm::LLVMContext* { return llvm_context_; }
-  auto SetCodeGenerator(clang::CodeGenerator* code_generator) -> void {
-    code_generator_ = code_generator;
-  }
-  auto GetCodeGenerator() const -> clang::CodeGenerator* {
-    // Clang code generation should not actually modify the AST, but isn't
-    // const-correct.
+  auto code_generator() const -> clang::CodeGenerator* {
     return code_generator_;
   }
 
  private:
   std::shared_ptr<clang::CompilerInstance> clang_;
-  llvm::LLVMContext* llvm_context_;
-  clang::CodeGenerator* code_generator_ = nullptr;
-  // Created by `CreateMangleContext()` once the AST context is available.
   std::unique_ptr<clang::MangleContext> mangle_context_;
+  llvm::LLVMContext* llvm_context_;
+  clang::CodeGenerator* code_generator_;
 };
 
 }  // namespace Carbon::SemIR

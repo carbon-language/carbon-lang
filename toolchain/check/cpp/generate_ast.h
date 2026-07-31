@@ -35,7 +35,7 @@ class CppDomain;
 // within one or more Carbon files. Returns the initialized state, or null on
 // failure.
 auto InitializeCppDomain(
-    Diagnostics::Consumer& consumer, llvm::StringRef filename,
+    Diagnostics::Consumer& consumer, llvm::ArrayRef<llvm::StringRef> filenames,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::LLVMContext* llvm_context,
     std::shared_ptr<clang::CompilerInvocation> base_invocation)

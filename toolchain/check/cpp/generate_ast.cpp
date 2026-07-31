@@ -9,12 +9,14 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/Mangle.h"
 #include "clang/Basic/DiagnosticParse.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendAction.h"
+#include "clang/Frontend/MultiplexConsumer.h"
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Parse/Parser.h"
@@ -714,12 +716,12 @@ namespace {
 // from a set of Cpp imports.
 class GenerateASTAction : public clang::ASTFrontendAction {
  public:
-  explicit GenerateASTAction(llvm::StringRef filename,
+  explicit GenerateASTAction(llvm::ArrayRef<llvm::StringRef> filenames,
                              llvm::LLVMContext* llvm_context)
-      : filename_(filename), llvm_context_(llvm_context) {}
+      : filenames_(filenames), llvm_context_(llvm_context) {}
 
-  auto code_generator() const -> clang::CodeGenerator* {
-    return code_generator_;
+  auto code_generators() const -> llvm::ArrayRef<clang::CodeGenerator*> {
+    return code_generators_;
   }
 
   auto TakeParser() -> std::unique_ptr<clang::Parser> {
@@ -733,15 +735,28 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     if (!llvm_context_) {
       return std::make_unique<clang::ASTConsumer>();
     }
-    auto code_generator =
+    // Build a code generator for each object file we will be building. For now
+    // we assume that we want one object file per Carbon source file.
+    // TODO: Only build CodeGenerators for the files we're actually generating
+    // code for.
+    // TODO: Consider supporting generating code for multiple Carbon files into
+    // a single object file, for a faster `carbon build` mode.
+    std::vector<std::unique_ptr<clang::ASTConsumer>> consumers;
+    for (auto filename : filenames_) {
+      // TODO: Filter what goes into each code generator. If there are strong
+      // external C++ definitions in a Carbon file (for example, in inline C++
+      // code), they should be emitted only in that one file.
+      auto code_generator = 
         std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-            clang_instance.getDiagnostics(), filename_,
+            clang_instance.getDiagnostics(), filename,
             clang_instance.getVirtualFileSystemPtr(),
             clang_instance.getHeaderSearchOpts(),
             clang_instance.getPreprocessorOpts(),
             clang_instance.getCodeGenOpts(), *llvm_context_));
-    code_generator_ = code_generator.get();
-    return code_generator;
+      code_generators_.push_back(code_generator.get());
+      consumers.push_back(std::move(code_generator));
+    }
+    return std::make_unique<clang::MultiplexConsumer>(std::move(consumers));
   }
 
   auto BeginSourceFileAction(clang::CompilerInstance& /*clang_instance*/)
@@ -776,9 +791,9 @@ class GenerateASTAction : public clang::ASTFrontendAction {
   }
 
  private:
-  std::string filename_;
+  llvm::ArrayRef<llvm::StringRef> filenames_;
   llvm::LLVMContext* llvm_context_;
-  clang::CodeGenerator* code_generator_ = nullptr;
+  llvm::SmallVector<clang::CodeGenerator*> code_generators_;
   std::unique_ptr<clang::Parser> parser_;
 };
 
@@ -788,7 +803,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 // creating a diagnostics engine, and parsing a dummy main file containing a
 // semicolon. Returns the initialized state, or null on failure.
 auto InitializeCppDomain(
-    Diagnostics::Consumer& consumer, llvm::StringRef filename,
+    Diagnostics::Consumer& consumer, llvm::ArrayRef<llvm::StringRef> filenames,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::LLVMContext* llvm_context,
     std::shared_ptr<clang::CompilerInvocation> base_invocation)
@@ -841,7 +856,7 @@ auto InitializeCppDomain(
     return nullptr;
   }
 
-  GenerateASTAction action(filename, llvm_context);
+  GenerateASTAction action(filenames, llvm_context);
   if (!action.BeginSourceFile(*clang_instance, inputs[0])) {
     return nullptr;
   }
@@ -880,8 +895,9 @@ auto InitializeCppDomain(
   auto parser = action.TakeParser();
   CARBON_CHECK(parser);
 
+  CARBON_CHECK(action.code_generators().size() == filenames.size());
   return std::make_unique<CppDomain>(std::move(clang_instance),
-                                     std::move(parser), action.code_generator(),
+                                     std::move(parser), action.code_generators(),
                                      llvm_context);
 }
 
@@ -900,22 +916,18 @@ auto GenerateAst(Context& context,
 
   auto clang_instance = domain.clang_instance_ptr();
 
+  auto mangle_context = std::unique_ptr<clang::MangleContext>(
+      clang_instance->getASTContext().createMangleContext());
+
   // Set up CppFile for the current SemIR::File.
-  auto cpp_file =
-      std::make_unique<SemIR::CppFile>(clang_instance, domain.llvm_context());
-  if (domain.code_generator()) {
-    cpp_file->SetCodeGenerator(domain.code_generator());
-  }
-  context.sem_ir().set_cpp_file(std::move(cpp_file));
+  context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
+      clang_instance, std::move(mangle_context), domain.llvm_context(),
+      domain.TakeNextCodeGenerator()));
 
   // Set up CppContext for the current Context.
   context.set_cpp_context(std::make_unique<CppContext>(
       domain, MakeContextDiagnosticListener(
                   *clang_instance->getDiagnostics().getClient(), context)));
-
-  // The AST context is now available, so the mangle context (used to compute
-  // stable identities for imported C++ types) can be created.
-  context.sem_ir().cpp_file()->CreateMangleContext();
 
   // Add an external source referring to this context.
   auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(

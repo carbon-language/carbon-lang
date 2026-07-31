@@ -64,7 +64,8 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
       vtables_(decltype(vtables_)::MakeForOverwrite(sem_ir.vtables())),
       specific_vtables_(sem_ir.specifics(), nullptr) {
   // Initialization that relies on invariants of the class.
-  cpp_code_generator_ = cpp_file() ? cpp_file()->GetCodeGenerator() : nullptr;
+  // TODO: Is this really the right code generator?
+  cpp_code_generator_ = cpp_file() ? cpp_file()->code_generator() : nullptr;
   CARBON_CHECK(
       !cpp_code_generator_ ||
       (&cpp_code_generator_->GetModule()->getContext() == &llvm_context()));
