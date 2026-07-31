@@ -313,6 +313,34 @@ constraint Y {
 // CHECK:STDERR:
 impl () as Y {}
 
+// --- fail_todo_member_access_in_extend_require.carbon
+library "[[@TEST_NAME]]";
+
+interface I { let X: type; }
+interface J {}
+
+impl () as J {}
+
+constraint GivesI {
+  extend require impls I where .X impls J;
+}
+
+// When we check this we check that GivesI is complete, which:
+// - Forms the self-specific for GivesI's extend require
+// - Creates Self.(I.X) which has a LookupImplWitness for `Self as I`
+// - Evaluates the witness which finds this impl
+// - Deduces for Self which tries to convert Self to type
+// - Requires the type of Self to be complete, and its type is GivesI
+// - Forms the self-specfic for GivesI's extend require....we have a loop.
+//
+// TODO: .X = () should satisfy the requirement that .X impls J. We're not
+// finding the rewrite when checking requirements.
+// CHECK:STDERR: fail_todo_member_access_in_extend_require.carbon:[[@LINE+4]]:1: error: constraint `GivesI where .(I.X) = ()` being implemented requires that `T.(I.X)` implements `J` [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR: impl forall [T: type] T as GivesI where .X = () {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl forall [T: type] T as GivesI where .X = () {}
+
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

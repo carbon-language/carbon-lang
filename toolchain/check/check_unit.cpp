@@ -160,7 +160,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   ImportOtherPackages(namespace_type_id);
 
   ImportCpp(context_, unit_and_imports_->cpp_imports,
-            unit_and_imports_->cpp_domain.get());
+            unit_and_imports_->cpp_domain);
 }
 
 auto CheckUnit::CollectDirectImports(

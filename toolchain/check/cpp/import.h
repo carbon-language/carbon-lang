@@ -25,7 +25,7 @@ class VarDecl;
 
 namespace Carbon::Check {
 
-struct CppDomain;
+class CppDomain;
 
 // Returns whether the given function is an object member function. This is true
 // if it's a non-static member function and not a constructor. Object member

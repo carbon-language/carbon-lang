@@ -21,104 +21,101 @@ var {s: str, i: 32} = {.s = "hello shorthand", .i = 1};
 var {.s = s: str, i: 32} = {.s = "hello mixed", .i = 1};
 
 // CHECK:STDOUT: - filename: var_struct.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'StructPatternStart', text: '{'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
-// CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
-// CHECK:STDOUT:               {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:               {kind: 'StringTypeLiteral', text: 'str'},
-// CHECK:STDOUT:             {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'StructPatternDesignatedField', text: '=', subtree_size: 7},
-// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'i'},
-// CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'i'},
-// CHECK:STDOUT:               {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:               {kind: 'IntLiteral', text: '32'},
-// CHECK:STDOUT:             {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'StructPatternDesignatedField', text: '=', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'StructPattern', text: '}', subtree_size: 17},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 18},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'StringLiteral', text: '"hello"'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'StructLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'i'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 32},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │   │   ╭─IdentifierNameNotBeforeSignature 's'
+// CHECK:STDOUT:   │ │   │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature 's'
+// CHECK:STDOUT:   │ │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ │ ├─StringTypeLiteral 'str'
+// CHECK:STDOUT:   │ │   │ ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │   ├─StructPatternDesignatedField '='
+// CHECK:STDOUT:   │ │   ├─PatternListComma ','
+// CHECK:STDOUT:   │ │   │   ╭─IdentifierNameNotBeforeSignature 'i'
+// CHECK:STDOUT:   │ │   │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature 'i'
+// CHECK:STDOUT:   │ │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ │ ├─IntLiteral '32'
+// CHECK:STDOUT:   │ │   │ ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │   ├─StructPatternDesignatedField '='
+// CHECK:STDOUT:   │ │ ╭─StructPattern '}'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 's'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ ├─StringLiteral '"hello"'
+// CHECK:STDOUT:   │ │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ │ ├─StructLiteralComma ','
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'i'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: var_struct_shorthand.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'StructPatternStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'str'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'i'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '32'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'StructPattern', text: '}', subtree_size: 11},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 12},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'StringLiteral', text: '"hello shorthand"'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'StructLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'i'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 26},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameNotBeforeSignature 's'
+// CHECK:STDOUT:   │ │   │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ├─StringTypeLiteral 'str'
+// CHECK:STDOUT:   │ │   ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │   ├─PatternListComma ','
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameNotBeforeSignature 'i'
+// CHECK:STDOUT:   │ │   │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ├─IntLiteral '32'
+// CHECK:STDOUT:   │ │   ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ╭─StructPattern '}'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 's'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ ├─StringLiteral '"hello shorthand"'
+// CHECK:STDOUT:   │ │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ │ ├─StructLiteralComma ','
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'i'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '1'
+// CHECK:STDOUT:   │ │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: var_struct_mixed.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'StructPatternStart', text: '{'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
-// CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
-// CHECK:STDOUT:               {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:               {kind: 'StringTypeLiteral', text: 'str'},
-// CHECK:STDOUT:             {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'StructPatternDesignatedField', text: '=', subtree_size: 7},
-// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'i'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '32'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'StructPattern', text: '}', subtree_size: 14},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 15},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'StringLiteral', text: '"hello mixed"'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'StructLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'i'},
-// CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 29},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │   │   ╭─IdentifierNameNotBeforeSignature 's'
+// CHECK:STDOUT:   │ │   │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature 's'
+// CHECK:STDOUT:   │ │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ │ ├─StringTypeLiteral 'str'
+// CHECK:STDOUT:   │ │   │ ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │   ├─StructPatternDesignatedField '='
+// CHECK:STDOUT:   │ │   ├─PatternListComma ','
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameNotBeforeSignature 'i'
+// CHECK:STDOUT:   │ │   │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ├─IntLiteral '32'
+// CHECK:STDOUT:   │ │   ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ╭─StructPattern '}'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 's'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ ├─StringLiteral '"hello mixed"'
+// CHECK:STDOUT:   │ │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ │ ├─StructLiteralComma ','
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'i'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '1'
+// CHECK:STDOUT:   │ │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -484,7 +484,7 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   %Generic.type.30d: type = generic_interface_type @Generic [concrete]
 // CHECK:STDOUT:   %Generic.generic: %Generic.type.30d = struct_value () [concrete]
 // CHECK:STDOUT:   %Generic.type.ee1: type = facet_type <@Generic, @Generic(%T.67d)> [symbolic]
-// CHECK:STDOUT:   %Self.8ea: %Generic.type.ee1 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self: %Generic.type.ee1 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -501,7 +501,6 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   %T.f18: %Generic.type.57d = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Self.cb2: %Generic.type.57d = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.f18 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -554,10 +553,10 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Generic.type: type = facet_type <@Generic, @Generic(%T.loc4_20.1)> [symbolic = %Generic.type (constants.%Generic.type.ee1)]
-// CHECK:STDOUT:   %Self.loc4_28.2: @Generic.%Generic.type (%Generic.type.ee1) = symbolic_binding Self, 1 [symbolic = %Self.loc4_28.2 (constants.%Self.8ea)]
+// CHECK:STDOUT:   %Self.loc4_28.2: @Generic.%Generic.type (%Generic.type.ee1) = symbolic_binding Self, 1 [symbolic = %Self.loc4_28.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc4_28.1: @Generic.%Generic.type (%Generic.type.ee1) = symbolic_binding Self, 1 [symbolic = %Self.loc4_28.2 (constants.%Self.8ea)]
+// CHECK:STDOUT:     %Self.loc4_28.1: @Generic.%Generic.type (%Generic.type.ee1) = symbolic_binding Self, 1 [symbolic = %Self.loc4_28.2 (constants.%Self)]
 // CHECK:STDOUT:     %Generic.WithSelf.decl = interface_with_self_decl @Generic [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -612,7 +611,7 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc4_20.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic.WithSelf(constants.%T.67d, constants.%Self.8ea) {}
+// CHECK:STDOUT: specific @Generic.WithSelf(constants.%T.67d, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%A) {
 // CHECK:STDOUT:   %T.patt.loc4_20.2 => constants.%T.patt.d47
@@ -627,19 +626,11 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT: specific @Generic(constants.%B) {
 // CHECK:STDOUT:   %T.patt.loc4_20.2 => constants.%T.patt.d47
 // CHECK:STDOUT:   %T.loc4_20.1 => constants.%B
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Generic.type => constants.%Generic.type.57d
-// CHECK:STDOUT:   %Self.loc4_28.2 => constants.%Self.cb2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.f18) {
 // CHECK:STDOUT:   %T.patt.loc10_15.2 => constants.%T.patt.b1f
 // CHECK:STDOUT:   %T.loc10_15.1 => constants.%T.f18
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic.WithSelf(constants.%B, constants.%Self.8ea) {
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_args_count_mismatch.carbon
