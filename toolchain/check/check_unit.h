@@ -20,7 +20,7 @@ class CompilerInvocation;
 namespace Carbon::Check {
 
 struct UnitAndImports;
-struct CppDomain;
+class CppDomain;
 
 // A file's imports corresponding to a single package, for
 // `UnitAndImports::package_imports`.
@@ -103,7 +103,7 @@ struct UnitAndImports {
   llvm::SmallVector<Parse::Tree::PackagingNames> cpp_imports;
 
   // The C++ domain for this unit.
-  std::shared_ptr<CppDomain> cpp_domain;
+  CppDomain* cpp_domain = nullptr;
 
   // The remaining number of imports which must be checked before this unit can
   // be processed.

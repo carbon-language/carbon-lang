@@ -32,7 +32,7 @@ struct Unit {
   int total_ir_count;
 };
 
-struct CppDomain;
+class CppDomain;
 
 struct CheckParseTreesOptions {
   // Options must be set individually, not through initialization.
