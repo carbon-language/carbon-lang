@@ -140,8 +140,8 @@ auto TreeAndSubtrees::roots() const -> llvm::iterator_range<SiblingIterator> {
       SiblingIterator(*this, NodeId(-1)));
 }
 
-auto TreeAndSubtrees::YamlPrintNode(llvm::raw_ostream& output, NodeId n, int depth,
-                                bool preorder) const -> bool {
+auto TreeAndSubtrees::YamlPrintNode(llvm::raw_ostream& output, NodeId n,
+                                    int depth, bool preorder) const -> bool {
   output.indent(2 * (depth + 2));
   output << "{";
   // If children are being added, include node_index in order to disambiguate
