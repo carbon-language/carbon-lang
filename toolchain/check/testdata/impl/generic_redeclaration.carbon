@@ -434,21 +434,13 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J.WithSelf(constants.%Self.653) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @J.WithSelf(constants.%Self.653) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @K.WithSelf(constants.%Self.a32) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @K.WithSelf(constants.%Self.a32) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @L.WithSelf(constants.%Self.480) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @L.WithSelf(constants.%Self.480) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as_type.as.Interface.impl.72f(constants.%T.dda) {
 // CHECK:STDOUT:   %T.patt.loc12_15.2 => constants.%T.patt.1df
@@ -618,9 +610,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.WithSelf(constants.%Self.653) {
 // CHECK:STDOUT: !definition:

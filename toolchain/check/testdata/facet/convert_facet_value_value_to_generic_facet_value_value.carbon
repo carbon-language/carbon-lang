@@ -83,7 +83,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.560: type = pattern_type %Eats.type.eb4 [symbolic]
 // CHECK:STDOUT:   %T.patt.02f: %pattern_type.560 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T.b01: %Eats.type.eb4 = symbolic_binding T, 1 [symbolic]
-// CHECK:STDOUT:   %Self.377: %Eats.type.eb4 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.as_type.b84: type = facet_access_type %T.b01 [symbolic]
 // CHECK:STDOUT:   %pattern_type.371: type = pattern_type %T.as_type.b84 [symbolic]
 // CHECK:STDOUT:   %e.param_patt.32e: %pattern_type.371 = value_param_pattern [symbolic]
@@ -565,14 +564,6 @@ fn F() {
 // CHECK:STDOUT: specific @Eats(constants.%Food.as_type.bca) {
 // CHECK:STDOUT:   %Food.patt.loc21_20.2 => constants.%Food.patt.d47
 // CHECK:STDOUT:   %Food.loc21_20.1 => constants.%Food.as_type.bca
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Eats.type => constants.%Eats.type.eb4
-// CHECK:STDOUT:   %Self.loc21_28.2 => constants.%Self.377
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Food.as_type.bca, constants.%Self.db3) {
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%Food.196, constants.%T.b01) {
