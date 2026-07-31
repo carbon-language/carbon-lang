@@ -27,26 +27,25 @@ var choice: i32;
 var f2: f32;
 
 // CHECK:STDOUT: - filename: fail_bad_name.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:         {kind: 'PrefixOperatorStar', text: '*', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'choice'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'f2'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'FloatTypeLiteral', text: 'f32'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ╭─PrefixOperatorStar '*' has_error
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'choice'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'f2'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─FloatTypeLiteral 'f32'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

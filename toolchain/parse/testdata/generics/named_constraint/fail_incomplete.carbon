@@ -21,13 +21,12 @@ constraint "Foo"
 constraint
 
 // CHECK:STDOUT: - filename: fail_incomplete.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '"Foo"', has_error: yes},
-// CHECK:STDOUT:     {kind: 'NamedConstraintDecl', text: '"Foo"', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '', has_error: yes},
-// CHECK:STDOUT:     {kind: 'NamedConstraintDecl', text: 'constraint', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─NamedConstraintIntroducer 'constraint'
+// CHECK:STDOUT:   │ ├─InvalidParse '"Foo"' has_error
+// CHECK:STDOUT:   ├─NamedConstraintDecl '"Foo"' has_error
+// CHECK:STDOUT:   │ ╭─NamedConstraintIntroducer 'constraint'
+// CHECK:STDOUT:   │ ├─InvalidParse '' has_error
+// CHECK:STDOUT:   ├─NamedConstraintDecl 'constraint' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

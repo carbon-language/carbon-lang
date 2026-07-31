@@ -38,59 +38,58 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: fail_else_unbraced.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:         {kind: 'IfCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: 'if', has_error: yes},
-// CHECK:STDOUT:               {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:             {kind: 'IfCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:               {kind: 'CodeBlockStart', text: 'c', has_error: yes},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:               {kind: 'ExprStatement', text: ';', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'CodeBlock', text: 'c', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:             {kind: 'IfStatementElse', text: 'else'},
-// CHECK:STDOUT:               {kind: 'CodeBlockStart', text: 'd', has_error: yes},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'd'},
-// CHECK:STDOUT:               {kind: 'ExprStatement', text: ';', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'CodeBlock', text: 'd', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'IfStatement', text: 'if', subtree_size: 13},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: 'if', has_error: yes, subtree_size: 15},
-// CHECK:STDOUT:         {kind: 'IfStatementElse', text: 'else'},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: 'e', has_error: yes},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'e'},
-// CHECK:STDOUT:           {kind: 'ExprStatement', text: ';', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: 'e', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'IfStatement', text: 'if', subtree_size: 24},
-// CHECK:STDOUT:           {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:         {kind: 'IfCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'f'},
-// CHECK:STDOUT:           {kind: 'ExprStatement', text: ';', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'IfStatementElse', text: 'else'},
-// CHECK:STDOUT:             {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:           {kind: 'IfCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'g'},
-// CHECK:STDOUT:             {kind: 'ExprStatement', text: ';', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'CodeBlock', text: '}', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'IfStatementElse', text: 'else'},
-// CHECK:STDOUT:             {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'h'},
-// CHECK:STDOUT:             {kind: 'ExprStatement', text: ';', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'CodeBlock', text: '}', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'IfStatement', text: 'if', subtree_size: 13},
-// CHECK:STDOUT:       {kind: 'IfStatement', text: 'if', subtree_size: 22},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 52},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │ ╭─IfCondition ')'
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart 'if' has_error
+// CHECK:STDOUT:   │ │ │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │ │ │   ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ │ │ ╭─IfCondition ')'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─CodeBlockStart 'c' has_error
+// CHECK:STDOUT:   │ │ │ │ │ │ ╭─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ │ │ │ │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │ │ │ ├─CodeBlock 'c' has_error
+// CHECK:STDOUT:   │ │ │ │ ├─IfStatementElse 'else'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─CodeBlockStart 'd' has_error
+// CHECK:STDOUT:   │ │ │ │ │ │ ╭─IdentifierNameExpr 'd'
+// CHECK:STDOUT:   │ │ │ │ │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │ │ │ ├─CodeBlock 'd' has_error
+// CHECK:STDOUT:   │ │ │ ├─IfStatement 'if'
+// CHECK:STDOUT:   │ │ ├─CodeBlock 'if' has_error
+// CHECK:STDOUT:   │ │ ├─IfStatementElse 'else'
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart 'e' has_error
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameExpr 'e'
+// CHECK:STDOUT:   │ │ │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │ ├─CodeBlock 'e' has_error
+// CHECK:STDOUT:   │ ├─IfStatement 'if'
+// CHECK:STDOUT:   │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │ ╭─IfCondition ')'
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameExpr 'f'
+// CHECK:STDOUT:   │ │ │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ │ ├─IfStatementElse 'else'
+// CHECK:STDOUT:   │ │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │ │   ├─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │ │ ╭─IfCondition ')'
+// CHECK:STDOUT:   │ │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─IdentifierNameExpr 'g'
+// CHECK:STDOUT:   │ │ │ │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ │ │ ├─IfStatementElse 'else'
+// CHECK:STDOUT:   │ │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─IdentifierNameExpr 'h'
+// CHECK:STDOUT:   │ │ │ │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ │ ├─IfStatement 'if'
+// CHECK:STDOUT:   │ ├─IfStatement 'if'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

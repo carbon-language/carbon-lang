@@ -13,30 +13,29 @@ fn F(n: i32) -> i32 {
 }
 
 // CHECK:STDOUT: - filename: parens.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'n'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 11},
-// CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:           {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:               {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:               {kind: 'ParenExpr', text: ')', subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'ParenExpr', text: ')', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'ParenExpr', text: ')', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 23},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'n'
+// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │ │ │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │ │ │ │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │ │ │ │ │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │ │ │ │ │ ├─IdentifierNameExpr 'n'
+// CHECK:STDOUT:   │ │ │ │ │ ├─ParenExpr ')'
+// CHECK:STDOUT:   │ │ │ │ ├─ParenExpr ')'
+// CHECK:STDOUT:   │ │ │ ├─ParenExpr ')'
+// CHECK:STDOUT:   │ │ ├─ParenExpr ')'
+// CHECK:STDOUT:   │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
