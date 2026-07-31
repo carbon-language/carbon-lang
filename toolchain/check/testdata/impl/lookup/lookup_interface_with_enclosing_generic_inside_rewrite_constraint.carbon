@@ -149,6 +149,7 @@ fn F() {
 // CHECK:STDOUT:   %.c26: <witness> = impl_self_witness %.Self.693, @Y, @Y(%empty_tuple.type) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.85f: type = impl_witness_access %.c26, element0 [symbolic_self]
 // CHECK:STDOUT:   %Y_where.type.69b: type = facet_type <@Y, @Y(%empty_tuple.type) where %impl.elem0.85f = %empty_tuple.type> [concrete]
+// CHECK:STDOUT:   %.6f6: <witness> = impl_self_witness %C, @Y, @Y(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness @C.as.Y.impl.%Y.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Y.facet: %Y.type.1f7 = facet_value %C, (%Y.impl_witness) [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -216,6 +217,7 @@ fn F() {
 // CHECK:STDOUT:       %rewrite.loc58_32.2 = requirement_rewrite %impl.elem0.loc58_29.2, %.loc58_35.2 [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc58: <witness> = impl_self_witness @C.as.Y.impl.%C.ref, @Y, @Y(constants.%empty_tuple.type) [concrete = constants.%.6f6]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -495,12 +497,15 @@ fn F() {
 // CHECK:STDOUT:   %.a5c: <witness> = impl_self_witness %.Self.b74, @Y, @Y(%OuterParam) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.aaa: type = impl_witness_access %.a5c, element0 [symbolic]
 // CHECK:STDOUT:   %Y_where.type.cb4: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.aaa = %empty_tuple.type> [symbolic]
+// CHECK:STDOUT:   %.8e6: <witness> = impl_self_witness %C.147, @Y, @Y(%OuterParam) [symbolic]
 // CHECK:STDOUT:   %Y.impl_witness.b49: <witness> = impl_witness @C.as.Y.impl.%Y.impl_witness_table, @C.as.Y.impl(%OuterParam) [symbolic]
 // CHECK:STDOUT:   %Y.facet.253: %Y.type.6da = facet_value %C.147, (%Y.impl_witness.b49) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %.9a5: <witness> = impl_self_witness %empty_tuple.type, @Z1 [concrete]
 // CHECK:STDOUT:   %Z1.impl_witness: <witness> = impl_witness @empty_tuple.type.as.Z1.impl.%Z1.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Z1.facet: %Z1.type = facet_value %empty_tuple.type, (%Z1.impl_witness) [concrete]
+// CHECK:STDOUT:   %.6bb: <witness> = impl_self_witness %empty_tuple.type, @Z2 [concrete]
 // CHECK:STDOUT:   %Z2.impl_witness: <witness> = impl_witness @empty_tuple.type.as.Z2.impl.%Z2.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Z2.facet: %Z2.type = facet_value %empty_tuple.type, (%Z2.impl_witness) [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -537,6 +542,7 @@ fn F() {
 // CHECK:STDOUT:   %.c6a: <witness> = impl_self_witness %.Self.b06, @Y, @Y(%Z1.facet) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.c60: type = impl_witness_access %.c6a, element0 [symbolic_self]
 // CHECK:STDOUT:   %Y_where.type.0d1: type = facet_type <@Y, @Y(%Z1.facet) where %impl.elem0.c60 = %empty_tuple.type> [concrete]
+// CHECK:STDOUT:   %.808: <witness> = impl_self_witness %C.5e2, @Y, @Y(%Z1.facet) [concrete]
 // CHECK:STDOUT:   %Y.impl_witness.5cc: <witness> = impl_witness @C.as.Y.impl.%Y.impl_witness_table, @C.as.Y.impl(%Z1.facet) [concrete]
 // CHECK:STDOUT:   %facet_value.3eb: %Y_where.type.8eb = facet_value %C.5e2, (%Y.impl_witness.5cc) [concrete]
 // CHECK:STDOUT:   %Y.lookup_impl_witness.fb3: <witness> = lookup_impl_witness %.Self.frozen.70d, @Y, @Y(%Z1.facet) [symbolic_self]
@@ -582,11 +588,13 @@ fn F() {
 // CHECK:STDOUT:     %.loc17_7.2: type = converted %.loc17_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Z1.ref: type = name_ref Z1, file.%Z1.decl [concrete = constants.%Z1.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @empty_tuple.type.as.Z1.impl.%.loc17_7.2, @Z1 [concrete = constants.%.9a5]
 // CHECK:STDOUT:   impl_decl @empty_tuple.type.as.Z2.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc18_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc18_7.2: type = converted %.loc18_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Z2.ref: type = name_ref Z2, file.%Z2.decl [concrete = constants.%Z2.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc18: <witness> = impl_self_witness @empty_tuple.type.as.Z2.impl.%.loc18_7.2, @Z2 [concrete = constants.%.6bb]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -651,6 +659,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_21.4: <witness> = impl_self_witness %.Self, @Y, @Y(%OuterParam) [symbolic = %.loc14_21.4 (constants.%.a5c)]
 // CHECK:STDOUT:   %impl.elem0.loc14_21.4: type = impl_witness_access %.loc14_21.4, element0 [symbolic = %impl.elem0.loc14_21.4 (constants.%impl.elem0.aaa)]
 // CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.loc14_21.4 = constants.%empty_tuple.type> [symbolic = %Y_where.type (constants.%Y_where.type.cb4)]
+// CHECK:STDOUT:   %.loc14_29: <witness> = impl_self_witness %C, @Y, @Y(%OuterParam) [symbolic = %.loc14_29 (constants.%.8e6)]
 // CHECK:STDOUT:   %Y.impl_witness.loc14_29.2: <witness> = impl_witness %Y.impl_witness_table, @C.as.Y.impl(%OuterParam) [symbolic = %Y.impl_witness.loc14_29.2 (constants.%Y.impl_witness.b49)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -747,6 +756,7 @@ fn F() {
 // CHECK:STDOUT:         %rewrite.loc14_24.2 = requirement_rewrite %impl.elem0.loc14_21.2, %.loc14_27.2 [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc14: <witness> = impl_self_witness @C.as.Y.impl.%C.ref, @Y, @Y(constants.%OuterParam) [symbolic = @C.as.Y.impl.%.loc14_29 (constants.%.8e6)]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -907,6 +917,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_21.4 => constants.%.a5c
 // CHECK:STDOUT:   %impl.elem0.loc14_21.4 => constants.%impl.elem0.aaa
 // CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.cb4
+// CHECK:STDOUT:   %.loc14_29 => constants.%.8e6
 // CHECK:STDOUT:   %Y.impl_witness.loc14_29.2 => constants.%Y.impl_witness.b49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -960,6 +971,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_21.4 => constants.%.c6a
 // CHECK:STDOUT:   %impl.elem0.loc14_21.4 => constants.%impl.elem0.c60
 // CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type.0d1
+// CHECK:STDOUT:   %.loc14_29 => constants.%.808
 // CHECK:STDOUT:   %Y.impl_witness.loc14_29.2 => constants.%Y.impl_witness.5cc
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

@@ -72,6 +72,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %I.WithSelf.F.ec6: %I.WithSelf.F.type.dcc = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.F.decl [concrete]
+// CHECK:STDOUT:   %.41f: <witness> = impl_self_witness %C, @I [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table, @C.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.type: type = fn_type @C.as.I.impl.F, @C.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F: %C.as.I.impl.F.type = struct_value () [symbolic]
@@ -108,6 +109,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc10_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc10_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc10: <witness> = impl_self_witness @C.as.I.impl.%C.loc10_26.2, @I [symbolic = @C.as.I.impl.%.loc10_33 (constants.%.41f)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -130,6 +132,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %T.patt.loc10_15.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc10_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc10_15.1 (constants.%T)]
 // CHECK:STDOUT:   %C.loc10_26.1: type = class_type @C, @C(%T.loc10_15.1) [symbolic = %C.loc10_26.1 (constants.%C)]
+// CHECK:STDOUT:   %.loc10_33: <witness> = impl_self_witness %C.loc10_26.1, @I [symbolic = %.loc10_33 (constants.%.41f)]
 // CHECK:STDOUT:   %I.impl_witness.loc10_33.2: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(%T.loc10_15.1) [symbolic = %I.impl_witness.loc10_33.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -194,6 +197,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %T.patt.loc10_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc10_15.1 => constants.%T
 // CHECK:STDOUT:   %C.loc10_26.1 => constants.%C
+// CHECK:STDOUT:   %.loc10_33 => constants.%.41f
 // CHECK:STDOUT:   %I.impl_witness.loc10_33.2 => constants.%I.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -238,9 +242,11 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.9f7 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.41f: <witness> = impl_self_witness %C.1d0, @I [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.5b2: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.type.86f: type = fn_type @C.as.I.impl.F, @C.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.45f: %C.as.I.impl.F.type.86f = struct_value () [symbolic]
+// CHECK:STDOUT:   %.0b2: <witness> = impl_self_witness %C.d8e, @I [concrete]
 // CHECK:STDOUT:   %I.impl_witness.a73: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.type.7ce: type = fn_type @C.as.I.impl.F, @C.as.I.impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.899: %C.as.I.impl.F.type.7ce = struct_value () [concrete]
@@ -335,6 +341,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.1d0)]
+// CHECK:STDOUT:   %.1: <witness> = impl_self_witness %C, @I [symbolic = %.1 (constants.%.41f)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%T) [symbolic = %I.impl_witness (constants.%I.impl_witness.5b2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -413,6 +420,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %C => constants.%C.1d0
+// CHECK:STDOUT:   %.1 => constants.%.41f
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.5b2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -426,6 +434,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%empty_struct_type
 // CHECK:STDOUT:   %C => constants.%C.d8e
+// CHECK:STDOUT:   %.1 => constants.%.0b2
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.a73
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

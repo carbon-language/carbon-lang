@@ -7,6 +7,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/specific_interface.h"
 
 namespace Carbon::Check {
 
@@ -97,6 +98,13 @@ auto CheckConstraintIsFacetType(Context& context, SemIR::LocId loc_id,
 auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 SemIR::TypeInstId constraint_id)
+    -> SemIR::SpecificInterface;
+
+// Given a specific for the impl, returns the specific interface that the impl
+// declaration is implementing. Returns None in the case of an error being
+// diagnosed while constructing the specific interface.
+auto GetImplInterfaceInSpecific(Context& context, const SemIR::Impl& impl,
+                                SemIR::SpecificId specific_id)
     -> SemIR::SpecificInterface;
 
 }  // namespace Carbon::Check

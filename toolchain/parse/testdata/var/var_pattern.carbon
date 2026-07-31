@@ -20,6 +20,14 @@ let (x: (), var y: ()) = ((), ());
 
 fn F(x: (), var y: ());
 
+// --- struct.carbon
+
+let {.x = var x: ()} = {.x = ()};
+
+// --- struct_shorthand.carbon
+
+let {var y: ()} = {.y = ()};
+
 // --- fail_nested.carbon
 
 // CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:25: error: `var` nested within another `var` [NestedVar]
@@ -90,6 +98,53 @@ let (x: (), var (y: (), var z: ())) = ((), ((), ()));
 // CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')'
 // CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: struct.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │   │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ │   ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ │ ├─StructPatternDesignatedField '='
+// CHECK:STDOUT:   │ ├─StructPattern '}'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: struct_shorthand.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │   ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─StructPattern '}'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─LetDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_nested.carbon

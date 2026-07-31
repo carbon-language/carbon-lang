@@ -522,7 +522,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %u.param_patt.151: %pattern_type.6b6 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %u.patt.49f: %pattern_type.6b6 = at_binding_pattern u, %u.param_patt.151 [concrete]
-// CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %.795f: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.J.impl.F.type: type = fn_type @empty_tuple.type.as.J.impl.F [concrete]
@@ -638,7 +638,7 @@ fn F() {
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc12_32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc12_32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32.loc12_32 [concrete = constants.%.795]
+// CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32.loc12_32 [concrete = constants.%.795f]
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @empty_tuple.type.as.J.impl.%.loc10_7.2 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self: %empty_tuple.type = wrapper_binding self, %self.param
@@ -791,7 +791,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc6_15 => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %u.param_patt.loc6_15.2 => constants.%u.param_patt.151
 // CHECK:STDOUT:   %u.patt.loc6_15.2 => constants.%u.patt.49f
-// CHECK:STDOUT:   %.loc6_23.1 => constants.%.795
+// CHECK:STDOUT:   %.loc6_23.1 => constants.%.795f
 // CHECK:STDOUT:   %return.param_patt.loc6_23.2 => constants.%return.param_patt.a9a
 // CHECK:STDOUT:   %return.patt.loc6_20.2 => constants.%return.patt.e1b
 // CHECK:STDOUT: }

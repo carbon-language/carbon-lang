@@ -133,6 +133,7 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %x.param_patt.c77: %pattern_type.a96 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %x.patt.05f: %pattern_type.a96 = at_binding_pattern x, %x.param_patt.c77 [concrete]
+// CHECK:STDOUT:   %.4ce: <witness> = impl_self_witness %C.6b1ed7.2, @I [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table, @C.as.I.impl(%Y) [symbolic]
 // CHECK:STDOUT:   %pattern_type.d0f: type = pattern_type %C.6b1ed7.2 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.bc9: %pattern_type.d0f = value_param_pattern [symbolic]
@@ -213,6 +214,7 @@ fn G() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Y.loc7_15.2: %empty_tuple.type = symbolic_binding Y, 0 [symbolic = %Y.loc7_15.1 (constants.%Y)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.I.impl.%C.loc7_24.2, @I [symbolic = @C.as.I.impl.%.loc7_31 (constants.%.4ce)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "a.carbon"] {
@@ -230,6 +232,7 @@ fn G() {
 // CHECK:STDOUT:   %Y.patt.loc7_15.2: %pattern_type.cb1 = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc7_15.2 (constants.%Y.patt)]
 // CHECK:STDOUT:   %Y.loc7_15.1: %empty_tuple.type = symbolic_binding Y, 0 [symbolic = %Y.loc7_15.1 (constants.%Y)]
 // CHECK:STDOUT:   %C.loc7_24.1: type = class_type @C, @C(%Y.loc7_15.1) [symbolic = %C.loc7_24.1 (constants.%C.6b1ed7.2)]
+// CHECK:STDOUT:   %.loc7_31: <witness> = impl_self_witness %C.loc7_24.1, @I [symbolic = %.loc7_31 (constants.%.4ce)]
 // CHECK:STDOUT:   %I.impl_witness.loc7_31.2: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(%Y.loc7_15.1) [symbolic = %I.impl_witness.loc7_31.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -376,6 +379,7 @@ fn G() {
 // CHECK:STDOUT:   %Y.patt.loc7_15.2 => constants.%Y.patt
 // CHECK:STDOUT:   %Y.loc7_15.1 => constants.%Y
 // CHECK:STDOUT:   %C.loc7_24.1 => constants.%C.6b1ed7.2
+// CHECK:STDOUT:   %.loc7_31 => constants.%.4ce
 // CHECK:STDOUT:   %I.impl_witness.loc7_31.2 => constants.%I.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -430,6 +434,7 @@ fn G() {
 // CHECK:STDOUT:   %assoc0.232: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.9f7 [concrete]
 // CHECK:STDOUT:   %Y: %empty_tuple.type = symbolic_binding Y, 0 [symbolic]
 // CHECK:STDOUT:   %C.6b1ed7.2: type = class_type @C, @C(%Y) [symbolic]
+// CHECK:STDOUT:   %.4ce: <witness> = impl_self_witness %C.6b1ed7.2, @I [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.95e: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%Y) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.type.c7d3b5.1: type = fn_type @C.as.I.impl.F.1, @C.as.I.impl(%Y) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.c1d971.1: %C.as.I.impl.F.type.c7d3b5.1 = struct_value () [symbolic]
@@ -453,6 +458,7 @@ fn G() {
 // CHECK:STDOUT:   %bound_method.ef4: <bound method> = bound_method %.e66, %specific_impl_fn [symbolic]
 // CHECK:STDOUT:   %bound_method.3e7: <bound method> = bound_method %.e66, %impl.elem0 [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.specific_fn.79d: <specific function> = specific_function %C.as.I.impl.F.c1d971.2, @C.as.I.impl.F.2(%Y) [symbolic]
+// CHECK:STDOUT:   %.3b5: <witness> = impl_self_witness %C.2c9, @I [concrete]
 // CHECK:STDOUT:   %I.impl_witness.953: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.type.42776e.1: type = fn_type @C.as.I.impl.F.2, @C.as.I.impl(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.4ca3bc.1: %C.as.I.impl.F.type.42776e.1 = struct_value () [concrete]
@@ -533,6 +539,7 @@ fn G() {
 // CHECK:STDOUT:   %Y.patt: %pattern_type.cb1 = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt (constants.%Y.patt)]
 // CHECK:STDOUT:   %Y: %empty_tuple.type = symbolic_binding Y, 0 [symbolic = %Y (constants.%Y)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Y) [symbolic = %C (constants.%C.6b1ed7.2)]
+// CHECK:STDOUT:   %.1: <witness> = impl_self_witness %C, @I [symbolic = %.1 (constants.%.4ce)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%Y) [symbolic = %I.impl_witness (constants.%I.impl_witness.95e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -668,6 +675,7 @@ fn G() {
 // CHECK:STDOUT:   %Y.patt => constants.%Y.patt
 // CHECK:STDOUT:   %Y => constants.%Y
 // CHECK:STDOUT:   %C => constants.%C.6b1ed7.2
+// CHECK:STDOUT:   %.1 => constants.%.4ce
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.95e
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -696,6 +704,7 @@ fn G() {
 // CHECK:STDOUT:   %Y.patt => constants.%Y.patt
 // CHECK:STDOUT:   %Y => constants.%empty_tuple
 // CHECK:STDOUT:   %C => constants.%C.2c9
+// CHECK:STDOUT:   %.1 => constants.%.3b5
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.953
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

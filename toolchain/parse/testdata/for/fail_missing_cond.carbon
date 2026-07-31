@@ -41,8 +41,8 @@ fn F() {
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │   ╭─ForHeaderStart 'for' has_error
-// CHECK:STDOUT:   │ │   │   ╭─StructLiteralStart '{'
-// CHECK:STDOUT:   │ │   │ ╭─StructLiteral '}'
+// CHECK:STDOUT:   │ │   │   ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │   │ ╭─StructPattern '}'
 // CHECK:STDOUT:   │ │   ├─ForIn 'for' has_error
 // CHECK:STDOUT:   │ │   ├─InvalidParse '}' has_error
 // CHECK:STDOUT:   │ │ ╭─ForHeader 'for' has_error

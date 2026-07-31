@@ -116,6 +116,13 @@ class Context {
     // could help catch errors.
     bool in_unused_pattern : 1 = false;
 
+    // Set to true to indicate that this state is handling a shorthand pattern
+    // inside a struct pattern such as `{var a: T}`
+    // TODO: This is meaningful only for patterns, and the precedence fields
+    // are meaningful only for expressions, so expressing them as a union
+    // could help catch errors.
+    bool in_field_shorthand_pattern : 1 = false;
+
     // The binding context governing this state, used to pick the default phase
     // of its bindings. Meaningful for pattern states, and for the
     // declaration-name states that carry an enclosing declaration's default
@@ -139,7 +146,8 @@ class Context {
 
   // We expect State to fit into 12 bytes:
   //   state = 1 byte
-  //   has_error, in_var_pattern, in_unused_pattern, binding_context = 1 byte
+  //   has_error, in_var_pattern, in_unused_pattern, in_field_shorthand_pattern,
+  //   binding_context = 1 byte
   //   ambient_precedence = 1 byte
   //   lhs_precedence = 1 byte
   //   token = 4 bytes
@@ -368,16 +376,19 @@ class Context {
   }
 
   // Pushes a new state for handling a pattern. `in_var_pattern` and
-  // `in_unused_pattern` indicate whether that pattern is nested inside a `var`
-  // or `unused` pattern. `binding_context` is the binding context that
-  // determines the default phase of bindings in this pattern.
+  // `in_unused_pattern`  and `in_field_shorthand_pattern` indicate whether that
+  // pattern is nested inside a `var`, `unused` or a struct shorthand field
+  // pattern.. `binding_context` is the binding context that determines the
+  // default phase of bindings in this pattern.
   auto PushStateForPattern(StateKind kind, bool in_var_pattern,
                            bool in_unused_pattern,
+                           bool in_field_shorthand_pattern,
                            BindingContext binding_context,
                            PrecedenceGroup precedence) -> void {
     PushState({.kind = kind,
                .in_var_pattern = in_var_pattern,
                .in_unused_pattern = in_unused_pattern,
+               .in_field_shorthand_pattern = in_field_shorthand_pattern,
                .binding_context = binding_context,
                .ambient_precedence = precedence,
                .token = *position_,
