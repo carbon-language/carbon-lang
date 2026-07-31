@@ -579,7 +579,7 @@ interface B {
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %.b2e: <witness> = impl_self_witness %.Self, @J [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.4f1: type = impl_witness_access %.b2e, element0 [symbolic_self]
-// CHECK:STDOUT:   %J_where.type.297: type = facet_type <@J where .Self impls @Incomplete and %impl.elem0.4f1 = %empty_tuple.type> [concrete]
+// CHECK:STDOUT:   %J_where.type: type = facet_type <@J where .Self impls @Incomplete and %impl.elem0.4f1 = %empty_tuple.type> [concrete]
 // CHECK:STDOUT:   %.ffd: <witness> = impl_self_witness %C, @J [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @C.as.J.impl.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.d08: %Incomplete.type = symbolic_binding Self, 0 [symbolic]
@@ -623,7 +623,7 @@ interface B {
 // CHECK:STDOUT:     %impls.loc8_25.2 = requirement_impls %.loc8_19.2, %Incomplete.ref.loc8 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc8_46.2: type = impl_witness_access constants.%.b2e, element0 [symbolic_self = constants.%impl.elem0.4f1]
 // CHECK:STDOUT:     %rewrite.loc8_49.2 = requirement_rewrite %impl.elem0.loc8_46.2, %.loc8_52.2 [concrete]
-// CHECK:STDOUT:     %.loc8_13: type = where_expr [concrete = constants.%J_where.type.297] {
+// CHECK:STDOUT:     %.loc8_13: type = where_expr [concrete = constants.%J_where.type] {
 // CHECK:STDOUT:       %base_facet_type.loc8 = requirement_base_facet_type %J.ref.loc8 [concrete]
 // CHECK:STDOUT:       %impls.loc8_25.2 = requirement_impls %.loc8_19.2, %Incomplete.ref.loc8 [concrete]
 // CHECK:STDOUT:       %rewrite.loc8_49.2 = requirement_rewrite %impl.elem0.loc8_46.2, %.loc8_52.2 [concrete]
@@ -661,7 +661,7 @@ interface B {
 // CHECK:STDOUT:     %impls.loc13_25.2 = requirement_impls %.loc13_19.2, %Incomplete.ref.loc13 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc13_46.2: type = impl_witness_access constants.%.b2e, element0 [symbolic_self = constants.%impl.elem0.4f1]
 // CHECK:STDOUT:     %rewrite.loc13_49.2 = requirement_rewrite %impl.elem0.loc13_46.2, %.loc13_52.2 [concrete]
-// CHECK:STDOUT:     %.loc13_13: type = where_expr [concrete = constants.%J_where.type.297] {
+// CHECK:STDOUT:     %.loc13_13: type = where_expr [concrete = constants.%J_where.type] {
 // CHECK:STDOUT:       %base_facet_type.loc13 = requirement_base_facet_type %J.ref.loc13 [concrete]
 // CHECK:STDOUT:       %impls.loc13_25.2 = requirement_impls %.loc13_19.2, %Incomplete.ref.loc13 [concrete]
 // CHECK:STDOUT:       %rewrite.loc13_49.2 = requirement_rewrite %impl.elem0.loc13_46.2, %.loc13_52.2 [concrete]
