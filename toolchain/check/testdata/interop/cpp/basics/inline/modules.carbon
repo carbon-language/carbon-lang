@@ -17,8 +17,12 @@ library "[[@TEST_NAME]]";
 
 // TODO: This diagnostic isn't very good.
 import Cpp inline '''
+// CHECK:STDERR: fail_export_module_in_inline_cpp.carbon:[[@LINE+11]]:8: error: module declaration must not come from an #include directive [CppInteropParseError]
+// CHECK:STDERR:    17 | export module Foo;
+// CHECK:STDERR:       |        ^~~~~~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_export_module_in_inline_cpp.carbon:[[@LINE+7]]:8: error: module declaration must occur at the start of the translation unit [CppInteropParseError]
-// CHECK:STDERR:    13 | export module Foo;
+// CHECK:STDERR:    17 | export module Foo;
 // CHECK:STDERR:       |        ^
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: add 'module;' to the start of the file to introduce a global module fragment [CppInteropParseNote]
 // CHECK:STDERR:     1 | ;
@@ -33,15 +37,19 @@ library "[[@TEST_NAME]]";
 
 // TODO: This diagnostic isn't very good.
 import Cpp inline '''
+// CHECK:STDERR: fail_module_in_inline_cpp.carbon:[[@LINE+15]]:1: error: module declaration must not come from an #include directive [CppInteropParseError]
+// CHECK:STDERR:    21 | module Foo;
+// CHECK:STDERR:       | ^~~~~~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_module_in_inline_cpp.carbon:[[@LINE+11]]:1: error: module declaration must occur at the start of the translation unit [CppInteropParseError]
-// CHECK:STDERR:    17 | module Foo;
+// CHECK:STDERR:    21 | module Foo;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: add 'module;' to the start of the file to introduce a global module fragment [CppInteropParseNote]
 // CHECK:STDERR:     1 | ;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_module_in_inline_cpp.carbon:[[@LINE+4]]:8: error: module 'Foo' not found [CppInteropParseError]
-// CHECK:STDERR:    17 | module Foo;
+// CHECK:STDERR:    21 | module Foo;
 // CHECK:STDERR:       |        ^~~~
 // CHECK:STDERR:
 module Foo;
@@ -53,23 +61,31 @@ library "[[@TEST_NAME]]";
 
 // TODO: This diagnostic isn't very good.
 import Cpp inline '''
+// CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+8]]:1: error: module declaration must not come from an #include directive [CppInteropParseError]
+// CHECK:STDERR:    14 | module;
+// CHECK:STDERR:       | ^~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+4]]:1: error: 'module;' introducing a global module fragment can appear only at the start of the translation unit [CppInteropParseError]
-// CHECK:STDERR:    10 | module;
+// CHECK:STDERR:    14 | module;
 // CHECK:STDERR:       | ^~~~~~~
 // CHECK:STDERR:
 module;
 
 int n;
 
+// CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+15]]:1: error: module declaration must not come from an #include directive [CppInteropParseError]
+// CHECK:STDERR:    33 | module Foo;
+// CHECK:STDERR:       | ^~~~~~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+11]]:1: error: module declaration must occur at the start of the translation unit [CppInteropParseError]
-// CHECK:STDERR:    25 | module Foo;
+// CHECK:STDERR:    33 | module Foo;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: add 'module;' to the start of the file to introduce a global module fragment [CppInteropParseNote]
 // CHECK:STDERR:     1 | ;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+4]]:8: error: module 'Foo' not found [CppInteropParseError]
-// CHECK:STDERR:    25 | module Foo;
+// CHECK:STDERR:    33 | module Foo;
 // CHECK:STDERR:       |        ^~~~
 // CHECK:STDERR:
 module Foo;

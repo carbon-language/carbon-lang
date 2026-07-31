@@ -681,8 +681,6 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 
   auto BeginSourceFileAction(clang::CompilerInstance& /*clang_instance*/)
       -> bool override {
-    // TODO: `clang.getPreprocessor().enableIncrementalProcessing();` to avoid
-    // the TU scope getting torn down before we're done parsing macros.
     return true;
   }
 
@@ -699,6 +697,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
                                               clang_instance.getSema(),
                                               /*SkipFunctionBodies=*/false);
 
+    clang_instance.getPreprocessor().enableIncrementalProcessing();
     clang_instance.getPreprocessor().EnterMainSourceFile();
     parser_->Initialize();
 
