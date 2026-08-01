@@ -608,6 +608,23 @@ Disadvantages:
 -   Need parens or operator `->` to resolve precedence issues when composing
     with postfix and infix operations, which is common.
 
+**Postfix `*`:**
+
+```
+p* = p* * p* + q*[3] + r*.x;
+```
+
+Advantages:
+
+-   No need for brackets when indexing pointee.
+-   No need for `->` operator.
+
+Disadvantages:
+
+-   Not familiar to C/C++ users.
+-   `a * - b` could have parser ambiguities, as `*` could be dereference or a
+    multiplication. Whitespace rules for operators (like Swift) may be needed.
+
 **Postfix `^`:**
 
 ```
