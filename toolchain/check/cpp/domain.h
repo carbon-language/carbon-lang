@@ -8,8 +8,9 @@
 #include <memory>
 
 #include "common/check.h"
+#include "common/map.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallVector.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace clang {
 class CodeGenerator;
@@ -23,12 +24,19 @@ class LLVMContext;
 
 namespace Carbon::Check {
 
+// An input Carbon file and its CheckIRId for C++ domain code generation.
+struct CppInputFile {
+  SemIR::CheckIRId check_ir_id;
+  llvm::StringRef filename;
+};
+
 // A C++ compilation domain, including a live Clang instance that can be used to
 // parse more code into that domain. May be shared across multiple Carbon files.
 class CppDomain {
  public:
   explicit CppDomain(std::shared_ptr<clang::CompilerInstance> clang_instance,
                      std::unique_ptr<clang::Parser> parser,
+                     llvm::ArrayRef<CppInputFile> inputs,
                      llvm::ArrayRef<clang::CodeGenerator*> code_generators,
                      llvm::LLVMContext* llvm_context);
   ~CppDomain();
@@ -42,18 +50,17 @@ class CppDomain {
   auto parser() const -> clang::Parser& { return *parser_; }
   auto llvm_context() const -> llvm::LLVMContext* { return llvm_context_; }
 
-  auto TakeNextCodeGenerator() -> clang::CodeGenerator* {
-    // TODO: Switch to a more robust way of identifying which code generator
-    // belongs with which `CppFile`.
-    CARBON_CHECK(next_code_generator_index_ < code_generators_.size());
-    return code_generators_[next_code_generator_index_++];
+  auto GetCodeGenerator(SemIR::CheckIRId check_ir_id) const
+      -> clang::CodeGenerator* {
+    auto res = code_generators_.Lookup(check_ir_id);
+    CARBON_CHECK(res, "No CodeGenerator found for CheckIRId {0}", check_ir_id);
+    return res.value();
   }
 
  private:
   std::shared_ptr<clang::CompilerInstance> clang_instance_;
   std::unique_ptr<clang::Parser> parser_;
-  llvm::SmallVector<clang::CodeGenerator*> code_generators_;
-  size_t next_code_generator_index_ = 0;
+  Map<SemIR::CheckIRId, clang::CodeGenerator*> code_generators_;
   llvm::LLVMContext* llvm_context_ = nullptr;
 };
 

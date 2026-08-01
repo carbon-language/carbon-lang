@@ -716,9 +716,9 @@ namespace {
 // from a set of Cpp imports.
 class GenerateASTAction : public clang::ASTFrontendAction {
  public:
-  explicit GenerateASTAction(llvm::ArrayRef<llvm::StringRef> filenames,
+  explicit GenerateASTAction(llvm::ArrayRef<CppInputFile> inputs,
                              llvm::LLVMContext* llvm_context)
-      : filenames_(filenames), llvm_context_(llvm_context) {}
+      : inputs_(inputs), llvm_context_(llvm_context) {}
 
   auto code_generators() const -> llvm::ArrayRef<clang::CodeGenerator*> {
     return code_generators_;
@@ -742,13 +742,13 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     // TODO: Consider supporting generating code for multiple Carbon files into
     // a single object file, for a faster `carbon build` mode.
     std::vector<std::unique_ptr<clang::ASTConsumer>> consumers;
-    for (auto filename : filenames_) {
+    for (const auto& input : inputs_) {
       // TODO: Filter what goes into each code generator. If there are strong
       // external C++ definitions in a Carbon file (for example, in inline C++
       // code), they should be emitted only in that one file.
       auto code_generator =
           std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-              clang_instance.getDiagnostics(), filename,
+              clang_instance.getDiagnostics(), input.filename,
               clang_instance.getVirtualFileSystemPtr(),
               clang_instance.getHeaderSearchOpts(),
               clang_instance.getPreprocessorOpts(),
@@ -791,7 +791,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
   }
 
  private:
-  llvm::ArrayRef<llvm::StringRef> filenames_;
+  llvm::ArrayRef<CppInputFile> inputs_;
   llvm::LLVMContext* llvm_context_;
   llvm::SmallVector<clang::CodeGenerator*> code_generators_;
   std::unique_ptr<clang::Parser> parser_;
@@ -803,7 +803,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 // creating a diagnostics engine, and parsing a dummy main file containing a
 // semicolon. Returns the initialized state, or null on failure.
 auto InitializeCppDomain(
-    Diagnostics::Consumer& consumer, llvm::ArrayRef<llvm::StringRef> filenames,
+    Diagnostics::Consumer& consumer, llvm::ArrayRef<CppInputFile> inputs,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::LLVMContext* llvm_context,
     std::shared_ptr<clang::CompilerInvocation> base_invocation)
@@ -831,11 +831,12 @@ auto InitializeCppDomain(
 
   // Extract the input from the frontend invocation and make sure it makes
   // sense.
-  const auto& inputs = invocation->getFrontendOpts().Inputs;
-  CARBON_CHECK(inputs.size() == 1 &&
-               inputs[0].getKind().getLanguage() == clang::Language::CXX &&
-               inputs[0].getKind().getFormat() == clang::InputKind::Source);
-  llvm::StringRef file_name = inputs[0].getFile();
+  const auto& clang_inputs = invocation->getFrontendOpts().Inputs;
+  CARBON_CHECK(
+      clang_inputs.size() == 1 &&
+      clang_inputs[0].getKind().getLanguage() == clang::Language::CXX &&
+      clang_inputs[0].getKind().getFormat() == clang::InputKind::Source);
+  llvm::StringRef file_name = clang_inputs[0].getFile();
 
   // Remap the input file to a dummy buffer containing a semicolon to start
   // with an empty AST. Clang requires at least one token in the main file
@@ -856,8 +857,8 @@ auto InitializeCppDomain(
     return nullptr;
   }
 
-  GenerateASTAction action(filenames, llvm_context);
-  if (!action.BeginSourceFile(*clang_instance, inputs[0])) {
+  GenerateASTAction action(inputs, llvm_context);
+  if (!action.BeginSourceFile(*clang_instance, clang_inputs[0])) {
     return nullptr;
   }
 
@@ -895,9 +896,9 @@ auto InitializeCppDomain(
   auto parser = action.TakeParser();
   CARBON_CHECK(parser);
 
-  CARBON_CHECK(action.code_generators().size() == filenames.size());
+  CARBON_CHECK(action.code_generators().size() == inputs.size());
   return std::make_unique<CppDomain>(std::move(clang_instance),
-                                     std::move(parser),
+                                     std::move(parser), inputs,
                                      action.code_generators(), llvm_context);
 }
 
@@ -922,7 +923,7 @@ auto GenerateAst(Context& context,
   // Set up CppFile for the current SemIR::File.
   context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
       clang_instance, std::move(mangle_context), domain.llvm_context(),
-      domain.TakeNextCodeGenerator()));
+      domain.GetCodeGenerator(context.sem_ir().check_ir_id())));
 
   // Set up CppContext for the current Context.
   context.set_cpp_context(std::make_unique<CppContext>(
