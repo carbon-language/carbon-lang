@@ -121,6 +121,9 @@ class Context {
   auto file_system() -> llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem>& {
     return file_system_;
   }
+  auto cpp_code_generator() -> clang::CodeGenerator* {
+    return clang_code_generator_;
+  }
   auto opt_level() -> Lower::OptimizationLevel { return opt_level_; }
   auto di_builder() -> llvm::DIBuilder& { return di_builder_; }
   auto di_compile_unit() -> llvm::DICompileUnit* { return di_compile_unit_; }

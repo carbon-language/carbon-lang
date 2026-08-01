@@ -746,13 +746,13 @@ class GenerateASTAction : public clang::ASTFrontendAction {
       // TODO: Filter what goes into each code generator. If there are strong
       // external C++ definitions in a Carbon file (for example, in inline C++
       // code), they should be emitted only in that one file.
-      auto code_generator = 
-        std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-            clang_instance.getDiagnostics(), filename,
-            clang_instance.getVirtualFileSystemPtr(),
-            clang_instance.getHeaderSearchOpts(),
-            clang_instance.getPreprocessorOpts(),
-            clang_instance.getCodeGenOpts(), *llvm_context_));
+      auto code_generator =
+          std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
+              clang_instance.getDiagnostics(), filename,
+              clang_instance.getVirtualFileSystemPtr(),
+              clang_instance.getHeaderSearchOpts(),
+              clang_instance.getPreprocessorOpts(),
+              clang_instance.getCodeGenOpts(), *llvm_context_));
       code_generators_.push_back(code_generator.get());
       consumers.push_back(std::move(code_generator));
     }
@@ -897,8 +897,8 @@ auto InitializeCppDomain(
 
   CARBON_CHECK(action.code_generators().size() == filenames.size());
   return std::make_unique<CppDomain>(std::move(clang_instance),
-                                     std::move(parser), action.code_generators(),
-                                     llvm_context);
+                                     std::move(parser),
+                                     action.code_generators(), llvm_context);
 }
 
 auto GenerateAst(Context& context,

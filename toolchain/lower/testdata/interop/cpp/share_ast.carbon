@@ -235,8 +235,8 @@ fn TestB() -> i32 {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %struct.A = type { i32, i32 }
-// CHECK:STDOUT: %struct.B = type { i32, i32 }
+// CHECK:STDOUT: %struct.A.32 = type { i32, i32 }
+// CHECK:STDOUT: %struct.B.33 = type { i32, i32 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_Z6make_av = comdat any
 // CHECK:STDOUT:
@@ -248,9 +248,9 @@ fn TestB() -> i32 {
 // CHECK:STDOUT:   %a.var = alloca [8 x i8], align 4, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !16
 // CHECK:STDOUT:   call void @_Z6make_av.carbon_thunk.(ptr %a.var), !dbg !17
-// CHECK:STDOUT:   %.loc16_11.1.b = getelementptr inbounds nuw [8 x i8], ptr %a.var, i32 0, i32 4, !dbg !18
-// CHECK:STDOUT:   %.loc16_11.2 = load i32, ptr %.loc16_11.1.b, align 4, !dbg !18
-// CHECK:STDOUT:   ret i32 %.loc16_11.2, !dbg !19
+// CHECK:STDOUT:   %.loc7_11.1.b = getelementptr inbounds nuw [8 x i8], ptr %a.var, i32 0, i32 4, !dbg !18
+// CHECK:STDOUT:   %.loc7_11.2 = load i32, ptr %.loc7_11.1.b, align 4, !dbg !18
+// CHECK:STDOUT:   ret i32 %.loc7_11.2, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -270,9 +270,9 @@ fn TestB() -> i32 {
 // CHECK:STDOUT:   %b.var = alloca [8 x i8], align 4, !dbg !24
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !24
 // CHECK:STDOUT:   call void @_Z6make_bv.carbon_thunk.(ptr %b.var), !dbg !25
-// CHECK:STDOUT:   %.loc28_11.1.x = getelementptr inbounds nuw [8 x i8], ptr %b.var, i32 0, i32 0, !dbg !26
-// CHECK:STDOUT:   %.loc28_11.2 = load i32, ptr %.loc28_11.1.x, align 4, !dbg !26
-// CHECK:STDOUT:   ret i32 %.loc28_11.2, !dbg !27
+// CHECK:STDOUT:   %.loc12_11.1.x = getelementptr inbounds nuw [8 x i8], ptr %b.var, i32 0, i32 0, !dbg !26
+// CHECK:STDOUT:   %.loc12_11.2 = load i32, ptr %.loc12_11.1.x, align 4, !dbg !26
+// CHECK:STDOUT:   ret i32 %.loc12_11.2, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -292,10 +292,10 @@ fn TestB() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local i64 @_Z6make_av() #3 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %retval = alloca %struct.A, align 4
-// CHECK:STDOUT:   %a = getelementptr inbounds nuw %struct.A, ptr %retval, i32 0, i32 0
+// CHECK:STDOUT:   %retval = alloca %struct.A.32, align 4
+// CHECK:STDOUT:   %a = getelementptr inbounds nuw %struct.A.32, ptr %retval, i32 0, i32 0
 // CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !30
-// CHECK:STDOUT:   %b = getelementptr inbounds nuw %struct.A, ptr %retval, i32 0, i32 1
+// CHECK:STDOUT:   %b = getelementptr inbounds nuw %struct.A.32, ptr %retval, i32 0, i32 1
 // CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !32
 // CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
 // CHECK:STDOUT:   ret i64 %0
@@ -304,10 +304,10 @@ fn TestB() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local i64 @_Z6make_bv() #3 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %retval = alloca %struct.B, align 4
-// CHECK:STDOUT:   %x = getelementptr inbounds nuw %struct.B, ptr %retval, i32 0, i32 0
+// CHECK:STDOUT:   %retval = alloca %struct.B.33, align 4
+// CHECK:STDOUT:   %x = getelementptr inbounds nuw %struct.B.33, ptr %retval, i32 0, i32 0
 // CHECK:STDOUT:   store i32 3, ptr %x, align 4, !tbaa !33
-// CHECK:STDOUT:   %y = getelementptr inbounds nuw %struct.B, ptr %retval, i32 0, i32 1
+// CHECK:STDOUT:   %y = getelementptr inbounds nuw %struct.B.33, ptr %retval, i32 0, i32 1
 // CHECK:STDOUT:   store i32 4, ptr %y, align 4, !tbaa !35
 // CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
 // CHECK:STDOUT:   ret i64 %0
@@ -337,22 +337,22 @@ fn TestB() -> i32 {
 // CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
 // CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestA", linkageName: "_CTestA.Main", scope: null, file: !1, line: 14, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestA", linkageName: "_CTestA.Main", scope: null, file: !1, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !16 = !DILocation(line: 15, column: 3, scope: !12)
-// CHECK:STDOUT: !17 = !DILocation(line: 15, column: 18, scope: !12)
-// CHECK:STDOUT: !18 = !DILocation(line: 16, column: 10, scope: !12)
-// CHECK:STDOUT: !19 = !DILocation(line: 16, column: 3, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 6, column: 3, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 6, column: 18, scope: !12)
+// CHECK:STDOUT: !18 = !DILocation(line: 7, column: 10, scope: !12)
+// CHECK:STDOUT: !19 = !DILocation(line: 7, column: 3, scope: !12)
 // CHECK:STDOUT: !20 = !{!21, !21, i64 0}
 // CHECK:STDOUT: !21 = !{!"p1 _ZTS1A", !22, i64 0}
 // CHECK:STDOUT: !22 = !{!"any pointer", !10, i64 0}
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "TestB", linkageName: "_CTestB.Main", scope: null, file: !1, line: 19, type: !13, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !24 = !DILocation(line: 27, column: 3, scope: !23)
-// CHECK:STDOUT: !25 = !DILocation(line: 27, column: 18, scope: !23)
-// CHECK:STDOUT: !26 = !DILocation(line: 28, column: 10, scope: !23)
-// CHECK:STDOUT: !27 = !DILocation(line: 28, column: 3, scope: !23)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "TestB", linkageName: "_CTestB.Main", scope: null, file: !1, line: 10, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !24 = !DILocation(line: 11, column: 3, scope: !23)
+// CHECK:STDOUT: !25 = !DILocation(line: 11, column: 18, scope: !23)
+// CHECK:STDOUT: !26 = !DILocation(line: 12, column: 10, scope: !23)
+// CHECK:STDOUT: !27 = !DILocation(line: 12, column: 3, scope: !23)
 // CHECK:STDOUT: !28 = !{!29, !29, i64 0}
 // CHECK:STDOUT: !29 = !{!"p1 _ZTS1B", !22, i64 0}
 // CHECK:STDOUT: !30 = !{!31, !9, i64 0}

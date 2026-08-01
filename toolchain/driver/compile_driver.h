@@ -26,7 +26,8 @@ class CompilationUnit {
                            Diagnostics::Consumer* consumer,
                            llvm::StringRef input_filename,
                            std::string output_filename,
-                           const llvm::Target* target);
+                           const llvm::Target* target,
+                           llvm::LLVMContext* llvm_context);
 
   // Sets the multi-unit cache and initializes dependent member state.
   auto SetMultiUnitCache(MultiUnitCache* cache) -> void;
@@ -146,7 +147,7 @@ class CompilationUnit {
   mutable std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
   std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
       tree_and_subtrees_getter_;
-  std::unique_ptr<llvm::LLVMContext> llvm_context_;
+  llvm::LLVMContext* llvm_context_ = nullptr;
   std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::Module> module_;
   std::unique_ptr<llvm::TargetMachine> target_machine_;
@@ -260,6 +261,7 @@ class CompileDriver {
  private:
   CompileOptions* options_;
   size_t input_filenames_index_ = 0;
+  std::unique_ptr<llvm::LLVMContext> llvm_context_;
   llvm::SmallVector<std::unique_ptr<CompilationUnit>, 256> units_;
   std::unique_ptr<MultiUnitCache> cache_;
   std::shared_ptr<clang::CompilerInvocation> clang_invocation_;

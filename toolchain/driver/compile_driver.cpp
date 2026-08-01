@@ -40,13 +40,11 @@
 
 namespace Carbon {
 
-CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
-                                 int total_ir_count, DriverEnv* driver_env,
-                                 const CompileOptions* options,
-                                 Diagnostics::Consumer* consumer,
-                                 llvm::StringRef input_filename,
-                                 std::string output_filename,
-                                 const llvm::Target* target)
+CompilationUnit::CompilationUnit(
+    SemIR::CheckIRId check_ir_id, int total_ir_count, DriverEnv* driver_env,
+    const CompileOptions* options, Diagnostics::Consumer* consumer,
+    llvm::StringRef input_filename, std::string output_filename,
+    const llvm::Target* target, llvm::LLVMContext* llvm_context)
     : check_ir_id_(check_ir_id),
       total_ir_count_(total_ir_count),
       driver_env_(driver_env),
@@ -54,7 +52,8 @@ CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
       target_(target),
       input_filename_(input_filename),
       output_filename_(std::move(output_filename)),
-      vlog_stream_(driver_env_->vlog_stream) {
+      vlog_stream_(driver_env_->vlog_stream),
+      llvm_context_(llvm_context) {
   if (vlog_stream_ != nullptr || options_->stream_errors) {
     consumer_ = consumer;
   } else {
@@ -150,14 +149,11 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
   };
   sem_ir_.emplace(&*parse_tree_, check_ir_id_, parse_tree_->packaging_decl(),
                   value_stores_, input_filename_);
-  if (!llvm_context_) {
-    llvm_context_ = std::make_unique<llvm::LLVMContext>();
-  }
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
           .sem_ir = &*sem_ir_,
-          .llvm_context = llvm_context_.get(),
+          .llvm_context = llvm_context_,
           .total_ir_count = total_ir_count_};
 }
 
@@ -180,9 +176,6 @@ auto CompilationUnit::PostCheck() -> void {
 
 auto CompilationUnit::RunLower() -> void {
   LogCall("Lower::LowerToLLVM", "lower", [&] {
-    if (!llvm_context_) {
-      llvm_context_ = std::make_unique<llvm::LLVMContext>();
-    }
     Lower::LowerToLLVMOptions options;
     options.llvm_verifier_stream =
         options_->run_llvm_verifier ? driver_env_->error_stream : nullptr;
@@ -498,6 +491,8 @@ auto CompileDriver::Initialize(
     }
   }
 
+  llvm_context_ = std::make_unique<llvm::LLVMContext>();
+
   // Prepare CompilationUnits before building scope exit handlers.
   int unit_index = -1;
   int total_unit_count =
@@ -506,7 +501,8 @@ auto CompileDriver::Initialize(
     ++unit_index;
     return std::make_unique<CompilationUnit>(
         SemIR::CheckIRId(unit_index), total_unit_count, &driver_env, options_,
-        driver_env.consumer, filename, map_input(filename), target);
+        driver_env.consumer, filename, map_input(filename), target,
+        llvm_context_.get());
   };
   llvm::append_range(units_, llvm::map_range(prelude, unit_builder));
   llvm::append_range(units_, llvm::map_range(core_library, unit_builder));

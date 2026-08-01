@@ -29,24 +29,24 @@ fn F64() -> type {
 // CHECK:STDOUT: ; ModuleID = 'type_values.carbon'
 // CHECK:STDOUT: source_filename = "type_values.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %type = type {}
+// CHECK:STDOUT: %type.26 = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define %type @_CI32.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define %type.26 @_CI32.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret %type zeroinitializer, !dbg !8
+// CHECK:STDOUT:   ret %type.26 zeroinitializer, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define %type @_CI48.Main() #0 !dbg !9 {
+// CHECK:STDOUT: define %type.26 @_CI48.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret %type zeroinitializer, !dbg !10
+// CHECK:STDOUT:   ret %type.26 zeroinitializer, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define %type @_CF64.Main() #0 !dbg !11 {
+// CHECK:STDOUT: define %type.26 @_CF64.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret %type zeroinitializer, !dbg !12
+// CHECK:STDOUT:   ret %type.26 zeroinitializer, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
