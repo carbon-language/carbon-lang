@@ -981,8 +981,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %To.fe9: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert.1, @Core.IntLiteral.as.ImplicitAs.impl.0e9(%To.fe9) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.845: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.7cb: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
 // CHECK:STDOUT:   %From.fe9: Core.IntLiteral = symbolic_binding From, 0 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.7cb: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.type.48d: type = fn_type @Int.as.ImplicitAs.impl.Convert, @Int.as.ImplicitAs.impl(%From.fe9) [symbolic]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.0f9: %Int.as.ImplicitAs.impl.Convert.type.48d = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.091: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.b3c, @Core.IntLiteral.as.ImplicitAs.impl.0e9(%int_64) [concrete]
@@ -2093,7 +2093,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.e4f: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.55f, %OrderedWith.facet.c3a [concrete]
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.specific_fn.1c1cdd.1: <specific function> = specific_function %Int.as.OrderedWith.impl.Less.1c6761.2, @Int.as.OrderedWith.impl.Less.2(%int_64, %ImplicitAs.facet.c71) [concrete]
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.specific_fn.1c1cdd.2: <specific function> = specific_function %Int.as.OrderedWith.impl.Less.1c6761.1, @Int.as.OrderedWith.impl.Less.3(%int_64, %ImplicitAs.facet.c71) [concrete]
-// CHECK:STDOUT:   %.ce8: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.a77, %OrderedWith.facet.c3a [concrete]
+// CHECK:STDOUT:   %.ce8f: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type.a77, %OrderedWith.facet.c3a [concrete]
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.GreaterOrEquivalent.specific_fn.2fed0f.1: <specific function> = specific_function %Int.as.OrderedWith.impl.GreaterOrEquivalent.ca4fe3.2, @Int.as.OrderedWith.impl.GreaterOrEquivalent.2(%int_64, %ImplicitAs.facet.c71) [concrete]
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.GreaterOrEquivalent.specific_fn.2fed0f.2: <specific function> = specific_function %Int.as.OrderedWith.impl.GreaterOrEquivalent.ca4fe3.1, @Int.as.OrderedWith.impl.GreaterOrEquivalent.3(%int_64, %ImplicitAs.facet.c71) [concrete]
 // CHECK:STDOUT:   %.2df: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.d47, %OrderedWith.facet.c3a [concrete]
@@ -2197,10 +2197,10 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.import_ref.06c923.2: %Cpp.long.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a3a = impl_witness_table (%Core.import_ref.06c923.2), @Cpp.long.as.ImplicitAs.impl.c8d [concrete]
 // CHECK:STDOUT:   %Core.import_ref.011: @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.Less.type.2 (%T.as_type.as.OrderedWith.impl.Less.type.9ca225.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.Less.2 (constants.%T.as_type.as.OrderedWith.impl.Less.571834.1)]
-// CHECK:STDOUT:   %Core.import_ref.ba2: @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.type.2 (%T.as_type.as.OrderedWith.impl.LessOrEquivalent.type.3b16e8.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.2 (constants.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.fd69b3.1)]
+// CHECK:STDOUT:   %Core.import_ref.ba20: @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.type.2 (%T.as_type.as.OrderedWith.impl.LessOrEquivalent.type.3b16e8.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.2 (constants.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.fd69b3.1)]
 // CHECK:STDOUT:   %Core.import_ref.44d: @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.Greater.type.2 (%T.as_type.as.OrderedWith.impl.Greater.type.776eb1.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.Greater.2 (constants.%T.as_type.as.OrderedWith.impl.Greater.bf137f.1)]
 // CHECK:STDOUT:   %Core.import_ref.3aa: @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.GreaterOrEquivalent.type.2 (%T.as_type.as.OrderedWith.impl.GreaterOrEquivalent.type.985ed6.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.GreaterOrEquivalent.2 (constants.%T.as_type.as.OrderedWith.impl.GreaterOrEquivalent.17b48a.1)]
-// CHECK:STDOUT:   %OrderedWith.impl_witness_table.f65 = impl_witness_table (%Core.import_ref.011, %Core.import_ref.ba2, %Core.import_ref.44d, %Core.import_ref.3aa), @T.as_type.as.OrderedWith.impl.4ed [concrete]
+// CHECK:STDOUT:   %OrderedWith.impl_witness_table.f65 = impl_witness_table (%Core.import_ref.011, %Core.import_ref.ba20, %Core.import_ref.44d, %Core.import_ref.3aa), @T.as_type.as.OrderedWith.impl.4ed [concrete]
 // CHECK:STDOUT:   %Core.Less.1d9: @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.Less.type.1 (%T.as_type.as.OrderedWith.impl.Less.type.9ca225.2) = import_ref Core//prelude/types/cpp/int, Less, loaded [symbolic = @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.Less.1 (constants.%T.as_type.as.OrderedWith.impl.Less.571834.2)]
 // CHECK:STDOUT:   %Core.LessOrEquivalent.88c: @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.type.1 (%T.as_type.as.OrderedWith.impl.LessOrEquivalent.type.3b16e8.2) = import_ref Core//prelude/types/cpp/int, LessOrEquivalent, loaded [symbolic = @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.1 (constants.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.fd69b3.2)]
 // CHECK:STDOUT:   %Core.Greater.172: @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.Greater.type.1 (%T.as_type.as.OrderedWith.impl.Greater.type.776eb1.2) = import_ref Core//prelude/types/cpp/int, Greater, loaded [symbolic = @T.as_type.as.OrderedWith.impl.4ed.%T.as_type.as.OrderedWith.impl.Greater.1 (constants.%T.as_type.as.OrderedWith.impl.Greater.bf137f.2)]
@@ -2303,7 +2303,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call: init bool = call %bound_method.loc13_5.3(%b.ref.loc13, %.loc13_7.2)
 // CHECK:STDOUT:   %b.ref.loc14: %i64 = name_ref b, %b
 // CHECK:STDOUT:   %a.ref.loc14: %Cpp.long = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem3.loc14: %.ce8 = impl_witness_access constants.%OrderedWith.impl_witness.a98, element3 [concrete = constants.%Int.as.OrderedWith.impl.GreaterOrEquivalent.ca4fe3.2]
+// CHECK:STDOUT:   %impl.elem3.loc14: %.ce8f = impl_witness_access constants.%OrderedWith.impl_witness.a98, element3 [concrete = constants.%Int.as.OrderedWith.impl.GreaterOrEquivalent.ca4fe3.2]
 // CHECK:STDOUT:   %bound_method.loc14_5.1: <bound method> = bound_method %b.ref.loc14, %impl.elem3.loc14
 // CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %impl.elem3.loc14, @Int.as.OrderedWith.impl.GreaterOrEquivalent.2(constants.%int_64, constants.%ImplicitAs.facet.c71) [concrete = constants.%Int.as.OrderedWith.impl.GreaterOrEquivalent.specific_fn.2fed0f.1]
 // CHECK:STDOUT:   %bound_method.loc14_5.2: <bound method> = bound_method %b.ref.loc14, %specific_fn.loc14
