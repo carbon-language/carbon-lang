@@ -179,7 +179,7 @@ fn ComparisonsHeterogeneousLongRightSide() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_comparisons_heterogeneous_long_and_i32.carbon
+// --- comparisons_heterogeneous_long_and_i32.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -295,7 +295,7 @@ fn ArithmeticHeterogeneousLongRightSide() {
   AssertSameType(1 % x, x);
 }
 
-// --- fail_todo_arithmetic_heterogeneous_long_and_i32.carbon
+// --- arithmetic_heterogeneous_long_and_i32.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -520,7 +520,7 @@ fn CompoundAssignmentLongAndRuntimeI64() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_compound_assignment_heterogeneous_long_and_i32.carbon
+// --- compound_assignment_heterogeneous_long_and_i32.carbon
 
 library "[[@TEST_NAME]]";
 
