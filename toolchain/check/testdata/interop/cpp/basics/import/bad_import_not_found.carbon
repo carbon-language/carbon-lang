@@ -10,6 +10,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/basics/import/file_not_found.carbon
 
+// This test must be in a file by itself because it produces a fatal clang error
+// (file not found), which suppresses all later clang errors in the same
+// compilation.
+
 // --- fail_cpp_file_not_found.carbon
 
 library "[[@TEST_NAME]]";
