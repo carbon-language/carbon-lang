@@ -9,6 +9,7 @@
 #include <utility>
 #include <variant>
 
+#include "clang/AST/Type.h"
 #include "common/concepts.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
@@ -405,6 +406,14 @@ class Stringifier {
     step_stack_->Push(StepStack::QualifiedNameItem{overload_set.parent_scope_id,
                                                    overload_set.name_id},
                       ">");
+  }
+
+  auto StringifyInst(InstId /*inst_id*/, CppFunctionPointerType inst) -> void {
+    clang::QualType clang_type(sem_ir_->clang_function_pointer_types()
+                                   .Get(inst.clang_type_id)
+                                   .clang_type,
+                               0);
+    *out_ << "<C++ type " << clang_type.getAsString() << ">";
   }
 
   auto StringifyInst(InstId /*inst_id*/, FunctionType inst) -> void {

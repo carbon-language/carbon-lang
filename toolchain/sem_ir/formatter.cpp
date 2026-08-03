@@ -1742,6 +1742,10 @@ auto Formatter::FormatArg(StringLiteralValueId id) -> void {
 
 auto Formatter::FormatArg(ClangDeclId id) -> void { out() << id; }
 
+auto Formatter::FormatArg(ClangFunctionPointerTypeId id) -> void {
+  out() << id;
+}
+
 auto Formatter::FormatReturnSlotArg(InstId dest_id) -> void {
   if (dest_id.has_value()) {
     out() << " to ";

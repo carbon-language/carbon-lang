@@ -58,6 +58,14 @@ class CanonicalValueStore {
   // the value is already in the store, returns the ID of the existing value.
   auto Add(ValueType value) -> IdT;
 
+  // Updates the value with the given id. The new value must have the same
+  // key as the old one.
+  auto Update(IdT id, ValueType value) -> void {
+    RefType storage = values_.Get(id);
+    CARBON_CHECK(GetAsKey(value) == GetAsKey(storage));
+    storage = std::move(value);
+  }
+
   // Returns the value for an ID.
   auto Get(IdT id) const -> ConstRefType { return values_.Get(id); }
 

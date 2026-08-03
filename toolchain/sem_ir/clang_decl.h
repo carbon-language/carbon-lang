@@ -7,6 +7,7 @@
 
 #include <concepts>
 
+#include "clang/AST/TypeBase.h"
 #include "common/hashtable_key_context.h"
 #include "common/ostream.h"
 #include "common/set.h"
@@ -21,7 +22,7 @@ class FunctionDecl;
 namespace Carbon::SemIR {
 
 // Information about how to form the Carbon function signature from the Clang
-// function declaration.
+// function signature.
 struct ClangDeclSignature : public Printable<ClangDeclSignature> {
   // A passing mode for a parameter in a C++ function signature.
   enum class PassingMode : int8_t {
@@ -160,6 +161,11 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
                UncheckedTag /*_*/);
 };
 
+// A ClangDeclSignature mapped to an ID.
+using ClangDeclSignatureStore =
+    CanonicalValueStore<ClangDeclSignatureId, ClangDeclSignature,
+                        Tag<CheckIRId>, ClangDeclSignature>;
+
 // A Clang declaration mapped to a Carbon instruction.
 //
 // Instances of this type are managed by a `ClangDeclStore`, which ensures that
@@ -230,10 +236,33 @@ class ClangDeclStore {
   Set<ClangDeclId, 0, KeyContext> reverse_lookup_;
 };
 
-// A ClangDeclSignature mapped to an ID.
-using ClangDeclSignatureStore =
-    CanonicalValueStore<ClangDeclSignatureId, ClangDeclSignature,
-                        Tag<CheckIRId>, ClangDeclSignature>;
+// Information about a Clang function pointer type. This plays the same role
+// for function pointer callees that `ClangDecl` plays for ordinary function
+// callees.
+struct ClangFunctionPointerTypeInfo {
+  auto GetAsKey() const -> const clang::Type* { return clang_type; }
+
+  // The function pointer type. This should be a canonical type.
+  //
+  // TODO: figure out how to get a canonical type that preserves nullability
+  // attributes, which canonicalization discards. Note that this applies to both
+  // the function pointer type and its parameter/return types.
+  const clang::Type* clang_type;
+
+  // The ID of the `FunctionDecl` for the Carbon thunk that invokes
+  // function pointers of this type, or `None` if the thunk has not yet
+  // been imported.
+  SemIR::InstId decl_id;
+
+  // The corresponding function ID, or `None` if it has not yet been
+  // imported.
+  SemIR::FunctionId function_id;
+};
+
+// Canonical storage for `ClangFunctionPointerTypeInfo`.
+using ClangFunctionPointerTypeStore =
+    CanonicalValueStore<SemIR::ClangFunctionPointerTypeId, const clang::Type*,
+                        Tag<SemIR::CheckIRId>, ClangFunctionPointerTypeInfo>;
 
 }  // namespace Carbon::SemIR
 

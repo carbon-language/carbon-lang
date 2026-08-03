@@ -652,6 +652,19 @@ struct CppOverloadSetType {
   SpecificId specific_id;
 };
 
+// The type of a C++ function pointer.
+struct CppFunctionPointerType {
+  static constexpr auto Kind =
+      InstKind::CppFunctionPointerType.Define<Parse::NodeId>(
+          {.ir_name = "cpp_fn_ptr_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  // Always TypeType.
+  TypeId type_id;
+  ClangFunctionPointerTypeId clang_type_id;
+};
+
 // An unresolved C++ overload set value.
 struct CppOverloadSetValue {
   static constexpr auto Kind =

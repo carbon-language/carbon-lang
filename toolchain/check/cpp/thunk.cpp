@@ -197,14 +197,55 @@ CalleeFunctionInfo::CalleeFunctionInfo(Context& context,
                                            /*for_parameter=*/false);
 }
 
+CalleeFunctionInfo::CalleeFunctionInfo(Context& context,
+                                       const clang::Type* function_pointer_type)
+    : self_param_kind(SelfParamKind::FunctionPointer),
+      decl(nullptr),
+      decl_name(&context.ast_context().Idents.get("__invoke")),
+      clang_loc(),
+      sem_ir_loc(SemIR::LocId::None),
+      function_type(function_pointer_type->getPointeeType()
+                        ->getAs<clang::FunctionProtoType>()),
+      signature_id(SemIR::ClangDeclSignatureId::None),
+      signature(nullptr),
+      num_callee_params(function_type->getNumParams()),
+      self_param_type(function_pointer_type, 0),
+      effective_return_type(function_type->getReturnType()),
+      has_simple_return_type(IsSimpleAbiType(context.ast_context(),
+                                             effective_return_type,
+                                             /*for_parameter=*/false)) {
+  SemIR::ClangDeclSignature local_signature;
+  local_signature.kind = SemIR::ClangDeclSignature::Normal;
+  local_signature.num_params =
+      static_cast<int32_t>(function_type->getNumParams());
+  local_signature.self_passing_mode =
+      SemIR::ClangDeclSignature::PassingMode::ByValue;
+  local_signature.passing_modes.assign(
+      local_signature.num_params,
+      SemIR::ClangDeclSignature::PassingMode::ByValue);
+  signature_id =
+      context.clang_decl_signatures().Add(std::move(local_signature));
+  signature = &context.clang_decl_signatures().Get(signature_id);
+}
+
 auto CalleeFunctionInfo::GetCalleeParamIdentifier(int i) const
     -> clang::IdentifierInfo* {
-  return decl->getParamDecl(i)->getIdentifier();
+  switch (self_param_kind) {
+    case SelfParamKind::FunctionPointer:
+      return nullptr;
+    default:
+      return decl->getParamDecl(i)->getIdentifier();
+  }
 }
 
 auto CalleeFunctionInfo::GetCalleeParamLocation(int i) const
     -> clang::SourceLocation {
-  return decl->getParamDecl(i)->getLocation();
+  switch (self_param_kind) {
+    case SelfParamKind::FunctionPointer:
+      return {};
+    default:
+      return decl->getParamDecl(i)->getLocation();
+  }
 }
 
 auto IsCppThunkRequired(Context& context, const CalleeFunctionInfo& callee_info)
@@ -533,6 +574,11 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
           clang::OK_Ordinary);
       break;
     }
+    case CalleeFunctionInfo::SelfParamKind::FunctionPointer:
+      callee = BuildThunkParamRef(sema, thunk_function_decl, 0,
+                                  callee_info.signature->self_passing_mode,
+                                  callee_info.self_param_type);
+      break;
     case CalleeFunctionInfo::SelfParamKind::None:
       if (isa<clang::CXXConstructorDecl>(callee_info.decl)) {
         break;

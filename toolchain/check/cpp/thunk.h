@@ -28,11 +28,23 @@ struct CalleeFunctionInfo {
   explicit CalleeFunctionInfo(Context& context, clang::FunctionDecl* decl,
                               SemIR::ClangDeclSignatureId signature_id);
 
+  // Constructs a CalleeFunctionInfo that represents a C++ function pointer.
+  // We treat function pointer types as having an `__invoke` method, with the
+  // pointer value acting as the implicit object parameter. On the C++ side this
+  // method is notional, and has no declaration: in effect, it is inlined into
+  // its own simple-ABI thunk (which always exists, even if the parameter and
+  // return types already have simple ABIs). The Carbon counterpart of this
+  // method is real, however, and takes the pointer value as its `self`
+  // parameter.
+  explicit CalleeFunctionInfo(Context& context,
+                              const clang::Type* function_pointer_type);
+
   // Returns the offset I such that callee parameter N corresponds to
   // parameter N+I of the imported Carbon function.
   auto callee_param_to_carbon_param_offset() const -> int {
     switch (self_param_kind) {
       case SelfParamKind::ImplicitObjectParam:
+      case SelfParamKind::FunctionPointer:
         return 1;
       case SelfParamKind::None:
       case SelfParamKind::ExplicitObjectParam:
@@ -47,6 +59,7 @@ struct CalleeFunctionInfo {
       case SelfParamKind::ExplicitObjectParam:
         return 1;
       case SelfParamKind::ImplicitObjectParam:
+      case SelfParamKind::FunctionPointer:
       case SelfParamKind::None:
         return 0;
     }
@@ -101,6 +114,12 @@ struct CalleeFunctionInfo {
     // argument list. Consequently, the Nth Carbon parameter corresponds to the
     // N-1th callee argument, and the Nth callee parameter.
     ExplicitObjectParam,
+    // The callee is the notional `__invoke` method of a C++ function pointer,
+    // which is treated has having the pointer value as its implicit object
+    // parameter (see the constructor comments for details). Consequently
+    // the Nth thunk parameter corresponds to the N-1th callee argument and the
+    // N-1th callee parameter.
+    FunctionPointer,
   };
   SelfParamKind self_param_kind;
 
