@@ -173,8 +173,9 @@ repos:
           (?x)^(
               toolchain/.*\.cpp|
               toolchain/.*\.h|
+              toolchain/.*/testdata/.*|
               toolchain/diagnostics/check_diagnostics\.py|
-              toolchain/diagnostics/diagnostic_kind\.def
+              toolchain/diagnostics/kind\.def
           )$
         pass_filenames: false
 

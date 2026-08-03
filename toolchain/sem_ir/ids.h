@@ -932,7 +932,7 @@ struct TypeId : public IdBase<TypeId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-// The ID of a `clang::SourceLocation`.
+// The ID of a range of C++ source, held as a `clang::SourceRange`.
 struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
   static constexpr llvm::StringLiteral Label = "clang_source_loc";
 

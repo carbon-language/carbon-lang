@@ -238,11 +238,11 @@ static auto DiagnoseInvalidQualifiedNameAccess(
       ClassInvalidMemberAccess, Error,
       "cannot access {0:private|protected} member `{1}` of type {2}",
       Diagnostics::BoolAsSelect, SemIR::NameId, SemIR::TypeId);
-  CARBON_DIAGNOSTIC(ClassMemberDeclaration, Note, "declared here");
+  CARBON_DIAGNOSTIC_LABEL(ClassMemberDeclaration, Info, "declared here");
   context.emitter()
       .Build(loc_id, ClassInvalidMemberAccess,
              access_kind == SemIR::AccessKind::Private, name_id, scope_type_id)
-      .Note(member_loc_id, ClassMemberDeclaration)
+      .Attach(member_loc_id, ClassMemberDeclaration)
       .Emit();
 }
 
@@ -365,11 +365,11 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       RequireCompleteType(
           context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
           loc_id, [&](auto& builder) {
-            CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Context,
-                              "member access into incomplete class {0}",
-                              InstIdAsType);
-            builder.Context(loc_id, QualifiedExprInIncompleteClassScope,
-                            lookup_inst_id);
+            CARBON_DIAGNOSTIC_CONTEXT(QualifiedExprInIncompleteClassScope,
+                                      "member access into incomplete class {0}",
+                                      InstIdAsType);
+            builder.Attach(loc_id, QualifiedExprInIncompleteClassScope,
+                           lookup_inst_id);
           });
     }
     auto& class_info = context.classes().Get(class_ty->class_id);
@@ -387,12 +387,12 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
               context,
               context.types().GetTypeIdForTypeConstantId(lookup_const_id),
               loc_id, [&](auto& builder) {
-                CARBON_DIAGNOSTIC(
-                    QualifiedExprInIncompleteFacetTypeScope, Context,
+                CARBON_DIAGNOSTIC_CONTEXT(
+                    QualifiedExprInIncompleteFacetTypeScope,
                     "member access into incomplete facet type {0}",
                     InstIdAsType);
-                builder.Context(loc_id, QualifiedExprInIncompleteFacetTypeScope,
-                                lookup_inst_id);
+                builder.Attach(loc_id, QualifiedExprInIncompleteFacetTypeScope,
+                               lookup_inst_id);
               })) {
         // Lookup into this scope should fail without producing an error since
         // `RequireCompleteFacetType` has already issued a diagnostic.
@@ -699,10 +699,11 @@ auto DiagnoseDuplicateName(Context& context, SemIR::NameId name_id,
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
                     "duplicate name `{0}` being declared in the same scope",
                     SemIR::NameId);
-  CARBON_DIAGNOSTIC(NameDeclPrevious, Note, "name is previously declared here");
+  CARBON_DIAGNOSTIC_LABEL(NameDeclPrevious, Info,
+                          "name is previously declared here");
   context.emitter()
       .Build(dup_def, NameDeclDuplicate, name_id)
-      .Note(prev_def, NameDeclPrevious)
+      .Attach(prev_def, NameDeclPrevious)
       .Emit();
 }
 
@@ -713,10 +714,10 @@ auto DiagnosePoisonedName(Context& context, SemIR::NameId name_id,
                "Trying to diagnose poisoned name with no poisoning location");
   CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
                     "name `{0}` used before it was declared", SemIR::NameId);
-  CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
+  CARBON_DIAGNOSTIC_LABEL(NameUseBeforeDeclNote, Info, "declared here");
   context.emitter()
       .Build(poisoning_loc_id, NameUseBeforeDecl, name_id)
-      .Note(decl_name_loc_id, NameUseBeforeDeclNote)
+      .Attach(decl_name_loc_id, NameUseBeforeDeclNote)
       .Emit();
 }
 

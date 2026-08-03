@@ -3023,13 +3023,13 @@ static auto MakeConstantForCall(EvalContext& eval_context,
         evaluation_mode == SemIR::Function::EvaluationMode::MustEval) {
       CARBON_DIAGNOSTIC(NonConstantCallToCompTimeOnlyFunction, Error,
                         "non-constant call to compile-time-only function");
-      CARBON_DIAGNOSTIC(CompTimeOnlyFunctionHere, Note,
-                        "compile-time-only function declared here");
+      CARBON_DIAGNOSTIC_LABEL(CompTimeOnlyFunctionHere, Info,
+                              "compile-time-only function declared here");
       const auto& function = eval_context.functions().Get(
           std::get<SemIR::CalleeFunction>(callee).function_id);
       eval_context.emitter()
           .Build(inst_id, NonConstantCallToCompTimeOnlyFunction)
-          .Note(function.latest_decl_id(), CompTimeOnlyFunctionHere)
+          .Attach(function.latest_decl_id(), CompTimeOnlyFunctionHere)
           .Emit();
     }
     return SemIR::ConstantId::NotConstant;
@@ -3515,10 +3515,10 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
 
   Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ResolvingSpecificHere, SoftContext,
-                          "unable to monomorphize specific {0}",
-                          SemIR::SpecificId);
-        builder.Context(loc_id, ResolvingSpecificHere, specific_id);
+        CARBON_DIAGNOSTIC_SOFT_CONTEXT(ResolvingSpecificHere,
+                                       "unable to monomorphize specific {0}",
+                                       SemIR::SpecificId);
+        builder.Attach(loc_id, ResolvingSpecificHere, specific_id);
       });
 
   bool has_error = false;
@@ -3881,9 +3881,9 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
 
   Diagnostics::AnnotationScope annotate_diagnostics(
       &eval_context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCallToEvalFn, Note, "in call to {0} here",
-                          SemIR::NameId);
-        builder.Note(loc_id, InCallToEvalFn, function.name_id);
+        CARBON_DIAGNOSTIC_LABEL(InCallToEvalFn, Info, "in call to {0} here",
+                                SemIR::NameId);
+        builder.Attach(loc_id, InCallToEvalFn, function.name_id);
       });
 
   // Execute the function decl block followed by the body.

@@ -15,9 +15,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Consumers](#consumers)
     -   [SortingConsumer](#sortingconsumer)
 -   [Producing diagnostics](#producing-diagnostics)
+-   [Attaching labels](#attaching-labels)
+    -   [Context](#context)
 -   [Diagnostic registry](#diagnostic-registry)
 -   [CARBON_DIAGNOSTIC placement](#carbon_diagnostic-placement)
--   [Diagnostic context](#diagnostic-context)
+-   [Choosing what a label marks](#choosing-what-a-label-marks)
 -   [Diagnostic parameter types](#diagnostic-parameter-types)
 -   [Diagnostic message style guide](#diagnostic-message-style-guide)
 -   [Alternatives considered](#alternatives-considered)
@@ -42,7 +44,7 @@ When emitting, the resulting formatted message is passed to a `Consumer`.
 `Consumer`s handle output of diagnostic messages after they've been formatted by
 an Emitter. Important consumers are:
 
--   [ConsoleConsumer](/toolchain/diagnostics/consumer.cpp): prints diagnostics
+-   [ConsoleConsumer](/toolchain/diagnostics/stream_consumer.cpp): prints diagnostics
     to console.
 
 -   [ErrorTrackingConsumer](/toolchain/diagnostics/consumer.h): counts the
@@ -126,6 +128,86 @@ CARBON_DIAGNOSTIC_ON_SCOPE(InvalidInScope, Error, "error inside scope");
 emitter.Emit(location, InvalidInScope);
 ```
 
+## Attaching labels
+
+A label is a range of source attached to a diagnostic, with optional text saying
+what that range has to do with the problem. It is declared with
+`CARBON_DIAGNOSTIC_LABEL`, which takes the category before the format, and is
+attached with `Attach`:
+
+```cpp
+CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
+                  "{0} argument{0:s} passed to function expecting "
+                  "{1} argument{1:s}",
+                  IntAsSelect, IntAsSelect);
+CARBON_DIAGNOSTIC_LABEL(ArgsPassedHere, Primary,
+                        "{0} argument{0:s} passed here", IntAsSelect);
+CARBON_DIAGNOSTIC_LABEL(InCallToFunction, Info,
+                        "calling function declared here");
+context.emitter()
+    .Build(call_parse_node, CallArgCountMismatch,
+           arg_refs.size(), param_refs.size())
+    .Attach(args_parse_node, ArgsPassedHere, arg_refs.size())
+    .Attach(param_parse_node, InCallToFunction)
+    .Emit();
+```
+
+A label has a format and arguments of its own, validated the way a message's
+are, so it says only what it needs to about the place it marks. It has no level,
+because it belongs to the message it is attached to.
+
+The category is `Primary` for source directly part of the problem and `Info` for
+source that explains it without being part of it. Those two are all there is:
+anything a diagnostic has to say that isn't read against the code it names is
+not a label, and is declared with `CARBON_DIAGNOSTIC_CONTEXT` or
+`CARBON_DIAGNOSTIC_LOCATION_INFO` instead.
+
+`Attach` also takes a location alone, with no label:
+
+```cpp
+emitter.Build(loc, InvalidCode).Attach(operand_loc).Emit();
+```
+
+That marks a range as part of the problem and says nothing about it, which is
+how a diagnostic points at the code its message is about without repeating the
+message against it.
+
+Attach every label at a location that reaches source: one that converts to only
+a filename -- an invalid node, code the compiler generated -- leaves its words
+on a row of their own with nothing to point at. Some diagnostics still do that
+today; the goal is to restructure them until none do, and to give a diagnostic
+genuinely about a file as a whole a start-of-file or end-of-file location with
+a rendering of its own.
+
+### Context
+
+A context names the operation a problem happened inside. It is not a label: its
+text is a sentence in its own right, so where a diagnostic has one it leads and
+the message is read against the code like anything else explaining it.
+
+A context is declared with `CARBON_DIAGNOSTIC_CONTEXT` and registered in a
+scope, so that every diagnostic produced inside it says what larger operation
+was being performed:
+
+```cpp
+Diagnostics::ContextScope diagnostic_context(
+    &context.emitter(), [&](auto& builder) {
+      CARBON_DIAGNOSTIC_CONTEXT(
+          QualifiedDeclInIncompleteClassScope,
+          "cannot declare a member of incomplete class {0}", SemIR::TypeId);
+      builder.Attach(loc_id, QualifiedDeclInIncompleteClassScope,
+                     context.classes().Get(class_id).self_type_id);
+    });
+```
+
+This is useful when delegating to another part of Check that may produce many
+different kinds of diagnostic. `CARBON_DIAGNOSTIC_SOFT_CONTEXT` declares a
+fallback: it is dropped when the diagnostic already has a context, which is
+assumed to describe the failure better.
+
+An `AnnotationScope` works the same way for labels, attaching one to every
+diagnostic emitted inside it.
+
 ## Diagnostic registry
 
 There is a [registry](/toolchain/diagnostics/kind.def) which all diagnostics
@@ -139,6 +221,29 @@ This produces a central enumeration of all diagnostics. The eventual intent is
 to require tests for every diagnostic that can be produced, but that isn't
 currently implemented.
 
+Labels, contexts, and location info are not registered. Each is declared where
+it is attached and nowhere else, so there is nothing for a registry to make
+unique and nothing that needs to name one from a distance. Each still carries
+its own name, so `--include-diagnostic-kind` says which one produced a line and
+a test can match on it as it does on a kind.
+
+What the registry does for a diagnostic is done for those by
+`check_diagnostics.py`, which reads the declarations and the testdata directly
+-- `label` below stands for any of the three:
+
+-   Every declared label is attached somewhere. The compiler warns about most of
+    these, but not about one declared in a header.
+-   Every label is exercised by a `file_test`, which is what `coverage_test`
+    does for kinds. `UNCOVERED_LABELS` is the exemption list, and an entry that
+    gains a test has to come back out of it.
+-   Every name a test matches on is a kind or a label that exists, so renaming
+    one doesn't leave a test matching nothing.
+
+Being attached does not imply being covered, which is why both are checked. A
+label attached only on a branch no test takes is referenced by the code and
+drawn by nothing, and the kind of the diagnostic it hangs off can be covered
+while the branch never runs.
+
 ## CARBON_DIAGNOSTIC placement
 
 Idiomatically, `CARBON_DIAGNOSTIC` will be adjacent to the `Emit` call. However,
@@ -148,45 +253,120 @@ that multiple `Emit` calls can reference them. When in a function,
 `CARBON_DIAGNOSTIC` should be placed as close as possible to the usage so that
 it's easier to see the associated output.
 
-## Diagnostic context
+## Choosing what a label marks
 
-Diagnostics can provide additional context for errors by attaching notes, which
-have their own location information. A diagnostic with a note looks like:
+A message's location is underlined across the range it covers, so a diagnostic
+with no label still shows the reader something. What it shows is whatever
+location the code emitting it happened to have, which is usually the whole
+construct the diagnostic was raised on -- and the part that is actually wrong is
+often narrower.
 
-```cpp
-CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
-                  "{0} argument{0:s} passed to function expecting "
-                  "{1} argument{1:s}",
-                  IntAsSelect, IntAsSelect);
-CARBON_DIAGNOSTIC(InCallToFunction, Note,
-                  "calling function declared here");
-context.emitter()
-    .Build(call_parse_node, CallArgCountMismatch,
-           arg_refs.size(), param_refs.size())
-    .Note(param_parse_node, InCallToFunction)
-    .Emit();
-```
+So the question for each diagnostic is not whether it marks anything but whether
+it marks the right thing:
 
-The error and the note are registered as two separate diagnostics, but a single
-overall diagnostic object is built and emitted, so that the error and the note
-can be treated as a single unit.
+-   Where the message's own location is what the reader should look at, leave it
+    alone. Attaching a label with the same range and no text says nothing the
+    message's own range didn't.
 
-Diagnostic context information can also be registered in a scope, so that all
-diagnostics produced in that scope attach a specific note. For example:
+-   Where something narrower is what went wrong, attach a primary label naming
+    it: the operand rather than the operator, the one argument rather than the
+    call.
 
-```cpp
-DiagnosticAnnotationScope annotate_diagnostics(
-    &context.emitter(), [&](auto& builder) {
-      CARBON_DIAGNOSTIC(
-          InCallToFunctionParam, Note,
-          "initializing parameter {0} of function declared here", int);
-      builder.Note(param_parse_node, InCallToFunctionParam,
-                   diag_param_index + 1);
-    });
-```
+-   Give the label words when they point at where a part of the message became
+    relevant, and leave it wordless otherwise. A message that says two things
+    about two different places should say each of them where it happened:
+    `CallArgCountMismatch` marks the call with `1 argument passed here` and the
+    declaration with the arity it was declared with. Repeating the message that
+    way is worth it, because the reader is being shown where each half of the
+    sentence came from.
 
-This is useful when delegating to another part of Check that may produce many
-different kinds of diagnostic.
+-   Where the right range isn't reachable, attach the closest one that is and
+    leave a TODO saying which range it should be and what would make it
+    available. A diagnostic marking its whole call because nothing names its
+    argument list is better than one marking nothing, but the gap is worth
+    recording where the next person will find it.
+
+-   A message that names two types is the clearest case for two labels. An
+    operation whose operands don't match reports the interface it looked up not
+    being implemented, which names both types and points at neither, so each
+    operand is marked with the type it contributed. `BuildBinaryOperator` takes
+    a `MissingImplDiagnostic` for this, and installs it as an `AnnotationScope`,
+    because the diagnostic is emitted further down where only one operand is
+    still in hand.
+
+    The words belong to the syntax, not to the helper the syntax shares.
+    `a * b` has a left and a right operand, `a[i]` has an object and an index,
+    and `for (x in r)` has only a range, so each names its own labels rather
+    than everything that reaches `BuildBinaryOperator` saying "left" and
+    "right".
+
+    Once the operands carry labels, the message points at whatever they leave
+    over rather than at the expression they make up. For an infix operator that
+    is the operator itself, which `LocIdForDiagnostics::TokenOnly` names since
+    the parse node is the operator token. For `a[i]` the parse node names the
+    closing bracket, so the message points at the index -- the operand the
+    object failed to accept.
+
+-   Mark the syntax that required an `impl`, and name the interface in the same
+    breath. Which interface a piece of syntax needs is a language rule the
+    reader may not know, and the message reports only that one is missing, so
+    `AttachOperatorSyntax` marks the operator with `` `*` requires an impl of
+    `Core.MulWith` `` and lets the two be read together. That also gives the
+    message somewhere to point that is neither operand.
+
+    A message reporting the same missing `impl` twice for one construct is
+    worse than either half of it. A `for` loop looks up `Iterate` to make its
+    cursor and again to advance it, so the second is diagnosed only when the
+    first succeeded.
+
+-   Say what the developer wrote, not what it desugared to. Impl lookup for
+    `a * b` runs through member access, and reporting that a member of
+    `Core.MulWith` can't be accessed describes code nobody typed. Where a
+    caller passes the syntax down -- `desugared_loc_id` in
+    `PerformCompoundMemberAccess` -- the message drops to the part the syntax
+    can't say: which type failed to implement the interface.
+
+-   Don't narrate the code the label sits under. `` `var` nested within another
+    `var` `` marks the keyword, and a label reading ``the invalid `var`
+    keyword`` repeats both the source and the message while saying nothing
+    about where anything came from. Most parse diagnostics are like this: the
+    message already names the token, so the range marks it and says nothing.
+
+Some ranges cannot be attached at all, and the reason is worth knowing before
+trying. A diagnostic can only mark source that something in hand still names, and
+several layers discard that on the way:
+
+-   **Desugaring drops where each operand was written.** An operator becomes a
+    call whose arguments are conversion insts created at the operator's location,
+    so a diagnostic raised while evaluating that call -- division by zero, integer
+    overflow, a shift out of range -- can name the operation but not the operand.
+    `SemIR::Converted` keeps an `original_id` for tooling, but the argument on
+    this path is not a `Converted`, so following it does not reach the operand.
+    `Convert` works around the same gap for `ConversionFailure` by holding the
+    expression it was given. Closing it properly means the desugaring recording
+    where each operand was written.
+
+-   **Some scopes have no declaration.** `extend impl` and `impl as` outside a
+    class are only ever reached from a namespace -- the file or package -- or from
+    a scope with no instruction, so there is nothing to mark as the scope they
+    ended up in.
+
+Where that is the case, attach nothing and leave a TODO saying which range it
+should be and what would make it available. A label whose location names a file
+but no line draws no anchor and reads as pointing at nothing, which is worse than
+the message alone. `check-toolchain-diagnostics` fails a label no testdata
+reaches, which is how to find one whose location never resolves.
+
+The obvious source being a dead end is not the same as no source existing, and
+it is worth one more look before writing the TODO. Deduction's inputs are
+substituted insts with no source, but the argument each one descended from can
+be carried alongside it. `UsedBeforeInitialization` is handed an `InitTombstone`
+rather than the binding, but the binding is still on `FullPatternStack`. In both
+cases the range is somewhere else on a stack that has not been unwound yet.
+
+Until a diagnostic is migrated its message location supplies the range, which is
+usually the one column an editor would put a cursor on and rarely an extent
+worth looking at.
 
 ## Diagnostic parameter types
 
@@ -312,8 +492,8 @@ Carbon's diagnostic style aims to balance these concerns. Our style is:
     tense ("previously declared here", "Y declared here", with no is/was).
 
 -   TODO: When do we put identifiers or expressions in diagnostics, versus
-    requiring notes pointing at relevant code? Is it only avoided for values, or
-    only allowed for types?
+    requiring labels pointing at relevant code? Is it only avoided for values,
+    or only allowed for types?
 
 -   TODO: Lots more things to decide, give examples.
 

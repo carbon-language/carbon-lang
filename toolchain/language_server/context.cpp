@@ -18,6 +18,7 @@
 #include "toolchain/diagnostics/consumer.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/diagnostics/stream_consumer.h"
 #include "toolchain/driver/compile_driver.h"
 #include "toolchain/driver/compile_options.h"
 #include "toolchain/lex/lex.h"
@@ -41,8 +42,13 @@ class DiagnosticConsumer : public Diagnostics::Consumer {
 
   // Turns a diagnostic into an LSP diagnostic.
   auto HandleDiagnostic(Diagnostics::Diagnostic diagnostic) -> void override {
-    const auto& message = diagnostic.messages[0];
-    if (message.loc.filename != params_.uri.file()) {
+    // A context names the operation that failed, and is what the reader is
+    // told about when a diagnostic has one, so it is what an editor shows too.
+    const Diagnostics::Context* context =
+        Diagnostics::LeadingContext(diagnostic);
+    const Diagnostics::Loc& loc =
+        context ? context->loc : diagnostic.message.loc;
+    if (loc.filename != params_.uri.file()) {
       // `pushDiagnostic` requires diagnostics to be associated with a location
       // in the current file. Suppress diagnostics rooted in other files.
       // TODO: Consider if there's a better way to handle this.
@@ -53,20 +59,20 @@ class DiagnosticConsumer : public Diagnostics::Consumer {
       CARBON_DIAGNOSTIC(LanguageServerDiagnosticInWrongFile, Warning,
                         "dropping diagnostic in {0}:\n{1}", std::string,
                         std::string);
-      context_->file_emitter().Emit(
-          params_.uri.file(), LanguageServerDiagnosticInWrongFile,
-          message.loc.filename.str(), stream.TakeStr());
+      context_->file_emitter().Emit(params_.uri.file(),
+                                    LanguageServerDiagnosticInWrongFile,
+                                    loc.filename.str(), stream.TakeStr());
       return;
     }
 
     // Add the main message.
     params_.diagnostics.push_back(clang::clangd::Diagnostic{
-        .range = GetRange(message.loc),
+        .range = GetRange(loc),
         .severity = GetSeverity(diagnostic.level),
         .source = "carbon",
-        .message = message.Format(),
+        .message = context ? context->Format() : diagnostic.message.Format(),
     });
-    // TODO: Figure out constructing URIs for note locations.
+    // TODO: Figure out constructing URIs for the locations of labels.
   }
 
   // Returns the constructed request.
@@ -99,8 +105,6 @@ class DiagnosticConsumer : public Diagnostics::Consumer {
         return static_cast<int>(DiagnosticSeverity::Error);
       case Diagnostics::Level::Warning:
         return static_cast<int>(DiagnosticSeverity::Warning);
-      default:
-        CARBON_FATAL("Unexpected diagnostic level: {0}", level);
     }
   }
 

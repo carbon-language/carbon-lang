@@ -18,6 +18,7 @@
 #include "toolchain/benchmarking/source_gen.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
+#include "toolchain/diagnostics/stream_consumer.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"

@@ -12,6 +12,7 @@ filegroup(
     srcs = [
         "//toolchain/check:testdata",
         "//toolchain/codegen:testdata",
+        "//toolchain/diagnostics:testdata",
         "//toolchain/driver:testdata",
         "//toolchain/format:testdata",
         "//toolchain/language_server:testdata",
@@ -34,6 +35,7 @@ cc_library(
     hdrs = ["compile_helper.h"],
     deps = [
         "//toolchain/diagnostics:emitter",
+        "//toolchain/diagnostics:renderer",
         "//toolchain/lex",
         "//toolchain/parse",
         "//toolchain/parse:tree",
@@ -68,6 +70,7 @@ file_test(
     tests = [":all_testdata"],
     deps = [
         "//common:all_llvm_targets",
+        "//common:check",
         "//common:error",
         "//testing/file_test:autoupdate",
         "//testing/file_test:file_test_base",

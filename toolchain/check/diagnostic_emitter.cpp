@@ -23,26 +23,28 @@ auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
   auto [imports, converted] = loc_converter_.ConvertWithImports(
       loc_id.loc_id(), loc_id.is_token_only());
   for (const auto& import : imports) {
-    CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
-    CARBON_DIAGNOSTIC(InCppInclude, LocationInfo, "in file included here");
-    CARBON_DIAGNOSTIC(InCppModule, LocationInfo, "in module imported here");
-    CARBON_DIAGNOSTIC(InCppMacroExpansion, LocationInfo,
-                      "in expansion of macro defined here");
+    // These are rendered as `<text>: <location>`, hanging off the location
+    // they were reached from, so each reads as a step in a path.
+    CARBON_DIAGNOSTIC_LOCATION_INFO(InImport, "imported from");
+    CARBON_DIAGNOSTIC_LOCATION_INFO(InCppInclude, "included from");
+    CARBON_DIAGNOSTIC_LOCATION_INFO(InCppModule, "imported from module at");
+    CARBON_DIAGNOSTIC_LOCATION_INFO(InCppMacroExpansion,
+                                    "expanded from macro defined at");
     switch (import.kind) {
       case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::Import:
-        // TODO: Include the library name in the note.
+        // TODO: Include the library name in the label.
         context_fn(import.loc, InImport);
         break;
       case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::CppInclude:
-        // TODO: Include the file name in the note.
+        // TODO: Include the file name in the label.
         context_fn(import.loc, InCppInclude);
         break;
       case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::CppModuleImport:
-        // TODO: Include the module name in the note.
+        // TODO: Include the module name in the label.
         context_fn(import.loc, InCppModule);
         break;
       case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::CppMacroExpansion:
-        // TODO: Include the macro name in the note.
+        // TODO: Include the macro name in the label.
         // TODO: Include the Clang-generated snippet here rather than with the
         // main diagnostic.
         context_fn(import.loc, InCppMacroExpansion);

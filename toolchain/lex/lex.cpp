@@ -2138,10 +2138,10 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
                       "opening symbol without a corresponding closing symbol");
     CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
                       "closing symbol without a corresponding opening symbol");
-    CARBON_DIAGNOSTIC(PossiblyMissingBracketHere, Note,
-                      "possibly missing `{0}` here", Lex::TokenKind);
+    CARBON_DIAGNOSTIC_LABEL(PossiblyMissingBracketHere, Info,
+                            "possibly missing `{0}` here", Lex::TokenKind);
 
-    // The note names a position between two tokens, which only the source
+    // The label names a position between two tokens, which only the source
     // pointer emitter can express.
     auto builder = emitter_.Build(
         TokenStartPosition(buffer_, correction.diagnostic_token_index),
@@ -2156,8 +2156,8 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
       // on the bracket rather than suggest one of them.
       fixes.ReplaceWithError(correction.diagnostic_token_index);
     } else {
-      builder.Note(BracketInsertionPosition(buffer_, correction),
-                   PossiblyMissingBracketHere, correction.fix_token_kind);
+      builder.Attach(BracketInsertionPosition(buffer_, correction),
+                     PossiblyMissingBracketHere, correction.fix_token_kind);
       insertion_ids[correction_index] =
           correction.fix_action == BracketFixAction::InsertBefore
               ? fixes.InsertBefore(correction.fix_token_index,

@@ -91,12 +91,12 @@ static auto DiagnoseDuplicateNames(
                         "duplicated field name `{1}` in "
                         "{0:struct type literal|struct literal}",
                         Diagnostics::BoolAsSelect, SemIR::NameId);
-      CARBON_DIAGNOSTIC(StructNamePrevious, Note,
-                        "field with the same name here");
+      CARBON_DIAGNOSTIC_LABEL(StructNamePrevious, Info,
+                              "field with the same name here");
       context.emitter()
           .Build(result.value(), StructNameDuplicate, is_struct_type_literal,
                  field.name_id)
-          .Note(field_name_node, StructNamePrevious)
+          .Attach(field_name_node, StructNamePrevious)
           .Emit();
       return true;
     }

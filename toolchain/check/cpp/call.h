@@ -31,6 +31,9 @@ auto ConvertArgsToTemplateArgs(Context& context,
 // function call in user code, so arguments to `ref` parameters aren't required
 // to have `ref` tags.
 //
+// `callee_expr_id` is the expression naming the overload set, which is what a
+// diagnostic about the call marks.
+//
 // Chooses the best viable C++ function by performing Clang overloading
 // resolution over the overload set.
 //
@@ -44,6 +47,7 @@ auto ConvertArgsToTemplateArgs(Context& context,
 // possible. Keeping the same behavior here for consistency and supporting
 // migrations so that the migrated callers from C++ remain valid.
 auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
+                              SemIR::InstId callee_expr_id,
                               SemIR::CppOverloadSetId overload_set_id,
                               SemIR::InstId self_id,
                               llvm::ArrayRef<SemIR::InstId> arg_ids,

@@ -516,6 +516,7 @@ auto TokenizedBuffer::SourcePointerToDiagnosticLoc(const char* loc) const
 
   return {.loc = {.filename = source_->filename(),
                   .line = line,
+                  .file_text = text,
                   .line_number = line_number + 1,
                   .column_number = column_number + 1},
           .last_byte_offset = offset};

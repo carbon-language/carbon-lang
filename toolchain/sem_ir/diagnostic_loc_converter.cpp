@@ -4,35 +4,104 @@
 
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 
+#include <algorithm>
+
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/DiagnosticRenderer.h"
+#include "common/check.h"
 
 namespace Carbon::SemIR {
 
+// Returns the bytes `end` reaches past `loc` on the line `loc` is on, or 1 when
+// it says nothing useful about an extent. Bytes rather than columns because
+// that is what `Diagnostics::Loc::length` holds; rendering converts.
+//
+// `end` must name the byte past the range, which is what a character range
+// gives. A token range's end names the start of its last token instead, so
+// measuring one here would drop that token from the underline; run it through
+// `clang::Lexer::getAsCharRange` first.
+//
+// A range that runs off the end of the line is clamped there, the way a
+// location spanning several lines is: a snippet shows one line, so an
+// underline that left it would have nowhere to go.
+static auto MeasureRange(clang::FullSourceLoc loc, clang::SourceLocation end,
+                         llvm::StringRef line, int32_t column) -> int32_t {
+  if (end.isInvalid()) {
+    return 1;
+  }
+  const auto& src_mgr = loc.getManager();
+  auto [file_id, offset] = src_mgr.getDecomposedSpellingLoc(loc);
+  auto [end_file_id, end_offset] = src_mgr.getDecomposedSpellingLoc(end);
+  if (end_file_id != file_id || end_offset <= offset) {
+    return 1;
+  }
+  auto length = static_cast<int32_t>(end_offset - offset);
+  auto to_end_of_line = static_cast<int32_t>(line.size()) - (column - 1);
+  return std::max(1, std::min(length, to_end_of_line));
+}
+
+// Returns the Carbon location for a Clang one, underlining `range` where it
+// says how far the location reaches.
 static auto ConvertPresumedLocToDiagnosticsLoc(clang::FullSourceLoc loc,
-                                               clang::PresumedLoc presumed_loc)
+                                               clang::PresumedLoc presumed_loc,
+                                               clang::CharSourceRange range)
+    -> Diagnostics::Loc;
+
+auto ConvertClangRangeToLoc(const clang::SourceManager& src_mgr,
+                            clang::CharSourceRange range) -> Diagnostics::Loc {
+  CARBON_CHECK(range.isCharRange() || range.getBegin() == range.getEnd(),
+               "A token range's end names the start of its last token rather "
+               "than an extent; widen it with `Lexer::getAsCharRange` first.");
+  clang::SourceLocation begin = range.getBegin();
+  if (begin.isInvalid()) {
+    return Diagnostics::Loc();
+  }
+  clang::PresumedLoc presumed_loc = src_mgr.getPresumedLoc(begin);
+  if (presumed_loc.isInvalid()) {
+    return Diagnostics::Loc();
+  }
+  return ConvertPresumedLocToDiagnosticsLoc(
+      clang::FullSourceLoc(begin, src_mgr), presumed_loc, range);
+}
+
+static auto ConvertPresumedLocToDiagnosticsLoc(clang::FullSourceLoc loc,
+                                               clang::PresumedLoc presumed_loc,
+                                               clang::CharSourceRange range)
     -> Diagnostics::Loc {
   llvm::StringRef line;
+  llvm::StringRef file_text;
 
   // Ask the Clang SourceManager for the contents of the line containing this
-  // location.
+  // location, and for the file it is a slice of, which is what lets a snippet
+  // show the lines between two spans that are close together.
   // TODO: If this location is in our generated header, use the source text from
   // the presumed location (the Carbon source file) as the snippet instead.
+  // TODO: A `#line` directive skews the presumed line numbers here against the
+  // physical lines of `file_text`, so the lines a snippet shows between two
+  // nearby spans can be the wrong ones. Cosmetic and bounded, but fixing it
+  // means carrying spelling line numbers alongside the presumed ones.
   bool loc_invalid = false;
   const auto& src_mgr = loc.getManager();
   auto [file_id, offset] = src_mgr.getDecomposedSpellingLoc(loc);
   auto loc_line = src_mgr.getLineNumber(file_id, offset, &loc_invalid);
+  if (!loc_invalid) {
+    file_text = src_mgr.getBufferData(file_id, &loc_invalid);
+  }
   if (!loc_invalid) {
     auto start_of_line = src_mgr.translateLineCol(file_id, loc_line, 1);
     line = src_mgr.getCharacterData(start_of_line, &loc_invalid);
     line = line.take_until([](char c) { return c == '\n'; });
   }
 
+  auto column = static_cast<int32_t>(presumed_loc.getColumn());
   return {.filename = presumed_loc.getFilename(),
           .line = loc_invalid ? "" : line,
+          .file_text = loc_invalid ? "" : file_text,
           .line_number = static_cast<int32_t>(presumed_loc.getLine()),
-          .column_number = static_cast<int32_t>(presumed_loc.getColumn()),
-          .length = loc_invalid ? -1 : 1};
+          .column_number = column,
+          .length = loc_invalid
+                        ? -1
+                        : MeasureRange(loc, range.getEnd(), line, column)};
 }
 
 namespace {
@@ -61,7 +130,8 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
     // This is an "in macro expanded here" diagnostic that Clang emits after the
     // emitted diagnostic. We treat that as another form of context location.
     imports_->push_back(
-        {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc),
+        {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc,
+                                                   clang::CharSourceRange()),
          .kind = DiagnosticLocConverter::ImportLoc::CppMacroExpansion,
          .imported_name = message});
   }
@@ -81,13 +151,15 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
     // buffer that corresponds to a carbon import, report it as being an Import
     // instead of a CppInclude.
     imports_->push_back(
-        {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc),
+        {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc,
+                                                   clang::CharSourceRange()),
          .kind = DiagnosticLocConverter::ImportLoc::CppInclude});
   }
   void emitImportLocation(clang::FullSourceLoc loc, clang::PresumedLoc ploc,
                           llvm::StringRef module_name) override {
     imports_->push_back(
-        {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc),
+        {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc,
+                                                   clang::CharSourceRange()),
          .kind = DiagnosticLocConverter::ImportLoc::CppModuleImport,
          .imported_name = module_name});
   }
@@ -95,7 +167,8 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
                                   clang::PresumedLoc ploc,
                                   llvm::StringRef module_name) override {
     imports_->push_back(
-        {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc),
+        {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc,
+                                                   clang::CharSourceRange()),
          .kind = DiagnosticLocConverter::ImportLoc::CppModuleImport,
          .imported_name = module_name});
   }
@@ -141,9 +214,10 @@ auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
                          file->cpp_file()->diagnostic_options(),
                          &result.imports)
         .emitDiagnostic(
-            clang::FullSourceLoc(
-                file->clang_source_locs().Get(final_node.clang_source_loc_id()),
-                file->cpp_file()->source_manager()),
+            clang::FullSourceLoc(file->clang_source_locs()
+                                     .Get(final_node.clang_source_loc_id())
+                                     .getBegin(),
+                                 file->cpp_file()->source_manager()),
             clang::DiagnosticsEngine::Error, "", {}, {});
   }
 
@@ -181,20 +255,19 @@ auto DiagnosticLocConverter::ConvertImpl(CheckIRId check_ir_id,
 auto DiagnosticLocConverter::ConvertImpl(
     const File* file, ClangSourceLocId clang_source_loc_id) const
     -> Diagnostics::ConvertedLoc {
-  clang::SourceLocation clang_loc =
-      file->clang_source_locs().Get(clang_source_loc_id);
+  clang::CharSourceRange clang_range = clang::CharSourceRange::getCharRange(
+      file->clang_source_locs().Get(clang_source_loc_id));
+  clang::SourceLocation clang_loc = clang_range.getBegin();
 
   CARBON_CHECK(file->cpp_file());
   const auto& src_mgr = file->cpp_file()->source_manager();
-  clang::PresumedLoc presumed_loc = src_mgr.getPresumedLoc(clang_loc);
-  if (presumed_loc.isInvalid()) {
+  if (clang_loc.isInvalid() || src_mgr.getPresumedLoc(clang_loc).isInvalid()) {
     return Diagnostics::ConvertedLoc();
   }
   unsigned offset = src_mgr.getDecomposedLoc(clang_loc).second;
 
   return Diagnostics::ConvertedLoc{
-      .loc = ConvertPresumedLocToDiagnosticsLoc(
-          clang::FullSourceLoc(clang_loc, src_mgr), presumed_loc),
+      .loc = ConvertClangRangeToLoc(src_mgr, clang_range),
       .last_byte_offset = static_cast<int32_t>(offset)};
 }
 

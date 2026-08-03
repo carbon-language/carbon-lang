@@ -34,6 +34,7 @@
 #include "toolchain/check/type_structure.h"
 #include "toolchain/check/unused.h"
 #include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/diagnostics/renderer.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
@@ -380,10 +381,10 @@ auto CheckUnit::ProcessNodeIds() -> bool {
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
     const auto& tree = tree_and_subtrees_getter_();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
-    converted.loc.FormatLocation(output);
+    output << Diagnostics::FormatLocation(converted.loc) << ": ";
     output << "Checking " << context_.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
-    converted.loc.FormatSnippet(output, /*indent=*/10);
+    Diagnostics::PrintSnippet(output, converted.loc, /*indent=*/10);
   });
 
   while (auto maybe_node_id = traversal.Next()) {
@@ -507,14 +508,14 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
     if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
       CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
                         "use of undefined generic function");
-      CARBON_DIAGNOSTIC(MissingGenericFunctionDefinitionHere, Note,
-                        "generic function declared here");
+      CARBON_DIAGNOSTIC_LABEL(MissingGenericFunctionDefinitionHere, Info,
+                              "generic function declared here");
       auto generic_decl_id =
           context_.generics()
               .Get(context_.specifics().Get(specific_id).generic_id)
               .decl_id;
       emitter_.Build(loc, MissingGenericFunctionDefinition)
-          .Note(generic_decl_id, MissingGenericFunctionDefinitionHere)
+          .Attach(generic_decl_id, MissingGenericFunctionDefinitionHere)
           .Emit();
     }
   }
@@ -568,27 +569,28 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
             "found `impl` that would change the result of an earlier "
             "use of `{0} as {1}`",
             InstIdAsRawType, SpecificInterfaceIdAsRawType);
-        CARBON_DIAGNOSTIC(
-            PoisonedImplLookupConcreteResultNoteBadImpl, Note,
+        CARBON_DIAGNOSTIC_LABEL(
+            PoisonedImplLookupConcreteResultNoteBadImpl, Info,
             "the use would select the `impl` here but it was not found yet");
-        CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl,
-                          Note, "the use had selected the `impl` here");
+        CARBON_DIAGNOSTIC_LABEL(
+            PoisonedImplLookupConcreteResultNotePreviousImpl, Info,
+            "the use had selected the `impl` here");
         emitter_
             .Build(poison.loc_id, PoisonedImplLookupConcreteResult,
                    poison.query.query_self_inst_id,
                    poison.query.query_specific_interface_id)
-            .Note(bad_impl.first_decl_id(),
-                  PoisonedImplLookupConcreteResultNoteBadImpl)
-            .Note(prev_impl.first_decl_id(),
-                  PoisonedImplLookupConcreteResultNotePreviousImpl)
+            .Attach(bad_impl.first_decl_id(),
+                    PoisonedImplLookupConcreteResultNoteBadImpl)
+            .Attach(prev_impl.first_decl_id(),
+                    PoisonedImplLookupConcreteResultNotePreviousImpl)
             .Emit();
       } else {
         CARBON_DIAGNOSTIC(
             PoisonedImplLookupCustomResult, Error,
             "found `impl` for {0} as {1}, which has a custom witness",
             InstIdAsRawType, SpecificInterfaceIdAsRawType);
-        CARBON_DIAGNOSTIC(
-            PoisonedImplLookupCustomResultNoteBadImpl, Note,
+        CARBON_DIAGNOSTIC_LABEL(
+            PoisonedImplLookupCustomResultNoteBadImpl, Info,
             "the use tried to select the `impl` here, but a custom "
             "witness was already chosen");
 
@@ -596,8 +598,8 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
             .Build(poison.loc_id, PoisonedImplLookupCustomResult,
                    poison.query.query_self_inst_id,
                    poison.query.query_specific_interface_id)
-            .Note(prev_impl.first_decl_id(),
-                  PoisonedImplLookupCustomResultNoteBadImpl)
+            .Attach(prev_impl.first_decl_id(),
+                    PoisonedImplLookupCustomResultNoteBadImpl)
             .Emit();
       }
     }

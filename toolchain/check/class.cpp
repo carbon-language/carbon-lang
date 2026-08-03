@@ -60,21 +60,22 @@ static auto CheckCompleteAdapterClassType(
   const auto& class_info = context.classes().Get(class_id);
   if (class_info.base_id.has_value()) {
     CARBON_DIAGNOSTIC(AdaptWithBase, Error, "adapter with base class");
-    CARBON_DIAGNOSTIC(AdaptWithBaseHere, Note, "`base` declaration is here");
+    CARBON_DIAGNOSTIC_LABEL(AdaptWithBaseHere, Info,
+                            "`base` declaration is here");
     context.emitter()
         .Build(class_info.adapt_id, AdaptWithBase)
-        .Note(class_info.base_id, AdaptWithBaseHere)
+        .Attach(class_info.base_id, AdaptWithBaseHere)
         .Emit();
     return SemIR::ErrorInst::InstId;
   }
 
   if (!field_decls.empty()) {
     CARBON_DIAGNOSTIC(AdaptWithFields, Error, "adapter with fields");
-    CARBON_DIAGNOSTIC(AdaptWithFieldHere, Note,
-                      "first field declaration is here");
+    CARBON_DIAGNOSTIC_LABEL(AdaptWithFieldHere, Info,
+                            "first field declaration is here");
     context.emitter()
         .Build(class_info.adapt_id, AdaptWithFields)
-        .Note(field_decls.front(), AdaptWithFieldHere)
+        .Attach(field_decls.front(), AdaptWithFieldHere)
         .Emit();
     return SemIR::ErrorInst::InstId;
   }
@@ -87,11 +88,11 @@ static auto CheckCompleteAdapterClassType(
           SemIR::Function::VirtualModifier::Virtual) {
         CARBON_DIAGNOSTIC(AdaptWithVirtual, Error,
                           "adapter with virtual function");
-        CARBON_DIAGNOSTIC(AdaptWithVirtualHere, Note,
-                          "first virtual function declaration is here");
+        CARBON_DIAGNOSTIC_LABEL(AdaptWithVirtualHere, Info,
+                                "first virtual function declaration is here");
         context.emitter()
             .Build(class_info.adapt_id, AdaptWithVirtual)
-            .Note(inst_id, AdaptWithVirtualHere)
+            .Attach(inst_id, AdaptWithVirtualHere)
             .Emit();
         return SemIR::ErrorInst::InstId;
       }
@@ -314,11 +315,12 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     } else if (!implemented_impls.Lookup(fn_decl.function_id)) {
       CARBON_DIAGNOSTIC(OverrideWithoutVirtualInBase, Error,
                         "override without compatible virtual in base class");
-      CARBON_DIAGNOSTIC(OverrideCandidateArityMismatch, Note,
-                        "base class function has {2:more|fewer} parameters "
-                        "({0} vs {1} excluding `self`)",
-                        Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
-                        Diagnostics::BoolAsSelect);
+      CARBON_DIAGNOSTIC_LABEL(
+          OverrideCandidateArityMismatch, Info,
+          "base class function has {2:more|fewer} parameters "
+          "({0} vs {1} excluding `self`)",
+          Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
+          Diagnostics::BoolAsSelect);
       auto builder = context.emitter().Build(SemIR::LocId(inst_id),
                                              OverrideWithoutVirtualInBase);
       if (base_vtable_id.has_value()) {
@@ -336,12 +338,12 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
           const auto& base_fn = context.sem_ir().functions().Get(fn_id);
           switch (CompareVirtualWithOverrider(base_fn, fn)) {
             case OverrideMatchResult::ArityMismatch:
-              builder.Note(base_fn.first_owning_decl_id,
-                           OverrideCandidateArityMismatch,
-                           base_fn.call_param_ranges.explicit_size() - 1,
-                           fn.call_param_ranges.explicit_size() - 1,
-                           base_fn.call_param_ranges.explicit_size() >
-                               fn.call_param_ranges.explicit_size());
+              builder.Attach(base_fn.first_owning_decl_id,
+                             OverrideCandidateArityMismatch,
+                             base_fn.call_param_ranges.explicit_size() - 1,
+                             fn.call_param_ranges.explicit_size() - 1,
+                             base_fn.call_param_ranges.explicit_size() >
+                                 fn.call_param_ranges.explicit_size());
               break;
             case OverrideMatchResult::NameMismatch:
               // TODO: If the name is similar enough and the overrider otherwise

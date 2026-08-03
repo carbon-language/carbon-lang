@@ -88,9 +88,9 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
         // If the explicit self type is the default, suggest removing it with a
         // diagnostic, but continue as if no error occurred since the self-type
         // is semantically valid.
-        CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
-                          "remove the explicit `Self` type here");
-        diag.Note(self_node, ExtendImplSelfAsDefault);
+        CARBON_DIAGNOSTIC_LABEL(ExtendImplSelfAsDefault, Info,
+                                "remove the explicit `Self` type here");
+        diag.Attach(self_node, ExtendImplSelfAsDefault);
         if (self_type.type_id != SemIR::ErrorInst::TypeId) {
           diag.Emit();
         }
@@ -327,13 +327,13 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     if (is_final && context.match_first_context()) {
       CARBON_DIAGNOSTIC(FinalImplInMatchFirst, Error,
                         "`final impl` in `match_first` block");
-      CARBON_DIAGNOSTIC(
-          FinalImplInMatchFirstNote, Note,
+      CARBON_DIAGNOSTIC_LABEL(
+          FinalImplInMatchFirstNote, Info,
           "the `match_first` block can be modified as `final` instead");
       context.emitter()
           .Build(node_id, FinalImplInMatchFirst)
-          .Note(context.match_first_context()->decl_id,
-                FinalImplInMatchFirstNote)
+          .Attach(context.match_first_context()->decl_id,
+                  FinalImplInMatchFirstNote)
           .Emit();
       impl_had_error = true;
     }
@@ -360,12 +360,12 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
               CARBON_DIAGNOSTIC(
                   ImplInTwoMatchFirst, Error,
                   "impl declared in `match_first` more than once");
-              CARBON_DIAGNOSTIC(ImplInTwoMatchFirstNote, Note,
-                                "previous declaration here");
+              CARBON_DIAGNOSTIC_LABEL(ImplInTwoMatchFirstNote, Info,
+                                      "previous declaration here");
               context.emitter()
                   .Build(node_id, ImplInTwoMatchFirst)
-                  .Note(prev_impl.decl_loc_in_match_first,
-                        ImplInTwoMatchFirstNote)
+                  .Attach(prev_impl.decl_loc_in_match_first,
+                          ImplInTwoMatchFirstNote)
                   .Emit();
             }
             impl_had_error = true;

@@ -141,11 +141,12 @@ static auto BuildCopyWitness(
     auto class_type_id = SemIR::TypeId::ForTypeConstant(query_self_const_id);
     if (!Check::RequireCompleteType(
             context, class_type_id, SemIR::LocId::None, [&](auto& builder) {
-              CARBON_DIAGNOSTIC(IncompleteTypeInCopyWitness, Context,
-                                "argument to C++ call has incomplete type {0}",
-                                SemIR::TypeId);
-              builder.Context(loc_id, IncompleteTypeInCopyWitness,
-                              class_type_id);
+              CARBON_DIAGNOSTIC_CONTEXT(
+                  IncompleteTypeInCopyWitness,
+                  "argument to C++ call has incomplete type {0}",
+                  SemIR::TypeId);
+              builder.Attach(loc_id, IncompleteTypeInCopyWitness,
+                             class_type_id);
             })) {
       return SemIR::ErrorInst::InstId;
     }

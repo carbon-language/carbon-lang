@@ -239,16 +239,16 @@ auto CheckFunctionReturnTypeMatches(Context& context,
             : context.emitter().Build(new_function.latest_decl_id(),
                                       FunctionRedeclReturnTypeDiffersNoReturn);
     if (prev_return_type_id.has_value()) {
-      CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePrevious, Note,
-                        "previously declared with return type {0}",
-                        SemIR::TypeId);
-      diag.Note(prev_function.latest_decl_id(),
-                FunctionRedeclReturnTypePrevious, prev_return_type_id);
+      CARBON_DIAGNOSTIC_LABEL(FunctionRedeclReturnTypePrevious, Info,
+                              "previously declared with return type {0}",
+                              SemIR::TypeId);
+      diag.Attach(prev_function.latest_decl_id(),
+                  FunctionRedeclReturnTypePrevious, prev_return_type_id);
     } else {
-      CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePreviousNoReturn, Note,
-                        "previously declared with no return type");
-      diag.Note(prev_function.latest_decl_id(),
-                FunctionRedeclReturnTypePreviousNoReturn);
+      CARBON_DIAGNOSTIC_LABEL(FunctionRedeclReturnTypePreviousNoReturn, Info,
+                              "previously declared with no return type");
+      diag.Attach(prev_function.latest_decl_id(),
+                  FunctionRedeclReturnTypePreviousNoReturn);
     }
     diag.Emit();
     return false;
@@ -286,16 +286,17 @@ static auto CheckFunctionEvaluationModeMatches(
       "function redeclaration differs because new function is "
       "{0:=-1:not `eval`|=-2:not `musteval`|=1:`eval`|=2:`musteval`}",
       Diagnostics::IntAsSelect);
-  CARBON_DIAGNOSTIC(FunctionRedeclEvaluationModePrevious, Note,
-                    "previously {0:<0:not |:}declared as "
-                    "{0:=-1:`eval`|=-2:`musteval`|=1:`eval`|=2:`musteval`}",
-                    Diagnostics::IntAsSelect);
+  CARBON_DIAGNOSTIC_LABEL(
+      FunctionRedeclEvaluationModePrevious, Info,
+      "previously {0:<0:not |:}declared as "
+      "{0:=-1:`eval`|=-2:`musteval`|=1:`eval`|=2:`musteval`}",
+      Diagnostics::IntAsSelect);
   context.emitter()
       .Build(new_function.latest_decl_id(), FunctionRedeclEvaluationModeDiffers,
              new_eval_mode_index ? new_eval_mode_index : -prev_eval_mode_index)
-      .Note(prev_function.latest_decl_id(),
-            FunctionRedeclEvaluationModePrevious,
-            prev_eval_mode_index ? prev_eval_mode_index : -new_eval_mode_index)
+      .Attach(
+          prev_function.latest_decl_id(), FunctionRedeclEvaluationModePrevious,
+          prev_eval_mode_index ? prev_eval_mode_index : -new_eval_mode_index)
       .Emit();
   return false;
 }
@@ -335,18 +336,18 @@ auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
     if (!RequireConcreteType(
             context, arg_type_id, SemIR::LocId(return_pattern_id),
             [&](auto& builder) {
-              CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Context,
-                                "function returns incomplete type {0}",
-                                SemIR::TypeId);
-              builder.Context(loc_id, IncompleteTypeInFunctionReturnType,
-                              arg_type_id);
+              CARBON_DIAGNOSTIC_CONTEXT(IncompleteTypeInFunctionReturnType,
+                                        "function returns incomplete type {0}",
+                                        SemIR::TypeId);
+              builder.Attach(loc_id, IncompleteTypeInFunctionReturnType,
+                             arg_type_id);
             },
             [&](auto& builder) {
-              CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Context,
-                                "function returns abstract type {0}",
-                                SemIR::TypeId);
-              builder.Context(loc_id, AbstractTypeInFunctionReturnType,
-                              arg_type_id);
+              CARBON_DIAGNOSTIC_CONTEXT(AbstractTypeInFunctionReturnType,
+                                        "function returns abstract type {0}",
+                                        SemIR::TypeId);
+              builder.Attach(loc_id, AbstractTypeInFunctionReturnType,
+                             arg_type_id);
             })) {
       return SemIR::ErrorInst::TypeId;
     }
@@ -379,12 +380,12 @@ auto CheckFunctionDefinitionSignature(Context& context,
     RequireCompleteType(
         context, context.insts().Get(param_ref_id).type_id(),
         SemIR::LocId(param_ref_id), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(
-              IncompleteTypeInFunctionParam, Context,
+          CARBON_DIAGNOSTIC_CONTEXT(
+              IncompleteTypeInFunctionParam,
               "parameter has incomplete type {0} in function definition",
               TypeOfInstId);
-          builder.Context(param_ref_id, IncompleteTypeInFunctionParam,
-                          param_ref_id);
+          builder.Attach(param_ref_id, IncompleteTypeInFunctionParam,
+                         param_ref_id);
         });
   }
 
