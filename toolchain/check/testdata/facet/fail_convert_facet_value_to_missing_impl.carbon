@@ -171,13 +171,9 @@ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.23e) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.23e) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%T.672) {
 // CHECK:STDOUT:   %T.patt.loc18_10.2 => constants.%T.patt.9e8

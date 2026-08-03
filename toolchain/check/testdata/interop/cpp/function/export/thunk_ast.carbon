@@ -38,16 +38,17 @@ fn F(i: i32) -> i32 {
 // CHECK:STDOUT: |   |   `-DeclRefExpr {{0x[a-f0-9]+}} <col:21> 'int' lvalue Var {{0x[a-f0-9]+}} 'return_storage' 'int'
 // CHECK:STDOUT: |   |-AlwaysInlineAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit always_inline
 // CHECK:STDOUT: |   `-InternalLinkageAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit
-// CHECK:STDOUT: `-FunctionDecl {{0x[a-f0-9]+}} <line:37:1, line:39:1> line:37:5 G 'int (int)' external-linkage
-// CHECK:STDOUT:   |-ParmVarDecl {{0x[a-f0-9]+}} <col:7, col:11> col:11 used i 'int'
-// CHECK:STDOUT:   `-CompoundStmt {{0x[a-f0-9]+}} <col:14, line:39:1>
-// CHECK:STDOUT:     `-ReturnStmt {{0x[a-f0-9]+}} <line:38:3, col:21>
-// CHECK:STDOUT:       `-CallExpr {{0x[a-f0-9]+}} <col:10, col:21> 'int'
-// CHECK:STDOUT:         |-ImplicitCastExpr {{0x[a-f0-9]+}} <col:10, col:18> 'int (*)(int)' <FunctionToPointerDecay>
-// CHECK:STDOUT:         | `-DeclRefExpr {{0x[a-f0-9]+}} <col:10, col:18> 'int (int)' lvalue Function {{0x[a-f0-9]+}} 'F' 'int (int)'
-// CHECK:STDOUT:         |   `-NestedNameSpecifier Namespace {{0x[a-f0-9]+}} 'Carbon'
-// CHECK:STDOUT:         `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:20> 'int' <LValueToRValue>
-// CHECK:STDOUT:           `-DeclRefExpr {{0x[a-f0-9]+}} <col:20> 'int' lvalue ParmVar {{0x[a-f0-9]+}} 'i' 'int'
+// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <line:38:1, line:40:1> line:38:5 in thunk_with_args_and_return.carbon hidden G 'int (int)' external-linkage
+// CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <col:7, col:11> col:11 in thunk_with_args_and_return.carbon hidden used i 'int'
+// CHECK:STDOUT: | `-CompoundStmt {{0x[a-f0-9]+}} <col:14, line:40:1>
+// CHECK:STDOUT: |   `-ReturnStmt {{0x[a-f0-9]+}} <line:39:3, col:21>
+// CHECK:STDOUT: |     `-CallExpr {{0x[a-f0-9]+}} <col:10, col:21> 'int'
+// CHECK:STDOUT: |       |-ImplicitCastExpr {{0x[a-f0-9]+}} <col:10, col:18> 'int (*)(int)' <FunctionToPointerDecay>
+// CHECK:STDOUT: |       | `-DeclRefExpr {{0x[a-f0-9]+}} <col:10, col:18> 'int (int)' lvalue Function {{0x[a-f0-9]+}} 'F' 'int (int)'
+// CHECK:STDOUT: |       |   `-NestedNameSpecifier Namespace {{0x[a-f0-9]+}} 'Carbon'
+// CHECK:STDOUT: |       `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:20> 'int' <LValueToRValue>
+// CHECK:STDOUT: |         `-DeclRefExpr {{0x[a-f0-9]+}} <col:20> 'int' lvalue ParmVar {{0x[a-f0-9]+}} 'i' 'int'
+// CHECK:STDOUT: `-ImportDecl {{0x[a-f0-9]+}} <line:41:4> col:4 in thunk_with_args_and_return.carbon implicit thunk_with_args_and_return.carbon
   return i;
 }
 

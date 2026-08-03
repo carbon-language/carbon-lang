@@ -39,6 +39,7 @@ fn F() {
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.G.decl [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %.a93: <witness> = impl_self_witness %empty_tuple.type, @I [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @empty_tuple.type.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %self.param_patt.154: %pattern_type.cb1 = value_param_pattern [concrete]
@@ -112,6 +113,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc19_9.2: type = converted %.loc19_9.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @F.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc19: <witness> = impl_self_witness @empty_tuple.type.as.I.impl.%.loc19_9.2, @I [concrete = constants.%.a93]
 // CHECK:STDOUT:   %.loc22_4.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %G.ref: %I.assoc_type = name_ref G, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]

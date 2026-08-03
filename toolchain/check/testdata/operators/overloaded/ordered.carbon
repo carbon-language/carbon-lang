@@ -91,6 +91,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %return.param_patt: %pattern_type.831 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %.f34: Core.Form = init_form bool [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.108: type = facet_type <@OrderedWith, @OrderedWith(%C)> [concrete]
+// CHECK:STDOUT:   %.71b: <witness> = impl_self_witness %C, @OrderedWith, @OrderedWith(%C) [concrete]
 // CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness @C.as.OrderedWith.impl.%OrderedWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.4a7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt.c03: %pattern_type.4a7 = value_param_pattern [concrete]
@@ -158,6 +159,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %C.ref.loc6_28: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %OrderedWith.type: type = facet_type <@OrderedWith, @OrderedWith(constants.%C)> [concrete = constants.%OrderedWith.type.108]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc6: <witness> = impl_self_witness @C.as.OrderedWith.impl.%C.ref.loc6_6, @OrderedWith, @OrderedWith(constants.%C) [concrete = constants.%.71b]
 // CHECK:STDOUT:   %TestLess.decl: %TestLess.type = fn_decl @TestLess [concrete = constants.%TestLess] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.4a7 = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type.4a7 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]

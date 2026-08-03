@@ -40,19 +40,21 @@ fn F() {
 }
 
 // --- bad_suffix.h
+// CHECK:STDERR: ./bad_suffix.h:[[@LINE+1]]:24: in expansion of macro defined here [InCppMacroExpansion]
 #define CONFIG_VALUE 42f
 
 // --- fail_import_bad_suffix.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./bad_suffix.h:1:24: error: invalid digit 'f' in decimal constant [CppInteropParseError]
-// CHECK:STDERR:     1 | #define CONFIG_VALUE 42f
-// CHECK:STDERR:       |                        ^
 import Cpp library "bad_suffix.h";
 
 fn F() {
+  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+20]]:6: error: invalid digit 'f' in decimal constant [CppInteropParseError]
+  // CHECK:STDERR:    27 |   Cpp.CONFIG_VALUE;
+  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR:     2 | #define CONFIG_VALUE 42f
+  // CHECK:STDERR:       |                        ^
   // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+15]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
@@ -72,19 +74,21 @@ fn F() {
 }
 
 // --- integer_literal_too_big.h
+// CHECK:STDERR: ./integer_literal_too_big.h:[[@LINE+1]]:22: in expansion of macro defined here [InCppMacroExpansion]
 #define CONFIG_VALUE 18446744073709551616
 
 // --- fail_import_integer_literal_too_big.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./integer_literal_too_big.h:1:22: error: integer literal is too large to be represented in any integer type [CppInteropParseError]
-// CHECK:STDERR:     1 | #define CONFIG_VALUE 18446744073709551616
-// CHECK:STDERR:       |                      ^
 import Cpp library "integer_literal_too_big.h";
 
 fn F() {
+  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+9]]:6: error: integer literal is too large to be represented in any integer type [CppInteropParseError]
+  // CHECK:STDERR:    16 |   Cpp.CONFIG_VALUE;
+  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR:     2 | #define CONFIG_VALUE 18446744073709551616
+  // CHECK:STDERR:       |                      ^
   // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
@@ -453,19 +457,21 @@ fn F() {
 
 // --- multiple_characters.h
 
+// CHECK:STDERR: ./multiple_characters.h:[[@LINE+1]]:24: in expansion of macro defined here [InCppMacroExpansion]
 #define MULTIPLE_CHARS 'AB'
 
 // --- import_multiple_characters.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_characters.h:2:24: warning: multi-character character constant [CppInteropParseWarning]
-// CHECK:STDERR:     2 | #define MULTIPLE_CHARS 'AB'
-// CHECK:STDERR:       |                        ^
 import Cpp library "multiple_characters.h";
 
 fn F() {
+ // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+9]]:25: warning: multi-character character constant [CppInteropParseWarning]
+ // CHECK:STDERR:    16 |  let unused a: i32 = Cpp.MULTIPLE_CHARS;
+ // CHECK:STDERR:       |                         ^
+ // CHECK:STDERR:     3 | #define MULTIPLE_CHARS 'AB'
+ // CHECK:STDERR:       |                        ^
  // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:22: note: in `Cpp` name lookup for `MULTIPLE_CHARS` [InCppNameLookup]
  // CHECK:STDERR:  let unused a: i32 = Cpp.MULTIPLE_CHARS;
  // CHECK:STDERR:                      ^~~~~~~~~~~~~~~~~~
@@ -970,6 +976,17 @@ fn F() {
   // CHECK:STDERR:
   Cpp.m = 2;
 }
+
+// --- self_expand.carbon
+
+import Cpp inline '''
+const int COUNT = 0;
+#define COUNT COUNT + 1
+''';
+
+class C(N: i32) {}
+// Expansion of `COUNT` should be suppressed inside itself.
+let _: C(1) = {} as C(Cpp.COUNT);
 
 // CHECK:STDOUT: --- import_integer_literal_replacement_token.carbon
 // CHECK:STDOUT:

@@ -23,51 +23,50 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: basic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:       {kind: 'AliasInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'foo'},
-// CHECK:STDOUT:     {kind: 'Alias', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:       {kind: 'AliasInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:     {kind: 'Alias', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'c'},
-// CHECK:STDOUT:       {kind: 'AliasInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '3'},
-// CHECK:STDOUT:       {kind: 'InfixOperatorPlus', text: '+', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'Alias', text: ';', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'NS'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameQualifierWithoutParams', text: '.', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'ns'},
-// CHECK:STDOUT:       {kind: 'AliasInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'foo'},
-// CHECK:STDOUT:     {kind: 'Alias', text: ';', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'c'},
-// CHECK:STDOUT:         {kind: 'AliasInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'foo'},
-// CHECK:STDOUT:       {kind: 'Alias', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'f'},
-// CHECK:STDOUT:         {kind: 'AliasInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'foo'},
-// CHECK:STDOUT:       {kind: 'Alias', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ ├─AliasInitializer '='
+// CHECK:STDOUT:   │ ├─IdentifierNameExpr 'foo'
+// CHECK:STDOUT:   ├─Alias ';'
+// CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ ├─AliasInitializer '='
+// CHECK:STDOUT:   │ ├─IntLiteral '0'
+// CHECK:STDOUT:   ├─Alias ';'
+// CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'c'
+// CHECK:STDOUT:   │ ├─AliasInitializer '='
+// CHECK:STDOUT:   │ │ ╭─IntLiteral '1'
+// CHECK:STDOUT:   │ │ ├─IntLiteral '3'
+// CHECK:STDOUT:   │ ├─InfixOperatorPlus '+'
+// CHECK:STDOUT:   ├─Alias ';'
+// CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'NS'
+// CHECK:STDOUT:   │ ├─IdentifierNameQualifierWithoutParams '.'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'ns'
+// CHECK:STDOUT:   │ ├─AliasInitializer '='
+// CHECK:STDOUT:   │ ├─IdentifierNameExpr 'foo'
+// CHECK:STDOUT:   ├─Alias ';'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameNotBeforeSignature 'c'
+// CHECK:STDOUT:   │ │ ├─AliasInitializer '='
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'foo'
+// CHECK:STDOUT:   │ ├─Alias ';'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameNotBeforeSignature 'f'
+// CHECK:STDOUT:   │ │ ├─AliasInitializer '='
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'foo'
+// CHECK:STDOUT:   │ ├─Alias ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

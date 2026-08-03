@@ -40,6 +40,7 @@
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/custom_type_mapping.h"
+#include "toolchain/check/cpp/domain.h"
 #include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/macros.h"
@@ -442,7 +443,12 @@ static auto LookupClangDeclInstId(Context& context, SemIR::ClangDeclKey key)
   const auto& clang_decls = context.clang_decls();
   if (auto context_clang_decl_id = clang_decls.LookupId(key);
       context_clang_decl_id.has_value()) {
-    return clang_decls.Get(context_clang_decl_id).inst_id;
+    const auto& clang_decl = clang_decls.Get(context_clang_decl_id);
+    if (clang_decl.var_storage_inst_id.has_value()) {
+      return clang_decl.var_storage_inst_id;
+    } else {
+      return clang_decls.Get(context_clang_decl_id).inst_id;
+    }
   }
   return SemIR::InstId::None;
 }
@@ -2198,10 +2204,10 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   context.imports().push_back(var_storage_inst_id);
 
   // Register the variable so we don't create it again.
-  context.clang_decls().AddVar({.key = SemIR::ClangDeclKey(var_decl),
-                                .inst_id = var_storage_inst_id,
-                                .is_imported = true},
-                               pattern_id);
+  context.clang_decls().Add({.key = SemIR::ClangDeclKey(var_decl),
+                             .inst_id = pattern_id,
+                             .var_storage_inst_id = var_storage_inst_id,
+                             .is_imported = true});
 
   // Inform Clang that the variable has been referenced.
   context.clang_sema().MarkVariableReferenced(GetCppLocation(context, loc_id),
@@ -2551,9 +2557,10 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
 // TODO: Add support for other macro types and non-integer literal values.
 static auto ImportMacro(Context& context, SemIR::LocId loc_id,
                         SemIR::NameScopeId scope_id, SemIR::NameId name_id,
+                        clang::IdentifierInfo* identifier_info,
                         clang::MacroInfo* macro_info)
     -> SemIR::ScopeLookupResult {
-  auto inst_id = TryEvaluateMacro(context, loc_id, name_id, macro_info);
+  auto inst_id = TryEvaluateMacro(context, loc_id, identifier_info, macro_info);
   if (inst_id == SemIR::ErrorInst::InstId) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
@@ -2619,7 +2626,8 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
   if (clang::MacroInfo* macro_info =
           LookupMacro(context, scope_id, identifier_info)) {
-    return ImportMacro(context, loc_id, scope_id, name_id, macro_info);
+    return ImportMacro(context, loc_id, scope_id, name_id, identifier_info,
+                       macro_info);
   }
   auto lookup = ClangLookupName(context, scope_id, identifier_info);
   if (!lookup) {

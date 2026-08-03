@@ -125,6 +125,15 @@ auto HandleBindingPattern(Context& context) -> void {
     self_token = *self;
     context.AddLeafNode(NodeKind::SelfValueName, *self);
   } else if (auto underscore = context.ConsumeIf(Lex::TokenKind::Underscore)) {
+    if (state.in_field_shorthand_pattern) {
+      CARBON_DIAGNOSTIC(
+          AnonymousBindingInStructPattern, Error,
+          "Anonymous binding found in struct pattern. Use `.field = "
+          "_: field_type` or `unused field: field_type`");
+      context.emitter().Emit(*context.position(),
+                             AnonymousBindingInStructPattern);
+      state.has_error = true;
+    }
     context.AddLeafNode(NodeKind::UnderscoreName, *underscore);
   } else if (context.PositionKind().is_word() &&
              context.PositionKind(Lookahead::NextToken)

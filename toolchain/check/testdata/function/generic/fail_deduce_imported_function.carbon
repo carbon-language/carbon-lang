@@ -121,9 +121,7 @@ fn B() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc4_7.2 => constants.%T.patt
@@ -259,9 +257,7 @@ fn B() {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.loc4(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc4_7.2 => constants.%T.patt

@@ -846,7 +846,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %pattern_type.e30: type = pattern_type %WithNontype.40e [symbolic]
 // CHECK:STDOUT:   %x.param_patt.12a: %pattern_type.e30 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %x.patt.e34: %pattern_type.e30 = at_binding_pattern x, %x.param_patt.12a [symbolic]
-// CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %.795f: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -943,7 +943,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc6_43 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc6_43: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6_43: Core.Form = init_form %i32.loc6_43 [concrete = constants.%.795]
+// CHECK:STDOUT:     %.loc6_43: Core.Form = init_form %i32.loc6_43 [concrete = constants.%.795f]
 // CHECK:STDOUT:     %.loc6_9: type = splice_block %i32.loc6_9 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %i32.loc6_9: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -964,7 +964,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc8: Core.Form = init_form %i32 [concrete = constants.%.795]
+// CHECK:STDOUT:     %.loc8: Core.Form = init_form %i32 [concrete = constants.%.795f]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

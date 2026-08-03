@@ -184,9 +184,7 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.WithSelf.F(constants.%Self.3ce) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Different.WithSelf(constants.%Self.8ba) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Different.WithSelf(constants.%Self.8ba) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
 // CHECK:STDOUT:   %U.patt.loc32_15.2 => constants.%U.patt

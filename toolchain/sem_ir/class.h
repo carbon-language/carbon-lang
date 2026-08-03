@@ -46,9 +46,6 @@ struct ClassFields {
   // Whether this class or any base class has at least one virtual function.
   bool is_dynamic = false;
 
-  // Whether the class's fields have been exported to C++.
-  bool fields_exported = false;
-
   // The following members are set at the `{` of the class definition.
 
   // The class scope.
@@ -142,7 +139,7 @@ struct Class : public EntityWithParamsBase,
   auto GetObjectRepr(const File& file, SpecificId specific_id) const -> TypeId;
 
   // Get the `StructTypeField`s from a class's object repr.
-  auto GetStructTypeFields(const File& sem_ir) const
+  auto GetStructTypeFields(const File& sem_ir, SpecificId specific_id) const
       -> llvm::ArrayRef<SemIR::StructTypeField>;
 };
 

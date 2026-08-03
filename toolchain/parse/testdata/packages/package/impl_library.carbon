@@ -11,13 +11,12 @@
 impl package Geometry library "[[@TEST_NAME]]";
 
 // CHECK:STDOUT: - filename: impl_library.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Geometry'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: '"impl_library"'},
-// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ ├─ImplModifier 'impl'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'Geometry'
+// CHECK:STDOUT:   │ │ ╭─LibraryName '"impl_library"'
+// CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
+// CHECK:STDOUT:   ├─PackageDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

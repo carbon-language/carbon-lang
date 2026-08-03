@@ -18,5 +18,5 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 The driver provides commands and ties together the toolchain's flow. Running a
 command such as `carbon compile --phase=lower <file>` will run through the flow
-and print output. Several dump flags, such as `--dump-parse-tree`, print output
+and print output. Several dump flags, such as `--dump-raw-sem-ir`, print output
 in YAML format for easier parsing.

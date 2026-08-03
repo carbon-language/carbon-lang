@@ -395,25 +395,6 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
   return impl_id;
 }
 
-// Returns whether the `LookupImplWitness` of `witness_id` is for the same
-// specific interface as the impl decl's `impl_interface`.
-static auto WitnessQueryMatchesInterface(
-    Context& context, SemIR::InstId access_witness_id,
-    const SemIR::SpecificInterface& impl_interface) -> bool {
-  // This condition catches witnesses from inside the impl declaration.
-  if (context.insts().Is<SemIR::ImplSelfWitness>(access_witness_id)) {
-    return true;
-  }
-
-  // We also need to find witnesses for rewrites acquired through a named
-  // constraint.
-  auto lookup =
-      context.insts().GetAs<SemIR::LookupImplWitness>(access_witness_id);
-  auto access_interface =
-      context.specific_interfaces().Get(lookup.query_specific_interface_id);
-  return access_interface == impl_interface;
-}
-
 auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
                                   const SemIR::Impl& impl,
                                   SemIR::TypeInstId full_constraint_id,
@@ -437,8 +418,7 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       [&](const SemIR::DeclaredFacetType::RewriteConstraint& rewrite) {
         auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(
             GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
-        return WitnessQueryMatchesInterface(context, access.witness_id,
-                                            impl.interface);
+        return context.insts().Is<SemIR::ImplSelfWitness>(access.witness_id);
       });
 
   if (rewrites_into_interface_to_witness.empty()) {
@@ -773,10 +753,10 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
 // enclosing ImplWitnessAccess be resolved to the corresponding value from the
 // impl's witness table.
 static auto SubstImplSelfWitnesses(Context& context, SemIR::LocId loc_id,
-                                   SemIR::ConstantId const_id,
+                                   SemIR::IdentifiedFacetType::RequiredImpl req,
                                    SemIR::InterfaceId impl_interface_id,
                                    SemIR::InstId witness_id)
-    -> SemIR::ConstantId {
+    -> SemIR::IdentifiedFacetType::RequiredImpl {
   class Callbacks : public SubstInstCallbacks {
    public:
     explicit Callbacks(Context* context, SemIR::LocId loc_id,
@@ -827,9 +807,24 @@ static auto SubstImplSelfWitnesses(Context& context, SemIR::LocId loc_id,
   };
 
   Callbacks callbacks(&context, loc_id, impl_interface_id, witness_id);
-  auto inst_id = context.constant_values().GetInstId(const_id);
-  inst_id = SubstInst(context, inst_id, callbacks);
-  return context.constant_values().Get(inst_id);
+
+  auto self_inst_id = context.constant_values().GetInstId(req.self_facet_value);
+  self_inst_id = SubstInst(context, self_inst_id, callbacks);
+
+  auto specific_id = req.specific_interface.specific_id;
+  if (specific_id.has_value()) {
+    const auto& specific = context.specifics().Get(specific_id);
+    llvm::SmallVector<SemIR::InstId> args(
+        context.inst_blocks().Get(specific.args_id));
+    for (auto& arg_id : args) {
+      arg_id = SubstInst(context, arg_id, callbacks);
+    }
+    specific_id = MakeSpecific(context, loc_id, specific.generic_id, args);
+  }
+
+  return {
+      .self_facet_value = context.constant_values().Get(self_inst_id),
+      .specific_interface = {req.specific_interface.interface_id, specific_id}};
 }
 
 auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
@@ -850,25 +845,22 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
   auto self_const_id = GetCanonicalFacetOrTypeValue(
       context, context.constant_values().Get(impl.self_id));
 
-  // Resolve any accesses in the declaration by using the impl's witness table,
-  // now that it exists. Since these accesses are in the declaration, they were
-  // originally checked before the `impl` existed.
-  auto subst_constraint_id = SubstImplSelfWitnesses(
-      context, loc_id, context.constant_values().Get(full_constraint_id),
-      impl.interface.interface_id, impl.witness_id);
-  // Any errors in the facet type will result in an error in the canonical value
-  // here. Don't diagnose anything more in the facet type.
-  if (subst_constraint_id == SemIR::ErrorInst::ConstantId) {
-    return;
-  }
-
-  auto canon_constraint_id =
-      context.types().GetTypeInstIdForTypeConstantId(subst_constraint_id);
-
+  // We already identified the `impl.self_id` as the canonical
+  // `full_constraint_id`, so this should just be a cache lookup and can't fail.
+  //
+  // This is critical because the identification constructs specifics in named
+  // constraints which may refer back to the impl itself through access of an
+  // associated constant. Those references back to the impl need to be
+  // represented as `ImplSelfWitness` which can only be done inside the impl
+  // declaration. It is too late to form those specifics here, we need to find
+  // the specifics formed during the impl declaration.
+  //
   // TODO: Consider a function that just forms the key and returns the ID for an
   // already-identified facet type? Or plumb through the IdentifiedFacetType?
   auto identified_id = TryToIdentifyFacetType(
-      context, loc_id, self_const_id, canon_constraint_id,
+      context, loc_id, context.constant_values().Get(impl.self_id),
+      context.constant_values().GetConstantTypeInstId(
+          context.types().GetAsTypeInstId(full_constraint_id)),
       /*allow_partially_identified=*/false);
   CARBON_CHECK(identified_id.has_value());
   const auto& identified = context.identified_facet_types().Get(identified_id);
@@ -878,6 +870,14 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
       // This is what the impl is implementing, so it's not already satisfied.
       continue;
     }
+
+    // Resolve any accesses in the declaration by using the impl's witness
+    // table, now that it exists. Since these accesses are from an
+    // IdentifiedFacetType first constructed inside the impl declaration, they
+    // were originally evaluated before the impl existed.
+    req = SubstImplSelfWitnesses(context, loc_id, req,
+                                 impl.interface.interface_id, impl.witness_id);
+
     auto result = LookupImplWitness(
         context, loc_id, req.self_facet_value,
         GetInterfaceType(context, req.specific_interface.interface_id,
@@ -1028,6 +1028,31 @@ auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
     return SemIR::SpecificInterface::None;
   }
   return identified.impl_as_target_interface();
+}
+
+auto GetImplInterfaceInSpecific(Context& context, const SemIR::Impl& impl,
+                                SemIR::SpecificId specific_id)
+    -> SemIR::SpecificInterface {
+  if (!specific_id.has_value()) {
+    CARBON_CHECK(!impl.generic_id.has_value());
+    // The impl is not generic, the specific interface will be concrete.
+    return impl.interface;
+  }
+
+  CARBON_CHECK(context.specifics().Get(specific_id).generic_id ==
+               impl.generic_id);
+  // The `interface_inst_id` is an instruction that contains the impl's target
+  // specific interface. We get its constant value to apply the impl's specific
+  // to that target interface.
+  auto interface_in_specific = SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), specific_id, impl.interface_inst_id);
+  if (interface_in_specific == SemIR::ErrorInst::ConstantId) {
+    return SemIR::SpecificInterface::None;
+  }
+  // The `interface_inst_id` is always an `ImplSelfWitness` at this time.
+  auto inst = context.constant_values().GetInstAs<SemIR::ImplSelfWitness>(
+      interface_in_specific);
+  return context.specific_interfaces().Get(inst.specific_interface_id);
 }
 
 }  // namespace Carbon::Check

@@ -438,6 +438,9 @@ auto TypeCompleter::ProcessStep() -> bool {
 }
 
 auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
+  // NOTE: `TryToCompleteClassType()` in convert.cpp matches the same types as
+  // the switch here. When adding a new type here, it should also be added
+  // there.
   CARBON_KIND_SWITCH(type_inst) {
     case CARBON_KIND(SemIR::ArrayType inst): {
       Push(context_->types().GetTypeIdForTypeInstId(inst.element_type_inst_id));

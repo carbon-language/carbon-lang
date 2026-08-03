@@ -145,6 +145,57 @@ class Derived : public Carbon::Abstract {
 };
 ''';
 
+// --- fail_variable_with_abstract_method.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+// TODO: We should support generating a base subobject destructor for an
+// abstract class, even though we refuse to generate a complete object
+// destructor.
+// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: abstract class Abstract {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+abstract class Abstract {
+  abstract fn F(self);
+}
+
+inline Cpp '''
+// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+7]]:18: error: variable type 'Carbon::Abstract' is an abstract class [CppInteropParseError]
+// CHECK:STDERR:    24 | Carbon::Abstract x;
+// CHECK:STDERR:       |                  ^
+// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE-7]]:22: note: unimplemented pure virtual method 'F' in 'Abstract' [CppInteropParseNote]
+// CHECK:STDERR:    13 |   abstract fn F(self);
+// CHECK:STDERR:       |                      ^
+// CHECK:STDERR:
+Carbon::Abstract x;
+''';
+
+// --- fail_todo_abstract_method_overridden_in_cpp.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+// TODO: We should support generating a base subobject destructor for an
+// abstract class, even though we refuse to generate a complete object
+// destructor.
+// CHECK:STDERR: fail_todo_abstract_method_overridden_in_cpp.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: abstract class Abstract {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+abstract class Abstract {
+  abstract fn F(ref self);
+}
+
+// A C++ class that overrides the abstract method can be instantiated.
+inline Cpp '''
+struct Derived : Carbon::Abstract {
+  void F() & override {}
+};
+Derived d;
+''';
+
 // --- override_virtual_dtor.carbon
 library "[[@TEST_NAME]]";
 

@@ -472,6 +472,8 @@ class NodeStack {
       case Parse::NodeKind::RuntimeBindingName:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::StructLiteralStart:
+      case Parse::NodeKind::StructPatternStart:
+      case Parse::NodeKind::StructPatternDesignatedField:
       case Parse::NodeKind::StructTypeLiteralField:
       case Parse::NodeKind::StructTypeLiteralStart:
       case Parse::NodeKind::TemplateBindingName:

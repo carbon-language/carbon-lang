@@ -43,6 +43,8 @@ auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
         break;
       case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::CppMacroExpansion:
         // TODO: Include the macro name in the note.
+        // TODO: Include the Clang-generated snippet here rather than with the
+        // main diagnostic.
         context_fn(import.loc, InCppMacroExpansion);
         break;
     }

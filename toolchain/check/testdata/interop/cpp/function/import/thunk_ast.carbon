@@ -18,24 +18,21 @@
 // --- thunk_required.h
 
 auto foo(short a) -> void;
-// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./thunk_required.h:[[@LINE-1]]:1, col:22> col:6 used foo 'auto (short) -> void' external-linkage
-// CHECK:STDOUT: | `-ParmVarDecl {{0x[a-f0-9]+}} <col:10, col:16> col:16 a 'short'
-// CHECK:STDOUT: `-FunctionDecl {{0x[a-f0-9]+}} <col:6> col:6 foo__carbon_thunk 'void (short * _Nonnull)' inline internal-linkage
-// CHECK:STDOUT:   |-ParmVarDecl {{0x[a-f0-9]+}} <col:6> col:6 used a 'short * _Nonnull':'short *'
-// CHECK:STDOUT:   |-ReturnStmt {{0x[a-f0-9]+}} <col:6>
-// CHECK:STDOUT:   | `-CallExpr {{0x[a-f0-9]+}} <col:6> 'void'
-// CHECK:STDOUT:   |   |-ImplicitCastExpr {{0x[a-f0-9]+}} <col:6> 'auto (*)(short) -> void' <FunctionToPointerDecay>
-// CHECK:STDOUT:   |   | `-DeclRefExpr {{0x[a-f0-9]+}} <col:6> 'auto (short) -> void' Function {{0x[a-f0-9]+}} 'foo' 'auto (short) -> void'
-// CHECK:STDOUT:   |   `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:6> 'short' <LValueToRValue>
-// CHECK:STDOUT:   |     `-UnaryOperator {{0x[a-f0-9]+}} <col:6> 'short' lvalue prefix '*' cannot overflow
-// CHECK:STDOUT:   |       `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:6> 'short * _Nonnull':'short *' <LValueToRValue>
-// CHECK:STDOUT:   |         `-DeclRefExpr {{0x[a-f0-9]+}} <col:6> 'short * _Nonnull':'short *' lvalue ParmVar {{0x[a-f0-9]+}} 'a' 'short * _Nonnull':'short *'
-// CHECK:STDOUT:   |-AlwaysInlineAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit always_inline
-// CHECK:STDOUT:   |-InternalLinkageAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit
-// CHECK:STDOUT:   `-AsmLabelAttr {{0x[a-f0-9]+}} <col:6> Implicit "_Z3foos.carbon_thunk._"
-// CHECK:STDOUT: TranslationUnitDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc>
-// CHECK:STDOUT: |-EmptyDecl {{0x[a-f0-9]+}} <<carbon Cpp imports>:1:1> col:1
-// CHECK:STDOUT: |-NamespaceDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> Carbon external-linkage
+// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./thunk_required.h:[[@LINE-1]]:1, col:22> col:6 in import_thunk_required.carbon hidden used foo 'auto (short) -> void' external-linkage
+// CHECK:STDOUT: | `-ParmVarDecl {{0x[a-f0-9]+}} <col:10, col:16> col:16 in import_thunk_required.carbon hidden a 'short'
+// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <col:6> col:6 in import_thunk_required.carbon hidden foo__carbon_thunk 'void (short * _Nonnull)' inline internal-linkage
+// CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <col:6> col:6 in import_thunk_required.carbon hidden used a 'short * _Nonnull':'short *'
+// CHECK:STDOUT: | |-ReturnStmt {{0x[a-f0-9]+}} <col:6>
+// CHECK:STDOUT: | | `-CallExpr {{0x[a-f0-9]+}} <col:6> 'void'
+// CHECK:STDOUT: | |   |-ImplicitCastExpr {{0x[a-f0-9]+}} <col:6> 'auto (*)(short) -> void' <FunctionToPointerDecay>
+// CHECK:STDOUT: | |   | `-DeclRefExpr {{0x[a-f0-9]+}} <col:6> 'auto (short) -> void' Function {{0x[a-f0-9]+}} 'foo' 'auto (short) -> void'
+// CHECK:STDOUT: | |   `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:6> 'short' <LValueToRValue>
+// CHECK:STDOUT: | |     `-UnaryOperator {{0x[a-f0-9]+}} <col:6> 'short' lvalue prefix '*' cannot overflow
+// CHECK:STDOUT: | |       `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:6> 'short * _Nonnull':'short *' <LValueToRValue>
+// CHECK:STDOUT: | |         `-DeclRefExpr {{0x[a-f0-9]+}} <col:6> 'short * _Nonnull':'short *' lvalue ParmVar {{0x[a-f0-9]+}} 'a' 'short * _Nonnull':'short *'
+// CHECK:STDOUT: | |-AlwaysInlineAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit always_inline
+// CHECK:STDOUT: | |-InternalLinkageAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit
+// CHECK:STDOUT: | `-AsmLabelAttr {{0x[a-f0-9]+}} <col:6> Implicit "_Z3foos.carbon_thunk._"
 
 // --- import_thunk_required.carbon
 
@@ -47,20 +44,24 @@ fn F() {
   Cpp.foo(1 as i16);
 }
 
+// CHECK:STDOUT: `-ImportDecl {{0x[a-f0-9]+}} <import_thunk_required.carbon:[[@LINE+3]]:104> col:104 in import_thunk_required.carbon implicit import_thunk_required.carbon
+// CHECK:STDOUT: TranslationUnitDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc>
+// CHECK:STDOUT: |-EmptyDecl {{0x[a-f0-9]+}} <<carbon Cpp imports>:1:1> col:1
+// CHECK:STDOUT: |-NamespaceDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> Carbon external-linkage
 // --- return_thunk_required.h
 
 auto foo() -> short;
-// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./return_thunk_required.h:[[@LINE-1]]:1, col:15> col:6 used foo 'auto () -> short' external-linkage
-// CHECK:STDOUT: `-FunctionDecl {{0x[a-f0-9]+}} <col:6> col:6 foo__carbon_thunk 'void (short * _Nonnull)' inline internal-linkage
-// CHECK:STDOUT:   |-ParmVarDecl {{0x[a-f0-9]+}} <col:6> col:6 used return 'short * _Nonnull':'short *'
-// CHECK:STDOUT:   |-CXXNewExpr {{0x[a-f0-9]+}} <col:6> 'short *' global Function {{0x[a-f0-9]+}} 'operator new' 'void *(__size_t, void *) noexcept'
-// CHECK:STDOUT:   | |-CallExpr {{0x[a-f0-9]+}} <col:6> 'short'
-// CHECK:STDOUT:   | | `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:6> 'auto (*)() -> short' <FunctionToPointerDecay>
-// CHECK:STDOUT:   | |   `-DeclRefExpr {{0x[a-f0-9]+}} <col:6> 'auto () -> short' Function {{0x[a-f0-9]+}} 'foo' 'auto () -> short'
-// CHECK:STDOUT:   | `-DeclRefExpr {{0x[a-f0-9]+}} <col:6> 'short * _Nonnull':'short *' lvalue ParmVar {{0x[a-f0-9]+}} 'return' 'short * _Nonnull':'short *'
-// CHECK:STDOUT:   |-AlwaysInlineAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit always_inline
-// CHECK:STDOUT:   |-InternalLinkageAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit
-// CHECK:STDOUT:   `-AsmLabelAttr {{0x[a-f0-9]+}} <col:6> Implicit "_Z3foov.carbon_thunk."
+// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./return_thunk_required.h:[[@LINE-1]]:1, col:15> col:6 in import_return_thunk_required.carbon hidden used foo 'auto () -> short' external-linkage
+// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <col:6> col:6 in import_return_thunk_required.carbon hidden foo__carbon_thunk 'void (short * _Nonnull)' inline internal-linkage
+// CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <col:6> col:6 in import_return_thunk_required.carbon hidden used return 'short * _Nonnull':'short *'
+// CHECK:STDOUT: | |-CXXNewExpr {{0x[a-f0-9]+}} <col:6> 'short *' global Function {{0x[a-f0-9]+}} 'operator new' 'void *(__size_t, void *) noexcept'
+// CHECK:STDOUT: | | |-CallExpr {{0x[a-f0-9]+}} <col:6> 'short'
+// CHECK:STDOUT: | | | `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:6> 'auto (*)() -> short' <FunctionToPointerDecay>
+// CHECK:STDOUT: | | |   `-DeclRefExpr {{0x[a-f0-9]+}} <col:6> 'auto () -> short' Function {{0x[a-f0-9]+}} 'foo' 'auto () -> short'
+// CHECK:STDOUT: | | `-DeclRefExpr {{0x[a-f0-9]+}} <col:6> 'short * _Nonnull':'short *' lvalue ParmVar {{0x[a-f0-9]+}} 'return' 'short * _Nonnull':'short *'
+// CHECK:STDOUT: | |-AlwaysInlineAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit always_inline
+// CHECK:STDOUT: | |-InternalLinkageAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit
+// CHECK:STDOUT: | `-AsmLabelAttr {{0x[a-f0-9]+}} <col:6> Implicit "_Z3foov.carbon_thunk."
 
 // --- import_return_thunk_required.carbon
 
@@ -71,3 +72,5 @@ import Cpp library "return_thunk_required.h";
 fn F() -> i16 {
   return Cpp.foo();
 }
+
+// CHECK:STDOUT: `-ImportDecl {{0x[a-f0-9]+}} <import_return_thunk_required.carbon:[[@LINE+0]]:191> col:191 in import_return_thunk_required.carbon implicit import_return_thunk_required.carbon

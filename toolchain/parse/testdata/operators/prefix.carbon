@@ -15,44 +15,43 @@ var c: const bool;
 var d: partial C*;
 
 // CHECK:STDOUT: - filename: prefix.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'n'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i8'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:       {kind: 'PrefixOperatorMinus', text: '-', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 10},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'BoolLiteralTrue', text: 'true'},
-// CHECK:STDOUT:       {kind: 'PrefixOperatorNot', text: 'not', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 10},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'c'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:           {kind: 'PrefixOperatorConst', text: 'const', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'd'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'C'},
-// CHECK:STDOUT:             {kind: 'PrefixOperatorPartial', text: 'partial', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'PostfixOperatorStar', text: '*', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'n'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i8'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'n'
+// CHECK:STDOUT:   │ ├─PrefixOperatorMinus '-'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─BoolLiteralTrue 'true'
+// CHECK:STDOUT:   │ ├─PrefixOperatorNot 'not'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'c'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ╭─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ │   ├─PrefixOperatorConst 'const'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'd'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │   ╭─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │ │   │ ╭─PrefixOperatorPartial 'partial'
+// CHECK:STDOUT:   │ │   ├─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

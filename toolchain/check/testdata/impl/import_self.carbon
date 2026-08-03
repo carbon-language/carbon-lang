@@ -167,6 +167,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %.719: Core.Form = init_form %Self.as_type [symbolic]
 // CHECK:STDOUT:   %other.param_patt.03b: %pattern_type.78d = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %other.patt.bca: %pattern_type.78d = at_binding_pattern other, %other.param_patt.03b [symbolic]
+// CHECK:STDOUT:   %.63f: <witness> = impl_self_witness %C, @Add [concrete]
 // CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness @C.as.Add.impl.%Add.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt.303: %pattern_type.98b = value_param_pattern [concrete]
@@ -221,6 +222,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, imports.%Main.Add [concrete = constants.%Add.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.Add.impl.%C.ref, @Add [concrete = constants.%.63f]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.98b = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type.98b = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]

@@ -8,6 +8,7 @@
 #include <string_view>
 
 #include "clang/AST/ASTConsumer.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
 #include "clang/Sema/Sema.h"
 #include "llvm/Support/Casting.h"
@@ -251,19 +252,40 @@ static auto CreateCppFieldDecl(Context& context,
   return cpp_field_decl;
 }
 
-auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
-  if (class_info.fields_exported) {
-    return;
-  }
+// Create an invalid `clang::FieldDecl`. This is only used as an error marker
+// to indicate that a Carbon field has already been unsuccessfully exported.
+static auto CreateInvalidFieldDecl(Context& context,
+                                   clang::DeclContext* decl_context)
+    -> clang::FieldDecl* {
+  clang::SourceLocation clang_loc;
+  auto* identifier_info =
+      context.clang_sema().getPreprocessor().getIdentifierInfo("invalid_field");
+  auto cpp_type = context.ast_context().IntTy;
+  auto* field_decl = clang::FieldDecl::Create(
+      context.ast_context(), decl_context, /*StartLoc=*/clang_loc,
+      /*IdLoc=*/clang_loc, identifier_info, cpp_type, /*TInfo=*/nullptr,
+      /*BW=*/nullptr,
+      /*Mutable=*/true, clang::ICIS_NoInit);
+  field_decl->setInvalidDecl();
+  return field_decl;
+}
 
+auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
   const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
 
-  for (const auto& struct_field :
-       class_info.GetStructTypeFields(context.sem_ir())) {
+  for (const auto& struct_field : class_info.GetStructTypeFields(
+           context.sem_ir(), SemIR::SpecificId::None)) {
     auto class_field = LookupClassFieldByStructField(context.sem_ir(),
                                                      class_scope, struct_field);
     if (!class_field) {
       continue;
+    }
+
+    // Return early if the field is already exported. Since fields are always
+    // exported as a group, this indicates all fields have been exported so
+    // there's no need to continue to the rest.
+    if (context.clang_decls().Lookup(class_field->inst_id)) {
+      return;
     }
 
     // Map the parent scope into the C++ AST.
@@ -276,16 +298,19 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
     auto* cpp_field_decl = CreateCppFieldDecl(
         context, class_scope, cast<clang::CXXRecordDecl>(decl_context),
         class_field->inst_id, class_field->inst);
+
+    // If the field cannot be exported, create an invalid `FieldDecl` to store
+    // in `clang_decls`. This marks the field as unsuccessfully exported, so
+    // that we know not to attempt export again (which could create duplicate
+    // error diagnostics).
     if (!cpp_field_decl) {
-      continue;
+      cpp_field_decl = CreateInvalidFieldDecl(context, decl_context);
     }
 
     // Create and store the `ClangDeclId`.
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(cpp_field_decl);
     context.clang_decls().Add({.key = key, .inst_id = class_field->inst_id});
   }
-
-  class_info.fields_exported = true;
 }
 
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
@@ -303,7 +328,9 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
 
   // Get the exported `clang::FieldDecl`.
   if (const auto* clang_decl = context.clang_decls().Lookup(field_inst_id)) {
-    return cast<clang::FieldDecl>(clang_decl->decl());
+    if (!clang_decl->decl()->isInvalidDecl()) {
+      return cast<clang::FieldDecl>(clang_decl->decl());
+    }
   }
   return nullptr;
 }
@@ -798,7 +825,10 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
             SemIR::Function::VirtualModifier::None &&
         target.function.virtual_modifier !=
             SemIR::Function::VirtualModifier::Override);
-    // TODO: Call setIsPureVirtual if VirtualModifier::Abstract is present.
+    if (target.function.virtual_modifier ==
+        SemIR::Function::VirtualModifier::Abstract) {
+      cast<clang::CXXMethodDecl>(thunk_function_decl)->setIsPureVirtual(true);
+    }
   } else {
     thunk_function_decl = clang::FunctionDecl::Create(
         ast_context, target.decl_context, clang_loc, name_info, thunk_qual_type,
@@ -1412,10 +1442,10 @@ auto ExportVarToCpp(Context& context, SemIR::InstId inst_id,
       context.ast_context(), decl_context,
       /*StartLoc=*/clang_loc, /*IdLoc=*/clang_loc, identifier_info, cpp_type,
       /*TInfo=*/nullptr, clang::SC_Extern);
-  context.clang_decls().AddVar(
+  context.clang_decls().Add(
       {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(var_decl),
-       .inst_id = inst_id},
-      var_storage.pattern_id);
+       .inst_id = var_storage.pattern_id,
+       .var_storage_inst_id = inst_id});
 
   if (scope_inst.Is<SemIR::ClassDecl>()) {
     SetCppClassMemberAccess(name_scope, entity_name.name_id, var_decl);

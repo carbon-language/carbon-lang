@@ -109,9 +109,11 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
   AddNameToLookup(context, SemIR::NameId::SelfType, self_type.inst_id);
   context.node_stack().Push(node_id, self_type.inst_id);
 
-  // The value in here, if any, is populated by the `where` expression that
-  // introduces a `.Self` in the impl's constraint facet type.
-  context.declaring_impl_decls().push_back(SemIR::SpecificInterface::None);
+  // The specific interface in here, if any, is populated by the `where`
+  // expression that introduces a `.Self` in the impl's constraint facet type.
+  context.declaring_impl_decls().push_back(
+      {.self_id = self_type.type_id.AsConstantId(),
+       .specific_interface = SemIR::SpecificInterface::None});
   return true;
 }
 
@@ -145,9 +147,11 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
   // the parent class scope.
   context.node_stack().Push(node_id, self_inst_id);
 
-  // The value in here, if any, is populated by the `where` expression that
-  // introduces a `.Self` in the impl's constraint facet type.
-  context.declaring_impl_decls().push_back(SemIR::SpecificInterface::None);
+  // The specific interface in here, if any, is populated by the `where`
+  // expression that introduces a `.Self` in the impl's constraint facet type.
+  context.declaring_impl_decls().push_back(
+      {.self_id = context.constant_values().Get(self_inst_id),
+       .specific_interface = SemIR::SpecificInterface::None});
   return true;
 }
 
@@ -252,6 +256,28 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     full_constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }
 
+  // Store an instruction in the decl's eval block that contains the target
+  // interface's specific, whose constant value will be updated when specifics
+  // are applied to the impl.
+  //
+  // We can use ImplSelfWitness for this because it contains a
+  // SpecificInterfaceId operand, and it has a constant_kind of `Always` so it
+  // never evaluates to some other type of inst.
+  //
+  // TODO: We could avoid the extra indirection through a SpecificInterfaceId if
+  // we introduced a new instruction with a SpecificId operand instead of
+  // reusing ImplSelfWitness for this.
+  auto interface_inst_id =
+      specific_interface.interface_id.has_value()
+          ? AddInst<SemIR::ImplSelfWitness>(
+                context, node_id,
+                {.type_id =
+                     GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+                 .period_self = self_type_inst_id,
+                 .specific_interface_id =
+                     context.specific_interfaces().Add(specific_interface)})
+          : SemIR::ErrorInst::InstId;
+
   // Strip off anything on the RHS of `where`, as they are not part of the
   // constraint being implemented, they just represent requirements that must be
   // met when the impl is defined. This drops any `.Self` references from the
@@ -282,7 +308,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                          .is_final = is_final,
                          .self_id = self_type_inst_id,
                          .constraint_id = extend_constraint_type_inst_id,
-                         .interface = specific_interface}};
+                         .interface = specific_interface,
+                         .interface_inst_id = interface_inst_id}};
     if (has_definition) {
       impl.definition_id = impl_decl_id;
     }

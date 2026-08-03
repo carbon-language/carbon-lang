@@ -14,22 +14,21 @@ base fn F();
 abstract base class C;
 
 // CHECK:STDOUT: - filename: mismatched_introducer.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:       {kind: 'AbstractModifier', text: 'abstract'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:     {kind: 'InterfaceDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'BaseModifier', text: 'base'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'AbstractModifier', text: 'abstract'},
-// CHECK:STDOUT:       {kind: 'BaseModifier', text: 'base'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │ ├─AbstractModifier 'abstract'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   ├─InterfaceDecl ';'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─BaseModifier 'base'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ ├─AbstractModifier 'abstract'
+// CHECK:STDOUT:   │ ├─BaseModifier 'base'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   ├─ClassDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

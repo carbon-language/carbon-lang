@@ -270,13 +270,9 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.23e) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.23e) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc6_10.2 => constants.%T.patt
@@ -522,17 +518,11 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.23e) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.23e) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Tame.WithSelf(constants.%Self.0f0) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Tame.WithSelf(constants.%Self.0f0) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedTame(constants.%V) {
 // CHECK:STDOUT:   %V.patt.loc7_14.2 => constants.%V.patt
@@ -579,6 +569,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   %A.patt: %pattern_type.333 = symbolic_binding_pattern A, 0 [symbolic]
 // CHECK:STDOUT:   %A: %Animal.type = symbolic_binding A, 0 [symbolic]
 // CHECK:STDOUT:   %A.as_type: type = facet_access_type %A [symbolic]
+// CHECK:STDOUT:   %.2b4: <witness> = impl_self_witness %A.as_type, @Eats [symbolic]
 // CHECK:STDOUT:   %Eats.impl_witness.e08: <witness> = impl_witness @A.as_type.as.Eats.impl.%Eats.impl_witness_table, @A.as_type.as.Eats.impl(%A) [symbolic]
 // CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %A.as_type, (%Eats.impl_witness.e08) [symbolic]
 // CHECK:STDOUT:   %BitAndWith.type.a06: type = generic_interface_type @BitAndWith [concrete]
@@ -618,6 +609,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %W, @Eats [symbolic]
 // CHECK:STDOUT:   %Animal.lookup_impl_witness: <witness> = lookup_impl_witness %W, @Animal [symbolic]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %W.as_type, (%Animal.lookup_impl_witness) [symbolic]
+// CHECK:STDOUT:   %.2a6: <witness> = impl_self_witness %W.as_type, @Eats [symbolic]
 // CHECK:STDOUT:   %Eats.impl_witness.7a5: <witness> = impl_witness @A.as_type.as.Eats.impl.%Eats.impl_witness_table, @A.as_type.as.Eats.impl(%Animal.facet) [symbolic]
 // CHECK:STDOUT:   %.86f: require_specific_def_type = require_specific_def @A.as_type.as.Eats.impl(%Animal.facet) [symbolic]
 // CHECK:STDOUT:   %Tame.lookup_impl_witness: <witness> = lookup_impl_witness %W, @Tame [symbolic]
@@ -664,6 +656,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %A.loc7_15.1: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc7_15.2 (constants.%A)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @A.as_type.as.Eats.impl.%.loc7_25, @Eats [symbolic = @A.as_type.as.Eats.impl.%.loc7_35 (constants.%.2b4)]
 // CHECK:STDOUT:   %FeedTame2.decl: %FeedTame2.type = fn_decl @FeedTame2 [concrete = constants.%FeedTame2] {
 // CHECK:STDOUT:     %V.patt.loc9_15.1: %pattern_type.fbb = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc9_15.2 (constants.%V.patt)]
 // CHECK:STDOUT:     %v.param_patt.loc9_38.1: @FeedTame2.%pattern_type (%pattern_type.7b2) = value_param_pattern [symbolic = %v.param_patt.loc9_38.2 (constants.%v.param_patt.bb4)]
@@ -751,6 +744,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   %A.patt.loc7_15.2: %pattern_type.333 = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc7_15.2 (constants.%A.patt)]
 // CHECK:STDOUT:   %A.loc7_15.2: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc7_15.2 (constants.%A)]
 // CHECK:STDOUT:   %A.as_type.loc7_25.2: type = facet_access_type %A.loc7_15.2 [symbolic = %A.as_type.loc7_25.2 (constants.%A.as_type)]
+// CHECK:STDOUT:   %.loc7_35: <witness> = impl_self_witness %A.as_type.loc7_25.2, @Eats [symbolic = %.loc7_35 (constants.%.2b4)]
 // CHECK:STDOUT:   %Eats.impl_witness.loc7_35.2: <witness> = impl_witness %Eats.impl_witness_table, @A.as_type.as.Eats.impl(%A.loc7_15.2) [symbolic = %Eats.impl_witness.loc7_35.2 (constants.%Eats.impl_witness.e08)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -818,18 +812,15 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Tame.WithSelf(constants.%Self.0f0) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Tame.WithSelf(constants.%Self.0f0) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.as_type.as.Eats.impl(constants.%A) {
 // CHECK:STDOUT:   %A.patt.loc7_15.2 => constants.%A.patt
 // CHECK:STDOUT:   %A.loc7_15.2 => constants.%A
 // CHECK:STDOUT:   %A.as_type.loc7_25.2 => constants.%A.as_type
+// CHECK:STDOUT:   %.loc7_35 => constants.%.2b4
 // CHECK:STDOUT:   %Eats.impl_witness.loc7_35.2 => constants.%Eats.impl_witness.e08
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -859,6 +850,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   %A.patt.loc7_15.2 => constants.%A.patt
 // CHECK:STDOUT:   %A.loc7_15.2 => constants.%Animal.facet
 // CHECK:STDOUT:   %A.as_type.loc7_25.2 => constants.%W.as_type
+// CHECK:STDOUT:   %.loc7_35 => constants.%.2a6
 // CHECK:STDOUT:   %Eats.impl_witness.loc7_35.2 => constants.%Eats.impl_witness.7a5
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1034,9 +1026,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TakesA(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc7_12.2 => constants.%T.patt

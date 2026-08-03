@@ -15,15 +15,14 @@
 let generic ref X: i32 = 0;
 
 // CHECK:STDOUT: - filename: fail_generic_ref.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'X'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternTypeStart', text: ':', has_error: yes},
-// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'X'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPatternTypeStart ':' has_error
+// CHECK:STDOUT:   │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ ├─IntLiteral '0'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

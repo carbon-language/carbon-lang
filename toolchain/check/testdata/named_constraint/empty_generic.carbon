@@ -39,7 +39,7 @@ fn G(generic T: Z, generic U: Empty(T), generic V: type) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_struct.26b: %Empty.type.f30 = struct_value () [concrete]
 // CHECK:STDOUT:   %Empty.type.d682d6.1: type = facet_type <@Empty, @Empty(%T.67d)> [symbolic]
-// CHECK:STDOUT:   %Self.22bbf7.1: %Empty.type.d682d6.1 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.22b: %Empty.type.d682d6.1 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type %Empty.type.d682d6.1 [symbolic]
 // CHECK:STDOUT:   %U.patt.cb839c.1: %pattern_type.9a587c.1 = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %U.e1f642.1: %Empty.type.d682d6.1 = symbolic_binding U, 1 [symbolic]
@@ -68,7 +68,6 @@ fn G(generic T: Z, generic U: Empty(T), generic V: type) {
 // CHECK:STDOUT:   %F.specific_fn.d75: <specific function> = specific_function %F, @F(%T.as_type, %Empty.facet.2cb) [symbolic]
 // CHECK:STDOUT:   %Empty.facet.aa1: %Empty.type.d682d6.2 = facet_value %T.as_type, () [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.7a2: <specific function> = specific_function %F, @F(%T.as_type, %Empty.facet.aa1) [symbolic]
-// CHECK:STDOUT:   %Self.22bbf7.2: %Empty.type.d682d6.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.ff9: <specific function> = specific_function %F, @F(%T.as_type, %U.e1f642.2) [symbolic]
 // CHECK:STDOUT:   %facet_value.ed5: %type = facet_value %V, () [symbolic]
 // CHECK:STDOUT:   %Empty.facet.ed5: %Empty.type.d682d6.2 = facet_value %V, () [symbolic]
@@ -135,10 +134,10 @@ fn G(generic T: Z, generic U: Empty(T), generic V: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty, @Empty(%T.loc16_19.1)> [symbolic = %Empty.type (constants.%Empty.type.d682d6.1)]
-// CHECK:STDOUT:   %Self.loc16_27.2: @Empty.%Empty.type (%Empty.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self.loc16_27.2 (constants.%Self.22bbf7.1)]
+// CHECK:STDOUT:   %Self.loc16_27.2: @Empty.%Empty.type (%Empty.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self.loc16_27.2 (constants.%Self.22b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.loc16_27.1: @Empty.%Empty.type (%Empty.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self.loc16_27.2 (constants.%Self.22bbf7.1)]
+// CHECK:STDOUT:     %Self.loc16_27.1: @Empty.%Empty.type (%Empty.type.d682d6.1) = symbolic_binding Self, 1 [symbolic = %Self.loc16_27.2 (constants.%Self.22b)]
 // CHECK:STDOUT:     %Empty.WithSelf.decl = constraint_with_self_decl @Empty [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -243,7 +242,7 @@ fn G(generic T: Z, generic U: Empty(T), generic V: type) {
 // CHECK:STDOUT:   %T.loc16_19.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.67d, constants.%Self.22bbf7.1) {}
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.67d, constants.%Self.22b) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67d, constants.%U.e1f642.1) {
 // CHECK:STDOUT:   %T.patt.loc18_15.2 => constants.%T.patt.d47
@@ -257,10 +256,6 @@ fn G(generic T: Z, generic U: Empty(T), generic V: type) {
 // CHECK:STDOUT: specific @Empty(constants.%T.as_type) {
 // CHECK:STDOUT:   %T.patt.loc16_19.2 => constants.%T.patt.d47
 // CHECK:STDOUT:   %T.loc16_19.1 => constants.%T.as_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Empty.type => constants.%Empty.type.d682d6.2
-// CHECK:STDOUT:   %Self.loc16_27.2 => constants.%Self.22bbf7.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.013, constants.%U.e1f642.2, constants.%V) {
@@ -317,10 +312,6 @@ fn G(generic T: Z, generic U: Empty(T), generic V: type) {
 // CHECK:STDOUT:   %U.patt.loc18_39.2 => constants.%U.patt.cb839c.3
 // CHECK:STDOUT:   %U.loc18_39.1 => constants.%Empty.facet.aa1
 // CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.as_type, constants.%Self.22bbf7.1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
