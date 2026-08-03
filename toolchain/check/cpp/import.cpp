@@ -1094,19 +1094,6 @@ static auto MakeCppCompatType(Context& context, SemIR::LocId loc_id,
       LookupNameInCore(context, loc_id, {CoreIdentifier::CppCompat, name}));
 }
 
-// Maps a C++ builtin integer type to a Carbon `Core.CppCompat` type.
-static auto MapBuiltinCppCompatIntegerType(Context& context,
-                                           unsigned int cpp_width,
-                                           unsigned int carbon_width,
-                                           CoreIdentifier cpp_compat_name)
-    -> TypeExpr {
-  if (cpp_width != carbon_width) {
-    return TypeExpr::None;
-  }
-
-  return MakeCppCompatType(context, Parse::NodeId::None, cpp_compat_name);
-}
-
 auto GetIntNType(const clang::ASTContext& ast_context, unsigned width,
                  bool is_signed) -> clang::QualType {
   const auto& target_info = ast_context.getTargetInfo();
@@ -1159,6 +1146,9 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
   clang::ASTContext& ast_context = context.ast_context();
   unsigned width = ast_context.getIntWidth(qual_type);
   bool is_signed = type.isSignedInteger();
+
+  // Check whether the type is `intN_t` or `uintN_t`, and if so, map it to `iN`
+  // or `uN` respectively.
   auto int_n_type = GetIntNType(ast_context, width, is_signed);
   if (clang::ASTContext::hasSameType(qual_type, int_n_type)) {
     TypeExpr type_expr =
@@ -1173,36 +1163,41 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
     }
     return type_expr;
   }
-  if (clang::ASTContext::hasSameType(qual_type, ast_context.CharTy)) {
-    return ExprAsType(context, Parse::NodeId::None,
-                      MakeCharTypeLiteral(context, Parse::NodeId::None));
-  }
-  if (clang::ASTContext::hasSameType(qual_type, ast_context.LongTy)) {
-    if (auto type = MapBuiltinCppCompatIntegerType(context, width, 32,
-                                                   CoreIdentifier::Long32);
-        type.type_id.has_value()) {
-      return type;
-    }
-    return MapBuiltinCppCompatIntegerType(context, width, 64,
-                                          CoreIdentifier::Long64);
-  }
-  if (clang::ASTContext::hasSameType(qual_type, ast_context.UnsignedLongTy)) {
-    if (auto type = MapBuiltinCppCompatIntegerType(context, width, 32,
-                                                   CoreIdentifier::ULong32);
-        type.type_id.has_value()) {
-      return type;
-    }
-    return MapBuiltinCppCompatIntegerType(context, width, 64,
-                                          CoreIdentifier::ULong64);
-  }
-  if (clang::ASTContext::hasSameType(qual_type, ast_context.LongLongTy)) {
-    return MapBuiltinCppCompatIntegerType(context, width, 64,
-                                          CoreIdentifier::LongLong64);
-  }
-  if (clang::ASTContext::hasSameType(qual_type,
-                                     ast_context.UnsignedLongLongTy)) {
-    return MapBuiltinCppCompatIntegerType(context, width, 64,
-                                          CoreIdentifier::ULongLong64);
+
+  // Handle special cases for types that don't map to `iN` or `uN`.
+  switch (type.getKind()) {
+    case clang::BuiltinType::Char_S:
+    case clang::BuiltinType::Char_U:
+      return ExprAsType(context, Parse::NodeId::None,
+                        MakeCharTypeLiteral(context, Parse::NodeId::None));
+    case clang::BuiltinType::Long:
+      if (width == 32) {
+        return MakeCppCompatType(context, loc_id, CoreIdentifier::Long32);
+      }
+      if (width == 64) {
+        return MakeCppCompatType(context, loc_id, CoreIdentifier::Long64);
+      }
+      break;
+    case clang::BuiltinType::ULong:
+      if (width == 32) {
+        return MakeCppCompatType(context, loc_id, CoreIdentifier::ULong32);
+      }
+      if (width == 64) {
+        return MakeCppCompatType(context, loc_id, CoreIdentifier::ULong64);
+      }
+      break;
+    case clang::BuiltinType::LongLong:
+      if (width == 64) {
+        return MakeCppCompatType(context, loc_id, CoreIdentifier::LongLong64);
+      }
+      break;
+    case clang::BuiltinType::ULongLong:
+      if (width == 64) {
+        return MakeCppCompatType(context, loc_id, CoreIdentifier::ULongLong64);
+      }
+      break;
+    default:
+      break;
   }
   return TypeExpr::None;
 }
