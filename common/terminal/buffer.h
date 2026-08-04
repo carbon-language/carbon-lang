@@ -82,10 +82,10 @@ class Buffer {
   // fit. Passing one saves the regrowing, and passing none costs only that.
   Buffer(int width, Charset charset);
 
-  // Constructs an empty buffer starting at `capabilities`'s width and holding
-  // its charset.
+  // Constructs an empty buffer holding `capabilities`'s charset, starting at
+  // its width when there is one to start from.
   explicit Buffer(const Capabilities& capabilities)
-      : Buffer(capabilities.columns, capabilities.charset) {}
+      : Buffer(capabilities.columns.value_or(1), capabilities.charset) {}
 
   // Returns the columns the buffer currently holds, which is at least as many
   // as anything drawn into it occupies.
@@ -180,6 +180,10 @@ class Buffer {
   // opportunities that render as a single space rather than advancing to a tab
   // stop, unlike in `DrawText`, because a tab stop is measured from the start
   // of a line and wrapped text has no fixed one.
+  //
+  // Any positive `max_width` works, however large, and one no row can reach
+  // wraps nothing. That is what a caller with no width to fit passes, rather
+  // than there being a second way to draw for having none.
   //
   // Returns where it ended, which is (x, y) when `max_width` isn't positive,
   // in which case nothing is drawn.

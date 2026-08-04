@@ -6,6 +6,7 @@
 #define CARBON_COMMON_TERMINAL_CAPABILITIES_H_
 
 #include <cstdint>
+#include <optional>
 
 #include "common/filesystem.h"
 #include "common/terminal/color.h"
@@ -133,10 +134,6 @@ auto ChooseCharset(Preference preference, llvm::StringRef locale) -> Charset;
 // Detect this once per stream at startup and pass it down; each field is an
 // environment query or a system call that shouldn't be repeated per diagnostic.
 struct Capabilities {
-  // The width used when the stream has no terminal to ask, chosen to match the
-  // classic terminal size so that redirected output is stable and reproducible.
-  static constexpr int DefaultColumns = 80;
-
   // Detects the capabilities of the terminal behind `file`, honoring
   // `preferences`.
   //
@@ -157,9 +154,15 @@ struct Capabilities {
   // still be in use when this is false, if the environment forces it.
   bool is_terminal = false;
 
-  // The terminal's width, or `DefaultColumns` when there is nothing to ask.
-  // Always positive, so layout code can divide by it freely.
-  int columns = DefaultColumns;
+  // The terminal's width, or none when nothing says how wide the output is.
+  // Positive whenever it is set, so layout can divide by it freely.
+  //
+  // There is deliberately no width to fall back on. One that was invented
+  // rather than measured is a claim about the far end of a pipe that nobody
+  // made, and laying out for it wraps and cuts where nothing needed either.
+  // Output with no width to fit is laid out as if nothing bounded it, which
+  // leaves the wrapping to whatever ends up displaying it.
+  std::optional<int> columns;
 };
 
 }  // namespace Carbon::Terminal

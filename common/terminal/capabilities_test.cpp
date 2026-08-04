@@ -234,17 +234,19 @@ TEST(CapabilitiesTest, Defaults) {
   EXPECT_EQ(capabilities.color_mode, ColorMode::NoColor);
   EXPECT_EQ(capabilities.charset, Charset::Ascii);
   EXPECT_FALSE(capabilities.is_terminal);
-  EXPECT_EQ(capabilities.columns, Capabilities::DefaultColumns);
+  EXPECT_FALSE(capabilities.columns.has_value());
 }
 
 TEST(CapabilitiesTest, Detect) {
   // Detection reads the real environment, so this pins only what holds
-  // regardless of it. Tests don't run on a terminal, so the width is the
-  // fallback unless `COLUMNS` is exported.
+  // regardless of it. Tests don't run on a terminal, so there is no width to
+  // find unless `COLUMNS` is exported, and a width that is found is real.
   for (Filesystem::WriteFileRef stream :
        {Filesystem::Stdout(), Filesystem::Stderr()}) {
     Capabilities capabilities = Capabilities::Detect(stream);
-    EXPECT_GT(capabilities.columns, 0);
+    if (capabilities.columns) {
+      EXPECT_GT(*capabilities.columns, 0);
+    }
     EXPECT_FALSE(capabilities.is_terminal);
     EXPECT_EQ(capabilities.color_mode, ColorMode::NoColor);
   }

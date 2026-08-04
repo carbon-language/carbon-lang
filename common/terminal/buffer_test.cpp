@@ -6,6 +6,9 @@
 
 #include <gtest/gtest.h>
 
+#include <limits>
+#include <optional>
+
 #include "common/filesystem.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
@@ -472,6 +475,17 @@ TEST(BufferTest, WrappedTextLineBreaks) {
   EXPECT_EQ(Render(degenerate), "");
 }
 
+TEST(BufferTest, WrappedTextWithNoWidthToFit) {
+  // A caller with no width to fit passes one no row reaches, which has to wrap
+  // nothing rather than overflow the column it would name.
+  Buffer buffer(10, Charset::Ascii);
+  llvm::StringRef text = "several words that would otherwise wrap";
+  EXPECT_EQ(buffer.DrawWrappedText(3, 0, std::numeric_limits<int>::max(), text,
+                                   Style()),
+            DrawEnd(3 + static_cast<int>(text.size()), 0));
+  EXPECT_EQ(Render(buffer), "   several words that would otherwise wrap\n");
+}
+
 TEST(BufferTest, WrappedTextKeepsSymbolsWiderThanTheRegion) {
   // No row in a one-column region could hold a double-width symbol. Drawing it
   // anyway overruns the region, which is what keeping the text costs here.
@@ -613,6 +627,13 @@ TEST(BufferTest, BuiltFromCapabilities) {
   EXPECT_EQ(buffer.charset(), Charset::Utf8);
   buffer.DrawHorizontalLine(0, 0, 5, Style());
   EXPECT_EQ(Render(buffer, capabilities.color_mode), "─────\n");
+
+  // With no width to start from, the buffer starts at nothing and grows, which
+  // is what it would have done past any starting width anyway.
+  capabilities.columns = std::nullopt;
+  Buffer grown(capabilities);
+  grown.DrawHorizontalLine(0, 0, 5, Style());
+  EXPECT_EQ(Render(grown, capabilities.color_mode), "─────\n");
 }
 
 TEST(BufferTest, CombiningMarkPastTheWidthItStartedWith) {

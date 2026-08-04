@@ -290,8 +290,11 @@ auto Buffer::WalkWrappedText(int x, int y, int max_width, llvm::StringRef text,
 
   int cur_x = x;
   int cur_y = y;
-  int limit = x + max_width;
 
+  // What a row has room for is decided from the columns it has used rather
+  // than from a column computed once from `max_width`, so that a width no row
+  // reaches works like any other instead of overflowing the column it names.
+  //
   // Splitting on bytes is safe because every character text can break at is
   // ASCII, and UTF-8 never encodes anything else using an ASCII byte. Only the
   // runs that get drawn are decoded.
@@ -311,7 +314,7 @@ auto Buffer::WalkWrappedText(int x, int y, int max_width, llvm::StringRef text,
       // never drawn, so CRLF line endings break exactly once.
       if (cur_x > x) {
         for (char space : spaces) {
-          if (space == '\r' || cur_x >= limit) {
+          if (space == '\r' || cur_x - x >= max_width) {
             continue;
           }
           cur_x = place(cur_x, cur_y, U' ');
@@ -327,7 +330,7 @@ auto Buffer::WalkWrappedText(int x, int y, int max_width, llvm::StringRef text,
     // Move a word that doesn't fit down to the next row. If it doesn't fit
     // there either it overhangs rather than being broken, and the buffer grows
     // to hold it.
-    if (cur_x > x && cur_x + metrics_.Width(word) > limit) {
+    if (cur_x > x && cur_x - x + metrics_.Width(word) > max_width) {
       cur_x = x;
       ++cur_y;
     }

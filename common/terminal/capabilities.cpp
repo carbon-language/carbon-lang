@@ -209,7 +209,7 @@ auto Capabilities::Detect(Filesystem::WriteFileRef file,
       ChooseColorMode(preferences.color, ColorEnvironment::FromProcess(),
                       capabilities.is_terminal);
   capabilities.charset = ChooseCharset(preferences.utf8, GetLocale());
-  capabilities.columns = GetColumns(fd).value_or(DefaultColumns);
+  capabilities.columns = GetColumns(fd);
 
   return capabilities;
 }
