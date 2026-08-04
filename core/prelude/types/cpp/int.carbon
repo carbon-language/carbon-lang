@@ -236,6 +236,79 @@ final impl CppCompat.ULongLong64 as ImplicitAs(u128) {
 // TODO: As from Int(N) to LongLong64 if N > 64.
 // TODO: As from UInt(N) to ULongLong64 if N > 64.
 
+impl forall [From: IntLiteral] Int(From) as As(CppCompat.Long32) {
+  fn Convert(self) -> CppCompat.Long32 = "int.convert";
+}
+impl forall [From: IntLiteral] UInt(From) as As(CppCompat.Long32) {
+  fn Convert(self) -> CppCompat.Long32 = "int.convert";
+}
+impl forall [From: IntLiteral] Int(From) as As(CppCompat.Long64) {
+  fn Convert(self) -> CppCompat.Long64 = "int.convert";
+}
+impl forall [From: IntLiteral] UInt(From) as As(CppCompat.Long64) {
+  fn Convert(self) -> CppCompat.Long64 = "int.convert";
+}
+impl forall [From: IntLiteral] Int(From) as As(CppCompat.LongLong64) {
+  fn Convert(self) -> CppCompat.LongLong64 = "int.convert";
+}
+impl forall [From: IntLiteral] UInt(From) as As(CppCompat.LongLong64) {
+  fn Convert(self) -> CppCompat.LongLong64 = "int.convert";
+}
+impl forall [From: IntLiteral] Int(From) as As(CppCompat.ULong32) {
+  fn Convert(self) -> CppCompat.ULong32 = "int.convert";
+}
+impl forall [From: IntLiteral] UInt(From) as As(CppCompat.ULong32) {
+  fn Convert(self) -> CppCompat.ULong32 = "int.convert";
+}
+impl forall [From: IntLiteral] Int(From) as As(CppCompat.ULong64) {
+  fn Convert(self) -> CppCompat.ULong64 = "int.convert";
+}
+impl forall [From: IntLiteral] UInt(From) as As(CppCompat.ULong64) {
+  fn Convert(self) -> CppCompat.ULong64 = "int.convert";
+}
+impl forall [From: IntLiteral] Int(From) as As(CppCompat.ULongLong64) {
+  fn Convert(self) -> CppCompat.ULongLong64 = "int.convert";
+}
+impl forall [From: IntLiteral] UInt(From) as As(CppCompat.ULongLong64) {
+  fn Convert(self) -> CppCompat.ULongLong64 = "int.convert";
+}
+final impl forall [To: IntLiteral] CppCompat.Long32 as As(Int(To)) {
+  fn Convert(self) -> Int(To) = "int.convert";
+}
+final impl forall [To: IntLiteral] CppCompat.Long32 as As(UInt(To)) {
+  fn Convert(self) -> UInt(To) = "int.convert";
+}
+final impl forall [To: IntLiteral] CppCompat.Long64 as As(Int(To)) {
+  fn Convert(self) -> Int(To) = "int.convert";
+}
+final impl forall [To: IntLiteral] CppCompat.Long64 as As(UInt(To)) {
+  fn Convert(self) -> UInt(To) = "int.convert";
+}
+final impl forall [To: IntLiteral] CppCompat.LongLong64 as As(Int(To)) {
+  fn Convert(self) -> Int(To) = "int.convert";
+}
+final impl forall [To: IntLiteral] CppCompat.LongLong64 as As(UInt(To)) {
+  fn Convert(self) -> UInt(To) = "int.convert";
+}
+final impl forall [To: IntLiteral] CppCompat.ULong32 as As(Int(To)) {
+  fn Convert(self) -> Int(To) = "int.convert";
+}
+final impl forall [To: IntLiteral] CppCompat.ULong32 as As(UInt(To)) {
+  fn Convert(self) -> UInt(To) = "int.convert";
+}
+final impl forall [To: IntLiteral] CppCompat.ULong64 as As(Int(To)) {
+  fn Convert(self) -> Int(To) = "int.convert";
+}
+final impl forall [To: IntLiteral] CppCompat.ULong64 as As(UInt(To)) {
+  fn Convert(self) -> UInt(To) = "int.convert";
+}
+final impl forall [To: IntLiteral] CppCompat.ULongLong64 as As(Int(To)) {
+  fn Convert(self) -> Int(To) = "int.convert";
+}
+final impl forall [To: IntLiteral] CppCompat.ULongLong64 as As(UInt(To)) {
+  fn Convert(self) -> UInt(To) = "int.convert";
+}
+
 // Comparisons.
 
 // - Homogeneous.
