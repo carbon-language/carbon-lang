@@ -2,9 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --phase=check --share-cpp-ast %s
-//
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// EXTRA-ARGS: --share-cpp-ast
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -39,7 +38,7 @@ import Cpp;
 
 fn CallLeakedA() -> i32 {
   // This should not be found as we have not imported "a.h".
-  // CHECK:STDERR: fail_a_does_not_leak.carbon:[[@LINE+4]]:10: error: member name `GetA` not found in `Cpp`
+  // CHECK:STDERR: fail_a_does_not_leak.carbon:[[@LINE+4]]:10: error: member name `GetA` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   return Cpp.GetA();
   // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR:

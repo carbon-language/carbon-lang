@@ -44,7 +44,7 @@ fn M() {
 // CHECK:STDOUT: ; ModuleID = 'call_deref_ptr.carbon'
 // CHECK:STDOUT: source_filename = "call_deref_ptr.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %type = type {}
+// CHECK:STDOUT: %type.26 = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CM.Main() #0 !dbg !4 {
@@ -80,7 +80,7 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.58016a73bff04416(ptr %x) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %A.call = call %type @_CA.Main.ee509b43cf4eb3c5(%type zeroinitializer), !dbg !31
+// CHECK:STDOUT:   %A.call = call %type.26 @_CA.Main.ee509b43cf4eb3c5(%type.26 zeroinitializer), !dbg !31
 // CHECK:STDOUT:   call void @_CB.Main.58016a73bff04416(ptr %x), !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
@@ -88,15 +88,15 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.fa1f0912a5bbe922(ptr %x) #0 !dbg !34 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %A.call = call %type @_CA.Main.ee509b43cf4eb3c5(%type zeroinitializer), !dbg !37
+// CHECK:STDOUT:   %A.call = call %type.26 @_CA.Main.ee509b43cf4eb3c5(%type.26 zeroinitializer), !dbg !37
 // CHECK:STDOUT:   call void @_CB.Main.fa1f0912a5bbe922(ptr %x), !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr %type @_CA.Main.ee509b43cf4eb3c5(%type %x) #0 !dbg !40 {
+// CHECK:STDOUT: define linkonce_odr %type.26 @_CA.Main.ee509b43cf4eb3c5(%type.26 %x) #0 !dbg !40 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret %type %x, !dbg !45
+// CHECK:STDOUT:   ret %type.26 %x, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind

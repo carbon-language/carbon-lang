@@ -507,14 +507,23 @@ auto CheckParseTrees(
 
   // Create C++ domains for Cpp imports.
   if (options.share_cpp_ast) {
+    llvm::SmallVector<CppInputFile> inputs;
+    for (auto& unit_info : unit_infos) {
+      if (unit_info.cpp_imports.empty()) {
+        continue;
+      }
+      inputs.push_back({.check_ir_id = unit_info.unit->sem_ir->check_ir_id(),
+                        .filename = unit_info.unit->sem_ir->filename()});
+    }
     // TODO: Remove dependence on properties of the first unit here.
     if (auto cpp_domain = InitializeCppDomain(
-            unit_infos.front().err_tracker,
-            unit_infos.front().unit->sem_ir->filename(), fs,
+            unit_infos.front().err_tracker, inputs, fs,
             unit_infos.front().unit->llvm_context, clang_invocation)) {
       cpp_domains.push_back(std::move(cpp_domain));
-      for (auto& target_info : unit_infos) {
-        target_info.cpp_domain = cpp_domains.back().get();
+      for (auto& unit_info : unit_infos) {
+        if (!unit_info.cpp_imports.empty()) {
+          unit_info.cpp_domain = cpp_domains.back().get();
+        }
       }
     }
   } else {
@@ -523,8 +532,10 @@ auto CheckParseTrees(
         continue;
       }
       if (auto cpp_domain = InitializeCppDomain(
-              unit_info.err_tracker, unit_info.unit->sem_ir->filename(), fs,
-              unit_info.unit->llvm_context, clang_invocation)) {
+              unit_info.err_tracker,
+              {{.check_ir_id = unit_info.unit->sem_ir->check_ir_id(),
+                .filename = unit_info.unit->sem_ir->filename()}},
+              fs, unit_info.unit->llvm_context, clang_invocation)) {
         cpp_domains.push_back(std::move(cpp_domain));
         unit_info.cpp_domain = cpp_domains.back().get();
       }

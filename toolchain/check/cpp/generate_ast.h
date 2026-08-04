@@ -12,6 +12,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/cpp/domain.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -35,7 +36,7 @@ class CppDomain;
 // within one or more Carbon files. Returns the initialized state, or null on
 // failure.
 auto InitializeCppDomain(
-    Diagnostics::Consumer& consumer, llvm::StringRef filename,
+    Diagnostics::Consumer& consumer, llvm::ArrayRef<CppInputFile> inputs,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::LLVMContext* llvm_context,
     std::shared_ptr<clang::CompilerInvocation> base_invocation)

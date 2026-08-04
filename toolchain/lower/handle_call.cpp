@@ -744,9 +744,17 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // Lower args in the LLVM parameter order, rather than the SemIR parameter
   // order.
   std::vector<llvm::Value*> args;
+  bool args_ok = true;
+  auto* callee_type = function_info->llvm_function->getFunctionType();
   for (auto index : function_info->lowered_param_indices) {
     args.push_back(context.GetValue(arg_ids[index.index]));
+
+    if (args.size() > callee_type->getNumParams() ||
+        callee_type->getParamType(args.size() - 1) != args.back()->getType()) {
+      args_ok = false;
+    }
   }
+  args_ok &= args.size() == callee_type->getNumParams();
 
   llvm::CallInst* call;
   if (function.virtual_index == -1) {
@@ -765,8 +773,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       llvm_callee->print(out);
       return out.TakeStr();
     };
-    CARBON_CHECK(llvm_callee->arg_size() == args.size(),
-                 "Argument count mismatch: {0}", describe_call());
+    CARBON_CHECK(args_ok, "Argument mismatch: {0}", describe_call());
     call = context.builder().CreateCall(llvm_callee, args);
   } else {
     call = HandleVirtualCall(context, args, function, *function_info);
