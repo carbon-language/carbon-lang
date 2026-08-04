@@ -50,7 +50,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/ThreadPool.h"
-#include "testing/base/unified_diff_matcher.h"
+#include "testing/base/unified_diff.h"
 #include "testing/file_test/autoupdate.h"
 #include "testing/file_test/run_test.h"
 #include "testing/file_test/test_file.h"
@@ -248,20 +248,30 @@ auto FileTestCase::TestBody() -> void {
         "updates.");
   }
   if (test_file.check_subset) {
-    EXPECT_THAT(SplitOutput(test_file.actual_stdout),
-                IsSupersetOf(test_file.expected_stdout))
-        << "Actual text:\n"
-        << test_file.actual_stdout;
-    EXPECT_THAT(SplitOutput(test_file.actual_stderr),
-                IsSupersetOf(test_file.expected_stderr))
-        << "Actual text:\n"
-        << test_file.actual_stderr;
+    EXPECT_TRUE(
+        testing::Value(SplitOutput(test_file.actual_stdout),
+                       testing::IsSupersetOf(test_file.expected_stdout)))
+        << UnifiedDiff(test_file.expected_stdout,
+                       SplitOutput(test_file.actual_stdout),
+                       /*check_subset=*/true);
+    EXPECT_TRUE(
+        testing::Value(SplitOutput(test_file.actual_stderr),
+                       testing::IsSupersetOf(test_file.expected_stderr)))
+        << UnifiedDiff(test_file.expected_stderr,
+                       SplitOutput(test_file.actual_stderr),
+                       /*check_subset=*/true);
 
   } else {
-    EXPECT_THAT(SplitOutput(test_file.actual_stdout),
-                ElementsAreArrayWithUnifiedDiff(test_file.expected_stdout));
-    EXPECT_THAT(SplitOutput(test_file.actual_stderr),
-                ElementsAreArrayWithUnifiedDiff(test_file.expected_stderr));
+    EXPECT_TRUE(
+        testing::Value(SplitOutput(test_file.actual_stdout),
+                       testing::ElementsAreArray(test_file.expected_stdout)))
+        << UnifiedDiff(test_file.expected_stdout,
+                       SplitOutput(test_file.actual_stdout));
+    EXPECT_TRUE(
+        testing::Value(SplitOutput(test_file.actual_stderr),
+                       testing::ElementsAreArray(test_file.expected_stderr)))
+        << UnifiedDiff(test_file.expected_stderr,
+                       SplitOutput(test_file.actual_stderr));
   }
 
   if (HasFailure()) {
