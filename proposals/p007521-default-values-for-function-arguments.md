@@ -68,13 +68,17 @@ In projects that are adopting Carbon, developers need to be able to write Carbon
 fluently emulate the API of their C++ counterparts. This fluent emulation of C++ necessarily
 includes the need for support for default argument values.
 
-Carbon establishes named bindings for
-[function parameters](/docs/design/functions.md#named-and-positional-parameters) using the
-[_tuple-pattern_](/docs/design/pattern_matching.md#tuple-patterns) contained within an outer group
-of parenthesis. A _struct-pattern_ is a valid nested _pattern_ to provide to a _tuple-pattern_ in
-function parameters, so it seems reasonable that the syntax for declaring default values for each
-should be the same, as well as the semantics in pattern matching to provide those default values as
-needed.
+In Carbon, a [function parameter list](/docs/design/functions.md#named-and-positional-parameters) is
+actually a [_tuple-pattern_](/docs/design/pattern_matching.md#tuple-patterns), and an argument list
+is actually a tuple literal expression. When you call a function, the argument tuple is matched
+against the parameter pattern. Like any _tuple-pattern_, the parameter list can contain arbitrarily
+complex subpatterns, not just name bindings. So we need to design how they fit into the pattern
+syntax, and how they affect pattern matching.
+
+A [_struct-pattern_](/docs/design/pattern_matching.md#struct-patterns) is a valid nested _pattern_
+to provide to a _tuple-pattern_ in function parameters, so it seems reasonable that the syntax for
+declaring default values for each should be the same, as well as the semantics in pattern matching
+to provide those default values as needed.
 
 The _tuple-pattern_ and _struct-pattern_ also appear in local binding declarations, as well as in
 [_alternative-pattern_](/docs/design/pattern_matching.md#alternative-patterns) arms inside `match`
@@ -85,6 +89,21 @@ There are some decisions to make in the modification of Carbon syntax to support
 discussed in a few [leads questions](#leads-questions) as well as a decision around default
 assignment at the syntactic or semantic parameter level (see [vocabulary](#vocabulary)), tentative
 answers to all of which are discussed in the proposal [details](#details).
+
+### Out of Scope
+
+In order to expedite the implementation work of the C++ interoperability requirements, this
+proposal is deliberately scoped to focus on default values for function arguments. What follows is
+a non-exhaustive list of elements we will not consider for change here:
+
+-   Function overloading
+-   Initializer expressions that are not concrete constants
+-   Default argument values that have `ref` bindings
+-   Defaults for function positional parameters
+-   Defaults for variadic functions
+-   Implicit conversions during pattern matching
+-   Default values for local bindings, for now the compiler will reject
+-   Default values for `match` alternative arms, for now the compiler will reject
 
 ## Background
 
@@ -155,22 +174,7 @@ The work on this proposal exposed a few questions for Carbon Leads, enumerated h
 
 ## Proposal
 
-In Carbon, a function parameter list is actually a
-[_tuple-pattern_](/docs/design/pattern_matching.md#tuple-patterns), and an argument list is actually
-a tuple literal expression. When you call a function, the argument tuple is matched against the
-parameter pattern. Like any _tuple-pattern_, the parameter list can contain arbitrarily complex
-subpatterns, not just name bindings. So we need to design how they fit into the pattern syntax, and
-how they affect pattern matching.
-
-Because developers can nest patterns arbitrarily, and a
-[_struct-pattern_](/docs/design/pattern_matching.md#struct-patterns) is a natural pattern to nest
-in a _tuple-pattern_, we also proposing adding support for defaults to this pattern as well.
-
-Default values are only allowed in function declarations for now. This is an intentional
-limitation of the scope of this proposal for expediency, and nothing proposed here is intended to
-apply, in the long term, to function declarations exclusively.
-
-Following any subpattern in either _struct-pattern_ or _tuple-pattern_, the programmer can declare
+Following any element of either _struct-pattern_ or _tuple-pattern_, the programmer can declare
 an optional default value with the addition of an assignment symbol `=` followed by a
 _value-expression_. Note that Defaults cannot appear in `var` patterns, because the
 initialization of a `var` pattern must be written in a single place, not interleaved with other
@@ -182,6 +186,10 @@ argument default values in C++, to ease "tech transfer" for C++ developers to Ca
 possibly reduce interoperability implementation costs.
 
 For now, default value expressions must be concrete constant expressions.
+
+Default values are only allowed in function declarations for now. This is an intentional
+limitation of the scope of this proposal for expediency, and nothing proposed here is intended to
+apply, in the long term, to function declarations exclusively.
 
 Here's a simple example declaring default values for parameters in a function definition:
 
@@ -197,21 +205,6 @@ fn Main() {
   Core.Print(DefaultThree(7));  // `7`
 }
 ```
-
-## Out of Scope
-
-In order to expedite the implementation work of the C++ interoperability requirements, this
-proposal is deliberately scoped to focus on default values for function arguments. What follows is
-a non-exhaustive list of elements we will not consider for change here:
-
--   Function overloading
--   Initializer expressions that are not concrete constants
--   Default argument values that have `ref` bindings
--   Defaults for function positional parameters
--   Defaults for variadic functions
--   Implicit conversions during pattern matching
--   Default values for local bindings, for now the compiler will reject
--   Default values for `match` alternative arms, for now the compiler will reject
 
 ## Details
 
@@ -269,8 +262,8 @@ match process.
 
 ### Struct Patterns
 
-We also extend default values to name bindings inside of the _struct-pattern_. Since the
-syntax is a bit more complex, particularly in the case of the long form, we have a leads question
+We also extend default values to elements of the _struct-pattern_. Since the syntax is a bit more
+complex, particularly in the case of the long form, we have a leads question
 [#7530](https://github.com/carbon-language/carbon-lang/issues/7530) about this.
 
 The current proposed syntax for both short and long form is to use the same optional assignment `=`
@@ -290,9 +283,9 @@ about the trailing `= {}` on both of these examples.
 #### Out-Of-Order Elision
 
 In a _struct-pattern_, the right-to-left elision requirements don't apply, as each member has an
-associated name, thus resolving the order ambiguity. This means that any struct member binding that
-has a provided default may be elided, including all members and the entire structure itself, if
-defaults are specified for all named members.
+associated name, thus resolving the order ambiguity. This means that any struct element that has a
+provided default may be elided, including all members and the entire structure itself, if defaults
+are specified for all named members.
 
 ```carbon
 Long();  // OK, index = 0, key = 0, value = 0
@@ -410,19 +403,28 @@ This proposal advances the following Carbon goals:
 
 ## Alternatives considered
 
-**TBD** leads questions resolution, further feedback on this proposal.
+### Defaults only at highest level of nesting
 
--   We considered an implementation of defaults only at the highest level of nesting in a
-    _tuple-pattern_, for the possibility it might be simpler to implement. We agreed that we
-    preferred defaults at any arbitrary level of nesting, and so deferred further inquiry. See the
-    [design details](#nesting-parameter-defaults) for more.
--   For interoperation with C++ function default arguments, it is plausible we could only add
-    support to _tuple-pattern_ and skip _struct-pattern_. However, Carbon uses the patterns
-    in other contexts, and so we wanted to at least specify the defaults for _struct-pattern_, to
-    pave the way for future work. Furthermore, some felt it would be natural for developers to want
-    to provide _struct-pattern_ as a nested pattern in a _tuple-pattern_, so we should go ahead and
-    provide it.
--   We also considered adding default support to local patterns, but this opened up a number of
-    questions, for example around ambiguity in implicit casts, and since our immediate need is to
-    support C++ interop for function defaults, we decided to leave this out of scope of this
-    proposal.
+We considered an implementation of defaults only at the highest level of nesting in a
+_tuple-pattern_, for the possibility it might be simpler to implement. We agreed that we preferred
+defaults at any arbitrary level of nesting, and so deferred further inquiry. See the
+[design details](#nesting-parameter-defaults) for more.
+
+### Downscope to exclude struct patterns
+
+For interoperation with C++ function default arguments, it is plausible we could only add support to
+_tuple-pattern_ and skip _struct-pattern_. However, Carbon uses the patterns in other contexts, and
+so we wanted to at least specify the defaults for _struct-pattern_, to pave the way for future work.
+
+Furthermore, some felt it would be natural for developers to want to provide _struct-pattern_ as a
+nested pattern in a _tuple-pattern_, so we should go ahead and provide it.
+
+### Default support for local patterns and match alternatives
+
+We also considered adding default support to local patterns, but this opened up a number of
+questions, for example around ambiguity in implicit casts, and since our immediate need is to
+support C++ interop for function defaults, we decided to leave this out of scope of this proposal.
+
+Match alternatives also raised some questions about interactions with generic code, and since the
+utility of defaults here seemed less obvious than in the other two use cases, we also decided to
+exclude them from this proposal.
