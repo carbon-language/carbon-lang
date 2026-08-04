@@ -165,7 +165,7 @@ static void BM_DrawText(benchmark::State& state, Charset charset,
 
   int row = 0;
   for (auto _ : state) {
-    row = buffer.DrawText(0, row, text, Style()) + row;
+    row = buffer.DrawText(0, row, text, Style()).y + 1;
     benchmark::DoNotOptimize(row);
     // Reuse a bounded band of rows so this measures drawing rather than the
     // buffer's growth.

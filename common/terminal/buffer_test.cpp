@@ -34,7 +34,7 @@ TEST(BufferTest, Empty) {
 
 TEST(BufferTest, GrowsRowsToFitWhatIsDrawn) {
   Buffer buffer(4, Charset::Ascii);
-  EXPECT_EQ(buffer.DrawSymbol(0, 2, 'x', Style()), 1);
+  EXPECT_EQ(buffer.DrawSymbol(0, 2, 'x', Style()).x, 1);
   EXPECT_EQ(buffer.height(), 3);
   EXPECT_EQ(Render(buffer), "\n\nx\n");
 }
@@ -57,8 +57,8 @@ TEST(BufferTest, DrawsNothingBeforeItsOrigin) {
   Buffer buffer(3, Charset::Ascii);
   // Negative coordinates have nowhere to grow to. The symbols still report the
   // columns they would have taken, so text walking a row stays in step.
-  EXPECT_EQ(buffer.DrawSymbol(-1, 0, 'a', Style()), 1);
-  EXPECT_EQ(buffer.DrawSymbol(0, -1, 'a', Style()), 1);
+  EXPECT_EQ(buffer.DrawSymbol(-1, 0, 'a', Style()).x, 0);
+  EXPECT_EQ(buffer.DrawSymbol(0, -1, 'a', Style()).x, 1);
   EXPECT_EQ(buffer.height(), 0);
 }
 
@@ -216,8 +216,8 @@ TEST(BufferTest, TextIsNeverRedrawnAsLines) {
 
 TEST(BufferTest, Text) {
   Buffer buffer(15, Charset::Utf8);
-  EXPECT_EQ(buffer.DrawText(0, 0, "Hello, World!", Style()), 1);
-  EXPECT_EQ(buffer.DrawText(0, 1, "A\tB\nC", Style()), 2);
+  EXPECT_EQ(buffer.DrawText(0, 0, "Hello, World!", Style()).y, 0);
+  EXPECT_EQ(buffer.DrawText(0, 1, "A\tB\nC", Style()).y, 2);
 
   EXPECT_EQ(Render(buffer),
             "Hello, World!\n"
@@ -225,7 +225,7 @@ TEST(BufferTest, Text) {
             "C\n");
 
   // Empty text still occupies the row it started on.
-  EXPECT_EQ(buffer.DrawText(0, 0, "", Style()), 1);
+  EXPECT_EQ(buffer.DrawText(0, 0, "", Style()).y, 0);
 }
 
 TEST(BufferTest, TabStopsAreMeasuredFromWhereTextBegins) {
@@ -280,8 +280,8 @@ TEST(BufferTest, AsciiDoesNoUtf8Processing) {
   EXPECT_EQ(Render(invalid), "??z\n");
 
   // Every symbol is one column wide, whatever it is.
-  EXPECT_EQ(buffer.DrawSymbol(0, 1, U'中', Style()), 1);
-  EXPECT_EQ(buffer.DrawSymbol(1, 1, CombiningAcute, Style()), 1);
+  EXPECT_EQ(buffer.DrawSymbol(0, 1, U'中', Style()).x, 1);
+  EXPECT_EQ(buffer.DrawSymbol(1, 1, CombiningAcute, Style()).x, 2);
   EXPECT_EQ(Render(buffer),
             "a???b\n"
             "??\n");
@@ -304,10 +304,12 @@ TEST(BufferTest, SymbolsWithNoEncoding) {
   // including the surrogates and the values past the last one that UTF-8 has no
   // encoding for.
   Buffer buffer(10, Charset::Utf8);
-  EXPECT_EQ(buffer.DrawSymbol(0, 0, static_cast<char32_t>(0xd800), Style()), 1);
-  EXPECT_EQ(buffer.DrawSymbol(1, 0, static_cast<char32_t>(0xdfff), Style()), 1);
-  EXPECT_EQ(buffer.DrawSymbol(2, 0, static_cast<char32_t>(0x110000), Style()),
+  EXPECT_EQ(buffer.DrawSymbol(0, 0, static_cast<char32_t>(0xd800), Style()).x,
             1);
+  EXPECT_EQ(buffer.DrawSymbol(1, 0, static_cast<char32_t>(0xdfff), Style()).x,
+            2);
+  EXPECT_EQ(
+      buffer.DrawSymbol(2, 0, static_cast<char32_t>(0x110000), Style()).x, 3);
   EXPECT_EQ(Render(buffer), "���\n");
 }
 
@@ -315,7 +317,7 @@ TEST(BufferTest, DoubleWidthSymbols) {
   Buffer buffer(6, Charset::Utf8);
   buffer.DrawText(0, 0, "中A🔥", Style());
   EXPECT_EQ(Render(buffer), "中A🔥\n");
-  EXPECT_EQ(buffer.DrawSymbol(0, 1, U'中', Style()), 2);
+  EXPECT_EQ(buffer.DrawSymbol(0, 1, U'中', Style()).x, 2);
 }
 
 TEST(BufferTest, DrawingOverADoubleWidthSymbolErasesAllOfIt) {
@@ -344,7 +346,7 @@ TEST(BufferTest, DoubleWidthSymbolPastTheEdgeTakesBothColumns) {
   // Splitting one would leave the terminal rendering half a character, so the
   // buffer grows by both of its columns rather than one.
   Buffer buffer(3, Charset::Utf8);
-  EXPECT_EQ(buffer.DrawSymbol(2, 0, U'中', Style()), 2);
+  EXPECT_EQ(buffer.DrawSymbol(2, 0, U'中', Style()).x, 4);
   buffer.DrawSymbol(0, 0, 'a', Style());
   EXPECT_EQ(Render(buffer), "a 中\n");
   EXPECT_GE(buffer.width(), 4);
@@ -357,7 +359,7 @@ TEST(BufferTest, CombiningMarks) {
   buffer.DrawText(0, 0, AcuteE, Style());
   EXPECT_EQ(Render(buffer), AcuteE.str() + "\n");
   EXPECT_EQ(buffer.MeasureWidth(AcuteE), 1);
-  EXPECT_EQ(buffer.DrawSymbol(5, 0, CombiningAcute, Style()), 0);
+  EXPECT_EQ(buffer.DrawSymbol(5, 0, CombiningAcute, Style()).x, 5);
 
   // A mark with nothing before it has nothing to attach to.
   Buffer orphan(10, Charset::Utf8);
@@ -398,10 +400,13 @@ TEST(BufferTest, CombiningMarksAreCapped) {
 
 TEST(BufferTest, WrappedText) {
   Buffer buffer(20, Charset::Ascii);
-  EXPECT_EQ(
-      buffer.DrawWrappedText(
-          0, 0, 10, "This is a long sentence that should be wrapped.", Style()),
-      6);
+  EXPECT_EQ(buffer
+                .DrawWrappedText(0, 0, 10,
+                                 "This is a long sentence that should be "
+                                 "wrapped.",
+                                 Style())
+                .y,
+            5);
 
   EXPECT_EQ(Render(buffer),
             "This is a\n"
@@ -414,7 +419,7 @@ TEST(BufferTest, WrappedText) {
 
 TEST(BufferTest, WrappedTextBreaksWordsTooLongToFit) {
   Buffer buffer(10, Charset::Ascii);
-  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 5, "abcdefghij", Style()), 2);
+  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 5, "abcdefghij", Style()).y, 1);
   EXPECT_EQ(Render(buffer),
             "abcde\n"
             "fghij\n");
@@ -435,7 +440,7 @@ TEST(BufferTest, WrappedTextIndents) {
 TEST(BufferTest, WrappedTextLineBreaks) {
   // Carriage returns are dropped, so CRLF endings break exactly once.
   Buffer buffer(10, Charset::Ascii);
-  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 10, "a\r\nb", Style()), 2);
+  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 10, "a\r\nb", Style()).y, 1);
   EXPECT_EQ(Render(buffer),
             "a\n"
             "b\n");
@@ -449,8 +454,8 @@ TEST(BufferTest, WrappedTextLineBreaks) {
 
   // A wrap region with no columns has nowhere to put anything.
   Buffer degenerate(10, Charset::Ascii);
-  EXPECT_EQ(degenerate.DrawWrappedText(0, 0, 0, "anything", Style()), 0);
-  EXPECT_EQ(degenerate.DrawWrappedText(0, 0, -1, "anything", Style()), 0);
+  EXPECT_EQ(degenerate.DrawWrappedText(0, 0, 0, "anything", Style()).y, 0);
+  EXPECT_EQ(degenerate.DrawWrappedText(0, 0, -1, "anything", Style()).y, 0);
   EXPECT_EQ(Render(degenerate), "");
 }
 
@@ -470,7 +475,7 @@ TEST(BufferTest, WrappedTextWithDoubleWidthSymbols) {
   // Wrapping counts columns, not characters, so a double-width word breaks at
   // half as many of them.
   Buffer buffer(10, Charset::Utf8);
-  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 4, "中中中", Style()), 2);
+  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 4, "中中中", Style()).y, 1);
   EXPECT_EQ(Render(buffer),
             "中中\n"
             "中\n");

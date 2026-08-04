@@ -61,6 +61,22 @@ namespace Carbon::Terminal {
 // much source a snippet shows, not how much the grid can hold.
 class Buffer {
  public:
+  // Where a drawing ended: the row it ended on, and the column after its last
+  // symbol on that row.
+  //
+  // Everything that draws returns one, so that a caller placing something
+  // after a drawing advances from this rather than measuring the same text a
+  // second time. Measuring and drawing would otherwise have to agree about
+  // every string, and where they don't -- a tab or a newline, which
+  // `MeasureWidth` counts as one column and drawing interprets -- the caller
+  // is silently wrong.
+  struct DrawEnd {
+    int x;
+    int y;
+
+    friend auto operator==(DrawEnd lhs, DrawEnd rhs) -> bool = default;
+  };
+
   // Constructs an empty buffer holding `charset`.
   explicit Buffer(Charset charset) : Buffer(1, charset) {}
 
@@ -83,19 +99,19 @@ class Buffer {
 
   auto charset() const -> Charset { return charset_; }
 
-  // Returns the columns `text` occupies when drawn into this buffer.
-  //
-  // Newlines and tabs are not interpreted; they count as one column each, the
-  // same as any other character with no rendering of its own.
+  // Returns the columns `text` occupies, measured as text rather than as
+  // something drawn: newlines and tabs count as one column each, where drawing
+  // interprets both. Use the `DrawEnd` a drawing returns to find out where it
+  // actually went; this is for laying out what hasn't been drawn yet.
   auto MeasureWidth(llvm::StringRef text) const -> int;
 
-  // Draws `symbol` at (x, y), adding rows as needed to reach `y`.
+  // Draws `symbol` at (x, y), growing the buffer as needed to reach it.
   //
-  // Returns the columns it occupies, which is what a caller walking across a
-  // row should advance by. That is zero only for a combining mark, and is
-  // otherwise the symbol's width whether or not it was actually drawn, so that
-  // clipping a symbol doesn't shift what comes after it.
-  auto DrawSymbol(int x, int y, char32_t symbol, const Style& style) -> int;
+  // Returns the column after it, which is `x` again for a combining mark since
+  // one renders into the column before it. A symbol before the buffer's origin
+  // still reports the columns it would have taken, so that text walking a row
+  // stays in step.
+  auto DrawSymbol(int x, int y, char32_t symbol, const Style& style) -> DrawEnd;
 
   // Draws a horizontal line of `length` columns starting at (x, y).
   //
@@ -109,24 +125,28 @@ class Buffer {
   //
   // A cell's style is whatever was drawn there last, so crossing lines of
   // different styles do depend on order.
-  auto DrawHorizontalLine(int x, int y, int length, const Style& style) -> void;
+  auto DrawHorizontalLine(int x, int y, int length, const Style& style)
+      -> DrawEnd;
 
-  // Draws a vertical line of `length` rows starting at (x, y).
-  auto DrawVerticalLine(int x, int y, int length, const Style& style) -> void;
+  // Draws a vertical line of `length` rows starting at (x, y). Returns the row
+  // after it, in the column it ran down.
+  auto DrawVerticalLine(int x, int y, int length, const Style& style)
+      -> DrawEnd;
 
   // Draws the outline of a box with its top-left corner at (x, y). Its corners
   // come out of the four sides meeting. A box with no interior is the single
   // line that bounds it, and one with no extent draws nothing.
   auto DrawBox(int x, int y, int box_width, int box_height, const Style& style)
-      -> void;
+      -> DrawEnd;
 
   // Draws `text` starting at (x, y).
   //
   // Newlines return to column `x` on the next row, carriage returns to column
   // `x` on the same row, and tabs advance to the next eight-column stop
-  // measured from `x`. Returns the number of rows spanned, counting the row
-  // the text ends on.
-  auto DrawText(int x, int y, llvm::StringRef text, const Style& style) -> int;
+  // measured from `x`. Returns where it ended, which for text with a newline
+  // in it is on a later row than it started.
+  auto DrawText(int x, int y, llvm::StringRef text, const Style& style)
+      -> DrawEnd;
 
   // Draws `text` starting at (x, y), wrapping it within `max_width` columns.
   //
@@ -142,10 +162,10 @@ class Buffer {
   // stop, unlike in `DrawText`, because a tab stop is measured from the start
   // of a line and wrapped text has no fixed one.
   //
-  // Returns the number of rows spanned, or zero when `max_width` isn't
-  // positive, in which case nothing is drawn.
+  // Returns where it ended, which is (x, y) when `max_width` isn't positive,
+  // in which case nothing is drawn.
   auto DrawWrappedText(int x, int y, int max_width, llvm::StringRef text,
-                       const Style& style) -> int;
+                       const Style& style) -> DrawEnd;
 
   // Renders the grid, appending the bytes that draw it to `out`.
   //

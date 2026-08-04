@@ -260,7 +260,7 @@ auto Buffer::AttachCombiningMark(int x, int y, char32_t symbol) -> void {
 }
 
 auto Buffer::DrawSymbol(int x, int y, char32_t symbol, const Style& style)
-    -> int {
+    -> DrawEnd {
   if (charset_ == Charset::Ascii) {
     if (x >= 0 && y >= 0) {
       EnsureWidth(x);
@@ -269,13 +269,13 @@ auto Buffer::DrawSymbol(int x, int y, char32_t symbol, const Style& style)
           .symbol = IsPrintableAscii(symbol) ? symbol : AsciiReplacement,
           .style = style};
     }
-    return 1;
+    return {.x = x + 1, .y = y};
   }
 
   int width = Utf8SymbolWidth(symbol);
   if (width == 0) {
     AttachCombiningMark(x, y, symbol);
-    return 0;
+    return {.x = x, .y = y};
   }
   if (width < 0) {
     symbol = Utf8Replacement;
@@ -283,7 +283,7 @@ auto Buffer::DrawSymbol(int x, int y, char32_t symbol, const Style& style)
   }
 
   if (x < 0 || y < 0) {
-    return width;
+    return {.x = x + width, .y = y};
   }
 
   // A double-width symbol needs both its columns, since splitting one would
@@ -300,7 +300,7 @@ auto Buffer::DrawSymbol(int x, int y, char32_t symbol, const Style& style)
     continuation.style = style;
     continuation.is_continuation = true;
   }
-  return width;
+  return {.x = x + width, .y = y};
 }
 
 auto Buffer::DrawLine(int x, int y, uint8_t directions, const Style& style)
@@ -327,7 +327,7 @@ auto Buffer::DrawLine(int x, int y, uint8_t directions, const Style& style)
 }
 
 auto Buffer::DrawHorizontalLine(int x, int y, int length, const Style& style)
-    -> void {
+    -> DrawEnd {
   for (int i = 0; i < length; ++i) {
     // The ends of a line only connect inward, so a line meeting another at its
     // end forms a corner rather than a crossing. A one-cell line has no inward
@@ -337,41 +337,42 @@ auto Buffer::DrawHorizontalLine(int x, int y, int length, const Style& style)
                     : (i > 0 ? LineLeft : 0) | (i + 1 < length ? LineRight : 0);
     DrawLine(x + i, y, directions, style);
   }
+  return {.x = x + std::max(length, 0), .y = y};
 }
 
 auto Buffer::DrawVerticalLine(int x, int y, int length, const Style& style)
-    -> void {
+    -> DrawEnd {
   for (int i = 0; i < length; ++i) {
     uint8_t directions =
         length == 1 ? LineUp | LineDown
                     : (i > 0 ? LineUp : 0) | (i + 1 < length ? LineDown : 0);
     DrawLine(x, y + i, directions, style);
   }
+  return {.x = x, .y = y + std::max(length, 0)};
 }
 
 auto Buffer::DrawBox(int x, int y, int box_width, int box_height,
-                     const Style& style) -> void {
+                     const Style& style) -> DrawEnd {
   if (box_width <= 0 || box_height <= 0) {
-    return;
+    return {.x = x, .y = y};
   }
   // A box with no interior is just the one line that bounds it.
   if (box_width == 1) {
-    DrawVerticalLine(x, y, box_height, style);
-    return;
+    return DrawVerticalLine(x, y, box_height, style);
   }
   if (box_height == 1) {
-    DrawHorizontalLine(x, y, box_width, style);
-    return;
+    return DrawHorizontalLine(x, y, box_width, style);
   }
 
   DrawHorizontalLine(x, y, box_width, style);
   DrawHorizontalLine(x, y + box_height - 1, box_width, style);
   DrawVerticalLine(x, y, box_height, style);
   DrawVerticalLine(x + box_width - 1, y, box_height, style);
+  return {.x = x + box_width, .y = y + box_height};
 }
 
 auto Buffer::DrawText(int x, int y, llvm::StringRef text, const Style& style)
-    -> int {
+    -> DrawEnd {
   int cur_x = x;
   int cur_y = y;
 
@@ -394,10 +395,10 @@ auto Buffer::DrawText(int x, int y, llvm::StringRef text, const Style& style)
       continue;
     }
 
-    cur_x += DrawSymbol(cur_x, cur_y, symbol, style);
+    cur_x = DrawSymbol(cur_x, cur_y, symbol, style).x;
   }
 
-  return cur_y - y + 1;
+  return {.x = cur_x, .y = cur_y};
 }
 
 // Returns whether `c` is a character wrapped text can be broken at. Carriage
@@ -407,9 +408,9 @@ static auto IsBreakSpace(char c) -> bool {
 }
 
 auto Buffer::DrawWrappedText(int x, int y, int max_width, llvm::StringRef text,
-                             const Style& style) -> int {
+                             const Style& style) -> DrawEnd {
   if (max_width <= 0) {
-    return 0;
+    return {.x = x, .y = y};
   }
 
   int cur_x = x;
@@ -438,7 +439,7 @@ auto Buffer::DrawWrappedText(int x, int y, int max_width, llvm::StringRef text,
           if (space == '\r' || cur_x >= limit) {
             continue;
           }
-          cur_x += DrawSymbol(cur_x, cur_y, ' ', style);
+          cur_x = DrawSymbol(cur_x, cur_y, ' ', style).x;
         }
       }
       continue;
@@ -470,11 +471,11 @@ auto Buffer::DrawWrappedText(int x, int y, int max_width, llvm::StringRef text,
         cur_x = x;
         ++cur_y;
       }
-      cur_x += DrawSymbol(cur_x, cur_y, symbol, style);
+      cur_x = DrawSymbol(cur_x, cur_y, symbol, style).x;
     }
   }
 
-  return cur_y - y + 1;
+  return {.x = cur_x, .y = cur_y};
 }
 
 auto Buffer::LastVisibleColumn(int y, ColorMode mode) const -> int {
