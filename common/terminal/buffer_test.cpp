@@ -32,32 +32,47 @@ TEST(BufferTest, Empty) {
   EXPECT_EQ(Render(buffer), "");
 }
 
-TEST(BufferTest, GrowsToFitWhatIsDrawn) {
+TEST(BufferTest, GrowsRowsToFitWhatIsDrawn) {
   Buffer buffer(4, Charset::Ascii);
   EXPECT_EQ(buffer.DrawSymbol(0, 2, 'x', Style()), 1);
   EXPECT_EQ(buffer.height(), 3);
   EXPECT_EQ(Render(buffer), "\n\nx\n");
 }
 
-TEST(BufferTest, ClipsOutsideItsWidth) {
+TEST(BufferTest, GrowsColumnsToFitWhatIsDrawn) {
   Buffer buffer(3, Charset::Ascii);
-  // Clipped symbols still report the columns they would have taken, so text
-  // walking across a row stays in step.
-  EXPECT_EQ(buffer.DrawSymbol(-1, 0, 'a', Style()), 1);
-  EXPECT_EQ(buffer.DrawSymbol(3, 0, 'a', Style()), 1);
-  EXPECT_EQ(buffer.DrawSymbol(0, -1, 'a', Style()), 1);
-  EXPECT_EQ(buffer.height(), 0);
-
-  // Lines that run past an edge draw the part that fits.
   buffer.DrawHorizontalLine(1, 0, 5, Style());
   buffer.DrawVerticalLine(0, 1, 5, Style());
   EXPECT_EQ(Render(buffer),
-            " --\n"
+            " -----\n"
             "|\n"
             "|\n"
             "|\n"
             "|\n"
             "|\n");
+  EXPECT_GE(buffer.width(), 6);
+}
+
+TEST(BufferTest, DrawsNothingBeforeItsOrigin) {
+  Buffer buffer(3, Charset::Ascii);
+  // Negative coordinates have nowhere to grow to. The symbols still report the
+  // columns they would have taken, so text walking a row stays in step.
+  EXPECT_EQ(buffer.DrawSymbol(-1, 0, 'a', Style()), 1);
+  EXPECT_EQ(buffer.DrawSymbol(0, -1, 'a', Style()), 1);
+  EXPECT_EQ(buffer.height(), 0);
+}
+
+TEST(BufferTest, WidthGrowsAcrossRowsAlreadyDrawn) {
+  // Rows are stored back to back, so widening has to reflow the ones already
+  // there rather than leaving them where their old width put them.
+  Buffer buffer(2, Charset::Ascii);
+  buffer.DrawText(0, 0, "ab", Style());
+  buffer.DrawText(0, 1, "cd", Style());
+  buffer.DrawText(0, 2, "efghij", Style());
+  EXPECT_EQ(Render(buffer),
+            "ab\n"
+            "cd\n"
+            "efghij\n");
 }
 
 TEST(BufferTest, LinesJoinWhereTheyMeet) {
@@ -325,18 +340,14 @@ TEST(BufferTest, DrawingOverADoubleWidthSymbolErasesAllOfIt) {
   EXPECT_EQ(Render(over_both), " 国\n");
 }
 
-TEST(BufferTest, DoubleWidthSymbolAtTheRightEdge) {
-  // Splitting one across the edge would leave the terminal rendering half a
-  // character, so it is dropped instead, while still reporting its width.
+TEST(BufferTest, DoubleWidthSymbolPastTheEdgeTakesBothColumns) {
+  // Splitting one would leave the terminal rendering half a character, so the
+  // buffer grows by both of its columns rather than one.
   Buffer buffer(3, Charset::Utf8);
   EXPECT_EQ(buffer.DrawSymbol(2, 0, U'中', Style()), 2);
   buffer.DrawSymbol(0, 0, 'a', Style());
-  EXPECT_EQ(Render(buffer), "a\n");
-
-  // So text after a clipped symbol doesn't slide into the space it left.
-  Buffer text(2, Charset::Utf8);
-  text.DrawText(0, 0, "a中b", Style());
-  EXPECT_EQ(Render(text), "a\n");
+  EXPECT_EQ(Render(buffer), "a 中\n");
+  EXPECT_GE(buffer.width(), 4);
 }
 
 TEST(BufferTest, CombiningMarks) {
@@ -548,27 +559,21 @@ TEST(BufferTest, BuiltFromCapabilities) {
   EXPECT_EQ(Render(buffer, capabilities.color_mode), "─────\n");
 }
 
-TEST(BufferTest, CombiningMarkPastTheRightEdge) {
-  // Text walks past the right edge rather than stopping there, so a mark can
-  // arrive at a column well beyond the buffer. Its base was clipped, so the
-  // mark goes with it rather than attaching to the last cell of the row, or to
-  // whatever cell the row-major index happens to land on.
+TEST(BufferTest, CombiningMarkPastTheWidthItStartedWith) {
+  // The buffer grows to hold the text, so a mark arriving past the width it
+  // was constructed with attaches to its base like any other.
   Buffer buffer(4, Charset::Utf8);
-  buffer.DrawText(0, 1, "z", Style());
   buffer.DrawText(0, 0, ("abcde" + AcuteE.drop_front(1)).str(), Style());
-  EXPECT_EQ(Render(buffer),
-            "abcd\n"
-            "z\n");
+  EXPECT_EQ(Render(buffer), ("abcde" + AcuteE.drop_front(1) + "\n").str());
+}
 
-  // The same past the last row, where the cell index has nothing to land on.
-  Buffer single_row(4, Charset::Utf8);
-  single_row.DrawText(0, 0, ("abcde" + AcuteE.drop_front(1)).str(), Style());
-  EXPECT_EQ(Render(single_row), "abcd\n");
-
-  // A mark exactly at the right edge still attaches to the last cell.
-  Buffer at_edge(4, Charset::Utf8);
-  at_edge.DrawText(0, 0, ("abcd" + AcuteE.drop_front(1)).str(), Style());
-  EXPECT_EQ(Render(at_edge), ("abcd" + AcuteE.drop_front(1) + "\n").str());
+TEST(BufferTest, CombiningMarkWithNoBase) {
+  // Marks render into the column before them, so one at the start of a row has
+  // nowhere to go rather than attaching to the end of the row above.
+  Buffer buffer(4, Charset::Utf8);
+  buffer.DrawText(0, 0, "ab", Style());
+  buffer.DrawText(0, 1, AcuteE.drop_front(1).str(), Style());
+  EXPECT_EQ(Render(buffer), "ab\n");
 }
 
 TEST(BufferTest, WriteTo) {

@@ -4,9 +4,13 @@
 
 #include "common/terminal/buffer.h"
 
+#include <algorithm>
 #include <array>
+#include <utility>
 
 #include "common/check.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/Unicode.h"
@@ -188,6 +192,35 @@ auto Buffer::EnsureRow(int y) -> void {
   cells_.resize(static_cast<size_t>(y + 1) * width_);
 }
 
+auto Buffer::EnsureWidth(int x) -> void {
+  if (x < width_) {
+    return;
+  }
+  // Growing by halves rather than to exactly what was asked keeps a row drawn
+  // one symbol at a time from reflowing on every symbol.
+  int width = std::max(x + 1, width_ + width_ / 2);
+
+  // Rows are stored back to back, so every row but the first moves.
+  int rows = height();
+  llvm::SmallVector<Cell, 0> widened(static_cast<size_t>(rows) * width);
+  for (int y : llvm::seq(rows)) {
+    llvm::copy(llvm::ArrayRef(cells_).slice(
+                   static_cast<size_t>(y) * width_, width_),
+               widened.begin() + static_cast<size_t>(y) * width);
+  }
+  cells_ = std::move(widened);
+
+  // The marks are keyed by cell index, which is where the row moved it to.
+  llvm::DenseMap<int, std::string> moved;
+  moved.reserve(combining_marks_.size());
+  for (auto& [index, marks] : combining_marks_) {
+    moved.insert({index / width_ * width + index % width_, std::move(marks)});
+  }
+  combining_marks_ = std::move(moved);
+
+  width_ = width;
+}
+
 auto Buffer::ClearCells(int x, int y, int width) -> void {
   // A cleared range must not leave half of a double-width symbol behind, so it
   // extends over either half that crosses its edges.
@@ -207,10 +240,8 @@ auto Buffer::ClearCells(int x, int y, int width) -> void {
 }
 
 auto Buffer::AttachCombiningMark(int x, int y, char32_t symbol) -> void {
-  // Marks render into the column before them, so there must be one, it must be
-  // in the buffer, and it must already have been drawn. Text walks past the
-  // right edge rather than stopping there, so `x` can be well beyond it, in
-  // which case the base was clipped and its marks go with it.
+  // Marks render into the column before them, so there must be one and it must
+  // already have been drawn.
   if (x <= 0 || x > width_ || y < 0 || y >= height()) {
     return;
   }
@@ -231,7 +262,8 @@ auto Buffer::AttachCombiningMark(int x, int y, char32_t symbol) -> void {
 auto Buffer::DrawSymbol(int x, int y, char32_t symbol, const Style& style)
     -> int {
   if (charset_ == Charset::Ascii) {
-    if (x >= 0 && x < width_ && y >= 0) {
+    if (x >= 0 && y >= 0) {
+      EnsureWidth(x);
       EnsureRow(y);
       CellAt(x, y) = {
           .symbol = IsPrintableAscii(symbol) ? symbol : AsciiReplacement,
@@ -250,12 +282,13 @@ auto Buffer::DrawSymbol(int x, int y, char32_t symbol, const Style& style)
     width = 1;
   }
 
-  // Out of bounds, or a double-width symbol that would straddle the right
-  // edge; splitting one would leave the terminal rendering half a character.
-  if (x < 0 || y < 0 || x + width > width_) {
+  if (x < 0 || y < 0) {
     return width;
   }
 
+  // A double-width symbol needs both its columns, since splitting one would
+  // leave the terminal rendering half a character.
+  EnsureWidth(x + width - 1);
   EnsureRow(y);
   ClearCells(x, y, width);
 
@@ -272,10 +305,11 @@ auto Buffer::DrawSymbol(int x, int y, char32_t symbol, const Style& style)
 
 auto Buffer::DrawLine(int x, int y, uint8_t directions, const Style& style)
     -> void {
-  if (x < 0 || x >= width_ || y < 0) {
+  if (x < 0 || y < 0) {
     return;
   }
   CARBON_DCHECK(directions < Utf8LineGlyphs.size());
+  EnsureWidth(x);
   EnsureRow(y);
 
   uint8_t existing = CellAt(x, y).lines;

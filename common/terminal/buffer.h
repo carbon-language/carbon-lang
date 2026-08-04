@@ -53,15 +53,29 @@ namespace Carbon::Terminal {
 //   form C, which still spells out marks for characters that have no
 //   precomposed form, so this comes up in ordinary input. Anything with no
 //   printable rendering, including invalid UTF-8, becomes U+FFFD.
+// A buffer grows to hold whatever is drawn into it, in both directions.
+// Nothing is clipped, so a caller never has to work out how wide its output
+// will be before it starts producing it -- a measuring pass that mirrors the
+// drawing pass, and that is wrong whenever the two disagree about a string.
+// What to draw is still the caller's to decide: a terminal's width bounds how
+// much source a snippet shows, not how much the grid can hold.
 class Buffer {
  public:
-  // Constructs an empty buffer `width` columns wide, which must be positive.
+  // Constructs an empty buffer holding `charset`.
+  explicit Buffer(Charset charset) : Buffer(1, charset) {}
+
+  // Constructs an empty buffer starting `width` columns wide, which must be
+  // positive. The width is a starting size rather than a bound; it grows to
+  // fit. Passing one saves the regrowing, and passing none costs only that.
   Buffer(int width, Charset charset);
 
-  // Constructs an empty buffer sized and encoded for `capabilities`.
+  // Constructs an empty buffer starting at `capabilities`'s width and holding
+  // its charset.
   explicit Buffer(const Capabilities& capabilities)
       : Buffer(capabilities.columns, capabilities.charset) {}
 
+  // Returns the columns the buffer currently holds, which is at least as many
+  // as anything drawn into it occupies.
   auto width() const -> int { return width_; }
 
   // Returns the number of rows drawn into so far.
@@ -195,6 +209,10 @@ class Buffer {
 
   // Adds rows until row `y` exists.
   auto EnsureRow(int y) -> void;
+
+  // Widens the buffer until column `x` exists, reflowing the rows it already
+  // holds, which are stored back to back.
+  auto EnsureWidth(int x) -> void;
 
   // Resets the cells in row `y` spanning columns [x, x + width), along with
   // either half of a double-width symbol that straddles the range's edges.
