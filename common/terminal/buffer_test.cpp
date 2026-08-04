@@ -8,6 +8,7 @@
 
 #include "common/filesystem.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon::Terminal {
@@ -17,6 +18,8 @@ namespace {
 // precomposed U+00E9 is a single code point and wouldn't exercise marks at all.
 constexpr char32_t CombiningAcute = 0x0301;
 constexpr llvm::StringLiteral AcuteE = "e\xcc\x81";
+
+using DrawEnd = Buffer::DrawEnd;
 
 auto Render(const Buffer& buffer, ColorMode mode = ColorMode::NoColor)
     -> std::string {
@@ -266,7 +269,7 @@ TEST(BufferTest, AsciiDoesNoUtf8Processing) {
   Buffer buffer(10, Charset::Ascii);
   buffer.DrawText(0, 0, "a中b", Style());
   EXPECT_EQ(Render(buffer), "a???b\n");
-  EXPECT_EQ(buffer.MeasureWidth("a中b"), 5);
+  EXPECT_EQ(buffer.MeasureText(0, 0, "a中b").x, 5);
 
   // The same goes for text with combining marks, which occupy no columns only
   // because a UTF-8 terminal folds them into the one before.
@@ -308,8 +311,8 @@ TEST(BufferTest, SymbolsWithNoEncoding) {
             1);
   EXPECT_EQ(buffer.DrawSymbol(1, 0, static_cast<char32_t>(0xdfff), Style()).x,
             2);
-  EXPECT_EQ(
-      buffer.DrawSymbol(2, 0, static_cast<char32_t>(0x110000), Style()).x, 3);
+  EXPECT_EQ(buffer.DrawSymbol(2, 0, static_cast<char32_t>(0x110000), Style()).x,
+            3);
   EXPECT_EQ(Render(buffer), "���\n");
 }
 
@@ -358,7 +361,7 @@ TEST(BufferTest, CombiningMarks) {
   Buffer buffer(10, Charset::Utf8);
   buffer.DrawText(0, 0, AcuteE, Style());
   EXPECT_EQ(Render(buffer), AcuteE.str() + "\n");
-  EXPECT_EQ(buffer.MeasureWidth(AcuteE), 1);
+  EXPECT_EQ(buffer.MeasureText(0, 0, AcuteE).x, 1);
   EXPECT_EQ(buffer.DrawSymbol(5, 0, CombiningAcute, Style()).x, 5);
 
   // A mark with nothing before it has nothing to attach to.
@@ -380,7 +383,7 @@ TEST(BufferTest, CombiningMarksOnADoubleWidthBase) {
   Buffer buffer(10, Charset::Utf8);
   buffer.DrawText(0, 0, ("中" + AcuteE.drop_front(1) + "x").str(), Style());
   EXPECT_EQ(Render(buffer), ("中" + AcuteE.drop_front(1) + "x\n").str());
-  EXPECT_EQ(buffer.MeasureWidth(("中" + AcuteE.drop_front(1)).str()), 2);
+  EXPECT_EQ(buffer.MeasureText(0, 0, ("中" + AcuteE.drop_front(1)).str()).x, 2);
 }
 
 TEST(BufferTest, CombiningMarksAreCapped) {
@@ -539,23 +542,65 @@ TEST(BufferTest, RenderEndsRowsWithoutStyle) {
             "\x1b[41mB\x1b[0m\n");
 }
 
-TEST(BufferTest, MeasureWidth) {
+TEST(BufferTest, MeasureText) {
   Buffer utf8(10, Charset::Utf8);
-  EXPECT_EQ(utf8.MeasureWidth(""), 0);
-  EXPECT_EQ(utf8.MeasureWidth("hello"), 5);
-  EXPECT_EQ(utf8.MeasureWidth("中A🔥"), 5);
-  EXPECT_EQ(utf8.MeasureWidth(AcuteE), 1);
-  EXPECT_EQ(utf8.MeasureWidth(llvm::StringRef("\xc0\x80", 2)), 2);
+  EXPECT_EQ(utf8.MeasureText(0, 0, ""), DrawEnd(0, 0));
+  EXPECT_EQ(utf8.MeasureText(0, 0, "hello"), DrawEnd(5, 0));
+  EXPECT_EQ(utf8.MeasureText(0, 0, "中A🔥"), DrawEnd(5, 0));
+  EXPECT_EQ(utf8.MeasureText(0, 0, AcuteE), DrawEnd(1, 0));
+  EXPECT_EQ(utf8.MeasureText(0, 0, llvm::StringRef("\xc0\x80", 2)),
+            DrawEnd(2, 0));
 
-  // Newlines and tabs are not interpreted here, only counted.
-  EXPECT_EQ(utf8.MeasureWidth("a\nb"), 3);
-  EXPECT_EQ(utf8.MeasureWidth("a\tb"), 3);
+  // Newlines, carriage returns, and tabs are interpreted as drawing does.
+  EXPECT_EQ(utf8.MeasureText(0, 0, "a\nb"), DrawEnd(1, 1));
+  EXPECT_EQ(utf8.MeasureText(0, 0, "a\r\nb"), DrawEnd(1, 1));
+  EXPECT_EQ(utf8.MeasureText(0, 0, "a\tb"), DrawEnd(9, 0));
+
+  // Measuring starts from where it is told to, which is what the tab stops and
+  // the rows a newline returns to are measured from.
+  EXPECT_EQ(utf8.MeasureText(3, 2, "a\tb"), DrawEnd(12, 2));
+  EXPECT_EQ(utf8.MeasureText(3, 2, "a\nb"), DrawEnd(4, 3));
 
   // Every byte is a column when the terminal isn't decoding UTF-8.
   Buffer ascii(10, Charset::Ascii);
-  EXPECT_EQ(ascii.MeasureWidth("hello"), 5);
-  EXPECT_EQ(ascii.MeasureWidth("中A🔥"), 8);
-  EXPECT_EQ(ascii.MeasureWidth(AcuteE), 3);
+  EXPECT_EQ(ascii.MeasureText(0, 0, "hello"), DrawEnd(5, 0));
+  EXPECT_EQ(ascii.MeasureText(0, 0, "中A🔥"), DrawEnd(8, 0));
+  EXPECT_EQ(ascii.MeasureText(0, 0, AcuteE), DrawEnd(3, 0));
+}
+
+TEST(BufferTest, MeasuringMatchesDrawing) {
+  // The point of measuring is to answer what drawing would, so check the two
+  // against each other on the text they used to disagree about.
+  for (llvm::StringRef text :
+       {"hello", "a\tb\tc", "a\nb\r\nc", "中A🔥", "a  b", ""}) {
+    Buffer buffer(10, Charset::Utf8);
+    EXPECT_EQ(buffer.MeasureText(2, 1, text),
+              buffer.DrawText(2, 1, text, Style()))
+        << text;
+  }
+  for (llvm::StringRef text : {"one two three", "a\nlonger line here",
+                               "verylongunbreakableword", ""}) {
+    Buffer buffer(10, Charset::Utf8);
+    EXPECT_EQ(buffer.MeasureWrappedText(2, 1, 8, text),
+              buffer.DrawWrappedText(2, 1, 8, text, Style()))
+        << text;
+  }
+}
+
+TEST(BufferTest, WrapWidthIsWhatWrappingDoesNotOverhang) {
+  // What `Metrics::WrapWidth` answers is a fact about wrapping, so it is
+  // checked here against the wrapping it describes rather than only in
+  // `metrics_test`.
+  Buffer buffer(10, Charset::Utf8);
+  llvm::StringRef text = "some quite long words here";
+  int width = buffer.metrics().WrapWidth(text);
+  Buffer drawn(1, Charset::Utf8);
+  drawn.DrawWrappedText(0, 0, width, text, Style());
+  llvm::SmallVector<llvm::StringRef> rows;
+  llvm::StringRef(Render(drawn)).split(rows, '\n');
+  for (llvm::StringRef row : rows) {
+    EXPECT_LE(static_cast<int>(row.size()), width) << row;
+  }
 }
 
 TEST(BufferTest, BuiltFromCapabilities) {

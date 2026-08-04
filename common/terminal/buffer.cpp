@@ -17,13 +17,6 @@
 
 namespace Carbon::Terminal {
 
-// Stands in for a byte an ASCII terminal has no dependable rendering for.
-static constexpr char32_t AsciiReplacement = U'?';
-
-// Stands in for anything a UTF-8 terminal has no rendering for: invalid UTF-8,
-// control characters, and unassigned code points.
-static constexpr char32_t Utf8Replacement = U'�';
-
 // Columns between tab stops, measured from where the text began rather than
 // from the left edge of the buffer.
 static constexpr int TabWidth = 8;
@@ -32,90 +25,6 @@ static constexpr int TabWidth = 8;
 // this is either adversarial or already illegible, and keeping all of it would
 // let one input character produce unbounded output.
 static constexpr size_t MaxCombiningBytes = 32;
-
-// The most bytes one code point encodes to in UTF-8.
-static constexpr size_t MaxUtf8Bytes = 4;
-
-// Returns whether an ASCII terminal renders `symbol` as itself, in one column.
-static auto IsPrintableAscii(char32_t symbol) -> bool {
-  return symbol >= 0x20 && symbol < 0x7f;
-}
-
-// Encodes `symbol` as UTF-8 into `storage`, returning the bytes written.
-//
-// Code points with no valid encoding, including surrogates and anything past
-// U+10FFFF, become the replacement character.
-static auto EncodeUtf8(char32_t symbol, std::array<char, MaxUtf8Bytes>& storage)
-    -> llvm::StringRef {
-  // Most of what gets rendered is ASCII, and encoding it is a single byte.
-  if (symbol < 0x80) {
-    storage[0] = static_cast<char>(symbol);
-    return llvm::StringRef(storage.data(), 1);
-  }
-
-  // Surrogates have no encoding of their own, and nothing past the last code
-  // point has one at all.
-  if (symbol > 0x10ffff || (symbol >= 0xd800 && symbol < 0xe000)) {
-    symbol = Utf8Replacement;
-  }
-
-  // Spelled out rather than handed to a general converter, which walks a range
-  // and checks bounds this already knows. Box-drawing characters go through
-  // here for every cell of every line drawn.
-  auto trailing = [symbol](int shift) {
-    return static_cast<char>(0x80 | ((symbol >> shift) & 0x3f));
-  };
-  if (symbol < 0x800) {
-    storage[0] = static_cast<char>(0xc0 | (symbol >> 6));
-    storage[1] = trailing(0);
-    return llvm::StringRef(storage.data(), 2);
-  }
-  if (symbol < 0x10000) {
-    storage[0] = static_cast<char>(0xe0 | (symbol >> 12));
-    storage[1] = trailing(6);
-    storage[2] = trailing(0);
-    return llvm::StringRef(storage.data(), 3);
-  }
-  storage[0] = static_cast<char>(0xf0 | (symbol >> 18));
-  storage[1] = trailing(12);
-  storage[2] = trailing(6);
-  storage[3] = trailing(0);
-  return llvm::StringRef(storage.data(), 4);
-}
-
-// Returns the columns `symbol` occupies on a UTF-8 terminal: zero for a
-// combining mark, one or two for a symbol with a glyph of its own, and a
-// negative value when there is no printable rendering for it.
-static auto Utf8SymbolWidth(char32_t symbol) -> int {
-  // Printable ASCII is one column, and is most of what gets measured. The
-  // general path parses a UTF-8 sequence and searches several code point
-  // range tables, which is far more than this needs.
-  if (IsPrintableAscii(symbol)) {
-    return 1;
-  }
-
-  std::array<char, MaxUtf8Bytes> storage;
-  return llvm::sys::unicode::columnWidthUTF8(EncodeUtf8(symbol, storage));
-}
-
-// Removes the first UTF-8 sequence from `text` and returns the code point it
-// encodes.
-//
-// A byte that doesn't start a valid sequence yields the replacement character
-// and is consumed on its own, so decoding resynchronizes at the next byte
-// rather than discarding the rest of the text.
-static auto TakeUtf8Symbol(llvm::StringRef& text) -> char32_t {
-  const auto* begin = reinterpret_cast<const llvm::UTF8*>(text.data());
-  const auto* pos = begin;
-  llvm::UTF32 symbol = 0;
-  if (llvm::convertUTF8Sequence(&pos, begin + text.size(), &symbol,
-                                llvm::strictConversion) != llvm::conversionOK) {
-    text = text.drop_front(1);
-    return Utf8Replacement;
-  }
-  text = text.drop_front(pos - begin);
-  return symbol;
-}
 
 // Glyphs for every combination of line directions, indexed by the direction
 // bits. Index zero never comes up, as a cell with no directions holds no line.
@@ -145,40 +54,8 @@ static constexpr std::array<char32_t, 16> AsciiLineGlyphs = {
     U'|', U'+', U'+', U'+', U'|', U'+', U'+', U'+',
 };
 
-Buffer::Buffer(int width, Charset charset) : width_(width), charset_(charset) {
+Buffer::Buffer(int width, Charset charset) : width_(width), metrics_(charset) {
   CARBON_CHECK(width > 0, "Buffer width must be positive, but was {0}.", width);
-}
-
-auto Buffer::TakeSymbol(llvm::StringRef& text) const -> char32_t {
-  CARBON_DCHECK(!text.empty());
-  if (charset_ == Charset::Ascii) {
-    auto byte = static_cast<unsigned char>(text.front());
-    text = text.drop_front();
-    return byte;
-  }
-  return TakeUtf8Symbol(text);
-}
-
-auto Buffer::SymbolWidth(char32_t symbol) const -> int {
-  if (charset_ == Charset::Ascii) {
-    return 1;
-  }
-  int width = Utf8SymbolWidth(symbol);
-  // A symbol with no rendering is drawn as the replacement character, which
-  // takes one column.
-  return width < 0 ? 1 : width;
-}
-
-auto Buffer::MeasureWidth(llvm::StringRef text) const -> int {
-  if (charset_ == Charset::Ascii) {
-    return static_cast<int>(text.size());
-  }
-
-  int width = 0;
-  while (!text.empty()) {
-    width += SymbolWidth(TakeUtf8Symbol(text));
-  }
-  return width;
 }
 
 auto Buffer::height() const -> int {
@@ -204,9 +81,9 @@ auto Buffer::EnsureWidth(int x) -> void {
   int rows = height();
   llvm::SmallVector<Cell, 0> widened(static_cast<size_t>(rows) * width);
   for (int y : llvm::seq(rows)) {
-    llvm::copy(llvm::ArrayRef(cells_).slice(
-                   static_cast<size_t>(y) * width_, width_),
-               widened.begin() + static_cast<size_t>(y) * width);
+    llvm::copy(
+        llvm::ArrayRef(cells_).slice(static_cast<size_t>(y) * width_, width_),
+        widened.begin() + static_cast<size_t>(y) * width);
   }
   cells_ = std::move(widened);
 
@@ -250,7 +127,7 @@ auto Buffer::AttachCombiningMark(int x, int y, char32_t symbol) -> void {
     --base;
   }
 
-  std::array<char, MaxUtf8Bytes> storage;
+  Utf8Storage storage;
   llvm::StringRef encoded = EncodeUtf8(symbol, storage);
   std::string& marks = combining_marks_[CellIndex(base, y)];
   if (marks.size() + encoded.size() > MaxCombiningBytes) {
@@ -261,26 +138,14 @@ auto Buffer::AttachCombiningMark(int x, int y, char32_t symbol) -> void {
 
 auto Buffer::DrawSymbol(int x, int y, char32_t symbol, const Style& style)
     -> DrawEnd {
-  if (charset_ == Charset::Ascii) {
-    if (x >= 0 && y >= 0) {
-      EnsureWidth(x);
-      EnsureRow(y);
-      CellAt(x, y) = {
-          .symbol = IsPrintableAscii(symbol) ? symbol : AsciiReplacement,
-          .style = style};
-    }
-    return {.x = x + 1, .y = y};
-  }
-
-  int width = Utf8SymbolWidth(symbol);
+  // A combining mark takes no column of its own, and renders into the one
+  // before it instead.
+  int width = metrics_.SymbolWidth(symbol);
   if (width == 0) {
     AttachCombiningMark(x, y, symbol);
     return {.x = x, .y = y};
   }
-  if (width < 0) {
-    symbol = Utf8Replacement;
-    width = 1;
-  }
+  symbol = metrics_.RenderedSymbol(symbol);
 
   if (x < 0 || y < 0) {
     return {.x = x + width, .y = y};
@@ -321,8 +186,9 @@ auto Buffer::DrawLine(int x, int y, uint8_t directions, const Style& style)
 
   Cell& cell = CellAt(x, y);
   cell.lines = existing | directions;
-  cell.symbol = charset_ == Charset::Utf8 ? Utf8LineGlyphs[cell.lines]
-                                          : AsciiLineGlyphs[cell.lines];
+  cell.symbol = metrics_.charset() == Charset::Utf8
+                    ? Utf8LineGlyphs[cell.lines]
+                    : AsciiLineGlyphs[cell.lines];
   cell.style = style;
 }
 
@@ -371,13 +237,14 @@ auto Buffer::DrawBox(int x, int y, int box_width, int box_height,
   return {.x = x + box_width, .y = y + box_height};
 }
 
-auto Buffer::DrawText(int x, int y, llvm::StringRef text, const Style& style)
+template <typename PlaceFn>
+auto Buffer::WalkText(int x, int y, llvm::StringRef text, PlaceFn place) const
     -> DrawEnd {
   int cur_x = x;
   int cur_y = y;
 
   while (!text.empty()) {
-    char32_t symbol = TakeSymbol(text);
+    char32_t symbol = metrics_.TakeSymbol(text);
     if (symbol == '\n') {
       cur_x = x;
       ++cur_y;
@@ -390,25 +257,33 @@ auto Buffer::DrawText(int x, int y, llvm::StringRef text, const Style& style)
     if (symbol == '\t') {
       int stop = x + ((cur_x - x) / TabWidth + 1) * TabWidth;
       for (; cur_x < stop; ++cur_x) {
-        DrawSymbol(cur_x, cur_y, ' ', style);
+        place(cur_x, cur_y, U' ');
       }
       continue;
     }
 
-    cur_x = DrawSymbol(cur_x, cur_y, symbol, style).x;
+    cur_x = place(cur_x, cur_y, symbol);
   }
 
   return {.x = cur_x, .y = cur_y};
 }
 
-// Returns whether `c` is a character wrapped text can be broken at. Carriage
-// returns count, so that a CRLF ending breaks only on its newline.
-static auto IsBreakSpace(char c) -> bool {
-  return c == ' ' || c == '\t' || c == '\r';
+auto Buffer::DrawText(int x, int y, llvm::StringRef text, const Style& style)
+    -> DrawEnd {
+  return WalkText(x, y, text, [&](int cur_x, int cur_y, char32_t symbol) {
+    return DrawSymbol(cur_x, cur_y, symbol, style).x;
+  });
 }
 
-auto Buffer::DrawWrappedText(int x, int y, int max_width, llvm::StringRef text,
-                             const Style& style) -> DrawEnd {
+auto Buffer::MeasureText(int x, int y, llvm::StringRef text) const -> DrawEnd {
+  return WalkText(x, y, text, [&](int cur_x, int /*cur_y*/, char32_t symbol) {
+    return cur_x + metrics_.SymbolWidth(symbol);
+  });
+}
+
+template <typename PlaceFn>
+auto Buffer::WalkWrappedText(int x, int y, int max_width, llvm::StringRef text,
+                             PlaceFn place) const -> DrawEnd {
   if (max_width <= 0) {
     return {.x = x, .y = y};
   }
@@ -428,8 +303,8 @@ auto Buffer::DrawWrappedText(int x, int y, int max_width, llvm::StringRef text,
       continue;
     }
 
-    if (IsBreakSpace(text.front())) {
-      llvm::StringRef spaces = text.take_while(IsBreakSpace);
+    if (IsWrapBreak(text.front())) {
+      llvm::StringRef spaces = text.take_while(IsWrapBreak);
       text = text.drop_front(spaces.size());
       // Spaces are dropped wherever they would begin a row, which is what
       // keeps wrapped text aligned with where it started. Carriage returns are
@@ -439,30 +314,46 @@ auto Buffer::DrawWrappedText(int x, int y, int max_width, llvm::StringRef text,
           if (space == '\r' || cur_x >= limit) {
             continue;
           }
-          cur_x = DrawSymbol(cur_x, cur_y, ' ', style).x;
+          cur_x = place(cur_x, cur_y, U' ');
         }
       }
       continue;
     }
 
     llvm::StringRef word =
-        text.take_until([](char c) { return c == '\n' || IsBreakSpace(c); });
+        text.take_until([](char c) { return c == '\n' || IsWrapBreak(c); });
     text = text.drop_front(word.size());
 
     // Move a word that doesn't fit down to the next row. If it doesn't fit
     // there either it overhangs rather than being broken, and the buffer grows
     // to hold it.
-    if (cur_x > x && cur_x + MeasureWidth(word) > limit) {
+    if (cur_x > x && cur_x + metrics_.Width(word) > limit) {
       cur_x = x;
       ++cur_y;
     }
 
     while (!word.empty()) {
-      cur_x = DrawSymbol(cur_x, cur_y, TakeSymbol(word), style).x;
+      cur_x = place(cur_x, cur_y, metrics_.TakeSymbol(word));
     }
   }
 
   return {.x = cur_x, .y = cur_y};
+}
+
+auto Buffer::DrawWrappedText(int x, int y, int max_width, llvm::StringRef text,
+                             const Style& style) -> DrawEnd {
+  return WalkWrappedText(x, y, max_width, text,
+                         [&](int cur_x, int cur_y, char32_t symbol) {
+                           return DrawSymbol(cur_x, cur_y, symbol, style).x;
+                         });
+}
+
+auto Buffer::MeasureWrappedText(int x, int y, int max_width,
+                                llvm::StringRef text) const -> DrawEnd {
+  return WalkWrappedText(x, y, max_width, text,
+                         [&](int cur_x, int /*cur_y*/, char32_t symbol) {
+                           return cur_x + metrics_.SymbolWidth(symbol);
+                         });
 }
 
 auto Buffer::LastVisibleColumn(int y, ColorMode mode) const -> int {
@@ -482,7 +373,7 @@ auto Buffer::LastVisibleColumn(int y, ColorMode mode) const -> int {
 }
 
 auto Buffer::Render(OutputBufferRef out, ColorMode mode) const -> void {
-  std::array<char, MaxUtf8Bytes> storage;
+  Utf8Storage storage;
 
   // The style a terminal starts a row in, and the one each row leaves it in.
   const Style default_style;

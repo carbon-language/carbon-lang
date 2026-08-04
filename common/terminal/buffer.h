@@ -11,6 +11,7 @@
 #include "common/filesystem.h"
 #include "common/terminal/capabilities.h"
 #include "common/terminal/color.h"
+#include "common/terminal/metrics.h"
 #include "common/terminal/output_buffer_ref.h"
 #include "common/terminal/style.h"
 #include "llvm/ADT/DenseMap.h"
@@ -22,10 +23,7 @@ namespace Carbon::Terminal {
 // A grid of styled cells staged for rendering to a terminal.
 //
 // Coordinates are 0-based with (0, 0) at the top left, `x` counting terminal
-// columns and `y` counting rows. Width is fixed at construction to match the
-// terminal, and drawing past it clips. Height grows to fit whatever is drawn,
-// so layout code doesn't need to know how tall its output is before producing
-// it.
+// columns and `y` counting rows.
 //
 // A buffer renders once, top to bottom, the way a compiler writes diagnostics.
 // There is no cursor addressing and nothing is ever redrawn, so a rendered
@@ -53,6 +51,7 @@ namespace Carbon::Terminal {
 //   form C, which still spells out marks for characters that have no
 //   precomposed form, so this comes up in ordinary input. Anything with no
 //   printable rendering, including invalid UTF-8, becomes U+FFFD.
+//
 // A buffer grows to hold whatever is drawn into it, in both directions.
 // Nothing is clipped, so a caller never has to work out how wide its output
 // will be before it starts producing it -- a measuring pass that mirrors the
@@ -66,10 +65,8 @@ class Buffer {
   //
   // Everything that draws returns one, so that a caller placing something
   // after a drawing advances from this rather than measuring the same text a
-  // second time. Measuring and drawing would otherwise have to agree about
-  // every string, and where they don't -- a tab or a newline, which
-  // `MeasureWidth` counts as one column and drawing interprets -- the caller
-  // is silently wrong.
+  // second time. The `Measure` operations return one too, and answer for text
+  // that hasn't been drawn yet what drawing it would answer.
   struct DrawEnd {
     int x;
     int y;
@@ -97,13 +94,34 @@ class Buffer {
   // Returns the number of rows drawn into so far.
   auto height() const -> int;
 
-  auto charset() const -> Charset { return charset_; }
+  auto charset() const -> Charset { return metrics_.charset(); }
 
-  // Returns the columns `text` occupies, measured as text rather than as
-  // something drawn: newlines and tabs count as one column each, where drawing
-  // interprets both. Use the `DrawEnd` a drawing returns to find out where it
-  // actually went; this is for laying out what hasn't been drawn yet.
-  auto MeasureWidth(llvm::StringRef text) const -> int;
+  // Returns how text is measured for this buffer's charset.
+  //
+  // The buffer lays its cells out with this, so a caller deciding where to put
+  // something asks the same thing the drawing will. Most such questions are
+  // about text rather than about a drawing -- how wide a word is, where to cut
+  // a line -- and want this rather than a buffer.
+  auto metrics() const -> Metrics { return metrics_; }
+
+  // Returns where `DrawText` would end for these arguments, without drawing.
+  //
+  // Measuring and drawing walk the text with the same code, differing only in
+  // whether they write a cell, so a layout decision made from this can't
+  // disagree with what drawing then does. Measurement written separately would
+  // have to agree about every string, and the ones it is most likely to get
+  // wrong -- a tab, a newline, a double-width character -- are the ones whose
+  // being wrong is hardest to see.
+  //
+  // This is for text that a tab or a newline makes positional. Text without
+  // either is as wide wherever it is drawn, and `Metrics::Width` answers for
+  // it without a buffer to draw into.
+  auto MeasureText(int x, int y, llvm::StringRef text) const -> DrawEnd;
+
+  // Returns where `DrawWrappedText` would end for these arguments, without
+  // drawing.
+  auto MeasureWrappedText(int x, int y, int max_width,
+                          llvm::StringRef text) const -> DrawEnd;
 
   // Draws `symbol` at (x, y), growing the buffer as needed to reach it.
   //
@@ -219,14 +237,16 @@ class Buffer {
     return cells_[CellIndex(x, y)];
   }
 
-  // Removes the next symbol from `text`, which must not be empty, and returns
-  // it: one byte under `Charset::Ascii`, and one decoded code point under
-  // `Charset::Utf8`.
-  auto TakeSymbol(llvm::StringRef& text) const -> char32_t;
-
-  // Returns the columns `symbol` occupies once drawn, which is what
-  // `DrawSymbol` returns for it.
-  auto SymbolWidth(char32_t symbol) const -> int;
+  // The walks behind the text operations, over which drawing and measuring are
+  // the same code. `place` is called with each symbol and where it goes, and
+  // returns the column after it: `DrawSymbol` when drawing, and the width alone
+  // when measuring.
+  template <typename PlaceFn>
+  auto WalkText(int x, int y, llvm::StringRef text, PlaceFn place) const
+      -> DrawEnd;
+  template <typename PlaceFn>
+  auto WalkWrappedText(int x, int y, int max_width, llvm::StringRef text,
+                       PlaceFn place) const -> DrawEnd;
 
   // Adds rows until row `y` exists.
   auto EnsureRow(int y) -> void;
@@ -250,7 +270,7 @@ class Buffer {
   auto LastVisibleColumn(int y, ColorMode mode) const -> int;
 
   int width_;
-  Charset charset_;
+  Metrics metrics_;
 
   llvm::SmallVector<Cell, 0> cells_;
 

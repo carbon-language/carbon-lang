@@ -103,12 +103,36 @@ cc_test(
 )
 
 cc_library(
+    name = "metrics",
+    srcs = ["metrics.cpp"],
+    hdrs = ["metrics.h"],
+    deps = [
+        ":capabilities",
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "metrics_test",
+    size = "small",
+    srcs = ["metrics_test.cpp"],
+    deps = [
+        ":metrics",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "buffer",
     srcs = ["buffer.cpp"],
     hdrs = ["buffer.h"],
     deps = [
         ":capabilities",
         ":color",
+        ":metrics",
         ":output_buffer_ref",
         ":style",
         "//common:check",
