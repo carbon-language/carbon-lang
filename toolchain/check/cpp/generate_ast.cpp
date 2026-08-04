@@ -832,10 +832,10 @@ auto InitializeCppDomain(
   // Extract the input from the frontend invocation and make sure it makes
   // sense.
   const auto& clang_inputs = invocation->getFrontendOpts().Inputs;
-  CARBON_CHECK(
-      clang_inputs.size() == 1 &&
-      clang_inputs[0].getKind().getLanguage() == clang::Language::CXX &&
-      clang_inputs[0].getKind().getFormat() == clang::InputKind::Source);
+  CARBON_CHECK(clang_inputs.size() == 1);
+  CARBON_CHECK(clang_inputs[0].getKind().getLanguage() == clang::Language::CXX);
+  CARBON_CHECK(clang_inputs[0].getKind().getFormat() ==
+               clang::InputKind::Source);
   llvm::StringRef file_name = clang_inputs[0].getFile();
 
   // Remap the input file to a dummy buffer containing a semicolon to start
