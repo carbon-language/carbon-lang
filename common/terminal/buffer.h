@@ -150,11 +150,12 @@ class Buffer {
 
   // Draws `text` starting at (x, y), wrapping it within `max_width` columns.
   //
-  // Wrapping breaks at ASCII spaces and tabs. A word too long for a row of its
-  // own is moved down and then broken as it is drawn, and a symbol wider than
-  // `max_width` is dropped, since no row could hold it. Spaces are dropped
-  // wherever they would begin a row, including at the start of the text, so
-  // wrapped text stays aligned to `x`.
+  // Wrapping breaks at ASCII spaces and tabs, and only there. A word too long
+  // for a row of its own is moved down to one and then overhangs it: breaking
+  // a path or a type name costs a reader more than the overhang does, and the
+  // buffer grows to hold what overhangs. Spaces are dropped wherever they
+  // would begin a row, including at the start of the text, so wrapped text
+  // stays aligned to `x`.
   //
   // Newlines break the line as they do in `DrawText`, and carriage returns are
   // dropped so that CRLF endings break exactly once. Tabs are break

@@ -450,28 +450,15 @@ auto Buffer::DrawWrappedText(int x, int y, int max_width, llvm::StringRef text,
     text = text.drop_front(word.size());
 
     // Move a word that doesn't fit down to the next row. If it doesn't fit
-    // there either, the loop below breaks it as it draws it.
+    // there either it overhangs rather than being broken, and the buffer grows
+    // to hold it.
     if (cur_x > x && cur_x + MeasureWidth(word) > limit) {
       cur_x = x;
       ++cur_y;
     }
 
     while (!word.empty()) {
-      char32_t symbol = TakeSymbol(word);
-      // Combining marks have no width and must stay with the symbol they
-      // follow, so they never trigger a break.
-      int width = SymbolWidth(symbol);
-      // A symbol too wide for the whole wrap region has no row that could hold
-      // it, and drawing it anyway would run past the region into whatever is
-      // laid out beside it.
-      if (width > max_width) {
-        continue;
-      }
-      if (width > 0 && cur_x > x && cur_x + width > limit) {
-        cur_x = x;
-        ++cur_y;
-      }
-      cur_x = DrawSymbol(cur_x, cur_y, symbol, style).x;
+      cur_x = DrawSymbol(cur_x, cur_y, TakeSymbol(word), style).x;
     }
   }
 

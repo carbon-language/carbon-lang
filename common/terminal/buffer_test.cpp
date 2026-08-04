@@ -417,12 +417,22 @@ TEST(BufferTest, WrappedText) {
             "wrapped.\n");
 }
 
-TEST(BufferTest, WrappedTextBreaksWordsTooLongToFit) {
+TEST(BufferTest, WrappedTextKeepsWordsTooLongToFitWhole) {
+  // Breaking one costs a reader more than the overhang does, so it overhangs
+  // and the buffer grows to hold it.
   Buffer buffer(10, Charset::Ascii);
-  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 5, "abcdefghij", Style()).y, 1);
+  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 5, "abcdefghij", Style()).y, 0);
+  EXPECT_EQ(Render(buffer), "abcdefghij\n");
+}
+
+TEST(BufferTest, WrappedTextStartsAnOverlongWordOnItsOwnRow) {
+  // It still moves down to a row of its own, so the words before it aren't
+  // pushed out of the region with it.
+  Buffer buffer(10, Charset::Ascii);
+  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 5, "ab abcdefghij", Style()).y, 1);
   EXPECT_EQ(Render(buffer),
-            "abcde\n"
-            "fghij\n");
+            "ab\n"
+            "abcdefghij\n");
 }
 
 TEST(BufferTest, WrappedTextIndents) {
@@ -459,26 +469,22 @@ TEST(BufferTest, WrappedTextLineBreaks) {
   EXPECT_EQ(Render(degenerate), "");
 }
 
-TEST(BufferTest, WrappedTextDropsSymbolsWiderThanTheRegion) {
-  // No row in a one-column region could hold a double-width symbol, and
-  // drawing it anyway would run into whatever is laid out beside the region.
+TEST(BufferTest, WrappedTextKeepsSymbolsWiderThanTheRegion) {
+  // No row in a one-column region could hold a double-width symbol. Drawing it
+  // anyway overruns the region, which is what keeping the text costs here.
   Buffer buffer(10, Charset::Utf8);
-  buffer.DrawText(2, 0, "|", Style());
-  buffer.DrawText(2, 1, "|", Style());
   buffer.DrawWrappedText(0, 0, 1, "中中", Style());
-  EXPECT_EQ(Render(buffer),
-            "  |\n"
-            "  |\n");
+  EXPECT_EQ(Render(buffer), "中中\n");
 }
 
 TEST(BufferTest, WrappedTextWithDoubleWidthSymbols) {
-  // Wrapping counts columns, not characters, so a double-width word breaks at
-  // half as many of them.
+  // Wrapping counts columns, not characters, so half as many double-width ones
+  // fit a row.
   Buffer buffer(10, Charset::Utf8);
-  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 4, "中中中", Style()).y, 1);
+  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 4, "中中 中中", Style()).y, 1);
   EXPECT_EQ(Render(buffer),
             "中中\n"
-            "中\n");
+            "中中\n");
 }
 
 TEST(BufferTest, TrailingBlanksAreDropped) {
