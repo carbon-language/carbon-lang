@@ -513,7 +513,8 @@ auto CheckParseTrees(
         continue;
       }
       inputs.push_back({.check_ir_id = unit_info.unit->sem_ir->check_ir_id(),
-                        .filename = unit_info.unit->sem_ir->filename()});
+                        .filename = unit_info.unit->sem_ir->filename(),
+                        .is_lowered = unit_info.unit->is_lowered});
     }
     // TODO: Remove dependence on properties of the first unit here.
     if (auto cpp_domain = InitializeCppDomain(
@@ -534,7 +535,8 @@ auto CheckParseTrees(
       if (auto cpp_domain = InitializeCppDomain(
               unit_info.err_tracker,
               {{.check_ir_id = unit_info.unit->sem_ir->check_ir_id(),
-                .filename = unit_info.unit->sem_ir->filename()}},
+                .filename = unit_info.unit->sem_ir->filename(),
+                .is_lowered = unit_info.unit->is_lowered}},
               fs, unit_info.unit->llvm_context, clang_invocation)) {
         cpp_domains.push_back(std::move(cpp_domain));
         unit_info.cpp_domain = cpp_domains.back().get();

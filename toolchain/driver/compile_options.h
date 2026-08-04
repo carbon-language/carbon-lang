@@ -115,7 +115,6 @@ struct CompileOptions {
   Parse::ParseOptions::DumpFormat parse_dump_format;
   bool builtin_sem_ir = false;
   bool prelude_import = true;
-  bool output_last_input_only = false;
   bool include_carbon_core = true;
 
   llvm::SmallVector<llvm::StringRef> exclude_dump_file_prefixes;

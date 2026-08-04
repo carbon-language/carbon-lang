@@ -28,6 +28,7 @@ struct Unit {
   // The unit's SemIR, provided as empty and filled in by CheckParseTrees.
   SemIR::File* sem_ir;
   llvm::LLVMContext* llvm_context;
+  bool is_lowered;
   // The total number of files.
   int total_ir_count;
 };

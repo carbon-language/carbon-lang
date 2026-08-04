@@ -154,6 +154,7 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
           .timings = timings_ ? &*timings_ : nullptr,
           .sem_ir = &*sem_ir_,
           .llvm_context = llvm_context_,
+          .is_lowered = is_lowered(),
           .total_ir_count = total_ir_count_};
 }
 
@@ -175,6 +176,8 @@ auto CompilationUnit::PostCheck() -> void {
 }
 
 auto CompilationUnit::RunLower() -> void {
+  CARBON_CHECK(is_lowered(), "Should not lower this compilation unit");
+
   LogCall("Lower::LowerToLLVM", "lower", [&] {
     Lower::LowerToLLVMOptions options;
     options.llvm_verifier_stream =
@@ -364,27 +367,10 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
       }
     }
   } else {
-    llvm::SmallString<256> output_filename = llvm::StringRef(output_filename_);
-    if (output_filename.empty()) {
-      if (!source_->is_regular_file()) {
-        // Don't invent file names like `-.o` or `/dev/stdin.o`.
-        // TODO: Consider rephrasing the diagnostic to use the file as the
-        // `Emit` location.
-        CARBON_DIAGNOSTIC(CompileInputNotRegularFile, Error,
-                          "output file name must be specified for input `{0}` "
-                          "that is not a regular file",
-                          std::string);
-        driver_env_->emitter.Emit(CompileInputNotRegularFile, input_filename_);
-        return false;
-      }
-      output_filename = input_filename_;
-      llvm::sys::path::replace_extension(output_filename,
-                                         options_->asm_output ? ".s" : ".o");
-    }
-    CARBON_VLOG("Writing output to: {0}\n", output_filename);
+    CARBON_VLOG("Writing output to: {0}\n", output_filename_);
 
     std::error_code ec;
-    llvm::raw_fd_ostream output_file(output_filename, ec,
+    llvm::raw_fd_ostream output_file(output_filename_, ec,
                                      llvm::sys::fs::OF_None);
     if (ec) {
       // TODO: Consider rephrasing the diagnostic to use the file as the `Emit`
@@ -392,8 +378,8 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
       CARBON_DIAGNOSTIC(CompileOutputFileOpenError, Error,
                         "could not open output file `{0}`: {1}", std::string,
                         std::string);
-      driver_env_->emitter.Emit(CompileOutputFileOpenError,
-                                output_filename.str().str(), ec.message());
+      driver_env_->emitter.Emit(CompileOutputFileOpenError, output_filename_,
+                                ec.message());
       return false;
     }
     if (options_->asm_output) {
@@ -647,6 +633,10 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
 
   // Lower and optimize.
   for (const auto& unit : units_) {
+    if (!unit->is_lowered()) {
+      continue;
+    }
+
     unit->RunLower();
 
     if (options_->phase != CompileOptions::Phase::Lower) {
@@ -662,28 +652,9 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
   CARBON_CHECK(options_->phase == CompileOptions::Phase::CodeGen,
                "CodeGen should be the last stage");
 
-  bool output_last_input_only = options_->output_last_input_only;
-  if (!output_last_input_only && units_.size() > 1 &&
-      !options_->output_filename.empty() && options_->output_filename != "-") {
-    // TODO: Command line structure should change to make this implicit
-    // (passing non-compiling inputs differently), and the warning should be
-    // removed.
-    CARBON_DIAGNOSTIC(
-        CompileMultipleInputsWithOutput, Warning,
-        "only outputting {0} to {1}, skipping output of {2} input "
-        "file{2:s}; pass `--output-last-input-only` to silence this warning",
-        std::string, std::string, Diagnostics::IntAsSelect);
-    driver_env.emitter.Emit(CompileMultipleInputsWithOutput,
-                            units_.back()->input_filename().str(),
-                            options_->output_filename.str(), units_.size() - 1);
-    output_last_input_only = true;
-  }
-
   // Codegen.
-  if (output_last_input_only) {
-    units_.back()->RunCodeGen();
-  } else {
-    for (const auto& unit : units_) {
+  for (const auto& unit : units_) {
+    if (unit->is_lowered()) {
       unit->RunCodeGen();
     }
   }

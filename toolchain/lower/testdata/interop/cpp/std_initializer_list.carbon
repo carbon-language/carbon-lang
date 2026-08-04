@@ -368,7 +368,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.std::initializer_list.64" = type { ptr, i64 }
+// CHECK:STDOUT: %"class.std::initializer_list.6" = type { ptr, i64 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN11vector_likeD2Ev = comdat any
 // CHECK:STDOUT:
@@ -442,7 +442,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %list.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %agg.tmp = alloca %"class.std::initializer_list.64", align 8
+// CHECK:STDOUT:   %agg.tmp = alloca %"class.std::initializer_list.6", align 8
 // CHECK:STDOUT:   store ptr %list, ptr %list.addr, align 8, !tbaa !38
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !41
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !41
@@ -521,7 +521,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN11vector_likeC2ESt16initializer_listIiE(ptr noundef nonnull align 1 dereferenceable(1) %this, ptr %list.coerce0, i64 %list.coerce1) unnamed_addr #2 comdat align 2 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %list = alloca %"class.std::initializer_list.64", align 8
+// CHECK:STDOUT:   %list = alloca %"class.std::initializer_list.6", align 8
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %0 = getelementptr inbounds nuw { ptr, i64 }, ptr %list, i32 0, i32 0
 // CHECK:STDOUT:   store ptr %list.coerce0, ptr %0, align 8
