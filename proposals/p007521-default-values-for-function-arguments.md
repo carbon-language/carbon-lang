@@ -14,30 +14,29 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Abstract](#abstract)
 -   [Problem](#problem)
+    -   [Out of scope](#out-of-scope)
 -   [Background](#background)
-    -   [General Knowledge](#general-knowledge)
     -   [Vocabulary](#vocabulary)
-    -   [Documentation](#documentation)
-        -   [Relevant Prior Proposals](#relevant-prior-proposals)
-        -   [Meeting Discussions](#meeting-discussions)
-        -   [Discord Discussions](#discord-discussions)
-        -   [Leads Questions](#leads-questions)
+    -   [Meeting discussions](#meeting-discussions)
+    -   [Discord discussions](#discord-discussions)
 -   [Proposal](#proposal)
--   [Out of Scope](#out-of-scope)
 -   [Details](#details)
-    -   [Tuple Patterns](#tuple-patterns)
-        -   [Right-To-Left Value Elision](#right-to-left-value-elision)
-        -   [Pattern Matching](#pattern-matching)
-    -   [Struct Patterns](#struct-patterns)
-        -   [Out-Of-Order Elision](#out-of-order-elision)
-        -   [Interaction Between Defaults and Unspecified Structure Members](#interaction-between-defaults-and-unspecified-structure-members)
-        -   [Pattern Matching](#pattern-matching-1)
-    -   [Nesting Parameter Defaults](#nesting-parameter-defaults)
-    -   [Interaction with Function Overloading](#interaction-with-function-overloading)
-    -   [Interaction with Generics](#interaction-with-generics)
+    -   [Tuple patterns](#tuple-patterns)
+        -   [Right-to-left value elision](#right-to-left-value-elision)
+        -   [Pattern matching](#pattern-matching)
+    -   [Struct patterns](#struct-patterns)
+        -   [Out-of-order elision](#out-of-order-elision)
+        -   [Interaction between defaults and unspecified structure members](#interaction-between-defaults-and-unspecified-structure-members)
+        -   [Pattern matching](#pattern-matching-1)
+    -   [Nesting parameter defaults](#nesting-parameter-defaults)
+    -   [Interaction with function overloading](#interaction-with-function-overloading)
+    -   [Interaction with generics](#interaction-with-generics)
     -   [Interaction with `unused`](#interaction-with-unused)
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
+    -   [Defaults only at highest level of nesting](#defaults-only-at-highest-level-of-nesting)
+    -   [Downscope to exclude struct patterns](#downscope-to-exclude-struct-patterns)
+    -   [Default support for local patterns and match alternatives](#default-support-for-local-patterns-and-match-alternatives)
 
 <!-- tocstop -->
 
@@ -86,9 +85,8 @@ statements, so while default values for those are outside of this proposal we mu
 this design does not unnecessarily encumber any future effort in this space.
 
 There are some decisions to make in the modification of Carbon syntax to support this feature,
-discussed in a few [leads questions](#leads-questions) as well as a decision around default
-assignment at the syntactic or semantic parameter level (see [vocabulary](#vocabulary)), tentative
-answers to all of which are discussed in the proposal [details](#details).
+discussed in a few leads questions, tentative answers to all of which are discussed in the proposal
+[details](#details).
 
 ### Out of scope
 
@@ -264,7 +262,7 @@ provided default may be elided, including all members and the entire structure i
 are specified for all named members.
 
 There's a pending leads question [#7529](https://github.com/carbon-language/carbon-lang/issues/7529)
-if we should requre the trailing `= {}` to omit the structure entirely.
+if we should require the trailing `= {}` to omit the structure entirely.
 
 ```carbon
 Long();  // OK, index = 0, key = 0, value = 0
