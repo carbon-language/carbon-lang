@@ -10,11 +10,13 @@
 #include "common/check.h"
 #include "common/map.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringMap.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace clang {
 class CodeGenerator;
 class CompilerInstance;
+class Module;
 class Parser;
 }  // namespace clang
 
@@ -62,10 +64,30 @@ class CppDomain {
     return res.value();
   }
 
+  // Gets the Clang module corresponding to the given Carbon file, if one was
+  // created.
+  auto GetModule(SemIR::CheckIRId check_ir_id) const -> clang::Module* {
+    auto res = modules_.Lookup(check_ir_id);
+    return res ? res.value() : nullptr;
+  }
+
+  // Associates a Clang module with a Carbon file.
+  auto SetModule(SemIR::CheckIRId check_ir_id, clang::Module* module) -> void {
+    auto res = modules_.Insert(check_ir_id, module);
+    CARBON_CHECK(res.is_inserted(), "Duplicate CheckIRId {0} in CppDomain",
+                 check_ir_id);
+  }
+
+  auto header_modules() -> llvm::StringMap<clang::Module*>& {
+    return header_modules_;
+  }
+
  private:
   std::shared_ptr<clang::CompilerInstance> clang_instance_;
   std::unique_ptr<clang::Parser> parser_;
   Map<SemIR::CheckIRId, clang::CodeGenerator*> code_generators_;
+  Map<SemIR::CheckIRId, clang::Module*> modules_;
+  llvm::StringMap<clang::Module*> header_modules_;
   llvm::LLVMContext* llvm_context_ = nullptr;
 };
 

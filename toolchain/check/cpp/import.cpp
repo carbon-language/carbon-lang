@@ -260,6 +260,22 @@ auto FindCorrespondingClangDeclKey(Context& context, SemIR::LocId loc_id,
   }
   CARBON_CHECK(clang_decl_id.has_value());
   auto key = file.clang_decls().Get(clang_decl_id).key;
+
+  // Easy case: files are from the same domain. We can just reuse the decl
+  // pointer.
+  if (context.sem_ir().cpp_file() && file.cpp_file() &&
+      context.sem_ir().cpp_file()->cpp_domain() ==
+          file.cpp_file()->cpp_domain()) {
+    if (key.signature_id.has_value()) {
+      key.signature_id = context.sem_ir().clang_decl_signatures().Add(
+          file.clang_decl_signatures().Get(key.signature_id));
+    }
+    if (ImportCppDecl(context, loc_id, key) != SemIR::ErrorInst::InstId) {
+      return key;
+    }
+    return std::nullopt;
+  }
+
   const auto* decl = key.decl;
   auto* corresponding = FindCorrespondingDecl(context, loc_id, decl);
   if (!corresponding) {

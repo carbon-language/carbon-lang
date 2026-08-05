@@ -159,6 +159,8 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
 
+  // Do this last: this also picks up indirect C++ imports through Carbon
+  // imports.
   ImportCpp(context_, unit_and_imports_->cpp_imports,
             unit_and_imports_->cpp_domain);
 }

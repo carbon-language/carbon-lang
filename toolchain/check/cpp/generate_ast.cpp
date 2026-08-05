@@ -12,6 +12,7 @@
 #include "clang/AST/Mangle.h"
 #include "clang/Basic/DiagnosticParse.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/Module.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
@@ -48,6 +49,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/cpp_file.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/read_only_ast_source.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -80,37 +82,6 @@ static auto AppendInlineCode(Context& context, llvm::raw_ostream& out,
 
   GenerateLineMarker(context, out, line);
   out << code << "\n";
-}
-
-// Generates C++ file contents to #include all requested imports.
-static auto GenerateCppIncludesHeaderCode(
-    Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
-    -> std::string {
-  RawStringOstream code_stream;
-  for (const Parse::Tree::PackagingNames& import : imports) {
-    if (import.inline_body_id.has_value()) {
-      // Expand `import Cpp inline "code";` directly into the specified code.
-      auto code_token = context.parse_tree().node_token(import.inline_body_id);
-      AppendInlineCode(context, code_stream, code_token,
-                       context.string_literal_values().Get(
-                           context.tokens().GetStringLiteralValue(code_token)));
-      // TODO: Inject a clang pragma here to produce an error if there are
-      // unclosed scopes at the end of this inline C++ fragment.
-    } else if (import.library_id.has_value()) {
-      // Translate `import Cpp library "foo.h";` into `#include "foo.h"`.
-      GenerateLineMarker(context, code_stream,
-                         context.tokens().GetLineNumber(
-                             context.parse_tree().node_token(import.node_id)));
-      auto name = context.string_literal_values().Get(import.library_id);
-      if (name.starts_with('<') && name.ends_with('>')) {
-        code_stream << "#include <"
-                    << FormatEscaped(name.drop_front().drop_back()) << ">\n";
-      } else {
-        code_stream << "#include \"" << FormatEscaped(name) << "\"\n";
-      }
-    }
-  }
-  return code_stream.TakeStr();
 }
 
 namespace {
@@ -619,7 +590,8 @@ static auto ParseTopLevelDecls(clang::Parser& parser,
 }
 
 // Generate a Clang module corresponding to the current Carbon file.
-static auto CreateModuleForFile(CppDomain& domain, const SemIR::File& file)
+static auto CreateModuleForCarbonFile(CppDomain& domain,
+                                      const SemIR::File& file)
     -> clang::Module* {
   // TODO: Consider creating a parent module to hold all Carbon modules.
   // Consider naming the module after the package and library rather than using
@@ -628,8 +600,35 @@ static auto CreateModuleForFile(CppDomain& domain, const SemIR::File& file)
                          .getPreprocessor()
                          .getHeaderSearchInfo()
                          .getModuleMap();
-  return module_map.createModule(file.filename(), /*Parent=*/nullptr,
-                                 /*IsFramework=*/false, /*IsExplicit=*/true);
+  auto* module =
+      module_map.createModule(file.filename(), /*Parent=*/nullptr,
+                              /*IsFramework=*/false, /*IsExplicit=*/true);
+  domain.SetModule(file.check_ir_id(), module);
+  return module;
+}
+
+// Generates a Clang module corresponding to the given C++ header name. Note
+// that this is separate from Clang's header -> module mapping. Even if a C++
+// header is imported into Carbon, C++-side #includes of the same header are
+// still treated as textual inclusions.
+// Returns the module and a bool indicating whether it was newly created.
+static auto GetOrCreateModuleForHeader(CppDomain& domain,
+                                       llvm::StringRef header_name)
+    -> std::pair<clang::Module*, bool> {
+  auto [it, added] = domain.header_modules().insert({header_name, nullptr});
+  if (!added) {
+    CARBON_CHECK(it->second);
+    return {it->second, false};
+  }
+
+  auto& module_map = domain.clang_instance()
+                         .getPreprocessor()
+                         .getHeaderSearchInfo()
+                         .getModuleMap();
+  it->second = module_map.createModule(header_name, /*Parent=*/nullptr,
+                                       /*IsFramework=*/false,
+                                       /*IsExplicit=*/true);
+  return {it->second, true};
 }
 
 // Parse the tokens that have been injected into the preprocessor in the given
@@ -659,37 +658,22 @@ static auto InjectBuffer(CppContext& cpp_context, llvm::StringRef contents,
   return file_id;
 }
 
-// Injects code to import the given set of headers into Clang and parses it as
-// top-level declarations.
-static auto ParseImports(Context& context,
-                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
-    -> void {
-  auto* cpp_context = context.cpp_context();
-  CARBON_CHECK(cpp_context);
-
-  // Inject the imports-as-#includes buffer.
-  auto file_id = InjectBuffer(*cpp_context,
-                              GenerateCppIncludesHeaderCode(context, imports),
-                              "<shared cpp imports>", clang::SourceLocation());
-
-  // Enter the module for this file.
-  auto& preprocessor = cpp_context->sema().getPreprocessor();
-  auto* mod = CreateModuleForFile(cpp_context->domain(), context.sem_ir());
-  auto loc = preprocessor.getSourceManager().getLocForStartOfFile(file_id);
+// Instruct the Clang preprocessor and Sema to enter the scope of the given
+// module.
+static auto EnterModule(CppContext& cpp_context, clang::Module* mod,
+                        clang::SourceLocation loc) -> void {
+  auto& preprocessor = cpp_context.sema().getPreprocessor();
   preprocessor.EnterSubmodule(mod, loc, /*ForPragma=*/false);
   preprocessor.EnterAnnotationToken(loc, clang::tok::annot_module_begin, mod);
-
-  ParseInjectedTokens(*cpp_context);
+  ParseInjectedTokens(cpp_context);
 }
 
 // Leave the current Clang module.
-static auto LeaveModule(Context& context, clang::SourceLocation loc) -> void {
+static auto LeaveModule(CppContext& cpp_context, clang::SourceLocation loc)
+    -> void {
   CARBON_CHECK(loc.isValid());
 
-  auto* cpp_context = context.cpp_context();
-  CARBON_CHECK(cpp_context);
-
-  auto& preprocessor = cpp_context->sema().getPreprocessor();
+  auto& preprocessor = cpp_context.sema().getPreprocessor();
   auto* mod = preprocessor.LeaveSubmodule(/*ForPragma=*/false);
   CARBON_CHECK(mod);
 
@@ -698,14 +682,122 @@ static auto LeaveModule(Context& context, clang::SourceLocation loc) -> void {
   // it sees a `module;` directive in the source. So recover from this by
   // leaving modules until we find the preprocessor's module.
   while (true) {
-    auto* sema_mod = cpp_context->sema().getCurrentModule();
+    auto* sema_mod = cpp_context.sema().getCurrentModule();
     CARBON_CHECK(sema_mod, "Sema prematurely exited Carbon module");
 
     preprocessor.EnterAnnotationToken(loc, clang::tok::annot_module_end,
                                       sema_mod);
-    ParseInjectedTokens(*cpp_context);
+    ParseInjectedTokens(cpp_context);
     if (sema_mod == mod) {
       break;
+    }
+  }
+}
+
+// Imports the module `import_mod` into the current Clang state.
+static auto ImportModule(CppContext& cpp_context, clang::Module* import_mod,
+                         clang::SourceLocation loc) -> void {
+  CARBON_CHECK(import_mod);
+  cpp_context.sema().getModuleLoader().makeModuleVisible(
+      import_mod, clang::Module::AllVisible, loc);
+  cpp_context.sema().getPreprocessor().makeModuleVisible(import_mod, loc);
+  cpp_context.sema().makeModuleVisible(import_mod, loc);
+}
+
+// Imports the header specified by the given import declaration.
+static auto ImportHeader(Context& context, clang::Module* mod,
+                         const Parse::Tree::PackagingNames& import) -> void {
+  auto* cpp_context = context.cpp_context();
+  CARBON_CHECK(cpp_context);
+
+  clang::SourceLocation import_loc = GetCppLocation(context, import.node_id);
+
+  // Import the corresponding module.
+  auto name = context.string_literal_values().Get(import.library_id);
+  auto [header_mod, added] =
+      GetOrCreateModuleForHeader(cpp_context->domain(), name);
+
+  // Re-export the header.
+  // TODO: Only do this if the header is `export import`ed. For now we don't
+  // syntactically allow `export` on `import Cpp ...` declarations.
+  mod->Exports.push_back({header_mod, false});
+
+  // If this is the first time we've seen an import of this header, build
+  // the contents of its module now.
+  if (added) {
+    EnterModule(*cpp_context, header_mod, import_loc);
+
+    // The header module re-exports everything it imports.
+    header_mod->Exports.push_back({nullptr, true});
+
+    RawStringOstream code_stream;
+    GenerateLineMarker(context, code_stream,
+                       context.tokens().GetLineNumber(
+                           context.parse_tree().node_token(import.node_id)));
+    if (name.starts_with('<') && name.ends_with('>')) {
+      code_stream << "#include <"
+                  << FormatEscaped(name.drop_front().drop_back()) << ">\n";
+    } else {
+      code_stream << "#include \"" << FormatEscaped(name) << "\"\n";
+    }
+    InjectBuffer(*cpp_context, code_stream.TakeStr(), "<header import>",
+                 clang::SourceLocation());
+    ParseInjectedTokens(*cpp_context);
+
+    LeaveModule(*cpp_context, import_loc);
+  }
+
+  ImportModule(*cpp_context, header_mod, import_loc);
+}
+
+// Injects code to import the given set of headers into Clang and parses it as
+// top-level declarations.
+static auto ParseImports(Context& context,
+                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
+    -> void {
+  auto* cpp_context = context.cpp_context();
+  CARBON_CHECK(cpp_context);
+
+  auto& preprocessor = cpp_context->sema().getPreprocessor();
+  auto filename = context.sem_ir().filename();
+
+  // Enter the module for this file. Generate a placeholder empty buffer so we
+  // can provide a location for entering the module.
+  auto file_id =
+      InjectBuffer(*cpp_context, "", filename, clang::SourceLocation());
+  auto loc = preprocessor.getSourceManager().getLocForStartOfFile(file_id);
+  auto* mod =
+      CreateModuleForCarbonFile(cpp_context->domain(), context.sem_ir());
+  EnterModule(*cpp_context, mod, loc);
+
+  // Import the modules for all the imported IRs.
+  for (const auto& import_ir : context.import_irs().values()) {
+    if (!import_ir.sem_ir) {
+      continue;
+    }
+    if (auto* import_mod =
+            cpp_context->domain().GetModule(import_ir.sem_ir->check_ir_id())) {
+      ImportModule(*cpp_context, import_mod, loc);
+      if (import_ir.is_export) {
+        mod->Exports.push_back({import_mod, false});
+      } else {
+        mod->Imports.push_back(import_mod);
+      }
+    }
+  }
+
+  // For each imported C++ header, generate a module and include the header into
+  // that module. For imported inline code, parse the code directly.
+  for (const Parse::Tree::PackagingNames& import : imports) {
+    if (import.inline_body_id.has_value()) {
+      // `import Cpp inline "foo";` behaves the same as `inline Cpp "foo";`.
+      auto code_token = context.parse_tree().node_token(import.inline_body_id);
+      InjectAstFromInlineCode(
+          context, import.inline_body_id,
+          context.string_literal_values().Get(
+              context.tokens().GetStringLiteralValue(code_token)));
+    } else if (import.library_id.has_value()) {
+      ImportHeader(context, mod, import);
     }
   }
 }
@@ -927,7 +1019,7 @@ auto GenerateAst(Context& context,
   // Set up CppFile for the current SemIR::File.
   context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
       clang_instance, std::move(mangle_context), domain.llvm_context(),
-      domain.GetCodeGenerator(context.sem_ir().check_ir_id())));
+      domain.GetCodeGenerator(context.sem_ir().check_ir_id()), &domain));
 
   // Set up CppContext for the current Context.
   context.set_cpp_context(std::make_unique<CppContext>(
@@ -981,7 +1073,7 @@ auto FinishAst(Context& context) -> void {
   // actually included, and then crash because it picked an invalid location!
   // There is always at least one token in a file with a `Cpp` import, so this
   // location adjustment is safe.
-  LeaveModule(context,
+  LeaveModule(*context.cpp_context(),
               GetCppLocation(context, end_loc_id).getLocWithOffset(-1));
 
   // Finalize the per-Context AST fragment. The final ActOnEndOfTranslationUnit
