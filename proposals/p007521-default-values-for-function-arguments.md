@@ -1,4 +1,4 @@
-# Default Values for Function Arguments
+# Default values for function arguments
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -43,11 +43,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Abstract
 
-Here we discuss the addition of default values for function arguments in Carbon, along
-with limited interoperability support for the same in C++. The proposed Carbon syntax and semantics
-closely emulate C++. We finish with some discussion for future work with general
-support for defaults in other pattern-matching contexts such as local variables and `match`
-alternatives.
+Proposes adding default values for function arguments to Carbon, along with limited interoperability
+support for the same in C++. The proposed syntax and semantics closely emulate C++.
+
+Also outlines future work to provide more general support for defaults in other pattern-matching
+contexts such as local variables and `match` alternatives.
 
 ## Problem
 
@@ -90,7 +90,7 @@ discussed in a few [leads questions](#leads-questions) as well as a decision aro
 assignment at the syntactic or semantic parameter level (see [vocabulary](#vocabulary)), tentative
 answers to all of which are discussed in the proposal [details](#details).
 
-### Out of Scope
+### Out of scope
 
 In order to expedite the implementation work of the C++ interoperability requirements, this
 proposal is deliberately scoped to focus on default values for function arguments. What follows is
@@ -107,15 +107,13 @@ a non-exhaustive list of elements we will not consider for change here:
 
 ## Background
 
-### General Knowledge
-
-Carbon's
-[C++ interoperability goals](/docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code)
-have bearing on this, as this feature is a necessary part of that overall goal.
-
-In addition, readers should have a basic understanding of
-[C++ default arguments](https://en.cppreference.com/cpp/language/default_arguments)
-as this proposed Carbon design largely mirrors this.
+-   Carbon's [C++ interoperability goals](/docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code)
+-   [C++ default arguments](https://en.cppreference.com/cpp/language/default_arguments)
+-   [p5164](/proposals/p005164-updates-to-pattern-matching-for-objects.md) affirmed that
+    `var` must declare a single complete object.
+-   [p1084](/proposals/p001084-generics-details-9-forward-declarations.md) in the associated
+    [PR](https://github.com/carbon-language/carbon-lang/pull/1084) added support for the
+    `where _` syntax when redeclaring constants in generics.
 
 ### Vocabulary
 
@@ -130,17 +128,7 @@ For the scope of this document we define certain terms as follows.
     by the compiler at the function call site when those arguments are not provided by the
     developer.
 
-### Documentation
-
-#### Relevant Prior Proposals
-
--   [p5164](/proposals/p005164-updates-to-pattern-matching-for-objects.md) affirmed that
-    `var` must declare a single complete object.
--   [p1084](/proposals/p001084-generics-details-9-forward-declarations.md) in the associated
-    [PR](https://github.com/carbon-language/carbon-lang/pull/1084) added support for the
-    `where _` syntax when redeclaring constants in generics.
-
-#### Meeting Discussions
+### Meeting discussions
 
 We have discussed this proposal on a few occasions at the Carbon open meetings. Links to the
 minutes for each date and a short summary of the discussions follow:
@@ -157,26 +145,17 @@ minutes for each date and a short summary of the discussions follow:
     Further discussion of semantic versus syntactic defaults support, and some feedback on an early
     draft of this proposal to consider downscoping it back to function default values only.
 
-#### Discord Discussions
+### Discord discussions
 
 -   [2026-07-24](https://discord.com/channels/655572317891461132/748959784815951963/1530303233942229053)
     Some questions and answers around the match process for patterns with defaults, as well as what
     to do with implicit conversions and defaults in structures.
 
-#### Leads Questions
-
-The work on this proposal exposed a few questions for Carbon Leads, enumerated here:
-
--   [#7529](https://github.com/carbon-language/carbon-lang/issues/7529) Do nested patterns with
-    entirely specified default values also need to specify a default value to accept callee elision?
--   [#7530](https://github.com/carbon-language/carbon-lang/issues/7530) Which de-structured name
-    binding form should accept defaults?
-
 ## Proposal
 
 Following any element of either _struct-pattern_ or _tuple-pattern_, the programmer can declare
 an optional default value with the addition of an assignment symbol `=` followed by a
-_value-expression_. Note that Defaults cannot appear in `var` patterns, because the
+_value-expression_. Note that these defaults cannot appear in `var` patterns, because the
 initialization of a `var` pattern must be written in a single place, not interleaved with other
 code.
 
@@ -221,14 +200,14 @@ either repeat the defaults exactly or provide a `= _` in every place a default v
 in the first declaration, following the convention of `where _` for constants established by
 [p1084](https://github.com/carbon-language/carbon-lang/pull/1084).
 
-### Tuple Patterns
+### Tuple patterns
 
 Defaults may be specified as an optional addition for any, all, or none of the elements in a
 _tuple-pattern_, at any level of nesting. However, at any particular level of nesting, if a certain
 element within the _tuple-pattern_ provides a default value, the developers must provide default
 values for every element to the right of that element, or the compiler will issue a diagnostic.
 
-#### Right-To-Left Value Elision
+#### Right-to-left value elision
 
 Default values for _tuple-pattern_ elements work similarly to C++ function argument defaults in that
 the scrutinee may only elide arguments in right-to-left fashion, avoiding the ambiguity of the\
@@ -253,14 +232,14 @@ fn Nested(a: i32, (b: i32, c: i32 = 1), d: i32);
 Nested(1, (2), 3);  // OK, a = 1, b = 2, c = 1, d = 3
 ```
 
-#### Pattern Matching
+#### Pattern matching
 
 During the arity check phase of tuple pattern matching, we can any missing elements to the
 scrutinee, drawing from the extended type of the defaults provided in the _tuple-pattern_.
 Any type or other match issues created by these additions will be caught by further stages in the
 match process.
 
-### Struct Patterns
+### Struct patterns
 
 We also extend default values to elements of the _struct-pattern_. Since the syntax is a bit more
 complex, particularly in the case of the long form, we have a leads question
@@ -277,22 +256,22 @@ fn Long(index: i32 = 0, {.key = k: i32 = 0, .value = v: i32 = 0} = {});
 let Short(index: i32 = 0, {key: i32 = 0, value: i32 = 0} = {});
 ```
 
-There's a pending leads question [#7529](https://github.com/carbon-language/carbon-lang/issues/7529)
-about the trailing `= {}` on both of these examples.
-
-#### Out-Of-Order Elision
+#### Out-of-order elision
 
 In a _struct-pattern_, the right-to-left elision requirements don't apply, as each member has an
 associated name, thus resolving the order ambiguity. This means that any struct element that has a
 provided default may be elided, including all members and the entire structure itself, if defaults
 are specified for all named members.
 
+There's a pending leads question [#7529](https://github.com/carbon-language/carbon-lang/issues/7529)
+if we should requre the trailing `= {}` to omit the structure entirely.
+
 ```carbon
 Long();  // OK, index = 0, key = 0, value = 0
-Short(1, {.value = 3});  // OK, index = 1, k = 0, v = 3
+Short(1, {.value = 3});  // OK, index = 1, key = 0, value = 3
 ```
 
-#### Interaction Between Defaults and Unspecified Structure Members
+#### Interaction between defaults and unspecified structure members
 
 The _struct-pattern_ allows for the addition of a `, _` as the last element in a struct, indicating
 that the scrutinee should match if the struct contains members with names other than those specified
@@ -325,13 +304,13 @@ fn F(index: i32, {key: i32 = 0, value: i32 = 0});
 fn G(index: i32, {key: i32 = 0, value: i32 = 0, _});
 ```
 
-#### Pattern Matching
+#### Pattern matching
 
 For _struct-pattern_, the compiler will supply the default values provided by the pattern for any
 member names that are missing from the scrutinee. As with _tuple-pattern_, we expect the rest of the
 pattern matching process to proceed as designed.
 
-### Nesting Parameter Defaults
+### Nesting parameter defaults
 
 Defaults supplied at different levels of nesting have different implications for pattern matching.
 For example:
@@ -358,7 +337,7 @@ reject the following:
 fn F({a: i32, .b = {_} = {.x = 1}} = {.a = 1, .b = {.x = 2}});  // ERROR, two defaults for .b.x
 ```
 
-### Interaction with Function Overloading
+### Interaction with function overloading
 
 We acknowledge that support for default values in functions, with the accompanying changes in the
 pattern matching system, is adding a form of function overloading support to Carbon. However, the
@@ -367,7 +346,7 @@ are intentionally limiting the scope of this proposal to default values for func
 the sake of expedience. Therefore our hope is that this proposal is minimally disruptive to the
 overall effort.
 
-### Interaction with Generics
+### Interaction with generics
 
 Default values should work as expected with generics, affording the developer the same type
 programming and flexibility they have in the rest of a generic programming. After monomorphization,
