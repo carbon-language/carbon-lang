@@ -534,41 +534,68 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
     }
     if (found_witness_id != poison.witness_id) {
       auto witness_to_impl_id = [&](SemIR::ConstantId witness_id) {
-        auto table_id = context_.constant_values()
-                            .GetInstAs<SemIR::ImplWitness>(witness_id)
-                            .witness_table_id;
-        return context_.insts()
-            .GetAs<SemIR::ImplWitnessTable>(table_id)
-            .impl_id;
+        auto inst = context_.constant_values().GetInst(witness_id);
+        CARBON_KIND_SWITCH(inst) {
+          case CARBON_KIND(SemIR::ImplWitness impl_witness): {
+            auto table_id = impl_witness.witness_table_id;
+            return context_.insts()
+                .GetAs<SemIR::ImplWitnessTable>(table_id)
+                .impl_id;
+          }
+          case CARBON_KIND(SemIR::CustomWitness _): {
+            return SemIR::ImplId::None;
+          }
+          default:
+            CARBON_FATAL("Unsupported entity");
+        }
       };
 
       // We can get the `Impl` from the resulting witness here, which is the
       // `Impl` that conflicts with the previous poison query.
       auto bad_impl_id = witness_to_impl_id(found_witness_id);
-      const auto& bad_impl = context_.impls().Get(bad_impl_id);
-
       auto prev_impl_id = witness_to_impl_id(poison.witness_id);
+      CARBON_CHECK(prev_impl_id.has_value(),
+                   "previous implementation should always have a value");
       const auto& prev_impl = context_.impls().Get(prev_impl_id);
+      if (bad_impl_id.has_value()) {
+        const auto& bad_impl = context_.impls().Get(bad_impl_id);
+        CARBON_DIAGNOSTIC(
+            PoisonedImplLookupConcreteResult, Error,
+            "found `impl` that would change the result of an earlier "
+            "use of `{0} as {1}`",
+            InstIdAsRawType, SpecificInterfaceIdAsRawType);
+        auto builder =
+            emitter_.Build(poison.loc_id, PoisonedImplLookupConcreteResult,
+                           poison.query.query_self_inst_id,
+                           poison.query.query_specific_interface_id);
+        CARBON_DIAGNOSTIC(
+            PoisonedImplLookupConcreteResultNoteBadImpl, Note,
+            "the use would select the `impl` here but it was not found yet");
+        builder.Note(bad_impl.first_decl_id(),
+                     PoisonedImplLookupConcreteResultNoteBadImpl);
+        CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl,
+                          Note, "the use had selected the `impl` here");
+        builder.Note(prev_impl.first_decl_id(),
+                     PoisonedImplLookupConcreteResultNotePreviousImpl);
+        builder.Emit();
+      } else {
+        CARBON_DIAGNOSTIC(
+            PoisonedImplLookupCustomResult, Error,
+            "found `impl` for {0} as {1}, which has a custom witness",
+            InstIdAsRawType, SpecificInterfaceIdAsRawType);
+        CARBON_DIAGNOSTIC(
+            PoisonedImplLookupCustomResultNoteBadImpl, Note,
+            "the use tried to select the `impl` here, but a custom "
+            "witness was already chosen");
 
-      CARBON_DIAGNOSTIC(
-          PoisonedImplLookupConcreteResult, Error,
-          "found `impl` that would change the result of an earlier "
-          "use of `{0} as {1}`",
-          InstIdAsRawType, SpecificInterfaceIdAsRawType);
-      auto builder =
-          emitter_.Build(poison.loc_id, PoisonedImplLookupConcreteResult,
-                         poison.query.query_self_inst_id,
-                         poison.query.query_specific_interface_id);
-      CARBON_DIAGNOSTIC(
-          PoisonedImplLookupConcreteResultNoteBadImpl, Note,
-          "the use would select the `impl` here but it was not found yet");
-      builder.Note(bad_impl.first_decl_id(),
-                   PoisonedImplLookupConcreteResultNoteBadImpl);
-      CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl, Note,
-                        "the use had selected the `impl` here");
-      builder.Note(prev_impl.first_decl_id(),
-                   PoisonedImplLookupConcreteResultNotePreviousImpl);
-      builder.Emit();
+        emitter_
+            .Build(poison.loc_id, PoisonedImplLookupCustomResult,
+                   poison.query.query_self_inst_id,
+                   poison.query.query_specific_interface_id)
+            .Note(prev_impl.first_decl_id(),
+                  PoisonedImplLookupCustomResultNoteBadImpl)
+            .Emit();
+      }
     }
   }
   context_.inst_block_stack().PopAndDiscard();
