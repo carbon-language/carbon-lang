@@ -16,9 +16,10 @@ namespace Carbon::Terminal {
 // The color escape sequences a terminal understands.
 //
 // Colors, like the other text attributes, are selected with Select Graphic
-// Rendition (SGR) escape sequences. The sequence and the codes for the original
-// 16 colors come from ECMA-48, published in parallel as ANSI X3.64; terminal
-// emulators have since extended it with the 256-color and 24-bit forms:
+// Rendition (SGR) escape sequences. The sequence and the codes for the first
+// eight colors come from ECMA-48, published in parallel as ANSI X3.64;
+// terminal emulators added the bright variants, the 256-color palette, and the
+// 24-bit form:
 // https://ecma-international.org/publications-and-standards/standards/ecma-48/
 //
 // These form a ladder: each mode can express everything the modes before it
@@ -37,7 +38,7 @@ enum class ColorMode : int8_t {
   Truecolor,
 };
 
-// The 16 colors with SGR codes of their own, named for ANSI X3.64.
+// The 16 colors with SGR codes of their own.
 //
 // Terminals render these through the user's configured palette, which makes
 // them the right choice for output that should blend with the user's theme.
@@ -122,13 +123,14 @@ class Color : public Printable<Color> {
 
   // Returns the named color. Valid only when `kind()` is `Ansi`.
   auto ansi() const -> AnsiColor {
-    CARBON_DCHECK(kind_ == Kind::Ansi);
+    CARBON_CHECK(kind_ == Kind::Ansi,
+                 "Only a named color has a palette index.");
     return static_cast<AnsiColor>(channels_.r);
   }
 
   // Returns the channel values. Valid only when `kind()` is `Rgb`.
   auto rgb() const -> RgbValue {
-    CARBON_DCHECK(kind_ == Kind::Rgb);
+    CARBON_CHECK(kind_ == Kind::Rgb, "Only an RGB color has channel values.");
     return channels_;
   }
 

@@ -31,33 +31,33 @@ TEST(MetricsTest, Width) {
   EXPECT_EQ(ascii.Width(AcuteE), 3);
 }
 
-TEST(MetricsTest, SymbolWidth) {
+TEST(MetricsTest, CodePointWidth) {
   Metrics utf8(Charset::Utf8);
-  EXPECT_EQ(utf8.SymbolWidth(U'a'), 1);
-  EXPECT_EQ(utf8.SymbolWidth(U'中'), 2);
+  EXPECT_EQ(utf8.CodePointWidth(U'a'), 1);
+  EXPECT_EQ(utf8.CodePointWidth(U'中'), 2);
   // A combining mark renders into the column before it.
-  EXPECT_EQ(utf8.SymbolWidth(U'́'), 0);
+  EXPECT_EQ(utf8.CodePointWidth(U'́'), 0);
   // Something with no rendering is drawn as a replacement, which is a column.
-  EXPECT_EQ(utf8.SymbolWidth(U''), 1);
+  EXPECT_EQ(utf8.CodePointWidth(U''), 1);
 
   Metrics ascii(Charset::Ascii);
-  EXPECT_EQ(ascii.SymbolWidth(U'a'), 1);
-  EXPECT_EQ(ascii.SymbolWidth(U'中'), 1);
-  EXPECT_EQ(ascii.SymbolWidth(U'́'), 1);
+  EXPECT_EQ(ascii.CodePointWidth(U'a'), 1);
+  EXPECT_EQ(ascii.CodePointWidth(U'中'), 1);
+  EXPECT_EQ(ascii.CodePointWidth(U'́'), 1);
 }
 
-TEST(MetricsTest, RenderedSymbol) {
+TEST(MetricsTest, RenderedCodePoint) {
   Metrics utf8(Charset::Utf8);
-  EXPECT_EQ(utf8.RenderedSymbol(U'a'), U'a');
-  EXPECT_EQ(utf8.RenderedSymbol(U'中'), U'中');
-  EXPECT_EQ(utf8.RenderedSymbol(U''), U'�');
+  EXPECT_EQ(utf8.RenderedCodePoint(U'a'), U'a');
+  EXPECT_EQ(utf8.RenderedCodePoint(U'中'), U'中');
+  EXPECT_EQ(utf8.RenderedCodePoint(U''), U'�');
 
   // An ASCII terminal is only given what it draws as itself, because there is
   // no telling what it would draw for anything else.
   Metrics ascii(Charset::Ascii);
-  EXPECT_EQ(ascii.RenderedSymbol(U'a'), U'a');
-  EXPECT_EQ(ascii.RenderedSymbol(U'中'), U'?');
-  EXPECT_EQ(ascii.RenderedSymbol(U''), U'?');
+  EXPECT_EQ(ascii.RenderedCodePoint(U'a'), U'a');
+  EXPECT_EQ(ascii.RenderedCodePoint(U'中'), U'?');
+  EXPECT_EQ(ascii.RenderedCodePoint(U''), U'?');
 }
 
 TEST(MetricsTest, WrapWidth) {
@@ -66,8 +66,7 @@ TEST(MetricsTest, WrapWidth) {
   EXPECT_EQ(utf8.WrapWidth("a bb ccc"), 3);
   EXPECT_EQ(utf8.WrapWidth("  spaced  out  "), 6);
 
-  // Newlines and tabs bound a word as break characters, not as columns of
-  // their own.
+  // Newlines and tabs bound a word without taking columns of their own.
   EXPECT_EQ(utf8.WrapWidth("a\nbb\tccc"), 3);
 
   // A word is measured in the columns it takes, not the bytes it holds.
@@ -91,9 +90,9 @@ TEST(MetricsTest, TakeColumns) {
   EXPECT_EQ(text, "abcde");
 }
 
-TEST(MetricsTest, TakeColumnsKeepsWideSymbolsWhole) {
+TEST(MetricsTest, TakeColumnsKeepsWideCharactersWhole) {
   Metrics utf8(Charset::Utf8);
-  // A symbol that would straddle the end stops the walk before it, so the
+  // A character that would straddle the end stops the walk before it, so the
   // prefix comes back a column short rather than half a character wide.
   llvm::StringRef text = "中中中";
   llvm::StringRef prefix = utf8.TakeColumns(text, 3);
@@ -101,7 +100,7 @@ TEST(MetricsTest, TakeColumnsKeepsWideSymbolsWhole) {
   EXPECT_EQ(utf8.Width(prefix), 2);
   EXPECT_EQ(text, "中中");
 
-  // Asking for exactly what one takes takes it.
+  // A request landing on a character boundary takes the whole prefix.
   text = "中中中";
   EXPECT_EQ(utf8.TakeColumns(text, 4), "中中");
   EXPECT_EQ(text, "中");
@@ -112,19 +111,19 @@ TEST(MetricsTest, TakeColumnsUnderAscii) {
   // run of bytes.
   Metrics ascii(Charset::Ascii);
   llvm::StringRef text = "中";
-  EXPECT_EQ(ascii.TakeColumns(text, 2).size(), 2u);
-  EXPECT_EQ(text.size(), 1u);
+  EXPECT_EQ(ascii.TakeColumns(text, 2).size(), 2U);
+  EXPECT_EQ(text.size(), 1U);
 }
 
-TEST(MetricsTest, TakeSymbolResynchronizesOnInvalidUtf8) {
+TEST(MetricsTest, TakeCodePointResynchronizesOnInvalidUtf8) {
   Metrics utf8(Charset::Utf8);
   // A byte that starts no valid sequence is consumed on its own, so the text
   // after it is still decoded rather than being discarded.
   llvm::StringRef text =
       "\xff"
       "a";
-  EXPECT_EQ(utf8.TakeSymbol(text), U'�');
-  EXPECT_EQ(utf8.TakeSymbol(text), U'a');
+  EXPECT_EQ(utf8.TakeCodePoint(text), U'�');
+  EXPECT_EQ(utf8.TakeCodePoint(text), U'a');
   EXPECT_TRUE(text.empty());
 }
 
@@ -138,6 +137,16 @@ TEST(MetricsTest, EncodeUtf8) {
   // A code point with no encoding of its own becomes the replacement.
   EXPECT_EQ(EncodeUtf8(static_cast<char32_t>(0xd800), storage), "�");
   EXPECT_EQ(EncodeUtf8(static_cast<char32_t>(0x110000), storage), "�");
+}
+
+TEST(MetricsDeathTest, WidthRejectsPositionalCharacters) {
+  // A tab's width is a fact about a drawing rather than about the text, so
+  // answering for one here would be answering a question this can't see the
+  // inputs to.
+  Metrics metrics(Charset::Utf8);
+  EXPECT_DEATH((void)metrics.Width("a\tb"), "Width is only for text whose");
+  EXPECT_DEATH((void)metrics.Width("a\nb"), "Width is only for text whose");
+  EXPECT_DEATH((void)metrics.Width("a\rb"), "Width is only for text whose");
 }
 
 }  // namespace

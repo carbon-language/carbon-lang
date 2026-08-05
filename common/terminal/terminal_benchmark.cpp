@@ -22,11 +22,10 @@ static auto RandomColor(absl::BitGen& bitgen) -> Color {
           absl::Uniform<uint8_t>(bitgen)};
 }
 
-// Benchmarks style transitions using a data-dependency feedback loop where the
-// next style index depends on the bytes written in the previous iteration.
+// Benchmarks style transitions with a store-to-load dependency on the rendered
+// buffer, so each iteration waits on the one before it.
 static void BM_StyleTransition(benchmark::State& state, ColorMode mode) {
-  // We use a somewhat large pool of colors to prevent branch prediction from
-  // learning much about the innards.
+  // A large pool of styles keeps branch prediction from learning the innards.
   constexpr int PoolSize = 1024;
   std::array<Style, PoolSize> styles;
 
@@ -46,17 +45,17 @@ static void BM_StyleTransition(benchmark::State& state, ColorMode mode) {
                     .UnderlineColor(RandomColor(bitgen));
   }
 
-  // We accumulate the style transitions in a reused buffer. This should have a
-  // small overhead per-iteration, but a stable one.
+  // The style transitions accumulate in a reused buffer, for a small but
+  // stable per-iteration overhead.
   llvm::SmallString<1024> str;
 
   int current_idx = 0;
   for (auto _ : state) {
     int next_idx = (current_idx + 1) % PoolSize;
     styles[current_idx].AppendTransitionTo(str, styles[next_idx], mode);
-    // We know that the string is null terminated, and so we can read that byte
-    // to create a data dependency from iteration to iteration. We also block
-    // the optimizer from guessing what this returns.
+    // Reading the string's terminator makes each iteration wait on the store
+    // the one before it made, and blocks the optimizer from guessing the
+    // value.
     uint8_t last_byte = str.c_str()[str.size()];
     benchmark::DoNotOptimize(last_byte);
     current_idx = (next_idx + last_byte) % PoolSize;
@@ -75,8 +74,8 @@ static void BM_BufferRender(benchmark::State& state, ColorMode mode) {
   const int width = state.range(0);
   const int height = state.range(1);
 
-  // Given the significantly larger body of work, we can use a much smaller pool
-  // without worrying about branch prediction skewing results.
+  // Given the significantly larger body of work, a much smaller pool suffices
+  // without branch prediction skewing results.
   constexpr int PoolSize = 16;
   llvm::SmallVector<Buffer, PoolSize> buffers;
 
@@ -105,8 +104,8 @@ static void BM_BufferRender(benchmark::State& state, ColorMode mode) {
 
     for (int y = 0; y < height; ++y) {
       for (int x = 0; x < width; ++x) {
-        buffer.DrawSymbol(x, y, U'A' + absl::Uniform(bitgen, 0, 26),
-                          get_style(x, y));
+        buffer.DrawCodePoint(x, y, U'A' + absl::Uniform(bitgen, 0, 26),
+                             get_style(x, y));
       }
     }
 
@@ -116,16 +115,16 @@ static void BM_BufferRender(benchmark::State& state, ColorMode mode) {
     buffers.push_back(std::move(buffer));
   }
 
-  // We accumulate the rendered output in a reused buffer. This should have a
-  // small overhead per-iteration, but a stable one.
+  // The rendered output accumulates in a reused buffer, for a small but
+  // stable per-iteration overhead.
   llvm::SmallString<1 << 16> str;
 
   int current_idx = 0;
   for (auto _ : state) {
     buffers[current_idx].Render(str, mode);
-    // We know that the string is null terminated, and so we can read that byte
-    // to create a data dependency from iteration to iteration. We also block
-    // the optimizer from guessing what this returns.
+    // Reading the string's terminator makes each iteration wait on the store
+    // the one before it made, and blocks the optimizer from guessing the
+    // value.
     uint8_t last_byte = str.c_str()[str.size()];
     benchmark::DoNotOptimize(last_byte);
     current_idx = (current_idx + 1 + last_byte) % PoolSize;
@@ -198,9 +197,7 @@ static void BM_DrawBox(benchmark::State& state, Charset charset) {
   int y = 0;
   for (auto _ : state) {
     buffer.DrawBox(0, y, BoxWidth, BoxHeight, style);
-    // Placing the next box from the buffer's height makes each iteration wait
-    // on the one before it rather than overlapping with it.
-    y = buffer.height() % (Rows - BoxHeight);
+    y = (y + BoxHeight) % (Rows - BoxHeight);
     benchmark::DoNotOptimize(y);
   }
 }
@@ -220,8 +217,8 @@ static void BM_RenderLineArt(benchmark::State& state, ColorMode mode) {
 
   for (int i = 0; i < PoolSize; ++i) {
     Buffer buffer(Width, Charset::Utf8);
-    // A column of nested boxes, so that the rendered rows are mostly line art
-    // with junctions wherever the boxes meet.
+    // Overlapping boxes offset by a row and two columns each, so the rendered
+    // rows carry line art and junctions wherever the edges cross.
     for (int box = 0; box < 4; ++box) {
       buffer.DrawBox(box * 2, box, BoxWidth + 2 * box, BoxHeight,
                      Style().Foreground(RandomColor(bitgen)));
@@ -234,9 +231,9 @@ static void BM_RenderLineArt(benchmark::State& state, ColorMode mode) {
   int current_idx = 0;
   for (auto _ : state) {
     buffers[current_idx].Render(str, mode);
-    // We know that the string is null terminated, and so we can read that byte
-    // to create a data dependency from iteration to iteration. We also block
-    // the optimizer from guessing what this returns.
+    // Reading the string's terminator makes each iteration wait on the store
+    // the one before it made, and blocks the optimizer from guessing the
+    // value.
     uint8_t last_byte = str.c_str()[str.size()];
     benchmark::DoNotOptimize(last_byte);
     current_idx = (current_idx + 1 + last_byte) % PoolSize;

@@ -6,7 +6,12 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+#include <vector>
+
 #include "common/raw_string_ostream.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/FormatVariadic.h"
 
 namespace Carbon::Terminal {
 namespace {
@@ -46,8 +51,8 @@ TEST(StyleTest, Attributes) {
                     ColorMode::Truecolor),
             "\x1b[3;4:3;7;9m\x1b[58;2;0;255;0m");
 
-  // Every attribute at once, which is as many parameters as one sequence can
-  // carry.
+  // Every attribute at once, which is the most parameters a diff can produce
+  // and the bound `AppendDiff` sizes its array for.
   EXPECT_EQ(Escapes(Style()
                         .Bold()
                         .Dim()
@@ -114,8 +119,8 @@ TEST(StyleTest, TransitionAddsWithoutReset) {
 TEST(StyleTest, TransitionResetsToDrop) {
   Style red_bold = Style().Bold().Foreground(Color(255, 0, 0));
 
-  // SGR can't remove one attribute without a full reset, so dropping bold
-  // costs a reset and a fresh start.
+  // Attributes are removed with a reset and a fresh start rather than SGR's
+  // entangled off-codes, so dropping bold costs both.
   EXPECT_EQ(Transition(red_bold, Style().Foreground(Color(255, 0, 0)),
                        ColorMode::Truecolor),
             "\x1b[0m\x1b[38;2;255;0;0m");
@@ -205,7 +210,7 @@ TEST(StyleTest, Ansi16Transitions) {
                  ColorMode::Ansi16),
       "");
 
-  // Attributes and the 16 colors still transition normally.
+  // The 16 colors still transition normally.
   EXPECT_EQ(Transition(Style().Foreground(AnsiColor::Red),
                        Style().Foreground(AnsiColor::Blue), ColorMode::Ansi16),
             "\x1b[34m");
@@ -246,6 +251,54 @@ TEST(StyleTest, Print) {
                               .Background(Color(1, 2, 3))),
             "Style(dim, italic, underline=Curly, background=#010203, "
             "underline_color=#000001)");
+}
+
+TEST(StyleTest, EveryPairOfStylesHasATransition) {
+  // Every pair of styles has to have a transition, including the ones that
+  // drop an attribute and so need a reset rather than a diff.
+  std::vector<Style> styles = {
+      Style(),
+      Style().Bold(),
+      Style().Dim().Italic(),
+      Style().Reverse().Strikethrough(),
+      Style().Underline(UnderlineShape::Curly),
+      Style().Underline(UnderlineShape::Double).UnderlineColor(AnsiColor::Red),
+      Style().Foreground(AnsiColor::BrightRed).Background(AnsiColor::Black),
+      Style().Foreground(Color(1, 2, 3)).Background(Color(250, 251, 252)),
+      Style()
+          .Bold()
+          .Dim()
+          .Italic()
+          .Reverse()
+          .Strikethrough()
+          .Underline(UnderlineShape::Dashed)
+          .Foreground(Color(9, 9, 9))
+          .Background(AnsiColor::White)
+          .UnderlineColor(Color(4, 5, 6)),
+  };
+  for (ColorMode mode : {ColorMode::NoColor, ColorMode::Ansi16,
+                         ColorMode::Ansi256, ColorMode::Truecolor}) {
+    for (auto [from_index, from] : llvm::enumerate(styles)) {
+      for (auto [to_index, to] : llvm::enumerate(styles)) {
+        std::string out = Transition(from, to, mode);
+        std::string pair =
+            llvm::formatv("{0} -> {1}", from_index, to_index).str();
+        if (mode == ColorMode::NoColor) {
+          // Nothing is said at all when nothing can be shown.
+          EXPECT_TRUE(out.empty()) << pair;
+        } else if (from == to) {
+          // Staying where it already is costs nothing, whatever the mode.
+          EXPECT_TRUE(out.empty()) << pair;
+        } else if (mode == ColorMode::Truecolor) {
+          // Truecolor is the one mode that can express every field, so no two
+          // distinct styles render the same and every step has to say
+          // something. The narrower modes round colors together, so there two
+          // styles can genuinely be one and the transition is empty.
+          EXPECT_FALSE(out.empty()) << pair;
+        }
+      }
+    }
+  }
 }
 
 }  // namespace

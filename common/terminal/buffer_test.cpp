@@ -8,8 +8,10 @@
 
 #include <limits>
 #include <optional>
+#include <string>
 
 #include "common/filesystem.h"
+#include "common/terminal/metrics.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -40,15 +42,19 @@ TEST(BufferTest, Empty) {
 
 TEST(BufferTest, GrowsRowsToFitWhatIsDrawn) {
   Buffer buffer(4, Charset::Ascii);
-  EXPECT_EQ(buffer.DrawSymbol(0, 2, 'x', Style()).x, 1);
+  EXPECT_EQ(buffer.DrawCodePoint(0, 2, 'x', Style()).x, 1);
   EXPECT_EQ(buffer.height(), 3);
   EXPECT_EQ(Render(buffer), "\n\nx\n");
 }
 
-TEST(BufferTest, GrowsColumnsToFitWhatIsDrawn) {
-  Buffer buffer(3, Charset::Ascii);
+TEST(BufferTest, WidthIsTheTargetUntilSomethingOverhangs) {
+  // `width()` tracks `columns()` while everything stays inside it.
+  Buffer buffer(6, Charset::Ascii);
+  EXPECT_EQ(buffer.columns(), 6);
+  EXPECT_EQ(buffer.width(), 6);
   buffer.DrawHorizontalLine(1, 0, 5, Style());
   buffer.DrawVerticalLine(0, 1, 5, Style());
+  EXPECT_EQ(buffer.width(), 6);
   EXPECT_EQ(Render(buffer),
             " -----\n"
             "|\n"
@@ -56,16 +62,16 @@ TEST(BufferTest, GrowsColumnsToFitWhatIsDrawn) {
             "|\n"
             "|\n"
             "|\n");
-  EXPECT_GE(buffer.width(), 6);
-}
 
-TEST(BufferTest, DrawsNothingBeforeItsOrigin) {
-  Buffer buffer(3, Charset::Ascii);
-  // Negative coordinates have nowhere to grow to. The symbols still report the
-  // columns they would have taken, so text walking a row stays in step.
-  EXPECT_EQ(buffer.DrawSymbol(-1, 0, 'a', Style()).x, 0);
-  EXPECT_EQ(buffer.DrawSymbol(0, -1, 'a', Style()).x, 1);
-  EXPECT_EQ(buffer.height(), 0);
+  // Text that starts inside the width can run past it, and a word wrapping
+  // cannot break is the case that produces.
+  Buffer overhang(4, Charset::Ascii);
+  overhang.DrawWrappedText(0, 0, 0, 4, "ab wordthatislong", Style());
+  EXPECT_EQ(overhang.columns(), 4);
+  EXPECT_GE(overhang.width(), 14);
+  EXPECT_EQ(Render(overhang),
+            "ab\n"
+            "wordthatislong\n");
 }
 
 TEST(BufferTest, WidthGrowsAcrossRowsAlreadyDrawn) {
@@ -81,15 +87,32 @@ TEST(BufferTest, WidthGrowsAcrossRowsAlreadyDrawn) {
             "efghij\n");
 }
 
+TEST(BufferTest, GrowthFromEveryStartingWidth) {
+  // Growth runs in steps, so every starting width reaches the same place by a
+  // different route.
+  for (int start : {1, 2, 3, 5, 17}) {
+    Buffer buffer(start, Charset::Utf8);
+    for (int row = 0; row < 4; ++row) {
+      buffer.DrawText(0, row, "abcdefghijklmnopqrstuvwxyz", Style());
+    }
+    EXPECT_EQ(Render(buffer),
+              "abcdefghijklmnopqrstuvwxyz\n"
+              "abcdefghijklmnopqrstuvwxyz\n"
+              "abcdefghijklmnopqrstuvwxyz\n"
+              "abcdefghijklmnopqrstuvwxyz\n")
+        << start;
+  }
+}
+
 TEST(BufferTest, LinesJoinWhereTheyMeet) {
   Buffer buffer(3, Charset::Utf8);
   buffer.DrawHorizontalLine(0, 1, 3, Style());
   buffer.DrawVerticalLine(1, 0, 3, Style());
 
   EXPECT_EQ(Render(buffer),
-            " │\n"
-            "─┼─\n"
-            " │\n");
+            " ╷\n"
+            "╶┼╴\n"
+            " ╵\n");
 }
 
 TEST(BufferTest, LineEndsFormCorners) {
@@ -98,31 +121,29 @@ TEST(BufferTest, LineEndsFormCorners) {
   buffer.DrawVerticalLine(1, 0, 3, Style());
 
   EXPECT_EQ(Render(buffer),
-            " ╭─\n"
+            " ╭╴\n"
             " │\n"
-            " │\n");
+            " ╵\n");
 }
 
 TEST(BufferTest, LinesOnlyJoinWhereTheyOverlap) {
   // A cell's glyph follows from the directions lines leave it in, so joining
   // is a matter of drawing into the same cell rather than of being adjacent.
-  // This keeps drawing order from mattering and keeps text that looks like a
-  // line from being redrawn as one.
   Buffer separate(3, Charset::Utf8);
   separate.DrawHorizontalLine(0, 0, 3, Style());
   separate.DrawVerticalLine(0, 1, 2, Style());
   EXPECT_EQ(Render(separate),
-            "───\n"
-            "│\n"
-            "│\n");
+            "╶─╴\n"
+            "╷\n"
+            "╵\n");
 
   Buffer overlapping(3, Charset::Utf8);
   overlapping.DrawHorizontalLine(0, 0, 3, Style());
   overlapping.DrawVerticalLine(0, 0, 3, Style());
   EXPECT_EQ(Render(overlapping),
-            "╭──\n"
+            "╭─╴\n"
             "│\n"
-            "│\n");
+            "╵\n");
 }
 
 TEST(BufferTest, DrawOrderDoesNotMatter) {
@@ -131,9 +152,9 @@ TEST(BufferTest, DrawOrderDoesNotMatter) {
   vertical_first.DrawHorizontalLine(0, 1, 3, Style());
 
   EXPECT_EQ(Render(vertical_first),
-            " │\n"
-            "─┼─\n"
-            " │\n");
+            " ╷\n"
+            "╶┼╴\n"
+            " ╵\n");
 }
 
 TEST(BufferTest, Tees) {
@@ -151,33 +172,118 @@ TEST(BufferTest, Tees) {
             "╰─┴─╯\n");
 }
 
-TEST(BufferTest, SingleCellLines) {
+TEST(BufferTest, ALineBetweenOneCenterAndItselfIsAPoint) {
+  // A line of one cell between two centers has no length and no direction, so
+  // it is a point. It is still line art, so anything drawn through it later
+  // joins it rather than replacing it.
   Buffer horizontal(3, Charset::Utf8);
   horizontal.DrawHorizontalLine(1, 0, 1, Style());
-  EXPECT_EQ(Render(horizontal), " ─\n");
+  EXPECT_EQ(Render(horizontal), " ·\n");
 
   Buffer vertical(3, Charset::Utf8);
   vertical.DrawVerticalLine(1, 0, 1, Style());
-  EXPECT_EQ(Render(vertical), " │\n");
+  EXPECT_EQ(Render(vertical), " ·\n");
+
+  Buffer joined(3, Charset::Utf8);
+  joined.DrawHorizontalLine(1, 0, 1, Style());
+  joined.DrawHorizontalLine(0, 0, 3, Style());
+  EXPECT_EQ(Render(joined), "╶─╴\n");
+
+  // ASCII has one glyph for everything that isn't a plain segment.
+  Buffer ascii(3, Charset::Ascii);
+  ascii.DrawVerticalLine(1, 0, 1, Style());
+  EXPECT_EQ(Render(ascii), " +\n");
 
   // A line with no length draws nothing at all.
   Buffer empty(3, Charset::Utf8);
   empty.DrawHorizontalLine(0, 0, 0, Style());
-  empty.DrawVerticalLine(0, 0, -1, Style());
+  empty.DrawVerticalLine(0, 0, 0, Style());
   EXPECT_EQ(Render(empty), "");
+}
+
+TEST(BufferTest, LineEndsDecideWhatMeetsThemAtTheEnd) {
+  // A line ending at a center is met with a corner, because the two lines stop
+  // at the same point. One running out through the edge of its last cell is met
+  // with a tee, because it carries on past whatever arrives there.
+  Buffer corner(4, Charset::Utf8);
+  corner.DrawHorizontalLine(0, 0, 3, Style());
+  corner.DrawVerticalLine(2, 0, 2, Style());
+  EXPECT_EQ(Render(corner),
+            "╶─╮\n"
+            "  ╵\n");
+
+  Buffer tee(4, Charset::Utf8);
+  tee.DrawHorizontalLine(0, 0, 3, Style(), LineEnd::Center, LineEnd::Edge);
+  tee.DrawVerticalLine(2, 0, 2, Style());
+  EXPECT_EQ(Render(tee),
+            "╶─┬\n"
+            "  ╵\n");
+
+  // `start` decides the first cell the way `end` decides the last.
+  Buffer edge_start(4, Charset::Utf8);
+  edge_start.DrawHorizontalLine(1, 0, 2, Style(), LineEnd::Edge);
+  EXPECT_EQ(Render(edge_start), " ─╴\n");
+}
+
+TEST(BufferTest, AnEndAtACenterDrawsHalfALine) {
+  // Two half-lines laid end to end show the gap that says they do not connect,
+  // which ASCII cannot draw.
+  Buffer buffer(6, Charset::Utf8);
+  buffer.DrawHorizontalLine(0, 0, 4, Style());
+  buffer.DrawVerticalLine(0, 1, 3, Style());
+  EXPECT_EQ(Render(buffer),
+            "╶──╴\n"
+            "╷\n"
+            "│\n"
+            "╵\n");
+
+  // Two lines that each stop at their own center, laid end to end, are drawn
+  // with the gap between them that says they do not connect.
+  Buffer apart(6, Charset::Utf8);
+  apart.DrawHorizontalLine(0, 0, 2, Style());
+  apart.DrawHorizontalLine(2, 0, 2, Style());
+  EXPECT_EQ(Render(apart), "╶╴╶╴\n");
+
+  // ASCII has nothing to draw half a line with, so there the two read as one.
+  Buffer ascii(6, Charset::Ascii);
+  ascii.DrawHorizontalLine(0, 0, 2, Style());
+  ascii.DrawHorizontalLine(2, 0, 2, Style());
+  EXPECT_EQ(Render(ascii), "----\n");
+}
+
+TEST(BufferTest, AnEdgeToEdgeLineSpansWholeCells) {
+  // Bounding a run of columns is edge to edge: the line covers all of them
+  // rather than stopping halfway into the first and last.
+  Buffer buffer(4, Charset::Utf8);
+  buffer.DrawHorizontalLine(0, 0, 1, Style(), LineEnd::Edge, LineEnd::Edge);
+  buffer.DrawVerticalLine(0, 1, 1, Style(), LineEnd::Edge, LineEnd::Edge);
+  EXPECT_EQ(Render(buffer),
+            "─\n"
+            "│\n");
+
+  // Two edge-to-edge runs that meet end to end read as one line, without
+  // either having to reach into the other's cells.
+  Buffer split(6, Charset::Utf8);
+  split.DrawVerticalLine(0, 0, 2, Style(), LineEnd::Edge, LineEnd::Edge);
+  split.DrawVerticalLine(0, 2, 2, Style(), LineEnd::Edge, LineEnd::Edge);
+  EXPECT_EQ(Render(split),
+            "│\n"
+            "│\n"
+            "│\n"
+            "│\n");
 }
 
 TEST(BufferTest, LinesDrawOverContent) {
   // A line replaces whatever text was in the cell, including both halves of a
-  // double-width symbol it lands on.
+  // double-width character it lands on.
   Buffer over_text(5, Charset::Utf8);
   over_text.DrawText(0, 0, "abcde", Style());
   over_text.DrawHorizontalLine(1, 0, 3, Style());
-  EXPECT_EQ(Render(over_text), "a───e\n");
+  EXPECT_EQ(Render(over_text), "a╶─╴e\n");
 
   Buffer over_wide(5, Charset::Utf8);
   over_wide.DrawText(0, 0, "中中", Style());
-  over_wide.DrawVerticalLine(1, 0, 1, Style());
+  over_wide.DrawVerticalLine(1, 0, 1, Style(), LineEnd::Edge, LineEnd::Edge);
   EXPECT_EQ(Render(over_wide), " │中\n");
 }
 
@@ -203,14 +309,14 @@ TEST(BufferTest, Box) {
   flat.DrawBox(0, 0, 4, 1, Style());
   flat.DrawBox(0, 2, 1, 2, Style());
   EXPECT_EQ(Render(flat),
-            "────\n"
+            "╶──╴\n"
             "\n"
-            "│\n"
-            "│\n");
+            "╷\n"
+            "╵\n");
 
   Buffer degenerate(4, Charset::Utf8);
   degenerate.DrawBox(0, 0, 0, 4, Style());
-  degenerate.DrawBox(0, 0, 4, -1, Style());
+  degenerate.DrawBox(0, 0, 4, 0, Style());
   EXPECT_EQ(Render(degenerate), "");
 }
 
@@ -230,7 +336,7 @@ TEST(BufferTest, Text) {
             "A       B\n"
             "C\n");
 
-  // Empty text still occupies the row it started on.
+  // Drawing nothing ends where it began.
   EXPECT_EQ(buffer.DrawText(0, 0, "", Style()).y, 0);
 }
 
@@ -285,9 +391,9 @@ TEST(BufferTest, AsciiDoesNoUtf8Processing) {
   invalid.DrawText(0, 0, llvm::StringRef("\xc0\x80z", 3), Style());
   EXPECT_EQ(Render(invalid), "??z\n");
 
-  // Every symbol is one column wide, whatever it is.
-  EXPECT_EQ(buffer.DrawSymbol(0, 1, U'中', Style()).x, 1);
-  EXPECT_EQ(buffer.DrawSymbol(1, 1, CombiningAcute, Style()).x, 2);
+  // Every code point is one column wide, whatever it is.
+  EXPECT_EQ(buffer.DrawCodePoint(0, 1, U'中', Style()).x, 1);
+  EXPECT_EQ(buffer.DrawCodePoint(1, 1, CombiningAcute, Style()).x, 2);
   EXPECT_EQ(Render(buffer),
             "a???b\n"
             "??\n");
@@ -305,55 +411,57 @@ TEST(BufferTest, TextInvalidUtf8) {
   EXPECT_EQ(Render(surrogate), "���z\n");
 }
 
-TEST(BufferTest, SymbolsWithNoEncoding) {
-  // Decoding text never yields these, but `DrawSymbol` takes any code point,
+TEST(BufferTest, CodePointsWithNoEncoding) {
+  // Decoding text never yields these, but `DrawCodePoint` takes any code point,
   // including the surrogates and the values past the last one that UTF-8 has no
   // encoding for.
   Buffer buffer(10, Charset::Utf8);
-  EXPECT_EQ(buffer.DrawSymbol(0, 0, static_cast<char32_t>(0xd800), Style()).x,
-            1);
-  EXPECT_EQ(buffer.DrawSymbol(1, 0, static_cast<char32_t>(0xdfff), Style()).x,
-            2);
-  EXPECT_EQ(buffer.DrawSymbol(2, 0, static_cast<char32_t>(0x110000), Style()).x,
-            3);
+  EXPECT_EQ(
+      buffer.DrawCodePoint(0, 0, static_cast<char32_t>(0xd800), Style()).x, 1);
+  EXPECT_EQ(
+      buffer.DrawCodePoint(1, 0, static_cast<char32_t>(0xdfff), Style()).x, 2);
+  EXPECT_EQ(
+      buffer.DrawCodePoint(2, 0, static_cast<char32_t>(0x110000), Style()).x,
+      3);
   EXPECT_EQ(Render(buffer), "���\n");
 }
 
-TEST(BufferTest, DoubleWidthSymbols) {
+TEST(BufferTest, DoubleWidthCharacters) {
   Buffer buffer(6, Charset::Utf8);
   buffer.DrawText(0, 0, "中A🔥", Style());
   EXPECT_EQ(Render(buffer), "中A🔥\n");
-  EXPECT_EQ(buffer.DrawSymbol(0, 1, U'中', Style()).x, 2);
+  EXPECT_EQ(buffer.DrawCodePoint(0, 1, U'中', Style()).x, 2);
 }
 
-TEST(BufferTest, DrawingOverADoubleWidthSymbolErasesAllOfIt) {
-  // Overwriting either half has to erase the whole symbol. Leaving the other
-  // half behind would either duplicate part of a glyph or, for the trailing
-  // half, silently drop a column and misalign everything after it.
+TEST(BufferTest, DrawingOverADoubleWidthCharacterErasesAllOfIt) {
+  // Overwriting either half has to erase the whole character. Either half left
+  // behind misaligns what follows, because the columns the grid counts for the
+  // cell and the ones the terminal paints stop agreeing.
   Buffer over_head(4, Charset::Utf8);
-  over_head.DrawSymbol(0, 0, U'中', Style());
-  over_head.DrawSymbol(0, 0, 'A', Style());
+  over_head.DrawCodePoint(0, 0, U'中', Style());
+  over_head.DrawCodePoint(0, 0, 'A', Style());
   EXPECT_EQ(Render(over_head), "A\n");
 
   Buffer over_tail(4, Charset::Utf8);
-  over_tail.DrawSymbol(0, 0, U'中', Style());
-  over_tail.DrawSymbol(1, 0, 'B', Style());
+  over_tail.DrawCodePoint(0, 0, U'中', Style());
+  over_tail.DrawCodePoint(1, 0, 'B', Style());
   EXPECT_EQ(Render(over_tail), " B\n");
 
-  // The same holds when a double-width symbol lands on another one.
+  // The same holds when a double-width character lands on another one.
   Buffer over_both(6, Charset::Utf8);
-  over_both.DrawSymbol(0, 0, U'中', Style());
-  over_both.DrawSymbol(2, 0, U'中', Style());
-  over_both.DrawSymbol(1, 0, U'国', Style());
+  over_both.DrawCodePoint(0, 0, U'中', Style());
+  over_both.DrawCodePoint(2, 0, U'中', Style());
+  over_both.DrawCodePoint(1, 0, U'国', Style());
   EXPECT_EQ(Render(over_both), " 国\n");
 }
 
-TEST(BufferTest, DoubleWidthSymbolPastTheEdgeTakesBothColumns) {
-  // Splitting one would leave the terminal rendering half a character, so the
-  // buffer grows by both of its columns rather than one.
+TEST(BufferTest, DoubleWidthCharacterInTheLastColumnTakesBothColumns) {
+  // It starts inside the width, and splitting one would leave the terminal
+  // rendering half a character, so it overhangs by a column rather than being
+  // refused.
   Buffer buffer(3, Charset::Utf8);
-  EXPECT_EQ(buffer.DrawSymbol(2, 0, U'中', Style()).x, 4);
-  buffer.DrawSymbol(0, 0, 'a', Style());
+  EXPECT_EQ(buffer.DrawCodePoint(2, 0, U'中', Style()).x, 4);
+  buffer.DrawCodePoint(0, 0, 'a', Style());
   EXPECT_EQ(Render(buffer), "a 中\n");
   EXPECT_GE(buffer.width(), 4);
 }
@@ -365,24 +473,19 @@ TEST(BufferTest, CombiningMarks) {
   buffer.DrawText(0, 0, AcuteE, Style());
   EXPECT_EQ(Render(buffer), AcuteE.str() + "\n");
   EXPECT_EQ(buffer.MeasureText(0, 0, AcuteE).x, 1);
-  EXPECT_EQ(buffer.DrawSymbol(5, 0, CombiningAcute, Style()).x, 5);
-
-  // A mark with nothing before it has nothing to attach to.
-  Buffer orphan(10, Charset::Utf8);
-  orphan.DrawSymbol(0, 0, CombiningAcute, Style());
-  EXPECT_EQ(Render(orphan), "");
+  EXPECT_EQ(buffer.DrawCodePoint(5, 0, CombiningAcute, Style()).x, 5);
 
   // Drawing over the base takes its marks with it.
   Buffer overwritten(10, Charset::Utf8);
   overwritten.DrawText(0, 0, AcuteE, Style());
   overwritten.DrawText(1, 0, "x", Style());
-  overwritten.DrawSymbol(0, 0, 'o', Style());
+  overwritten.DrawCodePoint(0, 0, 'o', Style());
   EXPECT_EQ(Render(overwritten), "ox\n");
 }
 
 TEST(BufferTest, CombiningMarksOnADoubleWidthBase) {
-  // A mark following a double-width symbol arrives at the column past its
-  // continuation, and has to reach back to the symbol itself.
+  // A mark following a double-width character arrives at the column past its
+  // continuation, and has to reach back to the character itself.
   Buffer buffer(10, Charset::Utf8);
   buffer.DrawText(0, 0, ("中" + AcuteE.drop_front(1) + "x").str(), Style());
   EXPECT_EQ(Render(buffer), ("中" + AcuteE.drop_front(1) + "x\n").str());
@@ -407,7 +510,7 @@ TEST(BufferTest, CombiningMarksAreCapped) {
 TEST(BufferTest, WrappedText) {
   Buffer buffer(20, Charset::Ascii);
   EXPECT_EQ(buffer
-                .DrawWrappedText(0, 0, 10,
+                .DrawWrappedText(0, 0, 0, 10,
                                  "This is a long sentence that should be "
                                  "wrapped.",
                                  Style())
@@ -424,81 +527,182 @@ TEST(BufferTest, WrappedText) {
 }
 
 TEST(BufferTest, WrappedTextKeepsWordsTooLongToFitWhole) {
-  // Breaking one costs a reader more than the overhang does, so it overhangs
-  // and the buffer grows to hold it.
+  // A break is a newline in the rendered text, and one inside a word stops it
+  // being copied out in one piece, so the word overhangs the width instead and
+  // the buffer grows to hold it.
   Buffer buffer(10, Charset::Ascii);
-  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 5, "abcdefghij", Style()).y, 0);
+  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 0, 5, "abcdefghij", Style()).y, 0);
   EXPECT_EQ(Render(buffer), "abcdefghij\n");
 }
 
 TEST(BufferTest, WrappedTextStartsAnOverlongWordOnItsOwnRow) {
-  // It still moves down to a row of its own, so the words before it aren't
-  // pushed out of the region with it.
+  // A word too long for any row moves to one of its own anyway, so it overhangs
+  // from the margin rather than from wherever the previous word ended.
   Buffer buffer(10, Charset::Ascii);
-  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 5, "ab abcdefghij", Style()).y, 1);
+  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 0, 5, "ab abcdefghij", Style()).y, 1);
   EXPECT_EQ(Render(buffer),
             "ab\n"
             "abcdefghij\n");
 }
 
+TEST(BufferTest, WrappedSpansShareOneBlock) {
+  // A block whose spans are styled differently is drawn one span at a time,
+  // each continuing where the last ended and all naming the same margin, so
+  // the rows after the first line up with the block rather than with wherever
+  // the span happened to start.
+  Buffer buffer(20, Charset::Ascii);
+  Buffer::DrawEnd end =
+      buffer.DrawWrappedText(2, 0, 2, 12, "plain words", Style());
+  end = buffer.DrawWrappedText(end.x, end.y, 2, 12, " emphasized more",
+                               Style().Bold());
+  buffer.DrawWrappedText(end.x, end.y, 2, 12, " plain again", Style());
+
+  EXPECT_EQ(Render(buffer),
+            "  plain words\n"
+            "  emphasized\n"
+            "  more plain\n"
+            "  again\n");
+}
+
 TEST(BufferTest, WrappedTextIndents) {
-  // Wrapping is relative to where the text starts, which is what lets a
-  // wrapped block sit beside a gutter.
+  // Wrapping is relative to the margin rather than to where the text starts,
+  // which is what lets a wrapped block sit beside a gutter.
   Buffer buffer(12, Charset::Ascii);
   buffer.DrawText(0, 0, "| ", Style());
-  buffer.DrawWrappedText(2, 0, 6, "alpha beta gamma", Style());
+  buffer.DrawWrappedText(2, 0, 2, 6, "alpha beta gamma", Style());
   EXPECT_EQ(Render(buffer),
             "| alpha\n"
             "  beta\n"
             "  gamma\n");
 }
 
+TEST(BufferTest, WrappedTextExpandsTabsToStops) {
+  // A tab advances to the next stop, and one following a newline the text wrote
+  // is indentation and is kept.
+  Buffer buffer(40, Charset::Ascii);
+  buffer.DrawWrappedText(0, 0, 0, 30, "a\tb\nlonger\tc", Style());
+  EXPECT_EQ(Render(buffer),
+            "a       b\n"
+            "longer  c\n");
+
+  // A tab the text wrote after a newline is indentation, and is kept.
+  Buffer indented(40, Charset::Ascii);
+  indented.DrawWrappedText(0, 0, 0, 30, "a\n\tb", Style());
+  EXPECT_EQ(Render(indented),
+            "a\n"
+            "        b\n");
+}
+
+TEST(BufferTest, WrappedTextTabStopsFollowTheMargin) {
+  // Stops are counted from the block's margin rather than from the buffer's
+  // left edge.
+  Buffer buffer(40, Charset::Ascii);
+  buffer.DrawText(0, 0, "| ", Style());
+  buffer.DrawWrappedText(2, 0, 2, 20, "a\tb", Style());
+  EXPECT_EQ(Render(buffer), "| a       b\n");
+}
+
+TEST(BufferTest, WrappedTextBreaksAtTabs) {
+  // A tab is a break opportunity as well as a jump to a stop.
+  Buffer buffer(40, Charset::Ascii);
+  buffer.DrawWrappedText(0, 0, 0, 8, "aaaa\tbbbb", Style());
+  EXPECT_EQ(Render(buffer),
+            "aaaa\n"
+            "bbbb\n");
+
+  // One reaching past the block stops at its edge, so the span after it
+  // continues from there rather than from a stop outside the block.
+  Buffer clipped(40, Charset::Ascii);
+  EXPECT_EQ(clipped.DrawWrappedText(0, 0, 0, 4, "ab\t", Style()),
+            DrawEnd(4, 0));
+}
+
+TEST(BufferTest, TabWidthComesFromCapabilities) {
+  Capabilities capabilities;
+  capabilities.charset = Charset::Ascii;
+  capabilities.tab_width = 4;
+
+  Buffer buffer(capabilities);
+  buffer.DrawText(0, 0, "a\tb", Style());
+  buffer.DrawWrappedText(0, 1, 0, 20, "a\tb", Style());
+  EXPECT_EQ(Render(buffer),
+            "a   b\n"
+            "a   b\n");
+
+  // A terminal claiming stops a buffer can't draw to is clamped rather than
+  // trusted, the same as one claiming an impossible width.
+  capabilities.tab_width = 0;
+  Buffer clamped(capabilities);
+  clamped.DrawText(0, 0, "a\tb", Style());
+  EXPECT_EQ(Render(clamped), "a b\n");
+}
+
+TEST(BufferTest, WrappedTextKeepsTheBreaksItIsGiven) {
+  // Wrapping only adds breaks. Text that arrives wrapped to some other width
+  // keeps that wrapping rather than being reflowed into this one, even where
+  // its lines would fit together.
+  Buffer buffer(40, Charset::Ascii);
+  EXPECT_EQ(
+      buffer.DrawWrappedText(0, 0, 0, 30, "already\nwrapped\nnarrow", Style())
+          .y,
+      2);
+  EXPECT_EQ(Render(buffer),
+            "already\n"
+            "wrapped\n"
+            "narrow\n");
+
+  // A break the text ends with closes its last line, and a row nothing was
+  // drawn into is not a row, so it doesn't also open an empty one.
+  Buffer trailing(40, Charset::Ascii);
+  trailing.DrawWrappedText(0, 0, 0, 30, "one\ntwo\n", Style());
+  EXPECT_EQ(Render(trailing),
+            "one\n"
+            "two\n");
+}
+
 TEST(BufferTest, WrappedTextLineBreaks) {
   // Carriage returns are dropped, so CRLF endings break exactly once.
   Buffer buffer(10, Charset::Ascii);
-  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 10, "a\r\nb", Style()).y, 1);
+  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 0, 10, "a\r\nb", Style()).y, 1);
   EXPECT_EQ(Render(buffer),
             "a\n"
             "b\n");
 
-  // Spaces that would begin a row are dropped, keeping text aligned.
+  // Whitespace stops at the block's edge, so a wrapped row starts at the
+  // margin.
   Buffer spaces(10, Charset::Ascii);
-  spaces.DrawWrappedText(0, 0, 5, "aaaaa     bbbbb", Style());
+  spaces.DrawWrappedText(0, 0, 0, 5, "aaaaa     bbbbb", Style());
   EXPECT_EQ(Render(spaces),
             "aaaaa\n"
             "bbbbb\n");
-
-  // A wrap region with no columns has nowhere to put anything.
-  Buffer degenerate(10, Charset::Ascii);
-  EXPECT_EQ(degenerate.DrawWrappedText(0, 0, 0, "anything", Style()).y, 0);
-  EXPECT_EQ(degenerate.DrawWrappedText(0, 0, -1, "anything", Style()).y, 0);
-  EXPECT_EQ(Render(degenerate), "");
 }
 
-TEST(BufferTest, WrappedTextWithNoWidthToFit) {
-  // A caller with no width to fit passes one no row reaches, which has to wrap
-  // nothing rather than overflow the column it would name.
-  Buffer buffer(10, Charset::Ascii);
-  llvm::StringRef text = "several words that would otherwise wrap";
-  EXPECT_EQ(buffer.DrawWrappedText(3, 0, std::numeric_limits<int>::max(), text,
-                                   Style()),
-            DrawEnd(3 + static_cast<int>(text.size()), 0));
-  EXPECT_EQ(Render(buffer), "   several words that would otherwise wrap\n");
+TEST(BufferTest, WrappedTextFillsTheWidthLeftOfTheMargin) {
+  // A caller with nothing to divide the width between gives the block all of
+  // what is left of it, which is what wrapping to the terminal is.
+  Buffer buffer(20, Charset::Ascii);
+  buffer.DrawText(0, 0, "-> ", Style());
+  buffer.DrawWrappedText(3, 0, 3, buffer.columns() - 3,
+                         "several words that would otherwise fit", Style());
+  EXPECT_EQ(Render(buffer),
+            "-> several words\n"
+            "   that would\n"
+            "   otherwise fit\n");
 }
 
-TEST(BufferTest, WrappedTextKeepsSymbolsWiderThanTheRegion) {
-  // No row in a one-column region could hold a double-width symbol. Drawing it
-  // anyway overruns the region, which is what keeping the text costs here.
+TEST(BufferTest, WrappedTextKeepsCharactersWiderThanTheRegion) {
+  // No row in a one-column region could hold a double-width character. Drawing
+  // it anyway overruns the region, which is what keeping the text costs here.
   Buffer buffer(10, Charset::Utf8);
-  buffer.DrawWrappedText(0, 0, 1, "中中", Style());
+  buffer.DrawWrappedText(0, 0, 0, 1, "中中", Style());
   EXPECT_EQ(Render(buffer), "中中\n");
 }
 
-TEST(BufferTest, WrappedTextWithDoubleWidthSymbols) {
+TEST(BufferTest, WrappedTextWithDoubleWidthCharacters) {
   // Wrapping counts columns, not characters, so half as many double-width ones
   // fit a row.
   Buffer buffer(10, Charset::Utf8);
-  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 4, "中中 中中", Style()).y, 1);
+  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 0, 4, "中中 中中", Style()).y, 1);
   EXPECT_EQ(Render(buffer),
             "中中\n"
             "中中\n");
@@ -515,8 +719,8 @@ TEST(BufferTest, TrailingBlanksAreDropped) {
 TEST(BufferTest, StyledBlanksAreKept) {
   // A blank cell with a background still paints, so it isn't padding.
   Buffer buffer(10, Charset::Ascii);
-  buffer.DrawSymbol(0, 0, 'x', Style());
-  buffer.DrawSymbol(3, 0, ' ', Style().Background(AnsiColor::Red));
+  buffer.DrawCodePoint(0, 0, 'x', Style());
+  buffer.DrawCodePoint(3, 0, ' ', Style().Background(AnsiColor::Red));
   EXPECT_EQ(Render(buffer, ColorMode::Ansi16), "x  \x1b[41m \x1b[0m\n");
 
   // With color off the background paints nothing, so those cells are padding
@@ -527,12 +731,12 @@ TEST(BufferTest, StyledBlanksAreKept) {
 TEST(BufferTest, RenderMinimizesEscapes) {
   Buffer buffer(4, Charset::Ascii);
   Style red_bold = Style().Bold().Foreground(Color(255, 0, 0));
-  buffer.DrawSymbol(0, 0, 'A', red_bold);
+  buffer.DrawCodePoint(0, 0, 'A', red_bold);
   // Sharing the attributes and changing only the color costs one escape.
-  buffer.DrawSymbol(1, 0, 'B', red_bold.Foreground(Color(0, 0, 255)));
+  buffer.DrawCodePoint(1, 0, 'B', red_bold.Foreground(Color(0, 0, 255)));
   // Dropping bold costs a reset and a fresh start.
-  buffer.DrawSymbol(2, 0, 'C', Style().Foreground(Color(0, 0, 255)));
-  buffer.DrawSymbol(3, 0, 'D', Style());
+  buffer.DrawCodePoint(2, 0, 'C', Style().Foreground(Color(0, 0, 255)));
+  buffer.DrawCodePoint(3, 0, 'D', Style());
 
   EXPECT_EQ(Render(buffer, ColorMode::Truecolor),
             "\x1b[1m\x1b[38;2;255;0;0m"
@@ -543,17 +747,6 @@ TEST(BufferTest, RenderMinimizesEscapes) {
             "C"
             "\x1b[0m"
             "D\n");
-}
-
-TEST(BufferTest, RenderEndsRowsWithoutStyle) {
-  // A style left on at the end of a row would bleed into whatever the terminal
-  // prints next.
-  Buffer buffer(4, Charset::Ascii);
-  buffer.DrawSymbol(0, 0, 'A', Style().Background(AnsiColor::Red));
-  buffer.DrawSymbol(0, 1, 'B', Style().Background(AnsiColor::Red));
-  EXPECT_EQ(Render(buffer, ColorMode::Ansi16),
-            "\x1b[41mA\x1b[0m\n"
-            "\x1b[41mB\x1b[0m\n");
 }
 
 TEST(BufferTest, MeasureText) {
@@ -570,8 +763,8 @@ TEST(BufferTest, MeasureText) {
   EXPECT_EQ(utf8.MeasureText(0, 0, "a\r\nb"), DrawEnd(1, 1));
   EXPECT_EQ(utf8.MeasureText(0, 0, "a\tb"), DrawEnd(9, 0));
 
-  // Measuring starts from where it is told to, which is what the tab stops and
-  // the rows a newline returns to are measured from.
+  // Measuring starts from where it is told to, which is the column a newline
+  // returns to and the origin the tab stops count from.
   EXPECT_EQ(utf8.MeasureText(3, 2, "a\tb"), DrawEnd(12, 2));
   EXPECT_EQ(utf8.MeasureText(3, 2, "a\nb"), DrawEnd(4, 3));
 
@@ -584,7 +777,7 @@ TEST(BufferTest, MeasureText) {
 
 TEST(BufferTest, MeasuringMatchesDrawing) {
   // The point of measuring is to answer what drawing would, so check the two
-  // against each other on the text they used to disagree about.
+  // against each other on the text most likely to make them disagree.
   for (llvm::StringRef text :
        {"hello", "a\tb\tc", "a\nb\r\nc", "中A🔥", "a  b", ""}) {
     Buffer buffer(10, Charset::Utf8);
@@ -592,11 +785,12 @@ TEST(BufferTest, MeasuringMatchesDrawing) {
               buffer.DrawText(2, 1, text, Style()))
         << text;
   }
-  for (llvm::StringRef text : {"one two three", "a\nlonger line here",
-                               "verylongunbreakableword", ""}) {
+  for (llvm::StringRef text :
+       {"one two three", "a\nlonger line here", "verylongunbreakableword",
+        "a\tb\tc", "col\tone\nrow\ttwo", ""}) {
     Buffer buffer(10, Charset::Utf8);
-    EXPECT_EQ(buffer.MeasureWrappedText(2, 1, 8, text),
-              buffer.DrawWrappedText(2, 1, 8, text, Style()))
+    EXPECT_EQ(buffer.MeasureWrappedText(2, 1, 2, 8, text),
+              buffer.DrawWrappedText(2, 1, 2, 8, text, Style()))
         << text;
   }
 }
@@ -606,14 +800,18 @@ TEST(BufferTest, WrapWidthIsWhatWrappingDoesNotOverhang) {
   // checked here against the wrapping it describes rather than only in
   // `metrics_test`.
   Buffer buffer(10, Charset::Utf8);
-  llvm::StringRef text = "some quite long words here";
-  int width = buffer.metrics().WrapWidth(text);
-  Buffer drawn(1, Charset::Utf8);
-  drawn.DrawWrappedText(0, 0, width, text, Style());
-  llvm::SmallVector<llvm::StringRef> rows;
-  llvm::StringRef(Render(drawn)).split(rows, '\n');
-  for (llvm::StringRef row : rows) {
-    EXPECT_LE(static_cast<int>(row.size()), width) << row;
+  // Tabs don't widen the answer: one stops at the block's edge rather than
+  // running to a stop outside it, so it can't overhang either.
+  for (llvm::StringRef text :
+       {"some quite long words here", "some\tquite\tlong words here"}) {
+    int width = buffer.metrics().WrapWidth(text);
+    Buffer drawn(width, Charset::Utf8);
+    drawn.DrawWrappedText(0, 0, 0, width, text, Style());
+    llvm::SmallVector<llvm::StringRef> rows;
+    llvm::StringRef(Render(drawn)).split(rows, '\n');
+    for (llvm::StringRef row : rows) {
+      EXPECT_LE(static_cast<int>(row.size()), width) << row;
+    }
   }
 }
 
@@ -623,17 +821,21 @@ TEST(BufferTest, BuiltFromCapabilities) {
   capabilities.charset = Charset::Utf8;
 
   Buffer buffer(capabilities);
-  EXPECT_EQ(buffer.width(), 5);
+  EXPECT_EQ(buffer.columns(), 5);
   EXPECT_EQ(buffer.charset(), Charset::Utf8);
   buffer.DrawHorizontalLine(0, 0, 5, Style());
-  EXPECT_EQ(Render(buffer, capabilities.color_mode), "─────\n");
+  EXPECT_EQ(Render(buffer, capabilities.color_mode), "╶───╴\n");
 
-  // With no width to start from, the buffer starts at nothing and grows, which
-  // is what it would have done past any starting width anyway.
+  // A terminal that said nothing about its width gets one chosen to be safe
+  // wherever the output ends up, rather than no width at all.
   capabilities.columns = std::nullopt;
-  Buffer grown(capabilities);
-  grown.DrawHorizontalLine(0, 0, 5, Style());
-  EXPECT_EQ(Render(grown, capabilities.color_mode), "─────\n");
+  Buffer fallback(capabilities);
+  EXPECT_EQ(fallback.columns(), DefaultColumns);
+
+  // One claiming a width no grid can hold gets the nearest that can be held.
+  capabilities.columns = Buffer::MaxColumns + 1;
+  Buffer clamped(capabilities);
+  EXPECT_EQ(clamped.columns(), Buffer::MaxColumns);
 }
 
 TEST(BufferTest, CombiningMarkPastTheWidthItStartedWith) {
@@ -644,13 +846,142 @@ TEST(BufferTest, CombiningMarkPastTheWidthItStartedWith) {
   EXPECT_EQ(Render(buffer), ("abcde" + AcuteE.drop_front(1) + "\n").str());
 }
 
+TEST(BufferTest, CombiningMarksSurviveGrowthAndOverdraw) {
+  // Marks live in a side table keyed by cell index, so widening has to move
+  // them with the rows and overdrawing has to take them with the cell.
+  for (int start : {1, 2, 3}) {
+    Buffer buffer(start, Charset::Utf8);
+    buffer.DrawText(0, 0, std::string(AcuteE) + "e" + std::string(AcuteE),
+                    Style());
+    buffer.DrawText(0, 1, "xxxxxxxxxxxx", Style());
+    buffer.DrawCodePoint(0, 0, U'z', Style());
+    std::string rendered = Render(buffer);
+    // The mark on the overdrawn cell went with it; the later one stayed.
+    EXPECT_EQ(rendered.substr(0, rendered.find('\n')),
+              "ze" + std::string(AcuteE))
+        << start;
+  }
+}
+
 TEST(BufferTest, CombiningMarkWithNoBase) {
   // Marks render into the column before them, so one at the start of a row has
-  // nowhere to go rather than attaching to the end of the row above.
+  // nowhere to go rather than attaching to the end of the row above. This is
+  // ordinary input rather than a caller mistake -- a source file can open a
+  // line with a mark -- so it is dropped and drawing goes on.
   Buffer buffer(4, Charset::Utf8);
   buffer.DrawText(0, 0, "ab", Style());
   buffer.DrawText(0, 1, AcuteE.drop_front(1).str(), Style());
   EXPECT_EQ(Render(buffer), "ab\n");
+
+  // Nor does it disturb what is already drawn on the row it lands on.
+  Buffer after(4, Charset::Utf8);
+  after.DrawText(0, 0, "ab", Style());
+  after.DrawCodePoint(0, 0, CombiningAcute, Style());
+  EXPECT_EQ(Render(after), "ab\n");
+}
+
+TEST(BufferTest, OverhangStopsAtTheGridBound) {
+  // An overhanging word is the only thing that reaches the grid's far edge, and
+  // how far it reaches is a fact about the text rather than something a caller
+  // could have checked, so it is clipped there rather than being a mistake.
+  // The column still advances past it, which is what keeps measuring and
+  // drawing answering the same thing.
+  Buffer buffer(4, Charset::Ascii);
+  std::string word(Buffer::MaxColumns + 10, 'x');
+  DrawEnd past(Buffer::MaxColumns + 10, 0);
+  EXPECT_EQ(buffer.MeasureWrappedText(0, 0, 0, 4, word), past);
+  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 0, 4, word, Style()), past);
+  EXPECT_EQ(buffer.width(), Buffer::MaxColumns);
+  EXPECT_EQ(buffer.height(), 1);
+}
+
+TEST(BufferTest, ACharacterStraddlingTheGridBoundIsNotDrawn) {
+  // Whether a character fits the far edge depends on how wide it turns out to
+  // be, and half of one is not something a terminal can render, so one
+  // straddling the bound is past it entirely.
+  Buffer buffer(4, Charset::Utf8);
+  std::string word(Buffer::MaxColumns - 1, 'x');
+  word += "中";
+  EXPECT_EQ(buffer.DrawWrappedText(0, 0, 0, 4, word, Style()),
+            DrawEnd(Buffer::MaxColumns + 1, 0));
+  EXPECT_EQ(buffer.width(), Buffer::MaxColumns);
+  // Only the run before it reached the output; the character itself did not.
+  EXPECT_EQ(Render(buffer).size(), static_cast<size_t>(Buffer::MaxColumns));
+}
+
+TEST(BufferTest, APointBoxLeavesALineAlone) {
+  // A point is line art with no directions, so drawing one where a line
+  // already runs adds nothing and leaves the line's own directions in place.
+  Buffer buffer(3, Charset::Utf8);
+  buffer.DrawHorizontalLine(0, 0, 3, Style());
+  buffer.DrawBox(1, 0, 1, 1, Style());
+  EXPECT_EQ(Render(buffer), "╶─╴\n");
+
+  // With nothing there, the point is drawn.
+  Buffer empty(3, Charset::Utf8);
+  empty.DrawBox(1, 0, 1, 1, Style());
+  EXPECT_EQ(Render(empty), " ·\n");
+}
+
+TEST(BufferDeathTest, WidthMustFitTheGrid) {
+  // A width comes from `COLUMNS` by way of `Capabilities`, which clamps it. A
+  // caller reaching this constructor has computed the width itself, so a value
+  // the grid can't hold is a mistake rather than bad input.
+  EXPECT_DEATH(Buffer(0, Charset::Ascii), "Buffer width must be in");
+  EXPECT_DEATH(Buffer(-1, Charset::Ascii), "Buffer width must be in");
+  EXPECT_DEATH(Buffer(Buffer::MaxColumns + 1, Charset::Ascii),
+               "Buffer width must be in");
+}
+
+TEST(BufferDeathTest, DrawingMustStartInsideTheGrid) {
+  // A caller placing something already knows the width, since it is what
+  // decided the layout, so landing outside it is a bug in that layout rather
+  // than something to quietly drop. Rows are checked the same way.
+  Buffer buffer(10, Charset::Ascii);
+  EXPECT_DEATH(buffer.DrawCodePoint(10, 0, 'a', Style()), "is outside the");
+  EXPECT_DEATH(buffer.DrawCodePoint(-1, 0, 'a', Style()), "is outside the");
+  EXPECT_DEATH(buffer.DrawCodePoint(0, -1, 'a', Style()), "is outside the");
+  EXPECT_DEATH(buffer.DrawCodePoint(0, Buffer::MaxRows, 'a', Style()),
+               "is outside the");
+  EXPECT_DEATH(buffer.DrawText(10, 0, "a", Style()), "is outside the");
+  EXPECT_DEATH(buffer.MeasureText(10, 0, "a"), "is outside the");
+}
+
+TEST(BufferDeathTest, LinesMustFitWhatTheyAreDrawnInto) {
+  // Nothing about a line is unbreakable, so unlike text it has no reason to
+  // reach outside the width, and one that does came from a wrong extent.
+  Buffer buffer(10, Charset::Ascii);
+  EXPECT_DEATH(buffer.DrawHorizontalLine(6, 0, 5, Style()), "runs outside the");
+  EXPECT_DEATH(buffer.DrawHorizontalLine(0, 0, -1, Style()),
+               "runs outside the");
+  EXPECT_DEATH(buffer.DrawVerticalLine(0, 0, Buffer::MaxRows + 1, Style()),
+               "runs outside the");
+  EXPECT_DEATH(buffer.DrawBox(0, 0, 11, 2, Style()), "runs outside the");
+}
+
+TEST(BufferDeathTest, WrappedBlocksMustFitTheWidth) {
+  // A block is a division of the width rather than something that can exceed
+  // it, and the text has to start inside the block it wraps in.
+  Buffer buffer(10, Charset::Ascii);
+  EXPECT_DEATH(buffer.DrawWrappedText(0, 0, 0, 11, "a", Style()),
+               "does not fit the");
+  EXPECT_DEATH(buffer.DrawWrappedText(4, 0, 4, 8, "a", Style()),
+               "does not fit the");
+  EXPECT_DEATH(buffer.DrawWrappedText(0, 0, 0, 0, "a", Style()),
+               "does not fit the");
+  EXPECT_DEATH(buffer.DrawWrappedText(2, 0, 4, 6, "a", Style()),
+               "does not fit the");
+  EXPECT_DEATH(buffer.MeasureWrappedText(0, 0, 0, 11, "a"), "does not fit the");
+}
+
+TEST(BufferDeathTest, TextMustBeShortEnoughToMeasure) {
+  // Measuring walks the text adding widths, so a long enough run would carry
+  // the column past what an `int` holds. Text this long was built rather than
+  // read off a line.
+  Buffer buffer(10, Charset::Ascii);
+  std::string huge(Buffer::MaxTextBytes + 1, 'x');
+  EXPECT_DEATH(buffer.DrawText(0, 0, huge, Style()), "is past the");
+  EXPECT_DEATH(buffer.MeasureText(0, 0, huge), "is past the");
 }
 
 TEST(BufferTest, WriteTo) {
@@ -670,7 +1001,29 @@ TEST(BufferTest, WriteTo) {
   auto read_back = dir->ReadFileToString("out");
   ASSERT_TRUE(read_back.ok()) << read_back.error();
   EXPECT_EQ(*read_back, Render(buffer, ColorMode::Ansi16));
-  EXPECT_EQ(*read_back, "\x1b[1mhello\x1b[0m\nworld\n");
+  EXPECT_EQ(*read_back, "\x1b[1mhello\n\x1b[0mworld\n");
+}
+
+TEST(BufferTest, StyleCarriesAcrossRows) {
+  // A style is usually still in use on the row below, so turning it off at the
+  // end of a row and back on at the start of the next costs a reset and a fresh
+  // start for nothing.
+  Buffer buffer(4, Charset::Ascii);
+  buffer.DrawText(0, 0, "ab", Style().Bold());
+  buffer.DrawText(0, 1, "cd", Style().Bold());
+  EXPECT_EQ(Render(buffer, ColorMode::Ansi16), "\x1b[1mab\ncd\x1b[0m\n");
+}
+
+TEST(BufferTest, StyleThatPaintsBlanksStopsAtTheRowEnd) {
+  // A terminal fills the rest of a row with the background it is in when the
+  // row ends, so a style that paints where there is no glyph can't be left on
+  // across the newline the way an attribute that only affects a glyph can.
+  Buffer buffer(4, Charset::Ascii);
+  buffer.DrawText(0, 0, "ab", Style().Background(AnsiColor::Red));
+  buffer.DrawText(0, 1, "cd", Style().Background(AnsiColor::Red));
+  EXPECT_EQ(Render(buffer, ColorMode::Ansi16),
+            "\x1b[41mab\x1b[0m\n"
+            "\x1b[41mcd\x1b[0m\n");
 }
 
 TEST(BufferTest, RenderAppends) {

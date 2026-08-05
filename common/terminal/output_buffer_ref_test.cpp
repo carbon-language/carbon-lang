@@ -46,8 +46,8 @@ TEST(OutputBufferRefTest, NumbersUseEveryDigitCount) {
   EXPECT_THAT(bytes, Eq("0 0 9 9 10 10 99 99 100 100 255 255 "));
 }
 
-// A number takes fewer bytes than it reserves unless it has three digits, so
-// pieces after one in the same call are what catch a misplaced write.
+// A number always writes fewer bytes than it reserves, so pieces after one in
+// the same call are what catch a misplaced write.
 TEST(OutputBufferRefTest, NumbersFollowedByMorePieces) {
   llvm::SmallString<32> bytes;
   OutputBufferRef out = bytes;

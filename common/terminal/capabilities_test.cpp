@@ -6,6 +6,10 @@
 
 #include <gtest/gtest.h>
 
+#include <utility>
+
+#include "common/filesystem.h"
+
 namespace Carbon::Terminal {
 namespace {
 
@@ -161,8 +165,8 @@ TEST(CapabilitiesTest, ColorDepthFromColorterm) {
             ColorMode::Truecolor);
   EXPECT_EQ(OnTerminal({.colorterm = "", .term = "xterm"}), ColorMode::Ansi16);
 
-  // `COLORTERM` describes depth, not whether to use color at all, so it must
-  // not smuggle escape sequences into a redirected stream.
+  // `COLORTERM` can't enable color off a terminal, so a rich value inherited
+  // by a redirected stream can't smuggle escapes into it.
   EXPECT_EQ(OffTerminal({.colorterm = "truecolor", .term = "xterm"}),
             ColorMode::NoColor);
 }
@@ -238,28 +242,45 @@ TEST(CapabilitiesTest, Defaults) {
 }
 
 TEST(CapabilitiesTest, Detect) {
-  // Detection reads the real environment, so this pins only what holds
-  // regardless of it. Tests don't run on a terminal, so there is no width to
-  // find unless `COLUMNS` is exported, and a width that is found is real.
-  for (Filesystem::WriteFileRef stream :
-       {Filesystem::Stdout(), Filesystem::Stderr()}) {
-    Capabilities capabilities = Capabilities::Detect(stream);
-    if (capabilities.columns) {
-      EXPECT_GT(*capabilities.columns, 0);
-    }
-    EXPECT_FALSE(capabilities.is_terminal);
-    EXPECT_EQ(capabilities.color_mode, ColorMode::NoColor);
-  }
+  // Detection reads the process environment and the descriptor it is handed, so
+  // only what neither can change is pinned here. What the policy decides from
+  // given inputs is tested above, against `ChooseColorMode` and `ChooseCharset`
+  // directly.
+  //
+  // It detects against a file rather than the process's own streams: those are
+  // a pipe under the test runner but a terminal under a debugger, and an
+  // exported `FORCE_COLOR` turns color on for either.
+  auto dir = Filesystem::MakeTmpDir();
+  ASSERT_TRUE(dir.ok()) << dir.error();
+  auto file = dir->OpenWriteOnly("out", Filesystem::CreationOptions::CreateNew);
+  ASSERT_TRUE(file.ok()) << file.error();
 
-  EXPECT_EQ(
-      Capabilities::Detect(Filesystem::Stderr(), {.color = Preference::Never,
-                                                  .utf8 = Preference::Never})
-          .color_mode,
+  Capabilities capabilities = Capabilities::Detect(*file);
+  // A file is never a terminal.
+  EXPECT_FALSE(capabilities.is_terminal);
+  // `COLUMNS` reaches detection from the environment, so whether a width is
+  // found depends on it, but one that is found is usable.
+  if (capabilities.columns) {
+    EXPECT_GT(*capabilities.columns, 0);
+  }
+  EXPECT_GT(capabilities.tab_width, 0);
+
+  // A preference decides on its own, whatever the environment holds. Color
+  // forced on picks a depth from the environment, so only that it is on can be
+  // pinned here.
+  EXPECT_EQ(Capabilities::Detect(
+                *file, {.color = Preference::Never, .utf8 = Preference::Never})
+                .color_mode,
+            ColorMode::NoColor);
+  EXPECT_NE(
+      Capabilities::Detect(*file, {.color = Preference::Always}).color_mode,
       ColorMode::NoColor);
-  EXPECT_EQ(
-      Capabilities::Detect(Filesystem::Stderr(), {.utf8 = Preference::Always})
-          .charset,
-      Charset::Utf8);
+  EXPECT_EQ(Capabilities::Detect(*file, {.utf8 = Preference::Always}).charset,
+            Charset::Utf8);
+  EXPECT_EQ(Capabilities::Detect(*file, {.utf8 = Preference::Never}).charset,
+            Charset::Ascii);
+
+  (*std::move(file)).Close().Check();
 }
 
 }  // namespace

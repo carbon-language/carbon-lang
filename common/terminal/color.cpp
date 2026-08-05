@@ -13,7 +13,6 @@
 
 namespace Carbon::Terminal {
 
-// The number of colors in `AnsiColor`.
 static constexpr int AnsiColorCount = 16;
 
 // Reference values for the 16 ANSI colors.
@@ -21,7 +20,7 @@ static constexpr int AnsiColorCount = 16;
 // Nothing standardizes these: a terminal draws them from the user's palette,
 // which is exactly what makes them worth using. But downsampling an RGB color
 // still needs some notion of where each named color sits, so these use the
-// xterm defaults, which most terminals default to as well.
+// xterm defaults, which terminals vary from but stay recognizably near.
 static constexpr std::array<Color::RgbValue, AnsiColorCount> AnsiColorRgbs = {{
     {.r = 0, .g = 0, .b = 0},        // Black
     {.r = 205, .g = 0, .b = 0},      // Red
@@ -47,14 +46,28 @@ static constexpr std::array<llvm::StringRef, AnsiColorCount> AnsiColorNames = {
     "BrightBlack", "BrightRed",     "BrightGreen", "BrightYellow",
     "BrightBlue",  "BrightMagenta", "BrightCyan",  "BrightWhite"};
 
-// Returns the squared Euclidean distance between two colors, treating the
-// channels as orthogonal axes. This is a crude stand-in for perceptual
-// distance, but it is predictable and exact matches always win.
+// Returns the "redmean" distance between two colors, squared and scaled by 256
+// to keep it in integer arithmetic.
+//
+// Treating the channels as orthogonal axes is cheaper but sits a long way from
+// perceived difference, and downsampling is exactly where that shows: a color
+// picked for a diagnostic lands on whichever of a small fixed set the
+// arithmetic says is closest, and a plain Euclidean fit underweights green,
+// where the eye is most sensitive. Redmean weights the
+// channels by where the pair sits on the red axis, which tracks perception far
+// better for a couple of extra multiplies:
+// https://en.wikipedia.org/wiki/Color_difference#sRGB
+//
+// The formula ends in a square root, which is dropped because only the ordering
+// is used. Scaling by 256 turns the two fractional weights into integers; the
+// result peaks just under 150 million, well inside the range.
 static auto DistanceSquared(Color::RgbValue lhs, Color::RgbValue rhs) -> int {
+  int red_mean = (static_cast<int>(lhs.r) + static_cast<int>(rhs.r)) / 2;
   int dr = static_cast<int>(lhs.r) - static_cast<int>(rhs.r);
   int dg = static_cast<int>(lhs.g) - static_cast<int>(rhs.g);
   int db = static_cast<int>(lhs.b) - static_cast<int>(rhs.b);
-  return dr * dr + dg * dg + db * db;
+  return (512 + red_mean) * dr * dr + 1024 * dg * dg +
+         (767 - red_mean) * db * db;
 }
 
 // Returns the ANSI color whose reference value is nearest to `rgb`.
@@ -138,8 +151,8 @@ static auto NearestPaletteIndex(Color::RgbValue rgb) -> uint8_t {
 // The original ANSI codes cover the first eight colors, and the later "bright"
 // codes cover the rest at a fixed offset.
 static auto AnsiSgrCode(AnsiColor color, ColorTarget target) -> uint8_t {
-  CARBON_DCHECK(target != ColorTarget::Underline,
-                "Underline color has no direct ANSI form.");
+  CARBON_CHECK(target != ColorTarget::Underline,
+               "Underline color has no direct ANSI form.");
   int index = static_cast<int>(color);
   int base = target == ColorTarget::Background ? 40 : 30;
   if (index >= 8) {
@@ -169,13 +182,12 @@ auto Color::AppendEscape(OutputBufferRef out, ColorMode mode,
   }
 
   // Underline colors are only expressible through the extended-color escape,
-  // which `Ansi16` doesn't use, so nothing is emitted and the terminal draws
-  // the underline in the foreground color.
+  // which `Ansi16` doesn't use.
   if (target == ColorTarget::Underline && mode == ColorMode::Ansi16) {
     return;
   }
 
-  CARBON_DCHECK(is_set(), "Only a color that is set can be selected.");
+  CARBON_CHECK(is_set(), "Only a color that is set can be selected.");
 
   if (kind_ == Kind::Ansi) {
     if (target == ColorTarget::Underline) {

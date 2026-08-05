@@ -76,6 +76,7 @@ cc_test(
         "//common:raw_string_ostream",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -147,7 +148,23 @@ cc_test(
     srcs = ["buffer_test.cpp"],
     deps = [
         ":buffer",
+        ":metrics",
         "//common:filesystem",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "pressure_test",
+    size = "small",
+    srcs = ["pressure_test.cpp"],
+    deps = [
+        ":buffer",
+        ":capabilities",
+        ":metrics",
+        ":style",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",

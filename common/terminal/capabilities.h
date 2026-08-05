@@ -129,10 +129,32 @@ auto ChooseColorMode(Preference preference, const ColorEnvironment& env,
 // the other way only makes output plainer.
 auto ChooseCharset(Preference preference, llvm::StringRef locale) -> Charset;
 
+// The width to lay out for when nothing says how wide the output is.
+//
+// Layout always has a width to fit, because the alternative is output laid out
+// as if nothing bounded it, which a terminal then wraps at column zero --
+// breaking every indent and gutter it was given, and in the middle of whatever
+// word it lands on. The cost of guessing is asymmetric: a viewer wider than
+// this sees slack on the right, while one narrower sees the wrapping done
+// twice, ours and then its own.
+//
+// Eighty is the traditional terminal width, and narrower ones are rare enough
+// that fitting them would cost more in wasted width everywhere else.
+inline constexpr int DefaultColumns = 80;
+
+// The columns between tab stops, absent anything saying otherwise.
+//
+// Eight is the interval terminfo records as `it#8` for all but a handful of
+// legacy entries. Unlike a terminal's width, it is worth defaulting rather than
+// leaving unknown, since text with a tab in it has to be given some width to be
+// laid out at all.
+inline constexpr int DefaultTabWidth = 8;
+
 // What the terminal behind a stream can render, and how wide it is.
 //
-// Detect this once per stream at startup and pass it down; each field is an
-// environment query or a system call that shouldn't be repeated per diagnostic.
+// Detect this once per stream at startup and pass it down; the fields come from
+// environment queries and system calls that shouldn't be repeated per
+// diagnostic.
 struct Capabilities {
   // Detects the capabilities of the terminal behind `file`, honoring
   // `preferences`.
@@ -157,12 +179,23 @@ struct Capabilities {
   // The terminal's width, or none when nothing says how wide the output is.
   // Positive whenever it is set, so layout can divide by it freely.
   //
-  // There is deliberately no width to fall back on. One that was invented
-  // rather than measured is a claim about the far end of a pipe that nobody
-  // made, and laying out for it wraps and cuts where nothing needed either.
-  // Output with no width to fit is laid out as if nothing bounded it, which
-  // leaves the wrapping to whatever ends up displaying it.
+  // This says what was measured, and nothing is invented to fill it in: an
+  // absence is a real answer about a pipe nobody described. Laying out still
+  // needs a width, and `DefaultColumns` is what a layout falls back to, so
+  // whether this is set decides whether output is fitted to the terminal in
+  // front of it or to a width chosen to be safe wherever it ends up.
   std::optional<int> columns;
+
+  // The columns between the terminal's tab stops, which is what a tab in text
+  // advances to the next of.
+  //
+  // TODO: Nothing sets this away from `DefaultTabWidth`. A terminal's stops are
+  // mutable at runtime -- `hts` sets one and `tbc` clears them -- so the only
+  // report of the live ones is `DECRQPSR`, which few emulators outside `xterm`
+  // answer, or a `DSR-CPR` round trip after writing a tab, which nearly all do.
+  // Either means putting the descriptor in raw mode and reading a reply with a
+  // timeout. Add it when a terminal that disagrees with eight is worth that.
+  int tab_width = DefaultTabWidth;
 };
 
 }  // namespace Carbon::Terminal

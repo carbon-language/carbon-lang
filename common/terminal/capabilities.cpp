@@ -64,9 +64,8 @@ static auto EnvironmentEnablesColor(const ColorEnvironment& env,
   // terminal that none of them describe can't be assumed to.
   //
   // `COLORTERM` and `TERM_PROGRAM` stand on their own rather than refining
-  // `TERM`, because the emulator sets them itself and they are specifically
-  // about color, while `TERM` is left unset by anything not launched from a
-  // shell.
+  // `TERM`: `TERM` names a terminfo entry, while these name the emulator and
+  // the color it handles.
   return !env.term.empty() || !env.colorterm.empty() ||
          !env.term_program.empty();
 }

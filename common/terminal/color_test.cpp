@@ -20,8 +20,9 @@ auto Escape(Color color, ColorMode mode,
 }
 
 TEST(ColorTest, AnsiEscapes) {
-  // Named colors use the original SGR codes in every mode that has color at
-  // all, so the terminal renders them from the user's palette.
+  // Named colors use their own SGR codes rather than the extended forms, in
+  // every mode that has color at all, so the terminal renders them from the
+  // user's palette.
   for (ColorMode mode :
        {ColorMode::Ansi16, ColorMode::Ansi256, ColorMode::Truecolor}) {
     EXPECT_EQ(Escape(AnsiColor::Red, mode), "\x1b[31m");
@@ -47,8 +48,8 @@ TEST(ColorTest, RgbEscapes) {
 }
 
 TEST(ColorTest, UnderlineEscapes) {
-  // Underline colors only exist in the extended-color escapes, so `Ansi16`
-  // leaves the underline in the terminal's default rather than approximating.
+  // Underline colors only exist in the extended-color escapes, so in `Ansi16`
+  // the terminal draws the underline in the foreground color.
   EXPECT_EQ(
       Escape(AnsiColor::Red, ColorMode::Truecolor, ColorTarget::Underline),
       "\x1b[58;5;1m");

@@ -52,16 +52,22 @@ auto Style::NeedsResetFrom(const Style& from) const -> bool {
 
 auto Style::AppendDiff(OutputBufferRef out, ColorMode mode,
                        const Style& from) const -> void {
-  CARBON_DCHECK(!NeedsResetFrom(from),
-                "Cannot reach this style from `from` without a reset.");
+  CARBON_CHECK(!NeedsResetFrom(from),
+               "Cannot reach this style from `from` without a reset.");
 
   // Attributes combine into a single SGR sequence, in ascending code order.
+  // Every write goes through `add` so the bound is checked in one place.
   std::array<llvm::StringRef, 6> params;
   int param_count = 0;
+  auto add = [&](llvm::StringRef param) {
+    CARBON_CHECK(param_count < static_cast<int>(params.size()),
+                 "More SGR parameters than the {0} there is room for.",
+                 params.size());
+    params[param_count++] = param;
+  };
   auto add_if = [&](bool from_set, bool to_set, llvm::StringRef param) {
     if (to_set && !from_set) {
-      CARBON_DCHECK(param_count < static_cast<int>(params.size()));
-      params[param_count++] = param;
+      add(param);
     }
   };
   add_if(from.bold_, bold_, "1");
@@ -69,7 +75,11 @@ auto Style::AppendDiff(OutputBufferRef out, ColorMode mode,
   add_if(from.italic_, italic_, "3");
   llvm::StringRef underline_param = UnderlineSgrParam(underline_shape_, mode);
   if (underline_param != UnderlineSgrParam(from.underline_shape_, mode)) {
-    params[param_count++] = underline_param;
+    // Turning an underline off needs a reset, which is the caller's to do, so
+    // reaching here with nothing to select would emit an empty parameter.
+    CARBON_CHECK(!underline_param.empty(),
+                 "Removing an underline cannot be done with a diff.");
+    add(underline_param);
   }
   add_if(from.reverse_, reverse_, "7");
   add_if(from.strikethrough_, strikethrough_, "9");
@@ -95,7 +105,8 @@ auto Style::AppendDiff(OutputBufferRef out, ColorMode mode,
 
 auto Style::AppendColorTransitionTo(OutputBufferRef out, const Style& target,
                                     ColorMode mode) const -> void {
-  CARBON_DCHECK(mode != ColorMode::NoColor);
+  CARBON_CHECK(mode != ColorMode::NoColor,
+               "Color transitions are only reached when color is in use.");
   if (*this == target) {
     return;
   }

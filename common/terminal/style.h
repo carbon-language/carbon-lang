@@ -22,8 +22,7 @@ namespace Carbon::Terminal {
 // Only `Single` is universally understood. The rest are selected with
 // colon-separated subparameters of the Select Graphic Rendition (SGR)
 // underline code, which terminals limited to 16 colors mishandle, so in that
-// mode they degrade to `Single` rather than disappearing, and an underline
-// always marks what it was meant to mark.
+// mode they degrade to `Single` rather than disappearing.
 enum class UnderlineShape : int8_t {
   None,
   Single,
@@ -69,36 +68,36 @@ class Style : public Printable<Style> {
     return result;
   }
 
-  // Returns this style with the bold attribute set.
+  // Returns this style with the bold attribute set to `value`.
   auto Bold(bool value = true) const -> Style {
     Style result = *this;
     result.bold_ = value;
     return result;
   }
 
-  // Returns this style with the dim (faint) attribute set.
+  // Returns this style with the dim (faint) attribute set to `value`.
   auto Dim(bool value = true) const -> Style {
     Style result = *this;
     result.dim_ = value;
     return result;
   }
 
-  // Returns this style with the italic attribute set.
+  // Returns this style with the italic attribute set to `value`.
   auto Italic(bool value = true) const -> Style {
     Style result = *this;
     result.italic_ = value;
     return result;
   }
 
-  // Returns this style with reverse video set, which has the terminal swap
-  // foreground and background when it renders.
+  // Returns this style with reverse video set to `value`, which has the
+  // terminal swap foreground and background when it renders.
   auto Reverse(bool value = true) const -> Style {
     Style result = *this;
     result.reverse_ = value;
     return result;
   }
 
-  // Returns this style with the strikethrough attribute set.
+  // Returns this style with the strikethrough attribute set to `value`.
   auto Strikethrough(bool value = true) const -> Style {
     Style result = *this;
     result.strikethrough_ = value;
@@ -123,7 +122,6 @@ class Style : public Printable<Style> {
     return result;
   }
 
-  // These return an unset color where the style leaves one to the terminal.
   auto foreground() const -> Color { return foreground_; }
   auto background() const -> Color { return background_; }
   auto underline_color() const -> Color { return underline_color_; }
@@ -140,9 +138,9 @@ class Style : public Printable<Style> {
   // Returns whether this style paints anything where there is no glyph.
   //
   // Attributes that only affect a glyph's own pixels, such as the foreground
-  // color or weight, are invisible on a blank cell. A background color,
-  // reverse video, an underline, or a strikethrough all paint the cell itself.
-  // Rendering uses this to decide which trailing blanks can be dropped.
+  // color or weight, are invisible on a blank cell. Rendering uses this to drop
+  // trailing blanks, and to decide when a style must be turned off before a
+  // newline.
   auto IsVisibleOnBlank() const -> bool {
     return background_.is_set() || reverse_ || strikethrough_ || underline();
   }
@@ -156,10 +154,10 @@ class Style : public Printable<Style> {
   //
   // SGR adds attributes one at a time, but its codes for removing them are
   // entangled and unevenly supported: one code clears both bold and dim, and
-  // the code to clear an underline collides with double-underline on some
-  // terminals. Dropping any attribute therefore costs a full reset and a fresh
-  // start, so runs of related output are cheapest to render when they share
-  // attributes and vary only in color.
+  // the code some terminals use to clear bold is double-underline in ECMA-48.
+  // Dropping anything therefore costs a full reset and a fresh start, so a run
+  // is cheapest when every style in it sets the same attributes and the same
+  // colors, differing only in the color values.
   auto AppendTransitionTo(OutputBufferRef out, const Style& target,
                           ColorMode mode) const -> void {
     // Rendering calls this for every cell it emits, and with color off no
@@ -173,7 +171,7 @@ class Style : public Printable<Style> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
   // Rendering compares the style of every cell against the one in use, so this
-  // compares the bytes rather than the nine members that make them up. The
+  // compares the bytes rather than member by member. The
   // assertion is what makes that valid: every bit of a style belongs to a
   // member, as the members are all byte-aligned and always initialized, so none
   // of the bytes are padding.
@@ -194,8 +192,8 @@ class Style : public Printable<Style> {
   // exactly when the transition needs a reset.
   auto NeedsResetFrom(const Style& from) const -> bool;
 
-  // Appends the escapes adding everything this style sets that `from` does
-  // not. Requires `!NeedsResetFrom(from)`.
+  // Appends the escapes taking `from` to this style, which requires that this
+  // style drops nothing `from` set: `!NeedsResetFrom(from)`.
   auto AppendDiff(OutputBufferRef out, ColorMode mode, const Style& from) const
       -> void;
 

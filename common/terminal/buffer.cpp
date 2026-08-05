@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
 #include <utility>
 
 #include "common/check.h"
@@ -17,27 +18,23 @@
 
 namespace Carbon::Terminal {
 
-// Columns between tab stops, measured from where the text began rather than
-// from the left edge of the buffer.
-static constexpr int TabWidth = 8;
-
 // The most bytes of combining marks kept on one cell. Text stacking more than
 // this is either adversarial or already illegible, and keeping all of it would
-// let one input character produce unbounded output.
+// let a single column of output carry unbounded bytes.
 static constexpr size_t MaxCombiningBytes = 32;
 
 // Glyphs for every combination of line directions, indexed by the direction
-// bits. Index zero never comes up, as a cell with no directions holds no line.
+// bits.
 static constexpr std::array<char32_t, 16> Utf8LineGlyphs = {
-    U' ',  // (none)
-    U'─',  // left
-    U'─',  // right
+    U'·',  // (none): a line between one center and itself, which is a point
+    U'╴',  // left
+    U'╶',  // right
     U'─',  // left, right
-    U'│',  // up
+    U'╵',  // up
     U'╯',  // left, up
     U'╰',  // right, up
     U'┴',  // left, right, up
-    U'│',  // down
+    U'╷',  // down
     U'╮',  // left, down
     U'╭',  // right, down
     U'┬',  // left, right, down
@@ -50,12 +47,29 @@ static constexpr std::array<char32_t, 16> Utf8LineGlyphs = {
 // The ASCII stand-ins, which can only distinguish horizontal, vertical, and
 // everything else.
 static constexpr std::array<char32_t, 16> AsciiLineGlyphs = {
-    U' ', U'-', U'-', U'-', U'|', U'+', U'+', U'+',
+    U'+', U'-', U'-', U'-', U'|', U'+', U'+', U'+',
     U'|', U'+', U'+', U'+', U'|', U'+', U'+', U'+',
 };
 
-Buffer::Buffer(int width, Charset charset) : width_(width), metrics_(charset) {
-  CARBON_CHECK(width > 0, "Buffer width must be positive, but was {0}.", width);
+// Returns the next tab stop after `x` on a line whose stops are `tab_width`
+// columns apart counting from `origin`, which `x` must not be left of.
+static auto NextTabStop(int x, int origin, int tab_width) -> int {
+  CARBON_DCHECK(x >= origin, "Column {0} is left of the origin {1}.", x,
+                origin);
+  return origin + ((x - origin) / tab_width + 1) * tab_width;
+}
+
+Buffer::Buffer(int columns, Charset charset, int tab_width)
+    : columns_(columns),
+      width_(columns),
+      tab_width_(tab_width),
+      metrics_(charset) {
+  CARBON_CHECK(columns > 0 && columns <= MaxColumns,
+               "Buffer width must be in [1, {0}], but was {1}.", MaxColumns,
+               columns);
+  CARBON_CHECK(tab_width > 0 && tab_width <= MaxTabWidth,
+               "Tab width must be in [1, {0}], but was {1}.", MaxTabWidth,
+               tab_width);
 }
 
 auto Buffer::height() const -> int {
@@ -63,44 +77,60 @@ auto Buffer::height() const -> int {
 }
 
 auto Buffer::EnsureRow(int y) -> void {
+  CARBON_CHECK(y >= 0 && y < MaxRows, "Row {0} is outside [0, {1}).", y,
+               MaxRows);
   if (y < height()) {
     return;
   }
+  // Rows are added at the end and nothing already in the grid moves, so this
+  // asks for exactly the rows wanted and lets the vector amortize the growing.
   cells_.resize(static_cast<size_t>(y + 1) * width_);
 }
 
 auto Buffer::EnsureWidth(int x) -> void {
+  CARBON_CHECK(x >= 0 && x < MaxColumns, "Column {0} is outside [0, {1}).", x,
+               MaxColumns);
   if (x < width_) {
     return;
   }
-  // Growing by halves rather than to exactly what was asked keeps a row drawn
-  // one symbol at a time from reflowing on every symbol.
-  int width = std::max(x + 1, width_ + width_ / 2);
+  // Widening moves every row, so it grows by halves rather than to exactly what
+  // was asked: a row drawn one code point at a time would otherwise copy the
+  // whole grid on every one of them. Growth stops at the bound, which is what
+  // holds the product of the two dimensions inside what a cell index can
+  // represent.
+  int width = std::min(std::max(x + 1, width_ + width_ / 2), MaxColumns);
 
-  // Rows are stored back to back, so every row but the first moves.
   int rows = height();
-  llvm::SmallVector<Cell, 0> widened(static_cast<size_t>(rows) * width);
+  llvm::SmallVector<Cell, 0> new_cells(static_cast<size_t>(rows) * width);
   for (int y : llvm::seq(rows)) {
     llvm::copy(
         llvm::ArrayRef(cells_).slice(static_cast<size_t>(y) * width_, width_),
-        widened.begin() + static_cast<size_t>(y) * width);
+        new_cells.begin() + static_cast<size_t>(y) * width);
   }
-  cells_ = std::move(widened);
+  cells_ = std::move(new_cells);
 
-  // The marks are keyed by cell index, which is where the row moved it to.
-  llvm::DenseMap<int, std::string> moved;
-  moved.reserve(combining_marks_.size());
+  // A mark's key is a cell index, which depends on the width, so each is
+  // recomputed for the new one.
+  llvm::DenseMap<int, std::string> new_combining_marks;
+  new_combining_marks.reserve(combining_marks_.size());
   for (auto& [index, marks] : combining_marks_) {
-    moved.insert({index / width_ * width + index % width_, std::move(marks)});
+    new_combining_marks.insert(
+        {index / width_ * width + index % width_, std::move(marks)});
   }
-  combining_marks_ = std::move(moved);
+  combining_marks_ = std::move(new_combining_marks);
 
   width_ = width;
 }
 
 auto Buffer::ClearCells(int x, int y, int width) -> void {
-  // A cleared range must not leave half of a double-width symbol behind, so it
-  // extends over either half that crosses its edges.
+  CARBON_CHECK(
+      x >= 0 && width >= 0 && x + width <= width_ && y >= 0 && y < height(),
+      "Clearing [{0}, {1}) of row {2} reaches outside the {3}x{4} cells the "
+      "buffer holds.",
+      x, x + width, y, width_, height());
+
+  // A cleared range must not leave half of a double-width character behind, so
+  // it extends over either half that crosses its edges.
   int begin = x;
   if (begin > 0 && CellAt(begin, y).is_continuation) {
     --begin;
@@ -116,19 +146,21 @@ auto Buffer::ClearCells(int x, int y, int width) -> void {
   }
 }
 
-auto Buffer::AttachCombiningMark(int x, int y, char32_t symbol) -> void {
-  // Marks render into the column before them, so there must be one and it must
-  // already have been drawn.
+auto Buffer::AttachCombiningMark(int x, int y, char32_t code_point) -> void {
+  // A mark has nowhere to go when no cell precedes it, so it is dropped.
   if (x <= 0 || x > width_ || y < 0 || y >= height()) {
     return;
   }
+  // The left half of a double-width character is never itself a continuation,
+  // so stepping back from one always lands on a real character.
   int base = x - 1;
   if (CellAt(base, y).is_continuation) {
     --base;
   }
+  CARBON_CHECK(base >= 0, "A continuation cell at column zero has no base.");
 
   Utf8Storage storage;
-  llvm::StringRef encoded = EncodeUtf8(symbol, storage);
+  llvm::StringRef encoded = EncodeUtf8(code_point, storage);
   std::string& marks = combining_marks_[CellIndex(base, y)];
   if (marks.size() + encoded.size() > MaxCombiningBytes) {
     return;
@@ -136,100 +168,126 @@ auto Buffer::AttachCombiningMark(int x, int y, char32_t symbol) -> void {
   marks.append(encoded.data(), encoded.size());
 }
 
-auto Buffer::DrawSymbol(int x, int y, char32_t symbol, const Style& style)
-    -> DrawEnd {
-  // A combining mark takes no column of its own, and renders into the one
-  // before it instead.
-  int width = metrics_.SymbolWidth(symbol);
+auto Buffer::DrawCodePoint(int x, int y, char32_t code_point,
+                           const Style& style) -> DrawEnd {
+  CheckOrigin(x, y);
+  return {.x = PlaceCodePoint(x, y, code_point, style), .y = y};
+}
+
+auto Buffer::PlaceCodePoint(int x, int y, char32_t code_point,
+                            const Style& style) -> int {
+  CARBON_DCHECK(x >= 0 && y >= 0,
+                "Placing at ({0}, {1}), which no walk should reach.", x, y);
+
+  int width = metrics_.CodePointWidth(code_point);
   if (width == 0) {
-    AttachCombiningMark(x, y, symbol);
-    return {.x = x, .y = y};
+    AttachCombiningMark(x, y, code_point);
+    return x;
   }
-  symbol = metrics_.RenderedSymbol(symbol);
+  code_point = metrics_.RenderedCodePoint(code_point);
 
-  if (x < 0 || y < 0) {
-    return {.x = x + width, .y = y};
+  // Both bounds are reached by what the text holds rather than by where the
+  // caller aimed -- a word overhanging the target width, or newlines running
+  // past the rows a grid can index -- so past either one nothing is drawn and
+  // the column still advances, which is what keeps measuring and drawing
+  // answering the same thing. A double-width character needs both its columns,
+  // so one that would only half fit is past the edge like any other: splitting
+  // it would leave the terminal rendering half a character.
+  if (y >= MaxRows || x > MaxColumns - width) {
+    return x + width;
   }
 
-  // A double-width symbol needs both its columns, since splitting one would
-  // leave the terminal rendering half a character.
   EnsureWidth(x + width - 1);
   EnsureRow(y);
   ClearCells(x, y, width);
 
   Cell& cell = CellAt(x, y);
-  cell.symbol = symbol;
+  cell.code_point = code_point;
   cell.style = style;
-  for (int i = 1; i < width; ++i) {
-    Cell& continuation = CellAt(x + i, y);
+  // Nothing is wider than two columns, so the second is the only continuation
+  // there can be.
+  if (width > 1) {
+    Cell& continuation = CellAt(x + 1, y);
     continuation.style = style;
     continuation.is_continuation = true;
   }
-  return {.x = x + width, .y = y};
+  return x + width;
+}
+
+// Returns the glyphs a cell's directions are read from.
+static auto LineGlyphs(Charset charset) -> const std::array<char32_t, 16>& {
+  return charset == Charset::Utf8 ? Utf8LineGlyphs : AsciiLineGlyphs;
 }
 
 auto Buffer::DrawLine(int x, int y, uint8_t directions, const Style& style)
     -> void {
-  if (x < 0 || y < 0) {
-    return;
-  }
-  CARBON_DCHECK(directions < Utf8LineGlyphs.size());
+  CARBON_DCHECK(directions <= LineDirections,
+                "Direction bits {0} name no glyph.", directions);
   EnsureWidth(x);
   EnsureRow(y);
 
   uint8_t existing = CellAt(x, y).lines;
   if (existing == 0) {
     // Whatever is here isn't a line. Clearing also removes either half of a
-    // double-width symbol the cell was part of.
+    // double-width character the cell was part of.
     ClearCells(x, y, 1);
   }
 
   Cell& cell = CellAt(x, y);
-  cell.lines = existing | directions;
-  cell.symbol = metrics_.charset() == Charset::Utf8
-                    ? Utf8LineGlyphs[cell.lines]
-                    : AsciiLineGlyphs[cell.lines];
+  cell.lines = existing | directions | LineCell;
+  cell.code_point = LineGlyphs(metrics_.charset())[cell.lines & LineDirections];
   cell.style = style;
 }
 
-auto Buffer::DrawHorizontalLine(int x, int y, int length, const Style& style)
-    -> DrawEnd {
-  for (int i = 0; i < length; ++i) {
-    // The ends of a line only connect inward, so a line meeting another at its
-    // end forms a corner rather than a crossing. A one-cell line has no inward
-    // direction and is drawn as a bare horizontal segment.
-    uint8_t directions =
-        length == 1 ? LineLeft | LineRight
-                    : (i > 0 ? LineLeft : 0) | (i + 1 < length ? LineRight : 0);
-    DrawLine(x + i, y, directions, style);
-  }
-  return {.x = x + std::max(length, 0), .y = y};
+// Checks that a line of `length` starting at `position` stays within `limit`,
+// which is the width for a horizontal line and `MaxRows` for a vertical one.
+//
+// Unlike text, a line has no reason to reach outside what it is being drawn
+// into: nothing about it is unbreakable, and a layout that put one there
+// computed the wrong extent.
+static auto CheckLineFits(int position, int length, int limit) -> void {
+  CARBON_CHECK(length >= 0 && position <= limit - length,
+               "A line of {0} at {1} runs outside the {2} available to it.",
+               length, position, limit);
 }
 
-auto Buffer::DrawVerticalLine(int x, int y, int length, const Style& style)
-    -> DrawEnd {
-  for (int i = 0; i < length; ++i) {
+auto Buffer::DrawHorizontalLine(int x, int y, int length, const Style& style,
+                                LineEnd start, LineEnd end) -> DrawEnd {
+  CheckOrigin(x, y);
+  CheckLineFits(x, length, columns_);
+  for (int i : llvm::seq(length)) {
+    // A cell in the middle of the line is entered from one side and left by the
+    // other. An end cell is only left towards the rest of the line, unless that
+    // end runs out through the cell's own side.
     uint8_t directions =
-        length == 1 ? LineUp | LineDown
-                    : (i > 0 ? LineUp : 0) | (i + 1 < length ? LineDown : 0);
+        (i > 0 || start == LineEnd::Edge ? LineLeft : 0) |
+        (i + 1 < length || end == LineEnd::Edge ? LineRight : 0);
+    DrawLine(x + i, y, directions, style);
+  }
+  return {.x = x + length, .y = y};
+}
+
+auto Buffer::DrawVerticalLine(int x, int y, int length, const Style& style,
+                              LineEnd start, LineEnd end) -> DrawEnd {
+  CheckOrigin(x, y);
+  CheckLineFits(y, length, MaxRows);
+  for (int i : llvm::seq(length)) {
+    uint8_t directions =
+        (i > 0 || start == LineEnd::Edge ? LineUp : 0) |
+        (i + 1 < length || end == LineEnd::Edge ? LineDown : 0);
     DrawLine(x, y + i, directions, style);
   }
-  return {.x = x, .y = y + std::max(length, 0)};
+  return {.x = x, .y = y + length};
 }
 
 auto Buffer::DrawBox(int x, int y, int box_width, int box_height,
                      const Style& style) -> DrawEnd {
-  if (box_width <= 0 || box_height <= 0) {
+  CheckOrigin(x, y);
+  CheckLineFits(x, box_width, columns_);
+  CheckLineFits(y, box_height, MaxRows);
+  if (box_width == 0 || box_height == 0) {
     return {.x = x, .y = y};
   }
-  // A box with no interior is just the one line that bounds it.
-  if (box_width == 1) {
-    return DrawVerticalLine(x, y, box_height, style);
-  }
-  if (box_height == 1) {
-    return DrawHorizontalLine(x, y, box_width, style);
-  }
-
   DrawHorizontalLine(x, y, box_width, style);
   DrawHorizontalLine(x, y + box_height - 1, box_width, style);
   DrawVerticalLine(x, y, box_height, style);
@@ -240,29 +298,32 @@ auto Buffer::DrawBox(int x, int y, int box_width, int box_height,
 template <typename PlaceFn>
 auto Buffer::WalkText(int x, int y, llvm::StringRef text, PlaceFn place) const
     -> DrawEnd {
+  CheckOrigin(x, y);
+  CheckTextSize(text);
+
   int cur_x = x;
   int cur_y = y;
 
   while (!text.empty()) {
-    char32_t symbol = metrics_.TakeSymbol(text);
-    if (symbol == '\n') {
+    char32_t code_point = metrics_.TakeCodePoint(text);
+    if (code_point == '\n') {
       cur_x = x;
       ++cur_y;
       continue;
     }
-    if (symbol == '\r') {
+    if (code_point == '\r') {
       cur_x = x;
       continue;
     }
-    if (symbol == '\t') {
-      int stop = x + ((cur_x - x) / TabWidth + 1) * TabWidth;
+    if (code_point == '\t') {
+      int stop = NextTabStop(cur_x, x, tab_width_);
       for (; cur_x < stop; ++cur_x) {
         place(cur_x, cur_y, U' ');
       }
       continue;
     }
 
-    cur_x = place(cur_x, cur_y, symbol);
+    cur_x = place(cur_x, cur_y, code_point);
   }
 
   return {.x = cur_x, .y = cur_y};
@@ -270,54 +331,72 @@ auto Buffer::WalkText(int x, int y, llvm::StringRef text, PlaceFn place) const
 
 auto Buffer::DrawText(int x, int y, llvm::StringRef text, const Style& style)
     -> DrawEnd {
-  return WalkText(x, y, text, [&](int cur_x, int cur_y, char32_t symbol) {
-    return DrawSymbol(cur_x, cur_y, symbol, style).x;
+  return WalkText(x, y, text, [&](int cur_x, int cur_y, char32_t code_point) {
+    return PlaceCodePoint(cur_x, cur_y, code_point, style);
   });
 }
 
 auto Buffer::MeasureText(int x, int y, llvm::StringRef text) const -> DrawEnd {
-  return WalkText(x, y, text, [&](int cur_x, int /*cur_y*/, char32_t symbol) {
-    return cur_x + metrics_.SymbolWidth(symbol);
-  });
+  return WalkText(x, y, text,
+                  [&](int cur_x, int /*cur_y*/, char32_t code_point) {
+                    return cur_x + metrics_.CodePointWidth(code_point);
+                  });
 }
 
 template <typename PlaceFn>
-auto Buffer::WalkWrappedText(int x, int y, int max_width, llvm::StringRef text,
-                             PlaceFn place) const -> DrawEnd {
-  if (max_width <= 0) {
-    return {.x = x, .y = y};
-  }
+auto Buffer::WalkWrappedText(int x, int y, int margin, int max_width,
+                             llvm::StringRef text, PlaceFn place) const
+    -> DrawEnd {
+  CheckOrigin(x, y);
+  CheckTextSize(text);
+  CARBON_CHECK(margin >= 0 && margin <= x && max_width > 0 &&
+                   x - margin < max_width && margin <= columns_ - max_width,
+               "A block of {0} columns at {1} holding text from {2} does not "
+               "fit the {3} columns a buffer covers.",
+               max_width, margin, x, columns_);
+
+  // The column a row runs out of room at. The block lies within the buffer's
+  // width, so this is a column like any other rather than a sum that has to be
+  // kept from overflowing.
+  int limit = margin + max_width;
 
   int cur_x = x;
   int cur_y = y;
+  // Whether the row being written was started by wrapping, rather than by the
+  // text itself. Spaces are dropped at the start of a wrapped row and kept at
+  // the start of one the text asked for, which is the difference between
+  // indentation the caller wrote and indentation an accident of width would
+  // otherwise introduce.
+  bool wrapped_row = false;
 
-  // What a row has room for is decided from the columns it has used rather
-  // than from a column computed once from `max_width`, so that a width no row
-  // reaches works like any other instead of overflowing the column it names.
-  //
   // Splitting on bytes is safe because every character text can break at is
-  // ASCII, and UTF-8 never encodes anything else using an ASCII byte. Only the
-  // runs that get drawn are decoded.
+  // ASCII, and UTF-8 never encodes anything else using an ASCII byte. Only
+  // words are decoded; whitespace is handled a byte at a time.
   while (!text.empty()) {
     if (text.front() == '\n') {
       text = text.drop_front();
-      cur_x = x;
+      cur_x = margin;
       ++cur_y;
+      wrapped_row = false;
       continue;
     }
 
     if (IsWrapBreak(text.front())) {
-      llvm::StringRef spaces = text.take_while(IsWrapBreak);
-      text = text.drop_front(spaces.size());
-      // Spaces are dropped wherever they would begin a row, which is what
-      // keeps wrapped text aligned with where it started. Carriage returns are
-      // never drawn, so CRLF line endings break exactly once.
-      if (cur_x > x) {
-        for (char space : spaces) {
-          if (space == '\r' || cur_x - x >= max_width) {
+      llvm::StringRef breaks = text.take_while(IsWrapBreak);
+      text = text.drop_front(breaks.size());
+      if (cur_x > margin || !wrapped_row) {
+        for (char c : breaks) {
+          if (c == '\r') {
             continue;
           }
-          cur_x = place(cur_x, cur_y, U' ');
+          // Whitespace stops at the block's edge, leaving the word after it to
+          // wrap.
+          int next = std::min(
+              c == '\t' ? NextTabStop(cur_x, margin, tab_width_) : cur_x + 1,
+              limit);
+          while (cur_x < next) {
+            cur_x = place(cur_x, cur_y, U' ');
+          }
         }
       }
       continue;
@@ -327,35 +406,37 @@ auto Buffer::WalkWrappedText(int x, int y, int max_width, llvm::StringRef text,
         text.take_until([](char c) { return c == '\n' || IsWrapBreak(c); });
     text = text.drop_front(word.size());
 
-    // Move a word that doesn't fit down to the next row. If it doesn't fit
-    // there either it overhangs rather than being broken, and the buffer grows
-    // to hold it.
-    if (cur_x > x && cur_x - x + metrics_.Width(word) > max_width) {
-      cur_x = x;
+    // Move a word that doesn't fit down to the next row, which minimizes the
+    // overhang when it doesn't fit there either.
+    if (cur_x > margin && cur_x + metrics_.Width(word) > limit) {
+      cur_x = margin;
       ++cur_y;
+      wrapped_row = true;
     }
 
     while (!word.empty()) {
-      cur_x = place(cur_x, cur_y, metrics_.TakeSymbol(word));
+      cur_x = place(cur_x, cur_y, metrics_.TakeCodePoint(word));
     }
   }
 
   return {.x = cur_x, .y = cur_y};
 }
 
-auto Buffer::DrawWrappedText(int x, int y, int max_width, llvm::StringRef text,
-                             const Style& style) -> DrawEnd {
-  return WalkWrappedText(x, y, max_width, text,
-                         [&](int cur_x, int cur_y, char32_t symbol) {
-                           return DrawSymbol(cur_x, cur_y, symbol, style).x;
+auto Buffer::DrawWrappedText(int x, int y, int margin, int max_width,
+                             llvm::StringRef text, const Style& style)
+    -> DrawEnd {
+  return WalkWrappedText(x, y, margin, max_width, text,
+                         [&](int cur_x, int cur_y, char32_t code_point) {
+                           return PlaceCodePoint(cur_x, cur_y, code_point,
+                                                 style);
                          });
 }
 
-auto Buffer::MeasureWrappedText(int x, int y, int max_width,
+auto Buffer::MeasureWrappedText(int x, int y, int margin, int max_width,
                                 llvm::StringRef text) const -> DrawEnd {
-  return WalkWrappedText(x, y, max_width, text,
-                         [&](int cur_x, int /*cur_y*/, char32_t symbol) {
-                           return cur_x + metrics_.SymbolWidth(symbol);
+  return WalkWrappedText(x, y, margin, max_width, text,
+                         [&](int cur_x, int /*cur_y*/, char32_t code_point) {
+                           return cur_x + metrics_.CodePointWidth(code_point);
                          });
 }
 
@@ -365,7 +446,7 @@ auto Buffer::LastVisibleColumn(int y, ColorMode mode) const -> int {
   bool styles_render = mode != ColorMode::NoColor;
   for (int x = width_ - 1; x >= 0; --x) {
     const Cell& cell = CellAt(x, y);
-    if (cell.is_continuation || cell.symbol != ' ' ||
+    if (cell.is_continuation || cell.code_point != ' ' ||
         (styles_render && cell.style.IsVisibleOnBlank()) ||
         (!combining_marks_.empty() &&
          combining_marks_.contains(CellIndex(x, y)))) {
@@ -378,13 +459,17 @@ auto Buffer::LastVisibleColumn(int y, ColorMode mode) const -> int {
 auto Buffer::Render(OutputBufferRef out, ColorMode mode) const -> void {
   Utf8Storage storage;
 
-  // The style a terminal starts a row in, and the one each row leaves it in.
+  // The style a terminal starts in, and the one it is left in.
   const Style default_style;
 
-  for (int y = 0, rows = height(); y < rows; ++y) {
-    // Cells outlive this loop, so the active style is tracked by pointing at
-    // one rather than copying a whole style per cell.
-    const Style* active = &default_style;
+  // Cells outlive this loop, so the active style is tracked by pointing at one
+  // rather than copying a whole style per cell. It carries across rows: a style
+  // is usually still in use on the row below, and turning it off and back on
+  // costs a reset and a fresh start for nothing.
+  const Style* active = &default_style;
+
+  int rows = height();
+  for (int y = 0; y < rows; ++y) {
     int last = LastVisibleColumn(y, mode);
     for (int x = 0; x <= last; ++x) {
       const Cell& cell = CellAt(x, y);
@@ -394,7 +479,7 @@ auto Buffer::Render(OutputBufferRef out, ColorMode mode) const -> void {
 
       active->AppendTransitionTo(out, cell.style, mode);
       active = &cell.style;
-      out.Append(EncodeUtf8(cell.symbol, storage));
+      out.Append(EncodeUtf8(cell.code_point, storage));
 
       // Almost nothing has combining marks, so the lookup is worth skipping
       // outright rather than doing it for every cell on the screen.
@@ -406,7 +491,16 @@ auto Buffer::Render(OutputBufferRef out, ColorMode mode) const -> void {
       }
     }
 
-    active->AppendTransitionTo(out, default_style, mode);
+    // A style is turned off before the newline in two cases. On the last row,
+    // so that nothing is left set for whatever is printed after this and the
+    // escape that turns it off still falls inside the rendering. And whenever
+    // it paints where there is no glyph, because a terminal fills the rest of
+    // the row with the background it is in when the row ends, so leaving one
+    // set would paint a stripe out to the right edge that nothing asked for.
+    if (y + 1 == rows || active->IsVisibleOnBlank()) {
+      active->AppendTransitionTo(out, default_style, mode);
+      active = &default_style;
+    }
     out.Append("\n");
   }
 }
