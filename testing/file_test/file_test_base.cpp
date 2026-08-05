@@ -135,6 +135,22 @@ static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
   }
 }
 
+// Verify that the success and `fail_` prefix use correspond for a split within
+// a test file.
+static auto CompareFailPrefix(llvm::StringRef filename, llvm::StringRef split,
+                              bool success) -> void {
+  if (success) {
+    EXPECT_FALSE(split.starts_with("fail_"))
+        << "`" << filename << "` split `" << split
+        << "` succeeded; if success is expected, remove the `fail_` "
+           "prefix.";
+  } else {
+    EXPECT_TRUE(split.starts_with("fail_"))
+        << "`" << filename << "` split `" << split
+        << "` failed; if failure is expected, add the `fail_` prefix.";
+  }
+}
+
 // Returns the requested bazel command string for the given execution mode.
 auto FileTestBase::GetBazelCommand(BazelMode mode) -> std::string {
   RawStringOstream args;
@@ -222,7 +238,7 @@ auto FileTestCase::TestBody() -> void {
     bool require_overall_failure = false;
     for (const auto& [filename, success] :
          test_file.run_result.per_file_success) {
-      CompareFailPrefix(filename, success);
+      CompareFailPrefix(test_filename.string(), filename, success);
       if (!success) {
         require_overall_failure = true;
       }
