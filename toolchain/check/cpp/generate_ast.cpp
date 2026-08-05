@@ -743,6 +743,10 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     // a single object file, for a faster `carbon build` mode.
     std::vector<std::unique_ptr<clang::ASTConsumer>> consumers;
     for (const auto& input : inputs_) {
+      if (!input.is_lowered) {
+        code_generators_.push_back(nullptr);
+        continue;
+      }
       // TODO: Filter what goes into each code generator. If there are strong
       // external C++ definitions in a Carbon file (for example, in inline C++
       // code), they should be emitted only in that one file.

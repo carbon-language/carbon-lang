@@ -20,7 +20,10 @@ class MultiUnitCache;
 // Ties together information for a file being compiled.
 class CompilationUnit {
  public:
-  // `driver_env`, `options`, `consumer`, and `target` must be non-null.
+  // `driver_env`, `options`, `consumer`, and `target` must be non-null. If
+  // `output_filename` is empty, no output will be generated for this file. This
+  // is used for inputs that are only used as dependencies of the current
+  // compilation.
   explicit CompilationUnit(SemIR::CheckIRId check_ir_id, int total_ir_count,
                            DriverEnv* driver_env, const CompileOptions* options,
                            Diagnostics::Consumer* consumer,
@@ -67,6 +70,7 @@ class CompilationUnit {
 
   auto input_filename() -> llvm::StringRef { return input_filename_; }
   auto output_filename() -> llvm::StringRef { return output_filename_; }
+  auto is_lowered() -> bool { return !output_filename_.empty(); }
   auto has_include_in_dumps() -> bool {
     return tokens_ && tokens_->has_include_in_dumps();
   }
@@ -236,8 +240,7 @@ class CompileDriver {
   explicit CompileDriver(CompileOptions* options);
 
   // Configure the toolchain to compile all input files and dependencies.
-  // The `map_input` function maps an input file name to an output static
-  // object name.
+  // The `map_input` function maps an input file name to an output file name.
   // Returns `false` on configuration error.
   [[nodiscard]] auto Initialize(
       DriverEnv& driver_env,

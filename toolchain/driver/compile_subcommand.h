@@ -16,10 +16,22 @@ namespace Carbon {
 struct CompileSubcommandOptions {
   auto Build(CommandLine::CommandBuilder& b) -> void {
     compile_options.BuildForCompileSubcommand(b, &codegen_options);
+    b.AddFlag(
+        {
+            .name = "output-last-input-only",
+            .help = R"""(
+Only write output for the last input file, ignoring all others.
+
+TODO: This is a temporary workaround and should be removed once separate
+compilation is better implemented.
+)""",
+        },
+        [&](auto& arg_b) { arg_b.Set(&output_last_input_only); });
   }
 
   CodegenOptions codegen_options;
   CompileOptions compile_options;
+  bool output_last_input_only = false;
 };
 
 // Implements the compile subcommand of the driver.

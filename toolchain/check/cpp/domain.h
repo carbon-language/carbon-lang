@@ -26,8 +26,13 @@ namespace Carbon::Check {
 
 // An input Carbon file and its CheckIRId for C++ domain code generation.
 struct CppInputFile {
+  // The ID used to identify this file within SemIR.
   SemIR::CheckIRId check_ir_id;
+  // The Carbon source filename for this input.
   llvm::StringRef filename;
+  // Whether this input IR will be lowered. If not, we don't need to build a
+  // Clang CodeGenerator for it.
+  bool is_lowered;
 };
 
 // A C++ compilation domain, including a live Clang instance that can be used to
