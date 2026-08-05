@@ -309,6 +309,29 @@ final impl forall [To: IntLiteral] CppCompat.ULongLong64 as As(UInt(To)) {
   fn Convert(self) -> UInt(To) = "int.convert";
 }
 
+// We only expect to have at most one of CppCompat.{Long32,Long64,LongLong64}
+// reachable in any given target, so we don't provide conversions between them.
+// But we do need to provide conversions between corresponding signed and
+// unsigned types.
+final impl CppCompat.Long32 as As(CppCompat.ULong32) {
+  fn Convert(self) -> CppCompat.ULong32 = "int.convert";
+}
+final impl CppCompat.Long64 as As(CppCompat.ULong64) {
+  fn Convert(self) -> CppCompat.ULong64 = "int.convert";
+}
+final impl CppCompat.LongLong64 as As(CppCompat.ULongLong64) {
+  fn Convert(self) -> CppCompat.ULongLong64 = "int.convert";
+}
+final impl CppCompat.ULong32 as As(CppCompat.Long32) {
+  fn Convert(self) -> CppCompat.Long32 = "int.convert";
+}
+final impl CppCompat.ULong64 as As(CppCompat.Long64) {
+  fn Convert(self) -> CppCompat.Long64 = "int.convert";
+}
+final impl CppCompat.ULongLong64 as As(CppCompat.LongLong64) {
+  fn Convert(self) -> CppCompat.LongLong64 = "int.convert";
+}
+
 // Comparisons.
 
 // - Homogeneous.
