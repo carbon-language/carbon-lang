@@ -67,9 +67,14 @@ cc_library(
 
 cc_library(
     name = "cpp_file",
-    hdrs = ["cpp_file.h"],
+    hdrs = [
+        "cpp_domain.h",
+        "cpp_file.h",
+    ],
     deps = [
+        ":typed_insts",
         "//common:check",
+        "//common:map",
         "@llvm-project//clang:ast",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:codegen",
@@ -90,6 +95,7 @@ cc_library(
         "class.cpp",
         "constant.cpp",
         "core_interface.cpp",
+        "cpp_domain.cpp",
         "cpp_file.cpp",
         "cpp_initializer_list.cpp",
         "cpp_overload_set.cpp",
@@ -125,6 +131,7 @@ cc_library(
         "constant.h",
         "copy_on_write_block.h",
         "core_interface.h",
+        "cpp_domain.h",
         "cpp_initializer_list.h",
         "cpp_overload_set.h",
         "declared_facet_type.h",
@@ -188,6 +195,7 @@ cc_library(
         "@llvm-project//clang:ast",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:frontend",
+        "@llvm-project//clang:parse",
         "@llvm-project//clang:sema",
         "@llvm-project//llvm:Support",
     ],

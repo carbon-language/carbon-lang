@@ -2,11 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/cpp/domain.h"
+#include "toolchain/sem_ir/cpp_domain.h"
 
 #include "clang/Parse/Parser.h"
 
-namespace Carbon::Check {
+namespace Carbon::SemIR {
 
 CppDomain::CppDomain(std::shared_ptr<clang::CompilerInstance> clang_instance,
                      std::unique_ptr<clang::Parser> parser,
@@ -27,4 +27,4 @@ CppDomain::CppDomain(std::shared_ptr<clang::CompilerInstance> clang_instance,
 
 CppDomain::~CppDomain() = default;
 
-}  // namespace Carbon::Check
+}  // namespace Carbon::SemIR
