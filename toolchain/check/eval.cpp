@@ -13,8 +13,11 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "toolchain/base/canonical_value_store.h"
+#include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/check/action.h"
+#include "toolchain/check/context.h"
 #include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval_inst.h"
@@ -29,6 +32,7 @@
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
@@ -2176,6 +2180,15 @@ static auto PerformBuiltinIntComparison(Context& context,
   return MakeBoolResult(context, bool_type_id, result);
 }
 
+static auto NegateRealLiteral(Real val) -> Real {
+  // Check if negation would overflow.
+  if (val.mantissa.isMinSignedValue()) {
+    val.mantissa = val.mantissa.sext(val.mantissa.getBitWidth() + 1);
+  }
+  val.mantissa.negate();
+  return val;
+}
+
 // Performs a builtin unary float -> float operation.
 static auto PerformBuiltinUnaryFloatOp(Context& context,
                                        SemIR::BuiltinFunctionKind builtin_kind,
@@ -2187,12 +2200,7 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
 
     switch (builtin_kind) {
       case SemIR::BuiltinFunctionKind::FloatNegate:
-        // Check if negation would overflow.
-        if (real_val.mantissa.isMinSignedValue()) {
-          real_val.mantissa =
-              real_val.mantissa.sext(real_val.mantissa.getBitWidth() + 1);
-        }
-        real_val.mantissa.negate();
+        real_val = NegateRealLiteral(std::move(real_val));
         break;
       default:
         CARBON_FATAL("Unexpected builtin kind");
@@ -2215,12 +2223,206 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
   return MakeFloatResult(context, op.type_id, std::move(op_val));
 }
 
+// Adds two APInts handling overflow by growing result.
+// Assumes lhs and rhs have same bit width.
+static auto OverflowAdd(const llvm::APInt& lhs, const llvm::APInt& rhs)
+    -> llvm::APInt {
+  bool is_negative = lhs.isNegative();
+
+  bool overflow = false;
+  llvm::APInt result = lhs.sadd_ov(rhs, overflow);
+  if (overflow) {
+    unsigned old_width = lhs.getBitWidth();
+    unsigned new_width = old_width + 1;
+    result = result.zext(new_width);
+    if (is_negative) {
+      // For positive value overflow, zero-extension is sufficient, for negative
+      // overflow we need to re-apply the dropped sign bits.
+      result.setBits(old_width, new_width);
+    }
+  }
+  return result;
+}
+
+// Adds two APInts handling overflow by growing result.
+static auto UnmatchedOverflowAdd(const llvm::APInt& lhs, const llvm::APInt& rhs)
+    -> llvm::APInt {
+  return OverflowAdd(
+      lhs.getBitWidth() < rhs.getBitWidth() ? lhs.zext(rhs.getBitWidth()) : lhs,
+      rhs.getBitWidth() < lhs.getBitWidth() ? rhs.zext(lhs.getBitWidth())
+                                            : rhs);
+}
+
+// Adds or subtracts two decadic Real literals.
+// Returns std::nullopt if value would be too large to compute without losing
+// precision.
+static auto TryAddRealLiterals(const Real& lhs, const Real& rhs)
+    -> std::optional<Real> {
+  const llvm::APInt& lhs_mantissa = lhs.mantissa;
+  const llvm::APInt& rhs_mantissa = rhs.mantissa;
+
+  llvm::APInt res_exponent;
+  llvm::APInt res_mantissa;
+
+  if (lhs.exponent.getBitWidth() == rhs.exponent.getBitWidth() &&
+      lhs.exponent == rhs.exponent) {
+    res_mantissa = UnmatchedOverflowAdd(lhs_mantissa, rhs_mantissa);
+    res_exponent = lhs.exponent;
+
+    return Real{
+        .mantissa = UnmatchedOverflowAdd(lhs.mantissa, rhs.mantissa),
+        .exponent = lhs.exponent,
+        .is_decimal = true,
+    };
+  }
+
+  auto lhs_exponent = lhs.exponent.trySExtValue();
+  if (!lhs_exponent) {
+    return std::nullopt;
+  }
+  auto rhs_exponent = rhs.exponent.trySExtValue();
+  if (!rhs_exponent) {
+    return std::nullopt;
+  }
+
+  bool lhs_larger = *lhs_exponent > *rhs_exponent;
+  auto [smaller_exponent, larger_exponent] =
+      std::minmax(lhs_exponent, rhs_exponent);
+
+  const llvm::APInt& larger_mantisssa =
+      lhs_larger ? lhs_mantissa : rhs_mantissa;
+  const llvm::APInt& smaller_mantissa =
+      lhs_larger ? rhs_mantissa : lhs_mantissa;
+
+  int64_t exponent_diff = *larger_exponent - *smaller_exponent;
+  unsigned bit_width = std::max(lhs_mantissa.getSignificantBits(),
+                                rhs_mantissa.getSignificantBits()) +
+                       exponent_diff * 4 + 2;
+  if (bit_width > IntStore::MaxIntWidth) {
+    return std::nullopt;
+  }
+
+  return Real{
+      .mantissa = OverflowAdd(
+          larger_mantisssa.sextOrTrunc(bit_width) *
+              llvm::APIntOps::pow(llvm::APInt(bit_width, 10), exponent_diff),
+          smaller_mantissa.sextOrTrunc(bit_width)),
+      .exponent = lhs_larger ? rhs.exponent : lhs.exponent,
+      .is_decimal = true};
+}
+
+// Mutates `value` to be a decadic real literal.
+// Returns false and emits diagnostic if not possible.
+static auto TryConvertToDecadic(Real& value) -> bool {
+  if (value.is_decimal) {
+    return true;
+  }
+
+  auto exponent = value.exponent.trySExtValue();
+  if (!exponent) {
+    return false;
+  }
+
+  if (exponent == 0) {
+    value.is_decimal = true;
+    return true;
+  }
+
+  if (exponent > 0) {
+    int64_t bit_width = value.mantissa.getSignificantBits() + *exponent;
+    if (bit_width > IntStore::MaxIntWidth) {
+      return false;
+    }
+
+    value.mantissa = value.mantissa.sext(bit_width);
+    value.exponent = llvm::APInt(32, 0, /*isSigned=*/true);
+    value.is_decimal = true;
+    return true;
+  }
+
+  int64_t abs_exponent = std::abs(*exponent);
+  int64_t bit_width = value.mantissa.getSignificantBits() + abs_exponent * 3;
+  if (bit_width > IntStore::MaxIntWidth) {
+    return false;
+  }
+
+  value.mantissa = value.mantissa.sextOrTrunc(bit_width);
+  value.mantissa *=
+      llvm::APIntOps::pow(llvm::APInt(bit_width, 5), abs_exponent);
+  return true;
+}
+
+// Performs a builtin binary real -> real operation.
+static auto PerformBuiltinBinaryFloatLiteralOp(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::BuiltinFunctionKind builtin_kind, RealId lhs_id, RealId rhs_id)
+    -> SemIR::ConstantId {
+  auto lhs_val = context.reals().Get(lhs_id);
+  auto rhs_val = context.reals().Get(rhs_id);
+
+  // To simplify implementation, all binary operations act on decadic reals
+  // only.
+  CARBON_DIAGNOSTIC(CompileTimeDecadicFloatLiteralTooLarge, Error,
+                    "conversion of binary float literal {0} to decimal would "
+                    "exceed the maximum supported integer width of {1}",
+                    Real, int);
+  if (!TryConvertToDecadic(lhs_val)) {
+    context.emitter().Emit(loc_id, CompileTimeDecadicFloatLiteralTooLarge,
+                           lhs_val, IntStore::MaxIntWidth);
+    return SemIR::ErrorInst::ConstantId;
+  }
+  if (!TryConvertToDecadic(rhs_val)) {
+    context.emitter().Emit(loc_id, CompileTimeDecadicFloatLiteralTooLarge,
+                           rhs_val, IntStore::MaxIntWidth);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  Lex::TokenKind op_token;
+  std::optional<Real> result;
+
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::FloatAdd:
+      result = TryAddRealLiterals(lhs_val, rhs_val);
+      op_token = Lex::TokenKind::Plus;
+      break;
+    case SemIR::BuiltinFunctionKind::FloatSub:
+      result = TryAddRealLiterals(lhs_val, NegateRealLiteral(rhs_val));
+      op_token = Lex::TokenKind::Minus;
+      break;
+    default:
+      CARBON_FATAL("Unexpected operation kind.");
+  }
+
+  if (!result) {
+    CARBON_DIAGNOSTIC(
+        CompileTimeFloatLiteralBinaryOperationOutOfRange, Error,
+        "binary calculation `{0} {1} {2}` would exceed the maximum "
+        "supported integer width of {1}",
+        Real, Lex::TokenKind, Real, int);
+    context.emitter().Emit(loc_id,
+                           CompileTimeFloatLiteralBinaryOperationOutOfRange,
+                           lhs_val, op_token, rhs_val, IntStore::MaxIntWidth);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  return MakeFloatLiteralResult(context, std::move(*result));
+}
+
 // Performs a builtin binary float -> float operation.
-static auto PerformBuiltinBinaryFloatOp(Context& context,
+static auto PerformBuiltinBinaryFloatOp(Context& context, SemIR::LocId loc_id,
                                         SemIR::BuiltinFunctionKind builtin_kind,
                                         SemIR::InstId lhs_id,
                                         SemIR::InstId rhs_id)
     -> SemIR::ConstantId {
+  if (context.insts().Is<SemIR::FloatLiteralValue>(lhs_id)) {
+    auto literal_lhs = context.insts().GetAs<SemIR::FloatLiteralValue>(lhs_id);
+    auto literal_rhs = context.insts().GetAs<SemIR::FloatLiteralValue>(rhs_id);
+
+    return PerformBuiltinBinaryFloatLiteralOp(context, loc_id, builtin_kind,
+                                              literal_lhs.real_id,
+                                              literal_rhs.real_id);
+  }
+
   auto lhs = context.insts().GetAs<SemIR::FloatValue>(lhs_id);
   auto rhs = context.insts().GetAs<SemIR::FloatValue>(rhs_id);
   auto lhs_val = context.floats().Get(lhs.float_id);
@@ -2685,8 +2887,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (phase != Phase::Concrete) {
         break;
       }
-      return PerformBuiltinBinaryFloatOp(context, builtin_kind, arg_ids[0],
-                                         arg_ids[1]);
+      return PerformBuiltinBinaryFloatOp(context, loc_id, builtin_kind,
+                                         arg_ids[0], arg_ids[1]);
     }
 
     // Float comparisons.
