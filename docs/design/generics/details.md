@@ -3261,6 +3261,29 @@ the expression `G.E.N.E.N` is one equality away from `G.N.E.N` and so it is
 allowed. This is true even though `G.N.E.N` isn't the type expression
 immediately prior to `G.E.N.E.N`.
 
+Inside an `interface` definition, an `observe` declaration may only refer to
+names dependent on `.Self`, generic parameters, and associated constants that
+are part of the enclosing `interface`. However, equivalence chains may include
+at most one unrelated value, and `observe .. == .. impls` declarations may
+include unrelated values that immediately satisfy the `impls` constraint.
+
+For example:
+
+```carbon
+interface A {
+    let T: type;
+}
+
+interface B {
+    let X: A where .T == i32;
+    let Y: A where .T == i32;
+
+    observe .X.T == i32 == .Y.T impls AddWith;
+}
+```
+
+where `i32` directly satisfies the `Core.AddWith` constraint.
+
 After an `observe` declaration, all of the listed type expressions are
 considered equal to each other using a single `where` equality. In this example,
 the `observe` declaration in the `Transitive` interface definition provides the
