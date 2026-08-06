@@ -1563,14 +1563,10 @@ static auto PerformIntToFloatConvert(Context& context, SemIR::LocId loc_id,
   if (!dest_float_type) {
     // Target is Core.FloatLiteral, which is always exact.
     llvm::APInt mantissa = op_val;
-    auto real_id = context.reals().Add(
-        Real{.mantissa = mantissa,
-             .exponent = llvm::APInt(32, 0, /*isSigned=*/true),
-             .is_decimal = true});
-    return MakeConstantResult(
-        context,
-        SemIR::FloatLiteralValue{.type_id = dest_type_id, .real_id = real_id},
-        Phase::Concrete);
+    return MakeFloatLiteralResult(
+        context, Real{.mantissa = mantissa,
+                      .exponent = llvm::APInt(32, 0, /*isSigned=*/true),
+                      .is_decimal = true});
   }
 
   llvm::APFloat ap_float(dest_float_type->float_kind.Semantics());
@@ -2185,12 +2181,17 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
                                        SemIR::BuiltinFunctionKind builtin_kind,
                                        SemIR::InstId arg_id)
     -> SemIR::ConstantId {
-  if (auto float_literal =
+  if (auto literal =
           context.insts().TryGetAs<SemIR::FloatLiteralValue>(arg_id)) {
-    auto real_val = context.reals().Get(float_literal->real_id);
+    auto real_val = context.reals().Get(literal->real_id);
 
     switch (builtin_kind) {
       case SemIR::BuiltinFunctionKind::FloatNegate:
+        // Check if negation would overflow.
+        if (real_val.mantissa.isMinSignedValue()) {
+          real_val.mantissa =
+              real_val.mantissa.sext(real_val.mantissa.getBitWidth() + 1);
+        }
         real_val.mantissa.negate();
         break;
       default:
