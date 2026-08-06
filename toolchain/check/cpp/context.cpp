@@ -6,11 +6,10 @@
 
 #include "clang/AST/Mangle.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "toolchain/check/cpp/domain.h"
 
 namespace Carbon::Check {
 
-CppContext::CppContext(CppDomain& domain,
+CppContext::CppContext(SemIR::CppDomain& domain,
                        std::unique_ptr<CppDiagnosticListener> listener)
     : domain_(&domain), diagnostic_listener_(std::move(listener)) {}
 

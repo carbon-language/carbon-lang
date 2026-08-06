@@ -18,9 +18,16 @@
 // --- thunk_required.h
 
 auto foo(short a) -> void;
-// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./thunk_required.h:[[@LINE-1]]:1, col:22> col:6 in import_thunk_required.carbon hidden used foo 'auto (short) -> void' external-linkage
-// CHECK:STDOUT: | `-ParmVarDecl {{0x[a-f0-9]+}} <col:10, col:16> col:16 in import_thunk_required.carbon hidden a 'short'
-// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <col:6> col:6 in import_thunk_required.carbon hidden foo__carbon_thunk 'void (short * _Nonnull)' inline internal-linkage
+// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./thunk_required.h:[[@LINE-1]]:1, col:22> col:6 in thunk_required.h hidden used foo 'auto (short) -> void' external-linkage
+// CHECK:STDOUT: | `-ParmVarDecl {{0x[a-f0-9]+}} <col:10, col:16> col:16 in thunk_required.h hidden a 'short'
+
+// --- import_thunk_required.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "thunk_required.h";
+// CHECK:STDOUT: |-ImportDecl {{0x[a-f0-9]+}} <import_thunk_required.carbon:[[@LINE-1]]:38> col:38 in thunk_required.h implicit thunk_required.h
+// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./thunk_required.h:2:6> col:6 in import_thunk_required.carbon hidden foo__carbon_thunk 'void (short * _Nonnull)' inline internal-linkage
 // CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <col:6> col:6 in import_thunk_required.carbon hidden used a 'short * _Nonnull':'short *'
 // CHECK:STDOUT: | |-ReturnStmt {{0x[a-f0-9]+}} <col:6>
 // CHECK:STDOUT: | | `-CallExpr {{0x[a-f0-9]+}} <col:6> 'void'
@@ -34,12 +41,6 @@ auto foo(short a) -> void;
 // CHECK:STDOUT: | |-InternalLinkageAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit
 // CHECK:STDOUT: | `-AsmLabelAttr {{0x[a-f0-9]+}} <col:6> Implicit "_Z3foos.carbon_thunk._"
 
-// --- import_thunk_required.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "thunk_required.h";
-
 fn F() {
   Cpp.foo(1 as i16);
 }
@@ -51,8 +52,15 @@ fn F() {
 // --- return_thunk_required.h
 
 auto foo() -> short;
-// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./return_thunk_required.h:[[@LINE-1]]:1, col:15> col:6 in import_return_thunk_required.carbon hidden used foo 'auto () -> short' external-linkage
-// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <col:6> col:6 in import_return_thunk_required.carbon hidden foo__carbon_thunk 'void (short * _Nonnull)' inline internal-linkage
+// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./return_thunk_required.h:[[@LINE-1]]:1, col:15> col:6 in return_thunk_required.h hidden used foo 'auto () -> short' external-linkage
+
+// --- import_return_thunk_required.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "return_thunk_required.h";
+// CHECK:STDOUT: |-ImportDecl {{0x[a-f0-9]+}} <import_return_thunk_required.carbon:[[@LINE-1]]:45> col:45 in return_thunk_required.h implicit return_thunk_required.h
+// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./return_thunk_required.h:2:6> col:6 in import_return_thunk_required.carbon hidden foo__carbon_thunk 'void (short * _Nonnull)' inline internal-linkage
 // CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <col:6> col:6 in import_return_thunk_required.carbon hidden used return 'short * _Nonnull':'short *'
 // CHECK:STDOUT: | |-CXXNewExpr {{0x[a-f0-9]+}} <col:6> 'short *' global Function {{0x[a-f0-9]+}} 'operator new' 'void *(__size_t, void *) noexcept'
 // CHECK:STDOUT: | | |-CallExpr {{0x[a-f0-9]+}} <col:6> 'short'
@@ -62,12 +70,6 @@ auto foo() -> short;
 // CHECK:STDOUT: | |-AlwaysInlineAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit always_inline
 // CHECK:STDOUT: | |-InternalLinkageAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit
 // CHECK:STDOUT: | `-AsmLabelAttr {{0x[a-f0-9]+}} <col:6> Implicit "_Z3foov.carbon_thunk."
-
-// --- import_return_thunk_required.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "return_thunk_required.h";
 
 fn F() -> i16 {
   return Cpp.foo();
