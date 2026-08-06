@@ -603,7 +603,8 @@ static auto CreateModuleForCarbonFile(SemIR::CppDomain& domain,
   auto* module =
       module_map.createModule(file.filename(), /*Parent=*/nullptr,
                               /*IsFramework=*/false, /*IsExplicit=*/true);
-  domain.SetModule(file.check_ir_id(), module);
+  auto insert_result = domain.file_modules().Insert(file.check_ir_id(), module);
+  CARBON_CHECK(insert_result.is_inserted());
   return module;
 }
 
@@ -775,8 +776,9 @@ static auto ParseImports(Context& context,
     if (!import_ir.sem_ir) {
       continue;
     }
-    if (auto* import_mod =
-            cpp_context->domain().GetModule(import_ir.sem_ir->check_ir_id())) {
+    if (auto lookup = cpp_context->domain().file_modules().Lookup(
+            import_ir.sem_ir->check_ir_id())) {
+      auto* import_mod = lookup.value();
       ImportModule(*cpp_context, import_mod, loc);
       if (import_ir.is_export) {
         mod->Exports.push_back({import_mod, false});

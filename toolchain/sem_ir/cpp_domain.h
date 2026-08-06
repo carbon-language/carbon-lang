@@ -63,20 +63,7 @@ class CppDomain {
     return res.value();
   }
 
-  // Gets the Clang module corresponding to the given Carbon file, if one was
-  // created.
-  auto GetModule(CheckIRId check_ir_id) const -> clang::Module* {
-    auto res = modules_.Lookup(check_ir_id);
-    return res ? res.value() : nullptr;
-  }
-
-  // Associates a Clang module with a Carbon file.
-  auto SetModule(CheckIRId check_ir_id, clang::Module* module) -> void {
-    auto res = modules_.Insert(check_ir_id, module);
-    CARBON_CHECK(res.is_inserted(), "Duplicate CheckIRId {0} in CppDomain",
-                 check_ir_id);
-  }
-
+  auto file_modules() -> Map<CheckIRId, clang::Module*>& { return modules_; }
   auto header_modules() -> llvm::StringMap<clang::Module*>& {
     return header_modules_;
   }
