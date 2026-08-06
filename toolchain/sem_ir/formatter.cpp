@@ -1705,7 +1705,7 @@ auto Formatter::FormatArg(ExprRegionId id) -> void {
 auto Formatter::FormatArg(RealId id) -> void {
   // TODO: Format with a `.` when the exponent is near zero.
   const auto& real = sem_ir_->reals().Get(id);
-  real.mantissa.print(out(), /*isSigned=*/false);
+  real.mantissa.print(out(), /*isSigned=*/true);
   out() << (real.is_decimal ? 'e' : 'p') << real.exponent;
 }
 

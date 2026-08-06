@@ -431,6 +431,19 @@ static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
   return MakeIntResult(context, type_id, result);
 }
 
+// Converts a Real into a ConstantId.
+static auto MakeFloatLiteralResult(Context& context, Real real)
+    -> SemIR::ConstantId {
+  auto real_id = context.reals().Add(real);
+  return MakeConstantResult(
+      context,
+      SemIR::FloatLiteralValue{
+          .type_id =
+              GetSingletonType(context, SemIR::FloatLiteralType::TypeInstId),
+          .real_id = real_id},
+      Phase::Concrete);
+}
+
 // Converts an APFloat value into a ConstantId.
 static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
                             llvm::APFloat value) -> SemIR::ConstantId {
@@ -1438,7 +1451,7 @@ static auto RealToAPFloat(Context& context, RealId real_id,
   // Convert the real value to a string.
   llvm::SmallString<64> str;
   real_value.mantissa.toString(str, real_value.is_decimal ? 10 : 16,
-                               /*signed=*/false, /*formatAsCLiteral=*/true);
+                               /*signed=*/true, /*formatAsCLiteral=*/true);
   str += real_value.is_decimal ? "e" : "p";
   real_value.exponent.toStringSigned(str);
 
@@ -1550,12 +1563,6 @@ static auto PerformIntToFloatConvert(Context& context, SemIR::LocId loc_id,
   if (!dest_float_type) {
     // Target is Core.FloatLiteral, which is always exact.
     llvm::APInt mantissa = op_val;
-    if (src_is_signed && op_val.isNegative()) {
-      // FloatLiteral can only represent positive real values. Negative
-      // literals are parsed as Negate(FloatLiteralValue).
-      context.TODO(loc_id, "negative float literal conversion");
-      return SemIR::ErrorInst::ConstantId;
-    }
     auto real_id = context.reals().Add(
         Real{.mantissa = mantissa,
              .exponent = llvm::APInt(32, 0, /*isSigned=*/true),
@@ -1702,19 +1709,19 @@ static auto ConvertRealLiteralToInt(Context& context, SemIR::LocId loc_id,
   // If the exponent is positive, base^exponent cannot be larger than the result
   // size. If it's negative, base^exponent can't be *much* larger than the
   // mantissa or we'd have computed a lower bound of 0 bits and bailed out.
-  CARBON_CHECK(
-      exponent_upper_bound <=
-      std::max<unsigned>(mantissa.getActiveBits() * 2, bounds.upper_bound));
+  CARBON_CHECK(exponent_upper_bound <=
+               std::max<unsigned>(mantissa.getSignificantBits() * 2,
+                                  bounds.upper_bound));
 
   // Compute a bit-width in which we can safely compute the result. We need
   // enough space to store the mantissa, base^exponent, the result and a sign
   // bit, and the number 10 (4 bits).
   unsigned calc_width =
-      std::max({mantissa.getActiveBits(), exponent_upper_bound,
+      std::max({mantissa.getSignificantBits(), exponent_upper_bound,
                 static_cast<unsigned>(bounds.upper_bound + 1), 4U});
 
   // Compute the integer result.
-  llvm::APInt integer_val = mantissa.zextOrTrunc(calc_width);
+  llvm::APInt integer_val = mantissa.sextOrTrunc(calc_width);
   if (!real_val.is_decimal) {
     // Binary exponent (mantissa * 2^exponent).
     if (!exponent.isNegative()) {
@@ -2178,18 +2185,33 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
                                        SemIR::BuiltinFunctionKind builtin_kind,
                                        SemIR::InstId arg_id)
     -> SemIR::ConstantId {
-  auto op = context.insts().GetAs<SemIR::FloatValue>(arg_id);
-  auto op_val = context.floats().Get(op.float_id);
+  if (auto float_literal =
+          context.insts().TryGetAs<SemIR::FloatLiteralValue>(arg_id)) {
+    auto real_val = context.reals().Get(float_literal->real_id);
 
-  switch (builtin_kind) {
-    case SemIR::BuiltinFunctionKind::FloatNegate:
-      op_val.changeSign();
-      break;
-    default:
-      CARBON_FATAL("Unexpected builtin kind");
+    switch (builtin_kind) {
+      case SemIR::BuiltinFunctionKind::FloatNegate:
+        real_val.mantissa.negate();
+        break;
+      default:
+        CARBON_FATAL("Unexpected builtin kind");
+    }
+
+    return MakeFloatLiteralResult(context, std::move(real_val));
+  } else {
+    auto op = context.insts().GetAs<SemIR::FloatValue>(arg_id);
+    auto op_val = context.floats().Get(op.float_id);
+
+    switch (builtin_kind) {
+      case SemIR::BuiltinFunctionKind::FloatNegate:
+        op_val.changeSign();
+        break;
+      default:
+        CARBON_FATAL("Unexpected builtin kind");
+    }
+
+    return MakeFloatResult(context, op.type_id, std::move(op_val));
   }
-
-  return MakeFloatResult(context, op.type_id, std::move(op_val));
 }
 
 // Performs a builtin binary float -> float operation.
