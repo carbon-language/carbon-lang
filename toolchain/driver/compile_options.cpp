@@ -374,17 +374,6 @@ Excludes files with the given prefix from dumps.
 )""",
       },
       [&](auto& arg_b) { arg_b.Append(&exclude_dump_file_prefixes); });
-  b.AddFlag(
-      {
-          .name = "output-last-input-only",
-          .help = R"""(
-Only write output for the last input file, ignoring all others.
-
-TODO: This is a temporary workaround and should be removed once separate
-compilation is better implemented.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&output_last_input_only); });
   b.AddStringOption(
       {
           .name = "sem-ir-crash-dump",

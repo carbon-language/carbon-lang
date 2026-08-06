@@ -6,7 +6,7 @@
 // dump flags.
 // TODO: Align lex/parse with check/lower.
 //
-// ARGS: compile - --phase=lower --no-prelude-import --target=x86_64-linux-gnu --dump-tokens --dump-parse-tree --parse-dump-format=yaml-postorder --dump-sem-ir --dump-raw-sem-ir --dump-llvm-ir
+// ARGS: compile - --output=- --phase=lower --no-prelude-import --target=x86_64-linux-gnu --dump-tokens --dump-parse-tree --parse-dump-format=yaml-postorder --dump-sem-ir --dump-raw-sem-ir --dump-llvm-ir
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

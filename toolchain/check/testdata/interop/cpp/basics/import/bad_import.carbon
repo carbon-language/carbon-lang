@@ -52,18 +52,26 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 import Cpp library "\"foo.h\"";
 
-// --- todo_fail_unterminated_import_inline.carbon
+// --- fail_unterminated_import_inline.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''c++
+// CHECK:STDERR: <carbon Cpp imports>:1:2: error: expected '}' [CppInteropParseError]
+// CHECK:STDERR:     1 | ;
+// CHECK:STDERR:       |  ^
+// CHECK:STDERR: fail_unterminated_import_inline.carbon:[[@LINE+4]]:10: note: to match this '{' [CppInteropParseNote]
+// CHECK:STDERR:    12 | void f() {
+// CHECK:STDERR:       |          ^
+// CHECK:STDERR:
 void f() {
 ''';
 
-// TODO: We should diagnose that the inline C++ code didn't leave us at the top
-// level.
-
 import Cpp inline '''c++
+// CHECK:STDERR: fail_unterminated_import_inline.carbon:[[@LINE+4]]:1: error: extraneous closing brace ('}') [CppInteropParseError]
+// CHECK:STDERR:    20 | }
+// CHECK:STDERR:       | ^
+// CHECK:STDERR:
 }
 ''';
 

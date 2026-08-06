@@ -11,7 +11,7 @@
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/cpp/diagnostic_listener.h"
-#include "toolchain/check/cpp/domain.h"
+#include "toolchain/sem_ir/cpp_domain.h"
 
 namespace clang {
 class ASTContext;
@@ -31,7 +31,7 @@ namespace Carbon::Check {
 // declarations, and similar values.
 class CppContext {
  public:
-  explicit CppContext(CppDomain& domain,
+  explicit CppContext(SemIR::CppDomain& domain,
                       std::unique_ptr<CppDiagnosticListener> listener);
   ~CppContext();
 
@@ -39,8 +39,8 @@ class CppContext {
   auto sema() -> clang::Sema&;
   auto parser() -> clang::Parser& { return domain_->parser(); }
 
-  auto domain() -> CppDomain& { return *domain_; }
-  auto domain() const -> const CppDomain& { return *domain_; }
+  auto domain() -> SemIR::CppDomain& { return *domain_; }
+  auto domain() const -> const SemIR::CppDomain& { return *domain_; }
 
   auto clang_mangle_context() -> clang::MangleContext&;
 
@@ -57,7 +57,7 @@ class CppContext {
 
  private:
   // The C++ compilation domain.
-  CppDomain* domain_;
+  SemIR::CppDomain* domain_;
 
   // TODO: All of the below state that is not specific to a particular
   // Check::Context or SemIR::File should be moved into CppDomain.
