@@ -282,26 +282,26 @@ fn F() {
   MyNamespaceAlias.bar();
 }
 
-// --- fail_indirect_namespace_no_local_decl.carbon
+// --- indirect_namespace_no_local_decl.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+3]]:1: in import [InImport]
+// CHECK:STDERR: indirect_namespace_no_local_decl.carbon:[[@LINE+3]]:1: in import [InImport]
 // CHECK:STDERR: namespace_alias.carbon: error: semantics TODO: `use of imported C++ declaration with no corresponding local import` [SemanticsTodo]
 // CHECK:STDERR:
 import library "namespace_alias";
 import Cpp;
 
 fn F() {
-  // Imports are not implicitly re-exported, so name lookup is expected to
-  // fail, regardless of whether a lookup was performed in the imported file.
-  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // With --share-cpp-ast, C++ declarations from single.h are present in the
+  // shared C++ AST, so lookup succeeds.
+  // CHECK:STDERR: indirect_namespace_no_local_decl.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   MyNamespaceAlias.foo();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   MyNamespaceAlias.foo();
 
-  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+4]]:3: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: indirect_namespace_no_local_decl.carbon:[[@LINE+4]]:3: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   MyNamespaceAlias.bar();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -321,7 +321,7 @@ fn F() {
   MyNamespaceAlias.bar();
 }
 
-// --- fail_indirect_namespace_different_contents_invalid.carbon
+// --- indirect_namespace_different_contents_invalid.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -335,9 +335,9 @@ namespace my_namespace {
 ''';
 
 fn F() {
-  // Cpp imports are not implicitly re-exported, so name lookup is expected to
-  // fail.
-  // CHECK:STDERR: fail_indirect_namespace_different_contents_invalid.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // With --share-cpp-ast, C++ declarations from single.h are present in the
+  // shared C++ AST, so lookup succeeds.
+  // CHECK:STDERR: indirect_namespace_different_contents_invalid.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   MyNamespaceAlias.foo();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

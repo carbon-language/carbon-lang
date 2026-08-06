@@ -17,6 +17,10 @@
 // Clang allows it in MSVC compatibility mode.
 enum UnsizedEnum;
 
+// --- fail_declaration.h
+
+enum FailUnsizedEnum;
+
 // --- import_declaration.carbon
 
 library "[[@TEST_NAME]]";
@@ -37,24 +41,24 @@ fn F(e: Cpp.UnsizedEnum);
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./declaration.h:4:6: warning: forward references to 'enum' types are a Microsoft extension [CppInteropParseWarning]
-// CHECK:STDERR:     4 | enum UnsizedEnum;
+// CHECK:STDERR: ./fail_declaration.h:2:6: warning: forward references to 'enum' types are a Microsoft extension [CppInteropParseWarning]
+// CHECK:STDERR:     2 | enum FailUnsizedEnum;
 // CHECK:STDERR:       |      ^
 // CHECK:STDERR:
-import Cpp library "declaration.h";
+import Cpp library "fail_declaration.h";
 
 fn MyF() {
   // TODO: It's a bit surprising to refer to this type as a class, even though
   // we model it as a class in Carbon. Consider customizing the diagnostic.
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:17: error: binding pattern has incomplete type `UnsizedEnum` in name binding declaration [IncompleteTypeInBindingDecl]
-  // CHECK:STDERR:   var unused e: Cpp.UnsizedEnum;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:17: error: binding pattern has incomplete type `FailUnsizedEnum` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR:   var unused e: Cpp.FailUnsizedEnum;
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./declaration.h:4:6: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: enum UnsizedEnum;
+  // CHECK:STDERR: ./fail_declaration.h:2:6: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: enum FailUnsizedEnum;
   // CHECK:STDERR:      ^
   // CHECK:STDERR:
-  var unused e: Cpp.UnsizedEnum;
+  var unused e: Cpp.FailUnsizedEnum;
 }
 
 // CHECK:STDOUT: --- import_declaration.carbon

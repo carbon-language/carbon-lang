@@ -34,7 +34,7 @@ fn MyF() {
 
 // --- inline_function_decl.h
 
-inline void foo() {}
+inline void foo_inline() {}
 
 // --- import_inline_function_decl.carbon
 
@@ -43,7 +43,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "inline_function_decl.h";
 
 fn MyF() {
-  Cpp.foo();
+  Cpp.foo_inline();
 }
 
 // ============================================================================
@@ -52,7 +52,7 @@ fn MyF() {
 
 // --- inline_used_function_decl.h
 
-inline __attribute__((used)) void foo() {}
+inline __attribute__((used)) void foo_used() {}
 
 // --- import_inline_used_function_decl.carbon
 
@@ -61,7 +61,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "inline_used_function_decl.h";
 
 fn MyF() {
-  Cpp.foo();
+  Cpp.foo_used();
 }
 
 // ============================================================================
@@ -70,9 +70,9 @@ fn MyF() {
 
 // --- multiple_inline_function_decls.h
 
-inline void foo1() {}
-inline void foo2() {}
-inline void foo3() {}
+inline void multi_foo1() {}
+inline void multi_foo2() {}
+inline void multi_foo3() {}
 
 // --- import_multiple_inline_function_decls.carbon
 
@@ -81,9 +81,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "multiple_inline_function_decls.h";
 
 fn MyF() {
-  Cpp.foo1();
-  Cpp.foo2();
-  Cpp.foo3();
+  Cpp.multi_foo1();
+  Cpp.multi_foo2();
+  Cpp.multi_foo3();
 }
 
 // ============================================================================
@@ -92,8 +92,8 @@ fn MyF() {
 
 // --- inline_recursive_function_decl.h
 
-inline void foo1() {}
-inline void foo2() { foo1(); }
+inline void rec_foo1() {}
+inline void rec_foo2() { rec_foo1(); }
 
 // --- import_inline_recursive_function_decl.carbon
 
@@ -103,7 +103,7 @@ import Cpp library "inline_recursive_function_decl.h";
 
 fn MyF() {
   // This should generate the definition of the inline function `foo1()`.
-  Cpp.foo2();
+  Cpp.rec_foo2();
 }
 
 // ============================================================================
@@ -178,17 +178,17 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Z3foov = comdat any
+// CHECK:STDOUT: $_Z10foo_inlinev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z3foov(), !dbg !15
+// CHECK:STDOUT:   call void @_Z10foo_inlinev(), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z3foov() #1 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z10foo_inlinev() #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -224,12 +224,12 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Z3foov = comdat any
+// CHECK:STDOUT: $_Z8foo_usedv = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: @llvm.compiler.used = appending global [1 x ptr] [ptr @_Z3foov], section "llvm.metadata"
+// CHECK:STDOUT: @llvm.compiler.used = appending global [1 x ptr] [ptr @_Z8foo_usedv], section "llvm.metadata"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z3foov() #0 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z8foo_usedv() #0 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -237,12 +237,12 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMyF.Main() #1 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z3foov(), !dbg !15
+// CHECK:STDOUT:   call void @_Z8foo_usedv(), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_Z3foov, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_Z8foo_usedv, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nounwind }
@@ -275,35 +275,35 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Z4foo1v = comdat any
+// CHECK:STDOUT: $_Z10multi_foo1v = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Z4foo2v = comdat any
+// CHECK:STDOUT: $_Z10multi_foo2v = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Z4foo3v = comdat any
+// CHECK:STDOUT: $_Z10multi_foo3v = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4foo1v(), !dbg !15
-// CHECK:STDOUT:   call void @_Z4foo2v(), !dbg !16
-// CHECK:STDOUT:   call void @_Z4foo3v(), !dbg !17
+// CHECK:STDOUT:   call void @_Z10multi_foo1v(), !dbg !15
+// CHECK:STDOUT:   call void @_Z10multi_foo2v(), !dbg !16
+// CHECK:STDOUT:   call void @_Z10multi_foo3v(), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo1v() #1 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z10multi_foo1v() #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo2v() #1 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z10multi_foo2v() #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo3v() #1 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z10multi_foo3v() #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -341,26 +341,26 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Z4foo2v = comdat any
+// CHECK:STDOUT: $_Z8rec_foo2v = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Z4foo1v = comdat any
+// CHECK:STDOUT: $_Z8rec_foo1v = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4foo2v(), !dbg !15
+// CHECK:STDOUT:   call void @_Z8rec_foo2v(), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo2v() #1 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z8rec_foo2v() #1 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4foo1v()
+// CHECK:STDOUT:   call void @_Z8rec_foo1v()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo1v() #2 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z8rec_foo1v() #2 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
