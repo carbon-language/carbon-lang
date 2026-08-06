@@ -23,9 +23,11 @@ class IdentifierInfo;
 class VarDecl;
 }  // namespace clang
 
-namespace Carbon::Check {
-
+namespace Carbon::SemIR {
 class CppDomain;
+}  // namespace Carbon::SemIR
+
+namespace Carbon::Check {
 
 // Returns whether the given function is an object member function. This is true
 // if it's a non-static member function and not a constructor. Object member
@@ -39,7 +41,7 @@ auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool;
 // non-null unless there was an error initializing Clang.
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-               CppDomain* domain) -> void;
+               SemIR::CppDomain* domain) -> void;
 
 // Given a clang declaration ID that was previously imported into another file,
 // returns the corresponding clang declaration key in the current context.

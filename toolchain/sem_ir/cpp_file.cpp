@@ -14,8 +14,7 @@ namespace Carbon::SemIR {
 CppFile::CppFile(std::shared_ptr<clang::CompilerInstance> clang,
                  std::unique_ptr<clang::MangleContext> mangle_context,
                  llvm::LLVMContext* llvm_context,
-                 clang::CodeGenerator* code_generator,
-                 Check::CppDomain* cpp_domain)
+                 clang::CodeGenerator* code_generator, CppDomain* cpp_domain)
     : clang_(std::move(clang)),
       mangle_context_(std::move(mangle_context)),
       llvm_context_(llvm_context),

@@ -36,7 +36,6 @@
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/diagnostic_consumer.h"
 #include "toolchain/check/cpp/diagnostic_listener.h"
-#include "toolchain/check/cpp/domain.h"
 #include "toolchain/check/cpp/export.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
@@ -48,6 +47,7 @@
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/cpp_domain.h"
 #include "toolchain/sem_ir/cpp_file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/read_only_ast_source.h"
@@ -590,7 +590,7 @@ static auto ParseTopLevelDecls(clang::Parser& parser,
 }
 
 // Generate a Clang module corresponding to the current Carbon file.
-static auto CreateModuleForCarbonFile(CppDomain& domain,
+static auto CreateModuleForCarbonFile(SemIR::CppDomain& domain,
                                       const SemIR::File& file)
     -> clang::Module* {
   // TODO: Consider creating a parent module to hold all Carbon modules.
@@ -612,7 +612,7 @@ static auto CreateModuleForCarbonFile(CppDomain& domain,
 // header is imported into Carbon, C++-side #includes of the same header are
 // still treated as textual inclusions.
 // Returns the module and a bool indicating whether it was newly created.
-static auto GetOrCreateModuleForHeader(CppDomain& domain,
+static auto GetOrCreateModuleForHeader(SemIR::CppDomain& domain,
                                        llvm::StringRef header_name)
     -> std::pair<clang::Module*, bool> {
   auto [it, added] = domain.header_modules().insert({header_name, nullptr});
@@ -808,7 +808,7 @@ namespace {
 // from a set of Cpp imports.
 class GenerateASTAction : public clang::ASTFrontendAction {
  public:
-  explicit GenerateASTAction(llvm::ArrayRef<CppInputFile> inputs,
+  explicit GenerateASTAction(llvm::ArrayRef<SemIR::CppInputFile> inputs,
                              llvm::LLVMContext* llvm_context)
       : inputs_(inputs), llvm_context_(llvm_context) {}
 
@@ -887,7 +887,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
   }
 
  private:
-  llvm::ArrayRef<CppInputFile> inputs_;
+  llvm::ArrayRef<SemIR::CppInputFile> inputs_;
   llvm::LLVMContext* llvm_context_;
   llvm::SmallVector<clang::CodeGenerator*> code_generators_;
   std::unique_ptr<clang::Parser> parser_;
@@ -899,11 +899,11 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 // creating a diagnostics engine, and parsing a dummy main file containing a
 // semicolon. Returns the initialized state, or null on failure.
 auto InitializeCppDomain(
-    Diagnostics::Consumer& consumer, llvm::ArrayRef<CppInputFile> inputs,
+    Diagnostics::Consumer& consumer, llvm::ArrayRef<SemIR::CppInputFile> inputs,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::LLVMContext* llvm_context,
     std::shared_ptr<clang::CompilerInvocation> base_invocation)
-    -> std::unique_ptr<CppDomain> {
+    -> std::unique_ptr<SemIR::CppDomain> {
   std::shared_ptr<clang::CompilerInstance> clang_instance;
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags;
 
@@ -993,14 +993,14 @@ auto InitializeCppDomain(
   CARBON_CHECK(parser);
 
   CARBON_CHECK(action.code_generators().size() == inputs.size());
-  return std::make_unique<CppDomain>(std::move(clang_instance),
-                                     std::move(parser), inputs,
-                                     action.code_generators(), llvm_context);
+  return std::make_unique<SemIR::CppDomain>(
+      std::move(clang_instance), std::move(parser), inputs,
+      action.code_generators(), llvm_context);
 }
 
 auto GenerateAst(Context& context,
                  llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                 CppDomain& domain) -> bool {
+                 SemIR::CppDomain& domain) -> bool {
   CARBON_CHECK(!context.cpp_context());
   CARBON_CHECK(!context.sem_ir().cpp_file());
 
@@ -1102,7 +1102,7 @@ auto FinishAst(Context& context) -> void {
   context.set_cpp_context(nullptr);
 }
 
-auto FinalizeCppDomain(CppDomain& domain) -> void {
+auto FinalizeCppDomain(SemIR::CppDomain& domain) -> void {
   if (domain.clang_instance_ptr()) {
     domain.clang_instance().getSema().ActOnEndOfTranslationUnit();
     FlushDiagnosticConsumer(

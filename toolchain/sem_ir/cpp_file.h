@@ -22,11 +22,9 @@ namespace llvm {
 class LLVMContext;
 }  // namespace llvm
 
-namespace Carbon::Check {
-class CppDomain;
-}  // namespace Carbon::Check
-
 namespace Carbon::SemIR {
+
+class CppDomain;
 
 // The result of compiling the C++ portion of a `File`, including both any
 // imported C++ headers and any inline C++ fragments.
@@ -35,8 +33,7 @@ class CppFile {
   explicit CppFile(std::shared_ptr<clang::CompilerInstance> clang,
                    std::unique_ptr<clang::MangleContext> mangle_context,
                    llvm::LLVMContext* llvm_context,
-                   clang::CodeGenerator* code_generator,
-                   Check::CppDomain* cpp_domain);
+                   clang::CodeGenerator* code_generator, CppDomain* cpp_domain);
   ~CppFile();
 
   // Access to compilation options.
@@ -60,14 +57,14 @@ class CppFile {
   auto code_generator() const -> clang::CodeGenerator* {
     return code_generator_;
   }
-  auto cpp_domain() const -> Check::CppDomain* { return cpp_domain_; }
+  auto cpp_domain() const -> CppDomain* { return cpp_domain_; }
 
  private:
   std::shared_ptr<clang::CompilerInstance> clang_;
   std::unique_ptr<clang::MangleContext> mangle_context_;
   llvm::LLVMContext* llvm_context_;
   clang::CodeGenerator* code_generator_;
-  Check::CppDomain* cpp_domain_;
+  CppDomain* cpp_domain_;
 };
 
 }  // namespace Carbon::SemIR

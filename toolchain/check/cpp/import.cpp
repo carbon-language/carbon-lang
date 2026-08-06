@@ -39,7 +39,6 @@
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/custom_type_mapping.h"
-#include "toolchain/check/cpp/domain.h"
 #include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/macros.h"
@@ -62,6 +61,7 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/class.h"
+#include "toolchain/sem_ir/cpp_domain.h"
 #include "toolchain/sem_ir/cpp_file.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/function.h"
@@ -119,7 +119,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-               CppDomain* domain) -> void {
+               SemIR::CppDomain* domain) -> void {
   if (imports.empty()) {
     // TODO: Consider always having a (non-null) AST even if there are no Cpp
     // imports.

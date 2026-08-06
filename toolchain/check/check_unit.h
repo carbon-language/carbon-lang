@@ -17,10 +17,13 @@ namespace clang {
 class CompilerInvocation;
 }
 
+namespace Carbon::SemIR {
+class CppDomain;
+}  // namespace Carbon::SemIR
+
 namespace Carbon::Check {
 
 struct UnitAndImports;
-class CppDomain;
 
 // A file's imports corresponding to a single package, for
 // `UnitAndImports::package_imports`.
@@ -103,7 +106,7 @@ struct UnitAndImports {
   llvm::SmallVector<Parse::Tree::PackagingNames> cpp_imports;
 
   // The C++ domain for this unit.
-  CppDomain* cpp_domain = nullptr;
+  SemIR::CppDomain* cpp_domain = nullptr;
 
   // The remaining number of imports which must be checked before this unit can
   // be processed.

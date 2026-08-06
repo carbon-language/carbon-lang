@@ -16,7 +16,6 @@
 #include "common/pretty_stack_trace_function.h"
 #include "toolchain/check/check_unit.h"
 #include "toolchain/check/context.h"
-#include "toolchain/check/cpp/domain.h"
 #include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/diagnostic_emitter.h"
@@ -27,6 +26,7 @@
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/cpp_domain.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/formatter.h"
 #include "toolchain/sem_ir/read_only_ast_source.h"
@@ -421,7 +421,7 @@ auto CheckParseTrees(
   // (`options.share_cpp_ast`), there is only a single shared domain. This
   // variable is created early so the domains outlive the `UnitAndImports` that
   // reference them.
-  llvm::SmallVector<std::unique_ptr<CppDomain>> cpp_domains;
+  llvm::SmallVector<std::unique_ptr<SemIR::CppDomain>> cpp_domains;
 
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
@@ -507,7 +507,7 @@ auto CheckParseTrees(
 
   // Create C++ domains for Cpp imports.
   if (options.share_cpp_ast) {
-    llvm::SmallVector<CppInputFile> inputs;
+    llvm::SmallVector<SemIR::CppInputFile> inputs;
     for (auto& unit_info : unit_infos) {
       if (unit_info.cpp_imports.empty()) {
         continue;
