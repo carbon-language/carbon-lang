@@ -119,13 +119,6 @@ impl IntLiteral as SubWith(Self) where .Result = Self {
 }
 
 
-// Operations for FloatLiteral. These need to be here because FloatLiteral has no
-// associated library of its own.
-impl FloatLiteral as Negate where .Result = Self {
-  fn Op(self) -> Self = "float.negate";
-}
-
-
 // Operations for CharLiteral. These need to be here because CharLiteral has no
 // associated library of its own.
 impl CharLiteral as AddWith(IntLiteral) where .Result = CharLiteral {
@@ -142,4 +135,11 @@ impl CharLiteral as SubWith(IntLiteral) where .Result = CharLiteral {
 
 impl CharLiteral as SubWith(Self) where .Result = IntLiteral {
   fn Op(self, other: Self) -> IntLiteral = "char_literal.sub_char";
+}
+
+
+// Operations for FloatLiteral. These need to be here because FloatLiteral has no
+// associated library of its own.
+impl FloatLiteral as Negate where .Result = Self {
+  fn Op(self) -> Self = "float.negate";
 }
