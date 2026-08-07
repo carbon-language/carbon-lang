@@ -134,7 +134,6 @@ impl FloatLiteral as SubWith(Self) where .Result = Self {
 }
 
 
-
 // Operations for CharLiteral. These need to be here because CharLiteral has no
 // associated library of its own.
 impl CharLiteral as AddWith(IntLiteral) where .Result = CharLiteral {
