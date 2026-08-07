@@ -23,10 +23,11 @@ interface I;
 library "[[@TEST_NAME]]";
 import library "a";
 
+// TODO: Replace this diagnostic with one that better describes the error, such as 'DeclaredInMultipleLibraries'.
 // CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:1: error: redeclaration of `interface I` is redundant [RedeclRedundant]
 // CHECK:STDERR: interface I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: fail_b.carbon:[[@LINE-6]]:1: in import [InImport]
 // CHECK:STDERR: a.carbon:4:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: interface I;
 // CHECK:STDERR: ^~~~~~~~~~~~
@@ -51,7 +52,7 @@ interface I {}
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type.8e70aa.2: type = facet_type <@I.loc13_13.2> [concrete]
+// CHECK:STDOUT:   %I.type.8e70aa.2: type = facet_type <@I.loc14_13.2> [concrete]
 // CHECK:STDOUT:   %Self: %I.type.8e70aa.2 = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,14 +61,14 @@ interface I {}
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.loc13_13.2 [concrete = constants.%I.type.8e70aa.2] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.loc14_13.2 [concrete = constants.%I.type.8e70aa.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I.loc13_13.1;
+// CHECK:STDOUT: interface @I.loc14_13.1;
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I.loc13_13.2 {
+// CHECK:STDOUT: interface @I.loc14_13.2 {
 // CHECK:STDOUT:   %Self: %I.type.8e70aa.2 = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I.loc13_13.2 [concrete]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I.loc14_13.2 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

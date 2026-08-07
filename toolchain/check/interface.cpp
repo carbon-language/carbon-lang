@@ -158,28 +158,6 @@ auto AddSelfSymbolicBindingToScope(Context& context,
 
 template <typename EntityT>
   requires std::same_as<EntityT, SemIR::Interface>
-static auto TryGetEntity(Context& context, SemIR::Inst inst)
-    -> const SemIR::EntityWithParamsBase* {
-  if (auto decl = inst.TryAs<SemIR::InterfaceDecl>()) {
-    return &context.interfaces().Get(decl->interface_id);
-  } else {
-    return nullptr;
-  }
-}
-
-template <typename EntityT>
-  requires std::same_as<EntityT, SemIR::NamedConstraint>
-static auto TryGetEntity(Context& context, SemIR::Inst inst)
-    -> const SemIR::EntityWithParamsBase* {
-  if (auto decl = inst.TryAs<SemIR::NamedConstraintDecl>()) {
-    return &context.named_constraints().Get(decl->named_constraint_id);
-  } else {
-    return nullptr;
-  }
-}
-
-template <typename EntityT>
-  requires std::same_as<EntityT, SemIR::Interface>
 static constexpr auto DeclTokenKind() -> Lex::TokenKind {
   return Lex::TokenKind::Interface;
 }
@@ -240,10 +218,16 @@ auto TryGetExistingDecl(Context& context, const NameComponent& name,
       // Verify the decl so that things like aliases are name conflicts.
       const auto* import_ir =
           context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
-      if (!import_ir->insts()
-               .IsOneOf<SemIR::InterfaceDecl, SemIR::InterfaceWithSelfDecl>(
-                   import_ir_inst.inst_id())) {
-        break;
+      if constexpr (IsInterface) {
+        if (!import_ir->insts().Is<SemIR::InterfaceDecl>(
+                import_ir_inst.inst_id())) {
+          break;
+        }
+      } else {
+        if (!import_ir->insts().Is<SemIR::NamedConstraintDecl>(
+                import_ir_inst.inst_id())) {
+          break;
+        }
       }
 
       // Use the constant value to get the ID.
@@ -274,7 +258,7 @@ auto TryGetExistingDecl(Context& context, const NameComponent& name,
     return std::nullopt;
   }
 
-  const auto& prev_entity = [&]() -> const EntityT& {
+  auto& prev_entity = [&]() -> EntityT& {
     if constexpr (IsInterface) {
       return context.interfaces().Get(prev_entity_id);
     } else {
