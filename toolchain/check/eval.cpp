@@ -2244,112 +2244,139 @@ static auto OverflowAdd(const llvm::APInt& lhs, const llvm::APInt& rhs)
   return result;
 }
 
-// Adds two APInts handling overflow by growing result.
-static auto UnmatchedOverflowAdd(const llvm::APInt& lhs, const llvm::APInt& rhs)
-    -> llvm::APInt {
-  return OverflowAdd(
-      lhs.getBitWidth() < rhs.getBitWidth() ? lhs.zext(rhs.getBitWidth()) : lhs,
-      rhs.getBitWidth() < lhs.getBitWidth() ? rhs.zext(lhs.getBitWidth())
-                                            : rhs);
+struct FactoredExponent {
+  int twos = 0;
+  int fives = 0;
+};
+
+// Decomposes Real's exponents into form 2^a * 5^b.
+static auto TryGetFactoredExponent(const Real& real)
+    -> std::optional<FactoredExponent> {
+  auto exponent = real.exponent.trySExtValue();
+  if (!exponent && *exponent > std::numeric_limits<int>::max()) {
+    // If the
+    return std::nullopt;
+  }
+  return FactoredExponent{
+      .twos = static_cast<int>(*exponent),
+      .fives = real.is_decimal ? static_cast<int>(*exponent) : 0,
+  };
 }
 
-// Adds or subtracts two decadic Real literals.
+// Constructs a Real from mantissa and factored exponent.
+static auto RecombineFactoredExponent(llvm::APInt mantissa,
+                                      const FactoredExponent& exponent)
+    -> Real {
+  CARBON_CHECK(exponent.fives == exponent.twos || exponent.fives == 0,
+               "exponent must by dyadic or decadic");
+  return {
+      .mantissa = mantissa,
+      .exponent = llvm::APInt(32, exponent.twos, /*isSigned=*/true),
+      .is_decimal = exponent.fives == exponent.twos,
+  };
+}
+
+// Finds a dyadic or decadic exponent that both lhs and rhs can be converted to.
+static auto FindCommonExponent(FactoredExponent lhs, FactoredExponent rhs)
+    -> FactoredExponent {
+  FactoredExponent min_factors = {
+      .twos = std::min(lhs.twos, rhs.twos),
+      .fives = std::min(lhs.fives, rhs.fives),
+  };
+
+  int factor_diff = std::abs(min_factors.fives - min_factors.twos);
+  int bits_required_for_decimal =
+      min_factors.fives > min_factors.twos ? 3 * factor_diff : factor_diff;
+  if (min_factors.fives > 0 &&
+      3 * min_factors.fives < bits_required_for_decimal) {
+    // Result will be (likely) smaller if stored as decadic real.
+    return {
+        .twos = min_factors.twos,
+        .fives = 0,
+    };
+  }
+
+  int min_exponent = std::min(min_factors.fives, min_factors.twos);
+  return {
+      .twos = min_exponent,
+      .fives = min_exponent,
+  };
+}
+
+// Finds difference between two exponents.
+static auto ComputeExponentDelta(const FactoredExponent& lhs,
+                                 const FactoredExponent& rhs)
+    -> FactoredExponent {
+  return {
+      .twos = lhs.twos - rhs.twos,
+      .fives = lhs.fives - rhs.fives,
+  };
+}
+
+static auto EstimateBitsForExponent(const FactoredExponent& exponent) -> int {
+  CARBON_CHECK(exponent.twos >= 0 && exponent.fives >= 0);
+  return 3 * exponent.fives + exponent.twos;
+}
+
+// Multiplies factored exponent with provided APInt sign, result is sign
+// extended to `bit_width`.
+static auto ApplyFactoredExponent(const FactoredExponent& exponent,
+                                  const llvm::APInt& mantissa,
+                                  unsigned bit_width) -> llvm::APInt {
+  CARBON_CHECK(exponent.twos >= 0 && exponent.fives >= 0);
+  auto result = mantissa.sextOrTrunc(bit_width);
+  if (exponent.twos > 0) {
+    result <<= exponent.twos;
+  }
+  if (exponent.fives > 0) {
+    result *= llvm::APIntOps::pow(llvm::APInt(bit_width, 5), exponent.fives);
+  }
+  return result;
+}
+
+// Adds or subtracts two Real literals.
 // Returns std::nullopt if value would be too large to compute without losing
 // precision.
 static auto TryAddRealLiterals(const Real& lhs, const Real& rhs)
     -> std::optional<Real> {
-  const llvm::APInt& lhs_mantissa = lhs.mantissa;
-  const llvm::APInt& rhs_mantissa = rhs.mantissa;
-
-  llvm::APInt res_exponent;
-  llvm::APInt res_mantissa;
-
-  if (lhs.exponent.getBitWidth() == rhs.exponent.getBitWidth() &&
-      lhs.exponent == rhs.exponent) {
-    res_mantissa = UnmatchedOverflowAdd(lhs_mantissa, rhs_mantissa);
-    res_exponent = lhs.exponent;
-
-    return Real{
-        .mantissa = UnmatchedOverflowAdd(lhs.mantissa, rhs.mantissa),
-        .exponent = lhs.exponent,
-        .is_decimal = true,
-    };
-  }
-
-  auto lhs_exponent = lhs.exponent.trySExtValue();
+  auto lhs_exponent = TryGetFactoredExponent(lhs);
   if (!lhs_exponent) {
     return std::nullopt;
   }
-  auto rhs_exponent = rhs.exponent.trySExtValue();
+  auto rhs_exponent = TryGetFactoredExponent(rhs);
   if (!rhs_exponent) {
     return std::nullopt;
   }
 
-  bool lhs_larger = *lhs_exponent > *rhs_exponent;
-  auto [smaller_exponent, larger_exponent] =
-      std::minmax(lhs_exponent, rhs_exponent);
+  // Find an exponent we can convert both lhs and rhs to.
+  auto common_exponent = FindCommonExponent(*lhs_exponent, *rhs_exponent);
+  // Find change to mantisssa (in form of factored exponents) so that lhs and
+  // rhs have desired exponent.
+  auto lhs_exponent_delta =
+      ComputeExponentDelta(*lhs_exponent, common_exponent);
+  auto rhs_exponent_delta =
+      ComputeExponentDelta(*rhs_exponent, common_exponent);
 
-  const llvm::APInt& larger_mantisssa =
-      lhs_larger ? lhs_mantissa : rhs_mantissa;
-  const llvm::APInt& smaller_mantissa =
-      lhs_larger ? rhs_mantissa : lhs_mantissa;
-
-  int64_t exponent_diff = *larger_exponent - *smaller_exponent;
-  unsigned bit_width = std::max(lhs_mantissa.getSignificantBits(),
-                                rhs_mantissa.getSignificantBits()) +
-                       exponent_diff * 4 + 2;
+  // Assume no overflow during addition, OverflowAdd will grow final result if
+  // necessary.
+  auto bit_width = std::max<unsigned>({
+      lhs.mantissa.getSignificantBits() +
+          EstimateBitsForExponent(lhs_exponent_delta),
+      rhs.mantissa.getSignificantBits() +
+          EstimateBitsForExponent(rhs_exponent_delta),
+      IntStore::MinAPWidth,
+  });
   if (bit_width > IntStore::MaxIntWidth) {
+    // Mantissa is too big.
     return std::nullopt;
   }
 
-  return Real{
-      .mantissa = OverflowAdd(
-          larger_mantisssa.sextOrTrunc(bit_width) *
-              llvm::APIntOps::pow(llvm::APInt(bit_width, 10), exponent_diff),
-          smaller_mantissa.sextOrTrunc(bit_width)),
-      .exponent = lhs_larger ? rhs.exponent : lhs.exponent,
-      .is_decimal = true};
-}
-
-// Mutates `value` to be a decadic real literal.
-// Returns false and emits diagnostic if not possible.
-static auto TryConvertToDecadic(Real& value) -> bool {
-  if (value.is_decimal) {
-    return true;
-  }
-
-  auto exponent = value.exponent.trySExtValue();
-  if (!exponent) {
-    return false;
-  }
-
-  if (exponent == 0) {
-    value.is_decimal = true;
-    return true;
-  }
-
-  if (exponent > 0) {
-    int64_t bit_width = value.mantissa.getSignificantBits() + *exponent;
-    if (bit_width > IntStore::MaxIntWidth) {
-      return false;
-    }
-
-    value.mantissa = value.mantissa.sext(bit_width);
-    value.exponent = llvm::APInt(32, 0, /*isSigned=*/true);
-    value.is_decimal = true;
-    return true;
-  }
-
-  int64_t abs_exponent = std::abs(*exponent);
-  int64_t bit_width = value.mantissa.getSignificantBits() + abs_exponent * 3;
-  if (bit_width > IntStore::MaxIntWidth) {
-    return false;
-  }
-
-  value.mantissa = value.mantissa.sextOrTrunc(bit_width);
-  value.mantissa *=
-      llvm::APIntOps::pow(llvm::APInt(bit_width, 5), abs_exponent);
-  return true;
+  auto lhs_mantissa =
+      ApplyFactoredExponent(lhs_exponent_delta, lhs.mantissa, bit_width);
+  auto rhs_mantissa =
+      ApplyFactoredExponent(rhs_exponent_delta, rhs.mantissa, bit_width);
+  return RecombineFactoredExponent(OverflowAdd(lhs_mantissa, rhs_mantissa),
+                                   common_exponent);
 }
 
 // Performs a builtin binary real -> real operation.
@@ -2360,26 +2387,8 @@ static auto PerformBuiltinBinaryFloatLiteralOp(
   auto lhs_val = context.reals().Get(lhs_id);
   auto rhs_val = context.reals().Get(rhs_id);
 
-  // To simplify implementation, all binary operations act on decadic reals
-  // only.
-  CARBON_DIAGNOSTIC(CompileTimeDecadicFloatLiteralTooLarge, Error,
-                    "conversion of binary float literal {0} to decimal would "
-                    "exceed the maximum supported integer width of {1}",
-                    Real, int);
-  if (!TryConvertToDecadic(lhs_val)) {
-    context.emitter().Emit(loc_id, CompileTimeDecadicFloatLiteralTooLarge,
-                           lhs_val, IntStore::MaxIntWidth);
-    return SemIR::ErrorInst::ConstantId;
-  }
-  if (!TryConvertToDecadic(rhs_val)) {
-    context.emitter().Emit(loc_id, CompileTimeDecadicFloatLiteralTooLarge,
-                           rhs_val, IntStore::MaxIntWidth);
-    return SemIR::ErrorInst::ConstantId;
-  }
-
   Lex::TokenKind op_token;
   std::optional<Real> result;
-
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::FloatAdd:
       result = TryAddRealLiterals(lhs_val, rhs_val);
@@ -2397,7 +2406,7 @@ static auto PerformBuiltinBinaryFloatLiteralOp(
     CARBON_DIAGNOSTIC(
         CompileTimeFloatLiteralBinaryOperationOutOfRange, Error,
         "binary calculation `{0} {1} {2}` would exceed the maximum "
-        "supported integer width of {1}",
+        "supported integer width of {3}",
         Real, Lex::TokenKind, Real, int);
     context.emitter().Emit(loc_id,
                            CompileTimeFloatLiteralBinaryOperationOutOfRange,
