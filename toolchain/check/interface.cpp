@@ -6,8 +6,11 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <optional>
+#include <type_traits>
 
 #include "common/concepts.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/eval.h"
@@ -193,6 +196,11 @@ auto TryGetExistingDecl(Context& context, const NameComponent& name,
                         SemIR::ScopeLookupResult lookup_result,
                         const EntityT& entity, bool is_definition)
     -> std::optional<SemIR::Inst> {
+  using EntityIdT =
+      std::conditional_t<std::is_same_v<EntityT, SemIR::Interface>,
+                         SemIR::InterfaceId, SemIR::NamedConstraintId>;
+  constexpr bool IsInterface = std::is_same_v<EntityIdT, SemIR::InterfaceId>;
+
   if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
     DiagnosePoisonedName(context, name.name_id,
@@ -204,39 +212,94 @@ auto TryGetExistingDecl(Context& context, const NameComponent& name,
     return std::nullopt;
   }
 
-  SemIR::InstId existing_id = lookup_result.target_inst_id();
-  SemIR::Inst existing_decl_inst = context.insts().Get(existing_id);
-  const auto* existing_decl_entity =
-      TryGetEntity<EntityT>(context, existing_decl_inst);
-  if (!existing_decl_entity) {
+  auto prev_id = lookup_result.target_inst_id();
+  auto prev = context.insts().Get(prev_id);
+
+  auto prev_entity_id = EntityIdT::None;
+  auto prev_import_ir_id = SemIR::ImportIRId::None;
+  auto existing_decl_id = SemIR::InstId::None;
+  CARBON_KIND_SWITCH(prev) {
+    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+      if constexpr (IsInterface) {
+        prev_entity_id = interface_decl.interface_id;
+        existing_decl_id = prev_id;
+      }
+      break;
+    }
+    case CARBON_KIND(SemIR::NamedConstraintDecl named_constraint_decl): {
+      if constexpr (!IsInterface) {
+        prev_entity_id = named_constraint_decl.named_constraint_id;
+        existing_decl_id = prev_id;
+      }
+      break;
+    }
+    case CARBON_KIND(SemIR::ImportRefLoaded import_ref): {
+      auto import_ir_inst =
+          context.import_ir_insts().Get(import_ref.import_ir_inst_id);
+
+      // Verify the decl so that things like aliases are name conflicts.
+      const auto* import_ir =
+          context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+      if (!import_ir->insts()
+               .IsOneOf<SemIR::InterfaceDecl, SemIR::InterfaceWithSelfDecl>(
+                   import_ir_inst.inst_id())) {
+        break;
+      }
+
+      // Use the constant value to get the ID.
+      auto decl_value = context.insts().Get(
+          context.constant_values().GetConstantInstId(prev_id));
+      if (auto facet_type = decl_value.TryAs<SemIR::FacetType>()) {
+        auto declared_facet_type = context.declared_facet_types().Get(
+            facet_type->declared_facet_type_id);
+        if constexpr (IsInterface) {
+          prev_entity_id =
+              declared_facet_type.extend_constraints[0].interface_id;
+        } else {
+          prev_entity_id = declared_facet_type.extend_named_constraints[0]
+                               .named_constraint_id;
+        }
+        prev_import_ir_id = import_ir_inst.ir_id();
+      }
+      break;
+    }
+    default:
+      break;
+  }
+
+  if (!prev_entity_id.has_value()) {
     // This is a redeclaration with a different entity kind.
     DiagnoseDuplicateName(context, name.name_id, name.name_loc_id,
-                          SemIR::LocId(existing_id));
+                          SemIR::LocId(prev_id));
     return std::nullopt;
   }
+
+  auto&& prev_entity = [&]() -> decltype(auto) {
+    if constexpr (IsInterface) {
+      return context.interfaces().Get(prev_entity_id);
+    } else {
+      return context.named_constraints().Get(prev_entity_id);
+    }
+  }();
 
   if (!CheckRedeclParamsMatch(
           context,
           DeclParams(SemIR::LocId(entity.latest_decl_id()),
                      name.first_param_node_id, name.last_param_node_id,
                      name.implicit_param_patterns_id, name.param_patterns_id),
-          DeclParams(*existing_decl_entity))) {
+          DeclParams(prev_entity))) {
     // Mismatch is diagnosed already if found.
     return std::nullopt;
   }
 
-  // TODO: This should be refactored a little, particularly for
-  // prev_import_ir_id. See similar logic for classes and functions, which
-  // might also be refactored to merge.
   DiagnoseIfInvalidRedecl(
-      context, DeclTokenKind<EntityT>(), existing_decl_entity->name_id,
+      context, DeclTokenKind<EntityT>(), prev_entity.name_id,
       RedeclInfo(entity, SemIR::LocId(entity.latest_decl_id()), is_definition),
-      RedeclInfo(*existing_decl_entity,
-                 SemIR::LocId(existing_decl_entity->latest_decl_id()),
-                 existing_decl_entity->has_definition_started()),
-      /*prev_import_ir_id=*/SemIR::ImportIRId::None);
+      RedeclInfo(prev_entity, SemIR::LocId(prev_entity.latest_decl_id()),
+                 prev_entity.has_definition_started()),
+      prev_import_ir_id);
 
-  if (is_definition && existing_decl_entity->has_definition_started()) {
+  if (is_definition && prev_entity.has_definition_started()) {
     // DiagnoseIfInvalidRedecl would diagnose an error in this case, since we'd
     // have two definitions. Given the declaration parts of the definitions
     // match, we would be able to use the prior declaration for error recovery,
@@ -246,8 +309,17 @@ auto TryGetExistingDecl(Context& context, const NameComponent& name,
     return std::nullopt;
   }
 
+  // TODO: Merge entity definition.
+
+  if (prev_import_ir_id.has_value()) {
+    prev_entity.first_owning_decl_id = entity.first_owning_decl_id;
+    ReplacePrevInstForMerge(context, entity.parent_scope_id,
+                            prev_entity.name_id, entity.first_owning_decl_id);
+  }
+
   // This is a matching redeclaration of an existing entity of the same type.
-  return existing_decl_inst;
+  return existing_decl_id.has_value() ? std::optional<SemIR::Inst>(prev)
+                                      : std::nullopt;
 }
 
 template auto TryGetExistingDecl(Context& context, const NameComponent& name,
