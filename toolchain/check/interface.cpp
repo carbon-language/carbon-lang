@@ -309,7 +309,9 @@ auto TryGetExistingDecl(Context& context, const NameComponent& name,
     return std::nullopt;
   }
 
-  // TODO: Merge entity definition.
+  if (is_definition) {
+    prev_entity.MergeDefinition(entity);
+  }
 
   if (prev_import_ir_id.has_value()) {
     prev_entity.first_owning_decl_id = entity.first_owning_decl_id;

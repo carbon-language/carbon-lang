@@ -129,7 +129,7 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     %U.loc7_22.2: %Z.type = symbolic_binding U, 0 [symbolic = %U.loc7_22.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.decl.loc9: %ForwardDeclaredGeneric.type.650 = constraint_decl @ForwardDeclaredGeneric [concrete = constants.%empty_struct.43d] {
-// CHECK:STDOUT:     %T.patt.loc9_36.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_36.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc10: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_38.1: type = splice_block %.loc9_38.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen.loc9: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -138,7 +138,7 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     %T.loc9_36.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_36.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.decl.loc10: %ForwardDeclaredGeneric.type.650 = constraint_decl @ForwardDeclaredGeneric [concrete = constants.%empty_struct.43d] {
-// CHECK:STDOUT:     %T.patt.loc9_36.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_36.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc10: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_38.1: type = splice_block %.loc10_38.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen.loc10: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -198,7 +198,7 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @ForwardDeclaredGeneric(%T.loc9_36.2: type) {
-// CHECK:STDOUT:   %T.patt.loc9_36.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_36.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc9: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc9_36.1: type = symbolic_binding T, 0 [symbolic = %T.loc9_36.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -233,7 +233,7 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT: specific @GenericZ.WithSelf(constants.%U, constants.%Self.22bbf7.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclaredGeneric(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc9_36.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.patt.loc9 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc9_36.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

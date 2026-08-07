@@ -52,7 +52,7 @@ library "[[@TEST_NAME]]";
 
 interface C;
 
-// --- fail_decl_in_api_decl_in_impl.impl.carbon
+// --- todo_fail_decl_in_api_decl_in_impl.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
@@ -62,7 +62,7 @@ interface C;
 
 library "[[@TEST_NAME]]";
 
-// --- fail_decl_only_in_impl.impl.carbon
+// --- todo_fail_decl_only_in_impl.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
@@ -179,7 +179,7 @@ interface D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.impl.carbon
+// CHECK:STDOUT: --- todo_fail_decl_in_api_decl_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type.709119.2: type = facet_type <@C.loc4_12.2> [concrete]
@@ -204,7 +204,7 @@ interface D;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_only_in_impl.impl.carbon
+// CHECK:STDOUT: --- todo_fail_decl_only_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %D.type: type = facet_type <@D> [concrete]
