@@ -164,11 +164,15 @@ import library "poison";
 // This doesn't fail.
 interface N.I;
 
-// --- poison.impl.carbon
+// --- fail_poison.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
 // TODO: #4622 This should fail since `N.I` was poisoned in the api.
+// CHECK:STDERR: fail_poison.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: interface N.I;
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 interface N.I;
 
 // --- fail_poison_when_lookup_fails.carbon

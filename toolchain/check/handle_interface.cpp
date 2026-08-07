@@ -108,6 +108,10 @@ static auto BuildInterfaceDecl(Context& context,
   // Write the interface ID into the InterfaceDecl.
   ReplaceInstBeforeConstantUse(context, decl_inst_id, interface_decl);
 
+  if (!is_definition && context.sem_ir().is_impl()) {
+    context.definitions_required_by_decl().push_back(decl_inst_id);
+  }
+
   return {interface_decl.interface_id, decl_inst_id};
 }
 

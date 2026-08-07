@@ -53,20 +53,28 @@ library "[[@TEST_NAME]]";
 
 interface C;
 
-// --- todo_fail_decl_in_api_decl_in_impl.impl.carbon
+// --- fail_decl_in_api_decl_in_impl.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: interface C;
+// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
 interface C;
 
 // --- decl_only_in_impl.carbon
 
 library "[[@TEST_NAME]]";
 
-// --- todo_fail_decl_only_in_impl.impl.carbon
+// --- fail_decl_only_in_impl.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: interface D;
+// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
 interface D;
 
 // CHECK:STDOUT: --- decl_in_api_definition_in_impl.carbon
@@ -180,10 +188,10 @@ interface D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_decl_in_api_decl_in_impl.impl.carbon
+// CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C.type.709119.2: type = facet_type <@C.loc4_12.2> [concrete]
+// CHECK:STDOUT:   %C.type.709119.2: type = facet_type <@C.loc8_12.2> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -192,12 +200,12 @@ interface D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_40.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_40.2 = import <none>
-// CHECK:STDOUT:   %C.decl: type = interface_decl @C.loc4_12.2 [concrete = constants.%C.type.709119.2] {} {}
+// CHECK:STDOUT:   %C.decl: type = interface_decl @C.loc8_12.2 [concrete = constants.%C.type.709119.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @C.loc4_12.1;
+// CHECK:STDOUT: interface @C.loc8_12.1;
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @C.loc4_12.2;
+// CHECK:STDOUT: interface @C.loc8_12.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_impl.carbon
 // CHECK:STDOUT:
@@ -205,7 +213,7 @@ interface D;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_decl_only_in_impl.impl.carbon
+// CHECK:STDOUT: --- fail_decl_only_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %D.type: type = facet_type <@D> [concrete]
