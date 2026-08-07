@@ -26,6 +26,18 @@ fn DoubleULong32(ul32: Core.CppCompat.ULong32) -> u32 {
   return 2 * (ul32 as u32);
 }
 
+// TODO: Return `Core.CppCompat.Long64` when it's copyable.
+fn DoubleLong64(l64: Core.CppCompat.Long64) -> i64 {
+  // TODO: Avoid explicit conversion when multiplication on `Long64` is available.
+  return 2 * (l64 as i64);
+}
+
+// TODO: Return `Core.CppCompat.ULong64` when it's copyable.
+fn DoubleULong64(ul64: Core.CppCompat.ULong64) -> u64 {
+  // TODO: Avoid explicit conversion when multiplication on `ULong64` is available.
+  return 2 * (ul64 as u64);
+}
+
 // TODO: Return `Core.CppCompat.LongLong64` when it's copyable.
 fn DoubleLongLong64(ll64: Core.CppCompat.LongLong64) -> i64 {
   // TODO: Avoid explicit conversion when multiplication on `LongLong64` is available.
@@ -33,9 +45,9 @@ fn DoubleLongLong64(ll64: Core.CppCompat.LongLong64) -> i64 {
 }
 
 // TODO: Return `Core.CppCompat.ULongLong64` when it's copyable.
-fn DoubleULong64(ul64: Core.CppCompat.ULongLong64) -> u64 {
+fn DoubleULongLong64(ull64: Core.CppCompat.ULongLong64) -> u64 {
   // TODO: Avoid explicit conversion when multiplication on `ULongLong64` is available.
-  return 2 * (ul64 as u64);
+  return 2 * (ull64 as u64);
 }
 
 // CHECK:STDOUT: ; ---
@@ -57,9 +69,9 @@ fn DoubleULong64(ul64: Core.CppCompat.ULongLong64) -> u64 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i64 @_CDoubleLongLong64.Main(i64 %ll64) #0 !dbg !20 {
+// CHECK:STDOUT: define i64 @_CDoubleLong64.Main(i64 %l64) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %T.as_type.as.MulWith.impl.Op.call = mul i64 2, %ll64, !dbg !26
+// CHECK:STDOUT:   %T.as_type.as.MulWith.impl.Op.call = mul i64 2, %l64, !dbg !26
 // CHECK:STDOUT:   ret i64 %T.as_type.as.MulWith.impl.Op.call, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,6 +80,20 @@ fn DoubleULong64(ul64: Core.CppCompat.ULongLong64) -> u64 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %T.as_type.as.MulWith.impl.Op.call = mul i64 2, %ul64, !dbg !34
 // CHECK:STDOUT:   ret i64 %T.as_type.as.MulWith.impl.Op.call, !dbg !35
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CDoubleLongLong64.Main(i64 %ll64) #0 !dbg !36 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %T.as_type.as.MulWith.impl.Op.call = mul i64 2, %ll64, !dbg !39
+// CHECK:STDOUT:   ret i64 %T.as_type.as.MulWith.impl.Op.call, !dbg !40
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CDoubleULongLong64.Main(i64 %ull64) #0 !dbg !41 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %T.as_type.as.MulWith.impl.Op.call = mul i64 2, %ull64, !dbg !44
+// CHECK:STDOUT:   ret i64 %T.as_type.as.MulWith.impl.Op.call, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -95,7 +121,7 @@ fn DoubleULong64(ul64: Core.CppCompat.ULongLong64) -> u64 {
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !12, type: !15)
 // CHECK:STDOUT: !18 = !DILocation(line: 13, column: 10, scope: !12)
 // CHECK:STDOUT: !19 = !DILocation(line: 13, column: 3, scope: !12)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "DoubleLongLong64", linkageName: "_CDoubleLongLong64.Main", scope: null, file: !1, line: 17, type: !21, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !24)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "DoubleLong64", linkageName: "_CDoubleLong64.Main", scope: null, file: !1, line: 17, type: !21, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !24)
 // CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
 // CHECK:STDOUT: !22 = !{!23, !23}
 // CHECK:STDOUT: !23 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_signed)
@@ -111,4 +137,14 @@ fn DoubleULong64(ul64: Core.CppCompat.ULongLong64) -> u64 {
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !28, type: !31)
 // CHECK:STDOUT: !34 = !DILocation(line: 25, column: 10, scope: !28)
 // CHECK:STDOUT: !35 = !DILocation(line: 25, column: 3, scope: !28)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "DoubleLongLong64", linkageName: "_CDoubleLongLong64.Main", scope: null, file: !1, line: 29, type: !21, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !37)
+// CHECK:STDOUT: !37 = !{!38}
+// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !36, type: !23)
+// CHECK:STDOUT: !39 = !DILocation(line: 31, column: 10, scope: !36)
+// CHECK:STDOUT: !40 = !DILocation(line: 31, column: 3, scope: !36)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "DoubleULongLong64", linkageName: "_CDoubleULongLong64.Main", scope: null, file: !1, line: 35, type: !29, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !42)
+// CHECK:STDOUT: !42 = !{!43}
+// CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !41, type: !31)
+// CHECK:STDOUT: !44 = !DILocation(line: 37, column: 10, scope: !41)
+// CHECK:STDOUT: !45 = !DILocation(line: 37, column: 3, scope: !41)
 // CHECK:STDOUT:
