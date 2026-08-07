@@ -2199,20 +2199,20 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
     }
 
     return MakeFloatLiteralResult(context, std::move(real_val));
-  } else {
-    auto op = context.insts().GetAs<SemIR::FloatValue>(arg_id);
-    auto op_val = context.floats().Get(op.float_id);
-
-    switch (builtin_kind) {
-      case SemIR::BuiltinFunctionKind::FloatNegate:
-        op_val.changeSign();
-        break;
-      default:
-        CARBON_FATAL("Unexpected builtin kind");
-    }
-
-    return MakeFloatResult(context, op.type_id, std::move(op_val));
   }
+
+  auto op = context.insts().GetAs<SemIR::FloatValue>(arg_id);
+  auto op_val = context.floats().Get(op.float_id);
+
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::FloatNegate:
+      op_val.changeSign();
+      break;
+    default:
+      CARBON_FATAL("Unexpected builtin kind");
+  }
+
+  return MakeFloatResult(context, op.type_id, std::move(op_val));
 }
 
 // Performs a builtin binary float -> float operation.

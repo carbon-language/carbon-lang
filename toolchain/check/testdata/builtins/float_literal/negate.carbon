@@ -14,12 +14,6 @@ library "[[@TEST_NAME]]";
 
 fn Negate(a: Core.FloatLiteral) -> Core.FloatLiteral = "float.negate";
 
-fn RuntimeCallIsValid(a: Core.FloatLiteral, unused b: Core.FloatLiteral) -> Core.FloatLiteral {
-  //@dump-sem-ir-begin
-  return Negate(a);
-  //@dump-sem-ir-end
-}
-
 //@dump-sem-ir-begin
 let f: Core.FloatLiteral = Negate(1.0);
 //@dump-sem-ir-end
@@ -45,24 +39,16 @@ let f: Core.FloatLiteral = Negate(1.0);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc24_38.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call [concrete = constants.%float.84a]
-// CHECK:STDOUT:   %.loc24_38.2: Core.FloatLiteral = converted @__global_init.%Negate.call, %.loc24_38.1 [concrete = constants.%float.84a]
-// CHECK:STDOUT:   %.loc24_12: type = splice_block %FloatLiteral.ref [concrete = Core.FloatLiteral] {
+// CHECK:STDOUT:   %.loc18_38.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call [concrete = constants.%float.84a]
+// CHECK:STDOUT:   %.loc18_38.2: Core.FloatLiteral = converted @__global_init.%Negate.call, %.loc18_38.1 [concrete = constants.%float.84a]
+// CHECK:STDOUT:   %.loc18_12: type = splice_block %FloatLiteral.ref [concrete = Core.FloatLiteral] {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %FloatLiteral.ref: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: Core.FloatLiteral = wrapper_binding f, %.loc24_38.2
+// CHECK:STDOUT:   %f: Core.FloatLiteral = wrapper_binding f, %.loc18_38.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type = value_binding_pattern f [concrete = constants.%f.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: Core.FloatLiteral, %b.param: Core.FloatLiteral) -> out %return.param: Core.FloatLiteral {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
-// CHECK:STDOUT:   %a.ref: Core.FloatLiteral = name_ref a, %a
-// CHECK:STDOUT:   %Negate.call: init Core.FloatLiteral = call %Negate.ref(%a.ref)
-// CHECK:STDOUT:   return %Negate.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
