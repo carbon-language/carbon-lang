@@ -729,13 +729,11 @@ constexpr BuiltinInfo FloatNegate = {"float.negate",
 
 // "float.add": float addition.
 constexpr BuiltinInfo FloatAdd = {
-    "float.add",
-    ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+    "float.add", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
 
 // "float.sub": float subtraction.
 constexpr BuiltinInfo FloatSub = {
-    "float.sub",
-    ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+    "float.sub", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
 
 // "float.mul": float multiplication.
 constexpr BuiltinInfo FloatMul = {
