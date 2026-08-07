@@ -2249,17 +2249,18 @@ struct FactoredExponent {
   int fives = 0;
 };
 
-// Decomposes Real's exponents into form 2^a * 5^b.
+// Decomposes Real's exponents into form 2^a * 5^b where a and b are 32-bit
+// ints. Returns nullopt if exponent is too large.
 static auto TryGetFactoredExponent(const Real& real)
     -> std::optional<FactoredExponent> {
-  auto exponent = real.exponent.trySExtValue();
-  if (!exponent && *exponent > std::numeric_limits<int>::max()) {
-    // If the
+  if (real.exponent.getSignificantBits() > 32) {
+    // Reject evaluation if we can't fit exponent into int.
     return std::nullopt;
   }
+  auto exponent = static_cast<int>(real.exponent.getZExtValue());
   return FactoredExponent{
-      .twos = static_cast<int>(*exponent),
-      .fives = real.is_decimal ? static_cast<int>(*exponent) : 0,
+      .twos = exponent,
+      .fives = real.is_decimal ? exponent : 0,
   };
 }
 
@@ -2279,21 +2280,29 @@ static auto RecombineFactoredExponent(llvm::APInt mantissa,
 // Finds a dyadic or decadic exponent that both lhs and rhs can be converted to.
 static auto FindCommonExponent(FactoredExponent lhs, FactoredExponent rhs)
     -> FactoredExponent {
+  // In general common exponent of x^a and x^b is x^min(a,b) because we can
+  // always subtract from exponent (and increase mantisssa by factor) but we
+  // can't add to exponent unless factor divides the mantisssa.
   FactoredExponent min_factors = {
       .twos = std::min(lhs.twos, rhs.twos),
       .fives = std::min(lhs.fives, rhs.fives),
   };
 
+  // If both lhs and rhs have positive 5^n factor, we can convert to dyadic or
+  // decadic real. Choose the one that minimizes mantissa size.
+  // Assume x * 5^n requires 3n bits and x * 2^n requires n bits.
   int factor_diff = std::abs(min_factors.fives - min_factors.twos);
-  int bits_required_for_decimal =
+  int decadic_bits =
       min_factors.fives > min_factors.twos ? 3 * factor_diff : factor_diff;
-  if (min_factors.fives > 0 &&
-      3 * min_factors.fives < bits_required_for_decimal) {
-    // Result will be (likely) smaller if stored as decadic real.
-    return {
-        .twos = min_factors.twos,
-        .fives = 0,
-    };
+  if (min_factors.fives >= 0) {
+    int dyadic_bits = 3 * min_factors.fives;
+    if (dyadic_bits < decadic_bits) {
+      // Result will be (likely) smaller if stored as dyadic real.
+      return {
+          .twos = min_factors.twos,
+          .fives = 0,
+      };
+    }
   }
 
   int min_exponent = std::min(min_factors.fives, min_factors.twos);
@@ -2313,9 +2322,11 @@ static auto ComputeExponentDelta(const FactoredExponent& lhs,
   };
 }
 
+// Estimates additional bits required to apply exponent to an APInt.
 static auto EstimateBitsForExponent(const FactoredExponent& exponent) -> int {
   CARBON_CHECK(exponent.twos >= 0 && exponent.fives >= 0);
-  return 3 * exponent.fives + exponent.twos;
+  return static_cast<int>(std::ceil(std::log2f(5) * exponent.fives)) +
+         exponent.twos;
 }
 
 // Multiplies factored exponent with provided APInt sign, result is sign
