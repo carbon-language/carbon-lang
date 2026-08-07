@@ -48,7 +48,7 @@ fn M() {
 // CHECK:STDOUT: ; ModuleID = 'call_specific_in_class.carbon'
 // CHECK:STDOUT: source_filename = "call_specific_in_class.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %type = type {}
+// CHECK:STDOUT: %type.26 = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %self) #0 !dbg !4 {
@@ -86,7 +86,7 @@ fn M() {
 // CHECK:STDOUT:   %.loc42_5 = load double, ptr %var_f64.var, align 8, !dbg !28
 // CHECK:STDOUT:   %F.call.loc42 = call double @_CF.Main.c27b765f2159c9a0(double %.loc42_5), !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !19
-// CHECK:STDOUT:   %F.call.loc44 = call %type @_CF.Main.ee509b43cf4eb3c5(%type zeroinitializer), !dbg !30
+// CHECK:STDOUT:   %F.call.loc44 = call %type.26 @_CF.Main.ee509b43cf4eb3c5(%type.26 zeroinitializer), !dbg !30
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %_.var), !dbg !19
 // CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %var_f64.var), !dbg !18
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %var_i32.var), !dbg !17
@@ -130,10 +130,10 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr %type @_CF.Main.ee509b43cf4eb3c5(%type %x) #0 !dbg !62 {
+// CHECK:STDOUT: define linkonce_odr %type.26 @_CF.Main.ee509b43cf4eb3c5(%type.26 %x) #0 !dbg !62 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %G.call = call %type @_CG.Main.ee509b43cf4eb3c5(%type %x), !dbg !65
-// CHECK:STDOUT:   ret %type %G.call, !dbg !66
+// CHECK:STDOUT:   %G.call = call %type.26 @_CG.Main.ee509b43cf4eb3c5(%type.26 %x), !dbg !65
+// CHECK:STDOUT:   ret %type.26 %G.call, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -167,13 +167,13 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr %type @_CG.Main.ee509b43cf4eb3c5(%type %x) #0 !dbg !85 {
+// CHECK:STDOUT: define linkonce_odr %type.26 @_CG.Main.ee509b43cf4eb3c5(%type.26 %x) #0 !dbg !85 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !88
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !88
-// CHECK:STDOUT:   %C.Cfn.call = call %type @_CCfn.C.Main.ee509b43cf4eb3c5(ptr %c.var, %type %x), !dbg !89
+// CHECK:STDOUT:   %C.Cfn.call = call %type.26 @_CCfn.C.Main.ee509b43cf4eb3c5(ptr %c.var, %type.26 %x), !dbg !89
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %c.var), !dbg !88
-// CHECK:STDOUT:   ret %type %C.Cfn.call, !dbg !90
+// CHECK:STDOUT:   ret %type.26 %C.Cfn.call, !dbg !90
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -195,9 +195,9 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr %type @_CCfn.C.Main.ee509b43cf4eb3c5(ptr %self, %type %x) #0 !dbg !110 {
+// CHECK:STDOUT: define linkonce_odr %type.26 @_CCfn.C.Main.ee509b43cf4eb3c5(ptr %self, %type.26 %x) #0 !dbg !110 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret %type %x, !dbg !114
+// CHECK:STDOUT:   ret %type.26 %x, !dbg !114
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives

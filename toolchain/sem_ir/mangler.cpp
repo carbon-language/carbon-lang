@@ -271,7 +271,7 @@ auto Mangler::MangleWithPlatform(SemIR::FunctionId function_id,
   // The only platform mangling that's relevant for us is applying a global
   // prefix, if the platform has one.
   if (char prefix = sem_ir_.cpp_file()
-                        ->GetCodeGenerator()
+                        ->code_generator()
                         ->GetModule()
                         ->getDataLayout()
                         .getGlobalPrefix()) {

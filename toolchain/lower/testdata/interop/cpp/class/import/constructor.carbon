@@ -276,7 +276,7 @@ fn Four() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %class.C = type { i32, i32 }
+// CHECK:STDOUT: %class.C.18 = type { i32, i32 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN1CC2Ev = comdat any
 // CHECK:STDOUT:
@@ -321,9 +321,9 @@ fn Four() {
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !17
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   %x_ = getelementptr inbounds nuw %class.C, ptr %this1, i32 0, i32 0
+// CHECK:STDOUT:   %x_ = getelementptr inbounds nuw %class.C.18, ptr %this1, i32 0, i32 0
 // CHECK:STDOUT:   store i32 8, ptr %x_, align 4, !tbaa !30
-// CHECK:STDOUT:   %y_ = getelementptr inbounds nuw %class.C, ptr %this1, i32 0, i32 1
+// CHECK:STDOUT:   %y_ = getelementptr inbounds nuw %class.C.18, ptr %this1, i32 0, i32 1
 // CHECK:STDOUT:   store i32 9, ptr %y_, align 4, !tbaa !32
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

@@ -48,7 +48,7 @@ fn M(ptr_i32: i32*, ptr_f64: f64*) {
 // CHECK:STDOUT: ; ModuleID = 'call_different_specific.carbon'
 // CHECK:STDOUT: source_filename = "call_different_specific.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %type = type {}
+// CHECK:STDOUT: %type.0 = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CM.Main(ptr %ptr_i32, ptr %ptr_f64) #0 !dbg !4 {
@@ -73,7 +73,7 @@ fn M(ptr_i32: i32*, ptr_f64: f64*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.58016a73bff04416(ptr %x) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %A.call = call %type @_CA.Main.ee509b43cf4eb3c5(%type zeroinitializer), !dbg !30
+// CHECK:STDOUT:   %A.call = call %type.0 @_CA.Main.ee509b43cf4eb3c5(%type.0 zeroinitializer), !dbg !30
 // CHECK:STDOUT:   call void @_CB.Main.58016a73bff04416(ptr %x), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
@@ -81,15 +81,15 @@ fn M(ptr_i32: i32*, ptr_f64: f64*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.fa1f0912a5bbe922(ptr %x) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %A.call = call %type @_CA.Main.ee509b43cf4eb3c5(%type zeroinitializer), !dbg !36
+// CHECK:STDOUT:   %A.call = call %type.0 @_CA.Main.ee509b43cf4eb3c5(%type.0 zeroinitializer), !dbg !36
 // CHECK:STDOUT:   call void @_CB.Main.fa1f0912a5bbe922(ptr %x), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr %type @_CA.Main.ee509b43cf4eb3c5(%type %x) #0 !dbg !39 {
+// CHECK:STDOUT: define linkonce_odr %type.0 @_CA.Main.ee509b43cf4eb3c5(%type.0 %x) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret %type %x, !dbg !44
+// CHECK:STDOUT:   ret %type.0 %x, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
