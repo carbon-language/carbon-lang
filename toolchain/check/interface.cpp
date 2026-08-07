@@ -274,7 +274,7 @@ auto TryGetExistingDecl(Context& context, const NameComponent& name,
     return std::nullopt;
   }
 
-  auto&& prev_entity = [&]() -> decltype(auto) {
+  const auto& prev_entity = [&]() -> const EntityT& {
     if constexpr (IsInterface) {
       return context.interfaces().Get(prev_entity_id);
     } else {
