@@ -18,10 +18,11 @@ library "[[@TEST_NAME]]";
 
 interface A;
 
-// --- decl_in_api_definition_in_impl.impl.carbon
+// --- todo_fail_decl_in_api_definition_in_impl.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
+// TODO: This should be diagnosed per #3762: A declaration should always add new information.
 interface A;
 
 interface A {}
@@ -83,28 +84,28 @@ interface D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- decl_in_api_definition_in_impl.impl.carbon
+// CHECK:STDOUT: --- todo_fail_decl_in_api_definition_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type.3138d6.2: type = facet_type <@A.loc6> [concrete]
+// CHECK:STDOUT:   %A.type.3138d6.2: type = facet_type <@A.loc7> [concrete]
 // CHECK:STDOUT:   %Self: %A.type.3138d6.2 = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.decl.loc4
+// CHECK:STDOUT:     .A = %A.decl.loc5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_46.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_46.2 = import <none>
-// CHECK:STDOUT:   %A.decl.loc4: type = interface_decl @A.loc6 [concrete = constants.%A.type.3138d6.2] {} {}
-// CHECK:STDOUT:   %A.decl.loc6: type = interface_decl @A.loc6 [concrete = constants.%A.type.3138d6.2] {} {}
+// CHECK:STDOUT:   %A.decl.loc5: type = interface_decl @A.loc7 [concrete = constants.%A.type.3138d6.2] {} {}
+// CHECK:STDOUT:   %A.decl.loc7: type = interface_decl @A.loc7 [concrete = constants.%A.type.3138d6.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @A.loc4;
+// CHECK:STDOUT: interface @A.loc5;
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @A.loc6 {
+// CHECK:STDOUT: interface @A.loc7 {
 // CHECK:STDOUT:   %Self: %A.type.3138d6.2 = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %A.WithSelf.decl = interface_with_self_decl @A.loc6 [concrete]
+// CHECK:STDOUT:   %A.WithSelf.decl = interface_with_self_decl @A.loc7 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
