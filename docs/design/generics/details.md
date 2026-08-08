@@ -3263,15 +3263,18 @@ immediately prior to `G.E.N.E.N`.
 
 An `observe` declaration inside an `interface` definition may only refer to
 names dependent on:
+
 -   `.Self`,
--    generic parameters, and
--    associated constants that are part of the enclosing `interface`.
+-   generic parameters, and
+-   associated constants that are part of the enclosing `interface`.
 
 Equivalence chains may include at most one unrelated value.
 `observe .. == .. impls` declarations may include unrelated values that
 immediately satisfy the `impls` constraint.
 
-For example:
+The `observe` declaration in the example below is allowed because `X.T` and
+`Y.T` are equivalent to `i32`, and `i32` directly satisfies the `Core.AddWith`
+constraint.
 
 ```carbon
 interface A {
@@ -3285,8 +3288,6 @@ interface B {
     observe .X.T == i32 == .Y.T impls AddWith;
 }
 ```
-
-where `i32` directly satisfies the `Core.AddWith` constraint.
 
 After an `observe` declaration, all of the listed type expressions are
 considered equal to each other using a single `where` equality. In this example,
