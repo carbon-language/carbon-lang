@@ -84,7 +84,8 @@ fn F(b: bool) -> auto {
   if (b) {
     return 1 as i32;
   }
-// CHECK:STDERR: fail_reachable_end.carbon:[[@LINE+2]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR: fail_reachable_end.carbon:[[@LINE+3]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR: fail_reachable_end.carbon:[[@LINE-3]]:12-19: note: return type deduced here [MissingReturnStatementDeducedType]
 // CHECK:STDERR:
 }
 
@@ -99,7 +100,8 @@ fn F() -> auto {}
 library "[[@TEST_NAME]]";
 
 fn F() -> auto {
-  // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE+2]]:3-13: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
+  // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE+3]]:3-13: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
+  // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE-2]]:1-16: note: return type of function is deduced [ReturnTypeIsDeducedNote]
   // CHECK:STDERR:
   return var;
 }

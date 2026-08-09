@@ -48,7 +48,7 @@ class X {}
 fn TakeNonConst(p: X*);
 
 // CHECK:STDERR: fail_removed_qualifiers.carbon:[[@LINE+4]]:38: error: cannot implicitly convert expression of type `const X*` to `X*` [ConversionFailure]
-// CHECK:STDERR: fail_removed_qualifiers.carbon:[[@LINE+3]]:38: note: type `const X*` does not implement interface `Core.ImplicitAs(X*)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_removed_qualifiers.carbon:[[@LINE+3]]:38: note: type `const X*` does not implement interface `Core.ImplicitAs(X*)` [MissingImplForType]
 // CHECK:STDERR: fail_removed_qualifiers.carbon:[[@LINE-4]]:17-21: note: initializing function parameter [InCallToFunctionParam]
 // CHECK:STDERR:
 fn Const(p: const X*) { TakeNonConst(p); }
@@ -66,7 +66,7 @@ fn TakeConstConst(p: const (const X*)*);
 fn NonConstNonConst(p: X**) {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_nested_qualifiers.carbon:[[@LINE+4]]:18: error: cannot implicitly convert expression of type `X**` to `const (const X*)*` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_nested_qualifiers.carbon:[[@LINE+3]]:18: note: type `X**` does not implement interface `Core.ImplicitAs(const (const X*)*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_nested_qualifiers.carbon:[[@LINE+3]]:18: note: type `X**` does not implement interface `Core.ImplicitAs(const (const X*)*)` [MissingImplForType]
   // CHECK:STDERR: fail_todo_nested_qualifiers.carbon:[[@LINE-8]]:19-38: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   TakeConstConst(p);
@@ -76,7 +76,7 @@ fn NonConstNonConst(p: X**) {
 fn ConstNonConst(p: const (X*)*) {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_nested_qualifiers.carbon:[[@LINE+4]]:18: error: cannot implicitly convert expression of type `const (X*)*` to `const (const X*)*` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_nested_qualifiers.carbon:[[@LINE+3]]:18: note: type `const (X*)*` does not implement interface `Core.ImplicitAs(const (const X*)*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_nested_qualifiers.carbon:[[@LINE+3]]:18: note: type `const (X*)*` does not implement interface `Core.ImplicitAs(const (const X*)*)` [MissingImplForType]
   // CHECK:STDERR: fail_todo_nested_qualifiers.carbon:[[@LINE-18]]:19-38: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   TakeConstConst(p);
@@ -92,7 +92,7 @@ class X {}
 fn TakeNonConstConst(p: (const X*)*);
 
 // CHECK:STDERR: fail_nested_added_qualifiers.carbon:[[@LINE+4]]:49: error: cannot implicitly convert expression of type `X**` to `const X**` [ConversionFailure]
-// CHECK:STDERR: fail_nested_added_qualifiers.carbon:[[@LINE+3]]:49: note: type `X**` does not implement interface `Core.ImplicitAs(const X**)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_nested_added_qualifiers.carbon:[[@LINE+3]]:49: note: type `X**` does not implement interface `Core.ImplicitAs(const X**)` [MissingImplForType]
 // CHECK:STDERR: fail_nested_added_qualifiers.carbon:[[@LINE-4]]:22-35: note: initializing function parameter [InCallToFunctionParam]
 // CHECK:STDERR:
 fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }

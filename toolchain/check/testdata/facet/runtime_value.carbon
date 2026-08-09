@@ -44,7 +44,8 @@ fn F(c: C) {
   // TODO: This copy should work, but the narrowing prevents it currently.
   //
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_facet_copy_narrowing_from_reference.carbon:[[@LINE+2]]:21-24: error: semantics TODO: `conversion of runtime facet value` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_facet_copy_narrowing_from_reference.carbon:[[@LINE+3]]:21-24: error: semantics TODO: `conversion of runtime facet value` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_facet_copy_narrowing_from_reference.carbon:[[@LINE+2]]:14-17: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   let unused a: I = c.ij;
   //@dump-sem-ir-end
@@ -180,8 +181,8 @@ fn F(T: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %ij.ref: %C.elem = name_ref ij, @C.%field_decl [concrete = @C.%field_decl]
-// CHECK:STDOUT:   %.loc19_22.1: ref %facet_type = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc19_22.2: %facet_type = acquire_value %.loc19_22.1
+// CHECK:STDOUT:   %.loc20_22.1: ref %facet_type = class_element_access %c.ref, element0
+// CHECK:STDOUT:   %.loc20_22.2: %facet_type = acquire_value %.loc20_22.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %a: %I.type = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

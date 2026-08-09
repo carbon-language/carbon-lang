@@ -14,7 +14,7 @@
 
 var a: array(i32, 1) = (12,);
 // CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+3]]:16-18: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
-// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+2]]:16-18: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+2]]:16-18: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
 // CHECK:STDERR:
 var b: i32 = a[2.6];
 

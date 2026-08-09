@@ -28,7 +28,7 @@ impl bool as I {
 
 impl i32 as I {
   // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+5]]:3-18: error: cannot implicitly convert expression of type `C(i32 as I)` to `C(i32)` [ConversionFailure]
-  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+4]]:3-18: note: type `C(i32 as I)` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+4]]:3-18: note: type `C(i32 as I)` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplForType]
   // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+3]]:8-16: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-14]]:3-19: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:

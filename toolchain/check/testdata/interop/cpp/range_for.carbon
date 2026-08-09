@@ -395,7 +395,7 @@ fn TestRangeFor(var m: Cpp.DiffMutableADL.MutableRange) {
   var sum: Cpp.DiffMutableADL.ValueType = Cpp.DiffMutableADL.ValueType.ValueType();
 
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+2]]:7-44: error: cannot access member of interface `Core.Iterate` in type `Cpp.DiffMutableADL.MutableRange` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+2]]:43: error: type `Cpp.DiffMutableADL.MutableRange` does not implement interface `Core.Iterate` [MissingImplForType]
   // CHECK:STDERR:
   for (i: Cpp.DiffMutableADL.ValueType in m) {
     sum += i;

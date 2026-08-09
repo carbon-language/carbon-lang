@@ -102,7 +102,7 @@ class D;
 // TODO: Right now the type of `U` ends up with an ImplSelfWitness
 // which does not resolve the access. So () can't convert to it.
 // CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific.carbon:[[@LINE+4]]:38-50: error: cannot implicitly convert expression of type `type` to `.(Z.Z1)` [ConversionFailure]
-// CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific.carbon:[[@LINE+3]]:38-50: note: type `type` does not implement interface `Core.ImplicitAs(.(Z.Z1))` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific.carbon:[[@LINE+3]]:38-50: note: type `type` does not implement interface `Core.ImplicitAs(.(Z.Z1))` [MissingImplForType]
 // CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific.carbon:[[@LINE-15]]:1-32: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self, .Z1) {}
@@ -132,7 +132,7 @@ class D;
 // TODO: Right now the type of `U` ends up with an ImplSelfWitness
 // which does not resolve the access. So `.Z1` can't convert to it.
 // CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific_before_rewrite_of_access.carbon:[[@LINE+4]]:25-37: error: cannot implicitly convert expression of type `type` to `.(Z.Z1)` [ConversionFailure]
-// CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific_before_rewrite_of_access.carbon:[[@LINE+3]]:25-37: note: type `type` does not implement interface `Core.ImplicitAs(.(Z.Z1))` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific_before_rewrite_of_access.carbon:[[@LINE+3]]:25-37: note: type `type` does not implement interface `Core.ImplicitAs(.(Z.Z1))` [MissingImplForType]
 // CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific_before_rewrite_of_access.carbon:[[@LINE-15]]:1-32: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
 impl D as Z where .Z2 = C(.Self, .Z1) and .Z1 = () {}

@@ -106,8 +106,9 @@ import library "empty_range";
 class X {}
 
 fn Run() {
-  // CHECK:STDERR: fail_bad_pattern.carbon:[[@LINE+3]]:7-43: error: cannot implicitly convert expression of type `C` to `X` [ConversionFailure]
-  // CHECK:STDERR: fail_bad_pattern.carbon:[[@LINE+2]]:7-43: note: type `C` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_bad_pattern.carbon:[[@LINE+4]]:7-43: error: cannot implicitly convert expression of type `C` to `X` [ConversionFailure]
+  // CHECK:STDERR: fail_bad_pattern.carbon:[[@LINE+3]]:7-43: note: type `C` does not implement interface `Core.ImplicitAs(X)` [MissingImplForType]
+  // CHECK:STDERR: fail_bad_pattern.carbon:[[@LINE+2]]:15-18: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   for (unused x: X in EmptyRange(C).Make()) {
   }

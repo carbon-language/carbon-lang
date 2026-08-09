@@ -55,6 +55,14 @@ using DiagnosticContextBuilder = DiagnosticEmitterBase::ContextBuilder;
 using DiagnosticContextFn =
     llvm::function_ref<auto(DiagnosticContextBuilder&)->void>;
 
+// A function that attaches labels to a diagnostic, for a caller that knows what
+// the code being checked looks like but not which diagnostic will come of it.
+using DiagnosticAnnotateFn = llvm::function_ref<auto(DiagnosticBuilder&)->void>;
+
+// Attaches labels to every diagnostic emitted while it is in scope.
+using DiagnosticAnnotationScope =
+    Diagnostics::AnnotationScope<LocIdForDiagnostics, DiagnosticAnnotateFn>;
+
 // An expression with a constant value, for rendering in a diagnostic. The
 // diagnostic rendering will include enclosing "`"s.
 struct InstIdAsConstant {

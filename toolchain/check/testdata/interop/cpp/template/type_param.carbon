@@ -44,7 +44,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "templates.h";
 
 // CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+3]]:28-31: error: cannot implicitly convert non-type value of type `bool` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+2]]:28-31: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+2]]:28-31: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
 // CHECK:STDERR:
 var x: Cpp.TwoTypes(Cpp.A, true);
 

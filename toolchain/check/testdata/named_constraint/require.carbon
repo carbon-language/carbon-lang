@@ -102,7 +102,8 @@ constraint Z {
 fn F(generic T: Z) {
   // This should fail name lookup since Z does not extend Y.
   //
-  // CHECK:STDERR: fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+2]]:3-6: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+3]]:3-6: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE-8]]:1-14: note: `Z` declared here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   T.YY();
 }
@@ -121,7 +122,8 @@ constraint Z {
 fn F(generic T: Z) {
   // This should fail name lookup since Z does not extend Y.
   //
-  // CHECK:STDERR: fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+2]]:3-6: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+3]]:3-6: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE-8]]:1-14: note: `Z` declared here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   T.YY();
 }
@@ -314,7 +316,7 @@ interface Y {}
 
 constraint Z(T: type) {
   // CHECK:STDERR: fail_non_type_impls.carbon:[[@LINE+3]]:11: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_non_type_impls.carbon:[[@LINE+2]]:11: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_non_type_impls.carbon:[[@LINE+2]]:11: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
   // CHECK:STDERR:
   require 1 impls Y;
 }

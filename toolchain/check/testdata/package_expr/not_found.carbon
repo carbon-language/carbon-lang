@@ -25,7 +25,8 @@ library "[[@TEST_NAME]]";
 private interface Private {}
 
 fn F() {
-  // CHECK:STDERR: fail_nested.carbon:[[@LINE+2]]:3-30: error: member name `DoesNotExist` not found in `Private` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_nested.carbon:[[@LINE+3]]:3-30: error: member name `DoesNotExist` not found in `Private` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_nested.carbon:[[@LINE-4]]:1-27: note: `Private` declared here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   package.Private.DoesNotExist;
 }

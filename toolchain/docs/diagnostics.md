@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Context](#context)
 -   [Diagnostic registry](#diagnostic-registry)
 -   [CARBON_DIAGNOSTIC placement](#carbon_diagnostic-placement)
--   [Choosing what a label marks](#choosing-what-a-label-marks)
+-   [Choosing locations and labels](#choosing-locations-and-labels)
 -   [Diagnostic parameter types](#diagnostic-parameter-types)
 -   [Diagnostic message style guide](#diagnostic-message-style-guide)
 -   [Alternatives considered](#alternatives-considered)
@@ -144,21 +144,18 @@ CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                   "{0} argument{0:s} passed to function expecting "
                   "{1} argument{1:s}",
                   IntAsSelect, IntAsSelect);
-CARBON_DIAGNOSTIC_LABEL(ArgsPassedHere, Primary,
-                        "{0} argument{0:s} passed here", IntAsSelect);
 CARBON_DIAGNOSTIC_LABEL(InCallToFunction, Info,
                         "calling function declared here");
 context.emitter()
     .Build(call_parse_node, CallArgCountMismatch,
            arg_refs.size(), param_refs.size())
-    .Attach(args_parse_node, ArgsPassedHere, arg_refs.size())
     .Attach(param_parse_node, InCallToFunction)
     .Emit();
 ```
 
 A label has a format and arguments of its own, validated the way a message's
-are, so it says only what it needs to about the place it marks. It has no level,
-because it belongs to the message it is attached to.
+are, so it says only what it needs to about the source it is attached to. It has
+no level, because it belongs to the message it is attached to.
 
 The category is `Primary` for source directly part of the problem and `Info` for
 source that explains it without being part of it. Those two are all there is:
@@ -172,7 +169,7 @@ not a label, and is declared with `CARBON_DIAGNOSTIC_CONTEXT` or
 emitter.Build(loc, InvalidCode).Attach(operand_loc).Emit();
 ```
 
-That marks a range as part of the problem and says nothing about it, which is
+That attaches a range of source as part of the problem with no text, which is
 how a diagnostic points at the code its message is about without repeating the
 message against it.
 
@@ -251,7 +248,7 @@ What the registry does for a diagnostic is done for those by
 
 Being attached does not imply being covered, which is why both are checked. A
 label attached only on a branch no test takes is referenced by the code and
-drawn by nothing, and the kind of the diagnostic it hangs off can be covered
+reached by no test, and the kind of the diagnostic it hangs off can be covered
 while the branch never runs.
 
 ## CARBON_DIAGNOSTIC placement
@@ -263,7 +260,7 @@ that multiple `Emit` calls can reference them. When in a function,
 `CARBON_DIAGNOSTIC` should be placed as close as possible to the usage so that
 it's easier to see the associated output.
 
-## Choosing what a label marks
+## Choosing locations and labels
 
 A message's location is underlined across the range it covers, so a diagnostic
 with no label still shows the reader something. What it shows is whatever
@@ -271,8 +268,8 @@ location the code emitting it happened to have, which is usually the whole
 construct the diagnostic was raised on -- and the part that is actually wrong is
 often narrower.
 
-So the question for each diagnostic is not whether it marks anything but whether
-it marks the right thing:
+So for each diagnostic, choose where its message is located and what labels it
+attaches:
 
 -   Where the message's own location is what the reader should look at, leave it
     alone. Attaching a label with the same range and no text says nothing the
@@ -282,13 +279,12 @@ it marks the right thing:
     it: the operand rather than the operator, the one argument rather than the
     call.
 
--   Give the label words when they point at where a part of the message became
-    relevant, and leave it wordless otherwise. A message that says two things
-    about two different places should say each of them where it happened:
-    `CallArgCountMismatch` marks the call with `1 argument passed here` and the
-    declaration with the arity it was declared with. Repeating the message that
-    way is worth it, because the reader is being shown where each half of the
-    sentence came from.
+-   Give a label words when they show where part of the message came from,
+    somewhere other than the message's own range, and leave it wordless
+    otherwise. `CallArgCountMismatch` states both counts in its message, which
+    is located at the call, and the declaration's label is only
+    `calling function declared here`, which shows where the other count came
+    from.
 
 -   In the lexer, a location is a `Lex::SourceLoc`. A `const char*` converts
     to a one-character position implicitly, and a range has to be constructed
@@ -297,23 +293,22 @@ it marks the right thing:
 
 -   Where the right range isn't reachable, attach the closest one that is and
     leave a TODO saying which range it should be and what would make it
-    available. A diagnostic marking its whole call because nothing names its
-    argument list is better than one marking nothing, but the gap is worth
+    available. A diagnostic located at its whole call because nothing names its
+    argument list is better than one with no location, but the gap is worth
     recording where the next person will find it.
 
 -   A message that names two types is the clearest case for two labels. An
     operation whose operands don't match reports the interface it looked up not
     being implemented, which names both types and points at neither, so each
-    operand is marked with the type it contributed. `BuildBinaryOperator` takes
-    a `MissingImplDiagnostic` for this, and installs it as an `AnnotationScope`,
-    because the diagnostic is emitted further down where only one operand is
-    still in hand.
+    operand gets a label with the type it contributed. `BuildBinaryOperator`
+    takes a `MissingImplDiagnostic` for this, and installs it as an
+    `AnnotationScope`, because the diagnostic is emitted further down where only
+    one operand is still in hand.
 
-    The words belong to the syntax, not to the helper the syntax shares.
-    `a * b` has a left and a right operand, `a[i]` has an object and an index,
-    and `for (x in r)` has only a range, so each names its own labels rather
-    than everything that reaches `BuildBinaryOperator` saying "left" and
-    "right".
+    The words belong to the syntax, not to the helper the syntax shares. `a * b`
+    has a left and a right operand, `a[i]` has an object and an index, and `for
+    (x in r)` has only a range, so each names its own labels rather than
+    everything that reaches `BuildBinaryOperator` saying "left" and "right".
 
     Once the operands carry labels, the message points at whatever they leave
     over rather than at the expression they make up. For an infix operator that
@@ -322,12 +317,10 @@ it marks the right thing:
     closing bracket, so the message points at the index -- the operand the
     object failed to accept.
 
--   Mark the syntax that required an `impl`, and name the interface in the same
-    breath. Which interface a piece of syntax needs is a language rule the
-    reader may not know, and the message reports only that one is missing, so
-    `AttachOperatorSyntax` marks the operator with `` `*` requires an impl of
-    `Core.MulWith` `` and lets the two be read together. That also gives the
-    message somewhere to point that is neither operand.
+-   Locate the message at the syntax that required the `impl`. Which interface
+    a piece of syntax needs is a language rule the reader may not know, and the
+    message names the interface, so locating it at the operator connects the
+    two.
 
     A message reporting the same missing `impl` twice for one construct is
     worse than either half of it. A `for` loop looks up `Iterate` to make its
@@ -341,15 +334,15 @@ it marks the right thing:
     `PerformCompoundMemberAccess` -- the message drops to the part the syntax
     can't say: which type failed to implement the interface.
 
--   Don't narrate the code the label sits under. `` `var` nested within another
-    `var` `` marks the keyword, and a label reading ``the invalid `var`
-    keyword`` repeats both the source and the message while saying nothing
-    about where anything came from. Most parse diagnostics are like this: the
-    message already names the token, so the range marks it and says nothing.
+-   Don't narrate the code a label is attached to. `` `var` nested within
+    another `var` `` is located at the keyword, and a label reading ``the
+    invalid `var` keyword`` repeats both the source and the message while saying
+    nothing about where anything came from. Most parse diagnostics are like
+    this: the message already names the token, so its location needs no label.
 
 Some ranges cannot be attached at all, and the reason is worth knowing before
-trying. A diagnostic can only mark source that something in hand still names,
-and several layers discard that on the way:
+trying. A diagnostic can only attach a label to source that something in hand
+still names, and several layers discard that on the way:
 
 -   **Desugaring drops where each operand was written.** An operator becomes a
     call whose arguments are conversion insts created at the operator's
@@ -363,14 +356,14 @@ and several layers discard that on the way:
 
 -   **Some scopes have no declaration.** `extend impl` and `impl as` outside a
     class are only ever reached from a namespace -- the file or package -- or
-    from a scope with no instruction, so there is nothing to mark as the scope
-    they ended up in.
+    from a scope with no instruction, so there is no declaration of the scope
+    they ended up in to attach a label to.
 
-Where that is the case, attach nothing and leave a TODO saying which range it
+Where that is the case, attach no label and leave a TODO saying which range it
 should be and what would make it available. A label whose location names a file
-but no line draws no anchor and reads as pointing at nothing, which is worse
-than the message alone. `check-toolchain-diagnostics` fails a label no testdata
-reaches, which is how to find one whose location never resolves.
+but no line refers to no source, which is worse than the message alone.
+`check-toolchain-diagnostics` fails a label no testdata reaches, which is how to
+find one whose location never resolves.
 
 The obvious source being a dead end is not the same as no source existing, and
 it is worth one more look before writing the TODO. Deduction's inputs are

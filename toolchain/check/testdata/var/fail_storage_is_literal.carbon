@@ -14,7 +14,7 @@
 
 fn Main() {
   // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:17: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+2]]:17: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+2]]:17: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
   // CHECK:STDERR:
   var unused x: 1 = 1;
 }

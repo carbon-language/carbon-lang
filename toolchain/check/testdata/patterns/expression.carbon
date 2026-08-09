@@ -26,7 +26,8 @@ library "[[@TEST_NAME]]";
 
 // TODO: We should reject this for using a refutable pattern in an irrefutable pattern context.
 let a: () = ();
-// CHECK:STDERR: fail_todo_in_tuple.carbon:[[@LINE+2]]:13: error: semantics TODO: `expression pattern` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_in_tuple.carbon:[[@LINE+3]]:13: error: semantics TODO: `expression pattern` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_in_tuple.carbon:[[@LINE+2]]:5-21: note: initializing this binding [InBindingInit]
 // CHECK:STDERR:
 let (b: (), a, c: ()) = ((), (), ());
 
@@ -61,9 +62,11 @@ fn F() {
   // TODO: Replace this with a valid expression pattern once we support refutable
   // pattern contexts.
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_control_flow.carbon:[[@LINE+4]]:8-35: error: semantics TODO: `expression pattern` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_control_flow.carbon:[[@LINE+6]]:8-35: error: semantics TODO: `expression pattern` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_control_flow.carbon:[[@LINE+5]]:7-51: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_control_flow.carbon:[[@LINE+2]]:38-50: error: semantics TODO: `expression pattern` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_control_flow.carbon:[[@LINE+3]]:38-50: error: semantics TODO: `expression pattern` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_control_flow.carbon:[[@LINE+2]]:7-51: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   let (if true then true else false, true and true) = (true, true);
   //@dump-sem-ir-end
@@ -78,46 +81,46 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (bool, bool) [concrete]
 // CHECK:STDOUT:   %pattern_type.860: type = pattern_type %tuple.type [concrete]
-// CHECK:STDOUT:   %.2f0: %pattern_type.860 = tuple_pattern (@F.%expr_patt.loc12_26, @F.%expr_patt.loc12_43) [concrete]
+// CHECK:STDOUT:   %.2f0: %pattern_type.860 = tuple_pattern (@F.%expr_patt.loc14_26, @F.%expr_patt.loc14_43) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%true, %true) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %true.loc12_56: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %true.loc12_62: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc12_66: %tuple.type = tuple_literal (%true.loc12_56, %true.loc12_62) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %true.loc14_56: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %true.loc14_62: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc14_66: %tuple.type = tuple_literal (%true.loc14_56, %true.loc14_62) [concrete = constants.%tuple]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %expr_patt.loc12_26: %pattern_type.831 = expr_pattern %.loc12_8 in [concrete] {
-// CHECK:STDOUT:       %true.loc12_11: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:       if %true.loc12_11 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:     %expr_patt.loc14_26: %pattern_type.831 = expr_pattern %.loc14_8 in [concrete] {
+// CHECK:STDOUT:       %true.loc14_11: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:       if %true.loc14_11 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT:     !if.expr.then:
-// CHECK:STDOUT:       %true.loc12_21: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:       br !if.expr.result(%true.loc12_21)
+// CHECK:STDOUT:       %true.loc14_21: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:       br !if.expr.result(%true.loc14_21)
 // CHECK:STDOUT:
 // CHECK:STDOUT:     !if.expr.else:
-// CHECK:STDOUT:       %false.loc12_31: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:       br !if.expr.result(%false.loc12_31)
+// CHECK:STDOUT:       %false.loc14_31: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:       br !if.expr.result(%false.loc14_31)
 // CHECK:STDOUT:
 // CHECK:STDOUT:     !if.expr.result:
-// CHECK:STDOUT:       %.loc12_8: bool = block_arg !if.expr.result [concrete = constants.%true]
+// CHECK:STDOUT:       %.loc14_8: bool = block_arg !if.expr.result [concrete = constants.%true]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %expr_patt.loc12_43: %pattern_type.831 = expr_pattern %.loc12_43 in [concrete] {
-// CHECK:STDOUT:       %true.loc12_38: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:       %false.loc12_43: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:       if %true.loc12_38 br !and.rhs else br !.loc12(%false.loc12_43)
+// CHECK:STDOUT:     %expr_patt.loc14_43: %pattern_type.831 = expr_pattern %.loc14_43 in [concrete] {
+// CHECK:STDOUT:       %true.loc14_38: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:       %false.loc14_43: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:       if %true.loc14_38 br !and.rhs else br !.loc14(%false.loc14_43)
 // CHECK:STDOUT:
 // CHECK:STDOUT:     !and.rhs:
-// CHECK:STDOUT:       %true.loc12_47: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:       br !.loc12(%true.loc12_47)
+// CHECK:STDOUT:       %true.loc14_47: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:       br !.loc14(%true.loc14_47)
 // CHECK:STDOUT:
-// CHECK:STDOUT:     !.loc12:
-// CHECK:STDOUT:       %.loc12_43: bool = block_arg !.loc12 [concrete = constants.%true]
+// CHECK:STDOUT:     !.loc14:
+// CHECK:STDOUT:       %.loc14_43: bool = block_arg !.loc14 [concrete = constants.%true]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc12_51: %pattern_type.860 = tuple_pattern (%expr_patt.loc12_26, %expr_patt.loc12_43) [concrete = constants.%.2f0]
+// CHECK:STDOUT:     %.loc14_51: %pattern_type.860 = tuple_pattern (%expr_patt.loc14_26, %expr_patt.loc14_43) [concrete = constants.%.2f0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

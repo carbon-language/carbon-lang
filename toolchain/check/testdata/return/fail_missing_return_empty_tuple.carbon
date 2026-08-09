@@ -13,7 +13,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_missing_return_empty_tuple.carbon
 
 fn F() -> () {
-// CHECK:STDERR: fail_missing_return_empty_tuple.carbon:[[@LINE+2]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR: fail_missing_return_empty_tuple.carbon:[[@LINE+3]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR: fail_missing_return_empty_tuple.carbon:[[@LINE-2]]:11-12: note: return type declared here [MissingReturnStatementType]
 // CHECK:STDERR:
 }
 

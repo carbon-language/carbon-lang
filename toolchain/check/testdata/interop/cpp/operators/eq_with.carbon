@@ -93,8 +93,9 @@ library "[[@TEST_NAME]]";
 import Cpp inline '''c++
 struct NeqBoolish {
   auto operator==(NeqBoolish) const -> bool;
-  // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+3]]:8: error: cannot implicitly convert expression of type `i32` to `bool` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+2]]:8: note: type `i32` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+4]]:8: error: cannot implicitly convert expression of type `i32` to `bool` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+3]]:8: note: type `i32` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+  // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:14:46-49: note: return type of function is `bool` [ReturnTypeHereNote]
   // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:14:3-51: note: while building thunk to match the signature of this function [ThunkSignature]
   auto operator!=(NeqBoolish) const -> int;
 };
@@ -114,20 +115,23 @@ struct BothBoolish {
 };
 ''';
 
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+17]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+20]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-16]]:8: error: cannot implicitly convert expression of type `Core.Optional(i32* as Core.OptionalStorage)` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-17]]:8: note: type `Core.Optional(i32* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-17]]:8: note: type `Core.Optional(i32* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:13:35-38: note: return type of function is `bool` [ReturnTypeHereNote]
 // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:13:3-39: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+12]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+14]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-12]]:8: error: cannot implicitly convert expression of type `Cpp.Result` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-13]]:8: note: type `Cpp.Result` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-13]]:8: error: cannot implicitly convert expression of type `Cpp.Result` to `bool` [ConversionFailure]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-14]]:8: note: type `Cpp.Result` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:13:35-38: note: return type of function is `bool` [ReturnTypeHereNote]
 // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:13:3-39: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+7]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+8]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-16]]:8: error: cannot implicitly convert expression of type `Cpp.Result` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-17]]:8: note: type `Cpp.Result` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-18]]:8: error: cannot implicitly convert expression of type `Cpp.Result` to `bool` [ConversionFailure]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-19]]:8: note: type `Cpp.Result` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:14:46-49: note: return type of function is `bool` [ReturnTypeHereNote]
 // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:14:3-51: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+2]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
@@ -168,19 +172,20 @@ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
 }
 
 fn Test(default_eq_only: Cpp.DefaultEqOnly,
-        // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE+2]]:33-56: error: member name `DefaultSpaceshipOnly` not found in `Cpp` [MemberNameNotFoundInInstScope]
+        // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE+3]]:33-56: error: member name `DefaultSpaceshipOnly` not found in `Cpp` [MemberNameNotFoundInInstScope]
+        // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE-19]]:1-24: note: `Cpp` declared here [MemberNameNotFoundScope]
         // CHECK:STDERR:
         default_spaceship_only: Cpp.DefaultSpaceshipOnly,
         only_eq_declared: Cpp.OnlyEqDeclared) {
   // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE+3]]:3-42: error: semantics TODO: `Rewriting operator!= using operator== is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE-11]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE-12]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   EqWith(default_eq_only, default_eq_only);
 
   EqWith(default_spaceship_only, default_spaceship_only);
 
   // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE+3]]:3-44: error: semantics TODO: `Rewriting operator!= using operator== is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE-18]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE-19]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   EqWith(only_eq_declared, only_eq_declared);
 }

@@ -270,9 +270,7 @@ static auto HandleAnyBindingPatternType(
             InvalidWhereInsideBinding, Error,
             "found `where` expression in binding's type that does "
             "not constrain the binding");
-        auto builder =
-            context.emitter().Build(where_loc_id, InvalidWhereInsideBinding);
-        builder.Emit();
+        context.emitter().Emit(where_loc_id, InvalidWhereInsideBinding);
       }
       original_inst_id = SemIR::ErrorInst::InstId;
     }

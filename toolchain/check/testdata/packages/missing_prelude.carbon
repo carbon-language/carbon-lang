@@ -53,11 +53,12 @@ library "[[@TEST_NAME]]";
 import Core library "prelude_fake_int";
 
 // We don't really care whether this works, but it shouldn't crash or otherwise misbehave.
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+6]]:17-19: error: cannot implicitly convert non-type value of type `Core.X` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+5]]:17-19: note: type `Core.X` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+7]]:17-19: error: cannot implicitly convert non-type value of type `Core.X` to `type` [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+6]]:17-19: note: type `Core.X` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+3]]:17-19: error: cannot implicitly convert expression of type `type` to `Core.X` [ConversionFailure]
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+2]]:17-19: note: type `type` does not implement interface `Core.ImplicitAs(Core.X)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+4]]:17-19: error: cannot implicitly convert expression of type `type` to `Core.X` [ConversionFailure]
+// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+3]]:17-19: note: type `type` does not implement interface `Core.ImplicitAs(Core.X)` [MissingImplForType]
+// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+2]]:5-13: note: initializing this binding [InBindingInit]
 // CHECK:STDERR:
 let n: Core.X = i32;
 
@@ -443,8 +444,8 @@ let n: type = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc13_17: %X = converted @__global_init.%.loc13_17.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc13_12: type = splice_block %X.ref [concrete = constants.%X] {
+// CHECK:STDOUT:   %.loc14_17: %X = converted @__global_init.%.loc14_17.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14_12: type = splice_block %X.ref [concrete = constants.%X] {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Core.X [concrete = constants.%X]
 // CHECK:STDOUT:   }
@@ -510,10 +511,10 @@ let n: type = i32;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int_32) [concrete = constants.%Int.specific_fn]
-// CHECK:STDOUT:   %.loc13_17.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %Int.call: init %X to %.loc13_17.1 = call %Int.specific_fn()
-// CHECK:STDOUT:   %.loc13_17.2: type = converted %Int.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc13_17.3: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14_17.1: ref %X = temporary_storage
+// CHECK:STDOUT:   %Int.call: init %X to %.loc14_17.1 = call %Int.specific_fn()
+// CHECK:STDOUT:   %.loc14_17.2: type = converted %Int.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14_17.3: type = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

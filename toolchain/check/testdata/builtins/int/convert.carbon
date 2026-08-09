@@ -76,8 +76,8 @@ import library "int_ops";
 
 fn F() {
   // Ensure our testing machinery works.
-  // CHECK:STDERR: fail_self_test.carbon:[[@LINE+3]]:3-43: error: cannot convert expression of type `Expect(0)` to `Expect(1)` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_self_test.carbon:[[@LINE+2]]:3-43: note: type `Expect(0)` does not implement interface `Core.As(Expect(1))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_self_test.carbon:[[@LINE+3]]:3-23: error: cannot convert expression of type `Expect(0)` to `Expect(1)` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_self_test.carbon:[[@LINE+2]]:3-43: note: type `Expect(0)` does not implement interface `Core.As(Expect(1))` [MissingImplForType]
   // CHECK:STDERR:
   Test(Int32ToInt32(0)) as Expect(1 as i32);
 }

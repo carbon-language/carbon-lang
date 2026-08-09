@@ -16,13 +16,14 @@ class Class {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+2]]:3-10: error: missing value for field `b` in struct initialization [StructInitMissingFieldInLiteral]
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+3]]:3-10: error: missing value for field `b` in struct initialization [StructInitMissingFieldInLiteral]
+  // CHECK:STDERR: fail_init.carbon:[[@LINE-5]]:7-12: note: field `b` declared here [StructFieldDeclaredHere]
   // CHECK:STDERR:
   {.a = 1} as Class;
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+2]]:3-18: error: struct `Class` has no field named `c` [StructInitUnexpectedFieldInLiteral]
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+2]]:17: error: struct `Class` has no field named `c` [StructInitUnexpectedFieldInLiteral]
   // CHECK:STDERR:
   {.a = 1, .c = 2} as Class;
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+2]]:3-26: error: struct `Class` has no field named `c` [StructInitUnexpectedFieldInLiteral]
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+2]]:25: error: struct `Class` has no field named `c` [StructInitUnexpectedFieldInLiteral]
   // CHECK:STDERR:
   {.a = 1, .b = 2, .c = 3} as Class;
 }

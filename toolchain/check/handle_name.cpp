@@ -212,7 +212,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
             CARBON_DIAGNOSTIC_LABEL(
                 NoPeriodSelfForDesignator, Info,
                 "designator may only be used when `.Self` is in scope");
-            builder.Attach(SemIR::LocId::None, NoPeriodSelfForDesignator);
+            builder.Attach(node_id, NoPeriodSelfForDesignator);
           });
       period_self_id =
           HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf);

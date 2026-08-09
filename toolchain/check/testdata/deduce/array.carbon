@@ -63,7 +63,7 @@ fn G() -> C {
   // TODO: We succeed at deducing T here but fail to convert. Is this the right behavior?
   var a: array(C, 3) = ({}, {}, {});
   // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+4]]:12: error: cannot implicitly convert expression of type `array(C, 3)` to `array(C, 2)` [ConversionFailure]
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+3]]:12: note: type `array(C, 3)` does not implement interface `Core.ImplicitAs(array(C, 2))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+3]]:12: note: type `array(C, 3)` does not implement interface `Core.ImplicitAs(array(C, 2))` [MissingImplForType]
   // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE-7]]:15-28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   return F(a);
@@ -82,7 +82,7 @@ fn G() -> i32 {
   // TODO: We succeed at deducing N here but fail to convert. Is this the right behavior?
   var a: array(D, 3) = ({}, {}, {});
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:12: error: cannot implicitly convert expression of type `array(D, 3)` to `array(C, 3)` [ConversionFailure]
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:12: note: type `array(D, 3)` does not implement interface `Core.ImplicitAs(array(C, 3))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:12: note: type `array(D, 3)` does not implement interface `Core.ImplicitAs(array(C, 3))` [MissingImplForType]
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-7]]:33-46: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   return F(a);
@@ -103,8 +103,9 @@ fn G() -> i32 {
   // which we can't deduce through. We should decide if we want to support
   // deductions of that form. If not, it'd be nice to diagnose this situation
   // better.
-  // CHECK:STDERR: fail_bound_type_mismatch.carbon:[[@LINE+3]]:10-13: error: cannot deduce value for generic parameter `N` [DeductionIncomplete]
-  // CHECK:STDERR: fail_bound_type_mismatch.carbon:[[@LINE-10]]:1-44: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_bound_type_mismatch.carbon:[[@LINE+4]]:10-13: error: cannot deduce value for generic parameter `N` [DeductionIncomplete]
+  // CHECK:STDERR: fail_bound_type_mismatch.carbon:[[@LINE-10]]:6-11: note: no value was deduced for this parameter [DeductionIncompleteParam]
+  // CHECK:STDERR: fail_bound_type_mismatch.carbon:[[@LINE-11]]:1-44: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   return F(a);
 }
@@ -119,8 +120,9 @@ fn F[N: i32](unused a: array(C, N)) {}
 fn G() {
   // TODO: Deduce N as 3 from the tuple's size.
   //
-  // CHECK:STDERR: fail_todo_array_length_from_tuple.carbon:[[@LINE+3]]:3-17: error: cannot deduce value for generic parameter `N` [DeductionIncomplete]
-  // CHECK:STDERR: fail_todo_array_length_from_tuple.carbon:[[@LINE-6]]:1-37: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_array_length_from_tuple.carbon:[[@LINE+4]]:3-17: error: cannot deduce value for generic parameter `N` [DeductionIncomplete]
+  // CHECK:STDERR: fail_todo_array_length_from_tuple.carbon:[[@LINE-6]]:6-11: note: no value was deduced for this parameter [DeductionIncompleteParam]
+  // CHECK:STDERR: fail_todo_array_length_from_tuple.carbon:[[@LINE-7]]:1-37: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   F(({}, {}, {}));
 }
@@ -2311,10 +2313,10 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc13_7: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc13_11: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc13_15: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc13_16: %tuple.type = tuple_literal (%.loc13_7, %.loc13_11, %.loc13_15) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc14_7: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc14_11: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc14_15: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc14_16: %tuple.type = tuple_literal (%.loc14_7, %.loc14_11, %.loc14_15) [concrete = constants.%tuple]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

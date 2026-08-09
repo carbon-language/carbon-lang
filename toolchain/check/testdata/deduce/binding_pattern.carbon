@@ -20,7 +20,7 @@ class C(T: type) {
 
 fn F(unused generic U: type, generic V: type) {
   // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE+4]]:15-16: error: cannot implicitly convert expression of type `{}` to `V` [ConversionFailure]
-  // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE+3]]:15-16: note: type `{}` does not implement interface `Core.ImplicitAs(V)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE+3]]:15-16: note: type `{}` does not implement interface `Core.ImplicitAs(V)` [MissingImplForType]
   // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE-6]]:20-27: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   C(V).Create({});

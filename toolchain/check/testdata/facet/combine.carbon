@@ -31,7 +31,9 @@ impl C as B {
 fn F() {
   // TODO: This error message is wrong here, we are not using `extend`.
 
-  // CHECK:STDERR: fail_name_collision.carbon:[[@LINE+2]]:14-22: error: ambiguous use of name `G` found in multiple extended scopes [NameAmbiguousDueToExtend]
+  // CHECK:STDERR: fail_name_collision.carbon:[[@LINE+4]]:14-22: error: ambiguous use of name `G` found in multiple extended scopes [NameAmbiguousDueToExtend]
+  // CHECK:STDERR: fail_name_collision.carbon:[[@LINE-15]]:3-9: note: candidate `G` declared here [NameAmbiguousCandidate]
+  // CHECK:STDERR: fail_name_collision.carbon:[[@LINE-19]]:3-9: note: candidate `G` declared here [NameAmbiguousCandidate]
   // CHECK:STDERR:
   ({} as C).((A & B).G)();
 }
@@ -173,8 +175,9 @@ interface J {}
 interface K {}
 
 fn Test() {
-  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE+3]]:3-36: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE-9]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE+4]]:3-36: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE+3]]:21-35: note: conflicting value for `T` deduced from this argument [DeductionInconsistentArg]
+  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE-10]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Same(Type(I & J), Type(K & I & J));
 }
@@ -190,8 +193,9 @@ interface I {}
 interface J(T: type) {}
 
 fn Test() {
-  // CHECK:STDERR: fail_compare_not_equal_parameterized.carbon:[[@LINE+3]]:3-40: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR: fail_compare_not_equal_parameterized.carbon:[[@LINE-8]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_compare_not_equal_parameterized.carbon:[[@LINE+4]]:3-40: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR: fail_compare_not_equal_parameterized.carbon:[[@LINE+3]]:25-39: note: conflicting value for `T` deduced from this argument [DeductionInconsistentArg]
+  // CHECK:STDERR: fail_compare_not_equal_parameterized.carbon:[[@LINE-9]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Same(Type(I & J(())), Type(J({}) & I));
 }
@@ -207,8 +211,9 @@ interface I {}
 interface J(T: type) {}
 
 fn Test() {
-  // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE+3]]:3-48: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE-8]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE+4]]:3-48: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE+3]]:25-47: note: conflicting value for `T` deduced from this argument [DeductionInconsistentArg]
+  // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE-9]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Same(Type(I & J(())), Type(J(()) & J({}) & I));
 }

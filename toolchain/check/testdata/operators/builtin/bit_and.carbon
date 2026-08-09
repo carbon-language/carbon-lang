@@ -60,7 +60,9 @@ class J { adapt {}; }
 fn F() {
   let a: J = {} as J;
   let b: J = {} as J;
-  // CHECK:STDERR: fail_bit_and_values_no_impl.carbon:[[@LINE+2]]:3-7: error: cannot access member of interface `Core.BitAndWith(J)` in type `J` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_bit_and_values_no_impl.carbon:[[@LINE+4]]:5: error: type `J` does not implement interface `Core.BitAndWith(J)` [MissingImplForType]
+  // CHECK:STDERR: fail_bit_and_values_no_impl.carbon:[[@LINE+3]]:3: note: left operand has type `J` [BinaryOperatorLhsType]
+  // CHECK:STDERR: fail_bit_and_values_no_impl.carbon:[[@LINE+2]]:7: note: right operand has type `J` [BinaryOperatorRhsType]
   // CHECK:STDERR:
   a & b;
 }

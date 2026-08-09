@@ -25,7 +25,7 @@ stands in for the registry. `label` below stands for any of the three:
 
 Being attached does not imply being covered, which is why both are checked: a
 label attached only on a branch no test takes is referenced by the code and
-drawn by nothing.
+reached by no test.
 """
 
 __copyright__ = """
