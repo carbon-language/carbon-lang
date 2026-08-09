@@ -712,6 +712,7 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
         auto lookup_result =
             LookupNameInExactScope(context, SemIR::LocId(decl_id), fn.name_id,
                                    impl.scope_id, impl_scope);
+        using InterfaceModifier = SemIR::Function::InterfaceModifier;
         if (lookup_result.is_found()) {
           used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_value = CheckAssociatedFunctionImplementation(
@@ -719,6 +720,16 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
               context.generics().GetSelfSpecific(impl.generic_id),
               lookup_result.target_inst_id(),
               /*defer_thunk_definition=*/true);
+        }
+
+        if (fn.interface_modifier == InterfaceModifier::Final) {
+          lookup_result =
+              LookupNameInDecl(context, SemIR::LocId(decl_id), fn.name_id,
+                               interface.scope_with_self_id, ScopeIndex::None);
+          CARBON_CHECK(lookup_result.is_found(),
+                       "`final` method should have definition by now");
+          used_decl_ids.push_back(lookup_result.target_inst_id());
+          witness_value = fn.definition_id;
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,
