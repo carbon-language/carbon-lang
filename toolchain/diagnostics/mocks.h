@@ -98,6 +98,29 @@ inline auto IsDiagnostic(
       testing::Field("labels", &Diagnostics::Diagnostic::labels, labels));
 }
 
+// Matches a diagnostic with one message and one range attached to it with no
+// text, checking the range's length as well as its start.
+inline auto IsDiagnosticWithRange(testing::Matcher<Diagnostics::Kind> kind,
+                                  testing::Matcher<Diagnostics::Level> level,
+                                  testing::Matcher<int> line_number,
+                                  testing::Matcher<int> column_number,
+                                  testing::Matcher<std::string> message,
+                                  testing::Matcher<int> range_line_number,
+                                  testing::Matcher<int> range_column_number,
+                                  testing::Matcher<int> range_length)
+    -> testing::Matcher<Diagnostics::Diagnostic> {
+  return IsDiagnostic(
+      level,
+      IsDiagnosticMessage(kind, level, line_number, column_number, message),
+      testing::IsEmpty(),
+      testing::ElementsAre(testing::AllOf(
+          IsDiagnosticLabel(Diagnostics::LabelCategory::Primary,
+                            range_line_number, range_column_number, ""),
+          testing::Field("loc", &Diagnostics::Label::loc,
+                         testing::Field("length", &Diagnostics::Loc::length,
+                                        range_length)))));
+}
+
 inline auto IsSingleDiagnostic(testing::Matcher<Diagnostics::Kind> kind,
                                testing::Matcher<Diagnostics::Level> level,
                                testing::Matcher<int> line_number,

@@ -18,6 +18,7 @@
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/lex/source_loc.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_info.h"
 #include "toolchain/lex/token_kind.h"
@@ -280,17 +281,19 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
  private:
   friend class Lexer;
 
-  class SourcePointerDiagnosticEmitter
-      : public Diagnostics::Emitter<const char*> {
+  class SourceLocDiagnosticEmitter : public Diagnostics::Emitter<SourceLoc> {
    public:
-    explicit SourcePointerDiagnosticEmitter(Diagnostics::Consumer* consumer,
-                                            const TokenizedBuffer* tokens)
+    explicit SourceLocDiagnosticEmitter(Diagnostics::Consumer* consumer,
+                                        const TokenizedBuffer* tokens)
         : Emitter(consumer), tokens_(tokens) {}
 
    protected:
-    auto ConvertLoc(const char* loc, ContextFnT /*context_fn*/) const
+    auto ConvertLoc(SourceLoc loc, ContextFnT /*context_fn*/) const
         -> Diagnostics::ConvertedLoc override {
-      return tokens_->SourcePointerToDiagnosticLoc(loc);
+      auto converted =
+          tokens_->SourcePointerToDiagnosticLoc(loc.text().begin());
+      converted.loc.length = loc.text().size();
+      return converted;
     }
 
    private:

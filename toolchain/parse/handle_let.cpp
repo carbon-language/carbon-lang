@@ -55,8 +55,7 @@ auto HandleAssociatedConstant(Context& context) -> void {
   if (identifier && !colon) {
     CARBON_DIAGNOSTIC(ExpectedAssociatedConstantColon, Error,
                       "expected `:` in associated constant declaration");
-    context.emitter().Emit(*context.position(),
-                           ExpectedAssociatedConstantColon);
+    context.emitter().Emit(*identifier, ExpectedAssociatedConstantColon);
     state.has_error = true;
   }
 

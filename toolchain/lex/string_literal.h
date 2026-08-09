@@ -10,6 +10,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/lex/source_loc.h"
 #include "toolchain/lex/token_info.h"
 
 namespace Carbon::Lex {
@@ -41,7 +42,7 @@ class StringLiteral {
   // Expand any escape sequences and compute the resulting character. This
   // handles error recovery internally, but can return nullopt for an invalid
   // character.
-  auto ComputeCharLiteralValue(Diagnostics::Emitter<const char*>& emitter) const
+  auto ComputeCharLiteralValue(Diagnostics::Emitter<SourceLoc>& emitter) const
       -> std::optional<CharLiteralValue>;
 
   // Expand any escape sequences in the given string literal and compute the
@@ -51,7 +52,7 @@ class StringLiteral {
   // deal with, this can return the content directly. Otherwise, the allocator
   // will be used for the StringRef.
   auto ComputeStringValue(llvm::BumpPtrAllocator& allocator,
-                          Diagnostics::Emitter<const char*>& emitter) const
+                          Diagnostics::Emitter<SourceLoc>& emitter) const
       -> llvm::StringRef;
 
   // Get the text corresponding to this literal.

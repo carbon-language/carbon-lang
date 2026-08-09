@@ -28,7 +28,7 @@ fn AndSuffix(generic Y: I where .J impls K and);
 
 // --- fail_and_early.carbon
 
-// CHECK:STDERR: fail_and_early.carbon:[[@LINE+2]]:35-37: error: requirement should use `impls`, `=`, or `==` operator [ExpectedRequirementOperator]
+// CHECK:STDERR: fail_and_early.carbon:[[@LINE+2]]:33: error: requirement should use `impls`, `=`, or `==` operator [ExpectedRequirementOperator]
 // CHECK:STDERR:
 fn AndEarly(generic Z: L where .M and N);
 

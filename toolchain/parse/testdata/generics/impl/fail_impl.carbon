@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/impl/fail_impl.carbon
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:10-12: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:6-8: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 impl foo bar;
 
@@ -16,7 +16,7 @@ impl foo bar;
 // CHECK:STDERR:
 impl i32 as;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:18-27: error: `impl` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:14-16: error: `impl` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
 // CHECK:STDERR:
 impl bool as bar unexpected;
 
@@ -28,33 +28,33 @@ impl return as A;
 // CHECK:STDERR:
 impl return B;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:13-15: error: expected `[` after `forall` in `impl` declaration [ImplExpectedAfterForall]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:6-11: error: expected `[` after `forall` in `impl` declaration [ImplExpectedAfterForall]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:16: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:13-15: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 impl forall f32;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:19: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:16-18: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 impl forall [] u32;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:25: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:23-24: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 impl forall [invalid] i8;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:13-15: error: expected `[` after `forall` in `impl` declaration [ImplExpectedAfterForall]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:6-11: error: expected `[` after `forall` in `impl` declaration [ImplExpectedAfterForall]
 // CHECK:STDERR:
 impl forall f16 as Quux;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:26: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:23-25: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 impl forall [T: type] str;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:25-34: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:23: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 impl forall [T: type] T missing_as;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:38-42: error: `impl` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+2]]:28-36: error: `impl` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
 // CHECK:STDERR:
 impl forall [T: type] T as Interface extra;
 

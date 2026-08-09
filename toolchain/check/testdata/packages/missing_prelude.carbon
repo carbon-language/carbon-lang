@@ -75,13 +75,13 @@ let n: i32 = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+4]]:11-14: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+4]]:1-9: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+2]]:11-14: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
 namespace Core;
 
-// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+2]]:4-7: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+2]]:1-2: error: `fn` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 fn Core.Int[T: type](generic N: T) -> {} { return {}; }
 
@@ -92,7 +92,7 @@ let n: type = i32;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+4]]:7-10: error: `class` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+4]]:1-5: error: `class` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+2]]:7-10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:

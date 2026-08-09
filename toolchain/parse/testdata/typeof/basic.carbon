@@ -20,7 +20,7 @@ fn F() {
 
 // --- fail_no_paren.carbon
 
-// CHECK:STDERR: fail_no_paren.carbon:[[@LINE+2]]:15: error: expected `(` after `typeof` [ExpectedParenAfter]
+// CHECK:STDERR: fail_no_paren.carbon:[[@LINE+2]]:8-13: error: expected `(` after `typeof` [ExpectedParenAfter]
 // CHECK:STDERR:
 var x: typeof y;
 
@@ -36,26 +36,34 @@ var x: typeof();
 // CHECK:STDERR:
 var x: typeof(y z);
 
+// --- fail_no_close_paren_multiline.carbon
+
+var x: typeof(y
+              // CHECK:STDERR: fail_no_close_paren_multiline.carbon:[[@LINE+3]]:15: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+              // CHECK:STDERR: fail_no_close_paren_multiline.carbon:[[@LINE-2]]:14: note: to match this `(` [GroupOpenedHere]
+              // CHECK:STDERR:
+              z);
+
 // --- fail_no_close_paren_before_eof_at_eof.carbon
 
-// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+5]]:14: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+4]]:15: note: possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+7]]:14: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+6]]:15: note: possibly missing `)` here [PossiblyMissingBracketHere]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+2]]:15: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+4]]:15: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+2]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 var x: typeof(
-// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+2]]:1: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR:
 
 // --- fail_no_close_paren_after_expr_at_eof.carbon
 
-// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+3]]:14: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+2]]:16: note: possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+5]]:14: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+4]]:16: note: possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+2]]:16: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 var x: typeof(y
 
-// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+104]]:26: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR:
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
@@ -118,6 +126,20 @@ var x: typeof(y
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_no_close_paren.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ╭─TypeOfExprKeyword 'typeof'
+// CHECK:STDOUT:   │ │   │ ├─TypeOfExprOpenParen '('
+// CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │   ├─TypeOfExpr ')' has_error
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_no_close_paren_multiline.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
