@@ -609,6 +609,8 @@ impl C as Final {
 // CHECK:STDOUT:   %Final.WithSelf.Method => constants.%Final.WithSelf.Method.2df
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Final.WithSelf.Method(constants.%Final.facet) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%f) {
 // CHECK:STDOUT:   %f.patt.loc13_15.2 => constants.%f.patt
 // CHECK:STDOUT:   %f.loc13_15.1 => constants.%f
@@ -757,6 +759,8 @@ impl C as Final {
 // CHECK:STDOUT:   %Final.WithSelf.Method.type => constants.%Final.WithSelf.Method.type.d8a
 // CHECK:STDOUT:   %Final.WithSelf.Method => constants.%Final.WithSelf.Method.410
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Final.WithSelf.Method(constants.%Final.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%f) {
 // CHECK:STDOUT:   %f.patt.loc15_15.2 => constants.%f.patt

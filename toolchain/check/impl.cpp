@@ -737,9 +737,22 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
         }
 
         if (fn.interface_modifier == InterfaceModifier::Final) {
-          CARBON_CHECK(fn.definition_id.has_value(),
-                       "final method should have a definition by now");
-          witness_value = fn.definition_id;
+          lookup_result = LookupNameInExactScope(
+              context, SemIR::LocId(decl_id), fn.name_id,
+              interface.scope_with_self_id,
+              context.name_scopes().Get(interface.scope_with_self_id));
+          CARBON_CHECK(lookup_result.is_found(),
+                       "final method should have definition");
+          used_decl_ids.push_back(lookup_result.target_inst_id());
+          witness_value = CheckAssociatedFunctionImplementation(
+              context, *fn_type,
+              context.generics().GetSelfSpecific(impl.generic_id),
+              context.insts()
+                  .GetAs<SemIR::AssociatedEntity>(
+                      lookup_result.target_inst_id())
+                  .decl_id,
+              true);
+          break;
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,
