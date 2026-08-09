@@ -225,18 +225,31 @@ auto RestrictExternModifierOnDecl(Context& context,
 
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          DeclIntroducerState& introducer,
-                                         SemIR::NameScopeId parent_scope_id)
-    -> void {
-  if (context.name_scopes().InstIs<SemIR::InterfaceWithSelfDecl>(
+                                         SemIR::NameScopeId parent_scope_id,
+                                         bool is_definition) -> void {
+  // Both `default` and `final` allowed in an interface definition.
+  if (!context.name_scopes().InstIs<SemIR::InterfaceWithSelfDecl>(
           parent_scope_id)) {
-    // Both `default` and `final` allowed in an interface definition.
+    CARBON_DIAGNOSTIC(ModifierRequiresInterface, Error,
+                      "`{0}` not allowed; requires interface scope",
+                      Lex::TokenKind);
+    ForbidModifiersOnDecl(context, ModifierRequiresInterface, introducer,
+                          KeywordModifierSet::Interface);
     return;
   }
-  CARBON_DIAGNOSTIC(ModifierRequiresInterface, Error,
-                    "`{0}` not allowed; requires interface scope",
-                    Lex::TokenKind);
-  ForbidModifiersOnDecl(context, ModifierRequiresInterface, introducer,
-                        KeywordModifierSet::Interface);
+
+  if (introducer.modifier_set != KeywordModifierSet::Final) {
+    // TODO: add rules for `default` modifier.
+    return;
+  }
+
+  if (!is_definition) {
+    CARBON_DIAGNOSTIC(ModifierFinalRequiresDefaultImpl, Error,
+                      "`{0}` modifier requires a default implementation",
+                      Lex::TokenKind);
+    ForbidModifiersOnDecl(context, ModifierFinalRequiresDefaultImpl, introducer,
+                          KeywordModifierSet::Final);
+  }
 }
 
 }  // namespace Carbon::Check

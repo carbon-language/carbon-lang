@@ -95,11 +95,12 @@ static auto DiagnoseModifiers(Context& context,
                                is_definition);
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
                                  parent_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_id);
+  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_id,
+                                      is_definition);
 
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
-    // TODO: Once we are saving the modifiers for a function, add check that
-    // the function may only be defined if it is marked `default` or `final`.
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Default)) {
+    // TODO: Add check that the function may be defined if it is marked
+    // `default`.
     context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
                  "interface modifier");
   }
@@ -133,6 +134,16 @@ static auto GetEvaluationMode(const KeywordModifierSet& modifier_set)
       .Case(KeywordModifierSet::MustEval,
             SemIR::Function::EvaluationMode::MustEval)
       .Default(SemIR::Function::EvaluationMode::None);
+}
+
+// Returns the implementation modifier as an enum.
+static auto GetInterfaceModifier(const KeywordModifierSet& modifier_set)
+    -> SemIR::Function::InterfaceModifier {
+  using enum SemIR::Function::InterfaceModifier;
+  return modifier_set.ToEnum<SemIR::Function::InterfaceModifier>()
+      .Case(KeywordModifierSet::Default, Default)
+      .Case(KeywordModifierSet::Final, Final)
+      .Default(None);
 }
 
 // Tries to merge new_function into prev_function_id. Since new_function won't
@@ -545,6 +556,7 @@ static auto BuildFunctionDecl(Context& context,
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto virtual_modifier = GetVirtualModifier(introducer.modifier_set);
   auto evaluation_mode = GetEvaluationMode(introducer.modifier_set);
+  auto interface_modifier = GetInterfaceModifier(introducer.modifier_set);
 
   // Add the function declaration.
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
@@ -565,6 +577,7 @@ static auto BuildFunctionDecl(Context& context,
                        .return_pattern_id = return_pattern_id,
                        .virtual_modifier = virtual_modifier,
                        .evaluation_mode = evaluation_mode,
+                       .interface_modifier = interface_modifier,
                        .self_param_id = self_param_id}};
   if (is_definition) {
     function_info.definition_id = decl_id;
