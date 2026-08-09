@@ -52,12 +52,12 @@ fn FArrayVarParam(var a: array(i32, 5)) -> i32 { return a[2]; }
 inline Cpp '''
 int GArrayVarParam() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE+7]]:10-15: error: no member named 'FArrayVarParam' in namespace 'Carbon'; did you mean 'GArrayVarParam'? [CppInteropParseError]
+  // CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE+7]]:10: error: no member named 'FArrayVarParam' in namespace 'Carbon'; did you mean 'GArrayVarParam'? [CppInteropParseError]
   // CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE+6]]:10-31: note: replace with `GArrayVarParam` [CppInteropFixItReplacement]
-  // CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE-4]]:5-18: note: 'GArrayVarParam' declared here [CppInteropParseNote]
+  // CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE-4]]:5: note: 'GArrayVarParam' declared here [CppInteropParseNote]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE+3]]:33-47: error: too many arguments to function call, expected 0, have 1 [CppInteropParseError]
-  // CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE-7]]:5-18: note: 'GArrayVarParam' declared here [CppInteropParseNote]
+  // CHECK:STDERR: fail_todo_array_var_param.carbon:[[@LINE-7]]:5: note: 'GArrayVarParam' declared here [CppInteropParseNote]
   // CHECK:STDERR:
   return Carbon::FArrayVarParam({1, 2, 3, 4, 5});
   //@dump-sem-ir-end
@@ -81,9 +81,9 @@ fn FArrayReturn() -> array(i32, 5) {
 
 inline Cpp '''
 int GArrayReturn() {
-  // CHECK:STDERR: fail_todo_array_return.carbon:[[@LINE+4]]:16-21: error: no member named 'FArrayReturn' in namespace 'Carbon'; did you mean 'GArrayReturn'? [CppInteropParseError]
+  // CHECK:STDERR: fail_todo_array_return.carbon:[[@LINE+4]]:16: error: no member named 'FArrayReturn' in namespace 'Carbon'; did you mean 'GArrayReturn'? [CppInteropParseError]
   // CHECK:STDERR: fail_todo_array_return.carbon:[[@LINE+3]]:16-35: note: replace with `GArrayReturn` [CppInteropFixItReplacement]
-  // CHECK:STDERR: fail_todo_array_return.carbon:[[@LINE-3]]:5-16: note: 'GArrayReturn' declared here [CppInteropParseNote]
+  // CHECK:STDERR: fail_todo_array_return.carbon:[[@LINE-3]]:5: note: 'GArrayReturn' declared here [CppInteropParseNote]
   // CHECK:STDERR:
   auto &&arr = Carbon::FArrayReturn();
   // CHECK:STDERR: fail_todo_array_return.carbon:[[@LINE+2]]:13: error: subscripted value is not an array, pointer, or vector [CppInteropParseError]

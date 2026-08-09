@@ -195,10 +195,10 @@ fn CallIt() {
   // CHECK:STDERR:        |-| ./cpp_decl.h:3:6
   // CHECK:STDERR:        :
   // CHECK:STDERR:      3 | void Use(Widget w, int extra);
-  // CHECK:STDERR:        :      --- -------------------
-  // CHECK:STDERR:        :       |           '--| requires 2 arguments, but 1 was provided
-  // CHECK:STDERR:        :       |              | [CppInteropParseNoteReason]
-  // CHECK:STDERR:        :       '--| candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        :      -   -------------------
+  // CHECK:STDERR:        :      |            '--| requires 2 arguments, but 1 was provided
+  // CHECK:STDERR:        :      |               | [CppInteropParseNoteReason]
+  // CHECK:STDERR:        :      '--| candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR:        '------------
   // CHECK:STDERR:
   Cpp.Use(1);

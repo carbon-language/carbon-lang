@@ -27,7 +27,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE+3]]:10 [InCppInclude]
 // CHECK:STDERR: ./decl_value_param_type.h:4:6-9: error: argument type 'ForwardDeclaredUnion' is incomplete [CppInteropParseError]
-// CHECK:STDERR: ./decl_value_param_type.h:2:7-26: note: forward declaration of 'ForwardDeclaredUnion' [CppInteropParseNote]
+// CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'ForwardDeclaredUnion' [CppInteropParseNote]
 import Cpp library "decl_value_param_type.h";
 
 fn F(p: Cpp.ForwardDeclaredUnion*) {
@@ -35,7 +35,7 @@ fn F(p: Cpp.ForwardDeclaredUnion*) {
   // CHECK:STDERR:
   // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-5]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:5:6-9: error: argument type 'ForwardDeclaredUnion' is incomplete [CppInteropParseError]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:7-26: note: forward declaration of 'ForwardDeclaredUnion' [CppInteropParseNote]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'ForwardDeclaredUnion' [CppInteropParseNote]
   Cpp.foo1(*p);
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3-14: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
@@ -321,8 +321,8 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE+4]]:10 [InCppInclude]
 // CHECK:STDERR: ./decl_value_return_type.h:4:6-26: error: calling 'foo_decl_value_return' with incomplete return type 'DeclValueReturnUnion' [CppInteropParseError]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6-26: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
-// CHECK:STDERR: ./decl_value_return_type.h:2:7-26: note: forward declaration of 'DeclValueReturnUnion' [CppInteropParseNote]
+// CHECK:STDERR: ./decl_value_return_type.h:4:6: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
+// CHECK:STDERR: ./decl_value_return_type.h:2:7: note: forward declaration of 'DeclValueReturnUnion' [CppInteropParseNote]
 import Cpp library "decl_value_return_type.h";
 
 fn F() {

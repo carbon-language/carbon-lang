@@ -63,7 +63,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+2]]:32-35: error: template argument for template template parameter must be a class template or type alias template [CppInteropParseError]
+// CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+2]]:32: error: template argument for template template parameter must be a class template or type alias template [CppInteropParseError]
 // CHECK:STDERR:
 var x: Cpp.TwoTemplates(Cpp.A, true);
 

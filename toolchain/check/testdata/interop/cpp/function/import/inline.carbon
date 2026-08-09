@@ -37,7 +37,7 @@ fn MyF() {
 // --- without_definition.h
 
 // TODO: Promote this warning to an error by default.
-// CHECK:STDERR: ./without_definition.h:[[@LINE+1]]:13-30: warning: inline function 'inline_without_def' is not defined [CppInteropParseWarning]
+// CHECK:STDERR: ./without_definition.h:[[@LINE+1]]:13: warning: inline function 'inline_without_def' is not defined [CppInteropParseWarning]
 inline void inline_without_def();
 
 // --- todo_fail_import_without_definition.carbon

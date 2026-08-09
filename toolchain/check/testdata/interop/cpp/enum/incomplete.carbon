@@ -22,7 +22,7 @@ enum UnsizedEnum;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: import_declaration.carbon:[[@LINE+3]]:10 [InCppInclude]
-// CHECK:STDERR: ./declaration.h:4:6-16: warning: forward references to 'enum' types are a Microsoft extension [CppInteropParseWarning]
+// CHECK:STDERR: ./declaration.h:4:6: warning: forward references to 'enum' types are a Microsoft extension [CppInteropParseWarning]
 // CHECK:STDERR:
 import Cpp library "declaration.h";
 
@@ -35,7 +35,7 @@ fn F(e: Cpp.UnsizedEnum);
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: fail_use_declaration_as_definition.carbon:[[@LINE+3]]:10 [InCppInclude]
-// CHECK:STDERR: ./declaration.h:4:6-16: warning: forward references to 'enum' types are a Microsoft extension [CppInteropParseWarning]
+// CHECK:STDERR: ./declaration.h:4:6: warning: forward references to 'enum' types are a Microsoft extension [CppInteropParseWarning]
 // CHECK:STDERR:
 import Cpp library "declaration.h";
 

@@ -45,7 +45,7 @@ fn F() {
   var s: const Cpp.NonNullableParamS = G();
   // CHECK:STDERR: fail_import_non_nullable_pointer_param_using_const_value.carbon:[[@LINE+5]]:3-28: error: no matching function for call to 'non_nullable_param_foo' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_import_non_nullable_pointer_param_using_const_value.carbon:[[@LINE-7]]:10 [InCppInclude]
-  // CHECK:STDERR: ./non_nullable_pointer_param.h:4:6-27: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./non_nullable_pointer_param.h:4:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./non_nullable_pointer_param.h:4:29-55: note: 1st argument ('const NonNullableParamS * _Nonnull') would lose const qualifier [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.non_nullable_param_foo(&s);

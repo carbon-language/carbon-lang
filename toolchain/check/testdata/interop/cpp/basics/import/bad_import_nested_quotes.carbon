@@ -22,10 +22,10 @@ library "[[@TEST_NAME]]";
 // properly. `\` escapes aren't processed in regular `#include`s.
 // CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+8]]:10-12: error: '\' file not found [CppInteropParseError]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+6]]:13-15: error: invalid suffix on literal; C++11 requires a space between literal and identifier [CppInteropParseError]
+// CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+6]]:13: error: invalid suffix on literal; C++11 requires a space between literal and identifier [CppInteropParseError]
 // CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+5]]:13: note: insert ` ` here [CppInteropFixItInsertion]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+3]]:13-15: warning: extra tokens at end of #include directive [CppInteropParseWarning]
+// CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+3]]:13: warning: extra tokens at end of #include directive [CppInteropParseWarning]
 // CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+2]]:13: note: insert `//` here [CppInteropFixItInsertion]
 // CHECK:STDERR:
 import Cpp library "\"foo.h\"";

@@ -46,14 +46,14 @@ fn F() {
   let s: Cpp.S = v;
   // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_param_lvalue_ref.carbon:[[@LINE-7]]:10 [InCppInclude]
-  // CHECK:STDERR: ./param_lvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./param_lvalue_ref.h:5:18-19: note: 1st argument ('const S') would lose const qualifier [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesLValue(s);
 
   // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_param_lvalue_ref.carbon:[[@LINE-14]]:10 [InCppInclude]
-  // CHECK:STDERR: ./param_lvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./param_lvalue_ref.h:5:18-19: note: 1st argument ('const S') would lose const qualifier [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesLValue(s as const Cpp.S);
@@ -61,7 +61,7 @@ fn F() {
   var t: Cpp.T;
   // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_param_lvalue_ref.carbon:[[@LINE-22]]:10 [InCppInclude]
-  // CHECK:STDERR: ./param_lvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./param_lvalue_ref.h:5:18-19: note: no known conversion from 'T' to 'S &' for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesLValue(t);
@@ -69,7 +69,7 @@ fn F() {
   var u: Cpp.S;
   // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_param_lvalue_ref.carbon:[[@LINE-30]]:10 [InCppInclude]
-  // CHECK:STDERR: ./param_lvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./param_lvalue_ref.h:5:18-19: note: 1st argument ('const S') would lose const qualifier [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesLValue(u as const Cpp.S);
@@ -125,7 +125,7 @@ fn F() {
   let s: Cpp.S = {};
   // CHECK:STDERR: fail_param_value_arg_for_rvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_param_value_arg_for_rvalue_ref.carbon:[[@LINE-5]]:10 [InCppInclude]
-  // CHECK:STDERR: ./param_rvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./param_rvalue_ref.h:5:18-20: note: 1st argument ('const S') would lose const qualifier [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesRValue(s);
@@ -142,7 +142,7 @@ fn F() {
   var s: Cpp.S;
   // CHECK:STDERR: fail_param_rvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_param_rvalue_ref.carbon:[[@LINE-6]]:10 [InCppInclude]
-  // CHECK:STDERR: ./param_rvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./param_rvalue_ref.h:5:18-20: note: expects an rvalue for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesRValue(s);
@@ -150,14 +150,14 @@ fn F() {
   var t: Cpp.T;
   // CHECK:STDERR: fail_param_rvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_param_rvalue_ref.carbon:[[@LINE-14]]:10 [InCppInclude]
-  // CHECK:STDERR: ./param_rvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./param_rvalue_ref.h:5:18-20: note: no known conversion from 'T' to 'S' for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesRValue(t);
 
   // CHECK:STDERR: fail_param_rvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_param_rvalue_ref.carbon:[[@LINE-21]]:10 [InCppInclude]
-  // CHECK:STDERR: ./param_rvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./param_rvalue_ref.h:5:18-20: note: 1st argument ('const S') would lose const qualifier [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesRValue(({} as Cpp.S) as const Cpp.S);
@@ -215,7 +215,7 @@ fn F() {
   var t: Cpp.T;
   // CHECK:STDERR: fail_call_param_const_lvalue_ref_with_wrong_type.carbon:[[@LINE+5]]:3-22: error: no matching function for call to 'TakesConstLValue' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_call_param_const_lvalue_ref_with_wrong_type.carbon:[[@LINE-5]]:10 [InCppInclude]
-  // CHECK:STDERR: ./param_const_lvalue_ref.h:5:6-21: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_const_lvalue_ref.h:5:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./param_const_lvalue_ref.h:5:23-30: note: no known conversion from 'T' to 'const S' for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesConstLValue(t);
@@ -271,7 +271,7 @@ fn F() {
   var s: Cpp.S;
   // CHECK:STDERR: fail_param_lvalue_ref_arg_const_rvalue_ref.carbon:[[@LINE+5]]:3-22: error: no matching function for call to 'TakesConstRValue' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_param_lvalue_ref_arg_const_rvalue_ref.carbon:[[@LINE-6]]:10 [InCppInclude]
-  // CHECK:STDERR: ./param_const_rvalue_ref.h:5:6-21: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_const_rvalue_ref.h:5:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./param_const_rvalue_ref.h:5:23-31: note: expects an rvalue for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesConstRValue(s);
@@ -279,7 +279,7 @@ fn F() {
   var t: Cpp.T;
   // CHECK:STDERR: fail_param_lvalue_ref_arg_const_rvalue_ref.carbon:[[@LINE+5]]:3-22: error: no matching function for call to 'TakesConstRValue' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_param_lvalue_ref_arg_const_rvalue_ref.carbon:[[@LINE-14]]:10 [InCppInclude]
-  // CHECK:STDERR: ./param_const_rvalue_ref.h:5:6-21: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_const_rvalue_ref.h:5:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./param_const_rvalue_ref.h:5:23-31: note: no known conversion from 'T' to 'const S' for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesConstRValue(t);

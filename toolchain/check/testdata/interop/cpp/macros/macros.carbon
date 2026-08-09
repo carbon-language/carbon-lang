@@ -684,8 +684,8 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: import_macro_defined_twice.carbon:[[@LINE+4]]:10 [InCppInclude]
-// CHECK:STDERR: ./macro_defined_twice.h:3:9-17: warning: 'TWICE_DEF' macro redefined [CppInteropParseWarning]
-// CHECK:STDERR: ./macro_defined_twice.h:2:9-17: note: previous definition is here [CppInteropParseNote]
+// CHECK:STDERR: ./macro_defined_twice.h:3:9: warning: 'TWICE_DEF' macro redefined [CppInteropParseWarning]
+// CHECK:STDERR: ./macro_defined_twice.h:2:9: note: previous definition is here [CppInteropParseNote]
 // CHECK:STDERR:
 import Cpp library "macro_defined_twice.h";
 

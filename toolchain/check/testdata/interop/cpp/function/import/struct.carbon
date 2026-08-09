@@ -27,7 +27,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE+3]]:10 [InCppInclude]
 // CHECK:STDERR: ./decl_value_param_type.h:4:6-9: error: argument type 'ForwardDeclaredStruct' is incomplete [CppInteropParseError]
-// CHECK:STDERR: ./decl_value_param_type.h:2:8-28: note: forward declaration of 'ForwardDeclaredStruct' [CppInteropParseNote]
+// CHECK:STDERR: ./decl_value_param_type.h:2:8: note: forward declaration of 'ForwardDeclaredStruct' [CppInteropParseNote]
 import Cpp library "decl_value_param_type.h";
 
 fn F(p: Cpp.ForwardDeclaredStruct*) {
@@ -35,7 +35,7 @@ fn F(p: Cpp.ForwardDeclaredStruct*) {
   // CHECK:STDERR:
   // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-5]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:5:6-9: error: argument type 'ForwardDeclaredStruct' is incomplete [CppInteropParseError]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:8-28: note: forward declaration of 'ForwardDeclaredStruct' [CppInteropParseNote]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: forward declaration of 'ForwardDeclaredStruct' [CppInteropParseNote]
   Cpp.foo1(*p);
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3-14: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
@@ -92,7 +92,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:10 [InCppInclude]
 // CHECK:STDERR: ./non_copyable_param_type.h:6:6-21: error: call to deleted constructor of 'NonCopyableStruct' [CppInteropParseError]
-// CHECK:STDERR: ./non_copyable_param_type.h:3:3-19: note: 'NonCopyableStruct' has been explicitly marked deleted here [CppInteropParseNote]
+// CHECK:STDERR: ./non_copyable_param_type.h:3:3: note: 'NonCopyableStruct' has been explicitly marked deleted here [CppInteropParseNote]
 // CHECK:STDERR: ./non_copyable_param_type.h:6:40: note: passing argument to parameter here [CppInteropParseNote]
 import Cpp library "non_copyable_param_type.h";
 
@@ -351,8 +351,8 @@ library "[[@TEST_NAME]]";
 // TODO: We should only produce one error here.
 // CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE+4]]:10 [InCppInclude]
 // CHECK:STDERR: ./decl_value_return_type.h:4:6-26: error: calling 'foo_decl_value_return' with incomplete return type 'DeclValueReturnStruct' [CppInteropParseError]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6-26: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
-// CHECK:STDERR: ./decl_value_return_type.h:2:8-28: note: forward declaration of 'DeclValueReturnStruct' [CppInteropParseNote]
+// CHECK:STDERR: ./decl_value_return_type.h:4:6: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
+// CHECK:STDERR: ./decl_value_return_type.h:2:8: note: forward declaration of 'DeclValueReturnStruct' [CppInteropParseNote]
 import Cpp library "decl_value_return_type.h";
 
 fn F() {

@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-// CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+2]]:1-5: error: unknown type name 'error' [CppInteropParseError]
+// CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+2]]:1: error: unknown type name 'error' [CppInteropParseError]
 // CHECK:STDERR:
 error has_error;
 #define macro_with_error has_error.member

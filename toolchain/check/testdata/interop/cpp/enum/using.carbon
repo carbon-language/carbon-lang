@@ -29,10 +29,10 @@ using enum Zoo::Animal;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: import_enum.carbon:[[@LINE+6]]:10 [InCppInclude]
-// CHECK:STDERR: ./enum.h:5:7-10: warning: using enum declaration is a C++20 extension [CppInteropParseWarning]
+// CHECK:STDERR: ./enum.h:5:7: warning: using enum declaration is a C++20 extension [CppInteropParseWarning]
 // CHECK:STDERR:
 // CHECK:STDERR: included from: import_enum.carbon:[[@LINE+3]]:10 [InCppInclude]
-// CHECK:STDERR: ./enum.h:12:7-10: warning: using enum declaration is a C++20 extension [CppInteropParseWarning]
+// CHECK:STDERR: ./enum.h:12:7: warning: using enum declaration is a C++20 extension [CppInteropParseWarning]
 // CHECK:STDERR:
 import Cpp library "enum.h";
 

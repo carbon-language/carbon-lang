@@ -65,28 +65,28 @@ fn Call() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+5]]:3-20: error: no matching function for call to 'GlobalNoReturn' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_call_too_few_args.carbon:[[@LINE-5]]:10 [InCppInclude]
-  // CHECK:STDERR: ./functions.h:2:6-19: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./functions.h:2:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./functions.h:2:21-54: note: requires at least 2 arguments, but 1 was provided [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.GlobalNoReturn(1);
 
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+5]]:3-20: error: no matching function for call to 'GlobalNoReturn' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_call_too_few_args.carbon:[[@LINE-12]]:10 [InCppInclude]
-  // CHECK:STDERR: ./functions.h:2:6-19: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./functions.h:2:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./functions.h:2:21-54: note: requires at least 2 arguments, but 0 were provided [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.GlobalNoReturn();
 
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+5]]:3-21: error: no matching function for call to 'GlobalReturnInt' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_call_too_few_args.carbon:[[@LINE-19]]:10 [InCppInclude]
-  // CHECK:STDERR: ./functions.h:3:6-20: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./functions.h:3:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./functions.h:3:22-55: note: requires at least 2 arguments, but 1 was provided [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.GlobalReturnInt(1);
 
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+5]]:3-21: error: no matching function for call to 'GlobalReturnInt' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_call_too_few_args.carbon:[[@LINE-26]]:10 [InCppInclude]
-  // CHECK:STDERR: ./functions.h:3:6-20: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./functions.h:3:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./functions.h:3:22-55: note: requires at least 2 arguments, but 0 were provided [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.GlobalReturnInt();

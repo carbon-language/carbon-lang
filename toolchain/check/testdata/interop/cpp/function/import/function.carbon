@@ -124,7 +124,7 @@ fn F() {
 // --- static.h
 
 // TODO: Promote this warning to an error by default.
-// CHECK:STDERR: ./static.h:[[@LINE+1]]:13-22: warning: function 'static_foo' has internal linkage but is not defined [CppInteropParseWarning]
+// CHECK:STDERR: ./static.h:[[@LINE+1]]:13: warning: function 'static_foo' has internal linkage but is not defined [CppInteropParseWarning]
 static auto static_foo() -> void;
 
 // --- todo_fail_import_static.carbon

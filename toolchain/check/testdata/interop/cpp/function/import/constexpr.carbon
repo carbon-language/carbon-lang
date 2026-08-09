@@ -101,9 +101,9 @@ var a: i32 = 0;
 
 // TODO: This is failing when building the thunk, not when calling it.
 inline Cpp '''
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+3]]:15-35: error: call to consteval function 'nonconst_consteval_fn' is not a constant expression [CppInteropParseError]
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+2]]:15-35: note: function parameter 'r' with unknown value cannot be used in a constant expression [CppInteropParseNote]
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+1]]:15-35: note: declared here [CppInteropParseNote]
+// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+3]]:15: error: call to consteval function 'nonconst_consteval_fn' is not a constant expression [CppInteropParseError]
+// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+2]]:15: note: function parameter 'r' with unknown value cannot be used in a constant expression [CppInteropParseNote]
+// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+1]]:15: note: declared here [CppInteropParseNote]
 consteval int nonconst_consteval_fn(const int &r) { return r; }
 ''';
 

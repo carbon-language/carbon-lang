@@ -27,7 +27,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE+3]]:10 [InCppInclude]
 // CHECK:STDERR: ./decl_value_param_type.h:4:6-20: error: argument type 'ForwardDeclaredClass' is incomplete [CppInteropParseError]
-// CHECK:STDERR: ./decl_value_param_type.h:2:7-26: note: forward declaration of 'ForwardDeclaredClass' [CppInteropParseNote]
+// CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'ForwardDeclaredClass' [CppInteropParseNote]
 import Cpp library "decl_value_param_type.h";
 
 fn F(p: Cpp.ForwardDeclaredClass*) {
@@ -35,7 +35,7 @@ fn F(p: Cpp.ForwardDeclaredClass*) {
   // CHECK:STDERR:
   // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-5]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:5:6-20: error: argument type 'ForwardDeclaredClass' is incomplete [CppInteropParseError]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:7-26: note: forward declaration of 'ForwardDeclaredClass' [CppInteropParseNote]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'ForwardDeclaredClass' [CppInteropParseNote]
   Cpp.foo_decl_param1(*p);
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3-25: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
@@ -92,7 +92,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:10 [InCppInclude]
 // CHECK:STDERR: ./non_copyable_param_type.h:6:6-27: error: call to deleted constructor of 'NonCopyableClass' [CppInteropParseError]
-// CHECK:STDERR: ./non_copyable_param_type.h:3:3-18: note: 'NonCopyableClass' has been explicitly marked deleted here [CppInteropParseNote]
+// CHECK:STDERR: ./non_copyable_param_type.h:3:3: note: 'NonCopyableClass' has been explicitly marked deleted here [CppInteropParseNote]
 // CHECK:STDERR: ./non_copyable_param_type.h:6:45: note: passing argument to parameter here [CppInteropParseNote]
 import Cpp library "non_copyable_param_type.h";
 
@@ -136,7 +136,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:10 [InCppInclude]
 // CHECK:STDERR: ./move_only_param_type.h:6:6-24: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
-// CHECK:STDERR: ./move_only_param_type.h:3:3-15: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
+// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
 // CHECK:STDERR: ./move_only_param_type.h:6:39: note: passing argument to parameter here [CppInteropParseNote]
 import Cpp library "move_only_param_type.h";
 
@@ -152,7 +152,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: fail_pass_move_only_param_ref.carbon:[[@LINE+4]]:10 [InCppInclude]
 // CHECK:STDERR: ./move_only_param_type.h:6:6-24: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
-// CHECK:STDERR: ./move_only_param_type.h:3:3-15: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
+// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
 // CHECK:STDERR: ./move_only_param_type.h:6:39: note: passing argument to parameter here [CppInteropParseNote]
 import Cpp library "move_only_param_type.h";
 
@@ -168,7 +168,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+4]]:10 [InCppInclude]
 // CHECK:STDERR: ./move_only_param_type.h:6:6-24: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
-// CHECK:STDERR: ./move_only_param_type.h:3:3-15: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
+// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
 // CHECK:STDERR: ./move_only_param_type.h:6:39: note: passing argument to parameter here [CppInteropParseNote]
 import Cpp library "move_only_param_type.h";
 
@@ -426,8 +426,8 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE+4]]:10 [InCppInclude]
 // CHECK:STDERR: ./decl_value_return_type.h:4:6-26: error: calling 'foo_decl_value_return' with incomplete return type 'DeclValueReturnClass' [CppInteropParseError]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6-26: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
-// CHECK:STDERR: ./decl_value_return_type.h:2:7-26: note: forward declaration of 'DeclValueReturnClass' [CppInteropParseNote]
+// CHECK:STDERR: ./decl_value_return_type.h:4:6: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
+// CHECK:STDERR: ./decl_value_return_type.h:2:7: note: forward declaration of 'DeclValueReturnClass' [CppInteropParseNote]
 import Cpp library "decl_value_return_type.h";
 
 fn F() {

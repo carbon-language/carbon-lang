@@ -36,8 +36,9 @@ class CppDiagnosticListener {
 
   struct Diagnostic {
     clang::DiagnosticsEngine::Level level;
-    // Where the diagnostic points, reaching across the token it names so that a
-    // note marks the token rather than a single column of it.
+    // Where the diagnostic points: the one column its location names, or the
+    // range holding that column when one was attached, which Clang draws as
+    // the caret's own `^~~~`.
     clang::CharSourceRange location;
     const clang::SourceManager* source_manager = nullptr;
     std::string message;

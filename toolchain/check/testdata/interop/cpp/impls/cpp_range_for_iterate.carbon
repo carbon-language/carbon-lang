@@ -198,7 +198,7 @@ import Cpp inline '''c++
 namespace N {
 class MutableRangeWithSentinel {
   struct Iterator {
-    // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+3]]:31-39: error: unknown type name 'ValueType' [CppInteropParseError]
+    // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+3]]:31: error: unknown type name 'ValueType' [CppInteropParseError]
     // CHECK:STDERR:
     // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon: error: value expression passed to reference parameter [ValueForRefParam]
     auto operator*() const -> ValueType&;
@@ -349,22 +349,22 @@ struct EndFunctionDeleted {
 
 fn Test() {
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE+4]]:47: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-22]]:8-12: note: 'begin' has been explicitly marked deleted here [CppInteropParseNote]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-22]]:8: note: 'begin' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:22:36-67: note: initializing generic parameter `S` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   Core.AssertIsNotRange(Cpp.BeginMethodDeleted);
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE+4]]:45: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-21]]:8-10: note: 'end' has been explicitly marked deleted here [CppInteropParseNote]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-21]]:8: note: 'end' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:22:36-67: note: initializing generic parameter `S` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   Core.AssertIsNotRange(Cpp.EndMethodDeleted);
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE+4]]:49: error: call to deleted function 'begin' [CppInteropParseError]
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-22]]:15-19: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-22]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:22:36-67: note: initializing generic parameter `S` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   Core.AssertIsNotRange(Cpp.BeginFunctionDeleted);
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE+4]]:47: error: call to deleted function 'end' [CppInteropParseError]
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-21]]:15-17: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-21]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:22:36-67: note: initializing generic parameter `S` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   Core.AssertIsNotRange(Cpp.EndFunctionDeleted);

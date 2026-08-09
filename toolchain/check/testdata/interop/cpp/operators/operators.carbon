@@ -266,8 +266,8 @@ void operator+(AmbiguousC, short);
 
 fn Test(c: Cpp.AmbiguousC) {
   // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE+4]]:5: error: use of overloaded operator '+' is ambiguous (with operand types 'const AmbiguousC' and 'int') [CppInteropParseError]
-  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-6]]:6-13: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-6]]:6-13: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-6]]:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-6]]:6: note: candidate function [CppInteropParseNote]
   // CHECK:STDERR:
   c + 1;
 }
@@ -284,8 +284,8 @@ void operator+(DeletedC, void*) = delete;
 
 fn Test(c: Cpp.DeletedC) {
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE+5]]:5: error: overload resolution selected deleted operator '+' [CppInteropParseError]
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-6]]:6-13: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-6]]:6-13: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-6]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-6]]:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE-7]]:26-30: note: no known conversion from 'int' to 'void *' for 2nd argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   c + 1;
@@ -347,8 +347,8 @@ auto operator<(CDel lhs, BaseDel rhs) -> bool;
 fn F(c: Cpp.CDel) -> bool {
   // Note that we mention `operator '<=>'` in the diagnostic.
   // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE+4]]:12: error: overload resolution selected deleted operator '<=>' [CppInteropParseError]
-  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-7]]:6-13: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-7]]:6-13: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-7]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-7]]:6: note: candidate function [CppInteropParseNote]
   // CHECK:STDERR:
   return c < c;
 }

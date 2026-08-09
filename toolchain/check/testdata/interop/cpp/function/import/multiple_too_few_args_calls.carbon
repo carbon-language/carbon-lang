@@ -23,12 +23,12 @@ void F2(X x);
 fn Call() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+4]]:3-8: error: no matching function for call to 'F1' [CppInteropParseError]
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-7]]:6-7: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-7]]:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-8]]:9-11: note: requires single argument 'x', but no arguments were provided [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.F1();
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+4]]:3-8: error: no matching function for call to 'F2' [CppInteropParseError]
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-11]]:6-7: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-11]]:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-12]]:9-11: note: requires single argument 'x', but no arguments were provided [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.F2();

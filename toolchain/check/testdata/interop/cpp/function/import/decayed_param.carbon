@@ -55,7 +55,7 @@ fn F() {
   var n: array(i32, 42);
   // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE+5]]:3-19: error: no matching function for call to 'TakesFunction' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_todo_call_params_2.carbon:[[@LINE-16]]:10 [InCppInclude]
-  // CHECK:STDERR: ./params.h:3:6-18: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./params.h:3:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./params.h:3:20-29: note: no known conversion from 'int * _Nonnull' to 'int (*)(int)' for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesFunction(&n[0]);

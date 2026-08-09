@@ -450,20 +450,13 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
       fix_its.push_back({.range = range, .text = hint.CodeToInsert});
     }
 
-    // A Clang location names a token, and marking the whole of it says more
-    // than marking the column it starts in. Not for a location inside a macro:
-    // the raw lexer measures the token at the expansion site while the range
-    // renders in spelling coordinates, and a wrong extent is worse than a
-    // point.
+    // A Clang location names a point, and is marked as the one column Clang's
+    // own caret marks. How far it reaches is said only by a range attached
+    // alongside it, and a location can name the middle of a token, as one in
+    // a format string does.
     clang::SourceLocation begin = info.getLocation();
     clang::CharSourceRange location =
         clang::CharSourceRange::getCharRange(begin, begin);
-    if (source_manager && begin.isValid() && !begin.isMacroID()) {
-      unsigned length = clang::Lexer::MeasureTokenLength(
-          begin, *source_manager, invocation_->getLangOpts());
-      location = clang::CharSourceRange::getCharRange(
-          begin, begin.getLocWithOffset(length));
-    }
 
     // Clang draws a range holding the caret as part of the caret's own mark
     // rather than beside it -- the `~~~~` of a `^~~~~` -- so such a range is

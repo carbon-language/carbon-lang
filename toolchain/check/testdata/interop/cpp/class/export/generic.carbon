@@ -56,7 +56,7 @@ inline Cpp '''
 void FUnsupported() {
   // CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+4]]:11: error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+2]]:11-25: error: no type named 'AliasEmptyTuple' in namespace 'Carbon' [CppInteropParseError]
+  // CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+2]]:11: error: no type named 'AliasEmptyTuple' in namespace 'Carbon' [CppInteropParseError]
   // CHECK:STDERR:
   Carbon::AliasEmptyTuple a;
   a.t = 123;

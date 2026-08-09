@@ -142,7 +142,7 @@ auto foo(char8_t c) -> void;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: included from: fail_todo_import_char8_t_param.carbon:[[@LINE+3]]:10 [InCppInclude]
-// CHECK:STDERR: ./char8_t_param.h:2:10-16: error: unknown type name 'char8_t' [CppInteropParseError]
+// CHECK:STDERR: ./char8_t_param.h:2:10: error: unknown type name 'char8_t' [CppInteropParseError]
 // CHECK:STDERR:
 import Cpp library "char8_t_param.h";
 

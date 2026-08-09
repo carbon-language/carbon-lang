@@ -115,8 +115,8 @@ import Cpp library "types.h";
 fn AmbiguousDestroy() {
   // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+7]]:17-39: error: binding pattern has incomplete type `AmbiguousDestructor` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR: included from: fail_destroy_nondestroyable.carbon:[[@LINE-4]]:10 [InCppInclude]
-  // CHECK:STDERR: ./types.h:13:7-26: note: destructor of class 'AmbiguousDestructorT<>' is ambiguous [CppInteropParseError]
-  // CHECK:STDERR: ./types.h:13:7-26: note: in instantiation of template class 'AmbiguousDestructorT<>' requested here [CppInteropParseNote]
+  // CHECK:STDERR: ./types.h:13:7: note: destructor of class 'AmbiguousDestructorT<>' is ambiguous [CppInteropParseError]
+  // CHECK:STDERR: ./types.h:13:7: note: in instantiation of template class 'AmbiguousDestructorT<>' requested here [CppInteropParseNote]
   // CHECK:STDERR: ./types.h:15:3: note: candidate function [CppInteropParseNote]
   // CHECK:STDERR: ./types.h:16:3: note: candidate function [CppInteropParseNote]
   // CHECK:STDERR:
@@ -124,7 +124,7 @@ fn AmbiguousDestroy() {
 }
 
 fn DeletedDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+4]]:3-5: error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+4]]:3: error: attempt to use a deleted function [CppInteropParseError]
   // CHECK:STDERR: included from: fail_destroy_nondestroyable.carbon:[[@LINE-15]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:23:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR:
@@ -180,7 +180,7 @@ class AdaptNoDestroy {
 fn Make() -> AdaptNoDestroy;
 
 fn F() {
-  // CHECK:STDERR: fail_no_destroy.carbon:[[@LINE+4]]:3-5: error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR: fail_no_destroy.carbon:[[@LINE+4]]:3: error: attempt to use a deleted function [CppInteropParseError]
   // CHECK:STDERR: included from: fail_no_destroy.carbon:[[@LINE-10]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:23:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR:

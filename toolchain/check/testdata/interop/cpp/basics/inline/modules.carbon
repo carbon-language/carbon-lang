@@ -19,7 +19,7 @@ library "[[@TEST_NAME]]";
 import Cpp inline '''
 // CHECK:STDERR: fail_export_module_in_inline_cpp.carbon:[[@LINE+6]]:8-18: error: module declaration must not come from an #include directive [CppInteropParseError]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_export_module_in_inline_cpp.carbon:[[@LINE+4]]:8-13: error: module declaration must occur at the start of the translation unit [CppInteropParseError]
+// CHECK:STDERR: fail_export_module_in_inline_cpp.carbon:[[@LINE+4]]:8: error: module declaration must occur at the start of the translation unit [CppInteropParseError]
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: add 'module;' to the start of the file to introduce a global module fragment [CppInteropParseNote]
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: insert `module; ` here [CppInteropFixItInsertion]
 // CHECK:STDERR:
@@ -34,7 +34,7 @@ library "[[@TEST_NAME]]";
 import Cpp inline '''
 // CHECK:STDERR: fail_module_in_inline_cpp.carbon:[[@LINE+8]]:1-11: error: module declaration must not come from an #include directive [CppInteropParseError]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_module_in_inline_cpp.carbon:[[@LINE+6]]:1-6: error: module declaration must occur at the start of the translation unit [CppInteropParseError]
+// CHECK:STDERR: fail_module_in_inline_cpp.carbon:[[@LINE+6]]:1: error: module declaration must occur at the start of the translation unit [CppInteropParseError]
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: add 'module;' to the start of the file to introduce a global module fragment [CppInteropParseNote]
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: insert `module; ` here [CppInteropFixItInsertion]
 // CHECK:STDERR:
@@ -59,7 +59,7 @@ int n;
 
 // CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+8]]:1-11: error: module declaration must not come from an #include directive [CppInteropParseError]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+6]]:1-6: error: module declaration must occur at the start of the translation unit [CppInteropParseError]
+// CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+6]]:1: error: module declaration must occur at the start of the translation unit [CppInteropParseError]
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: add 'module;' to the start of the file to introduce a global module fragment [CppInteropParseNote]
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: insert `module; ` here [CppInteropFixItInsertion]
 // CHECK:STDERR:

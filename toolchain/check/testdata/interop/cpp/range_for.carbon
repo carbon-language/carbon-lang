@@ -604,8 +604,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   Test(begin_method_end_field);
 
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+8]]:3-28: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9-17: note: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-83]]:8-12: note: 'begin' has been explicitly marked deleted here [CppInteropParseNote]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9: note: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-83]]:8: note: 'begin' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-64]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-28: error: cannot convert type `Cpp.BeginMethodDeleted` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
@@ -614,8 +614,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   Test(begin_method_deleted);
 
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+8]]:3-26: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9-17: note: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-87]]:8-10: note: 'end' has been explicitly marked deleted here [CppInteropParseNote]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9: note: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-87]]:8: note: 'end' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-74]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-26: error: cannot convert type `Cpp.EndMethodDeleted` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
@@ -625,7 +625,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+8]]:3-30: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9-17: note: call to deleted function 'begin' [CppInteropParseError]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-93]]:15-19: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-93]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-84]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-30: error: cannot convert type `Cpp.BeginFunctionDeleted` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
@@ -635,7 +635,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+8]]:3-28: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9-17: note: call to deleted function 'end' [CppInteropParseError]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-97]]:15-17: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-97]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-94]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-28: error: cannot convert type `Cpp.EndFunctionDeleted` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]

@@ -85,7 +85,7 @@ import Cpp library "types.h";
 fn CopyDeletedCopy(c: Cpp.DeletedCopy) -> Cpp.DeletedCopy {
   // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: error: attempt to use a deleted function [CppInteropParseError]
   // CHECK:STDERR: included from: fail_copy_noncopyable.carbon:[[@LINE-4]]:10 [InCppInclude]
-  // CHECK:STDERR: ./types.h:14:3-13: note: 'DeletedCopy' has been explicitly marked deleted here [CppInteropParseNote]
+  // CHECK:STDERR: ./types.h:14:3: note: 'DeletedCopy' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR:
   return c;
 }
@@ -93,7 +93,7 @@ fn CopyDeletedCopy(c: Cpp.DeletedCopy) -> Cpp.DeletedCopy {
 fn CopyMoveOnly(c: Cpp.MoveOnly) -> Cpp.MoveOnly {
   // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: error: attempt to use a deleted function [CppInteropParseError]
   // CHECK:STDERR: included from: fail_copy_noncopyable.carbon:[[@LINE-12]]:10 [InCppInclude]
-  // CHECK:STDERR: ./types.h:19:3-10: note: copy constructor is implicitly deleted because 'MoveOnly' has a user-declared move constructor [CppInteropParseNote]
+  // CHECK:STDERR: ./types.h:19:3: note: copy constructor is implicitly deleted because 'MoveOnly' has a user-declared move constructor [CppInteropParseNote]
   // CHECK:STDERR:
   return c;
 }
@@ -101,7 +101,7 @@ fn CopyMoveOnly(c: Cpp.MoveOnly) -> Cpp.MoveOnly {
 fn CopyDeletedMove(c: Cpp.DeletedMove) -> Cpp.DeletedMove {
   // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: error: attempt to use a deleted function [CppInteropParseError]
   // CHECK:STDERR: included from: fail_copy_noncopyable.carbon:[[@LINE-20]]:10 [InCppInclude]
-  // CHECK:STDERR: ./types.h:24:3-13: note: copy constructor is implicitly deleted because 'DeletedMove' has a user-declared move constructor [CppInteropParseNote]
+  // CHECK:STDERR: ./types.h:24:3: note: copy constructor is implicitly deleted because 'DeletedMove' has a user-declared move constructor [CppInteropParseNote]
   // CHECK:STDERR:
   return c;
 }

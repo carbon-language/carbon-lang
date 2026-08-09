@@ -62,7 +62,7 @@ import Cpp;
 class FinalClass {}
 
 inline Cpp '''
-// CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+3]]:12-17: error: base 'FinalClass' is marked 'final' [CppInteropParseError]
+// CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+3]]:12: error: base 'FinalClass' is marked 'final' [CppInteropParseError]
 // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE-4]]:18: note: 'FinalClass' declared here [CppInteropParseNote]
 // CHECK:STDERR:
 struct A : Carbon::FinalClass {};
@@ -144,7 +144,7 @@ abstract class AbstractWithMethod {
 }
 
 inline Cpp '''
-// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+3]]:28-37: error: variable type 'Carbon::AbstractWithMethod' is an abstract class [CppInteropParseError]
+// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+3]]:28: error: variable type 'Carbon::AbstractWithMethod' is an abstract class [CppInteropParseError]
 // CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE-5]]:22: note: unimplemented pure virtual method 'F' in 'AbstractWithMethod' [CppInteropParseNote]
 // CHECK:STDERR:
 Carbon::AbstractWithMethod x_abstract;

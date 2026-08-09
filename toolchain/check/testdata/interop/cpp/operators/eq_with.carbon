@@ -262,8 +262,8 @@ fn Test(only_neq: Cpp.OnlyNeq,
   EqWith(neq_returns_void, neq_returns_void);
 
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+5]]:34: error: overload resolution selected deleted operator '!=' [CppInteropParseError]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-55]]:8-15: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-55]]:8-15: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-55]]:8: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-55]]:8: note: candidate function has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-41]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   EqWith(deleted_neq, deleted_neq);

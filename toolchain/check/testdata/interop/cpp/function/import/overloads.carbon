@@ -294,14 +294,14 @@ import Cpp library "struct_init.h";
 fn F() {
   // CHECK:STDERR: fail_struct_init_field_mismatch.carbon:[[@LINE+5]]:3-21: error: no matching function for call to 'PassThreeFields' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_struct_init_field_mismatch.carbon:[[@LINE-4]]:10 [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:6-20: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./struct_init.h:10:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./struct_init.h:10:22-34: note: cannot convert initializer list argument to 'ThreeFields' [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.PassThreeFields({.a = 1, .b = 2, .c = 3, .d = 4});
 
   // CHECK:STDERR: fail_struct_init_field_mismatch.carbon:[[@LINE+5]]:3-21: error: no matching function for call to 'PassThreeFields' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_struct_init_field_mismatch.carbon:[[@LINE-11]]:10 [InCppInclude]
-  // CHECK:STDERR: ./struct_init.h:10:6-20: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./struct_init.h:10:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./struct_init.h:10:22-34: note: cannot convert initializer list argument to 'ThreeFields' [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.PassThreeFields({.a = 1, .x = 2, .c = 3});
@@ -472,7 +472,7 @@ import Cpp library "nested_structs.h";
 fn F() {
   // CHECK:STDERR: fail_pass_nested_structs_inner_field_mismatch.carbon:[[@LINE+5]]:3-11: error: no matching function for call to 'TakeB' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_pass_nested_structs_inner_field_mismatch.carbon:[[@LINE-4]]:10 [InCppInclude]
-  // CHECK:STDERR: ./nested_structs.h:11:6-10: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./nested_structs.h:11:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./nested_structs.h:11:12: note: cannot convert initializer list argument to 'B' [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakeB({.a = {.x = 1, .z = 2}, .n = 3});
@@ -566,7 +566,7 @@ import Cpp library "no_viable_function.h";
 fn F() {
   // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+5]]:3-19: error: no matching function for call to 'no_viable_foo' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_import_no_viable_function.carbon:[[@LINE-4]]:10 [InCppInclude]
-  // CHECK:STDERR: ./no_viable_function.h:2:6-18: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./no_viable_function.h:2:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./no_viable_function.h:2:20-33: note: requires 2 arguments, but 1 was provided [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.no_viable_foo(1 as i64);
@@ -590,8 +590,8 @@ import Cpp library "ambiguous_overload.h";
 fn F() {
   // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+5]]:3-19: error: call to 'ambiguous_foo' is ambiguous [CppInteropParseError]
   // CHECK:STDERR: included from: fail_import_ambiguous_overload.carbon:[[@LINE-4]]:10 [InCppInclude]
-  // CHECK:STDERR: ./ambiguous_overload.h:2:6-18: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR: ./ambiguous_overload.h:3:6-18: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR: ./ambiguous_overload.h:2:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR: ./ambiguous_overload.h:3:6: note: candidate function [CppInteropParseNote]
   // CHECK:STDERR:
   Cpp.ambiguous_foo(1 as i64);
 }
@@ -614,8 +614,8 @@ import Cpp library "deleted_function.h";
 fn F() {
   // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+5]]:3-17: error: call to deleted function 'deleted_foo' [CppInteropParseError]
   // CHECK:STDERR: included from: fail_import_deleted_function.carbon:[[@LINE-4]]:10 [InCppInclude]
-  // CHECK:STDERR: ./deleted_function.h:3:6-16: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR: ./deleted_function.h:2:6-16: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR: ./deleted_function.h:3:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: ./deleted_function.h:2:6: note: candidate function [CppInteropParseNote]
   // CHECK:STDERR:
   Cpp.deleted_foo(1 as i32);
 }

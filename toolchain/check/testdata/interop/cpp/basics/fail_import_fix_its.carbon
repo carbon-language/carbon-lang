@@ -29,7 +29,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: included from: fail_import_replacement.carbon:[[@LINE+5]]:10 [InCppInclude]
 // CHECK:STDERR: ./replacement.h:3:13-24: error: use of undeclared identifier 'varable_name'; did you mean 'variable_name'? [CppInteropParseError]
 // CHECK:STDERR: ./replacement.h:3:13-24: note: replace with `variable_name` [CppInteropFixItReplacement]
-// CHECK:STDERR: ./replacement.h:2:5-17: note: 'variable_name' declared here [CppInteropParseNote]
+// CHECK:STDERR: ./replacement.h:2:5: note: 'variable_name' declared here [CppInteropParseNote]
 // CHECK:STDERR:
 import Cpp library "replacement.h";
 

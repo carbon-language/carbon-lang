@@ -47,7 +47,7 @@ import Cpp library "templates.h";
 
 // CHECK:STDERR: fail_too_few_arguments.carbon:[[@LINE+4]]:26: error: too few template arguments for class template 'TwoTypes' [CppInteropParseError]
 // CHECK:STDERR: included from: fail_too_few_arguments.carbon:[[@LINE-3]]:10 [InCppInclude]
-// CHECK:STDERR: ./templates.h:5:41-48: note: template is declared here [CppInteropParseNote]
+// CHECK:STDERR: ./templates.h:5:41: note: template is declared here [CppInteropParseNote]
 // CHECK:STDERR:
 var x: Cpp.TwoTypes(Cpp.A);
 
@@ -59,7 +59,7 @@ import Cpp library "templates.h";
 
 // CHECK:STDERR: fail_too_many_arguments.carbon:[[@LINE+4]]:38-40: error: too many template arguments for class template 'TwoTypes' [CppInteropParseError]
 // CHECK:STDERR: included from: fail_too_many_arguments.carbon:[[@LINE-3]]:10 [InCppInclude]
-// CHECK:STDERR: ./templates.h:5:41-48: note: template is declared here [CppInteropParseNote]
+// CHECK:STDERR: ./templates.h:5:41: note: template is declared here [CppInteropParseNote]
 // CHECK:STDERR:
 var x: Cpp.TwoTypes(Cpp.A, Cpp.A, Cpp.A);
 
@@ -92,13 +92,13 @@ import Cpp library "templates.h";
 
 // CHECK:STDERR: fail_fixed_size_pack_wrong_size.carbon:[[@LINE+4]]:57: error: too few template arguments for class template 'Inner' [CppInteropParseError]
 // CHECK:STDERR: included from: fail_fixed_size_pack_wrong_size.carbon:[[@LINE-3]]:10 [InCppInclude]
-// CHECK:STDERR: ./templates.h:15:33-37: note: template is declared here [CppInteropParseNote]
+// CHECK:STDERR: ./templates.h:15:33: note: template is declared here [CppInteropParseNote]
 // CHECK:STDERR:
 var too_few: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B);
 
 // CHECK:STDERR: fail_fixed_size_pack_wrong_size.carbon:[[@LINE+4]]:70-72: error: too many template arguments for class template 'Inner' [CppInteropParseError]
 // CHECK:STDERR: included from: fail_fixed_size_pack_wrong_size.carbon:[[@LINE-9]]:10 [InCppInclude]
-// CHECK:STDERR: ./templates.h:15:33-37: note: template is declared here [CppInteropParseNote]
+// CHECK:STDERR: ./templates.h:15:33: note: template is declared here [CppInteropParseNote]
 // CHECK:STDERR:
 var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 
