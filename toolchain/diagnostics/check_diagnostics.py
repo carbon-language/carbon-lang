@@ -56,7 +56,9 @@ def load_diagnostic_kind() -> Set[str]:
     """
     path = Path("toolchain/diagnostics/kind.def")
     content = path.read_text()
-    decls = set(re.findall(r"^\s+CARBON_DIAGNOSTIC_KIND\((.+)\)", content))
+    decls = set(
+        re.findall(r"^CARBON_DIAGNOSTIC_KIND\((.+)\)", content, flags=re.M)
+    )
     return decls.difference(IGNORED)
 
 
@@ -71,9 +73,13 @@ def load_diagnostic_uses_in(
     line_offset = 0
 
     found: Dict[str, List[Loc]] = collections.defaultdict(lambda: [])
-    for m in re.finditer(r"CARBON_DIAGNOSTIC\(\s*(\w+),", content):
+    # `CARBON_DIAGNOSTIC_ON_SCOPE` declares a diagnostic too; the definitions of
+    # both macros name their own parameter, which is not a use.
+    for m in re.finditer(
+        r"CARBON_DIAGNOSTIC(?:_ON_SCOPE)?\(\s*(\w+),", content
+    ):
         diag = m.group(1)
-        if diag in IGNORED:
+        if diag in IGNORED or diag in ("DiagnosticName",):
             continue
         line += content.count("\n", line_offset, m.start())
         line_offset = m.start()
