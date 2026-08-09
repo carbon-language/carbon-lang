@@ -564,20 +564,20 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
             "found `impl` that would change the result of an earlier "
             "use of `{0} as {1}`",
             InstIdAsRawType, SpecificInterfaceIdAsRawType);
-        auto builder =
-            emitter_.Build(poison.loc_id, PoisonedImplLookupConcreteResult,
-                           poison.query.query_self_inst_id,
-                           poison.query.query_specific_interface_id);
         CARBON_DIAGNOSTIC(
             PoisonedImplLookupConcreteResultNoteBadImpl, Note,
             "the use would select the `impl` here but it was not found yet");
-        builder.Note(bad_impl.first_decl_id(),
-                     PoisonedImplLookupConcreteResultNoteBadImpl);
         CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl,
                           Note, "the use had selected the `impl` here");
-        builder.Note(prev_impl.first_decl_id(),
-                     PoisonedImplLookupConcreteResultNotePreviousImpl);
-        builder.Emit();
+        emitter_
+            .Build(poison.loc_id, PoisonedImplLookupConcreteResult,
+                   poison.query.query_self_inst_id,
+                   poison.query.query_specific_interface_id)
+            .Note(bad_impl.first_decl_id(),
+                  PoisonedImplLookupConcreteResultNoteBadImpl)
+            .Note(prev_impl.first_decl_id(),
+                  PoisonedImplLookupConcreteResultNotePreviousImpl)
+            .Emit();
       } else {
         CARBON_DIAGNOSTIC(
             PoisonedImplLookupCustomResult, Error,
