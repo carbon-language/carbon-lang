@@ -83,11 +83,11 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %str.3d4: type = class_type @String [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
+// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
 // CHECK:STDOUT:   %char: type = class_type @Char [concrete]
 // CHECK:STDOUT:   %ptr.b46: type = ptr_type %char [concrete]
 // CHECK:STDOUT:   %str.4f8: %ptr.b46 = string_literal "Test" [concrete]
-// CHECK:STDOUT:   %int_4: %u64 = int_value 4 [concrete]
+// CHECK:STDOUT:   %int_4: %i64 = int_value 4 [concrete]
 // CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str.4f8, %int_4) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -95,7 +95,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %str: %ptr.b46 = string_literal "Test" [concrete = constants.%str.4f8]
-// CHECK:STDOUT:   %int_4: %u64 = int_value 4 [concrete = constants.%int_4]
+// CHECK:STDOUT:   %int_4: %i64 = int_value 4 [concrete = constants.%int_4]
 // CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str, %int_4) [concrete = constants.%String.val]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   <elided>
@@ -109,14 +109,13 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %c.patt: %pattern_type.2ff = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   %str.3d4: type = class_type @String [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
+// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
 // CHECK:STDOUT:   %ptr.b46: type = ptr_type %char [concrete]
 // CHECK:STDOUT:   %str.4f8: %ptr.b46 = string_literal "Test" [concrete]
-// CHECK:STDOUT:   %int_4: %u64 = int_value 4 [concrete]
+// CHECK:STDOUT:   %int_4: %i64 = int_value 4 [concrete]
 // CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str.4f8, %int_4) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %IndexWith.type.385: type = facet_type <@IndexWith, @IndexWith(Core.IntLiteral)> [concrete]
-// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.221: type = facet_type <@ImplicitAs, @ImplicitAs(%i64)> [concrete]
 // CHECK:STDOUT:   %T.2f3: %ImplicitAs.type.221 = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.type.62e: type = fn_type @str.as.IndexWith.impl.At, @str.as.IndexWith.impl(%T.2f3) [symbolic]
@@ -149,7 +148,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT: fn @TestStringIndexing() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %str.loc5: %ptr.b46 = string_literal "Test" [concrete = constants.%str.4f8]
-// CHECK:STDOUT:   %int_4.loc5: %u64 = int_value 4 [concrete = constants.%int_4]
+// CHECK:STDOUT:   %int_4.loc5: %i64 = int_value 4 [concrete = constants.%int_4]
 // CHECK:STDOUT:   %String.val.loc5: %str.3d4 = struct_value (%str.loc5, %int_4.loc5) [concrete = constants.%String.val]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %impl.elem1.loc5: %.197 = impl_witness_access constants.%IndexWith.impl_witness.47e, element1 [concrete = constants.%str.as.IndexWith.impl.At.19c]
@@ -169,7 +168,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:     %c.patt: %pattern_type.2ff = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %str.loc6: %ptr.b46 = string_literal "Test" [concrete = constants.%str.4f8]
-// CHECK:STDOUT:   %int_4.loc6: %u64 = int_value 4 [concrete = constants.%int_4]
+// CHECK:STDOUT:   %int_4.loc6: %i64 = int_value 4 [concrete = constants.%int_4]
 // CHECK:STDOUT:   %String.val.loc6: %str.3d4 = struct_value (%str.loc6, %int_4.loc6) [concrete = constants.%String.val]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:   %impl.elem1.loc6: %.197 = impl_witness_access constants.%IndexWith.impl_witness.47e, element1 [concrete = constants.%str.as.IndexWith.impl.At.19c]
