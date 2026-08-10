@@ -15,22 +15,21 @@ fn Bar() {
 }
 
 // CHECK:STDOUT: - filename: basic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:     {kind: 'Namespace', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Bar'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Foo'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'Baz'},
-// CHECK:STDOUT:             {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Foo'
+// CHECK:STDOUT:   ├─Namespace ';'
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'Bar'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │       ╭─IdentifierNameExpr 'Foo'
+// CHECK:STDOUT:   │ │       ├─IdentifierNameNotBeforeSignature 'Baz'
+// CHECK:STDOUT:   │ │     ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

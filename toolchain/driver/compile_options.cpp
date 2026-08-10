@@ -237,20 +237,35 @@ Dump the parse tree to stdout when parsed.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_parse_tree); });
-  b.AddFlag(
+
+  b.AddOneOfOption(
       {
-          .name = "preorder-parse-tree",
+          .name = "parse-dump-format",
           .help = R"""(
-When dumping the parse tree, reorder it so that it is in preorder rather than
-postorder.
+The format to use for parse tree dumps. 'pretty' (the default) prints the
+tree in postorder, visualizing the tree structure with box-drawing
+characters. 'yaml-postorder' prints the tree in postorder as unstructured yaml
+(a flat list of nodes), indented to suggest the tree structure. 'yaml-preorder'
+prints the tree as structured yaml (with children nested under parents).
 )""",
       },
-      [&](auto& arg_b) { arg_b.Set(&preorder_parse_tree); });
+      [&](auto& arg_b) {
+        using DumpFormat = Parse::ParseOptions::DumpFormat;
+        arg_b.SetOneOf(
+            {
+                arg_b.OneOfValue("pretty", DumpFormat::PrettyPostorder)
+                    .Default(true),
+                arg_b.OneOfValue("yaml-postorder", DumpFormat::YamlPostorder),
+                arg_b.OneOfValue("yaml-preorder", DumpFormat::YamlPreorder),
+            },
+            &parse_dump_format);
+      });
+
   b.AddFlag(
       {
           .name = "dump-raw-sem-ir",
           .help = R"""(
-Dump the raw JSON structure of SemIR to stdout when built.
+Dump the raw YAML structure of SemIR to stdout when built.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_raw_sem_ir); });
@@ -359,17 +374,6 @@ Excludes files with the given prefix from dumps.
 )""",
       },
       [&](auto& arg_b) { arg_b.Append(&exclude_dump_file_prefixes); });
-  b.AddFlag(
-      {
-          .name = "output-last-input-only",
-          .help = R"""(
-Only write output for the last input file, ignoring all others.
-
-TODO: This is a temporary workaround and should be removed once separate
-compilation is better implemented.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&output_last_input_only); });
   b.AddStringOption(
       {
           .name = "sem-ir-crash-dump",

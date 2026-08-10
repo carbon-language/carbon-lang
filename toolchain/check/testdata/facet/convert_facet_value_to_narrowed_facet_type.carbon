@@ -270,13 +270,9 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.23e) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.23e) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc6_10.2 => constants.%T.patt
@@ -522,17 +518,11 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.23e) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.23e) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Tame.WithSelf(constants.%Self.0f0) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Tame.WithSelf(constants.%Self.0f0) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedTame(constants.%V) {
 // CHECK:STDOUT:   %V.patt.loc7_14.2 => constants.%V.patt
@@ -822,13 +812,9 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Tame.WithSelf(constants.%Self.0f0) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Tame.WithSelf(constants.%Self.0f0) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.as_type.as.Eats.impl(constants.%A) {
 // CHECK:STDOUT:   %A.patt.loc7_15.2 => constants.%A.patt
@@ -1040,9 +1026,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TakesA(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc7_12.2 => constants.%T.patt

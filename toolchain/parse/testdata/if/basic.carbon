@@ -19,33 +19,32 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: basic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:         {kind: 'IfCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:               {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:             {kind: 'IfCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:               {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:                   {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:                   {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:                 {kind: 'IfCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:                   {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:                     {kind: 'IdentifierNameExpr', text: 'd'},
-// CHECK:STDOUT:                   {kind: 'ExprStatement', text: ';', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'CodeBlock', text: '}', subtree_size: 4},
-// CHECK:STDOUT:               {kind: 'IfStatement', text: 'if', subtree_size: 8},
-// CHECK:STDOUT:             {kind: 'CodeBlock', text: '}', subtree_size: 10},
-// CHECK:STDOUT:           {kind: 'IfStatement', text: 'if', subtree_size: 14},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 16},
-// CHECK:STDOUT:       {kind: 'IfStatement', text: 'if', subtree_size: 20},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 26},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │ ╭─IfCondition ')'
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │ │ │   ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ │ │ ╭─IfCondition ')'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ │ │ │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │ │ │ │ │   ├─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ │ │ │ │ │ ╭─IfCondition ')'
+// CHECK:STDOUT:   │ │ │ │ │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ │ │ │ │ │ │ ╭─IdentifierNameExpr 'd'
+// CHECK:STDOUT:   │ │ │ │ │ │ │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │ │ │ │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ │ │ │ │ ├─IfStatement 'if'
+// CHECK:STDOUT:   │ │ │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ │ │ ├─IfStatement 'if'
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ ├─IfStatement 'if'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

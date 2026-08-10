@@ -33,7 +33,7 @@ fn G() {
 // CHECK:STDOUT: ; ModuleID = 'call.carbon'
 // CHECK:STDOUT: source_filename = "call.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %type = type {}
+// CHECK:STDOUT: %type.26 = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: @C.val.loc20_3 = internal constant {} zeroinitializer
 // CHECK:STDOUT: @D.val.loc21_3 = internal constant {} zeroinitializer
@@ -59,7 +59,7 @@ fn G() {
 // CHECK:STDOUT:   call void @_CF.Main.84588f41d61dafba(i32 %.loc27), !dbg !14
 // CHECK:STDOUT:   %.loc28 = load double, ptr %m.var, align 8, !dbg !15
 // CHECK:STDOUT:   call void @_CF.Main.073fbce68be6103e(double %.loc28), !dbg !16
-// CHECK:STDOUT:   call void @_CF.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !17
+// CHECK:STDOUT:   call void @_CF.Main.5754c7a55c7cbe4a(%type.26 zeroinitializer), !dbg !17
 // CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %m.var), !dbg !10
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %n.var), !dbg !9
 // CHECK:STDOUT:   call void @"_COp.7fd3b6c3a3c15807:core.Destroy.Core"(ptr %d.var), !dbg !8
@@ -116,7 +116,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.5754c7a55c7cbe4a(%type %_) #0 !dbg !53 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.5754c7a55c7cbe4a(%type.26 %_) #0 !dbg !53 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }

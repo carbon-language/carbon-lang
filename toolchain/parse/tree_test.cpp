@@ -127,7 +127,7 @@ TEST_F(TreeTest, PrintPreorderAsYaml) {
       compile_helper_.GetTokenizedBufferWithTreeAndSubtrees("fn F();");
   EXPECT_FALSE(tree_and_subtrees.tree().has_errors());
   RawStringOstream print_stream;
-  tree_and_subtrees.PrintPreorder(print_stream);
+  tree_and_subtrees.PrintYamlPreorder(print_stream);
 
   auto param_list = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("node_index", "3"),

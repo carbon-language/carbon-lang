@@ -11,6 +11,7 @@
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/cpp/diagnostic_listener.h"
+#include "toolchain/sem_ir/cpp_domain.h"
 
 namespace clang {
 class ASTContext;
@@ -30,15 +31,16 @@ namespace Carbon::Check {
 // declarations, and similar values.
 class CppContext {
  public:
-  explicit CppContext(clang::CompilerInstance& instance,
-                      std::shared_ptr<clang::Parser> parser,
+  explicit CppContext(SemIR::CppDomain& domain,
                       std::unique_ptr<CppDiagnosticListener> listener);
   ~CppContext();
 
-  auto ast_context() -> clang::ASTContext& { return *ast_context_; }
-  auto sema() -> clang::Sema& { return *sema_; }
-  auto parser() -> clang::Parser& { return *parser_; }
-  auto parser_ptr() const -> std::shared_ptr<clang::Parser> { return parser_; }
+  auto ast_context() -> clang::ASTContext&;
+  auto sema() -> clang::Sema&;
+  auto parser() -> clang::Parser& { return domain_->parser(); }
+
+  auto domain() -> SemIR::CppDomain& { return *domain_; }
+  auto domain() const -> const SemIR::CppDomain& { return *domain_; }
 
   auto clang_mangle_context() -> clang::MangleContext&;
 
@@ -54,14 +56,11 @@ class CppContext {
   }
 
  private:
-  // The Clang AST context.
-  clang::ASTContext* ast_context_;
+  // The C++ compilation domain.
+  SemIR::CppDomain* domain_;
 
-  // The Clang semantic analysis engine.
-  clang::Sema* sema_;
-
-  // The Clang parser.
-  std::shared_ptr<clang::Parser> parser_;
+  // TODO: All of the below state that is not specific to a particular
+  // Check::Context or SemIR::File should be moved into CppDomain.
 
   // Per-Carbon-file start locations for corresponding Clang source buffers.
   // Owned and managed by code in location.cpp.

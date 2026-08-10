@@ -574,6 +574,9 @@ cc_library(
         # than the client (our toolchain) uses, even though they both include
         # the same headers from the libraries.
         "-fexceptions",
+        # Like exceptions, these libraries are built internally with RTTI
+        # enabled, while the toolchain is built without.
+        "-frtti",
     ],
     hdrs_check = "strict",
     includes = [

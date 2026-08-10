@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
+// EXTRA-ARGS: --target=x86_64-linux-gnu
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -40,19 +41,21 @@ fn F() {
 }
 
 // --- bad_suffix.h
+// CHECK:STDERR: ./bad_suffix.h:[[@LINE+1]]:24: in expansion of macro defined here [InCppMacroExpansion]
 #define CONFIG_VALUE 42f
 
 // --- fail_import_bad_suffix.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./bad_suffix.h:1:24: error: invalid digit 'f' in decimal constant [CppInteropParseError]
-// CHECK:STDERR:     1 | #define CONFIG_VALUE 42f
-// CHECK:STDERR:       |                        ^
 import Cpp library "bad_suffix.h";
 
 fn F() {
+  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+20]]:6: error: invalid digit 'f' in decimal constant [CppInteropParseError]
+  // CHECK:STDERR:    27 |   Cpp.CONFIG_VALUE;
+  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR:     2 | #define CONFIG_VALUE 42f
+  // CHECK:STDERR:       |                        ^
   // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+15]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
@@ -72,19 +75,21 @@ fn F() {
 }
 
 // --- integer_literal_too_big.h
+// CHECK:STDERR: ./integer_literal_too_big.h:[[@LINE+1]]:22: in expansion of macro defined here [InCppMacroExpansion]
 #define CONFIG_VALUE 18446744073709551616
 
 // --- fail_import_integer_literal_too_big.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./integer_literal_too_big.h:1:22: error: integer literal is too large to be represented in any integer type [CppInteropParseError]
-// CHECK:STDERR:     1 | #define CONFIG_VALUE 18446744073709551616
-// CHECK:STDERR:       |                      ^
 import Cpp library "integer_literal_too_big.h";
 
 fn F() {
+  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+9]]:6: error: integer literal is too large to be represented in any integer type [CppInteropParseError]
+  // CHECK:STDERR:    16 |   Cpp.CONFIG_VALUE;
+  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR:     2 | #define CONFIG_VALUE 18446744073709551616
+  // CHECK:STDERR:       |                      ^
   // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
@@ -453,19 +458,21 @@ fn F() {
 
 // --- multiple_characters.h
 
+// CHECK:STDERR: ./multiple_characters.h:[[@LINE+1]]:24: in expansion of macro defined here [InCppMacroExpansion]
 #define MULTIPLE_CHARS 'AB'
 
 // --- import_multiple_characters.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./multiple_characters.h:2:24: warning: multi-character character constant [CppInteropParseWarning]
-// CHECK:STDERR:     2 | #define MULTIPLE_CHARS 'AB'
-// CHECK:STDERR:       |                        ^
 import Cpp library "multiple_characters.h";
 
 fn F() {
+ // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+9]]:25: warning: multi-character character constant [CppInteropParseWarning]
+ // CHECK:STDERR:    16 |  let unused a: i32 = Cpp.MULTIPLE_CHARS;
+ // CHECK:STDERR:       |                         ^
+ // CHECK:STDERR:     3 | #define MULTIPLE_CHARS 'AB'
+ // CHECK:STDERR:       |                        ^
  // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:22: note: in `Cpp` name lookup for `MULTIPLE_CHARS` [InCppNameLookup]
  // CHECK:STDERR:  let unused a: i32 = Cpp.MULTIPLE_CHARS;
  // CHECK:STDERR:                      ^~~~~~~~~~~~~~~~~~
@@ -971,6 +978,17 @@ fn F() {
   Cpp.m = 2;
 }
 
+// --- self_expand.carbon
+
+import Cpp inline '''
+const int COUNT = 0;
+#define COUNT COUNT + 1
+''';
+
+class C(N: i32) {}
+// Expansion of `COUNT` should be suppressed inside itself.
+let _: C(1) = {} as C(Cpp.COUNT);
+
 // CHECK:STDOUT: --- import_integer_literal_replacement_token.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1357,36 +1375,36 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %str.3d4: type = class_type @String [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
+// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
 // CHECK:STDOUT:   %char: type = class_type @Char [concrete]
 // CHECK:STDOUT:   %ptr.b46: type = ptr_type %char [concrete]
 // CHECK:STDOUT:   %pattern_type.adf: type = pattern_type %str.3d4 [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.adf = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   %str.d76: %ptr.b46 = string_literal "abc" [concrete]
-// CHECK:STDOUT:   %int_3: %u64 = int_value 3 [concrete]
-// CHECK:STDOUT:   %String.val.6e1: %str.3d4 = struct_value (%str.d76, %int_3) [concrete]
+// CHECK:STDOUT:   %int_3: %i64 = int_value 3 [concrete]
+// CHECK:STDOUT:   %String.val.2dc: %str.3d4 = struct_value (%str.d76, %int_3) [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.adf = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   %str.3d5: %ptr.b46 = string_literal "" [concrete]
-// CHECK:STDOUT:   %int_0: %u64 = int_value 0 [concrete]
-// CHECK:STDOUT:   %String.val.9fd: %str.3d4 = struct_value (%str.3d5, %int_0) [concrete]
+// CHECK:STDOUT:   %int_0: %i64 = int_value 0 [concrete]
+// CHECK:STDOUT:   %String.val.b11: %str.3d4 = struct_value (%str.3d5, %int_0) [concrete]
 // CHECK:STDOUT:   %c.patt: %pattern_type.adf = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   %str.4fa: %ptr.b46 = string_literal " \t " [concrete]
-// CHECK:STDOUT:   %String.val.86a: %str.3d4 = struct_value (%str.4fa, %int_3) [concrete]
+// CHECK:STDOUT:   %String.val.5de: %str.3d4 = struct_value (%str.4fa, %int_3) [concrete]
 // CHECK:STDOUT:   %d.patt: %pattern_type.adf = value_binding_pattern d [concrete]
 // CHECK:STDOUT:   %str.475: %ptr.b46 = string_literal "ab" [concrete]
-// CHECK:STDOUT:   %int_2: %u64 = int_value 2 [concrete]
-// CHECK:STDOUT:   %String.val.efd: %str.3d4 = struct_value (%str.475, %int_2) [concrete]
+// CHECK:STDOUT:   %int_2: %i64 = int_value 2 [concrete]
+// CHECK:STDOUT:   %String.val.c5e: %str.3d4 = struct_value (%str.475, %int_2) [concrete]
 // CHECK:STDOUT:   %e.patt: %pattern_type.adf = value_binding_pattern e [concrete]
 // CHECK:STDOUT:   %str.434: %ptr.b46 = string_literal " foo: \"bar\" { 123 } " [concrete]
-// CHECK:STDOUT:   %int_20: %u64 = int_value 20 [concrete]
-// CHECK:STDOUT:   %String.val.70a: %str.3d4 = struct_value (%str.434, %int_20) [concrete]
+// CHECK:STDOUT:   %int_20: %i64 = int_value 20 [concrete]
+// CHECK:STDOUT:   %String.val.593: %str.3d4 = struct_value (%str.434, %int_20) [concrete]
 // CHECK:STDOUT:   %f.patt: %pattern_type.adf = value_binding_pattern f [concrete]
 // CHECK:STDOUT:   %str.fa3: %ptr.b46 = string_literal "\xD0\xB0\xD0\xB1\xD0\xB2" [concrete]
-// CHECK:STDOUT:   %int_6: %u64 = int_value 6 [concrete]
-// CHECK:STDOUT:   %String.val.711: %str.3d4 = struct_value (%str.fa3, %int_6) [concrete]
+// CHECK:STDOUT:   %int_6: %i64 = int_value 6 [concrete]
+// CHECK:STDOUT:   %String.val.7f0: %str.3d4 = struct_value (%str.fa3, %int_6) [concrete]
 // CHECK:STDOUT:   %g.patt: %pattern_type.adf = value_binding_pattern g [concrete]
 // CHECK:STDOUT:   %str.618: %ptr.b46 = string_literal "xy" [concrete]
-// CHECK:STDOUT:   %String.val.fce: %str.3d4 = struct_value (%str.618, %int_2) [concrete]
+// CHECK:STDOUT:   %String.val.41b: %str.3d4 = struct_value (%str.618, %int_2) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1406,7 +1424,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SimpleString.ref: %str.3d4 = name_ref SimpleString, %String.val.1 [concrete = constants.%String.val.6e1]
+// CHECK:STDOUT:   %SimpleString.ref: %str.3d4 = name_ref SimpleString, %String.val.1 [concrete = constants.%String.val.2dc]
 // CHECK:STDOUT:   %str.loc8: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
 // CHECK:STDOUT:   %a: %str.3d4 = wrapper_binding a, %SimpleString.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1414,7 +1432,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %EmptyString.ref: %str.3d4 = name_ref EmptyString, %String.val.2 [concrete = constants.%String.val.9fd]
+// CHECK:STDOUT:   %EmptyString.ref: %str.3d4 = name_ref EmptyString, %String.val.2 [concrete = constants.%String.val.b11]
 // CHECK:STDOUT:   %str.loc9: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
 // CHECK:STDOUT:   %b: %str.3d4 = wrapper_binding b, %EmptyString.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1422,7 +1440,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %EscapeCharacter.ref: %str.3d4 = name_ref EscapeCharacter, %String.val.3 [concrete = constants.%String.val.86a]
+// CHECK:STDOUT:   %EscapeCharacter.ref: %str.3d4 = name_ref EscapeCharacter, %String.val.3 [concrete = constants.%String.val.5de]
 // CHECK:STDOUT:   %str.loc10: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
 // CHECK:STDOUT:   %c: %str.3d4 = wrapper_binding c, %EscapeCharacter.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1430,7 +1448,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Concatenated.ref: %str.3d4 = name_ref Concatenated, %String.val.4 [concrete = constants.%String.val.efd]
+// CHECK:STDOUT:   %Concatenated.ref: %str.3d4 = name_ref Concatenated, %String.val.4 [concrete = constants.%String.val.c5e]
 // CHECK:STDOUT:   %str.loc11: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
 // CHECK:STDOUT:   %d: %str.3d4 = wrapper_binding d, %Concatenated.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1438,7 +1456,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %RawString.ref: %str.3d4 = name_ref RawString, %String.val.5 [concrete = constants.%String.val.70a]
+// CHECK:STDOUT:   %RawString.ref: %str.3d4 = name_ref RawString, %String.val.5 [concrete = constants.%String.val.593]
 // CHECK:STDOUT:   %str.loc12: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
 // CHECK:STDOUT:   %e: %str.3d4 = wrapper_binding e, %RawString.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1446,7 +1464,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Utf8String.ref: %str.3d4 = name_ref Utf8String, %String.val.6 [concrete = constants.%String.val.711]
+// CHECK:STDOUT:   %Utf8String.ref: %str.3d4 = name_ref Utf8String, %String.val.6 [concrete = constants.%String.val.7f0]
 // CHECK:STDOUT:   %str.loc13: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
 // CHECK:STDOUT:   %f: %str.3d4 = wrapper_binding f, %Utf8String.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1454,7 +1472,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Indirect.ref: %str.3d4 = name_ref Indirect, %String.val.7 [concrete = constants.%String.val.fce]
+// CHECK:STDOUT:   %Indirect.ref: %str.3d4 = name_ref Indirect, %String.val.7 [concrete = constants.%String.val.41b]
 // CHECK:STDOUT:   %str.loc14: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
 // CHECK:STDOUT:   %g: %str.3d4 = wrapper_binding g, %Indirect.ref
 // CHECK:STDOUT:   name_binding_decl {

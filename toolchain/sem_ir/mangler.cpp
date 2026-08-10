@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/IR/Module.h"
@@ -270,10 +271,12 @@ auto Mangler::MangleWithPlatform(SemIR::FunctionId function_id,
   CARBON_CHECK(sem_ir_.cpp_file());
   // The only platform mangling that's relevant for us is applying a global
   // prefix, if the platform has one.
-  if (char prefix = sem_ir_.cpp_file()
-                        ->GetCodeGenerator()
-                        ->GetModule()
-                        ->getDataLayout()
+  // TODO: Cache this rather than parsing the data layout string each time we
+  // need it.
+  if (char prefix = llvm::DataLayout(sem_ir_.cpp_file()
+                                         ->ast_context()
+                                         .getTargetInfo()
+                                         .getDataLayoutString())
                         .getGlobalPrefix()) {
     os << prefix;
   }

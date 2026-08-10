@@ -17,26 +17,24 @@ var x: Core;
 var x: Cpp;
 
 // CHECK:STDOUT: - filename: core.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'CoreNameExpr', text: 'Core'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─CoreNameExpr 'Core'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: cpp.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'CppNameExpr', text: 'Cpp'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─CppNameExpr 'Cpp'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

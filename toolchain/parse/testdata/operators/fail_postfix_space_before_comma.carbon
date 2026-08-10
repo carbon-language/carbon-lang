@@ -15,22 +15,21 @@
 var n: i8 = F(i8 *, 0);
 
 // CHECK:STDOUT: - filename: fail_postfix_space_before_comma.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'n'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i8'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'F'},
-// CHECK:STDOUT:         {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i8'},
-// CHECK:STDOUT:         {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:       {kind: 'CallExpr', text: ')', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 15},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'n'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i8'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'F'
+// CHECK:STDOUT:   │ │ ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IntTypeLiteral 'i8'
+// CHECK:STDOUT:   │ │ ├─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ ├─CallExpr ')'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

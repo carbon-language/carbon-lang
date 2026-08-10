@@ -19,8 +19,8 @@ template<typename T> struct A : Base {
   T n;
 };
 
-using Aint = A<int>;
-using Along = A<long>;
+using Ai32 = A<int>;
+using Ai16 = A<short>;
 
 // --- use_class_template.carbon
 
@@ -28,7 +28,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "class_template.h";
 
-fn F(x: Cpp.Aint) -> i32 {
+fn F(x: Cpp.Ai32) -> i32 {
   // Trigger instantiation through name lookup.
   //@dump-sem-ir-begin
   x.f();
@@ -36,7 +36,7 @@ fn F(x: Cpp.Aint) -> i32 {
   //@dump-sem-ir-end
 }
 
-fn G(p: Cpp.Along*) -> Cpp.Base* {
+fn G(p: Cpp.Ai16*) -> Cpp.Base* {
   // Trigger instantiation through type completion.
   //@dump-sem-ir-begin
   return p;
@@ -125,8 +125,8 @@ fn F() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.d09: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.987) [concrete]
 // CHECK:STDOUT:   %.7a6: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d09, %Copy.facet.987 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
-// CHECK:STDOUT:   %A.26b: type = class_type @A.2 [concrete]
-// CHECK:STDOUT:   %ptr.f2d: type = ptr_type %A.26b [concrete]
+// CHECK:STDOUT:   %A.e3f: type = class_type @A.2 [concrete]
+// CHECK:STDOUT:   %ptr.bc0: type = ptr_type %A.e3f [concrete]
 // CHECK:STDOUT:   %ptr.0e0: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.428: <witness> = impl_witness imports.%Copy.impl_witness_table.4f1, @ptr.as.Copy.impl(%Base) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.136: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Base) [concrete]
@@ -168,10 +168,10 @@ fn F() {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param: %ptr.f2d) -> out %return.param: %ptr.0e0 {
+// CHECK:STDOUT: fn @G(%p.param: %ptr.bc0) -> out %return.param: %ptr.0e0 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %ptr.f2d = name_ref p, %p
-// CHECK:STDOUT:   %.loc17_11.1: ref %A.26b = deref %p.ref
+// CHECK:STDOUT:   %p.ref: %ptr.bc0 = name_ref p, %p
+// CHECK:STDOUT:   %.loc17_11.1: ref %A.e3f = deref %p.ref
 // CHECK:STDOUT:   %.loc17_11.2: ref %Base = class_element_access %.loc17_11.1, element0
 // CHECK:STDOUT:   %addr: %ptr.0e0 = addr_of %.loc17_11.2
 // CHECK:STDOUT:   %.loc17_11.3: %ptr.0e0 = converted %p.ref, %addr

@@ -105,12 +105,12 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
       const auto& identified =
           context.identified_facet_types().Get(identified_id);
       if (identified.is_valid_impl_as_target()) {
-        auto& decl_impl_interface = context.declaring_impl_decls().back();
-        if (decl_impl_interface != SemIR::SpecificInterface::None) {
-          CARBON_CHECK(decl_impl_interface ==
+        auto& declaring = context.declaring_impl_decls().back();
+        if (declaring.specific_interface != SemIR::SpecificInterface::None) {
+          CARBON_CHECK(declaring.specific_interface ==
                        identified.impl_as_target_interface());
         }
-        decl_impl_interface = identified.impl_as_target_interface();
+        declaring.specific_interface = identified.impl_as_target_interface();
       }
     }
   }

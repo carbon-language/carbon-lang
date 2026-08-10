@@ -59,7 +59,7 @@ fn M() {
 // CHECK:STDOUT: ; ModuleID = 'call_basic.carbon'
 // CHECK:STDOUT: source_filename = "call_basic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %type = type {}
+// CHECK:STDOUT: %type.26 = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: @C.val.loc15_43 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
@@ -138,7 +138,7 @@ fn M() {
 // CHECK:STDOUT:   %H.call.loc29 = call i32 @_CH.Main.5bd8d5767580997a(i32 %x), !dbg !51
 // CHECK:STDOUT:   store i32 %H.call.loc29, ptr %.loc29_6.3.temp, align 4, !dbg !51
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc29_6.3.temp), !dbg !51
-// CHECK:STDOUT:   %H.call.loc30 = call %type @_CH.Main.ee509b43cf4eb3c5(%type zeroinitializer), !dbg !60
+// CHECK:STDOUT:   %H.call.loc30 = call %type.26 @_CH.Main.ee509b43cf4eb3c5(%type.26 zeroinitializer), !dbg !60
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc31_8.3.temp), !dbg !52
 // CHECK:STDOUT:   %G.call = call i32 @_CG.Main.58016a73bff04416(i32 %x), !dbg !52
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc31_9.3.temp), !dbg !53
@@ -195,7 +195,7 @@ fn M() {
 // CHECK:STDOUT:   %H.call.loc29 = call double @_CH.Main.c27b765f2159c9a0(double %x), !dbg !77
 // CHECK:STDOUT:   store double %H.call.loc29, ptr %.loc29_6.3.temp, align 8, !dbg !77
 // CHECK:STDOUT:   call void @"_COp.30d8007fdcc57f83:core.Destroy.Core"(ptr %.loc29_6.3.temp), !dbg !77
-// CHECK:STDOUT:   %H.call.loc30 = call %type @_CH.Main.ee509b43cf4eb3c5(%type zeroinitializer), !dbg !86
+// CHECK:STDOUT:   %H.call.loc30 = call %type.26 @_CH.Main.ee509b43cf4eb3c5(%type.26 zeroinitializer), !dbg !86
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc31_8.3.temp), !dbg !78
 // CHECK:STDOUT:   %G.call = call double @_CG.Main.fa1f0912a5bbe922(double %x), !dbg !78
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc31_9.3.temp), !dbg !79
@@ -237,9 +237,9 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr %type @_CH.Main.ee509b43cf4eb3c5(%type %x) #0 !dbg !100 {
+// CHECK:STDOUT: define linkonce_odr %type.26 @_CH.Main.ee509b43cf4eb3c5(%type.26 %x) #0 !dbg !100 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret %type %x, !dbg !103
+// CHECK:STDOUT:   ret %type.26 %x, !dbg !103
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind

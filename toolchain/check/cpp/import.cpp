@@ -15,6 +15,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/UnresolvedSet.h"
 #include "clang/AST/VTableBuilder.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
@@ -61,6 +62,7 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/class.h"
+#include "toolchain/sem_ir/cpp_domain.h"
 #include "toolchain/sem_ir/cpp_file.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/function.h"
@@ -118,7 +120,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-               CppDomain* domain) -> void {
+               SemIR::CppDomain* domain) -> void {
   if (imports.empty()) {
     // TODO: Consider always having a (non-null) AST even if there are no Cpp
     // imports.
@@ -259,6 +261,22 @@ auto FindCorrespondingClangDeclKey(Context& context, SemIR::LocId loc_id,
   }
   CARBON_CHECK(clang_decl_id.has_value());
   auto key = file.clang_decls().Get(clang_decl_id).key;
+
+  // Easy case: files are from the same domain. We can just reuse the decl
+  // pointer.
+  if (context.sem_ir().cpp_file() && file.cpp_file() &&
+      context.sem_ir().cpp_file()->cpp_domain() ==
+          file.cpp_file()->cpp_domain()) {
+    if (key.signature_id.has_value()) {
+      key.signature_id = context.sem_ir().clang_decl_signatures().Add(
+          file.clang_decl_signatures().Get(key.signature_id));
+    }
+    if (ImportCppDecl(context, loc_id, key) != SemIR::ErrorInst::InstId) {
+      return key;
+    }
+    return std::nullopt;
+  }
+
   const auto* decl = key.decl;
   auto* corresponding = FindCorrespondingDecl(context, loc_id, decl);
   if (!corresponding) {
@@ -1092,17 +1110,48 @@ static auto MakeCppCompatType(Context& context, SemIR::LocId loc_id,
       LookupNameInCore(context, loc_id, {CoreIdentifier::CppCompat, name}));
 }
 
-// Maps a C++ builtin integer type to a Carbon `Core.CppCompat` type.
-static auto MapBuiltinCppCompatIntegerType(Context& context,
-                                           unsigned int cpp_width,
-                                           unsigned int carbon_width,
-                                           CoreIdentifier cpp_compat_name)
-    -> TypeExpr {
-  if (cpp_width != carbon_width) {
-    return TypeExpr::None;
+auto GetIntNType(const clang::ASTContext& ast_context, unsigned width,
+                 bool is_signed) -> clang::QualType {
+  const auto& target_info = ast_context.getTargetInfo();
+
+  // Work around Clang's getIntTypeForBitwidth being broken in various targets.
+  auto target_type = clang::TargetInfo::IntType::NoInt;
+  if (width == 64) {
+    target_type =
+        is_signed ? target_info.getInt64Type() : target_info.getUInt64Type();
+  } else if (width == 16) {
+    target_type =
+        is_signed ? target_info.getInt16Type() : target_info.getUInt16Type();
+  } else {
+    target_type = target_info.getIntTypeByWidth(width, is_signed);
   }
 
-  return MakeCppCompatType(context, Parse::NodeId::None, cpp_compat_name);
+  switch (target_type) {
+    case clang::TargetInfo::NoInt:
+      // Call getIntTypeForBitwidth to pick up its i128 handling.
+      return ast_context.getIntTypeForBitwidth(width, is_signed);
+
+    case clang::TargetInfo::SignedChar:
+      return ast_context.SignedCharTy;
+    case clang::TargetInfo::UnsignedChar:
+      return ast_context.UnsignedCharTy;
+    case clang::TargetInfo::SignedShort:
+      return ast_context.ShortTy;
+    case clang::TargetInfo::UnsignedShort:
+      return ast_context.UnsignedShortTy;
+    case clang::TargetInfo::SignedInt:
+      return ast_context.IntTy;
+    case clang::TargetInfo::UnsignedInt:
+      return ast_context.UnsignedIntTy;
+    case clang::TargetInfo::SignedLong:
+      return ast_context.LongTy;
+    case clang::TargetInfo::UnsignedLong:
+      return ast_context.UnsignedLongTy;
+    case clang::TargetInfo::SignedLongLong:
+      return ast_context.LongLongTy;
+    case clang::TargetInfo::UnsignedLongLong:
+      return ast_context.UnsignedLongLongTy;
+  }
 }
 
 // Maps a C++ builtin integer type to a Carbon type.
@@ -1113,7 +1162,10 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
   clang::ASTContext& ast_context = context.ast_context();
   unsigned width = ast_context.getIntWidth(qual_type);
   bool is_signed = type.isSignedInteger();
-  auto int_n_type = ast_context.getIntTypeForBitwidth(width, is_signed);
+
+  // Check whether the type is `intN_t` or `uintN_t`, and if so, map it to `iN`
+  // or `uN` respectively.
+  auto int_n_type = GetIntNType(ast_context, width, is_signed);
   if (clang::ASTContext::hasSameType(qual_type, int_n_type)) {
     TypeExpr type_expr =
         MakeIntType(context, context.ints().Add(width), is_signed);
@@ -1127,26 +1179,41 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
     }
     return type_expr;
   }
-  if (clang::ASTContext::hasSameType(qual_type, ast_context.CharTy)) {
-    return ExprAsType(context, Parse::NodeId::None,
-                      MakeCharTypeLiteral(context, Parse::NodeId::None));
-  }
-  if (clang::ASTContext::hasSameType(qual_type, ast_context.LongTy)) {
-    return MapBuiltinCppCompatIntegerType(context, width, 32,
-                                          CoreIdentifier::Long32);
-  }
-  if (clang::ASTContext::hasSameType(qual_type, ast_context.UnsignedLongTy)) {
-    return MapBuiltinCppCompatIntegerType(context, width, 32,
-                                          CoreIdentifier::ULong32);
-  }
-  if (clang::ASTContext::hasSameType(qual_type, ast_context.LongLongTy)) {
-    return MapBuiltinCppCompatIntegerType(context, width, 64,
-                                          CoreIdentifier::LongLong64);
-  }
-  if (clang::ASTContext::hasSameType(qual_type,
-                                     ast_context.UnsignedLongLongTy)) {
-    return MapBuiltinCppCompatIntegerType(context, width, 64,
-                                          CoreIdentifier::ULongLong64);
+
+  // Handle special cases for types that don't map to `iN` or `uN`.
+  switch (type.getKind()) {
+    case clang::BuiltinType::Char_S:
+    case clang::BuiltinType::Char_U:
+      return ExprAsType(context, Parse::NodeId::None,
+                        MakeCharTypeLiteral(context, Parse::NodeId::None));
+    case clang::BuiltinType::Long:
+      if (width == 32) {
+        return MakeCppCompatType(context, loc_id, CoreIdentifier::Long32);
+      }
+      if (width == 64) {
+        return MakeCppCompatType(context, loc_id, CoreIdentifier::Long64);
+      }
+      break;
+    case clang::BuiltinType::ULong:
+      if (width == 32) {
+        return MakeCppCompatType(context, loc_id, CoreIdentifier::ULong32);
+      }
+      if (width == 64) {
+        return MakeCppCompatType(context, loc_id, CoreIdentifier::ULong64);
+      }
+      break;
+    case clang::BuiltinType::LongLong:
+      if (width == 64) {
+        return MakeCppCompatType(context, loc_id, CoreIdentifier::LongLong64);
+      }
+      break;
+    case clang::BuiltinType::ULongLong:
+      if (width == 64) {
+        return MakeCppCompatType(context, loc_id, CoreIdentifier::ULongLong64);
+      }
+      break;
+    default:
+      break;
   }
   return TypeExpr::None;
 }
@@ -2501,9 +2568,10 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
 // TODO: Add support for other macro types and non-integer literal values.
 static auto ImportMacro(Context& context, SemIR::LocId loc_id,
                         SemIR::NameScopeId scope_id, SemIR::NameId name_id,
+                        clang::IdentifierInfo* identifier_info,
                         clang::MacroInfo* macro_info)
     -> SemIR::ScopeLookupResult {
-  auto inst_id = TryEvaluateMacro(context, loc_id, name_id, macro_info);
+  auto inst_id = TryEvaluateMacro(context, loc_id, identifier_info, macro_info);
   if (inst_id == SemIR::ErrorInst::InstId) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
@@ -2569,7 +2637,8 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
   if (clang::MacroInfo* macro_info =
           LookupMacro(context, scope_id, identifier_info)) {
-    return ImportMacro(context, loc_id, scope_id, name_id, macro_info);
+    return ImportMacro(context, loc_id, scope_id, name_id, identifier_info,
+                       macro_info);
   }
   auto lookup = ClangLookupName(context, scope_id, identifier_info);
   if (!lookup) {

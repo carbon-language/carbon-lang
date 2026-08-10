@@ -15,20 +15,19 @@
 var x: {,} = {};
 
 // CHECK:STDOUT: - filename: fail_comma_only.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: ',', has_error: yes},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: ',', has_error: yes},
-// CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 13},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ',' has_error
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ',' has_error
+// CHECK:STDOUT:   │ │   ├─StructLiteral '}' has_error
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
