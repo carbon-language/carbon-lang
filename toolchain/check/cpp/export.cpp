@@ -486,30 +486,23 @@ auto ExportAllFieldsToCpp(Context& context,
       return;
     }
 
-    // Map the parent scope into the C++ AST.
-    clang::DeclContext* decl_context = nullptr;
-    if (class_type.specific_id == SemIR::SpecificId::None) {
-      decl_context = ExportNameScopeToCpp(
-          context, SemIR::LocId(class_field->inst_id), class_info.scope_id);
-    } else {
-      auto* clang_decl = context.clang_decls().Lookup(class_type_inst_id);
-      decl_context = llvm::cast<clang::ClassTemplateSpecializationDecl>(
-          clang_decl->decl());
-    }
-    if (!decl_context) {
-      continue;
-    }
+    // Get the field's record decl.
+    auto lookup_key = class_type.specific_id == SemIR::SpecificId::None
+                          ? class_info.first_decl_id()
+                          : class_type_inst_id;
+    auto* clang_decl = context.clang_decls().Lookup(lookup_key);
+    auto* record_decl = llvm::cast<clang::CXXRecordDecl>(clang_decl->decl());
 
     auto* cpp_field_decl = CreateCppFieldDecl(
-        context, class_scope, cast<clang::CXXRecordDecl>(decl_context),
-        class_field->inst_id, class_field->inst, class_type.specific_id);
+        context, class_scope, record_decl, class_field->inst_id,
+        class_field->inst, class_type.specific_id);
 
     // If the field cannot be exported, create an invalid `FieldDecl` to store
     // in `clang_decls`. This marks the field as unsuccessfully exported, so
     // that we know not to attempt export again (which could create duplicate
     // error diagnostics).
     if (!cpp_field_decl) {
-      cpp_field_decl = CreateInvalidFieldDecl(context, decl_context);
+      cpp_field_decl = CreateInvalidFieldDecl(context, record_decl);
     }
 
     // Create and store the `ClangDeclId`.
