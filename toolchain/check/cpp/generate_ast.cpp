@@ -877,7 +877,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 
     clang_instance.getPreprocessor().enableIncrementalProcessing();
     clang_instance.getPreprocessor().EnterMainSourceFile();
-    parser_->ConsumeToken();
+    parser_->Initialize();
 
     if (auto* source = clang_instance.getASTContext().getExternalSource()) {
       source->StartTranslationUnit(&clang_instance.getASTConsumer());
