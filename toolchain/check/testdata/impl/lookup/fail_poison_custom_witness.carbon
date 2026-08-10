@@ -14,7 +14,6 @@
 
 package Core library "destroy";
 
-
 interface Destroy {
   fn Op(ref self);
 }
@@ -23,7 +22,8 @@ impl forall [T: type] T as Destroy {
   fn Op(unused ref self) {}
 }
 
-// --- const_ref_param.carbon
+// --- fail_poison_custom_witness.carbon
+
 library "[[@TEST_NAME]]";
 import Core library "destroy";
 import Cpp;
@@ -36,11 +36,11 @@ struct A {
 };
 ''';
 
-// CHECK:STDERR: const_ref_param.carbon:[[@LINE+8]]:1: error: found `impl` for Cpp.A as Destroy, which has a custom witness [PoisonedImplLookupCustomResult]
+// CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE+8]]:1: error: found `impl` for Cpp.A as Destroy, which has a custom witness [PoisonedImplLookupCustomResult]
 // CHECK:STDERR: class B {
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: const_ref_param.carbon:[[@LINE-14]]:1: in import [InImport]
-// CHECK:STDERR: destroy.carbon:9:1: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
+// CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE-14]]:1: in import [InImport]
+// CHECK:STDERR: destroy.carbon:8:1: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
 // CHECK:STDERR: impl forall [T: type] T as Destroy {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
