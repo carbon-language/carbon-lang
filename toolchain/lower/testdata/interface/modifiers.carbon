@@ -85,14 +85,14 @@ fn F(generic f: Final) {
 // CHECK:STDOUT: ; ModuleID = 'final_method.carbon'
 // CHECK:STDOUT: source_filename = "final_method.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc17_3 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc21_3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc17_3, i64 0, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc21_3, i64 0, i1 false), !dbg !8
 // CHECK:STDOUT:   call void @_CF.Main.6290460de74d7799(), !dbg !9
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %c.var), !dbg !8
 // CHECK:STDOUT:   ret i32 0, !dbg !10
@@ -137,16 +137,16 @@ fn F(generic f: Final) {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7}
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !8 = !DILocation(line: 17, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 28, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 21, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 22, column: 3, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 16, column: 1, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.807eb4f2d3ed7e54:core.Destroy.Core", scope: null, file: !1, line: 17, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.807eb4f2d3ed7e54:core.Destroy.Core", scope: null, file: !1, line: 21, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null, !14}
 // CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !15 = !{!16}
 // CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
-// CHECK:STDOUT: !17 = !DILocation(line: 17, column: 3, scope: !11)
+// CHECK:STDOUT: !17 = !DILocation(line: 21, column: 3, scope: !11)
 // CHECK:STDOUT: !18 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.6290460de74d7799", scope: null, file: !1, line: 12, type: !19, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !19 = !DISubroutineType(types: !20)
 // CHECK:STDOUT: !20 = !{null}
@@ -159,7 +159,7 @@ fn F(generic f: Final) {
 // CHECK:STDOUT: ; ModuleID = 'control.carbon'
 // CHECK:STDOUT: source_filename = "control.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc20_3 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc24_3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_CMethod.C.Main:NonFinal.Main"() #0 !dbg !4 {
@@ -172,7 +172,7 @@ fn F(generic f: Final) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !12
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !12
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc20_3, i64 0, i1 false), !dbg !12
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc24_3, i64 0, i1 false), !dbg !12
 // CHECK:STDOUT:   call void @_CF.Main.a1251c6173e631e7(), !dbg !13
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %c.var), !dbg !12
 // CHECK:STDOUT:   ret i32 0, !dbg !14
@@ -215,16 +215,16 @@ fn F(generic f: Final) {
 // CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
 // CHECK:STDOUT: !10 = !{!11}
 // CHECK:STDOUT: !11 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !12 = !DILocation(line: 20, column: 3, scope: !8)
-// CHECK:STDOUT: !13 = !DILocation(line: 31, column: 3, scope: !8)
+// CHECK:STDOUT: !12 = !DILocation(line: 24, column: 3, scope: !8)
+// CHECK:STDOUT: !13 = !DILocation(line: 25, column: 3, scope: !8)
 // CHECK:STDOUT: !14 = !DILocation(line: 19, column: 1, scope: !8)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Op", linkageName: "_COp.807eb4f2d3ed7e54:core.Destroy.Core", scope: null, file: !1, line: 20, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !19)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Op", linkageName: "_COp.807eb4f2d3ed7e54:core.Destroy.Core", scope: null, file: !1, line: 24, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !19)
 // CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
 // CHECK:STDOUT: !17 = !{null, !18}
 // CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
-// CHECK:STDOUT: !21 = !DILocation(line: 20, column: 3, scope: !15)
+// CHECK:STDOUT: !21 = !DILocation(line: 24, column: 3, scope: !15)
 // CHECK:STDOUT: !22 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.a1251c6173e631e7", scope: null, file: !1, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !23 = !DILocation(line: 16, column: 3, scope: !22)
 // CHECK:STDOUT: !24 = !DILocation(line: 15, column: 1, scope: !22)
