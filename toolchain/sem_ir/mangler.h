@@ -49,6 +49,9 @@ class Mangler {
   auto MangleVTable(const SemIR::Class& class_info,
                     SemIR::SpecificId specific_id) -> std::string;
 
+  // Produce a deterministically unique mangled name for a specific.
+  auto MangleSpecificId(SemIR::SpecificId specific_id) -> std::string;
+
  private:
   auto MangleImpl(SemIR::FunctionId function_id, SemIR::SpecificId specific_id,
                   llvm::raw_ostream& os) -> void;

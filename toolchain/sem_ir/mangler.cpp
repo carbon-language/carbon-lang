@@ -344,6 +344,12 @@ auto Mangler::MangleVTable(const SemIR::Class& class_info,
   return os.TakeStr();
 }
 
+auto Mangler::MangleSpecificId(SemIR::SpecificId specific_id) -> std::string {
+  RawStringOstream os;
+  MangleSpecificId(os, specific_id);
+  return os.TakeStr();
+}
+
 auto Mangler::MangleUnqualifiedName(llvm::raw_ostream& os,
                                     const SemIR::EntityWithParamsBase& entity,
                                     SemIR::SpecificId specific_id) -> void {

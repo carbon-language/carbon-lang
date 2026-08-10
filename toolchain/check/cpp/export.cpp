@@ -1144,14 +1144,8 @@ auto ExportFunctionSpecializationToCpp(
   auto bindings = context.inst_blocks().Get(generic.bindings_id);
   CARBON_CHECK(bindings.size() == template_args.size());
 
-  // This name will be appended to the thunk name to disambiguate
-  // between specializations.
-  std::string extra_name;
-
   // Map the `clang::TemplateArgument`s into Carbon types suitable for
   // passing into `MakeSpecific`.
-  //
-  // Also initialize `extra_name`.
   llvm::SmallVector<SemIR::InstId> specific_arg_ids;
   for (auto [binding_inst_id, clang_template_arg] :
        llvm::zip(bindings, template_args)) {
@@ -1165,9 +1159,6 @@ auto ExportFunctionSpecializationToCpp(
       return false;
     }
 
-    // TODO: this generates a pretty ugly name.
-    extra_name += std::string(llvm::formatv("{}", type_expr.inst_id));
-
     auto binding_const_inst_id =
         context.constant_values().GetConstantInstId(binding_inst_id);
 
@@ -1180,6 +1171,11 @@ auto ExportFunctionSpecializationToCpp(
   // parameters with symbolic types to concrete types.
   auto specific_id = MakeSpecific(context, loc_id, target.function.generic_id,
                                   specific_arg_ids);
+  // This name is appended to the thunk name to disambiguate between
+  // specializations.
+  SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
+                   context.mangle_string_fingerprint());
+  auto extra_name = m.MangleSpecificId(specific_id);
   target.return_type_id =
       target.function.GetDeclaredReturnType(context.sem_ir(), specific_id);
   for (auto& param : target.explicit_params) {
