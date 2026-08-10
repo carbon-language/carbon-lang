@@ -92,7 +92,7 @@ git_override(
         "//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
         "//bazel/llvm_project:0004_Introduce_basic_sources_exporting_for_libunwind.patch",
         "//bazel/llvm_project:0005_Introduce_basic_sources_exporting_for_libcxx_and_libcxxabi.patch",
-        "//bazel/llvm_project:0012_Add_more_libc_math_excludes.patch",
+        "//bazel/llvm_project:0006_Add_more_libc_math_excludes.patch",
         "//bazel/llvm_project:0009_Introduce_starlark_exporting_compiler-rt_build_information.patch",
         "//bazel/llvm_project:0011_Temporarily_remove_reference_to_hermetic_toolchain.patch",
     ],
