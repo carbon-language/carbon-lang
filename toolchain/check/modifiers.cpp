@@ -238,17 +238,14 @@ auto RequireDefaultFinalOnlyInInterfaces(Context& context,
     return;
   }
 
-  if (introducer.modifier_set != KeywordModifierSet::Final) {
-    // TODO: add rules for `default` modifier.
-    return;
-  }
-
+  // TODO: remove and check that final/default declarations have a definition by
+  // the end of the file.
   if (!is_definition) {
     CARBON_DIAGNOSTIC(ModifierFinalRequiresDefaultImpl, Error,
                       "`{0}` modifier requires a default implementation",
                       Lex::TokenKind);
     ForbidModifiersOnDecl(context, ModifierFinalRequiresDefaultImpl, introducer,
-                          KeywordModifierSet::Final);
+                          KeywordModifierSet::Interface);
   }
 }
 

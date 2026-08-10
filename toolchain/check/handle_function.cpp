@@ -98,13 +98,6 @@ static auto DiagnoseModifiers(Context& context,
   RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_id,
                                       is_definition);
 
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Default)) {
-    // TODO: Add check that the function may be defined if it is marked
-    // `default`.
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
-                 "interface modifier");
-  }
-
   if (!self_param_id.has_value() &&
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
     CARBON_DIAGNOSTIC(VirtualWithoutSelf, Error, "virtual class function");
