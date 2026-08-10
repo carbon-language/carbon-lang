@@ -19,15 +19,9 @@ class C(T: type) {
 }
 
 fn F(unused generic U: type, generic V: type) {
-  // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE+10]]:15: error: cannot implicitly convert expression of type `{}` to `V` [ConversionFailure]
-  // CHECK:STDERR:   C(V).Create({});
-  // CHECK:STDERR:               ^~
-  // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE+7]]:15: note: type `{}` does not implement interface `Core.ImplicitAs(V)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   C(V).Create({});
-  // CHECK:STDERR:               ^~
-  // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE-10]]:20: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn Create(unused value: T) {}
-  // CHECK:STDERR:                    ^~~~~~~~
+  // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE+4]]:15-16: error: cannot implicitly convert expression of type `{}` to `V` [ConversionFailure]
+  // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE+3]]:15-16: note: type `{}` does not implement interface `Core.ImplicitAs(V)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE-6]]:20-27: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   C(V).Create({});
 }
@@ -51,9 +45,7 @@ library "[[@TEST_NAME]]";
 
 class A {};
 
-// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+4]]:9: error: name `DoesNotExist` not found [NameNotFound]
-// CHECK:STDERR: fn F[T: DoesNotExist](unused x: T) {}
-// CHECK:STDERR:         ^~~~~~~~~~~~
+// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+2]]:9-20: error: name `DoesNotExist` not found [NameNotFound]
 // CHECK:STDERR:
 fn F[T: DoesNotExist](unused x: T) {}
 

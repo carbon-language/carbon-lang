@@ -106,12 +106,8 @@ let n: Y = ({.x = ()} as X) as Y;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+7]]:13: error: cannot convert expression of type `Core.IntLiteral` to `{}` with `as` [ConversionFailure]
-// CHECK:STDERR: let a: {} = 1 as {};
-// CHECK:STDERR:             ^~~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:13: note: type `Core.IntLiteral` does not implement interface `Core.As({})` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: let a: {} = 1 as {};
-// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:13-19: error: cannot convert expression of type `Core.IntLiteral` to `{}` with `as` [ConversionFailure]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+2]]:13-19: note: type `Core.IntLiteral` does not implement interface `Core.As({})` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 let a: {} = 1 as {};
 
@@ -119,12 +115,8 @@ let a: {} = 1 as {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:32: error: cannot implicitly convert non-type value of type `{.x: ()}` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: let n: {.x: ()} = {.x = ()} as {.x = ()};
-// CHECK:STDERR:                                ^~~~~~~~~
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:32: note: type `{.x: ()}` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: let n: {.x: ()} = {.x = ()} as {.x = ()};
-// CHECK:STDERR:                                ^~~~~~~~~
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:32-40: error: cannot implicitly convert non-type value of type `{.x: ()}` to `type` [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+2]]:32-40: note: type `{.x: ()}` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 let n: {.x: ()} = {.x = ()} as {.x = ()};
 

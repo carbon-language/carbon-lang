@@ -80,12 +80,8 @@ fn G(generic T: Core.Default & Core.Destroy) {
 }
 
 fn CallG() {
-  // CHECK:STDERR: fail_no_default.carbon:[[@LINE+7]]:3: error: cannot convert type `NoDefault` into type implementing `Core.Default & Core.Destroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   G(Cpp.NoDefault);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_no_default.carbon:[[@LINE-8]]:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn G(generic T: Core.Default & Core.Destroy) {
-  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_no_default.carbon:[[@LINE+3]]:3-18: error: cannot convert type `NoDefault` into type implementing `Core.Default & Core.Destroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_no_default.carbon:[[@LINE-6]]:14-43: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   G(Cpp.NoDefault);
 }
@@ -212,26 +208,15 @@ library "[[@TEST_NAME]]";
 import Cpp library "deleted.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE+8]]:54: error: call to deleted function 'DeletedC' [CppInteropParseError]
-  // CHECK:STDERR:    15 |   let unused c: Cpp.DeletedC = Cpp.DeletedC.DeletedC();
-  // CHECK:STDERR:       |                                                      ^
-  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./deleted.h:4:3: note: candidate constructor has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:     4 |   DeletedC() = delete;
-  // CHECK:STDERR:       |   ^
+  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE+4]]:32-52: error: call to deleted function 'DeletedC' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_import_deleted.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: ./deleted.h:4:3-10: note: candidate constructor has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR:
   let unused c: Cpp.DeletedC = Cpp.DeletedC.DeletedC();
-  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE+12]]:55: error: call to deleted function 'DeletedD' [CppInteropParseError]
-  // CHECK:STDERR:    28 |   let unused d: Cpp.DeletedD = Cpp.DeletedD.DeletedD(0);
-  // CHECK:STDERR:       |                                                       ^
-  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE-15]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./deleted.h:9:3: note: candidate constructor has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:     9 |   DeletedD(int) = delete;
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE-19]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./deleted.h:10:3: note: candidate constructor [CppInteropParseNote]
-  // CHECK:STDERR:    10 |   DeletedD(short);
-  // CHECK:STDERR:       |   ^
+  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE+5]]:32-52: error: call to deleted function 'DeletedD' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_import_deleted.carbon:[[@LINE-9]]:10 [InCppInclude]
+  // CHECK:STDERR: ./deleted.h:9:3-10: note: candidate constructor has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: ./deleted.h:10:3-10: note: candidate constructor [CppInteropParseNote]
   // CHECK:STDERR:
   let unused d: Cpp.DeletedD = Cpp.DeletedD.DeletedD(0);
 }
@@ -300,13 +285,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-   // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+8]]:4: error: member access into incomplete class `Cpp.IncompleteC` [QualifiedExprInIncompleteClassScope]
-   // CHECK:STDERR:    Cpp.IncompleteC.IncompleteC();
-   // CHECK:STDERR:    ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-   // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+   // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+4]]:4-30: error: member access into incomplete class `Cpp.IncompleteC` [QualifiedExprInIncompleteClassScope]
+   // CHECK:STDERR: included from: fail_import_incomplete.carbon:[[@LINE-4]]:10 [InCppInclude]
    // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-   // CHECK:STDERR: class IncompleteC;
-   // CHECK:STDERR:       ^
    // CHECK:STDERR:
    Cpp.IncompleteC.IncompleteC();
 }

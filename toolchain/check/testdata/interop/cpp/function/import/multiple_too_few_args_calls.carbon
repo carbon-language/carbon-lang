@@ -22,20 +22,14 @@ void F2(X x);
 
 fn Call() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+7]]:10: error: no matching function for call to 'F1' [CppInteropParseError]
-  // CHECK:STDERR:    19 |   Cpp.F1();
-  // CHECK:STDERR:       |          ^
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-9]]:6: note: candidate function not viable: requires single argument 'x', but no arguments were provided [CppInteropParseNote]
-  // CHECK:STDERR:     6 | void F1(X x);
-  // CHECK:STDERR:       |      ^  ~~~
+  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+4]]:3-8: error: no matching function for call to 'F1' [CppInteropParseError]
+  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-7]]:6-7: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-8]]:9-11: note: requires single argument 'x', but no arguments were provided [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.F1();
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+7]]:10: error: no matching function for call to 'F2' [CppInteropParseError]
-  // CHECK:STDERR:    27 |   Cpp.F2();
-  // CHECK:STDERR:       |          ^
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-16]]:6: note: candidate function not viable: requires single argument 'x', but no arguments were provided [CppInteropParseNote]
-  // CHECK:STDERR:     7 | void F2(X x);
-  // CHECK:STDERR:       |      ^  ~~~
+  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+4]]:3-8: error: no matching function for call to 'F2' [CppInteropParseError]
+  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-11]]:6-7: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-12]]:9-11: note: requires single argument 'x', but no arguments were provided [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.F2();
   //@dump-sem-ir-end
@@ -62,9 +56,9 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %F1.ref: %F1.cpp_overload_set.type = name_ref F1, imports.%F1.cpp_overload_set.value [concrete = constants.%F1.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %F2.ref: %F2.cpp_overload_set.type = name_ref F2, imports.%F2.cpp_overload_set.value [concrete = constants.%F2.cpp_overload_set.value]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

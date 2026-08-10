@@ -35,9 +35,7 @@ library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
 class C(T: Core.Copy) {
   fn F() {
-    // CHECK:STDERR: fail_member_inline_missing_self_dot.carbon:[[@LINE+4]]:5: error: expression cannot be used as a value [UseOfNonExprAsValue]
-    // CHECK:STDERR:     data;
-    // CHECK:STDERR:     ^~~~
+    // CHECK:STDERR: fail_member_inline_missing_self_dot.carbon:[[@LINE+2]]:5-8: error: expression cannot be used as a value [UseOfNonExprAsValue]
     // CHECK:STDERR:
     data;
   }
@@ -348,14 +346,14 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %C.F.decl: @C.%C.F.type (%C.F.type) = fn_decl @C.F [symbolic = @C.%C.F (constants.%C.F)] {} {}
-// CHECK:STDOUT:     %.loc13: @C.%C.elem (%C.elem) = field_decl data, element0 [concrete]
+// CHECK:STDOUT:     %.loc11: @C.%C.elem (%C.elem) = field_decl data, element0 [concrete]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.data [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C
 // CHECK:STDOUT:     .F = %C.F.decl
-// CHECK:STDOUT:     .data = %.loc13
+// CHECK:STDOUT:     .data = %.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -367,7 +365,7 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %data.ref: @C.F.%C.elem (%C.elem) = name_ref data, @C.%.loc13 [concrete = @C.%.loc13]
+// CHECK:STDOUT:     %data.ref: @C.F.%C.elem (%C.elem) = name_ref data, @C.%.loc11 [concrete = @C.%.loc11]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -16,14 +16,10 @@ fn F() -> i32 { return 0; }
 
 fn Main() {
   var a: i32 = 3;
-  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+4]]:7: error: member name of type `i32` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
-  // CHECK:STDERR:   a = a.(a);
-  // CHECK:STDERR:       ^~~~~
+  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+2]]:7-11: error: member name of type `i32` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:
   a = a.(a);
-  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+4]]:7: error: member name of type `<type of F>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
-  // CHECK:STDERR:   a = a.(F)();
-  // CHECK:STDERR:       ^~~~~
+  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+2]]:7-11: error: member name of type `<type of F>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:
   a = a.(F)();
 }
@@ -151,21 +147,21 @@ fn Main() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.ref.loc23_3: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc23_7: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc23_10: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc23: %i32 = acquire_value %a.ref.loc23_10
-// CHECK:STDOUT:   %impl.elem0.loc23: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
-// CHECK:STDOUT:   %bound_method.loc23_10.1: <bound method> = bound_method %.loc23, %impl.elem0.loc23
-// CHECK:STDOUT:   %specific_fn.loc23: <specific function> = specific_function %impl.elem0.loc23, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc23_10.2: <bound method> = bound_method %.loc23, %specific_fn.loc23
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc23_10.2(%.loc23)
-// CHECK:STDOUT:   assign %a.ref.loc23_3, %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %a.ref.loc28_3: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc28_7: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc21_3: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc21_7: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc21_10: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %.loc21: %i32 = acquire_value %a.ref.loc21_10
+// CHECK:STDOUT:   %impl.elem0.loc21: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %bound_method.loc21_10.1: <bound method> = bound_method %.loc21, %impl.elem0.loc21
+// CHECK:STDOUT:   %specific_fn.loc21: <specific function> = specific_function %impl.elem0.loc21, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc21_10.2: <bound method> = bound_method %.loc21, %specific_fn.loc21
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc21_10.2(%.loc21)
+// CHECK:STDOUT:   assign %a.ref.loc21_3, %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %a.ref.loc24_3: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc24_7: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
-// CHECK:STDOUT:   assign %a.ref.loc28_3, %F.call
+// CHECK:STDOUT:   assign %a.ref.loc24_3, %F.call
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
 // CHECK:STDOUT:   return

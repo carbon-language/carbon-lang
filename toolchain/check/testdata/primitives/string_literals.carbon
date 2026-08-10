@@ -15,9 +15,7 @@
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_no_string.carbon:[[@LINE+4]]:3: error: name `Core.String` implicitly referenced here, but not found [CoreNameNotFound]
-  // CHECK:STDERR:   "hello";
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_no_string.carbon:[[@LINE+2]]:3-9: error: name `Core.String` implicitly referenced here, but not found [CoreNameNotFound]
   // CHECK:STDERR:
   "hello";
 }
@@ -37,9 +35,7 @@ class String {
 
 import Core library "unusual_string";
 
-// CHECK:STDERR: fail_use_unusual_string.carbon:[[@LINE+4]]:14: error: unexpected representation for type `str` [StringLiteralTypeUnexpected]
-// CHECK:STDERR: let x: str = "hello";
-// CHECK:STDERR:              ^~~~~~~
+// CHECK:STDERR: fail_use_unusual_string.carbon:[[@LINE+2]]:14-20: error: unexpected representation for type `str` [StringLiteralTypeUnexpected]
 // CHECK:STDERR:
 let x: str = "hello";
 
@@ -56,12 +52,8 @@ library "[[@TEST_NAME]]";
 import Core library "incomplete_string";
 
 fn F() {
-  // CHECK:STDERR: fail_use_incomplete_string.carbon:[[@LINE+7]]:3: error: type `Core.String` is incomplete [StringLiteralTypeIncomplete]
-  // CHECK:STDERR:   "hello";
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: incomplete_string.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class String;
-  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_use_incomplete_string.carbon:[[@LINE+3]]:3-9: error: type `Core.String` is incomplete [StringLiteralTypeIncomplete]
+  // CHECK:STDERR: incomplete_string.carbon:4:1-13: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:
   "hello";
 }
@@ -96,9 +88,7 @@ library "[[@TEST_NAME]]";
 import Core library "small_string";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_overfill_small_string.carbon:[[@LINE+4]]:14: error: string literal is too long [StringLiteralTooLong]
-// CHECK:STDERR: let x: str = '''
-// CHECK:STDERR:              ^~~
+// CHECK:STDERR: fail_overfill_small_string.carbon:[[@LINE+2]]:14-276: error: string literal is too long [StringLiteralTooLong]
 // CHECK:STDERR:
 let x: str = '''
 A string so long its size does not fit in `u8`. This results in an error,

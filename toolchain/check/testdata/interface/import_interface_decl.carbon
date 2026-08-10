@@ -21,9 +21,7 @@ impl library "[[@TEST_NAME]]";
 // --- fail_b.carbon
 library "[[@TEST_NAME]]";
 interface B {}
-// CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl () as B;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_b.carbon:[[@LINE+2]]:1-13: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR:
 impl () as B;
 
@@ -56,8 +54,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.B = import_ref Main//b, B, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c07 = import_ref Main//b, loc2_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//b, loc7_7, loaded [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %Main.import_ref.21a: type = import_ref Main//b, loc7_12, loaded [concrete = constants.%B.type]
+// CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//b, loc5_7, loaded [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %Main.import_ref.21a: type = import_ref Main//b, loc5_12, loaded [concrete = constants.%B.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

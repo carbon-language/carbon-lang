@@ -10,9 +10,7 @@
 
 // --- fail_unused_does_not_start_declaration.carbon
 
-// CHECK:STDERR: fail_unused_does_not_start_declaration.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: unused y: i32;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fail_unused_does_not_start_declaration.carbon:[[@LINE+2]]:1-6: error: unrecognized declaration introducer [UnrecognizedDecl]
 // CHECK:STDERR:
 unused y: i32;
 
@@ -64,25 +62,19 @@ fn F(x: (), unused var y: ());
 
 // --- fail_ref_unused.carbon
 
-// CHECK:STDERR: fail_ref_unused.carbon:[[@LINE+4]]:10: error: `unused` must be written before `ref` [UnusedAfterBindingModifier]
-// CHECK:STDERR: fn F(ref unused y: i32);
-// CHECK:STDERR:          ^~~~~~
+// CHECK:STDERR: fail_ref_unused.carbon:[[@LINE+2]]:10-15: error: `unused` must be written before `ref` [UnusedAfterBindingModifier]
 // CHECK:STDERR:
 fn F(ref unused y: i32);
 
 // --- fail_nested.carbon
 
-// CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:12: error: `unused` nested within another `unused` [NestedUnused]
-// CHECK:STDERR: var unused unused x: i32 = 0;
-// CHECK:STDERR:            ^~~~~~
+// CHECK:STDERR: fail_nested.carbon:[[@LINE+2]]:12-17: error: `unused` nested within another `unused` [NestedUnused]
 // CHECK:STDERR:
 var unused unused x: i32 = 0;
 
 // --- fail_nested_parens.carbon
 
-// CHECK:STDERR: fail_nested_parens.carbon:[[@LINE+4]]:13: error: `unused` nested within another `unused` [NestedUnused]
-// CHECK:STDERR: var unused (unused y: i32) = (0,);
-// CHECK:STDERR:             ^~~~~~
+// CHECK:STDERR: fail_nested_parens.carbon:[[@LINE+2]]:13-18: error: `unused` nested within another `unused` [NestedUnused]
 // CHECK:STDERR:
 var unused (unused y: i32) = (0,);
 

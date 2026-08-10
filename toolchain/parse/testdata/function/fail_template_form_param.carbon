@@ -9,9 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/fail_template_form_param.carbon
 
 // `template` cannot be combined with a `:?` form binding.
-// CHECK:STDERR: fail_template_form_param.carbon:[[@LINE+4]]:6: error: `template` is only allowed on a generic binding [ExpectedGenericBindingPatternAfterTemplate]
-// CHECK:STDERR: fn F(template x:? Form);
-// CHECK:STDERR:      ^~~~~~~~
+// CHECK:STDERR: fail_template_form_param.carbon:[[@LINE+2]]:6-13: error: `template` is only allowed on a generic binding [ExpectedGenericBindingPatternAfterTemplate]
 // CHECK:STDERR:
 fn F(template x:? Form);
 

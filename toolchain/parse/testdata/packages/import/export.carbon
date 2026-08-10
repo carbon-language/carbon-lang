@@ -12,9 +12,7 @@
 
 package Pkg;
 
-// CHECK:STDERR: fail_package.carbon:[[@LINE+4]]:15: error: `export` cannot be used when importing a package [ExportImportPackage]
-// CHECK:STDERR: export import Bar;
-// CHECK:STDERR:               ^~~
+// CHECK:STDERR: fail_package.carbon:[[@LINE+2]]:15-17: error: `export` cannot be used when importing a package [ExportImportPackage]
 // CHECK:STDERR:
 export import Bar;
 
@@ -38,20 +36,14 @@ export import library "a";
 
 class C;
 
-// CHECK:STDERR: fail_order.carbon:[[@LINE+7]]:1: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
-// CHECK:STDERR: export import library "b";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_order.carbon:[[@LINE-5]]:1: note: first declaration is here [FirstDecl]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~
+// CHECK:STDERR: fail_order.carbon:[[@LINE+3]]:1-6: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
+// CHECK:STDERR: fail_order.carbon:[[@LINE-3]]:1-5: note: first declaration is here [FirstDecl]
 // CHECK:STDERR:
 export import library "b";
 
 // --- fail_in_default_library.carbon
 
-// CHECK:STDERR: fail_in_default_library.carbon:[[@LINE+4]]:1: error: `export` is only allowed in API files [ExportFromImpl]
-// CHECK:STDERR: export import library "lib";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fail_in_default_library.carbon:[[@LINE+2]]:1-6: error: `export` is only allowed in API files [ExportFromImpl]
 // CHECK:STDERR:
 export import library "lib";
 
@@ -59,9 +51,7 @@ export import library "lib";
 
 impl package Pkg;
 
-// CHECK:STDERR: fail_in_impl.carbon:[[@LINE+4]]:1: error: `export` is only allowed in API files [ExportFromImpl]
-// CHECK:STDERR: export import library "lib";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fail_in_impl.carbon:[[@LINE+2]]:1-6: error: `export` is only allowed in API files [ExportFromImpl]
 // CHECK:STDERR:
 export import library "lib";
 

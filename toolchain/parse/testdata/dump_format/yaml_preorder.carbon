@@ -11,9 +11,7 @@
 
 // --- fail_yaml_preorder.carbon
 
-// CHECK:STDERR: fail_yaml_preorder.carbon:[[@LINE+4]]:9: error: expected `.field: field_type` or `.field = value` [ExpectedStructLiteralField]
-// CHECK:STDERR: var x: {,} = {};
-// CHECK:STDERR:         ^
+// CHECK:STDERR: fail_yaml_preorder.carbon:[[@LINE+2]]:9: error: expected `.field: field_type` or `.field = value` [ExpectedStructLiteralField]
 // CHECK:STDERR:
 var x: {,} = {};
 

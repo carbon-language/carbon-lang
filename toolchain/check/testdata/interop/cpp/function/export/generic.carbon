@@ -52,21 +52,15 @@ Carbon::B CallInterfaceF() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-// CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+4]]:1: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
-// CHECK:STDERR: fn NonTypeF[unused N: i32]() {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+2]]:1-30: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
 // CHECK:STDERR:
 fn NonTypeF[unused N: i32]() {}
 
 inline Cpp '''
 void CallNonTypeF() {
-  // CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+8]]:11: error: no member named 'NonTypeF' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    20 |   Carbon::NonTypeF<3>();
-  // CHECK:STDERR:       |           ^~~~~~~~
+  // CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+4]]:11-18: error: no member named 'NonTypeF' in namespace 'Carbon' [CppInteropParseError]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+4]]:23: error: expected expression [CppInteropParseError]
-  // CHECK:STDERR:    20 |   Carbon::NonTypeF<3>();
-  // CHECK:STDERR:       |                       ^
+  // CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+2]]:23: error: expected expression [CppInteropParseError]
   // CHECK:STDERR:
   Carbon::NonTypeF<3>();
 }
@@ -91,9 +85,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class EnclosingA(T: type) {
-  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+4]]:3: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
-  // CHECK:STDERR:   fn MemberF[U: type](x: T, y: U);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+2]]:3-34: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
   // CHECK:STDERR:
   fn MemberF[U: type](x: T, y: U);
 }
@@ -105,9 +97,7 @@ void CallEnclosingF() {
   // is to test a generic function within an enclosing generic scope.
   //
   Carbon::EnclosingB b;
-  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+4]]:5: error: no member named 'MemberF' in 'Carbon::EnclosingA<int>' [CppInteropParseError]
-  // CHECK:STDERR:    23 |   b.MemberF(1, 2);
-  // CHECK:STDERR:       |   ~ ^
+  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+2]]:5-11: error: no member named 'MemberF' in 'Carbon::EnclosingA<int>' [CppInteropParseError]
   // CHECK:STDERR:
   b.MemberF(1, 2);
 }
@@ -117,21 +107,15 @@ void CallEnclosingF() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-// CHECK:STDERR: fail_generic_unsupported_type.carbon:[[@LINE+4]]:1: error: semantics TODO: `failed to import C++ type` [SemanticsTodo]
-// CHECK:STDERR: fn UnsupportedF[T: type](unused t: T) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_generic_unsupported_type.carbon:[[@LINE+2]]:1-39: error: semantics TODO: `failed to import C++ type` [SemanticsTodo]
 // CHECK:STDERR:
 fn UnsupportedF[T: type](unused t: T) {}
 
 inline Cpp '''
 void CallUnsupportedF() {
   volatile int x;
-  // CHECK:STDERR: fail_generic_unsupported_type.carbon:[[@LINE+7]]:3: error: no matching function for call to 'UnsupportedF' [CppInteropParseError]
-  // CHECK:STDERR:    20 |   Carbon::UnsupportedF(x);
-  // CHECK:STDERR:       |   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic_unsupported_type.carbon:[[@LINE-8]]:39: note: candidate template ignored: substitution failure [with T = volatile int] [CppInteropParseNote]
-  // CHECK:STDERR:     8 | fn UnsupportedF[T: type](unused t: T) {}
-  // CHECK:STDERR:       |                                       ^
+  // CHECK:STDERR: fail_generic_unsupported_type.carbon:[[@LINE+3]]:3-22: error: no matching function for call to 'UnsupportedF' [CppInteropParseError]
+  // CHECK:STDERR: fail_generic_unsupported_type.carbon:[[@LINE-6]]:39: note: candidate template ignored: substitution failure [with T = volatile int] [CppInteropParseNote]
   // CHECK:STDERR:
   Carbon::UnsupportedF(x);
 }

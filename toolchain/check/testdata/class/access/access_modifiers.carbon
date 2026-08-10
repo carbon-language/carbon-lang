@@ -31,37 +31,21 @@ class Circle {
 fn Run() {
 //@dump-sem-ir-begin
   let circle: Circle = Circle.Make();
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:28: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let unused radius: i32 = circle.radius;
-  // CHECK:STDERR:                            ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-20]]:15: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private var radius: i32;
-  // CHECK:STDERR:               ^~~~~~~~~~~
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+3]]:28-40: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-18]]:15-25: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let unused radius: i32 = circle.radius;
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   circle.radius = 5;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-28]]:15: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private var radius: i32;
-  // CHECK:STDERR:               ^~~~~~~~~~~
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+3]]:3-15: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-22]]:15-25: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   circle.radius = 5;
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `SOME_INTERNAL_CONSTANT` of type `Circle` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   circle.SOME_INTERNAL_CONSTANT;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-35]]:15: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private let SOME_INTERNAL_CONSTANT: i32 = 5;
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+3]]:3-31: error: cannot access private member `SOME_INTERNAL_CONSTANT` of type `Circle` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-25]]:15-41: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   circle.SOME_INTERNAL_CONSTANT;
 
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `SomeInternalFunction` of type `Circle` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   circle.SomeInternalFunction();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-42]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private fn SomeInternalFunction() -> i32 {
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+3]]:3-29: error: cannot access private member `SomeInternalFunction` of type `Circle` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-28]]:3-44: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   circle.SomeInternalFunction();
 //@dump-sem-ir-end
@@ -76,12 +60,8 @@ class A {
 
 fn Run() {
 //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE+7]]:23: error: cannot access protected member `x` of type `A` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let unused x: i32 = A.x;
-  // CHECK:STDERR:                       ^~~
-  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE-8]]:17: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   protected var x: i32;
-  // CHECK:STDERR:                 ^~~~~~
+  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE+3]]:23-25: error: cannot access protected member `x` of type `A` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE-6]]:17-22: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let unused x: i32 = A.x;
 //@dump-sem-ir-end
@@ -130,20 +110,12 @@ class A {
 }
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: error: cannot access protected member `x` of type `A` [ClassInvalidMemberAccess]
-// CHECK:STDERR: let x: i32 = A.x;
-// CHECK:STDERR:              ^~~
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE-8]]:17: note: declared here [ClassMemberDeclaration]
-// CHECK:STDERR:   protected let x: i32 = 5;
-// CHECK:STDERR:                 ^~~~~~
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE+3]]:14-16: error: cannot access protected member `x` of type `A` [ClassInvalidMemberAccess]
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE-6]]:17-22: note: declared here [ClassMemberDeclaration]
 // CHECK:STDERR:
 let x: i32 = A.x;
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: error: cannot access private member `y` of type `A` [ClassInvalidMemberAccess]
-// CHECK:STDERR: let y: i32 = A.y;
-// CHECK:STDERR:              ^~~
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE-15]]:15: note: declared here [ClassMemberDeclaration]
-// CHECK:STDERR:   private let y: i32 = 5;
-// CHECK:STDERR:               ^~~~~~
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE+3]]:14-16: error: cannot access private member `y` of type `A` [ClassInvalidMemberAccess]
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE-9]]:15-20: note: declared here [ClassMemberDeclaration]
 // CHECK:STDERR:
 let y: i32 = A.y;
 //@dump-sem-ir-end
@@ -244,20 +216,20 @@ class A {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %circle.patt: %pattern_type.f70 = value_binding_pattern circle [concrete = constants.%circle.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %circle.ref.loc28: %Circle = name_ref circle, %circle
-// CHECK:STDOUT:   %radius.ref.loc28: <error> = name_ref radius, <error> [concrete = <error>]
+// CHECK:STDOUT:   %circle.ref.loc24: %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %radius.ref.loc24: <error> = name_ref radius, <error> [concrete = <error>]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %radius: %i32 = wrapper_binding radius, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %radius.patt: %pattern_type.6b6 = value_binding_pattern radius [concrete = constants.%radius.patt.a1f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %circle.ref.loc36: %Circle = name_ref circle, %circle
-// CHECK:STDOUT:   %radius.ref.loc36: <error> = name_ref radius, <error> [concrete = <error>]
+// CHECK:STDOUT:   %circle.ref.loc28: %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %radius.ref.loc28: <error> = name_ref radius, <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
-// CHECK:STDOUT:   assign %radius.ref.loc36, <error>
-// CHECK:STDOUT:   %circle.ref.loc44: %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   assign %radius.ref.loc28, <error>
+// CHECK:STDOUT:   %circle.ref.loc32: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT.ref: <error> = name_ref SOME_INTERNAL_CONSTANT, <error> [concrete = <error>]
-// CHECK:STDOUT:   %circle.ref.loc53: %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %circle.ref.loc37: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %SomeInternalFunction.ref: <error> = name_ref SomeInternalFunction, <error> [concrete = <error>]
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc20_36.2, constants.%Destroy.Op.1a2547.4
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc20_36.2)
@@ -401,12 +373,12 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %x: %i32 = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = value_binding_pattern x [concrete = constants.%x.patt.d88]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %y: %i32 = wrapper_binding y, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.6b6 = value_binding_pattern y [concrete = constants.%y.patt.f4d]
@@ -415,9 +387,9 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc16: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc12: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
-// CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc16: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

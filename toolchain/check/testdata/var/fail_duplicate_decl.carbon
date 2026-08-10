@@ -16,12 +16,8 @@
 
 fn Main() {
   var unused x: () = ();
-  // CHECK:STDERR: fail_basic.carbon:[[@LINE+7]]:14: error: duplicate name `x` being declared in the same scope [NameDeclDuplicate]
-  // CHECK:STDERR:   var unused x: () = ();
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_basic.carbon:[[@LINE-4]]:14: note: name is previously declared here [NameDeclPrevious]
-  // CHECK:STDERR:   var unused x: () = ();
-  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR: fail_basic.carbon:[[@LINE+3]]:14: error: duplicate name `x` being declared in the same scope [NameDeclDuplicate]
+  // CHECK:STDERR: fail_basic.carbon:[[@LINE-2]]:14-18: note: name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:
   var unused x: () = ();
 }
@@ -77,22 +73,22 @@ fn Main() {
 // CHECK:STDOUT:     %x.patt.loc3: %pattern_type.cb1 = ref_binding_pattern x [concrete = constants.%x.patt.06838d.1]
 // CHECK:STDOUT:     %x.var_patt.loc3: %pattern_type.cb1 = var_pattern %x.patt.loc3 [concrete = constants.%x.var_patt.28d573.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var.loc11: ref %empty_tuple.type = var_storage %x.var_patt.loc11
-// CHECK:STDOUT:   %.loc11_23.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc11_23.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc11_3: init %empty_tuple.type = converted %.loc11_23.1, %.loc11_23.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %x.var.loc11, %.loc11_3
-// CHECK:STDOUT:   %.loc11_18.1: type = splice_block %.loc11_18.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc11_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc11_18.3: type = converted %.loc11_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %x.var.loc7: ref %empty_tuple.type = var_storage %x.var_patt.loc7
+// CHECK:STDOUT:   %.loc7_23.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_23.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_3: init %empty_tuple.type = converted %.loc7_23.1, %.loc7_23.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %x.var.loc7, %.loc7_3
+// CHECK:STDOUT:   %.loc7_18.1: type = splice_block %.loc7_18.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc7_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc7_18.3: type = converted %.loc7_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.loc11: ref %empty_tuple.type = wrapper_binding x, %x.var.loc11
+// CHECK:STDOUT:   %x.loc7: ref %empty_tuple.type = wrapper_binding x, %x.var.loc7
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt.loc11: %pattern_type.cb1 = ref_binding_pattern x [concrete = constants.%x.patt.06838d.2]
-// CHECK:STDOUT:     %x.var_patt.loc11: %pattern_type.cb1 = var_pattern %x.patt.loc11 [concrete = constants.%x.var_patt.28d573.2]
+// CHECK:STDOUT:     %x.patt.loc7: %pattern_type.cb1 = ref_binding_pattern x [concrete = constants.%x.patt.06838d.2]
+// CHECK:STDOUT:     %x.var_patt.loc7: %pattern_type.cb1 = var_pattern %x.patt.loc7 [concrete = constants.%x.var_patt.28d573.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound.loc11: <bound method> = bound_method %x.var.loc11, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc11: init %empty_tuple.type = call %Destroy.Op.bound.loc11(%x.var.loc11)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %x.var.loc7, constants.%Destroy.Op
+// CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%x.var.loc7)
 // CHECK:STDOUT:   %Destroy.Op.bound.loc3: <bound method> = bound_method %x.var.loc3, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc3: init %empty_tuple.type = call %Destroy.Op.bound.loc3(%x.var.loc3)
 // CHECK:STDOUT:   return

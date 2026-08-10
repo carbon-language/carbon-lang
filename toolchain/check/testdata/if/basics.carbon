@@ -65,9 +65,7 @@ fn If1(b: bool) -> bool {
     return false;
   } else {
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+4]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+2]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
 // CHECK:STDERR:
 }
 
@@ -76,9 +74,7 @@ fn If2(b: bool) -> bool {
   } else {
     return true;
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+4]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+2]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
 // CHECK:STDERR:
 }
 
@@ -86,9 +82,7 @@ fn If3(b: bool) -> bool {
   if (b) {
     return false;
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+4]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+2]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
 // CHECK:STDERR:
 }
 
@@ -100,9 +94,7 @@ fn VarScope(b: bool) -> bool {
     var n: bool = true;
     return n;
   }
-  // CHECK:STDERR: fail_scope.carbon:[[@LINE+4]]:10: error: name `n` not found [NameNotFound]
-  // CHECK:STDERR:   return n;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR: fail_scope.carbon:[[@LINE+2]]:10: error: name `n` not found [NameNotFound]
   // CHECK:STDERR:
   return n;
 }

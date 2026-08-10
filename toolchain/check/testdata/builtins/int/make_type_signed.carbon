@@ -71,9 +71,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_zero_size.carbon:[[@LINE+4]]:8: error: integer type width of 0 is not positive [IntWidthNotPositive]
-// CHECK:STDERR: var n: Int(0);
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR: fail_zero_size.carbon:[[@LINE+2]]:8-13: error: integer type width of 0 is not positive [IntWidthNotPositive]
 // CHECK:STDERR:
 var n: Int(0);
 
@@ -85,9 +83,7 @@ import library "types";
 
 fn Negate(a: IntLiteral) -> IntLiteral = "int.snegate";
 
-// CHECK:STDERR: fail_negative_size.carbon:[[@LINE+4]]:8: error: integer type width of -1 is not positive [IntWidthNotPositive]
-// CHECK:STDERR: var n: Int(Negate(1));
-// CHECK:STDERR:        ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_negative_size.carbon:[[@LINE+2]]:8-21: error: integer type width of -1 is not positive [IntWidthNotPositive]
 // CHECK:STDERR:
 var n: Int(Negate(1));
 
@@ -97,9 +93,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_oversized.carbon:[[@LINE+4]]:8: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
-// CHECK:STDERR: var m: Int(1000000000);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_oversized.carbon:[[@LINE+2]]:8-22: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR:
 var m: Int(1000000000);
 

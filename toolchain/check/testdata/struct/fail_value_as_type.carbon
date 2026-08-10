@@ -12,12 +12,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_value_as_type.carbon
 
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+7]]:8: error: cannot implicitly convert non-type value of type `{.a: Core.IntLiteral}` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: var x: {.a = 1};
-// CHECK:STDERR:        ^~~~~~~~
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+4]]:8: note: type `{.a: Core.IntLiteral}` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var x: {.a = 1};
-// CHECK:STDERR:        ^~~~~~~~
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8-15: error: cannot implicitly convert non-type value of type `{.a: Core.IntLiteral}` to `type` [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+2]]:8-15: note: type `{.a: Core.IntLiteral}` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 var x: {.a = 1};
 
@@ -49,8 +45,8 @@ var x: {.a = 1};
 // CHECK:STDOUT:   %x.var: ref <error> = var_storage %x.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:     %.loc22_15.1: %struct_type.a = struct_literal (%int_1) [concrete = constants.%struct]
-// CHECK:STDOUT:     %.loc22_15.2: type = converted %.loc22_15.1, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc18_15.1: %struct_type.a = struct_literal (%int_1) [concrete = constants.%struct]
+// CHECK:STDOUT:     %.loc18_15.2: type = converted %.loc18_15.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: <error> = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

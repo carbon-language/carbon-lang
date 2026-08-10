@@ -13,12 +13,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_returned_var_type.carbon
 
 fn Mismatch() -> i32 {
-  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE+7]]:19: error: type `f64` of `returned var` does not match return type of enclosing function [ReturnedVarWrongType]
-  // CHECK:STDERR:   returned var v: f64 = 0.0;
-  // CHECK:STDERR:                   ^~~
-  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE-4]]:18: note: return type of function is `i32` [ReturnTypeHereNote]
-  // CHECK:STDERR: fn Mismatch() -> i32 {
-  // CHECK:STDERR:                  ^~~
+  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE+3]]:19-21: error: type `f64` of `returned var` does not match return type of enclosing function [ReturnedVarWrongType]
+  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE-2]]:18-20: note: return type of function is `i32` [ReturnTypeHereNote]
   // CHECK:STDERR:
   returned var v: f64 = 0.0;
   return var;
@@ -64,7 +60,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.1f7, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.895: %f64.dc1 = float_value 0 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc23_12.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc19_12.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,27 +103,27 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %v.var: ref %f64.dc1 = var_storage %v.var_patt
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 0e-1 [concrete = constants.%float.1f7]
 // CHECK:STDOUT:   %impl.elem0: %.194 = impl_witness_access constants.%ImplicitAs.impl_witness.d4c, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.cf0]
-// CHECK:STDOUT:   %bound_method.loc23_12.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc19_12.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc23_12.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.dc1 = call %bound_method.loc23_12.2(%float) [concrete = constants.%float.895]
-// CHECK:STDOUT:   %.loc23_12: init %f64.dc1 = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.895]
-// CHECK:STDOUT:   assign %v.var, %.loc23_12
+// CHECK:STDOUT:   %bound_method.loc19_12.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.dc1 = call %bound_method.loc19_12.2(%float) [concrete = constants.%float.895]
+// CHECK:STDOUT:   %.loc19_12: init %f64.dc1 = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.895]
+// CHECK:STDOUT:   assign %v.var, %.loc19_12
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %v: ref %f64.dc1 = wrapper_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.fb7 = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.fb7 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc23_17: %f64.dc1 = acquire_value %v
+// CHECK:STDOUT:   %.loc19_17: %f64.dc1 = acquire_value %v
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
-// CHECK:STDOUT:   return %.loc23_17
+// CHECK:STDOUT:   return %.loc19_17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc23_12.1(%self.param: ref %f64.794) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc19_12.1(%self.param: ref %f64.794) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc23_12.2(%self.param: ref %f64.dc1) {
+// CHECK:STDOUT: fn @Destroy.Op.loc19_12.2(%self.param: ref %f64.dc1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

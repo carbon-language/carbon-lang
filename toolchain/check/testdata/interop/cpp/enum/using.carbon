@@ -28,15 +28,11 @@ using enum Zoo::Animal;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: import_enum.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./enum.h:5:7: warning: using enum declaration is a C++20 extension [CppInteropParseWarning]
-// CHECK:STDERR:     5 | using enum Color;
-// CHECK:STDERR:       |       ^
+// CHECK:STDERR: included from: import_enum.carbon:[[@LINE+6]]:10 [InCppInclude]
+// CHECK:STDERR: ./enum.h:5:7-10: warning: using enum declaration is a C++20 extension [CppInteropParseWarning]
 // CHECK:STDERR:
-// CHECK:STDERR: import_enum.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./enum.h:12:7: warning: using enum declaration is a C++20 extension [CppInteropParseWarning]
-// CHECK:STDERR:    12 | using enum Zoo::Animal;
-// CHECK:STDERR:       |       ^
+// CHECK:STDERR: included from: import_enum.carbon:[[@LINE+3]]:10 [InCppInclude]
+// CHECK:STDERR: ./enum.h:12:7-10: warning: using enum declaration is a C++20 extension [CppInteropParseWarning]
 // CHECK:STDERR:
 import Cpp library "enum.h";
 
@@ -92,46 +88,46 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc18_32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Color.ref.loc18_35: type = name_ref Color, imports.%Color.decl [concrete = constants.%Color]
+// CHECK:STDOUT:   %Cpp.ref.loc14_32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Color.ref.loc14_35: type = name_ref Color, imports.%Color.decl [concrete = constants.%Color]
 // CHECK:STDOUT:   %Red.ref: %Color = name_ref Red, imports.%int_0.59e [concrete = constants.%int_0.59e]
-// CHECK:STDOUT:   %.loc18: type = splice_block %Color.ref.loc18_23 [concrete = constants.%Color] {
-// CHECK:STDOUT:     %Cpp.ref.loc18_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Color.ref.loc18_23: type = name_ref Color, imports.%Color.decl [concrete = constants.%Color]
+// CHECK:STDOUT:   %.loc14: type = splice_block %Color.ref.loc14_23 [concrete = constants.%Color] {
+// CHECK:STDOUT:     %Cpp.ref.loc14_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Color.ref.loc14_23: type = name_ref Color, imports.%Color.decl [concrete = constants.%Color]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %col: %Color = wrapper_binding col, %Red.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %col.patt: %pattern_type.732 = value_binding_pattern col [concrete = constants.%col.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc19_33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc15_33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Blue.ref: %Color = name_ref Blue, imports.%int_1.b76 [concrete = constants.%int_1.b76]
-// CHECK:STDOUT:   %.loc19: type = splice_block %Color.ref.loc19 [concrete = constants.%Color] {
-// CHECK:STDOUT:     %Cpp.ref.loc19_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Color.ref.loc19: type = name_ref Color, imports.%Color.decl [concrete = constants.%Color]
+// CHECK:STDOUT:   %.loc15: type = splice_block %Color.ref.loc15 [concrete = constants.%Color] {
+// CHECK:STDOUT:     %Cpp.ref.loc15_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Color.ref.loc15: type = name_ref Color, imports.%Color.decl [concrete = constants.%Color]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %colb: %Color = wrapper_binding colb, %Blue.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %colb.patt: %pattern_type.732 = value_binding_pattern colb [concrete = constants.%colb.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc20_37: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Zoo.ref.loc20_40: type = name_ref Zoo, imports.%Zoo.decl [concrete = constants.%Zoo]
-// CHECK:STDOUT:   %Animal.ref.loc20_44: type = name_ref Animal, imports.%Animal.decl [concrete = constants.%Animal]
+// CHECK:STDOUT:   %Cpp.ref.loc16_37: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Zoo.ref.loc16_40: type = name_ref Zoo, imports.%Zoo.decl [concrete = constants.%Zoo]
+// CHECK:STDOUT:   %Animal.ref.loc16_44: type = name_ref Animal, imports.%Animal.decl [concrete = constants.%Animal]
 // CHECK:STDOUT:   %Cat.ref: %Animal = name_ref Cat, imports.%int_0.648 [concrete = constants.%int_0.648]
-// CHECK:STDOUT:   %.loc20: type = splice_block %Animal.ref.loc20_27 [concrete = constants.%Animal] {
-// CHECK:STDOUT:     %Cpp.ref.loc20_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Zoo.ref.loc20_23: type = name_ref Zoo, imports.%Zoo.decl [concrete = constants.%Zoo]
-// CHECK:STDOUT:     %Animal.ref.loc20_27: type = name_ref Animal, imports.%Animal.decl [concrete = constants.%Animal]
+// CHECK:STDOUT:   %.loc16: type = splice_block %Animal.ref.loc16_27 [concrete = constants.%Animal] {
+// CHECK:STDOUT:     %Cpp.ref.loc16_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Zoo.ref.loc16_23: type = name_ref Zoo, imports.%Zoo.decl [concrete = constants.%Zoo]
+// CHECK:STDOUT:     %Animal.ref.loc16_27: type = name_ref Animal, imports.%Animal.decl [concrete = constants.%Animal]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pet: %Animal = wrapper_binding pet, %Cat.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pet.patt: %pattern_type.8cd = value_binding_pattern pet [concrete = constants.%pet.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc21_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc17_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Dog.ref: %Animal = name_ref Dog, imports.%int_1.e7b [concrete = constants.%int_1.e7b]
-// CHECK:STDOUT:   %.loc21: type = splice_block %Animal.ref.loc21 [concrete = constants.%Animal] {
-// CHECK:STDOUT:     %Cpp.ref.loc21_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Zoo.ref.loc21: type = name_ref Zoo, imports.%Zoo.decl [concrete = constants.%Zoo]
-// CHECK:STDOUT:     %Animal.ref.loc21: type = name_ref Animal, imports.%Animal.decl [concrete = constants.%Animal]
+// CHECK:STDOUT:   %.loc17: type = splice_block %Animal.ref.loc17 [concrete = constants.%Animal] {
+// CHECK:STDOUT:     %Cpp.ref.loc17_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Zoo.ref.loc17: type = name_ref Zoo, imports.%Zoo.decl [concrete = constants.%Zoo]
+// CHECK:STDOUT:     %Animal.ref.loc17: type = name_ref Animal, imports.%Animal.decl [concrete = constants.%Animal]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pet2: %Animal = wrapper_binding pet2, %Dog.ref
 // CHECK:STDOUT:   name_binding_decl {

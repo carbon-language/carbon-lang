@@ -20,13 +20,9 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "header.h";
 
-// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE+8]]:11: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: namespace Cpp;
-// CHECK:STDERR:           ^~~
+// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE+4]]:11-13: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE+4]]:11: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: namespace Cpp;
-// CHECK:STDERR:           ^~~
+// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE+2]]:11-13: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
 namespace Cpp;
 
@@ -37,13 +33,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "header.h";
 
 namespace N;
-// CHECK:STDERR: fail_cpp_in_inner_namespace.carbon:[[@LINE+8]]:13: error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
-// CHECK:STDERR: namespace N.Cpp;
-// CHECK:STDERR:             ^~~
+// CHECK:STDERR: fail_cpp_in_inner_namespace.carbon:[[@LINE+4]]:13-15: error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_cpp_in_inner_namespace.carbon:[[@LINE+4]]:13: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: namespace N.Cpp;
-// CHECK:STDERR:             ^~~
+// CHECK:STDERR: fail_cpp_in_inner_namespace.carbon:[[@LINE+2]]:13-15: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
 namespace N.Cpp;
 
@@ -63,13 +55,9 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "header.h";
 
-// CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE+8]]:7: error: `class` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: class Cpp.C {};
-// CHECK:STDERR:       ^~~
+// CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE+4]]:7-9: error: `class` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE+4]]:7: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: class Cpp.C {};
-// CHECK:STDERR:       ^~~
+// CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE+2]]:7-9: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
 class Cpp.C {};
 

@@ -38,9 +38,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:14: error: name `v` not found [NameNotFound]
-// CHECK:STDERR: let v2: () = v;
-// CHECK:STDERR:              ^
+// CHECK:STDERR: fail_local_def.carbon:[[@LINE+2]]:14: error: name `v` not found [NameNotFound]
 // CHECK:STDERR:
 let v2: () = v;
 
@@ -50,9 +48,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:14: error: member name `v` not found in `Test` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: let v2: () = Test.v;
-// CHECK:STDERR:              ^~~~~~
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+2]]:14-19: error: member name `v` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 let v2: () = Test.v;
 
@@ -138,9 +134,9 @@ let v2: () = Test.v;
 // CHECK:STDOUT:     .v = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %.loc10_10.1: type = splice_block %.loc10_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc10_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_10.3: type = converted %.loc8_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: %empty_tuple.type = wrapper_binding v2, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -176,9 +172,9 @@ let v2: () = Test.v;
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %.loc10_10.1: type = splice_block %.loc10_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc10_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_10.3: type = converted %.loc8_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: %empty_tuple.type = wrapper_binding v2, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

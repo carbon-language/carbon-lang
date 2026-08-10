@@ -42,21 +42,13 @@ class Class {
 }
 
 // A redeclaration must spell `self` the same way as the original.
-// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Class.F(unused self) {}
-// CHECK:STDERR:                   ^~~~
-// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE-8]]:12: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR:   fn F(self: Self);
-// CHECK:STDERR:            ^
+// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE+3]]:19-22: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE-6]]:12: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:
 fn Class.F(unused self) {}
 
-// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE+7]]:23: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Class.G(unused self: Self) {}
-// CHECK:STDERR:                       ^
-// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE-16]]:8: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR:   fn G(self);
-// CHECK:STDERR:        ^~~~
+// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE+3]]:23: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_self_syntax_mismatch.carbon:[[@LINE-10]]:8-11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:
 fn Class.G(unused self: Self) {}
 
@@ -69,12 +61,8 @@ class Class {
 
 // Two explicit `self` types that differ syntactically (here `Class` instead of
 // `Self`, even though they refer to the same type).
-// CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+7]]:25: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Class.F(unused self: Class) {}
-// CHECK:STDERR:                         ^~~~~
-// CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-8]]:14: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR:   fn F(self: Self);
-// CHECK:STDERR:              ^~~~
+// CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+3]]:25-29: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-6]]:14-17: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:
 fn Class.F(unused self: Class) {}
 
@@ -82,12 +70,8 @@ fn Class.F(unused self: Class) {}
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+7]]:17: error: cannot implicitly convert non-type value of type `Class` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   fn F(self) -> self;
-  // CHECK:STDERR:                 ^~~~
-  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+4]]:17: note: type `Class` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   fn F(self) -> self;
-  // CHECK:STDERR:                 ^~~~
+  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+3]]:17-20: error: cannot implicitly convert non-type value of type `Class` to `type` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+2]]:17-20: note: type `Class` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   fn F(self) -> self;
 }
@@ -261,9 +245,9 @@ class Class {
 // CHECK:STDOUT:   %Class.G.d407b2.1: %Class.G.type.321a2c.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Class.F.type.48cdab.2: type = fn_type @Class.F.loc16 [concrete]
+// CHECK:STDOUT:   %Class.F.type.48cdab.2: type = fn_type @Class.F.loc12 [concrete]
 // CHECK:STDOUT:   %Class.F.bd5be1.2: %Class.F.type.48cdab.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Class.G.type.321a2c.2: type = fn_type @Class.G.loc25 [concrete]
+// CHECK:STDOUT:   %Class.G.type.321a2c.2: type = fn_type @Class.G.loc17 [concrete]
 // CHECK:STDOUT:   %Class.G.d407b2.2: %Class.G.type.321a2c.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -281,7 +265,7 @@ class Class {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
-// CHECK:STDOUT:   %Class.F.decl: %Class.F.type.48cdab.2 = fn_decl @Class.F.loc16 [concrete = constants.%Class.F.bd5be1.2] {
+// CHECK:STDOUT:   %Class.F.decl: %Class.F.type.48cdab.2 = fn_decl @Class.F.loc12 [concrete = constants.%Class.F.bd5be1.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern [concrete = constants.%self.param_patt]
 // CHECK:STDOUT:     %self.patt: %pattern_type = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
 // CHECK:STDOUT:   } {
@@ -289,7 +273,7 @@ class Class {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %self: %Class = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.G.decl: %Class.G.type.321a2c.2 = fn_decl @Class.G.loc25 [concrete = constants.%Class.G.d407b2.2] {
+// CHECK:STDOUT:   %Class.G.decl: %Class.G.type.321a2c.2 = fn_decl @Class.G.loc17 [concrete = constants.%Class.G.d407b2.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern [concrete = constants.%self.param_patt]
 // CHECK:STDOUT:     %self.patt: %pattern_type = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
 // CHECK:STDOUT:   } {
@@ -329,12 +313,12 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.G.loc5(%self.param: %Class);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F.loc16(%self.param: %Class) {
+// CHECK:STDOUT: fn @Class.F.loc12(%self.param: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.G.loc25(%self.param: %Class) {
+// CHECK:STDOUT: fn @Class.G.loc17(%self.param: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -350,7 +334,7 @@ class Class {
 // CHECK:STDOUT:   %Class.F.bd5be1.1: %Class.F.type.48cdab.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Class.F.type.48cdab.2: type = fn_type @Class.F.loc16 [concrete]
+// CHECK:STDOUT:   %Class.F.type.48cdab.2: type = fn_type @Class.F.loc12 [concrete]
 // CHECK:STDOUT:   %Class.F.bd5be1.2: %Class.F.type.48cdab.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -368,7 +352,7 @@ class Class {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
-// CHECK:STDOUT:   %Class.F.decl: %Class.F.type.48cdab.2 = fn_decl @Class.F.loc16 [concrete = constants.%Class.F.bd5be1.2] {
+// CHECK:STDOUT:   %Class.F.decl: %Class.F.type.48cdab.2 = fn_decl @Class.F.loc12 [concrete = constants.%Class.F.bd5be1.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern [concrete = constants.%self.param_patt]
 // CHECK:STDOUT:     %self.patt: %pattern_type = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
 // CHECK:STDOUT:   } {
@@ -398,7 +382,7 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.F.loc4(%self.param: %Class);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F.loc16(%self.param: %Class) {
+// CHECK:STDOUT: fn @Class.F.loc12(%self.param: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -443,7 +427,7 @@ class Class {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.ref: %Class = name_ref self, %self
-// CHECK:STDOUT:     %.loc11: type = converted %self.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc7: type = converted %self.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     %self.param: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %self: %Class = wrapper_binding self, %self.param

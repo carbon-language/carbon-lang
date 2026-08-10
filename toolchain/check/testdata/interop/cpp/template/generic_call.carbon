@@ -26,13 +26,9 @@ import Cpp library "header.h";
 fn F[T: type](unused x: T) {
   // TODO: This should be treated as being template-dependent on T,
   // and we should perform the call during monomorphization.
-  // CHECK:STDERR: fail_todo_generic_call.carbon:[[@LINE+8]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   var unused v: Cpp.S(T);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_generic_call.carbon:[[@LINE+4]]:3-25: error: value of type `<dependent type>` is not callable [CallToNonCallable]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_generic_call.carbon:[[@LINE+4]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   var unused v: Cpp.S(T);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_generic_call.carbon:[[@LINE+2]]:3-24: error: value of type `<dependent type>` is not callable [CallToNonCallable]
   // CHECK:STDERR:
   var unused v: Cpp.S(T);
 }

@@ -57,12 +57,8 @@ fn Simple3(generic T: K2, x: T) {
 // Compound member access does not. It tries to convert `y` to `K2`, but only
 // its type `V` can.
 fn Compound3(generic V: K2, y: V) {
-  // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `V` into type implementing `K2` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   y.(K2.Q2)();
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+4]]:3: note: type `V` does not implement interface `Core.ImplicitAs(K2)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   y.(K2.Q2)();
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert non-type value of type `V` into type implementing `K2` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+2]]:3-11: note: type `V` does not implement interface `Core.ImplicitAs(K2)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   y.(K2.Q2)();
 }
@@ -98,34 +94,22 @@ interface L2 {
 
 // Simple member access. Fails since calling an instance method without an object.
 fn Simple5(generic T: L2) {
-  // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE+7]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-  // CHECK:STDERR:   T.R2();
-  // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE-9]]:3: note: calling function declared here [InCallToEntity]
-  // CHECK:STDERR:   fn R2(self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE+3]]:3-8: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+  // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE-7]]:3-14: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR:
   T.R2();
-  // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE+7]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-  // CHECK:STDERR:   T.S2();
-  // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE-16]]:3: note: calling function declared here [InCallToEntity]
-  // CHECK:STDERR:   fn S2(ref self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE+3]]:3-8: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+  // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE-10]]:3-18: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR:
   T.S2();
 }
 
 // TODO: Expected to fail in the same way as `Simple5`.
 fn Compound5(generic V: L2) {
-  // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE+4]]:3: error: cannot access member of interface `L2` in type `L2` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   V.(L2.R2)();
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE+2]]:3-11: error: cannot access member of interface `L2` in type `L2` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   V.(L2.R2)();
-  // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE+4]]:3: error: cannot access member of interface `L2` in type `L2` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   V.(L2.S2)();
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_interface_instance_caller_not.carbon:[[@LINE+2]]:3-11: error: cannot access member of interface `L2` in type `L2` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   V.(L2.S2)();
 }
@@ -145,28 +129,16 @@ impl C as A {
 // Since `A.G` is a non-instance method, compound member access may only be
 // used with a type, not an instance.
 fn Fails() {
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `C` into type implementing `A` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   ({} as C).((A & A).G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   ({} as C).((A & A).G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+3]]:3-23: error: cannot implicitly convert non-type value of type `C` into type implementing `A` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+2]]:3-23: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   ({} as C).((A & A).G)();
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `C` into type implementing `A` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   (({} as C) as (C as (A & A))).((A & A).G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   (({} as C) as (C as (A & A))).((A & A).G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+3]]:3-43: error: cannot implicitly convert non-type value of type `C` into type implementing `A` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+2]]:3-43: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   (({} as C) as (C as (A & A))).((A & A).G)();
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `C` into type implementing `A` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   (({} as C) as (C as (A & A))).(A.G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   (({} as C) as (C as (A & A))).(A.G)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+3]]:3-37: error: cannot implicitly convert non-type value of type `C` into type implementing `A` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+2]]:3-37: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   (({} as C) as (C as (A & A))).(A.G)();
 }
@@ -696,9 +668,9 @@ fn Works() {
 // CHECK:STDOUT:   fn(%y.param: @Compound3.%V.as_type.loc14_32.1 (%V.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %y.ref: @Compound3.%V.as_type.loc14_32.1 (%V.as_type) = name_ref y, %y
-// CHECK:STDOUT:     %K2.ref.loc22: type = name_ref K2, file.%K2.decl [concrete = constants.%K2.type]
+// CHECK:STDOUT:     %K2.ref.loc18: type = name_ref K2, file.%K2.decl [concrete = constants.%K2.type]
 // CHECK:STDOUT:     %Q2.ref: %K2.assoc_type = name_ref Q2, @K2.WithSelf.%assoc0 [concrete = constants.%assoc0.7f8]
-// CHECK:STDOUT:     %.loc22: %K2.type = converted %y.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc18: %K2.type = converted %y.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1226,13 +1198,13 @@ fn Works() {
 // CHECK:STDOUT:     %T.loc10_21.2: %L2.type = symbolic_binding T, 0 [symbolic = %T.loc10_21.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compound5.decl: %Compound5.type = fn_decl @Compound5 [concrete = constants.%Compound5] {
-// CHECK:STDOUT:     %V.patt.loc30_23.1: %pattern_type.5b3 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc30_23.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.patt.loc22_23.1: %pattern_type.5b3 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc22_23.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc30: type = splice_block %L2.ref.loc30 [concrete = constants.%L2.type] {
+// CHECK:STDOUT:     %.loc22: type = splice_block %L2.ref.loc22 [concrete = constants.%L2.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %L2.ref.loc30: type = name_ref L2, file.%L2.decl [concrete = constants.%L2.type]
+// CHECK:STDOUT:       %L2.ref.loc22: type = name_ref L2, file.%L2.decl [concrete = constants.%L2.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %V.loc30_23.2: %L2.type = symbolic_binding V, 0 [symbolic = %V.loc30_23.1 (constants.%V)]
+// CHECK:STDOUT:     %V.loc22_23.2: %L2.type = symbolic_binding V, 0 [symbolic = %V.loc22_23.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1302,44 +1274,44 @@ fn Works() {
 // CHECK:STDOUT:   %T.loc10_21.1: %L2.type = symbolic_binding T, 0 [symbolic = %T.loc10_21.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc18_4.2: type = facet_access_type %T.loc10_21.1 [symbolic = %T.as_type.loc18_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %T.as_type.loc14_4.2: type = facet_access_type %T.loc10_21.1 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %L2.WithSelf.R2.type: type = fn_type @L2.WithSelf.R2, @L2.WithSelf(%T.loc10_21.1) [symbolic = %L2.WithSelf.R2.type (constants.%L2.WithSelf.R2.type.1a9)]
-// CHECK:STDOUT:   %.loc18_4.2: type = fn_type_with_self_type %L2.WithSelf.R2.type, %T.loc10_21.1 [symbolic = %.loc18_4.2 (constants.%.244)]
+// CHECK:STDOUT:   %.loc14_4.2: type = fn_type_with_self_type %L2.WithSelf.R2.type, %T.loc10_21.1 [symbolic = %.loc14_4.2 (constants.%.244)]
 // CHECK:STDOUT:   %L2.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc10_21.1, @L2 [symbolic = %L2.lookup_impl_witness (constants.%L2.lookup_impl_witness.d84)]
-// CHECK:STDOUT:   %impl.elem0.loc18_4.2: @Simple5.%.loc18_4.2 (%.244) = impl_witness_access %L2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %impl.elem0.loc14_4.2: @Simple5.%.loc14_4.2 (%.244) = impl_witness_access %L2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %L2.WithSelf.S2.type: type = fn_type @L2.WithSelf.S2, @L2.WithSelf(%T.loc10_21.1) [symbolic = %L2.WithSelf.S2.type (constants.%L2.WithSelf.S2.type.937)]
-// CHECK:STDOUT:   %.loc26_4.2: type = fn_type_with_self_type %L2.WithSelf.S2.type, %T.loc10_21.1 [symbolic = %.loc26_4.2 (constants.%.451)]
-// CHECK:STDOUT:   %impl.elem1.loc26_4.2: @Simple5.%.loc26_4.2 (%.451) = impl_witness_access %L2.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc26_4.2 (constants.%impl.elem1)]
+// CHECK:STDOUT:   %.loc18_4.2: type = fn_type_with_self_type %L2.WithSelf.S2.type, %T.loc10_21.1 [symbolic = %.loc18_4.2 (constants.%.451)]
+// CHECK:STDOUT:   %impl.elem1.loc18_4.2: @Simple5.%.loc18_4.2 (%.451) = impl_witness_access %L2.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc18_4.2 (constants.%impl.elem1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref.loc18: %L2.type = name_ref T, %T.loc10_21.2 [symbolic = %T.loc10_21.1 (constants.%T)]
-// CHECK:STDOUT:     %T.as_type.loc18_4.1: type = facet_access_type %T.ref.loc18 [symbolic = %T.as_type.loc18_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc18_4.1: type = converted %T.ref.loc18, %T.as_type.loc18_4.1 [symbolic = %T.as_type.loc18_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %T.ref.loc14: %L2.type = name_ref T, %T.loc10_21.2 [symbolic = %T.loc10_21.1 (constants.%T)]
+// CHECK:STDOUT:     %T.as_type.loc14_4.1: type = facet_access_type %T.ref.loc14 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc14_4.1: type = converted %T.ref.loc14, %T.as_type.loc14_4.1 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %R2.ref: %L2.assoc_type = name_ref R2, @L2.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc18_4.1: @Simple5.%.loc18_4.2 (%.244) = impl_witness_access constants.%L2.lookup_impl_witness.d84, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:     %T.ref.loc26: %L2.type = name_ref T, %T.loc10_21.2 [symbolic = %T.loc10_21.1 (constants.%T)]
-// CHECK:STDOUT:     %T.as_type.loc26: type = facet_access_type %T.ref.loc26 [symbolic = %T.as_type.loc18_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc26_4.1: type = converted %T.ref.loc26, %T.as_type.loc26 [symbolic = %T.as_type.loc18_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %impl.elem0.loc14_4.1: @Simple5.%.loc14_4.2 (%.244) = impl_witness_access constants.%L2.lookup_impl_witness.d84, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %T.ref.loc18: %L2.type = name_ref T, %T.loc10_21.2 [symbolic = %T.loc10_21.1 (constants.%T)]
+// CHECK:STDOUT:     %T.as_type.loc18: type = facet_access_type %T.ref.loc18 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc18_4.1: type = converted %T.ref.loc18, %T.as_type.loc18 [symbolic = %T.as_type.loc14_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %S2.ref: %L2.assoc_type = name_ref S2, @L2.WithSelf.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:     %impl.elem1.loc26_4.1: @Simple5.%.loc26_4.2 (%.451) = impl_witness_access constants.%L2.lookup_impl_witness.d84, element1 [symbolic = %impl.elem1.loc26_4.2 (constants.%impl.elem1)]
+// CHECK:STDOUT:     %impl.elem1.loc18_4.1: @Simple5.%.loc18_4.2 (%.451) = impl_witness_access constants.%L2.lookup_impl_witness.d84, element1 [symbolic = %impl.elem1.loc18_4.2 (constants.%impl.elem1)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Compound5(%V.loc30_23.2: %L2.type) {
-// CHECK:STDOUT:   %V.patt.loc30_23.2: %pattern_type.5b3 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc30_23.2 (constants.%V.patt)]
-// CHECK:STDOUT:   %V.loc30_23.1: %L2.type = symbolic_binding V, 0 [symbolic = %V.loc30_23.1 (constants.%V)]
+// CHECK:STDOUT: generic fn @Compound5(%V.loc22_23.2: %L2.type) {
+// CHECK:STDOUT:   %V.patt.loc22_23.2: %pattern_type.5b3 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc22_23.2 (constants.%V.patt)]
+// CHECK:STDOUT:   %V.loc22_23.1: %L2.type = symbolic_binding V, 0 [symbolic = %V.loc22_23.1 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %V.ref.loc35: %L2.type = name_ref V, %V.loc30_23.2 [symbolic = %V.loc30_23.1 (constants.%V)]
-// CHECK:STDOUT:     %L2.ref.loc35: type = name_ref L2, file.%L2.decl [concrete = constants.%L2.type]
+// CHECK:STDOUT:     %V.ref.loc25: %L2.type = name_ref V, %V.loc22_23.2 [symbolic = %V.loc22_23.1 (constants.%V)]
+// CHECK:STDOUT:     %L2.ref.loc25: type = name_ref L2, file.%L2.decl [concrete = constants.%L2.type]
 // CHECK:STDOUT:     %R2.ref: %L2.assoc_type = name_ref R2, @L2.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %V.ref.loc40: %L2.type = name_ref V, %V.loc30_23.2 [symbolic = %V.loc30_23.1 (constants.%V)]
-// CHECK:STDOUT:     %L2.ref.loc40: type = name_ref L2, file.%L2.decl [concrete = constants.%L2.type]
+// CHECK:STDOUT:     %V.ref.loc28: %L2.type = name_ref V, %V.loc22_23.2 [symbolic = %V.loc22_23.1 (constants.%V)]
+// CHECK:STDOUT:     %L2.ref.loc28: type = name_ref L2, file.%L2.decl [concrete = constants.%L2.type]
 // CHECK:STDOUT:     %S2.ref: %L2.assoc_type = name_ref S2, @L2.WithSelf.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -1385,8 +1357,8 @@ fn Works() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Compound5(constants.%V) {
-// CHECK:STDOUT:   %V.patt.loc30_23.2 => constants.%V.patt
-// CHECK:STDOUT:   %V.loc30_23.1 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc22_23.2 => constants.%V.patt
+// CHECK:STDOUT:   %V.loc22_23.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_combine_non_instance.carbon
@@ -1503,62 +1475,62 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Fails() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc22_5.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc22_5.3: init %C to %.loc22_5.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc22_7: init %C = converted %.loc22_5.1, %.loc22_5.3 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %A.ref.loc22_15: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %A.ref.loc22_19: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %impl.elem0.loc22: %.eef = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc22: <bound method> = bound_method %A.ref.loc22_15, %impl.elem0.loc22 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
-// CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.call.loc22: init type = call %bound_method.loc22(%A.ref.loc22_15, %A.ref.loc22_19) [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc18_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc18: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc18_5.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc18_5.3: init %C to %.loc18_5.2 = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc18_7: init %C = converted %.loc18_5.1, %.loc18_5.3 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %A.ref.loc18_15: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %A.ref.loc18_19: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %impl.elem0.loc18: %.eef = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %A.ref.loc18_15, %impl.elem0.loc18 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
+// CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.call.loc18: init type = call %bound_method.loc18(%A.ref.loc18_15, %A.ref.loc18_19) [concrete = constants.%A.type]
+// CHECK:STDOUT:   %G.ref.loc18: %A.assoc_type = name_ref G, @A.WithSelf.%assoc0 [concrete = constants.%assoc0.f27]
+// CHECK:STDOUT:   %.loc18_12: %A.type = converted %.loc18_7, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc22_11: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc22_6.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc22_6.3: init %C to %.loc22_6.2 = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc22_8: init %C = converted %.loc22_6.1, %.loc22_6.3 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %C.ref.loc22_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %A.ref.loc22_24: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %A.ref.loc22_28: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %impl.elem0.loc22_26: %.eef = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc22_26: <bound method> = bound_method %A.ref.loc22_24, %impl.elem0.loc22_26 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
+// CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.call.loc22_26: init type = call %bound_method.loc22_26(%A.ref.loc22_24, %A.ref.loc22_28) [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc22_29.1: type = value_of_initializer %type.as.BitAndWith.impl.Op.call.loc22_26 [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc22_29.2: type = converted %type.as.BitAndWith.impl.Op.call.loc22_26, %.loc22_29.1 [concrete = constants.%A.type]
+// CHECK:STDOUT:   %A.facet.loc22: %A.type = facet_value %C.ref.loc22_18, (constants.%A.impl_witness) [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %.loc22_20: %A.type = converted %C.ref.loc22_18, %A.facet.loc22 [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %as_type.loc22: type = facet_access_type %.loc22_20 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc22_30: type = converted %.loc22_20, %as_type.loc22 [concrete = constants.%C]
+// CHECK:STDOUT:   %A.ref.loc22_35: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %A.ref.loc22_39: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %impl.elem0.loc22_37: %.eef = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc22_37: <bound method> = bound_method %A.ref.loc22_35, %impl.elem0.loc22_37 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
+// CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.call.loc22_37: init type = call %bound_method.loc22_37(%A.ref.loc22_35, %A.ref.loc22_39) [concrete = constants.%A.type]
 // CHECK:STDOUT:   %G.ref.loc22: %A.assoc_type = name_ref G, @A.WithSelf.%assoc0 [concrete = constants.%assoc0.f27]
-// CHECK:STDOUT:   %.loc22_12: %A.type = converted %.loc22_7, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc30_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %C.ref.loc30_11: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc30_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc30_6.3: init %C to %.loc30_6.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc30_8: init %C = converted %.loc30_6.1, %.loc30_6.3 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %C.ref.loc30_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %A.ref.loc30_24: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %A.ref.loc30_28: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %impl.elem0.loc30_26: %.eef = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc30_26: <bound method> = bound_method %A.ref.loc30_24, %impl.elem0.loc30_26 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
-// CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.call.loc30_26: init type = call %bound_method.loc30_26(%A.ref.loc30_24, %A.ref.loc30_28) [concrete = constants.%A.type]
-// CHECK:STDOUT:   %.loc30_29.1: type = value_of_initializer %type.as.BitAndWith.impl.Op.call.loc30_26 [concrete = constants.%A.type]
-// CHECK:STDOUT:   %.loc30_29.2: type = converted %type.as.BitAndWith.impl.Op.call.loc30_26, %.loc30_29.1 [concrete = constants.%A.type]
-// CHECK:STDOUT:   %A.facet.loc30: %A.type = facet_value %C.ref.loc30_18, (constants.%A.impl_witness) [concrete = constants.%A.facet]
-// CHECK:STDOUT:   %.loc30_20: %A.type = converted %C.ref.loc30_18, %A.facet.loc30 [concrete = constants.%A.facet]
-// CHECK:STDOUT:   %as_type.loc30: type = facet_access_type %.loc30_20 [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc30_30: type = converted %.loc30_20, %as_type.loc30 [concrete = constants.%C]
-// CHECK:STDOUT:   %A.ref.loc30_35: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %A.ref.loc30_39: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %impl.elem0.loc30_37: %.eef = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc30_37: <bound method> = bound_method %A.ref.loc30_35, %impl.elem0.loc30_37 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
-// CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.call.loc30_37: init type = call %bound_method.loc30_37(%A.ref.loc30_35, %A.ref.loc30_39) [concrete = constants.%A.type]
-// CHECK:STDOUT:   %G.ref.loc30: %A.assoc_type = name_ref G, @A.WithSelf.%assoc0 [concrete = constants.%assoc0.f27]
-// CHECK:STDOUT:   %.loc30_32: %A.type = converted %.loc30_8, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc38_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %C.ref.loc38_11: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc38_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc38_6.3: init %C to %.loc38_6.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc38_8: init %C = converted %.loc38_6.1, %.loc38_6.3 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %C.ref.loc38_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %A.ref.loc38_24: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %A.ref.loc38_28: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %impl.elem0.loc38: %.eef = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc38: <bound method> = bound_method %A.ref.loc38_24, %impl.elem0.loc38 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
-// CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.call.loc38: init type = call %bound_method.loc38(%A.ref.loc38_24, %A.ref.loc38_28) [concrete = constants.%A.type]
-// CHECK:STDOUT:   %.loc38_29.1: type = value_of_initializer %type.as.BitAndWith.impl.Op.call.loc38 [concrete = constants.%A.type]
-// CHECK:STDOUT:   %.loc38_29.2: type = converted %type.as.BitAndWith.impl.Op.call.loc38, %.loc38_29.1 [concrete = constants.%A.type]
-// CHECK:STDOUT:   %A.facet.loc38: %A.type = facet_value %C.ref.loc38_18, (constants.%A.impl_witness) [concrete = constants.%A.facet]
-// CHECK:STDOUT:   %.loc38_20: %A.type = converted %C.ref.loc38_18, %A.facet.loc38 [concrete = constants.%A.facet]
-// CHECK:STDOUT:   %as_type.loc38: type = facet_access_type %.loc38_20 [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc38_30: type = converted %.loc38_20, %as_type.loc38 [concrete = constants.%C]
-// CHECK:STDOUT:   %A.ref.loc38_34: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %G.ref.loc38: %A.assoc_type = name_ref G, @A.WithSelf.%assoc0 [concrete = constants.%assoc0.f27]
-// CHECK:STDOUT:   %.loc38_32: %A.type = converted %.loc38_8, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_32: %A.type = converted %.loc22_8, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc26_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc26_11: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc26_6.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc26_6.3: init %C to %.loc26_6.2 = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc26_8: init %C = converted %.loc26_6.1, %.loc26_6.3 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %C.ref.loc26_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %A.ref.loc26_24: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %A.ref.loc26_28: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %impl.elem0.loc26: %.eef = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %A.ref.loc26_24, %impl.elem0.loc26 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
+// CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.call.loc26: init type = call %bound_method.loc26(%A.ref.loc26_24, %A.ref.loc26_28) [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc26_29.1: type = value_of_initializer %type.as.BitAndWith.impl.Op.call.loc26 [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc26_29.2: type = converted %type.as.BitAndWith.impl.Op.call.loc26, %.loc26_29.1 [concrete = constants.%A.type]
+// CHECK:STDOUT:   %A.facet.loc26: %A.type = facet_value %C.ref.loc26_18, (constants.%A.impl_witness) [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %.loc26_20: %A.type = converted %C.ref.loc26_18, %A.facet.loc26 [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %as_type.loc26: type = facet_access_type %.loc26_20 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc26_30: type = converted %.loc26_20, %as_type.loc26 [concrete = constants.%C]
+// CHECK:STDOUT:   %A.ref.loc26_34: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %G.ref.loc26: %A.assoc_type = name_ref G, @A.WithSelf.%assoc0 [concrete = constants.%assoc0.f27]
+// CHECK:STDOUT:   %.loc26_32: %A.type = converted %.loc26_8, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

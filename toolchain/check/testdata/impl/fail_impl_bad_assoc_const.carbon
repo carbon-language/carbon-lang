@@ -14,12 +14,8 @@
 
 interface I { let T: type; }
 
-// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+7]]:1: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: impl () as I {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE-5]]:19: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR: interface I { let T: type; }
-// CHECK:STDERR:                   ^~~~~~~
+// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+3]]:1-14: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE-3]]:19-25: note: associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:
 impl () as I {}
 
@@ -43,11 +39,11 @@ impl () as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @empty_tuple.type.as.I.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc24_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc24_7.2: type = converted %.loc24_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc20_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc20_7.2: type = converted %.loc20_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc24: <witness> = impl_self_witness @empty_tuple.type.as.I.impl.%.loc24_7.2, @I [concrete = constants.%.2ef]
+// CHECK:STDOUT:   %.loc20: <witness> = impl_self_witness @empty_tuple.type.as.I.impl.%.loc20_7.2, @I [concrete = constants.%.2ef]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -67,7 +63,7 @@ impl () as I {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.I.impl: %.loc24_7.2 as %I.ref {
+// CHECK:STDOUT: impl @empty_tuple.type.as.I.impl: %.loc20_7.2 as %I.ref {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @empty_tuple.type.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:

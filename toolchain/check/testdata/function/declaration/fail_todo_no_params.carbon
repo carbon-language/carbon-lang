@@ -15,18 +15,14 @@
 // --- fail_no_body.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_no_body.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn A;
-// CHECK:STDERR: ^~~~~
+// CHECK:STDERR: fail_no_body.carbon:[[@LINE+2]]:1-5: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
 // CHECK:STDERR:
 fn A;
 
 // --- fail_todo_brace_body.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_brace_body.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn A {
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fail_todo_brace_body.carbon:[[@LINE+2]]:1-6: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
 // CHECK:STDERR:
 fn A {
 }
@@ -34,18 +30,14 @@ fn A {
 // --- fail_todo_return_type.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_return_type.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn A -> ();
-// CHECK:STDERR: ^~~~~~~~~~~
+// CHECK:STDERR: fail_todo_return_type.carbon:[[@LINE+2]]:1-11: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
 // CHECK:STDERR:
 fn A -> ();
 
 // --- fail_todo_implicit_only.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_implicit_only.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn A[] -> ();
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_implicit_only.carbon:[[@LINE+2]]:1-13: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
 // CHECK:STDERR:
 fn A[] -> ();
 
@@ -53,13 +45,9 @@ fn A[] -> ();
 
 // TODO: We don't have parsing support for this yet.
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+8]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn A => 0;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:1-7: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:6: error: semantics TODO: `HandleTerseBodyArrow` [SemanticsTodo]
-// CHECK:STDERR: fn A => 0;
-// CHECK:STDERR:      ^~
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+2]]:6-7: error: semantics TODO: `HandleTerseBodyArrow` [SemanticsTodo]
 // CHECK:STDERR:
 fn A => 0;
 
@@ -67,13 +55,9 @@ fn A => 0;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+8]]:13: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: var generic x: () = ();
-// CHECK:STDERR:             ^~~~~
+// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+4]]:13-17: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+4]]:19: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
-// CHECK:STDERR: var generic x: () = ();
-// CHECK:STDERR:                   ^
+// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+2]]:19: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
 // CHECK:STDERR:
 var generic x: () = ();
 
@@ -135,11 +119,11 @@ fn A {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc7_10.2 [concrete = constants.%return.patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc5_10.2 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc7_10.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc7_10.2: type = converted %.loc7_10.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc7_10.3: Core.Form = init_form %.loc7_10.2 [concrete = constants.%.262]
+// CHECK:STDOUT:     %.loc5_10.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_10.2: type = converted %.loc5_10.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc5_10.3: Core.Form = init_form %.loc5_10.2 [concrete = constants.%.262]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -166,11 +150,11 @@ fn A {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc7_12.2 [concrete = constants.%return.patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc5_12.2 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc7_12.3: Core.Form = init_form %.loc7_12.2 [concrete = constants.%.262]
+// CHECK:STDOUT:     %.loc5_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_12.2: type = converted %.loc5_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc5_12.3: Core.Form = init_form %.loc5_12.2 [concrete = constants.%.262]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }

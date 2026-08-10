@@ -22,22 +22,12 @@ class A(T: type) {
   var v: T;
 }
 
-// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+17]]:13: error: parameter has incomplete type `A(B)` in function definition [IncompleteTypeInFunctionParam]
-// CHECK:STDERR: fn F(unused x: A(B)) {}
-// CHECK:STDERR:             ^~~~~~~
-// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-6]]:10: note: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
-// CHECK:STDERR:   var v: T;
-// CHECK:STDERR:          ^
-// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-12]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class B;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+7]]:13-19: error: parameter has incomplete type `A(B)` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-4]]:10: note: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-8]]:1-8: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+7]]:13: error: parameter has incomplete type `A(B)` in function definition [IncompleteTypeInFunctionParam]
-// CHECK:STDERR: fn F(unused x: A(B)) {}
-// CHECK:STDERR:             ^~~~~~~
-// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-19]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class B;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+3]]:13-19: error: parameter has incomplete type `A(B)` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-11]]:1-8: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:
 fn F(unused x: A(B)) {}
 
@@ -68,15 +58,9 @@ fn F(generic T: type, p: T*) {
   let _: T = *p;
 }
 
-// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+10]]:15: error: unable to monomorphize specific `F(B)` [ResolvingSpecificHere]
-// CHECK:STDERR: fn G(p: B*) { F(B, p); }
-// CHECK:STDERR:               ^
-// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE-6]]:10: note: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
-// CHECK:STDERR:   let _: T = *p;
-// CHECK:STDERR:          ^
-// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE-12]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class B;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+4]]:15: error: unable to monomorphize specific `F(B)` [ResolvingSpecificHere]
+// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE-4]]:10: note: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
+// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE-8]]:1-8: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:
 fn G(p: B*) { F(B, p); }
 
@@ -143,14 +127,14 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:     %x.patt: %pattern_type.b3e = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %A.d32 = value_param call_param0
-// CHECK:STDOUT:     %.loc27: type = splice_block %A [concrete = constants.%A.d32] {
+// CHECK:STDOUT:     %.loc17: type = splice_block %A [concrete = constants.%A.d32] {
 // CHECK:STDOUT:       %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl.loc4 [concrete = constants.%B]
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%B) [concrete = constants.%A.d32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %A.d32 = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl.loc29: type = class_decl @B [concrete = constants.%B] {} {}
+// CHECK:STDOUT:   %B.decl.loc19: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -416,9 +400,9 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:     %p.patt: %pattern_type.3c8 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.8dd]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr.432 = value_param call_param0
-// CHECK:STDOUT:     %.loc20: type = splice_block %ptr [concrete = constants.%ptr.432] {
-// CHECK:STDOUT:       %B.ref.loc20_9: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:       %ptr: type = ptr_type %B.ref.loc20_9 [concrete = constants.%ptr.432]
+// CHECK:STDOUT:     %.loc14: type = splice_block %ptr [concrete = constants.%ptr.432] {
+// CHECK:STDOUT:       %B.ref.loc14_9: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:       %ptr: type = ptr_type %B.ref.loc14_9 [concrete = constants.%ptr.432]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.432 = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
@@ -457,7 +441,7 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT: fn @G(%p.param: %ptr.432) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %B.ref.loc20_17: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc14_17: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %p.ref: %ptr.432 = name_ref p, %p
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%B) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%p.ref)

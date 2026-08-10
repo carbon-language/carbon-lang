@@ -47,9 +47,7 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 library "[[@TEST_NAME]]";
 
 class C(T: type) {
-  // CHECK:STDERR: fail_todo_extend_symbolic_base.carbon:[[@LINE+4]]:16: error: deriving from final type `T`; base type must be an `abstract` or `base` class [BaseIsFinal]
-  // CHECK:STDERR:   extend base: T;
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR: fail_todo_extend_symbolic_base.carbon:[[@LINE+2]]:16: error: deriving from final type `T`; base type must be an `abstract` or `base` class [BaseIsFinal]
   // CHECK:STDERR:
   extend base: T;
 }
@@ -531,14 +529,14 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_10.2 [symbolic = %T.loc4_10.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc9: <error> = base_decl <error>, element0 [concrete]
+// CHECK:STDOUT:     %.loc7: <error> = base_decl <error>, element0 [concrete]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.1d0
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .base = %.loc9
+// CHECK:STDOUT:     .base = %.loc7
 // CHECK:STDOUT:     .G = <poisoned>
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }

@@ -83,12 +83,8 @@ class Square {
   extend base: Shape;
 
   fn GetPosition(self) -> i32 {
-    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE+7]]:12: error: cannot access private member `y` of type `Shape` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     return self.y;
-    // CHECK:STDERR:            ^~~~~~
-    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE-10]]:15: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   private var y: i32;
-    // CHECK:STDERR:               ^~~~~~
+    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE+3]]:12-17: error: cannot access private member `y` of type `Shape` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE-8]]:15-20: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     return self.y;
   }
@@ -128,12 +124,8 @@ base class B {
 
 class C {
   extend base: B;
-  // CHECK:STDERR: fail_noninstance_private_on_parent_qualified.carbon:[[@LINE+7]]:12: error: cannot access private member `F` of type `B` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   fn G() { Self.F(); }
-  // CHECK:STDERR:            ^~~~~~
-  // CHECK:STDERR: fail_noninstance_private_on_parent_qualified.carbon:[[@LINE-8]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private fn F() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_noninstance_private_on_parent_qualified.carbon:[[@LINE+3]]:12-17: error: cannot access private member `F` of type `B` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_noninstance_private_on_parent_qualified.carbon:[[@LINE-6]]:3-18: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   fn G() { Self.F(); }
 }
@@ -156,30 +148,18 @@ base class B {
 class C {
   extend base: B;
 
-  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+7]]:27: error: cannot access private member `SOME_PRIVATE_CONSTANT` of type `B` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   fn G1() -> i32 { return SOME_PRIVATE_CONSTANT; }
-  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-10]]:15: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private let SOME_PRIVATE_CONSTANT: i32 = 86;
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+3]]:27-47: error: cannot access private member `SOME_PRIVATE_CONSTANT` of type `B` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-8]]:15-40: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   fn G1() -> i32 { return SOME_PRIVATE_CONSTANT; }
 
-  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+7]]:13: error: cannot access private member `Fa` of type `A` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   fn G2() { Fa(); }
-  // CHECK:STDERR:             ^~
-  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-25]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private fn Fa() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+3]]:13-14: error: cannot access private member `Fa` of type `A` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-19]]:3-19: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   fn G2() { Fa(); }
 
-  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+7]]:13: error: cannot access private member `Fb` of type `B` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   fn G3() { Fb(); }
-  // CHECK:STDERR:             ^~
-  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-27]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private fn Fb() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+3]]:13-14: error: cannot access private member `Fb` of type `B` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-17]]:3-19: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   fn G3() { Fb(); }
 }
@@ -214,32 +194,20 @@ class B {
   private var internal: Internal;
 
   fn G() -> i32 {
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:5: error: cannot access private member `SOME_PRIVATE_CONSTANT` of type `A` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     A.SOME_PRIVATE_CONSTANT;
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-14]]:15: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   private let SOME_PRIVATE_CONSTANT: i32 = 5;
-    // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+3]]:5-27: error: cannot access private member `SOME_PRIVATE_CONSTANT` of type `A` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-12]]:15-40: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     A.SOME_PRIVATE_CONSTANT;
 
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:12: error: cannot access protected member `SOME_PROTECTED_CONSTANT` of type `A` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     return A.SOME_PROTECTED_CONSTANT;
-    // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-24]]:17: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   protected let SOME_PROTECTED_CONSTANT: i32 = 5;
-    // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+3]]:12-36: error: cannot access protected member `SOME_PROTECTED_CONSTANT` of type `A` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-18]]:17-44: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     return A.SOME_PROTECTED_CONSTANT;
   }
 
   fn SomeFunc(self) -> i32{
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:12: error: cannot access protected member `INTERNAL_CONSTANT` of type `Internal` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     return self.internal.INTERNAL_CONSTANT;
-    // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-30]]:17: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   protected let INTERNAL_CONSTANT: i32 = 5;
-    // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+3]]:12-42: error: cannot access protected member `INTERNAL_CONSTANT` of type `Internal` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-20]]:17-38: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     return self.internal.INTERNAL_CONSTANT;
   }
@@ -256,12 +224,8 @@ base class A {
 class B {
   extend base: A;
   fn F(self) {
-    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE+7]]:11: error: cannot access private member `x` of type `A` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     self.(A.x);
-    // CHECK:STDERR:           ^~~
-    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE-9]]:15: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   private var x: i32;
-    // CHECK:STDERR:               ^~~~~~
+    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE+3]]:11-13: error: cannot access private member `x` of type `A` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE-7]]:15-20: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     self.(A.x);
   }
@@ -1150,7 +1114,7 @@ class B {
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc25: Core.Form = init_form %i32 [concrete = constants.%.795f]
+// CHECK:STDOUT:     %.loc21: Core.Form = init_form %i32 [concrete = constants.%.795f]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1424,7 +1388,7 @@ class B {
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc36: Core.Form = init_form %i32 [concrete = constants.%.795f]
+// CHECK:STDOUT:     %.loc28: Core.Form = init_form %i32 [concrete = constants.%.795f]
 // CHECK:STDOUT:     %self.param: %B = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [concrete = constants.%B]
 // CHECK:STDOUT:     %self: %B = wrapper_binding self, %self.param
@@ -1445,9 +1409,9 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.G() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc20: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT.ref: <error> = name_ref SOME_PRIVATE_CONSTANT, <error> [concrete = <error>]
-// CHECK:STDOUT:   %A.ref.loc33: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc25: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %SOME_PROTECTED_CONSTANT.ref: <error> = name_ref SOME_PROTECTED_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -1456,8 +1420,8 @@ class B {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %internal.ref: %B.elem = name_ref internal, @B.%.loc14 [concrete = @B.%.loc14]
-// CHECK:STDOUT:   %.loc44_16.1: ref %Internal = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc44_16.2: %Internal = acquire_value %.loc44_16.1
+// CHECK:STDOUT:   %.loc32_16.1: ref %Internal = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc32_16.2: %Internal = acquire_value %.loc32_16.1
 // CHECK:STDOUT:   %INTERNAL_CONSTANT.ref: <error> = name_ref INTERNAL_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

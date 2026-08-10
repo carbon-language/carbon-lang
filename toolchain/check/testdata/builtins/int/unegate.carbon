@@ -31,15 +31,11 @@ fn RuntimeCallIsValid(a: u32, unused b: u32) -> u32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.unegate" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooFew() -> u32 = "int.unegate";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE+2]]:1-20: error: invalid signature for builtin function "int.unegate" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooFew() -> u32 = "int.unegate";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+4]]:25: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var too_few: array(u32, TooFew());
-// CHECK:STDERR:                         ^~~~~~~~
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE+2]]:25-32: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR:
 var too_few: array(u32, TooFew());
 
@@ -51,15 +47,11 @@ fn RuntimeCallIsValidTooFew() -> u32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.unegate" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooMany(a: u32, b: u32) -> u32 = "int.unegate";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE+2]]:1-35: error: invalid signature for builtin function "int.unegate" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooMany(a: u32, b: u32) -> u32 = "int.unegate";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+4]]:26: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var too_many: array(u32, TooMany(1, 2));
-// CHECK:STDERR:                          ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE+2]]:26-38: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR:
 var too_many: array(u32, TooMany(1, 2));
 
@@ -71,15 +63,11 @@ fn RuntimeCallIsValidTooMany(a: u32, b: u32) -> u32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.unegate" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn BadReturnType(a: u32) -> bool = "int.unegate";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+2]]:1-34: error: invalid signature for builtin function "int.unegate" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn BadReturnType(a: u32) -> bool = "int.unegate";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:33: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var bad_return_type: array(u32, BadReturnType(1));
-// CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+2]]:33-48: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR:
 var bad_return_type: array(u32, BadReturnType(1));
 
@@ -93,12 +81,8 @@ library "[[@TEST_NAME]]";
 
 fn Negate(a: u32) -> u32 = "int.unegate";
 
-// CHECK:STDERR: fail_bad_call.carbon:[[@LINE+7]]:26: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: var bad_call: array(u32, Negate(1, 2));
-// CHECK:STDERR:                          ^~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_call.carbon:[[@LINE-5]]:1: note: calling function declared here [InCallToEntity]
-// CHECK:STDERR: fn Negate(a: u32) -> u32 = "int.unegate";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_call.carbon:[[@LINE+3]]:26-37: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+// CHECK:STDERR: fail_bad_call.carbon:[[@LINE-3]]:1-26: note: calling function declared here [InCallToEntity]
 // CHECK:STDERR:
 var bad_call: array(u32, Negate(1, 2));
 

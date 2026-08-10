@@ -12,9 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_assign_to_empty.carbon
 
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+4]]:13: error: struct `{}` has no field named `a` [StructInitUnexpectedFieldInLiteral]
-// CHECK:STDERR: var x: {} = {.a = 1};
-// CHECK:STDERR:             ^~~~~~~~
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+2]]:13-20: error: struct `{}` has no field named `a` [StructInitUnexpectedFieldInLiteral]
 // CHECK:STDERR:
 var x: {} = {.a = 1};
 
@@ -45,9 +43,9 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var_storage %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc19_9.1: type = splice_block %.loc19_9.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc19_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc19_9.3: type = converted %.loc19_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc17_9.1: type = splice_block %.loc17_9.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc17_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc17_9.3: type = converted %.loc17_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_struct_type = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -59,7 +57,7 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc19: %struct_type.a = struct_literal (%int_1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc17: %struct_type.a = struct_literal (%int_1) [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

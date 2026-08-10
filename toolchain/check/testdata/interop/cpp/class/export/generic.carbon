@@ -45,9 +45,7 @@ void FSpecific() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-// CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+4]]:1: error: semantics TODO: `failed to map specific type arg to C++` [SemanticsTodo]
-// CHECK:STDERR: class UnsupportedClass(T: type) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+2]]:1-33: error: semantics TODO: `failed to map specific type arg to C++` [SemanticsTodo]
 // CHECK:STDERR:
 class UnsupportedClass(T: type) {
   var t: T;
@@ -56,13 +54,9 @@ alias AliasEmptyTuple = UnsupportedClass(());
 
 inline Cpp '''
 void FUnsupported() {
-  // CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+8]]:11: error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
-  // CHECK:STDERR:   Carbon::AliasEmptyTuple a;
-  // CHECK:STDERR:           ^
+  // CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+4]]:11: error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+4]]:11: error: no type named 'AliasEmptyTuple' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    23 |   Carbon::AliasEmptyTuple a;
-  // CHECK:STDERR:       |   ~~~~~~~~^
+  // CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+2]]:11-25: error: no type named 'AliasEmptyTuple' in namespace 'Carbon' [CppInteropParseError]
   // CHECK:STDERR:
   Carbon::AliasEmptyTuple a;
   a.t = 123;
@@ -74,9 +68,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class ClassWithMethod(T: type) {
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:3: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
-  // CHECK:STDERR:   fn M(unused ref self) {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+2]]:3-25: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
   // CHECK:STDERR:
   fn M(unused ref self) {}
 }
@@ -84,9 +76,7 @@ class ClassWithMethod(T: type) {
 inline Cpp '''
 void FMethodCall() {
   Carbon::ClassWithMethod<int> c;
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:5: error: no member named 'M' in 'Carbon::ClassWithMethod<int>' [CppInteropParseError]
-  // CHECK:STDERR:    19 |   c.M();
-  // CHECK:STDERR:       |   ~ ^
+  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+2]]:5: error: no member named 'M' in 'Carbon::ClassWithMethod<int>' [CppInteropParseError]
   // CHECK:STDERR:
   c.M();
 }

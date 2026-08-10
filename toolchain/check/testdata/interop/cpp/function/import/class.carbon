@@ -25,57 +25,29 @@ auto foo_decl_param2(ForwardDeclaredClass) -> void;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_param_type.h:4:6: error: argument type 'ForwardDeclaredClass' is incomplete [CppInteropParseError]
-// CHECK:STDERR:     4 | auto foo_decl_param1(ForwardDeclaredClass) -> void;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'ForwardDeclaredClass' [CppInteropParseNote]
-// CHECK:STDERR:     2 | class ForwardDeclaredClass;
-// CHECK:STDERR:       |       ^
+// CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE+3]]:10 [InCppInclude]
+// CHECK:STDERR: ./decl_value_param_type.h:4:6-20: error: argument type 'ForwardDeclaredClass' is incomplete [CppInteropParseError]
+// CHECK:STDERR: ./decl_value_param_type.h:2:7-26: note: forward declaration of 'ForwardDeclaredClass' [CppInteropParseNote]
 import Cpp library "decl_value_param_type.h";
 
 fn F(p: Cpp.ForwardDeclaredClass*) {
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_decl_param1(*p);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+5]]:3-25: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:5:6: error: argument type 'ForwardDeclaredClass' is incomplete [CppInteropParseError]
-  // CHECK:STDERR:     5 | auto foo_decl_param2(ForwardDeclaredClass) -> void;
-  // CHECK:STDERR:       |      ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'ForwardDeclaredClass' [CppInteropParseNote]
-  // CHECK:STDERR:     2 | class ForwardDeclaredClass;
-  // CHECK:STDERR:       |       ^
+  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-5]]:10 [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:5:6-20: error: argument type 'ForwardDeclaredClass' is incomplete [CppInteropParseError]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7-26: note: forward declaration of 'ForwardDeclaredClass' [CppInteropParseNote]
   Cpp.foo_decl_param1(*p);
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+28]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_decl_param2(*p);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3-25: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-5]]:23: error: forming value of incomplete type `Cpp.ForwardDeclaredClass` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR:   Cpp.foo_decl_param1(*p);
-  // CHECK:STDERR:                       ^~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-23]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-3]]:23-24: error: forming value of incomplete type `Cpp.ForwardDeclaredClass` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-12]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class ForwardDeclaredClass;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-27]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:4:42: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo_decl_param1(ForwardDeclaredClass) -> void;
-  // CHECK:STDERR:                                          ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:23: error: forming value of incomplete type `Cpp.ForwardDeclaredClass` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR:   Cpp.foo_decl_param2(*p);
-  // CHECK:STDERR:                       ^~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-35]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+5]]:23-24: error: forming value of incomplete type `Cpp.ForwardDeclaredClass` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-17]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class ForwardDeclaredClass;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-39]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:5:42: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo_decl_param2(ForwardDeclaredClass) -> void;
-  // CHECK:STDERR:                                          ^
   // CHECK:STDERR:
   Cpp.foo_decl_param2(*p);
 }
@@ -118,25 +90,15 @@ auto foo_non_copyable_param(NonCopyableClass) -> void;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./non_copyable_param_type.h:6:6: error: call to deleted constructor of 'NonCopyableClass' [CppInteropParseError]
-// CHECK:STDERR:     6 | auto foo_non_copyable_param(NonCopyableClass) -> void;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./non_copyable_param_type.h:3:3: note: 'NonCopyableClass' has been explicitly marked deleted here [CppInteropParseNote]
-// CHECK:STDERR:     3 |   NonCopyableClass(const NonCopyableClass&) = delete;
-// CHECK:STDERR:       |   ^
-// CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: included from: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:10 [InCppInclude]
+// CHECK:STDERR: ./non_copyable_param_type.h:6:6-27: error: call to deleted constructor of 'NonCopyableClass' [CppInteropParseError]
+// CHECK:STDERR: ./non_copyable_param_type.h:3:3-18: note: 'NonCopyableClass' has been explicitly marked deleted here [CppInteropParseNote]
 // CHECK:STDERR: ./non_copyable_param_type.h:6:45: note: passing argument to parameter here [CppInteropParseNote]
-// CHECK:STDERR:     6 | auto foo_non_copyable_param(NonCopyableClass) -> void;
-// CHECK:STDERR:       |                                             ^
 import Cpp library "non_copyable_param_type.h";
 
 fn F(c: Cpp.NonCopyableClass) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_non_copyable_param(c);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+2]]:3-31: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
   Cpp.foo_non_copyable_param(c);
   //@dump-sem-ir-end
@@ -172,24 +134,14 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
-// CHECK:STDERR:     6 | auto foo_move_only_param(MoveOnlyClass) -> void;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
-// CHECK:STDERR:     3 |   MoveOnlyClass(MoveOnlyClass&&);
-// CHECK:STDERR:       |   ^
-// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: included from: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:10 [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6-24: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
+// CHECK:STDERR: ./move_only_param_type.h:3:3-15: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
 // CHECK:STDERR: ./move_only_param_type.h:6:39: note: passing argument to parameter here [CppInteropParseNote]
-// CHECK:STDERR:     6 | auto foo_move_only_param(MoveOnlyClass) -> void;
-// CHECK:STDERR:       |                                       ^
 import Cpp library "move_only_param_type.h";
 
 fn F(c: Cpp.MoveOnlyClass) {
-  // CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_move_only_param(c);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+2]]:3-28: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
   Cpp.foo_move_only_param(c);
 }
@@ -198,24 +150,14 @@ fn F(c: Cpp.MoveOnlyClass) {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
-// CHECK:STDERR:     6 | auto foo_move_only_param(MoveOnlyClass) -> void;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
-// CHECK:STDERR:     3 |   MoveOnlyClass(MoveOnlyClass&&);
-// CHECK:STDERR:       |   ^
-// CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: included from: fail_pass_move_only_param_ref.carbon:[[@LINE+4]]:10 [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6-24: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
+// CHECK:STDERR: ./move_only_param_type.h:3:3-15: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
 // CHECK:STDERR: ./move_only_param_type.h:6:39: note: passing argument to parameter here [CppInteropParseNote]
-// CHECK:STDERR:     6 | auto foo_move_only_param(MoveOnlyClass) -> void;
-// CHECK:STDERR:       |                                       ^
 import Cpp library "move_only_param_type.h";
 
 fn F(ref c: Cpp.MoveOnlyClass) {
-  // CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_move_only_param(c);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+2]]:3-28: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
   Cpp.foo_move_only_param(c);
 }
@@ -224,24 +166,14 @@ fn F(ref c: Cpp.MoveOnlyClass) {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
-// CHECK:STDERR:     6 | auto foo_move_only_param(MoveOnlyClass) -> void;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
-// CHECK:STDERR:     3 |   MoveOnlyClass(MoveOnlyClass&&);
-// CHECK:STDERR:       |   ^
-// CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: included from: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+4]]:10 [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6-24: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
+// CHECK:STDERR: ./move_only_param_type.h:3:3-15: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
 // CHECK:STDERR: ./move_only_param_type.h:6:39: note: passing argument to parameter here [CppInteropParseNote]
-// CHECK:STDERR:     6 | auto foo_move_only_param(MoveOnlyClass) -> void;
-// CHECK:STDERR:       |                                       ^
 import Cpp library "move_only_param_type.h";
 
 fn F(ref c: Cpp.MoveOnlyClass) {
-  // CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_move_only_param(Cpp.move_move_only(ref c));
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+2]]:3-52: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
   Cpp.foo_move_only_param(Cpp.move_move_only(ref c));
 }
@@ -427,13 +359,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+8]]:3: error: member access into incomplete class `Cpp.Incomplete` [QualifiedExprInIncompleteClassScope]
-  // CHECK:STDERR:   Cpp.Incomplete.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+4]]:3-20: error: member access into incomplete class `Cpp.Incomplete` [QualifiedExprInIncompleteClassScope]
+  // CHECK:STDERR: included from: fail_import_incomplete.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class Incomplete;
-  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   Cpp.Incomplete.foo();
 }
@@ -496,36 +424,19 @@ auto foo_decl_value_return() -> DeclValueReturnClass;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6: error: calling 'foo_decl_value_return' with incomplete return type 'DeclValueReturnClass' [CppInteropParseError]
-// CHECK:STDERR:     4 | auto foo_decl_value_return() -> DeclValueReturnClass;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
-// CHECK:STDERR:     4 | auto foo_decl_value_return() -> DeclValueReturnClass;
-// CHECK:STDERR:       |      ^
-// CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_return_type.h:2:7: note: forward declaration of 'DeclValueReturnClass' [CppInteropParseNote]
-// CHECK:STDERR:     2 | class DeclValueReturnClass;
-// CHECK:STDERR:       |       ^
+// CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE+4]]:10 [InCppInclude]
+// CHECK:STDERR: ./decl_value_return_type.h:4:6-26: error: calling 'foo_decl_value_return' with incomplete return type 'DeclValueReturnClass' [CppInteropParseError]
+// CHECK:STDERR: ./decl_value_return_type.h:4:6-26: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
+// CHECK:STDERR: ./decl_value_return_type.h:2:7-26: note: forward declaration of 'DeclValueReturnClass' [CppInteropParseNote]
 import Cpp library "decl_value_return_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+16]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_decl_value_return();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+7]]:3-29: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+12]]:3: error: function returns incomplete type `Cpp.DeclValueReturnClass` [IncompleteTypeInFunctionReturnType]
-  // CHECK:STDERR:   Cpp.foo_decl_value_return();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+5]]:3-29: error: function returns incomplete type `Cpp.DeclValueReturnClass` [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE-6]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class DeclValueReturnClass;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_return_type.h:4:1: note: return type declared here [IncompleteReturnTypeHere]
-  // CHECK:STDERR: auto foo_decl_value_return() -> DeclValueReturnClass;
-  // CHECK:STDERR: ^
   // CHECK:STDERR:
   Cpp.foo_decl_value_return();
 }
@@ -662,7 +573,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %NonCopyableClass) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo_non_copyable_param.ref: %foo_non_copyable_param.cpp_overload_set.type = name_ref foo_non_copyable_param, imports.%foo_non_copyable_param.cpp_overload_set.value [concrete = constants.%foo_non_copyable_param.cpp_overload_set.value]
 // CHECK:STDOUT:   %c.ref: %NonCopyableClass = name_ref c, %c
 // CHECK:STDOUT:   %foo_non_copyable_param.call: init %empty_tuple.type = call imports.%foo_non_copyable_param.decl(%c.ref)

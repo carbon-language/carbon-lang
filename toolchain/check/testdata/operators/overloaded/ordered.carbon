@@ -48,33 +48,25 @@ package FailNoImpl;
 class D {};
 
 fn TestLess(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a < b;
-  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-14: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a < b;
 }
 
 fn TestLessEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a <= b;
-  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a <= b;
 }
 
 fn TestGreater(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a > b;
-  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-14: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a > b;
 }
 
 fn TestGreaterEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a >= b;
-  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a >= b;
 }
@@ -458,15 +450,15 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.9dc = value_param_pattern [concrete = constants.%b.param_patt]
 // CHECK:STDOUT:     %b.patt: %pattern_type.9dc = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc14_33.1 [concrete = constants.%return.patt.c0c]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc12_33.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc14_33.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc14_33.2: Core.Form = init_form %.loc14_33.1 [concrete = constants.%.f34]
+// CHECK:STDOUT:     %.loc12_33.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc12_33.2: Core.Form = init_form %.loc12_33.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %a.param: %D = value_param call_param0
-// CHECK:STDOUT:     %D.ref.loc14_21: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %D.ref.loc12_21: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %a: %D = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %D = value_param call_param1
-// CHECK:STDOUT:     %D.ref.loc14_27: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %D.ref.loc12_27: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %b: %D = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
@@ -477,15 +469,15 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.9dc = value_param_pattern [concrete = constants.%b.param_patt]
 // CHECK:STDOUT:     %b.patt: %pattern_type.9dc = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc22_31.1 [concrete = constants.%return.patt.c0c]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc18_31.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc22_31.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc22_31.2: Core.Form = init_form %.loc22_31.1 [concrete = constants.%.f34]
+// CHECK:STDOUT:     %.loc18_31.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc18_31.2: Core.Form = init_form %.loc18_31.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %a.param: %D = value_param call_param0
-// CHECK:STDOUT:     %D.ref.loc22_19: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %D.ref.loc18_19: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %a: %D = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %D = value_param call_param1
-// CHECK:STDOUT:     %D.ref.loc22_25: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %D.ref.loc18_25: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %b: %D = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
@@ -496,15 +488,15 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.9dc = value_param_pattern [concrete = constants.%b.param_patt]
 // CHECK:STDOUT:     %b.patt: %pattern_type.9dc = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc30_36.1 [concrete = constants.%return.patt.c0c]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc24_36.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc30_36.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc30_36.2: Core.Form = init_form %.loc30_36.1 [concrete = constants.%.f34]
+// CHECK:STDOUT:     %.loc24_36.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc24_36.2: Core.Form = init_form %.loc24_36.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %a.param: %D = value_param call_param0
-// CHECK:STDOUT:     %D.ref.loc30_24: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %D.ref.loc24_24: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %a: %D = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %D = value_param call_param1
-// CHECK:STDOUT:     %D.ref.loc30_30: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %D.ref.loc24_30: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %b: %D = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param

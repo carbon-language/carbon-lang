@@ -41,9 +41,7 @@ let b: i32 = Mod(Sub(Negate(0x7FFF_FFFF), 1), 1);
 
 // -0x8000_0000 / -1 overflows, so -0x8000_0000 % -1 is disallowed, even though
 // its result is representable.
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:14: error: integer overflow in calculation `-2147483648 % -1` [CompileTimeIntegerOverflow]
-// CHECK:STDERR: let c: i32 = Mod(Sub(Negate(0x7FFF_FFFF), 1), Negate(1));
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:14-56: error: integer overflow in calculation `-2147483648 % -1` [CompileTimeIntegerOverflow]
 // CHECK:STDERR:
 let c: i32 = Mod(Sub(Negate(0x7FFF_FFFF), 1), Negate(1));
 
@@ -55,15 +53,11 @@ fn Mod(a: i32, b: i32) -> i32 = "int.smod";
 
 // Remainder of division by zero is not defined.
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:14: error: division by zero [CompileTimeDivisionByZero]
-// CHECK:STDERR: let a: i32 = Mod(1, 0);
-// CHECK:STDERR:              ^~~~~~~~~
+// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+2]]:14-22: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR:
 let a: i32 = Mod(1, 0);
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:14: error: division by zero [CompileTimeDivisionByZero]
-// CHECK:STDERR: let b: i32 = Mod(0, 0);
-// CHECK:STDERR:              ^~~~~~~~~
+// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+2]]:14-22: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR:
 let b: i32 = Mod(0, 0);
 

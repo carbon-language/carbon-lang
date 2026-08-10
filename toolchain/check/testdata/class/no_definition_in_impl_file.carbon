@@ -55,9 +55,7 @@ class C;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+2]]:1-8: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR:
 class C;
 
@@ -69,8 +67,6 @@ library "[[@TEST_NAME]]";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
-// CHECK:STDERR: class D;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+2]]:1-8: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR:
 class D;

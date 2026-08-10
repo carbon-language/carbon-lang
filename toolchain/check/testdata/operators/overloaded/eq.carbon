@@ -38,17 +38,13 @@ package FailNoImpl;
 class D {};
 
 fn TestEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.EqWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a == b;
-  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.EqWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a == b;
 }
 
 fn TestNotEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.EqWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a != b;
-  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.EqWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a != b;
 }
@@ -66,17 +62,13 @@ impl C as Core.EqWith(C) {
 }
 
 fn TestRhsBad(a: C, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.EqWith(D)` in type `C` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a == b;
-  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.EqWith(D)` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a == b;
 }
 
 fn TestLhsBad(a: D, b: C) -> bool {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.EqWith(C)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a != b;
-  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.EqWith(C)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a != b;
 }
@@ -338,15 +330,15 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.9dc = value_param_pattern [concrete = constants.%b.param_patt]
 // CHECK:STDOUT:     %b.patt: %pattern_type.9dc = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc14_32.1 [concrete = constants.%return.patt.c0c]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc12_32.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc14_32.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc14_32.2: Core.Form = init_form %.loc14_32.1 [concrete = constants.%.f34]
+// CHECK:STDOUT:     %.loc12_32.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc12_32.2: Core.Form = init_form %.loc12_32.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %a.param: %D = value_param call_param0
-// CHECK:STDOUT:     %D.ref.loc14_20: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %D.ref.loc12_20: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %a: %D = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %D = value_param call_param1
-// CHECK:STDOUT:     %D.ref.loc14_26: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %D.ref.loc12_26: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %b: %D = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
@@ -470,10 +462,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.eae = value_param_pattern [concrete = constants.%b.param_patt.16c]
 // CHECK:STDOUT:     %b.patt: %pattern_type.eae = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt.518]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc20_30.1 [concrete = constants.%return.patt.c0c]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc18_30.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc20_30.1: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc20_30.2: Core.Form = init_form %.loc20_30.1 [concrete = constants.%.f34]
+// CHECK:STDOUT:     %.loc18_30.1: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc18_30.2: Core.Form = init_form %.loc18_30.1 [concrete = constants.%.f34]
 // CHECK:STDOUT:     %a.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %a: %D = wrapper_binding a, %a.param

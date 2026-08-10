@@ -24,9 +24,7 @@ library "[[@TEST_NAME]]";
 
 import Core library "core_wrong_index_with";
 
-// CHECK:STDERR: fail_wrong_index_with.carbon:[[@LINE+4]]:10: error: value of type `type` is not callable [CallToNonCallable]
-// CHECK:STDERR: fn F() { 0[1]; }
-// CHECK:STDERR:          ^~~~
+// CHECK:STDERR: fail_wrong_index_with.carbon:[[@LINE+2]]:10-13: error: value of type `type` is not callable [CallToNonCallable]
 // CHECK:STDERR:
 fn F() { 0[1]; }
 
@@ -34,9 +32,7 @@ fn F() { 0[1]; }
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+4]]:10: error: name `Core.IndexWith` implicitly referenced here, but not found [CoreNameNotFound]
-// CHECK:STDERR: fn F() { 0[1]; }
-// CHECK:STDERR:          ^~~~
+// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+2]]:10-13: error: name `Core.IndexWith` implicitly referenced here, but not found [CoreNameNotFound]
 // CHECK:STDERR:
 fn F() { 0[1]; }
 
@@ -65,12 +61,8 @@ impl C as Core.IndexWith((), ()) {
 
 fn F() {
   let c: C = {};
-  // CHECK:STDERR: fail_wrong_arg_count.carbon:[[@LINE+7]]:3: error: 1 argument passed to generic interface expecting 2 arguments [CallArgCountMismatch]
-  // CHECK:STDERR:   c[()];
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: core_wrong_arg_count.carbon:4:1: note: calling generic interface declared here [InCallToEntity]
-  // CHECK:STDERR: interface IndexWith(SubscriptType: type, ElementType: type) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_arg_count.carbon:[[@LINE+3]]:3-7: error: 1 argument passed to generic interface expecting 2 arguments [CallArgCountMismatch]
+  // CHECK:STDERR: core_wrong_arg_count.carbon:4:1-61: note: calling generic interface declared here [InCallToEntity]
   // CHECK:STDERR:
   c[()];
 }
@@ -587,7 +579,7 @@ fn F() {
 // CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %.loc23: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc19: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.115)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

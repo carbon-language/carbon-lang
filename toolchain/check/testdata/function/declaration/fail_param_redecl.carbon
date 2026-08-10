@@ -12,12 +12,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/fail_param_redecl.carbon
 
-// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+7]]:14: error: duplicate name `n` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn F(n: i32, n: i32);
-// CHECK:STDERR:              ^
-// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+4]]:6: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: fn F(n: i32, n: i32);
-// CHECK:STDERR:      ^~~~~~
+// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+3]]:14: error: duplicate name `n` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_param_redecl.carbon:[[@LINE+2]]:6-11: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
 fn F(n: i32, n: i32);
 
@@ -51,19 +47,19 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %n.param_patt.loc22_7: %pattern_type.6b6 = value_param_pattern [concrete = constants.%n.param_patt]
-// CHECK:STDOUT:     %n.patt.loc22_7: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt.loc22_7 [concrete = constants.%n.patt]
-// CHECK:STDOUT:     %n.param_patt.loc22_15: %pattern_type.6b6 = value_param_pattern [concrete = constants.%n.param_patt]
-// CHECK:STDOUT:     %n.patt.loc22_15: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt.loc22_15 [concrete = constants.%n.patt]
+// CHECK:STDOUT:     %n.param_patt.loc18_7: %pattern_type.6b6 = value_param_pattern [concrete = constants.%n.param_patt]
+// CHECK:STDOUT:     %n.patt.loc18_7: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt.loc18_7 [concrete = constants.%n.patt]
+// CHECK:STDOUT:     %n.param_patt.loc18_15: %pattern_type.6b6 = value_param_pattern [concrete = constants.%n.param_patt]
+// CHECK:STDOUT:     %n.patt.loc18_15: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt.loc18_15 [concrete = constants.%n.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %n.param.loc22_7: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc22_9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n.loc22_7: %i32 = wrapper_binding n, %n.param.loc22_7
-// CHECK:STDOUT:     %n.param.loc22_15: %i32 = value_param call_param1
-// CHECK:STDOUT:     %i32.loc22_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n.loc22_15: %i32 = wrapper_binding n, %n.param.loc22_15
+// CHECK:STDOUT:     %n.param.loc18_7: %i32 = value_param call_param0
+// CHECK:STDOUT:     %i32.loc18_9: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %n.loc18_7: %i32 = wrapper_binding n, %n.param.loc18_7
+// CHECK:STDOUT:     %n.param.loc18_15: %i32 = value_param call_param1
+// CHECK:STDOUT:     %i32.loc18_17: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %n.loc18_15: %i32 = wrapper_binding n, %n.param.loc18_15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.param.loc22_7: %i32, %n.param.loc22_15: %i32);
+// CHECK:STDOUT: fn @F(%n.param.loc18_7: %i32, %n.param.loc18_15: %i32);
 // CHECK:STDOUT:

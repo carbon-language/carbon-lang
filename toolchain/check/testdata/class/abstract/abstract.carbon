@@ -19,12 +19,8 @@ abstract class Abstract {
 }
 
 class Contains {
-  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE+7]]:10: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR:   var a: Abstract;
-  // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE-7]]:1: note: class was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE+3]]:10-17: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
+  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE-5]]:1-25: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR:
   var a: Abstract;
 }
@@ -36,12 +32,8 @@ abstract class Abstract {
 }
 
 fn Var() {
-  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:17: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR:   var unused v: Abstract;
-  // CHECK:STDERR:                 ^~~~~~~~
-  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE-7]]:1: note: class was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+3]]:17-24: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
+  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE-5]]:1-25: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR:
   var unused v: Abstract;
 }
@@ -52,12 +44,8 @@ library "[[@TEST_NAME]]";
 abstract class Abstract {
 }
 
-// CHECK:STDERR: fail_abstract_var_function_param.carbon:[[@LINE+7]]:13: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
-// CHECK:STDERR: fn F(var _: Abstract) {
-// CHECK:STDERR:             ^~~~~~~~
-// CHECK:STDERR: fail_abstract_var_function_param.carbon:[[@LINE-6]]:1: note: class was declared abstract here [ClassAbstractHere]
-// CHECK:STDERR: abstract class Abstract {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_abstract_var_function_param.carbon:[[@LINE+3]]:13-20: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
+// CHECK:STDERR: fail_abstract_var_function_param.carbon:[[@LINE-4]]:1-25: note: class was declared abstract here [ClassAbstractHere]
 // CHECK:STDERR:
 fn F(var _: Abstract) {
 }
@@ -80,12 +68,8 @@ abstract class Abstract {
 
 class Adapter {
   // TODO(#4387): This should probably be valid
-  // CHECK:STDERR: fail_abstract_adapter.carbon:[[@LINE+7]]:3: error: adapted type `Abstract` is an abstract type [AbstractTypeInAdaptDecl]
-  // CHECK:STDERR:   adapt Abstract;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_abstract_adapter.carbon:[[@LINE-8]]:1: note: class was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_abstract_adapter.carbon:[[@LINE+3]]:3-17: error: adapted type `Abstract` is an abstract type [AbstractTypeInAdaptDecl]
+  // CHECK:STDERR: fail_abstract_adapter.carbon:[[@LINE-6]]:1-25: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR:
   adapt Abstract;
 }
@@ -130,12 +114,8 @@ class Derived {
   var d: {};
 }
 
-// CHECK:STDERR: fail_return_abstract.carbon:[[@LINE+7]]:24: error: function returns abstract type `Abstract` [AbstractTypeInFunctionReturnType]
-// CHECK:STDERR: fn Return(a: Abstract) -> Abstract {
-// CHECK:STDERR:                        ^~~~~~~~~~~
-// CHECK:STDERR: fail_return_abstract.carbon:[[@LINE-12]]:1: note: class was declared abstract here [ClassAbstractHere]
-// CHECK:STDERR: abstract class Abstract {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_return_abstract.carbon:[[@LINE+3]]:24-34: error: function returns abstract type `Abstract` [AbstractTypeInFunctionReturnType]
+// CHECK:STDERR: fail_return_abstract.carbon:[[@LINE-10]]:1-25: note: class was declared abstract here [ClassAbstractHere]
 // CHECK:STDERR:
 fn Return(a: Abstract) -> Abstract {
   return a;
@@ -169,13 +149,9 @@ abstract class Abstract {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+8]]:28: error: initialization of abstract class `Abstract` [AbstractTypeInInit]
-  // CHECK:STDERR:   let unused l: Abstract = {};
-  // CHECK:STDERR:                            ^~
+  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+4]]:28-29: error: initialization of abstract class `Abstract` [AbstractTypeInInit]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+4]]:28: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   let unused l: Abstract = {};
-  // CHECK:STDERR:                            ^~
+  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+2]]:28-29: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   let unused l: Abstract = {};
 }
@@ -193,9 +169,7 @@ class Derived {
 fn F() {
   // TODO: support destroying classes that derive from abstract types.
   //
-  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+4]]:28: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   let unused l: Abstract = {.base = {}} as Derived;
-  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+2]]:28-50: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   let unused l: Abstract = {.base = {}} as Derived;
 }
@@ -209,15 +183,9 @@ abstract class Abstract {
 fn ReturnAbstract() -> Abstract;
 
 fn CallReturnAbstract() {
-  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE+10]]:3: error: function returns abstract type `Abstract` [AbstractTypeInFunctionReturnType]
-  // CHECK:STDERR:   ReturnAbstract();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-9]]:1: note: class was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-9]]:21: note: return type declared here [IncompleteReturnTypeHere]
-  // CHECK:STDERR: fn ReturnAbstract() -> Abstract;
-  // CHECK:STDERR:                     ^~~~~~~~~~~
+  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE+4]]:3-18: error: function returns abstract type `Abstract` [AbstractTypeInFunctionReturnType]
+  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-7]]:1-25: note: class was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-5]]:21-31: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR:
   ReturnAbstract();
 }
@@ -229,12 +197,8 @@ abstract class Abstract {
 }
 
 fn Assign(ref a: Abstract) {
-  // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE+7]]:7: error: cannot copy value of type `Abstract` [CopyOfUncopyableType]
-  // CHECK:STDERR:   a = a;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE+4]]:7: note: type `Abstract` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   a = a;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE+3]]:7: error: cannot copy value of type `Abstract` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE+2]]:7: note: type `Abstract` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   a = a;
 }
@@ -275,14 +239,14 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
-// CHECK:STDOUT:   %.loc14: <error> = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc10: <error> = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Contains
 // CHECK:STDOUT:   .Abstract = <poisoned>
-// CHECK:STDOUT:   .a = %.loc14
+// CHECK:STDOUT:   .a = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_var.carbon
@@ -696,12 +660,12 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.169 = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type.169 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.169 = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type.169 = return_slot_pattern %return.param_patt, %Abstract.ref.loc19_27 [concrete = constants.%return.patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.169 = return_slot_pattern %return.param_patt, %Abstract.ref.loc15_27 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Abstract.ref.loc19_27: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %.loc19: Core.Form = init_form %Abstract.ref.loc19_27 [concrete = constants.%.749]
+// CHECK:STDOUT:     %Abstract.ref.loc15_27: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:     %.loc15: Core.Form = init_form %Abstract.ref.loc15_27 [concrete = constants.%.749]
 // CHECK:STDOUT:     %a.param: %Abstract = value_param call_param0
-// CHECK:STDOUT:     %Abstract.ref.loc19_14: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:     %Abstract.ref.loc15_14: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %a: %Abstract = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %Abstract = out_param call_param1
 // CHECK:STDOUT:     %return: ref %Abstract = return_slot %return.param
@@ -914,14 +878,14 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc15_29.2: ref %Abstract = temporary_storage
-// CHECK:STDOUT:   %.loc15_29.3: init %Abstract to %.loc15_29.2 = class_init () [concrete = constants.%Abstract.val]
-// CHECK:STDOUT:   %.loc15_29.4: init %Abstract = converted %.loc15_29.1, %.loc15_29.3 [concrete = constants.%Abstract.val]
-// CHECK:STDOUT:   %.loc15_29.5: ref %Abstract = temporary %.loc15_29.2, %.loc15_29.4 [concrete = constants.%.69a]
-// CHECK:STDOUT:   %.loc15_29.6: %Abstract = acquire_value %.loc15_29.5 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc11_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc11_29.2: ref %Abstract = temporary_storage
+// CHECK:STDOUT:   %.loc11_29.3: init %Abstract to %.loc11_29.2 = class_init () [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc11_29.4: init %Abstract = converted %.loc11_29.1, %.loc11_29.3 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc11_29.5: ref %Abstract = temporary %.loc11_29.2, %.loc11_29.4 [concrete = constants.%.69a]
+// CHECK:STDOUT:   %.loc11_29.6: %Abstract = acquire_value %.loc11_29.5 [concrete = constants.%Abstract.val]
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc15_29.6
+// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc11_29.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %pattern_type.169 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
@@ -1000,23 +964,23 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_38.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc17_39.1: %struct_type.base.f5e = struct_literal (%.loc17_38.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc15_38.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc15_39.1: %struct_type.base.f5e = struct_literal (%.loc15_38.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %.loc17_39.2: ref %Derived = temporary_storage
-// CHECK:STDOUT:   %.loc17_39.3: ref %.79f = class_element_access %.loc17_39.2, element0
-// CHECK:STDOUT:   %.loc17_38.2: init %.79f to %.loc17_39.3 = class_init () [concrete = constants.%empty_struct.5e0]
-// CHECK:STDOUT:   %.loc17_39.4: init %.79f = converted %.loc17_38.1, %.loc17_38.2 [concrete = constants.%empty_struct.5e0]
-// CHECK:STDOUT:   %.loc17_39.5: init %Abstract = as_compatible %.loc17_39.4 [concrete = constants.%Abstract.val.b13]
-// CHECK:STDOUT:   %.loc17_39.6: init %Derived to %.loc17_39.2 = class_init (%.loc17_39.5) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc17_41.1: init %Derived = converted %.loc17_39.1, %.loc17_39.6 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc17_41.2: init %Abstract = as_compatible %.loc17_41.1 [concrete = constants.%Abstract.val.1c8]
-// CHECK:STDOUT:   %.loc17_41.3: ref %Abstract = temporary %.loc17_39.2, %.loc17_41.2 [concrete = constants.%.383]
-// CHECK:STDOUT:   %.loc17_41.4: ref %Abstract = class_element_access %.loc17_41.3, element0 [concrete = constants.%.27a]
-// CHECK:STDOUT:   %.loc17_41.5: ref %Abstract = converted %.loc17_41.1, %.loc17_41.4 [concrete = constants.%.27a]
-// CHECK:STDOUT:   %.loc17_41.6: %Abstract = acquire_value %.loc17_41.5
+// CHECK:STDOUT:   %.loc15_39.2: ref %Derived = temporary_storage
+// CHECK:STDOUT:   %.loc15_39.3: ref %.79f = class_element_access %.loc15_39.2, element0
+// CHECK:STDOUT:   %.loc15_38.2: init %.79f to %.loc15_39.3 = class_init () [concrete = constants.%empty_struct.5e0]
+// CHECK:STDOUT:   %.loc15_39.4: init %.79f = converted %.loc15_38.1, %.loc15_38.2 [concrete = constants.%empty_struct.5e0]
+// CHECK:STDOUT:   %.loc15_39.5: init %Abstract = as_compatible %.loc15_39.4 [concrete = constants.%Abstract.val.b13]
+// CHECK:STDOUT:   %.loc15_39.6: init %Derived to %.loc15_39.2 = class_init (%.loc15_39.5) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc15_41.1: init %Derived = converted %.loc15_39.1, %.loc15_39.6 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc15_41.2: init %Abstract = as_compatible %.loc15_41.1 [concrete = constants.%Abstract.val.1c8]
+// CHECK:STDOUT:   %.loc15_41.3: ref %Abstract = temporary %.loc15_39.2, %.loc15_41.2 [concrete = constants.%.383]
+// CHECK:STDOUT:   %.loc15_41.4: ref %Abstract = class_element_access %.loc15_41.3, element0 [concrete = constants.%.27a]
+// CHECK:STDOUT:   %.loc15_41.5: ref %Abstract = converted %.loc15_41.1, %.loc15_41.4 [concrete = constants.%.27a]
+// CHECK:STDOUT:   %.loc15_41.6: %Abstract = acquire_value %.loc15_41.5
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc17_41.6
+// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc15_41.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %pattern_type.169 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
@@ -1135,10 +1099,10 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Assign(%a.param: ref %Abstract) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref.loc14_3: ref %Abstract = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc14_7: ref %Abstract = name_ref a, %a
-// CHECK:STDOUT:   %.loc14: %Abstract = acquire_value %a.ref.loc14_7
-// CHECK:STDOUT:   assign %a.ref.loc14_3, <error>
+// CHECK:STDOUT:   %a.ref.loc10_3: ref %Abstract = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc10_7: ref %Abstract = name_ref a, %a
+// CHECK:STDOUT:   %.loc10: %Abstract = acquire_value %a.ref.loc10_7
+// CHECK:STDOUT:   assign %a.ref.loc10_3, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

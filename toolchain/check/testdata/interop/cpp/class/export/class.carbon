@@ -59,19 +59,13 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE+4]]:1: error: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class IncompleteConcreteA;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE+2]]:1-26: error: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:
 class IncompleteConcreteA;
 
 inline Cpp '''
-// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE+7]]:29: error: variable has incomplete type 'Carbon::IncompleteConcreteA' [CppInteropParseError]
-// CHECK:STDERR:    19 | Carbon::IncompleteConcreteA incomplete_concrete_a;
-// CHECK:STDERR:       |                             ^
-// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE-6]]:26: note: forward declaration of 'Carbon::IncompleteConcreteA' [CppInteropParseNote]
-// CHECK:STDERR:     9 | class IncompleteConcreteA;
-// CHECK:STDERR:       |                          ^
+// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE+3]]:29-49: error: variable has incomplete type 'Carbon::IncompleteConcreteA' [CppInteropParseError]
+// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE-4]]:26: note: forward declaration of 'Carbon::IncompleteConcreteA' [CppInteropParseNote]
 // CHECK:STDERR:
 Carbon::IncompleteConcreteA incomplete_concrete_a;
 ''';
@@ -81,9 +75,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+4]]:1: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
-// CHECK:STDERR: class B(N: i32) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+2]]:1-17: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
 // CHECK:STDERR:
 class B(N: i32) {
   var a: array(i8, N);
@@ -94,13 +86,9 @@ class B(N: i32) {
 alias T = B(-1);
 
 inline Cpp '''
-// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+8]]:1: error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
-// CHECK:STDERR: Carbon::T t;
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+4]]:1: error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+4]]:9: error: no type named 'T' in namespace 'Carbon' [CppInteropParseError]
-// CHECK:STDERR:    26 | Carbon::T t;
-// CHECK:STDERR:       | ~~~~~~~~^
+// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+2]]:9: error: no type named 'T' in namespace 'Carbon' [CppInteropParseError]
 // CHECK:STDERR:
 Carbon::T t;
 ''';

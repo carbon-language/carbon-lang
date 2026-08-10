@@ -92,12 +92,8 @@ class RefMethodRValueClass {
 
 inline Cpp '''
 void RefMethodRValue() {
-  // CHECK:STDERR: fail_ref_method_rvalue.carbon:[[@LINE+7]]:3: error: 'this' argument to member function 'M' is an rvalue, but function has non-const lvalue ref-qualifier [CppInteropParseError]
-  // CHECK:STDERR:    17 |   Carbon::RefMethodRValueClass().M();
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_ref_method_rvalue.carbon:[[@LINE-8]]:17: note: 'M' declared here [CppInteropParseNote]
-  // CHECK:STDERR:     5 |   fn M(ref self);
-  // CHECK:STDERR:       |                 ^
+  // CHECK:STDERR: fail_ref_method_rvalue.carbon:[[@LINE+3]]:3-8: error: 'this' argument to member function 'M' is an rvalue, but function has non-const lvalue ref-qualifier [CppInteropParseError]
+  // CHECK:STDERR: fail_ref_method_rvalue.carbon:[[@LINE-6]]:17: note: 'M' declared here [CppInteropParseNote]
   // CHECK:STDERR:
   Carbon::RefMethodRValueClass().M();
 }
@@ -113,12 +109,8 @@ class RefMethodConstLValueClass {
 
 inline Cpp '''
 void RefMethodConstLValue(const Carbon::RefMethodConstLValueClass& c) {
-  // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE+7]]:3: error: 'this' argument to member function 'M' has type 'const Carbon::RefMethodConstLValueClass', but function is not marked const [CppInteropParseError]
-  // CHECK:STDERR:    17 |   c.M();
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE-8]]:17: note: 'M' declared here [CppInteropParseNote]
-  // CHECK:STDERR:     5 |   fn M(ref self);
-  // CHECK:STDERR:       |                 ^
+  // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE+3]]:3: error: 'this' argument to member function 'M' has type 'const Carbon::RefMethodConstLValueClass', but function is not marked const [CppInteropParseError]
+  // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE-6]]:17: note: 'M' declared here [CppInteropParseNote]
   // CHECK:STDERR:
   c.M();
 }

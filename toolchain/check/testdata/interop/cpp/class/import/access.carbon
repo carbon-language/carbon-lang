@@ -70,21 +70,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_function_member_protected.h";
 
 fn F(c: Cpp.NonFunctionMemberProtected) {
-  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+8]]:35: error: cannot access protected member `instance_data` of type `Cpp.NonFunctionMemberProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let unused instance_data: i32 = c.instance_data;
-  // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+4]]:35-49: error: cannot access protected member `instance_data` of type `Cpp.NonFunctionMemberProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_import_non_function_member_protected.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./non_function_member_protected.h:2:7: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR: class NonFunctionMemberProtected {
-  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   let unused instance_data: i32 = c.instance_data;
-  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+7]]:33: error: cannot access protected member `static_data` of type `Cpp.NonFunctionMemberProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let unused static_data: i32 = Cpp.NonFunctionMemberProtected.static_data;
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+4]]:33: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   let unused static_data: i32 = Cpp.NonFunctionMemberProtected.static_data;
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+3]]:33-74: error: cannot access protected member `static_data` of type `Cpp.NonFunctionMemberProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+2]]:33-74: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let unused static_data: i32 = Cpp.NonFunctionMemberProtected.static_data;
 }
@@ -100,21 +92,13 @@ class Derived {
 }
 
 fn F(d: Derived) {
-  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+8]]:35: error: cannot access protected member `instance_data` of type `Derived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let unused instance_data: i32 = d.instance_data;
-  // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+4]]:35-49: error: cannot access protected member `instance_data` of type `Derived` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_import_non_function_member_protected_extend.carbon:[[@LINE-8]]:10 [InCppInclude]
   // CHECK:STDERR: ./non_function_member_protected.h:2:7: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR: class NonFunctionMemberProtected {
-  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   let unused instance_data: i32 = d.instance_data;
-  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+7]]:33: error: cannot access protected member `static_data` of type `Derived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let unused static_data: i32 = Derived.static_data;
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+4]]:33: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   let unused static_data: i32 = Derived.static_data;
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+3]]:33-51: error: cannot access protected member `static_data` of type `Derived` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+2]]:33-51: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let unused static_data: i32 = Derived.static_data;
 }
@@ -155,21 +139,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_function_member_private.h";
 
 fn F(c: Cpp.NonFunctionMemberPrivate) {
-  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+8]]:35: error: cannot access private member `instance_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let unused instance_data: i32 = c.instance_data;
-  // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+4]]:35-49: error: cannot access private member `instance_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_import_non_function_member_private.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR: class NonFunctionMemberPrivate {
-  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   let unused instance_data: i32 = c.instance_data;
-  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+7]]:33: error: cannot access private member `static_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let unused static_data: i32 = Cpp.NonFunctionMemberPrivate.static_data;
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+4]]:33: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   let unused static_data: i32 = Cpp.NonFunctionMemberPrivate.static_data;
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+3]]:33-72: error: cannot access private member `static_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+2]]:33-72: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let unused static_data: i32 = Cpp.NonFunctionMemberPrivate.static_data;
 }
@@ -183,42 +159,26 @@ import Cpp library "non_function_member_private.h";
 class Derived {
   extend base: Cpp.NonFunctionMemberPrivate;
   fn F(self) {
-    // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+8]]:37: error: cannot access private member `instance_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     let unused instance_data: i32 = self.instance_data;
-    // CHECK:STDERR:                                     ^~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
+    // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+4]]:37-54: error: cannot access private member `instance_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: included from: fail_import_non_function_member_private_extend.carbon:[[@LINE-6]]:10 [InCppInclude]
     // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR: class NonFunctionMemberPrivate {
-    // CHECK:STDERR:       ^
     // CHECK:STDERR:
     let unused instance_data: i32 = self.instance_data;
   }
 }
 
 fn F(d: Derived) {
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+8]]:35: error: cannot access private member `instance_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let unused instance_data: i32 = d.instance_data;
-  // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-21]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+4]]:35-49: error: cannot access private member `instance_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_import_non_function_member_private_extend.carbon:[[@LINE-15]]:10 [InCppInclude]
   // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR: class NonFunctionMemberPrivate {
-  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   let unused instance_data: i32 = d.instance_data;
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+7]]:41: error: cannot access private member `static_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let unused derived_static_data: i32 = Derived.static_data;
-  // CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+4]]:41: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   let unused derived_static_data: i32 = Derived.static_data;
-  // CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+3]]:41-59: error: cannot access private member `static_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+2]]:41-59: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let unused derived_static_data: i32 = Derived.static_data;
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+7]]:38: error: cannot access private member `static_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let unused base_static_data: i32 = Cpp.NonFunctionMemberPrivate.static_data;
-  // CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-4]]:41: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   let unused derived_static_data: i32 = Derived.static_data;
-  // CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+3]]:38-77: error: cannot access private member `static_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-2]]:41-59: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let unused base_static_data: i32 = Cpp.NonFunctionMemberPrivate.static_data;
 }
@@ -234,12 +194,8 @@ class Derived {
   fn F() {
     // TODO: `NonFunctionMemberPrivate.static_data` is private, so this
     // should fail.
-    // CHECK:STDERR: fail_import_non_function_member_private_extend_static_within_member_function.carbon:[[@LINE+7]]:47: error: cannot access private member `static_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     let unused unqualified_static_data: i32 = static_data;
-    // CHECK:STDERR:                                               ^~~~~~~~~~~
-    // CHECK:STDERR: fail_import_non_function_member_private_extend_static_within_member_function.carbon:[[@LINE+4]]:47: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     let unused unqualified_static_data: i32 = static_data;
-    // CHECK:STDERR:                                               ^~~~~~~~~~~
+    // CHECK:STDERR: fail_import_non_function_member_private_extend_static_within_member_function.carbon:[[@LINE+3]]:47-57: error: cannot access private member `static_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_non_function_member_private_extend_static_within_member_function.carbon:[[@LINE+2]]:47-57: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     let unused unqualified_static_data: i32 = static_data;
   }
@@ -288,20 +244,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "function_member_protected.h";
 
 fn F(c: Cpp.FunctionMemberProtected*) {
-  // CHECK:STDERR: fail_import_function_member_protected.carbon:[[@LINE+7]]:3: error: cannot access protected member `instance_fn` of type `Cpp.FunctionMemberProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   c->instance_fn();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_function_member_protected.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   c->instance_fn();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_function_member_protected.carbon:[[@LINE+3]]:3-16: error: cannot access protected member `instance_fn` of type `Cpp.FunctionMemberProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_function_member_protected.carbon:[[@LINE+2]]:3-16: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   c->instance_fn();
-  // CHECK:STDERR: fail_import_function_member_protected.carbon:[[@LINE+7]]:3: error: cannot access protected member `static_fn` of type `Cpp.FunctionMemberProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.FunctionMemberProtected.static_fn();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_function_member_protected.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.FunctionMemberProtected.static_fn();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_function_member_protected.carbon:[[@LINE+3]]:3-39: error: cannot access protected member `static_fn` of type `Cpp.FunctionMemberProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_function_member_protected.carbon:[[@LINE+2]]:3-39: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.FunctionMemberProtected.static_fn();
 }
@@ -317,13 +265,10 @@ class Derived {
   fn F(self) {
     //@dump-sem-ir-begin
     // TODO: It should be possible to call protected methods in the base class.
-    // CHECK:STDERR: fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon:[[@LINE+8]]:22: error: no matching function for call to 'instance_fn' [CppInteropParseError]
-    // CHECK:STDERR:    19 |     self.instance_fn();
-    // CHECK:STDERR:       |                      ^
-    // CHECK:STDERR: fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
-    // CHECK:STDERR: ./function_member_protected.h:4:8: note: candidate function not viable: cannot convert argument of incomplete type 'const Carbon::Derived' to 'FunctionMemberProtected' for object argument [CppInteropParseNote]
-    // CHECK:STDERR:     4 |   auto instance_fn() -> void;
-    // CHECK:STDERR:       |        ^
+    // CHECK:STDERR: fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon:[[@LINE+5]]:5-20: error: no matching function for call to 'instance_fn' [CppInteropParseError]
+    // CHECK:STDERR: included from: fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon:[[@LINE-8]]:10 [InCppInclude]
+    // CHECK:STDERR: ./function_member_protected.h:4:8-18: note: candidate function not viable [CppInteropParseNote]
+    // CHECK:STDERR: ./function_member_protected.h:4:19-20: note: cannot convert argument of incomplete type 'const Carbon::Derived' to 'FunctionMemberProtected' for object argument [CppInteropParseNoteReason]
     // CHECK:STDERR:
     self.instance_fn();
     //@dump-sem-ir-end
@@ -368,64 +313,36 @@ import Cpp library "function_member_private.h";
 class Derived {
   extend base: Cpp.FunctionMemberPrivate;
   fn F(self) {
-    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+7]]:5: error: cannot access private member `instance_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     self.instance_fn();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     self.instance_fn();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+3]]:5-20: error: cannot access private member `instance_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+2]]:5-20: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     self.instance_fn();
-    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+7]]:5: error: cannot access private member `static_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     static_fn();
-    // CHECK:STDERR:     ^~~~~~~~~
-    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     static_fn();
-    // CHECK:STDERR:     ^~~~~~~~~
+    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+3]]:5-13: error: cannot access private member `static_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+2]]:5-13: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     static_fn();
-    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+7]]:5: error: cannot access private member `static_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Derived.static_fn();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     static_fn();
-    // CHECK:STDERR:     ^~~~~~~~~
+    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+3]]:5-21: error: cannot access private member `static_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE-2]]:5-13: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Derived.static_fn();
-    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+7]]:5: error: cannot access private member `static_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Cpp.FunctionMemberPrivate.static_fn();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE-12]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     static_fn();
-    // CHECK:STDERR:     ^~~~~~~~~
+    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+3]]:5-39: error: cannot access private member `static_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE-6]]:5-13: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Cpp.FunctionMemberPrivate.static_fn();
   }
 }
 
 fn F(c: Cpp.FunctionMemberPrivate*) {
-  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+7]]:3: error: cannot access private member `instance_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   c->instance_fn();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE-32]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     self.instance_fn();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+3]]:3-16: error: cannot access private member `instance_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE-18]]:5-20: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   c->instance_fn();
-  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+7]]:3: error: cannot access private member `static_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.static_fn();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE-32]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     static_fn();
-  // CHECK:STDERR:     ^~~~~~~~~
+  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+3]]:3-19: error: cannot access private member `static_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE-18]]:5-13: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.static_fn();
-  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+7]]:3: error: cannot access private member `static_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.FunctionMemberPrivate.static_fn();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE-40]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     static_fn();
-  // CHECK:STDERR:     ^~~~~~~~~
+  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+3]]:3-37: error: cannot access private member `static_fn` of type `Cpp.FunctionMemberPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE-22]]:5-13: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.FunctionMemberPrivate.static_fn();
 }
@@ -472,22 +389,14 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+8]]:3: error: cannot access protected member `OverloadSet` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.OverloadSet.OverloadSet(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+4]]:3-64: error: cannot access protected member `OverloadSet` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_import_overload_set_protected.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./overload_set.h:11:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   OverloadSet(ProtectedCall x);
-  // CHECK:STDERR:   ^
   // CHECK:STDERR:
   Cpp.OverloadSet.OverloadSet(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+8]]:3: error: cannot access protected member `Overload` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.OverloadSet.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE-15]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+4]]:3-61: error: cannot access protected member `Overload` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_import_overload_set_protected.carbon:[[@LINE-9]]:10 [InCppInclude]
   // CHECK:STDERR: ./overload_set.h:12:15: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   static auto Overload(ProtectedCall x) -> void;
-  // CHECK:STDERR:               ^
   // CHECK:STDERR:
   Cpp.OverloadSet.Overload(Cpp.ProtectedCall.ProtectedCall());
 }
@@ -533,22 +442,14 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+8]]:3: error: cannot access private member `OverloadSet` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.OverloadSet.OverloadSet(Cpp.PrivateCall.PrivateCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+4]]:3-60: error: cannot access private member `OverloadSet` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_import_overload_set_private.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./overload_set.h:14:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   OverloadSet(PrivateCall x);
-  // CHECK:STDERR:   ^
   // CHECK:STDERR:
   Cpp.OverloadSet.OverloadSet(Cpp.PrivateCall.PrivateCall());
-  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+8]]:3: error: cannot access private member `Overload` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.OverloadSet.Overload(Cpp.PrivateCall.PrivateCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE-15]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+4]]:3-57: error: cannot access private member `Overload` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_import_overload_set_private.carbon:[[@LINE-9]]:10 [InCppInclude]
   // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
-  // CHECK:STDERR:               ^
   // CHECK:STDERR:
   Cpp.OverloadSet.Overload(Cpp.PrivateCall.PrivateCall());
 }
@@ -563,25 +464,17 @@ class D {
   extend base: Cpp.OverloadSet;
 
   fn MakePrivate() -> D {
-    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+8]]:21: error: cannot access private member `OverloadSet` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     return {.base = OverloadSet(Cpp.PrivateCall.PrivateCall())};
-    // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+4]]:21-62: error: cannot access private member `OverloadSet` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: included from: fail_import_overload_set_private_base.carbon:[[@LINE-7]]:10 [InCppInclude]
     // CHECK:STDERR: ./overload_set.h:14:3: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   OverloadSet(PrivateCall x);
-    // CHECK:STDERR:   ^
     // CHECK:STDERR:
     return {.base = OverloadSet(Cpp.PrivateCall.PrivateCall())};
   }
 
   fn CallPrivate() {
-    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+8]]:5: error: cannot access private member `Overload` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE-21]]:10: in file included here [InCppInclude]
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+4]]:5-43: error: cannot access private member `Overload` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: included from: fail_import_overload_set_private_base.carbon:[[@LINE-15]]:10 [InCppInclude]
     // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
-    // CHECK:STDERR:               ^
     // CHECK:STDERR:
     Overload(Cpp.PrivateCall.PrivateCall());
   }
@@ -614,24 +507,16 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+9]]:3: error: cannot access protected member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.OverloadPublic.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+5]]:3-64: error: cannot access protected member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: included from: ./overload_set_base_class.h:2:10 [InCppInclude]
   // CHECK:STDERR: ./overload_set.h:12:15: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   static auto Overload(ProtectedCall x) -> void;
-  // CHECK:STDERR:               ^
   // CHECK:STDERR:
   Cpp.OverloadPublic.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+9]]:3: error: cannot access private member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.OverloadPublic.Overload(Cpp.PrivateCall.PrivateCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+5]]:3-60: error: cannot access private member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE-10]]:10 [InCppInclude]
+  // CHECK:STDERR: included from: ./overload_set_base_class.h:2:10 [InCppInclude]
   // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
-  // CHECK:STDERR:               ^
   // CHECK:STDERR:
   Cpp.OverloadPublic.Overload(Cpp.PrivateCall.PrivateCall());
 }
@@ -663,14 +548,10 @@ class Derived {
   extend base: Cpp.OverloadPublic;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE+9]]:5: error: cannot access private member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-    // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
+    // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE+5]]:5-43: error: cannot access private member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: included from: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE-7]]:10 [InCppInclude]
+    // CHECK:STDERR: included from: ./overload_set_base_class.h:2:10 [InCppInclude]
     // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
-    // CHECK:STDERR:               ^
     // CHECK:STDERR:
     Overload(Cpp.PrivateCall.PrivateCall());
   }
@@ -683,28 +564,16 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+7]]:3: error: cannot access protected member `Overload` of type `Cpp.OverloadProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.OverloadProtected.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.OverloadProtected.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+3]]:3-32: error: cannot access protected member `Overload` of type `Cpp.OverloadProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+2]]:3-32: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.OverloadProtected.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+7]]:3: error: cannot access protected member `Overload` of type `Cpp.OverloadProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.OverloadProtected.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE-4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.OverloadProtected.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+3]]:3-32: error: cannot access protected member `Overload` of type `Cpp.OverloadProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE-2]]:3-32: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.OverloadProtected.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+7]]:3: error: cannot access protected member `Overload` of type `Cpp.OverloadProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.OverloadProtected.Overload(Cpp.PrivateCall.PrivateCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE-12]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.OverloadProtected.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+3]]:3-32: error: cannot access protected member `Overload` of type `Cpp.OverloadProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE-6]]:3-32: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.OverloadProtected.Overload(Cpp.PrivateCall.PrivateCall());
 }
@@ -736,14 +605,10 @@ class Derived {
   extend base: Cpp.OverloadProtected;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE+9]]:5: error: cannot access private member `Overload` of type `Cpp.OverloadProtected` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-    // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
+    // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE+5]]:5-43: error: cannot access private member `Overload` of type `Cpp.OverloadProtected` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: included from: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE-7]]:10 [InCppInclude]
+    // CHECK:STDERR: included from: ./overload_set_base_class.h:2:10 [InCppInclude]
     // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   static auto Overload(PrivateCall x) -> void;
-    // CHECK:STDERR:               ^
     // CHECK:STDERR:
     Overload(Cpp.PrivateCall.PrivateCall());
   }
@@ -756,28 +621,16 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+7]]:3: error: cannot access private member `Overload` of type `Cpp.OverloadPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.OverloadPrivate.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.OverloadPrivate.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+3]]:3-30: error: cannot access private member `Overload` of type `Cpp.OverloadPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+2]]:3-30: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.OverloadPrivate.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+7]]:3: error: cannot access private member `Overload` of type `Cpp.OverloadPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.OverloadPrivate.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE-4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.OverloadPrivate.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+3]]:3-30: error: cannot access private member `Overload` of type `Cpp.OverloadPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE-2]]:3-30: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.OverloadPrivate.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+7]]:3: error: cannot access private member `Overload` of type `Cpp.OverloadPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.OverloadPrivate.Overload(Cpp.PrivateCall.PrivateCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE-12]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.OverloadPrivate.Overload(Cpp.PublicCall.PublicCall());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+3]]:3-30: error: cannot access private member `Overload` of type `Cpp.OverloadPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE-6]]:3-30: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.OverloadPrivate.Overload(Cpp.PrivateCall.PrivateCall());
 }
@@ -792,28 +645,16 @@ class Derived {
   extend base: Cpp.OverloadPrivate;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+7]]:5: error: cannot access private member `Overload` of type `Cpp.OverloadPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR:     ^~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR:     ^~~~~~~~
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+3]]:5-12: error: cannot access private member `Overload` of type `Cpp.OverloadPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+2]]:5-12: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+7]]:5: error: cannot access private member `Overload` of type `Cpp.OverloadPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Overload(Cpp.ProtectedCall.ProtectedCall());
-    // CHECK:STDERR:     ^~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR:     ^~~~~~~~
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+3]]:5-12: error: cannot access private member `Overload` of type `Cpp.OverloadPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE-2]]:5-12: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Overload(Cpp.ProtectedCall.ProtectedCall());
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+7]]:5: error: cannot access private member `Overload` of type `Cpp.OverloadPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
-    // CHECK:STDERR:     ^~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE-12]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR:     ^~~~~~~~
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+3]]:5-12: error: cannot access private member `Overload` of type `Cpp.OverloadPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE-6]]:5-12: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Overload(Cpp.PrivateCall.PrivateCall());
   }
@@ -895,32 +736,20 @@ class Derived {
   extend base: Cpp.Public;
 
   fn CallStatic() {
-    // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateStatic` of type `Cpp.Public` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Cpp.Public.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.Public.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+3]]:5-28: error: cannot access private member `PrivateStatic` of type `Cpp.Public` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+2]]:5-28: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Cpp.Public.PrivateStatic();
-    // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateStatic` of type `Cpp.Public` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Self.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.Public.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+3]]:5-22: error: cannot access private member `PrivateStatic` of type `Cpp.Public` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE-2]]:5-28: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Self.PrivateStatic();
   }
 
   fn CallInstance(var instance: Cpp.Public) {
     //@dump-sem-ir-begin
-    // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateInstance` of type `Cpp.Public` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     instance.PrivateInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     instance.PrivateInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+3]]:5-28: error: cannot access private member `PrivateInstance` of type `Cpp.Public` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+2]]:5-28: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     instance.PrivateInstance();
     //@dump-sem-ir-end
@@ -928,54 +757,30 @@ class Derived {
 }
 
 fn Call(var instance: Cpp.Public) {
-  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `ProtectedStatic` of type `Cpp.Public` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Public.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.Public.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+3]]:3-28: error: cannot access protected member `ProtectedStatic` of type `Cpp.Public` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+2]]:3-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.Public.ProtectedStatic();
-  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `ProtectedStatic` of type `Derived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE-4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.Public.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+3]]:3-25: error: cannot access protected member `ProtectedStatic` of type `Derived` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE-2]]:3-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.ProtectedStatic();
 
-  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateStatic` of type `Cpp.Public` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Public.PrivateStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE-46]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.Public.PrivateStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+3]]:3-26: error: cannot access private member `PrivateStatic` of type `Cpp.Public` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE-28]]:5-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.Public.PrivateStatic();
-  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateStatic` of type `Cpp.Public` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.PrivateStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE-54]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.Public.PrivateStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+3]]:3-23: error: cannot access private member `PrivateStatic` of type `Cpp.Public` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE-32]]:5-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.PrivateStatic();
 
-  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `ProtectedInstance` of type `Cpp.Public` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.ProtectedInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   instance.ProtectedInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+3]]:3-28: error: cannot access protected member `ProtectedInstance` of type `Cpp.Public` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+2]]:3-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.ProtectedInstance();
-  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateInstance` of type `Cpp.Public` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.PrivateInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE-51]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     instance.PrivateInstance();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE+3]]:3-26: error: cannot access private member `PrivateInstance` of type `Cpp.Public` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_access_denied.carbon:[[@LINE-29]]:5-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.PrivateInstance();
 }
@@ -1021,110 +826,62 @@ class Derived {
   extend base: Cpp.Protected;
 
   fn CallStatic() {
-    // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Cpp.Protected.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.Protected.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+3]]:5-31: error: cannot access private member `PrivateStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+2]]:5-31: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Cpp.Protected.PrivateStatic();
-    // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Self.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.Protected.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+3]]:5-22: error: cannot access private member `PrivateStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE-2]]:5-31: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Self.PrivateStatic();
   }
 
   fn CallInstance(var instance: Cpp.Protected) {
-    // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateInstance` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     instance.PrivateInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     instance.PrivateInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+3]]:5-28: error: cannot access private member `PrivateInstance` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+2]]:5-28: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     instance.PrivateInstance();
   }
 }
 
 fn Call(var instance: Cpp.Protected) {
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `PublicStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Protected.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.Protected.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+3]]:3-28: error: cannot access protected member `PublicStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+2]]:3-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.Protected.PublicStatic();
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `PublicStatic` of type `Derived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE-4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.Protected.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+3]]:3-22: error: cannot access protected member `PublicStatic` of type `Derived` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE-2]]:3-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.PublicStatic();
 
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `ProtectedStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Protected.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.Protected.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+3]]:3-31: error: cannot access protected member `ProtectedStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+2]]:3-31: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.Protected.ProtectedStatic();
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `ProtectedStatic` of type `Derived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE-4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.Protected.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+3]]:3-25: error: cannot access protected member `ProtectedStatic` of type `Derived` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE-2]]:3-31: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.ProtectedStatic();
 
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Protected.PrivateStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE-61]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.Protected.PrivateStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+3]]:3-29: error: cannot access private member `PrivateStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE-35]]:5-31: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.Protected.PrivateStatic();
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.PrivateStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE-69]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.Protected.PrivateStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+3]]:3-23: error: cannot access private member `PrivateStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE-39]]:5-31: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.PrivateStatic();
 
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `PublicInstance` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.PublicInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   instance.PublicInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+3]]:3-25: error: cannot access protected member `PublicInstance` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+2]]:3-25: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.PublicInstance();
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `ProtectedInstance` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.ProtectedInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   instance.ProtectedInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+3]]:3-28: error: cannot access protected member `ProtectedInstance` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+2]]:3-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.ProtectedInstance();
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateInstance` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.PrivateInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE-75]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     instance.PrivateInstance();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE+3]]:3-26: error: cannot access private member `PrivateInstance` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_protected_access_denied.carbon:[[@LINE-41]]:5-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.PrivateInstance();
 }
@@ -1139,162 +896,90 @@ class Derived {
   extend base: Cpp.Private;
 
   fn CallStatic() {
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PublicStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Cpp.Private.PublicStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.Private.PublicStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:5-28: error: cannot access private member `PublicStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+2]]:5-28: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Cpp.Private.PublicStatic();
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PublicStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Self.PublicStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.Private.PublicStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:5-21: error: cannot access private member `PublicStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-2]]:5-28: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Self.PublicStatic();
 
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `ProtectedStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Cpp.Private.ProtectedStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.Private.ProtectedStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:5-31: error: cannot access private member `ProtectedStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+2]]:5-31: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Cpp.Private.ProtectedStatic();
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `ProtectedStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Self.ProtectedStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.Private.ProtectedStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:5-24: error: cannot access private member `ProtectedStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-2]]:5-31: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Self.ProtectedStatic();
 
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Cpp.Private.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.Private.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:5-29: error: cannot access private member `PrivateStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+2]]:5-29: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Cpp.Private.PrivateStatic();
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Self.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.Private.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:5-22: error: cannot access private member `PrivateStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-2]]:5-29: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Self.PrivateStatic();
   }
 
   fn CallInstance(var instance: Cpp.Private) {
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PublicInstance` of type `Cpp.Private` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     instance.PublicInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     instance.PublicInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:5-27: error: cannot access private member `PublicInstance` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+2]]:5-27: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     instance.PublicInstance();
 
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `ProtectedInstance` of type `Cpp.Private` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     instance.ProtectedInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     instance.ProtectedInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:5-30: error: cannot access private member `ProtectedInstance` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+2]]:5-30: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     instance.ProtectedInstance();
 
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateInstance` of type `Cpp.Private` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     instance.PrivateInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     instance.PrivateInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:5-28: error: cannot access private member `PrivateInstance` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+2]]:5-28: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     instance.PrivateInstance();
   }
 }
 
 fn Call(var instance: Cpp.Private) {
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PublicStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Private.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-79]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.Private.PublicStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:3-26: error: cannot access private member `PublicStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-45]]:5-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.Private.PublicStatic();
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PublicStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-87]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.Private.PublicStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:3-22: error: cannot access private member `PublicStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-49]]:5-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.PublicStatic();
 
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `ProtectedStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Private.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-79]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.Private.ProtectedStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:3-29: error: cannot access private member `ProtectedStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-45]]:5-31: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.Private.ProtectedStatic();
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `ProtectedStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-87]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.Private.ProtectedStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:3-25: error: cannot access private member `ProtectedStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-49]]:5-31: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.ProtectedStatic();
 
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Private.PrivateStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-79]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.Private.PrivateStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:3-27: error: cannot access private member `PrivateStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-45]]:5-29: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.Private.PrivateStatic();
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.PrivateStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-87]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.Private.PrivateStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:3-23: error: cannot access private member `PrivateStatic` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-49]]:5-29: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.PrivateStatic();
 
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PublicInstance` of type `Cpp.Private` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.PublicInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-77]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     instance.PublicInstance();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:3-25: error: cannot access private member `PublicInstance` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-43]]:5-27: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.PublicInstance();
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `ProtectedInstance` of type `Cpp.Private` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.ProtectedInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-76]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     instance.ProtectedInstance();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:3-28: error: cannot access private member `ProtectedInstance` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-42]]:5-30: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.ProtectedInstance();
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateInstance` of type `Cpp.Private` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.PrivateInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-75]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     instance.PrivateInstance();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE+3]]:3-26: error: cannot access private member `PrivateInstance` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_private_access_denied.carbon:[[@LINE-41]]:5-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.PrivateInstance();
 }
@@ -1340,110 +1025,62 @@ class Derived {
   extend base: Cpp.PublicProtected;
 
   fn CallStatic() {
-    // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateStatic` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Cpp.PublicProtected.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.PublicProtected.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+3]]:5-37: error: cannot access private member `PrivateStatic` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+2]]:5-37: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Cpp.PublicProtected.PrivateStatic();
-    // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateStatic` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Self.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.PublicProtected.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+3]]:5-22: error: cannot access private member `PrivateStatic` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE-2]]:5-37: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Self.PrivateStatic();
   }
 
   fn CallInstance(var instance: Cpp.PublicProtected) {
-    // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateInstance` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     instance.PrivateInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     instance.PrivateInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+3]]:5-28: error: cannot access private member `PrivateInstance` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+2]]:5-28: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     instance.PrivateInstance();
   }
 }
 
 fn Call(var instance: Cpp.PublicProtected) {
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `PublicStatic` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.PublicProtected.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.PublicProtected.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+3]]:3-34: error: cannot access protected member `PublicStatic` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+2]]:3-34: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.PublicProtected.PublicStatic();
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `PublicStatic` of type `Derived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE-4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.PublicProtected.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+3]]:3-22: error: cannot access protected member `PublicStatic` of type `Derived` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE-2]]:3-34: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.PublicStatic();
 
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `ProtectedStatic` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.PublicProtected.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.PublicProtected.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+3]]:3-37: error: cannot access protected member `ProtectedStatic` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+2]]:3-37: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.PublicProtected.ProtectedStatic();
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `ProtectedStatic` of type `Derived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE-4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   Cpp.PublicProtected.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+3]]:3-25: error: cannot access protected member `ProtectedStatic` of type `Derived` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE-2]]:3-37: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.ProtectedStatic();
 
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateStatic` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.PublicProtected.PrivateStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE-61]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.PublicProtected.PrivateStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+3]]:3-35: error: cannot access private member `PrivateStatic` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE-35]]:5-37: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.PublicProtected.PrivateStatic();
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateStatic` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.PrivateStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE-69]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.PublicProtected.PrivateStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+3]]:3-23: error: cannot access private member `PrivateStatic` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE-39]]:5-37: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.PrivateStatic();
 
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `PublicInstance` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.PublicInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   instance.PublicInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+3]]:3-25: error: cannot access protected member `PublicInstance` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+2]]:3-25: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.PublicInstance();
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access protected member `ProtectedInstance` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.ProtectedInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+4]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   instance.ProtectedInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+3]]:3-28: error: cannot access protected member `ProtectedInstance` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+2]]:3-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.ProtectedInstance();
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateInstance` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.PrivateInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE-75]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     instance.PrivateInstance();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE+3]]:3-26: error: cannot access private member `PrivateInstance` of type `Cpp.PublicProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_protected_access_denied.carbon:[[@LINE-41]]:5-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.PrivateInstance();
 }
@@ -1458,162 +1095,90 @@ class Derived {
   extend base: Cpp.PublicPrivate;
 
   fn CallStatic() {
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PublicStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Cpp.PublicPrivate.PublicStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.PublicPrivate.PublicStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:5-34: error: cannot access private member `PublicStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+2]]:5-34: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Cpp.PublicPrivate.PublicStatic();
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PublicStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Self.PublicStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.PublicPrivate.PublicStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:5-21: error: cannot access private member `PublicStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-2]]:5-34: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Self.PublicStatic();
 
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `ProtectedStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Cpp.PublicPrivate.ProtectedStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.PublicPrivate.ProtectedStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:5-37: error: cannot access private member `ProtectedStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+2]]:5-37: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Cpp.PublicPrivate.ProtectedStatic();
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `ProtectedStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Self.ProtectedStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.PublicPrivate.ProtectedStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:5-24: error: cannot access private member `ProtectedStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-2]]:5-37: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Self.ProtectedStatic();
 
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Cpp.PublicPrivate.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.PublicPrivate.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:5-35: error: cannot access private member `PrivateStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+2]]:5-35: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Cpp.PublicPrivate.PrivateStatic();
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     Self.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     Cpp.PublicPrivate.PrivateStatic();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:5-22: error: cannot access private member `PrivateStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-2]]:5-35: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Self.PrivateStatic();
   }
 
   fn CallInstance(var instance: Cpp.PublicPrivate) {
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PublicInstance` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     instance.PublicInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     instance.PublicInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:5-27: error: cannot access private member `PublicInstance` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+2]]:5-27: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     instance.PublicInstance();
 
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `ProtectedInstance` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     instance.ProtectedInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     instance.ProtectedInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:5-30: error: cannot access private member `ProtectedInstance` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+2]]:5-30: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     instance.ProtectedInstance();
 
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:5: error: cannot access private member `PrivateInstance` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     instance.PrivateInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:     instance.PrivateInstance();
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:5-28: error: cannot access private member `PrivateInstance` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+2]]:5-28: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     instance.PrivateInstance();
   }
 }
 
 fn Call(var instance: Cpp.PublicPrivate) {
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PublicStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.PublicPrivate.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-79]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.PublicPrivate.PublicStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:3-32: error: cannot access private member `PublicStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-45]]:5-34: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.PublicPrivate.PublicStatic();
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PublicStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-87]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.PublicPrivate.PublicStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:3-22: error: cannot access private member `PublicStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-49]]:5-34: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.PublicStatic();
 
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `ProtectedStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.PublicPrivate.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-79]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.PublicPrivate.ProtectedStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:3-35: error: cannot access private member `ProtectedStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-45]]:5-37: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.PublicPrivate.ProtectedStatic();
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `ProtectedStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.ProtectedStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-87]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.PublicPrivate.ProtectedStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:3-25: error: cannot access private member `ProtectedStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-49]]:5-37: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.ProtectedStatic();
 
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.PublicPrivate.PrivateStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-79]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.PublicPrivate.PrivateStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:3-33: error: cannot access private member `PrivateStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-45]]:5-35: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.PublicPrivate.PrivateStatic();
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.PrivateStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-87]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     Cpp.PublicPrivate.PrivateStatic();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:3-23: error: cannot access private member `PrivateStatic` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-49]]:5-35: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Derived.PrivateStatic();
 
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PublicInstance` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.PublicInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-77]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     instance.PublicInstance();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:3-25: error: cannot access private member `PublicInstance` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-43]]:5-27: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.PublicInstance();
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `ProtectedInstance` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.ProtectedInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-76]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     instance.ProtectedInstance();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:3-28: error: cannot access private member `ProtectedInstance` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-42]]:5-30: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.ProtectedInstance();
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+7]]:3: error: cannot access private member `PrivateInstance` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   instance.PrivateInstance();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-75]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:     instance.PrivateInstance();
-  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE+3]]:3-26: error: cannot access private member `PrivateInstance` of type `Cpp.PublicPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_base_class_public_private_access_denied.carbon:[[@LINE-41]]:5-28: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   instance.PrivateInstance();
 }

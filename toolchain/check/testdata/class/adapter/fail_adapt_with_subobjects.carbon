@@ -19,13 +19,9 @@ library "[[@TEST_NAME]]";
 base class Base {}
 
 class AdaptWithBase {
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+3]]:3: error: adapter with base class [AdaptWithBase]
-  // CHECK:STDERR:   adapt i32;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+1]]:3-12: error: adapter with base class [AdaptWithBase]
   adapt i32;
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+4]]:3: note: `base` declaration is here [AdaptWithBaseHere]
-  // CHECK:STDERR:   extend base: Base;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+2]]:3-20: note: `base` declaration is here [AdaptWithBaseHere]
   // CHECK:STDERR:
   extend base: Base;
 }
@@ -35,25 +31,17 @@ class AdaptWithBase {
 library "[[@TEST_NAME]]";
 
 class AdaptWithField {
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: error: adapter with fields [AdaptWithFields]
-  // CHECK:STDERR:   adapt i32;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+1]]:3-12: error: adapter with fields [AdaptWithFields]
   adapt i32;
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: note: first field declaration is here [AdaptWithFieldHere]
-  // CHECK:STDERR:   var n: i32;
-  // CHECK:STDERR:       ^~~~~~
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+2]]:7-12: note: first field declaration is here [AdaptWithFieldHere]
   // CHECK:STDERR:
   var n: i32;
 }
 
 class AdaptWithFields {
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: error: adapter with fields [AdaptWithFields]
-  // CHECK:STDERR:   adapt i32;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+1]]:3-12: error: adapter with fields [AdaptWithFields]
   adapt i32;
-  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+4]]:7: note: first field declaration is here [AdaptWithFieldHere]
-  // CHECK:STDERR:   var a: i32;
-  // CHECK:STDERR:       ^~~~~~
+  // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+2]]:7-12: note: first field declaration is here [AdaptWithFieldHere]
   // CHECK:STDERR:
   var a: i32;
   var b: i32;
@@ -69,12 +57,8 @@ base class Base {}
 class AdaptWithBaseAndFields {
   extend base: Base;
   var n: i32;
-  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+7]]:3: error: adapter with base class [AdaptWithBase]
-  // CHECK:STDERR:   adapt {};
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE-5]]:3: note: `base` declaration is here [AdaptWithBaseHere]
-  // CHECK:STDERR:   extend base: Base;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+3]]:3-11: error: adapter with base class [AdaptWithBase]
+  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE-3]]:3-20: note: `base` declaration is here [AdaptWithBaseHere]
   // CHECK:STDERR:
   adapt {};
 }
@@ -125,13 +109,13 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   adapt_decl %i32 [concrete]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %.loc15: %AdaptWithBase.elem = base_decl %Base.ref, element<none> [concrete]
+// CHECK:STDOUT:   %.loc11: %AdaptWithBase.elem = base_decl %Base.ref, element<none> [concrete]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithBase
 // CHECK:STDOUT:   .Base = <poisoned>
-// CHECK:STDOUT:   .base = %.loc15
+// CHECK:STDOUT:   .base = %.loc11
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -171,27 +155,27 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT: class @AdaptWithField {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   adapt_decl %i32 [concrete]
-// CHECK:STDOUT:   %.loc13: %AdaptWithField.elem = field_decl n, element<none> [concrete]
+// CHECK:STDOUT:   %.loc9: %AdaptWithField.elem = field_decl n, element<none> [concrete]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithField
-// CHECK:STDOUT:   .n = %.loc13
+// CHECK:STDOUT:   .n = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithFields {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   adapt_decl %i32 [concrete]
-// CHECK:STDOUT:   %.loc25: %AdaptWithFields.elem = field_decl a, element<none> [concrete]
-// CHECK:STDOUT:   %.loc26: %AdaptWithFields.elem = field_decl b, element<none> [concrete]
-// CHECK:STDOUT:   %.loc27: %AdaptWithFields.elem = field_decl c, element<none> [concrete]
+// CHECK:STDOUT:   %.loc17: %AdaptWithFields.elem = field_decl a, element<none> [concrete]
+// CHECK:STDOUT:   %.loc18: %AdaptWithFields.elem = field_decl b, element<none> [concrete]
+// CHECK:STDOUT:   %.loc19: %AdaptWithFields.elem = field_decl c, element<none> [concrete]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithFields
-// CHECK:STDOUT:   .a = %.loc25
-// CHECK:STDOUT:   .b = %.loc26
-// CHECK:STDOUT:   .c = %.loc27
+// CHECK:STDOUT:   .a = %.loc17
+// CHECK:STDOUT:   .b = %.loc18
+// CHECK:STDOUT:   .c = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_adapt_with_base_and_fields.carbon
@@ -242,9 +226,9 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc7: %AdaptWithBaseAndFields.elem.8fd = base_decl %Base.ref, element<none> [concrete]
 // CHECK:STDOUT:   %.loc8: %AdaptWithBaseAndFields.elem.3f0 = field_decl n, element<none> [concrete]
-// CHECK:STDOUT:   %.loc16_10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc16_11: type = converted %.loc16_10, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   adapt_decl %.loc16_11 [concrete]
+// CHECK:STDOUT:   %.loc12_10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc12_11: type = converted %.loc12_10, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   adapt_decl %.loc12_11 [concrete]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

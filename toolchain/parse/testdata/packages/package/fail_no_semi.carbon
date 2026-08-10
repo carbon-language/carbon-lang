@@ -10,9 +10,7 @@
 
 package Geometry
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+10]]:26: error: `package` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR: // CHECK:STDOUT:   (root)
-// CHECK:STDERR:                          ^
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+8]]:26: error: `package` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''

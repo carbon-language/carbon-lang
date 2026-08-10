@@ -14,9 +14,7 @@
 library "[[@TEST_NAME]]";
 
 choice Always {
-  // CHECK:STDERR: fail_todo_empty_params.carbon:[[@LINE+4]]:8: error: semantics TODO: `empty parameter list should make a member function` [SemanticsTodo]
-  // CHECK:STDERR:   Sunny()
-  // CHECK:STDERR:        ^~
+  // CHECK:STDERR: fail_todo_empty_params.carbon:[[@LINE+2]]:8-9: error: semantics TODO: `empty parameter list should make a member function` [SemanticsTodo]
   // CHECK:STDERR:
   Sunny()
 }
@@ -28,9 +26,7 @@ library "[[@TEST_NAME]]";
 
 choice C {
   Alt1,
-  // CHECK:STDERR: fail_todo_params.carbon:[[@LINE+4]]:7: error: semantics TODO: `choice alternatives with parameters are not yet supported` [SemanticsTodo]
-  // CHECK:STDERR:   Alt2(a: i32, b: i64),
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_params.carbon:[[@LINE+2]]:7-22: error: semantics TODO: `choice alternatives with parameters are not yet supported` [SemanticsTodo]
   // CHECK:STDERR:
   Alt2(a: i32, b: i64),
   Alt3,
@@ -40,9 +36,7 @@ choice C {
 library "[[@TEST_NAME]]";
 
 choice C(T: type) {
-  // CHECK:STDERR: fail_todo_generic_params.carbon:[[@LINE+4]]:6: error: semantics TODO: `choice alternatives with parameters are not yet supported` [SemanticsTodo]
-  // CHECK:STDERR:   Alt(a: T)
-  // CHECK:STDERR:      ^~~~~~
+  // CHECK:STDERR: fail_todo_generic_params.carbon:[[@LINE+2]]:6-11: error: semantics TODO: `choice alternatives with parameters are not yet supported` [SemanticsTodo]
   // CHECK:STDERR:
   Alt(a: T)
 }
@@ -51,9 +45,7 @@ choice C(T: type) {
 library "[[@TEST_NAME]]";
 
 choice C {
-  // CHECK:STDERR: fail_todo_self_param.carbon:[[@LINE+4]]:6: error: semantics TODO: `choice alternatives with parameters are not yet supported` [SemanticsTodo]
-  // CHECK:STDERR:   Alt(a: Self*)
-  // CHECK:STDERR:      ^~~~~~~~~~
+  // CHECK:STDERR: fail_todo_self_param.carbon:[[@LINE+2]]:6-15: error: semantics TODO: `choice alternatives with parameters are not yet supported` [SemanticsTodo]
   // CHECK:STDERR:
   Alt(a: Self*)
 }

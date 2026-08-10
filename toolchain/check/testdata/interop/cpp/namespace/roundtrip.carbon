@@ -68,9 +68,7 @@ void F();
 
 void G() {
   // This is not found because it looks for the identifier `Cpp`, not the keyword `Cpp`.
-  // CHECK:STDERR: fail_carbon_cpp.carbon:[[@LINE+4]]:11: error: no member named 'Cpp' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    14 |   Carbon::Cpp::F();
-  // CHECK:STDERR:       |   ~~~~~~~~^
+  // CHECK:STDERR: fail_carbon_cpp.carbon:[[@LINE+2]]:11-13: error: no member named 'Cpp' in namespace 'Carbon' [CppInteropParseError]
   // CHECK:STDERR:
   Carbon::Cpp::F();
 }
@@ -87,13 +85,9 @@ inline Cpp '''
 void FRaw();
 
 void GRaw() {
-  // CHECK:STDERR: fail_carbon_raw_cpp.carbon:[[@LINE+8]]:16: error: semantics TODO: `interop with translation unit decl` [SemanticsTodo]
-  // CHECK:STDERR:   Carbon::Cpp::FRaw();
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR: fail_carbon_raw_cpp.carbon:[[@LINE+4]]:16: error: semantics TODO: `interop with translation unit decl` [SemanticsTodo]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_carbon_raw_cpp.carbon:[[@LINE+4]]:11: error: no member named 'Cpp' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    19 |   Carbon::Cpp::FRaw();
-  // CHECK:STDERR:       |   ~~~~~~~~^
+  // CHECK:STDERR: fail_carbon_raw_cpp.carbon:[[@LINE+2]]:11-13: error: no member named 'Cpp' in namespace 'Carbon' [CppInteropParseError]
   // CHECK:STDERR:
   Carbon::Cpp::FRaw();
 }

@@ -56,12 +56,8 @@ library "[[@TEST_NAME]]";
 fn F(generic _: type);
 
 fn G() {
-  // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE+7]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]
-  // CHECK:STDERR:   F({});
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE-6]]:1: note: generic function declared here [MissingGenericFunctionDefinitionHere]
-  // CHECK:STDERR: fn F(generic _: type);
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE+3]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]
+  // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE-4]]:1-22: note: generic function declared here [MissingGenericFunctionDefinitionHere]
   // CHECK:STDERR:
   F({});
 }
@@ -79,9 +75,7 @@ fn G[_: type]() {}
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:7: error: expected identifier in field declaration [FieldNamedUnderscore]
-  // CHECK:STDERR:   var _: ();
-  // CHECK:STDERR:       ^~~~~
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+2]]:7-11: error: expected identifier in field declaration [FieldNamedUnderscore]
   // CHECK:STDERR:
   var _: ();
 }
@@ -90,17 +84,11 @@ class C {
 
 fn F() -> {} {
   let _: {} = {};
-  // CHECK:STDERR: fail_use.carbon:[[@LINE+12]]:10: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   return _;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR: fail_use.carbon:[[@LINE+6]]:10: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_use.carbon:[[@LINE+8]]:10: error: `return` statements must end with a `;` [ExpectedStatementSemi]
-  // CHECK:STDERR:   return _;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR: fail_use.carbon:[[@LINE+4]]:10: error: `return` statements must end with a `;` [ExpectedStatementSemi]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_use.carbon:[[@LINE+4]]:10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   return _;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR: fail_use.carbon:[[@LINE+2]]:10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:
   return _;
 }
@@ -413,8 +401,8 @@ fn F() -> {} {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc14_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc14_7: type = converted %.loc14_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc10_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_7: type = converted %.loc10_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   return
@@ -534,7 +522,7 @@ fn F() -> {} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc9: %C.elem = field_decl _, element0 [concrete]
+// CHECK:STDOUT:   %.loc7: %C.elem = field_decl _, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type._ [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

@@ -13,9 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_non_member_access.carbon
 
 var x: {.a: i32} = {.a = 4};
-// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+4]]:14: error: type `{.a: i32}` does not have a member `b` [QualifiedExprNameNotFound]
-// CHECK:STDERR: var y: i32 = x.b;
-// CHECK:STDERR:              ^~~
+// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+2]]:14-16: error: type `{.a: i32}` does not have a member `b` [QualifiedExprNameNotFound]
 // CHECK:STDERR:
 var y: i32 = x.b;
 
@@ -86,7 +84,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.506 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var_storage %y.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc18: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %y: ref %i32 = wrapper_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.6b6 = ref_binding_pattern y [concrete = constants.%y.patt]

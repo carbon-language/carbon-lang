@@ -93,8 +93,8 @@ impl package SwappedExt;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %default.import.loc6_24.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc6_24.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc4_24.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc4_24.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_package.incorrect

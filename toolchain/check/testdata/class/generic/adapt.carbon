@@ -52,12 +52,8 @@ class Adapter {
 
 fn Access(a: Adapter) -> i32 {
   // TODO: This should presumably work, but the design doesn't say how yet.
-  // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `Adapter` to `C(i32)` [ConversionFailure]
-  // CHECK:STDERR:   return a.x;
-  // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+4]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return a.x;
-  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+3]]:10-12: error: cannot implicitly convert expression of type `Adapter` to `C(i32)` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+2]]:10-12: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return a.x;
 }
@@ -85,12 +81,8 @@ import library "extend_adapt_specific_type_library";
 
 fn ImportedAccess(a: Adapter) -> i32 {
   // TODO: This should presumably work, but the design doesn't say how yet.
-  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `Adapter` to `C(i32)` [ConversionFailure]
-  // CHECK:STDERR:   return a.x;
-  // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+4]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return a.x;
-  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+3]]:10-12: error: cannot implicitly convert expression of type `Adapter` to `C(i32)` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+2]]:10-12: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return a.x;
 }
@@ -595,8 +587,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: %C.elem.29b = name_ref x, @C.%.loc5 [concrete = @C.%.loc5]
-// CHECK:STDOUT:   %.loc21_11.1: %C.3b7 = converted %a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc21_11.2: %i32 = class_element_access <error>, element0 [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_11.1: %C.3b7 = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_11.2: %i32 = class_element_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -856,8 +848,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: %C.elem.29b = name_ref x, imports.%Main.import_ref.ba1 [concrete = imports.%.c54]
-// CHECK:STDOUT:   %.loc15_11.1: %C.3b7 = converted %a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_11.2: %i32 = class_element_access <error>, element0 [concrete = <error>]
+// CHECK:STDOUT:   %.loc11_11.1: %C.3b7 = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc11_11.2: %i32 = class_element_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

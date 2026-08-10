@@ -16,24 +16,16 @@
 
 package Implicit;
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:12: error: name `x` not found [NameNotFound]
-// CHECK:STDERR: var a_ref: x;
-// CHECK:STDERR:            ^
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+2]]:12: error: name `x` not found [NameNotFound]
 // CHECK:STDERR:
 var a_ref: x;
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: error: name `x` not found [NameNotFound]
-// CHECK:STDERR: var b_ref: {.a = x};
-// CHECK:STDERR:                  ^
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+2]]:18: error: name `x` not found [NameNotFound]
 // CHECK:STDERR:
 var b_ref: {.a = x};
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:13: error: name `x` not found [NameNotFound]
-// CHECK:STDERR: var c_ref: (x,);
-// CHECK:STDERR:             ^
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+2]]:13: error: name `x` not found [NameNotFound]
 // CHECK:STDERR:
 var c_ref: (x,);
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:12: error: name `x` not found [NameNotFound]
-// CHECK:STDERR: var d_ref: x*;
-// CHECK:STDERR:            ^
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+2]]:12: error: name `x` not found [NameNotFound]
 // CHECK:STDERR:
 var d_ref: x*;
 
@@ -68,7 +60,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %a_ref.var: ref <error> = var_storage %a_ref.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %x.ref.loc8: <error> = name_ref x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x.ref.loc6: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:   %a_ref: <error> = wrapper_binding a_ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_ref.patt: <error> = ref_binding_pattern a_ref [concrete = <error>]
@@ -76,8 +68,8 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ref.var: ref <error> = var_storage %b_ref.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %x.ref.loc13: <error> = name_ref x, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc13: <error> = struct_literal (%x.ref.loc13) [concrete = <error>]
+// CHECK:STDOUT:     %x.ref.loc9: <error> = name_ref x, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc9: <error> = struct_literal (%x.ref.loc9) [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ref: <error> = wrapper_binding b_ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -86,8 +78,8 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c_ref.var: ref <error> = var_storage %c_ref.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.2: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %x.ref.loc18: <error> = name_ref x, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc18: <error> = tuple_literal (%x.ref.loc18) [concrete = <error>]
+// CHECK:STDOUT:     %x.ref.loc12: <error> = name_ref x, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc12: <error> = tuple_literal (%x.ref.loc12) [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c_ref: <error> = wrapper_binding c_ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -95,8 +87,8 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     %c_ref.var_patt: <error> = var_pattern %c_ref.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d_ref.var: ref <error> = var_storage %d_ref.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc23: type = splice_block %ptr [concrete = <error>] {
-// CHECK:STDOUT:     %x.ref.loc23: <error> = name_ref x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc15: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %x.ref.loc15: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:     %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d_ref: <error> = wrapper_binding d_ref, <error> [concrete = <error>]

@@ -8,9 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/var/fail_ref.carbon
 
-// CHECK:STDERR: fail_ref.carbon:[[@LINE+4]]:5: error: found `ref` inside `var` pattern [RefInsideVar]
-// CHECK:STDERR: var ref x: i32 = 0;
-// CHECK:STDERR:     ^~~
+// CHECK:STDERR: fail_ref.carbon:[[@LINE+2]]:5-7: error: found `ref` inside `var` pattern [RefInsideVar]
 // CHECK:STDERR:
 var ref x: i32 = 0;
 

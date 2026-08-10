@@ -26,12 +26,8 @@ library "[[@TEST_NAME]]";
 
 class C(a: i32) {}
 class D(b: C(1000));
-// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE+7]]:14: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: class D(b: C(1_000)) {}
-// CHECK:STDERR:              ^~~~~
-// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE-4]]:14: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: class D(b: C(1000));
-// CHECK:STDERR:              ^~~~
+// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE+3]]:14-18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_int_mismatch.carbon:[[@LINE-2]]:14-17: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:
 class D(b: C(1_000)) {}
 
@@ -230,9 +226,9 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %b: %C.847 = symbolic_binding b, 0 [symbolic]
 // CHECK:STDOUT:   %D.type.ff75f2.1: type = generic_class_type @D.loc5 [concrete]
 // CHECK:STDOUT:   %D.generic.7223e9.1: %D.type.ff75f2.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %D.type.ff75f2.2: type = generic_class_type @D.loc13 [concrete]
+// CHECK:STDOUT:   %D.type.ff75f2.2: type = generic_class_type @D.loc9 [concrete]
 // CHECK:STDOUT:   %D.generic.7223e9.2: %D.type.ff75f2.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %D.5b0064.2: type = class_type @D.loc13, @D.loc13(%b) [symbolic]
+// CHECK:STDOUT:   %D.5b0064.2: type = class_type @D.loc9, @D.loc9(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -282,23 +278,23 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc5_10.2: %C.847 = symbolic_binding b, 0 [symbolic = %b.loc5_10.1 (constants.%b)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl.loc13: %D.type.ff75f2.2 = class_decl @D.loc13 [concrete = constants.%D.generic.7223e9.2] {
-// CHECK:STDOUT:     %b.patt.loc13_10.1: %pattern_type.053 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc13_10.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %D.decl.loc9: %D.type.ff75f2.2 = class_decl @D.loc9 [concrete = constants.%D.generic.7223e9.2] {
+// CHECK:STDOUT:     %b.patt.loc9_10.1: %pattern_type.053 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc9_10.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_19.1: type = splice_block %C [concrete = constants.%C.847] {
+// CHECK:STDOUT:     %.loc9_19.1: type = splice_block %C [concrete = constants.%C.847] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
 // CHECK:STDOUT:       %impl.elem0: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:       %bound_method.loc13_19.1: <bound method> = bound_method %int_1000, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:       %bound_method.loc9_19.1: <bound method> = bound_method %int_1000, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:       %bound_method.loc13_19.2: <bound method> = bound_method %int_1000, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc13_19.2(%int_1000) [concrete = constants.%int_1000.55f]
-// CHECK:STDOUT:       %.loc13_19.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1000.55f]
-// CHECK:STDOUT:       %.loc13_19.3: %i32 = converted %int_1000, %.loc13_19.2 [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %bound_method.loc9_19.2: <bound method> = bound_method %int_1000, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc9_19.2(%int_1000) [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %.loc9_19.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1000.55f]
+// CHECK:STDOUT:       %.loc9_19.3: %i32 = converted %int_1000, %.loc9_19.2 [concrete = constants.%int_1000.55f]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%int_1000.55f) [concrete = constants.%C.847]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc13_10.2: %C.847 = symbolic_binding b, 0 [symbolic = %b.loc13_10.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc9_10.2: %C.847 = symbolic_binding b, 0 [symbolic = %b.loc9_10.1 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,9 +320,9 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @D.loc13(%b.loc13_10.2: %C.847) {
-// CHECK:STDOUT:   %b.patt.loc13_10.2: %pattern_type.053 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc13_10.2 (constants.%b.patt)]
-// CHECK:STDOUT:   %b.loc13_10.1: %C.847 = symbolic_binding b, 0 [symbolic = %b.loc13_10.1 (constants.%b)]
+// CHECK:STDOUT: generic class @D.loc9(%b.loc9_10.2: %C.847) {
+// CHECK:STDOUT:   %b.patt.loc9_10.2: %pattern_type.053 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc9_10.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %b.loc9_10.1: %C.847 = symbolic_binding b, 0 [symbolic = %b.loc9_10.1 (constants.%b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -354,8 +350,8 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %b.loc5_10.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @D.loc13(constants.%b) {
-// CHECK:STDOUT:   %b.patt.loc13_10.2 => constants.%b.patt
-// CHECK:STDOUT:   %b.loc13_10.1 => constants.%b
+// CHECK:STDOUT: specific @D.loc9(constants.%b) {
+// CHECK:STDOUT:   %b.patt.loc9_10.2 => constants.%b.patt
+// CHECK:STDOUT:   %b.loc9_10.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -72,9 +72,7 @@ interface Z {
   let T: type;
 }
 
-// CHECK:STDERR: fail_nested_facet_types_different.carbon:[[@LINE+4]]:25: error: associated constant `.(Z.T)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(unused generic FF: (Z where .T = ()) where .T = {}) {}
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different.carbon:[[@LINE+2]]:25-55: error: associated constant `.(Z.T)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:
 fn F(unused generic FF: (Z where .T = ()) where .T = {}) {}
 
@@ -86,9 +84,7 @@ interface Z {
   let U: type;
 }
 
-// CHECK:STDERR: fail_nested_facet_types_different_with_associated.carbon:[[@LINE+4]]:25: error: associated constant `.(Z.T)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(unused generic FF: (Z where .T = .U) where .T = {}) {}
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_with_associated.carbon:[[@LINE+2]]:25-55: error: associated constant `.(Z.T)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:
 fn F(unused generic FF: (Z where .T = .U) where .T = {}) {}
 
@@ -101,9 +97,7 @@ interface Z {
 }
 interface Y {}
 
-// CHECK:STDERR: fail_nested_facet_types_different_with_impls_interface.carbon:[[@LINE+4]]:25: error: associated constant `.(Z.T)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(unused generic FF: (Z where .Self impls Y and .T = ()) where .T = {}) {}
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_with_impls_interface.carbon:[[@LINE+2]]:25-73: error: associated constant `.(Z.T)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:
 fn F(unused generic FF: (Z where .Self impls Y and .T = ()) where .T = {}) {}
 
@@ -116,9 +110,7 @@ interface Z {
 }
 constraint Y {}
 
-// CHECK:STDERR: fail_nested_facet_types_different_with_impls_constraint.carbon:[[@LINE+4]]:25: error: associated constant `.(Z.T)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(unused generic FF: (Z where .Self impls Y and .T = ()) where .T = {}) {}
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_with_impls_constraint.carbon:[[@LINE+2]]:25-73: error: associated constant `.(Z.T)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:
 fn F(unused generic FF: (Z where .Self impls Y and .T = ()) where .T = {}) {}
 
@@ -131,9 +123,7 @@ interface Z {
 }
 class C(T: type) {}
 
-// CHECK:STDERR: fail_nested_facet_types_different_with_associated_in_generic_parameter.carbon:[[@LINE+4]]:25: error: associated constant `.(Z.T)` given two different values `C(.(Z.U))` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(unused generic FF: (Z where .T = C(.U)) where .T = {}) {}
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_with_associated_in_generic_parameter.carbon:[[@LINE+2]]:25-58: error: associated constant `.(Z.T)` given two different values `C(.(Z.U))` and `{}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:
 fn F(unused generic FF: (Z where .T = C(.U)) where .T = {}) {}
 
@@ -155,9 +145,7 @@ interface Z {
   let U: type;
 }
 
-// CHECK:STDERR: fail_nested_facet_types_different_with_bitand.carbon:[[@LINE+4]]:25: error: associated constant `.(Z.T)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(unused generic FF: ((Z where .T = .U) where .T = .U) & (Z where .T = {})) {}
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_with_bitand.carbon:[[@LINE+2]]:25-77: error: associated constant `.(Z.T)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:
 fn F(unused generic FF: ((Z where .T = .U) where .T = .U) & (Z where .T = {})) {}
 
@@ -169,9 +157,7 @@ interface Z {
   let U: type;
 }
 
-// CHECK:STDERR: fail_nested_facet_type_cycle.carbon:[[@LINE+4]]:25: error: found cycle in facet type constraint for `.(Z.U)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(unused generic FF: (Z where .T = .U) where .U = .T) {}
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_type_cycle.carbon:[[@LINE+2]]:25-55: error: found cycle in facet type constraint for `.(Z.U)` [FacetTypeConstraintCycle]
 // CHECK:STDERR:
 fn F(unused generic FF: (Z where .T = .U) where .U = .T) {}
 
@@ -188,9 +174,7 @@ interface Z {
 // The ordering here is meant to find a way to insert a LHS between the two `.S`
 // ids, by producing different orderings to get an id between them.
 
-// CHECK:STDERR: fail_nested_facet_types_different_separated_order_one.carbon:[[@LINE+4]]:25: error: associated constant `.(Z.S)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(unused generic FF: (((Z where .S = .U) where .V = {}) where .T = .U) & (Z where .S = {})) {}
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_separated_order_one.carbon:[[@LINE+2]]:25-93: error: associated constant `.(Z.S)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:
 fn F(unused generic FF: (((Z where .S = .U) where .V = {}) where .T = .U) & (Z where .S = {})) {}
 
@@ -208,9 +192,7 @@ interface Z {
 // ids, by producing different orderings to get an id between them. As of today,
 // this is the case where `.T` is sorted between the two `.S` rewrite rules.
 
-// CHECK:STDERR: fail_nested_facet_types_different_separated_order_two.carbon:[[@LINE+4]]:25: error: associated constant `.(Z.S)` given two different values `{}` and `.(Z.U)` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(unused generic FF: (((Z where .V = {}) where .S = .U) where .T = .U) & (Z where .S = {})) {}
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_separated_order_two.carbon:[[@LINE+2]]:25-93: error: associated constant `.(Z.S)` given two different values `{}` and `.(Z.U)` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:
 fn F(unused generic FF: (((Z where .V = {}) where .S = .U) where .T = .U) & (Z where .S = {})) {}
 
@@ -227,9 +209,7 @@ interface Z {
 // The ordering here is meant to find a way to insert a LHS between the two `.S`
 // ids, by producing different orderings to get an id between them.
 
-// CHECK:STDERR: fail_nested_facet_types_different_separated_order_three.carbon:[[@LINE+4]]:25: error: associated constant `.(Z.S)` given two different values `{}` and `.(Z.U)` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(unused generic FF: (((Z where .V = {}) where .T = .U) where .S = .U) & (Z where .S = {})) {}
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_facet_types_different_separated_order_three.carbon:[[@LINE+2]]:25-93: error: associated constant `.(Z.S)` given two different values `{}` and `.(Z.U)` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:
 fn F(unused generic FF: (((Z where .V = {}) where .T = .U) where .S = .U) & (Z where .S = {})) {}
 
@@ -308,12 +288,8 @@ constraint NZ2 {
 }
 
 fn F(generic FF: ((Y where .Y1 = ()) where .Self impls NZ1) where .Self impls NZ2) -> FF.(Z.Z1) {
-  // CHECK:STDERR: fail_todo_nested_impl_combine_rewrites_from_named_constraints.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `C(())` to `FF.(Z.Z1)` [ConversionFailure]
-  // CHECK:STDERR:   return () as C(());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_nested_impl_combine_rewrites_from_named_constraints.carbon:[[@LINE+4]]:3: note: type `C(())` does not implement interface `Core.ImplicitAs(FF.(Z.Z1))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return () as C(());
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_nested_impl_combine_rewrites_from_named_constraints.carbon:[[@LINE+3]]:3-21: error: cannot implicitly convert expression of type `C(())` to `FF.(Z.Z1)` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_nested_impl_combine_rewrites_from_named_constraints.carbon:[[@LINE+2]]:3-21: note: type `C(())` does not implement interface `Core.ImplicitAs(FF.(Z.Z1))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return () as C(());
 }
@@ -321,12 +297,8 @@ fn F(generic FF: ((Y where .Y1 = ()) where .Self impls NZ1) where .Self impls NZ
 // --- fail_where_nested_inside_where_impls.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_where_nested_inside_where_impls.carbon:[[@LINE+7]]:41: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
-// CHECK:STDERR: fn F(generic _: type where .Self impls (type where .Self impls type)) {}
-// CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_where_nested_inside_where_impls.carbon:[[@LINE+4]]:17: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
-// CHECK:STDERR: fn F(generic _: type where .Self impls (type where .Self impls type)) {}
-// CHECK:STDERR:                 ^~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_where_impls.carbon:[[@LINE+3]]:41-67: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fail_where_nested_inside_where_impls.carbon:[[@LINE+2]]:17-26: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
 // CHECK:STDERR:
 fn F(generic _: type where .Self impls (type where .Self impls type)) {}
 
@@ -337,12 +309,8 @@ interface Z {
   let Z1: type;
 }
 
-// CHECK:STDERR: fail_where_nested_inside_where_rewrite.carbon:[[@LINE+7]]:32: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
-// CHECK:STDERR: fn F(generic _: Z where .Z1 = (type where .Self impls type)) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_where_nested_inside_where_rewrite.carbon:[[@LINE+4]]:17: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
-// CHECK:STDERR: fn F(generic _: Z where .Z1 = (type where .Self impls type)) {}
-// CHECK:STDERR:                 ^~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_where_rewrite.carbon:[[@LINE+3]]:32-58: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fail_where_nested_inside_where_rewrite.carbon:[[@LINE+2]]:17-23: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
 // CHECK:STDERR:
 fn F(generic _: Z where .Z1 = (type where .Self impls type)) {}
 
@@ -352,12 +320,8 @@ library "[[@TEST_NAME]]";
 interface Z {}
 class C;
 
-// CHECK:STDERR: fail_where_nested_inside_where_same_type.carbon:[[@LINE+7]]:31: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
-// CHECK:STDERR: fn F(generic _: Z where C == (type where .Self impls type)) {}
-// CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_where_nested_inside_where_same_type.carbon:[[@LINE+4]]:17: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
-// CHECK:STDERR: fn F(generic _: Z where C == (type where .Self impls type)) {}
-// CHECK:STDERR:                 ^~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_where_same_type.carbon:[[@LINE+3]]:31-57: error: found `where` expression nested on the right-hand side of `where` [NestedWhereInsideWhere]
+// CHECK:STDERR: fail_where_nested_inside_where_same_type.carbon:[[@LINE+2]]:17-23: note: on right-hand side of `where` here [NestedWhereInsideWhereOuterNote]
 // CHECK:STDERR:
 fn F(generic _: Z where C == (type where .Self impls type)) {}
 
@@ -367,9 +331,7 @@ library "[[@TEST_NAME]]";
 interface Z(T: type) {}
 interface Y {}
 
-// CHECK:STDERR: fail_where_nested_inside_binding.carbon:[[@LINE+4]]:17: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
-// CHECK:STDERR: fn F(generic _: Z(type where .Self impls Y)) {}
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_binding.carbon:[[@LINE+2]]:17-43: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
 // CHECK:STDERR:
 fn F(generic _: Z(type where .Self impls Y)) {}
 
@@ -379,9 +341,7 @@ library "[[@TEST_NAME]]";
 interface Z(T: type) {}
 interface Y {}
 
-// CHECK:STDERR: fail_where_double_nested_inside_binding.carbon:[[@LINE+4]]:17: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
-// CHECK:STDERR: fn F(generic _: Z(type where .Self impls Y) where .Self impls Y) {}
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_double_nested_inside_binding.carbon:[[@LINE+2]]:17-43: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
 // CHECK:STDERR:
 fn F(generic _: Z(type where .Self impls Y) where .Self impls Y) {}
 
@@ -391,9 +351,7 @@ library "[[@TEST_NAME]]";
 interface Z(T: type) {}
 interface Y {}
 
-// CHECK:STDERR: fail_where_triple_nested_inside_binding.carbon:[[@LINE+4]]:18: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
-// CHECK:STDERR: fn F(generic _: (Z(type where .Self impls Y) where .Self impls Y) where .Self impls Y) {}
-// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_triple_nested_inside_binding.carbon:[[@LINE+2]]:18-44: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
 // CHECK:STDERR:
 fn F(generic _: (Z(type where .Self impls Y) where .Self impls Y) where .Self impls Y) {}
 
@@ -403,9 +361,7 @@ library "[[@TEST_NAME]]";
 interface Z(T: type) {}
 interface Y {}
 
-// CHECK:STDERR: fail_where_nested_inside_binding_combined.carbon:[[@LINE+4]]:17: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
-// CHECK:STDERR: fn F(generic _: Z(type where .Self impls Y) & Y) {}
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_binding_combined.carbon:[[@LINE+2]]:17-47: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
 // CHECK:STDERR:
 fn F(generic _: Z(type where .Self impls Y) & Y) {}
 
@@ -415,9 +371,7 @@ library "[[@TEST_NAME]]";
 interface Z(T: type) {}
 interface Y {}
 
-// CHECK:STDERR: fail_where_double_nested_inside_binding_combined.carbon:[[@LINE+4]]:17: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
-// CHECK:STDERR: fn F(generic _: (Z(type where .Self impls Y) where .Self impls Y) & Y) {}
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_double_nested_inside_binding_combined.carbon:[[@LINE+2]]:17-69: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
 // CHECK:STDERR:
 fn F(generic _: (Z(type where .Self impls Y) where .Self impls Y) & Y) {}
 
@@ -427,9 +381,7 @@ library "[[@TEST_NAME]]";
 interface Z(T: type) {}
 interface Y {}
 
-// CHECK:STDERR: fail_where_triple_nested_inside_binding_combined.carbon:[[@LINE+4]]:17: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
-// CHECK:STDERR: fn F(generic _: ((Z(type where .Self impls Y) where .Self impls Y) where .Self impls Y) & Y) {}
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_triple_nested_inside_binding_combined.carbon:[[@LINE+2]]:17-91: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
 // CHECK:STDERR:
 fn F(generic _: ((Z(type where .Self impls Y) where .Self impls Y) where .Self impls Y) & Y) {}
 
@@ -439,9 +391,7 @@ library "[[@TEST_NAME]]";
 class C(T: type);
 interface Y {}
 
-// CHECK:STDERR: fail_where_nested_inside_binding_of_non_facet_type.carbon:[[@LINE+4]]:17: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
-// CHECK:STDERR: fn F(generic _: C(type where .Self impls Y)) {}
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_binding_of_non_facet_type.carbon:[[@LINE+2]]:17-43: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
 // CHECK:STDERR:
 fn F(generic _: C(type where .Self impls Y)) {}
 
@@ -451,9 +401,7 @@ library "[[@TEST_NAME]]";
 interface Z(T: type) {}
 interface Y {}
 
-// CHECK:STDERR: fail_where_nested_inside_runtime_let_binding.carbon:[[@LINE+4]]:9: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
-// CHECK:STDERR: fn F(_: Z(type where .Self impls Y)) {}
-// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_runtime_let_binding.carbon:[[@LINE+2]]:9-35: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
 // CHECK:STDERR:
 fn F(_: Z(type where .Self impls Y)) {}
 
@@ -463,9 +411,7 @@ library "[[@TEST_NAME]]";
 interface Z(T: type) {}
 interface Y {}
 
-// CHECK:STDERR: fail_where_nested_inside_form_binding.carbon:[[@LINE+4]]:10: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
-// CHECK:STDERR: fn F(_:? Z(type where .Self impls Y)) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_form_binding.carbon:[[@LINE+2]]:10-36: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
 // CHECK:STDERR:
 fn F(_:? Z(type where .Self impls Y)) {}
 
@@ -475,8 +421,6 @@ library "[[@TEST_NAME]]";
 interface Z(T: type) {}
 interface Y {}
 
-// CHECK:STDERR: fail_where_nested_inside_var_binding.carbon:[[@LINE+4]]:13: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
-// CHECK:STDERR: fn F(var _: Z(type where .Self impls Y)) {}
-// CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_where_nested_inside_var_binding.carbon:[[@LINE+2]]:13-39: error: found `where` expression in binding's type that does not constrain the binding [InvalidWhereInsideBinding]
 // CHECK:STDERR:
 fn F(var _: Z(type where .Self impls Y)) {}

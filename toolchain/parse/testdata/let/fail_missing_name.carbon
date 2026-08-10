@@ -10,17 +10,13 @@
 
 // --- fail_runtime_binding.carbon
 
-// CHECK:STDERR: fail_runtime_binding.carbon:[[@LINE+4]]:5: error: expected pattern [ExpectedPattern]
-// CHECK:STDERR: let : i32 = 4;
-// CHECK:STDERR:     ^
+// CHECK:STDERR: fail_runtime_binding.carbon:[[@LINE+2]]:5: error: expected pattern [ExpectedPattern]
 // CHECK:STDERR:
 let : i32 = 4;
 
 // --- fail_compiletime_binding.carbon
 
-// CHECK:STDERR: fail_compiletime_binding.carbon:[[@LINE+4]]:13: error: expected name in binding pattern [ExpectedBindingPattern]
-// CHECK:STDERR: let generic : bool = true;
-// CHECK:STDERR:             ^
+// CHECK:STDERR: fail_compiletime_binding.carbon:[[@LINE+2]]:13: error: expected name in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR:
 let generic : bool = true;
 

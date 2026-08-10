@@ -24,22 +24,12 @@ int other = varable_name;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: <carbon Cpp imports>:1:1: warning: extra ';' outside of a function is incompatible with C++98 [CppInteropParseWarning]
-// CHECK:STDERR: ;
-// CHECK:STDERR: -
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: remove this [CppInteropFixItRemoval]
-// CHECK:STDERR: ;
-// CHECK:STDERR: -
 // CHECK:STDERR:
-// CHECK:STDERR: included from: fail_import_replacement.carbon:[[@LINE+11]]:10 [InCppInclude]
-// CHECK:STDERR: ./replacement.h:3:13: error: use of undeclared identifier 'varable_name'; did you mean 'variable_name'? [CppInteropParseError]
-// CHECK:STDERR: int other = varable_name;
-// CHECK:STDERR:             ------------
-// CHECK:STDERR: ./replacement.h:3:13: note: replace with `variable_name` [CppInteropFixItReplacement]
-// CHECK:STDERR: int other = varable_name;
-// CHECK:STDERR:             ------------
-// CHECK:STDERR: ./replacement.h:2:5: note: 'variable_name' declared here [CppInteropParseNote]
-// CHECK:STDERR: int variable_name;
-// CHECK:STDERR:     -------------
+// CHECK:STDERR: included from: fail_import_replacement.carbon:[[@LINE+5]]:10 [InCppInclude]
+// CHECK:STDERR: ./replacement.h:3:13-24: error: use of undeclared identifier 'varable_name'; did you mean 'variable_name'? [CppInteropParseError]
+// CHECK:STDERR: ./replacement.h:3:13-24: note: replace with `variable_name` [CppInteropFixItReplacement]
+// CHECK:STDERR: ./replacement.h:2:5-17: note: 'variable_name' declared here [CppInteropParseNote]
 // CHECK:STDERR:
 import Cpp library "replacement.h";
 
@@ -52,19 +42,11 @@ struct WithExtraSemi {};;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: <carbon Cpp imports>:1:1: warning: extra ';' outside of a function is incompatible with C++98 [CppInteropParseWarning]
-// CHECK:STDERR: ;
-// CHECK:STDERR: -
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: remove this [CppInteropFixItRemoval]
-// CHECK:STDERR: ;
-// CHECK:STDERR: -
 // CHECK:STDERR:
-// CHECK:STDERR: included from: import_removal.carbon:[[@LINE+8]]:10 [InCppInclude]
+// CHECK:STDERR: included from: import_removal.carbon:[[@LINE+4]]:10 [InCppInclude]
 // CHECK:STDERR: ./removal.h:2:25: warning: extra ';' outside of a function is incompatible with C++98 [CppInteropParseWarning]
-// CHECK:STDERR: struct WithExtraSemi {};;
-// CHECK:STDERR:                         -
 // CHECK:STDERR: ./removal.h:2:25: note: remove this [CppInteropFixItRemoval]
-// CHECK:STDERR: struct WithExtraSemi {};;
-// CHECK:STDERR:                         -
 // CHECK:STDERR:
 import Cpp library "removal.h";
 
@@ -77,18 +59,10 @@ double missing_semicolon = 0.1
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: <carbon Cpp imports>:1:1: warning: extra ';' outside of a function is incompatible with C++98 [CppInteropParseWarning]
-// CHECK:STDERR: ;
-// CHECK:STDERR: -
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: remove this [CppInteropFixItRemoval]
-// CHECK:STDERR: ;
-// CHECK:STDERR: -
 // CHECK:STDERR:
-// CHECK:STDERR: included from: fail_import_insertion.carbon:[[@LINE+8]]:10 [InCppInclude]
+// CHECK:STDERR: included from: fail_import_insertion.carbon:[[@LINE+4]]:10 [InCppInclude]
 // CHECK:STDERR: ./insertion.h:2:31: error: expected ';' after top level declarator [CppInteropParseError]
-// CHECK:STDERR: double missing_semicolon = 0.1
-// CHECK:STDERR:                               -
 // CHECK:STDERR: ./insertion.h:2:31: note: insert `;` here [CppInteropFixItInsertion]
-// CHECK:STDERR: double missing_semicolon = 0.1
-// CHECK:STDERR:                               -
 // CHECK:STDERR:
 import Cpp library "insertion.h";

@@ -44,45 +44,33 @@ fn F() {
   //@dump-sem-ir-begin
   var v: Cpp.S;
   let s: Cpp.S = v;
-  // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE+8]]:20: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
-  // CHECK:STDERR:    18 |   Cpp.TakesLValue(s);
-  // CHECK:STDERR:       |                    ^
-  // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./param_lvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const S') would lose const qualifier [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto TakesLValue(S&) -> void;
-  // CHECK:STDERR:       |      ^           ~~
+  // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_param_lvalue_ref.carbon:[[@LINE-7]]:10 [InCppInclude]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:18-19: note: 1st argument ('const S') would lose const qualifier [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesLValue(s);
 
-  // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE+8]]:35: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
-  // CHECK:STDERR:    28 |   Cpp.TakesLValue(s as const Cpp.S);
-  // CHECK:STDERR:       |                                   ^
-  // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE-19]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./param_lvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const S') would lose const qualifier [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto TakesLValue(S&) -> void;
-  // CHECK:STDERR:       |      ^           ~~
+  // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_param_lvalue_ref.carbon:[[@LINE-14]]:10 [InCppInclude]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:18-19: note: 1st argument ('const S') would lose const qualifier [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesLValue(s as const Cpp.S);
 
   var t: Cpp.T;
-  // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE+8]]:20: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
-  // CHECK:STDERR:    39 |   Cpp.TakesLValue(t);
-  // CHECK:STDERR:       |                    ^
-  // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE-30]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./param_lvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'T' to 'S &' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto TakesLValue(S&) -> void;
-  // CHECK:STDERR:       |      ^           ~~
+  // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_param_lvalue_ref.carbon:[[@LINE-22]]:10 [InCppInclude]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:18-19: note: no known conversion from 'T' to 'S &' for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesLValue(t);
 
   var u: Cpp.S;
-  // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE+8]]:35: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
-  // CHECK:STDERR:    50 |   Cpp.TakesLValue(u as const Cpp.S);
-  // CHECK:STDERR:       |                                   ^
-  // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE-41]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./param_lvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const S') would lose const qualifier [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto TakesLValue(S&) -> void;
-  // CHECK:STDERR:       |      ^           ~~
+  // CHECK:STDERR: fail_param_lvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_param_lvalue_ref.carbon:[[@LINE-30]]:10 [InCppInclude]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_lvalue_ref.h:5:18-19: note: 1st argument ('const S') would lose const qualifier [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesLValue(u as const Cpp.S);
   //@dump-sem-ir-end
@@ -135,13 +123,10 @@ import Cpp library "param_rvalue_ref.h";
 
 fn F() {
   let s: Cpp.S = {};
-  // CHECK:STDERR: fail_param_value_arg_for_rvalue_ref.carbon:[[@LINE+8]]:20: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
-  // CHECK:STDERR:    16 |   Cpp.TakesRValue(s);
-  // CHECK:STDERR:       |                    ^
-  // CHECK:STDERR: fail_param_value_arg_for_rvalue_ref.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./param_rvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const S') would lose const qualifier [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto TakesRValue(S&&) -> void;
-  // CHECK:STDERR:       |      ^           ~~~
+  // CHECK:STDERR: fail_param_value_arg_for_rvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_param_value_arg_for_rvalue_ref.carbon:[[@LINE-5]]:10 [InCppInclude]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:18-20: note: 1st argument ('const S') would lose const qualifier [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesRValue(s);
 }
@@ -155,34 +140,25 @@ import Cpp library "param_rvalue_ref.h";
 fn F() {
   //@dump-sem-ir-begin
   var s: Cpp.S;
-  // CHECK:STDERR: fail_param_rvalue_ref.carbon:[[@LINE+8]]:20: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
-  // CHECK:STDERR:    17 |   Cpp.TakesRValue(s);
-  // CHECK:STDERR:       |                    ^
-  // CHECK:STDERR: fail_param_rvalue_ref.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./param_rvalue_ref.h:5:6: note: candidate function not viable: expects an rvalue for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto TakesRValue(S&&) -> void;
-  // CHECK:STDERR:       |      ^           ~~~
+  // CHECK:STDERR: fail_param_rvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_param_rvalue_ref.carbon:[[@LINE-6]]:10 [InCppInclude]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:18-20: note: expects an rvalue for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesRValue(s);
 
   var t: Cpp.T;
-  // CHECK:STDERR: fail_param_rvalue_ref.carbon:[[@LINE+8]]:20: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
-  // CHECK:STDERR:    28 |   Cpp.TakesRValue(t);
-  // CHECK:STDERR:       |                    ^
-  // CHECK:STDERR: fail_param_rvalue_ref.carbon:[[@LINE-19]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./param_rvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'T' to 'S' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto TakesRValue(S&&) -> void;
-  // CHECK:STDERR:       |      ^           ~~~
+  // CHECK:STDERR: fail_param_rvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_param_rvalue_ref.carbon:[[@LINE-14]]:10 [InCppInclude]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:18-20: note: no known conversion from 'T' to 'S' for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesRValue(t);
 
-  // CHECK:STDERR: fail_param_rvalue_ref.carbon:[[@LINE+8]]:47: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
-  // CHECK:STDERR:    38 |   Cpp.TakesRValue(({} as Cpp.S) as const Cpp.S);
-  // CHECK:STDERR:       |                                               ^
-  // CHECK:STDERR: fail_param_rvalue_ref.carbon:[[@LINE-29]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./param_rvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const S') would lose const qualifier [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto TakesRValue(S&&) -> void;
-  // CHECK:STDERR:       |      ^           ~~~
+  // CHECK:STDERR: fail_param_rvalue_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_param_rvalue_ref.carbon:[[@LINE-21]]:10 [InCppInclude]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:6-16: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_rvalue_ref.h:5:18-20: note: 1st argument ('const S') would lose const qualifier [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesRValue(({} as Cpp.S) as const Cpp.S);
   //@dump-sem-ir-end
@@ -237,13 +213,10 @@ import Cpp library "param_const_lvalue_ref.h";
 
 fn F() {
   var t: Cpp.T;
-  // CHECK:STDERR: fail_call_param_const_lvalue_ref_with_wrong_type.carbon:[[@LINE+8]]:25: error: no matching function for call to 'TakesConstLValue' [CppInteropParseError]
-  // CHECK:STDERR:    16 |   Cpp.TakesConstLValue(t);
-  // CHECK:STDERR:       |                         ^
-  // CHECK:STDERR: fail_call_param_const_lvalue_ref_with_wrong_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./param_const_lvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'T' to 'const S' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto TakesConstLValue(const S&) -> void;
-  // CHECK:STDERR:       |      ^                ~~~~~~~~
+  // CHECK:STDERR: fail_call_param_const_lvalue_ref_with_wrong_type.carbon:[[@LINE+5]]:3-22: error: no matching function for call to 'TakesConstLValue' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_call_param_const_lvalue_ref_with_wrong_type.carbon:[[@LINE-5]]:10 [InCppInclude]
+  // CHECK:STDERR: ./param_const_lvalue_ref.h:5:6-21: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_const_lvalue_ref.h:5:23-30: note: no known conversion from 'T' to 'const S' for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesConstLValue(t);
 }
@@ -296,24 +269,18 @@ import Cpp library "param_const_rvalue_ref.h";
 fn F() {
   //@dump-sem-ir-begin
   var s: Cpp.S;
-  // CHECK:STDERR: fail_param_lvalue_ref_arg_const_rvalue_ref.carbon:[[@LINE+8]]:25: error: no matching function for call to 'TakesConstRValue' [CppInteropParseError]
-  // CHECK:STDERR:    17 |   Cpp.TakesConstRValue(s);
-  // CHECK:STDERR:       |                         ^
-  // CHECK:STDERR: fail_param_lvalue_ref_arg_const_rvalue_ref.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./param_const_rvalue_ref.h:5:6: note: candidate function not viable: expects an rvalue for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto TakesConstRValue(const S&&) -> void;
-  // CHECK:STDERR:       |      ^                ~~~~~~~~~
+  // CHECK:STDERR: fail_param_lvalue_ref_arg_const_rvalue_ref.carbon:[[@LINE+5]]:3-22: error: no matching function for call to 'TakesConstRValue' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_param_lvalue_ref_arg_const_rvalue_ref.carbon:[[@LINE-6]]:10 [InCppInclude]
+  // CHECK:STDERR: ./param_const_rvalue_ref.h:5:6-21: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_const_rvalue_ref.h:5:23-31: note: expects an rvalue for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesConstRValue(s);
 
   var t: Cpp.T;
-  // CHECK:STDERR: fail_param_lvalue_ref_arg_const_rvalue_ref.carbon:[[@LINE+8]]:25: error: no matching function for call to 'TakesConstRValue' [CppInteropParseError]
-  // CHECK:STDERR:    28 |   Cpp.TakesConstRValue(t);
-  // CHECK:STDERR:       |                         ^
-  // CHECK:STDERR: fail_param_lvalue_ref_arg_const_rvalue_ref.carbon:[[@LINE-19]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./param_const_rvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'T' to 'const S' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto TakesConstRValue(const S&&) -> void;
-  // CHECK:STDERR:       |      ^                ~~~~~~~~~
+  // CHECK:STDERR: fail_param_lvalue_ref_arg_const_rvalue_ref.carbon:[[@LINE+5]]:3-22: error: no matching function for call to 'TakesConstRValue' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_param_lvalue_ref_arg_const_rvalue_ref.carbon:[[@LINE-14]]:10 [InCppInclude]
+  // CHECK:STDERR: ./param_const_rvalue_ref.h:5:6-21: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./param_const_rvalue_ref.h:5:23-31: note: no known conversion from 'T' to 'const S' for 1st argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.TakesConstRValue(t);
   //@dump-sem-ir-end
@@ -392,12 +359,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "return_const_lvalue_ref.h";
 
 fn F() {
-  // CHECK:STDERR: fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+7]]:29: error: cannot implicitly convert expression of type `const Cpp.S` to `Cpp.S` [ConversionFailure]
-  // CHECK:STDERR:   let unused ref s: Cpp.S = Cpp.ReturnConstLValue();
-  // CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+4]]:29: note: type `const Cpp.S` does not implement interface `Core.ImplicitAs(Cpp.S)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   let unused ref s: Cpp.S = Cpp.ReturnConstLValue();
-  // CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+3]]:29-51: error: cannot implicitly convert expression of type `const Cpp.S` to `Cpp.S` [ConversionFailure]
+  // CHECK:STDERR: fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+2]]:29-51: note: type `const Cpp.S` does not implement interface `Core.ImplicitAs(Cpp.S)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   let unused ref s: Cpp.S = Cpp.ReturnConstLValue();
 }
@@ -471,12 +434,8 @@ template<typename T> void TakeAnything_ExpectConstLRef_ByRef(T&&) {
 ''';
 
 fn PassConstRef(ref x: const XByRef) {
-  // CHECK:STDERR: fail_todo_forwarding_reference_by_ref.carbon:[[@LINE+7]]:42: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-  // CHECK:STDERR:   Cpp.TakeAnything_ExpectConstLRef_ByRef(ref x);
-  // CHECK:STDERR:                                          ^~~~~
-  // CHECK:STDERR: fail_todo_forwarding_reference_by_ref.carbon:[[@LINE-9]]:65: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: template<typename T> void TakeAnything_ExpectConstLRef_ByRef(T&&) {
-  // CHECK:STDERR:                                                                 ^
+  // CHECK:STDERR: fail_todo_forwarding_reference_by_ref.carbon:[[@LINE+3]]:42-46: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+  // CHECK:STDERR: fail_todo_forwarding_reference_by_ref.carbon:[[@LINE-7]]:65: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.TakeAnything_ExpectConstLRef_ByRef(ref x);
 }
@@ -627,28 +586,28 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = value_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesLValue.ref.loc18: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %s.ref.loc18: %S = name_ref s, %s
-// CHECK:STDOUT:   %Cpp.ref.loc28_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesLValue.ref.loc28: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %s.ref.loc28: %S = name_ref s, %s
-// CHECK:STDOUT:   %Cpp.ref.loc28_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc28: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %const.loc28: type = const_type %S.ref.loc28 [concrete = constants.%const]
-// CHECK:STDOUT:   %.loc28_21.1: %const = as_compatible %s.ref.loc28
-// CHECK:STDOUT:   %.loc28_21.2: %const = converted %s.ref.loc28, %.loc28_21.1
+// CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesLValue.ref.loc15: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %s.ref.loc15: %S = name_ref s, %s
+// CHECK:STDOUT:   %Cpp.ref.loc22_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesLValue.ref.loc22: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %s.ref.loc22: %S = name_ref s, %s
+// CHECK:STDOUT:   %Cpp.ref.loc22_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc22: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %const.loc22: type = const_type %S.ref.loc22 [concrete = constants.%const]
+// CHECK:STDOUT:   %.loc22_21.1: %const = as_compatible %s.ref.loc22
+// CHECK:STDOUT:   %.loc22_21.2: %const = converted %s.ref.loc22, %.loc22_21.1
 // CHECK:STDOUT:   %t.var: ref %T.ed0 = var_storage %t.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc30: %DefaultOrUnformed.type = facet_value constants.%T.ed0, (constants.%DefaultOrUnformed.impl_witness.8f2) [concrete = constants.%DefaultOrUnformed.facet.0be]
-// CHECK:STDOUT:   %.loc30_15.1: %DefaultOrUnformed.type = converted constants.%T.ed0, %DefaultOrUnformed.facet.loc30 [concrete = constants.%DefaultOrUnformed.facet.0be]
-// CHECK:STDOUT:   %as_type.loc30: type = facet_access_type %.loc30_15.1 [concrete = constants.%T.ed0]
-// CHECK:STDOUT:   %.loc30_15.2: type = converted %.loc30_15.1, %as_type.loc30 [concrete = constants.%T.ed0]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc24: %DefaultOrUnformed.type = facet_value constants.%T.ed0, (constants.%DefaultOrUnformed.impl_witness.8f2) [concrete = constants.%DefaultOrUnformed.facet.0be]
+// CHECK:STDOUT:   %.loc24_15.1: %DefaultOrUnformed.type = converted constants.%T.ed0, %DefaultOrUnformed.facet.loc24 [concrete = constants.%DefaultOrUnformed.facet.0be]
+// CHECK:STDOUT:   %as_type.loc24: type = facet_access_type %.loc24_15.1 [concrete = constants.%T.ed0]
+// CHECK:STDOUT:   %.loc24_15.2: type = converted %.loc24_15.1, %as_type.loc24 [concrete = constants.%T.ed0]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc30_3: ref %T.ed0 = splice_block %t.var {}
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc30: init %T.ed0 to %.loc30_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn.2()
-// CHECK:STDOUT:   assign %t.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc30
-// CHECK:STDOUT:   %.loc30_13: type = splice_block %T.ref [concrete = constants.%T.ed0] {
-// CHECK:STDOUT:     %Cpp.ref.loc30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc24_3: ref %T.ed0 = splice_block %t.var {}
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc24: init %T.ed0 to %.loc24_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn.2()
+// CHECK:STDOUT:   assign %t.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc24
+// CHECK:STDOUT:   %.loc24_13: type = splice_block %T.ref [concrete = constants.%T.ed0] {
+// CHECK:STDOUT:     %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.ed0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %T.ed0 = wrapper_binding t, %t.var
@@ -656,37 +615,37 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:     %t.patt: %pattern_type.5f6 = ref_binding_pattern t [concrete = constants.%t.patt]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.5f6 = var_pattern %t.patt [concrete = constants.%t.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc39: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesLValue.ref.loc39: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesLValue.ref.loc30: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T.ed0 = name_ref t, %t
 // CHECK:STDOUT:   %u.var: ref %S = var_storage %u.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc41: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.6da) [concrete = constants.%DefaultOrUnformed.facet.dce]
-// CHECK:STDOUT:   %.loc41_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc41 [concrete = constants.%DefaultOrUnformed.facet.dce]
-// CHECK:STDOUT:   %as_type.loc41: type = facet_access_type %.loc41_15.1 [concrete = constants.%S]
-// CHECK:STDOUT:   %.loc41_15.2: type = converted %.loc41_15.1, %as_type.loc41 [concrete = constants.%S]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc32: %DefaultOrUnformed.type = facet_value constants.%S, (constants.%DefaultOrUnformed.impl_witness.6da) [concrete = constants.%DefaultOrUnformed.facet.dce]
+// CHECK:STDOUT:   %.loc32_15.1: %DefaultOrUnformed.type = converted constants.%S, %DefaultOrUnformed.facet.loc32 [concrete = constants.%DefaultOrUnformed.facet.dce]
+// CHECK:STDOUT:   %as_type.loc32: type = facet_access_type %.loc32_15.1 [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc32_15.2: type = converted %.loc32_15.1, %as_type.loc32 [concrete = constants.%S]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc41_3: ref %S = splice_block %u.var {}
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc41: init %S to %.loc41_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn.3()
-// CHECK:STDOUT:   assign %u.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc41
-// CHECK:STDOUT:   %.loc41_13: type = splice_block %S.ref.loc41 [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc41: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref.loc41: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc32_3: ref %S = splice_block %u.var {}
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc32: init %S to %.loc32_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn.3()
+// CHECK:STDOUT:   assign %u.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc32
+// CHECK:STDOUT:   %.loc32_13: type = splice_block %S.ref.loc32 [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc32: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %u: ref %S = wrapper_binding u, %u.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %u.patt: %pattern_type.0f5 = ref_binding_pattern u [concrete = constants.%u.patt]
 // CHECK:STDOUT:     %u.var_patt: %pattern_type.0f5 = var_pattern %u.patt [concrete = constants.%u.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc50_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesLValue.ref.loc50: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc38_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesLValue.ref.loc38: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: ref %S = name_ref u, %u
-// CHECK:STDOUT:   %Cpp.ref.loc50_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc50: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %const.loc50: type = const_type %S.ref.loc50 [concrete = constants.%const]
-// CHECK:STDOUT:   %.loc50_21.1: ref %const = as_compatible %u.ref
-// CHECK:STDOUT:   %.loc50_21.2: ref %const = converted %u.ref, %.loc50_21.1
-// CHECK:STDOUT:   %S.cpp_destructor.bound.loc41: <bound method> = bound_method %u.var, constants.%S.cpp_destructor
-// CHECK:STDOUT:   %S.cpp_destructor.call.loc41: init %empty_tuple.type = call %S.cpp_destructor.bound.loc41(%u.var)
+// CHECK:STDOUT:   %Cpp.ref.loc38_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc38: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %const.loc38: type = const_type %S.ref.loc38 [concrete = constants.%const]
+// CHECK:STDOUT:   %.loc38_21.1: ref %const = as_compatible %u.ref
+// CHECK:STDOUT:   %.loc38_21.2: ref %const = converted %u.ref, %.loc38_21.1
+// CHECK:STDOUT:   %S.cpp_destructor.bound.loc32: <bound method> = bound_method %u.var, constants.%S.cpp_destructor
+// CHECK:STDOUT:   %S.cpp_destructor.call.loc32: init %empty_tuple.type = call %S.cpp_destructor.bound.loc32(%u.var)
 // CHECK:STDOUT:   %T.cpp_destructor.bound: <bound method> = bound_method %t.var, constants.%T.cpp_destructor
 // CHECK:STDOUT:   %T.cpp_destructor.call: init %empty_tuple.type = call %T.cpp_destructor.bound(%t.var)
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc8: <bound method> = bound_method %v.var, constants.%S.cpp_destructor
@@ -816,20 +775,20 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesRValue.ref.loc17: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesRValue.ref.loc14: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
 // CHECK:STDOUT:   %t.var: ref %T.ed0 = var_storage %t.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc19: %DefaultOrUnformed.type = facet_value constants.%T.ed0, (constants.%DefaultOrUnformed.impl_witness.8f2) [concrete = constants.%DefaultOrUnformed.facet.0be]
-// CHECK:STDOUT:   %.loc19_15.1: %DefaultOrUnformed.type = converted constants.%T.ed0, %DefaultOrUnformed.facet.loc19 [concrete = constants.%DefaultOrUnformed.facet.0be]
-// CHECK:STDOUT:   %as_type.loc19: type = facet_access_type %.loc19_15.1 [concrete = constants.%T.ed0]
-// CHECK:STDOUT:   %.loc19_15.2: type = converted %.loc19_15.1, %as_type.loc19 [concrete = constants.%T.ed0]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc16: %DefaultOrUnformed.type = facet_value constants.%T.ed0, (constants.%DefaultOrUnformed.impl_witness.8f2) [concrete = constants.%DefaultOrUnformed.facet.0be]
+// CHECK:STDOUT:   %.loc16_15.1: %DefaultOrUnformed.type = converted constants.%T.ed0, %DefaultOrUnformed.facet.loc16 [concrete = constants.%DefaultOrUnformed.facet.0be]
+// CHECK:STDOUT:   %as_type.loc16: type = facet_access_type %.loc16_15.1 [concrete = constants.%T.ed0]
+// CHECK:STDOUT:   %.loc16_15.2: type = converted %.loc16_15.1, %as_type.loc16 [concrete = constants.%T.ed0]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc19_3: ref %T.ed0 = splice_block %t.var {}
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc19: init %T.ed0 to %.loc19_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn.2()
-// CHECK:STDOUT:   assign %t.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc19
-// CHECK:STDOUT:   %.loc19_13: type = splice_block %T.ref [concrete = constants.%T.ed0] {
-// CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc16_3: ref %T.ed0 = splice_block %t.var {}
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc16: init %T.ed0 to %.loc16_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn.2()
+// CHECK:STDOUT:   assign %t.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc16
+// CHECK:STDOUT:   %.loc16_13: type = splice_block %T.ref [concrete = constants.%T.ed0] {
+// CHECK:STDOUT:     %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.ed0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %T.ed0 = wrapper_binding t, %t.var
@@ -837,22 +796,22 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:     %t.patt: %pattern_type.5f6 = ref_binding_pattern t [concrete = constants.%t.patt]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.5f6 = var_pattern %t.patt [concrete = constants.%t.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesRValue.ref.loc28: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesRValue.ref.loc22: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T.ed0 = name_ref t, %t
-// CHECK:STDOUT:   %Cpp.ref.loc38_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesRValue.ref.loc38: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc38_21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %Cpp.ref.loc38_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc38_29: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %.loc38_21.2: ref %S = temporary_storage
-// CHECK:STDOUT:   %.loc38_21.3: init %S to %.loc38_21.2 = class_init () [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc38_23: init %S = converted %.loc38_21.1, %.loc38_21.3 [concrete = constants.%S.val]
-// CHECK:STDOUT:   %Cpp.ref.loc38_42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc38_45: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %const: type = const_type %S.ref.loc38_45 [concrete = constants.%const]
-// CHECK:STDOUT:   %.loc38_33.1: init %const = as_compatible %.loc38_23 [concrete = constants.%empty_struct.674]
-// CHECK:STDOUT:   %.loc38_33.2: init %const = converted %.loc38_23, %.loc38_33.1 [concrete = constants.%empty_struct.674]
+// CHECK:STDOUT:   %Cpp.ref.loc29_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesRValue.ref.loc29: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc29_21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %Cpp.ref.loc29_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc29_29: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc29_21.2: ref %S = temporary_storage
+// CHECK:STDOUT:   %.loc29_21.3: init %S to %.loc29_21.2 = class_init () [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc29_23: init %S = converted %.loc29_21.1, %.loc29_21.3 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %Cpp.ref.loc29_42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc29_45: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %const: type = const_type %S.ref.loc29_45 [concrete = constants.%const]
+// CHECK:STDOUT:   %.loc29_33.1: init %const = as_compatible %.loc29_23 [concrete = constants.%empty_struct.674]
+// CHECK:STDOUT:   %.loc29_33.2: init %const = converted %.loc29_23, %.loc29_33.1 [concrete = constants.%empty_struct.674]
 // CHECK:STDOUT:   %T.cpp_destructor.bound: <bound method> = bound_method %t.var, constants.%T.cpp_destructor
 // CHECK:STDOUT:   %T.cpp_destructor.call: init %empty_tuple.type = call %T.cpp_destructor.bound(%t.var)
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
@@ -1143,20 +1102,20 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:     %s.patt: %pattern_type.0f5 = ref_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.0f5 = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesConstRValue.ref.loc17: %TakesConstRValue.cpp_overload_set.type = name_ref TakesConstRValue, imports.%TakesConstRValue.cpp_overload_set.value [concrete = constants.%TakesConstRValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesConstRValue.ref.loc14: %TakesConstRValue.cpp_overload_set.type = name_ref TakesConstRValue, imports.%TakesConstRValue.cpp_overload_set.value [concrete = constants.%TakesConstRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
 // CHECK:STDOUT:   %t.var: ref %T.ed0 = var_storage %t.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc19: %DefaultOrUnformed.type = facet_value constants.%T.ed0, (constants.%DefaultOrUnformed.impl_witness.8f2) [concrete = constants.%DefaultOrUnformed.facet.0be]
-// CHECK:STDOUT:   %.loc19_15.1: %DefaultOrUnformed.type = converted constants.%T.ed0, %DefaultOrUnformed.facet.loc19 [concrete = constants.%DefaultOrUnformed.facet.0be]
-// CHECK:STDOUT:   %as_type.loc19: type = facet_access_type %.loc19_15.1 [concrete = constants.%T.ed0]
-// CHECK:STDOUT:   %.loc19_15.2: type = converted %.loc19_15.1, %as_type.loc19 [concrete = constants.%T.ed0]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc16: %DefaultOrUnformed.type = facet_value constants.%T.ed0, (constants.%DefaultOrUnformed.impl_witness.8f2) [concrete = constants.%DefaultOrUnformed.facet.0be]
+// CHECK:STDOUT:   %.loc16_15.1: %DefaultOrUnformed.type = converted constants.%T.ed0, %DefaultOrUnformed.facet.loc16 [concrete = constants.%DefaultOrUnformed.facet.0be]
+// CHECK:STDOUT:   %as_type.loc16: type = facet_access_type %.loc16_15.1 [concrete = constants.%T.ed0]
+// CHECK:STDOUT:   %.loc16_15.2: type = converted %.loc16_15.1, %as_type.loc16 [concrete = constants.%T.ed0]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc19_3: ref %T.ed0 = splice_block %t.var {}
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc19: init %T.ed0 to %.loc19_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn.2()
-// CHECK:STDOUT:   assign %t.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc19
-// CHECK:STDOUT:   %.loc19_13: type = splice_block %T.ref [concrete = constants.%T.ed0] {
-// CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc16_3: ref %T.ed0 = splice_block %t.var {}
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc16: init %T.ed0 to %.loc16_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn.2()
+// CHECK:STDOUT:   assign %t.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call.loc16
+// CHECK:STDOUT:   %.loc16_13: type = splice_block %T.ref [concrete = constants.%T.ed0] {
+// CHECK:STDOUT:     %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T.ed0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %T.ed0 = wrapper_binding t, %t.var
@@ -1164,8 +1123,8 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:     %t.patt: %pattern_type.5f6 = ref_binding_pattern t [concrete = constants.%t.patt]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.5f6 = var_pattern %t.patt [concrete = constants.%t.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesConstRValue.ref.loc28: %TakesConstRValue.cpp_overload_set.type = name_ref TakesConstRValue, imports.%TakesConstRValue.cpp_overload_set.value [concrete = constants.%TakesConstRValue.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesConstRValue.ref.loc22: %TakesConstRValue.cpp_overload_set.type = name_ref TakesConstRValue, imports.%TakesConstRValue.cpp_overload_set.value [concrete = constants.%TakesConstRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T.ed0 = name_ref t, %t
 // CHECK:STDOUT:   %T.cpp_destructor.bound: <bound method> = bound_method %t.var, constants.%T.cpp_destructor
 // CHECK:STDOUT:   %T.cpp_destructor.call: init %empty_tuple.type = call %T.cpp_destructor.bound(%t.var)

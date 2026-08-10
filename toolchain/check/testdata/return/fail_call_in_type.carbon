@@ -15,9 +15,7 @@
 // TODO: Some variant of this should work, once compile-time function calls are
 // supported.
 fn ReturnType() -> type { return i32; }
-// CHECK:STDERR: fail_call_in_type.carbon:[[@LINE+4]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-// CHECK:STDERR: fn Six() -> ReturnType() { return 6; }
-// CHECK:STDERR:             ^~~~~~~~~~~~
+// CHECK:STDERR: fail_call_in_type.carbon:[[@LINE+2]]:13-24: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR:
 fn Six() -> ReturnType() { return 6; }
 
@@ -81,8 +79,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ReturnType.ref: %ReturnType.type = name_ref ReturnType, file.%ReturnType.decl [concrete = constants.%ReturnType]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
-// CHECK:STDOUT:     %.loc22_24.1: type = value_of_initializer %ReturnType.call
-// CHECK:STDOUT:     %.loc22_24.2: type = converted %ReturnType.call, %.loc22_24.1
+// CHECK:STDOUT:     %.loc20_24.1: type = value_of_initializer %ReturnType.call
+// CHECK:STDOUT:     %.loc20_24.2: type = converted %ReturnType.call, %.loc20_24.1
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

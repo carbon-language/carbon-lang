@@ -13,12 +13,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:24: error: cannot implicitly convert expression of type `Core.IntLiteral` to `bool` [ConversionFailure]
-  // CHECK:STDERR:   var unused x: bool = not 12;
-  // CHECK:STDERR:                        ^~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:24: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   var unused x: bool = not 12;
-  // CHECK:STDERR:                        ^~~~~~
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:24-29: error: cannot implicitly convert expression of type `Core.IntLiteral` to `bool` [ConversionFailure]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+2]]:24-29: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var unused x: bool = not 12;
 }
@@ -66,10 +62,10 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref bool = var_storage %x.var_patt
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12]
-// CHECK:STDOUT:   %.loc23_24.1: bool = converted %int_12, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc23_24.2: <error> = not <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc19_24.1: bool = converted %int_12, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc19_24.2: <error> = not <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc23_17: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %.loc19_17: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %x: ref bool = wrapper_binding x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.831 = ref_binding_pattern x [concrete = constants.%x.patt]

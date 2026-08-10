@@ -13,18 +13,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_address_of_error.carbon
 
 fn Test() {
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:4: error: name `undeclared` not found [NameNotFound]
-  // CHECK:STDERR:   &undeclared;
-  // CHECK:STDERR:    ^~~~~~~~~~
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+2]]:4-13: error: name `undeclared` not found [NameNotFound]
   // CHECK:STDERR:
   &undeclared;
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+8]]:6: error: name `undeclared` not found [NameNotFound]
-  // CHECK:STDERR:   &(&undeclared);
-  // CHECK:STDERR:      ^~~~~~~~~~
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:6-15: error: name `undeclared` not found [NameNotFound]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
-  // CHECK:STDERR:   &(&undeclared);
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+2]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:
   &(&undeclared);
 }
@@ -55,11 +49,11 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %undeclared.ref.loc20: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc20: <error> = addr_of %undeclared.ref.loc20 [concrete = <error>]
-// CHECK:STDOUT:   %undeclared.ref.loc29: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc29_5: <error> = addr_of %undeclared.ref.loc29 [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc29_3: <error> = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc18: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc18: <error> = addr_of %undeclared.ref.loc18 [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc23: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc23_5: <error> = addr_of %undeclared.ref.loc23 [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc23_3: <error> = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
