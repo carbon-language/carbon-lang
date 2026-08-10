@@ -490,7 +490,7 @@ auto ExportAllFieldsToCpp(Context& context,
     auto lookup_key = class_type.specific_id == SemIR::SpecificId::None
                           ? class_info.first_decl_id()
                           : class_type_inst_id;
-    auto* clang_decl = context.clang_decls().Lookup(lookup_key);
+    const auto* clang_decl = context.clang_decls().Lookup(lookup_key);
     auto* record_decl = llvm::cast<clang::CXXRecordDecl>(clang_decl->decl());
 
     auto* cpp_field_decl = CreateCppFieldDecl(
