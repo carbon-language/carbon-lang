@@ -180,8 +180,8 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %C.as.Add.impl.Op.type: type = fn_type @C.as.Add.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Add.impl.Op: %C.as.Add.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %C, (%Add.impl_witness) [concrete]
-// CHECK:STDOUT:   %Add.WithSelf.Op.type.9f5: type = fn_type @Add.WithSelf.Op, @Add.WithSelf(%Add.facet) [concrete]
-// CHECK:STDOUT:   %Add.WithSelf.Op.196: %Add.WithSelf.Op.type.9f5 = struct_value () [concrete]
+// CHECK:STDOUT:   %Add.WithSelf.Op.type.314: type = fn_type @Add.WithSelf.Op, @Add.WithSelf(%Add.facet) [concrete]
+// CHECK:STDOUT:   %Add.WithSelf.Op.ddf: %Add.WithSelf.Op.type.314 = struct_value () [concrete]
 // CHECK:STDOUT:   %return.patt.18a: %pattern_type.98b = return_slot_pattern %return.param_patt.89a, invalid [concrete]
 // CHECK:STDOUT:   %empty_tuple.4db: %C = tuple_value () [concrete]
 // CHECK:STDOUT:   %x.param_patt: %pattern_type.98b = value_param_pattern [concrete]
@@ -192,7 +192,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, imports.%Main.import_ref.f19 [concrete]
-// CHECK:STDOUT:   %.698: type = fn_type_with_self_type %Add.WithSelf.Op.type.9f5, %Add.facet [concrete]
+// CHECK:STDOUT:   %.1d3: type = fn_type_with_self_type %Add.WithSelf.Op.type.314, %Add.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -329,7 +329,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [concrete = constants.%Add.type]
 // CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.d84 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.698 = impl_witness_access constants.%Add.impl_witness, element0 [concrete = constants.%C.as.Add.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.1d3 = impl_witness_access constants.%Add.impl_witness, element0 [concrete = constants.%C.as.Add.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %y.ref: %C = name_ref y, %y
 // CHECK:STDOUT:   %C.as.Add.impl.Op.call: init %C = call %bound_method(%x.ref, %y.ref)
@@ -359,8 +359,8 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT: specific @Add.WithSelf(constants.%Add.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Add.facet
-// CHECK:STDOUT:   %Add.WithSelf.Op.type => constants.%Add.WithSelf.Op.type.9f5
-// CHECK:STDOUT:   %Add.WithSelf.Op => constants.%Add.WithSelf.Op.196
+// CHECK:STDOUT:   %Add.WithSelf.Op.type => constants.%Add.WithSelf.Op.type.314
+// CHECK:STDOUT:   %Add.WithSelf.Op => constants.%Add.WithSelf.Op.ddf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.WithSelf.Op(constants.%Add.facet) {

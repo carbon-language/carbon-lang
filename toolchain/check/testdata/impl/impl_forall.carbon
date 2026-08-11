@@ -39,8 +39,8 @@ impl forall [T: type] T as Simple {
 // CHECK:STDOUT:   %T.as.Simple.impl.F.type: type = fn_type @T.as.Simple.impl.F, @T.as.Simple.impl(%T) [symbolic]
 // CHECK:STDOUT:   %T.as.Simple.impl.F: %T.as.Simple.impl.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %T, (%Simple.impl_witness) [symbolic]
-// CHECK:STDOUT:   %Simple.WithSelf.F.type.165: type = fn_type @Simple.WithSelf.F, @Simple.WithSelf(%Simple.facet) [symbolic]
-// CHECK:STDOUT:   %Simple.WithSelf.F.2e8: %Simple.WithSelf.F.type.165 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Simple.WithSelf.F.type.7bf: type = fn_type @Simple.WithSelf.F, @Simple.WithSelf(%Simple.facet) [symbolic]
+// CHECK:STDOUT:   %Simple.WithSelf.F.c46: %Simple.WithSelf.F.type.7bf = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -138,8 +138,8 @@ impl forall [T: type] T as Simple {
 // CHECK:STDOUT: specific @Simple.WithSelf(constants.%Simple.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Simple.facet
-// CHECK:STDOUT:   %Simple.WithSelf.F.type => constants.%Simple.WithSelf.F.type.165
-// CHECK:STDOUT:   %Simple.WithSelf.F => constants.%Simple.WithSelf.F.2e8
+// CHECK:STDOUT:   %Simple.WithSelf.F.type => constants.%Simple.WithSelf.F.type.7bf
+// CHECK:STDOUT:   %Simple.WithSelf.F => constants.%Simple.WithSelf.F.c46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.WithSelf.F(constants.%Simple.facet) {}

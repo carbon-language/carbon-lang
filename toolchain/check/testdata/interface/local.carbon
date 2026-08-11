@@ -47,9 +47,9 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.type: type = fn_type @empty_tuple.type.as.I.impl.G [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G: %empty_tuple.type.as.I.impl.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %empty_tuple.type, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.G.type.107: type = fn_type @I.WithSelf.G, @I.WithSelf(%I.facet) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.G.641: %I.WithSelf.G.type.107 = struct_value () [concrete]
-// CHECK:STDOUT:   %.a19: type = fn_type_with_self_type %I.WithSelf.G.type.107, %I.facet [concrete]
+// CHECK:STDOUT:   %I.WithSelf.G.type.6fe: type = fn_type @I.WithSelf.G, @I.WithSelf(%I.facet) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.G.9e3: %I.WithSelf.G.type.6fe = struct_value () [concrete]
+// CHECK:STDOUT:   %.da7: type = fn_type_with_self_type %I.WithSelf.G.type.6fe, %I.facet [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.bound: <bound method> = bound_method %empty_tuple, %empty_tuple.type.as.I.impl.G [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -117,7 +117,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_4.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %G.ref: %I.assoc_type = name_ref G, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.a19 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.I.impl.G]
+// CHECK:STDOUT:   %impl.elem0: %.da7 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.I.impl.G]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc22_4.1, %impl.elem0 [concrete = constants.%empty_tuple.type.as.I.impl.G.bound]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc22_4.2: %empty_tuple.type = converted %.loc22_4.1, %empty_tuple [concrete = constants.%empty_tuple]
@@ -158,8 +158,8 @@ fn F() {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %I.WithSelf.G.type => constants.%I.WithSelf.G.type.107
-// CHECK:STDOUT:   %I.WithSelf.G => constants.%I.WithSelf.G.641
+// CHECK:STDOUT:   %I.WithSelf.G.type => constants.%I.WithSelf.G.type.6fe
+// CHECK:STDOUT:   %I.WithSelf.G => constants.%I.WithSelf.G.9e3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.G(constants.%I.facet) {

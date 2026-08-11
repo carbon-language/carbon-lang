@@ -61,7 +61,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.as.Inc.impl.Op: %C.as.Inc.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, (%Inc.impl_witness) [concrete]
-// CHECK:STDOUT:   %Inc.WithSelf.Op.type.445: type = fn_type @Inc.WithSelf.Op, @Inc.WithSelf(%Inc.facet) [concrete]
+// CHECK:STDOUT:   %Inc.WithSelf.Op.type.584: type = fn_type @Inc.WithSelf.Op, @Inc.WithSelf(%Inc.facet) [concrete]
 // CHECK:STDOUT:   %AddAssignWith.type.2fb: type = generic_interface_type @AddAssignWith [concrete]
 // CHECK:STDOUT:   %AddAssignWith.generic: %AddAssignWith.type.2fb = struct_value () [concrete]
 // CHECK:STDOUT:   %AddAssignWith.type.cba: type = facet_type <@AddAssignWith, @AddAssignWith(%C)> [concrete]
@@ -72,17 +72,17 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.type: type = fn_type @C.as.AddAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op: %C.as.AddAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AddAssignWith.facet: %AddAssignWith.type.cba = facet_value %C, (%AddAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %AddAssignWith.WithSelf.Op.type.62f: type = fn_type @AddAssignWith.WithSelf.Op, @AddAssignWith.WithSelf(%C, %AddAssignWith.facet) [concrete]
+// CHECK:STDOUT:   %AddAssignWith.WithSelf.Op.type.1aa: type = fn_type @AddAssignWith.WithSelf.Op, @AddAssignWith.WithSelf(%C, %AddAssignWith.facet) [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.4a7 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.4a7 = at_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %TestIncNonRef.type: type = fn_type @TestIncNonRef [concrete]
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.b87: type = fn_type_with_self_type %Inc.WithSelf.Op.type.445, %Inc.facet [concrete]
+// CHECK:STDOUT:   %.6db: type = fn_type_with_self_type %Inc.WithSelf.Op.type.584, %Inc.facet [concrete]
 // CHECK:STDOUT:   %b.param_patt: %pattern_type.4a7 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.4a7 = at_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef: %TestAddAssignNonRef.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.fbc: type = fn_type_with_self_type %AddAssignWith.WithSelf.Op.type.62f, %AddAssignWith.facet [concrete]
+// CHECK:STDOUT:   %.a8f: type = fn_type_with_self_type %AddAssignWith.WithSelf.Op.type.1aa, %AddAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -200,7 +200,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0: %.b87 = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%C.as.Inc.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.6db = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%C.as.Inc.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.Inc.impl.Op.call: init %empty_tuple.type = call %bound_method(<error>)
 // CHECK:STDOUT:   return
@@ -210,7 +210,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.fbc = impl_witness_access constants.%AddAssignWith.impl_witness, element0 [concrete = constants.%C.as.AddAssignWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.a8f = impl_witness_access constants.%AddAssignWith.impl_witness, element0 [concrete = constants.%C.as.AddAssignWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(<error>, %b.ref)
 // CHECK:STDOUT:   return

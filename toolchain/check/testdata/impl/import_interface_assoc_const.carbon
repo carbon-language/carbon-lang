@@ -552,8 +552,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %.00f: <witness> = impl_self_witness %.Self, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.c0c: type = impl_witness_access %.00f, element0 [symbolic_self]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0.c0c = %empty_struct_type> [concrete]
-// CHECK:STDOUT:   %I.impl_witness.877: <witness> = impl_witness @C3.as.I.impl.a518fc.2.%I.impl_witness_table [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C3, (%I.impl_witness.877) [concrete]
+// CHECK:STDOUT:   %I.impl_witness.e7ce0e.2: <witness> = impl_witness @C3.as.I.impl.a518fc.2.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C3, (%I.impl_witness.e7ce0e.2) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -617,7 +617,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C3.as.I.impl.a518fc.2: %C3.ref as %I.ref {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C3.as.I.impl.a518fc.2 [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.877]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.e7ce0e.2]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -668,8 +668,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %.911: <witness> = impl_self_witness %C4, @I [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %I_where.type.d99: type = facet_type <@I where %impl.elem0.c0c = %empty_tuple.type> [concrete]
-// CHECK:STDOUT:   %I.impl_witness.4a9: <witness> = impl_witness @C4.as.I.impl.c5f663.2.%I.impl_witness_table [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C4, (%I.impl_witness.4a9) [concrete]
+// CHECK:STDOUT:   %I.impl_witness.50654e.2: <witness> = impl_witness @C4.as.I.impl.c5f663.2.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C4, (%I.impl_witness.50654e.2) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -749,7 +749,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C4.as.I.impl.c5f663.2: %C4.ref as %I.ref {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C4.as.I.impl.c5f663.2 [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.4a9]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.50654e.2]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -976,8 +976,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %impl.elem0.c0c: type = impl_witness_access %.00f, element0 [symbolic_self]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0.c0c = %empty_struct_type> [concrete]
 // CHECK:STDOUT:   %.7ff: <witness> = impl_self_witness %C6, @I [concrete]
-// CHECK:STDOUT:   %I.impl_witness.a68: <witness> = impl_witness @C6.as.I.impl.e1b87a.2.%I.impl_witness_table [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C6, (%I.impl_witness.a68) [concrete]
+// CHECK:STDOUT:   %I.impl_witness.5ea304.2: <witness> = impl_witness @C6.as.I.impl.e1b87a.2.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C6, (%I.impl_witness.5ea304.2) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1041,7 +1041,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C6.as.I.impl.e1b87a.2: %C6.ref as %I.ref {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @C6.as.I.impl.e1b87a.2 [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.a68]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.5ea304.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %I.ref
@@ -1798,8 +1798,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %CD.as.IF.impl.F.type: type = fn_type @CD.as.IF.impl.F [concrete]
 // CHECK:STDOUT:   %CD.as.IF.impl.F: %CD.as.IF.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IF.facet: %IF.type = facet_value %CD, (%IF.impl_witness) [concrete]
-// CHECK:STDOUT:   %IF.WithSelf.F.type.41b: type = fn_type @IF.WithSelf.F, @IF.WithSelf(%IF.facet) [concrete]
-// CHECK:STDOUT:   %IF.WithSelf.F.24b: %IF.WithSelf.F.type.41b = struct_value () [concrete]
+// CHECK:STDOUT:   %IF.WithSelf.F.type.4f8: type = fn_type @IF.WithSelf.F, @IF.WithSelf(%IF.facet) [concrete]
+// CHECK:STDOUT:   %IF.WithSelf.F.742: %IF.WithSelf.F.type.4f8 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1898,8 +1898,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: specific @IF.WithSelf(constants.%IF.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%IF.facet
-// CHECK:STDOUT:   %IF.WithSelf.F.type => constants.%IF.WithSelf.F.type.41b
-// CHECK:STDOUT:   %IF.WithSelf.F => constants.%IF.WithSelf.F.24b
+// CHECK:STDOUT:   %IF.WithSelf.F.type => constants.%IF.WithSelf.F.type.4f8
+// CHECK:STDOUT:   %IF.WithSelf.F => constants.%IF.WithSelf.F.742
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF.WithSelf.F(constants.%IF.facet) {}

@@ -52,7 +52,7 @@ fn F() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal, @HandleAnimal(%Animal.facet) [concrete]
-// CHECK:STDOUT:   %FeedAnimal.specific_fn.42c: <specific function> = specific_function %FeedAnimal, @FeedAnimal(%Animal.facet) [concrete]
+// CHECK:STDOUT:   %FeedAnimal.specific_fn.99a: <specific function> = specific_function %FeedAnimal, @FeedAnimal(%Animal.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -198,7 +198,7 @@ fn F() {
 // CHECK:STDOUT:   %T.loc19_26.1 => constants.%Animal.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %FeedAnimal.specific_fn.loc19_38.2 => constants.%FeedAnimal.specific_fn.42c
+// CHECK:STDOUT:   %FeedAnimal.specific_fn.loc19_38.2 => constants.%FeedAnimal.specific_fn.99a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(constants.%Animal.facet) {

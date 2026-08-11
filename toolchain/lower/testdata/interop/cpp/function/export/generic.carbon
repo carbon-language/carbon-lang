@@ -132,7 +132,7 @@ fn Run() {
 // CHECK:STDOUT: define internal void @_ZN6CarbonL1FENS_1AE() #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %0 = alloca %"class.Carbon::A", align 1
-// CHECK:STDOUT:   call void @_CF__carbon_thunk.83afdff581006d1a.Main(ptr noundef nonnull align 1 %0)
+// CHECK:STDOUT:   call void @_CF__carbon_thunk.26f2099a79512a5d.Main(ptr noundef nonnull align 1 %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -152,7 +152,7 @@ fn Run() {
 // CHECK:STDOUT: define internal void @_ZN6CarbonL1FENS_1BE() #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %0 = alloca %"class.Carbon::B", align 1
-// CHECK:STDOUT:   call void @_CF__carbon_thunk.36f470e96b413347.Main(ptr noundef nonnull align 1 %0)
+// CHECK:STDOUT:   call void @_CF__carbon_thunk.7a3b9f04ddf4269e.Main(ptr noundef nonnull align 1 %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -208,16 +208,16 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.83afdff581006d1a.Main(ptr %_) #4 !dbg !44 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.26f2099a79512a5d.Main(ptr %_) #4 !dbg !44 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.3e1f7ed08cd9ee58(ptr %_), !dbg !47
+// CHECK:STDOUT:   call void @_CF.Main.6662a1ffb773360a(ptr %_), !dbg !47
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.36f470e96b413347.Main(ptr %_) #4 !dbg !48 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.7a3b9f04ddf4269e.Main(ptr %_) #4 !dbg !48 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.bd1b6d59f703c190(ptr %_), !dbg !51
+// CHECK:STDOUT:   call void @_CF.Main.d53b17eed3ce903c(ptr %_), !dbg !51
 // CHECK:STDOUT:   ret void, !dbg !51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -229,14 +229,14 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.3e1f7ed08cd9ee58(ptr %t) #4 !dbg !58 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.6662a1ffb773360a(ptr %t) #4 !dbg !58 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CDoit.A.Main:I.Main"(ptr %t), !dbg !61
 // CHECK:STDOUT:   ret void, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.bd1b6d59f703c190(ptr %t) #4 !dbg !63 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.d53b17eed3ce903c(ptr %t) #4 !dbg !63 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CDoit.B.Main:I.Main"(ptr %t), !dbg !66
 // CHECK:STDOUT:   ret void, !dbg !67
@@ -303,11 +303,11 @@ fn Run() {
 // CHECK:STDOUT: !41 = !{!42}
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !40, type: !20)
 // CHECK:STDOUT: !43 = !DILocation(line: 13, column: 1, scope: !40)
-// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "F__carbon_thunk.83afdff581006d1a", linkageName: "_CF__carbon_thunk.83afdff581006d1a.Main", scope: null, file: !1, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !45)
+// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "F__carbon_thunk.26f2099a79512a5d", linkageName: "_CF__carbon_thunk.26f2099a79512a5d.Main", scope: null, file: !1, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !45)
 // CHECK:STDOUT: !45 = !{!46}
 // CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !44, type: !20)
 // CHECK:STDOUT: !47 = !DILocation(line: 19, column: 1, scope: !44)
-// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "F__carbon_thunk.36f470e96b413347", linkageName: "_CF__carbon_thunk.36f470e96b413347.Main", scope: null, file: !1, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !49)
+// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "F__carbon_thunk.7a3b9f04ddf4269e", linkageName: "_CF__carbon_thunk.7a3b9f04ddf4269e.Main", scope: null, file: !1, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !49)
 // CHECK:STDOUT: !49 = !{!50}
 // CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !48, type: !20)
 // CHECK:STDOUT: !51 = !DILocation(line: 19, column: 1, scope: !48)
@@ -317,12 +317,12 @@ fn Run() {
 // CHECK:STDOUT: !55 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !56 = !DILocation(line: 33, column: 3, scope: !52)
 // CHECK:STDOUT: !57 = !DILocation(line: 32, column: 1, scope: !52)
-// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.3e1f7ed08cd9ee58", scope: null, file: !1, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !59)
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.6662a1ffb773360a", scope: null, file: !1, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !59)
 // CHECK:STDOUT: !59 = !{!60}
 // CHECK:STDOUT: !60 = !DILocalVariable(arg: 1, scope: !58, type: !20)
 // CHECK:STDOUT: !61 = !DILocation(line: 20, column: 3, scope: !58)
 // CHECK:STDOUT: !62 = !DILocation(line: 19, column: 1, scope: !58)
-// CHECK:STDOUT: !63 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.bd1b6d59f703c190", scope: null, file: !1, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !64)
+// CHECK:STDOUT: !63 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.d53b17eed3ce903c", scope: null, file: !1, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !64)
 // CHECK:STDOUT: !64 = !{!65}
 // CHECK:STDOUT: !65 = !DILocalVariable(arg: 1, scope: !63, type: !20)
 // CHECK:STDOUT: !66 = !DILocation(line: 20, column: 3, scope: !63)
