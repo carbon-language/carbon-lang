@@ -63,7 +63,7 @@ fn DoThing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_ZTV4Base = available_externally constant { [4 x ptr] } { [4 x ptr] [ptr null, ptr @_ZTI4Base, ptr @_ZN11FurtherBase17further_base_funcEv, ptr @_ZNR4Base4funcEv] }, align 8
 // CHECK:STDOUT: @_ZTV11FurtherBase = available_externally constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI11FurtherBase, ptr @_ZN11FurtherBase17further_base_funcEv] }, align 8
-// CHECK:STDOUT: @_ZTVN6Carbon7DerivedE = linkonce_odr dso_local constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTIN6Carbon7DerivedE, ptr @_ZN11FurtherBase17further_base_funcEv, ptr @_ZNR6Carbon7Derived4funcEv, ptr @_ZN6Carbon7Derived10other_funcEv] }, comdat, align 8
+// CHECK:STDOUT: @_ZTVN6Carbon7DerivedE = linkonce_odr dso_local constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTIN6Carbon7DerivedE, ptr @_ZN11FurtherBase17further_base_funcEv, ptr @_ZNR6Carbon7Derived4funcEv, ptr @_ZNK6Carbon7Derived10other_funcEv] }, comdat, align 8
 // CHECK:STDOUT: @_ZTI4Base = external constant ptr
 // CHECK:STDOUT: @_ZTI11FurtherBase = external constant ptr
 // CHECK:STDOUT: @_ZTIN6Carbon7DerivedE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2), ptr @_ZTSN6Carbon7DerivedE, ptr @_ZTI4Base }, comdat, align 8
@@ -95,7 +95,7 @@ fn DoThing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_Cfunc:thunk:Base.Cpp:Derived.Main"(ptr %self) #3 !dbg !26 {
+// CHECK:STDOUT: define weak_odr void @"_Cfunc:thunk:Base.Cpp:Derived.Main"(ptr %self) #3 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Cfunc.Derived.Main(ptr %self), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !29
@@ -129,7 +129,7 @@ fn DoThing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.Derived.Main"(ptr %self) #3 !dbg !39 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Derived.Main"(ptr %self) #3 !dbg !39 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.8185e3504351afa8:core.Destroy.Core"(ptr %self), !dbg !42
 // CHECK:STDOUT:   ret void, !dbg !42
@@ -180,7 +180,7 @@ fn DoThing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6Carbon7Derived10other_funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #4 align 2 {
+// CHECK:STDOUT: define internal void @_ZNK6Carbon7Derived10other_funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #4 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !59

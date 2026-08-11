@@ -8,6 +8,7 @@
 #include <string_view>
 
 #include "clang/AST/ASTConsumer.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
 #include "clang/Sema/Sema.h"
 #include "llvm/Support/Casting.h"
@@ -48,6 +49,46 @@ static auto GetClangDeclContextForScope(Context& context,
   return cast<clang::DeclContext>(decl);
 }
 
+// Exports a Carbon class into C++ as a class in the given `decl_context`.
+//
+// This does not check for an existing export of the class, nor does it add
+// the class to `clang_decls()`.
+//
+// Returns nullptr if the class could not be exported and an error was
+// diagnosed.
+static auto ExportClassToCppInDeclContext(Context& context,
+                                          clang::DeclContext* decl_context,
+                                          const SemIR::Class& class_info,
+                                          const SemIR::SpecificId specific_id)
+    -> clang::TagDecl* {
+  SemIR::LocId loc_id(class_info.first_decl_id());
+
+  if (specific_id.has_value()) {
+    context.TODO(loc_id, "interop with specific class");
+    return nullptr;
+  }
+
+  auto* identifier_info = GetClangIdentifierInfo(context, class_info.name_id);
+  CARBON_CHECK(identifier_info, "non-identifier class name {0}",
+               class_info.name_id);
+
+  auto clang_loc = GetCppLocation(context, loc_id);
+  auto* record_decl = clang::CXXRecordDecl::Create(
+      context.ast_context(), clang::TagTypeKind::Class, decl_context, clang_loc,
+      clang_loc, identifier_info);
+  // If this is a member class, set its access.
+  if (isa<clang::CXXRecordDecl>(decl_context)) {
+    // TODO: Map Carbon access to C++ access.
+    record_decl->setAccess(clang::AS_public);
+  }
+
+  decl_context->addHiddenDecl(record_decl);
+  record_decl->setHasExternalLexicalStorage();
+  record_decl->setHasExternalVisibleStorage();
+
+  return record_decl;
+}
+
 auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
                           SemIR::NameScopeId name_scope_id)
     -> clang::DeclContext* {
@@ -80,39 +121,30 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
     name_scope_id = name_scope_ids_to_create.pop_back_val();
 
     auto& name_scope = context.name_scopes().Get(name_scope_id);
-    auto* identifier_info =
-        GetClangIdentifierInfo(context, name_scope.name_id());
-    if (!identifier_info) {
-      // TODO: Handle keyword package names like `Cpp` and `Core`. These can
-      // be named from C++ via an alias.
-      context.TODO(loc_id, "interop with non-identifier package name");
-      return nullptr;
-    }
 
-    auto inst = context.insts().Get(name_scope.inst_id());
-    if (inst.Is<SemIR::Namespace>()) {
+    auto const_inst_id =
+        context.constant_values().GetConstantInstId(name_scope.inst_id());
+    if (context.insts().Is<SemIR::Namespace>(const_inst_id)) {
+      auto* identifier_info =
+          GetClangIdentifierInfo(context, name_scope.name_id());
+      if (!identifier_info) {
+        // TODO: Handle keyword package names like `Cpp` and `Core`. These can
+        // be named from C++ via an alias.
+        context.TODO(loc_id, "interop with non-identifier package name");
+        return nullptr;
+      }
+
       // TODO: Provide a source location.
       auto* namespace_decl = clang::NamespaceDecl::Create(
           context.ast_context(), decl_context, false, clang::SourceLocation(),
           clang::SourceLocation(), identifier_info, nullptr, false);
       decl_context->addHiddenDecl(namespace_decl);
       decl_context = namespace_decl;
-    } else if (inst.Is<SemIR::ClassDecl>()) {
-      // TODO: Provide a source location.
-      // TODO: This duplicates work done by ExportClassToCpp. Factor out the
-      // shared code!
-      auto* record_decl = clang::CXXRecordDecl::Create(
-          context.ast_context(), clang::TagTypeKind::Class, decl_context,
-          clang::SourceLocation(), clang::SourceLocation(), identifier_info);
-      // If this is a member class, set its access.
-      if (isa<clang::CXXRecordDecl>(decl_context)) {
-        // TODO: Map Carbon access to C++ access.
-        record_decl->setAccess(clang::AS_public);
-      }
-
-      decl_context->addHiddenDecl(record_decl);
-      decl_context = record_decl;
-      decl_context->setHasExternalLexicalStorage();
+    } else if (auto class_type =
+                   context.insts().TryGetAs<SemIR::ClassType>(const_inst_id)) {
+      const auto& class_info = context.classes().Get(class_type->class_id);
+      decl_context = ExportClassToCppInDeclContext(
+          context, decl_context, class_info, class_type->specific_id);
     } else {
       context.TODO(loc_id, "non-class non-namespace name scope");
       return nullptr;
@@ -125,22 +157,26 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
     auto clang_decl_id = context.clang_decls().Add(
         {.key = key, .inst_id = name_scope.inst_id()});
     name_scope.set_clang_decl_context_id(clang_decl_id, /*is_cpp_scope=*/false);
+
+    // Complete the type here to avoid hitting a clang assert later when
+    // adding methods.
+    if (auto* record_decl = llvm::dyn_cast<clang::RecordDecl>(decl_context)) {
+      context.ast_context().getExternalSource()->CompleteType(record_decl);
+    }
   }
 
   return decl_context;
 }
 
-auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
-                      SemIR::ClassType class_type) -> clang::TagDecl* {
-  // TODO: A lot of logic in this function is shared with ExportNameScopeToCpp.
-  // This should be refactored.
+auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
+    -> clang::TagDecl* {
+  const auto& class_info = context.classes().Get(class_type.class_id);
+  SemIR::LocId loc_id(class_info.first_decl_id());
 
   if (class_type.specific_id.has_value()) {
     context.TODO(loc_id, "interop with specific class");
     return nullptr;
   }
-
-  const auto& class_info = context.classes().Get(class_type.class_id);
 
   // If this class was produced by importing a C++ declaration or has
   // already been exported to C++, return the corresponding Clang declaration.
@@ -150,25 +186,10 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
     return cast<clang::TagDecl>(clang_decl->decl());
   }
 
-  auto* identifier_info = GetClangIdentifierInfo(context, class_info.name_id);
-  CARBON_CHECK(identifier_info, "non-identifier class name {0}",
-               class_info.name_id);
-
   auto* decl_context =
       ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
-  // TODO: Provide a source location.
-  auto* record_decl = clang::CXXRecordDecl::Create(
-      context.ast_context(), clang::TagTypeKind::Class, decl_context,
-      clang::SourceLocation(), clang::SourceLocation(), identifier_info);
-  // If this is a member class, set its access.
-  if (isa<clang::CXXRecordDecl>(decl_context)) {
-    // TODO: Map Carbon access to C++ access.
-    record_decl->setAccess(clang::AS_public);
-  }
-
-  decl_context->addHiddenDecl(record_decl);
-  record_decl->setHasExternalLexicalStorage();
-  record_decl->setHasExternalVisibleStorage();
+  auto* record_decl = ExportClassToCppInDeclContext(
+      context, decl_context, class_info, class_type.specific_id);
 
   auto key =
       SemIR::ClangDeclKey::ForNonFunctionDecl(cast<clang::Decl>(record_decl));
@@ -182,6 +203,196 @@ auto ExportClassToCpp(Context& context, SemIR::LocId loc_id,
         .set_clang_decl_context_id(clang_decl_id, /*is_cpp_scope=*/false);
   }
   return record_decl;
+}
+
+// Export the bindings in a generic as a `clang::TemplateParameterList`.
+static auto ExportGenericBindings(Context& context, SemIR::LocId loc_id,
+                                  SemIR::GenericId generic_id,
+                                  clang::DeclContext* decl_context)
+    -> clang::TemplateParameterList* {
+  auto clang_loc = GetCppLocation(context, loc_id);
+
+  const auto& generic = context.generics().Get(generic_id);
+  auto bindings = context.inst_blocks().Get(generic.bindings_id);
+  llvm::SmallVector<clang::NamedDecl*> template_param_decls;
+
+  // Create `clang::TemplateTypeParmDecl`s for each of the generic's bindings.
+  //
+  // TODO: handle the case where the generic is within an enclosing generic,
+  // and only include the bindings introduced in the inner generic here. See
+  // `fail_todo_enclosing_generic.carbon`.
+  for (auto binding_inst_id : bindings) {
+    binding_inst_id =
+        context.constant_values().GetConstantInstId(binding_inst_id);
+    auto symbolic_binding =
+        context.insts().GetAs<SemIR::SymbolicBinding>(binding_inst_id);
+
+    const auto& entity_name =
+        context.entity_names().Get(symbolic_binding.entity_name_id);
+
+    auto* param_ident = GetClangIdentifierInfo(context, entity_name.name_id);
+    CARBON_CHECK(param_ident, "non-identifier param name {0}",
+                 entity_name.name_id);
+
+    if (symbolic_binding.type_id != SemIR::TypeType::TypeId &&
+        !context.types().Is<SemIR::FacetType>(symbolic_binding.type_id)) {
+      context.TODO(loc_id, "binding maps to a non-type template parameter");
+      return nullptr;
+    }
+
+    auto* param_decl = clang::TemplateTypeParmDecl::Create(
+        context.ast_context(), decl_context, /*KeyLoc=*/clang_loc,
+        /*NameLoc=*/clang_loc,
+        /*D=*/0, /*P=*/0, param_ident, /*Typename=*/true,
+        /*ParameterPack=*/false);
+    template_param_decls.push_back(param_decl);
+
+    // Store a mapping between the generic parameter's `TypeInstId` and
+    // the `clang::TemplateTypeParmDecl`.
+    auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(param_decl);
+    context.clang_decls().Add({.key = key, .inst_id = binding_inst_id});
+  }
+
+  return clang::TemplateParameterList::Create(context.ast_context(),
+                                              /*TemplateLoc=*/clang_loc,
+                                              /*LAngleLoc=*/clang_loc,
+                                              template_param_decls,
+                                              /*RAngleLoc=*/clang_loc,
+                                              /*RequiresClause=*/nullptr);
+}
+
+/// Create a Specific for the given generic using the given template args.
+///
+/// Returns `SemIR::SpecificId::None` if an error occurs.
+static auto MakeSpecificForTemplateArgs(
+    Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
+    llvm::ArrayRef<clang::TemplateArgument> template_args)
+    -> SemIR::SpecificId {
+  const auto& generic = context.generics().Get(generic_id);
+
+  auto bindings = context.inst_blocks().Get(generic.bindings_id);
+  CARBON_CHECK(bindings.size() == template_args.size());
+
+  // Map the `clang::TemplateArgument`s into Carbon types suitable for
+  // passing into `MakeSpecific`.
+  llvm::SmallVector<SemIR::InstId> specific_arg_ids;
+  for (auto [binding_inst_id, clang_template_arg] :
+       llvm::zip(bindings, template_args)) {
+    auto type_expr =
+        ImportCppType(context, loc_id, clang_template_arg.getAsType());
+    if (type_expr.type_id == SemIR::ErrorInst::TypeId) {
+      return SemIR::SpecificId::None;
+    }
+    if (!type_expr.type_id.has_value()) {
+      context.TODO(loc_id, "failed to import C++ type");
+      return SemIR::SpecificId::None;
+    }
+
+    auto binding_const_inst_id =
+        context.constant_values().GetConstantInstId(binding_inst_id);
+
+    specific_arg_ids.push_back(ConvertToValueOfType(
+        context, loc_id, type_expr.inst_id,
+        context.insts().Get(binding_const_inst_id).type_id()));
+  }
+
+  return MakeSpecific(context, loc_id, generic_id, specific_arg_ids);
+}
+
+auto ExportGenericClassToCpp(Context& context, SemIR::InstId inst_id,
+                             SemIR::GenericClassType generic_class_type)
+    -> clang::ClassTemplateDecl* {
+  // Use existing export if possible.
+  const auto& class_info = context.classes().Get(generic_class_type.class_id);
+  if (const auto* clang_decl =
+          context.clang_decls().Lookup(class_info.first_decl_id())) {
+    return cast<clang::ClassTemplateDecl>(clang_decl->decl());
+  }
+
+  // Map the parent scope into the C++ AST.
+  SemIR::LocId loc_id(inst_id);
+  auto* decl_context =
+      ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
+  if (!decl_context) {
+    return nullptr;
+  }
+
+  auto* template_param_list = ExportGenericBindings(
+      context, loc_id, class_info.generic_id, decl_context);
+  if (!template_param_list) {
+    return nullptr;
+  }
+
+  auto clang_loc = GetCppLocation(context, loc_id);
+  auto* record_decl = ExportClassToCppInDeclContext(
+      context, decl_context, class_info, SemIR::SpecificId::None);
+  auto* class_template_decl = clang::ClassTemplateDecl::Create(
+      context.ast_context(), decl_context,
+      /*L=*/clang_loc, record_decl->getDeclName(), template_param_list,
+      record_decl);
+
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
+      cast<clang::Decl>(class_template_decl));
+  context.clang_decls().Add({.key = key, .inst_id = inst_id});
+
+  return class_template_decl;
+}
+
+static auto GetClassTypeInstId(Context& context, SemIR::ClassId class_id,
+                               SemIR::SpecificId specific_id)
+    -> SemIR::TypeInstId {
+  auto type_id = GetClassType(context, class_id, specific_id);
+  return context.types().GetTypeInstId(type_id);
+}
+
+auto ExportClassSpecializationToCpp(
+    Context& context, clang::ClassTemplateDecl* class_template_decl,
+    llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool {
+  // Map from the `clang::ClassTemplateDecl` to the Carbon `GenericClassType`.
+  auto clang_decl_id =
+      context.clang_decls().LookupId(SemIR::ClangDeclKey(class_template_decl));
+  if (clang_decl_id == SemIR::ClangDeclId::None) {
+    return false;
+  }
+  const auto& clang_decl = context.clang_decls().Get(clang_decl_id);
+  if (clang_decl.is_imported) {
+    return false;
+  }
+  auto generic_class_type =
+      context.insts().GetAs<SemIR::GenericClassType>(clang_decl.inst_id);
+
+  const auto& class_info = context.classes().Get(generic_class_type.class_id);
+  SemIR::LocId loc_id(class_info.first_decl_id());
+
+  auto specific_id = MakeSpecificForTemplateArgs(
+      context, loc_id, class_info.generic_id, template_args);
+  if (specific_id == SemIR::SpecificId::None) {
+    return false;
+  }
+
+  auto* class_template_specialization_decl =
+      clang::ClassTemplateSpecializationDecl::Create(
+          context.ast_context(),
+          class_template_decl->getTemplatedDecl()->getTagKind(),
+          class_template_decl->getDeclContext(),
+          class_template_decl->getTemplatedDecl()->getBeginLoc(),
+          class_template_decl->getLocation(), class_template_decl,
+          template_args,
+          /*StrictPackMatch=*/false,
+          /*PrevDecl=*/nullptr);
+  class_template_decl->AddSpecialization(class_template_specialization_decl,
+                                         /*InsertPos=*/nullptr);
+  class_template_specialization_decl->setHasExternalLexicalStorage();
+  class_template_specialization_decl->setHasExternalVisibleStorage();
+
+  // Create and store the `ClangDeclId`.
+  auto class_type_inst_id =
+      GetClassTypeInstId(context, generic_class_type.class_id, specific_id);
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
+      class_template_specialization_decl);
+  context.clang_decls().Add({.key = key, .inst_id = class_type_inst_id});
+
+  return true;
 }
 
 static auto SetCppClassMemberAccess(const SemIR::NameScope& class_scope,
@@ -199,11 +410,13 @@ static auto CreateCppFieldDecl(Context& context,
                                const SemIR::NameScope& class_scope,
                                clang::CXXRecordDecl* record_decl,
                                SemIR::InstId field_inst_id,
-                               const SemIR::FieldDecl& field_decl)
+                               const SemIR::FieldDecl& field_decl,
+                               SemIR::SpecificId specific_id)
     -> clang::FieldDecl* {
   // Get the field's C++ type.
-  auto unbound_element_type =
-      context.types().GetAs<SemIR::UnboundElementType>(field_decl.type_id);
+  auto unbound_element_type = context.types().GetAs<SemIR::UnboundElementType>(
+      SemIR::GetTypeOfInstInSpecific(context.sem_ir(), specific_id,
+                                     field_inst_id));
   auto cpp_type =
       MapToCppType(context, context.types().GetTypeIdForTypeInstId(
                                 unbound_element_type.element_type_inst_id));
@@ -232,59 +445,95 @@ static auto CreateCppFieldDecl(Context& context,
   return cpp_field_decl;
 }
 
-auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void {
-  if (class_info.fields_exported) {
-    return;
-  }
+// Create an invalid `clang::FieldDecl`. This is only used as an error marker
+// to indicate that a Carbon field has already been unsuccessfully exported.
+static auto CreateInvalidFieldDecl(Context& context,
+                                   clang::DeclContext* decl_context)
+    -> clang::FieldDecl* {
+  clang::SourceLocation clang_loc;
+  auto* identifier_info =
+      context.clang_sema().getPreprocessor().getIdentifierInfo("invalid_field");
+  auto cpp_type = context.ast_context().IntTy;
+  auto* field_decl = clang::FieldDecl::Create(
+      context.ast_context(), decl_context, /*StartLoc=*/clang_loc,
+      /*IdLoc=*/clang_loc, identifier_info, cpp_type, /*TInfo=*/nullptr,
+      /*BW=*/nullptr,
+      /*Mutable=*/true, clang::ICIS_NoInit);
+  field_decl->setInvalidDecl();
+  return field_decl;
+}
+
+auto ExportAllFieldsToCpp(Context& context,
+                          SemIR::TypeInstId class_type_inst_id) -> void {
+  auto class_type = context.insts().GetAs<SemIR::ClassType>(class_type_inst_id);
+  auto& class_info = context.classes().Get(class_type.class_id);
 
   const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
 
-  for (const auto& struct_field :
-       class_info.GetStructTypeFields(context.sem_ir())) {
+  for (const auto& struct_field : class_info.GetStructTypeFields(
+           context.sem_ir(), class_type.specific_id)) {
     auto class_field = LookupClassFieldByStructField(context.sem_ir(),
                                                      class_scope, struct_field);
     if (!class_field) {
       continue;
     }
 
-    // Map the parent scope into the C++ AST.
-    auto* decl_context = ExportNameScopeToCpp(
-        context, SemIR::LocId(class_field->inst_id), class_info.scope_id);
-    if (!decl_context) {
-      continue;
+    // Return early if the field is already exported. Since fields are always
+    // exported as a group, this indicates all fields have been exported so
+    // there's no need to continue to the rest.
+    if (context.clang_decls().Lookup(class_field->inst_id,
+                                     class_type.specific_id)) {
+      return;
     }
 
+    // Get the field's record decl.
+    auto lookup_key = class_type.specific_id == SemIR::SpecificId::None
+                          ? class_info.first_decl_id()
+                          : class_type_inst_id;
+    const auto* clang_decl = context.clang_decls().Lookup(lookup_key);
+    auto* record_decl = llvm::cast<clang::CXXRecordDecl>(clang_decl->decl());
+
     auto* cpp_field_decl = CreateCppFieldDecl(
-        context, class_scope, cast<clang::CXXRecordDecl>(decl_context),
-        class_field->inst_id, class_field->inst);
+        context, class_scope, record_decl, class_field->inst_id,
+        class_field->inst, class_type.specific_id);
+
+    // If the field cannot be exported, create an invalid `FieldDecl` to store
+    // in `clang_decls`. This marks the field as unsuccessfully exported, so
+    // that we know not to attempt export again (which could create duplicate
+    // error diagnostics).
     if (!cpp_field_decl) {
-      continue;
+      cpp_field_decl = CreateInvalidFieldDecl(context, record_decl);
     }
 
     // Create and store the `ClangDeclId`.
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(cpp_field_decl);
-    context.clang_decls().Add({.key = key, .inst_id = class_field->inst_id});
+    context.clang_decls().Add({.key = key,
+                               .inst_id = class_field->inst_id,
+                               .specific_id = class_type.specific_id});
   }
-
-  class_info.fields_exported = true;
 }
 
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
-                      SemIR::FieldDecl field_decl) -> clang::FieldDecl* {
+                      SemIR::FieldDecl field_decl,
+                      SemIR::SpecificId specific_id) -> clang::FieldDecl* {
   // Get the `SemIR::Class` that contains the `field_decl`.
   auto unbound_element_type =
       context.types().GetAs<SemIR::UnboundElementType>(field_decl.type_id);
   SemIR::TypeId class_type_id = context.types().GetTypeIdForTypeInstId(
       unbound_element_type.class_type_inst_id);
   auto class_type = context.types().GetAs<SemIR::ClassType>(class_type_id);
-  auto& class_info = context.classes().Get(class_type.class_id);
 
   // If the class's fields haven't already been exported, do so now.
-  ExportAllFieldsToCpp(context, class_info);
+  auto class_type_inst_id =
+      GetClassTypeInstId(context, class_type.class_id, specific_id);
+  ExportAllFieldsToCpp(context, class_type_inst_id);
 
   // Get the exported `clang::FieldDecl`.
-  if (const auto* clang_decl = context.clang_decls().Lookup(field_inst_id)) {
-    return cast<clang::FieldDecl>(clang_decl->decl());
+  if (const auto* clang_decl =
+          context.clang_decls().Lookup(field_inst_id, specific_id)) {
+    if (!clang_decl->decl()->isInvalidDecl()) {
+      return cast<clang::FieldDecl>(clang_decl->decl());
+    }
   }
   return nullptr;
 }
@@ -310,10 +559,13 @@ struct FunctionInfo {
 
   explicit FunctionInfo(Context& context, SemIR::FunctionId function_id,
                         const SemIR::Function& function,
-                        clang::DeclContext* decl_context)
+                        clang::DeclContext* decl_context,
+                        bool export_as_constructor)
       : function_id(function_id),
         function(function),
-        decl_context(decl_context) {
+        decl_context(decl_context),
+        return_type_id(function.GetDeclaredReturnType(context.sem_ir())),
+        export_as_constructor(export_as_constructor) {
     auto function_params =
         context.inst_blocks().Get(function.call_param_patterns_id);
     const auto& ranges = function.call_param_ranges;
@@ -353,11 +605,23 @@ struct FunctionInfo {
     return SemIR::TypeId::None;
   }
 
+  // Get the clang::DeclarationName of this function's C++ counterpart.
+  auto GetCppName(Context& context) const -> clang::DeclarationName {
+    if (export_as_constructor) {
+      auto* record_decl = cast<clang::CXXRecordDecl>(decl_context);
+      return context.ast_context().DeclarationNames.getCXXConstructorName(
+          context.ast_context().getCanonicalTagType(record_decl));
+    } else {
+      return &context.ast_context().Idents.get(
+          context.names().GetFormatted(function.name_id));
+    }
+  }
+
   SemIR::FunctionId function_id;
   const SemIR::Function& function;
 
   // Parent scope in the C++ AST where a C++ thunk for this function can
-  // be created. If the function is a method, this will be a
+  // be created. If the function is a method or constructor, this will be a
   // `CXXRecordDecl`.
   clang::DeclContext* decl_context;
 
@@ -365,9 +629,15 @@ struct FunctionInfo {
   // and whether the parameter is a reference.
   llvm::SmallVector<Param> explicit_params;
 
+  // Return type of the function.
+  SemIR::TypeId return_type_id;
+
   // For methods, the type of `self` and whether it is a reference. If
   // the function does not have a `self` parameter, this is `nullopt`.
   std::optional<Param> self_param;
+
+  // Whether this function should be exported as a C++ constructor.
+  bool export_as_constructor;
 };
 }  // namespace
 
@@ -401,7 +671,99 @@ static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
     return std::nullopt;
   }
 
-  return FunctionInfo(context, callee_function_id, callee, decl_context);
+  bool export_as_constructor = false;
+  const auto& parent_scope = context.name_scopes().Get(callee.parent_scope_id);
+  if (auto class_decl =
+          context.insts().TryGetAs<SemIR::ClassDecl>(parent_scope.inst_id())) {
+    auto& class_info = context.classes().Get(class_decl->class_id);
+    if (class_info.name_id == callee.name_id) {
+      // If the function's name matches the name of the enclosing class,
+      // we can't export it as an ordinary function, so from this point on
+      // if we can't export it as a constructor we can't export it at all.
+      //
+      // TODO: figure out a way to provide good diagnostics in this situation.
+      // Ideally we'd only diagnose if the user actually tries to call it,
+      // because it's perfectly valid as Carbon code, but it's not clear how
+      // to do that.
+      //
+      // TODO: some impl functions should also be exported as constructors
+      // (e.g. `Core.Copy.Op`). Figure out how to avoid colliding with those
+      // here.
+      if (callee.self_param_id != SemIR::InstId::None) {
+        return std::nullopt;
+      }
+      if (!context.insts().Is<SemIR::InitForm>(
+              callee.GetDeclaredReturnForm(context.sem_ir()))) {
+        return std::nullopt;
+      }
+      auto class_type_id =
+          GetClassType(context, class_decl->class_id, SemIR::SpecificId::None);
+      auto return_type_id =
+          context.types().GetTypeIdForTypeInstId(callee.return_type_inst_id);
+      if (class_type_id != return_type_id) {
+        return std::nullopt;
+      }
+      // TODO figure out how to deal with explicit generic parameters.
+      export_as_constructor = true;
+    }
+  }
+
+  return FunctionInfo(context, callee_function_id, callee, decl_context,
+                      export_as_constructor);
+}
+
+// Create a `clang::FunctionDecl` with the given parameter types and
+// return type.
+//
+// The function's name will match the one referenced by `function_name_id`,
+// and the function will be added to the given `decl_context`.
+static auto BuildCppFunctionDecl(Context& context,
+                                 clang::DeclContext* decl_context,
+                                 SemIR::LocId loc_id,
+                                 clang::DeclarationName declaration_name,
+                                 clang::ArrayRef<clang::QualType> param_types,
+                                 clang::QualType return_type,
+                                 bool export_as_constructor) {
+  auto clang_loc = GetCppLocation(context, loc_id);
+
+  auto cpp_function_type = context.ast_context().getFunctionType(
+      return_type, param_types, clang::FunctionProtoType::ExtProtoInfo());
+
+  auto* tinfo = context.ast_context().getTrivialTypeSourceInfo(
+      cpp_function_type, clang_loc);
+  clang::FunctionDecl* function_decl;
+  if (export_as_constructor) {
+    auto* record_decl = cast<clang::CXXRecordDecl>(decl_context);
+    function_decl = clang::CXXConstructorDecl::Create(
+        context.ast_context(), record_decl, /*StartLoc=*/clang_loc,
+        clang::DeclarationNameInfo{declaration_name, clang_loc},
+        cpp_function_type, tinfo,
+        clang::ExplicitSpecifier{nullptr,
+                                 clang::ExplicitSpecKind::ResolvedTrue},
+        /*UsesFPIntrin=*/false,
+        /*isInline=*/false, /*isImplicitlyDeclared=*/false,
+        clang::ConstexprSpecKind::Unspecified);
+  } else {
+    function_decl = clang::FunctionDecl::Create(
+        context.ast_context(), decl_context,
+        /*StartLoc=*/clang_loc, /*NLoc=*/clang_loc, declaration_name,
+        cpp_function_type, tinfo, clang::SC_Extern);
+  }
+
+  // Build parameter decls.
+  llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
+  for (auto [i, type] : llvm::enumerate(param_types)) {
+    auto* param_tinfo =
+        context.ast_context().getTrivialTypeSourceInfo(type, clang_loc);
+    clang::ParmVarDecl* param = clang::ParmVarDecl::Create(
+        context.ast_context(), function_decl, /*StartLoc=*/clang_loc,
+        /*IdLoc=*/clang_loc, /*Id=*/nullptr, type, param_tinfo, clang::SC_None,
+        /*DefArg=*/nullptr);
+    param_var_decls.push_back(param);
+  }
+  function_decl->setParams(param_var_decls);
+
+  return function_decl;
 }
 
 // Create a `clang::FunctionDecl` for the given Carbon function. This
@@ -410,16 +772,75 @@ static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
 //
 // The resulting decl is used to allow a generated C++ function to call
 // a generated Carbon function.
-static auto BuildCppFunctionDeclForCarbonFn(Context& context,
-                                            SemIR::LocId loc_id,
-                                            SemIR::FunctionId function_id)
+static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
+                                                      SemIR::LocId loc_id,
+                                                      FunctionInfo target)
     -> clang::FunctionDecl* {
-  auto clang_loc = GetCppLocation(context, loc_id);
-
-  const SemIR::Function& function = context.functions().Get(function_id);
-  FunctionInfo callee(context, function_id, function, nullptr);
+  CARBON_CHECK(!target.function.generic_id.has_value());
 
   // Get parameters types.
+  llvm::SmallVector<clang::QualType> cpp_param_types;
+  if (target.self_param) {
+    auto cpp_type = MapToCppThunkParamType(context, target.self_param->type_id);
+    if (cpp_type.isNull()) {
+      context.TODO(loc_id, "failed to map Carbon self type to C++");
+      return nullptr;
+    }
+    cpp_param_types.push_back(cpp_type);
+  }
+  // For constructors, the first Carbon parameter is the object being
+  // constructed, which is not explicitly declared in C++.
+  llvm::ArrayRef<FunctionInfo::Param> params_to_map = target.explicit_params;
+  if (target.export_as_constructor) {
+    params_to_map = params_to_map.drop_front();
+  }
+  for (auto param : params_to_map) {
+    auto cpp_type = MapToCppThunkParamType(context, param.type_id);
+    if (cpp_type.isNull()) {
+      context.TODO(loc_id, "failed to map Carbon type to C++");
+      return nullptr;
+    }
+    cpp_param_types.push_back(cpp_type);
+  }
+
+  CARBON_CHECK(target.function.return_type_inst_id == SemIR::TypeInstId::None);
+  auto cpp_return_type = context.ast_context().VoidTy;
+
+  auto* decl_context = target.export_as_constructor
+                           ? target.decl_context
+                           : context.ast_context().getTranslationUnitDecl();
+  auto* function_decl = BuildCppFunctionDecl(
+      context, decl_context, loc_id, target.GetCppName(context),
+      cpp_param_types, cpp_return_type, target.export_as_constructor);
+
+  // Mangle the function name and attach it to the `FunctionDecl`.
+  SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
+                   context.mangle_string_fingerprint());
+  std::string mangled_name =
+      m.MangleWithPlatform(target.function_id, SemIR::SpecificId::None);
+  function_decl->addAttr(
+      clang::AsmLabelAttr::Create(context.ast_context(), mangled_name));
+
+  return function_decl;
+}
+
+// Create a `clang::FunctionDecl` for the given generic Carbon function.
+//
+// The `clang::FunctionDecl` created here is only used as a function template
+// decl. Only specializations of this function template decl are called
+// directly, so the ABI of this function decl is irrelevant.
+static auto BuildCppFunctionDeclForGenericCarbonFn(Context& context,
+                                                   SemIR::LocId loc_id,
+                                                   FunctionInfo callee)
+    -> clang::FunctionDecl* {
+  CARBON_CHECK(callee.function.generic_id.has_value());
+
+  // Get parameters types.
+  //
+  // TODO: currently this matches the behavior of
+  // BuildCppFunctionDeclForNonGenericCarbonFn, but for templates the ABI is
+  // irrelevant, and the parameter should instead map to something that will
+  // guide C++ template argument deduction into doing the right thing.
   llvm::SmallVector<clang::QualType> cpp_param_types;
   if (callee.self_param) {
     auto cpp_type = MapToCppThunkParamType(context, callee.self_param->type_id);
@@ -438,45 +859,23 @@ static auto BuildCppFunctionDeclForCarbonFn(Context& context,
     cpp_param_types.push_back(cpp_type);
   }
 
-  CARBON_CHECK(function.return_type_inst_id == SemIR::TypeInstId::None);
-  auto cpp_return_type = context.ast_context().VoidTy;
-
-  auto cpp_function_type = context.ast_context().getFunctionType(
-      cpp_return_type, cpp_param_types,
-      clang::FunctionProtoType::ExtProtoInfo());
-
-  auto* identifier_info = GetClangIdentifierInfo(context, function.name_id);
-  CARBON_CHECK(identifier_info, "function with non-identifier name {0}",
-               function.name_id);
-
-  auto* tinfo = context.ast_context().getTrivialTypeSourceInfo(
-      cpp_function_type, clang_loc);
-  clang::FunctionDecl* function_decl = clang::FunctionDecl::Create(
-      context.ast_context(), context.ast_context().getTranslationUnitDecl(),
-      /*StartLoc=*/clang_loc, /*NLoc=*/clang_loc, identifier_info,
-      cpp_function_type, tinfo, clang::SC_Extern);
-
-  // Build parameter decls.
-  llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
-  for (auto [i, type] : llvm::enumerate(cpp_param_types)) {
-    auto* param_tinfo =
-        context.ast_context().getTrivialTypeSourceInfo(type, clang_loc);
-    clang::ParmVarDecl* param = clang::ParmVarDecl::Create(
-        context.ast_context(), function_decl, /*StartLoc=*/clang_loc,
-        /*IdLoc=*/clang_loc, /*Id=*/nullptr, type, param_tinfo, clang::SC_None,
-        /*DefArg=*/nullptr);
-    param_var_decls.push_back(param);
+  clang::QualType cpp_return_type = context.ast_context().VoidTy;
+  if (callee.return_type_id.has_value()) {
+    cpp_return_type = MapToCppType(context, callee.return_type_id);
+    if (cpp_return_type.isNull()) {
+      context.TODO(loc_id, "failed to map Carbon return type to C++");
+      return nullptr;
+    }
   }
-  function_decl->setParams(param_var_decls);
 
-  // Mangle the function name and attach it to the `FunctionDecl`.
-  SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
-                   context.mangle_string_fingerprint());
-  std::string mangled_name = m.Mangle(function_id, SemIR::SpecificId::None);
-  function_decl->addAttr(
-      clang::AsmLabelAttr::Create(context.ast_context(), mangled_name));
-
-  return function_decl;
+  // TODO: provide the decl context corresponding to the Carbon generic
+  // function.
+  auto* decl_context = callee.export_as_constructor
+                           ? callee.decl_context
+                           : context.ast_context().getTranslationUnitDecl();
+  return BuildCppFunctionDecl(context, decl_context, loc_id,
+                              callee.GetCppName(context), cpp_param_types,
+                              cpp_return_type, callee.export_as_constructor);
 }
 
 // Returns whether the given Carbon parameter should be passed as a C++ const
@@ -532,9 +931,9 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
   // Get the C++ return type (this corresponds to the return type of the
   // target Carbon function).
   clang::QualType cpp_return_type = context.ast_context().VoidTy;
-  auto return_type_id = target.function.GetDeclaredReturnType(context.sem_ir());
-  if (return_type_id != SemIR::TypeId::None) {
-    cpp_return_type = MapToCppType(context, return_type_id);
+  if (!target.export_as_constructor &&
+      (target.return_type_id != SemIR::TypeId::None)) {
+    cpp_return_type = MapToCppType(context, target.return_type_id);
     if (cpp_return_type.isNull()) {
       context.TODO(loc_id, "failed to map Carbon return type to C++ type");
       return nullptr;
@@ -547,8 +946,15 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
   }
 
   auto ext_proto_info = clang::FunctionProtoType::ExtProtoInfo();
-  if (target.self_param && target.self_param->kind == ParamPatternKind::Ref) {
-    ext_proto_info.RefQualifier = clang::RQ_LValue;
+  if (target.self_param) {
+    if (target.self_param->kind == ParamPatternKind::Ref) {
+      ext_proto_info.RefQualifier = clang::RQ_LValue;
+    } else {
+      // A method with `self` doesn't modify the object, so export it as
+      // `const`. Unlike `ref self`, `self` doesn't require a reference
+      // expression, so no ref-qualifier is added.
+      ext_proto_info.TypeQuals.addConst();
+    }
   }
   return context.ast_context()
       .getFunctionType(cpp_return_type, thunk_param_types, ext_proto_info)
@@ -587,9 +993,9 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
   }
 
   clang::DeclarationNameInfo name_info(thunk_name, clang_loc);
-
-  auto* tinfo = ast_context.getTrivialTypeSourceInfo(
-      clang::QualType(thunk_function_type, 0), clang_loc);
+  clang::QualType thunk_qual_type(thunk_function_type, 0);
+  auto* tinfo =
+      ast_context.getTrivialTypeSourceInfo(thunk_qual_type, clang_loc);
 
   bool uses_fp_intrin = false;
   bool inline_specified = true;
@@ -599,11 +1005,20 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
   clang::FunctionDecl* thunk_function_decl = nullptr;
   if (auto* parent_class =
           dyn_cast<clang::CXXRecordDecl>(target.decl_context)) {
-    thunk_function_decl = clang::CXXMethodDecl::Create(
-        ast_context, parent_class, clang_loc, name_info,
-        clang::QualType(thunk_function_type, 0), tinfo,
-        target.GetStorageClass(), uses_fp_intrin, inline_specified,
-        constexpr_kind, clang_loc, trailing_requires_clause);
+    if (target.export_as_constructor) {
+      thunk_function_decl = clang::CXXConstructorDecl::Create(
+          ast_context, parent_class, clang_loc, name_info, thunk_qual_type,
+          tinfo,
+          clang::ExplicitSpecifier{nullptr,
+                                   clang::ExplicitSpecKind::ResolvedTrue},
+          uses_fp_intrin, inline_specified, /* isImplicitlyDeclared= */ false,
+          constexpr_kind);
+    } else {
+      thunk_function_decl = clang::CXXMethodDecl::Create(
+          ast_context, parent_class, clang_loc, name_info, thunk_qual_type,
+          tinfo, target.GetStorageClass(), uses_fp_intrin, inline_specified,
+          constexpr_kind, clang_loc, trailing_requires_clause);
+    }
     // TODO: Map Carbon access to C++ access.
     thunk_function_decl->setAccess(clang::AS_public);
     // Carbon overriders are non-virtual in C++; only the corresponding thunk is
@@ -613,15 +1028,16 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
             SemIR::Function::VirtualModifier::None &&
         target.function.virtual_modifier !=
             SemIR::Function::VirtualModifier::Override);
-    // TODO: Call setIsPureVirtual if VirtualModifier::Abstract is present.
+    if (target.function.virtual_modifier ==
+        SemIR::Function::VirtualModifier::Abstract) {
+      cast<clang::CXXMethodDecl>(thunk_function_decl)->setIsPureVirtual(true);
+    }
   } else {
     thunk_function_decl = clang::FunctionDecl::Create(
-        ast_context, target.decl_context, clang_loc, name_info,
-        clang::QualType(thunk_function_type, 0), tinfo, clang::SC_None,
-        uses_fp_intrin, inline_specified,
+        ast_context, target.decl_context, clang_loc, name_info, thunk_qual_type,
+        tinfo, clang::SC_None, uses_fp_intrin, inline_specified,
         /*hasWrittenPrototype=*/true, constexpr_kind, trailing_requires_clause);
   }
-  target.decl_context->addHiddenDecl(thunk_function_decl);
 
   llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
   for (auto [i, type] : llvm::enumerate(thunk_function_type->param_types())) {
@@ -632,6 +1048,7 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
     param_var_decls.push_back(thunk_param);
   }
   thunk_function_decl->setParams(param_var_decls);
+  target.decl_context->addHiddenDecl(thunk_function_decl);
 
   // Force the thunk to be inlined and discarded.
   thunk_function_decl->addAttr(
@@ -644,11 +1061,11 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
 
 // Get an expr for accessing `this` in a method.
 static auto GetThisArg(clang::Sema& sema, clang::SourceLocation clang_loc,
-                       clang::CXXRecordDecl* record_decl) -> clang::Expr* {
-  clang::QualType class_type =
-      sema.getASTContext().getCanonicalTagType(record_decl);
-  auto class_ptr_type = sema.getASTContext().getPointerType(class_type);
-  auto* this_expr = sema.BuildCXXThisExpr(clang_loc, class_ptr_type,
+                       const clang::CXXMethodDecl* method_decl)
+    -> clang::Expr* {
+  // These pick up the method's `const` qualifier, if any.
+  clang::QualType class_type = method_decl->getFunctionObjectParameterType();
+  auto* this_expr = sema.BuildCXXThisExpr(clang_loc, method_decl->getThisType(),
                                           /*IsImplicit=*/true);
   return clang::UnaryOperator::Create(
       sema.getASTContext(), this_expr, clang::UO_Deref, class_type,
@@ -658,11 +1075,12 @@ static auto GetThisArg(clang::Sema& sema, clang::SourceLocation clang_loc,
 
 // Create the body of a C++ thunk that calls a Carbon thunk. The
 // arguments are passed by reference to the callee.
-static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
+static auto BuildCppToCarbonThunkBody(Context& context,
                                       const FunctionInfo& target,
                                       clang::FunctionDecl* function_decl,
                                       clang::FunctionDecl* callee_function_decl)
     -> clang::StmtResult {
+  clang::Sema& sema = context.clang_sema();
   clang::SourceLocation clang_loc = function_decl->getLocation();
 
   llvm::SmallVector<clang::Stmt*> stmts;
@@ -672,6 +1090,7 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
   clang::VarDecl* return_storage_var_decl = nullptr;
   clang::ExprResult return_storage_expr;
   if (has_return_value) {
+    CARBON_CHECK(!target.export_as_constructor);
     auto& return_storage_ident =
         sema.getASTContext().Idents.get("return_storage");
     return_storage_var_decl =
@@ -692,15 +1111,11 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
     stmts.push_back(decl_stmt.get());
   }
 
-  clang::ExprResult callee = sema.BuildDeclRefExpr(
-      callee_function_decl, callee_function_decl->getType(), clang::VK_PRValue,
-      clang_loc);
-
   llvm::SmallVector<clang::Expr*> call_args;
   // For methods, pass the `this` pointer as the first argument to the callee.
   if (target.self_param) {
-    auto* parent_class = cast<clang::CXXRecordDecl>(target.decl_context);
-    call_args.push_back(GetThisArg(sema, clang_loc, parent_class));
+    call_args.push_back(
+        GetThisArg(sema, clang_loc, cast<clang::CXXMethodDecl>(function_decl)));
   }
   for (auto* param : function_decl->parameters()) {
     clang::Expr* call_arg =
@@ -715,18 +1130,49 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
     call_args.push_back(return_storage_expr.get());
   }
 
-  clang::ExprResult call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc,
-                                              call_args, clang_loc);
-  CARBON_CHECK(call.isUsable());
-  stmts.push_back(call.get());
+  if (target.export_as_constructor) {
+    auto* class_decl = cast<clang::CXXRecordDecl>(target.decl_context);
+    clang::QualType class_type =
+        sema.getASTContext().getCanonicalTagType(class_decl);
+    auto* callee_ctor_decl =
+        llvm::cast<clang::CXXConstructorDecl>(callee_function_decl);
+    llvm::SmallVector<clang::Expr*> converted_args;
+    if (sema.CompleteConstructorCall(callee_ctor_decl, class_type, call_args,
+                                     clang_loc, converted_args,
+                                     /*AllowExplicit=*/true)) {
+      CARBON_FATAL("CompleteConstructorCall failed");
+    }
+    auto call = sema.BuildCXXConstructExpr(
+        clang_loc, class_type, callee_ctor_decl, /*Elidable=*/false,
+        converted_args,
+        /*HadMultipleCandidates=*/true, /*IsListInitialization=*/false,
+        /*IsStdInitListInitialization=*/false,
+        /*RequiresZeroInit=*/false, clang::CXXConstructionKind::Delegating,
+        clang::SourceRange(clang_loc, clang_loc));
+    auto* tinfo =
+        context.ast_context().getTrivialTypeSourceInfo(class_type, clang_loc);
+    auto* ctor_initializer =
+        new (context.ast_context()) clang::CXXCtorInitializer(
+            context.ast_context(), tinfo, clang_loc, call.get(), clang_loc);
+    CARBON_CHECK(call.isUsable());
+    sema.SetDelegatingInitializer(
+        llvm::cast<clang::CXXConstructorDecl>(function_decl), ctor_initializer);
+  } else {
+    clang::ExprResult callee = sema.BuildDeclRefExpr(
+        callee_function_decl, callee_function_decl->getType(),
+        clang::VK_PRValue, clang_loc);
+    clang::ExprResult call = sema.BuildCallExpr(
+        nullptr, callee.get(), clang_loc, call_args, clang_loc);
+    CARBON_CHECK(call.isUsable());
+    stmts.push_back(call.get());
 
-  if (has_return_value) {
-    auto* return_stmt = clang::ReturnStmt::Create(
-        sema.getASTContext(), clang_loc, return_storage_expr.get(),
-        return_storage_var_decl);
-    stmts.push_back(return_stmt);
+    if (has_return_value) {
+      auto* return_stmt = clang::ReturnStmt::Create(
+          sema.getASTContext(), clang_loc, return_storage_expr.get(),
+          return_storage_var_decl);
+      stmts.push_back(return_stmt);
+    }
   }
-
   return clang::CompoundStmt::Create(sema.getASTContext(), stmts,
                                      clang::FPOptionsOverride(), clang_loc,
                                      clang_loc);
@@ -740,7 +1186,7 @@ static auto BuildCppToCarbonThunkBody(clang::Sema& sema,
 static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
                                      const FunctionInfo& target,
                                      std::string_view extra_name = "")
-    -> SemIR::FunctionId {
+    -> FunctionInfo {
   // Create the thunk's name.
   llvm::SmallString<64> thunk_name =
       context.names().GetFormatted(target.function.name_id);
@@ -757,10 +1203,19 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
   for (const auto& param : target.explicit_params) {
     thunk_param_type_ids.push_back(param.type_id);
   }
-  auto callee_return_type_id =
-      target.function.GetDeclaredReturnType(context.sem_ir());
-  if (callee_return_type_id != SemIR::TypeId::None) {
-    thunk_param_type_ids.push_back(callee_return_type_id);
+  if (target.return_type_id != SemIR::TypeId::None) {
+    thunk_param_type_ids.push_back(target.return_type_id);
+  }
+
+  // If this thunk will be exposed as a C++ constructor, we put the output
+  // parameter first to match the Itanium constructor ABI.
+  //
+  // TODO: use `clang::CodeGen::CGCXXABI::HasThisReturn` to determine if the
+  // constructor's `this` should be a return value instead of an output param.
+  if (target.export_as_constructor) {
+    CARBON_CHECK(target.return_type_id != SemIR::TypeId::None);
+    std::rotate(thunk_param_type_ids.begin(), thunk_param_type_ids.end() - 1,
+                thunk_param_type_ids.end());
   }
 
   auto carbon_thunk_function_id =
@@ -776,19 +1231,19 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
   BuildThunkDefinitionForExport(
       context, carbon_thunk_function_id, target.function_id,
       context.functions().Get(carbon_thunk_function_id).first_decl_id(),
-      target.function.first_decl_id());
+      target.function.first_decl_id(), target.export_as_constructor);
 
-  return carbon_thunk_function_id;
+  return FunctionInfo(context, carbon_thunk_function_id,
+                      context.functions().Get(carbon_thunk_function_id),
+                      target.decl_context, target.export_as_constructor);
 }
 
 static auto ExportNonGenericFunctionDeclToCpp(Context& context,
                                               SemIR::LocId loc_id,
                                               const FunctionInfo& target)
     -> clang::FunctionDecl* {
-  auto& thunk_ident = context.ast_context().Idents.get(
-      context.names().GetFormatted(target.function.name_id));
-
-  return BuildCppToCarbonThunkDecl(context, loc_id, target, &thunk_ident);
+  return BuildCppToCarbonThunkDecl(context, loc_id, target,
+                                   target.GetCppName(context));
 }
 
 auto ExportVirtualFunctionDeclToCpp(Context& context, SemIR::LocId loc_id,
@@ -796,7 +1251,8 @@ auto ExportVirtualFunctionDeclToCpp(Context& context, SemIR::LocId loc_id,
                                     SemIR::FunctionId function_id)
     -> clang::CXXMethodDecl* {
   FunctionInfo target(context, function_id,
-                      context.functions().Get(function_id), parent);
+                      context.functions().Get(function_id), parent,
+                      /*export_as_constructor=*/false);
   return cast_or_null<clang::CXXMethodDecl>(
       ExportNonGenericFunctionDeclToCpp(context, loc_id, target));
 }
@@ -807,12 +1263,12 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
                                   std::string_view extra_name) -> void {
   // Create a Carbon thunk that calls the callee. The thunk's parameters
   // are all references so that the ABI is compatible with C++ callers.
-  auto carbon_thunk_function_id =
+  auto carbon_thunk_target =
       BuildCarbonToCarbonThunk(context, loc_id, target, extra_name);
 
   // Create a `clang::FunctionDecl` that can be used to call the Carbon thunk.
-  auto* carbon_function_decl = BuildCppFunctionDeclForCarbonFn(
-      context, loc_id, carbon_thunk_function_id);
+  auto* carbon_function_decl = BuildCppFunctionDeclForNonGenericCarbonFn(
+      context, loc_id, carbon_thunk_target);
   if (!carbon_function_decl) {
     return;
   }
@@ -826,7 +1282,7 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
       sema, clang::Sema::ExpressionEvaluationContext::PotentiallyEvaluated);
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
   clang::StmtResult body = BuildCppToCarbonThunkBody(
-      sema, target, thunk_function_decl, carbon_function_decl);
+      context, target, thunk_function_decl, carbon_function_decl);
   sema.ActOnFinishFunctionBody(thunk_function_decl, body.get());
   CARBON_CHECK(!body.isInvalid());
 
@@ -839,7 +1295,8 @@ auto DefineExportedVirtualFunction(Context& context, SemIR::LocId loc_id,
                                    clang::CXXMethodDecl* method_decl) -> void {
   const SemIR::Function& callee = context.functions().Get(callee_function_id);
   FunctionInfo target_function_info(context, callee_function_id, callee,
-                                    method_decl->getDeclContext());
+                                    method_decl->getDeclContext(),
+                                    /*export_as_constructor=*/false);
   BuildCppToCarbonThunk(context, loc_id, target_function_info, method_decl, "");
 }
 
@@ -881,55 +1338,29 @@ auto ExportFunctionSpecializationToCpp(
 
   auto* decl_context = function_template_decl->getDeclContext();
   FunctionInfo target(context, target_function_decl.function_id,
-                      target_function, decl_context);
+                      target_function, decl_context,
+                      llvm::isa<clang::CXXConstructorDecl>(
+                          function_template_decl->getTemplatedDecl()));
   SemIR::LocId loc_id(target.function.first_decl_id());
 
-  const auto& generic = context.generics().Get(target.function.generic_id);
-  auto bindings = context.inst_blocks().Get(generic.bindings_id);
-  CARBON_CHECK(bindings.size() == template_args.size());
-
-  // This name will be appended to the thunk name to disambiguate
-  // between specializations.
-  std::string extra_name;
-
-  // Map the `clang::TemplateArgument`s into Carbon types suitable for
-  // passing into `MakeSpecific`.
-  //
-  // Also initialize `extra_name`.
-  llvm::SmallVector<SemIR::InstId> specific_arg_ids;
-  for (auto [binding_inst_id, clang_template_arg] :
-       llvm::zip(bindings, template_args)) {
-    auto type_expr =
-        ImportCppType(context, loc_id, clang_template_arg.getAsType());
-    if (type_expr.type_id == SemIR::ErrorInst::TypeId) {
-      return false;
-    }
-    if (!type_expr.type_id.has_value()) {
-      context.TODO(loc_id, "failed to import C++ type");
-      return false;
-    }
-
-    // TODO: this generates a pretty ugly name.
-    extra_name += std::string(llvm::formatv("{}", type_expr.inst_id));
-
-    auto binding_const_inst_id =
-        context.constant_values().GetConstantInstId(binding_inst_id);
-
-    specific_arg_ids.push_back(ConvertToValueOfType(
-        context, loc_id, type_expr.inst_id,
-        context.insts().Get(binding_const_inst_id).type_id()));
+  // Create a specific, and use that to convert return type and
+  // parameters with symbolic types to concrete types.
+  auto specific_id = MakeSpecificForTemplateArgs(
+      context, loc_id, target.function.generic_id, template_args);
+  if (specific_id == SemIR::SpecificId::None) {
+    return false;
   }
-
-  // Create a specific, and use that to convert from parameters with
-  // symbolic types to concrete types.
-  auto specific_id = MakeSpecific(context, loc_id, target.function.generic_id,
-                                  specific_arg_ids);
+  // This name is appended to the thunk name to disambiguate between
+  // specializations.
+  SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
+                   context.mangle_string_fingerprint());
+  auto extra_name = m.MangleSpecificId(specific_id);
+  target.return_type_id =
+      target.function.GetDeclaredReturnType(context.sem_ir(), specific_id);
   for (auto& param : target.explicit_params) {
     param.type_id =
         GetScrutineeTypeInSpecific(context, param.pattern_inst_id, specific_id);
   }
-
-  // TODO: handle generic return type.
 
   // Build the thunks. Mark the C++ thunk as a template specialization.
   auto* function_decl =
@@ -956,57 +1387,14 @@ static auto ExportGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
     -> clang::FunctionTemplateDecl* {
   auto clang_loc = GetCppLocation(context, loc_id);
 
-  const auto& generic = context.generics().Get(callee.function.generic_id);
-  auto bindings = context.inst_blocks().Get(generic.bindings_id);
-  llvm::SmallVector<clang::NamedDecl*> template_param_decls;
-
-  // Create `clang::TemplateTypeParmDecl`s for each of the function's
-  // symbolic parameters.
-  //
-  // TODO: handle the case where the function is within an enclosing generic,
-  // and only include the bindings introduced in the inner function here. See
-  // `fail_todo_enclosing_generic.carbon`.
-  for (auto binding_inst_id : bindings) {
-    binding_inst_id =
-        context.constant_values().GetConstantInstId(binding_inst_id);
-    auto symbolic_binding =
-        context.insts().GetAs<SemIR::SymbolicBinding>(binding_inst_id);
-
-    const auto& entity_name =
-        context.entity_names().Get(symbolic_binding.entity_name_id);
-
-    auto* param_ident = GetClangIdentifierInfo(context, entity_name.name_id);
-    CARBON_CHECK(param_ident, "non-identifier param name {0}",
-                 entity_name.name_id);
-
-    if (symbolic_binding.type_id != SemIR::TypeType::TypeId &&
-        !context.types().Is<SemIR::FacetType>(symbolic_binding.type_id)) {
-      context.TODO(loc_id, "binding maps to a non-type template parameter");
-      return nullptr;
-    }
-
-    auto* param_decl = clang::TemplateTypeParmDecl::Create(
-        context.ast_context(), callee.decl_context, /*KeyLoc=*/clang_loc,
-        /*NameLoc=*/clang_loc,
-        /*D=*/0, /*P=*/0, param_ident, /*Typename=*/true,
-        /*ParameterPack=*/false);
-    template_param_decls.push_back(param_decl);
-
-    // Store a mapping between the generic parameter's `TypeInstId` and
-    // the `clang::TemplateTypeParmDecl`.
-    auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(param_decl);
-    context.clang_decls().Add({.key = key, .inst_id = binding_inst_id});
+  auto* template_param_list = ExportGenericBindings(
+      context, loc_id, callee.function.generic_id, callee.decl_context);
+  if (!template_param_list) {
+    return nullptr;
   }
 
-  auto* template_param_list = clang::TemplateParameterList::Create(
-      context.ast_context(),
-      /*TemplateLoc=*/clang_loc,
-      /*LAngleLoc=*/clang_loc, template_param_decls,
-      /*RAngleLoc=*/clang_loc,
-      /*RequiresClause=*/nullptr);
-
   auto* function_decl =
-      BuildCppFunctionDeclForCarbonFn(context, loc_id, callee.function_id);
+      BuildCppFunctionDeclForGenericCarbonFn(context, loc_id, callee);
   if (!function_decl) {
     return nullptr;
   }
@@ -1028,6 +1416,10 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
   }
 
   if (target->function.generic_id.has_value()) {
+    if (target->export_as_constructor || target->self_param.has_value()) {
+      context.TODO(loc_id, "support exporting generic member functions");
+      return nullptr;
+    }
     return ExportGenericFunctionToCpp(context, loc_id, *target);
   }
 
@@ -1113,8 +1505,11 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
   // TODO: Once we support exporting specific classes, export the specific
   // destructor here rather than a generic one.
   auto thunk_function_id = BuildDestroyThunk(context, loc_id, class_info);
+  FunctionInfo thunk_target(context, thunk_function_id,
+                            context.functions().Get(thunk_function_id),
+                            record_decl, /*export_as_constructor=*/false);
   auto* cpp_function_decl =
-      BuildCppFunctionDeclForCarbonFn(context, loc_id, thunk_function_id);
+      BuildCppFunctionDeclForNonGenericCarbonFn(context, loc_id, thunk_target);
   if (!cpp_function_decl) {
     return nullptr;
   }
@@ -1128,7 +1523,7 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
       sema.BuildDeclRefExpr(cpp_function_decl, cpp_function_decl->getType(),
                             clang::VK_PRValue, clang_loc);
   llvm::SmallVector<clang::Expr*> call_args;
-  call_args.push_back(GetThisArg(sema, clang_loc, record_decl));
+  call_args.push_back(GetThisArg(sema, clang_loc, cpp_destructor_decl));
   clang::ExprResult call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc,
                                               call_args, clang_loc);
 
@@ -1179,16 +1574,18 @@ auto ExportVarToCpp(Context& context, SemIR::InstId inst_id,
       context.ast_context(), decl_context,
       /*StartLoc=*/clang_loc, /*IdLoc=*/clang_loc, identifier_info, cpp_type,
       /*TInfo=*/nullptr, clang::SC_Extern);
-  context.clang_decls().AddVar(
+  context.clang_decls().Add(
       {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(var_decl),
-       .inst_id = inst_id},
-      var_storage.pattern_id);
+       .inst_id = var_storage.pattern_id,
+       .var_storage_inst_id = inst_id});
 
   if (scope_inst.Is<SemIR::ClassDecl>()) {
     SetCppClassMemberAccess(name_scope, entity_name.name_id, var_decl);
   }
 
   // Set the Carbon mangled variable name.
+  // TODO: do we need to apply the platform mangling, like we do for exported
+  // functions?
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
                    context.mangle_string_fingerprint());
   std::string mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);

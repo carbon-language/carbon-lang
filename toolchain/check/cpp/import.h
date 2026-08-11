@@ -18,10 +18,15 @@
 #include "toolchain/sem_ir/ids.h"
 
 namespace clang {
+class ASTContext;
 class CompilerInvocation;
 class IdentifierInfo;
 class VarDecl;
 }  // namespace clang
+
+namespace Carbon::SemIR {
+class CppDomain;
+}  // namespace Carbon::SemIR
 
 namespace Carbon::Check {
 
@@ -33,12 +38,11 @@ auto IsObjectMemberFunction(const clang::FunctionDecl& decl) -> bool;
 
 // Generates a C++ header that includes the imported cpp files, parses it,
 // generates the AST from it and links `SemIR::File` to it. Reports C++ errors
-// and warnings. If successful, adds a `Cpp` namespace.
+// and warnings. If successful, adds a `Cpp` namespace. `domain` should be
+// non-null unless there was an error initializing Clang.
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-               llvm::LLVMContext* llvm_context,
-               std::shared_ptr<clang::CompilerInvocation> invocation) -> void;
+               SemIR::CppDomain* domain) -> void;
 
 // Given a clang declaration ID that was previously imported into another file,
 // returns the corresponding clang declaration key in the current context.
@@ -78,6 +82,10 @@ inline auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
       context, loc_id,
       SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, signature_id));
 }
+
+// Returns the type that intN_t or uintN_t is an alias for.
+auto GetIntNType(const clang::ASTContext& ast_context, unsigned width,
+                 bool is_signed) -> clang::QualType;
 
 // Imports a type from Clang to Carbon. Returns a `TypeExpr` which contains
 // both a `TypeId` and `TypeInstId`. All unimported dependencies are imported

@@ -18,10 +18,11 @@ library "[[@TEST_NAME]]";
 
 fn A();
 
-// --- decl_in_api_definition_in_impl.impl.carbon
+// --- todo_fail_decl_in_api_definition_in_impl.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
+// TODO: This should be diagnosed per #3762: A declaration should always add new information.
 fn A();
 
 fn A() {}
@@ -92,7 +93,7 @@ fn D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- decl_in_api_definition_in_impl.impl.carbon
+// CHECK:STDOUT: --- todo_fail_decl_in_api_definition_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
@@ -101,12 +102,12 @@ fn D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.decl.loc4
+// CHECK:STDOUT:     .A = %A.decl.loc5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_46.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_46.2 = import <none>
-// CHECK:STDOUT:   %A.decl.loc4: %A.type = fn_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %A.decl.loc6: %A.type = fn_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc5: %A.type = fn_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc7: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() [from "decl_in_api_definition_in_impl.carbon"] {

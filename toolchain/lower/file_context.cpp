@@ -63,11 +63,6 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
       coalescer_(vlog_stream_, sem_ir.specifics()),
       vtables_(decltype(vtables_)::MakeForOverwrite(sem_ir.vtables())),
       specific_vtables_(sem_ir.specifics(), nullptr) {
-  // Initialization that relies on invariants of the class.
-  cpp_code_generator_ = cpp_file() ? cpp_file()->GetCodeGenerator() : nullptr;
-  CARBON_CHECK(
-      !cpp_code_generator_ ||
-      (&cpp_code_generator_->GetModule()->getContext() == &llvm_context()));
   CARBON_CHECK(!sem_ir.has_errors(),
                "Generating LLVM IR from invalid SemIR::File is unsupported.");
 }
@@ -184,10 +179,14 @@ auto FileContext::LowerDefinitions() -> void {
 }
 
 auto FileContext::Finalize() -> void {
-  if (cpp_code_generator_) {
+  // TODO: This is an ugly way to check if we're supposed to finalize this code
+  // generator. Context::Finalize should finalize its own code generator, but
+  // doesn't have a reference to its `ASTContext`.
+  if (cpp_file() &&
+      cpp_file()->code_generator() == context().cpp_code_generator()) {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
-    cpp_code_generator_->HandleTranslationUnit(
+    cpp_file()->code_generator()->HandleTranslationUnit(
         const_cast<clang::ASTContext&>(cpp_file()->ast_context()));
   }
 
@@ -316,9 +315,12 @@ auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
   // so that code generation (`CodeGenModule::EmitGlobal()`) would see this
   // function name (`CodeGenModule::getMangledName()`), and will generate
   // its definition.
-  auto* function_address = dyn_cast<llvm::Function>(
-      cpp_code_generator_->GetAddrOfGlobal(CreateGlobalDecl(cpp_decl),
-                                           /*isForDefinition=*/false));
+  // TODO: This code generator can be for the wrong AST if we're not using
+  // --share-cpp-ast.
+  auto* function_address =
+      dyn_cast<llvm::Function>(context().cpp_code_generator()->GetAddrOfGlobal(
+          CreateGlobalDecl(cpp_decl),
+          /*isForDefinition=*/false));
   CARBON_CHECK(function_address);
 
   return function_address;
@@ -347,11 +349,12 @@ auto FileContext::HandleReferencedSpecificFunction(
 auto FileContext::GetOrCreateLLVMFunction(
     const FunctionTypeInfo& function_type_info, SemIR::FunctionId function_id,
     SemIR::SpecificId specific_id) -> llvm::Function* {
+  const auto& function = sem_ir().functions().Get(function_id);
+
   // If this is a C++ function, tell Clang that we referenced it.
   // The global_ctor function can't be a C++ function (but doesn't have any
   // decl_id so it doesn't fall out naturally from the handling below)
   if (function_id != sem_ir().global_ctor_id()) {
-    const auto& function = sem_ir().functions().Get(function_id);
     if (const auto* clang_decl =
             sem_ir().clang_decls().Lookup(function.first_decl_id())) {
       if (clang_decl->is_imported) {
@@ -386,21 +389,8 @@ auto FileContext::GetOrCreateLLVMFunction(
                                      function_type_info.type);
   }
 
-  // TODO: For an imported inline function, consider generating an
-  // `available_externally` definition.
-  auto linkage = llvm::Function::ExternalLinkage;
-  if (function_id == sem_ir().global_ctor_id()) {
-    // The global constructor name would collide with global constructors for
-    // other files in the same package, so use an internal linkage symbol.
-    linkage = llvm::Function::InternalLinkage;
-  } else if (specific_id.has_value()) {
-    // Specific functions are allowed to be duplicated across files.
-    // TODO: CoreWitness should have the same behavior; see its use of
-    // WeakODRLinkage in BuildFunctionDefinition.
-    linkage = llvm::Function::LinkOnceODRLinkage;
-  }
-
-  auto* llvm_function = llvm::Function::Create(function_type_info.type, linkage,
+  auto* llvm_function = llvm::Function::Create(function_type_info.type,
+                                               llvm::Function::ExternalLinkage,
                                                mangled_name, llvm_module());
   CARBON_CHECK(llvm_function->getName() == mangled_name,
                "Mangled name collision: {0}", mangled_name);
@@ -550,13 +540,6 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
                "Attempting to emit definition of inexact function: {0}",
                *function_info->llvm_function);
 
-  // TODO: Build CoreWitness functions when they're called instead of when
-  // they're defined. That should allow LinkOnceODRLinkage.
-  if (declaration_function.special_function_kind ==
-      SemIR::Function::SpecialFunctionKind::CoreWitness) {
-    function_info->llvm_function->setLinkage(llvm::Function::WeakODRLinkage);
-  }
-
   const auto& body_block_ids = definition_function.body_block_ids;
   CARBON_DCHECK(!body_block_ids.empty(),
                 "No function body blocks found during lowering.");
@@ -568,6 +551,26 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     // can deduplicate specifics from different files.
     AddLoweredSpecificForGeneric(declaration_function.generic_id, specific_id);
   }
+
+  // Set the linkage for the definition.
+  auto linkage = llvm::Function::ExternalLinkage;
+  if (function_id == sem_ir().global_ctor_id()) {
+    // The global constructor name would collide with global constructors for
+    // other files in the same package, so use an internal linkage symbol.
+    linkage = llvm::Function::InternalLinkage;
+  } else if (specific_id.has_value()) {
+    // Specific functions are emitted in each file they are referenced in.
+    linkage = llvm::Function::LinkOnceODRLinkage;
+  } else if (declaration_function.special_function_kind ==
+                 SemIR::Function::SpecialFunctionKind::CoreWitness ||
+             declaration_function.special_function_kind ==
+                 SemIR::Function::SpecialFunctionKind::Thunk) {
+    // TODO: Emit CoreWitness functions and thunks in files where they're called
+    // instead of in files where they're defined. That should allow
+    // LinkOnceODRLinkage.
+    linkage = llvm::Function::WeakODRLinkage;
+  }
+  function_info->llvm_function->setLinkage(linkage);
 
   // Set attributes on the function definition.
   {
@@ -723,7 +726,9 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
   // llvm::GlobalVariable.
   if (const auto* clang_decl =
           sem_ir().clang_decls().Lookup(var_storage.pattern_id)) {
-    auto* constant = cpp_code_generator_->GetAddrOfGlobal(
+    // TODO: This code generator can be for the wrong AST if we're not using
+    // --share-cpp-ast.
+    auto* constant = context().cpp_code_generator()->GetAddrOfGlobal(
         CreateGlobalDecl(cast<clang::NamedDecl>(clang_decl->decl())),
         /*isForDefinition=*/false);
     if (constant) {
@@ -771,7 +776,9 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
   if (!vtable.carbon_native_vtable) {
     auto* cxx_record_decl = cast<clang::CXXRecordDecl>(
         sem_ir().clang_decls().Lookup(class_info.latest_decl_id())->key.decl);
-    return cpp_code_generator_->GetAddrOfVTable(
+    // TODO: This code generator can be for the wrong AST if we're not using
+    // --share-cpp-ast.
+    return context().cpp_code_generator()->GetAddrOfVTable(
         clang::BaseSubobject(cxx_record_decl,
                              clang::CharUnits::fromQuantity(0)),
         cxx_record_decl);

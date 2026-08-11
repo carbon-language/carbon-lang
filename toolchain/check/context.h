@@ -31,8 +31,9 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
-#include "toolchain/sem_ir/facet_type_info.h"
+#include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
@@ -258,7 +259,7 @@ class Context {
   using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::ConstantId>;
   auto impl_lookup_cache() -> ImplLookupCacheMap& { return impl_lookup_cache_; }
 
-  auto impl_lookup_no_symbolic_final_lookups() -> int& {
+  auto impl_lookup_no_symbolic_final_lookups() -> int32_t& {
     return impl_lookup_no_symbolic_final_lookups_;
   }
 
@@ -302,8 +303,16 @@ class Context {
     return where_stack_;
   }
 
-  auto forbidden_impls() -> llvm::SmallVector<SemIR::ImplId>& {
-    return forbidden_impls_;
+  auto binding_type_where_count() -> int32_t& {
+    return binding_type_where_count_;
+  }
+
+  struct DeclaringImplDecl {
+    SemIR::ConstantId self_id;
+    SemIR::SpecificInterface specific_interface;
+  };
+  auto declaring_impl_decls() -> llvm::SmallVector<DeclaringImplDecl>& {
+    return declaring_impl_decls_;
   }
 
   // Data about a form expression.
@@ -384,8 +393,8 @@ class Context {
   auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
   }
-  auto facet_types() -> SemIR::FacetTypeInfoStore& {
-    return sem_ir().facet_types();
+  auto declared_facet_types() -> SemIR::DeclaredFacetTypeStore& {
+    return sem_ir().declared_facet_types();
   }
   auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();
@@ -586,7 +595,7 @@ class Context {
   // prevent cycles. This is incremented while replacing `.Self` in a facet type
   // from an impl lookup query that we are searching for a witness for the
   // query.
-  int impl_lookup_no_symbolic_final_lookups_ = 0;
+  int32_t impl_lookup_no_symbolic_final_lookups_ = 0;
 
   // Tracks impl lookup queries that lead to concrete witness results, along
   // with those results. Used to verify that the same queries produce the same
@@ -598,10 +607,14 @@ class Context {
   // being checked so that they can be used by later constraints.
   llvm::SmallVector<WhereStackEntry> where_stack_;
 
-  // Impls that cannot be used in impl lookup. This prevents cycles where a
-  // `LookupImplWitness` instruction inside the impl decl should not be able to
-  // find the containing impl decl.
-  llvm::SmallVector<SemIR::ImplId> forbidden_impls_;
+  // Counts the number of `where` expressions in the type of the binding
+  // currently being checked.
+  int32_t binding_type_where_count_ = 0;
+
+  // Track impl declarations that are underway. If we're declaring an impl for
+  // `C as I`, an impl lookup query for `C as I` or `.Self as I` should find
+  // that impl being declared (even though it does not yet exist).
+  llvm::SmallVector<DeclaringImplDecl> declaring_impl_decls_;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;

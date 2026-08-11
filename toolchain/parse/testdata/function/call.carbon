@@ -33,129 +33,126 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: basic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:                       {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:                       {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:                     {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:                     {kind: 'IdentifierNameNotBeforeSignature', text: 'f'},
-// CHECK:STDOUT:                   {kind: 'MemberAccessExpr', text: '.', subtree_size: 5},
-// CHECK:STDOUT:                 {kind: 'CallExprStart', text: '(', subtree_size: 6},
-// CHECK:STDOUT:                   {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:                   {kind: 'IdentifierNameNotBeforeSignature', text: 'd'},
-// CHECK:STDOUT:                 {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:                 {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:                   {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:                   {kind: 'IdentifierNameExpr', text: 'e'},
-// CHECK:STDOUT:                 {kind: 'ParenExpr', text: ')', subtree_size: 3},
-// CHECK:STDOUT:               {kind: 'CallExpr', text: ')', subtree_size: 14},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'g'},
-// CHECK:STDOUT:             {kind: 'MemberAccessExpr', text: '.', subtree_size: 16},
-// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 17},
-// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 18},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 19},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 25},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │               ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │               ├─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │             ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │             ├─IdentifierNameNotBeforeSignature 'f'
+// CHECK:STDOUT:   │ │           ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │         ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │         │ ╭─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ │         │ ├─IdentifierNameNotBeforeSignature 'd'
+// CHECK:STDOUT:   │ │         ├─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │         ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │         │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │         │ ├─IdentifierNameExpr 'e'
+// CHECK:STDOUT:   │ │         ├─ParenExpr ')'
+// CHECK:STDOUT:   │ │       ╭─CallExpr ')'
+// CHECK:STDOUT:   │ │       ├─IdentifierNameNotBeforeSignature 'g'
+// CHECK:STDOUT:   │ │     ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: ref_args.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'G'},
-// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:           {kind: 'PrefixOperatorRef', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'G'},
-// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:           {kind: 'PrefixOperatorRef', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'y'},
-// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 8},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'G'},
-// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'y'},
-// CHECK:STDOUT:           {kind: 'PrefixOperatorRef', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 28},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'G'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │   ├─PrefixOperatorRef 'ref'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'G'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │   ├─PrefixOperatorRef 'ref'
+// CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'G'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │   ├─PrefixOperatorRef 'ref'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: nested_ref.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'G'},
-// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:             {kind: 'PrefixOperatorRef', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 10},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 11},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'G'},
-// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'y'},
-// CHECK:STDOUT:             {kind: 'PrefixOperatorRef', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'z'},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 11},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 12},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'G'},
-// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'y'},
-// CHECK:STDOUT:             {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'z'},
-// CHECK:STDOUT:             {kind: 'PrefixOperatorRef', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 11},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 12},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'G'},
-// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:               {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'y'},
-// CHECK:STDOUT:               {kind: 'PrefixOperatorRef', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'StructLiteralField', text: '=', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'StructLiteralComma', text: ','},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'z'},
-// CHECK:STDOUT:               {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'z'},
-// CHECK:STDOUT:             {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', subtree_size: 12},
-// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 17},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 18},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 59},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'G'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │   │ ├─PrefixOperatorRef 'ref'
+// CHECK:STDOUT:   │ │   │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'G'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │   │ ├─PrefixOperatorRef 'ref'
+// CHECK:STDOUT:   │ │   │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'z'
+// CHECK:STDOUT:   │ │   ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'G'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │   │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameExpr 'z'
+// CHECK:STDOUT:   │ │   │ ├─PrefixOperatorRef 'ref'
+// CHECK:STDOUT:   │ │   ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'G'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │   │ │   ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │   │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │   │ │ │ ╭─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │   │ │ ├─PrefixOperatorRef 'ref'
+// CHECK:STDOUT:   │ │   │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ │   │ ├─StructLiteralComma ','
+// CHECK:STDOUT:   │ │   │ │   ╭─IdentifierNameNotBeforeSignature 'z'
+// CHECK:STDOUT:   │ │   │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │   │ │ ├─IdentifierNameExpr 'z'
+// CHECK:STDOUT:   │ │   │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ │   ├─StructLiteral '}'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

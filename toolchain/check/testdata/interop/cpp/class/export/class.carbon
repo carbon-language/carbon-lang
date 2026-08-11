@@ -66,9 +66,12 @@ import Cpp;
 class A;
 
 inline Cpp '''
-// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE+4]]:11: error: variable has incomplete type 'Carbon::A' [CppInteropParseError]
-// CHECK:STDERR:    16 | Carbon::A a;
+// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE+7]]:11: error: variable has incomplete type 'Carbon::A' [CppInteropParseError]
+// CHECK:STDERR:    19 | Carbon::A a;
 // CHECK:STDERR:       |           ^
+// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE-6]]:8: note: forward declaration of 'Carbon::A' [CppInteropParseNote]
+// CHECK:STDERR:     9 | class A;
+// CHECK:STDERR:       |        ^
 // CHECK:STDERR:
 Carbon::A a;
 ''';
@@ -78,6 +81,10 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
+// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+4]]:1: error: semantics TODO: `interop with specific class` [SemanticsTodo]
+// CHECK:STDERR: class B(N: i32) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 class B(N: i32) {
   var a: array(i8, N);
 }
@@ -92,7 +99,7 @@ inline Cpp '''
 // CHECK:STDERR: ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+4]]:9: error: no type named 'T' in namespace 'Carbon' [CppInteropParseError]
-// CHECK:STDERR:    22 | Carbon::T t;
+// CHECK:STDERR:    26 | Carbon::T t;
 // CHECK:STDERR:       | ~~~~~~~~^
 // CHECK:STDERR:
 Carbon::T t;

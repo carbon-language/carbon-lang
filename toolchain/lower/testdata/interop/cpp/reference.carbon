@@ -177,7 +177,7 @@ fn GetRefs() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !30 {
+// CHECK:STDOUT: define weak_odr void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %return), !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !34
@@ -368,7 +368,7 @@ fn GetRefs() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !30 {
+// CHECK:STDOUT: define weak_odr void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %return), !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !34
@@ -599,7 +599,7 @@ fn GetRefs() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %class.ForceThunk = type { i8 }
+// CHECK:STDOUT: %class.ForceThunk.23 = type { i8 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CGetRefs.Main() #0 !dbg !12 {
@@ -616,7 +616,7 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal noundef nonnull align 1 dereferenceable(1) ptr @_Z10ReturnCRef10ForceThunk.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk.23, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 1 dereferenceable(1) ptr @_Z10ReturnCRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
@@ -624,7 +624,7 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal noundef nonnull align 1 dereferenceable(1) ptr @_Z11ReturnCRRef10ForceThunk.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk.23, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 1 dereferenceable(1) ptr @_Z11ReturnCRRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
@@ -632,7 +632,7 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal noundef nonnull align 1 dereferenceable(1) ptr @_Z15ReturnConstCRef10ForceThunk.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk.23, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 1 dereferenceable(1) ptr @_Z15ReturnConstCRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
@@ -640,7 +640,7 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal noundef nonnull align 4 dereferenceable(4) ptr @_Z12ReturnIntRef10ForceThunk.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk.23, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 4 dereferenceable(4) ptr @_Z12ReturnIntRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
@@ -648,7 +648,7 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal noundef nonnull align 4 dereferenceable(4) ptr @_Z13ReturnIntRRef10ForceThunk.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk.23, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 4 dereferenceable(4) ptr @_Z13ReturnIntRRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
@@ -656,7 +656,7 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal noundef nonnull align 4 dereferenceable(4) ptr @_Z17ReturnConstIntRef10ForceThunk.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk.23, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 4 dereferenceable(4) ptr @_Z17ReturnConstIntRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }

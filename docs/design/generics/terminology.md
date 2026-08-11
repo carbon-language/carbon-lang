@@ -38,10 +38,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Member access](#member-access)
     -   [Simple member access](#simple-member-access)
     -   [Qualified member access expression](#qualified-member-access-expression)
--   [Compatible types](#compatible-types)
 -   [Subtyping and casting](#subtyping-and-casting)
 -   [Coherence](#coherence)
--   [Adapting a type](#adapting-a-type)
 -   [Type erasure](#type-erasure)
 -   [Archetype](#archetype)
 -   [Extending an interface](#extending-an-interface)
@@ -478,7 +476,7 @@ members of the interface as named members of the type. This means that the
 members of the interface are available by way of both
 [simple member access and qualified member access expressions](#member-access).
 See
-[how `extend` affects member access](../expressions/member_access.md#extend).
+[how `extend` affects member access](/docs/design/expressions/member_access.md#extend).
 
 If a type implements an interface without extending, the members of the
 interface may only be accessed using
@@ -522,22 +520,6 @@ member access expression `s1.(Comparable.Less)(s2)`.
 This form may be used to access any member of an interface implemented for a
 type, whether or not it [extends the implementation](#extending-an-impl).
 
-## Compatible types
-
-Two types are compatible if they have the same notional set of values and
-represent those values in the same way, even if they expose different APIs. The
-representation of a type describes how the values of that type are represented
-as a sequence of bits in memory. The set of values of a type includes properties
-that the compiler can't directly see, such as invariants that the type
-maintains.
-
-We can't just say two types are compatible based on structural reasons. Instead,
-we have specific constructs that create compatible types from existing types in
-ways that encourage preserving the programmer's intended semantics and
-invariants, such as implementing the API of the new type by calling (public)
-methods of the original API, instead of accessing any private implementation
-details.
-
 ## Subtyping and casting
 
 Both subtyping and casting are different names for changing the type of a value
@@ -569,14 +551,14 @@ make it clear that the data representation of the value is not changing, just
 its type as reflected in the API available to manipulate the value.
 
 Casting is indicated explicitly by way of some syntax in the source code. You
-might use a cast to switch between [type adaptations](#adapting-a-type), or to
+might use a cast to switch between [type adaptations](/docs/design/classes.md#adapters), or to
 be explicit where an implicit conversion would otherwise occur. For now, we are
 saying "`x as y`" is the provisional syntax in Carbon for casting the value `x`
 to the type `y`. Note that outside of generics, the term "casting" includes any
 explicit type change, including those that change the data representation.
 
 In contexts where an expression of one type is provided and a different type is
-required, an [implicit conversion](../expressions/implicit_conversions.md) is
+required, an [implicit conversion](/docs/design/expressions/implicit_conversions.md) is
 performed if it is considered safe to do so. Such an implicit conversion, if
 permitted, always has the same meaning as an explicit cast.
 
@@ -606,27 +588,6 @@ This is enforced using two kinds of rules:
 
 The rationale for Carbon choosing coherence and alternatives considered may be
 found in [this appendix](appendix-coherence.md)
-
-## Adapting a type
-
-A type can be adapted by creating a new type that is
-[compatible](#compatible-types) with an existing type, but has a different API.
-In particular, the new type might implement different interfaces or provide
-different implementations of the same interfaces.
-
-Unlike extending a type (as with C++ class inheritance), you are not allowed to
-add new data fields onto the end of the representation -- you may only change
-the API. This means that it is safe to [cast](#subtyping-and-casting) a value
-between those two types without any dynamic checks or danger of
-[object slicing](https://en.wikipedia.org/wiki/Object_slicing).
-
-This is called "newtype" in Rust, and is used for capturing additional
-information in types to improve type safety by moving some checking to compile
-time ([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
-[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
-[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html))
-and as a workaround for
-[Rust's orphan rules for coherence](https://github.com/Ixrec/rust-orphan-rules#why-are-the-orphan-rules-controversial).
 
 ## Type erasure
 
@@ -664,7 +625,7 @@ An interface can be extended by defining an interface that includes the full API
 of another interface, plus some additional API. Types implementing the extended
 interface should automatically be considered to have implemented the narrower
 interface. See
-[how `extend` affects member access](../expressions/member_access.md#extend).
+[how `extend` affects member access](/docs/design/expressions/member_access.md#extend).
 
 ## Dynamic-dispatch witness table
 
@@ -863,7 +824,7 @@ express, for example:
     element type.
 -   An interface may define an associated facet that needs to be constrained to
     implement some interfaces.
--   This type must be [compatible](#compatible-types) with another type. You
+-   This type must be [compatible](/docs/design/classes.md#compatible-types) with another type. You
     might use this to define alternate implementations of a single interfaces,
     such as sorting order, for a single type.
 

@@ -11,12 +11,11 @@
 impl bool as Interface;
 
 // CHECK:STDOUT: - filename: declaration.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:         {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:       {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ │ ╭─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │ ├─IdentifierNameExpr 'Interface'
+// CHECK:STDOUT:   ├─ImplDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

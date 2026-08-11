@@ -74,9 +74,13 @@ import Cpp library "int_param.h";
 
 // This doesn't have a direct type mapping in `getIntTypeForBitwidth`.
 fn F(x: i512) {
-  // CHECK:STDERR: fail_large_int.carbon:[[@LINE+4]]:11: error: call argument of type `i512` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR: fail_large_int.carbon:[[@LINE+8]]:11: error: call argument of type `i512` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo(x);
   // CHECK:STDERR:           ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: min_prelude/parts/int.carbon:10:1: error: semantics TODO: `interop with specific class` [SemanticsTodo]
+  // CHECK:STDERR: class Int(N: IntLiteral) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(x);
 }

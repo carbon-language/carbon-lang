@@ -34,17 +34,16 @@ Context::Context(
     llvm::LLVMContext* llvm_context,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-    clang::CodeGenerator* clang_code_generator, llvm::StringRef module_name,
+    clang::CodeGenerator* cpp_code_generator, llvm::StringRef module_name,
     int total_ir_count, Lower::OptimizationLevel opt_level,
     bool mangle_string_fingerprint, llvm::raw_ostream* vlog_stream)
     : llvm_context_(llvm_context),
-      clang_code_generator_(clang_code_generator),
-      llvm_module_owner_(
-          clang_code_generator_
-              ? nullptr
-              : std::make_unique<llvm::Module>(module_name, *llvm_context)),
+      cpp_code_generator_(cpp_code_generator),
+      llvm_module_owner_(cpp_code_generator_ ? nullptr
+                                             : std::make_unique<llvm::Module>(
+                                                   module_name, *llvm_context)),
       llvm_module_(llvm_module_owner_ ? llvm_module_owner_.get()
-                                      : clang_code_generator_->GetModule()),
+                                      : cpp_code_generator_->GetModule()),
       file_system_(std::move(fs)),
       opt_level_(opt_level),
       di_builder_(*llvm_module_),
@@ -95,9 +94,9 @@ auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
                          "Debug Info Version", llvm::DEBUG_METADATA_VERSION);
   }
 
-  return clang_code_generator_ ? std::unique_ptr<llvm::Module>(
-                                     clang_code_generator_->ReleaseModule())
-                               : std::move(llvm_module_owner_);
+  return cpp_code_generator_ ? std::unique_ptr<llvm::Module>(
+                                   cpp_code_generator_->ReleaseModule())
+                             : std::move(llvm_module_owner_);
 }
 
 auto Context::BuildDICompileUnit(llvm::StringRef module_name,

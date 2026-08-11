@@ -25,45 +25,42 @@ impl package DisambiguateImplPackage;
 impl package.Name as package.Interface {}
 
 // CHECK:STDOUT: - filename: impl.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Geometry'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ ├─ImplModifier 'impl'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'Geometry'
+// CHECK:STDOUT:   ├─PackageDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: impl_disambiguate.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'DisambiguateImpl'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ ├─ImplModifier 'impl'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'DisambiguateImpl'
+// CHECK:STDOUT:   ├─PackageDecl ';'
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   ├─IdentifierNameExpr 'Interface'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: impl_package_disambiguate.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'DisambiguateImplPackage'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:             {kind: 'PackageExpr', text: 'package'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'Name'},
-// CHECK:STDOUT:           {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ImplTypeAs', text: 'as', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'PackageExpr', text: 'package'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'Interface'},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ ├─ImplModifier 'impl'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'DisambiguateImplPackage'
+// CHECK:STDOUT:   ├─PackageDecl ';'
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │   ╭─PackageExpr 'package'
+// CHECK:STDOUT:   │   │   ├─IdentifierNameNotBeforeSignature 'Name'
+// CHECK:STDOUT:   │   │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   │ ╭─PackageExpr 'package'
+// CHECK:STDOUT:   │   │ ├─IdentifierNameNotBeforeSignature 'Interface'
+// CHECK:STDOUT:   │   ├─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

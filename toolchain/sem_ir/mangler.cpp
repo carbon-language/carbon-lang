@@ -6,7 +6,10 @@
 
 #include <string>
 
+#include "clang/Basic/TargetInfo.h"
+#include "clang/CodeGen/ModuleBuilder.h"
 #include "common/raw_string_ostream.h"
+#include "llvm/IR/Module.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/ids.h"
@@ -183,12 +186,14 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
   }
 }
 
-auto Mangler::Mangle(SemIR::FunctionId function_id,
-                     SemIR::SpecificId specific_id) -> std::string {
+auto Mangler::MangleImpl(SemIR::FunctionId function_id,
+                         SemIR::SpecificId specific_id, llvm::raw_ostream& os)
+    -> void {
   const auto& function = sem_ir().functions().Get(function_id);
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
     CARBON_CHECK(!specific_id.has_value(), "entry point should not be generic");
-    return "main";
+    os << "main";
+    return;
   }
 
   // Clang should emit C++ function declarations for us.
@@ -199,7 +204,6 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
                  "Shouldn't mangle C++ function");
   }
 
-  RawStringOstream os;
   os << "_C";
 
   MangleNameId(os, function.name_id);
@@ -251,7 +255,32 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   }
 
   MangleSpecificId(os, specific_id);
+}
 
+auto Mangler::Mangle(SemIR::FunctionId function_id,
+                     SemIR::SpecificId specific_id) -> std::string {
+  RawStringOstream os;
+  MangleImpl(function_id, specific_id, os);
+  return os.TakeStr();
+}
+
+auto Mangler::MangleWithPlatform(SemIR::FunctionId function_id,
+                                 SemIR::SpecificId specific_id) -> std::string {
+  RawStringOstream os;
+
+  CARBON_CHECK(sem_ir_.cpp_file());
+  // The only platform mangling that's relevant for us is applying a global
+  // prefix, if the platform has one.
+  // TODO: Cache this rather than parsing the data layout string each time we
+  // need it.
+  if (char prefix = llvm::DataLayout(sem_ir_.cpp_file()
+                                         ->ast_context()
+                                         .getTargetInfo()
+                                         .getDataLayoutString())
+                        .getGlobalPrefix()) {
+    os << prefix;
+  }
+  MangleImpl(function_id, specific_id, os);
   return os.TakeStr();
 }
 
@@ -312,6 +341,12 @@ auto Mangler::MangleVTable(const SemIR::Class& class_info,
 
   MangleSpecificId(os, specific_id);
 
+  return os.TakeStr();
+}
+
+auto Mangler::MangleSpecificId(SemIR::SpecificId specific_id) -> std::string {
+  RawStringOstream os;
+  MangleSpecificId(os, specific_id);
   return os.TakeStr();
 }
 

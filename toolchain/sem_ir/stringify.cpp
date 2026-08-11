@@ -12,11 +12,12 @@
 #include "common/concepts.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
-#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -51,9 +52,9 @@ class StepStack {
 
   // An individual step in the stack, which stringifies some component of a type
   // name.
-  using Step =
-      std::variant<InstId, llvm::StringRef, NameId, ElementIndex, FacetTypeId,
-                   StopQualifiedNames, ResumeQualifiedNames>;
+  using Step = std::variant<InstId, llvm::StringRef, NameId, ElementIndex,
+                            DeclaredFacetTypeId, StopQualifiedNames,
+                            ResumeQualifiedNames>;
 
   // Support `Push` for a qualified name. e.g., `A.B.C`.
   using QualifiedNameItem = std::pair<NameScopeId, NameId>;
@@ -79,8 +80,8 @@ class StepStack {
   auto PushElementIndex(ElementIndex element_index) -> void {
     steps_.push_back(element_index);
   }
-  auto PushFacetType(FacetTypeId facet_type_id) -> void {
-    steps_.push_back(facet_type_id);
+  auto PushFacetType(DeclaredFacetTypeId declared_facet_type_id) -> void {
+    steps_.push_back(declared_facet_type_id);
   }
   auto PushResumeQualfiedNames() -> void {
     steps_.push_back(ResumeQualifiedNames{});
@@ -375,7 +376,7 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetType inst) -> void {
-    step_stack_->PushFacetType(inst.facet_type_id);
+    step_stack_->PushFacetType(inst.declared_facet_type_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetValue inst) -> void {
@@ -476,9 +477,18 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, ImplWitnessAccess inst) -> void {
     auto witness_inst_id =
         sem_ir_->constant_values().GetConstantInstId(inst.witness_id);
-    auto lookup = sem_ir_->insts().GetAs<LookupImplWitness>(witness_inst_id);
-    auto specific_interface =
-        sem_ir_->specific_interfaces().Get(lookup.query_specific_interface_id);
+
+    auto specific_interface = SemIR::SpecificInterface::None;
+    if (auto self_witness =
+            sem_ir_->insts().TryGetAs<ImplSelfWitness>(witness_inst_id)) {
+      specific_interface = sem_ir_->specific_interfaces().Get(
+          self_witness->specific_interface_id);
+    } else {
+      auto lookup = sem_ir_->insts().GetAs<LookupImplWitness>(witness_inst_id);
+      specific_interface = sem_ir_->specific_interfaces().Get(
+          lookup.query_specific_interface_id);
+    }
+
     const auto& interface =
         sem_ir_->interfaces().Get(specific_interface.interface_id);
     if (!interface.associated_entities_id.has_value()) {
@@ -514,16 +524,28 @@ class Stringifier {
       step_stack_->Push(".(");
     }
 
-    if (auto lookup =
-            sem_ir_->insts().TryGetAs<LookupImplWitness>(witness_inst_id)) {
-      bool period_self = false;
+    if (auto self_witness =
+            sem_ir_->insts().TryGetAs<ImplSelfWitness>(witness_inst_id)) {
+      bool is_period_self = false;
+      if (auto sym_name = sem_ir_->insts().TryGetAs<SymbolicBinding>(
+              self_witness->period_self)) {
+        auto name_id =
+            sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
+        is_period_self = (name_id == NameId::PeriodSelf);
+      }
+      if (!is_period_self) {
+        step_stack_->PushInstId(self_witness->period_self);
+      }
+    } else if (auto lookup = sem_ir_->insts().TryGetAs<LookupImplWitness>(
+                   witness_inst_id)) {
+      bool is_period_self = false;
       if (auto sym_name = sem_ir_->insts().TryGetAs<SymbolicBinding>(
               lookup->query_self_inst_id)) {
         auto name_id =
             sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
-        period_self = (name_id == NameId::PeriodSelf);
+        is_period_self = (name_id == NameId::PeriodSelf);
       }
-      if (!period_self) {
+      if (!is_period_self) {
         step_stack_->PushInstId(lookup->query_self_inst_id);
       }
     } else {
@@ -713,40 +735,42 @@ class Stringifier {
     *out_ << "<vtable ptr>";
   }
 
-  auto StringifyFacetType(FacetTypeId facet_type_id) -> void {
-    const FacetTypeInfo& facet_type_info =
-        sem_ir_->facet_types().Get(facet_type_id);
+  auto StringifyFacetType(DeclaredFacetTypeId declared_facet_type_id) -> void {
+    const DeclaredFacetType& declared_facet_type =
+        sem_ir_->declared_facet_types().Get(declared_facet_type_id);
     // Output `where` restrictions.
     bool some_where = false;
-    if (facet_type_info.other_requirements) {
+    if (declared_facet_type.other_requirements) {
       step_stack_->PushString("...");
       some_where = true;
     }
-    for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {
+    for (auto rewrite :
+         llvm::reverse(declared_facet_type.rewrite_constraints)) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
       step_stack_->Push(" ", rewrite.lhs_id, " = ", rewrite.rhs_id);
       some_where = true;
     }
-    if (!facet_type_info.self_impls_constraints.empty() ||
-        !facet_type_info.self_impls_named_constraints.empty()) {
+    if (!declared_facet_type.self_impls_constraints.empty() ||
+        !declared_facet_type.self_impls_named_constraints.empty()) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
       llvm::ListSeparator sep(" & ");
       for (auto impls :
-           llvm::reverse(facet_type_info.self_impls_named_constraints)) {
+           llvm::reverse(declared_facet_type.self_impls_named_constraints)) {
         step_stack_->Push(impls, &sep);
       }
-      for (auto impls : llvm::reverse(facet_type_info.self_impls_constraints)) {
+      for (auto impls :
+           llvm::reverse(declared_facet_type.self_impls_constraints)) {
         step_stack_->Push(impls, &sep);
       }
       step_stack_->PushString(" .Self impls ");
       some_where = true;
     }
     for (const auto& type_impls :
-         llvm::reverse(facet_type_info.type_impls_interfaces)) {
+         llvm::reverse(declared_facet_type.type_impls_interfaces)) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
@@ -755,7 +779,7 @@ class Stringifier {
       some_where = true;
     }
     for (const auto& type_impls :
-         llvm::reverse(facet_type_info.type_impls_named_constraints)) {
+         llvm::reverse(declared_facet_type.type_impls_named_constraints)) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
@@ -768,17 +792,17 @@ class Stringifier {
     }
 
     // Output extend interface and named constraint requirements.
-    if (facet_type_info.extend_constraints.empty() &&
-        facet_type_info.extend_named_constraints.empty()) {
+    if (declared_facet_type.extend_constraints.empty() &&
+        declared_facet_type.extend_named_constraints.empty()) {
       step_stack_->PushString("type");
       return;
     }
     llvm::ListSeparator sep(" & ");
     for (auto extend :
-         llvm::reverse(facet_type_info.extend_named_constraints)) {
+         llvm::reverse(declared_facet_type.extend_named_constraints)) {
       step_stack_->Push(extend, &sep);
     }
-    for (auto extend : llvm::reverse(facet_type_info.extend_constraints)) {
+    for (auto extend : llvm::reverse(declared_facet_type.extend_constraints)) {
       step_stack_->Push(extend, &sep);
     }
   }
@@ -827,8 +851,8 @@ static auto Stringify(const File& sem_ir, StepStack& step_stack)
         out << element_index.index;
         break;
       }
-      case CARBON_KIND(FacetTypeId facet_type_id): {
-        stringifier.StringifyFacetType(facet_type_id);
+      case CARBON_KIND(DeclaredFacetTypeId declared_facet_type_id): {
+        stringifier.StringifyFacetType(declared_facet_type_id);
         break;
       }
       case CARBON_KIND(StepStack::StopQualifiedNames _): {
@@ -936,10 +960,11 @@ auto StringifySpecificInterface(const File& sem_ir,
   }
 }
 
-auto StringifyFacetType(const File& sem_ir, FacetTypeId facet_type_id)
+auto StringifyDeclaredFacetType(const File& sem_ir,
+                                DeclaredFacetTypeId declared_facet_type_id)
     -> std::string {
   StepStack step_stack(&sem_ir);
-  step_stack.PushFacetType(facet_type_id);
+  step_stack.PushFacetType(declared_facet_type_id);
   return Stringify(sem_ir, step_stack);
 }
 

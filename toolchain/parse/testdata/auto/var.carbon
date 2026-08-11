@@ -11,15 +11,15 @@
 var y: auto = false;
 
 // CHECK:STDOUT: - filename: var.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:           {kind: 'AutoTypeLiteral', text: 'auto'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'BoolLiteralFalse', text: 'false'},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ ├─BoolLiteralFalse 'false'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

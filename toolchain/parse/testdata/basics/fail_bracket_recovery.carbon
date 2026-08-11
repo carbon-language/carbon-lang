@@ -32,63 +32,64 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: fail_bracket_recovery.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:               {kind: 'ArrayExprKeyword', text: 'array'},
-// CHECK:STDOUT:               {kind: 'ArrayExprOpenParen', text: '('},
-// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:               {kind: 'ArrayExprComma', text: ','},
-// CHECK:STDOUT:               {kind: 'IntLiteral', text: '3'},
-// CHECK:STDOUT:             {kind: 'ArrayExpr', text: ')', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:           {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '2'},
-// CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 19},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:               {kind: 'IndexExprStart', text: '[', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:             {kind: 'IndexExpr', text: ']', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'InfixOperatorPlus', text: '+', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:               {kind: 'StructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:                   {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:                 {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:                   {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'StructTypeLiteralField', text: ':', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'StructTypeLiteral', text: '}', subtree_size: 7},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 10},
-// CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:           {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:               {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'ParenExpr', text: ')', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'StructLiteralField', text: '=', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 22},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 56},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │ ╭─ArrayExprKeyword 'array'
+// CHECK:STDOUT:   │ │ │   │ ├─ArrayExprOpenParen '('
+// CHECK:STDOUT:   │ │ │   │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │   │ ├─ArrayExprComma ','
+// CHECK:STDOUT:   │ │ │   │ ├─IntLiteral '3'
+// CHECK:STDOUT:   │ │ │   ├─ArrayExpr ')'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '1'
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '2'
+// CHECK:STDOUT:   │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   │ │     ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │     │   ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │     │ ╭─IndexExprStart '['
+// CHECK:STDOUT:   │ │     │ ├─IntLiteral '1'
+// CHECK:STDOUT:   │ │     ├─IndexExpr ']'
+// CHECK:STDOUT:   │ │   ╭─ParenExpr ')'
+// CHECK:STDOUT:   │ │   ├─IntLiteral '1'
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorPlus '+'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │ ╭─StructTypeLiteralStart '{'
+// CHECK:STDOUT:   │ │ │   │ │   ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │   │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │   │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │   │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │   │ ├─StructTypeLiteralField ':'
+// CHECK:STDOUT:   │ │ │   ├─StructTypeLiteral '}'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │ │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │ │ ├─ParenExpr ')'
+// CHECK:STDOUT:   │ │ │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ │ ├─StructLiteral '}'
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

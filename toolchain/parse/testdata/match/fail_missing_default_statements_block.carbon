@@ -20,28 +20,27 @@ fn f() -> i32 {
 }
 
 // CHECK:STDOUT: - filename: fail_missing_default_statements_block.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'f'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
-// CHECK:STDOUT:           {kind: 'MatchIntroducer', text: 'match'},
-// CHECK:STDOUT:             {kind: 'MatchConditionStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '3'},
-// CHECK:STDOUT:           {kind: 'MatchCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'MatchStatementStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:               {kind: 'MatchDefaultIntroducer', text: 'default'},
-// CHECK:STDOUT:             {kind: 'MatchDefault', text: '=>', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'MatchHandlerStart', text: '}', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'MatchHandler', text: '}', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'MatchStatement', text: '}', subtree_size: 10},
-// CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 21},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'f'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─MatchIntroducer 'match'
+// CHECK:STDOUT:   │ │   │ ╭─MatchConditionStart '('
+// CHECK:STDOUT:   │ │   │ ├─IntLiteral '3'
+// CHECK:STDOUT:   │ │   ├─MatchCondition ')'
+// CHECK:STDOUT:   │ │ ╭─MatchStatementStart '{'
+// CHECK:STDOUT:   │ │ │     ╭─MatchDefaultIntroducer 'default'
+// CHECK:STDOUT:   │ │ │   ╭─MatchDefault '=>'
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart '}' has_error
+// CHECK:STDOUT:   │ │ ├─MatchHandler '}' has_error
+// CHECK:STDOUT:   │ ├─MatchStatement '}'
+// CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

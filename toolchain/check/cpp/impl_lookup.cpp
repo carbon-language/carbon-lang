@@ -397,6 +397,24 @@ static auto LookupCppMethod(Context& context, clang::Sema& clang_sema,
   constexpr auto LookupKind = clang::Sema::LookupMemberName;
   auto lookup_info = clang::LookupResult(clang_sema, name_info, LookupKind);
   clang_sema.LookupQualifiedName(lookup_info, class_decl);
+
+  // If we found multiple results, drop anything that's not a const-qualified
+  // method and try again.
+  if (!lookup_info.isSingleResult()) {
+    auto filter = lookup_info.makeFilter();
+    while (filter.hasNext()) {
+      auto* decl = filter.next();
+      if (auto* method = dyn_cast<clang::CXXMethodDecl>(decl)) {
+        if (!method->getMethodQualifiers().hasConst()) {
+          filter.erase();
+        }
+      } else {
+        filter.erase();
+      }
+    }
+    filter.done();
+  }
+
   if (lookup_info.empty()) {
     return SemIR::InstId::None;
   }
