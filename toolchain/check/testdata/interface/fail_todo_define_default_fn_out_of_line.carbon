@@ -15,13 +15,13 @@
 // --- fail_todo_define_default_fn_out_of_line.carbon
 
 interface Interface {
-  // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+4]]:3: error: TODO: `default` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
   // CHECK:STDERR:   default fn F();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default fn F();
 
-  // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+4]]:3: error: TODO: `default` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
   // CHECK:STDERR:   default fn G(a: i32, b: i32) -> i32;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
