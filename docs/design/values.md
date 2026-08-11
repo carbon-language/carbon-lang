@@ -245,12 +245,12 @@ class Vector(T) {
 ### `Core.SelfDestruct`
 
 ```carbon
-unsafe fn SelfDestruct[T: Destroy](ref x: T) {
+fn SelfDestruct[T: Destroy](ref x: T) {
   x.Op();
   x.(SubobjectDestroy.Op)();
 }
 
-unsafe fn SelfDestruct[T: TrivialDestroy](ref x: T) = "no_op";
+fn SelfDestruct[T: TrivialDestroy](ref x: T) = "no_op";
 ```
 
 `SelfDestruct` destroys a complete object, including all subobjects, and ends
@@ -284,7 +284,7 @@ fn F() {
   if (v.Len() == 56) {
     var exaggerated_length: i64 = v.Len() * 2;
     v.Push(exaggerated_length);
-    Core.SelfDestruct(exaggerated_length);
+    Core.SelfDestruct(exaggerated_length); // The toolchain inserts this on behalf of the user.
   }
 
   Core.SelfDestruct(v);
