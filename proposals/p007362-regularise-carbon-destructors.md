@@ -88,7 +88,7 @@ explicit object destruction since it is both an unsafe and an exceptionally rare
 operation.
 
 -   Using a function frames the scope as the active participant (for example
-    `Core.DestroyObject(x)`). `x` is passive, and has destruction rendered unto
+    `Core.SelfDestruct(x)`). `x` is passive, and has destruction rendered unto
     it by its environment. This communicates that the object exists at the behest
     of something external.
 -   Using a method frames the object as the active participant (for example
@@ -96,9 +96,10 @@ operation.
     environment just facilitates that. This communicates that the object is in
     control of its own destiny.
 
-It is highly likely that the vast majority of cases of explicit object destruction
-are objects destroying subobjects (for example a vector class' elements). This motivates
-preferring a function, as subobjects cannot exist without their parent object.
+We do not know what idiomatic Carbon will look like, so we should pick a style
+to experiment with, and revise as necessary. The toolchain can't facilitate a
+friend functions right now, so we need to implement `SelfDestruct` as method for
+the time being.
 
 ### Trivial destruction
 
@@ -125,6 +126,23 @@ From the [existing destructor design]:
 > Unhandled failure during a destructor call will abort the program.
 
 This is resolved in the [Trivial destruction section of the new design].
+
+[`TrivialDestructor`]: https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/generics/details.md#destructor-constraints
+[struct type]: https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/classes.md#struct-types
+[trivial destruction section of the new design]: /docs/design/values.md#trivial-destruction
+
+### Calling `SelfDestruct`
+
+`SelfDestruct` is a recursive through `SubobjectDestroy.Op`. This recursion could
+cause trivially destroyable objects to end up doing "busy work". To avoid this
+problem, the toolchain does not call `SelfDestruct` for trivially destroyable
+objects at all.
+
+The check pass will not generate SemIR instructions for calling `SelfDestruct`
+when it knows that calling `Destroy.Op` and `SubobjectDestroy.Op` are trivial.
+SemIR will be emitted when this isn't known, such as when checking generics. The
+missing information becomes known by the time we reach lowering, we are always
+able to prune the calls during lowering.
 
 ## Rationale
 

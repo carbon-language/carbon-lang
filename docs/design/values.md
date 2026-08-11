@@ -180,7 +180,7 @@ An object will eventually be destroyed provided its type implements [`Core.Destr
 The toolchain provides a default implementation for most types. Users may provide
 an alternative implementation if necessary. Similarly, the toolchain automatically
 destroys objects by default. Users may---under very rare circumstances---manually
-destroy objects by calling [`Core.SelfDestruct`](#coreselfdestruct).
+destroy objects by calling [`Core.Destroy.SelfDestruct`](#coredestroyselfdestruct).
 
 Carbon also provides [support for detecting whether destroying an object results
 contains computation](#trivial-destruction), and [support for dispatching to a
@@ -189,7 +189,7 @@ dynamic type's `Core.Destroy` implementation](#dynamic-destruction).
 The following subsections describe five core entities:
 
 1.  [`Core.Destroy`](#coredestroy)
-2.  [`Core.SelfDestruct`](#coreselfdestruct)
+2.  [`Core.Destroy.SelfDestruct`](#coredestroyselfdestruct)
 3.  [`Core.SubobjectDestroy`](#coresubobjectdestroy)
 4.  [`Core.TrivialDestroy`](#trivial-destruction)
 5.  [`Core.DynamicDestroy`](#dynamic-destruction)
@@ -203,9 +203,12 @@ are also destructible.
 ```carbon
 interface Destroy {
   require impls SubobjectDestroy;
-  friend fn SelfDestruct(ref Self);
-
   private fn Op(ref self: partial Self) = "no_op";
+
+  final fn SelfDestruct(ref self) {
+    self.Op();
+    self.(SubobjectDestroy.Op)();
+  }
 }
 
 final impl forall [T: Destroy] partial T as Destroy {
@@ -242,21 +245,12 @@ class Vector(T) {
 }
 ```
 
-### `Core.SelfDestruct`
+#### `Core.Destroy.SelfDestruct`
 
-```carbon
-fn SelfDestruct[T: Destroy](ref x: T) {
-  x.Op();
-  x.(SubobjectDestroy.Op)();
-}
-
-fn SelfDestruct[T: TrivialDestroy](ref x: T) = "no_op";
-```
-
-`SelfDestruct` destroys a complete object, including all subobjects, and ends
-their lifetimes. `SelfDestruct(x)` potentially calls `x.(Core.Destroy.Op)`, then
-calls `x.(Core.SubobjectDestroy.Op)`. `SelfDestruct` only calls `Destroy.Op` if
-`Self` manually implements `Destroy`.
+`Destroy.SelfDestruct` destroys a complete object, including all subobjects, and
+ends their lifetimes. `x.SelfDestruct()` calls `self.Op`, then calls `self.(SubobjectDestroy.Op)`.
+`SelfDestruct` may omit calling `self.Op` if `Self` does not manually implement
+`Destroy`.
 
 The behavior for `SelfDestruct` cannot be customized. Types requiring control
 over how their subobjects are destroyed must use a raw storage type for their
@@ -284,14 +278,14 @@ fn F() {
   if (v.Len() == 56) {
     var exaggerated_length: i64 = v.Len() * 2;
     v.Push(exaggerated_length);
-    Core.SelfDestruct(exaggerated_length); // The toolchain inserts this on behalf of the user.
+    exaggerated_length.SelfDestruct(); // The toolchain inserts this on behalf of the user.
   }
 
-  Core.SelfDestruct(v);
+  v.SelfDestruct(); // The toolchain inserts this on behalf of the user.
 }
 ```
 
-Users may manually call `Core.SelfDestruct`. Users should only manually call
+Users may manually call `SelfDestruct`. Users should only manually call
 `SelfDestruct` when explicit lifetime management is necessary. For example, a
 vector type manages its elements' lifetimes in addition to its storage. We
 rewrite the above vector implementation to account for this:
@@ -323,7 +317,7 @@ class Vector(T: Destroy) {
 ```
 
 > [!WARNING]
-Manually calling `Core.SelfDestruct` is unsafe.
+Manually calling `Destroy.SelfDestruct` is unsafe.
 
 ### `Core.SubobjectDestroy`
 
@@ -339,7 +333,7 @@ implement `SubobjectDestroy` unless they:
 ```carbon
 private interface SubobjectDestroy {
   private fn Op(ref self: Self) = "destroy.subobjects";
-  friend fn SelfDestruct(ref Self);
+  friend Destroy;
 }
 ```
 
