@@ -100,37 +100,6 @@ It is highly likely that the vast majority of cases of explicit object destructi
 are objects destroying subobjects (for example a vector class' elements). This motivates
 preferring a function, as subobjects cannot exist without their parent object.
 
-#### Naming
-
-The following names have been considered:
-
-| Name              | Function             | Method                | Preference |
-|-------------------|----------------------|-----------------------|------------|
-| `SelfDestruct`    | `SelfDestruct(x)`    | `x.SelfDestruct()`    | 1          |
-| `DestroyObject`   | `DestroyObject(x)`   | `x.DestroyObject()`   | 2          |
-| `DestroySelf`     | `DestroySelf(x)`     | `x.DestroySelf()`     | 3          |
-| `CompleteDestroy` | `CompleteDestroy(x)` | `x.CompleteDestroy()` | 4          |
-| `ManualDestroy`   | `ManualDestroy(x)`   | `x.ManualDestroy()`   | 5          |
-| `ExplicitDestroy` | `ExplicitDestroy(x)` | `x.ExplicitDestroy()` | 6          |
-
-`ManualDestroy` is not recommended because they make it awkward to reason about
-implicit object destruction without some complement (for example `AutoDestroy`). The
-toolchain would implicitly call `AutoDestroy`, and users would call `ManualDestroy`.
-This would probably need to show up in stacktraces, which adds to their obfuscation.
-We could potentially do some amount of inlining, but this could cause confusion
-about what is responsible for destroying an object. Similarly for `ExplicitDestroy`.
-
-The remaining options are all appropriate for both situations. As such, we end
-up with a subjective decision.
-
--   `CompleteDestroy` produces an incomplete phrase.
--   `DestroySelf` could potentially be mixed up with `Destroy.Destroy(self)`.
--   `DestroyObject` clearly articulates the operation and user intent. It also
-    renders nicely in other contexts, such as documentation and stacktraces.
--   `SelfDestruct` has the same benefits as `DestroyObject`. "Self-destruct"
-    additionally refers to an internal mechanism for destroying an entity. That
-    "internal mechanism" `Core.Destroy.Op` for Carbon object tear-down.
-
 ### Trivial destruction
 
 From the [existing destructor design]:
