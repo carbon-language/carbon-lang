@@ -74,7 +74,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.type: type = fn_type @RuntimeConvertFrom.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert: %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.286 = facet_value %RuntimeConvertFrom, (%ImplicitAs.impl_witness) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.f8a: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%RuntimeConvertTo, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.811: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%RuntimeConvertTo, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %RuntimeConvertTo.val: %RuntimeConvertTo = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
@@ -97,7 +97,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %from: %RuntimeConvertFrom = symbolic_binding from, 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.820: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.f8a, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %.b6a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.811, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %from, %RuntimeConvertFrom.as.ImplicitAs.impl.Convert [symbolic]
 // CHECK:STDOUT:   %A.patt.797: %pattern_type.c10 = symbolic_binding_pattern A, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.fbd: %pattern_type.905 = value_param_pattern [concrete]
@@ -298,7 +298,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %from.ref: %RuntimeConvertFrom = name_ref from, %from.loc29_61.2 [symbolic = %from.loc29_61.1 (constants.%from)]
 // CHECK:STDOUT:     %holds_to.ref: %HoldsType.9f2 = name_ref holds_to, %holds_to
-// CHECK:STDOUT:     %impl.elem0: %.820 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:     %impl.elem0: %.b6a = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method constants.%from, %impl.elem0 [symbolic = %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound (constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound)]
 // CHECK:STDOUT:     %.loc40_19.1: ref %RuntimeConvertTo = temporary_storage
 // CHECK:STDOUT:     %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.call: init %RuntimeConvertTo to %.loc40_19.1 = call %bound_method(constants.%from)

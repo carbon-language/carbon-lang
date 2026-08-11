@@ -160,9 +160,9 @@ fn DestroyAIndirectly() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CDestroyAIndirectly.Main() #0 !dbg !48 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CDestroyIndirectly.Main.e5fba025cd74a7f8(), !dbg !49
-// CHECK:STDOUT:   call void @_CDestroyIndirectly.Main.941e8170f59f4395(), !dbg !50
-// CHECK:STDOUT:   call void @_CDestroyIndirectly.Main.792f9aee5f4c6f04(), !dbg !51
+// CHECK:STDOUT:   call void @_CDestroyIndirectly.Main.2a28a415478a31f5(), !dbg !49
+// CHECK:STDOUT:   call void @_CDestroyIndirectly.Main.a0f524e76111d8a1(), !dbg !50
+// CHECK:STDOUT:   call void @_CDestroyIndirectly.Main.bf648cc7ac7f04db(), !dbg !51
 // CHECK:STDOUT:   ret void, !dbg !52
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -173,7 +173,7 @@ fn DestroyAIndirectly() {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #5
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CDestroyIndirectly.Main.e5fba025cd74a7f8() #0 !dbg !53 {
+// CHECK:STDOUT: define linkonce_odr void @_CDestroyIndirectly.Main.2a28a415478a31f5() #0 !dbg !53 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca {}, align 1, !dbg !54
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !54
@@ -183,7 +183,7 @@ fn DestroyAIndirectly() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CDestroyIndirectly.Main.941e8170f59f4395() #0 !dbg !57 {
+// CHECK:STDOUT: define linkonce_odr void @_CDestroyIndirectly.Main.a0f524e76111d8a1() #0 !dbg !57 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca {}, align 1, !dbg !58
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !58
@@ -193,7 +193,7 @@ fn DestroyAIndirectly() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CDestroyIndirectly.Main.792f9aee5f4c6f04() #0 !dbg !61 {
+// CHECK:STDOUT: define linkonce_odr void @_CDestroyIndirectly.Main.bf648cc7ac7f04db() #0 !dbg !61 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca {}, align 1, !dbg !62
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !62
@@ -271,15 +271,15 @@ fn DestroyAIndirectly() {
 // CHECK:STDOUT: !50 = !DILocation(line: 40, column: 3, scope: !48)
 // CHECK:STDOUT: !51 = !DILocation(line: 41, column: 3, scope: !48)
 // CHECK:STDOUT: !52 = !DILocation(line: 38, column: 1, scope: !48)
-// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "DestroyIndirectly", linkageName: "_CDestroyIndirectly.Main.e5fba025cd74a7f8", scope: null, file: !1, line: 34, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "DestroyIndirectly", linkageName: "_CDestroyIndirectly.Main.2a28a415478a31f5", scope: null, file: !1, line: 34, type: !13, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !54 = !DILocation(line: 35, column: 3, scope: !53)
 // CHECK:STDOUT: !55 = !DILocation(line: 35, column: 21, scope: !53)
 // CHECK:STDOUT: !56 = !DILocation(line: 34, column: 1, scope: !53)
-// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "DestroyIndirectly", linkageName: "_CDestroyIndirectly.Main.941e8170f59f4395", scope: null, file: !1, line: 34, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "DestroyIndirectly", linkageName: "_CDestroyIndirectly.Main.a0f524e76111d8a1", scope: null, file: !1, line: 34, type: !13, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !58 = !DILocation(line: 35, column: 3, scope: !57)
 // CHECK:STDOUT: !59 = !DILocation(line: 35, column: 21, scope: !57)
 // CHECK:STDOUT: !60 = !DILocation(line: 34, column: 1, scope: !57)
-// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "DestroyIndirectly", linkageName: "_CDestroyIndirectly.Main.792f9aee5f4c6f04", scope: null, file: !1, line: 34, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "DestroyIndirectly", linkageName: "_CDestroyIndirectly.Main.bf648cc7ac7f04db", scope: null, file: !1, line: 34, type: !13, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !62 = !DILocation(line: 35, column: 3, scope: !61)
 // CHECK:STDOUT: !63 = !DILocation(line: 35, column: 21, scope: !61)
 // CHECK:STDOUT: !64 = !DILocation(line: 34, column: 1, scope: !61)

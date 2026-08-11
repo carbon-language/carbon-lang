@@ -101,7 +101,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_CF:thunk:I.4b54445be9b10a0e.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !25 {
+// CHECK:STDOUT: define weak_odr void @"_CF:thunk:I.6a2feaaa6331eb92.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 4, !dbg !28
 // CHECK:STDOUT:   %.4.temp = alloca { i32 }, align 4, !dbg !29
@@ -172,7 +172,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !22 = !DILocation(line: 20, column: 34, scope: !19)
 // CHECK:STDOUT: !23 = !DILocation(line: 20, column: 28, scope: !19)
 // CHECK:STDOUT: !24 = !DILocation(line: 20, column: 21, scope: !19)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:I.4b54445be9b10a0e.Main:61ea2aba74ab3bf1:I.Main", scope: null, file: !1, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !26)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:I.6a2feaaa6331eb92.Main:61ea2aba74ab3bf1:I.Main", scope: null, file: !1, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !26)
 // CHECK:STDOUT: !26 = !{!27}
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !7)
 // CHECK:STDOUT: !28 = !DILocation(line: 20, column: 3, scope: !25)
@@ -216,7 +216,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CF:thunk:I.81762ab15bc0c2ed.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT: declare void @"_CF:thunk:I.f5faeaa774ca256e.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
@@ -301,7 +301,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_CF:thunk:I.c81631f865470482.Main:X.Main:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !13 {
+// CHECK:STDOUT: define weak_odr void @"_CF:thunk:I.d0cc85b6c89517e3.Main:X.Main:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_19.1.temp = alloca { i32 }, align 4, !dbg !16
 // CHECK:STDOUT:   %.4.temp = alloca { i32 }, align 4, !dbg !17
@@ -364,7 +364,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !10 = !DILocation(line: 9, column: 34, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 9, column: 28, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 9, column: 21, scope: !4)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:I.c81631f865470482.Main:X.Main:I.Main", scope: null, file: !1, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !14)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:I.d0cc85b6c89517e3.Main:X.Main:I.Main", scope: null, file: !1, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !14)
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !13, type: !7)
 // CHECK:STDOUT: !16 = !DILocation(line: 9, column: 3, scope: !13)
@@ -408,7 +408,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CF:thunk:I.7538afb22b3edcf0.Main:X.Main:I.Main"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT: declare void @"_CF:thunk:I.4980a17f6b368c72.Main:X.Main:I.Main"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF.X.Main:I.Main"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:

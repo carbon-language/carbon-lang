@@ -57,10 +57,10 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.4df: <witness> = require_complete_type %Int [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.6f1: <witness> = impl_witness imports.%Copy.impl_witness_table.5e0 [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value Core.IntLiteral, (%Copy.impl_witness.6f1) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.c52: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.c22: type = fn_type_with_self_type %Copy.WithSelf.Op.type.c52, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.0b3: <witness> = impl_witness imports.%Copy.impl_witness_table.ee5 [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value Core.IntLiteral, (%Copy.impl_witness.0b3) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.85c: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.af5: type = fn_type_with_self_type %Copy.WithSelf.Op.type.85c, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.type: type = fn_type @Core.IntLiteral.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op: %Core.IntLiteral.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.bound.3c6: <bound method> = bound_method %N, %Core.IntLiteral.as.Copy.impl.Op [symbolic]
@@ -91,7 +91,7 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.9c3: %Core.IntLiteral.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
-// CHECK:STDOUT:   %Copy.impl_witness_table.5e0 = impl_witness_table (%Core.import_ref.9c3), @Core.IntLiteral.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness_table.ee5 = impl_witness_table (%Core.import_ref.9c3), @Core.IntLiteral.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -160,7 +160,7 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:   fn(%n.param: @F.%Int.loc4_46.1 (%Int)) -> out %return.param: Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %N.ref.loc5: Core.IntLiteral = name_ref N, %N.loc4_7.2 [symbolic = %N.loc4_7.1 (constants.%N)]
-// CHECK:STDOUT:     %impl.elem0: %.c22 = impl_witness_access constants.%Copy.impl_witness.6f1, element0 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
+// CHECK:STDOUT:     %impl.elem0: %.af5 = impl_witness_access constants.%Copy.impl_witness.0b3, element0 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %N.ref.loc5, %impl.elem0 [symbolic = %Core.IntLiteral.as.Copy.impl.Op.bound (constants.%Core.IntLiteral.as.Copy.impl.Op.bound.3c6)]
 // CHECK:STDOUT:     %Core.IntLiteral.as.Copy.impl.Op.call: init Core.IntLiteral = call %bound_method(%N.ref.loc5) [symbolic = %N.loc4_7.1 (constants.%N)]
 // CHECK:STDOUT:     return %Core.IntLiteral.as.Copy.impl.Op.call
@@ -219,10 +219,10 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.eb0: <witness> = require_complete_type %Float [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.6f1: <witness> = impl_witness imports.%Copy.impl_witness_table.5e0 [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value Core.IntLiteral, (%Copy.impl_witness.6f1) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.c52: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.c22: type = fn_type_with_self_type %Copy.WithSelf.Op.type.c52, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.0b3: <witness> = impl_witness imports.%Copy.impl_witness_table.ee5 [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value Core.IntLiteral, (%Copy.impl_witness.0b3) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.85c: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.af5: type = fn_type_with_self_type %Copy.WithSelf.Op.type.85c, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.type: type = fn_type @Core.IntLiteral.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op: %Core.IntLiteral.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.bound.3c6: <bound method> = bound_method %N, %Core.IntLiteral.as.Copy.impl.Op [symbolic]
@@ -253,7 +253,7 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/parts/float, Float, loaded [concrete = constants.%Float.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.9c3: %Core.IntLiteral.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
-// CHECK:STDOUT:   %Copy.impl_witness_table.5e0 = impl_witness_table (%Core.import_ref.9c3), @Core.IntLiteral.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness_table.ee5 = impl_witness_table (%Core.import_ref.9c3), @Core.IntLiteral.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -322,7 +322,7 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:   fn(%n.param: @F.%Float.loc4_48.1 (%Float)) -> out %return.param: Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %N.ref.loc5: Core.IntLiteral = name_ref N, %N.loc4_7.2 [symbolic = %N.loc4_7.1 (constants.%N)]
-// CHECK:STDOUT:     %impl.elem0: %.c22 = impl_witness_access constants.%Copy.impl_witness.6f1, element0 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
+// CHECK:STDOUT:     %impl.elem0: %.af5 = impl_witness_access constants.%Copy.impl_witness.0b3, element0 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %N.ref.loc5, %impl.elem0 [symbolic = %Core.IntLiteral.as.Copy.impl.Op.bound (constants.%Core.IntLiteral.as.Copy.impl.Op.bound.3c6)]
 // CHECK:STDOUT:     %Core.IntLiteral.as.Copy.impl.Op.call: init Core.IntLiteral = call %bound_method(%N.ref.loc5) [symbolic = %N.loc4_7.1 (constants.%N)]
 // CHECK:STDOUT:     return %Core.IntLiteral.as.Copy.impl.Op.call

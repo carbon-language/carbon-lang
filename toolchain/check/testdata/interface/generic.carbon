@@ -121,8 +121,8 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   %C.as.WithAssocFn.impl.F.type: type = fn_type @C.as.WithAssocFn.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.WithAssocFn.impl.F: %C.as.WithAssocFn.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %WithAssocFn.facet: %WithAssocFn.type.5fd = facet_value %C, (%WithAssocFn.impl_witness) [concrete]
-// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.7cf: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn.WithSelf(%C, %WithAssocFn.facet) [concrete]
-// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.9fa: %WithAssocFn.WithSelf.F.type.7cf = struct_value () [concrete]
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type.268: type = fn_type @WithAssocFn.WithSelf.F, @WithAssocFn.WithSelf(%C, %WithAssocFn.facet) [concrete]
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.5e7: %WithAssocFn.WithSelf.F.type.268 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.val: %X = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T.67d [symbolic]
@@ -438,8 +438,8 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:   %WithAssocFn.type => constants.%WithAssocFn.type.5fd
 // CHECK:STDOUT:   %Self => constants.%WithAssocFn.facet
-// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type => constants.%WithAssocFn.WithSelf.F.type.7cf
-// CHECK:STDOUT:   %WithAssocFn.WithSelf.F => constants.%WithAssocFn.WithSelf.F.9fa
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F.type => constants.%WithAssocFn.WithSelf.F.type.268
+// CHECK:STDOUT:   %WithAssocFn.WithSelf.F => constants.%WithAssocFn.WithSelf.F.5e7
 // CHECK:STDOUT:   %WithAssocFn.assoc_type => constants.%WithAssocFn.assoc_type.c3e
 // CHECK:STDOUT:   %assoc0.loc10_14.2 => constants.%assoc0.d90
 // CHECK:STDOUT: }

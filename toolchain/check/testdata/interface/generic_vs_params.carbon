@@ -112,9 +112,9 @@ interface Bar[T: type] {}
 // CHECK:STDOUT:   %NotGenericButParams.facet: %NotGenericButParams.type.21c = facet_value %X, (%NotGenericButParams.impl_witness) [concrete]
 // CHECK:STDOUT:   %GenericAndParams.type.8ab: type = facet_type <@GenericAndParams.loc6, @GenericAndParams.loc6(%X)> [concrete]
 // CHECK:STDOUT:   %.bbd: <witness> = impl_self_witness %X, @GenericAndParams.loc6, @GenericAndParams.loc6(%X) [concrete]
-// CHECK:STDOUT:   %GenericAndParams.impl_witness.925: <witness> = impl_witness @X.as.GenericAndParams.impl.44a.%GenericAndParams.impl_witness_table [concrete]
+// CHECK:STDOUT:   %GenericAndParams.impl_witness.861: <witness> = impl_witness @X.as.GenericAndParams.impl.44a.%GenericAndParams.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.34f: %GenericAndParams.type.8ab = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %GenericAndParams.facet.9e9: %GenericAndParams.type.8ab = facet_value %X, (%GenericAndParams.impl_witness.925) [concrete]
+// CHECK:STDOUT:   %GenericAndParams.facet.416: %GenericAndParams.type.8ab = facet_value %X, (%GenericAndParams.impl_witness.861) [concrete]
 // CHECK:STDOUT:   %C.a43: type = class_type @C, @C(%X) [concrete]
 // CHECK:STDOUT:   %GenericNoParams.type.670: type = facet_type <@GenericNoParams, @GenericNoParams(%X)> [concrete]
 // CHECK:STDOUT:   %GenericAndParams.type.0ab: type = generic_interface_type @GenericAndParams.loc10, @C(%X) [concrete]
@@ -125,9 +125,9 @@ interface Bar[T: type] {}
 // CHECK:STDOUT:   %GenericNoParams.facet: %GenericNoParams.type.670 = facet_value %X, (%GenericNoParams.impl_witness) [concrete]
 // CHECK:STDOUT:   %GenericAndParams.type.b2b: type = facet_type <@GenericAndParams.loc10, @GenericAndParams.loc10(%X, %X)> [concrete]
 // CHECK:STDOUT:   %.364: <witness> = impl_self_witness %X, @GenericAndParams.loc10, @GenericAndParams.loc10(%X, %X) [concrete]
-// CHECK:STDOUT:   %GenericAndParams.impl_witness.b47: <witness> = impl_witness @X.as.GenericAndParams.impl.5ef.%GenericAndParams.impl_witness_table [concrete]
+// CHECK:STDOUT:   %GenericAndParams.impl_witness.377: <witness> = impl_witness @X.as.GenericAndParams.impl.5ef.%GenericAndParams.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.883: %GenericAndParams.type.b2b = symbolic_binding Self, 2 [symbolic]
-// CHECK:STDOUT:   %GenericAndParams.facet.abe: %GenericAndParams.type.b2b = facet_value %X, (%GenericAndParams.impl_witness.b47) [concrete]
+// CHECK:STDOUT:   %GenericAndParams.facet.61b: %GenericAndParams.type.b2b = facet_value %X, (%GenericAndParams.impl_witness.377) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -300,7 +300,7 @@ interface Bar[T: type] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @X.as.GenericAndParams.impl.44a: %X.ref.loc16_6 as %GenericAndParams.type {
 // CHECK:STDOUT:   %GenericAndParams.impl_witness_table = impl_witness_table (), @X.as.GenericAndParams.impl.44a [concrete]
-// CHECK:STDOUT:   %GenericAndParams.impl_witness: <witness> = impl_witness %GenericAndParams.impl_witness_table [concrete = constants.%GenericAndParams.impl_witness.925]
+// CHECK:STDOUT:   %GenericAndParams.impl_witness: <witness> = impl_witness %GenericAndParams.impl_witness_table [concrete = constants.%GenericAndParams.impl_witness.861]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %GenericAndParams.type
@@ -318,7 +318,7 @@ interface Bar[T: type] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @X.as.GenericAndParams.impl.5ef: %X.ref.loc18_6 as %GenericAndParams.type {
 // CHECK:STDOUT:   %GenericAndParams.impl_witness_table = impl_witness_table (), @X.as.GenericAndParams.impl.5ef [concrete]
-// CHECK:STDOUT:   %GenericAndParams.impl_witness: <witness> = impl_witness %GenericAndParams.impl_witness_table [concrete = constants.%GenericAndParams.impl_witness.b47]
+// CHECK:STDOUT:   %GenericAndParams.impl_witness: <witness> = impl_witness %GenericAndParams.impl_witness_table [concrete = constants.%GenericAndParams.impl_witness.377]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %GenericAndParams.type
@@ -415,7 +415,7 @@ interface Bar[T: type] {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.WithSelf.loc6(constants.%X, constants.%GenericAndParams.facet.9e9) {
+// CHECK:STDOUT: specific @GenericAndParams.WithSelf.loc6(constants.%X, constants.%GenericAndParams.facet.416) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -458,7 +458,7 @@ interface Bar[T: type] {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.WithSelf.loc10(constants.%X, constants.%X, constants.%GenericAndParams.facet.abe) {
+// CHECK:STDOUT: specific @GenericAndParams.WithSelf.loc10(constants.%X, constants.%X, constants.%GenericAndParams.facet.61b) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
