@@ -146,7 +146,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CEqual:thunk:EqWith.ffb401eeee8c4872.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !30 {
+// CHECK:STDOUT: define weak_odr i1 @"_CEqual:thunk:EqWith.ffb401eeee8c4872.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !36
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !36
@@ -156,7 +156,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CNotEqual:thunk:EqWith.ffb401eeee8c4872.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !37 {
+// CHECK:STDOUT: define weak_odr i1 @"_CNotEqual:thunk:EqWith.ffb401eeee8c4872.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !37 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !41
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !41
@@ -290,7 +290,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %struct.A = type { i32 }
+// CHECK:STDOUT: %struct.A.4 = type { i32 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_Zlt1AS_ = comdat any
 // CHECK:STDOUT:
@@ -313,8 +313,8 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %y.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A.4, align 4
 // CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !24
@@ -323,9 +323,9 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !26
 // CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !26
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp1, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp1, i32 0, i32 0
 // CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
 // CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zlt1AS_(i32 %3, i32 %4)
 // CHECK:STDOUT:   %storedv = zext i1 %call to i8
@@ -339,8 +339,8 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %y.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A.4, align 4
 // CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !24
@@ -349,9 +349,9 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !26
 // CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !26
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp1, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp1, i32 0, i32 0
 // CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
 // CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zle1AS_(i32 %3, i32 %4)
 // CHECK:STDOUT:   %storedv = zext i1 %call to i8
@@ -365,8 +365,8 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %y.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A.4, align 4
 // CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !24
@@ -375,9 +375,9 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !26
 // CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !26
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp1, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp1, i32 0, i32 0
 // CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
 // CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zgt1AS_(i32 %3, i32 %4)
 // CHECK:STDOUT:   %storedv = zext i1 %call to i8
@@ -391,8 +391,8 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %y.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A.4, align 4
 // CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !24
@@ -401,9 +401,9 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !26
 // CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !26
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp1, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp1, i32 0, i32 0
 // CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
 // CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zge1AS_(i32 %3, i32 %4)
 // CHECK:STDOUT:   %storedv = zext i1 %call to i8
@@ -412,7 +412,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CLess:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !30 {
+// CHECK:STDOUT: define weak_odr i1 @"_CLess:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !36
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !36
@@ -422,7 +422,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CLessOrEquivalent:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !37 {
+// CHECK:STDOUT: define weak_odr i1 @"_CLessOrEquivalent:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !37 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !41
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !41
@@ -432,7 +432,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CGreater:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !42 {
+// CHECK:STDOUT: define weak_odr i1 @"_CGreater:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !42 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !46
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !46
@@ -442,7 +442,7 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !47 {
+// CHECK:STDOUT: define weak_odr i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.92c0df05bd55f97a.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !47 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !51
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !51
@@ -467,15 +467,15 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zlt1AS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x = alloca %struct.A, align 4
-// CHECK:STDOUT:   %y = alloca %struct.A, align 4
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %x = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %y = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A.4, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %x.coerce, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A.4, ptr %y, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %y.coerce, ptr %coerce.dive1, align 4
-// CHECK:STDOUT:   %value = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %value = getelementptr inbounds nuw %struct.A.4, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   %0 = load i32, ptr %value, align 4, !tbaa !61
-// CHECK:STDOUT:   %value2 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %value2 = getelementptr inbounds nuw %struct.A.4, ptr %y, i32 0, i32 0
 // CHECK:STDOUT:   %1 = load i32, ptr %value2, align 4, !tbaa !61
 // CHECK:STDOUT:   %cmp = icmp slt i32 %0, %1
 // CHECK:STDOUT:   ret i1 %cmp
@@ -487,19 +487,19 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zle1AS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x = alloca %struct.A, align 4
-// CHECK:STDOUT:   %y = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.A, align 4
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %x = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %y = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A.4, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %x.coerce, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A.4, ptr %y, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %y.coerce, ptr %coerce.dive1, align 4
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %y, i64 4, i1 false), !tbaa.struct !26
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp2, ptr align 4 %x, i64 4, i1 false), !tbaa.struct !26
-// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %0 = load i32, ptr %coerce.dive3, align 4
-// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp2, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp2, i32 0, i32 0
 // CHECK:STDOUT:   %1 = load i32, ptr %coerce.dive4, align 4
 // CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zlt1AS_(i32 %0, i32 %1)
 // CHECK:STDOUT:   %lnot = xor i1 %call, true
@@ -509,19 +509,19 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zgt1AS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x = alloca %struct.A, align 4
-// CHECK:STDOUT:   %y = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.A, align 4
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %x = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %y = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A.4, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %x.coerce, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A.4, ptr %y, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %y.coerce, ptr %coerce.dive1, align 4
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %y, i64 4, i1 false), !tbaa.struct !26
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp2, ptr align 4 %x, i64 4, i1 false), !tbaa.struct !26
-// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %0 = load i32, ptr %coerce.dive3, align 4
-// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp2, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp2, i32 0, i32 0
 // CHECK:STDOUT:   %1 = load i32, ptr %coerce.dive4, align 4
 // CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zlt1AS_(i32 %0, i32 %1)
 // CHECK:STDOUT:   ret i1 %call
@@ -530,19 +530,19 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zge1AS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x = alloca %struct.A, align 4
-// CHECK:STDOUT:   %y = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.A, align 4
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %x = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %y = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.A.4, align 4
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A.4, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %x.coerce, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A.4, ptr %y, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %y.coerce, ptr %coerce.dive1, align 4
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %x, i64 4, i1 false), !tbaa.struct !26
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp2, ptr align 4 %y, i64 4, i1 false), !tbaa.struct !26
-// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %0 = load i32, ptr %coerce.dive3, align 4
-// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp2, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.A.4, ptr %agg.tmp2, i32 0, i32 0
 // CHECK:STDOUT:   %1 = load i32, ptr %coerce.dive4, align 4
 // CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zlt1AS_(i32 %0, i32 %1)
 // CHECK:STDOUT:   %lnot = xor i1 %call, true

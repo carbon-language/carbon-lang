@@ -9,11 +9,15 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/Mangle.h"
+#include "clang/Basic/DiagnosticParse.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/Module.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendAction.h"
+#include "clang/Frontend/MultiplexConsumer.h"
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Parse/Parser.h"
@@ -30,6 +34,8 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/cpp/access.h"
+#include "toolchain/check/cpp/diagnostic_consumer.h"
+#include "toolchain/check/cpp/diagnostic_listener.h"
 #include "toolchain/check/cpp/export.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
@@ -41,7 +47,9 @@
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/cpp_domain.h"
 #include "toolchain/sem_ir/cpp_file.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/read_only_ast_source.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -76,234 +84,7 @@ static auto AppendInlineCode(Context& context, llvm::raw_ostream& out,
   out << code << "\n";
 }
 
-// Generates C++ file contents to #include all requested imports.
-static auto GenerateCppIncludesHeaderCode(
-    Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
-    -> std::string {
-  RawStringOstream code_stream;
-  for (const Parse::Tree::PackagingNames& import : imports) {
-    if (import.inline_body_id.has_value()) {
-      // Expand `import Cpp inline "code";` directly into the specified code.
-      auto code_token = context.parse_tree().node_token(import.inline_body_id);
-      AppendInlineCode(context, code_stream, code_token,
-                       context.string_literal_values().Get(
-                           context.tokens().GetStringLiteralValue(code_token)));
-      // TODO: Inject a clang pragma here to produce an error if there are
-      // unclosed scopes at the end of this inline C++ fragment.
-    } else if (import.library_id.has_value()) {
-      // Translate `import Cpp library "foo.h";` into `#include "foo.h"`.
-      GenerateLineMarker(context, code_stream,
-                         context.tokens().GetLineNumber(
-                             context.parse_tree().node_token(import.node_id)));
-      auto name = context.string_literal_values().Get(import.library_id);
-      if (name.starts_with('<') && name.ends_with('>')) {
-        code_stream << "#include <"
-                    << FormatEscaped(name.drop_front().drop_back()) << ">\n";
-      } else {
-        code_stream << "#include \"" << FormatEscaped(name) << "\"\n";
-      }
-    }
-  }
-  return code_stream.TakeStr();
-}
-
-// Adds the given source location and an `ImportIRInst` referring to it in
-// `ImportIRId::Cpp`.
-static auto AddImportIRInst(SemIR::File& file,
-                            clang::SourceLocation clang_source_loc)
-    -> SemIR::ImportIRInstId {
-  SemIR::ClangSourceLocId clang_source_loc_id =
-      file.clang_source_locs().Add(clang_source_loc);
-  return file.import_ir_insts().Add(SemIR::ImportIRInst(clang_source_loc_id));
-}
-
 namespace {
-
-// Used to convert Clang diagnostics to Carbon diagnostics.
-//
-// Handling of Clang notes is a little subtle: as far as Clang is concerned,
-// notes are separate diagnostics, not connected to the error or warning that
-// precedes them. But in Carbon's diagnostics system, notes are part of the
-// enclosing diagnostic. To handle this, we buffer Clang diagnostics until we
-// reach a point where we know we're not in the middle of a diagnostic, and then
-// emit a diagnostic along with all of its notes. This is triggered when adding
-// or removing a Carbon context note, which could otherwise get attached to the
-// wrong C++ diagnostics, and at the end of the Carbon program.
-class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
- public:
-  // Creates an instance with the location that triggers calling Clang. The
-  // `context` is not stored here, and the diagnostics consumer is expected to
-  // outlive it.
-  explicit CarbonClangDiagnosticConsumer(
-      Context& context, std::shared_ptr<clang::CompilerInvocation> invocation)
-      : sem_ir_(&context.sem_ir()),
-        emitter_(&context.emitter()),
-        invocation_(std::move(invocation)) {
-    emitter_->AddFlushFn([this] { EmitDiagnostics(); });
-  }
-
-  ~CarbonClangDiagnosticConsumer() override {
-    // Do not inspect `emitter_` here; it's typically destroyed before the
-    // consumer is.
-    // TODO: If Clang produces diagnostics after check finishes, they'll get
-    // added to the list of pending diagnostics and never emitted.
-    CARBON_CHECK(diagnostic_infos_.empty(),
-                 "Missing flush before destroying diagnostic consumer");
-  }
-
-  // Generates a Carbon warning for each Clang warning and a Carbon error for
-  // each Clang error or fatal.
-  auto HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
-                        const clang::Diagnostic& info) -> void override {
-    DiagnosticConsumer::HandleDiagnostic(diag_level, info);
-
-    SemIR::ImportIRInstId clang_import_ir_inst_id =
-        AddImportIRInst(*sem_ir_, info.getLocation());
-
-    llvm::SmallString<256> message;
-    info.FormatDiagnostic(message);
-
-    // Render a code snippet including any highlighted ranges and fixit hints.
-    // TODO: Also include the #include stack and macro expansion stack in the
-    // diagnostic output in some way.
-    RawStringOstream snippet_stream;
-    if (!info.hasSourceManager()) {
-      // If we don't have a source manager, this is an error from early in the
-      // frontend. Don't produce a snippet.
-      CARBON_CHECK(info.getLocation().isInvalid());
-    } else {
-      CodeContextRenderer(snippet_stream, invocation_->getLangOpts(),
-                          invocation_->getDiagnosticOpts())
-          .emitDiagnostic(
-              clang::FullSourceLoc(info.getLocation(), info.getSourceManager()),
-              diag_level, message, info.getRanges(), info.getFixItHints());
-    }
-
-    diagnostic_infos_.push_back({.level = diag_level,
-                                 .import_ir_inst_id = clang_import_ir_inst_id,
-                                 .message = message.str().str(),
-                                 .snippet = snippet_stream.TakeStr()});
-  }
-
-  // Returns the diagnostic to use for a given Clang diagnostic level.
-  static auto GetDiagnostic(clang::DiagnosticsEngine::Level level)
-      -> const Diagnostics::DiagnosticBase<std::string>& {
-    switch (level) {
-      case clang::DiagnosticsEngine::Ignored: {
-        CARBON_FATAL("Emitting an ignored diagnostic");
-        break;
-      }
-      case clang::DiagnosticsEngine::Note: {
-        CARBON_DIAGNOSTIC(CppInteropParseNote, Note, "{0}", std::string);
-        return CppInteropParseNote;
-      }
-      case clang::DiagnosticsEngine::Remark:
-      case clang::DiagnosticsEngine::Warning: {
-        // TODO: Add a distinct Remark level to Carbon diagnostics, and stop
-        // mapping remarks to warnings.
-        CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "{0}", std::string);
-        return CppInteropParseWarning;
-      }
-      case clang::DiagnosticsEngine::Error:
-      case clang::DiagnosticsEngine::Fatal: {
-        CARBON_DIAGNOSTIC(CppInteropParseError, Error, "{0}", std::string);
-        return CppInteropParseError;
-      }
-    }
-  }
-
-  // Outputs Carbon diagnostics based on the collected Clang diagnostics. Must
-  // be called after the AST is set in the context.
-  auto EmitDiagnostics() -> void {
-    CARBON_CHECK(
-        sem_ir_->cpp_file(),
-        "Attempted to emit C++ diagnostics before the C++ file is set");
-
-    for (size_t i = 0; i != diagnostic_infos_.size(); ++i) {
-      const ClangDiagnosticInfo& info = diagnostic_infos_[i];
-      auto builder = emitter_->Build(SemIR::LocId(info.import_ir_inst_id),
-                                     GetDiagnostic(info.level), info.message);
-      builder.OverrideSnippet(info.snippet);
-      for (; i + 1 < diagnostic_infos_.size() &&
-             diagnostic_infos_[i + 1].level == clang::DiagnosticsEngine::Note;
-           ++i) {
-        const ClangDiagnosticInfo& note_info = diagnostic_infos_[i + 1];
-        builder
-            .Note(SemIR::LocId(note_info.import_ir_inst_id),
-                  GetDiagnostic(note_info.level), note_info.message)
-            .OverrideSnippet(note_info.snippet);
-      }
-      // TODO: This will apply all current Carbon annotation functions. We
-      // should instead track how Clang's context notes and Carbon's annotation
-      // functions are interleaved, and interleave the notes in the same order.
-      builder.Emit();
-    }
-    diagnostic_infos_.clear();
-  }
-
- private:
-  // A diagnostics renderer based on clang's TextDiagnostic that captures just
-  // the code context (the snippet).
-  class CodeContextRenderer : public clang::TextDiagnostic {
-   protected:
-    using TextDiagnostic::TextDiagnostic;
-
-    void emitDiagnosticMessage(
-        clang::FullSourceLoc /*loc*/, clang::PresumedLoc /*ploc*/,
-        clang::DiagnosticsEngine::Level /*level*/, llvm::StringRef /*message*/,
-        llvm::ArrayRef<clang::CharSourceRange> /*ranges*/,
-        clang::DiagOrStoredDiag /*info*/) override {}
-    void emitDiagnosticLoc(
-        clang::FullSourceLoc /*loc*/, clang::PresumedLoc /*ploc*/,
-        clang::DiagnosticsEngine::Level /*level*/,
-        llvm::ArrayRef<clang::CharSourceRange> /*ranges*/) override {}
-
-    // emitCodeContext is inherited from clang::TextDiagnostic.
-
-    void emitIncludeLocation(clang::FullSourceLoc /*loc*/,
-                             clang::PresumedLoc /*ploc*/) override {}
-    void emitImportLocation(clang::FullSourceLoc /*loc*/,
-                            clang::PresumedLoc /*ploc*/,
-                            llvm::StringRef /*module_name*/) override {}
-    void emitBuildingModuleLocation(clang::FullSourceLoc /*loc*/,
-                                    clang::PresumedLoc /*ploc*/,
-                                    llvm::StringRef /*module_name*/) override {}
-
-    // beginDiagnostic and endDiagnostic are inherited from
-    // clang::TextDiagnostic in case it wants to do any setup / teardown work.
-  };
-
-  // Information on a Clang diagnostic that can be converted to a Carbon
-  // diagnostic.
-  struct ClangDiagnosticInfo {
-    // The Clang diagnostic level.
-    clang::DiagnosticsEngine::Level level;
-
-    // The ID of the ImportIR instruction referring to the Clang source
-    // location.
-    SemIR::ImportIRInstId import_ir_inst_id;
-
-    // The Clang diagnostic textual message.
-    std::string message;
-
-    // The code snippet produced by clang.
-    std::string snippet;
-  };
-
-  // The Carbon file that this C++ compilation is attached to.
-  SemIR::File* sem_ir_;
-
-  // The diagnostic emitter that we're emitting diagnostics into.
-  DiagnosticEmitterBase* emitter_;
-
-  // The compiler invocation that is producing the diagnostics.
-  std::shared_ptr<clang::CompilerInvocation> invocation_;
-
-  // Collects the information for all Clang diagnostics to be converted to
-  // Carbon diagnostics after the context has been initialized with the Clang
-  // AST.
-  llvm::SmallVector<ClangDiagnosticInfo> diagnostic_infos_;
-};
 
 // A wrapper around a clang::CompilerInvocation that allows us to make a shallow
 // copy of most of the invocation and only make a deep copy of the parts that we
@@ -330,7 +111,9 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
   explicit CarbonExternalASTSource(Context* context)
       : ReadOnlyASTSource(context->sem_ir()), context_(context) {}
 
-  auto StartTranslationUnit(clang::ASTConsumer* consumer) -> void override;
+  // Builds the top-level C++ namespace `Carbon` and adds it to the translation
+  // unit.
+  auto BuildCarbonNamespace() -> void;
 
   // Look up decls for `decl_name` inside `decl_context`, adding the decls to
   // `decl_context`. Returns true if any decls were added.
@@ -341,16 +124,22 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
   auto LoadExternalSpecializations(
       const clang::Decl* decl,
       llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool override {
-    const auto* function_template_decl =
-        llvm::dyn_cast<clang::FunctionTemplateDecl>(decl);
-    if (!function_template_decl) {
-      return false;
+    if (const auto* function_template_decl =
+            llvm::dyn_cast<clang::FunctionTemplateDecl>(decl)) {
+      return ExportFunctionSpecializationToCpp(
+          *context_,
+          const_cast<clang::FunctionTemplateDecl*>(function_template_decl),
+          template_args);
     }
 
-    return ExportFunctionSpecializationToCpp(
-        *context_,
-        const_cast<clang::FunctionTemplateDecl*>(function_template_decl),
-        template_args);
+    if (const auto* class_template_decl =
+            llvm::dyn_cast<clang::ClassTemplateDecl>(decl)) {
+      return ExportClassSpecializationToCpp(
+          *context_, const_cast<clang::ClassTemplateDecl*>(class_template_decl),
+          template_args);
+    }
+
+    return false;
   }
 
   auto CompleteType(clang::TagDecl* tag_decl) -> void override;
@@ -371,10 +160,6 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
   }
 
  private:
-  // Builds the top-level C++ namespace `Carbon` and adds it to the translation
-  // unit.
-  auto BuildCarbonNamespace() -> void;
-
   // Map a Carbon entity to a Clang NamedDecl. Returns null if the entity cannot
   // currently be represented in C++.
   auto MapInstIdToClangDeclOrType(LookupResult lookup)
@@ -398,11 +183,7 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
       clang_source_loc = code_synthesis_contexts.back().PointOfInstantiation;
     }
 
-    // TODO: Refactor with AddImportIRInst in import.cpp.
-    SemIR::ClangSourceLocId clang_source_loc_id =
-        context_->sem_ir().clang_source_locs().Add(clang_source_loc);
-    return context_->import_ir_insts().Add(
-        SemIR::ImportIRInst(clang_source_loc_id));
+    return AddImportIRInst(context_->sem_ir(), clang_source_loc);
   }
 
   // For LLVM RTTI.
@@ -414,11 +195,6 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
 char CarbonExternalASTSource::id;
 
 }  // namespace
-
-void CarbonExternalASTSource::StartTranslationUnit(
-    clang::ASTConsumer* /*Consumer*/) {
-  BuildCarbonNamespace();
-}
 
 auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
     -> std::variant<clang::NamedDecl*, clang::QualType> {
@@ -453,17 +229,23 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
       return cast<clang::NamedDecl>(decl_context);
     }
     case SemIR::StructValue::Kind: {
+      auto type_inst_id =
+          context_->types().GetTypeInstId(target_inst.type_id());
       auto callee = GetCallee(context_->sem_ir(), target_inst_id);
-      auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee);
-      if (!callee_function) {
-        return nullptr;
+      if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
+        return GetOrExportFunctionToCpp(target_inst_id,
+                                        callee_function->function_id);
+      } else if (auto generic_class =
+                     context_->insts().TryGetAs<SemIR::GenericClassType>(
+                         type_inst_id)) {
+        return ExportGenericClassToCpp(*context_, type_inst_id, *generic_class);
       }
 
-      return GetOrExportFunctionToCpp(target_inst_id,
-                                      callee_function->function_id);
+      return nullptr;
     }
     case CARBON_KIND(SemIR::FieldDecl field_decl): {
-      return ExportFieldToCpp(*context_, target_inst_id, field_decl);
+      return ExportFieldToCpp(*context_, target_inst_id, field_decl,
+                              lookup.specific_id);
     }
     case CARBON_KIND(SemIR::VarStorage var_storage): {
       return ExportVarToCpp(*context_, target_inst_id, var_storage);
@@ -518,16 +300,24 @@ auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
   auto& ast_context = context_->ast_context();
   auto* identifier = &ast_context.Idents.get(carbon_namespace_name);
 
-  // Create the namespace and add it to the translation unit scope.
   auto* decl_context = ast_context.getTranslationUnitDecl();
-  auto* carbon_cpp_namespace = clang::NamespaceDecl::Create(
-      ast_context, decl_context, /*Inline=*/false, clang::SourceLocation(),
-      clang::SourceLocation(), identifier, /*PrevDecl=*/nullptr,
-      /*Nested=*/false);
-  decl_context->addDecl(carbon_cpp_namespace);
 
-  // We provide custom lookup results within this namespace.
-  carbon_cpp_namespace->setHasExternalVisibleStorage();
+  // Check if it already exists.
+  clang::NamespaceDecl* carbon_cpp_namespace = nullptr;
+  auto lookup_result = decl_context->lookup(identifier);
+  if (!lookup_result.empty()) {
+    carbon_cpp_namespace = cast<clang::NamespaceDecl>(lookup_result.front());
+  } else {
+    // Create it if it doesn't exist.
+    carbon_cpp_namespace = clang::NamespaceDecl::Create(
+        ast_context, decl_context, /*Inline=*/false, clang::SourceLocation(),
+        clang::SourceLocation(), identifier, /*PrevDecl=*/nullptr,
+        /*Nested=*/false);
+    decl_context->addDecl(carbon_cpp_namespace);
+
+    // We provide custom lookup results within this namespace.
+    carbon_cpp_namespace->setHasExternalVisibleStorage();
+  }
 
   // Register this file's package scope as corresponding to the `Carbon`
   // namespace in C++.
@@ -574,10 +364,21 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     return false;
   }
 
-  auto* identifier = decl_name.getAsIdentifierInfo();
-  if (!identifier) {
-    // Only supporting identifiers for now.
-    return false;
+  clang::IdentifierInfo* identifier = nullptr;
+  switch (decl_name.getNameKind()) {
+    case clang::DeclarationName::Identifier: {
+      identifier = decl_name.getAsIdentifierInfo();
+      break;
+    }
+    case clang::DeclarationName::CXXConstructorName: {
+      // The Carbon counterpart of a constructor is a function whose name
+      // matches the class name.
+      identifier =
+          llvm::cast<clang::CXXRecordDecl>(decl_context)->getIdentifier();
+      break;
+    }
+    default:
+      return false;
   }
 
   auto name_id = AddIdentifierName(*context_, identifier->getName());
@@ -670,8 +471,7 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
       bool is_virtual = false;
       bool is_base_of_class = true;
       clang::CXXBaseSpecifier base(
-          clang::SourceRange(base_loc, base_loc), is_virtual, is_base_of_class,
-          clang::AS_public,
+          base_loc, is_virtual, is_base_of_class, clang::AS_public,
           context_->ast_context().getTrivialTypeSourceInfo(base_type, base_loc),
           /*EllipsisLoc=*/clang::SourceLocation());
       clang::CXXBaseSpecifier* bases[1] = {&base};
@@ -680,9 +480,14 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
     }
   }
 
-  ExportAllFieldsToCpp(*context_, class_info);
+  ExportAllFieldsToCpp(*context_,
+                       context_->types().GetTypeInstId(class_type_id));
 
-  class_decl->addDecl(ExportDestructorToCpp(*context_, class_info, class_decl));
+  // TODO: support exporting destructors for generic classes.
+  if (!llvm::isa<clang::ClassTemplateSpecializationDecl>(class_decl)) {
+    class_decl->addDecl(
+        ExportDestructorToCpp(*context_, class_info, class_decl));
+  }
 
   // TODO: Import any special member functions that affect class properties.
 
@@ -729,6 +534,11 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
                method_decl,
                MakeVirtualFunctionSignature(*context_, method_decl)),
            .inst_id = function.first_decl_id()});
+      // An abstract function has no definition, so it doesn't need a thunk.
+      if (function.virtual_modifier ==
+          SemIR::Function::VirtualModifier::Abstract) {
+        continue;
+      }
       pending_virtual_functions.push_back(
           {.loc_id = SemIR::LocId(vtable_entry_id),
            .function_id = callee_function.function_id,
@@ -764,8 +574,8 @@ auto CarbonExternalASTSource::layoutRecordType(
   // general.
   CompleteTypeOrCheckFail(*context_, class_type_id);
 
-  auto& class_info = context_->classes().Get(class_type.class_id);
-  ExportAllFieldsToCpp(*context_, class_info);
+  ExportAllFieldsToCpp(*context_,
+                       context_->types().GetTypeInstId(class_type_id));
 
   return ReadOnlyASTSource::layoutRecordType(
       record_decl, size, alignment, field_offsets, base_offsets, vbase_offsets);
@@ -796,37 +606,276 @@ static auto ParseTopLevelDecls(clang::Parser& parser,
   }
 }
 
+// Generate a Clang module corresponding to the current Carbon file.
+static auto CreateModuleForCarbonFile(SemIR::CppDomain& domain,
+                                      const SemIR::File& file)
+    -> clang::Module* {
+  // TODO: Consider creating a parent module to hold all Carbon modules.
+  // Consider naming the module after the package and library rather than using
+  // the filename.
+  auto& module_map = domain.clang_instance()
+                         .getPreprocessor()
+                         .getHeaderSearchInfo()
+                         .getModuleMap();
+  auto* module =
+      module_map.createModule(file.filename(), /*Parent=*/nullptr,
+                              /*IsFramework=*/false, /*IsExplicit=*/true);
+  auto insert_result = domain.file_modules().Insert(file.check_ir_id(), module);
+  CARBON_CHECK(insert_result.is_inserted());
+  return module;
+}
+
+// Generates a Clang module corresponding to the given C++ header name. Note
+// that this is separate from Clang's header -> module mapping. Even if a C++
+// header is imported into Carbon, C++-side #includes of the same header are
+// still treated as textual inclusions.
+// Returns the module and a bool indicating whether it was newly created.
+static auto GetOrCreateModuleForHeader(SemIR::CppDomain& domain,
+                                       llvm::StringRef header_name)
+    -> std::pair<clang::Module*, bool> {
+  auto [it, added] = domain.header_modules().insert({header_name, nullptr});
+  if (!added) {
+    CARBON_CHECK(it->second);
+    return {it->second, false};
+  }
+
+  auto& module_map = domain.clang_instance()
+                         .getPreprocessor()
+                         .getHeaderSearchInfo()
+                         .getModuleMap();
+  it->second = module_map.createModule(header_name, /*Parent=*/nullptr,
+                                       /*IsFramework=*/false,
+                                       /*IsExplicit=*/true);
+  return {it->second, true};
+}
+
+// Parse the tokens that have been injected into the preprocessor in the given
+// context.
+static auto ParseInjectedTokens(CppContext& cpp_context) -> void {
+  clang::Sema& sema = cpp_context.sema();
+  clang::Parser& parser = cpp_context.parser();
+  CARBON_CHECK(parser.getCurToken().is(clang::tok::eof));
+  parser.ConsumeToken();
+  ParseTopLevelDecls(parser, sema.getASTConsumer());
+}
+
+// Injects the C++ code in `buffer` into the Clang preprocessor. Returns the
+// file ID of the injected buffer.
+static auto InjectBuffer(CppContext& cpp_context, llvm::StringRef contents,
+                         llvm::StringRef name, clang::SourceLocation import_loc)
+    -> clang::FileID {
+  auto buffer = llvm::MemoryBuffer::getMemBufferCopy(contents, name);
+
+  clang::Preprocessor& preprocessor = cpp_context.sema().getPreprocessor();
+  clang::FileID file_id =
+      preprocessor.getSourceManager().createFileID(std::move(buffer));
+  if (preprocessor.EnterSourceFile(file_id, nullptr, import_loc)) {
+    CARBON_FATAL("Failed to enter buffer");
+  }
+
+  return file_id;
+}
+
+// Instruct the Clang preprocessor and Sema to enter the scope of the given
+// module.
+static auto EnterModule(CppContext& cpp_context, clang::Module* mod,
+                        clang::SourceLocation loc) -> void {
+  auto& preprocessor = cpp_context.sema().getPreprocessor();
+  preprocessor.EnterSubmodule(mod, loc, /*ForPragma=*/false);
+  preprocessor.EnterAnnotationToken(loc, clang::tok::annot_module_begin, mod);
+  ParseInjectedTokens(cpp_context);
+}
+
+// Leave the current Clang module.
+static auto LeaveModule(CppContext& cpp_context, clang::SourceLocation loc)
+    -> void {
+  CARBON_CHECK(loc.isValid());
+
+  auto& preprocessor = cpp_context.sema().getPreprocessor();
+  auto* mod = preprocessor.LeaveSubmodule(/*ForPragma=*/false);
+  CARBON_CHECK(mod);
+
+  // We *should* only need to enter one annotation token, but Clang has some
+  // error recovery where Sema enters and never leaves an additional module if
+  // it sees a `module;` directive in the source. So recover from this by
+  // leaving modules until we find the preprocessor's module.
+  while (true) {
+    auto* sema_mod = cpp_context.sema().getCurrentModule();
+    CARBON_CHECK(sema_mod, "Sema prematurely exited Carbon module");
+
+    preprocessor.EnterAnnotationToken(loc, clang::tok::annot_module_end,
+                                      sema_mod);
+    ParseInjectedTokens(cpp_context);
+    if (sema_mod == mod) {
+      break;
+    }
+  }
+}
+
+// Imports the module `import_mod` into the current Clang state.
+static auto ImportModule(CppContext& cpp_context, clang::Module* import_mod,
+                         clang::SourceLocation loc) -> void {
+  CARBON_CHECK(import_mod);
+  cpp_context.sema().getModuleLoader().makeModuleVisible(
+      import_mod, clang::Module::AllVisible, loc);
+  cpp_context.sema().getPreprocessor().makeModuleVisible(import_mod, loc);
+  cpp_context.sema().makeModuleVisible(import_mod, loc);
+}
+
+// Imports the header specified by the given import declaration.
+static auto ImportHeader(Context& context, clang::Module* mod,
+                         const Parse::Tree::PackagingNames& import) -> void {
+  auto* cpp_context = context.cpp_context();
+  CARBON_CHECK(cpp_context);
+
+  clang::SourceLocation import_loc = GetCppLocation(context, import.node_id);
+
+  // Import the corresponding module.
+  auto name = context.string_literal_values().Get(import.library_id);
+  auto [header_mod, added] =
+      GetOrCreateModuleForHeader(cpp_context->domain(), name);
+
+  // Re-export the header.
+  // TODO: Only do this if the header is `export import`ed. For now we don't
+  // syntactically allow `export` on `import Cpp ...` declarations.
+  mod->Exports.push_back({header_mod, false});
+
+  // If this is the first time we've seen an import of this header, build
+  // the contents of its module now.
+  if (added) {
+    EnterModule(*cpp_context, header_mod, import_loc);
+
+    // The header module re-exports everything it imports.
+    header_mod->Exports.push_back({nullptr, true});
+
+    RawStringOstream code_stream;
+    GenerateLineMarker(context, code_stream,
+                       context.tokens().GetLineNumber(
+                           context.parse_tree().node_token(import.node_id)));
+    if (name.starts_with('<') && name.ends_with('>')) {
+      code_stream << "#include <"
+                  << FormatEscaped(name.drop_front().drop_back()) << ">\n";
+    } else {
+      code_stream << "#include \"" << FormatEscaped(name) << "\"\n";
+    }
+    InjectBuffer(*cpp_context, code_stream.TakeStr(), "<header import>",
+                 clang::SourceLocation());
+    ParseInjectedTokens(*cpp_context);
+
+    LeaveModule(*cpp_context, import_loc);
+  }
+
+  ImportModule(*cpp_context, header_mod, import_loc);
+}
+
+// Injects code to import the given set of headers into Clang and parses it as
+// top-level declarations.
+static auto ParseImports(Context& context,
+                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
+    -> void {
+  auto* cpp_context = context.cpp_context();
+  CARBON_CHECK(cpp_context);
+
+  auto& preprocessor = cpp_context->sema().getPreprocessor();
+  auto filename = context.sem_ir().filename();
+
+  // Enter the module for this file. Generate a placeholder empty buffer so we
+  // can provide a location for entering the module.
+  auto file_id =
+      InjectBuffer(*cpp_context, "", filename, clang::SourceLocation());
+  auto loc = preprocessor.getSourceManager().getLocForStartOfFile(file_id);
+  auto* mod =
+      CreateModuleForCarbonFile(cpp_context->domain(), context.sem_ir());
+  EnterModule(*cpp_context, mod, loc);
+
+  // Import the modules for all the imported IRs.
+  for (const auto& import_ir : context.import_irs().values()) {
+    if (!import_ir.sem_ir) {
+      continue;
+    }
+    if (auto lookup = cpp_context->domain().file_modules().Lookup(
+            import_ir.sem_ir->check_ir_id())) {
+      auto* import_mod = lookup.value();
+      ImportModule(*cpp_context, import_mod, loc);
+      if (import_ir.is_export) {
+        mod->Exports.push_back({import_mod, false});
+      } else {
+        mod->Imports.push_back(import_mod);
+      }
+    }
+  }
+
+  // For each imported C++ header, generate a module and include the header into
+  // that module. For imported inline code, parse the code directly.
+  for (const Parse::Tree::PackagingNames& import : imports) {
+    if (import.inline_body_id.has_value()) {
+      // `import Cpp inline "foo";` behaves the same as `inline Cpp "foo";`.
+      auto code_token = context.parse_tree().node_token(import.inline_body_id);
+      InjectAstFromInlineCode(
+          context, import.inline_body_id,
+          context.string_literal_values().Get(
+              context.tokens().GetStringLiteralValue(code_token)));
+    } else if (import.library_id.has_value()) {
+      ImportHeader(context, mod, import);
+    }
+  }
+}
+
 namespace {
 
 // An action and a set of registered Clang callbacks used to generate an AST
 // from a set of Cpp imports.
 class GenerateASTAction : public clang::ASTFrontendAction {
  public:
-  explicit GenerateASTAction(Context& context) : context_(&context) {}
+  explicit GenerateASTAction(llvm::ArrayRef<SemIR::CppInputFile> inputs,
+                             llvm::LLVMContext* llvm_context)
+      : inputs_(inputs), llvm_context_(llvm_context) {}
+
+  auto code_generators() const -> llvm::ArrayRef<clang::CodeGenerator*> {
+    return code_generators_;
+  }
+
+  auto TakeParser() -> std::unique_ptr<clang::Parser> {
+    return std::move(parser_);
+  }
 
  protected:
   auto CreateASTConsumer(clang::CompilerInstance& clang_instance,
                          llvm::StringRef /*file*/)
       -> std::unique_ptr<clang::ASTConsumer> override {
-    auto& cpp_file = *context_->sem_ir().cpp_file();
-    if (!cpp_file.llvm_context()) {
+    if (!llvm_context_) {
       return std::make_unique<clang::ASTConsumer>();
     }
-    auto code_generator =
-        std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-            cpp_file.diagnostics(), context_->sem_ir().filename(),
-            clang_instance.getVirtualFileSystemPtr(),
-            clang_instance.getHeaderSearchOpts(),
-            clang_instance.getPreprocessorOpts(),
-            clang_instance.getCodeGenOpts(), *cpp_file.llvm_context()));
-    cpp_file.SetCodeGenerator(code_generator.get());
-    return code_generator;
+    // Build a code generator for each object file we will be building. For now
+    // we assume that we want one object file per Carbon source file.
+    // TODO: Only build CodeGenerators for the files we're actually generating
+    // code for.
+    // TODO: Consider supporting generating code for multiple Carbon files into
+    // a single object file, for a faster `carbon build` mode.
+    std::vector<std::unique_ptr<clang::ASTConsumer>> consumers;
+    for (const auto& input : inputs_) {
+      if (!input.is_lowered) {
+        code_generators_.push_back(nullptr);
+        continue;
+      }
+      // TODO: Filter what goes into each code generator. If there are strong
+      // external C++ definitions in a Carbon file (for example, in inline C++
+      // code), they should be emitted only in that one file.
+      auto code_generator =
+          std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
+              clang_instance.getDiagnostics(), input.filename,
+              clang_instance.getVirtualFileSystemPtr(),
+              clang_instance.getHeaderSearchOpts(),
+              clang_instance.getPreprocessorOpts(),
+              clang_instance.getCodeGenOpts(), *llvm_context_));
+      code_generators_.push_back(code_generator.get());
+      consumers.push_back(std::move(code_generator));
+    }
+    return std::make_unique<clang::MultiplexConsumer>(std::move(consumers));
   }
 
   auto BeginSourceFileAction(clang::CompilerInstance& /*clang_instance*/)
       -> bool override {
-    // TODO: `clang.getPreprocessor().enableIncrementalProcessing();` to avoid
-    // the TU scope getting torn down before we're done parsing macros.
     return true;
   }
 
@@ -839,16 +888,13 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     clang_instance.createSema(getTranslationUnitKind(),
                               /*CompletionConsumer=*/nullptr);
 
-    auto parser_ptr = std::make_unique<clang::Parser>(
-        clang_instance.getPreprocessor(), clang_instance.getSema(),
-        /*SkipFunctionBodies=*/false);
-    auto& parser = *parser_ptr;
+    parser_ = std::make_unique<clang::Parser>(clang_instance.getPreprocessor(),
+                                              clang_instance.getSema(),
+                                              /*SkipFunctionBodies=*/false);
 
+    clang_instance.getPreprocessor().enableIncrementalProcessing();
     clang_instance.getPreprocessor().EnterMainSourceFile();
-    parser.Initialize();
-
-    context_->set_cpp_context(
-        std::make_unique<CppContext>(clang_instance, std::move(parser_ptr)));
+    parser_->Initialize();
 
     if (auto* source = clang_instance.getASTContext().getExternalSource()) {
       source->StartTranslationUnit(&clang_instance.getASTConsumer());
@@ -856,24 +902,31 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 
     clang_instance.getSema().ActOnStartOfTranslationUnit();
 
-    ParseTopLevelDecls(parser, clang_instance.getASTConsumer());
+    ParseTopLevelDecls(*parser_, clang_instance.getASTConsumer());
   }
 
  private:
-  Context* context_;
+  llvm::ArrayRef<SemIR::CppInputFile> inputs_;
+  llvm::LLVMContext* llvm_context_;
+  llvm::SmallVector<clang::CodeGenerator*> code_generators_;
+  std::unique_ptr<clang::Parser> parser_;
 };
 
 }  // namespace
 
-auto GenerateAst(Context& context,
-                 llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                 llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                 llvm::LLVMContext* llvm_context,
-                 std::shared_ptr<clang::CompilerInvocation> base_invocation)
-    -> bool {
-  CARBON_CHECK(!context.cpp_context());
-  CARBON_CHECK(!context.sem_ir().cpp_file());
+// Initializes the Clang state by building a new compiler invocation,
+// creating a diagnostics engine, and parsing a dummy main file containing a
+// semicolon. Returns the initialized state, or null on failure.
+auto InitializeCppDomain(
+    Diagnostics::Consumer& consumer, llvm::ArrayRef<SemIR::CppInputFile> inputs,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::LLVMContext* llvm_context,
+    std::shared_ptr<clang::CompilerInvocation> base_invocation)
+    -> std::unique_ptr<SemIR::CppDomain> {
+  std::shared_ptr<clang::CompilerInstance> clang_instance;
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags;
 
+  // Build a new invocation.
   auto invocation =
       std::make_shared<ShallowCopyCompilerInvocation>(*base_invocation);
 
@@ -881,60 +934,55 @@ auto GenerateAst(Context& context,
   invocation->getFrontendOpts().DisableFree = false;
 
   // Build a diagnostics engine.
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(
-      clang::CompilerInstance::createDiagnostics(
-          *fs, invocation->getDiagnosticOpts(),
-          new CarbonClangDiagnosticConsumer(context, invocation),
-          /*ShouldOwnClient=*/true));
+  diags = clang::CompilerInstance::createDiagnostics(
+      *fs, invocation->getDiagnosticOpts(),
+      MakeDiagnosticConsumer(consumer, invocation).release(),
+      /*ShouldOwnClient=*/true);
+
+  // Ensure any diagnostics emitted in this function are flushed before we
+  // return.
+  auto on_exit =
+      llvm::scope_exit([&]() { FlushDiagnosticConsumer(*diags->getClient()); });
 
   // Extract the input from the frontend invocation and make sure it makes
   // sense.
-  const auto& inputs = invocation->getFrontendOpts().Inputs;
-  CARBON_CHECK(inputs.size() == 1 &&
-               inputs[0].getKind().getLanguage() == clang::Language::CXX &&
-               inputs[0].getKind().getFormat() == clang::InputKind::Source);
-  llvm::StringRef file_name = inputs[0].getFile();
+  const auto& clang_inputs = invocation->getFrontendOpts().Inputs;
+  CARBON_CHECK(clang_inputs.size() == 1);
+  CARBON_CHECK(clang_inputs[0].getKind().getLanguage() == clang::Language::CXX);
+  CARBON_CHECK(clang_inputs[0].getKind().getFormat() ==
+               clang::InputKind::Source);
+  llvm::StringRef file_name = clang_inputs[0].getFile();
 
-  // Remap the imports file name to the corresponding `#include`s.
-  // TODO: Modify the frontend options to specify this memory buffer as input
-  // instead of remapping the file.
-  std::string includes = GenerateCppIncludesHeaderCode(context, imports);
-  auto includes_buffer =
-      llvm::MemoryBuffer::getMemBufferCopy(includes, file_name);
+  // Remap the input file to a dummy buffer containing a semicolon to start
+  // with an empty AST. Clang requires at least one token in the main file
+  // to avoid assertion failures if it later encounters module declarations.
+  // TODO: See if we can fix this by injecting code into the main file rather
+  // than entering nested buffers.
+  auto empty_buffer = llvm::MemoryBuffer::getMemBuffer(";");
   invocation->getPreprocessorOpts().addRemappedFile(file_name,
-                                                    includes_buffer.release());
+                                                    empty_buffer.release());
 
-  auto clang_instance_ptr =
-      std::make_unique<clang::CompilerInstance>(invocation);
-  auto& clang_instance = *clang_instance_ptr;
-  context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
-      std::move(clang_instance_ptr), llvm_context));
+  clang_instance = std::make_shared<clang::CompilerInstance>(invocation);
 
-  // Register an annotation scope to flush any Clang diagnostics when we return.
-  // This ensures C++ diagnostics get flushed before `diags` is destroyed, and
-  // that diagnostics created here don't interleave with later Carbon
-  // diagnostics.
-  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
-                                                    [](auto& /*builder*/) {});
-
-  clang_instance.setDiagnostics(diags);
-  clang_instance.setVirtualFileSystem(fs);
-  clang_instance.createFileManager();
-  clang_instance.createSourceManager();
-  if (!clang_instance.createTarget()) {
-    return false;
+  clang_instance->setDiagnostics(diags);
+  clang_instance->setVirtualFileSystem(fs);
+  clang_instance->createFileManager();
+  clang_instance->createSourceManager();
+  if (!clang_instance->createTarget()) {
+    return nullptr;
   }
 
-  GenerateASTAction action(context);
-  if (!action.BeginSourceFile(clang_instance, inputs[0])) {
-    return false;
+  GenerateASTAction action(inputs, llvm_context);
+  if (!action.BeginSourceFile(*clang_instance, clang_inputs[0])) {
+    return nullptr;
   }
 
-  // The AST context is now available, so the mangle context (used to compute
-  // stable identities for imported C++ types) can be created.
-  context.sem_ir().cpp_file()->CreateMangleContext();
+  auto& ast = clang_instance->getASTContext();
 
-  auto& ast = clang_instance.getASTContext();
+  // Create an AST reader before we set up our own source. Clang does this
+  // automatically later if we don't do it now, and will overwrite our external
+  // source with its own when it does so.
+  clang_instance->createASTReader();
 
   // Always build a multiplex source, even if there's only one child
   // source. During lowering, the `CarbonExternalASTSource` can no longer be
@@ -952,17 +1000,63 @@ auto GenerateAst(Context& context,
           ast.getExternalSource())) {
     multiplex_source->AddSource(existing_source);
   }
-  multiplex_source->AddSource(
-      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context));
   ast.setExternalSource(std::move(multiplex_source_ref_cnt_ptr));
 
   if (llvm::Error error = action.Execute()) {
     // `Execute` currently never fails, but its contract allows it to.
-    context.TODO(SemIR::LocId::None, "failed to execute clang action: " +
-                                         llvm::toString(std::move(error)));
-    return false;
+    CARBON_FATAL("Failed to execute clang action: {0}",
+                 llvm::toString(std::move(error)));
   }
 
+  auto parser = action.TakeParser();
+  CARBON_CHECK(parser);
+
+  CARBON_CHECK(action.code_generators().size() == inputs.size());
+  return std::make_unique<SemIR::CppDomain>(
+      std::move(clang_instance), std::move(parser), inputs,
+      action.code_generators(), llvm_context);
+}
+
+auto GenerateAst(Context& context,
+                 llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
+                 SemIR::CppDomain& domain) -> bool {
+  CARBON_CHECK(!context.cpp_context());
+  CARBON_CHECK(!context.sem_ir().cpp_file());
+
+  // Register an annotation scope to flush any Clang diagnostics when we
+  // return. This ensures C++ diagnostics get flushed before `diags` is
+  // destroyed, and that diagnostics created here don't interleave with later
+  // Carbon diagnostics.
+  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                    [](auto& /*builder*/) {});
+
+  auto clang_instance = domain.clang_instance_ptr();
+
+  auto mangle_context = std::unique_ptr<clang::MangleContext>(
+      clang_instance->getASTContext().createMangleContext());
+
+  // Set up CppFile for the current SemIR::File.
+  context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
+      clang_instance, std::move(mangle_context), domain.llvm_context(),
+      domain.GetCodeGenerator(context.sem_ir().check_ir_id()), &domain));
+
+  // Set up CppContext for the current Context.
+  context.set_cpp_context(std::make_unique<CppContext>(
+      domain, MakeContextDiagnosticListener(
+                  *clang_instance->getDiagnostics().getClient(), context)));
+
+  // Add an external source referring to this context.
+  auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
+      context.ast_context().getExternalSource());
+  auto ast_source =
+      llvm::makeIntrusiveRefCnt<CarbonExternalASTSource>(&context);
+  multiplex_source->AddSource(ast_source);
+
+  // Map the package scope to the Carbon namespace.
+  ast_source->BuildCarbonNamespace();
+
+  // Parse the imports-as-#includes buffer.
+  ParseImports(context, imports);
   return true;
 }
 
@@ -971,33 +1065,16 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
   auto* cpp_context = context.cpp_context();
   CARBON_CHECK(cpp_context);
 
-  clang::Sema& sema = cpp_context->sema();
-  clang::Preprocessor& preprocessor = sema.getPreprocessor();
-  clang::Parser& parser = cpp_context->parser();
-
   RawStringOstream code_stream;
   AppendInlineCode(context, code_stream,
                    context.parse_tree().node_token(loc_id.node_id()),
                    source_code);
 
-  auto buffer = llvm::MemoryBuffer::getMemBufferCopy(code_stream.TakeStr(),
-                                                     "<inline c++>");
-  clang::FileID file_id =
-      preprocessor.getSourceManager().createFileID(std::move(buffer));
-
-  if (preprocessor.EnterSourceFile(file_id, nullptr, clang::SourceLocation())) {
-    // Clang will have generated a suitable error. There's nothing more to do
-    // here.
-    return;
-  }
-
-  // The parser will typically have an EOF as its cached current token; consume
-  // that so we can reach the newly-injected tokens.
-  if (parser.getCurToken().is(clang::tok::eof)) {
-    parser.ConsumeToken();
-  }
-
-  ParseTopLevelDecls(parser, sema.getASTConsumer());
+  // Clang will have generated a suitable error if this fails. There's nothing
+  // more to do here.
+  InjectBuffer(*cpp_context, code_stream.TakeStr(), "<inline c++>",
+               GetCppLocation(context, loc_id));
+  ParseInjectedTokens(*cpp_context);
 }
 
 auto FinishAst(Context& context) -> void {
@@ -1005,7 +1082,27 @@ auto FinishAst(Context& context) -> void {
     return;
   }
 
-  context.cpp_context()->sema().ActOnEndOfTranslationUnit();
+  // Leave the module we entered to encapsulate the contents of this Carbon
+  // file.
+  auto end_loc_id =
+      SemIR::LocId(*(context.sem_ir().parse_tree().postorder().end() - 1));
+  // Shuffle the end of file location back by one character to work around a
+  // Clang bug: if we give Clang the end-of-file location, it will replace the
+  // location with the include location without checking whether the file was
+  // actually included, and then crash because it picked an invalid location!
+  // There is always at least one token in a file with a `Cpp` import, so this
+  // location adjustment is safe.
+  LeaveModule(*context.cpp_context(),
+              GetCppLocation(context, end_loc_id).getLocWithOffset(-1));
+
+  // Finalize the per-Context AST fragment. The final ActOnEndOfTranslationUnit
+  // call for the CppDomain is performed in FinalizeCppDomain once all files
+  // sharing the domain have been checked.
+  context.cpp_context()->sema().ActOnEndOfTranslationUnitFragment(
+      clang::TUFragmentKind::Normal);
+  FlushDiagnosticConsumer(
+      *context.cpp_context()->sema().getDiagnostics().getClient());
+  context.emitter().Flush();
 
   // Remove the `CarbonExternalASTSource` installed in `GenerateAst` and
   // replace it with a `ReadOnlyASTSource`. This is necessary because
@@ -1015,16 +1112,21 @@ auto FinishAst(Context& context) -> void {
   auto* multiplex_source = cast<clang::MultiplexExternalSemaSource>(
       context.ast_context().getExternalSource());
   multiplex_source->EraseIf([](const auto& src) {
-    // `CarbonExternalASTSource` inherits from `ReadOnlyASTSource`.
-    return llvm::isa<SemIR::ReadOnlyASTSource>(src.get());
+    return llvm::isa<CarbonExternalASTSource>(src.get());
   });
   multiplex_source->AddSource(
       llvm::makeIntrusiveRefCnt<SemIR::ReadOnlyASTSource>(context.sem_ir()));
 
   // We don't call FrontendAction::EndSourceFile, because that destroys the AST.
   context.set_cpp_context(nullptr);
+}
 
-  context.emitter().Flush();
+auto FinalizeCppDomain(SemIR::CppDomain& domain) -> void {
+  if (domain.clang_instance_ptr()) {
+    domain.clang_instance().getSema().ActOnEndOfTranslationUnit();
+    FlushDiagnosticConsumer(
+        *domain.clang_instance().getDiagnostics().getClient());
+  }
 }
 
 }  // namespace Carbon::Check

@@ -184,8 +184,8 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %struct.A = type <{ %struct.Base, i32, [4 x i8] }>
-// CHECK:STDOUT: %struct.Base = type { ptr }
+// CHECK:STDOUT: %struct.A.18 = type <{ %struct.Base.19, i32, [4 x i8] }>
+// CHECK:STDOUT: %struct.Base.19 = type { ptr }
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN1A6by_refEv = comdat any
 // CHECK:STDOUT:
@@ -211,7 +211,7 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   %n = getelementptr inbounds nuw %struct.A, ptr %this1, i32 0, i32 1
+// CHECK:STDOUT:   %n = getelementptr inbounds nuw %struct.A.18, ptr %this1, i32 0, i32 1
 // CHECK:STDOUT:   %0 = load i32, ptr %n, align 8, !tbaa !24
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }

@@ -15,12 +15,11 @@
 namespace Foo.;
 
 // CHECK:STDOUT: - filename: fail_incomplete_name.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameQualifierWithoutParams', text: '.', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Namespace', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'Foo'
+// CHECK:STDOUT:   │ ├─IdentifierNameQualifierWithoutParams '.'
+// CHECK:STDOUT:   │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   ├─Namespace ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

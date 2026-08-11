@@ -16,47 +16,48 @@ interface Order {
 }
 
 // CHECK:STDOUT: - filename: final_fn.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Order'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Less'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'SelfValueName', text: 'self'},
-// CHECK:STDOUT:           {kind: 'SelfBindingPattern', text: 'self', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'right'},
-// CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 8},
-// CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 13},
-// CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'FinalModifier', text: 'final'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Greater'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'SelfValueName', text: 'self'},
-// CHECK:STDOUT:             {kind: 'SelfBindingPattern', text: 'self', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'right'},
-// CHECK:STDOUT:               {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 8},
-// CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:           {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 14},
-// CHECK:STDOUT:           {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'right'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'Less'},
-// CHECK:STDOUT:               {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'CallExprStart', text: '(', subtree_size: 4},
-// CHECK:STDOUT:             {kind: 'SelfValueNameExpr', text: 'self'},
-// CHECK:STDOUT:           {kind: 'CallExpr', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'ReturnStatement', text: ';', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 23},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 40},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Order'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'Less'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ │ ╭─SelfValueName 'self'
+// CHECK:STDOUT:   │ │ │ ├─SelfBindingPattern 'self'
+// CHECK:STDOUT:   │ │ │ ├─PatternListComma ','
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'right'
+// CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ │ ╭─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ │ ├─ReturnType '->'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │   ├─FinalModifier 'final'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameMaybeBeforeSignature 'Greater'
+// CHECK:STDOUT:   │ │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │   │ │ ╭─SelfValueName 'self'
+// CHECK:STDOUT:   │ │   │ ├─SelfBindingPattern 'self'
+// CHECK:STDOUT:   │ │   │ ├─PatternListComma ','
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature 'right'
+// CHECK:STDOUT:   │ │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ │ ├─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │   │ ╭─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │ │     ╭─IdentifierNameExpr 'right'
+// CHECK:STDOUT:   │ │ │ │     ├─IdentifierNameNotBeforeSignature 'Less'
+// CHECK:STDOUT:   │ │ │ │   ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │ │ │ ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │ │ │ ├─SelfValueNameExpr 'self'
+// CHECK:STDOUT:   │ │ │ ├─CallExpr ')'
+// CHECK:STDOUT:   │ │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   │ ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

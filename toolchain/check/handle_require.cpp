@@ -211,21 +211,22 @@ static auto ValidateRequire(Context& context, SemIR::LocId full_require_loc_id,
   if (auto named_constraint =
           context.insts().TryGetAs<SemIR::NamedConstraintWithSelfDecl>(
               scope_inst_id)) {
-    const auto& constraint_facet_type_info =
-        context.facet_types().Get(constraint_facet_type->facet_type_id);
+    const auto& constraint_declared_facet_type =
+        context.declared_facet_types().Get(
+            constraint_facet_type->declared_facet_type_id);
     // TODO: Handle other impls named constraints for the
     // RequireImplsReferenceCycle diagnostic.
-    if (constraint_facet_type_info.other_requirements) {
+    if (constraint_declared_facet_type.other_requirements) {
       context.TODO(constraint_loc_id,
                    "facet type has constraints that we don't handle yet");
       return std::nullopt;
     }
     auto named_constraints_from_type_impls = llvm::map_range(
-        constraint_facet_type_info.type_impls_named_constraints,
+        constraint_declared_facet_type.type_impls_named_constraints,
         [](auto impls) { return impls.specific_named_constraint; });
     auto named_constraints = llvm::concat<const SemIR::SpecificNamedConstraint>(
-        constraint_facet_type_info.extend_named_constraints,
-        constraint_facet_type_info.self_impls_named_constraints,
+        constraint_declared_facet_type.extend_named_constraints,
+        constraint_declared_facet_type.self_impls_named_constraints,
         named_constraints_from_type_impls);
     for (auto c : named_constraints) {
       if (c.named_constraint_id == named_constraint->named_constraint_id) {

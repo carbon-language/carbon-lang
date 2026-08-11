@@ -4,7 +4,6 @@
 
 """Provides rules for building Carbon files using the toolchain."""
 
-load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
@@ -52,7 +51,7 @@ def _carbon_binary_impl(ctx):
         if CarbonLibraryInfo in dep:
             carbon_info = dep[CarbonLibraryInfo]
             dep_link_inputs += carbon_info.objs.to_list()
-            dep_api_files.append(carbon_info.api)
+            dep_api_files += carbon_info.apis
 
     # Add the dependencies' link flags and inputs to the link flags.
     link_flags += [dep.path for dep in dep_link_inputs]
@@ -133,9 +132,9 @@ def _carbon_binary_impl(ctx):
     return [DefaultInfo(files = depset([bin]), executable = bin)]
 
 CarbonLibraryInfo = provider(
-    doc = "Contains information about a compiled Carbon library.",
+    doc = "Contains information about a linkage unit of one or more compiled Carbon libraries.",
     fields = {
-        "api": "The api source file to provide to library consumers.",
+        "apis": "The api source files to provide to library consumers.",
         "objs": "A depset of one or more compiled library files, including impl and api.",
     },
 )
@@ -167,10 +166,10 @@ def _carbon_library_impl(ctx):
             dep_hdrs.append(cc_info.compilation_context.headers)
         if CarbonLibraryInfo in dep:
             carbon_info = dep[CarbonLibraryInfo]
-            dep_api_srcs.append(carbon_info.api)
+            dep_api_srcs += carbon_info.apis.to_list()
 
     # Build object files for the library impls and api file
-    srcs_and_flags = [(ctx.files.impls + ctx.files.api, dep_flags)]
+    srcs_and_flags = [(ctx.files.srcs + ctx.files.hdrs, dep_flags)]
 
     objs = []
     for (srcs, extra_flags) in srcs_and_flags:
@@ -204,43 +203,7 @@ def _carbon_library_impl(ctx):
                 progress_message = "Compiling " + src.short_path,
             )
 
-    return [CarbonLibraryInfo(api = ctx.files.api[0], objs = depset(objs))]
-
-def _carbon_prelude_impl(ctx):
-    cc_toolchain = find_cpp_toolchain(ctx)
-
-    # TODO: find a less terrible way to figure this out
-    repo_root = str(cc_toolchain.compiler_executable)
-    repo_root = repo_root.removeprefix(cc_toolchain._crosstool_top_path + "/")
-
-    # The tool path seems to be relative to the toolchain _repository_ root, so
-    # it includes the `toolchain/install` suffix, which is why we remove it here.
-    repo_root = repo_root.removesuffix("toolchain/install/llvm/bin/clang++")
-
-    carbon_busybox = repo_root + cc_toolchain._tool_paths["carbon-busybox"]
-
-    srcs = [s for s in ctx.files.srcs if s.extension == "carbon"]
-    objs = []
-    for src in srcs:
-        out = ctx.actions.declare_file("_objs/{0}/{1}o".format(
-            ctx.label.name,
-            src.short_path.removeprefix(ctx.label.package).removesuffix(src.extension),
-        ))
-        objs.append(out)
-        srcs_reordered = [s for s in srcs if s != src] + [src]
-        ctx.actions.run(
-            outputs = [out],
-            inputs = depset(direct = srcs_reordered),
-            tools = depset(transitive = [cc_toolchain.all_files]),
-            executable = carbon_busybox,
-            arguments = ["compile", "--output=" + out.path, "--output-last-input-only"] +
-                        ["--no-prelude-import"] +
-                        [s.path for s in srcs_reordered] + ctx.attr.flags,
-            mnemonic = "CarbonPrelude",
-            progress_message = "Precompiling prelude file " + src.short_path,
-        )
-
-    return DefaultInfo(files = depset(objs))
+    return [CarbonLibraryInfo(apis = ctx.files.hdrs, objs = depset(objs))]
 
 # We synthesize two sets of attributes from mirrored `select`s here
 # because we want to select on an internal property of these attributes
@@ -327,10 +290,9 @@ _carbon_binary_internal = rule(
 _carbon_library_internal = rule(
     implementation = _carbon_library_impl,
     attrs = {
-        "api": attr.label(allow_single_file = True),
         "deps": attr.label_list(allow_files = True),
         "flags": attr.string_list(),
-        "impls": attr.label_list(allow_files = [".carbon"]),
+        "hdrs": attr.label_list(allow_files = [".carbon"]),
 
         # The exec config toolchain attributes. These will be `None` when using
         # the target config and populated when using the exec config. We have to
@@ -365,22 +327,10 @@ _carbon_library_internal = rule(
             executable = True,
             cfg = "target",
         ),
+        "srcs": attr.label_list(allow_files = [".carbon"]),
         "_cc_toolchain": attr.label(default = "//toolchain/install:carbon_stage1_cc_toolchain"),
     },
     executable = False,
-    fragments = ["cpp"],
-)
-
-carbon_prelude = rule(
-    implementation = _carbon_prelude_impl,
-    attrs = {
-        "flags": attr.string_list(),
-        "srcs": attr.label_list(allow_files = [".carbon"]),
-        "_cc_toolchain": attr.label(
-            default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
-        ),
-    },
-    toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
     fragments = ["cpp"],
 )
 
@@ -408,13 +358,21 @@ def carbon_binary(name, srcs, deps = [], flags = [], tags = []):
         internal_target_prebuilt_runtimes = _select_internal_target_prebuilt_runtimes,
     )
 
-def carbon_library(name, api, impls = [], deps = [], flags = [], tags = [], visibility = []):
+def carbon_library(name, hdrs = [], srcs = [], deps = [], flags = [], tags = [], visibility = []):
     """Compiles a Carbon library.
+
+    Note: This carbon_library is designed as a _linkage_unit_, and does not necessarily
+    have to correlate the Carbon language library concept. As such it is designed to
+    accommodate more than one api file.
+
+    The arguments `hdrs` and `srcs` are kept for reasons of convention and compatibility
+    with C++ toolchains, particularly build aspects that folks might want to reuse on
+    mixed projects.
 
     Args:
       name: The name of the build target.
-      api: Name of a single api file.
-      impls: List of zero or more implementation files.
+      hdrs: List of one or more api files.
+      srcs: List of zero or more implementation files.
       deps: List of dependencies.
       flags: Extra flags to pass to the Carbon compile command.
       tags: Tags to apply to the rule.
@@ -422,8 +380,8 @@ def carbon_library(name, api, impls = [], deps = [], flags = [], tags = [], visi
     """
     _carbon_library_internal(
         name = name,
-        api = api,
-        impls = impls,
+        hdrs = hdrs,
+        srcs = srcs,
         deps = deps,
         flags = flags,
         tags = tags,

@@ -274,7 +274,7 @@ fn G() {
 // CHECK:STDOUT: declare void @_CCallC.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #4 !dbg !19 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #4 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.68011419f123494e:core.Destroy.Core"(ptr %self), !dbg !25
 // CHECK:STDOUT:   ret void, !dbg !25
@@ -307,7 +307,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.B.Main"(ptr %self) #4 !dbg !45 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.B.Main"(ptr %self) #4 !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.6c3865e9cbd9f6de:core.Destroy.Core"(ptr %self), !dbg !48
 // CHECK:STDOUT:   ret void, !dbg !48
@@ -334,7 +334,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.C.Main"(ptr %self) #4 !dbg !61 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.C.Main"(ptr %self) #4 !dbg !61 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %self), !dbg !64
 // CHECK:STDOUT:   ret void, !dbg !64
@@ -458,7 +458,7 @@ fn G() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.Carbon::C" = type { i32, i32 }
+// CHECK:STDOUT: %"class.Carbon::C.0" = type { i32, i32 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: @C.val.loc19_3 = internal constant { i32, i32 } zeroinitializer
 // CHECK:STDOUT:
@@ -468,16 +468,16 @@ fn G() {
 // CHECK:STDOUT:   %c.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %c, ptr %c.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   %0 = load ptr, ptr %c.addr, align 8, !tbaa !12, !nonnull !15, !align !16
-// CHECK:STDOUT:   %a = getelementptr inbounds nuw %"class.Carbon::C", ptr %0, i32 0, i32 0
+// CHECK:STDOUT:   %a = getelementptr inbounds nuw %"class.Carbon::C.0", ptr %0, i32 0, i32 0
 // CHECK:STDOUT:   store i32 12, ptr %a, align 4, !tbaa !17
 // CHECK:STDOUT:   %1 = load ptr, ptr %c.addr, align 8, !tbaa !12, !nonnull !15, !align !16
-// CHECK:STDOUT:   %b = getelementptr inbounds nuw %"class.Carbon::C", ptr %1, i32 0, i32 1
+// CHECK:STDOUT:   %b = getelementptr inbounds nuw %"class.Carbon::C.0", ptr %1, i32 0, i32 1
 // CHECK:STDOUT:   store i32 34, ptr %b, align 4, !tbaa !19
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.C.Main"(ptr %self) #1 !dbg !20 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.C.Main"(ptr %self) #1 !dbg !20 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %self), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !26

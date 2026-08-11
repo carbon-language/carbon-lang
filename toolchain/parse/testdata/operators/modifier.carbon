@@ -54,51 +54,49 @@ fn G() {
 }
 
 // CHECK:STDOUT: - filename: valid.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:           {kind: 'UnsafeModifier', text: 'unsafe', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:         {kind: 'InfixOperatorAs', text: 'as', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │   ╭─UnsafeModifier 'unsafe'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorAs 'as'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_invalid.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'G'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:           {kind: 'ShortCircuitOperandOr', text: 'or', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:         {kind: 'ShortCircuitOperatorOr', text: 'or', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:         {kind: 'InfixOperatorStar', text: '*', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: 'unsafe', has_error: yes},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:               {kind: 'InfixOperatorPlus', text: '+', subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'UnsafeModifier', text: 'unsafe', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:           {kind: 'InfixOperatorAs', text: 'as', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'd'},
-// CHECK:STDOUT:         {kind: 'InfixOperatorStar', text: '*', has_error: yes, subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 28},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'G'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │   ╭─ShortCircuitOperandOr 'or' has_error
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ ╭─ShortCircuitOperatorOr 'or' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorStar '*' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
+// CHECK:STDOUT:   │ │ ╭─InvalidParse 'unsafe' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
+// CHECK:STDOUT:   │ │         ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │         ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │       ╭─InfixOperatorPlus '+'
+// CHECK:STDOUT:   │ │     ╭─UnsafeModifier 'unsafe' has_error
+// CHECK:STDOUT:   │ │     ├─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ │   ╭─InfixOperatorAs 'as' has_error
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'd'
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorStar '*' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

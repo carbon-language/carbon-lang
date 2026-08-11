@@ -72,6 +72,7 @@ export default function (hljs) {
       'then',
       'type',
       '_',
+      'unused',
       'var',
       'virtual',
       'where',

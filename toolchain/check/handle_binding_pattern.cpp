@@ -135,16 +135,80 @@ struct BindingPatternTypeInfo {
 };
 }  // namespace
 
+static auto FindInvalidWhere(Context& context, SemIR::InstId first_inst_id)
+    -> SemIR::LocId {
+  llvm::SmallVector<SemIR::InstId> work = {first_inst_id};
+
+  while (!work.empty()) {
+    auto next_id = work.pop_back_val();
+    if (auto where = context.insts().TryGetAs<SemIR::WhereExpr>(next_id)) {
+      // Harder case. We have a `where` but need to look for an invalid `where`
+      // on the LHS of it.
+      for (auto req_id : context.inst_blocks().Get(where->requirements_id)) {
+        if (auto base =
+                context.insts().TryGetAs<SemIR::RequirementBaseFacetType>(
+                    req_id)) {
+          work.push_back(base->base_type_inst_id);
+        }
+      }
+      continue;
+    }
+
+    auto const_next_id = context.constant_values().Get(next_id);
+    if (!const_next_id.is_constant()) {
+      continue;
+    }
+
+    // Other facet types can be formed through evaluation. Having a `where` is
+    // fine, but we have to look for an invalid `where` in specific arguments on
+    // the LHS of it.
+    if (auto facet_type =
+            context.constant_values().TryGetInstAs<SemIR::FacetType>(
+                const_next_id)) {
+      const auto& decl_facet_type = context.declared_facet_types().Get(
+          facet_type->declared_facet_type_id);
+      for (auto extend : decl_facet_type.extend_constraints) {
+        for (auto arg_id : context.inst_blocks().Get(
+                 context.specifics().GetArgsOrEmpty(extend.specific_id))) {
+          if (FindWhere(context, context.constant_values().Get(arg_id))) {
+            return SemIR::LocId(next_id);
+          }
+        }
+      }
+      for (auto extend : decl_facet_type.extend_named_constraints) {
+        for (auto arg_id : context.inst_blocks().Get(
+                 context.specifics().GetArgsOrEmpty(extend.specific_id))) {
+          if (FindWhere(context, context.constant_values().Get(arg_id))) {
+            return SemIR::LocId(next_id);
+          }
+        }
+      }
+      continue;
+    }
+
+    // Simpler case. The top level expression is not a facet type so any `where`
+    // inside it would come from a specific argument, and is invalid.
+    if (FindWhere(context, const_next_id)) {
+      return SemIR::LocId(next_id);
+    }
+  }
+  return SemIR::LocId::None;
+}
+
+// Either the node kind of the pattern type's start node, or the type of Self
+// for a `self` binding with an omitted type.
+using TypeStartOrSelfType = std::variant<Parse::NodeKind, SemIR::InstId>;
+
 // Handle the type position of a binding pattern. For a `self` binding with an
 // omitted type, `self_type_inst_id` is the synthesized `Self` type expression
 // and there is no type expression on the node stack to pop.
-static auto HandleAnyBindingPatternType(Context& context,
-                                        Parse::NodeId binding_node_id,
-                                        Parse::NodeKind node_kind,
-                                        SemIR::InstId self_type_inst_id)
+static auto HandleAnyBindingPatternType(
+    Context& context, Parse::NodeId binding_node_id, Parse::NodeKind node_kind,
+    TypeStartOrSelfType type_start_or_self_type, bool is_generic)
     -> BindingPatternTypeInfo {
-  if (self_type_inst_id.has_value()) {
-    auto as_type = ExprAsType(context, binding_node_id, self_type_inst_id);
+  if (auto* self_type_inst_id =
+          std::get_if<SemIR::InstId>(&type_start_or_self_type)) {
+    auto as_type = ExprAsType(context, binding_node_id, *self_type_inst_id);
     return {.node_id = binding_node_id,
             .inst_id = as_type.inst_id,
             .type_component_id = as_type.type_id};
@@ -152,22 +216,60 @@ static auto HandleAnyBindingPatternType(Context& context,
 
   auto [node_id, original_inst_id] = context.node_stack().PopExprWithNodeId();
 
-  // We are leaving the scope of the `.Self`; they should no longer be frozen in
-  // the binding's type.
-  auto thawed_inst_id = ThawPeriodSelf(context, original_inst_id);
-  if (thawed_inst_id != original_inst_id) {
-    // If ThawPeriodSelf changed the instruction, it means there is a `.Self`
-    // reference in the type. Diagnose if the type is not a facet type.
-    auto const_inst_id =
-        context.constant_values().GetConstantInstId(original_inst_id);
-    if (!context.insts().Is<SemIR::FacetType>(const_inst_id) &&
-        const_inst_id != SemIR::ErrorInst::InstId) {
-      CARBON_DIAGNOSTIC(PeriodSelfInNonFacetType, Error,
-                        "`.Self` used in a type that is not a facet type");
-      context.emitter().Emit(node_id, PeriodSelfInNonFacetType);
+  if (is_generic) {
+    // We are leaving the scope of the `.Self`; they should no longer be frozen
+    // in the binding's type.
+    auto thawed_inst_id = ThawPeriodSelf(context, original_inst_id);
+    if (thawed_inst_id != original_inst_id) {
+      // If ThawPeriodSelf changed the instruction, it means there is a `.Self`
+      // reference in the type. Diagnose if the type is not a facet type.
+      auto const_inst_id =
+          context.constant_values().GetConstantInstId(original_inst_id);
+      if (!context.insts().Is<SemIR::FacetType>(const_inst_id) &&
+          const_inst_id != SemIR::ErrorInst::InstId) {
+        CARBON_DIAGNOSTIC(PeriodSelfInNonFacetType, Error,
+                          "`.Self` used in a type that is not a facet type");
+        context.emitter().Emit(node_id, PeriodSelfInNonFacetType);
+        original_inst_id = SemIR::ErrorInst::InstId;
+      } else {
+        original_inst_id = thawed_inst_id;
+      }
+    }
+  }
+
+  // Determine how many `where` expressions are present in the binding's type.
+  auto before_where_count = 0;
+  switch (std::get<Parse::NodeKind>(type_start_or_self_type)) {
+    case Parse::NodeKind::BindingPatternTypeStart:
+      before_where_count = context.node_stack()
+                               .Pop<Parse::NodeKind::BindingPatternTypeStart>()
+                               .index;
+      break;
+    case Parse::NodeKind::CompileTimeBindingPatternTypeStart:
+      before_where_count =
+          context.node_stack()
+              .Pop<Parse::NodeKind::CompileTimeBindingPatternTypeStart>()
+              .index;
+      break;
+    default:
+      CARBON_FATAL("unexpected node kind {0}",
+                   std::get<Parse::NodeKind>(type_start_or_self_type));
+  }
+  auto where_count = context.binding_type_where_count() - before_where_count;
+  if (where_count > 0) {
+    if (auto where_loc_id = FindInvalidWhere(context, original_inst_id);
+        where_loc_id.has_value()) {
+      if (context.constant_values().Get(original_inst_id) !=
+          SemIR::ErrorInst::ConstantId) {
+        CARBON_DIAGNOSTIC(
+            InvalidWhereInsideBinding, Error,
+            "found `where` expression in binding's type that does "
+            "not constrain the binding");
+        auto builder =
+            context.emitter().Build(where_loc_id, InvalidWhereInsideBinding);
+        builder.Emit();
+      }
       original_inst_id = SemIR::ErrorInst::InstId;
-    } else {
-      original_inst_id = thawed_inst_id;
     }
   }
 
@@ -185,18 +287,18 @@ static auto HandleAnyBindingPatternType(Context& context,
 }
 
 // TODO: make this function shorter by factoring pieces out.
-static auto HandleAnyBindingPattern(
-    Context& context, Parse::NodeId node_id, Parse::NodeKind node_kind,
-    bool is_unused = false,
-    SemIR::InstId self_type_inst_id = SemIR::InstId::None) -> bool {
-  auto type_expr = HandleAnyBindingPatternType(context, node_id, node_kind,
-                                               self_type_inst_id);
+static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
+                                    Parse::NodeKind node_kind,
+                                    TypeStartOrSelfType type_start_or_self_type)
+    -> bool {
+  bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
+  auto type_expr = HandleAnyBindingPatternType(
+      context, node_id, node_kind, type_start_or_self_type, is_generic);
 
   SemIR::ExprRegionId type_expr_region_id =
       ConsumeExprRegionForPattern(context, type_expr.inst_id);
 
   // The name in a generic binding may be wrapped in `template`.
-  bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
   bool is_template =
       context.node_stack()
           .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
@@ -237,8 +339,8 @@ static auto HandleAnyBindingPattern(
         context, node_id, type_expr_region_id, type_expr.type_component_id,
         {.kind = kind,
          .type_id = GetPatternType(context, type_expr.type_component_id),
-         .entity_name_id =
-             AddBindingEntityName(context, name_id, form_id, is_unused, phase),
+         .entity_name_id = AddBindingEntityName(context, name_id, form_id,
+                                                /*is_unused=*/false, phase),
          .subpattern_id = subpattern_id});
 
     // TODO: If `is_generic`, then `binding.bind_id is a SymbolicBinding. Subst
@@ -454,10 +556,18 @@ static auto HandleAnyBindingPattern(
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::BindingPatternTypeStartId node_id)
+    -> bool {
+  context.node_stack().Push(
+      node_id, SemIR::ElementIndex(context.binding_type_where_count()));
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::LetBindingPatternId node_id)
     -> bool {
   return HandleAnyBindingPattern(context, node_id,
-                                 Parse::NodeKind::LetBindingPattern);
+                                 Parse::NodeKind::LetBindingPattern,
+                                 Parse::NodeKind::BindingPatternTypeStart);
 }
 
 auto HandleParseNode(Context& context, Parse::SelfBindingPatternId node_id)
@@ -470,37 +580,41 @@ auto HandleParseNode(Context& context, Parse::SelfBindingPatternId node_id)
   auto self_type_inst_id = BuildNameRef(
       context, node_id, SemIR::NameId::SelfType,
       self_type.scope_result.target_inst_id(), self_type.specific_id);
-  return HandleAnyBindingPattern(context, node_id,
-                                 Parse::NodeKind::LetBindingPattern,
-                                 /*is_unused=*/false, self_type_inst_id);
+  return HandleAnyBindingPattern(
+      context, node_id, Parse::NodeKind::LetBindingPattern, self_type_inst_id);
 }
 
 auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
     -> bool {
   return HandleAnyBindingPattern(context, node_id,
-                                 Parse::NodeKind::VarBindingPattern);
+                                 Parse::NodeKind::VarBindingPattern,
+                                 Parse::NodeKind::BindingPatternTypeStart);
 }
 
 auto HandleParseNode(Context& context, Parse::FormBindingPatternId node_id)
     -> bool {
   return HandleAnyBindingPattern(context, node_id,
-                                 Parse::NodeKind::FormBindingPattern);
+                                 Parse::NodeKind::FormBindingPattern,
+                                 Parse::NodeKind::BindingPatternTypeStart);
 }
 
 auto HandleParseNode(Context& context,
-                     Parse::CompileTimeBindingPatternStartId node_id) -> bool {
+                     Parse::CompileTimeBindingPatternTypeStartId node_id)
+    -> bool {
   // Make a scope to contain the `.Self` facet value for use in the type of the
   // compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
   MakePeriodSelfFacetValue(context, node_id, GetEmptyFacetType(context));
+  context.node_stack().Push(
+      node_id, SemIR::ElementIndex(context.binding_type_where_count()));
   return true;
 }
 
 auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternId node_id) -> bool {
   // Pop the `.Self` facet value name introduced by the
-  // CompileTimeBindingPatternStart.
+  // CompileTimeBindingPatternTypeStart.
   context.scope_stack().Pop(/*check_unused=*/true);
 
   auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
@@ -526,7 +640,9 @@ auto HandleParseNode(Context& context,
     }
   }
 
-  return HandleAnyBindingPattern(context, node_id, node_kind);
+  return HandleAnyBindingPattern(
+      context, node_id, node_kind,
+      Parse::NodeKind::CompileTimeBindingPatternTypeStart);
 }
 
 auto HandleParseNode(Context& context,

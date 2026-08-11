@@ -100,8 +100,9 @@ auto GetNamedConstraintType(Context& context,
                             SemIR::NamedConstraintId named_constraint_id,
                             SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
-// Gets the facet type for the given `info`.
-auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
+// Gets the facet type for the given `declared_facet_type`.
+auto GetFacetType(Context& context,
+                  const SemIR::DeclaredFacetType& declared_facet_type)
     -> SemIR::TypeId;
 
 // Gets the type contained within the given facet value.

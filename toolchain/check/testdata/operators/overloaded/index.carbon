@@ -407,6 +407,7 @@ fn F() {
 // CHECK:STDOUT:   %subscript.patt.bdc: %pattern_type.51d = at_binding_pattern subscript, %subscript.param_patt.fd1 [symbolic]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.type.de8: type = facet_type <@IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type)> [concrete]
+// CHECK:STDOUT:   %.65d: <witness> = impl_self_witness %C, @IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.121: %IndexWith.type.de8 = symbolic_binding Self, 2 [symbolic]
 // CHECK:STDOUT:   %IndexWith.WithSelf.At.type.d39: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%empty_tuple.type, %empty_tuple.type, %Self.799) [symbolic]
@@ -479,6 +480,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %.loc8_31, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%empty_tuple.type, constants.%empty_tuple.type)> [concrete = constants.%IndexWith.type.de8]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.IndexWith.impl.%C.ref, @IndexWith, @IndexWith(constants.%empty_tuple.type, constants.%empty_tuple.type) [concrete = constants.%.65d]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

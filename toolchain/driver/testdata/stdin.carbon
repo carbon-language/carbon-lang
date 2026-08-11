@@ -6,7 +6,7 @@
 // dump flags.
 // TODO: Align lex/parse with check/lower.
 //
-// ARGS: compile - --phase=lower --no-prelude-import --target=x86_64-linux-gnu --dump-tokens --dump-parse-tree --dump-sem-ir --dump-raw-sem-ir --dump-llvm-ir
+// ARGS: compile - --output=- --phase=lower --no-prelude-import --target=x86_64-linux-gnu --dump-tokens --dump-parse-tree --parse-dump-format=yaml-postorder --dump-sem-ir --dump-raw-sem-ir --dump-llvm-ir
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -72,7 +72,7 @@
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:   facet_types:     {}
+// CHECK:STDOUT:   declared_facet_types: {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:   bundles:         {}

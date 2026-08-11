@@ -25,25 +25,23 @@ let : i32 = 4;
 let generic : bool = true;
 
 // CHECK:STDOUT: - filename: fail_runtime_binding.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: ':', has_error: yes},
-// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IntLiteral', text: '4'},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ ├─InvalidParse ':' has_error
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ ├─IntLiteral '4'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_compiletime_binding.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: ':', has_error: yes},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternStart', text: ':', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'BoolLiteralTrue', text: 'true'},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature ':' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPatternTypeStart ':' has_error
+// CHECK:STDOUT:   │ │ ├─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ ├─BoolLiteralTrue 'true'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

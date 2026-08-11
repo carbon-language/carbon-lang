@@ -23,12 +23,11 @@ choice InvalidAlternativeIdentifier {
 }
 
 // CHECK:STDOUT: - filename: fail_invalid_alternative_identifier.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ChoiceIntroducer', text: 'choice'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'InvalidAlternativeIdentifier'},
-// CHECK:STDOUT:       {kind: 'ChoiceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Other'},
-// CHECK:STDOUT:     {kind: 'ChoiceDefinition', text: '}', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ChoiceIntroducer 'choice'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'InvalidAlternativeIdentifier'
+// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Other'
+// CHECK:STDOUT:   ├─ChoiceDefinition '}' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
