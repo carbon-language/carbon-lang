@@ -16,6 +16,8 @@ namespace Carbon::Lex {
 
 class StringLiteral {
  public:
+  StringLiteral() = default;
+
   // A string literal's kind.
   enum class Kind : int8_t {
     // A character literal is still handled through string literal lexing.
@@ -96,20 +98,20 @@ class StringLiteral {
 
   // Whether content needs validation, in particular due to either an escape
   // (which needs modifications) or a tab character (which may cause a warning).
-  bool content_needs_validation_;
+  bool content_needs_validation_ = false;
 
   // The number of `#`s preceding the opening `"` or `"""`.
-  int hash_level_;
+  int hash_level_ = 0;
 
   // Whether this was a single-line string literal, multi-line string literal,
   // or a char literal.
-  Kind kind_;
+  Kind kind_ = Kind::SingleLine;
 
   // Whether the literal is valid, or should only be used for errors.
-  bool is_terminated_;
+  bool is_terminated_ = false;
 
   // Whether this is a multi-line literal whose introducer line is malformed.
-  bool has_invalid_introducer_;
+  bool has_invalid_introducer_ = false;
 };
 
 }  // namespace Carbon::Lex

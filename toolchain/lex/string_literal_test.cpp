@@ -39,6 +39,14 @@ class StringLiteralTest : public ::testing::Test {
   Diagnostics::ErrorTrackingConsumer error_tracker_;
 };
 
+TEST_F(StringLiteralTest, DefaultConstructedIsDeterministic) {
+  StringLiteral literal;
+  EXPECT_TRUE(literal.text().empty());
+  EXPECT_EQ(literal.kind(), StringLiteral::Kind::SingleLine);
+  EXPECT_FALSE(literal.is_terminated());
+  EXPECT_FALSE(literal.has_invalid_introducer());
+}
+
 TEST_F(StringLiteralTest, StringLiteralBounds) {
   llvm::StringLiteral valid[] = {
       R"("")",
