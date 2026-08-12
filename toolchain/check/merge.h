@@ -5,9 +5,23 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_MERGE_H_
 #define CARBON_TOOLCHAIN_CHECK_MERGE_H_
 
+#include <type_traits>
+
+#include "common/check.h"
+#include "common/concepts.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/function.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/sem_ir/class.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
+#include "toolchain/sem_ir/interface.h"
+#include "toolchain/sem_ir/named_constraint.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -107,6 +121,292 @@ inline auto CheckRedeclParamsMatch(Context& context,
   return CheckRedeclParamsMatch(context, new_entity, prev_entity,
                                 SemIR::SpecificId::None, /*diagnose=*/true,
                                 /*check_syntax=*/true);
+}
+
+// Fills the previous class id and import ir id.
+inline auto FillPrevEntityInfo(Context& context,
+                               const SemIR::ImportIRInst& import_ir_inst,
+                               SemIR::Inst decl_val,
+                               SemIR::ClassId& prev_entity_id,
+                               SemIR::TypeId& prev_type_id,
+                               SemIR::ImportIRId& prev_import_ir_id) -> void {
+  // Verify the decl so that things like aliases are name conflicts.
+  const auto* import_ir =
+      context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+  if (!import_ir->insts().Is<SemIR::ClassDecl>(import_ir_inst.inst_id())) {
+    return;
+  }
+
+  if (auto class_type = decl_val.TryAs<SemIR::ClassType>()) {
+    prev_entity_id = class_type->class_id;
+    prev_type_id = class_type->type_id;
+    prev_import_ir_id = import_ir_inst.ir_id();
+  } else if (auto generic_class_type =
+                 context.types().TryGetAs<SemIR::GenericClassType>(
+                     decl_val.type_id())) {
+    prev_entity_id = generic_class_type->class_id;
+    prev_type_id = generic_class_type->type_id;
+    prev_import_ir_id = import_ir_inst.ir_id();
+  }
+}
+
+// Fills the previous function id and import ir id.
+inline auto FillPrevEntityInfo(Context& context,
+                               const SemIR::ImportIRInst& import_ir_inst,
+                               SemIR::Inst decl_val,
+                               SemIR::FunctionId& prev_entity_id,
+                               SemIR::TypeId& prev_type_id,
+                               SemIR::ImportIRId& prev_import_ir_id) -> void {
+  // Verify the decl so that things like aliases are name conflicts.
+  const auto* import_ir =
+      context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+  if (!import_ir->insts().Is<SemIR::FunctionDecl>(import_ir_inst.inst_id())) {
+    return;
+  }
+
+  if (auto struct_value = decl_val.TryAs<SemIR::StructValue>()) {
+    if (auto function_type = context.types().TryGetAs<SemIR::FunctionType>(
+            struct_value->type_id)) {
+      prev_entity_id = function_type->function_id;
+      prev_type_id = struct_value->type_id;
+      prev_import_ir_id = import_ir_inst.ir_id();
+    }
+  }
+}
+
+// Fills the previous interface id and import ir id.
+inline auto FillPrevEntityInfo(Context& context,
+                               const SemIR::ImportIRInst& import_ir_inst,
+                               SemIR::Inst decl_val,
+                               SemIR::InterfaceId& prev_entity_id,
+                               SemIR::TypeId& prev_type_id,
+                               SemIR::ImportIRId& prev_import_ir_id) -> void {
+  // Verify the decl so that things like aliases are name conflicts.
+  const auto* import_ir =
+      context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+  if (!import_ir->insts().Is<SemIR::InterfaceDecl>(import_ir_inst.inst_id())) {
+    return;
+  }
+
+  if (auto facet_type = decl_val.TryAs<SemIR::FacetType>()) {
+    auto declared_facet_type =
+        context.declared_facet_types().Get(facet_type->declared_facet_type_id);
+    prev_entity_id = declared_facet_type.extend_constraints[0].interface_id;
+    prev_type_id = facet_type->type_id;
+    prev_import_ir_id = import_ir_inst.ir_id();
+  }
+}
+
+// Fills the previous named constraint id and import ir id.
+inline auto FillPrevEntityInfo(Context& context,
+                               const SemIR::ImportIRInst& import_ir_inst,
+                               SemIR::Inst decl_val,
+                               SemIR::NamedConstraintId& prev_entity_id,
+                               SemIR::TypeId& prev_type_id,
+                               SemIR::ImportIRId& prev_import_ir_id) -> void {
+  // Verify the decl so that things like aliases are name conflicts.
+  const auto* import_ir =
+      context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+  if (!import_ir->insts().Is<SemIR::NamedConstraintDecl>(
+          import_ir_inst.inst_id())) {
+    return;
+  }
+
+  if (auto facet_type = decl_val.TryAs<SemIR::FacetType>()) {
+    auto declared_facet_type =
+        context.declared_facet_types().Get(facet_type->declared_facet_type_id);
+    prev_entity_id =
+        declared_facet_type.extend_named_constraints[0].named_constraint_id;
+    prev_type_id = facet_type->type_id;
+    prev_import_ir_id = import_ir_inst.ir_id();
+  }
+}
+
+// Tries to merge new_entity into prev_entity_id. Since new_entity won't have a
+// definition even if one is upcoming, set is_definition to indicate the planned
+// result.
+//
+// If merging is successful, returns the previous declaration.
+// Otherwise, returns nullopt. Prints a diagnostic when appropriate.
+template <typename EntityT>
+  requires SameAsOneOf<EntityT, SemIR::Class, SemIR::Function, SemIR::Interface,
+                       SemIR::NamedConstraint>
+auto TryMergeRedecl(Context& context,
+                    const DeclNameStack::NameContext& name_context,
+                    SemIR::ScopeLookupResult lookup_result,
+                    const EntityT& new_entity, bool is_definition) -> bool {
+  constexpr bool IsClass = std::is_same_v<EntityT, SemIR::Class>;
+  constexpr bool IsFunction = std::is_same_v<EntityT, SemIR::Function>;
+  constexpr bool IsInterface = std::is_same_v<EntityT, SemIR::Interface>;
+  constexpr bool IsNamedConstraint =
+      std::is_same_v<EntityT, SemIR::NamedConstraint>;
+
+  if (lookup_result.is_poisoned()) {
+    // Diagnose if we are declaring a poisoned name. However, don't diagnose at
+    // impl scope: if the name was referenced before being declared, we will
+    // have produced an error already.
+    if (!context.name_scopes().InstIs<SemIR::ImplDecl>(
+            name_context.parent_scope_id)) {
+      DiagnosePoisonedName(context, name_context.name_id,
+                           name_context.poisoning_loc_id, name_context.loc_id);
+    }
+    return false;
+  }
+
+  if (!lookup_result.is_found()) {
+    return false;
+  }
+
+  auto prev_id = lookup_result.target_inst_id();
+
+  auto prev_entity_id = [&]() -> decltype(auto) {
+    if constexpr (IsClass) {
+      return SemIR::ClassId::None;
+    } else if constexpr (IsFunction) {
+      return SemIR::FunctionId::None;
+    } else if constexpr (IsInterface) {
+      return SemIR::InterfaceId::None;
+    } else if constexpr (IsNamedConstraint) {
+      return SemIR::NamedConstraintId::None;
+    } else {
+      CARBON_FATAL("Unhandled entity type.");
+    }
+  }();
+  auto prev_type_id = SemIR::TypeId::None;
+  auto prev_import_ir_id = SemIR::ImportIRId::None;
+  CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
+    case CARBON_KIND(SemIR::AssociatedEntity assoc_entity): {
+      if constexpr (IsFunction) {
+        // This is a function in an interface definition scope.
+        auto function_decl =
+            context.insts().GetAs<SemIR::FunctionDecl>(assoc_entity.decl_id);
+        prev_entity_id = function_decl.function_id;
+        prev_type_id = function_decl.type_id;
+      }
+      break;
+    }
+    case CARBON_KIND(SemIR::ClassDecl class_decl): {
+      if constexpr (IsClass) {
+        prev_entity_id = class_decl.class_id;
+      }
+      break;
+    }
+    case CARBON_KIND(SemIR::FunctionDecl function_decl): {
+      if constexpr (IsFunction) {
+        prev_entity_id = function_decl.function_id;
+        prev_type_id = function_decl.type_id;
+      }
+      break;
+    }
+    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+      if constexpr (IsInterface) {
+        prev_entity_id = interface_decl.interface_id;
+      }
+      break;
+    }
+    case CARBON_KIND(SemIR::NamedConstraintDecl named_constraint_decl): {
+      if constexpr (IsNamedConstraint) {
+        prev_entity_id = named_constraint_decl.named_constraint_id;
+      }
+      break;
+    }
+    case CARBON_KIND(SemIR::ImportRefLoaded import_ref): {
+      // Use the constant value to get the ID.
+      const auto& import_ir_inst =
+          context.import_ir_insts().Get(import_ref.import_ir_inst_id);
+      auto decl_val = context.insts().Get(
+          context.constant_values().GetConstantInstId(prev_id));
+      FillPrevEntityInfo(context, import_ir_inst, decl_val, prev_entity_id,
+                         prev_type_id, prev_import_ir_id);
+      break;
+    }
+    default: {
+      CARBON_FATAL("Unhandled decl type.");
+      break;
+    }
+  }
+
+  if (!prev_entity_id.has_value()) {
+    // This is a redeclaration with a different entity kind.
+    DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
+                          SemIR::LocId(prev_id));
+    return false;
+  }
+
+  auto& prev_entity = [&]() -> EntityT& {
+    if constexpr (IsClass) {
+      return context.classes().Get(prev_entity_id);
+    } else if constexpr (IsFunction) {
+      return context.functions().Get(prev_entity_id);
+    } else if constexpr (IsInterface) {
+      return context.interfaces().Get(prev_entity_id);
+    } else if constexpr (IsNamedConstraint) {
+      return context.named_constraints().Get(prev_entity_id);
+    } else {
+      CARBON_FATAL("Unhandled entity type.");
+    }
+  }();
+
+  if constexpr (IsClass || IsInterface || IsNamedConstraint) {
+    if (!CheckRedeclParamsMatch(context, DeclParams(new_entity),
+                                DeclParams(prev_entity))) {
+      // Mismatch is diagnosed already if found.
+      return false;
+    }
+  } else if constexpr (IsFunction) {
+    if (!CheckFunctionTypeMatches(context, new_entity, prev_entity)) {
+      // Mismatch is diagnosed already if found.
+      return false;
+    }
+  } else {
+    CARBON_FATAL("Unhandled entity type");
+  }
+
+  DiagnoseIfInvalidRedecl(
+      context, DeclTokenKind<EntityT>(), prev_entity.name_id,
+      RedeclInfo(new_entity, SemIR::LocId(new_entity.latest_decl_id()),
+                 is_definition),
+      RedeclInfo(prev_entity, SemIR::LocId(prev_entity.latest_decl_id()),
+                 prev_entity.has_definition_started()),
+      prev_import_ir_id);
+
+  if (is_definition && prev_entity.has_definition_started()) {
+    // DiagnoseIfInvalidRedecl would diagnose an error in this case, since we'd
+    // have two definitions. Given the declaration parts of the definitions
+    // match, we would be able to use the prior declaration for error recovery,
+    // except that having two definitions causes larger problems for generics.
+    // All interfaces (and named constraints) are generic with an implicit Self
+    // compile time binding.
+    return false;
+  }
+
+  if (is_definition) {
+    prev_entity.MergeDefinition(new_entity);
+  }
+
+  if (prev_import_ir_id.has_value()) {
+    if constexpr (IsClass) {
+      if (prev_entity.is_extern && !new_entity.is_extern) {
+        prev_entity.first_owning_decl_id = new_entity.first_owning_decl_id;
+        ReplacePrevInstForMerge(context, new_entity.parent_scope_id,
+                                prev_entity.name_id,
+                                new_entity.first_owning_decl_id);
+      }
+    } else if constexpr (IsFunction || IsInterface || IsNamedConstraint) {
+      prev_entity.first_owning_decl_id = new_entity.first_owning_decl_id;
+      ReplacePrevInstForMerge(context, new_entity.parent_scope_id,
+                              prev_entity.name_id,
+                              new_entity.first_owning_decl_id);
+    } else {
+      CARBON_FATAL("Unhandled entity type.");
+    }
+  }
+
+  // TODO:
+  // entity_decl.entity_id = prev_entity_id;
+  // entity_decl.type_id = prev_type_id;
+
+  return true;
 }
 
 }  // namespace Carbon::Check
