@@ -97,6 +97,8 @@ static auto DiagnoseModifiers(Context& context,
                                  parent_scope_inst);
   RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_id,
                                       is_definition);
+  // TODO: add check that functions in interfaces may only be defined if they
+  // are marked `default` or `final`.
 
   if (!self_param_id.has_value() &&
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {

@@ -326,7 +326,8 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   // constant. We use this rather than `LimitModifiersOnDecl` to get a more
   // specific error.
   RequireDefaultFinalOnlyInInterfaces(context, decl_info.introducer,
-                                      SemIR::NameScopeId::None, false);
+                                      SemIR::NameScopeId::None,
+                                      /*is_definition=*/false);
 
   if (decl_info.init_id.has_value()) {
     LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
