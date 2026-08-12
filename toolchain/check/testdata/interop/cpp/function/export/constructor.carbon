@@ -160,12 +160,18 @@ class GenericClass(T: type) {
 
 inline Cpp '''
 void f() {
-  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE+7]]:29: error: no matching constructor for initialization of 'Carbon::GenericClass<int>' [CppInteropParseError]
-  // CHECK:STDERR:    24 |   Carbon::GenericClass<int> c(0);
+  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE+13]]:29: error: no matching constructor for initialization of 'Carbon::GenericClass<int>' [CppInteropParseError]
+  // CHECK:STDERR:    30 |   Carbon::GenericClass<int> c(0);
   // CHECK:STDERR:       |                             ^ ~
-  // CHECK:STDERR: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const GenericClass<int>' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'GenericClass<int>' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR: note: candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE-15]]:29: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const GenericClass<int>' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class GenericClass(T: type) {
+  // CHECK:STDERR:       |                             ^
+  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE-18]]:29: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'GenericClass<int>' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class GenericClass(T: type) {
+  // CHECK:STDERR:       |                             ^
+  // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE-21]]:29: note: candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class GenericClass(T: type) {
+  // CHECK:STDERR:       |                             ^
   // CHECK:STDERR:
   Carbon::GenericClass<int> c(0);
 }
