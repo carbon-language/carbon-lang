@@ -124,16 +124,22 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
   auto LoadExternalSpecializations(
       const clang::Decl* decl,
       llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool override {
-    const auto* function_template_decl =
-        llvm::dyn_cast<clang::FunctionTemplateDecl>(decl);
-    if (!function_template_decl) {
-      return false;
+    if (const auto* function_template_decl =
+            llvm::dyn_cast<clang::FunctionTemplateDecl>(decl)) {
+      return ExportFunctionSpecializationToCpp(
+          *context_,
+          const_cast<clang::FunctionTemplateDecl*>(function_template_decl),
+          template_args);
     }
 
-    return ExportFunctionSpecializationToCpp(
-        *context_,
-        const_cast<clang::FunctionTemplateDecl*>(function_template_decl),
-        template_args);
+    if (const auto* class_template_decl =
+            llvm::dyn_cast<clang::ClassTemplateDecl>(decl)) {
+      return ExportClassSpecializationToCpp(
+          *context_, const_cast<clang::ClassTemplateDecl*>(class_template_decl),
+          template_args);
+    }
+
+    return false;
   }
 
   auto CompleteType(clang::TagDecl* tag_decl) -> void override;
@@ -223,17 +229,23 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
       return cast<clang::NamedDecl>(decl_context);
     }
     case SemIR::StructValue::Kind: {
+      auto type_inst_id =
+          context_->types().GetTypeInstId(target_inst.type_id());
       auto callee = GetCallee(context_->sem_ir(), target_inst_id);
-      auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee);
-      if (!callee_function) {
-        return nullptr;
+      if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
+        return GetOrExportFunctionToCpp(target_inst_id,
+                                        callee_function->function_id);
+      } else if (auto generic_class =
+                     context_->insts().TryGetAs<SemIR::GenericClassType>(
+                         type_inst_id)) {
+        return ExportGenericClassToCpp(*context_, type_inst_id, *generic_class);
       }
 
-      return GetOrExportFunctionToCpp(target_inst_id,
-                                      callee_function->function_id);
+      return nullptr;
     }
     case CARBON_KIND(SemIR::FieldDecl field_decl): {
-      return ExportFieldToCpp(*context_, target_inst_id, field_decl);
+      return ExportFieldToCpp(*context_, target_inst_id, field_decl,
+                              lookup.specific_id);
     }
     case CARBON_KIND(SemIR::VarStorage var_storage): {
       return ExportVarToCpp(*context_, target_inst_id, var_storage);
@@ -468,9 +480,14 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
     }
   }
 
-  ExportAllFieldsToCpp(*context_, class_info);
+  ExportAllFieldsToCpp(*context_,
+                       context_->types().GetTypeInstId(class_type_id));
 
-  class_decl->addDecl(ExportDestructorToCpp(*context_, class_info, class_decl));
+  // TODO: support exporting destructors for generic classes.
+  if (!llvm::isa<clang::ClassTemplateSpecializationDecl>(class_decl)) {
+    class_decl->addDecl(
+        ExportDestructorToCpp(*context_, class_info, class_decl));
+  }
 
   // TODO: Import any special member functions that affect class properties.
 
@@ -557,8 +574,8 @@ auto CarbonExternalASTSource::layoutRecordType(
   // general.
   CompleteTypeOrCheckFail(*context_, class_type_id);
 
-  auto& class_info = context_->classes().Get(class_type.class_id);
-  ExportAllFieldsToCpp(*context_, class_info);
+  ExportAllFieldsToCpp(*context_,
+                       context_->types().GetTypeInstId(class_type_id));
 
   return ReadOnlyASTSource::layoutRecordType(
       record_decl, size, alignment, field_offsets, base_offsets, vbase_offsets);

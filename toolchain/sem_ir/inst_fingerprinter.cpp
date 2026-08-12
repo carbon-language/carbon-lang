@@ -745,8 +745,14 @@ struct Worklist {
         Add(inst.type_id());
       }
 
-      AddWithKind(inst.arg0_and_kind());
-      AddWithKind(inst.arg1_and_kind());
+      // TODO: change `ImplWitnessTable::elements_id` type with a new type whose
+      // value is not a part of the identity of the instruction.
+      if (auto impl_witness_table = inst.TryAs<SemIR::ImplWitnessTable>()) {
+        Add(impl_witness_table->impl_id);
+      } else {
+        AddWithKind(inst.arg0_and_kind());
+        AddWithKind(inst.arg1_and_kind());
+      }
 
       // If we didn't add any work, we have a fingerprint for this instruction;
       // pop it from the todo list. Otherwise, we leave it on the todo list so

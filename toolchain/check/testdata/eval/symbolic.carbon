@@ -80,10 +80,10 @@ fn F() {
 // CHECK:STDOUT:   %U.013: %Z.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %U.as_type.ff1: type = facet_access_type %U.013 [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.638: <witness> = impl_witness imports.%Copy.impl_witness_table.4d6 [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.638) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.8b3: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.524: type = fn_type_with_self_type %Copy.WithSelf.Op.type.8b3, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.c99: <witness> = impl_witness imports.%Copy.impl_witness_table.7b6 [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.c99) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.ac1: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.224: type = fn_type_with_self_type %Copy.WithSelf.Op.type.ac1, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.bound.05d: <bound method> = bound_method %U.as_type.ff1, %type.as.Copy.impl.Op [symbolic]
@@ -92,7 +92,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.import_ref.9c3: %type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.Copy.impl.Op]
-// CHECK:STDOUT:   %Copy.impl_witness_table.4d6 = impl_witness_table (%Core.import_ref.9c3), @type.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness_table.7b6 = impl_witness_table (%Core.import_ref.9c3), @type.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @E(%U.loc6_20.2: %Z.type) {
@@ -107,7 +107,7 @@ fn F() {
 // CHECK:STDOUT:     %U.ref: %Z.type = name_ref U, %U.loc6_20.2 [symbolic = %U.loc6_20.1 (constants.%U.013)]
 // CHECK:STDOUT:     %U.as_type.loc11_11.1: type = facet_access_type %U.ref [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
 // CHECK:STDOUT:     %.loc11: type = converted %U.ref, %U.as_type.loc11_11.1 [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
-// CHECK:STDOUT:     %impl.elem0: %.524 = impl_witness_access constants.%Copy.impl_witness.638, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:     %impl.elem0: %.224 = impl_witness_access constants.%Copy.impl_witness.c99, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc11, %impl.elem0 [symbolic = %type.as.Copy.impl.Op.bound (constants.%type.as.Copy.impl.Op.bound.05d)]
 // CHECK:STDOUT:     %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc11) [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
 // CHECK:STDOUT:     return %type.as.Copy.impl.Op.call

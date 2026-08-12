@@ -36,8 +36,27 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
     -> clang::TagDecl*;
 
+// Exports a generic Carbon class into C++ as a templated class.
+//
+// If the generic class has already been exported, returns the existing
+// C++ class template.  Otherwise, creates a new C++ class template and
+// returns it. Returns nullptr if the class could not be exported and an
+// error was diagnosed.
+auto ExportGenericClassToCpp(Context& context, SemIR::InstId inst_id,
+                             SemIR::GenericClassType generic_class_type)
+    -> clang::ClassTemplateDecl*;
+
+// Creates a C++ class template specialization for a generic Carbon
+// class.
+//
+// Returns true if a specialization was added, false otherwise.
+auto ExportClassSpecializationToCpp(
+    Context& context, clang::ClassTemplateDecl* class_template_decl,
+    llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool;
+
 // Export all `SemIR::FieldDecl`s in the class body as `clang::FieldDecl`s.
-auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void;
+auto ExportAllFieldsToCpp(Context& context,
+                          SemIR::TypeInstId class_type_inst_id) -> void;
 
 // Exports a Carbon class field into C++.
 //
@@ -50,7 +69,8 @@ auto ExportAllFieldsToCpp(Context& context, SemIR::Class& class_info) -> void;
 // Returns nullptr if the class could not be exported and an error was
 // diagnosed.
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
-                      SemIR::FieldDecl field_decl) -> clang::FieldDecl*;
+                      SemIR::FieldDecl field_decl,
+                      SemIR::SpecificId specific_id) -> clang::FieldDecl*;
 
 // Get a `clang::FunctionDecl` that can be used to call a Carbon function.
 // If the function is generic, a `clang::FunctionTemplateDecl` will be

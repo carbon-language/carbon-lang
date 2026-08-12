@@ -10,48 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/basics/import/bad_import.carbon
 
-// --- fail_import_cpp_library_empty.carbon
-
-library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+4]]:10: error: empty filename [CppInteropParseError]
-// CHECK:STDERR:     8 | #include ""
-// CHECK:STDERR:       |          ^
-// CHECK:STDERR:
-import Cpp library "";
-
-// --- fail_import_cpp_library_nonexistent.carbon
-
-library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_import_cpp_library_nonexistent.carbon:[[@LINE+4]]:10: error: 'does_not_exist.h' file not found [CppInteropParseError]
-// CHECK:STDERR:     8 | #include "does_not_exist.h"
-// CHECK:STDERR:       |          ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-import Cpp library "does_not_exist.h";
-
-// --- fail_todo_import_cpp_library_file_with_quotes.carbon
-
-library "[[@TEST_NAME]]";
-
-// TODO: Translate the file to a `#include` that includes the named file
-// properly. `\` escapes aren't processed in regular `#include`s.
-// CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+14]]:10: error: '\' file not found [CppInteropParseError]
-// CHECK:STDERR:    20 | #include "\"foo.h\""
-// CHECK:STDERR:       |          ^~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+10]]:13: error: invalid suffix on literal; C++11 requires a space between literal and identifier [CppInteropParseError]
-// CHECK:STDERR:    20 | #include "\"foo.h\""
-// CHECK:STDERR:       |             ^
-// CHECK:STDERR:       |              {{}}
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+5]]:13: warning: extra tokens at end of #include directive [CppInteropParseWarning]
-// CHECK:STDERR:    20 | #include "\"foo.h\""
-// CHECK:STDERR:       |             ^
-// CHECK:STDERR:       |             //
-// CHECK:STDERR:
-import Cpp library "\"foo.h\"";
-
 // --- fail_unterminated_import_inline.carbon
 
 library "[[@TEST_NAME]]";

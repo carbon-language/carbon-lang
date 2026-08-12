@@ -41,8 +41,8 @@ class C {
 // CHECK:STDOUT:   %C.as.Simple.impl.F.type: type = fn_type @C.as.Simple.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.Simple.impl.F: %C.as.Simple.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %C, (%Simple.impl_witness) [concrete]
-// CHECK:STDOUT:   %Simple.WithSelf.F.type.c73: type = fn_type @Simple.WithSelf.F, @Simple.WithSelf(%Simple.facet) [concrete]
-// CHECK:STDOUT:   %Simple.WithSelf.F.bbe: %Simple.WithSelf.F.type.c73 = struct_value () [concrete]
+// CHECK:STDOUT:   %Simple.WithSelf.F.type.a3b: type = fn_type @Simple.WithSelf.F, @Simple.WithSelf(%Simple.facet) [concrete]
+// CHECK:STDOUT:   %Simple.WithSelf.F.81b: %Simple.WithSelf.F.type.a3b = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
@@ -160,8 +160,8 @@ class C {
 // CHECK:STDOUT: specific @Simple.WithSelf(constants.%Simple.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Simple.facet
-// CHECK:STDOUT:   %Simple.WithSelf.F.type => constants.%Simple.WithSelf.F.type.c73
-// CHECK:STDOUT:   %Simple.WithSelf.F => constants.%Simple.WithSelf.F.bbe
+// CHECK:STDOUT:   %Simple.WithSelf.F.type => constants.%Simple.WithSelf.F.type.a3b
+// CHECK:STDOUT:   %Simple.WithSelf.F => constants.%Simple.WithSelf.F.81b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.WithSelf.F(constants.%Simple.facet) {}
