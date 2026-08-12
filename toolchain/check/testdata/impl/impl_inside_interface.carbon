@@ -23,7 +23,6 @@ interface I {
 // --- impl_in_interface_definition_with_associated.carbon
 library "[[@TEST_NAME]]";
 
-// This test uses many unsupported features, and is expected to change.
 interface I {
   let U: type;
   default fn F() {
