@@ -170,6 +170,19 @@ TEST(BufferTest, Tees) {
             "├─┼─┤\n"
             "│ │ │\n"
             "╰─┴─╯\n");
+
+  // The same table in ASCII, where every tee keeps its through-stroke and only
+  // the crossing in the middle is a `+`.
+  Buffer ascii(5, Charset::Ascii);
+  ascii.DrawBox(0, 0, 5, 5, Style());
+  ascii.DrawHorizontalLine(0, 2, 5, Style());
+  ascii.DrawVerticalLine(2, 0, 5, Style());
+  EXPECT_EQ(Render(ascii),
+            ".---.\n"
+            "| | |\n"
+            "|-+-|\n"
+            "| | |\n"
+            "'---'\n");
 }
 
 TEST(BufferTest, ALineBetweenOneCenterAndItselfIsAPoint) {
@@ -189,10 +202,11 @@ TEST(BufferTest, ALineBetweenOneCenterAndItselfIsAPoint) {
   joined.DrawHorizontalLine(0, 0, 3, Style());
   EXPECT_EQ(Render(joined), "╶─╴\n");
 
-  // ASCII has one glyph for everything that isn't a plain segment.
+  // A point is a small mark in either character set, rather than the junction
+  // ASCII draws where lines really cross.
   Buffer ascii(3, Charset::Ascii);
   ascii.DrawVerticalLine(1, 0, 1, Style());
-  EXPECT_EQ(Render(ascii), " +\n");
+  EXPECT_EQ(Render(ascii), " .\n");
 
   // A line with no length draws nothing at all.
   Buffer empty(3, Charset::Utf8);
@@ -296,13 +310,15 @@ TEST(BufferTest, Box) {
             "│  │\n"
             "╰──╯\n");
 
-  // ASCII can only tell horizontal and vertical apart from everything else.
+  // The ASCII stand-ins keep the shape: the sides run and the corners turn,
+  // with the character that sits low where the line leaves downward and the one
+  // that sits high where it arrives from above.
   Buffer ascii(4, Charset::Ascii);
   ascii.DrawBox(0, 0, 4, 3, Style());
   EXPECT_EQ(Render(ascii),
-            "+--+\n"
+            ".--.\n"
             "|  |\n"
-            "+--+\n");
+            "'--'\n");
 
   // A box with no interior is the single line that bounds it.
   Buffer flat(4, Charset::Utf8);
@@ -990,22 +1006,35 @@ TEST(BufferDeathTest, WidthMustFitTheGrid) {
                "Buffer width must be in");
 }
 
-TEST(BufferDeathTest, DrawingMustStartInsideTheGrid) {
-  // A caller placing something already knows the width, since it is what
-  // decided the layout, so landing outside it is a bug in that layout rather
-  // than something to quietly drop. Rows are checked the same way.
+TEST(BufferDeathTest, TextMustStartInsideTheGrid) {
+  // The width does not bind unwrapped text, so only a column before the origin
+  // or a row no grid can index is a mistake.
   Buffer buffer(10, Charset::Ascii);
-  EXPECT_DEATH(buffer.DrawCodePoint(10, 0, 'a', Style()), "is outside the");
   EXPECT_DEATH(buffer.DrawCodePoint(-1, 0, 'a', Style()), "is outside the");
   EXPECT_DEATH(buffer.DrawCodePoint(0, -1, 'a', Style()), "is outside the");
   EXPECT_DEATH(buffer.DrawCodePoint(0, Buffer::MaxRows, 'a', Style()),
                "is outside the");
-  EXPECT_DEATH(buffer.DrawText(10, 0, "a", Style()), "is outside the");
-  EXPECT_DEATH(buffer.MeasureText(10, 0, "a"), "is outside the");
+  EXPECT_DEATH(buffer.DrawText(-1, 0, "a", Style()), "is outside the");
+  EXPECT_DEATH(buffer.MeasureText(0, Buffer::MaxRows, "a"), "is outside the");
 
   // Text begins at or right of the margin its rows return to.
   EXPECT_DEATH(buffer.DrawText(2, 0, 3, "a", Style()), "left of its margin");
   EXPECT_DEATH(buffer.MeasureText(2, 0, -1, "a"), "left of its margin");
+}
+
+TEST(BufferTest, UnwrappedTextWidensTheBuffer) {
+  // `DrawText` widens the buffer rather than being held to its width, so a run
+  // continues from where the one before it ended however far past that is.
+  Buffer buffer(10, Charset::Ascii);
+  Buffer::DrawEnd end =
+      buffer.DrawText(0, 0, "a message far longer than ten columns", Style());
+  EXPECT_EQ(end, DrawEnd(37, 0));
+  EXPECT_EQ(buffer.columns(), 10);
+  EXPECT_GE(buffer.width(), 37);
+
+  // Which is what lets a row be built from runs that carry different styles.
+  buffer.DrawText(end.x, end.y, " [tag]", Style().Bold());
+  EXPECT_EQ(Render(buffer), "a message far longer than ten columns [tag]\n");
 }
 
 TEST(BufferDeathTest, LinesMustFitWhatTheyAreDrawnInto) {

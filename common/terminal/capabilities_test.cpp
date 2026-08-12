@@ -231,12 +231,57 @@ TEST(CapabilitiesTest, Charset) {
   EXPECT_EQ(ChooseCharset(Preference::Always, "C"), Charset::Utf8);
 }
 
+TEST(CapabilitiesTest, BackgroundFromColorFgBg) {
+  // `fg;bg`, which is what `rxvt` and its derivatives write.
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, "15;0"),
+            Background::Dark);
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, "0;15"),
+            Background::Light);
+  // The eighth entry is white and the ninth the dark gray after it, so the
+  // halves are not simply the low and high eight.
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, "0;7"),
+            Background::Light);
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, "15;8"),
+            Background::Dark);
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, "15;6"),
+            Background::Dark);
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, "0;9"),
+            Background::Light);
+  // Some terminals write a third field between the two.
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, "15;default;0"),
+            Background::Dark);
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, "0;default;15"),
+            Background::Light);
+}
+
+TEST(CapabilitiesTest, BackgroundWithNothingToGoOn) {
+  // Unset, unparsable, and out of range all say nothing, and what nothing
+  // gets is the assumption that costs contrast rather than legibility.
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, ""), Background::Dark);
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, "default;default"),
+            Background::Dark);
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, "0;99"),
+            Background::Dark);
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, "15"),
+            Background::Dark);
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Auto, "15;"),
+            Background::Dark);
+}
+
+TEST(CapabilitiesTest, BackgroundPreferenceWins) {
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Dark, "0;15"),
+            Background::Dark);
+  EXPECT_EQ(ChooseBackground(BackgroundPreference::Light, "15;0"),
+            Background::Light);
+}
+
 TEST(CapabilitiesTest, Defaults) {
   // The defaults describe a plain-text sink, which is what a file or a pipe
   // gets and what tests should use unless exercising something richer.
   Capabilities capabilities;
   EXPECT_EQ(capabilities.color_mode, ColorMode::NoColor);
   EXPECT_EQ(capabilities.charset, Charset::Ascii);
+  EXPECT_EQ(capabilities.background, Background::Dark);
   EXPECT_FALSE(capabilities.is_terminal);
   EXPECT_FALSE(capabilities.columns.has_value());
 }
@@ -279,6 +324,14 @@ TEST(CapabilitiesTest, Detect) {
             Charset::Utf8);
   EXPECT_EQ(Capabilities::Detect(*file, {.utf8 = Preference::Never}).charset,
             Charset::Ascii);
+  EXPECT_EQ(
+      Capabilities::Detect(*file, {.background = BackgroundPreference::Light})
+          .background,
+      Background::Light);
+  EXPECT_EQ(
+      Capabilities::Detect(*file, {.background = BackgroundPreference::Dark})
+          .background,
+      Background::Dark);
 
   (*std::move(file)).Close().Check();
 }

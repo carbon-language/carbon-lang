@@ -169,6 +169,31 @@ auto ChooseCharset(Preference preference, llvm::StringRef locale) -> Charset {
              : Charset::Ascii;
 }
 
+auto ChooseBackground(BackgroundPreference preference,
+                      llvm::StringRef colorfgbg) -> Background {
+  switch (preference) {
+    case BackgroundPreference::Dark:
+      return Background::Dark;
+    case BackgroundPreference::Light:
+      return Background::Light;
+    case BackgroundPreference::Auto:
+      break;
+  }
+
+  // The background is the last field, since some terminals write a third one
+  // between the foreground and it.
+  llvm::StringRef background = colorfgbg.rsplit(';').second;
+  unsigned index = 0;
+  if (!llvm::to_integer(background, index) || index > 15) {
+    // Anything else, including the `default` some terminals write and the
+    // variable being unset, says nothing.
+    return Background::Dark;
+  }
+  // The first eight palette entries are the dark half, except that the eighth
+  // is white and the ninth is the dark gray that follows it.
+  return index <= 6 || index == 8 ? Background::Dark : Background::Light;
+}
+
 // Returns the locale that determines the terminal's character encoding,
 // following the precedence POSIX defines for `LC_CTYPE`.
 static auto GetLocale() -> llvm::StringRef {
@@ -208,6 +233,8 @@ auto Capabilities::Detect(Filesystem::WriteFileRef file,
       ChooseColorMode(preferences.color, ColorEnvironment::FromProcess(),
                       capabilities.is_terminal);
   capabilities.charset = ChooseCharset(preferences.utf8, GetLocale());
+  capabilities.background =
+      ChooseBackground(preferences.background, GetEnv("COLORFGBG"));
   capabilities.columns = GetColumns(fd);
 
   return capabilities;
