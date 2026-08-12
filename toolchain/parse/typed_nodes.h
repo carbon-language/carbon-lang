@@ -435,7 +435,9 @@ struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 3});
 
-  AnyRuntimeBindingPatternName name;
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
+              RuntimeBindingName>
+      name;
   BindingPatternTypeStartId introducer;
   Lex::ColonTokenIndex token;
   AnyExprId type;
