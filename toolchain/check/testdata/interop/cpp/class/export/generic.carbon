@@ -25,14 +25,10 @@ void F() {
 }
 ''';
 
-// --- fail_todo_specific_alias.carbon
+// --- specific_alias.carbon
 library "[[@TEST_NAME]]";
 import Cpp;
 
-// CHECK:STDERR: fail_todo_specific_alias.carbon:[[@LINE+4]]:1: error: semantics TODO: `interop with specific class` [SemanticsTodo]
-// CHECK:STDERR: class C(T: type) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 class C(T: type) {
   var t: T;
 }
@@ -40,14 +36,6 @@ alias A = C(i32);
 
 inline Cpp '''
 void F() {
-  // CHECK:STDERR: fail_todo_specific_alias.carbon:[[@LINE+8]]:11: error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
-  // CHECK:STDERR:   Carbon::A a;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_specific_alias.carbon:[[@LINE+4]]:11: error: no type named 'A' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    23 |   Carbon::A a;
-  // CHECK:STDERR:       |   ~~~~~~~~^
-  // CHECK:STDERR:
   Carbon::A a;
   a.t = 123;
 }
@@ -57,7 +45,7 @@ void F() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-// CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+4]]:1: error: semantics TODO: `interop with specific class` [SemanticsTodo]
+// CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+4]]:1: error: semantics TODO: `failed to map specific type arg to C++` [SemanticsTodo]
 // CHECK:STDERR: class C(T: type) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
