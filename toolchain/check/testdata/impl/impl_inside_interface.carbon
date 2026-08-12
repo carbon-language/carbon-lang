@@ -13,7 +13,6 @@
 // --- impl_in_interface_definition.carbon
 library "[[@TEST_NAME]]";
 
-// This test uses many unsupported features, and is expected to change.
 interface I {
   default fn F() {
     class C {}
