@@ -241,8 +241,10 @@ auto RequireDefaultFinalOnlyInInterfaces(Context& context,
   // TODO: remove and check that final/default declarations have a definition by
   // the end of the file.
   if (!is_definition) {
-    CARBON_DIAGNOSTIC(ModifierFinalRequiresDefaultImpl, Error,
-                      "TODO: `{0}` modifier currently requires an inline definition", Lex::TokenKind);
+    CARBON_DIAGNOSTIC(
+        ModifierFinalRequiresDefaultImpl, Error,
+        "TODO: `{0}` modifier currently requires an inline definition",
+        Lex::TokenKind);
     ForbidModifiersOnDecl(context, ModifierFinalRequiresDefaultImpl, introducer,
                           KeywordModifierSet::Interface);
   }

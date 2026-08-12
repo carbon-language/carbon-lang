@@ -192,30 +192,49 @@ fn F() {
 
 // --- fail_todo_deferred_modifiers.carbon
 
-interface Default {
+library "[[@TEST_NAME]]";
+
+interface Modifiers {
   // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+4]]:3: error: TODO: `default` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
-  // CHECK:STDERR:   default fn Function();
+  // CHECK:STDERR:   default fn DefaultFunction();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  default fn Function();
+  default fn DefaultFunction();
   // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+4]]:3: error: TODO: `default` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
-  // CHECK:STDERR:   default fn Method(self);
+  // CHECK:STDERR:   default fn DefaultMethod(self);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  default fn Method(self);
+  default fn DefaultMethod(self);
+
+  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+4]]:3: error: TODO: `final` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
+  // CHECK:STDERR:   final fn FinalFunction();
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  final fn FinalFunction();
+  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+4]]:3: error: TODO: `final` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
+  // CHECK:STDERR:   final fn FinalMethod(self);
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  final fn FinalMethod(self);
 }
 
-interface Final {
-  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+4]]:3: error: TODO: `final` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
-  // CHECK:STDERR:   final fn Function();
-  // CHECK:STDERR:   ^~~~~
+// --- fail_impl_final.carbon
+
+library "[[@TEST_NAME]]";
+import library "final_interfaces";
+
+class C {
+  // CHECK:STDERR: fail_impl_final.carbon:[[@LINE+8]]:3: error: attempted to implement `M`, which is final in interface `FinalMethod` [ImplFinalFunction]
+  // CHECK:STDERR:   impl as FinalMethod {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_final.carbon:[[@LINE-6]]:1: in import [InImport]
+  // CHECK:STDERR: final_interfaces.carbon:10:3: note: associated function M declared here [AssociatedFunctionHere]
+  // CHECK:STDERR:   final fn M(unused self) {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  final fn Function();
-  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+4]]:3: error: TODO: `final` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
-  // CHECK:STDERR:   final fn Method(self);
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR:
-  final fn Method(self);
+  impl as FinalMethod {
+    fn M(unused self) { }
+  }
 }
 
 // CHECK:STDOUT: --- default_interfaces.carbon
