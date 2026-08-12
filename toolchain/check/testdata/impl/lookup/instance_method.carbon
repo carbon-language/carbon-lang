@@ -59,8 +59,8 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %C.as.I.impl.F.type: type = fn_type @C.as.I.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F: %C.as.I.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.F.type.064: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.F.513: %I.WithSelf.F.type.064 = struct_value () [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.type.372: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.d46: %I.WithSelf.F.type.372 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type.98b = value_param_pattern [concrete]
@@ -71,7 +71,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %C.type.facet: %type = facet_value %C, () [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.b04: type = fn_type @I.WithSelf.F, @I.WithSelf(%C.type.facet) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.cef: %I.WithSelf.F.type.b04 = struct_value () [concrete]
-// CHECK:STDOUT:   %.ea0: type = fn_type_with_self_type %I.WithSelf.F.type.064, %I.facet [concrete]
+// CHECK:STDOUT:   %.a89: type = fn_type_with_self_type %I.WithSelf.F.type.372, %I.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -199,7 +199,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.ea0 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
+// CHECK:STDOUT:   %impl.elem0: %.a89 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.I.impl.F.call: init %i32 = call %bound_method(%c.ref)
 // CHECK:STDOUT:   return %C.as.I.impl.F.call
@@ -223,8 +223,8 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.064
-// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.513
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.372
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.d46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet) {

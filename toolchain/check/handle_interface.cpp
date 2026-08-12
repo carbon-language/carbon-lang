@@ -78,9 +78,6 @@ static auto BuildInterfaceDecl(Context& context,
     auto existing_interface_decl = existing_decl->As<SemIR::InterfaceDecl>();
     interface_decl.interface_id = existing_interface_decl.interface_id;
     interface_decl.type_id = existing_interface_decl.type_id;
-    // TODO: If the new declaration is a definition, keep its parameter
-    // and implicit parameter lists rather than the ones from the
-    // previous declaration.
 
     auto prev_decl_generic_id =
         context.interfaces().Get(interface_decl.interface_id).generic_id;
@@ -110,6 +107,10 @@ static auto BuildInterfaceDecl(Context& context,
 
   // Write the interface ID into the InterfaceDecl.
   ReplaceInstBeforeConstantUse(context, decl_inst_id, interface_decl);
+
+  if (!is_definition && context.sem_ir().is_impl()) {
+    context.definitions_required_by_decl().push_back(decl_inst_id);
+  }
 
   return {interface_decl.interface_id, decl_inst_id};
 }

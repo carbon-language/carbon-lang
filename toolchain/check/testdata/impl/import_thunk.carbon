@@ -141,8 +141,8 @@ fn G() {
 // CHECK:STDOUT:   %C.as.I.impl.F.type.9a27ec.1: type = fn_type @C.as.I.impl.F.loc8_24.1, @C.as.I.impl(%Y) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.84dd70.1: %C.as.I.impl.F.type.9a27ec.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.6b1ed7.2, (%I.impl_witness) [symbolic]
-// CHECK:STDOUT:   %I.WithSelf.F.type.535: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet) [symbolic]
-// CHECK:STDOUT:   %I.WithSelf.F.6f0: %I.WithSelf.F.type.535 = struct_value () [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.type.ca5: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.a9c: %I.WithSelf.F.type.ca5 = struct_value () [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.type.9a27ec.2: type = fn_type @C.as.I.impl.F.loc8_24.2, @C.as.I.impl(%Y) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.84dd70.2: %C.as.I.impl.F.type.9a27ec.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.6b1ed7.2 [symbolic]
@@ -403,8 +403,8 @@ fn G() {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.535
-// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.6f0
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.ca5
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.a9c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet) {}
@@ -435,7 +435,7 @@ fn G() {
 // CHECK:STDOUT:   %Y: %empty_tuple.type = symbolic_binding Y, 0 [symbolic]
 // CHECK:STDOUT:   %C.6b1ed7.2: type = class_type @C, @C(%Y) [symbolic]
 // CHECK:STDOUT:   %.4ce: <witness> = impl_self_witness %C.6b1ed7.2, @I [symbolic]
-// CHECK:STDOUT:   %I.impl_witness.95e: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%Y) [symbolic]
+// CHECK:STDOUT:   %I.impl_witness.079: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%Y) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.type.c7d3b5.1: type = fn_type @C.as.I.impl.F.1, @C.as.I.impl(%Y) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.c1d971.1: %C.as.I.impl.F.type.c7d3b5.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.type.c7d3b5.2: type = fn_type @C.as.I.impl.F.2, @C.as.I.impl(%Y) [symbolic]
@@ -445,7 +445,7 @@ fn G() {
 // CHECK:STDOUT:   %Y.patt: %pattern_type.cb1 = symbolic_binding_pattern Y, 0 [symbolic]
 // CHECK:STDOUT:   %x.patt.cc8: %pattern_type.d0f = at_binding_pattern x, %x.param_patt.bc9 [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.6b1ed7.2 [symbolic]
-// CHECK:STDOUT:   %I.facet.cee: %I.type = facet_value %C.6b1ed7.2, (%I.impl_witness.95e) [symbolic]
+// CHECK:STDOUT:   %I.facet.38e: %I.type = facet_value %C.6b1ed7.2, (%I.impl_witness.079) [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %C.6b1ed7.2, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.886: %Destroy.type = facet_value %C.6b1ed7.2, (%Destroy.lookup_impl_witness) [symbolic]
@@ -459,15 +459,15 @@ fn G() {
 // CHECK:STDOUT:   %bound_method.3e7: <bound method> = bound_method %.e66, %impl.elem0 [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.specific_fn.79d: <specific function> = specific_function %C.as.I.impl.F.c1d971.2, @C.as.I.impl.F.2(%Y) [symbolic]
 // CHECK:STDOUT:   %.3b5: <witness> = impl_self_witness %C.2c9, @I [concrete]
-// CHECK:STDOUT:   %I.impl_witness.953: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%empty_tuple) [concrete]
+// CHECK:STDOUT:   %I.impl_witness.973: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.type.42776e.1: type = fn_type @C.as.I.impl.F.2, @C.as.I.impl(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.4ca3bc.1: %C.as.I.impl.F.type.42776e.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.type.42776e.2: type = fn_type @C.as.I.impl.F.1, @C.as.I.impl(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.4ca3bc.2: %C.as.I.impl.F.type.42776e.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %I.facet.01a: %I.type = facet_value %C.2c9, (%I.impl_witness.953) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.F.type.fbb: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.01a) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.F.c63: %I.WithSelf.F.type.fbb = struct_value () [concrete]
-// CHECK:STDOUT:   %.1e5: type = fn_type_with_self_type %I.WithSelf.F.type.fbb, %I.facet.01a [concrete]
+// CHECK:STDOUT:   %I.facet.b89: %I.type = facet_value %C.2c9, (%I.impl_witness.973) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.type.ae4: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.b89) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.c0f: %I.WithSelf.F.type.ae4 = struct_value () [concrete]
+// CHECK:STDOUT:   %.902: type = fn_type_with_self_type %I.WithSelf.F.type.ae4, %I.facet.b89 [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.specific_fn.e3e0cd.1: <specific function> = specific_function %C.as.I.impl.F.4ca3bc.2, @C.as.I.impl.F.1(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %pattern_type.7b9: type = pattern_type %C.2c9 [concrete]
@@ -502,7 +502,7 @@ fn G() {
 // CHECK:STDOUT:   %Main.import_ref.e59c42.2: %I.type = import_ref Main//a, loc4_13, loaded [symbolic = constants.%Self.dda]
 // CHECK:STDOUT:   %Main.import_ref.223 = import_ref Main//a, loc4_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9f7: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.418) = import_ref Main//a, loc5_14, loaded [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.ca5)]
-// CHECK:STDOUT:   %Main.import_ref.9c4: <witness> = import_ref Main//b, loc7_31, loaded [symbolic = @C.as.I.impl.%I.impl_witness (constants.%I.impl_witness.95e)]
+// CHECK:STDOUT:   %Main.import_ref.294: <witness> = import_ref Main//b, loc7_31, loaded [symbolic = @C.as.I.impl.%I.impl_witness (constants.%I.impl_witness.079)]
 // CHECK:STDOUT:   %Main.import_ref.718: @C.as.I.impl.%C.as.I.impl.F.type.2 (%C.as.I.impl.F.type.c7d3b5.1) = import_ref Main//b, loc8_24, loaded [symbolic = @C.as.I.impl.%C.as.I.impl.F.2 (constants.%C.as.I.impl.F.c1d971.1)]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.718), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.c90e1a.2: %empty_tuple.type = import_ref Main//b, loc7_15, loaded [symbolic = @C.as.I.impl.%Y (constants.%Y)]
@@ -540,7 +540,7 @@ fn G() {
 // CHECK:STDOUT:   %Y: %empty_tuple.type = symbolic_binding Y, 0 [symbolic = %Y (constants.%Y)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Y) [symbolic = %C (constants.%C.6b1ed7.2)]
 // CHECK:STDOUT:   %.1: <witness> = impl_self_witness %C, @I [symbolic = %.1 (constants.%.4ce)]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%Y) [symbolic = %I.impl_witness (constants.%I.impl_witness.95e)]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%Y) [symbolic = %I.impl_witness (constants.%I.impl_witness.079)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.I.impl.F.type.1: type = fn_type @C.as.I.impl.F.2, @C.as.I.impl(%Y) [symbolic = %C.as.I.impl.F.type.1 (constants.%C.as.I.impl.F.type.c7d3b5.2)]
@@ -550,7 +550,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%Main.import_ref.ff4 as imports.%Main.import_ref.e90 {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = imports.%Main.import_ref.9c4
+// CHECK:STDOUT:     witness = imports.%Main.import_ref.294
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -577,9 +577,9 @@ fn G() {
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%empty_tuple) [concrete = constants.%C.2c9]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %F.ref.loc7_11: %I.assoc_type = name_ref F, imports.%Main.import_ref.1b3 [concrete = constants.%assoc0.232]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (constants.%I.impl_witness.953) [concrete = constants.%I.facet.01a]
-// CHECK:STDOUT:   %.loc7_8: %I.type = converted %C, %I.facet [concrete = constants.%I.facet.01a]
-// CHECK:STDOUT:   %impl.elem0: %.1e5 = impl_witness_access constants.%I.impl_witness.953, element0 [concrete = constants.%C.as.I.impl.F.4ca3bc.2]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (constants.%I.impl_witness.973) [concrete = constants.%I.facet.b89]
+// CHECK:STDOUT:   %.loc7_8: %I.type = converted %C, %I.facet [concrete = constants.%I.facet.b89]
+// CHECK:STDOUT:   %impl.elem0: %.902 = impl_witness_access constants.%I.impl_witness.973, element0 [concrete = constants.%C.as.I.impl.F.4ca3bc.2]
 // CHECK:STDOUT:   %.loc7_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @C.as.I.impl.F.1(constants.%empty_tuple) [concrete = constants.%C.as.I.impl.F.specific_fn.e3e0cd.1]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
@@ -620,7 +620,7 @@ fn G() {
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.WithSelf.Op(%Destroy.facet) [symbolic = %specific_impl_fn (constants.%specific_impl_fn)]
 // CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %.1, %specific_impl_fn [symbolic = %bound_method.2 (constants.%bound_method.ef4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn [thunk imports.%Main.F.b80 for imports.%I.WithSelf.F.decl, @I.WithSelf.F(constants.%I.facet.cee)];
+// CHECK:STDOUT:   fn [thunk imports.%Main.F.b80 for imports.%I.WithSelf.F.decl, @I.WithSelf.F(constants.%I.facet.38e)];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @C.as.I.impl.F.2(imports.%Main.import_ref.c90e1a.2: %empty_tuple.type) [from "b.carbon"] {
@@ -676,7 +676,7 @@ fn G() {
 // CHECK:STDOUT:   %Y => constants.%Y
 // CHECK:STDOUT:   %C => constants.%C.6b1ed7.2
 // CHECK:STDOUT:   %.1 => constants.%.4ce
-// CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.95e
+// CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.079
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.I.impl.F.type.1 => constants.%C.as.I.impl.F.type.c7d3b5.2
@@ -696,7 +696,7 @@ fn G() {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet.cee) {}
+// CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet.38e) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl.F.1(constants.%Y) {}
 // CHECK:STDOUT:
@@ -705,7 +705,7 @@ fn G() {
 // CHECK:STDOUT:   %Y => constants.%empty_tuple
 // CHECK:STDOUT:   %C => constants.%C.2c9
 // CHECK:STDOUT:   %.1 => constants.%.3b5
-// CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.953
+// CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.973
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.I.impl.F.type.1 => constants.%C.as.I.impl.F.type.42776e.1
@@ -714,11 +714,11 @@ fn G() {
 // CHECK:STDOUT:   %C.as.I.impl.F.2 => constants.%C.as.I.impl.F.4ca3bc.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.01a) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.b89) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%I.facet.01a
-// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.fbb
-// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.c63
+// CHECK:STDOUT:   %Self => constants.%I.facet.b89
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.ae4
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.c0f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl.F.1(constants.%empty_tuple) {

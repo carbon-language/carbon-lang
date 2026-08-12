@@ -67,7 +67,7 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.4ea, %Destroy.Op.1a2547.2 [concrete]
 // CHECK:STDOUT:   %a.patt.8aa5e9.2: %pattern_type.283 = at_binding_pattern a, %a.param_patt.8f5 [concrete]
-// CHECK:STDOUT:   %FeedAnimal.specific_fn.42c: <specific function> = specific_function %FeedAnimal, @FeedAnimal(%Animal.facet) [concrete]
+// CHECK:STDOUT:   %FeedAnimal.specific_fn.99a: <specific function> = specific_function %FeedAnimal, @FeedAnimal(%Animal.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -270,7 +270,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
-// CHECK:STDOUT:   %FeedAnimal.specific_fn.loc19_36.2 => constants.%FeedAnimal.specific_fn.42c
+// CHECK:STDOUT:   %FeedAnimal.specific_fn.loc19_36.2 => constants.%FeedAnimal.specific_fn.99a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(constants.%Animal.facet) {

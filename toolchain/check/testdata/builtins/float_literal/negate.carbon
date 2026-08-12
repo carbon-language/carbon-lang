@@ -67,63 +67,63 @@ let v6: Core.FloatLiteral = Negate(Negate(0.0));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc23_39.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call.loc23 [concrete = constants.%float.84a]
-// CHECK:STDOUT:   %.loc23_39.2: Core.FloatLiteral = converted @__global_init.%Negate.call.loc23, %.loc23_39.1 [concrete = constants.%float.84a]
+// CHECK:STDOUT:   %.loc19_39.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call.loc19 [concrete = constants.%float.84a]
+// CHECK:STDOUT:   %.loc19_39.2: Core.FloatLiteral = converted @__global_init.%Negate.call.loc19, %.loc19_39.1 [concrete = constants.%float.84a]
+// CHECK:STDOUT:   %.loc19_13: type = splice_block %FloatLiteral.ref.loc19 [concrete = Core.FloatLiteral] {
+// CHECK:STDOUT:     %Core.ref.loc19: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %FloatLiteral.ref.loc19: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v1: Core.FloatLiteral = wrapper_binding v1, %.loc19_39.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v1.patt: %pattern_type = value_binding_pattern v1 [concrete = constants.%v1.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc20_41.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call.loc20 [concrete = constants.%float.838]
+// CHECK:STDOUT:   %.loc20_41.2: Core.FloatLiteral = converted @__global_init.%Negate.call.loc20, %.loc20_41.1 [concrete = constants.%float.838]
+// CHECK:STDOUT:   %.loc20_13: type = splice_block %FloatLiteral.ref.loc20 [concrete = Core.FloatLiteral] {
+// CHECK:STDOUT:     %Core.ref.loc20: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %FloatLiteral.ref.loc20: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v2: Core.FloatLiteral = wrapper_binding v2, %.loc20_41.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v2.patt: %pattern_type = value_binding_pattern v2 [concrete = constants.%v2.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc23_49.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call.loc23_49 [concrete = constants.%float.b21268.2]
+// CHECK:STDOUT:   %.loc23_49.2: Core.FloatLiteral = converted @__global_init.%Negate.call.loc23_49, %.loc23_49.1 [concrete = constants.%float.b21268.2]
 // CHECK:STDOUT:   %.loc23_13: type = splice_block %FloatLiteral.ref.loc23 [concrete = Core.FloatLiteral] {
 // CHECK:STDOUT:     %Core.ref.loc23: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %FloatLiteral.ref.loc23: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v1: Core.FloatLiteral = wrapper_binding v1, %.loc23_39.2
+// CHECK:STDOUT:   %v3: Core.FloatLiteral = wrapper_binding v3, %.loc23_49.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v1.patt: %pattern_type = value_binding_pattern v1 [concrete = constants.%v1.patt]
+// CHECK:STDOUT:     %v3.patt: %pattern_type = value_binding_pattern v3 [concrete = constants.%v3.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc28_41.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call.loc28 [concrete = constants.%float.838]
-// CHECK:STDOUT:   %.loc28_41.2: Core.FloatLiteral = converted @__global_init.%Negate.call.loc28, %.loc28_41.1 [concrete = constants.%float.838]
+// CHECK:STDOUT:   %.loc24_51.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call.loc24_51 [concrete = constants.%float.eda197.2]
+// CHECK:STDOUT:   %.loc24_51.2: Core.FloatLiteral = converted @__global_init.%Negate.call.loc24_51, %.loc24_51.1 [concrete = constants.%float.eda197.2]
+// CHECK:STDOUT:   %.loc24_13: type = splice_block %FloatLiteral.ref.loc24 [concrete = Core.FloatLiteral] {
+// CHECK:STDOUT:     %Core.ref.loc24: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %FloatLiteral.ref.loc24: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v4: Core.FloatLiteral = wrapper_binding v4, %.loc24_51.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v4.patt: %pattern_type = value_binding_pattern v4 [concrete = constants.%v4.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc27_39.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call.loc27 [concrete = constants.%float.1f75e4.2]
+// CHECK:STDOUT:   %.loc27_39.2: Core.FloatLiteral = converted @__global_init.%Negate.call.loc27, %.loc27_39.1 [concrete = constants.%float.1f75e4.2]
+// CHECK:STDOUT:   %.loc27_13: type = splice_block %FloatLiteral.ref.loc27 [concrete = Core.FloatLiteral] {
+// CHECK:STDOUT:     %Core.ref.loc27: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %FloatLiteral.ref.loc27: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v5: Core.FloatLiteral = wrapper_binding v5, %.loc27_39.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v5.patt: %pattern_type = value_binding_pattern v5 [concrete = constants.%v5.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc28_47.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call.loc28_47 [concrete = constants.%float.1f75e4.5]
+// CHECK:STDOUT:   %.loc28_47.2: Core.FloatLiteral = converted @__global_init.%Negate.call.loc28_47, %.loc28_47.1 [concrete = constants.%float.1f75e4.5]
 // CHECK:STDOUT:   %.loc28_13: type = splice_block %FloatLiteral.ref.loc28 [concrete = Core.FloatLiteral] {
 // CHECK:STDOUT:     %Core.ref.loc28: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %FloatLiteral.ref.loc28: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2: Core.FloatLiteral = wrapper_binding v2, %.loc28_41.2
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v2.patt: %pattern_type = value_binding_pattern v2 [concrete = constants.%v2.patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc35_49.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call.loc35_49 [concrete = constants.%float.b21268.2]
-// CHECK:STDOUT:   %.loc35_49.2: Core.FloatLiteral = converted @__global_init.%Negate.call.loc35_49, %.loc35_49.1 [concrete = constants.%float.b21268.2]
-// CHECK:STDOUT:   %.loc35_13: type = splice_block %FloatLiteral.ref.loc35 [concrete = Core.FloatLiteral] {
-// CHECK:STDOUT:     %Core.ref.loc35: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %FloatLiteral.ref.loc35: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v3: Core.FloatLiteral = wrapper_binding v3, %.loc35_49.2
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v3.patt: %pattern_type = value_binding_pattern v3 [concrete = constants.%v3.patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc40_51.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call.loc40_51 [concrete = constants.%float.eda197.2]
-// CHECK:STDOUT:   %.loc40_51.2: Core.FloatLiteral = converted @__global_init.%Negate.call.loc40_51, %.loc40_51.1 [concrete = constants.%float.eda197.2]
-// CHECK:STDOUT:   %.loc40_13: type = splice_block %FloatLiteral.ref.loc40 [concrete = Core.FloatLiteral] {
-// CHECK:STDOUT:     %Core.ref.loc40: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %FloatLiteral.ref.loc40: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v4: Core.FloatLiteral = wrapper_binding v4, %.loc40_51.2
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v4.patt: %pattern_type = value_binding_pattern v4 [concrete = constants.%v4.patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc47_39.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call.loc47 [concrete = constants.%float.1f75e4.2]
-// CHECK:STDOUT:   %.loc47_39.2: Core.FloatLiteral = converted @__global_init.%Negate.call.loc47, %.loc47_39.1 [concrete = constants.%float.1f75e4.2]
-// CHECK:STDOUT:   %.loc47_13: type = splice_block %FloatLiteral.ref.loc47 [concrete = Core.FloatLiteral] {
-// CHECK:STDOUT:     %Core.ref.loc47: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %FloatLiteral.ref.loc47: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v5: Core.FloatLiteral = wrapper_binding v5, %.loc47_39.2
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v5.patt: %pattern_type = value_binding_pattern v5 [concrete = constants.%v5.patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc52_47.1: Core.FloatLiteral = value_of_initializer @__global_init.%Negate.call.loc52_47 [concrete = constants.%float.1f75e4.5]
-// CHECK:STDOUT:   %.loc52_47.2: Core.FloatLiteral = converted @__global_init.%Negate.call.loc52_47, %.loc52_47.1 [concrete = constants.%float.1f75e4.5]
-// CHECK:STDOUT:   %.loc52_13: type = splice_block %FloatLiteral.ref.loc52 [concrete = Core.FloatLiteral] {
-// CHECK:STDOUT:     %Core.ref.loc52: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %FloatLiteral.ref.loc52: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v6: Core.FloatLiteral = wrapper_binding v6, %.loc52_47.2
+// CHECK:STDOUT:   %v6: Core.FloatLiteral = wrapper_binding v6, %.loc28_47.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v6.patt: %pattern_type = value_binding_pattern v6 [concrete = constants.%v6.patt]
 // CHECK:STDOUT:   }
@@ -131,36 +131,36 @@ let v6: Core.FloatLiteral = Negate(Negate(0.0));
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Negate.ref.loc23: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
-// CHECK:STDOUT:   %float.loc23: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6da]
-// CHECK:STDOUT:   %Negate.call.loc23: init Core.FloatLiteral = call %Negate.ref.loc23(%float.loc23) [concrete = constants.%float.84a]
-// CHECK:STDOUT:   %Negate.ref.loc28: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
-// CHECK:STDOUT:   %float.loc28: Core.FloatLiteral = float_literal_value 18e8 [concrete = constants.%float.c59]
-// CHECK:STDOUT:   %Negate.call.loc28: init Core.FloatLiteral = call %Negate.ref.loc28(%float.loc28) [concrete = constants.%float.838]
-// CHECK:STDOUT:   %Negate.ref.loc35_29: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
-// CHECK:STDOUT:   %Negate.ref.loc35_36: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
-// CHECK:STDOUT:   %float.loc35: Core.FloatLiteral = float_literal_value 8787e-2 [concrete = constants.%float.b21268.1]
-// CHECK:STDOUT:   %Negate.call.loc35_48: init Core.FloatLiteral = call %Negate.ref.loc35_36(%float.loc35) [concrete = constants.%float.923]
-// CHECK:STDOUT:   %.loc35_48.1: Core.FloatLiteral = value_of_initializer %Negate.call.loc35_48 [concrete = constants.%float.923]
-// CHECK:STDOUT:   %.loc35_48.2: Core.FloatLiteral = converted %Negate.call.loc35_48, %.loc35_48.1 [concrete = constants.%float.923]
-// CHECK:STDOUT:   %Negate.call.loc35_49: init Core.FloatLiteral = call %Negate.ref.loc35_29(%.loc35_48.2) [concrete = constants.%float.b21268.2]
-// CHECK:STDOUT:   %Negate.ref.loc40_29: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
-// CHECK:STDOUT:   %Negate.ref.loc40_36: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
-// CHECK:STDOUT:   %float.loc40: Core.FloatLiteral = float_literal_value 24p-3 [concrete = constants.%float.eda197.1]
-// CHECK:STDOUT:   %Negate.call.loc40_50: init Core.FloatLiteral = call %Negate.ref.loc40_36(%float.loc40) [concrete = constants.%float.0b3]
-// CHECK:STDOUT:   %.loc40_50.1: Core.FloatLiteral = value_of_initializer %Negate.call.loc40_50 [concrete = constants.%float.0b3]
-// CHECK:STDOUT:   %.loc40_50.2: Core.FloatLiteral = converted %Negate.call.loc40_50, %.loc40_50.1 [concrete = constants.%float.0b3]
-// CHECK:STDOUT:   %Negate.call.loc40_51: init Core.FloatLiteral = call %Negate.ref.loc40_29(%.loc40_50.2) [concrete = constants.%float.eda197.2]
-// CHECK:STDOUT:   %Negate.ref.loc47: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
-// CHECK:STDOUT:   %float.loc47: Core.FloatLiteral = float_literal_value 0e-1 [concrete = constants.%float.1f75e4.1]
-// CHECK:STDOUT:   %Negate.call.loc47: init Core.FloatLiteral = call %Negate.ref.loc47(%float.loc47) [concrete = constants.%float.1f75e4.2]
-// CHECK:STDOUT:   %Negate.ref.loc52_29: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
-// CHECK:STDOUT:   %Negate.ref.loc52_36: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
-// CHECK:STDOUT:   %float.loc52: Core.FloatLiteral = float_literal_value 0e-1 [concrete = constants.%float.1f75e4.3]
-// CHECK:STDOUT:   %Negate.call.loc52_46: init Core.FloatLiteral = call %Negate.ref.loc52_36(%float.loc52) [concrete = constants.%float.1f75e4.4]
-// CHECK:STDOUT:   %.loc52_46.1: Core.FloatLiteral = value_of_initializer %Negate.call.loc52_46 [concrete = constants.%float.1f75e4.4]
-// CHECK:STDOUT:   %.loc52_46.2: Core.FloatLiteral = converted %Negate.call.loc52_46, %.loc52_46.1 [concrete = constants.%float.1f75e4.4]
-// CHECK:STDOUT:   %Negate.call.loc52_47: init Core.FloatLiteral = call %Negate.ref.loc52_29(%.loc52_46.2) [concrete = constants.%float.1f75e4.5]
+// CHECK:STDOUT:   %Negate.ref.loc19: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
+// CHECK:STDOUT:   %float.loc19: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6da]
+// CHECK:STDOUT:   %Negate.call.loc19: init Core.FloatLiteral = call %Negate.ref.loc19(%float.loc19) [concrete = constants.%float.84a]
+// CHECK:STDOUT:   %Negate.ref.loc20: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
+// CHECK:STDOUT:   %float.loc20: Core.FloatLiteral = float_literal_value 18e8 [concrete = constants.%float.c59]
+// CHECK:STDOUT:   %Negate.call.loc20: init Core.FloatLiteral = call %Negate.ref.loc20(%float.loc20) [concrete = constants.%float.838]
+// CHECK:STDOUT:   %Negate.ref.loc23_29: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
+// CHECK:STDOUT:   %Negate.ref.loc23_36: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
+// CHECK:STDOUT:   %float.loc23: Core.FloatLiteral = float_literal_value 8787e-2 [concrete = constants.%float.b21268.1]
+// CHECK:STDOUT:   %Negate.call.loc23_48: init Core.FloatLiteral = call %Negate.ref.loc23_36(%float.loc23) [concrete = constants.%float.923]
+// CHECK:STDOUT:   %.loc23_48.1: Core.FloatLiteral = value_of_initializer %Negate.call.loc23_48 [concrete = constants.%float.923]
+// CHECK:STDOUT:   %.loc23_48.2: Core.FloatLiteral = converted %Negate.call.loc23_48, %.loc23_48.1 [concrete = constants.%float.923]
+// CHECK:STDOUT:   %Negate.call.loc23_49: init Core.FloatLiteral = call %Negate.ref.loc23_29(%.loc23_48.2) [concrete = constants.%float.b21268.2]
+// CHECK:STDOUT:   %Negate.ref.loc24_29: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
+// CHECK:STDOUT:   %Negate.ref.loc24_36: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
+// CHECK:STDOUT:   %float.loc24: Core.FloatLiteral = float_literal_value 24p-3 [concrete = constants.%float.eda197.1]
+// CHECK:STDOUT:   %Negate.call.loc24_50: init Core.FloatLiteral = call %Negate.ref.loc24_36(%float.loc24) [concrete = constants.%float.0b3]
+// CHECK:STDOUT:   %.loc24_50.1: Core.FloatLiteral = value_of_initializer %Negate.call.loc24_50 [concrete = constants.%float.0b3]
+// CHECK:STDOUT:   %.loc24_50.2: Core.FloatLiteral = converted %Negate.call.loc24_50, %.loc24_50.1 [concrete = constants.%float.0b3]
+// CHECK:STDOUT:   %Negate.call.loc24_51: init Core.FloatLiteral = call %Negate.ref.loc24_29(%.loc24_50.2) [concrete = constants.%float.eda197.2]
+// CHECK:STDOUT:   %Negate.ref.loc27: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
+// CHECK:STDOUT:   %float.loc27: Core.FloatLiteral = float_literal_value 0e-1 [concrete = constants.%float.1f75e4.1]
+// CHECK:STDOUT:   %Negate.call.loc27: init Core.FloatLiteral = call %Negate.ref.loc27(%float.loc27) [concrete = constants.%float.1f75e4.2]
+// CHECK:STDOUT:   %Negate.ref.loc28_29: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
+// CHECK:STDOUT:   %Negate.ref.loc28_36: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
+// CHECK:STDOUT:   %float.loc28: Core.FloatLiteral = float_literal_value 0e-1 [concrete = constants.%float.1f75e4.3]
+// CHECK:STDOUT:   %Negate.call.loc28_46: init Core.FloatLiteral = call %Negate.ref.loc28_36(%float.loc28) [concrete = constants.%float.1f75e4.4]
+// CHECK:STDOUT:   %.loc28_46.1: Core.FloatLiteral = value_of_initializer %Negate.call.loc28_46 [concrete = constants.%float.1f75e4.4]
+// CHECK:STDOUT:   %.loc28_46.2: Core.FloatLiteral = converted %Negate.call.loc28_46, %.loc28_46.1 [concrete = constants.%float.1f75e4.4]
+// CHECK:STDOUT:   %Negate.call.loc28_47: init Core.FloatLiteral = call %Negate.ref.loc28_29(%.loc28_46.2) [concrete = constants.%float.1f75e4.5]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

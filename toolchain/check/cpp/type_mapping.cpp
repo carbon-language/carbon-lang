@@ -169,10 +169,10 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
               bit_width, clang::FloatModeKind::NoFloat);
         }
         case SemIR::NumericTypeLiteralInfo::Int: {
-          return ast_context.getIntTypeForBitwidth(bit_width, true);
+          return GetIntNType(ast_context, bit_width, true);
         }
         case SemIR::NumericTypeLiteralInfo::UInt: {
-          return ast_context.getIntTypeForBitwidth(bit_width, false);
+          return GetIntNType(ast_context, bit_width, false);
         }
       }
     }
@@ -182,8 +182,14 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
     case SemIR::RecognizedTypeInfo::CppLong32: {
       return VerifyIntegerTypeWidth(context, ast_context.LongTy, 32);
     }
+    case SemIR::RecognizedTypeInfo::CppLong64: {
+      return VerifyIntegerTypeWidth(context, ast_context.LongTy, 64);
+    }
     case SemIR::RecognizedTypeInfo::CppULong32: {
       return VerifyIntegerTypeWidth(context, ast_context.UnsignedLongTy, 32);
+    }
+    case SemIR::RecognizedTypeInfo::CppULong64: {
+      return VerifyIntegerTypeWidth(context, ast_context.UnsignedLongTy, 64);
     }
     case SemIR::RecognizedTypeInfo::CppLongLong64: {
       return VerifyIntegerTypeWidth(context, ast_context.LongLongTy, 64);

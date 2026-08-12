@@ -160,7 +160,7 @@ void G() {
 // CHECK:STDOUT:   %assoc0.628: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.Doit.decl [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %.b03: <witness> = impl_self_witness %A, @I [concrete]
-// CHECK:STDOUT:   %I.impl_witness.6ad: <witness> = impl_witness @A.as.I.impl.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.impl_witness.ca2: <witness> = impl_witness @A.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %self.param_patt.04e: %pattern_type.9ef = value_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.312: %pattern_type.9ef = at_binding_pattern self, %self.param_patt.04e [concrete]
@@ -169,16 +169,16 @@ void G() {
 // CHECK:STDOUT:   %return.patt.a6d: %pattern_type.9ef = return_slot_pattern %return.param_patt.f0c, %A [concrete]
 // CHECK:STDOUT:   %A.as.I.impl.Doit.type: type = fn_type @A.as.I.impl.Doit [concrete]
 // CHECK:STDOUT:   %A.as.I.impl.Doit: %A.as.I.impl.Doit.type = struct_value () [concrete]
-// CHECK:STDOUT:   %I.facet.64b: %I.type = facet_value %A, (%I.impl_witness.6ad) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.Doit.type.5b3: type = fn_type @I.WithSelf.Doit, @I.WithSelf(%I.facet.64b) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.Doit.dab: %I.WithSelf.Doit.type.5b3 = struct_value () [concrete]
+// CHECK:STDOUT:   %I.facet.f31: %I.type = facet_value %A, (%I.impl_witness.ca2) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.Doit.type.808: type = fn_type @I.WithSelf.Doit, @I.WithSelf(%I.facet.f31) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.Doit.ebf: %I.WithSelf.Doit.type.808 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %.d64: <witness> = impl_self_witness %B, @I [concrete]
-// CHECK:STDOUT:   %I.impl_witness.5b8: <witness> = impl_witness @B.as.I.impl.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.impl_witness.b14: <witness> = impl_witness @B.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.e39: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %self.param_patt.f1f: %pattern_type.e39 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.4eb: %pattern_type.e39 = at_binding_pattern self, %self.param_patt.f1f [concrete]
@@ -187,9 +187,9 @@ void G() {
 // CHECK:STDOUT:   %return.patt.911: %pattern_type.e39 = return_slot_pattern %return.param_patt.934, %B [concrete]
 // CHECK:STDOUT:   %B.as.I.impl.Doit.type: type = fn_type @B.as.I.impl.Doit [concrete]
 // CHECK:STDOUT:   %B.as.I.impl.Doit: %B.as.I.impl.Doit.type = struct_value () [concrete]
-// CHECK:STDOUT:   %I.facet.9f8: %I.type = facet_value %B, (%I.impl_witness.5b8) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.Doit.type.2ce: type = fn_type @I.WithSelf.Doit, @I.WithSelf(%I.facet.9f8) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.Doit.450: %I.WithSelf.Doit.type.2ce = struct_value () [concrete]
+// CHECK:STDOUT:   %I.facet.a68: %I.type = facet_value %B, (%I.impl_witness.b14) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.Doit.type.a07: type = fn_type @I.WithSelf.Doit, @I.WithSelf(%I.facet.a68) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.Doit.9cf: %I.WithSelf.Doit.type.a07 = struct_value () [concrete]
 // CHECK:STDOUT:   %B.val: %B = struct_value () [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
@@ -229,12 +229,12 @@ void G() {
 // CHECK:STDOUT:   %.dca: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.09e, %Destroy.facet.6e5 [concrete]
 // CHECK:STDOUT:   %t.param_patt.169: %pattern_type.9ef = value_param_pattern [concrete]
 // CHECK:STDOUT:   %t.patt.ee8: %pattern_type.9ef = at_binding_pattern t, %t.param_patt.169 [concrete]
-// CHECK:STDOUT:   %F.specific_fn.f33: <specific function> = specific_function %F, @F(%I.facet.64b) [concrete]
+// CHECK:STDOUT:   %F.specific_fn.9d8: <specific function> = specific_function %F, @F(%I.facet.f31) [concrete]
 // CHECK:STDOUT:   %t.param_patt.267: %pattern_type.e39 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %t.patt.062: %pattern_type.e39 = at_binding_pattern t, %t.param_patt.267 [concrete]
-// CHECK:STDOUT:   %F.specific_fn.db2: <specific function> = specific_function %F, @F(%I.facet.9f8) [concrete]
-// CHECK:STDOUT:   %.660: type = fn_type_with_self_type %I.WithSelf.Doit.type.5b3, %I.facet.64b [concrete]
-// CHECK:STDOUT:   %.545: type = fn_type_with_self_type %I.WithSelf.Doit.type.2ce, %I.facet.9f8 [concrete]
+// CHECK:STDOUT:   %F.specific_fn.480: <specific function> = specific_function %F, @F(%I.facet.a68) [concrete]
+// CHECK:STDOUT:   %.760: type = fn_type_with_self_type %I.WithSelf.Doit.type.808, %I.facet.f31 [concrete]
+// CHECK:STDOUT:   %.10f: type = fn_type_with_self_type %I.WithSelf.Doit.type.a07, %I.facet.a68 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -274,10 +274,10 @@ void G() {
 // CHECK:STDOUT:     %return: ref @F.%T.as_type.loc24_15.1 (%T.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %I.facet.loc24_23.1: %I.type = facet_value %A.decl, (constants.%I.impl_witness.6ad) [concrete = constants.%I.facet.64b]
-// CHECK:STDOUT:   %.loc24_23.1: %I.type = converted %A.decl, %I.facet.loc24_23.1 [concrete = constants.%I.facet.64b]
-// CHECK:STDOUT:   %I.facet.loc24_23.2: %I.type = facet_value %B.decl, (constants.%I.impl_witness.5b8) [concrete = constants.%I.facet.9f8]
-// CHECK:STDOUT:   %.loc24_23.2: %I.type = converted %B.decl, %I.facet.loc24_23.2 [concrete = constants.%I.facet.9f8]
+// CHECK:STDOUT:   %I.facet.loc24_23.1: %I.type = facet_value %A.decl, (constants.%I.impl_witness.ca2) [concrete = constants.%I.facet.f31]
+// CHECK:STDOUT:   %.loc24_23.1: %I.type = converted %A.decl, %I.facet.loc24_23.1 [concrete = constants.%I.facet.f31]
+// CHECK:STDOUT:   %I.facet.loc24_23.2: %I.type = facet_value %B.decl, (constants.%I.impl_witness.b14) [concrete = constants.%I.facet.a68]
+// CHECK:STDOUT:   %.loc24_23.2: %I.type = converted %B.decl, %I.facet.loc24_23.2 [concrete = constants.%I.facet.a68]
 // CHECK:STDOUT:   inline_cpp "Carbon::B G() {\n  Carbon::A a;\n  Carbon::B b;\n  Carbon::F(a);\n  return Carbon::F(b);\n}\n"
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -332,7 +332,7 @@ void G() {
 // CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%A.as.I.impl.Doit.decl), @A.as.I.impl [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.6ad]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.ca2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Doit = %A.as.I.impl.Doit.decl
@@ -356,7 +356,7 @@ void G() {
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%B.as.I.impl.Doit.decl), @B.as.I.impl [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.5b8]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.b14]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Doit = %B.as.I.impl.Doit.decl
@@ -486,14 +486,14 @@ void G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F__carbon_thunkinst64000043(%_.param.loc24_23.1: ref %A, %_.param.loc24_23.2: ref %A) {
+// CHECK:STDOUT: fn @F__carbon_thunk.26f2099a79512a5d(%_.param.loc24_23.1: ref %A, %_.param.loc24_23.2: ref %A) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F__carbon_thunkinst64000043.ref: %F.type = name_ref F__carbon_thunkinst64000043, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %I.facet.loc24_23.1: %I.type = facet_value constants.%A, (constants.%I.impl_witness.6ad) [concrete = constants.%I.facet.64b]
-// CHECK:STDOUT:   %.loc24_23.1: %I.type = converted constants.%A, %I.facet.loc24_23.1 [concrete = constants.%I.facet.64b]
-// CHECK:STDOUT:   %I.facet.loc24_23.2: %I.type = facet_value constants.%A, (constants.%I.impl_witness.6ad) [concrete = constants.%I.facet.64b]
-// CHECK:STDOUT:   %.loc24_23.2: %I.type = converted constants.%A, %I.facet.loc24_23.2 [concrete = constants.%I.facet.64b]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F__carbon_thunkinst64000043.ref, @F(constants.%I.facet.64b) [concrete = constants.%F.specific_fn.f33]
+// CHECK:STDOUT:   %F__carbon_thunk.26f2099a79512a5d.ref: %F.type = name_ref F__carbon_thunk.26f2099a79512a5d, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %I.facet.loc24_23.1: %I.type = facet_value constants.%A, (constants.%I.impl_witness.ca2) [concrete = constants.%I.facet.f31]
+// CHECK:STDOUT:   %.loc24_23.1: %I.type = converted constants.%A, %I.facet.loc24_23.1 [concrete = constants.%I.facet.f31]
+// CHECK:STDOUT:   %I.facet.loc24_23.2: %I.type = facet_value constants.%A, (constants.%I.impl_witness.ca2) [concrete = constants.%I.facet.f31]
+// CHECK:STDOUT:   %.loc24_23.2: %I.type = converted constants.%A, %I.facet.loc24_23.2 [concrete = constants.%I.facet.f31]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F__carbon_thunk.26f2099a79512a5d.ref, @F(constants.%I.facet.f31) [concrete = constants.%F.specific_fn.9d8]
 // CHECK:STDOUT:   %.loc24_23.3: ref %A = splice_block %_.param.loc24_23.2 {}
 // CHECK:STDOUT:   %.loc24_23.4: %A = acquire_value %_.param.loc24_23.1
 // CHECK:STDOUT:   %F.call: init %A to %.loc24_23.3 = call %F.specific_fn(%.loc24_23.4)
@@ -501,14 +501,14 @@ void G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F__carbon_thunkinst6400006E(%_.param.loc24_23.1: ref %B, %_.param.loc24_23.2: ref %B) {
+// CHECK:STDOUT: fn @F__carbon_thunk.7a3b9f04ddf4269e(%_.param.loc24_23.1: ref %B, %_.param.loc24_23.2: ref %B) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F__carbon_thunkinst6400006E.ref: %F.type = name_ref F__carbon_thunkinst6400006E, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %I.facet.loc24_23.1: %I.type = facet_value constants.%B, (constants.%I.impl_witness.5b8) [concrete = constants.%I.facet.9f8]
-// CHECK:STDOUT:   %.loc24_23.1: %I.type = converted constants.%B, %I.facet.loc24_23.1 [concrete = constants.%I.facet.9f8]
-// CHECK:STDOUT:   %I.facet.loc24_23.2: %I.type = facet_value constants.%B, (constants.%I.impl_witness.5b8) [concrete = constants.%I.facet.9f8]
-// CHECK:STDOUT:   %.loc24_23.2: %I.type = converted constants.%B, %I.facet.loc24_23.2 [concrete = constants.%I.facet.9f8]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F__carbon_thunkinst6400006E.ref, @F(constants.%I.facet.9f8) [concrete = constants.%F.specific_fn.db2]
+// CHECK:STDOUT:   %F__carbon_thunk.7a3b9f04ddf4269e.ref: %F.type = name_ref F__carbon_thunk.7a3b9f04ddf4269e, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %I.facet.loc24_23.1: %I.type = facet_value constants.%B, (constants.%I.impl_witness.b14) [concrete = constants.%I.facet.a68]
+// CHECK:STDOUT:   %.loc24_23.1: %I.type = converted constants.%B, %I.facet.loc24_23.1 [concrete = constants.%I.facet.a68]
+// CHECK:STDOUT:   %I.facet.loc24_23.2: %I.type = facet_value constants.%B, (constants.%I.impl_witness.b14) [concrete = constants.%I.facet.a68]
+// CHECK:STDOUT:   %.loc24_23.2: %I.type = converted constants.%B, %I.facet.loc24_23.2 [concrete = constants.%I.facet.a68]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F__carbon_thunk.7a3b9f04ddf4269e.ref, @F(constants.%I.facet.a68) [concrete = constants.%F.specific_fn.480]
 // CHECK:STDOUT:   %.loc24_23.3: ref %B = splice_block %_.param.loc24_23.2 {}
 // CHECK:STDOUT:   %.loc24_23.4: %B = acquire_value %_.param.loc24_23.1
 // CHECK:STDOUT:   %F.call: init %B to %.loc24_23.3 = call %F.specific_fn(%.loc24_23.4)
@@ -534,15 +534,15 @@ void G() {
 // CHECK:STDOUT:   %return.patt.loc6_17.2 => constants.%return.patt.44a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.64b) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.f31) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%I.facet.64b
-// CHECK:STDOUT:   %I.WithSelf.Doit.type => constants.%I.WithSelf.Doit.type.5b3
-// CHECK:STDOUT:   %I.WithSelf.Doit => constants.%I.WithSelf.Doit.dab
+// CHECK:STDOUT:   %Self => constants.%I.facet.f31
+// CHECK:STDOUT:   %I.WithSelf.Doit.type => constants.%I.WithSelf.Doit.type.808
+// CHECK:STDOUT:   %I.WithSelf.Doit => constants.%I.WithSelf.Doit.ebf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf.Doit(constants.%I.facet.64b) {
-// CHECK:STDOUT:   %Self => constants.%I.facet.64b
+// CHECK:STDOUT: specific @I.WithSelf.Doit(constants.%I.facet.f31) {
+// CHECK:STDOUT:   %Self => constants.%I.facet.f31
 // CHECK:STDOUT:   %Self.as_type.loc6_11.1 => constants.%A
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9ef
 // CHECK:STDOUT:   %self.param_patt.loc6_11.2 => constants.%self.param_patt.04e
@@ -552,15 +552,15 @@ void G() {
 // CHECK:STDOUT:   %return.patt.loc6_17.2 => constants.%return.patt.a6d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.9f8) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.a68) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%I.facet.9f8
-// CHECK:STDOUT:   %I.WithSelf.Doit.type => constants.%I.WithSelf.Doit.type.2ce
-// CHECK:STDOUT:   %I.WithSelf.Doit => constants.%I.WithSelf.Doit.450
+// CHECK:STDOUT:   %Self => constants.%I.facet.a68
+// CHECK:STDOUT:   %I.WithSelf.Doit.type => constants.%I.WithSelf.Doit.type.a07
+// CHECK:STDOUT:   %I.WithSelf.Doit => constants.%I.WithSelf.Doit.9cf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf.Doit(constants.%I.facet.9f8) {
-// CHECK:STDOUT:   %Self => constants.%I.facet.9f8
+// CHECK:STDOUT: specific @I.WithSelf.Doit(constants.%I.facet.a68) {
+// CHECK:STDOUT:   %Self => constants.%I.facet.a68
 // CHECK:STDOUT:   %Self.as_type.loc6_11.1 => constants.%B
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e39
 // CHECK:STDOUT:   %self.param_patt.loc6_11.2 => constants.%self.param_patt.f1f
@@ -602,7 +602,7 @@ void G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(file.%.loc24_23.1) {
 // CHECK:STDOUT:   %T.patt.loc24_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc24_7.1 => constants.%I.facet.64b
+// CHECK:STDOUT:   %T.loc24_7.1 => constants.%I.facet.f31
 // CHECK:STDOUT:   %T.as_type.loc24_15.1 => constants.%A
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9ef
 // CHECK:STDOUT:   %t.param_patt.loc24_13.2 => constants.%t.param_patt.169
@@ -612,9 +612,9 @@ void G() {
 // CHECK:STDOUT:   %return.patt.loc24_18.2 => constants.%return.patt.a6d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%I.facet.64b) {
+// CHECK:STDOUT: specific @F(constants.%I.facet.f31) {
 // CHECK:STDOUT:   %T.patt.loc24_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc24_7.1 => constants.%I.facet.64b
+// CHECK:STDOUT:   %T.loc24_7.1 => constants.%I.facet.f31
 // CHECK:STDOUT:   %T.as_type.loc24_15.1 => constants.%A
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9ef
 // CHECK:STDOUT:   %t.param_patt.loc24_13.2 => constants.%t.param_patt.169
@@ -625,16 +625,16 @@ void G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
-// CHECK:STDOUT:   %I.WithSelf.Doit.type => constants.%I.WithSelf.Doit.type.5b3
-// CHECK:STDOUT:   %.loc25_11 => constants.%.660
-// CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.impl_witness.6ad
+// CHECK:STDOUT:   %I.WithSelf.Doit.type => constants.%I.WithSelf.Doit.type.808
+// CHECK:STDOUT:   %.loc25_11 => constants.%.760
+// CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.impl_witness.ca2
 // CHECK:STDOUT:   %impl.elem0.loc25_11.2 => constants.%A.as.I.impl.Doit
 // CHECK:STDOUT:   %specific_impl_fn.loc25_11.2 => constants.%A.as.I.impl.Doit
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(file.%.loc24_23.2) {
 // CHECK:STDOUT:   %T.patt.loc24_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc24_7.1 => constants.%I.facet.9f8
+// CHECK:STDOUT:   %T.loc24_7.1 => constants.%I.facet.a68
 // CHECK:STDOUT:   %T.as_type.loc24_15.1 => constants.%B
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e39
 // CHECK:STDOUT:   %t.param_patt.loc24_13.2 => constants.%t.param_patt.267
@@ -644,9 +644,9 @@ void G() {
 // CHECK:STDOUT:   %return.patt.loc24_18.2 => constants.%return.patt.911
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%I.facet.9f8) {
+// CHECK:STDOUT: specific @F(constants.%I.facet.a68) {
 // CHECK:STDOUT:   %T.patt.loc24_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc24_7.1 => constants.%I.facet.9f8
+// CHECK:STDOUT:   %T.loc24_7.1 => constants.%I.facet.a68
 // CHECK:STDOUT:   %T.as_type.loc24_15.1 => constants.%B
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e39
 // CHECK:STDOUT:   %t.param_patt.loc24_13.2 => constants.%t.param_patt.267
@@ -657,9 +657,9 @@ void G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
-// CHECK:STDOUT:   %I.WithSelf.Doit.type => constants.%I.WithSelf.Doit.type.2ce
-// CHECK:STDOUT:   %.loc25_11 => constants.%.545
-// CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.impl_witness.5b8
+// CHECK:STDOUT:   %I.WithSelf.Doit.type => constants.%I.WithSelf.Doit.type.a07
+// CHECK:STDOUT:   %.loc25_11 => constants.%.10f
+// CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.impl_witness.b14
 // CHECK:STDOUT:   %impl.elem0.loc25_11.2 => constants.%B.as.I.impl.Doit
 // CHECK:STDOUT:   %specific_impl_fn.loc25_11.2 => constants.%B.as.I.impl.Doit
 // CHECK:STDOUT: }
