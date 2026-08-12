@@ -597,6 +597,20 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
     out() << "]";
   }
 
+  if (fn.call_param_default_values_id.has_value()) {
+    out() << " default_values:";
+    // The default values are encoded as instructions referring to constants,
+    // and as such have no location, and so are normally elided when
+    // use_dump_sem_ir_ranges_ is true. However, if the function containing
+    // these default values is to be printed, it should also include these
+    // defaults, so we temporarily disable this flag to force the printing of
+    // the contents of this block.
+    auto format_mask = use_dump_sem_ir_ranges_;
+    use_dump_sem_ir_ranges_ = false;
+    FormatTrailingBlock(fn.call_param_default_values_id);
+    use_dump_sem_ir_ranges_ = format_mask;
+  }
+
   if (!fn.body_block_ids.empty()) {
     out() << ' ';
     OpenBrace();
@@ -1635,6 +1649,10 @@ auto Formatter::FormatArg(DeclaredFacetTypeId id) -> void {
     }
   }
   out() << ">";
+}
+
+auto Formatter::FormatArg(DefaultValueId id) -> void {
+  out() << "index: " << id.index;
 }
 
 auto Formatter::FormatArg(FieldId id) -> void {

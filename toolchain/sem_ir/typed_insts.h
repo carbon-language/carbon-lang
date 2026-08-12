@@ -726,6 +726,21 @@ struct CustomWitness {
   SpecificInterfaceId query_specific_interface_id;
 };
 
+// Describes a constant default value for a pattern, which may be used if that
+// pattern is absent in a scrutinee.
+struct DefaultValuePattern {
+  static constexpr auto Kind =
+      InstKind::DefaultValuePattern.Define<Parse::DefaultValuePatternId>(
+          {.ir_name = "default_value_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+  DefaultValueId default_value_id;
+};
+
 // The `*` dereference operator, as in `*pointer`.
 struct Deref {
   static constexpr auto Kind = InstKind::Deref.Define<Parse::NodeId>(

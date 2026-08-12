@@ -4,6 +4,7 @@
 
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/pattern.h"
@@ -158,7 +159,53 @@ auto HandleParseNode(Context& context, Parse::DefaultValueUnspecifiedId node_id)
 
 auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
     -> bool {
-  return context.TODO(node_id, "pattern default values");
+  // On entry, the top of the node stack should have an expression for the
+  // default value. We evaluate it to get a constant.
+  auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
+
+  // Ensure we are in an explicit parameter list, otherwise issue a diagnostic.
+  auto full_pattern_kind = context.full_pattern_stack().CurrentKind();
+  if (full_pattern_kind != FullPatternStack::Kind::ExplicitParamList) {
+    CARBON_DIAGNOSTIC(PatternDefaultValueNotInParameterList, Error,
+                      "default values are only supported in parameter lists");
+    context.emitter().Emit(LocIdForDiagnostics(expr_node_id),
+                           PatternDefaultValueNotInParameterList);
+    return false;
+  }
+
+  auto expr_const_id = TryEvalInst(context, expr_inst_id);
+  if (expr_const_id == SemIR::ConstantId::NotConstant) {
+    CARBON_DIAGNOSTIC(PatternDefaultValueNotConstant, Error,
+                      "default value for pattern must be constant");
+    context.emitter().Emit(LocIdForDiagnostics(expr_node_id),
+                           PatternDefaultValueNotConstant);
+    return false;
+  }
+
+  // Look up the instruction associated with the evaluated constant.
+  auto constant_inst_id = context.constant_values().GetInstId(expr_const_id);
+  CARBON_CHECK(constant_inst_id != SemIR::InstId::None);
+
+  // Add the value to the default values array in the full pattern stack, for
+  // recovery later in the NameComponent.
+  auto default_value_id =
+      context.full_pattern_stack().AddDefaultValue(constant_inst_id);
+
+  // Next on the node stack should be the pattern for which this default was
+  // specified. We pop that so we can issue the DefaultValuePattern in its
+  // place.
+  auto pattern_inst_id = context.node_stack().PopPattern();
+
+  // The default value pattern should have the same type as the subpattern.
+  auto pattern_type_id = context.insts().Get(pattern_inst_id).type_id();
+  auto default_value_inst_id = AddInst<SemIR::DefaultValuePattern>(
+      context, node_id,
+      {.type_id = pattern_type_id,
+       .subpattern_id = pattern_inst_id,
+       .default_value_id = default_value_id});
+  context.node_stack().Push(node_id, default_value_inst_id);
+
+  return true;
 }
 
 }  // namespace Carbon::Check

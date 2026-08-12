@@ -436,19 +436,22 @@ static auto BuildFunctionDecl(Context& context,
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
-  auto function_info =
-      SemIR::Function{name_context.MakeEntityWithParamsBase(
-                          name, decl_id, is_extern, introducer.extern_library),
-                      {.call_param_patterns_id = name.call_param_patterns_id,
-                       .call_params_id = name.call_params_id,
-                       .call_param_ranges = name.param_ranges,
-                       .return_type_inst_id = return_type_inst_id,
-                       .return_form_inst_id = return_form_inst_id,
-                       .return_pattern_id = return_pattern_id,
-                       .virtual_modifier = virtual_modifier,
-                       .evaluation_mode = evaluation_mode,
-                       .interface_modifier = interface_modifier,
-                       .self_param_id = self_param_id}};
+  auto function_info = SemIR::Function{
+      name_context.MakeEntityWithParamsBase(name, decl_id, is_extern,
+                                            introducer.extern_library),
+      {
+          .call_param_patterns_id = name.call_param_patterns_id,
+          .call_params_id = name.call_params_id,
+          .call_param_default_values_id = name.call_param_default_values_id,
+          .call_param_ranges = name.param_ranges,
+          .return_type_inst_id = return_type_inst_id,
+          .return_form_inst_id = return_form_inst_id,
+          .return_pattern_id = return_pattern_id,
+          .virtual_modifier = virtual_modifier,
+          .evaluation_mode = evaluation_mode,
+          .interface_modifier = interface_modifier,
+          .self_param_id = self_param_id,
+      }};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
@@ -515,7 +518,6 @@ static auto CheckUnusedBindingsInPattern(Context& context,
                                          SemIR::InstId pattern_id) -> void {
   llvm::SmallVector<SemIR::InstId> work_list;
   work_list.push_back(pattern_id);
-
   while (!work_list.empty()) {
     auto current_id = work_list.pop_back_val();
     auto inst = context.insts().Get(current_id);
@@ -549,6 +551,10 @@ static auto CheckUnusedBindingsInPattern(Context& context,
         }
         break;
       }
+      case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
+        work_list.push_back(default_value_pattern.subpattern_id);
+        break;
+      }
       default:
         break;
     }
@@ -572,10 +578,143 @@ static auto DiagnoseUnusedMarkersWithoutDefinition(
   }
 }
 
+// For the top-level parameter patterns list, and for any level of nested tuple
+// patterns, ensure that if a subpattern provides a default value, all
+// subsequent patterns at that level of nesting must provide a default value as
+// well.
+// TODO: per https://github.com/carbon-language/carbon-lang/issues/7529, this
+// should also consider automatically supplied defaults for fully-specified
+// tuple subpatterns, and consider them as having a default for the purposes
+// of the out-of-order detection. It will also need to detect the error
+// condition when a default is also specified for those fully-specified tuple
+// subpatterns.
+static auto DiagnoseOutOfOrderDefaults(Context& context,
+                                       SemIR::FunctionId function_id) -> void {
+  const auto& function = context.functions().Get(function_id);
+  if (!function.param_patterns_id.has_value()) {
+    return;
+  }
+
+  struct PatternLevelState {
+    // The inst ids of the subpatterns on this level of tuple subpattern
+    // nesting, treated as a work list, so in reverse order of declaration.
+    llvm::SmallVector<SemIR::InstId> subpattern_ids;
+
+    // If patterns at this level of nesting have default values, this refers
+    // to the first instruction to specify a default, useful for diagnostics.
+    SemIR::InstId first_pattern_with_default = SemIR::InstId::None;
+
+    // If we encounter a tuple-pattern during processing, we suspend processing
+    // of this pattern level, in the middle of processing a single pattern from
+    // root to leaves. So we record the current state of processing of a single
+    // pattern to return to it after processing any tuple subpatterns.
+
+    // True if the current pattern being processed has a default value
+    // specified.
+    bool pattern_has_default = false;
+
+    // The current pattern we are processing, stored separately since it's been
+    // popped from the `pattern_work_list` and already processed, just may need
+    // subsequent processing.
+    SemIR::InstId current_id = SemIR::InstId::None;
+
+    // A work list of patterns to be processed at this level of nesting.
+    llvm::SmallVector<SemIR::InstId> pattern_work_list;
+
+    // A list of subpatterns missing required defaults, to coalesce error
+    // reporting into a single diagnostic and limit diagnostic spam.
+    llvm::SmallVector<SemIR::InstId> patterns_missing_defaults;
+  };
+
+  llvm::SmallVector<PatternLevelState> level_state_stack;
+  level_state_stack.push_back({});
+  for (auto subpattern_id :
+       llvm::reverse(context.inst_blocks().Get(function.param_patterns_id))) {
+    level_state_stack.back().subpattern_ids.push_back(subpattern_id);
+  }
+
+  while (!level_state_stack.empty()) {
+    auto& state = level_state_stack.back();
+    while (!state.subpattern_ids.empty() || !state.pattern_work_list.empty() ||
+           state.current_id.has_value()) {
+      if (!state.current_id.has_value()) {
+        state.pattern_work_list.push_back(state.subpattern_ids.pop_back_val());
+        state.pattern_has_default = false;
+      }
+      while (!state.pattern_work_list.empty()) {
+        state.current_id = state.pattern_work_list.pop_back_val();
+        auto inst = context.insts().Get(state.current_id);
+        CARBON_KIND_SWITCH(inst) {
+          case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
+            state.pattern_has_default = true;
+            state.pattern_work_list.push_back(
+                default_value_pattern.subpattern_id);
+            break;
+          }
+          case CARBON_KIND(
+              SemIR::WrapperBindingPattern wrapper_binding_pattern): {
+            state.pattern_work_list.push_back(
+                wrapper_binding_pattern.subpattern_id);
+            break;
+          }
+          case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
+            auto elements =
+                context.inst_blocks().Get(tuple_pattern.elements_id);
+            if (!elements.empty()) {
+              // Start a new state for the nested tuple pattern elements.
+              level_state_stack.push_back({});
+              state = level_state_stack.back();
+              for (auto element_id : llvm::reverse(elements)) {
+                state.subpattern_ids.push_back(element_id);
+              }
+            }
+            break;
+          }
+          default:
+            break;
+        }
+      }
+      // Finished processing this subpattern, detect a missing default if
+      // required.
+      if (state.pattern_has_default &&
+          !state.first_pattern_with_default.has_value()) {
+        state.first_pattern_with_default = state.current_id;
+      } else if (!state.pattern_has_default &&
+                 state.first_pattern_with_default.has_value()) {
+        state.patterns_missing_defaults.push_back(state.current_id);
+      }
+      state.current_id = SemIR::InstId::None;
+    }
+    // Finished processing this tuple-pattern, emit diagnostics if any.
+    if (!state.patterns_missing_defaults.empty()) {
+      CARBON_DIAGNOSTIC(RequiredPatternDefaultValueMissing, Error,
+                        "this pattern is missing a required default value.");
+      CARBON_DIAGNOSTIC(RequiredPatternDefaultValueFirstDefault, Note,
+                        "all patterns to the right of this first pattern with "
+                        "a default value must also specify a default value.");
+      CARBON_DIAGNOSTIC(
+          RequiredPatternDefaultValueMissingAdditional, Note,
+          "this pattern is also missing a required default value.");
+      auto inst_ref =
+          llvm::ArrayRef<SemIR::InstId>(state.patterns_missing_defaults);
+      auto diag = context.emitter().Build(inst_ref.consume_front(),
+                                          RequiredPatternDefaultValueMissing);
+      diag.Note(state.first_pattern_with_default,
+                RequiredPatternDefaultValueFirstDefault);
+      for (auto inst_id : inst_ref) {
+        diag.Note(inst_id, RequiredPatternDefaultValueMissingAdditional);
+      }
+      diag.Emit();
+    }
+    level_state_stack.pop_back();
+  }
+}
+
 auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
   auto [function_id, decl_id] =
       BuildFunctionDecl(context, node_id, /*is_definition=*/false);
   DiagnoseUnusedMarkersWithoutDefinition(context, function_id);
+  DiagnoseOutOfOrderDefaults(context, function_id);
   context.decl_name_stack().PopScope();
   return true;
 }
