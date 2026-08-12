@@ -2181,22 +2181,19 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
                                        SemIR::BuiltinFunctionKind builtin_kind,
                                        SemIR::InstId arg_id)
     -> SemIR::ConstantId {
+  CARBON_CHECK(builtin_kind == SemIR::BuiltinFunctionKind::FloatNegate,
+               "Unexpected builtin kind");
+
   if (auto literal =
           context.insts().TryGetAs<SemIR::FloatLiteralValue>(arg_id)) {
     auto real_val = context.reals().Get(literal->real_id);
 
-    switch (builtin_kind) {
-      case SemIR::BuiltinFunctionKind::FloatNegate:
-        // Check if negation would overflow.
-        if (real_val.mantissa.isMinSignedValue()) {
-          real_val.mantissa =
-              real_val.mantissa.sext(real_val.mantissa.getBitWidth() + 1);
-        }
-        real_val.mantissa.negate();
-        break;
-      default:
-        CARBON_FATAL("Unexpected builtin kind");
+    // Check if negation would overflow.
+    if (real_val.mantissa.isMinSignedValue()) {
+      real_val.mantissa =
+          real_val.mantissa.sext(real_val.mantissa.getBitWidth() + 1);
     }
+    real_val.mantissa.negate();
 
     return MakeFloatLiteralResult(context, std::move(real_val));
   }
@@ -2204,13 +2201,7 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
   auto op = context.insts().GetAs<SemIR::FloatValue>(arg_id);
   auto op_val = context.floats().Get(op.float_id);
 
-  switch (builtin_kind) {
-    case SemIR::BuiltinFunctionKind::FloatNegate:
-      op_val.changeSign();
-      break;
-    default:
-      CARBON_FATAL("Unexpected builtin kind");
-  }
+  op_val.changeSign();
 
   return MakeFloatResult(context, op.type_id, std::move(op_val));
 }
