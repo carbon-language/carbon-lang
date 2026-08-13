@@ -49,11 +49,7 @@ void F() {
   // CHECK:STDERR:       |   ~~~~~~~~^
   // CHECK:STDERR:
   Carbon::A a;
-  // CHECK:STDERR: fail_todo_specific_alias.carbon:[[@LINE+4]]:3: error: use of undeclared identifier 'c' [CppInteropParseError]
-  // CHECK:STDERR:    28 |   c.t = 123;
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR:
-  c.t = 123;
+  a.t = 123;
 }
 ''';
 
