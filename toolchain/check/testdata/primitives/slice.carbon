@@ -28,8 +28,7 @@ fn TestSize(s: Core.Slice(i32)) -> u64 {
 
 fn TestCopy(s: Core.Slice(i32)) -> Core.Slice(i32) {
   //@dump-sem-ir-begin
-  let t: Core.Slice(i32) = s;
-  return t;
+  return s;
   //@dump-sem-ir-end
 }
 
@@ -148,7 +147,6 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %Slice.Make.ee0: %Slice.Make.type.768 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Slice.c12: type = class_type @Slice, @Slice(%i32) [concrete]
-// CHECK:STDOUT:   %pattern_type.162: type = pattern_type %Slice.c12 [concrete]
 // CHECK:STDOUT:   %Slice.Make.type.3ec: type = fn_type @Slice.Make, @Slice(%i32) [concrete]
 // CHECK:STDOUT:   %Slice.Make.34f: %Slice.Make.type.3ec = struct_value () [concrete]
 // CHECK:STDOUT:   %Slice.Size.type.250: type = fn_type @Slice.Size, @Slice(%i32) [concrete]
@@ -157,7 +155,6 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %Slice.Range.a65: %Slice.Range.type.0bd = struct_value () [concrete]
 // CHECK:STDOUT:   %Slice.Make.specific_fn.6dc: <specific function> = specific_function %Slice.Make.34f, @Slice.Make(%i32) [concrete]
 // CHECK:STDOUT:   %Slice.Size.specific_fn.03b: <specific function> = specific_function %Slice.Size.4fc, @Slice.Size(%i32) [concrete]
-// CHECK:STDOUT:   %t.patt: %pattern_type.162 = value_binding_pattern t [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N.fe9) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Slice.as.Copy.impl.Op.type.8ae: type = fn_type @Slice.as.Copy.impl.Op, @Slice.as.Copy.impl(%T.67d) [symbolic]
@@ -206,7 +203,7 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %Slice.as.Iterate.impl.NewCursor.a4e: %Slice.as.Iterate.impl.NewCursor.type.33e = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.c17: type = ptr_type %u64 [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.0e0: <witness> = impl_witness imports.%Copy.impl_witness_table.367, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc26_19.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc33_19.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.df9cc1.4: <witness> = custom_witness (%Destroy.Op.1a2547.4), @Destroy [concrete]
 // CHECK:STDOUT:   %facet_value.1fc: %facet_type.a1a = facet_value %i32, (%Copy.impl_witness.0e0, %custom_witness.df9cc1.4) [concrete]
@@ -263,9 +260,9 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %.98a: type = fn_type_with_self_type %AddAssignWith.WithSelf.Op.type.51d, %AddAssignWith.facet.b9a [concrete]
 // CHECK:STDOUT:   %Int.as.AddAssignWith.impl.Op.specific_fn.80c75c.1: <specific function> = specific_function %Int.as.AddAssignWith.impl.Op.83e130.2, @Int.as.AddAssignWith.impl.Op.1(%int_32, %ImplicitAs.facet.640) [concrete]
 // CHECK:STDOUT:   %Int.as.AddAssignWith.impl.Op.specific_fn.80c75c.2: <specific function> = specific_function %Int.as.AddAssignWith.impl.Op.83e130.1, @Int.as.AddAssignWith.impl.Op.2(%int_32, %ImplicitAs.facet.640) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.10: type = fn_type @Destroy.Op.loc26_19.8 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.10: type = fn_type @Destroy.Op.loc33_19.8 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.10: %Destroy.Op.type.1d8f74.10 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.12: type = fn_type @Destroy.Op.loc26_19.10 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.12: type = fn_type @Destroy.Op.loc33_19.10 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.12: %Destroy.Op.type.1d8f74.12 = struct_value () [concrete]
 // CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
@@ -295,7 +292,7 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.a20: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.13f) [concrete]
 // CHECK:STDOUT:   %.a42: type = fn_type_with_self_type %Copy.WithSelf.Op.type.a20, %Copy.facet.13f [concrete]
 // CHECK:STDOUT:   %Slice.as.Copy.impl.Op.specific_fn.303: <specific function> = specific_function %Slice.as.Copy.impl.Op.a11, @Slice.as.Copy.impl.Op(%f64) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.15: type = fn_type @Destroy.Op.loc36_3.3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.15: type = fn_type @Destroy.Op.loc43_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.15: %Destroy.Op.type.1d8f74.15 = struct_value () [concrete]
 // CHECK:STDOUT:   %Slice.Range.specific_fn: <specific function> = specific_function %Slice.Range.a65, @Slice.Range(%i32) [concrete]
 // CHECK:STDOUT: }
@@ -390,23 +387,12 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT: fn @TestCopy(%s.param: %Slice.c12) -> out %return.param: %Slice.c12 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Slice.c12 = name_ref s, %s
-// CHECK:STDOUT:   %.loc18: type = splice_block %Slice.loc18 [concrete = constants.%Slice.c12] {
-// CHECK:STDOUT:     %Core.ref.loc18: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %Slice.ref.loc18: %Slice.type = name_ref Slice, imports.%Core.Slice [concrete = constants.%Slice.generic]
-// CHECK:STDOUT:     %i32.loc18: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %Slice.loc18: type = class_type @Slice, @Slice(constants.%i32) [concrete = constants.%Slice.c12]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: %Slice.c12 = wrapper_binding t, %s.ref
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type.162 = value_binding_pattern t [concrete = constants.%t.patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t.ref: %Slice.c12 = name_ref t, %t
 // CHECK:STDOUT:   %impl.elem0: %.606 = impl_witness_access constants.%Copy.impl_witness.137, element0 [concrete = constants.%Slice.as.Copy.impl.Op.789]
-// CHECK:STDOUT:   %bound_method.loc19_10.1: <bound method> = bound_method %t.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc26_10.1: <bound method> = bound_method %s.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Slice.as.Copy.impl.Op(constants.%i32) [concrete = constants.%Slice.as.Copy.impl.Op.specific_fn.e5e]
-// CHECK:STDOUT:   %bound_method.loc19_10.2: <bound method> = bound_method %t.ref, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc26_10.2: <bound method> = bound_method %s.ref, %specific_fn
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Slice.as.Copy.impl.Op.call: init %Slice.c12 to %.loc16_50.1 = call %bound_method.loc19_10.2(%t.ref)
+// CHECK:STDOUT:   %Slice.as.Copy.impl.Op.call: init %Slice.c12 to %.loc16_50.1 = call %bound_method.loc26_10.2(%s.ref)
 // CHECK:STDOUT:   return %Slice.as.Copy.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -418,14 +404,14 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %Slice.c12 = name_ref s, %s
 // CHECK:STDOUT:   %impl.elem2: %.5dc = impl_witness_access constants.%Iterate.impl_witness.817, element2 [concrete = constants.%Slice.as.Iterate.impl.NewCursor.705]
-// CHECK:STDOUT:   %bound_method.loc26_19.1: <bound method> = bound_method %s.ref, %impl.elem2
-// CHECK:STDOUT:   %facet_value.loc26_19.1: %facet_type.a1a = facet_value constants.%i32, (constants.%Copy.impl_witness.0e0, constants.%custom_witness.df9cc1.4) [concrete = constants.%facet_value.1fc]
-// CHECK:STDOUT:   %.loc26_19.1: %facet_type.a1a = converted constants.%i32, %facet_value.loc26_19.1 [concrete = constants.%facet_value.1fc]
-// CHECK:STDOUT:   %facet_value.loc26_19.2: %facet_type.a1a = facet_value constants.%i32, (constants.%Copy.impl_witness.0e0, constants.%custom_witness.df9cc1.4) [concrete = constants.%facet_value.1fc]
-// CHECK:STDOUT:   %.loc26_19.2: %facet_type.a1a = converted constants.%i32, %facet_value.loc26_19.2 [concrete = constants.%facet_value.1fc]
-// CHECK:STDOUT:   %specific_fn.loc26_19.1: <specific function> = specific_function %impl.elem2, @Slice.as.Iterate.impl.NewCursor(constants.%facet_value.1fc) [concrete = constants.%Slice.as.Iterate.impl.NewCursor.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc26_19.2: <bound method> = bound_method %s.ref, %specific_fn.loc26_19.1
-// CHECK:STDOUT:   %Slice.as.Iterate.impl.NewCursor.call: init %u64 = call %bound_method.loc26_19.2(%s.ref)
+// CHECK:STDOUT:   %bound_method.loc33_19.1: <bound method> = bound_method %s.ref, %impl.elem2
+// CHECK:STDOUT:   %facet_value.loc33_19.1: %facet_type.a1a = facet_value constants.%i32, (constants.%Copy.impl_witness.0e0, constants.%custom_witness.df9cc1.4) [concrete = constants.%facet_value.1fc]
+// CHECK:STDOUT:   %.loc33_19.1: %facet_type.a1a = converted constants.%i32, %facet_value.loc33_19.1 [concrete = constants.%facet_value.1fc]
+// CHECK:STDOUT:   %facet_value.loc33_19.2: %facet_type.a1a = facet_value constants.%i32, (constants.%Copy.impl_witness.0e0, constants.%custom_witness.df9cc1.4) [concrete = constants.%facet_value.1fc]
+// CHECK:STDOUT:   %.loc33_19.2: %facet_type.a1a = converted constants.%i32, %facet_value.loc33_19.2 [concrete = constants.%facet_value.1fc]
+// CHECK:STDOUT:   %specific_fn.loc33_19.1: <specific function> = specific_function %impl.elem2, @Slice.as.Iterate.impl.NewCursor(constants.%facet_value.1fc) [concrete = constants.%Slice.as.Iterate.impl.NewCursor.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc33_19.2: <bound method> = bound_method %s.ref, %specific_fn.loc33_19.1
+// CHECK:STDOUT:   %Slice.as.Iterate.impl.NewCursor.call: init %u64 = call %bound_method.loc33_19.2(%s.ref)
 // CHECK:STDOUT:   %var: ref %u64 = var_storage invalid
 // CHECK:STDOUT:   assign %var, %Slice.as.Iterate.impl.NewCursor.call
 // CHECK:STDOUT:   br !for.next
@@ -433,100 +419,100 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr: %ptr.c17 = addr_of %var
 // CHECK:STDOUT:   %impl.elem3: %.eba = impl_witness_access constants.%Iterate.impl_witness.817, element3 [concrete = constants.%Slice.as.Iterate.impl.Next.0de]
-// CHECK:STDOUT:   %bound_method.loc26_19.3: <bound method> = bound_method %s.ref, %impl.elem3
-// CHECK:STDOUT:   %facet_value.loc26_19.3: %facet_type.a1a = facet_value constants.%i32, (constants.%Copy.impl_witness.0e0, constants.%custom_witness.df9cc1.4) [concrete = constants.%facet_value.1fc]
-// CHECK:STDOUT:   %.loc26_19.3: %facet_type.a1a = converted constants.%i32, %facet_value.loc26_19.3 [concrete = constants.%facet_value.1fc]
-// CHECK:STDOUT:   %facet_value.loc26_19.4: %facet_type.a1a = facet_value constants.%i32, (constants.%Copy.impl_witness.0e0, constants.%custom_witness.df9cc1.4) [concrete = constants.%facet_value.1fc]
-// CHECK:STDOUT:   %.loc26_19.4: %facet_type.a1a = converted constants.%i32, %facet_value.loc26_19.4 [concrete = constants.%facet_value.1fc]
-// CHECK:STDOUT:   %specific_fn.loc26_19.2: <specific function> = specific_function %impl.elem3, @Slice.as.Iterate.impl.Next(constants.%facet_value.1fc) [concrete = constants.%Slice.as.Iterate.impl.Next.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc26_19.4: <bound method> = bound_method %s.ref, %specific_fn.loc26_19.2
-// CHECK:STDOUT:   %.loc26_19.5: ref %Optional.224 = temporary_storage
-// CHECK:STDOUT:   %Slice.as.Iterate.impl.Next.call: init %Optional.224 to %.loc26_19.5 = call %bound_method.loc26_19.4(%s.ref, %addr)
-// CHECK:STDOUT:   %.loc26_19.6: ref %Optional.224 = temporary %.loc26_19.5, %Slice.as.Iterate.impl.Next.call
-// CHECK:STDOUT:   %.loc26_19.7: %Optional.HasValue.type.17d = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.9bb) [concrete = constants.%Optional.HasValue.fb6]
-// CHECK:STDOUT:   %HasValue.ref: %Optional.HasValue.type.17d = name_ref HasValue, %.loc26_19.7 [concrete = constants.%Optional.HasValue.fb6]
-// CHECK:STDOUT:   %Optional.HasValue.bound: <bound method> = bound_method %.loc26_19.6, %HasValue.ref
+// CHECK:STDOUT:   %bound_method.loc33_19.3: <bound method> = bound_method %s.ref, %impl.elem3
+// CHECK:STDOUT:   %facet_value.loc33_19.3: %facet_type.a1a = facet_value constants.%i32, (constants.%Copy.impl_witness.0e0, constants.%custom_witness.df9cc1.4) [concrete = constants.%facet_value.1fc]
+// CHECK:STDOUT:   %.loc33_19.3: %facet_type.a1a = converted constants.%i32, %facet_value.loc33_19.3 [concrete = constants.%facet_value.1fc]
+// CHECK:STDOUT:   %facet_value.loc33_19.4: %facet_type.a1a = facet_value constants.%i32, (constants.%Copy.impl_witness.0e0, constants.%custom_witness.df9cc1.4) [concrete = constants.%facet_value.1fc]
+// CHECK:STDOUT:   %.loc33_19.4: %facet_type.a1a = converted constants.%i32, %facet_value.loc33_19.4 [concrete = constants.%facet_value.1fc]
+// CHECK:STDOUT:   %specific_fn.loc33_19.2: <specific function> = specific_function %impl.elem3, @Slice.as.Iterate.impl.Next(constants.%facet_value.1fc) [concrete = constants.%Slice.as.Iterate.impl.Next.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc33_19.4: <bound method> = bound_method %s.ref, %specific_fn.loc33_19.2
+// CHECK:STDOUT:   %.loc33_19.5: ref %Optional.224 = temporary_storage
+// CHECK:STDOUT:   %Slice.as.Iterate.impl.Next.call: init %Optional.224 to %.loc33_19.5 = call %bound_method.loc33_19.4(%s.ref, %addr)
+// CHECK:STDOUT:   %.loc33_19.6: ref %Optional.224 = temporary %.loc33_19.5, %Slice.as.Iterate.impl.Next.call
+// CHECK:STDOUT:   %.loc33_19.7: %Optional.HasValue.type.17d = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.9bb) [concrete = constants.%Optional.HasValue.fb6]
+// CHECK:STDOUT:   %HasValue.ref: %Optional.HasValue.type.17d = name_ref HasValue, %.loc33_19.7 [concrete = constants.%Optional.HasValue.fb6]
+// CHECK:STDOUT:   %Optional.HasValue.bound: <bound method> = bound_method %.loc33_19.6, %HasValue.ref
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %HasValue.ref, @Optional.HasValue(constants.%OptionalStorage.facet.9bb) [concrete = constants.%Optional.HasValue.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc26_19.5: <bound method> = bound_method %.loc26_19.6, %Optional.HasValue.specific_fn
-// CHECK:STDOUT:   %.loc26_19.8: %Optional.224 = acquire_value %.loc26_19.6
-// CHECK:STDOUT:   %Optional.HasValue.call: init bool = call %bound_method.loc26_19.5(%.loc26_19.8)
-// CHECK:STDOUT:   %.loc26_19.9: bool = value_of_initializer %Optional.HasValue.call
-// CHECK:STDOUT:   %.loc26_19.10: bool = converted %Optional.HasValue.call, %.loc26_19.9
-// CHECK:STDOUT:   if %.loc26_19.10 br !for.body else br !for.done
+// CHECK:STDOUT:   %bound_method.loc33_19.5: <bound method> = bound_method %.loc33_19.6, %Optional.HasValue.specific_fn
+// CHECK:STDOUT:   %.loc33_19.8: %Optional.224 = acquire_value %.loc33_19.6
+// CHECK:STDOUT:   %Optional.HasValue.call: init bool = call %bound_method.loc33_19.5(%.loc33_19.8)
+// CHECK:STDOUT:   %.loc33_19.9: bool = value_of_initializer %Optional.HasValue.call
+// CHECK:STDOUT:   %.loc33_19.10: bool = converted %Optional.HasValue.call, %.loc33_19.9
+// CHECK:STDOUT:   if %.loc33_19.10 br !for.body else br !for.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.body:
-// CHECK:STDOUT:   %.loc26_19.11: %Optional.Get.type.ea4 = specific_constant imports.%Core.import_ref.daba, @Optional(constants.%OptionalStorage.facet.9bb) [concrete = constants.%Optional.Get.9ad]
-// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.ea4 = name_ref Get, %.loc26_19.11 [concrete = constants.%Optional.Get.9ad]
-// CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc26_19.6, %Get.ref
+// CHECK:STDOUT:   %.loc33_19.11: %Optional.Get.type.ea4 = specific_constant imports.%Core.import_ref.daba, @Optional(constants.%OptionalStorage.facet.9bb) [concrete = constants.%Optional.Get.9ad]
+// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.ea4 = name_ref Get, %.loc33_19.11 [concrete = constants.%Optional.Get.9ad]
+// CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc33_19.6, %Get.ref
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%OptionalStorage.facet.9bb) [concrete = constants.%Optional.Get.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc26_19.6: <bound method> = bound_method %.loc26_19.6, %Optional.Get.specific_fn
-// CHECK:STDOUT:   %.loc26_19.12: %Optional.224 = acquire_value %.loc26_19.6
-// CHECK:STDOUT:   %Optional.Get.call: init %i32 = call %bound_method.loc26_19.6(%.loc26_19.12)
-// CHECK:STDOUT:   %.loc26_19.13: %i32 = value_of_initializer %Optional.Get.call
-// CHECK:STDOUT:   %.loc26_19.14: %i32 = converted %Optional.Get.call, %.loc26_19.13
-// CHECK:STDOUT:   %i32.loc26: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %.loc26_19.14
-// CHECK:STDOUT:   %sum.ref.loc27: ref %i32 = name_ref sum, %sum
+// CHECK:STDOUT:   %bound_method.loc33_19.6: <bound method> = bound_method %.loc33_19.6, %Optional.Get.specific_fn
+// CHECK:STDOUT:   %.loc33_19.12: %Optional.224 = acquire_value %.loc33_19.6
+// CHECK:STDOUT:   %Optional.Get.call: init %i32 = call %bound_method.loc33_19.6(%.loc33_19.12)
+// CHECK:STDOUT:   %.loc33_19.13: %i32 = value_of_initializer %Optional.Get.call
+// CHECK:STDOUT:   %.loc33_19.14: %i32 = converted %Optional.Get.call, %.loc33_19.13
+// CHECK:STDOUT:   %i32.loc33: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %.loc33_19.14
+// CHECK:STDOUT:   %sum.ref.loc34: ref %i32 = name_ref sum, %sum
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
-// CHECK:STDOUT:   %impl.elem0.loc27: %.98a = impl_witness_access constants.%AddAssignWith.impl_witness.ccf, element0 [concrete = constants.%Int.as.AddAssignWith.impl.Op.83e130.2]
-// CHECK:STDOUT:   %bound_method.loc27_9.1: <bound method> = bound_method %sum.ref.loc27, %impl.elem0.loc27
-// CHECK:STDOUT:   %specific_fn.loc27: <specific function> = specific_function %impl.elem0.loc27, @Int.as.AddAssignWith.impl.Op.1(constants.%int_32, constants.%ImplicitAs.facet.640) [concrete = constants.%Int.as.AddAssignWith.impl.Op.specific_fn.80c75c.1]
-// CHECK:STDOUT:   %bound_method.loc27_9.2: <bound method> = bound_method %sum.ref.loc27, %specific_fn.loc27
-// CHECK:STDOUT:   %.loc27: %Int.as.AddAssignWith.impl.Op.type.a94901.1 = specific_constant imports.%Core.Op.1b1, @Int.as.AddAssignWith.impl(constants.%int_32, constants.%ImplicitAs.facet.640) [concrete = constants.%Int.as.AddAssignWith.impl.Op.83e130.1]
-// CHECK:STDOUT:   %Op.ref: %Int.as.AddAssignWith.impl.Op.type.a94901.1 = name_ref Op, %.loc27 [concrete = constants.%Int.as.AddAssignWith.impl.Op.83e130.1]
-// CHECK:STDOUT:   %Int.as.AddAssignWith.impl.Op.bound: <bound method> = bound_method %sum.ref.loc27, %Op.ref
+// CHECK:STDOUT:   %impl.elem0.loc34: %.98a = impl_witness_access constants.%AddAssignWith.impl_witness.ccf, element0 [concrete = constants.%Int.as.AddAssignWith.impl.Op.83e130.2]
+// CHECK:STDOUT:   %bound_method.loc34_9.1: <bound method> = bound_method %sum.ref.loc34, %impl.elem0.loc34
+// CHECK:STDOUT:   %specific_fn.loc34: <specific function> = specific_function %impl.elem0.loc34, @Int.as.AddAssignWith.impl.Op.1(constants.%int_32, constants.%ImplicitAs.facet.640) [concrete = constants.%Int.as.AddAssignWith.impl.Op.specific_fn.80c75c.1]
+// CHECK:STDOUT:   %bound_method.loc34_9.2: <bound method> = bound_method %sum.ref.loc34, %specific_fn.loc34
+// CHECK:STDOUT:   %.loc34: %Int.as.AddAssignWith.impl.Op.type.a94901.1 = specific_constant imports.%Core.Op.1b1, @Int.as.AddAssignWith.impl(constants.%int_32, constants.%ImplicitAs.facet.640) [concrete = constants.%Int.as.AddAssignWith.impl.Op.83e130.1]
+// CHECK:STDOUT:   %Op.ref: %Int.as.AddAssignWith.impl.Op.type.a94901.1 = name_ref Op, %.loc34 [concrete = constants.%Int.as.AddAssignWith.impl.Op.83e130.1]
+// CHECK:STDOUT:   %Int.as.AddAssignWith.impl.Op.bound: <bound method> = bound_method %sum.ref.loc34, %Op.ref
 // CHECK:STDOUT:   %Int.as.AddAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref, @Int.as.AddAssignWith.impl.Op.2(constants.%int_32, constants.%ImplicitAs.facet.640) [concrete = constants.%Int.as.AddAssignWith.impl.Op.specific_fn.80c75c.2]
-// CHECK:STDOUT:   %bound_method.loc27_9.3: <bound method> = bound_method %sum.ref.loc27, %Int.as.AddAssignWith.impl.Op.specific_fn
-// CHECK:STDOUT:   %Int.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc27_9.3(%sum.ref.loc27, %x.ref)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc26_19.1: <bound method> = bound_method %.loc26_19.6, constants.%Destroy.Op.1a2547.10
-// CHECK:STDOUT:   %Destroy.Op.call.loc26_19.1: init %empty_tuple.type = call %Destroy.Op.bound.loc26_19.1(%.loc26_19.6)
+// CHECK:STDOUT:   %bound_method.loc34_9.3: <bound method> = bound_method %sum.ref.loc34, %Int.as.AddAssignWith.impl.Op.specific_fn
+// CHECK:STDOUT:   %Int.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc34_9.3(%sum.ref.loc34, %x.ref)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc33_19.1: <bound method> = bound_method %.loc33_19.6, constants.%Destroy.Op.1a2547.10
+// CHECK:STDOUT:   %Destroy.Op.call.loc33_19.1: init %empty_tuple.type = call %Destroy.Op.bound.loc33_19.1(%.loc33_19.6)
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   %Destroy.Op.bound.loc26_19.2: <bound method> = bound_method %.loc26_19.6, constants.%Destroy.Op.1a2547.10
-// CHECK:STDOUT:   %Destroy.Op.call.loc26_19.2: init %empty_tuple.type = call %Destroy.Op.bound.loc26_19.2(%.loc26_19.6)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc26_19.3: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.12
-// CHECK:STDOUT:   %Destroy.Op.call.loc26_19.3: init %empty_tuple.type = call %Destroy.Op.bound.loc26_19.3(%var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc33_19.2: <bound method> = bound_method %.loc33_19.6, constants.%Destroy.Op.1a2547.10
+// CHECK:STDOUT:   %Destroy.Op.call.loc33_19.2: init %empty_tuple.type = call %Destroy.Op.bound.loc33_19.2(%.loc33_19.6)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc33_19.3: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.12
+// CHECK:STDOUT:   %Destroy.Op.call.loc33_19.3: init %empty_tuple.type = call %Destroy.Op.bound.loc33_19.3(%var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc26_19.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc33_19.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc26_19.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.Op.loc33_19.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc26_19.3(%self.param: ref %.1d6) {
+// CHECK:STDOUT: fn @Destroy.Op.loc33_19.3(%self.param: ref %.1d6) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc26_19.4(%self.param: ref %MaybeUnformed.023) {
+// CHECK:STDOUT: fn @Destroy.Op.loc33_19.4(%self.param: ref %MaybeUnformed.023) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc26_19.5(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc33_19.5(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc26_19.6(%self.param: ref %struct_type.value.has_value.ad0) {
+// CHECK:STDOUT: fn @Destroy.Op.loc33_19.6(%self.param: ref %struct_type.value.has_value.ad0) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc26_19.7(%self.param: ref %DefaultOptionalStorage.e35) {
+// CHECK:STDOUT: fn @Destroy.Op.loc33_19.7(%self.param: ref %DefaultOptionalStorage.e35) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc26_19.8(%self.param: ref %Optional.224) {
+// CHECK:STDOUT: fn @Destroy.Op.loc33_19.8(%self.param: ref %Optional.224) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc26_19.9(%self.param: ref %u64.builtin) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc33_19.9(%self.param: ref %u64.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc26_19.10(%self.param: ref %u64) {
+// CHECK:STDOUT: fn @Destroy.Op.loc33_19.10(%self.param: ref %u64) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -535,58 +521,58 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.var: ref %Slice.d46 = var_storage %s.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%Slice.d46, (constants.%DefaultOrUnformed.impl_witness.f9c) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc36_25.1: %DefaultOrUnformed.type = converted constants.%Slice.d46, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc36_25.1 [concrete = constants.%Slice.d46]
-// CHECK:STDOUT:   %.loc36_25.2: type = converted %.loc36_25.1, %as_type [concrete = constants.%Slice.d46]
+// CHECK:STDOUT:   %.loc43_25.1: %DefaultOrUnformed.type = converted constants.%Slice.d46, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc43_25.1 [concrete = constants.%Slice.d46]
+// CHECK:STDOUT:   %.loc43_25.2: type = converted %.loc43_25.1, %as_type [concrete = constants.%Slice.d46]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc36_3: ref %Slice.d46 = splice_block %s.var {}
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %Slice.d46 to %.loc36_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   %.loc43_3: ref %Slice.d46 = splice_block %s.var {}
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %Slice.d46 to %.loc43_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %s.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call
-// CHECK:STDOUT:   %.loc36_24: type = splice_block %Slice.loc36 [concrete = constants.%Slice.d46] {
-// CHECK:STDOUT:     %Core.ref.loc36: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %Slice.ref.loc36: %Slice.type = name_ref Slice, imports.%Core.Slice [concrete = constants.%Slice.generic]
-// CHECK:STDOUT:     %f64.loc36: type = type_literal constants.%f64 [concrete = constants.%f64]
-// CHECK:STDOUT:     %Slice.loc36: type = class_type @Slice, @Slice(constants.%f64) [concrete = constants.%Slice.d46]
+// CHECK:STDOUT:   %.loc43_24: type = splice_block %Slice.loc43 [concrete = constants.%Slice.d46] {
+// CHECK:STDOUT:     %Core.ref.loc43: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %Slice.ref.loc43: %Slice.type = name_ref Slice, imports.%Core.Slice [concrete = constants.%Slice.generic]
+// CHECK:STDOUT:     %f64.loc43: type = type_literal constants.%f64 [concrete = constants.%f64]
+// CHECK:STDOUT:     %Slice.loc43: type = class_type @Slice, @Slice(constants.%f64) [concrete = constants.%Slice.d46]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %Slice.d46 = wrapper_binding s, %s.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.c4b = ref_binding_pattern s [concrete = constants.%s.patt.482]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.c4b = var_pattern %s.patt [concrete = constants.%s.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.ref.loc37: ref %Slice.d46 = name_ref s, %s
-// CHECK:STDOUT:   %Core.ref.loc37: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %Slice.ref.loc37: %Slice.type = name_ref Slice, imports.%Core.Slice [concrete = constants.%Slice.generic]
-// CHECK:STDOUT:   %f64.loc37: type = type_literal constants.%f64 [concrete = constants.%f64]
-// CHECK:STDOUT:   %Slice.loc37: type = class_type @Slice, @Slice(constants.%f64) [concrete = constants.%Slice.d46]
-// CHECK:STDOUT:   %.loc37_22: %Slice.Make.type.eac = specific_constant imports.%Core.import_ref.07e, @Slice(constants.%f64) [concrete = constants.%Slice.Make.2cb]
-// CHECK:STDOUT:   %Make.ref: %Slice.Make.type.eac = name_ref Make, %.loc37_22 [concrete = constants.%Slice.Make.2cb]
+// CHECK:STDOUT:   %s.ref.loc44: ref %Slice.d46 = name_ref s, %s
+// CHECK:STDOUT:   %Core.ref.loc44: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %Slice.ref.loc44: %Slice.type = name_ref Slice, imports.%Core.Slice [concrete = constants.%Slice.generic]
+// CHECK:STDOUT:   %f64.loc44: type = type_literal constants.%f64 [concrete = constants.%f64]
+// CHECK:STDOUT:   %Slice.loc44: type = class_type @Slice, @Slice(constants.%f64) [concrete = constants.%Slice.d46]
+// CHECK:STDOUT:   %.loc44_22: %Slice.Make.type.eac = specific_constant imports.%Core.import_ref.07e, @Slice(constants.%f64) [concrete = constants.%Slice.Make.2cb]
+// CHECK:STDOUT:   %Make.ref: %Slice.Make.type.eac = name_ref Make, %.loc44_22 [concrete = constants.%Slice.Make.2cb]
 // CHECK:STDOUT:   %p.ref: %ptr.749 = name_ref p, %p
 // CHECK:STDOUT:   %n.ref: %u64 = name_ref n, %n
 // CHECK:STDOUT:   %Slice.Make.specific_fn: <specific function> = specific_function %Make.ref, @Slice.Make(constants.%f64) [concrete = constants.%Slice.Make.specific_fn.ffc]
-// CHECK:STDOUT:   %.loc37_3: ref %Slice.d46 = splice_block %s.ref.loc37 {}
-// CHECK:STDOUT:   %Slice.Make.call: init %Slice.d46 to %.loc37_3 = call %Slice.Make.specific_fn(%p.ref, %n.ref)
-// CHECK:STDOUT:   assign %s.ref.loc37, %Slice.Make.call
-// CHECK:STDOUT:   %s.ref.loc38: ref %Slice.d46 = name_ref s, %s
-// CHECK:STDOUT:   %.loc38: %Slice.d46 = acquire_value %s.ref.loc38
+// CHECK:STDOUT:   %.loc44_3: ref %Slice.d46 = splice_block %s.ref.loc44 {}
+// CHECK:STDOUT:   %Slice.Make.call: init %Slice.d46 to %.loc44_3 = call %Slice.Make.specific_fn(%p.ref, %n.ref)
+// CHECK:STDOUT:   assign %s.ref.loc44, %Slice.Make.call
+// CHECK:STDOUT:   %s.ref.loc45: ref %Slice.d46 = name_ref s, %s
+// CHECK:STDOUT:   %.loc45: %Slice.d46 = acquire_value %s.ref.loc45
 // CHECK:STDOUT:   %impl.elem0: %.a42 = impl_witness_access constants.%Copy.impl_witness.47e, element0 [concrete = constants.%Slice.as.Copy.impl.Op.a11]
-// CHECK:STDOUT:   %bound_method.loc38_10.1: <bound method> = bound_method %.loc38, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc45_10.1: <bound method> = bound_method %.loc45, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Slice.as.Copy.impl.Op(constants.%f64) [concrete = constants.%Slice.as.Copy.impl.Op.specific_fn.303]
-// CHECK:STDOUT:   %bound_method.loc38_10.2: <bound method> = bound_method %.loc38, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc45_10.2: <bound method> = bound_method %.loc45, %specific_fn
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Slice.as.Copy.impl.Op.call: init %Slice.d46 to %.loc34_51.1 = call %bound_method.loc38_10.2(%.loc38)
+// CHECK:STDOUT:   %Slice.as.Copy.impl.Op.call: init %Slice.d46 to %.loc41_51.1 = call %bound_method.loc45_10.2(%.loc45)
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %s.var, constants.%Destroy.Op.1a2547.15
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%s.var)
 // CHECK:STDOUT:   return %Slice.as.Copy.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc36_3.1(%self.param: ref %ptr.749) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc43_3.1(%self.param: ref %ptr.749) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc36_3.2(%self.param: ref %struct_type.ptr.size.b4d) {
+// CHECK:STDOUT: fn @Destroy.Op.loc43_3.2(%self.param: ref %struct_type.ptr.size.b4d) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc36_3.3(%self.param: ref %Slice.d46) {
+// CHECK:STDOUT: fn @Destroy.Op.loc43_3.3(%self.param: ref %Slice.d46) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -594,15 +580,15 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT: fn @TestRange(%s.param: %Slice.c12, %start.param: %u64, %count.param: %u64) -> out %return.param: %Slice.c12 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Slice.c12 = name_ref s, %s
-// CHECK:STDOUT:   %.loc44: %Slice.Range.type.0bd = specific_constant imports.%Core.import_ref.e9f, @Slice(constants.%i32) [concrete = constants.%Slice.Range.a65]
-// CHECK:STDOUT:   %Range.ref: %Slice.Range.type.0bd = name_ref Range, %.loc44 [concrete = constants.%Slice.Range.a65]
+// CHECK:STDOUT:   %.loc51: %Slice.Range.type.0bd = specific_constant imports.%Core.import_ref.e9f, @Slice(constants.%i32) [concrete = constants.%Slice.Range.a65]
+// CHECK:STDOUT:   %Range.ref: %Slice.Range.type.0bd = name_ref Range, %.loc51 [concrete = constants.%Slice.Range.a65]
 // CHECK:STDOUT:   %Slice.Range.bound: <bound method> = bound_method %s.ref, %Range.ref
 // CHECK:STDOUT:   %start.ref: %u64 = name_ref start, %start
 // CHECK:STDOUT:   %count.ref: %u64 = name_ref count, %count
 // CHECK:STDOUT:   %Slice.Range.specific_fn: <specific function> = specific_function %Range.ref, @Slice.Range(constants.%i32) [concrete = constants.%Slice.Range.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.ref, %Slice.Range.specific_fn
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Slice.Range.call: init %Slice.c12 to %.loc42_75.1 = call %bound_method(%s.ref, %start.ref, %count.ref)
+// CHECK:STDOUT:   %Slice.Range.call: init %Slice.c12 to %.loc49_75.1 = call %bound_method(%s.ref, %start.ref, %count.ref)
 // CHECK:STDOUT:   return %Slice.Range.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -610,11 +596,11 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Slice.c12 = name_ref s, %s
 // CHECK:STDOUT:   %impl.elem0: %.606 = impl_witness_access constants.%Copy.impl_witness.137, element0 [concrete = constants.%Slice.as.Copy.impl.Op.789]
-// CHECK:STDOUT:   %bound_method.loc50_10.1: <bound method> = bound_method %s.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc57_10.1: <bound method> = bound_method %s.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Slice.as.Copy.impl.Op(constants.%i32) [concrete = constants.%Slice.as.Copy.impl.Op.specific_fn.e5e]
-// CHECK:STDOUT:   %bound_method.loc50_10.2: <bound method> = bound_method %s.ref, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc57_10.2: <bound method> = bound_method %s.ref, %specific_fn
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Slice.as.Copy.impl.Op.call: init %Slice.c12 to %.loc48_43.1 = call %bound_method.loc50_10.2(%s.ref)
+// CHECK:STDOUT:   %Slice.as.Copy.impl.Op.call: init %Slice.c12 to %.loc55_43.1 = call %bound_method.loc57_10.2(%s.ref)
 // CHECK:STDOUT:   return %Slice.as.Copy.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
