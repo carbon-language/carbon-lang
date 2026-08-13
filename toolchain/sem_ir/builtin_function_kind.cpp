@@ -724,8 +724,8 @@ constexpr BuiltinInfo IntGreaterEq = {
     "int.greater_eq", ValidateSignature<auto(IntT, IntU)->Bool>};
 
 // "float.negate": float negation.
-constexpr BuiltinInfo FloatNegate = {
-    "float.negate", ValidateSignature<auto(SizedFloatT)->SizedFloatT>};
+constexpr BuiltinInfo FloatNegate = {"float.negate",
+                                     ValidateSignature<auto(FloatT)->FloatT>};
 
 // "float.add": float addition.
 constexpr BuiltinInfo FloatAdd = {
