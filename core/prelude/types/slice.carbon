@@ -42,7 +42,7 @@ impl forall [T: type, Subscript: ImplicitAs(u64)]
     Slice(T) as IndirectIndexWith(Subscript)
     where .ElementType = T {
   fn Addr(self, subscript: Subscript) -> T* {
-    return PointerOffset(self.Ptr(), subscript as u64);
+    return PointerOffset(self.Ptr(), subscript);
   }
 }
 
@@ -51,6 +51,6 @@ impl forall [T: type] Slice(T) as UnformedInit {}
 // TODO: convert from `ref array(T, N)` rather than pointer, when that's supported
 impl forall [T: type, N: IntLiteral] array(T, N)* as ImplicitAs(Slice(T)) {
   fn Convert(self: array(T, N)*) -> Slice(T) {
-    return Slice(T).Make(&(*self)[0], N as u64);
+    return Slice(T).Make(&(*self)[0], N);
   }
 }
