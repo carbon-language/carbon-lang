@@ -479,7 +479,7 @@ private class Redecl {}
 // CHECK:STDOUT:   %Forward.decl: type = class_decl @Forward [concrete = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Forward {
+// CHECK:STDOUT: class @Forward [from "forward.carbon"] {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

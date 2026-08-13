@@ -95,8 +95,8 @@ interface D;
 // CHECK:STDOUT: --- todo_fail_decl_in_api_definition_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type.3138d6.2: type = facet_type <@A.loc7> [concrete]
-// CHECK:STDOUT:   %Self: %A.type.3138d6.2 = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
+// CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -105,15 +105,13 @@ interface D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_46.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_46.2 = import <none>
-// CHECK:STDOUT:   %A.decl.loc5: type = interface_decl @A.loc7 [concrete = constants.%A.type.3138d6.2] {} {}
-// CHECK:STDOUT:   %A.decl.loc7: type = interface_decl @A.loc7 [concrete = constants.%A.type.3138d6.2] {} {}
+// CHECK:STDOUT:   %A.decl.loc5: type = interface_decl @A [concrete = constants.%A.type] {} {}
+// CHECK:STDOUT:   %A.decl.loc7: type = interface_decl @A [concrete = constants.%A.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @A.loc5;
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @A.loc7 {
-// CHECK:STDOUT:   %Self: %A.type.3138d6.2 = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %A.WithSelf.decl = interface_with_self_decl @A.loc7 [concrete]
+// CHECK:STDOUT: interface @A [from "decl_in_api_definition_in_impl.carbon"] {
+// CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %A.WithSelf.decl = interface_with_self_decl @A [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -191,7 +189,7 @@ interface D;
 // CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C.type.709119.2: type = facet_type <@C.loc8_12.2> [concrete]
+// CHECK:STDOUT:   %C.type: type = facet_type <@C> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -200,12 +198,10 @@ interface D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_40.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_40.2 = import <none>
-// CHECK:STDOUT:   %C.decl: type = interface_decl @C.loc8_12.2 [concrete = constants.%C.type.709119.2] {} {}
+// CHECK:STDOUT:   %C.decl: type = interface_decl @C [concrete = constants.%C.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @C.loc8_12.1;
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @C.loc8_12.2;
+// CHECK:STDOUT: interface @C [from "decl_in_api_decl_in_impl.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_impl.carbon
 // CHECK:STDOUT:
