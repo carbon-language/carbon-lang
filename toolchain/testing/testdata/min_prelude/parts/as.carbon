@@ -10,28 +10,28 @@
 
 package Core library "prelude/parts/as";
 
-// export import library "prelude/parts/default";
+export import library "prelude/parts/default";
 export import library "prelude/parts/destroy";
-// export import library "prelude/parts/form";
+export import library "prelude/parts/form";
 
-// interface UnsafeAs(Dest: type) {
-//   fn Convert(self) -> Dest;
-// }
+interface UnsafeAs(Dest: type) {
+  fn Convert(self) -> Dest;
+}
 
 interface As(Dest: type) {
   // TODO: extend UnsafeAs(Dest);
   fn Convert(self) -> Dest;
 }
 
-// interface ImplicitAs(Dest: type) {
-//   // TODO: extend As(Dest);
-//   fn Convert(self) -> Dest;
-// }
+interface ImplicitAs(Dest: type) {
+  // TODO: extend As(Dest);
+  fn Convert(self) -> Dest;
+}
 
-// interface BitAndWith(Other: type) {
-//   fn Op(self, other: Other) -> Self;
-// }
+interface BitAndWith(Other: type) {
+  fn Op(self, other: Other) -> Self;
+}
 
-// impl type as BitAndWith(type) {
-//   fn Op(self, other: Self) -> Self = "type.and";
-// }
+impl type as BitAndWith(type) {
+  fn Op(self, other: Self) -> Self = "type.and";
+}
