@@ -66,10 +66,8 @@ fn TestKeyword(s: slice(i32)) -> slice(i32) {
 
 
 
-// --- fail_todo_index.carbon
+// --- index.carbon
 
-// According to p002274, this should work via a blanket impl of `IndexWith`
-// for all types implementing `IndirectIndexWith`
 fn TestIndex(s: Core.Slice(i32), i: u64) -> i32 {
   //@dump-sem-ir-begin
   return s[i];
@@ -81,6 +79,47 @@ fn TestIndex(s: Core.Slice(i32), i: u64) -> i32 {
 
 
 
+
+
+// --- array_to_slice_pointer.carbon
+
+library "[[@TEST_NAME]]";
+
+fn TakesSlice(s: Core.Slice(i32)) -> i32;
+
+fn CallWithArrayPointer(a: array(i32, 5)*) -> i32 {
+  //@dump-sem-ir-begin
+  return TakesSlice(a);
+  //@dump-sem-ir-end
+}
+
+// --- array_to_slice_var.carbon
+
+library "[[@TEST_NAME]]";
+
+fn TakesSlice(s: Core.Slice(i32)) -> i32;
+
+fn CallWithAddressOfLocalVariable() -> i32 {
+  var b: array(i32, 5) = (1, 2, 3, 4, 5);
+  //@dump-sem-ir-begin
+  return TakesSlice(&b);
+  //@dump-sem-ir-end
+}
+
+// --- fail_array_to_slice_param.carbon
+
+library "[[@TEST_NAME]]";
+
+fn TakesSlice(s: Core.Slice(i32)) -> i32;
+
+fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
+  // NOTE: This is expected to fail because parameters are non-references in Carbon.
+  // CHECK:STDERR: fail_array_to_slice_param.carbon:[[@LINE+4]]:21: error: cannot take the address of non-reference expression [AddrOfNonRef]
+  // CHECK:STDERR:   return TakesSlice(&a);
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR:
+  return TakesSlice(&a);
+}
 
 // CHECK:STDOUT: --- test_slice.carbon
 // CHECK:STDOUT:
@@ -579,7 +618,7 @@ fn TestIndex(s: Core.Slice(i32), i: u64) -> i32 {
 // CHECK:STDOUT:   return %Slice.as.Copy.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_index.carbon
+// CHECK:STDOUT: --- index.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
@@ -654,10 +693,165 @@ fn TestIndex(s: Core.Slice(i32), i: u64) -> i32 {
 // CHECK:STDOUT:   %s.ref: %Slice.c12 = name_ref s, %s
 // CHECK:STDOUT:   %i.ref: %u64 = name_ref i, %i
 // CHECK:STDOUT:   %impl.elem1: %.fc8 = impl_witness_access constants.%IndexWith.impl_witness.13b, element1 [concrete = constants.%T.as_type.as.IndexWith.impl.At.952]
-// CHECK:STDOUT:   %bound_method.loc10_13.1: <bound method> = bound_method %s.ref, %impl.elem1
+// CHECK:STDOUT:   %bound_method.loc4_13.1: <bound method> = bound_method %s.ref, %impl.elem1
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem1, @T.as_type.as.IndexWith.impl.At(constants.%u64, constants.%facet_value.422) [concrete = constants.%T.as_type.as.IndexWith.impl.At.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_13.2: <bound method> = bound_method %s.ref, %specific_fn
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.call: init %i32 = call %bound_method.loc10_13.2(%s.ref, %i.ref)
+// CHECK:STDOUT:   %bound_method.loc4_13.2: <bound method> = bound_method %s.ref, %specific_fn
+// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.call: init %i32 = call %bound_method.loc4_13.2(%s.ref, %i.ref)
 // CHECK:STDOUT:   return %T.as_type.as.IndexWith.impl.At.call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- array_to_slice_pointer.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
+// CHECK:STDOUT:   %u64.builtin: type = int_type unsigned, %int_64 [concrete]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Slice.c12: type = class_type @Slice, @Slice(%i32) [concrete]
+// CHECK:STDOUT:   %TakesSlice.type: type = fn_type @TakesSlice [concrete]
+// CHECK:STDOUT:   %TakesSlice: %TakesSlice.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
+// CHECK:STDOUT:   %array_type.368: type = array_type %int_5.64b, %i32 [concrete]
+// CHECK:STDOUT:   %ptr.759: type = ptr_type %array_type.368 [concrete]
+// CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %struct_type.ptr.size.a02: type = struct_type {.ptr: %ptr.d08, .size: %u64} [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.8a2: type = facet_type <@ImplicitAs, @ImplicitAs(%Slice.c12)> [concrete]
+// CHECK:STDOUT:   %N.d23: Core.IntLiteral = symbolic_binding N, 1 [symbolic]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.9d0: type = fn_type @ptr.as.ImplicitAs.impl.Convert.2, @ptr.as.ImplicitAs.impl.396(%T.67d, %N.d23) [symbolic]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.e85: %ptr.as.ImplicitAs.impl.Convert.type.9d0 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.fb8: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.2d2, @ptr.as.ImplicitAs.impl.396(%i32, %int_5.64b) [concrete]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.59c: type = fn_type @ptr.as.ImplicitAs.impl.Convert.2, @ptr.as.ImplicitAs.impl.396(%i32, %int_5.64b) [concrete]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.b5b: %ptr.as.ImplicitAs.impl.Convert.type.59c = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.8a2 = facet_value %ptr.759, (%ImplicitAs.impl_witness.fb8) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.433: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Slice.c12, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.0de: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.433, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %ptr.as.ImplicitAs.impl.Convert.b5b, @ptr.as.ImplicitAs.impl.Convert.2(%i32, %int_5.64b) [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.5: type = fn_type @Destroy.Op.loc8_21.5 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1a2547.5: %Destroy.Op.type.1d8f74.5 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.59d: @ptr.as.ImplicitAs.impl.396.%ptr.as.ImplicitAs.impl.Convert.type (%ptr.as.ImplicitAs.impl.Convert.type.9d0) = import_ref Core//prelude/types/slice, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.ImplicitAs.impl.396.%ptr.as.ImplicitAs.impl.Convert (constants.%ptr.as.ImplicitAs.impl.Convert.e85)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.2d2 = impl_witness_table (%Core.import_ref.59d), @ptr.as.ImplicitAs.impl.396 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CallWithArrayPointer(%a.param: %ptr.759) -> out %return.param: %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %TakesSlice.ref: %TakesSlice.type = name_ref TakesSlice, file.%TakesSlice.decl [concrete = constants.%TakesSlice]
+// CHECK:STDOUT:   %a.ref: %ptr.759 = name_ref a, %a
+// CHECK:STDOUT:   %impl.elem0: %.0de = impl_witness_access constants.%ImplicitAs.impl_witness.fb8, element0 [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.b5b]
+// CHECK:STDOUT:   %bound_method.loc8_21.1: <bound method> = bound_method %a.ref, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.ImplicitAs.impl.Convert.2(constants.%i32, constants.%int_5.64b) [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8_21.2: <bound method> = bound_method %a.ref, %specific_fn
+// CHECK:STDOUT:   %.loc8_21.1: ref %Slice.c12 = temporary_storage
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.call: init %Slice.c12 to %.loc8_21.1 = call %bound_method.loc8_21.2(%a.ref)
+// CHECK:STDOUT:   %.loc8_21.2: init %Slice.c12 = converted %a.ref, %ptr.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %.loc8_21.3: ref %Slice.c12 = temporary %.loc8_21.1, %.loc8_21.2
+// CHECK:STDOUT:   %.loc8_21.4: %Slice.c12 = acquire_value %.loc8_21.3
+// CHECK:STDOUT:   %TakesSlice.call: init %i32 = call %TakesSlice.ref(%.loc8_21.4)
+// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc8_21.3, constants.%Destroy.Op.1a2547.5
+// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc8_21.3)
+// CHECK:STDOUT:   return %TakesSlice.call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc8_21.1(%self.param: ref %ptr.d08) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc8_21.2(%self.param: ref %u64.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc8_21.3(%self.param: ref %u64) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc8_21.4(%self.param: ref %struct_type.ptr.size.a02) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc8_21.5(%self.param: ref %Slice.c12) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- array_to_slice_var.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
+// CHECK:STDOUT:   %u64.builtin: type = int_type unsigned, %int_64 [concrete]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Slice.c12: type = class_type @Slice, @Slice(%i32) [concrete]
+// CHECK:STDOUT:   %TakesSlice.type: type = fn_type @TakesSlice [concrete]
+// CHECK:STDOUT:   %TakesSlice: %TakesSlice.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
+// CHECK:STDOUT:   %array_type.368: type = array_type %int_5.64b, %i32 [concrete]
+// CHECK:STDOUT:   %ptr.759: type = ptr_type %array_type.368 [concrete]
+// CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %struct_type.ptr.size.a02: type = struct_type {.ptr: %ptr.d08, .size: %u64} [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.8a2: type = facet_type <@ImplicitAs, @ImplicitAs(%Slice.c12)> [concrete]
+// CHECK:STDOUT:   %N.d23: Core.IntLiteral = symbolic_binding N, 1 [symbolic]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.9d0: type = fn_type @ptr.as.ImplicitAs.impl.Convert.2, @ptr.as.ImplicitAs.impl.396(%T.67d, %N.d23) [symbolic]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.e85: %ptr.as.ImplicitAs.impl.Convert.type.9d0 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.fb8: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.2d2, @ptr.as.ImplicitAs.impl.396(%i32, %int_5.64b) [concrete]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.type.59c: type = fn_type @ptr.as.ImplicitAs.impl.Convert.2, @ptr.as.ImplicitAs.impl.396(%i32, %int_5.64b) [concrete]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.b5b: %ptr.as.ImplicitAs.impl.Convert.type.59c = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.b81: %ImplicitAs.type.8a2 = facet_value %ptr.759, (%ImplicitAs.impl_witness.fb8) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.433: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Slice.c12, %ImplicitAs.facet.b81) [concrete]
+// CHECK:STDOUT:   %.0de: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.433, %ImplicitAs.facet.b81 [concrete]
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %ptr.as.ImplicitAs.impl.Convert.b5b, @ptr.as.ImplicitAs.impl.Convert.2(%i32, %int_5.64b) [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.5: type = fn_type @Destroy.Op.loc9_21.5 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1a2547.5: %Destroy.Op.type.1d8f74.5 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.59d: @ptr.as.ImplicitAs.impl.396.%ptr.as.ImplicitAs.impl.Convert.type (%ptr.as.ImplicitAs.impl.Convert.type.9d0) = import_ref Core//prelude/types/slice, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.ImplicitAs.impl.396.%ptr.as.ImplicitAs.impl.Convert (constants.%ptr.as.ImplicitAs.impl.Convert.e85)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.2d2 = impl_witness_table (%Core.import_ref.59d), @ptr.as.ImplicitAs.impl.396 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CallWithAddressOfLocalVariable() -> out %return.param: %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %TakesSlice.ref: %TakesSlice.type = name_ref TakesSlice, file.%TakesSlice.decl [concrete = constants.%TakesSlice]
+// CHECK:STDOUT:   %b.ref: ref %array_type.368 = name_ref b, %b
+// CHECK:STDOUT:   %addr: %ptr.759 = addr_of %b.ref
+// CHECK:STDOUT:   %impl.elem0.loc9: %.0de = impl_witness_access constants.%ImplicitAs.impl_witness.fb8, element0 [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.b5b]
+// CHECK:STDOUT:   %bound_method.loc9_21.1: <bound method> = bound_method %addr, %impl.elem0.loc9
+// CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @ptr.as.ImplicitAs.impl.Convert.2(constants.%i32, constants.%int_5.64b) [concrete = constants.%ptr.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc9_21.2: <bound method> = bound_method %addr, %specific_fn.loc9
+// CHECK:STDOUT:   %.loc9_21.1: ref %Slice.c12 = temporary_storage
+// CHECK:STDOUT:   %ptr.as.ImplicitAs.impl.Convert.call: init %Slice.c12 to %.loc9_21.1 = call %bound_method.loc9_21.2(%addr)
+// CHECK:STDOUT:   %.loc9_21.2: init %Slice.c12 = converted %addr, %ptr.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %.loc9_21.3: ref %Slice.c12 = temporary %.loc9_21.1, %.loc9_21.2
+// CHECK:STDOUT:   %.loc9_21.4: %Slice.c12 = acquire_value %.loc9_21.3
+// CHECK:STDOUT:   %TakesSlice.call: init %i32 = call %TakesSlice.ref(%.loc9_21.4)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc9: <bound method> = bound_method %.loc9_21.3, constants.%Destroy.Op.1a2547.5
+// CHECK:STDOUT:   %Destroy.Op.call.loc9: init %empty_tuple.type = call %Destroy.Op.bound.loc9(%.loc9_21.3)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   return %TakesSlice.call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc9_21.1(%self.param: ref %ptr.d08) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc9_21.2(%self.param: ref %u64.builtin) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc9_21.3(%self.param: ref %u64) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc9_21.4(%self.param: ref %struct_type.ptr.size.a02) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc9_21.5(%self.param: ref %Slice.c12) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

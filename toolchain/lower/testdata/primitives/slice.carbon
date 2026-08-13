@@ -112,18 +112,18 @@ fn IterateSlice(s: Core.Slice(i32)) -> i32 {
 // CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !14, type: !7)
 // CHECK:STDOUT: !19 = !DILocation(line: 8, column: 10, scope: !14)
 // CHECK:STDOUT: !20 = !DILocation(line: 8, column: 3, scope: !14)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Slice.Core.84588f41d61dafba", scope: null, file: !22, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !23)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Slice.Core.84588f41d61dafba", scope: null, file: !22, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !23)
 // CHECK:STDOUT: !22 = !DIFile(filename: "{{.*}}/prelude/types/slice.carbon", directory: "")
 // CHECK:STDOUT: !23 = !{!24, !25}
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !21, type: !7)
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 2, scope: !21, type: !8)
-// CHECK:STDOUT: !26 = !DILocation(line: 18, column: 12, scope: !21)
-// CHECK:STDOUT: !27 = !DILocation(line: 18, column: 5, scope: !21)
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Size", linkageName: "_CSize.Slice.Core.84588f41d61dafba", scope: null, file: !22, line: 21, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !29)
+// CHECK:STDOUT: !26 = !DILocation(line: 21, column: 12, scope: !21)
+// CHECK:STDOUT: !27 = !DILocation(line: 21, column: 5, scope: !21)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Size", linkageName: "_CSize.Slice.Core.84588f41d61dafba", scope: null, file: !22, line: 24, type: !15, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !29)
 // CHECK:STDOUT: !29 = !{!30}
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !28, type: !7)
-// CHECK:STDOUT: !31 = !DILocation(line: 21, column: 33, scope: !28)
-// CHECK:STDOUT: !32 = !DILocation(line: 21, column: 26, scope: !28)
+// CHECK:STDOUT: !31 = !DILocation(line: 24, column: 33, scope: !28)
+// CHECK:STDOUT: !32 = !DILocation(line: 24, column: 26, scope: !28)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'copy.carbon'
@@ -166,14 +166,14 @@ fn IterateSlice(s: Core.Slice(i32)) -> i32 {
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 4, column: 10, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 4, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Slice.eb057aa32837c84e.Core:Copy.Core.073fbce68be6103e", scope: null, file: !13, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !14)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Slice.eb057aa32837c84e.Core:Copy.Core.073fbce68be6103e", scope: null, file: !13, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !14)
 // CHECK:STDOUT: !13 = !DIFile(filename: "{{.*}}/prelude/types/slice.carbon", directory: "")
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !12, type: !7)
-// CHECK:STDOUT: !16 = !DILocation(line: 29, column: 42, scope: !12)
-// CHECK:STDOUT: !17 = !DILocation(line: 29, column: 60, scope: !12)
-// CHECK:STDOUT: !18 = !DILocation(line: 29, column: 34, scope: !12)
-// CHECK:STDOUT: !19 = !DILocation(line: 29, column: 27, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 32, column: 42, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 32, column: 60, scope: !12)
+// CHECK:STDOUT: !18 = !DILocation(line: 32, column: 34, scope: !12)
+// CHECK:STDOUT: !19 = !DILocation(line: 32, column: 27, scope: !12)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'unformed.carbon'
@@ -271,22 +271,22 @@ fn IterateSlice(s: Core.Slice(i32)) -> i32 {
 // CHECK:STDOUT: !29 = !{!30}
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !28, type: !7)
 // CHECK:STDOUT: !31 = !DILocation(line: 4, column: 3, scope: !28)
-// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Slice.Core.84588f41d61dafba", scope: null, file: !33, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !34)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Slice.Core.84588f41d61dafba", scope: null, file: !33, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !34)
 // CHECK:STDOUT: !33 = !DIFile(filename: "{{.*}}/prelude/types/slice.carbon", directory: "")
 // CHECK:STDOUT: !34 = !{!35, !36}
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !32, type: !7)
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 2, scope: !32, type: !8)
-// CHECK:STDOUT: !37 = !DILocation(line: 18, column: 12, scope: !32)
-// CHECK:STDOUT: !38 = !DILocation(line: 18, column: 5, scope: !32)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Slice.eb057aa32837c84e.Core:Copy.Core.84588f41d61dafba", scope: null, file: !33, line: 29, type: !40, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !42)
+// CHECK:STDOUT: !37 = !DILocation(line: 21, column: 12, scope: !32)
+// CHECK:STDOUT: !38 = !DILocation(line: 21, column: 5, scope: !32)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Slice.eb057aa32837c84e.Core:Copy.Core.84588f41d61dafba", scope: null, file: !33, line: 32, type: !40, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !42)
 // CHECK:STDOUT: !40 = !DISubroutineType(types: !41)
 // CHECK:STDOUT: !41 = !{!7, !7}
 // CHECK:STDOUT: !42 = !{!43}
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !39, type: !7)
-// CHECK:STDOUT: !44 = !DILocation(line: 29, column: 42, scope: !39)
-// CHECK:STDOUT: !45 = !DILocation(line: 29, column: 60, scope: !39)
-// CHECK:STDOUT: !46 = !DILocation(line: 29, column: 34, scope: !39)
-// CHECK:STDOUT: !47 = !DILocation(line: 29, column: 27, scope: !39)
+// CHECK:STDOUT: !44 = !DILocation(line: 32, column: 42, scope: !39)
+// CHECK:STDOUT: !45 = !DILocation(line: 32, column: 60, scope: !39)
+// CHECK:STDOUT: !46 = !DILocation(line: 32, column: 34, scope: !39)
+// CHECK:STDOUT: !47 = !DILocation(line: 32, column: 27, scope: !39)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'iterate.carbon'
@@ -605,23 +605,23 @@ fn IterateSlice(s: Core.Slice(i32)) -> i32 {
 // CHECK:STDOUT: !87 = !DILocalVariable(arg: 1, scope: !85, type: !8)
 // CHECK:STDOUT: !88 = !DILocation(line: 40, column: 12, scope: !85)
 // CHECK:STDOUT: !89 = !DILocation(line: 40, column: 5, scope: !85)
-// CHECK:STDOUT: !90 = distinct !DISubprogram(name: "Size", linkageName: "_CSize.Slice.Core.84588f41d61dafba", scope: null, file: !91, line: 21, type: !54, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !92)
+// CHECK:STDOUT: !90 = distinct !DISubprogram(name: "Size", linkageName: "_CSize.Slice.Core.84588f41d61dafba", scope: null, file: !91, line: 24, type: !54, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !92)
 // CHECK:STDOUT: !91 = !DIFile(filename: "{{.*}}/prelude/types/slice.carbon", directory: "")
 // CHECK:STDOUT: !92 = !{!93}
 // CHECK:STDOUT: !93 = !DILocalVariable(arg: 1, scope: !90, type: !8)
-// CHECK:STDOUT: !94 = !DILocation(line: 21, column: 33, scope: !90)
-// CHECK:STDOUT: !95 = !DILocation(line: 21, column: 26, scope: !90)
+// CHECK:STDOUT: !94 = !DILocation(line: 24, column: 33, scope: !90)
+// CHECK:STDOUT: !95 = !DILocation(line: 24, column: 26, scope: !90)
 // CHECK:STDOUT: !96 = distinct !DISubprogram(name: "Op", linkageName: "_COp.UInt.9452f4c51951679b.Core:Inc.Core.9025b11fc94ef1f2", scope: null, file: !97, line: 458, type: !46, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !98)
 // CHECK:STDOUT: !97 = !DIFile(filename: "{{.*}}/prelude/types/uint.carbon", directory: "")
 // CHECK:STDOUT: !98 = !{!99}
 // CHECK:STDOUT: !99 = !DILocalVariable(arg: 1, scope: !96, type: !48)
 // CHECK:STDOUT: !100 = !DILocation(line: 460, column: 5, scope: !96)
 // CHECK:STDOUT: !101 = !DILocation(line: 458, column: 3, scope: !96)
-// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "Ptr", linkageName: "_CPtr.Slice.Core.84588f41d61dafba", scope: null, file: !91, line: 22, type: !79, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !103)
+// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "Ptr", linkageName: "_CPtr.Slice.Core.84588f41d61dafba", scope: null, file: !91, line: 25, type: !79, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !103)
 // CHECK:STDOUT: !103 = !{!104}
 // CHECK:STDOUT: !104 = !DILocalVariable(arg: 1, scope: !102, type: !8)
-// CHECK:STDOUT: !105 = !DILocation(line: 22, column: 31, scope: !102)
-// CHECK:STDOUT: !106 = !DILocation(line: 22, column: 24, scope: !102)
+// CHECK:STDOUT: !105 = !DILocation(line: 25, column: 31, scope: !102)
+// CHECK:STDOUT: !106 = !DILocation(line: 25, column: 24, scope: !102)
 // CHECK:STDOUT: !107 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.Optional.Core.8698ccdc411f2307", scope: null, file: !78, line: 33, type: !108, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !110)
 // CHECK:STDOUT: !108 = !DISubroutineType(types: !109)
 // CHECK:STDOUT: !109 = !{!8, !7}

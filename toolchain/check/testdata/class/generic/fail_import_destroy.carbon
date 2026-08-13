@@ -10,13 +10,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/generic/fail_import_destroy.carbon
 
-// --- fail_core.carbon
+// --- core.carbon
 
 package Core;
 
 interface ImplicitAs(Dest: type) { fn Convert(self) -> Dest; }
 
-// --- fail_def.carbon
+// --- def.carbon
 
 library "[[@TEST_NAME]]";
 
