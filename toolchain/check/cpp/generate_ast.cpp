@@ -238,7 +238,7 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
       } else if (auto generic_class =
                      context_->insts().TryGetAs<SemIR::GenericClassType>(
                          type_inst_id)) {
-        return ExportGenericClassToCpp(*context_, type_inst_id, *generic_class);
+        return ExportGenericClassToCpp(*context_, *generic_class);
       }
 
       return nullptr;
