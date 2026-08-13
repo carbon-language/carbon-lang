@@ -2370,12 +2370,12 @@ static auto TryAddRealLiterals(const Real& lhs, const Real& rhs)
 
   // Assume no overflow during addition, OverflowAdd will grow final result if
   // necessary.
-  auto bit_width = std::max<unsigned>({
+  auto bit_width = std::max({
       lhs.mantissa.getSignificantBits() +
           EstimateBitsForExponent(lhs_exponent_delta),
       rhs.mantissa.getSignificantBits() +
           EstimateBitsForExponent(rhs_exponent_delta),
-      IntStore::MinAPWidth,
+      static_cast<unsigned>(IntStore::MinAPWidth),
   });
   if (bit_width > IntStore::MaxIntWidth) {
     // Mantissa is too big.
