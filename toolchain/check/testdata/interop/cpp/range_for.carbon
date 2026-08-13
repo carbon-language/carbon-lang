@@ -226,7 +226,7 @@ fn TestIterateDriver(var m: Cpp.N.MutableRange) {
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-21]]:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   friend auto begin(MutableRange&) -> Iterator;
   // CHECK:STDERR:                                  ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:61:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn Begin(self) -> Iterator;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -240,7 +240,7 @@ fn TestIterateDriver(var m: Cpp.N.MutableRange) {
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-34]]:32: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   friend auto end(MutableRange&) -> Iterator;
   // CHECK:STDERR:                                ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:43:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:62:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn End(self) -> Sentinel;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -356,7 +356,7 @@ fn TestIterateDriver(var m: Cpp.N.MutableRange) {
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-21]]:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   friend auto begin(MutableRange&) -> Iterator;
   // CHECK:STDERR:                                  ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:61:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn Begin(self) -> Iterator;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -370,7 +370,7 @@ fn TestIterateDriver(var m: Cpp.N.MutableRange) {
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-34]]:32: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   friend auto end(MutableRange&) -> Sentinel;
   // CHECK:STDERR:                                ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:43:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:62:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn End(self) -> Sentinel;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -467,7 +467,7 @@ fn TestIterateDriver(var mc: Cpp.N.MutableAndConstRange) {
   // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-24]]:44: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:     friend auto begin(MutableAndConstRange&) -> Iterator;
   // CHECK:STDERR:                                            ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:61:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn Begin(self) -> Iterator;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -481,7 +481,7 @@ fn TestIterateDriver(var mc: Cpp.N.MutableAndConstRange) {
   // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-37]]:42: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:     friend auto end(MutableAndConstRange&) -> Iterator;
   // CHECK:STDERR:                                          ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:43:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:62:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn End(self) -> Sentinel;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -665,8 +665,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   Test(begin_method_deleted);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:64:9: note: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    64 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:83:9: note: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR:    83 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
   // CHECK:STDERR:       |         ^
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-123]]:8: note: 'begin' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR:    44 |   auto begin() = delete;
@@ -687,8 +687,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   Test(end_method_deleted);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:64:9: note: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    64 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:83:9: note: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR:    83 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
   // CHECK:STDERR:       |         ^
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-139]]:8: note: 'end' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR:    50 |   auto end() = delete;
@@ -709,8 +709,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   Test(begin_function_deleted);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:64:9: note: call to deleted function 'begin' [CppInteropParseError]
-  // CHECK:STDERR:    64 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:83:9: note: call to deleted function 'begin' [CppInteropParseError]
+  // CHECK:STDERR:    83 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
   // CHECK:STDERR:       |         ^~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-157]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR:    54 |   friend auto begin(const BeginFunctionDeleted&) = delete;
@@ -731,8 +731,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   Test(end_function_deleted);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:64:9: note: call to deleted function 'end' [CppInteropParseError]
-  // CHECK:STDERR:    64 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:83:9: note: call to deleted function 'end' [CppInteropParseError]
+  // CHECK:STDERR:    83 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
   // CHECK:STDERR:       |         ^~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-173]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR:    60 |   friend auto end(const EndFunctionDeleted&) = delete;
@@ -2030,6 +2030,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.Self.500: %Iterate.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness.1d8: <witness> = lookup_impl_witness %.Self.500, @Iterate [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.294: %facet_type.f48 = impl_witness_access %Iterate.lookup_impl_witness.1d8, element0 [symbolic_self]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %CppRange.type: type = facet_type <@CppRange> [concrete]
 // CHECK:STDOUT:   %.Self.e0b: %CppRange.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %CppRangeForIterate.lookup_impl_witness.50b: <witness> = lookup_impl_witness %.Self.e0b, @CppRangeForIterate [symbolic_self]
@@ -2053,7 +2054,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.064: %T.as_type.as.Iterate.impl.Next.type.8ae = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.NewCursor.type.09f: type = fn_type @T.as_type.as.Iterate.impl.NewCursor, @T.as_type.as.Iterate.impl(%T.f45530.2) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.NewCursor.ae5: %T.as_type.as.Iterate.impl.NewCursor.type.09f = struct_value () [symbolic]
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.fb7: type = pattern_type %f64.dc1 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc20_53.2 [concrete]
@@ -2463,6 +2463,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %.Self.500: %Iterate.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness.1d8: <witness> = lookup_impl_witness %.Self.500, @Iterate [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.294: %facet_type.f48 = impl_witness_access %Iterate.lookup_impl_witness.1d8, element0 [symbolic_self]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %CppRange.type: type = facet_type <@CppRange> [concrete]
 // CHECK:STDOUT:   %.Self.e0b: %CppRange.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %CppRangeForIterate.lookup_impl_witness.50b: <witness> = lookup_impl_witness %.Self.e0b, @CppRangeForIterate [symbolic_self]
@@ -2486,7 +2487,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.064: %T.as_type.as.Iterate.impl.Next.type.8ae = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.NewCursor.type.09f: type = fn_type @T.as_type.as.Iterate.impl.NewCursor, @T.as_type.as.Iterate.impl(%T.f45530.2) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.NewCursor.ae5: %T.as_type.as.Iterate.impl.NewCursor.type.09f = struct_value () [symbolic]
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.fb7: type = pattern_type %f64.dc1 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc22_53.2 [concrete]
