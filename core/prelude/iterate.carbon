@@ -32,6 +32,25 @@ impl forall [T: Copy & Destroy, N: IntLiteral]
   }
 }
 
+// Iteration support for Core.Slice(T)
+
+private fn PointerOffset[T: type](p: T*, offset: u64) -> T* = "pointer.offset";
+
+impl forall [T: Copy & Destroy]
+    Slice(T) as Iterate
+    where .ElementType = T and .CursorType = u64 {
+  fn NewCursor(unused self) -> u64 { return 0; }
+  fn Next(self, cursor: u64*) -> Optional(T) {
+    if (*cursor < self.Size()) {
+      var offset: u64 = *cursor;
+      ++*cursor;
+      return Optional(T).Some(*PointerOffset(self.Ptr(), offset));
+    } else {
+      return Optional(T).None();
+    }
+  }
+}
+
 // Iteration support for C++ ranges.
 
 private interface CppRangeForIterate {
@@ -79,22 +98,5 @@ impl forall [T: CppRange where .ValueType impls Copy]
       return var;
     }
     return Optional(ElementType).None();
-  }
-}
-
-private fn PointerOffset[T: type](p: T*, offset: u64) -> T* = "pointer.offset";
-
-impl forall [T: Copy & Destroy]
-    Slice(T) as Iterate
-    where .ElementType = T and .CursorType = u64 {
-  fn NewCursor(unused self) -> u64 { return 0; }
-  fn Next(self, cursor: u64*) -> Optional(T) {
-    if (*cursor < self.Size()) {
-      var offset: u64 = *cursor;
-      ++*cursor;
-      return Optional(T).Some(*PointerOffset(self.Ptr(), offset));
-    } else {
-      return Optional(T).None();
-    }
   }
 }
