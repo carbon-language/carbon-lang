@@ -42,7 +42,7 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
 // C++ class template.  Otherwise, creates a new C++ class template and
 // returns it. Returns nullptr if the class could not be exported and an
 // error was diagnosed.
-auto ExportGenericClassToCpp(Context& context, SemIR::InstId inst_id,
+auto ExportGenericClassToCpp(Context& context,
                              SemIR::GenericClassType generic_class_type)
     -> clang::ClassTemplateDecl*;
 
