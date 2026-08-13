@@ -90,8 +90,9 @@ impl forall [T: Copy & Destroy]
   fn NewCursor(unused self) -> u64 { return 0; }
   fn Next(self, cursor: u64*) -> Optional(T) {
     if (*cursor < self.Size()) {
+      var offset: u64 = *cursor;
       ++*cursor;
-      return Optional(T).Some(*PointerOffset(self.Ptr(), *cursor - 1));
+      return Optional(T).Some(*PointerOffset(self.Ptr(), offset));
     } else {
       return Optional(T).None();
     }
