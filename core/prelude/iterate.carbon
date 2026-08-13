@@ -23,8 +23,9 @@ impl forall [T: Copy & Destroy, N: IntLiteral]
   fn NewCursor(unused self) -> i32 { return 0; }
   fn Next(self, cursor: i32*) -> Optional(T) {
     if (*cursor < N) {
+      var offset: i32 = *cursor;
       ++*cursor;
-      return Optional(T).Some(self[*cursor - 1]);
+      return Optional(T).Some(self[offset]);
     } else {
       return Optional(T).None();
     }

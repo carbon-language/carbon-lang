@@ -226,7 +226,7 @@ fn TestIterateDriver(var m: Cpp.N.MutableRange) {
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-21]]:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   friend auto begin(MutableRange&) -> Iterator;
   // CHECK:STDERR:                                  ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:41:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn Begin(self) -> Iterator;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -240,7 +240,7 @@ fn TestIterateDriver(var m: Cpp.N.MutableRange) {
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-34]]:32: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   friend auto end(MutableRange&) -> Iterator;
   // CHECK:STDERR:                                ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:43:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn End(self) -> Sentinel;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -356,7 +356,7 @@ fn TestIterateDriver(var m: Cpp.N.MutableRange) {
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-21]]:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   friend auto begin(MutableRange&) -> Iterator;
   // CHECK:STDERR:                                  ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:41:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn Begin(self) -> Iterator;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -370,7 +370,7 @@ fn TestIterateDriver(var m: Cpp.N.MutableRange) {
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-34]]:32: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   friend auto end(MutableRange&) -> Sentinel;
   // CHECK:STDERR:                                ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:43:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn End(self) -> Sentinel;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -467,7 +467,7 @@ fn TestIterateDriver(var mc: Cpp.N.MutableAndConstRange) {
   // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-24]]:44: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:     friend auto begin(MutableAndConstRange&) -> Iterator;
   // CHECK:STDERR:                                            ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:41:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn Begin(self) -> Iterator;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -481,7 +481,7 @@ fn TestIterateDriver(var mc: Cpp.N.MutableAndConstRange) {
   // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-37]]:42: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:     friend auto end(MutableAndConstRange&) -> Iterator;
   // CHECK:STDERR:                                          ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:43:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn End(self) -> Sentinel;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -665,8 +665,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   Test(begin_method_deleted);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9: note: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    63 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:64:9: note: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR:    64 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
   // CHECK:STDERR:       |         ^
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-123]]:8: note: 'begin' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR:    44 |   auto begin() = delete;
@@ -687,8 +687,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   Test(end_method_deleted);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9: note: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    63 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:64:9: note: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR:    64 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
   // CHECK:STDERR:       |         ^
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-139]]:8: note: 'end' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR:    50 |   auto end() = delete;
@@ -709,8 +709,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   Test(begin_function_deleted);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9: note: call to deleted function 'begin' [CppInteropParseError]
-  // CHECK:STDERR:    63 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:64:9: note: call to deleted function 'begin' [CppInteropParseError]
+  // CHECK:STDERR:    64 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
   // CHECK:STDERR:       |         ^~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-157]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR:    54 |   friend auto begin(const BeginFunctionDeleted&) = delete;
@@ -731,8 +731,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR:   Test(end_function_deleted);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9: note: call to deleted function 'end' [CppInteropParseError]
-  // CHECK:STDERR:    63 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:64:9: note: call to deleted function 'end' [CppInteropParseError]
+  // CHECK:STDERR:    64 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
   // CHECK:STDERR:       |         ^~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-173]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR:    60 |   friend auto end(const EndFunctionDeleted&) = delete;
