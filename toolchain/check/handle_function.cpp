@@ -135,131 +135,6 @@ static auto GetEvaluationMode(const KeywordModifierSet& modifier_set)
       .Default(SemIR::Function::EvaluationMode::None);
 }
 
-// Tries to merge new_function into prev_function_id. Since new_function won't
-// have a definition even if one is upcoming, set is_definition to indicate the
-// planned result.
-//
-// If merging is successful, returns true and may update the previous function.
-// Otherwise, returns false. Prints a diagnostic when appropriate.
-static auto MergeFunctionRedecl(Context& context,
-                                Parse::AnyFunctionDeclId node_id,
-                                SemIR::Function& new_function,
-                                bool new_is_definition,
-                                SemIR::FunctionId prev_function_id,
-                                SemIR::ImportIRId prev_import_ir_id) -> bool {
-  auto& prev_function = context.functions().Get(prev_function_id);
-
-  if (!CheckFunctionTypeMatches(context, new_function, prev_function)) {
-    return false;
-  }
-
-  DiagnoseIfInvalidRedecl(
-      context, Lex::TokenKind::Fn, prev_function.name_id,
-      RedeclInfo(new_function, node_id, new_is_definition),
-      RedeclInfo(prev_function, SemIR::LocId(prev_function.latest_decl_id()),
-                 prev_function.has_definition_started()),
-      prev_import_ir_id);
-  if (new_is_definition && prev_function.has_definition_started()) {
-    return false;
-  }
-
-  if (!prev_function.first_owning_decl_id.has_value()) {
-    prev_function.first_owning_decl_id = new_function.first_owning_decl_id;
-  }
-  if (new_is_definition) {
-    // Track the signature from the definition, so that IDs in the body
-    // match IDs in the signature.
-    prev_function.MergeDefinition(new_function);
-  }
-  if (prev_import_ir_id.has_value()) {
-    ReplacePrevInstForMerge(context, new_function.parent_scope_id,
-                            prev_function.name_id,
-                            new_function.first_owning_decl_id);
-  }
-  return true;
-}
-
-// Check whether this is a redeclaration, merging if needed.
-static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
-                           const DeclNameStack::NameContext& name_context,
-                           SemIR::FunctionDecl& function_decl,
-                           SemIR::Function& function_info, bool is_definition)
-    -> void {
-  // Diagnose if we are declaring a poisoned name. However, don't diagnose at
-  // impl scope: if the name was referenced before being declared, we will have
-  // produced an error already.
-  if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    if (!context.name_scopes().InstIs<SemIR::ImplDecl>(
-            name_context.parent_scope_id)) {
-      DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
-                           name_context.poisoning_loc_id, name_context.loc_id);
-    }
-    return;
-  }
-
-  auto prev_id = name_context.prev_inst_id();
-  if (!prev_id.has_value()) {
-    return;
-  }
-
-  auto prev_function_id = SemIR::FunctionId::None;
-  auto prev_type_id = SemIR::TypeId::None;
-  auto prev_import_ir_id = SemIR::ImportIRId::None;
-  CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
-    case CARBON_KIND(SemIR::AssociatedEntity assoc_entity): {
-      // This is a function in an interface definition scope.
-      auto function_decl =
-          context.insts().GetAs<SemIR::FunctionDecl>(assoc_entity.decl_id);
-      prev_function_id = function_decl.function_id;
-      prev_type_id = function_decl.type_id;
-      break;
-    }
-    case CARBON_KIND(SemIR::FunctionDecl function_decl): {
-      prev_function_id = function_decl.function_id;
-      prev_type_id = function_decl.type_id;
-      break;
-    }
-    case SemIR::ImportRefLoaded::Kind: {
-      auto import_ir_inst = GetCanonicalImportIRInst(context, prev_id);
-
-      // Verify the decl so that things like aliases are name conflicts.
-      const auto* import_ir =
-          context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
-      if (!import_ir->insts().Is<SemIR::FunctionDecl>(
-              import_ir_inst.inst_id())) {
-        break;
-      }
-
-      // Use the type to get the ID.
-      if (auto struct_value = context.insts().TryGetAs<SemIR::StructValue>(
-              context.constant_values().GetConstantInstId(prev_id))) {
-        if (auto function_type = context.types().TryGetAs<SemIR::FunctionType>(
-                struct_value->type_id)) {
-          prev_function_id = function_type->function_id;
-          prev_type_id = struct_value->type_id;
-          prev_import_ir_id = import_ir_inst.ir_id();
-        }
-      }
-      break;
-    }
-    default:
-      break;
-  }
-
-  if (!prev_function_id.has_value()) {
-    DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                          SemIR::LocId(prev_id));
-    return;
-  }
-
-  if (MergeFunctionRedecl(context, node_id, function_info, is_definition,
-                          prev_function_id, prev_import_ir_id)) {
-    // When merging, use the existing function rather than adding a new one.
-    function_decl.function_id = prev_function_id;
-    function_decl.type_id = prev_type_id;
-  }
-}
-
 // Adds the declaration to name lookup when appropriate.
 static auto MaybeAddToNameLookup(Context& context,
                                  const DeclNameStack::NameContext& name_context,
@@ -572,8 +447,11 @@ static auto BuildFunctionDecl(Context& context,
 
   DiagnosePositionalParams(context, function_info);
 
-  TryMergeRedecl(context, node_id, name_context, function_decl, function_info,
-                 is_definition);
+  TryMergeRedecl(
+      context, name_context, std::nullopt,
+      MergeRedeclEntityInfo<SemIR::Function>{.new_entity_decl = function_decl,
+                                             .new_entity = function_info},
+      is_definition);
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.has_value()) {
