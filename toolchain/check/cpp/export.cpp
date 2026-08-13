@@ -168,6 +168,36 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
   return decl_context;
 }
 
+// Creates a `clang::ClassTemplateSpecializationDecl`, and registers it
+// with the `ClassTemplateDecl` and `clang_decls`.
+static auto CreateClassTemplateSpecializationDecl(
+    Context& context, clang::ClassTemplateDecl* class_template_decl,
+    llvm::ArrayRef<clang::TemplateArgument> template_args,
+    SemIR::TypeInstId class_type_inst_id)
+    -> clang::ClassTemplateSpecializationDecl* {
+  auto* class_template_specialization_decl =
+      clang::ClassTemplateSpecializationDecl::Create(
+          context.ast_context(),
+          class_template_decl->getTemplatedDecl()->getTagKind(),
+          class_template_decl->getDeclContext(),
+          class_template_decl->getTemplatedDecl()->getBeginLoc(),
+          class_template_decl->getLocation(), class_template_decl,
+          template_args,
+          /*StrictPackMatch=*/false,
+          /*PrevDecl=*/nullptr);
+  class_template_decl->AddSpecialization(class_template_specialization_decl,
+                                         /*InsertPos=*/nullptr);
+  class_template_specialization_decl->setHasExternalLexicalStorage();
+  class_template_specialization_decl->setHasExternalVisibleStorage();
+
+  // Create and store the `ClangDecl`.
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
+      class_template_specialization_decl);
+  context.clang_decls().Add({.key = key, .inst_id = class_type_inst_id});
+
+  return class_template_specialization_decl;
+}
+
 auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
     -> clang::TagDecl* {
   const auto& class_info = context.classes().Get(class_type.class_id);
@@ -369,27 +399,10 @@ auto ExportClassSpecializationToCpp(
     return false;
   }
 
-  auto* class_template_specialization_decl =
-      clang::ClassTemplateSpecializationDecl::Create(
-          context.ast_context(),
-          class_template_decl->getTemplatedDecl()->getTagKind(),
-          class_template_decl->getDeclContext(),
-          class_template_decl->getTemplatedDecl()->getBeginLoc(),
-          class_template_decl->getLocation(), class_template_decl,
-          template_args,
-          /*StrictPackMatch=*/false,
-          /*PrevDecl=*/nullptr);
-  class_template_decl->AddSpecialization(class_template_specialization_decl,
-                                         /*InsertPos=*/nullptr);
-  class_template_specialization_decl->setHasExternalLexicalStorage();
-  class_template_specialization_decl->setHasExternalVisibleStorage();
-
-  // Create and store the `ClangDeclId`.
   auto class_type_inst_id =
       GetClassTypeInstId(context, class_decl.class_id, specific_id);
-  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
-      class_template_specialization_decl);
-  context.clang_decls().Add({.key = key, .inst_id = class_type_inst_id});
+  CreateClassTemplateSpecializationDecl(context, class_template_decl,
+                                        template_args, class_type_inst_id);
 
   return true;
 }
