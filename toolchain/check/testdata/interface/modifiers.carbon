@@ -155,7 +155,7 @@ fn F() {
 }
 //@dump-sem-ir-end
 
-// --- todo_inline_definition_without_modifier.carbon
+// --- todo_fail_inline_definition_without_modifier.carbon
 
 interface I {
   // Should be an error: only default or final interface members can be defined.
