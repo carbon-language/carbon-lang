@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/text_document/multiple_files.carbon
 
 // --- STDIN
-[[@LSP-CALL:initialize]]
+[[@LSP-CALL:initialize:"capabilities": {}]]
 [[@LSP-NOTIFY:textDocument/didOpen:
   "textDocument": {"uri": "file:/foo.carbon", "languageId": "carbon",
                    "version": 1, "text": "library \"foo\"; fn A();"}
@@ -25,7 +25,7 @@
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDOUT: Content-Length: 146{{\r}}
+// CHECK:STDOUT: Content-Length: 182{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
@@ -33,6 +33,7 @@
 // CHECK:STDOUT:   "result": {
 // CHECK:STDOUT:     "capabilities": {
 // CHECK:STDOUT:       "documentSymbolProvider": true,
+// CHECK:STDOUT:       "positionEncoding": "utf-16",
 // CHECK:STDOUT:       "textDocumentSync": 2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
