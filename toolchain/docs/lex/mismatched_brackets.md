@@ -158,8 +158,8 @@ sum. That table is the other half of the same judgment as the first: a penalty
 for swallowing a token that has no business inside the current group is what
 makes "close the group before it" win.
 
-A lookup buckets on two categorical facts — the context class (which bracket is
-innermost, or which one would be inserted, with block and struct braces
+A lookup buckets on two categorical facts — the context category (which bracket
+is innermost, or which one would be inserted, with block and struct braces
 distinguished) and the token's kind — and a compile-time index maps each bucket
 to the rows that could apply in it, so only a handful are ever tested. Rows
 condition further on `Cue`s, as sets of properties that must all hold, must not
@@ -267,10 +267,10 @@ suggestion falls back to an error token and costs only the missing note. The
 model is therefore tuned to minimize Incorrect first and maximize Correct
 second.
 
-Every rule carries an origin string, which the eval aggregates into per-rule
-firing counts and precision. That is how an over-firing rule is found, and it is
-also what makes the cost column tunable mechanically, by coordinate descent
-against the eval rather than by hand.
+Every rule carries a name, which the eval aggregates into per-rule firing counts
+and precision. That is how an over-firing rule is found, and it is also what
+makes the cost column tunable mechanically, by coordinate descent against the
+eval rather than by hand.
 
 `--d-values` sets how many brackets a trial deletes, which is worth raising to
 see how gracefully recovery degrades when mistakes overlap. With one deletion

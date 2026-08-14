@@ -1664,24 +1664,7 @@ class Lexer::ErrorRecoveryBuffer {
 
   // Merge the recovery tokens into the token list of the tokenized buffer.
   auto Apply() -> void {
-    llvm::stable_sort(insertions_, [](const Insertion& a, const Insertion& b) {
-      if (a.target() != b.target()) {
-        return a.target() < b.target();
-      }
-      if (a.is_after != b.is_after) {
-        return a.is_after;
-      }
-      bool a_is_closing = a.info.kind().is_closing_symbol();
-      bool b_is_closing = b.info.kind().is_closing_symbol();
-      if (a_is_closing != b_is_closing) {
-        return a_is_closing;
-      }
-      if (a.is_after) {
-        return a.order < b.order;
-      } else {
-        return a.order > b.order;
-      }
-    });
+    llvm::sort(insertions_);
 
     ValueStore<TokenIndex, TokenInfo> old_tokens =
         std::exchange(buffer_->token_infos_, {});
@@ -1689,46 +1672,51 @@ class Lexer::ErrorRecoveryBuffer {
     buffer_->token_infos_.Reserve(new_size);
     buffer_->recovery_tokens_.resize(new_size);
     inserted_token_index_.assign(insertions_.size(), TokenIndex::None);
+    new_token_index_.assign(old_tokens.size(), TokenIndex::None);
 
     size_t ins_idx = 0;
     for (TokenIndex old_idx(0);
          old_idx.index < static_cast<int>(old_tokens.size()); ++old_idx.index) {
-      bool has_insertions = ins_idx < insertions_.size() &&
-                            insertions_[ins_idx].target() == old_idx;
-
-      if (has_insertions) {
-        bool orig_leading_space = old_tokens.Get(old_idx).has_leading_space();
-        bool is_first = true;
-        while (ins_idx < insertions_.size() &&
-               insertions_[ins_idx].target() == old_idx) {
-          TokenInfo info = insertions_[ins_idx].info.WithLeadingSpace(
-              is_first ? orig_leading_space : false);
-          is_first = false;
-          TokenIndex added = buffer_->AddToken(info);
-          buffer_->recovery_tokens_.set(added.index);
-          inserted_token_index_[insertions_[ins_idx].order] = added;
-          ++ins_idx;
-        }
-        buffer_->token_infos_.Add(
-            old_tokens.Get(old_idx).WithLeadingSpace(false));
-      } else {
-        buffer_->token_infos_.Add(old_tokens.Get(old_idx));
+      if (ins_idx == insertions_.size() ||
+          insertions_[ins_idx].target() != old_idx) {
+        // Nothing is inserted before this token: it keeps its leading
+        // whitespace and simply moves across.
+        new_token_index_[old_idx.index] =
+            buffer_->token_infos_.Add(old_tokens.Get(old_idx));
+        continue;
       }
+
+      // At least one insertion goes before this token. `insertions_` is sorted
+      // by target, so they are exactly the next run of entries. The first of
+      // them takes over the token's leading whitespace, so that the whitespace
+      // stays at the start of the run.
+      bool orig_leading_space = old_tokens.Get(old_idx).has_leading_space();
+      bool is_first = true;
+      for (; ins_idx < insertions_.size() &&
+             insertions_[ins_idx].target() == old_idx;
+           ++ins_idx) {
+        TokenInfo info = insertions_[ins_idx].info.WithLeadingSpace(
+            is_first ? orig_leading_space : false);
+        is_first = false;
+        TokenIndex added = buffer_->AddToken(info);
+        buffer_->recovery_tokens_.set(added.index);
+        inserted_token_index_[insertions_[ins_idx].insertion_order] = added;
+      }
+      new_token_index_[old_idx.index] = buffer_->token_infos_.Add(
+          old_tokens.Get(old_idx).WithLeadingSpace(false));
     }
   }
 
   // Maps a token index from before `Apply` to the same token's index after it.
-  // Each insertion placed before the token shifted it up by one, so count those
-  // in the insertion list, which `Apply` leaves sorted by target. Must be
-  // called after `Apply`, except that with nothing to apply it is the identity
-  // either way.
+  // `Apply` must have run, except that with no insertions to apply this is the
+  // identity either way.
   auto GetNewTokenIndex(TokenIndex old_index) const -> TokenIndex {
-    const auto* first_after =
-        std::upper_bound(insertions_.begin(), insertions_.end(), old_index,
-                         [](TokenIndex index, const Insertion& insertion) {
-                           return index < insertion.target();
-                         });
-    return TokenIndex(old_index.index + (first_after - insertions_.begin()));
+    if (insertions_.empty()) {
+      return old_index;
+    }
+    CARBON_CHECK(!new_token_index_.empty(),
+                 "Token indexes are only renumbered by `Apply`.");
+    return new_token_index_[old_index.index];
   }
 
   // Maps an id returned by `InsertBefore` or `InsertAfter` to the token that
@@ -1766,13 +1754,45 @@ class Lexer::ErrorRecoveryBuffer {
   struct Insertion {
     TokenIndex anchor;
     bool is_after;
-    int order;
+    // Where this insertion came in the sequence of requests, which is both the
+    // id handed back to the caller and the tiebreak between insertions that go
+    // in the same place.
+    int insertion_order;
     TokenInfo info;
 
     // The token this insertion goes before, indexed in the stream as it was
     // before `Apply`. `Apply` sorts insertions by this.
     auto target() const -> TokenIndex {
       return is_after ? TokenIndex(anchor.index + 1) : anchor;
+    }
+
+    // Orders insertions as `Apply` emits them, so that sorting produces the
+    // final token order. Insertions are grouped by the token they go before,
+    // because `Apply` walks the old tokens in order, and within a group:
+    //
+    // - An insertion requested as "after the previous token" comes before one
+    //   requested as "before this token", so that each stays on the side of
+    //   the gap it was anchored to.
+    // - A closing bracket comes before an opening one, so that a group ending
+    //   in the gap is closed before a new group is opened in it.
+    // - Otherwise the request order breaks the tie, in the direction that puts
+    //   the earliest request nearest its anchor: first-requested first for
+    //   insertions after a token, last-requested first for insertions before
+    //   one.
+    friend auto operator<(const Insertion& lhs, const Insertion& rhs) -> bool {
+      if (lhs.target() != rhs.target()) {
+        return lhs.target() < rhs.target();
+      }
+      if (lhs.is_after != rhs.is_after) {
+        return lhs.is_after;
+      }
+      bool lhs_is_closing = lhs.info.kind().is_closing_symbol();
+      bool rhs_is_closing = rhs.info.kind().is_closing_symbol();
+      if (lhs_is_closing != rhs_is_closing) {
+        return lhs_is_closing;
+      }
+      return lhs.is_after ? lhs.insertion_order < rhs.insertion_order
+                          : lhs.insertion_order > rhs.insertion_order;
     }
   };
 
@@ -1804,14 +1824,14 @@ class Lexer::ErrorRecoveryBuffer {
       }
     }
 
-    int order = static_cast<int>(insertions_.size());
+    int insertion_order = static_cast<int>(insertions_.size());
     insertions_.push_back({
         .anchor = anchor,
         .is_after = is_after,
-        .order = order,
+        .insertion_order = insertion_order,
         .info = TokenInfo(kind, insert_leading_space, byte_offset),
     });
-    return order;
+    return insertion_order;
   }
 
   TokenizedBuffer* buffer_;
@@ -1821,6 +1841,10 @@ class Lexer::ErrorRecoveryBuffer {
   // Filled in by `Apply`: which token each insertion added, indexed by the id
   // `AddInsertion` handed out.
   llvm::SmallVector<TokenIndex> inserted_token_index_;
+
+  // Filled in by `Apply`: the new index of each token that existed before it,
+  // indexed by that token's old index.
+  llvm::SmallVector<TokenIndex> new_token_index_;
 };
 
 // Returns true if the token kind forms a complete primary expression on its

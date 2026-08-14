@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_kind.h"
 
@@ -205,8 +206,10 @@ struct BracketCorrection {
   // Set to true if multiple optimal paths tie/disagree on the repair.
   bool is_tied = false;
 
-  // Source transition/origin for diagnostics and evaluation.
-  const char* origin = "";
+  // The name of the rule that chose this correction. This never reaches a
+  // user-facing diagnostic; it exists so that debug dumps and the evaluation
+  // tool's per-rule precision table can say which rule to blame.
+  llvm::StringLiteral rule_name = "";
 };
 
 // Analyzes the input token stream, finds the optimal set of bracket insertions

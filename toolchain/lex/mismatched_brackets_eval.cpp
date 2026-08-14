@@ -156,7 +156,9 @@ struct Suggestion {
   int32_t byte_offset;
   int32_t line;
   int32_t column;
-  std::string origin;
+  // The name of the rule that inserted this bracket. See
+  // `BracketCorrection::rule_name`.
+  llvm::StringRef rule_name;
 };
 
 }  // namespace
@@ -605,9 +607,9 @@ static auto TokensWereFused(const TokenizedBuffer& buffer, llvm::StringRef text,
   });
 }
 
-// Checks the invariant the origin lookup relies on: corrections name tokens of
-// the buffer recovery produced, so an insertion names the recovery token it
-// inserted. A wrong index would silently lose origins rather than fail.
+// Checks the invariant the rule-name lookup relies on: corrections name tokens
+// of the buffer recovery produced, so an insertion names the recovery token it
+// inserted. A wrong index would silently lose rule names rather than fail.
 static auto CheckCorrectionsNameRealTokens(
     const TokenizedBuffer& buffer,
     llvm::ArrayRef<BracketCorrection> corrections) -> void {
@@ -624,15 +626,15 @@ static auto CheckCorrectionsNameRealTokens(
   }
 }
 
-// The rule that inserted `token`. Corrections name the tokens of this buffer,
-// so the one that inserted it names it directly. A tied correction was
+// Names the rule that inserted `token`. Corrections name the tokens of this
+// buffer, so the one that inserted it names it directly. A tied correction was
 // downgraded to an error token and has no rule to report.
-static auto OriginOfInsertion(llvm::ArrayRef<BracketCorrection> corrections,
-                              TokenIndex token) -> std::string {
+static auto RuleNameOfInsertion(llvm::ArrayRef<BracketCorrection> corrections,
+                                TokenIndex token) -> llvm::StringRef {
   for (const auto& c : corrections) {
     if (c.fix_action != BracketFixAction::ReplaceWithError && !c.is_tied &&
         c.fix_token_index == token) {
-      return c.origin;
+      return c.rule_name;
     }
   }
   return "Unknown";
@@ -667,7 +669,7 @@ static auto CollectSuggestions(const TokenizedBuffer& buffer,
                                 : static_cast<int32_t>(text.size()),
         .line = has_succ ? buffer.GetLineNumber(succ) : -1,
         .column = has_succ ? buffer.GetColumnNumber(succ) : -1,
-        .origin = OriginOfInsertion(corrections, t),
+        .rule_name = RuleNameOfInsertion(corrections, t),
     });
   }
   return suggestions;
@@ -810,8 +812,8 @@ struct FileResult {
   std::vector<TrialStats> stats_by_level;
 };
 
-// How often the rule named by an origin was right.
-struct OriginStat {
+// How often a named rule was right.
+struct RuleStat {
   int correct = 0;
   int incorrect = 0;
 };
@@ -837,7 +839,7 @@ struct Report {
   // Indexed as the deletion levels.
   std::vector<TrialStats> stats_by_level;
   std::vector<FileResult> results_by_file;
-  std::map<std::string, OriginStat> stats_by_origin;
+  std::map<llvm::StringRef, RuleStat> stats_by_rule;
   std::map<std::string, DistStat> wrong_close_by_kind;
   // Trials skipped because closing the gap fused two tokens.
   int merged_skips = 0;
@@ -864,10 +866,10 @@ struct EvalOptions {
   // if either is invalid.
   auto Resolve() -> bool;
 
-  // The one deletion level the origin table reports on, so that its precisions
+  // The one deletion level the rule table reports on, so that its precisions
   // aren't a blend of easy and hard configurations. The truncate modes have
   // only the single level; otherwise it's D=1, if that was asked for.
-  auto OriginLevelLabel() const -> llvm::StringRef {
+  auto RuleLevelLabel() const -> llvm::StringRef {
     return IsTruncateMode(mode) ? llvm::StringRef(d_specs.front().label) : "1";
   }
 };
@@ -946,9 +948,9 @@ class Evaluator {
   auto RunTrial(const FileContext& file, const DSpec& spec, int d_count,
                 std::mt19937_64& rng) -> std::optional<TestClassification>;
 
-  // Credits or blames the rule behind each suggestion, for the origin table.
-  auto RecordOrigins(llvm::ArrayRef<DeletedToken> deleted_tokens,
-                     llvm::ArrayRef<Suggestion> suggestions) -> void;
+  // Credits or blames the rule behind each suggestion, for the rule table.
+  auto RecordRuleNames(llvm::ArrayRef<DeletedToken> deleted_tokens,
+                       llvm::ArrayRef<Suggestion> suggestions) -> void;
 
   // Records, for each deleted bracket recovery failed to restore, how far the
   // nearest same-kind close it did suggest is from where the bracket belonged.
@@ -1075,8 +1077,8 @@ auto Evaluator::RunTrial(const FileContext& file, const DSpec& spec,
   CheckCorrectionsNameRealTokens(buffer, corrections);
   auto suggestions = CollectSuggestions(buffer, corrupted_text, corrections);
 
-  if (spec.label == options_.OriginLevelLabel()) {
-    RecordOrigins(deleted_tokens, suggestions);
+  if (spec.label == options_.RuleLevelLabel()) {
+    RecordRuleNames(deleted_tokens, suggestions);
   }
 
   TestClassification classification =
@@ -1089,10 +1091,11 @@ auto Evaluator::RunTrial(const FileContext& file, const DSpec& spec,
   return classification;
 }
 
-auto Evaluator::RecordOrigins(llvm::ArrayRef<DeletedToken> deleted_tokens,
-                              llvm::ArrayRef<Suggestion> suggestions) -> void {
+auto Evaluator::RecordRuleNames(llvm::ArrayRef<DeletedToken> deleted_tokens,
+                                llvm::ArrayRef<Suggestion> suggestions)
+    -> void {
   for (const auto& sugg : suggestions) {
-    auto& stat = report_.stats_by_origin[sugg.origin];
+    auto& stat = report_.stats_by_rule[sugg.rule_name];
     ++(AnyDeletionMatches(deleted_tokens, sugg) ? stat.correct
                                                 : stat.incorrect);
   }
@@ -1174,7 +1177,7 @@ auto Evaluator::MaybeDumpTrial(const FileContext& file, const DSpec& spec,
   }
   llvm::errs() << "  Suggestions (" << suggestions.size() << "):\n";
   for (const auto& s : suggestions) {
-    llvm::errs() << "    Suggestion (" << s.origin
+    llvm::errs() << "    Suggestion (" << s.rule_name
                  << "): kind=" << s.kind.name() << " at byte=" << s.byte_offset
                  << " (line=" << s.line << ", col=" << s.column << ")\n";
   }
@@ -1188,7 +1191,7 @@ auto Evaluator::MaybeDumpTrial(const FileContext& file, const DSpec& spec,
                          : "ReplaceWithError")
                  << " kind=" << c.fix_token_kind.name()
                  << " tok=" << c.fix_token_index.index
-                 << (c.is_tied ? " TIED" : "") << " origin=" << c.origin
+                 << (c.is_tied ? " TIED" : "") << " rule=" << c.rule_name
                  << "\n";
   }
   // Center the excerpt on the first deletion, or on the first suggestion when
@@ -1264,14 +1267,14 @@ static auto PrintLevelTable(const EvalOptions& options, const Report& report)
   llvm::outs() << "\n";
 }
 
-static auto PrintOriginTable(const EvalOptions& options, const Report& report)
+static auto PrintRuleTable(const EvalOptions& options, const Report& report)
     -> void {
-  llvm::outs() << "## Suggestion Origin Breakdown (D = "
-               << options.OriginLevelLabel() << ")\n\n";
-  llvm::outs() << "| Origin Transition | Total | Correct | Incorrect | "
+  llvm::outs() << "## Suggestion Rule Breakdown (D = "
+               << options.RuleLevelLabel() << ")\n\n";
+  llvm::outs() << "| Rule | Total | Correct | Incorrect | "
                   "Precision (%) |\n";
   llvm::outs() << "|:---|---:|---:|---:|---:|\n";
-  for (const auto& [name, stat] : report.stats_by_origin) {
+  for (const auto& [name, stat] : report.stats_by_rule) {
     int total = stat.correct + stat.incorrect;
     double prec = total == 0 ? 100.0 : (100.0 * stat.correct) / total;
     llvm::outs() << llvm::formatv(
@@ -1384,7 +1387,7 @@ static auto PrintMarkdownReport(const EvalOptions& options,
   llvm::outs() << "\n";
 
   PrintLevelTable(options, report);
-  PrintOriginTable(options, report);
+  PrintRuleTable(options, report);
   if (options.verbose) {
     PrintPerFileTables(options, report);
   }
