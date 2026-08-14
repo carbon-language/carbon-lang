@@ -205,10 +205,22 @@ Context::Context(const InstallPaths* installation,
   vfs_ = vfs;
 }
 
+auto Context::File::sem_ir_index() const -> const SemIRIndex* {
+  if (!sem_ir_index_) {
+    const auto* sem_ir = this->sem_ir();
+    if (!sem_ir) {
+      return nullptr;
+    }
+    sem_ir_index_.emplace(*sem_ir, tree_and_subtrees());
+  }
+  return &*sem_ir_index_;
+}
+
 auto Context::File::SetText(Context& context, std::optional<int64_t> version,
                             llvm::StringRef text) -> void {
   // Clear state dependent on the source text.
   compile_driver_.reset();
+  sem_ir_index_.reset();
 
   text_ = text.str();
 

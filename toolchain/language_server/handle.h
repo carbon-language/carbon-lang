@@ -37,6 +37,33 @@ auto HandleDocumentSymbol(
         auto(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)->void>
         on_done) -> void;
 
+// Provides the type of the entity at a position.
+auto HandleHover(
+    Context& context, const clang::clangd::TextDocumentPositionParams& params,
+    llvm::function_ref<auto(llvm::Expected<clang::clangd::Hover>)->void>
+        on_done) -> void;
+
+// Locates the entity named at a position.
+auto HandleDefinition(
+    Context& context, const clang::clangd::TextDocumentPositionParams& params,
+    llvm::function_ref<
+        auto(llvm::Expected<std::vector<clang::clangd::Location>>)->void>
+        on_done) -> void;
+
+// Locates the type of the entity named at a position.
+auto HandleTypeDefinition(
+    Context& context, const clang::clangd::TextDocumentPositionParams& params,
+    llvm::function_ref<
+        auto(llvm::Expected<std::vector<clang::clangd::Location>>)->void>
+        on_done) -> void;
+
+// Finds references to the entity named at a position, within this file only.
+auto HandleReferences(
+    Context& context, const clang::clangd::ReferenceParams& params,
+    llvm::function_ref<
+        auto(llvm::Expected<std::vector<clang::clangd::Location>>)->void>
+        on_done) -> void;
+
 // Tells the client what features are supported.
 auto HandleInitialize(
     Context& /*context*/,

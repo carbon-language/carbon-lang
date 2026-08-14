@@ -19,15 +19,20 @@
 
 // CHECK:STDERR: warning: -32602: in call to `textDocument/didOpen`, JSON parse failed: missing value at (root).textDocument [LanguageServerNotificationParseError]
 // CHECK:STDERR:
-// CHECK:STDOUT: Content-Length: 146{{\r}}
+// CHECK:STDOUT: Content-Length: 316{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": {
 // CHECK:STDOUT:     "capabilities": {
+// CHECK:STDOUT:       "declarationProvider": true,
+// CHECK:STDOUT:       "definitionProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
-// CHECK:STDOUT:       "textDocumentSync": 2
+// CHECK:STDOUT:       "hoverProvider": true,
+// CHECK:STDOUT:       "referencesProvider": true,
+// CHECK:STDOUT:       "textDocumentSync": 2,
+// CHECK:STDOUT:       "typeDefinitionProvider": true
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }Content-Length: 51{{\r}}

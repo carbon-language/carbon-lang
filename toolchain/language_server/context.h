@@ -18,6 +18,7 @@
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/compile_driver.h"
 #include "toolchain/driver/compile_options.h"
+#include "toolchain/language_server/sem_ir_index.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
@@ -39,16 +40,42 @@ class Context {
     auto SetText(Context& context, std::optional<int64_t> version,
                  llvm::StringRef text) -> void;
 
+    auto uri() const -> const clang::clangd::URIForFile& { return uri_; }
     auto filename() const -> llvm::StringRef { return filename_; }
     auto text() const -> llvm::StringRef { return text_; }
 
     auto tree_and_subtrees() const -> const Parse::TreeAndSubtrees& {
-      CARBON_CHECK(compile_driver_);
-      return compile_driver_->units()[compile_driver_->first_input_index()]
-          ->parse_tree_and_subtrees();
+      return unit().parse_tree_and_subtrees();
     }
 
+    auto tokens() const -> const Lex::TokenizedBuffer& {
+      return unit().tokens();
+    }
+
+    // Returns the checked IR, or null if checking didn't get far enough to
+    // produce one.
+    auto sem_ir() const -> const SemIR::File* {
+      const auto& compilation_unit = unit();
+      return compilation_unit.has_sem_ir() ? &compilation_unit.sem_ir()
+                                           : nullptr;
+    }
+
+    // Returns an index of this file's instructions by token, building it if
+    // this is the first query since the text last changed. Returns null if
+    // there's no checked IR to index.
+    //
+    // This is deliberately not built by `SetText`: most text changes are
+    // followed by another text change rather than by a query, and the work
+    // would land on the path that produces diagnostics, which is the latency
+    // users actually notice.
+    auto sem_ir_index() const -> const SemIRIndex*;
+
    private:
+    auto unit() const -> const CompilationUnit& {
+      CARBON_CHECK(compile_driver_);
+      return *compile_driver_->units()[compile_driver_->first_input_index()];
+    }
+
     // The filename, stable across instances.
     clang::clangd::URIForFile uri_;
     std::string filename_;
@@ -59,6 +86,9 @@ class Context {
     CodegenOptions codegen_options_;
     CompileOptions options_;
     std::unique_ptr<CompileDriver> compile_driver_;
+
+    // Built on demand by `sem_ir_index()`, and discarded by `SetText`.
+    mutable std::optional<SemIRIndex> sem_ir_index_;
   };
 
   // `vlog_stream` is optional; other parameters are required.
