@@ -6,17 +6,22 @@
 
 #include "clang/AST/Mangle.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/Parse/Parser.h"
 
 namespace Carbon::Check {
 
-CppContext::CppContext(clang::CompilerInstance& instance,
-                       std::unique_ptr<clang::Parser> parser)
-    : ast_context_(&instance.getASTContext()),
-      sema_(&instance.getSema()),
-      parser_(std::move(parser)) {}
+CppContext::CppContext(SemIR::CppDomain& domain,
+                       std::unique_ptr<CppDiagnosticListener> listener)
+    : domain_(&domain), diagnostic_listener_(std::move(listener)) {}
 
 CppContext::~CppContext() = default;
+
+auto CppContext::ast_context() -> clang::ASTContext& {
+  return domain_->clang_instance().getASTContext();
+}
+
+auto CppContext::sema() -> clang::Sema& {
+  return domain_->clang_instance().getSema();
+}
 
 auto CppContext::clang_mangle_context() -> clang::MangleContext& {
   if (!clang_mangle_context_) {

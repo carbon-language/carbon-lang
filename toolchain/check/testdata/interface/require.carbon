@@ -552,9 +552,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.cb6) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.cb6) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%Self.cb6) {
 // CHECK:STDOUT:   %Self => constants.%Self.cb6
@@ -605,9 +603,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.cb6) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.cb6) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%Self.cb6) {
 // CHECK:STDOUT:   %Self => constants.%Self.cb6

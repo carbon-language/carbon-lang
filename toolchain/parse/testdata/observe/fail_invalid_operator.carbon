@@ -15,10 +15,9 @@
 observe T = U impls I;
 
 // CHECK:STDOUT: - filename: fail_invalid_operator.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ObserveIntroducer 'observe'
+// CHECK:STDOUT:   │ ├─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   ├─ObserveDecl ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

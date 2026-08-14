@@ -108,6 +108,12 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
   // TODO: Revisit this once #3714 is resolved.
   AddNameToLookup(context, SemIR::NameId::SelfType, self_type.inst_id);
   context.node_stack().Push(node_id, self_type.inst_id);
+
+  // The specific interface in here, if any, is populated by the `where`
+  // expression that introduces a `.Self` in the impl's constraint facet type.
+  context.declaring_impl_decls().push_back(
+      {.self_id = self_type.type_id.AsConstantId(),
+       .specific_interface = SemIR::SpecificInterface::None});
   return true;
 }
 
@@ -140,6 +146,12 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
   // There's no need to push `Self` into scope here, because we can find it in
   // the parent class scope.
   context.node_stack().Push(node_id, self_inst_id);
+
+  // The specific interface in here, if any, is populated by the `where`
+  // expression that introduces a `.Self` in the impl's constraint facet type.
+  context.declaring_impl_decls().push_back(
+      {.self_id = context.constant_values().Get(self_inst_id),
+       .specific_interface = SemIR::SpecificInterface::None});
   return true;
 }
 
@@ -197,7 +209,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 // also sets the `definition_id` on the Impl structure.
 static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                           bool has_definition)
-    -> std::pair<SemIR::ImplId, SemIR::InstId> {
+    -> std::tuple<SemIR::ImplId, SemIR::InstId, SemIR::TypeInstId> {
   auto [constraint_node, constraint_id] =
       context.node_stack().PopExprWithNodeId();
   auto [self_type_node, self_type_inst_id] =
@@ -206,9 +218,10 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   auto name = PopImplIntroducerAndParamsAsNameComponent(context, node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
-  // Convert the constraint expression to a type.
-  auto [constraint_type_inst_id, constraint_type_id] =
-      ExprAsType(context, constraint_node, constraint_id);
+  // Convert the constraint expression to a type. This contains all constraints,
+  // including rewrites and other constrains on the RHS of `where`.
+  auto full_constraint_type_inst_id =
+      ExprAsType(context, constraint_node, constraint_id).inst_id;
 
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?
@@ -223,38 +236,63 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   auto name_context = context.decl_name_stack().FinishImplName();
   CARBON_CHECK(name_context.state == DeclNameStack::NameContext::State::Empty);
 
-  // TODO: Check for an orphan `impl`.
-
   // Add the impl declaration.
   auto impl_decl_id =
       AddPlaceholderInst(context, node_id,
                          SemIR::ImplDecl{.impl_id = SemIR::ImplId::None,
                                          .decl_block_id = decl_block_id});
 
-  if (!CheckConstraintIsFacetType(context, node_id, constraint_type_inst_id)) {
-    constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
+  if (!CheckConstraintIsFacetType(context, node_id,
+                                  full_constraint_type_inst_id)) {
+    full_constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }
-
-  // The identified facet type will also replace `.Self` references in the
-  // specific interface, but we want to store the full facet type not just the
-  // identified one. So we have to replace `.Self` references explicitly here in
-  // the constraint.
-  //
-  // We do this after `CheckConstraintIsFacetType()` which has ensured the
-  // constraint is in fact a FacetType. We do this before identifying the facet
-  // type in `CheckConstraintIsInterface()` so that the identified facet type is
-  // for the substituted facet type instruction that will be stored in the Impl.
-  // This ensures the impl bucket finds the identified facet type.
-  constraint_type_inst_id = SubstPeriodSelfInFacetType(
-      context, constraint_node, self_type_inst_id, constraint_type_inst_id);
 
   // This requires that the facet type is identified, and returns the single
   // interface from the identified facet type. It returns None if an error was
   // diagnosed.
   auto specific_interface = CheckConstraintIsInterface(
-      context, node_id, self_type_inst_id, constraint_type_inst_id);
+      context, node_id, self_type_inst_id, full_constraint_type_inst_id);
   if (!specific_interface.interface_id.has_value()) {
-    constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
+    full_constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
+  }
+
+  // Store an instruction in the decl's eval block that contains the target
+  // interface's specific, whose constant value will be updated when specifics
+  // are applied to the impl.
+  //
+  // We can use ImplSelfWitness for this because it contains a
+  // SpecificInterfaceId operand, and it has a constant_kind of `Always` so it
+  // never evaluates to some other type of inst.
+  //
+  // TODO: We could avoid the extra indirection through a SpecificInterfaceId if
+  // we introduced a new instruction with a SpecificId operand instead of
+  // reusing ImplSelfWitness for this.
+  auto interface_inst_id =
+      specific_interface.interface_id.has_value()
+          ? AddInst<SemIR::ImplSelfWitness>(
+                context, node_id,
+                {.type_id =
+                     GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+                 .period_self = self_type_inst_id,
+                 .specific_interface_id =
+                     context.specific_interfaces().Add(specific_interface)})
+          : SemIR::ErrorInst::InstId;
+
+  // Strip off anything on the RHS of `where`, as they are not part of the
+  // constraint being implemented, they just represent requirements that must be
+  // met when the impl is defined. This drops any `.Self` references from the
+  // resulting impl's `constraint_id` as they don't make sense outside the scope
+  // of the impl declaration.
+  auto extend_constraint_type_inst_id = full_constraint_type_inst_id;
+  if (auto where = context.insts().TryGetAs<SemIR::WhereExpr>(
+          extend_constraint_type_inst_id)) {
+    for (auto req_id : context.inst_blocks().Get(where->requirements_id)) {
+      if (auto base = context.insts().TryGetAs<SemIR::RequirementBaseFacetType>(
+              req_id)) {
+        extend_constraint_type_inst_id = base->base_type_inst_id;
+        break;
+      }
+    }
   }
 
   // The impl decl has a scope stack entry for the DeclNameStack, so we look at
@@ -269,8 +307,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                         {.parent_scope_inst_id = parent_scope_inst_id,
                          .is_final = is_final,
                          .self_id = self_type_inst_id,
-                         .constraint_id = constraint_type_inst_id,
-                         .interface = specific_interface}};
+                         .constraint_id = extend_constraint_type_inst_id,
+                         .interface = specific_interface,
+                         .interface_inst_id = interface_inst_id}};
     if (has_definition) {
       impl.definition_id = impl_decl_id;
     }
@@ -368,7 +407,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
           // also must be part of the generic eval block by coming before
           // FinishGenericDecl().
           impl.witness_id = AddImplWitnessForDeclaration(
-              context, node_id, impl,
+              context, node_id, impl, full_constraint_type_inst_id,
               context.generics().GetSelfSpecific(impl.generic_id));
           impl.witness_block_id = context.inst_block_stack().Pop();
 
@@ -397,14 +436,15 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   impl_decl.impl_id = impl_id;
   ReplaceInstBeforeConstantUse(context, impl_decl_id, impl_decl);
 
-  return {impl_id, impl_decl_id};
+  return {impl_id, impl_decl_id, full_constraint_type_inst_id};
 }
 
 auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
-  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id, false);
+  auto [impl_id, impl_decl_id, _] = BuildImplDecl(context, node_id, false);
   auto& impl = context.impls().Get(impl_id);
 
   context.decl_name_stack().PopScope();
+  context.declaring_impl_decls().pop_back();
 
   // Impl definitions are required in the same file as the declaration. We skip
   // this requirement if we've already issued an invalid redeclaration error, or
@@ -418,10 +458,9 @@ auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
     -> bool {
-  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id, true);
+  auto [impl_id, impl_decl_id, full_constraint_id] =
+      BuildImplDecl(context, node_id, true);
   auto& impl = context.impls().Get(impl_id);
-
-  CheckRequireDeclsSatisfied(context, node_id, impl);
 
   impl.scope_id =
       context.name_scopes().Add(impl_decl_id, SemIR::NameId::None,
@@ -434,8 +473,10 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       context.generics().GetSelfSpecific(impl.generic_id));
   StartGenericDefinition(context, impl.generic_id);
   ImplWitnessStartDefinition(context, impl);
+  CheckRequireDeclsSatisfied(context, node_id, impl, full_constraint_id);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
+  context.declaring_impl_decls().pop_back();
 
   // TODO: Handle the case where there's control flow in the impl body. For
   // example:

@@ -78,7 +78,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %ref.tmp = alloca %"class.Carbon::A", align 1
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #4
-// CHECK:STDOUT:   call void @_ZN6Carbon1A1FEv(ptr noundef nonnull align 1 %ref.tmp)
+// CHECK:STDOUT:   call void @_ZNK6Carbon1A1FEv(ptr noundef nonnull align 1 %ref.tmp)
 // CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 1 %ref.tmp) #4
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp) #4
 // CHECK:STDOUT:   ret void
@@ -88,7 +88,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6Carbon1A1FEv(ptr noundef nonnull align 1 %this) #2 align 2 {
+// CHECK:STDOUT: define internal void @_ZNK6Carbon1A1FEv(ptr noundef nonnull align 1 %this) #2 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !12
@@ -188,16 +188,16 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.Carbon::A" = type {}
+// CHECK:STDOUT: %"class.Carbon::A.0" = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN6Carbon1AD2Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local noundef i32 @_Z5CallFv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ref.tmp = alloca %"class.Carbon::A", align 1
+// CHECK:STDOUT:   %ref.tmp = alloca %"class.Carbon::A.0", align 1
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #4
-// CHECK:STDOUT:   %call = call noundef i32 @_ZN6Carbon1A1FEi(ptr noundef nonnull align 1 %ref.tmp, i32 noundef 123)
+// CHECK:STDOUT:   %call = call noundef i32 @_ZNK6Carbon1A1FEi(ptr noundef nonnull align 1 %ref.tmp, i32 noundef 123)
 // CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 1 %ref.tmp) #4
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp) #4
 // CHECK:STDOUT:   ret i32 %call
@@ -207,7 +207,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal noundef i32 @_ZN6Carbon1A1FEi(ptr noundef nonnull align 1 %this, i32 noundef %0) #2 align 2 {
+// CHECK:STDOUT: define internal noundef i32 @_ZNK6Carbon1A1FEi(ptr noundef nonnull align 1 %this, i32 noundef %0) #2 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca i32, align 4
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8

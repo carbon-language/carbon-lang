@@ -729,8 +729,7 @@ struct FacetType {
        .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
-  // TODO: Rename this to facet_type_info_id.
-  FacetTypeId facet_type_id;
+  DeclaredFacetTypeId declared_facet_type_id;
 };
 
 // A facet value is a general value of type FacetType. This consists of a type
@@ -956,6 +955,23 @@ struct ImplDecl {
   // The declaration block, containing the impl's deduced parameters and its
   // self type and interface type.
   DeclInstBlockId decl_block_id;
+};
+
+// A witness that `.Self` implements an interface, which is currently being
+// implemented. Only appears inside an `impl ... as` declaration, and acts as a
+// placeholder that is substituted to point to the `ImplWitness` once it is
+// constructed.
+struct ImplSelfWitness {
+  static constexpr auto Kind = InstKind::ImplSelfWitness.Define<Parse::NodeId>(
+      {.ir_name = "impl_self_witness",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+  // Always the type of the builtin `WitnessType` singleton instruction.
+  TypeId type_id;
+  // Initially the `.Self` facet value used in the impl lookup query.
+  InstId period_self;
+  // The interface of the impl being declared.
+  SpecificInterfaceId specific_interface_id;
 };
 
 // A witness that a type implements an interface.
@@ -2426,10 +2442,10 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of `ImplWitness`, `CustomWitness`, and `LookupImplWitness`
-// instructions. The latter will evaluate at some point during specific
-// computation into one of the former two, and their types should not change in
-// the process.
+// The type of `ImplWitness`, `CustomWitness`,  `ImplSelfWitness`, and
+// `LookupImplWitness` instructions. The latter will evaluate at some point
+// during specific computation into one of first two, and their types should not
+// change in the process.
 //
 // Also the type of `RequireCompleteType` instructions.
 //

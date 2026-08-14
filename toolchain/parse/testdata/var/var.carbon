@@ -17,51 +17,55 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: var.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'v'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'UnderscoreName', text: '_'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'w'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
-// CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'str'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'StringLiteral', text: '"hello"'},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'UnderscoreName', text: '_'},
-// CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'str'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'StringLiteral', text: '"anonymous"'},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 22},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'v'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ ├─IntLiteral '0'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─UnderscoreName '_'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ ├─IntLiteral '0'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'w'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 's'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─StringTypeLiteral 'str'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ├─StringLiteral '"hello"'
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─UnderscoreName '_'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─StringTypeLiteral 'str'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ├─StringLiteral '"anonymous"'
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -132,6 +132,7 @@ class X {
 // CHECK:STDOUT:   impl_decl @<error>.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc11: <witness> = impl_self_witness <error>, @I [concrete = <error>]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -225,6 +226,7 @@ class X {
 // CHECK:STDOUT:   impl_decl @<error>.as.J.impl [concrete] {} {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc12: <witness> = impl_self_witness <error>, @J [concrete = <error>]
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref()
 // CHECK:STDOUT:   return
@@ -255,6 +257,7 @@ class X {
 // CHECK:STDOUT:   %<error>.as.Z.impl.Method: %<error>.as.Z.impl.Method.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.0cf [symbolic]
 // CHECK:STDOUT:   %Point: type = class_type @Point [concrete]
+// CHECK:STDOUT:   %.354: <witness> = impl_self_witness %Point, @Z [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @Point.as.Z.impl.%Z.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero.type: type = fn_type @Point.as.Z.impl.Zero [concrete]
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero: %Point.as.Z.impl.Zero.type = struct_value () [concrete]
@@ -264,18 +267,18 @@ class X {
 // CHECK:STDOUT:   %Point.as.Z.impl.Method.type: type = fn_type @Point.as.Z.impl.Method [concrete]
 // CHECK:STDOUT:   %Point.as.Z.impl.Method: %Point.as.Z.impl.Method.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point, (%Z.impl_witness) [concrete]
-// CHECK:STDOUT:   %Z.WithSelf.Zero.type.d05: type = fn_type @Z.WithSelf.Zero, @Z.WithSelf(%Z.facet) [concrete]
-// CHECK:STDOUT:   %Z.WithSelf.Zero.0d2: %Z.WithSelf.Zero.type.d05 = struct_value () [concrete]
-// CHECK:STDOUT:   %Z.WithSelf.Method.type.de2: type = fn_type @Z.WithSelf.Method, @Z.WithSelf(%Z.facet) [concrete]
-// CHECK:STDOUT:   %Z.WithSelf.Method.683: %Z.WithSelf.Method.type.de2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.Zero.type.896: type = fn_type @Z.WithSelf.Zero, @Z.WithSelf(%Z.facet) [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.Zero.8c2: %Z.WithSelf.Zero.type.896 = struct_value () [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.Method.type.330: type = fn_type @Z.WithSelf.Method, @Z.WithSelf(%Z.facet) [concrete]
+// CHECK:STDOUT:   %Z.WithSelf.Method.2ef: %Z.WithSelf.Method.type.330 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.1fe: type = fn_type_with_self_type %Z.WithSelf.Zero.type.d05, %Z.facet [concrete]
+// CHECK:STDOUT:   %.dfa: type = fn_type_with_self_type %Z.WithSelf.Zero.type.896, %Z.facet [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
-// CHECK:STDOUT:   %.f5a: type = fn_type_with_self_type %Z.WithSelf.Method.type.de2, %Z.facet [concrete]
+// CHECK:STDOUT:   %.f36: type = fn_type_with_self_type %Z.WithSelf.Method.type.330, %Z.facet [concrete]
 // CHECK:STDOUT:   %Point.as.Z.impl.Method.bound: <bound method> = bound_method %Point.val, %Point.as.Z.impl.Method [concrete]
 // CHECK:STDOUT:   %.e6b: ref %Point = temporary invalid, %Point.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -329,6 +332,7 @@ class X {
 // CHECK:STDOUT:   impl_decl @<error>.as.Z.impl [concrete] {} {
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc11: <witness> = impl_self_witness <error>, @Z [concrete = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -397,6 +401,7 @@ class X {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc18: <witness> = impl_self_witness @Point.as.Z.impl.%Self.ref, @Z [concrete = constants.%.354]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -461,7 +466,7 @@ class X {
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.WithSelf.%assoc0 [concrete = constants.%assoc0.627]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point.ref.loc28, (constants.%Z.impl_witness) [concrete = constants.%Z.facet]
 // CHECK:STDOUT:   %.loc28: %Z.type = converted %Point.ref.loc28, %Z.facet [concrete = constants.%Z.facet]
-// CHECK:STDOUT:   %impl.elem0: %.1fe = impl_witness_access constants.%Z.impl_witness, element0 [concrete = constants.%Point.as.Z.impl.Zero]
+// CHECK:STDOUT:   %impl.elem0: %.dfa = impl_witness_access constants.%Z.impl_witness, element0 [concrete = constants.%Point.as.Z.impl.Zero]
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   %.loc29_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Point.ref.loc29: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
@@ -470,7 +475,7 @@ class X {
 // CHECK:STDOUT:   %.loc29_7.1: init %Point = converted %.loc29_5.1, %.loc29_5.3 [concrete = constants.%Point.val]
 // CHECK:STDOUT:   %Z.ref.loc29: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   %Method.ref: %Z.assoc_type = name_ref Method, @Z.WithSelf.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:   %impl.elem1: %.f5a = impl_witness_access constants.%Z.impl_witness, element1 [concrete = constants.%Point.as.Z.impl.Method]
+// CHECK:STDOUT:   %impl.elem1: %.f36 = impl_witness_access constants.%Z.impl_witness, element1 [concrete = constants.%Point.as.Z.impl.Method]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc29_7.1, %impl.elem1 [concrete = constants.%Point.as.Z.impl.Method.bound]
 // CHECK:STDOUT:   %.loc29_7.2: ref %Point = temporary %.loc29_5.2, %.loc29_7.1 [concrete = constants.%.e6b]
 // CHECK:STDOUT:   %.loc29_7.3: %Point = acquire_value %.loc29_7.2 [concrete = constants.%Point.val]
@@ -527,10 +532,10 @@ class X {
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Z.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Z.facet
-// CHECK:STDOUT:   %Z.WithSelf.Zero.type => constants.%Z.WithSelf.Zero.type.d05
-// CHECK:STDOUT:   %Z.WithSelf.Zero => constants.%Z.WithSelf.Zero.0d2
-// CHECK:STDOUT:   %Z.WithSelf.Method.type => constants.%Z.WithSelf.Method.type.de2
-// CHECK:STDOUT:   %Z.WithSelf.Method => constants.%Z.WithSelf.Method.683
+// CHECK:STDOUT:   %Z.WithSelf.Zero.type => constants.%Z.WithSelf.Zero.type.896
+// CHECK:STDOUT:   %Z.WithSelf.Zero => constants.%Z.WithSelf.Zero.8c2
+// CHECK:STDOUT:   %Z.WithSelf.Method.type => constants.%Z.WithSelf.Method.type.330
+// CHECK:STDOUT:   %Z.WithSelf.Method => constants.%Z.WithSelf.Method.2ef
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Zero(constants.%Z.facet) {}
@@ -558,12 +563,13 @@ class X {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
+// CHECK:STDOUT:   %.57f: <witness> = impl_self_witness %X, @A [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness @X.as.A.impl.%A.impl_witness_table [concrete]
 // CHECK:STDOUT:   %X.as.A.impl.B.type: type = fn_type @X.as.A.impl.B [concrete]
 // CHECK:STDOUT:   %X.as.A.impl.B: %X.as.A.impl.B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, (%A.impl_witness) [concrete]
-// CHECK:STDOUT:   %A.WithSelf.B.type.d09: type = fn_type @A.WithSelf.B, @A.WithSelf(%A.facet) [concrete]
-// CHECK:STDOUT:   %A.WithSelf.B.e21: %A.WithSelf.B.type.d09 = struct_value () [concrete]
+// CHECK:STDOUT:   %A.WithSelf.B.type.210: type = fn_type @A.WithSelf.B, @A.WithSelf(%A.facet) [concrete]
+// CHECK:STDOUT:   %A.WithSelf.B.11e: %A.WithSelf.B.type.210 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -623,6 +629,7 @@ class X {
 // CHECK:STDOUT:   impl_decl @<error>.as.C.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness <error>, @C [concrete = <error>]
 // CHECK:STDOUT:   %X.as.A.impl.B.decl: %X.as.A.impl.B.type = fn_decl @X.as.A.impl.B [concrete = constants.%X.as.A.impl.B] {} {}
 // CHECK:STDOUT:   %A.impl_witness_table = impl_witness_table (%X.as.A.impl.B.decl), @X.as.A.impl [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
@@ -646,6 +653,7 @@ class X {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc12: <witness> = impl_self_witness @X.as.A.impl.%Self.ref, @A [concrete = constants.%.57f]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -686,8 +694,8 @@ class X {
 // CHECK:STDOUT: specific @A.WithSelf(constants.%A.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%A.facet
-// CHECK:STDOUT:   %A.WithSelf.B.type => constants.%A.WithSelf.B.type.d09
-// CHECK:STDOUT:   %A.WithSelf.B => constants.%A.WithSelf.B.e21
+// CHECK:STDOUT:   %A.WithSelf.B.type => constants.%A.WithSelf.B.type.210
+// CHECK:STDOUT:   %A.WithSelf.B => constants.%A.WithSelf.B.11e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf.B(constants.%A.facet) {}

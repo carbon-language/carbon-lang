@@ -23,7 +23,7 @@ auto LowerToLLVM(
   Context context(
       &llvm_context, std::move(fs), options.want_debug_info,
       &tree_and_subtrees_getters,
-      sem_ir.cpp_file() ? sem_ir.cpp_file()->GetCodeGenerator() : nullptr,
+      sem_ir.cpp_file() ? sem_ir.cpp_file()->code_generator() : nullptr,
       sem_ir.filename(), total_ir_count, options.opt_level,
       options.mangle_string_fingerprint, options.vlog_stream);
 

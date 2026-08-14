@@ -528,10 +528,10 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %struct.Y = type { i8 }
+// CHECK:STDOUT: %struct.Y.26 = type { i8 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_ZN1X11static_tmplIiEE = external global i32, align 4
-// CHECK:STDOUT: @_ZN1X11static_tmplI1YEE = external global %struct.Y, align 1
+// CHECK:STDOUT: @_ZN1X11static_tmplI1YEE = external global %struct.Y.26, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CReadStaticVarTemplate.Main() #0 !dbg !12 {

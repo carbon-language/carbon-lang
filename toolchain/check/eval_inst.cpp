@@ -306,10 +306,10 @@ static auto TryFindValueInRewriteConstraints(
   auto access_interface =
       context.specific_interfaces().Get(specific_interface_id);
 
-  auto access_self_facet_type_id =
+  auto access_self_declared_facet_type_id =
       context.types()
           .GetAs<SemIR::FacetType>(access_self_type_id)
-          .facet_type_id;
+          .declared_facet_type_id;
   // TODO: We could consider something better than linear search here, such as a
   // map. However that would probably require heap allocations which may be
   // worse overall since the number of rewrite constraints is generally low. If
@@ -317,8 +317,8 @@ static auto TryFindValueInRewriteConstraints(
   // grouped together, as in ResolveFacetTypeRewriteConstraints(), and limited
   // to just the `ImplWitnessAccess` entries, then a binary search may work
   // here.
-  for (const auto& rewrite : context.facet_types()
-                                 .Get(access_self_facet_type_id)
+  for (const auto& rewrite : context.declared_facet_types()
+                                 .Get(access_self_declared_facet_type_id)
                                  .rewrite_constraints) {
     // Look at each rewrite constraint in the self facet's type. If the LHS is
     // an `ImplWitnessAccess` into the same interface that `inst` is indexing

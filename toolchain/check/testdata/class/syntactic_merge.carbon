@@ -180,9 +180,9 @@ base class Base {
   fn F(ref self);
 }
 
-// CHECK:STDERR: fail_self_type.carbon:[[@LINE+7]]:21: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_self_type.carbon:[[@LINE+7]]:19: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: fn Base.F(ref self: Base) {
-// CHECK:STDERR:                     ^~~~
+// CHECK:STDERR:                   ^
 // CHECK:STDERR: fail_self_type.carbon:[[@LINE-6]]:8: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:   fn F(ref self);
 // CHECK:STDERR:        ^~~~~~~~

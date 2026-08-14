@@ -26,48 +26,49 @@ fn f() -> i32 {
 }
 
 // CHECK:STDOUT: - filename: fail_missing_guard_parens_only_parse_errors.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'f'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
-// CHECK:STDOUT:           {kind: 'MatchIntroducer', text: 'match'},
-// CHECK:STDOUT:             {kind: 'MatchConditionStart', text: '('},
-// CHECK:STDOUT:             {kind: 'BoolLiteralTrue', text: 'true'},
-// CHECK:STDOUT:           {kind: 'MatchCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'MatchStatementStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:               {kind: 'MatchCaseIntroducer', text: 'case'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:                 {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:               {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:                 {kind: 'MatchCaseGuardIntroducer', text: 'if'},
-// CHECK:STDOUT:                 {kind: 'MatchCaseGuardStart', text: '('},
-// CHECK:STDOUT:                   {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:                   {kind: 'BoolLiteralFalse', text: 'false'},
-// CHECK:STDOUT:                 {kind: 'InfixOperatorEqualEqual', text: '==', subtree_size: 3},
-// CHECK:STDOUT:               {kind: 'MatchCaseGuard', text: '=>', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:             {kind: 'MatchCase', text: 'case', has_error: yes, subtree_size: 11},
-// CHECK:STDOUT:           {kind: 'MatchHandlerStart', text: 'case', has_error: yes, subtree_size: 12},
-// CHECK:STDOUT:         {kind: 'MatchHandler', text: 'case', has_error: yes, subtree_size: 13},
-// CHECK:STDOUT:               {kind: 'MatchCaseIntroducer', text: 'case'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'z'},
-// CHECK:STDOUT:                 {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:               {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:                 {kind: 'MatchCaseGuardIntroducer', text: 'if'},
-// CHECK:STDOUT:                 {kind: 'MatchCaseGuardStart', text: 'true', has_error: yes},
-// CHECK:STDOUT:                 {kind: 'InvalidParse', text: 'true', has_error: yes},
-// CHECK:STDOUT:               {kind: 'MatchCaseGuard', text: 'true', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:             {kind: 'MatchCase', text: 'true', has_error: yes, subtree_size: 9},
-// CHECK:STDOUT:           {kind: 'MatchHandlerStart', text: 'true', has_error: yes, subtree_size: 10},
-// CHECK:STDOUT:         {kind: 'MatchHandler', text: 'true', has_error: yes, subtree_size: 11},
-// CHECK:STDOUT:       {kind: 'MatchStatement', text: '}', subtree_size: 30},
-// CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 41},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'f'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─MatchIntroducer 'match'
+// CHECK:STDOUT:   │ │   │ ╭─MatchConditionStart '('
+// CHECK:STDOUT:   │ │   │ ├─BoolLiteralTrue 'true'
+// CHECK:STDOUT:   │ │   ├─MatchCondition ')'
+// CHECK:STDOUT:   │ │ ╭─MatchStatementStart '{'
+// CHECK:STDOUT:   │ │ │     ╭─MatchCaseIntroducer 'case'
+// CHECK:STDOUT:   │ │ │     │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │     │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │     │ ├─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ │ │     ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │     │ ╭─MatchCaseGuardIntroducer 'if'
+// CHECK:STDOUT:   │ │ │     │ ├─MatchCaseGuardStart '('
+// CHECK:STDOUT:   │ │ │     │ │ ╭─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │ │     │ │ ├─BoolLiteralFalse 'false'
+// CHECK:STDOUT:   │ │ │     │ ├─InfixOperatorEqualEqual '=='
+// CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard '=>' has_error
+// CHECK:STDOUT:   │ │ │   ╭─MatchCase 'case' has_error
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart 'case' has_error
+// CHECK:STDOUT:   │ │ ├─MatchHandler 'case' has_error
+// CHECK:STDOUT:   │ │ │     ╭─MatchCaseIntroducer 'case'
+// CHECK:STDOUT:   │ │ │     │ ╭─IdentifierNameNotBeforeSignature 'z'
+// CHECK:STDOUT:   │ │ │     │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │     │ ├─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ │ │     ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │     │ ╭─MatchCaseGuardIntroducer 'if'
+// CHECK:STDOUT:   │ │ │     │ ├─MatchCaseGuardStart 'true' has_error
+// CHECK:STDOUT:   │ │ │     │ ├─InvalidParse 'true' has_error
+// CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard 'true' has_error
+// CHECK:STDOUT:   │ │ │   ╭─MatchCase 'true' has_error
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart 'true' has_error
+// CHECK:STDOUT:   │ │ ├─MatchHandler 'true' has_error
+// CHECK:STDOUT:   │ ├─MatchStatement '}'
+// CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

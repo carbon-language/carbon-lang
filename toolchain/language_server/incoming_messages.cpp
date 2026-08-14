@@ -76,10 +76,12 @@ IncomingMessages::IncomingMessages(clang::clangd::Transport* transport,
   AddCallHandler("textDocument/documentSymbol", &HandleDocumentSymbol);
   AddCallHandler("initialize", &HandleInitialize);
   AddCallHandler("shutdown", &HandleShutdown);
+  AddNotificationHandler("initialized", &HandleInitialized);
   AddNotificationHandler("textDocument/didChange",
                          &HandleDidChangeTextDocument);
   AddNotificationHandler("textDocument/didClose", &HandleDidCloseTextDocument);
   AddNotificationHandler("textDocument/didOpen", &HandleDidOpenTextDocument);
+  AddNotificationHandler("textDocument/didSave", &HandleDidSaveTextDocument);
 }
 
 auto IncomingMessages::onCall(llvm::StringRef name, llvm::json::Value params,
@@ -102,6 +104,14 @@ auto IncomingMessages::onNotify(llvm::StringRef name, llvm::json::Value value)
     -> bool {
   if (name == "exit") {
     return false;
+  }
+  // Notifications prefixed with `$/` are implementation dependent, and LSP says
+  // a recipient is free to ignore ones it doesn't implement. Note this doesn't
+  // apply to calls, which must be answered with `MethodNotFound`; `onCall`
+  // already does that for anything unhandled.
+  // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#dollarRequests
+  if (name.starts_with("$/")) {
+    return true;
   }
   if (auto result = notification_handlers_.Lookup(name)) {
     (result.value())(*context_, std::move(value));

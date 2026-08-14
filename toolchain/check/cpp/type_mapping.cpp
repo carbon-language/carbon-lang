@@ -140,8 +140,8 @@ static auto VerifyIntegerTypeWidth(Context& context, clang::QualType type,
 
 // Maps a Carbon class type to a C++ type. Returns a null `QualType` if the
 // type is not supported.
-static auto TryMapClassType(Context& context, SemIR::TypeInstId class_inst_id,
-                            SemIR::ClassType class_type) -> TryMapTypeResult {
+static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
+    -> TryMapTypeResult {
   clang::ASTContext& ast_context = context.ast_context();
 
   // If the class represents a Carbon type literal, map it to the corresponding
@@ -169,10 +169,10 @@ static auto TryMapClassType(Context& context, SemIR::TypeInstId class_inst_id,
               bit_width, clang::FloatModeKind::NoFloat);
         }
         case SemIR::NumericTypeLiteralInfo::Int: {
-          return ast_context.getIntTypeForBitwidth(bit_width, true);
+          return GetIntNType(ast_context, bit_width, true);
         }
         case SemIR::NumericTypeLiteralInfo::UInt: {
-          return ast_context.getIntTypeForBitwidth(bit_width, false);
+          return GetIntNType(ast_context, bit_width, false);
         }
       }
     }
@@ -182,8 +182,14 @@ static auto TryMapClassType(Context& context, SemIR::TypeInstId class_inst_id,
     case SemIR::RecognizedTypeInfo::CppLong32: {
       return VerifyIntegerTypeWidth(context, ast_context.LongTy, 32);
     }
+    case SemIR::RecognizedTypeInfo::CppLong64: {
+      return VerifyIntegerTypeWidth(context, ast_context.LongTy, 64);
+    }
     case SemIR::RecognizedTypeInfo::CppULong32: {
       return VerifyIntegerTypeWidth(context, ast_context.UnsignedLongTy, 32);
+    }
+    case SemIR::RecognizedTypeInfo::CppULong64: {
+      return VerifyIntegerTypeWidth(context, ast_context.UnsignedLongTy, 64);
     }
     case SemIR::RecognizedTypeInfo::CppLongLong64: {
       return VerifyIntegerTypeWidth(context, ast_context.LongLongTy, 64);
@@ -222,14 +228,8 @@ static auto TryMapClassType(Context& context, SemIR::TypeInstId class_inst_id,
     }
   }
 
-  // TODO: We cannot yet map specific classes.
-  if (class_type.specific_id.has_value()) {
-    return clang::QualType();
-  }
-
   // Otherwise, find the existing C++ declaration or create a new one.
-  auto* tag_decl =
-      ExportClassToCpp(context, SemIR::LocId(class_inst_id), class_type);
+  auto* tag_decl = ExportClassToCpp(context, class_type);
   if (!tag_decl) {
     return clang::QualType();
   }
@@ -265,8 +265,7 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
       return context.ast_context().CharTy;
     }
     case CARBON_KIND(SemIR::ClassType class_type): {
-      return TryMapClassType(context, context.types().GetTypeInstId(type_id),
-                             class_type);
+      return TryMapClassType(context, class_type);
     }
     case CARBON_KIND(SemIR::ConstType const_type): {
       return WrappedType{

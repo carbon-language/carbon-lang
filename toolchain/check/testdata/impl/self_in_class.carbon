@@ -44,6 +44,7 @@ class A {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %.259: <witness> = impl_self_witness %C, @DefaultConstructible [concrete]
 // CHECK:STDOUT:   %DefaultConstructible.impl_witness: <witness> = impl_witness @C.as.DefaultConstructible.impl.%DefaultConstructible.impl_witness_table [concrete]
 // CHECK:STDOUT:   %.a44: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
@@ -52,8 +53,8 @@ class A {
 // CHECK:STDOUT:   %C.as.DefaultConstructible.impl.Make.type: type = fn_type @C.as.DefaultConstructible.impl.Make [concrete]
 // CHECK:STDOUT:   %C.as.DefaultConstructible.impl.Make: %C.as.DefaultConstructible.impl.Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DefaultConstructible.facet: %DefaultConstructible.type = facet_value %C, (%DefaultConstructible.impl_witness) [concrete]
-// CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.type.1d3: type = fn_type @DefaultConstructible.WithSelf.Make, @DefaultConstructible.WithSelf(%DefaultConstructible.facet) [concrete]
-// CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.08d: %DefaultConstructible.WithSelf.Make.type.1d3 = struct_value () [concrete]
+// CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.type.b0c: type = fn_type @DefaultConstructible.WithSelf.Make, @DefaultConstructible.WithSelf(%DefaultConstructible.facet) [concrete]
+// CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.12e: %DefaultConstructible.WithSelf.Make.type.b0c = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -127,6 +128,7 @@ class A {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %DefaultConstructible.ref: type = name_ref DefaultConstructible, file.%DefaultConstructible.decl [concrete = constants.%DefaultConstructible.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness @C.as.DefaultConstructible.impl.%C.ref, @DefaultConstructible [concrete = constants.%.259]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -174,8 +176,8 @@ class A {
 // CHECK:STDOUT: specific @DefaultConstructible.WithSelf(constants.%DefaultConstructible.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%DefaultConstructible.facet
-// CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.type => constants.%DefaultConstructible.WithSelf.Make.type.1d3
-// CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make => constants.%DefaultConstructible.WithSelf.Make.08d
+// CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make.type => constants.%DefaultConstructible.WithSelf.Make.type.b0c
+// CHECK:STDOUT:   %DefaultConstructible.WithSelf.Make => constants.%DefaultConstructible.WithSelf.Make.12e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DefaultConstructible.WithSelf.Make(constants.%DefaultConstructible.facet) {

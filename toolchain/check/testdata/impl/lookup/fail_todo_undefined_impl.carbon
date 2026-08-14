@@ -58,7 +58,8 @@ fn G() {
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %I.impl_witness.4e9: <witness> = impl_witness @C.as.I.impl.ac9.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %.b7f: <witness> = impl_self_witness %C, @I [concrete]
+// CHECK:STDOUT:   %I.impl_witness.490: <witness> = impl_witness @C.as.I.impl.ac9.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -67,16 +68,16 @@ fn G() {
 // CHECK:STDOUT:   %C.type.facet: %type = facet_value %C, () [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.b04: type = fn_type @I.WithSelf.F, @I.WithSelf(%C.type.facet) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.cef: %I.WithSelf.F.type.b04 = struct_value () [concrete]
-// CHECK:STDOUT:   %I.facet.029: %I.type = facet_value %C, (%I.impl_witness.4e9) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.F.type.d7f: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.029) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.F.1f7: %I.WithSelf.F.type.d7f = struct_value () [concrete]
-// CHECK:STDOUT:   %.010: type = fn_type_with_self_type %I.WithSelf.F.type.d7f, %I.facet.029 [concrete]
-// CHECK:STDOUT:   %I.impl_witness.d1b: <witness> = impl_witness @C.as.I.impl.e10.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.facet.aa5: %I.type = facet_value %C, (%I.impl_witness.490) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.type.372: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.aa5) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.d46: %I.WithSelf.F.type.372 = struct_value () [concrete]
+// CHECK:STDOUT:   %.a89: type = fn_type_with_self_type %I.WithSelf.F.type.372, %I.facet.aa5 [concrete]
+// CHECK:STDOUT:   %I.impl_witness.df5: <witness> = impl_witness @C.as.I.impl.e10.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.type: type = fn_type @C.as.I.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F: %C.as.I.impl.F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %I.facet.c86: %I.type = facet_value %C, (%I.impl_witness.d1b) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.F.type.51c: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.c86) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.F.179: %I.WithSelf.F.type.51c = struct_value () [concrete]
+// CHECK:STDOUT:   %I.facet.a71: %I.type = facet_value %C, (%I.impl_witness.df5) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.type.cb9: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.a71) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.a58: %I.WithSelf.F.type.cb9 = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -95,6 +96,7 @@ fn G() {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc35: <witness> = impl_self_witness @C.as.I.impl.e10.%C.ref, @I [concrete = constants.%.b7f]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -119,7 +121,7 @@ fn G() {
 // CHECK:STDOUT: impl @C.as.I.impl.e10: %C.ref as %I.ref {
 // CHECK:STDOUT:   %C.as.I.impl.F.decl: %C.as.I.impl.F.type = fn_decl @C.as.I.impl.F [concrete = constants.%C.as.I.impl.F] {} {}
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%C.as.I.impl.F.decl), @C.as.I.impl.e10 [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.d1b]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.df5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %C.as.I.impl.F.decl
@@ -132,6 +134,7 @@ fn G() {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness @C.as.I.impl.ac9.%Self.ref, @I [concrete = constants.%.b7f]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -150,7 +153,7 @@ fn G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.010 = impl_witness_access constants.%I.impl_witness.4e9, element0 [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0: %.a89 = impl_witness_access constants.%I.impl_witness.490, element0 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -163,7 +166,7 @@ fn G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.010 = impl_witness_access constants.%I.impl_witness.4e9, element0 [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0: %.a89 = impl_witness_access constants.%I.impl_witness.490, element0 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -183,19 +186,19 @@ fn G() {
 // CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.cef
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.029) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.aa5) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%I.facet.029
-// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.d7f
-// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.1f7
+// CHECK:STDOUT:   %Self => constants.%I.facet.aa5
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.372
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.d46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.c86) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.a71) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%I.facet.c86
-// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.51c
-// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.179
+// CHECK:STDOUT:   %Self => constants.%I.facet.a71
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.cb9
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.a58
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet.c86) {}
+// CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet.a71) {}
 // CHECK:STDOUT:

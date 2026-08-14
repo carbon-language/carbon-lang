@@ -2,11 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "testing/base/unified_diff_matcher.h"
+#include "testing/base/unified_diff.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <sstream>
 #include <string>
 
 #include "llvm/ADT/SmallVector.h"
@@ -14,7 +15,9 @@
 namespace Carbon::Testing {
 namespace {
 
+using ::testing::ElementsAreArray;
 using ::testing::Matcher;
+using ::testing::MatchesRegex;
 using ::testing::StrEq;
 
 // Asserts that when expected does not match actual, the string
@@ -22,63 +25,67 @@ using ::testing::StrEq;
 auto ExpectUnifiedDiff(const llvm::SmallVector<std::string>& actual,
                        const llvm::SmallVector<Matcher<std::string>>& expected,
                        const std::string& expected_diff) -> void {
-  testing::StringMatchResultListener listener;
-  EXPECT_FALSE(testing::ExplainMatchResult(
-      ElementsAreArrayWithUnifiedDiff(expected), actual, &listener));
-  EXPECT_THAT(listener.str(), testing::Eq(expected_diff));
+  std::stringstream ss;
+  ss << UnifiedDiff(expected, actual);
+  EXPECT_THAT(ss.str(), testing::Eq(expected_diff));
 }
 
-TEST(UnifiedDiffMatcherTest, Matches) {
+TEST(UnifiedDiffTest, Matches) {
   llvm::SmallVector<std::string> actual = {"A", "B", "C"};
   llvm::SmallVector<Matcher<std::string>> expected = {StrEq("A"), StrEq("B"),
                                                       StrEq("C")};
-  EXPECT_THAT(actual, ElementsAreArrayWithUnifiedDiff(expected));
+  EXPECT_TRUE(testing::Value(actual, ElementsAreArray(expected)))
+      << UnifiedDiff(expected, actual);
+
+  std::stringstream ss;
+  ss << UnifiedDiff(expected, actual);
+  EXPECT_THAT(ss.str(), testing::Eq(""));
 }
 
-TEST(UnifiedDiffMatcherTest, MismatchMissing) {
+TEST(UnifiedDiffTest, MismatchMissing) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 1 to 3 (1-based index):
-  A
-- is equal to "B"
-  C
+ A
+-B
+ C
 === diff end
 )";
   ExpectUnifiedDiff({"A", "C"}, {StrEq("A"), StrEq("B"), StrEq("C")},
                     ExpectedDiff);
 }
 
-TEST(UnifiedDiffMatcherTest, MismatchExtra) {
+TEST(UnifiedDiffTest, MismatchExtra) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 1 to 2 (1-based index):
-  A
-+ B
-  C
+ A
++B
+ C
 === diff end
 )";
   ExpectUnifiedDiff({"A", "B", "C"}, {StrEq("A"), StrEq("C")}, ExpectedDiff);
 }
 
-TEST(UnifiedDiffMatcherTest, MismatchBoth) {
+TEST(UnifiedDiffTest, MismatchBoth) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 1 to 2 (1-based index):
-  A
-- is equal to "C"
-+ B
+ A
+-C
++B
 === diff end
 )";
   ExpectUnifiedDiff({"A", "B"}, {StrEq("A"), StrEq("C")}, ExpectedDiff);
 }
 
-TEST(UnifiedDiffMatcherTest, MismatchMultiple) {
+TEST(UnifiedDiffTest, MismatchMultiple) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 1 to 5 (1-based index):
-  A
-- is equal to "B"
-+ X
-  C
-- is equal to "D"
-+ Y
-  E
+ A
+-B
++X
+ C
+-D
++Y
+ E
 === diff end
 )";
   ExpectUnifiedDiff(
@@ -87,17 +94,17 @@ TEST(UnifiedDiffMatcherTest, MismatchMultiple) {
       ExpectedDiff);
 }
 
-TEST(UnifiedDiffMatcherTest, MismatchLongContext) {
+TEST(UnifiedDiffTest, MismatchLongContext) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 2 to 8 (1-based index):
-  1
-  2
-  3
-- is equal to "X"
-+ 4
-  5
-  6
-  7
+ 1
+ 2
+ 3
+-X
++4
+ 5
+ 6
+ 7
 === diff end
 )";
   ExpectUnifiedDiff({"0", "1", "2", "3", "4", "5", "6", "7", "8"},
@@ -106,18 +113,18 @@ TEST(UnifiedDiffMatcherTest, MismatchLongContext) {
                     ExpectedDiff);
 }
 
-TEST(UnifiedDiffMatcherTest, Mismatch5LineContext) {
+TEST(UnifiedDiffTest, Mismatch5LineContext) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 1 to 7 (1-based index):
-- is equal to "X"
-+ 0
-  1
-  2
-  3
-  4
-  5
-- is equal to "Y"
-+ 6
+-X
++0
+ 1
+ 2
+ 3
+ 4
+ 5
+-Y
++6
 === diff end
 )";
   ExpectUnifiedDiff({"0", "1", "2", "3", "4", "5", "6"},
@@ -126,19 +133,19 @@ TEST(UnifiedDiffMatcherTest, Mismatch5LineContext) {
                     ExpectedDiff);
 }
 
-TEST(UnifiedDiffMatcherTest, Mismatch6LineContext) {
+TEST(UnifiedDiffTest, Mismatch6LineContext) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 1 to 8 (1-based index):
-- is equal to "X"
-+ 0
-  1
-  2
-  3
-  4
-  5
-  6
-- is equal to "Y"
-+ 7
+-X
++0
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+-Y
++7
 === diff end
 )";
   ExpectUnifiedDiff({"0", "1", "2", "3", "4", "5", "6", "7"},
@@ -147,20 +154,20 @@ TEST(UnifiedDiffMatcherTest, Mismatch6LineContext) {
                     ExpectedDiff);
 }
 
-TEST(UnifiedDiffMatcherTest, Mismatch7LineContext) {
+TEST(UnifiedDiffTest, Mismatch7LineContext) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 1 to 4 (1-based index):
-- is equal to "X"
-+ 0
-  1
-  2
-  3
+-X
++0
+ 1
+ 2
+ 3
 === diff in expected elements 6 to 9 (1-based index):
-  5
-  6
-  7
-- is equal to "Y"
-+ 8
+ 5
+ 6
+ 7
+-Y
++8
 === diff end
 )";
   ExpectUnifiedDiff({"0", "1", "2", "3", "4", "5", "6", "7", "8"},
@@ -169,34 +176,34 @@ TEST(UnifiedDiffMatcherTest, Mismatch7LineContext) {
                     ExpectedDiff);
 }
 
-TEST(UnifiedDiffMatcherTest, MismatchEmptyExpected) {
+TEST(UnifiedDiffTest, MismatchEmptyExpected) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 1 to 1 (1-based index):
-+ A
++A
 === diff end
 )";
   ExpectUnifiedDiff({"A"}, {}, ExpectedDiff);
 }
 
-TEST(UnifiedDiffMatcherTest, MismatchEmptyActual) {
+TEST(UnifiedDiffTest, MismatchEmptyActual) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 1 to 1 (1-based index):
-- is equal to "A"
+-A
 === diff end
 )";
   ExpectUnifiedDiff({}, {StrEq("A")}, ExpectedDiff);
 }
 
-TEST(UnifiedDiffMatcherTest, MismatchLongDifference) {
+TEST(UnifiedDiffTest, MismatchLongDifference) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 1 to 4 (1-based index):
-  1
-- is equal to "2"
-- is equal to "3"
-+ X
-+ Y
-+ Z
-  4
+ 1
+-2
+-3
++X
++Y
++Z
+ 4
 === diff end
 )";
   ExpectUnifiedDiff({"1", "X", "Y", "Z", "4"},
@@ -204,17 +211,17 @@ TEST(UnifiedDiffMatcherTest, MismatchLongDifference) {
                     ExpectedDiff);
 }
 
-TEST(UnifiedDiffMatcherTest, MismatchGreedyResyncActualMissing) {
+TEST(UnifiedDiffTest, MismatchGreedyResyncActualMissing) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 1 to 6 (1-based index):
-  1
-  2
-- is equal to "3"
-+ X
-+ 7
-  4
-  5
-  6
+ 1
+ 2
+-3
++X
++7
+ 4
+ 5
+ 6
 === diff end
 )";
   ExpectUnifiedDiff({"1", "2", "X", "7", "4", "5", "6", "7", "8", "9"},
@@ -223,17 +230,17 @@ TEST(UnifiedDiffMatcherTest, MismatchGreedyResyncActualMissing) {
                     ExpectedDiff);
 }
 
-TEST(UnifiedDiffMatcherTest, MismatchGreedyResyncExpectedMissing) {
+TEST(UnifiedDiffTest, MismatchGreedyResyncExpectedMissing) {
   constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
 === diff in expected elements 1 to 7 (1-based index):
-  1
-  2
-- is equal to "X"
-- is equal to "7"
-+ 3
-  4
-  5
-  6
+ 1
+ 2
+-X
+-7
++3
+ 4
+ 5
+ 6
 === diff end
 )";
   ExpectUnifiedDiff(
@@ -241,6 +248,39 @@ TEST(UnifiedDiffMatcherTest, MismatchGreedyResyncExpectedMissing) {
       {StrEq("1"), StrEq("2"), StrEq("X"), StrEq("7"), StrEq("4"), StrEq("5"),
        StrEq("6"), StrEq("7"), StrEq("8"), StrEq("9")},
       ExpectedDiff);
+}
+
+TEST(UnifiedDiffTest, MismatchRegexMatcher) {
+  constexpr char ExpectedDiff[] = R"(unified diff (- expected, + actual):
+=== diff in expected elements 1 to 3 (1-based index):
+ A
+-matches regular expression ".*B.*"
+ C
+=== diff end
+)";
+  ExpectUnifiedDiff({"A", "C"}, {StrEq("A"), MatchesRegex(".*B.*"), StrEq("C")},
+                    ExpectedDiff);
+}
+
+TEST(UnifiedDiffTest, CheckSubset) {
+  constexpr char ExpectedDiff[] =
+      R"(unified diff (- expected, + actual) [+ lines are normal]:
+=== diff in expected elements 1 to 4 (1-based index):
+-X
++0
+ 1
+ 2
+ 3
+=== diff end
+)";
+  std::stringstream ss;
+  llvm::SmallVector<Matcher<std::string>> expected = {
+      StrEq("X"), StrEq("1"), StrEq("2"), StrEq("3"), StrEq("4"),
+      StrEq("5"), StrEq("6"), StrEq("7"), StrEq("8"), StrEq("9")};
+  llvm::SmallVector<std::string> actual = {"0", "1", "2", "3",  "4",  "5", "6",
+                                           "7", "8", "9", "10", "11", "12"};
+  ss << UnifiedDiff(expected, actual, /*check_subset=*/true);
+  EXPECT_THAT(ss.str(), testing::Eq(ExpectedDiff));
 }
 
 }  // namespace

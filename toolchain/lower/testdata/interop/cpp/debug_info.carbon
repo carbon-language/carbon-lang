@@ -49,7 +49,7 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!9}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !1, isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, splitDebugInlining: false, nameTableKind: None)
-// CHECK:STDOUT: !1 = !DIFile(filename: "<carbon Cpp imports>", directory: "", checksumkind: CSK_MD5, checksum: "d41d8cd98f00b204e9800998ecf8427e")
+// CHECK:STDOUT: !1 = !DIFile(filename: "<carbon Cpp imports>", directory: "", checksumkind: CSK_MD5, checksum: "9eecb7db59d16c80417c72d1e1f4fbf1")
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "debug_info.carbon", directory: "")
 // CHECK:STDOUT: !4 = !{i32 7, !"Dwarf Version", i32 5}

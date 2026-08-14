@@ -42,18 +42,19 @@ fn G(c: C) {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %.ba1: <witness> = impl_self_witness %C, @HasF [concrete]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness @C.as.HasF.impl.%HasF.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.HasF.impl.F.type: type = fn_type @C.as.HasF.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.HasF.impl.F: %C.as.HasF.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %C, (%HasF.impl_witness) [concrete]
-// CHECK:STDOUT:   %HasF.WithSelf.F.type.263: type = fn_type @HasF.WithSelf.F, @HasF.WithSelf(%HasF.facet) [concrete]
-// CHECK:STDOUT:   %HasF.WithSelf.F.3c7: %HasF.WithSelf.F.type.263 = struct_value () [concrete]
+// CHECK:STDOUT:   %HasF.WithSelf.F.type.722: type = fn_type @HasF.WithSelf.F, @HasF.WithSelf(%HasF.facet) [concrete]
+// CHECK:STDOUT:   %HasF.WithSelf.F.689: %HasF.WithSelf.F.type.722 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:   %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.34f: type = fn_type_with_self_type %HasF.WithSelf.F.type.263, %HasF.facet [concrete]
+// CHECK:STDOUT:   %.697: type = fn_type_with_self_type %HasF.WithSelf.F.type.722, %HasF.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -68,6 +69,7 @@ fn G(c: C) {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc23: <witness> = impl_self_witness @C.as.HasF.impl.%C.ref, @HasF [concrete = constants.%.ba1]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern [concrete = constants.%c.param_patt]
 // CHECK:STDOUT:     %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
@@ -131,11 +133,11 @@ fn G(c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc28: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %G.ref.loc28: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc28: %.34f = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
+// CHECK:STDOUT:   %impl.elem0.loc28: %.697 = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
 // CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc28: init %empty_tuple.type = call %impl.elem0.loc28()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc29: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc29: %.34f = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
+// CHECK:STDOUT:   %impl.elem0.loc29: %.697 = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
 // CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc29: init %empty_tuple.type = call %impl.elem0.loc29()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -152,8 +154,8 @@ fn G(c: C) {
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%HasF.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%HasF.facet
-// CHECK:STDOUT:   %HasF.WithSelf.F.type => constants.%HasF.WithSelf.F.type.263
-// CHECK:STDOUT:   %HasF.WithSelf.F => constants.%HasF.WithSelf.F.3c7
+// CHECK:STDOUT:   %HasF.WithSelf.F.type => constants.%HasF.WithSelf.F.type.722
+// CHECK:STDOUT:   %HasF.WithSelf.F => constants.%HasF.WithSelf.F.689
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf.F(constants.%HasF.facet) {}

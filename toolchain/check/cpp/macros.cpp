@@ -11,7 +11,9 @@
 #include "clang/Sema/Sema.h"
 #include "common/check.h"
 #include "toolchain/check/cpp/constant.h"
+#include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/location.h"
 #include "toolchain/check/literal.h"
 
 namespace Carbon::Check {
@@ -46,52 +48,49 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
 }
 
 auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
-                      SemIR::NameId name_id, clang::MacroInfo* macro_info)
-    -> SemIR::InstId {
-  auto name_str_opt = context.names().GetAsStringIfIdentifier(name_id);
+                      clang::IdentifierInfo* identifier_info,
+                      clang::MacroInfo* macro_info) -> SemIR::InstId {
   CARBON_CHECK(macro_info, "macro info missing");
-
   if (macro_info->getNumTokens() == 0) {
     context.TODO(loc_id, "Unsupported: macro with 0 replacement tokens");
     return SemIR::ErrorInst::InstId;
   }
 
-  clang::Sema& sema = context.clang_sema();
-  clang::Preprocessor& preprocessor = sema.getPreprocessor();
+  auto& ast_context = context.cpp_context()->ast_context();
   auto& parser = context.cpp_context()->parser();
+  auto& preprocessor = context.cpp_context()->sema().getPreprocessor();
 
-  llvm::SmallVector<clang::Token> tokens(macro_info->tokens().begin(),
-                                         macro_info->tokens().end());
-
-  clang::Token current_token = parser.getCurToken();
-
-  // Add eof token
-  clang::Token eof;
-  eof.startToken();
-  eof.setKind(clang::tok::eof);
-  eof.setLocation(current_token.getEndLoc());
-  tokens.push_back(eof);
-
-  tokens.push_back(current_token);
-
-  preprocessor.EnterTokenStream(tokens, /*DisableMacroExpansion=*/false,
+  // Enter the macro name, not the macro body, so we properly suppress recursive
+  // expansion.
+  clang::Token macro_name[1];
+  macro_name[0].startToken();
+  macro_name[0].setKind(clang::tok::identifier);
+  macro_name[0].setIdentifierInfo(identifier_info);
+  macro_name[0].setLocation(GetCppLocation(context, loc_id));
+  preprocessor.EnterTokenStream(macro_name, /*DisableMacroExpansion=*/false,
                                 /*IsReinject=*/false);
-  parser.ConsumeAnyToken(true);
+
+  CARBON_CHECK(parser.getCurToken().is(clang::tok::eof));
+  parser.ConsumeToken();
 
   clang::ExprResult result = parser.ParseConstantExpression();
-
   clang::Expr* result_expr = result.get();
 
+  // Consume any remaining tokens to advance the preprocessor and parser past
+  // the end of the macro.
   bool success =
       !result.isInvalid() && parser.getCurToken().is(clang::tok::eof);
+  while (!parser.getCurToken().is(clang::tok::eof)) {
+    parser.ConsumeAnyToken(true);
+  }
 
   if (!success) {
-    parser.SkipUntil(clang::tok::eof);
     CARBON_DIAGNOSTIC(
         InCppMacroEvaluation, Error,
         "failed to parse macro Cpp.{0} to a valid constant expression",
         std::string);
-    context.emitter().Emit(loc_id, InCppMacroEvaluation, (*name_str_opt).str());
+    context.emitter().Emit(loc_id, InCppMacroEvaluation,
+                           identifier_info->getName().str());
     return SemIR::ErrorInst::InstId;
   }
 
@@ -103,8 +102,7 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
   }
 
   clang::Expr::EvalResult evaluated_result;
-  if (!result_expr->EvaluateAsConstantExpr(evaluated_result,
-                                           sema.getASTContext())) {
+  if (!result_expr->EvaluateAsConstantExpr(evaluated_result, ast_context)) {
     CARBON_FATAL("failed to evaluate macro as constant expression");
   }
 

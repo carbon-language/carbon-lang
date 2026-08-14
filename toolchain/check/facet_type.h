@@ -55,7 +55,7 @@ auto GetImplWitnessAccessWithoutSubstitution(Context& context,
 // value of the facet type should be an error constant.
 auto ResolveFacetTypeRewriteConstraints(
     Context& context, SemIR::LocId loc_id,
-    llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>& rewrites)
+    llvm::SmallVector<SemIR::DeclaredFacetType::RewriteConstraint>& rewrites)
     -> bool;
 
 // Get a FacetType instruction for an empty FacetType. This is the facet
@@ -75,6 +75,14 @@ auto GetConstantFacetValueForTypeAndInterface(
     Context& context, SemIR::TypeInstId type_inst_id,
     SemIR::SpecificInterface specific_interface, SemIR::InstId witness_id)
     -> SemIR::ConstantId;
+
+// Returns whether the constant value `const_id` contains a facet type
+// instruction with a `where` expression.
+//
+// This search ignores the type_id of insts, and just looks at the `const_id`
+// and its non-type operands recursively. Any use of a symbolic facet may have a
+// type with an arbitrary facet type (including a `where` expression).
+auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool;
 
 }  // namespace Carbon::Check
 
