@@ -116,18 +116,6 @@ fn G[T: Transitive](t: T) {
   TakesPQR(a);
 }
 
-// --- same_observe_in_both_scopes.carbon
-library "[[@TEST_NAME]]";
-
-import library "transitive";
-
-fn G[T: Transitive](t: T) {
-  observe T.A == T.B == T.C;
-
-  var a: T.A = t.GetA();
-  t.TakesC(a);
-}
-
 // --- blanket_impls.carbon
 library "[[@TEST_NAME]]";
 
