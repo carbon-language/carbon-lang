@@ -153,6 +153,47 @@ fn RequiresA[T: A](x: T) {
 }
 //@dump-sem-ir-end
 
+// --- observe_in_assoc_constant.carbon
+library "[[@TEST_NAME]]";
+
+import library "transitive";
+
+interface I {
+  let T: Transitive;
+}
+
+fn F[T: I](t: T.T) {
+  var a: T.T.A = t.GetA();
+
+  t.TakesC(a);
+
+  (a as T.T.C).InR();
+}
+
+// --- observe_values_of_assoc_constant.carbon
+library "[[@TEST_NAME]]";
+
+interface I1 {
+  let A: Core.Destroy;
+  let B: (type where .Self == A) & Core.Destroy;
+  let C: (type where .Self == B) & Core.Destroy;
+
+  fn GetA(self) -> A;
+  fn TakesC(self, c: C);
+}
+
+interface I2 {
+  let T: I1;
+
+  observe T.A == T.B == T.C;
+}
+
+fn F[T: I2](t: T.T) {
+  var a: T.T.A = t.GetA();
+
+  t.TakesC(a);
+}
+
 // --- nested_functions_in_outer.carbon
 library "[[@TEST_NAME]]";
 

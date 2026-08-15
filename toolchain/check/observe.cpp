@@ -19,20 +19,22 @@ auto GetObserveIds(Context& context, SemIR::InstId expr_id)
   // `T impls C` before we can observe `T impls B` when resolving from `D` to
   // `A`.
 
-  if (auto access =
-          context.insts().Get(expr_id).TryAs<SemIR::ImplWitnessAccess>()) {
-    if (auto witness = context.insts()
-                           .Get(access->witness_id)
-                           .TryAs<SemIR::LookupImplWitness>()) {
-      auto specific_interface = context.specific_interfaces().Get(
-          witness->query_specific_interface_id);
-      auto interface =
-          context.interfaces().Get(specific_interface.interface_id);
-      if (interface.observe_block_id.has_value()) {
-        llvm::append_range(
-            ids, context.observe_blocks().Get(interface.observe_block_id));
-      }
+  while (auto access =
+             context.insts().Get(expr_id).TryAs<SemIR::ImplWitnessAccess>()) {
+    auto witness = context.insts()
+                       .Get(access->witness_id)
+                       .TryAs<SemIR::LookupImplWitness>();
+    if (!witness) {
+      break;
     }
+    auto specific_interface =
+        context.specific_interfaces().Get(witness->query_specific_interface_id);
+    auto interface = context.interfaces().Get(specific_interface.interface_id);
+    if (interface.observe_block_id.has_value()) {
+      llvm::append_range(
+          ids, context.observe_blocks().Get(interface.observe_block_id));
+    }
+    expr_id = witness->query_self_inst_id;
   }
 
   if (context.scope_stack().IsInFunctionScope()) {
