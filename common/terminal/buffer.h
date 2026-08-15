@@ -132,8 +132,7 @@ enum class LineEnd : int8_t {
 // visual order, or takes logical order and reorders as it draws, and what it
 // then means for a caller to name a column at all. Marking a span and drawing a
 // line under it are the hard cases, since a logically contiguous span need not
-// be contiguous on screen. Worth settling before anything depends on the
-// current answer, which is that text is assumed to be left-to-right throughout.
+// be contiguous on screen.
 class Buffer {
  public:
   // The bounds a buffer exists within.
