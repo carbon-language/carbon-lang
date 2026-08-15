@@ -145,9 +145,9 @@ inline constexpr int DefaultColumns = 80;
 // The columns between tab stops, absent anything saying otherwise.
 //
 // Eight is the interval terminfo records as `it#8` for all but a handful of
-// legacy entries. Unlike a terminal's width, it is worth defaulting rather than
-// leaving unknown, since text with a tab in it has to be given some width to be
-// laid out at all.
+// legacy entries. Nothing measures a terminal's stops, so unlike its width this
+// stands in for no measurement: `Capabilities` carries it as a plain value
+// rather than as one a caller can tell apart from an absence.
 inline constexpr int DefaultTabWidth = 8;
 
 // What the terminal behind a stream can render, and how wide it is.

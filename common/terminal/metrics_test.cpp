@@ -7,6 +7,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstdint>
+
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon::Terminal {
@@ -46,11 +48,30 @@ TEST(MetricsTest, CodePointWidth) {
   EXPECT_EQ(ascii.CodePointWidth(U'́'), 1);
 }
 
+TEST(MetricsTest, OnlyCombiningMarksAreZeroColumns) {
+  // Drawing reads a width of zero as "renders into the cell before this one",
+  // so a code point that takes no column without combining with anything has to
+  // measure as something else. Terminals disagree about these -- Terminal.app
+  // gives U+200C a column and VS Code's terminal gives it none -- so each is
+  // drawn as a replacement character, which takes exactly one.
+  Metrics utf8(Charset::Utf8);
+  for (char32_t code_point : {U'\u200b', U'\u200c', U'\u200d', U'\ufeff'}) {
+    EXPECT_EQ(utf8.CodePointWidth(code_point), 1)
+        << static_cast<uint32_t>(code_point);
+    EXPECT_EQ(utf8.RenderedCodePoint(code_point), U'�')
+        << static_cast<uint32_t>(code_point);
+  }
+}
+
 TEST(MetricsTest, RenderedCodePoint) {
   Metrics utf8(Charset::Utf8);
   EXPECT_EQ(utf8.RenderedCodePoint(U'a'), U'a');
   EXPECT_EQ(utf8.RenderedCodePoint(U'中'), U'中');
   EXPECT_EQ(utf8.RenderedCodePoint(U''), U'�');
+
+  // Code points that UTF-8 has no encoding for have no rendering either.
+  EXPECT_EQ(utf8.RenderedCodePoint(static_cast<char32_t>(0xd800)), U'�');
+  EXPECT_EQ(utf8.RenderedCodePoint(static_cast<char32_t>(0x110000)), U'�');
 
   // An ASCII terminal is only given what it draws as itself, because there is
   // no telling what it would draw for anything else.
@@ -58,19 +79,6 @@ TEST(MetricsTest, RenderedCodePoint) {
   EXPECT_EQ(ascii.RenderedCodePoint(U'a'), U'a');
   EXPECT_EQ(ascii.RenderedCodePoint(U'中'), U'?');
   EXPECT_EQ(ascii.RenderedCodePoint(U''), U'?');
-}
-
-TEST(MetricsTest, WrapWidth) {
-  Metrics utf8(Charset::Utf8);
-  EXPECT_EQ(utf8.WrapWidth(""), 0);
-  EXPECT_EQ(utf8.WrapWidth("a bb ccc"), 3);
-  EXPECT_EQ(utf8.WrapWidth("  spaced  out  "), 6);
-
-  // Newlines and tabs bound a word without taking columns of their own.
-  EXPECT_EQ(utf8.WrapWidth("a\nbb\tccc"), 3);
-
-  // A word is measured in the columns it takes, not the bytes it holds.
-  EXPECT_EQ(utf8.WrapWidth("中中 a"), 4);
 }
 
 TEST(MetricsTest, TakeColumns) {

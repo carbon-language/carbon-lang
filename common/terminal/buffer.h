@@ -232,7 +232,14 @@ class Buffer {
   // This is for text that a tab, a newline, or a carriage return makes
   // positional. Text with none of them is as wide wherever it is drawn, and
   // `Metrics::Width` answers for it without a buffer to draw into.
-  auto MeasureText(int x, int y, llvm::StringRef text) const -> DrawEnd;
+  auto MeasureText(int x, int y, int margin, llvm::StringRef text) const
+      -> DrawEnd;
+
+  // Returns where the `DrawText` taking no margin would end, which draws `text`
+  // as text of its own beginning at (x, y).
+  auto MeasureText(int x, int y, llvm::StringRef text) const -> DrawEnd {
+    return MeasureText(x, y, x, text);
+  }
 
   // Returns where `DrawWrappedText` would end for these arguments, without
   // drawing.
@@ -241,6 +248,13 @@ class Buffer {
   // answers only for arguments drawing would accept.
   auto MeasureWrappedText(int x, int y, int margin, int max_width,
                           llvm::StringRef text) const -> DrawEnd;
+
+  // Returns the fewest columns `text` wraps into without overhanging them,
+  // which is the width of its widest word since wrapping never breaks one.
+  //
+  // Wrapping into fewer columns still draws everything; the excess overhangs.
+  // So this is a layout preference rather than a minimum.
+  auto MeasureWrapWidth(llvm::StringRef text) const -> int;
 
   // Draws `code_point` at (x, y), which must be inside `columns()` and
   // `MaxRows`, adding rows as needed to reach it.
@@ -293,7 +307,8 @@ class Buffer {
   auto DrawBox(int x, int y, int box_width, int box_height, const Style& style)
       -> DrawEnd;
 
-  // Draws `text` starting at (x, y), which must be inside `columns()`.
+  // Draws `text` starting at (x, y), which must be inside `columns()`, as part
+  // of text whose left edge is `margin`.
   //
   // Nothing here wraps, so text with no newline in it runs off the right of the
   // width when it is longer than the room left, exactly as an overhanging word
@@ -301,13 +316,27 @@ class Buffer {
   // and deciding how much of one to show is the caller's, made against
   // `columns()` before the quoting starts.
   //
-  // Newlines return to column `x` on the next row, carriage returns to column
-  // `x` on the same row, and tabs advance to the next tab stop, with stops
-  // measured from `x` so that a quoted source line keeps the tab alignment it
-  // had in the file wherever the quote is placed. Returns where it ended, which
-  // for text with a newline in it is on a later row than it started.
+  // Newlines return to column `margin` on the next row, carriage returns to
+  // column `margin` on the same row, and tabs advance to the next tab stop,
+  // with stops measured from `margin` so that a quoted source line keeps the
+  // tab alignment it had in the file wherever the quote is placed. Returns
+  // where it ended, which for text with a newline in it is on a later row than
+  // it started.
+  //
+  // The margin is what lets text with newlines in it be drawn as differently
+  // styled spans, each starting where the last ended and all naming the same
+  // margin, the way `DrawWrappedText` does for a block: a newline in the middle
+  // of such a run returns to the text's own left edge rather than to wherever
+  // the span it fell in happened to start.
+  auto DrawText(int x, int y, int margin, llvm::StringRef text,
+                const Style& style) -> DrawEnd;
+
+  // Draws `text` as text of its own beginning at (x, y), which is then both
+  // where it starts and the margin its later rows return to.
   auto DrawText(int x, int y, llvm::StringRef text, const Style& style)
-      -> DrawEnd;
+      -> DrawEnd {
+    return DrawText(x, y, x, text, style);
+  }
 
   // Draws `text` starting at (x, y), into the block of `max_width` columns
   // beginning at `margin`.
@@ -330,10 +359,11 @@ class Buffer {
   // word, and one too long for a row of its own is moved down to one and then
   // overhangs it rather than being broken.
   //
-  // Spaces that would begin a wrapped row are dropped, so a row the width
-  // happened to break stays aligned to the margin; spaces the text opens with,
-  // or that follow a newline in it, are kept, since those are indentation the
-  // caller wrote.
+  // Whitespace stops at the block's edge rather than running past it, so the
+  // spaces between two words stay on the row the first of them ended and the
+  // row the second wraps onto begins at the margin. Spaces the text opens with,
+  // or that follow a newline in it, are kept as they are, since those are
+  // indentation the caller wrote.
   //
   // Newlines are breaks the caller already made, and are kept as they are:
   // wrapping only adds breaks to the text it is given. They break the line as a
@@ -349,9 +379,8 @@ class Buffer {
   // leaving the word after it to wrap.
   //
   // `DrawText` is the way to draw text that should not wrap at all, and differs
-  // in more than that: it keeps every space, counts tab stops from `x` since it
-  // has no block to count them from, and returns to column `x` on a carriage
-  // return rather than dropping it.
+  // in more than that: it keeps every space, and returns to the margin on a
+  // carriage return rather than dropping it.
   //
   // Returns where it ended.
   //
@@ -395,7 +424,7 @@ class Buffer {
     LineRight = 1 << 1,
     LineUp = 1 << 2,
     LineDown = 1 << 3,
-    LineDirections = 0xf,
+    LineDirections = 0b1111,
     // Set on every cell line drawing writes. A cell can hold line art and no
     // directions -- a line between one center and itself is a point -- and
     // without this such a cell would be indistinguishable from one holding
@@ -434,6 +463,10 @@ class Buffer {
   }
 
   // Checks that (x, y) is somewhere a drawing may start.
+  //
+  // The text walks check this themselves, together with the bounds particular
+  // to each: they are inlined into every text operation, and one check there
+  // costs measurably less than two.
   auto CheckOrigin(int x, int y) const -> void {
     CARBON_CHECK(
         x >= 0 && x < columns_ && y >= 0 && y < MaxRows,
@@ -455,8 +488,8 @@ class Buffer {
   // and returns the column after it: `PlaceCodePoint` when drawing, and the
   // width alone when measuring.
   template <typename PlaceFn>
-  auto WalkText(int x, int y, llvm::StringRef text, PlaceFn place) const
-      -> DrawEnd;
+  auto WalkText(int x, int y, int margin, llvm::StringRef text,
+                PlaceFn place) const -> DrawEnd;
   template <typename PlaceFn>
   auto WalkWrappedText(int x, int y, int margin, int max_width,
                        llvm::StringRef text, PlaceFn place) const -> DrawEnd;
@@ -467,7 +500,7 @@ class Buffer {
   // Widens the grid until column `x` exists, reflowing the rows it already
   // holds, which are stored back to back. Only something overhanging the target
   // width reaches past it, so this runs for nothing else.
-  auto EnsureWidth(int x) -> void;
+  auto EnsureColumn(int x) -> void;
 
   // Resets the cells in row `y` spanning columns [x, x + width), along with
   // either half of a double-width character that straddles the range's edges.

@@ -12,7 +12,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Endian.h"
 
 namespace Carbon::Terminal {
 
@@ -72,6 +71,33 @@ class OutputBufferRef {
   // written as a single four-byte store whose last byte is discarded.
   static constexpr size_t NumberBytes = 4;
 
+  // The decimal text of a number, and how many digits it took. The digits are
+  // at the front and the length in the byte after them, so a whole entry is one
+  // store and the length says how far of it to keep.
+  struct NumberText {
+    std::array<char, NumberBytes - 1> digits;
+    uint8_t length;
+  };
+  static_assert(sizeof(NumberText) == NumberBytes,
+                "A number is written by storing a whole entry at once.");
+
+  // The text of every value a number piece can hold. A kilobyte of table, in
+  // exchange for a lookup where computing the digits would branch on the value
+  // three times.
+  static constexpr std::array<NumberText, 256> NumberTexts = [] {
+    std::array<NumberText, 256> texts = {};
+    for (int value = 0; value < 256; ++value) {
+      NumberText& text = texts[value];
+      text.length = 1 + (value >= 10) + (value >= 100);
+      int rest = value;
+      for (int digit = text.length; digit > 0; --digit) {
+        text.digits[digit - 1] = static_cast<char>('0' + rest % 10);
+        rest /= 10;
+      }
+    }
+    return texts;
+  }();
+
   // Returns the most bytes a piece can append. A number contributes the bound
   // above rather than the digits it will take, so the bound for a sequence
   // doesn't depend on any of the values in it.
@@ -104,23 +130,15 @@ class OutputBufferRef {
   }
   template <std::same_as<uint8_t> T>
   static auto WritePiece(char* out, T piece) -> char* {
-    // Written without branching on the value. Escape sequences carry color
-    // channels and palette indices, which are spread across the whole range, so
-    // a branch per digit is one the processor can't predict, and there are four
-    // numbers in a truecolor escape. The cost is then the same for every value,
-    // which loses a little where a number is always short and wins a great deal
-    // where it isn't.
-    //
-    // All three digits are packed low byte first, shifted down to drop the
-    // leading zeros, and stored at once. The store always covers four bytes,
-    // which is why a number reserves that many, and the cursor advances only
-    // over the digits that count.
-    uint32_t digits = static_cast<uint32_t>('0' + piece / 100) |
-                      static_cast<uint32_t>('0' + piece / 10 % 10) << 8 |
-                      static_cast<uint32_t>('0' + piece % 10) << 16;
-    int length = 1 + (piece >= 10) + (piece >= 100);
-    llvm::support::endian::write32le(out, digits >> (3 - length) * 8);
-    return out + length;
+    // One load and one store, with no branch on the value. Escape sequences
+    // carry color channels and palette indices, which are spread across the
+    // whole range, so a branch per digit is one the processor can't predict,
+    // and there are four numbers in a truecolor escape. The store always covers
+    // four bytes, which is why a number reserves that many, and the cursor
+    // advances only over the digits that count.
+    const NumberText& text = NumberTexts[piece];
+    std::memcpy(out, &text, sizeof(text));
+    return out + text.length;
   }
 
   // Appends a piece on its own, growing the buffer to fit it.

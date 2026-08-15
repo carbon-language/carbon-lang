@@ -4,8 +4,6 @@
 
 #include "common/terminal/metrics.h"
 
-#include <algorithm>
-
 #include "common/check.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/Unicode.h"
@@ -22,6 +20,14 @@ static auto IsPrintableAscii(char32_t code_point) -> bool {
   return code_point >= 0x20 && code_point < 0x7f;
 }
 
+// Spelled out rather than handed to a general converter, which walks a range
+// and checks bounds this already knows. Box-drawing characters go through here
+// for every cell of every line drawn.
+//
+// TODO: Offer this to LLVM, whose `ConvertCodePointToUTF8` is the general
+// converter this replaces. Encoding one code point at a time is what anything
+// writing UTF-8 out of a grid does, so this belongs beside it rather than
+// here; drop this once it is there.
 auto EncodeUtf8(char32_t code_point, Utf8Storage& storage) -> llvm::StringRef {
   // Most of what gets rendered is ASCII, and encoding it is a single byte.
   if (code_point < 0x80) {
@@ -35,24 +41,21 @@ auto EncodeUtf8(char32_t code_point, Utf8Storage& storage) -> llvm::StringRef {
     code_point = Utf8Replacement;
   }
 
-  // Spelled out rather than handed to a general converter, which walks a range
-  // and checks bounds this already knows. Box-drawing characters go through
-  // here for every cell of every line drawn.
   auto trailing = [code_point](int shift) {
-    return static_cast<char>(0x80 | ((code_point >> shift) & 0x3f));
+    return static_cast<char>(0b1000'0000 | ((code_point >> shift) & 0b11'1111));
   };
   if (code_point < 0x800) {
-    storage[0] = static_cast<char>(0xc0 | (code_point >> 6));
+    storage[0] = static_cast<char>(0b1100'0000 | (code_point >> 6));
     storage[1] = trailing(0);
     return llvm::StringRef(storage.data(), 2);
   }
   if (code_point < 0x10000) {
-    storage[0] = static_cast<char>(0xe0 | (code_point >> 12));
+    storage[0] = static_cast<char>(0b1110'0000 | (code_point >> 12));
     storage[1] = trailing(6);
     storage[2] = trailing(0);
     return llvm::StringRef(storage.data(), 3);
   }
-  storage[0] = static_cast<char>(0xf0 | (code_point >> 18));
+  storage[0] = static_cast<char>(0b1111'0000 | (code_point >> 18));
   storage[1] = trailing(12);
   storage[2] = trailing(6);
   storage[3] = trailing(0);
@@ -120,7 +123,17 @@ auto Metrics::RenderedCodePoint(char32_t code_point) const -> char32_t {
   if (charset_ == Charset::Ascii) {
     return IsPrintableAscii(code_point) ? code_point : U'?';
   }
-  return Utf8CodePointWidth(code_point) < 0 ? Utf8Replacement : code_point;
+  // Printable ASCII is most of what gets drawn, and settling it here keeps it
+  // out of the range tables the general answer searches.
+  if (IsPrintableAscii(code_point)) {
+    return code_point;
+  }
+  // Which code points have no rendering is what a negative width names as well,
+  // asked directly rather than through a width that has to encode one to
+  // answer.
+  return llvm::sys::unicode::isPrintable(static_cast<int>(code_point))
+             ? code_point
+             : Utf8Replacement;
 }
 
 auto Metrics::Width(llvm::StringRef text) const -> int {
@@ -149,17 +162,6 @@ auto Metrics::Width(llvm::StringRef text) const -> int {
   width = 0;
   while (!text.empty()) {
     width += CodePointWidth(TakeUtf8CodePoint(text));
-  }
-  return width;
-}
-
-auto Metrics::WrapWidth(llvm::StringRef text) const -> int {
-  int width = 0;
-  while (!text.empty()) {
-    llvm::StringRef word =
-        text.take_until([](char c) { return c == '\n' || IsWrapBreak(c); });
-    width = std::max(width, Width(word));
-    text = text.drop_front(std::max<size_t>(word.size(), 1));
   }
   return width;
 }

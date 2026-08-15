@@ -108,6 +108,9 @@ TEST(PressureTest, WrappedTextSurvivesHostileBytes) {
         EXPECT_LE(buffer.height(), end.y + 1) << text;
         EXPECT_GE(end.x, 0) << text;
         EXPECT_EQ(buffer.MeasureWrappedText(0, 0, 0, width, text), end) << text;
+        // The width wrapping this wouldn't overhang is a fact about the text
+        // rather than about the block it was drawn into.
+        EXPECT_GE(buffer.MeasureWrapWidth(text), 0) << text;
 
         RenderAndCheck(buffer, ColorMode::Truecolor);
       }
@@ -145,8 +148,6 @@ TEST(PressureTest, MetricsSurviveHostileBytes) {
         ++steps;
         ASSERT_LE(steps, text.size()) << "TakeCodePoint failed to consume";
       }
-
-      EXPECT_GE(metrics.WrapWidth(text), 0) << text;
     }
   }
 }

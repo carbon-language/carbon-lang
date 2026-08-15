@@ -23,16 +23,6 @@ using Utf8Storage = std::array<char, MaxUtf8Bytes>;
 // U+10FFFF, become the replacement character.
 auto EncodeUtf8(char32_t code_point, Utf8Storage& storage) -> llvm::StringRef;
 
-// Returns whether wrapped text can be broken at `c`.
-//
-// This is the one definition of where wrapping may introduce a break, so that
-// measuring what text wraps into and drawing it wrapped agree about it.
-// Carriage returns count so that a CRLF ending is whitespace rather than part
-// of the word before it; what becomes of the `\r` is then up to the drawing.
-constexpr auto IsWrapBreak(char c) -> bool {
-  return c == ' ' || c == '\t' || c == '\r';
-}
-
 // How many columns a terminal spends on text, given the charset it decodes
 // with.
 //
@@ -76,6 +66,15 @@ class Metrics {
   // `Charset::Utf8` a combining mark is zero, since it renders into the column
   // before it, and anything with no printable rendering is one, since it is
   // drawn as a replacement character.
+  //
+  // A combining mark is the only thing zero is ever the answer for, which is
+  // what lets `Buffer` read a zero as one: a code point to fold into the cell
+  // before it rather than give a cell of its own. A code point that takes no
+  // column without combining with anything, such as U+200C ZERO WIDTH
+  // NON-JOINER, has no printable rendering here and takes the column its
+  // replacement character does. Terminals disagree about those -- some give
+  // them a column and some don't -- so drawing one as itself would leave the
+  // columns counted here and the columns painted disagreeing from there on.
   auto CodePointWidth(char32_t code_point) const -> int;
 
   // Returns the code point to render for `code_point`, which is a replacement
@@ -84,8 +83,8 @@ class Metrics {
   // Under `Charset::Ascii` that is anything outside printable ASCII, because a
   // terminal decoding some single-byte encoding will draw such a byte as
   // something and there is no way to know what. Under `Charset::Utf8` it is
-  // anything with no printable rendering at all. A surrogate is left as it is
-  // and replaced when it is encoded, since it has no encoding to render.
+  // anything with no printable rendering at all, which includes the surrogates
+  // and so covers everything UTF-8 has no encoding for as well.
   auto RenderedCodePoint(char32_t code_point) const -> char32_t;
 
   // Returns the columns `text` occupies once drawn.
@@ -96,13 +95,6 @@ class Metrics {
   // them questions about a drawing rather than about the text, and `Buffer`
   // answers those.
   auto Width(llvm::StringRef text) const -> int;
-
-  // Returns the fewest columns `text` wraps into without overhanging them,
-  // which is the width of its widest word since wrapping never breaks one.
-  //
-  // Wrapping into fewer columns still draws everything; the excess overhangs.
-  // So this is a layout preference rather than a minimum.
-  auto WrapWidth(llvm::StringRef text) const -> int;
 
   // Removes and returns the longest prefix of `text` that occupies at most
   // `columns` columns.

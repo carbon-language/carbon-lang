@@ -348,6 +348,26 @@ TEST(BufferTest, TabStopsAreMeasuredFromWhereTextBegins) {
   EXPECT_EQ(Render(buffer), "   A       B\n");
 }
 
+TEST(BufferTest, TextRowsReturnToTheMargin) {
+  // Text drawn as differently styled spans names one margin across all of them,
+  // so a newline in the middle of it returns to the text's own left edge rather
+  // than to wherever the span it fell in started.
+  Buffer buffer(20, Charset::Ascii);
+  buffer.DrawText(0, 0, "| ", Style());
+  DrawEnd end = buffer.DrawText(2, 0, 2, "plain\nmore ", Style());
+  buffer.DrawText(end.x, end.y, 2, "bold\ntext", Style().Bold());
+  EXPECT_EQ(Render(buffer),
+            "| plain\n"
+            "  more bold\n"
+            "  text\n");
+
+  // Carriage returns return there too, and tab stops are counted from it.
+  Buffer positional(20, Charset::Ascii);
+  positional.DrawText(0, 0, "| ", Style());
+  positional.DrawText(2, 0, 2, "a\tb\rc", Style());
+  EXPECT_EQ(Render(positional), "| c       b\n");
+}
+
 TEST(BufferTest, TextControlCharacters) {
   Buffer buffer(10, Charset::Utf8);
   // A carriage return returns to the column the text started in.
@@ -690,6 +710,24 @@ TEST(BufferTest, WrappedTextFillsTheWidthLeftOfTheMargin) {
             "   otherwise fit\n");
 }
 
+TEST(BufferTest, WrappedTextKeepsAMarkWithTheWhitespaceBeforeIt) {
+  // A combining mark renders into the column before it, which for a mark
+  // following whitespace is that whitespace. Left to begin the word after it,
+  // the mark would move to another row whenever that word wrapped and attach to
+  // whatever preceded it there.
+  Buffer buffer(10, Charset::Utf8);
+  std::string mark = AcuteE.drop_front(1).str();
+  buffer.DrawWrappedText(0, 0, 0, 5, "aaa " + mark + "bbbb", Style());
+  EXPECT_EQ(Render(buffer), "aaa " + mark + "\nbbbb\n");
+
+  // Whitespace stops at the block's edge, so a mark can arrive where none of it
+  // was drawn. It attaches to the last cell written rather than being carried
+  // to the row the next word wraps onto.
+  Buffer filled(10, Charset::Utf8);
+  filled.DrawWrappedText(0, 0, 0, 5, "aaaaa " + mark + "bb", Style());
+  EXPECT_EQ(Render(filled), "aaaaa" + mark + "\nbb\n");
+}
+
 TEST(BufferTest, WrappedTextKeepsCharactersWiderThanTheRegion) {
   // No row in a one-column region could hold a double-width character. Drawing
   // it anyway overruns the region, which is what keeping the text costs here.
@@ -784,10 +822,17 @@ TEST(BufferTest, MeasuringMatchesDrawing) {
     EXPECT_EQ(buffer.MeasureText(2, 1, text),
               buffer.DrawText(2, 1, text, Style()))
         << text;
+
+    // A margin left of where the text starts moves what the positional
+    // characters answer to, and moves it for both of them alike.
+    Buffer block(10, Charset::Utf8);
+    EXPECT_EQ(block.MeasureText(2, 1, 1, text),
+              block.DrawText(2, 1, 1, text, Style()))
+        << text;
   }
   for (llvm::StringRef text :
        {"one two three", "a\nlonger line here", "verylongunbreakableword",
-        "a\tb\tc", "col\tone\nrow\ttwo", ""}) {
+        "a\tb\tc", "col\tone\nrow\ttwo", "e\xcc\x81 \xcc\x81word", ""}) {
     Buffer buffer(10, Charset::Utf8);
     EXPECT_EQ(buffer.MeasureWrappedText(2, 1, 2, 8, text),
               buffer.DrawWrappedText(2, 1, 2, 8, text, Style()))
@@ -795,16 +840,28 @@ TEST(BufferTest, MeasuringMatchesDrawing) {
   }
 }
 
+TEST(BufferTest, MeasureWrapWidth) {
+  Buffer buffer(10, Charset::Utf8);
+  EXPECT_EQ(buffer.MeasureWrapWidth(""), 0);
+  EXPECT_EQ(buffer.MeasureWrapWidth("a bb ccc"), 3);
+  EXPECT_EQ(buffer.MeasureWrapWidth("  spaced  out  "), 6);
+
+  // Newlines and tabs bound a word without taking columns of their own.
+  EXPECT_EQ(buffer.MeasureWrapWidth("a\nbb\tccc"), 3);
+
+  // A word is measured in the columns it takes, not the bytes it holds.
+  EXPECT_EQ(buffer.MeasureWrapWidth("中中 a"), 4);
+}
+
 TEST(BufferTest, WrapWidthIsWhatWrappingDoesNotOverhang) {
-  // What `Metrics::WrapWidth` answers is a fact about wrapping, so it is
-  // checked here against the wrapping it describes rather than only in
-  // `metrics_test`.
+  // The width answered for is a fact about wrapping, so it is checked against
+  // the wrapping it describes.
   Buffer buffer(10, Charset::Utf8);
   // Tabs don't widen the answer: one stops at the block's edge rather than
   // running to a stop outside it, so it can't overhang either.
   for (llvm::StringRef text :
        {"some quite long words here", "some\tquite\tlong words here"}) {
-    int width = buffer.metrics().WrapWidth(text);
+    int width = buffer.MeasureWrapWidth(text);
     Buffer drawn(width, Charset::Utf8);
     drawn.DrawWrappedText(0, 0, 0, width, text, Style());
     llvm::SmallVector<llvm::StringRef> rows;
@@ -945,6 +1002,10 @@ TEST(BufferDeathTest, DrawingMustStartInsideTheGrid) {
                "is outside the");
   EXPECT_DEATH(buffer.DrawText(10, 0, "a", Style()), "is outside the");
   EXPECT_DEATH(buffer.MeasureText(10, 0, "a"), "is outside the");
+
+  // Text begins at or right of the margin its rows return to.
+  EXPECT_DEATH(buffer.DrawText(2, 0, 3, "a", Style()), "left of its margin");
+  EXPECT_DEATH(buffer.MeasureText(2, 0, -1, "a"), "left of its margin");
 }
 
 TEST(BufferDeathTest, LinesMustFitWhatTheyAreDrawnInto) {

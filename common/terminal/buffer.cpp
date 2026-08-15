@@ -87,7 +87,7 @@ auto Buffer::EnsureRow(int y) -> void {
   cells_.resize(static_cast<size_t>(y + 1) * width_);
 }
 
-auto Buffer::EnsureWidth(int x) -> void {
+auto Buffer::EnsureColumn(int x) -> void {
   CARBON_CHECK(x >= 0 && x < MaxColumns, "Column {0} is outside [0, {1}).", x,
                MaxColumns);
   if (x < width_) {
@@ -197,7 +197,7 @@ auto Buffer::PlaceCodePoint(int x, int y, char32_t code_point,
     return x + width;
   }
 
-  EnsureWidth(x + width - 1);
+  EnsureColumn(x + width - 1);
   EnsureRow(y);
   ClearCells(x, y, width);
 
@@ -223,7 +223,7 @@ auto Buffer::DrawLine(int x, int y, uint8_t directions, const Style& style)
     -> void {
   CARBON_DCHECK(directions <= LineDirections,
                 "Direction bits {0} name no glyph.", directions);
-  EnsureWidth(x);
+  EnsureColumn(x);
   EnsureRow(y);
 
   uint8_t existing = CellAt(x, y).lines;
@@ -296,10 +296,14 @@ auto Buffer::DrawBox(int x, int y, int box_width, int box_height,
 }
 
 template <typename PlaceFn>
-auto Buffer::WalkText(int x, int y, llvm::StringRef text, PlaceFn place) const
-    -> DrawEnd {
-  CheckOrigin(x, y);
+auto Buffer::WalkText(int x, int y, int margin, llvm::StringRef text,
+                      PlaceFn place) const -> DrawEnd {
   CheckTextSize(text);
+  CARBON_CHECK(
+      margin >= 0 && margin <= x && x < columns_ && y >= 0 && y < MaxRows,
+      "Text at ({0}, {1}) with a margin of {2} is outside the {3} "
+      "columns and {4} rows a buffer covers, or left of its margin.",
+      x, y, margin, columns_, MaxRows);
 
   int cur_x = x;
   int cur_y = y;
@@ -307,16 +311,16 @@ auto Buffer::WalkText(int x, int y, llvm::StringRef text, PlaceFn place) const
   while (!text.empty()) {
     char32_t code_point = metrics_.TakeCodePoint(text);
     if (code_point == '\n') {
-      cur_x = x;
+      cur_x = margin;
       ++cur_y;
       continue;
     }
     if (code_point == '\r') {
-      cur_x = x;
+      cur_x = margin;
       continue;
     }
     if (code_point == '\t') {
-      int stop = NextTabStop(cur_x, x, tab_width_);
+      int stop = NextTabStop(cur_x, margin, tab_width_);
       for (; cur_x < stop; ++cur_x) {
         place(cur_x, cur_y, U' ');
       }
@@ -329,31 +333,46 @@ auto Buffer::WalkText(int x, int y, llvm::StringRef text, PlaceFn place) const
   return {.x = cur_x, .y = cur_y};
 }
 
-auto Buffer::DrawText(int x, int y, llvm::StringRef text, const Style& style)
-    -> DrawEnd {
-  return WalkText(x, y, text, [&](int cur_x, int cur_y, char32_t code_point) {
-    return PlaceCodePoint(cur_x, cur_y, code_point, style);
-  });
+auto Buffer::DrawText(int x, int y, int margin, llvm::StringRef text,
+                      const Style& style) -> DrawEnd {
+  return WalkText(x, y, margin, text,
+                  [&](int cur_x, int cur_y, char32_t code_point) {
+                    return PlaceCodePoint(cur_x, cur_y, code_point, style);
+                  });
 }
 
-auto Buffer::MeasureText(int x, int y, llvm::StringRef text) const -> DrawEnd {
-  return WalkText(x, y, text,
+auto Buffer::MeasureText(int x, int y, int margin, llvm::StringRef text) const
+    -> DrawEnd {
+  return WalkText(x, y, margin, text,
                   [&](int cur_x, int /*cur_y*/, char32_t code_point) {
                     return cur_x + metrics_.CodePointWidth(code_point);
                   });
+}
+
+// Returns whether wrapped text can be broken at `c`.
+//
+// This is the one definition of where wrapping may introduce a break, so that
+// measuring what text wraps into and drawing it wrapped agree about it.
+// Carriage returns count so that a CRLF ending is whitespace rather than part
+// of the word before it; what becomes of the `\r` is then up to the drawing.
+static constexpr auto IsWrapBreak(char c) -> bool {
+  return c == ' ' || c == '\t' || c == '\r';
 }
 
 template <typename PlaceFn>
 auto Buffer::WalkWrappedText(int x, int y, int margin, int max_width,
                              llvm::StringRef text, PlaceFn place) const
     -> DrawEnd {
-  CheckOrigin(x, y);
   CheckTextSize(text);
-  CARBON_CHECK(margin >= 0 && margin <= x && max_width > 0 &&
-                   x - margin < max_width && margin <= columns_ - max_width,
-               "A block of {0} columns at {1} holding text from {2} does not "
-               "fit the {3} columns a buffer covers.",
-               max_width, margin, x, columns_);
+  // The block runs from the margin to `margin + max_width`, lies within the
+  // buffer, and holds the column the text starts in, which is every bound on
+  // the three of them read in one order.
+  CARBON_CHECK(llvm::is_sorted(std::array{0, margin, x, x + 1,
+                                          margin + max_width, columns_}) &&
+                   y >= 0 && y < MaxRows,
+               "A block of {0} columns at {1} holding text from ({2}, {3}) "
+               "does not fit the {4} columns and {5} rows a buffer covers.",
+               max_width, margin, x, y, columns_, MaxRows);
 
   // The column a row runs out of room at. The block lies within the buffer's
   // width, so this is a column like any other rather than a sum that has to be
@@ -362,12 +381,6 @@ auto Buffer::WalkWrappedText(int x, int y, int margin, int max_width,
 
   int cur_x = x;
   int cur_y = y;
-  // Whether the row being written was started by wrapping, rather than by the
-  // text itself. Spaces are dropped at the start of a wrapped row and kept at
-  // the start of one the text asked for, which is the difference between
-  // indentation the caller wrote and indentation an accident of width would
-  // otherwise introduce.
-  bool wrapped_row = false;
 
   // Splitting on bytes is safe because every character text can break at is
   // ASCII, and UTF-8 never encodes anything else using an ASCII byte. Only
@@ -377,27 +390,38 @@ auto Buffer::WalkWrappedText(int x, int y, int margin, int max_width,
       text = text.drop_front();
       cur_x = margin;
       ++cur_y;
-      wrapped_row = false;
       continue;
     }
 
     if (IsWrapBreak(text.front())) {
       llvm::StringRef breaks = text.take_while(IsWrapBreak);
       text = text.drop_front(breaks.size());
-      if (cur_x > margin || !wrapped_row) {
-        for (char c : breaks) {
-          if (c == '\r') {
-            continue;
-          }
-          // Whitespace stops at the block's edge, leaving the word after it to
-          // wrap.
-          int next = std::min(
-              c == '\t' ? NextTabStop(cur_x, margin, tab_width_) : cur_x + 1,
-              limit);
-          while (cur_x < next) {
-            cur_x = place(cur_x, cur_y, U' ');
-          }
+      for (char c : breaks) {
+        if (c == '\r') {
+          continue;
         }
+        // Whitespace stops at the block's edge, leaving the word after it to
+        // wrap.
+        int next = std::min(
+            c == '\t' ? NextTabStop(cur_x, margin, tab_width_) : cur_x + 1,
+            limit);
+        while (cur_x < next) {
+          cur_x = place(cur_x, cur_y, U' ');
+        }
+      }
+
+      // A combining mark renders into the column before it, so one following
+      // whitespace belongs to that whitespace and goes with it. Left to begin
+      // the next word, it would move to another row whenever that word wrapped
+      // and attach to whatever preceded it there.
+      while (!text.empty()) {
+        llvm::StringRef rest = text;
+        char32_t code_point = metrics_.TakeCodePoint(rest);
+        if (metrics_.CodePointWidth(code_point) != 0) {
+          break;
+        }
+        text = rest;
+        cur_x = place(cur_x, cur_y, code_point);
       }
       continue;
     }
@@ -407,11 +431,12 @@ auto Buffer::WalkWrappedText(int x, int y, int margin, int max_width,
     text = text.drop_front(word.size());
 
     // Move a word that doesn't fit down to the next row, which minimizes the
-    // overhang when it doesn't fit there either.
+    // overhang when it doesn't fit there either. The word is drawn into the row
+    // this starts before anything else can reach it, so a wrapped row begins at
+    // the margin rather than with the whitespace the wrap came after.
     if (cur_x > margin && cur_x + metrics_.Width(word) > limit) {
       cur_x = margin;
       ++cur_y;
-      wrapped_row = true;
     }
 
     while (!word.empty()) {
@@ -438,6 +463,17 @@ auto Buffer::MeasureWrappedText(int x, int y, int margin, int max_width,
                          [&](int cur_x, int /*cur_y*/, char32_t code_point) {
                            return cur_x + metrics_.CodePointWidth(code_point);
                          });
+}
+
+auto Buffer::MeasureWrapWidth(llvm::StringRef text) const -> int {
+  int width = 0;
+  while (!text.empty()) {
+    llvm::StringRef word =
+        text.take_until([](char c) { return c == '\n' || IsWrapBreak(c); });
+    width = std::max(width, metrics_.Width(word));
+    text = text.drop_front(std::max<size_t>(word.size(), 1));
+  }
+  return width;
 }
 
 auto Buffer::LastVisibleColumn(int y, ColorMode mode) const -> int {

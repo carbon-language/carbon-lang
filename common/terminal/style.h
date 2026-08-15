@@ -171,10 +171,13 @@ class Style : public Printable<Style> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
   // Rendering compares the style of every cell against the one in use, so this
-  // compares the bytes rather than member by member. The
-  // assertion is what makes that valid: every bit of a style belongs to a
-  // member, as the members are all byte-aligned and always initialized, so none
-  // of the bytes are padding.
+  // compares the bytes rather than member by member. The assertion is what
+  // makes that valid: every bit of a style belongs to a member, as the members
+  // are all byte-aligned and always initialized, so none of the bytes are
+  // padding.
+  //
+  // Written out rather than defaulted because the `Printable` base has no
+  // comparison of its own, which would leave a defaulted one deleted.
   friend auto operator==(const Style& lhs, const Style& rhs) -> bool {
     static_assert(std::has_unique_object_representations_v<Style>);
     return std::memcmp(&lhs, &rhs, sizeof(Style)) == 0;
