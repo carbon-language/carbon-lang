@@ -184,8 +184,8 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %struct.A = type <{ %struct.Base, i32, [4 x i8] }>
-// CHECK:STDOUT: %struct.Base = type { ptr }
+// CHECK:STDOUT: %struct.A.18 = type <{ %struct.Base.19, i32, [4 x i8] }>
+// CHECK:STDOUT: %struct.Base.19 = type { ptr }
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN1A6by_refEv = comdat any
 // CHECK:STDOUT:
@@ -211,7 +211,7 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !21
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   %n = getelementptr inbounds nuw %struct.A, ptr %this1, i32 0, i32 1
+// CHECK:STDOUT:   %n = getelementptr inbounds nuw %struct.A.18, ptr %this1, i32 0, i32 1
 // CHECK:STDOUT:   %0 = load i32, ptr %n, align 8, !tbaa !24
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
@@ -334,10 +334,10 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT:   %.loc8_14.3.temp = alloca i8, align 1, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_14.3.temp), !dbg !18
 // CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk.__(ptr %n, ptr @int_1.f1e), !dbg !20
+// CHECK:STDOUT:   call void @"_COp.578b3934f85dbca6:core.Destroy.Core"(ptr @int_1.f1e), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_14.3.temp), !dbg !19
 // CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk.__(ptr %n, ptr @int_1.f1e), !dbg !21
 // CHECK:STDOUT:   call void @"_COp.578b3934f85dbca6:core.Destroy.Core"(ptr @int_1.f1e), !dbg !19
-// CHECK:STDOUT:   call void @"_COp.578b3934f85dbca6:core.Destroy.Core"(ptr @int_1.f1e), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -355,6 +355,12 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.578b3934f85dbca6:core.Destroy.Core"(ptr %self) #0 !dbg !30 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !36
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk.__(ptr noundef %0, ptr noundef %c) #1 {
 // CHECK:STDOUT: entry:
@@ -368,12 +374,6 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT:   %3 = load i8, ptr %2, align 1, !tbaa !29
 // CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a(i8 noundef signext %3)
 // CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.578b3934f85dbca6:core.Destroy.Core"(ptr %self) #0 !dbg !30 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -426,13 +426,13 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: !27 = !{!"p1 omnipotent char", !25, i64 0}
 // CHECK:STDOUT: !28 = !{}
 // CHECK:STDOUT: !29 = !{!10, !10, i64 0}
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp.578b3934f85dbca6:core.Destroy.Core", scope: null, file: !1, line: 8, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !34)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp.578b3934f85dbca6:core.Destroy.Core", scope: null, file: !1, line: 7, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !34)
 // CHECK:STDOUT: !31 = !DISubroutineType(types: !32)
 // CHECK:STDOUT: !32 = !{null, !33}
 // CHECK:STDOUT: !33 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !34 = !{!35}
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !30, type: !33)
-// CHECK:STDOUT: !36 = !DILocation(line: 8, column: 14, scope: !30)
+// CHECK:STDOUT: !36 = !DILocation(line: 7, column: 14, scope: !30)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_with_ref_self.carbon'

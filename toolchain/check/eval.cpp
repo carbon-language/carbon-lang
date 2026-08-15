@@ -31,7 +31,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
-#include "toolchain/sem_ir/facet_type_info.h"
+#include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/id_kind.h"
@@ -244,8 +244,8 @@ class EvalContext {
   auto specific_interfaces() -> SemIR::SpecificInterfaceStore& {
     return sem_ir().specific_interfaces();
   }
-  auto facet_types() -> SemIR::FacetTypeInfoStore& {
-    return sem_ir().facet_types();
+  auto declared_facet_types() -> SemIR::DeclaredFacetTypeStore& {
+    return sem_ir().declared_facet_types();
   }
   auto generics() -> const SemIR::GenericStore& { return sem_ir().generics(); }
   auto specifics() -> const SemIR::SpecificStore& {
@@ -431,6 +431,19 @@ static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
   return MakeIntResult(context, type_id, result);
 }
 
+// Converts a Real into a ConstantId.
+static auto MakeFloatLiteralResult(Context& context, Real real)
+    -> SemIR::ConstantId {
+  auto real_id = context.reals().Add(real);
+  return MakeConstantResult(
+      context,
+      SemIR::FloatLiteralValue{
+          .type_id =
+              GetSingletonType(context, SemIR::FloatLiteralType::TypeInstId),
+          .real_id = real_id},
+      Phase::Concrete);
+}
+
 // Converts an APFloat value into a ConstantId.
 static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
                             llvm::APFloat value) -> SemIR::ConstantId {
@@ -441,14 +454,16 @@ static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
 }
 
 // Creates a FacetType constant.
-static auto MakeFacetTypeResult(Context& context,
-                                const SemIR::FacetTypeInfo& info, Phase phase)
-    -> SemIR::ConstantId {
-  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
-  return MakeConstantResult(context,
-                            SemIR::FacetType{.type_id = SemIR::TypeType::TypeId,
-                                             .facet_type_id = facet_type_id},
-                            phase);
+static auto MakeFacetTypeResult(
+    Context& context, const SemIR::DeclaredFacetType& declared_facet_type,
+    Phase phase) -> SemIR::ConstantId {
+  SemIR::DeclaredFacetTypeId declared_facet_type_id =
+      context.declared_facet_types().Add(declared_facet_type);
+  return MakeConstantResult(
+      context,
+      SemIR::FacetType{.type_id = SemIR::TypeType::TypeId,
+                       .declared_facet_type_id = declared_facet_type_id},
+      phase);
 }
 
 // `GetConstantValue` checks to see whether the provided ID describes a value
@@ -723,57 +738,62 @@ static auto GetConstantValue(EvalContext& eval_context,
            GetConstantValue(eval_context, interface.specific_id, phase)});
 }
 
-// Like `GetConstantValue` but for a `FacetTypeInfo`.
-static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
-                                     SemIR::LocId loc_id,
-                                     const SemIR::FacetTypeInfo& orig,
-                                     Phase* phase) -> SemIR::FacetTypeInfo {
-  SemIR::FacetTypeInfo info = {};
+// Like `GetConstantValue` but for a `DeclaredFacetType`.
+static auto GetConstantDeclaredFacetType(EvalContext& eval_context,
+                                         SemIR::LocId loc_id,
+                                         const SemIR::DeclaredFacetType& orig,
+                                         Phase* phase)
+    -> SemIR::DeclaredFacetType {
+  SemIR::DeclaredFacetType declared_facet_type = {};
 
   // Phase of constraints whose `.Self` refers to the type constrained by this
   // facet type.
   Phase self_phase = Phase::Concrete;
 
-  info.extend_constraints.reserve(orig.extend_constraints.size());
+  declared_facet_type.extend_constraints.reserve(
+      orig.extend_constraints.size());
   for (const auto& extend : orig.extend_constraints) {
     // TODO: Add GetConstantValue for SpecificInterface.
-    info.extend_constraints.push_back(
+    declared_facet_type.extend_constraints.push_back(
         {.interface_id = extend.interface_id,
          .specific_id =
              GetConstantValue(eval_context, extend.specific_id, phase)});
   }
 
-  info.self_impls_constraints.reserve(orig.self_impls_constraints.size());
+  declared_facet_type.self_impls_constraints.reserve(
+      orig.self_impls_constraints.size());
   for (const auto& self_impls : orig.self_impls_constraints) {
     // TODO: Add GetConstantValue for SpecificInterface.
-    info.self_impls_constraints.push_back(
+    declared_facet_type.self_impls_constraints.push_back(
         {.interface_id = self_impls.interface_id,
          .specific_id = GetConstantValue(eval_context, self_impls.specific_id,
                                          &self_phase)});
   }
 
-  info.extend_named_constraints.reserve(orig.extend_named_constraints.size());
+  declared_facet_type.extend_named_constraints.reserve(
+      orig.extend_named_constraints.size());
   for (const auto& extend : orig.extend_named_constraints) {
     // TODO: Add GetConstantValue for SpecificNamedConstraint.
-    info.extend_named_constraints.push_back(
+    declared_facet_type.extend_named_constraints.push_back(
         {.named_constraint_id = extend.named_constraint_id,
          .specific_id =
              GetConstantValue(eval_context, extend.specific_id, phase)});
   }
 
-  info.self_impls_named_constraints.reserve(
+  declared_facet_type.self_impls_named_constraints.reserve(
       orig.self_impls_named_constraints.size());
   for (const auto& self_impls : orig.self_impls_named_constraints) {
     // TODO: Add GetConstantValue for SpecificNamedConstraint.
-    info.self_impls_named_constraints.push_back(
+    declared_facet_type.self_impls_named_constraints.push_back(
         {.named_constraint_id = self_impls.named_constraint_id,
          .specific_id = GetConstantValue(eval_context, self_impls.specific_id,
                                          &self_phase)});
   }
 
-  info.type_impls_interfaces.reserve(orig.type_impls_interfaces.size());
+  declared_facet_type.type_impls_interfaces.reserve(
+      orig.type_impls_interfaces.size());
   for (const auto& type_impls : orig.type_impls_interfaces) {
-    info.type_impls_interfaces.push_back(
+    declared_facet_type.type_impls_interfaces.push_back(
         {.self_type =
              GetConstantValue(eval_context, type_impls.self_type, &self_phase),
          // TODO: Add GetConstantValue for SpecificInterface.
@@ -784,10 +804,10 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                  &self_phase)}});
   }
 
-  info.type_impls_named_constraints.reserve(
+  declared_facet_type.type_impls_named_constraints.reserve(
       orig.type_impls_named_constraints.size());
   for (const auto& type_impls : orig.type_impls_named_constraints) {
-    info.type_impls_named_constraints.push_back(
+    declared_facet_type.type_impls_named_constraints.push_back(
         {.self_type =
              GetConstantValue(eval_context, type_impls.self_type, &self_phase),
          // TODO: Add GetConstantValue for SpecificNamedConstraint.
@@ -810,13 +830,14 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   // which must be handled gracefully during resolution. They will be replaced
   // with the constant value of the `ImplWitnessAccess` below when they are
   // substituted with a constant value.
-  info.rewrite_constraints = orig.rewrite_constraints;
-  if (!ResolveFacetTypeRewriteConstraints(eval_context.context(), loc_id,
-                                          info.rewrite_constraints)) {
+  declared_facet_type.rewrite_constraints = orig.rewrite_constraints;
+  if (!ResolveFacetTypeRewriteConstraints(
+          eval_context.context(), loc_id,
+          declared_facet_type.rewrite_constraints)) {
     *phase = Phase::UnknownDueToError;
   }
 
-  for (auto& rewrite : info.rewrite_constraints) {
+  for (auto& rewrite : declared_facet_type.rewrite_constraints) {
     auto lhs_id =
         RequireConstantValue(eval_context, rewrite.lhs_id, &self_phase);
     auto rhs_id =
@@ -831,19 +852,19 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   }
 
   // TODO: Process other requirements.
-  info.other_requirements = orig.other_requirements;
+  declared_facet_type.other_requirements = orig.other_requirements;
 
-  info.Canonicalize();
-  return info;
+  declared_facet_type.Canonicalize();
+  return declared_facet_type;
 }
 
 static auto GetConstantValue(EvalContext& eval_context,
-                             SemIR::FacetTypeId facet_type_id, Phase* phase)
-    -> SemIR::FacetTypeId {
-  SemIR::FacetTypeInfo info = GetConstantFacetTypeInfo(
+                             SemIR::DeclaredFacetTypeId declared_facet_type_id,
+                             Phase* phase) -> SemIR::DeclaredFacetTypeId {
+  SemIR::DeclaredFacetType declared_facet_type = GetConstantDeclaredFacetType(
       eval_context, SemIR::LocId::None,
-      eval_context.facet_types().Get(facet_type_id), phase);
-  return eval_context.facet_types().Add(info);
+      eval_context.declared_facet_types().Get(declared_facet_type_id), phase);
+  return eval_context.declared_facet_types().Add(declared_facet_type);
 }
 
 static auto GetConstantValue(EvalContext& eval_context,
@@ -1002,27 +1023,30 @@ static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
                       specific_id);
 }
 
-static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
-                                      SemIR::FacetTypeId facet_type_id)
-    -> void {
-  const auto& info = eval_context.context().facet_types().Get(facet_type_id);
-  for (const auto& interface : info.extend_constraints) {
+static auto ResolveSpecificDeclForArg(
+    EvalContext& eval_context,
+    SemIR::DeclaredFacetTypeId declared_facet_type_id) -> void {
+  const auto& declared_facet_type =
+      eval_context.context().declared_facet_types().Get(declared_facet_type_id);
+  for (const auto& interface : declared_facet_type.extend_constraints) {
     ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
   }
-  for (const auto& interface : info.self_impls_constraints) {
+  for (const auto& interface : declared_facet_type.self_impls_constraints) {
     ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
   }
-  for (const auto& constraint : info.extend_named_constraints) {
+  for (const auto& constraint : declared_facet_type.extend_named_constraints) {
     ResolveSpecificDeclForSpecificId(eval_context, constraint.specific_id);
   }
-  for (const auto& constraint : info.self_impls_named_constraints) {
+  for (const auto& constraint :
+       declared_facet_type.self_impls_named_constraints) {
     ResolveSpecificDeclForSpecificId(eval_context, constraint.specific_id);
   }
-  for (const auto& type_impls : info.type_impls_interfaces) {
+  for (const auto& type_impls : declared_facet_type.type_impls_interfaces) {
     ResolveSpecificDeclForSpecificId(eval_context,
                                      type_impls.specific_interface.specific_id);
   }
-  for (const auto& type_impls : info.type_impls_named_constraints) {
+  for (const auto& type_impls :
+       declared_facet_type.type_impls_named_constraints) {
     ResolveSpecificDeclForSpecificId(
         eval_context, type_impls.specific_named_constraint.specific_id);
   }
@@ -1427,7 +1451,7 @@ static auto RealToAPFloat(Context& context, RealId real_id,
   // Convert the real value to a string.
   llvm::SmallString<64> str;
   real_value.mantissa.toString(str, real_value.is_decimal ? 10 : 16,
-                               /*signed=*/false, /*formatAsCLiteral=*/true);
+                               /*signed=*/true, /*formatAsCLiteral=*/true);
   str += real_value.is_decimal ? "e" : "p";
   real_value.exponent.toStringSigned(str);
 
@@ -1539,20 +1563,10 @@ static auto PerformIntToFloatConvert(Context& context, SemIR::LocId loc_id,
   if (!dest_float_type) {
     // Target is Core.FloatLiteral, which is always exact.
     llvm::APInt mantissa = op_val;
-    if (src_is_signed && op_val.isNegative()) {
-      // FloatLiteral can only represent positive real values. Negative
-      // literals are parsed as Negate(FloatLiteralValue).
-      context.TODO(loc_id, "negative float literal conversion");
-      return SemIR::ErrorInst::ConstantId;
-    }
-    auto real_id = context.reals().Add(
-        Real{.mantissa = mantissa,
-             .exponent = llvm::APInt(32, 0, /*isSigned=*/true),
-             .is_decimal = true});
-    return MakeConstantResult(
-        context,
-        SemIR::FloatLiteralValue{.type_id = dest_type_id, .real_id = real_id},
-        Phase::Concrete);
+    return MakeFloatLiteralResult(
+        context, Real{.mantissa = mantissa,
+                      .exponent = llvm::APInt(32, 0, /*isSigned=*/true),
+                      .is_decimal = true});
   }
 
   llvm::APFloat ap_float(dest_float_type->float_kind.Semantics());
@@ -1691,19 +1705,19 @@ static auto ConvertRealLiteralToInt(Context& context, SemIR::LocId loc_id,
   // If the exponent is positive, base^exponent cannot be larger than the result
   // size. If it's negative, base^exponent can't be *much* larger than the
   // mantissa or we'd have computed a lower bound of 0 bits and bailed out.
-  CARBON_CHECK(
-      exponent_upper_bound <=
-      std::max<unsigned>(mantissa.getActiveBits() * 2, bounds.upper_bound));
+  CARBON_CHECK(exponent_upper_bound <=
+               std::max<unsigned>(mantissa.getSignificantBits() * 2,
+                                  bounds.upper_bound));
 
   // Compute a bit-width in which we can safely compute the result. We need
   // enough space to store the mantissa, base^exponent, the result and a sign
   // bit, and the number 10 (4 bits).
   unsigned calc_width =
-      std::max({mantissa.getActiveBits(), exponent_upper_bound,
+      std::max({mantissa.getSignificantBits(), exponent_upper_bound,
                 static_cast<unsigned>(bounds.upper_bound + 1), 4U});
 
   // Compute the integer result.
-  llvm::APInt integer_val = mantissa.zextOrTrunc(calc_width);
+  llvm::APInt integer_val = mantissa.sextOrTrunc(calc_width);
   if (!real_val.is_decimal) {
     // Binary exponent (mantissa * 2^exponent).
     if (!exponent.isNegative()) {
@@ -2167,16 +2181,27 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
                                        SemIR::BuiltinFunctionKind builtin_kind,
                                        SemIR::InstId arg_id)
     -> SemIR::ConstantId {
+  CARBON_CHECK(builtin_kind == SemIR::BuiltinFunctionKind::FloatNegate,
+               "Unexpected builtin kind");
+
+  if (auto literal =
+          context.insts().TryGetAs<SemIR::FloatLiteralValue>(arg_id)) {
+    auto real_val = context.reals().Get(literal->real_id);
+
+    // Check if negation would overflow.
+    if (real_val.mantissa.isMinSignedValue()) {
+      real_val.mantissa =
+          real_val.mantissa.sext(real_val.mantissa.getBitWidth() + 1);
+    }
+    real_val.mantissa.negate();
+
+    return MakeFloatLiteralResult(context, std::move(real_val));
+  }
+
   auto op = context.insts().GetAs<SemIR::FloatValue>(arg_id);
   auto op_val = context.floats().Get(op.float_id);
 
-  switch (builtin_kind) {
-    case SemIR::BuiltinFunctionKind::FloatNegate:
-      op_val.changeSign();
-      break;
-    default:
-      CARBON_FATAL("Unexpected builtin kind");
-  }
+  op_val.changeSign();
 
   return MakeFloatResult(context, op.type_id, std::move(op_val));
 }
@@ -2263,13 +2288,14 @@ static auto PerformBuiltinBoolComparison(
                             : lhs != rhs);
 }
 
-// Converts a call argument to a FacetTypeId.
+// Converts a call argument to a DeclaredFacetTypeId.
 static auto ArgToFacetTypeId(Context& context, SemIR::LocId loc_id,
-                             SemIR::InstId arg_id) -> SemIR::FacetTypeId {
+                             SemIR::InstId arg_id)
+    -> SemIR::DeclaredFacetTypeId {
   auto type_arg_id = context.types().GetAsTypeInstId(arg_id);
   if (auto facet_type =
           context.insts().TryGetAs<SemIR::FacetType>(type_arg_id)) {
-    return facet_type->facet_type_id;
+    return facet_type->declared_facet_type_id;
   }
   CARBON_DIAGNOSTIC(FacetTypeRequiredForTypeAndOperator, Error,
                     "non-facet type {0} combined with `&` operator",
@@ -2280,7 +2306,7 @@ static auto ArgToFacetTypeId(Context& context, SemIR::LocId loc_id,
   // The `arg_id` instruction has no location in it for some reason.
   context.emitter().Emit(loc_id, FacetTypeRequiredForTypeAndOperator,
                          context.types().GetTypeIdForTypeInstId(type_arg_id));
-  return SemIR::FacetTypeId::None;
+  return SemIR::DeclaredFacetTypeId::None;
 }
 
 // Returns a constant for a call to a builtin function.
@@ -2390,29 +2416,33 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
     case SemIR::BuiltinFunctionKind::TypeAnd: {
       CARBON_CHECK(arg_ids.size() == 2);
-      auto lhs_facet_type_id = ArgToFacetTypeId(context, loc_id, arg_ids[0]);
-      auto rhs_facet_type_id = ArgToFacetTypeId(context, loc_id, arg_ids[1]);
+      auto lhs_declared_facet_type_id =
+          ArgToFacetTypeId(context, loc_id, arg_ids[0]);
+      auto rhs_declared_facet_type_id =
+          ArgToFacetTypeId(context, loc_id, arg_ids[1]);
 
       // Allow errors to be diagnosed for both sides of the operator before
       // returning here if any error occurred on either side.
-      if (!lhs_facet_type_id.has_value() || !rhs_facet_type_id.has_value()) {
+      if (!lhs_declared_facet_type_id.has_value() ||
+          !rhs_declared_facet_type_id.has_value()) {
         return SemIR::ErrorInst::ConstantId;
       }
       // Reuse one of the argument instructions if nothing has changed.
-      if (lhs_facet_type_id == rhs_facet_type_id) {
+      if (lhs_declared_facet_type_id == rhs_declared_facet_type_id) {
         return context.types().GetConstantId(
             context.types().GetTypeIdForTypeInstId(arg_ids[0]));
       }
-      auto combined_info = SemIR::FacetTypeInfo::Combine(
-          context.facet_types().Get(lhs_facet_type_id),
-          context.facet_types().Get(rhs_facet_type_id));
+      auto combined_declared_facet_type = SemIR::DeclaredFacetType::Combine(
+          context.declared_facet_types().Get(lhs_declared_facet_type_id),
+          context.declared_facet_types().Get(rhs_declared_facet_type_id));
       if (!ResolveFacetTypeRewriteConstraints(
               eval_context.context(), loc_id,
-              combined_info.rewrite_constraints)) {
+              combined_declared_facet_type.rewrite_constraints)) {
         phase = Phase::UnknownDueToError;
       }
-      combined_info.Canonicalize();
-      return MakeFacetTypeResult(eval_context.context(), combined_info, phase);
+      combined_declared_facet_type.Canonicalize();
+      return MakeFacetTypeResult(eval_context.context(),
+                                 combined_declared_facet_type, phase);
     }
 
     case SemIR::BuiltinFunctionKind::CharLiteralMakeType: {
@@ -3020,8 +3050,8 @@ auto TryEvalTypedInst<SemIR::Temporary>(EvalContext& eval_context,
 
 static auto AddRequirementBase(Context& context,
                                SemIR::RequirementBaseFacetType base,
-                               SemIR::FacetTypeInfo* info, Phase* phase)
-    -> void {
+                               SemIR::DeclaredFacetType* declared_facet_type,
+                               Phase* phase) -> void {
   auto base_type_inst_id =
       context.constant_values().GetConstantTypeInstId(base.base_type_inst_id);
   if (base_type_inst_id == SemIR::ErrorInst::TypeInstId) {
@@ -3031,25 +3061,31 @@ static auto AddRequirementBase(Context& context,
 
   if (auto base_facet_type =
           context.insts().TryGetAs<SemIR::FacetType>(base_type_inst_id)) {
-    const auto& base_info =
-        context.facet_types().Get(base_facet_type->facet_type_id);
-    info->extend_constraints.append(base_info.extend_constraints);
-    info->extend_named_constraints.append(base_info.extend_named_constraints);
-    info->self_impls_constraints.append(base_info.self_impls_constraints);
-    info->self_impls_named_constraints.append(
-        base_info.self_impls_named_constraints);
-    info->type_impls_interfaces.append(base_info.type_impls_interfaces);
-    info->type_impls_named_constraints.append(
-        base_info.type_impls_named_constraints);
-    info->rewrite_constraints.append(base_info.rewrite_constraints);
-    info->other_requirements |= base_info.other_requirements;
+    const auto& base_declared_facet_type = context.declared_facet_types().Get(
+        base_facet_type->declared_facet_type_id);
+    declared_facet_type->extend_constraints.append(
+        base_declared_facet_type.extend_constraints);
+    declared_facet_type->extend_named_constraints.append(
+        base_declared_facet_type.extend_named_constraints);
+    declared_facet_type->self_impls_constraints.append(
+        base_declared_facet_type.self_impls_constraints);
+    declared_facet_type->self_impls_named_constraints.append(
+        base_declared_facet_type.self_impls_named_constraints);
+    declared_facet_type->type_impls_interfaces.append(
+        base_declared_facet_type.type_impls_interfaces);
+    declared_facet_type->type_impls_named_constraints.append(
+        base_declared_facet_type.type_impls_named_constraints);
+    declared_facet_type->rewrite_constraints.append(
+        base_declared_facet_type.rewrite_constraints);
+    declared_facet_type->other_requirements |=
+        base_declared_facet_type.other_requirements;
   }
 }
 
 static auto AddRequirementRewrite(Context& context,
                                   SemIR::RequirementRewrite rewrite,
-                                  SemIR::FacetTypeInfo* info, Phase* phase)
-    -> void {
+                                  SemIR::DeclaredFacetType* declared_facet_type,
+                                  Phase* phase) -> void {
   auto lhs_id = context.constant_values().GetConstantInstId(rewrite.lhs_id);
   auto rhs_id = context.constant_values().GetConstantInstId(rewrite.rhs_id);
   if (lhs_id == SemIR::ErrorInst::InstId ||
@@ -3065,9 +3101,9 @@ static auto AddRequirementRewrite(Context& context,
     return;
   }
 
-  // The FacetTypeInfo must hold canonical IDs for constant comparison, yet here
-  // we must insert the non-canonical IDs:
-  // * Rewrite constraints are resolved once the FacetTypeInfo is fully
+  // The DeclaredFacetType must hold canonical IDs for constant comparison, yet
+  // here we must insert the non-canonical IDs:
+  // * Rewrite constraints are resolved once the DeclaredFacetType is fully
   //   constructed in order to produce the constant value of the facet type.
   //   That resolution step needs the non-canonical insts to do its job
   //   correctly. For instance, the LHS may be a `ImplWitnessAccessSubstituted`
@@ -3083,13 +3119,13 @@ static auto AddRequirementRewrite(Context& context,
   //   values here. We only need to use canonical values if we need to observe
   //   the constant value, such as to determine in the RHS has a runtime value
   //   above.
-  info->rewrite_constraints.push_back(
+  declared_facet_type->rewrite_constraints.push_back(
       {.lhs_id = rewrite.lhs_id, .rhs_id = rewrite.rhs_id});
 }
 
 static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
-                                SemIR::FacetTypeInfo* info, Phase* phase)
-    -> void {
+                                SemIR::DeclaredFacetType* declared_facet_type,
+                                Phase* phase) -> void {
   auto lhs_id = context.constant_values().GetConstantInstId(impls.lhs_id);
   auto rhs_id = context.constant_values().GetConstantInstId(impls.rhs_id);
   if (lhs_id == SemIR::ErrorInst::InstId ||
@@ -3104,7 +3140,8 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
   }
 
   auto facet_type = context.insts().GetAs<SemIR::FacetType>(rhs_id);
-  const auto& rhs = context.facet_types().Get(facet_type.facet_type_id);
+  const auto& rhs =
+      context.declared_facet_types().Get(facet_type.declared_facet_type_id);
 
   // We forbid `where` on the RHS of another `where`, so non-extend constraints
   // can't be part of a facet type on the RHS of `where ... impls`.
@@ -3120,36 +3157,36 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
     // type constrains for `.Self` gets forwarded to the output facet type to
     // also constrain `.Self`. Nothing on the RHS of `impls` can extend the
     // resulting facet type.
-    llvm::append_range(info->self_impls_constraints, rhs.extend_constraints);
-    llvm::append_range(info->self_impls_named_constraints,
+    llvm::append_range(declared_facet_type->self_impls_constraints,
+                       rhs.extend_constraints);
+    llvm::append_range(declared_facet_type->self_impls_named_constraints,
                        rhs.extend_named_constraints);
   } else {
     auto lhs_facet_or_type = GetCanonicalFacetOrTypeValue(context, lhs_id);
 
     auto extends_interface = [=](SemIR::SpecificInterface si)
-        -> SemIR::FacetTypeInfo::TypeImplsInterface {
+        -> SemIR::DeclaredFacetType::TypeImplsInterface {
       return {lhs_facet_or_type, si};
     };
     auto extends_constraint = [=](SemIR::SpecificNamedConstraint sc)
-        -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
+        -> SemIR::DeclaredFacetType::TypeImplsNamedConstraint {
       return {lhs_facet_or_type, sc};
     };
 
     // Extend constraints are copied over without replacing anything, but are
     // converted to type impls constraints so they apply to the LHS type.
     llvm::append_range(
-        info->type_impls_interfaces,
+        declared_facet_type->type_impls_interfaces,
         llvm::map_range(rhs.extend_constraints, extends_interface));
     llvm::append_range(
-        info->type_impls_named_constraints,
+        declared_facet_type->type_impls_named_constraints,
         llvm::map_range(rhs.extend_named_constraints, extends_constraint));
   }
 }
 
-static auto AddRequirementEquivalent(Context& context,
-                                     SemIR::RequirementEquivalent equiv,
-                                     SemIR::FacetTypeInfo* info, Phase* phase)
-    -> void {
+static auto AddRequirementEquivalent(
+    Context& context, SemIR::RequirementEquivalent equiv,
+    SemIR::DeclaredFacetType* declared_facet_type, Phase* phase) -> void {
   auto lhs_id = context.constant_values().GetConstantInstId(equiv.lhs_id);
   auto rhs_id = context.constant_values().GetConstantInstId(equiv.rhs_id);
   if (lhs_id == SemIR::ErrorInst::InstId ||
@@ -3158,11 +3195,11 @@ static auto AddRequirementEquivalent(Context& context,
     return;
   }
   // TODO: Handle equality requirements.
-  info->other_requirements = true;
+  declared_facet_type->other_requirements = true;
 }
 
-// Add the constraints from the WhereExpr instruction into a FacetTypeInfo in
-// order to construct a FacetType constant value.
+// Add the constraints from the WhereExpr instruction into a DeclaredFacetType
+// in order to construct a FacetType constant value.
 //
 // TODO: Convert this to an EvalConstantInst function. This will require
 // providing a `GetConstantValue` overload for a requirement block.
@@ -3173,7 +3210,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
   auto typed_inst = inst.As<SemIR::WhereExpr>();
 
   Phase phase = Phase::Concrete;
-  SemIR::FacetTypeInfo info;
+  SemIR::DeclaredFacetType declared_facet_type;
 
   if (inst.type_id() == SemIR::ErrorInst::TypeId) {
     return SemIR::ErrorInst::ConstantId;
@@ -3192,19 +3229,23 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
     auto inst = eval_context.insts().Get(inst_id);
     CARBON_KIND_SWITCH(inst) {
       case CARBON_KIND(SemIR::RequirementBaseFacetType base): {
-        AddRequirementBase(eval_context.context(), base, &info, &phase);
+        AddRequirementBase(eval_context.context(), base, &declared_facet_type,
+                           &phase);
         break;
       }
       case CARBON_KIND(SemIR::RequirementRewrite rewrite): {
-        AddRequirementRewrite(eval_context.context(), rewrite, &info, &phase);
+        AddRequirementRewrite(eval_context.context(), rewrite,
+                              &declared_facet_type, &phase);
         break;
       }
       case CARBON_KIND(SemIR::RequirementImpls impls): {
-        AddRequirementImpls(eval_context.context(), impls, &info, &phase);
+        AddRequirementImpls(eval_context.context(), impls, &declared_facet_type,
+                            &phase);
         break;
       }
       case CARBON_KIND(SemIR::RequirementEquivalent equiv): {
-        AddRequirementEquivalent(eval_context.context(), equiv, &info, &phase);
+        AddRequirementEquivalent(eval_context.context(), equiv,
+                                 &declared_facet_type, &phase);
         break;
       }
       default:
@@ -3213,9 +3254,10 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
     }
   }
 
-  auto const_info = GetConstantFacetTypeInfo(
-      eval_context, SemIR::LocId(where_inst_id), info, &phase);
-  return MakeFacetTypeResult(eval_context.context(), const_info, phase);
+  auto const_declared_facet_type = GetConstantDeclaredFacetType(
+      eval_context, SemIR::LocId(where_inst_id), declared_facet_type, &phase);
+  return MakeFacetTypeResult(eval_context.context(), const_declared_facet_type,
+                             phase);
 }
 
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.

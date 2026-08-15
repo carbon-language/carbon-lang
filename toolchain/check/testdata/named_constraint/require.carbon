@@ -1084,9 +1084,7 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%Self.d87) {
 // CHECK:STDOUT:   %Self => constants.%Self.d87
@@ -1147,9 +1145,7 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%Self.d87) {
 // CHECK:STDOUT:   %Self => constants.%Self.d87
@@ -1542,9 +1538,7 @@ constraint N {
 // CHECK:STDOUT:   %Z_where.type.loc10_19.3: type = facet_type <@Z where .Self impls @Y, @Y(%Self.as_type.loc10_11.2)> [symbolic = %Z_where.type.loc10_19.3 (constants.%Z_where.type.0d5)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%Self.d87) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @N.WithSelf(constants.%Self.d87) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%Self.d87) {
 // CHECK:STDOUT:   %Self => constants.%Self.d87
@@ -1650,9 +1644,7 @@ constraint N {
 // CHECK:STDOUT:   %Z_where.type.loc10_19.3: type = facet_type <@Z where %C.loc10_19 impls @Y, @Y(%Self.as_type.loc10_11.2)> [symbolic = %Z_where.type.loc10_19.3 (constants.%Z_where.type.a0f3c6.2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%Self.d87) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @N.WithSelf(constants.%Self.d87) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%Self.d87) {
 // CHECK:STDOUT:   %Self => constants.%Self.d87

@@ -35,14 +35,15 @@ class X {
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.WithSelf.%A.WithSelf.B.decl [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
+// CHECK:STDOUT:   %.57f: <witness> = impl_self_witness %X, @A [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness @X.as.A.impl.%A.impl_witness_table [concrete]
 // CHECK:STDOUT:   %X.as.A.impl.B.type: type = fn_type @X.as.A.impl.B [concrete]
 // CHECK:STDOUT:   %X.as.A.impl.B: %X.as.A.impl.B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.as.A.impl.F.type: type = fn_type @X.as.A.impl.F [concrete]
 // CHECK:STDOUT:   %X.as.A.impl.F: %X.as.A.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, (%A.impl_witness) [concrete]
-// CHECK:STDOUT:   %A.WithSelf.B.type.d09: type = fn_type @A.WithSelf.B, @A.WithSelf(%A.facet) [concrete]
-// CHECK:STDOUT:   %A.WithSelf.B.e21: %A.WithSelf.B.type.d09 = struct_value () [concrete]
+// CHECK:STDOUT:   %A.WithSelf.B.type.210: type = fn_type @A.WithSelf.B, @A.WithSelf(%A.facet) [concrete]
+// CHECK:STDOUT:   %A.WithSelf.B.11e: %A.WithSelf.B.type.210 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -90,6 +91,7 @@ class X {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc20: <witness> = impl_self_witness @X.as.A.impl.%Self.ref, @A [concrete = constants.%.57f]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -124,8 +126,8 @@ class X {
 // CHECK:STDOUT: specific @A.WithSelf(constants.%A.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%A.facet
-// CHECK:STDOUT:   %A.WithSelf.B.type => constants.%A.WithSelf.B.type.d09
-// CHECK:STDOUT:   %A.WithSelf.B => constants.%A.WithSelf.B.e21
+// CHECK:STDOUT:   %A.WithSelf.B.type => constants.%A.WithSelf.B.type.210
+// CHECK:STDOUT:   %A.WithSelf.B => constants.%A.WithSelf.B.11e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf.B(constants.%A.facet) {}

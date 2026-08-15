@@ -157,12 +157,12 @@ fn GetRefs() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.2), !dbg !18
 // CHECK:STDOUT:   store i32 42, ptr %_.var.2, align 4, !dbg !18
 // CHECK:STDOUT:   call void @_Z11TakeIntRRefOi.carbon_thunk.v(ptr %_.var.2), !dbg !24
+// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %_.var.2), !dbg !18
 // CHECK:STDOUT:   %.loc25_23.1 = load i32, ptr %n.var, align 4, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_23.2.temp), !dbg !19
 // CHECK:STDOUT:   store i32 %.loc25_23.1, ptr %.loc25_23.2.temp, align 4, !dbg !19
 // CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi.carbon_thunk._(ptr %.loc25_23.2.temp), !dbg !25
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc25_23.2.temp), !dbg !19
-// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %_.var.2), !dbg !18
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %n.var), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
@@ -177,7 +177,7 @@ fn GetRefs() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !30 {
+// CHECK:STDOUT: define weak_odr void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %return), !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !34
@@ -217,6 +217,12 @@ fn GetRefs() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %self) #0 !dbg !37 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !43
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal void @_Z15TakeConstIntRefRKi.carbon_thunk._(ptr noundef %0) #4 {
 // CHECK:STDOUT: entry:
@@ -225,12 +231,6 @@ fn GetRefs() {
 // CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !35
 // CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi(ptr noundef nonnull align 4 dereferenceable(4) %1)
 // CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %self) #0 !dbg !37 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -305,13 +305,13 @@ fn GetRefs() {
 // CHECK:STDOUT: !34 = !DILocation(line: 5, column: 7, scope: !30)
 // CHECK:STDOUT: !35 = !{!36, !36, i64 0}
 // CHECK:STDOUT: !36 = !{!"p1 int", !29, i64 0}
-// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !1, line: 25, type: !38, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !41)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !1, line: 12, type: !38, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !41)
 // CHECK:STDOUT: !38 = !DISubroutineType(types: !39)
 // CHECK:STDOUT: !39 = !{null, !40}
 // CHECK:STDOUT: !40 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !41 = !{!42}
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !37, type: !40)
-// CHECK:STDOUT: !43 = !DILocation(line: 25, column: 23, scope: !37)
+// CHECK:STDOUT: !43 = !DILocation(line: 12, column: 23, scope: !37)
 // CHECK:STDOUT: !44 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !45, line: 9, type: !31, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !45 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !46 = !DILocation(line: 9, column: 28, scope: !44)
@@ -348,12 +348,12 @@ fn GetRefs() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !18
 // CHECK:STDOUT:   store i32 42, ptr %_.var, align 4, !dbg !18
 // CHECK:STDOUT:   call void @_Z11TakeIntRRefOi10ForceThunk.carbon_thunk.v(ptr %_.var), !dbg !24
+// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %_.var), !dbg !18
 // CHECK:STDOUT:   %.loc26_23.1 = load i32, ptr %n.var, align 4, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_23.2.temp), !dbg !19
 // CHECK:STDOUT:   store i32 %.loc26_23.1, ptr %.loc26_23.2.temp, align 4, !dbg !19
 // CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi10ForceThunk.carbon_thunk._(ptr %.loc26_23.2.temp), !dbg !25
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %.loc26_23.2.temp), !dbg !19
-// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %_.var), !dbg !18
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %n.var), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
@@ -368,7 +368,7 @@ fn GetRefs() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !30 {
+// CHECK:STDOUT: define weak_odr void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %return), !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !34
@@ -429,6 +429,12 @@ fn GetRefs() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %self) #0 !dbg !39 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !45
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal void @_Z15TakeConstIntRefRKi10ForceThunk.carbon_thunk._(ptr noundef %0) #3 {
 // CHECK:STDOUT: entry:
@@ -438,12 +444,6 @@ fn GetRefs() {
 // CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !36
 // CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi10ForceThunk(ptr noundef nonnull align 4 dereferenceable(4) %1)
 // CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %self) #0 !dbg !39 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -521,13 +521,13 @@ fn GetRefs() {
 // CHECK:STDOUT: !36 = !{!37, !37, i64 0}
 // CHECK:STDOUT: !37 = !{!"p1 int", !29, i64 0}
 // CHECK:STDOUT: !38 = !{i64 4}
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !1, line: 26, type: !40, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !43)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !1, line: 13, type: !40, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !43)
 // CHECK:STDOUT: !40 = !DISubroutineType(types: !41)
 // CHECK:STDOUT: !41 = !{null, !42}
 // CHECK:STDOUT: !42 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !43 = !{!44}
 // CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !39, type: !42)
-// CHECK:STDOUT: !45 = !DILocation(line: 26, column: 23, scope: !39)
+// CHECK:STDOUT: !45 = !DILocation(line: 13, column: 23, scope: !39)
 // CHECK:STDOUT: !46 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !47, line: 9, type: !31, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !47 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !48 = !DILocation(line: 9, column: 28, scope: !46)
@@ -599,7 +599,7 @@ fn GetRefs() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %class.ForceThunk = type { i8 }
+// CHECK:STDOUT: %class.ForceThunk.23 = type { i8 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CGetRefs.Main() #0 !dbg !12 {
@@ -616,7 +616,7 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal noundef nonnull align 1 dereferenceable(1) ptr @_Z10ReturnCRef10ForceThunk.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk.23, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 1 dereferenceable(1) ptr @_Z10ReturnCRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
@@ -624,7 +624,7 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal noundef nonnull align 1 dereferenceable(1) ptr @_Z11ReturnCRRef10ForceThunk.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk.23, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 1 dereferenceable(1) ptr @_Z11ReturnCRRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
@@ -632,7 +632,7 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal noundef nonnull align 1 dereferenceable(1) ptr @_Z15ReturnConstCRef10ForceThunk.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk.23, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 1 dereferenceable(1) ptr @_Z15ReturnConstCRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
@@ -640,7 +640,7 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal noundef nonnull align 4 dereferenceable(4) ptr @_Z12ReturnIntRef10ForceThunk.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk.23, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 4 dereferenceable(4) ptr @_Z12ReturnIntRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
@@ -648,7 +648,7 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal noundef nonnull align 4 dereferenceable(4) ptr @_Z13ReturnIntRRef10ForceThunk.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk.23, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 4 dereferenceable(4) ptr @_Z13ReturnIntRRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
@@ -656,7 +656,7 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal noundef nonnull align 4 dereferenceable(4) ptr @_Z17ReturnConstIntRef10ForceThunk.carbon_thunk.() #1 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk.23, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 4 dereferenceable(4) ptr @_Z17ReturnConstIntRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }

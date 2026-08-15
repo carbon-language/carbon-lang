@@ -33,50 +33,49 @@ fn foo(template ref a: i32);
 fn foo(ref template a: i32);
 
 // CHECK:STDOUT: - filename: basic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:             {kind: 'TemplateBindingName', text: 'template', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'foo'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │ │ ╭─TemplateBindingName 'template'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_template_ref.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:             {kind: 'TemplateBindingName', text: 'template', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:             {kind: 'TemplateBindingName', text: 'template', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'template', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'template', has_error: yes},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: 'ref', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'foo'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │ │ ╭─TemplateBindingName 'template'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'foo'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │ │ ╭─TemplateBindingName 'template'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'foo'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'template' has_error
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse 'template' has_error
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse 'template' has_error
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'ref' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

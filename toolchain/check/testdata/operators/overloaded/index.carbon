@@ -84,10 +84,32 @@ fn F() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.UnsafeAs = import_ref Core//prelude/parts/as, UnsafeAs, unloaded
+// CHECK:STDOUT:   %Core.As = import_ref Core//prelude/parts/as, As, unloaded
+// CHECK:STDOUT:   %Core.ImplicitAs = import_ref Core//prelude/parts/as, ImplicitAs, unloaded
+// CHECK:STDOUT:   %Core.BitAndWith = import_ref Core//prelude/parts/as, BitAndWith, unloaded
+// CHECK:STDOUT:   %Core.Copy = import_ref Core//prelude/parts/copy, Copy, unloaded
+// CHECK:STDOUT:   %Core.DefaultOrUnformed = import_ref Core//prelude/parts/default, DefaultOrUnformed, unloaded
+// CHECK:STDOUT:   %Core.Default = import_ref Core//prelude/parts/default, Default, unloaded
+// CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
+// CHECK:STDOUT:   %Core.Form = import_ref Core//prelude/parts/form, Form, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .UnsafeAs = imports.%Core.UnsafeAs
+// CHECK:STDOUT:     .As = imports.%Core.As
+// CHECK:STDOUT:     .ImplicitAs = imports.%Core.ImplicitAs
+// CHECK:STDOUT:     .BitAndWith = imports.%Core.BitAndWith
+// CHECK:STDOUT:     .Copy = imports.%Core.Copy
+// CHECK:STDOUT:     .DefaultOrUnformed = imports.%Core.DefaultOrUnformed
+// CHECK:STDOUT:     .Default = imports.%Core.Default
+// CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
+// CHECK:STDOUT:     .Form = imports.%Core.Form
 // CHECK:STDOUT:     .IndexWith = %IndexWith.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %IndexWith.decl: type = class_decl @IndexWith [concrete = constants.%IndexWith] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -210,10 +232,32 @@ fn F() {
 // CHECK:STDOUT:   %assoc0: %IndexWith.assoc_type = assoc_entity element0, @IndexWith.WithSelf.%IndexWith.WithSelf.At.decl [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.UnsafeAs = import_ref Core//prelude/parts/as, UnsafeAs, unloaded
+// CHECK:STDOUT:   %Core.As = import_ref Core//prelude/parts/as, As, unloaded
+// CHECK:STDOUT:   %Core.ImplicitAs = import_ref Core//prelude/parts/as, ImplicitAs, unloaded
+// CHECK:STDOUT:   %Core.BitAndWith = import_ref Core//prelude/parts/as, BitAndWith, unloaded
+// CHECK:STDOUT:   %Core.Copy = import_ref Core//prelude/parts/copy, Copy, unloaded
+// CHECK:STDOUT:   %Core.DefaultOrUnformed = import_ref Core//prelude/parts/default, DefaultOrUnformed, unloaded
+// CHECK:STDOUT:   %Core.Default = import_ref Core//prelude/parts/default, Default, unloaded
+// CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
+// CHECK:STDOUT:   %Core.Form = import_ref Core//prelude/parts/form, Form, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .UnsafeAs = imports.%Core.UnsafeAs
+// CHECK:STDOUT:     .As = imports.%Core.As
+// CHECK:STDOUT:     .ImplicitAs = imports.%Core.ImplicitAs
+// CHECK:STDOUT:     .BitAndWith = imports.%Core.BitAndWith
+// CHECK:STDOUT:     .Copy = imports.%Core.Copy
+// CHECK:STDOUT:     .DefaultOrUnformed = imports.%Core.DefaultOrUnformed
+// CHECK:STDOUT:     .Default = imports.%Core.Default
+// CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
+// CHECK:STDOUT:     .Form = imports.%Core.Form
 // CHECK:STDOUT:     .IndexWith = %IndexWith.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %IndexWith.decl: %IndexWith.type.df6 = interface_decl @IndexWith [concrete = constants.%IndexWith.generic] {
 // CHECK:STDOUT:     %SubscriptType.patt.loc4_34.1: %pattern_type.98f = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt.loc4_34.2 (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:     %ElementType.patt.loc4_53.1: %pattern_type.98f = symbolic_binding_pattern ElementType, 1 [symbolic = %ElementType.patt.loc4_53.2 (constants.%ElementType.patt)]
@@ -363,6 +407,7 @@ fn F() {
 // CHECK:STDOUT:   %subscript.patt.bdc: %pattern_type.51d = at_binding_pattern subscript, %subscript.param_patt.fd1 [symbolic]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.type.de8: type = facet_type <@IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type)> [concrete]
+// CHECK:STDOUT:   %.65d: <witness> = impl_self_witness %C, @IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.121: %IndexWith.type.de8 = symbolic_binding Self, 2 [symbolic]
 // CHECK:STDOUT:   %IndexWith.WithSelf.At.type.d39: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%empty_tuple.type, %empty_tuple.type, %Self.799) [symbolic]
@@ -381,8 +426,8 @@ fn F() {
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.type: type = fn_type @C.as.IndexWith.impl.At [concrete]
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At: %C.as.IndexWith.impl.At.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.de8 = facet_value %C, (%IndexWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.9d6: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%empty_tuple.type, %empty_tuple.type, %IndexWith.facet) [concrete]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.a95: %IndexWith.WithSelf.At.type.9d6 = struct_value () [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.799: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%empty_tuple.type, %empty_tuple.type, %IndexWith.facet) [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.36a: %IndexWith.WithSelf.At.type.799 = struct_value () [concrete]
 // CHECK:STDOUT:   %return.patt.9ca: %pattern_type.cb1 = return_slot_pattern %return.param_patt.900, invalid [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -435,6 +480,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %.loc8_31, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%empty_tuple.type, constants.%empty_tuple.type)> [concrete = constants.%IndexWith.type.de8]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.IndexWith.impl.%C.ref, @IndexWith, @IndexWith(constants.%empty_tuple.type, constants.%empty_tuple.type) [concrete = constants.%.65d]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -609,8 +655,8 @@ fn F() {
 // CHECK:STDOUT:   %ElementType => constants.%empty_tuple.type
 // CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.de8
 // CHECK:STDOUT:   %Self => constants.%IndexWith.facet
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type => constants.%IndexWith.WithSelf.At.type.9d6
-// CHECK:STDOUT:   %IndexWith.WithSelf.At => constants.%IndexWith.WithSelf.At.a95
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type => constants.%IndexWith.WithSelf.At.type.799
+// CHECK:STDOUT:   %IndexWith.WithSelf.At => constants.%IndexWith.WithSelf.At.36a
 // CHECK:STDOUT:   %IndexWith.assoc_type => constants.%IndexWith.assoc_type.e52
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.a9a
 // CHECK:STDOUT: }

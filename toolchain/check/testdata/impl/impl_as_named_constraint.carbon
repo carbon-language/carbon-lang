@@ -185,8 +185,7 @@ impl C as N where .I1 = C {}
 
 fn F(generic _: I where .I1 = .Self) {}
 fn G() {
-// TODO: This crashes.
-//   F(C);
+  F(C);
 }
 
 // --- impl_as_concrete_generic_constraint_where_rewrite.carbon
@@ -206,11 +205,10 @@ impl C as N where .I1 = C {}
 
 fn F(generic _: I(.Self) where .I1 = .Self) {}
 fn G() {
-// TODO: This crashes.
-//   F(C);
+  F(C);
 }
 
-// --- todo_impl_as_symbolic_generic_constraint_where_rewrite.carbon
+// --- impl_as_symbolic_generic_constraint_where_rewrite.carbon
 library "[[@TEST_NAME]]";
 
 interface I(T: type) {
@@ -226,8 +224,7 @@ impl C as N where .I1 = C {}
 
 fn F(generic _: I(.Self) where .I1 = .Self) {}
 fn G() {
-// TODO: This crashes.
-//   F(C);
+  F(C);
 }
 
 // --- fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon
@@ -253,8 +250,14 @@ impl C as N {}
 
 fn F(generic _: I where .I1 = .Self) {}
 fn G() {
-// TODO: This crashes.
-//   F(C);
+  // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `I where .(I.I1) = .Self` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   F(C);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE-5]]:14: note: initializing generic parameter `_` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(generic _: I where .I1 = .Self) {}
+  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  F(C);
 }
 
 // --- fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon
@@ -280,8 +283,14 @@ impl C as N {}
 
 fn F(generic _: I(.Self) where .I1 = .Self) {}
 fn G() {
-// TODO: This crashes.
-//   F(C);
+  // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `I(.Self) where .(I(.Self).I1) = .Self` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   F(C);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE-5]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn F(generic _: I(.Self) where .I1 = .Self) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  F(C);
 }
 
 // --- fail_no_require_self.carbon
@@ -303,6 +312,27 @@ constraint Y {
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl () as Y {}
+
+// --- member_access_in_extend_require.carbon
+library "[[@TEST_NAME]]";
+
+interface I { let X: type; }
+interface J {}
+
+impl () as J {}
+
+constraint GivesI {
+  extend require impls I where .X impls J;
+}
+
+// When we check this we check that GivesI is complete, which:
+// - Forms the self-specific for GivesI's extend require
+// - Creates Self.(I.X) which has a LookupImplWitness for `Self as I`
+// - Evaluates the witness which finds this impl
+// - Deduces for Self which tries to convert Self to type
+// - Requires the type of Self to be complete, and its type is GivesI
+// - Forms the self-specfic for GivesI's extend require....we have a loop.
+impl forall [T: type] T as GivesI where .X = () {}
 
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon
 // CHECK:STDOUT:

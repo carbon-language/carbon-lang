@@ -11,14 +11,14 @@
 let x: auto = 1;
 
 // CHECK:STDOUT: - filename: let.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:         {kind: 'AutoTypeLiteral', text: 'auto'},
-// CHECK:STDOUT:       {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ ├─IntLiteral '1'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

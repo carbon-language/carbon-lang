@@ -17,7 +17,7 @@ auto HandleParseNode(Context& context, Parse::CodeBlockStartId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::CodeBlockId /*node_id*/) -> bool {
-  AddAndDiscardCleanups(context);
+  AddAndDiscardScopeCleanups(context);
   context.scope_stack().Pop(/*check_unused=*/true);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::CodeBlockStart>();

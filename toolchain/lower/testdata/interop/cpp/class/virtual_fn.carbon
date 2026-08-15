@@ -198,7 +198,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: declare void @_CF.Final.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_CF:thunk:A.Cpp:Final.Main"(ptr %self) #6 !dbg !23 {
+// CHECK:STDOUT: define weak_odr void @"_CF:thunk:A.Cpp:Final.Main"(ptr %self) #6 !dbg !23 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Final.Main(ptr %self), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !29
@@ -207,14 +207,14 @@ void delete_new_Base() {
 // CHECK:STDOUT: declare void @_CF.Base.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_CF:thunk:A.Cpp:Base.Main"(ptr %self) #6 !dbg !30 {
+// CHECK:STDOUT: define weak_odr void @"_CF:thunk:A.Cpp:Base.Main"(ptr %self) #6 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Base.Main(ptr %self), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.Final.Main"(ptr %self) #6 !dbg !34 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Final.Main"(ptr %self) #6 !dbg !34 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.6622c02ec7a967c3:core.Destroy.Core"(ptr %self), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !37
@@ -243,7 +243,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_C__destroy_thunk:thunk.Base.Main"(ptr %self) #6 !dbg !50 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Base.Main"(ptr %self) #6 !dbg !50 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.a45b619846c20518:core.Destroy.Core"(ptr %self), !dbg !53
 // CHECK:STDOUT:   ret void, !dbg !53

@@ -120,7 +120,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: declare void @"_COp.Destructible.Main:Destroy.Core"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk:Destroy.25364816f7046881.Core:Destructible.Main:Destroy.Core"(ptr %self) #0 !dbg !4 {
+// CHECK:STDOUT: define weak_odr void @"_COp:thunk:Destroy.3fda586d04e243ea.Core:Destructible.Main:Destroy.Core"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.Destructible.Main:Destroy.Core"(ptr %self), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !10
@@ -137,7 +137,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !1 = !DIFile(filename: "destructible.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.25364816f7046881.Core:Destructible.Main:Destroy.Core", scope: null, file: !1, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !8)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Destroy.3fda586d04e243ea.Core:Destructible.Main:Destroy.Core", scope: null, file: !1, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null, !7}
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)

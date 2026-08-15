@@ -168,6 +168,31 @@ interface Z {
 // CHECK:STDERR:
 fn G(unused generic T: Z where A(.Z0) == B and A(B) == B) {}
 
+// --- self_designator_in_both_impls_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {}
+interface I(T: type) {}
+interface J(T: type) {}
+class C;
+
+fn F(unused generic T: type where C impls (I(.Self) & J(.Self))) {}
+
+// --- fail_where_without_self_designator_in_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {}
+interface I {}
+interface J(T: type) {}
+class C;
+
+// CHECK:STDERR: fail_where_without_self_designator_in_type.carbon:[[@LINE+4]]:35: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused generic T: type where C impls type) {}
+// CHECK:STDERR:                                   ^~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused generic T: type where C impls type) {}
+
+
 // --- fail_where_without_self_designator_in_one_impls_interface.carbon
 library "[[@TEST_NAME]]";
 
@@ -260,15 +285,183 @@ fn F(unused generic T: type where C impls N(.Self)) {}
 // --- todo_fail_constraint_does_not_constrain_designator.carbon
 library "[[@TEST_NAME]]";
 
+interface Y {
+  fn YY();
+}
 interface Z {}
 constraint N(T: type) {
   require impls Z;
 }
 class C;
 
-// TODO: This `.Self` is not actually constrained by `C impls N(.Self)`, so it
-// should fail.
-fn F(unused generic T: type where C impls N(.Self)) {}
+// TODO: This `.Self` is not actually constrained by `C impls N(.Self)`. In
+// #7299 we propose that this means `C impls Z` must be satisfied in order to
+// identify the facet type.
+fn F(generic T: Y where C impls N(.Self)) {
+  // TODO: This should fail to identify then.
+  T.YY();
+}
+
+// --- same_type_designator_in_facet_type.carbon
+library "[[@TEST_NAME]]";
+
+interface J(T: type) {}
+
+fn F(generic U: type, unused generic T: type where U == J(.Self)) {}
+
+fn G(generic U: type, unused generic T: type where (U, ) == (J(.Self), )) {}
+
+// --- concrete_access_does_constrain_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let Member: type;
+}
+interface J {}
+
+// The `.Member` has a concrete constant value of `()` so the constant value in
+// the constraint is `()` which does not have a designator. So we can't look in
+// the constant value.
+
+// Gets a concrete value for `.Member` from a prior constraint.
+fn F1(unused generic T: I where .Member = () and .Member == ()) {}
+
+// Gets a concrete value for `.Member` from a prior constraint.
+fn F2(unused generic T: I where .Member = () and .Member impls J) {}
+
+final impl forall [T: J] T as I where .Member = () {}
+
+// Gets a concrete value for `.Member` from the final impl.
+fn F3(generic _: J where .Self.(I.Member) == ()) {}
+
+// Gets a concrete value for `.Member` from the final impl.
+fn F4(generic _: J where .Self.(I.Member) impls J) {}
+
+// --- fail_fn_call_returns_type_without_self_in_same_type.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+class C;
+
+eval fn E(generic _: type) -> type { return C; }
+
+// CHECK:STDERR: fail_fn_call_returns_type_without_self_in_same_type.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused generic T: I where C == E(.Self)) {}
+// CHECK:STDERR:                                ^~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused generic T: I where C == E(.Self)) {}
+
+// --- fail_fn_call_returns_type_without_self_in_impls.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+class C;
+
+eval fn E(generic _: type) -> type { return C; }
+
+// CHECK:STDERR: fail_fn_call_returns_type_without_self_in_impls.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused generic T: I where C impls E(.Self)) {}
+// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused generic T: I where C impls E(.Self)) {}
+
+// --- fail_fn_call_returns_type_with_self_in_same_type.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+class C;
+
+eval fn E(generic T: type) -> type { return T; }
+
+// Given `E(.Self)`, it should return `.Self`. However since `.Self` is
+// symbolic, the call is not evaluated until `.Self` is replaced with a concrete
+// value. As such, we can't tell at the time of checking the facet type if
+// `E(.Self)` resolves to an expression containing a designator.
+
+// CHECK:STDERR: fail_fn_call_returns_type_with_self_in_same_type.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused generic T: I where C == E(.Self)) {}
+// CHECK:STDERR:                                ^~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused generic T: I where C == E(.Self)) {}
+
+// --- fail_fn_call_returns_type_with_self_in_impls.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+class C;
+
+eval fn E(generic T: type) -> type { return T; }
+
+// Given `E(.Self)`, it should return `.Self`. However since `.Self` is
+// symbolic, the call is not evaluated until `.Self` is replaced with a concrete
+// value. As such, we can't tell at the time of checking the facet type if
+// `E(.Self)` resolves to an expression containing a designator.
+
+// CHECK:STDERR: fail_fn_call_returns_type_with_self_in_impls.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fn F(unused generic T: I where C impls E(.Self)) {}
+// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(unused generic T: I where C impls E(.Self)) {}
+
+// --- alias_of_generic_type.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+class C(T: type);
+
+alias A = C;
+
+fn F(unused generic T: I where C == A(.Self)) {}
+
+// --- fail_todo_generic_alias_preserves_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+class C(T: type);
+
+// TODO: Once we can write a generic alias, this should pass.
+
+// CHECK:STDERR: fail_todo_generic_alias_preserves_self.carbon:[[@LINE+4]]:8: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
+// CHECK:STDERR: alias A(U: type) = C(U);
+// CHECK:STDERR:        ^~~~~~~~~
+// CHECK:STDERR:
+alias A(U: type) = C(U);
+
+// CHECK:STDERR: fail_todo_generic_alias_preserves_self.carbon:[[@LINE+8]]:15: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fn F(unused T:! I where C == A(.Self)) {}
+// CHECK:STDERR:               ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_generic_alias_preserves_self.carbon:[[@LINE+4]]:15: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fn F(unused T:! I where C == A(.Self)) {}
+// CHECK:STDERR:               ^
+// CHECK:STDERR:
+fn F(unused T:! I where C == A(.Self)) {}
+
+// --- fail_generic_alias_without_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+class C;
+
+// CHECK:STDERR: fail_generic_alias_without_self.carbon:[[@LINE+4]]:8: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
+// CHECK:STDERR: alias A(U: type) = C;
+// CHECK:STDERR:        ^~~~~~~~~
+// CHECK:STDERR:
+alias A(U: type) = C;
+
+// The alias returns `C` which does not contain `.Self`.
+
+// TODO: Once we can write a generic alias, this should become an error because
+// there is no constraint against `.Self`.
+// CHECK:STDERR: fail_generic_alias_without_self.carbon:[[@LINE+8]]:15: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fn F(unused T:! I where C == A(.Self)) {}
+// CHECK:STDERR:               ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_generic_alias_without_self.carbon:[[@LINE+4]]:15: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fn F(unused T:! I where C == A(.Self)) {}
+// CHECK:STDERR:               ^
+// CHECK:STDERR:
+fn F(unused T:! I where C == A(.Self)) {}
 
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:

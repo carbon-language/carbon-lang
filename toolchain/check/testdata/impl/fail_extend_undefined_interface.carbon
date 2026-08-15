@@ -35,6 +35,7 @@ fn F(c: C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %.b7f: <witness> = impl_self_witness %C, @I [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
@@ -71,6 +72,7 @@ fn F(c: C) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc25: <witness> = impl_self_witness @C.as.I.impl.%Self.ref, @I [concrete = constants.%.b7f]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

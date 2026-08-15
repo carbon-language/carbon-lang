@@ -81,12 +81,9 @@ fn AssociatedTypeImpls(generic W: K where .Associated impls M);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+7]]:39: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:39: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR: fn NonTypeImpls(generic U: type where 7 impls type);
-// CHECK:STDERR:                                       ^
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:39: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: fn NonTypeImpls(generic U: type where 7 impls type);
-// CHECK:STDERR:                                       ^
+// CHECK:STDERR:                                       ^~~~~~~~~~~~
 // CHECK:STDERR:
 fn NonTypeImpls(generic U: type where 7 impls type);
 

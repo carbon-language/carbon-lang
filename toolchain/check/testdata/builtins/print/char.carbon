@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// EXTRA-ARGS: --include-carbon-core
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 //
 // AUTOUPDATE
@@ -29,16 +30,16 @@ fn Main() {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %PrintChar.type.7a7: type = fn_type @PrintChar.loc15 [concrete]
+// CHECK:STDOUT:   %PrintChar.type.7a7: type = fn_type @PrintChar.loc16 [concrete]
 // CHECK:STDOUT:   %PrintChar.772: %PrintChar.type.7a7 = struct_value () [concrete]
 // CHECK:STDOUT:   %.75c: Core.CharLiteral = char_value U+0031 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e81: type = facet_type <@ImplicitAs, @ImplicitAs(%char)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.780: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.8a5 [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.e81 = facet_value Core.CharLiteral, (%ImplicitAs.impl_witness.780) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.0c6: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%char, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %.1e6: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.0c6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.1ff: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.5e3 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.e81 = facet_value Core.CharLiteral, (%ImplicitAs.impl_witness.1ff) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.a04: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%char, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.601: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.a04, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.type: type = fn_type @Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.bound.17b: <bound method> = bound_method %.75c, %Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
@@ -64,29 +65,29 @@ fn Main() {
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.06c: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/char, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.8a5 = impl_witness_table (%Core.import_ref.06c), @Core.CharLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.5e3 = impl_witness_table (%Core.import_ref.06c), @Core.CharLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Core.PrintChar: %PrintChar.type.b3c = import_ref Core//io, PrintChar, loaded [concrete = constants.%PrintChar.063]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %PrintChar.ref.loc19: %PrintChar.type.7a7 = name_ref PrintChar, file.%PrintChar.decl [concrete = constants.%PrintChar.772]
-// CHECK:STDOUT:   %.loc19_13.1: Core.CharLiteral = char_value U+0031 [concrete = constants.%.75c]
-// CHECK:STDOUT:   %impl.elem0.loc19: %.1e6 = impl_witness_access constants.%ImplicitAs.impl_witness.780, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
-// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %.loc19_13.1, %impl.elem0.loc19 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound.17b]
-// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc19: init %char = call %bound_method.loc19(%.loc19_13.1) [concrete = constants.%int_49]
-// CHECK:STDOUT:   %.loc19_13.2: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc19 [concrete = constants.%int_49]
-// CHECK:STDOUT:   %.loc19_13.3: %char = converted %.loc19_13.1, %.loc19_13.2 [concrete = constants.%int_49]
-// CHECK:STDOUT:   %PrintChar.call.loc19: init %i32 = call %PrintChar.ref.loc19(%.loc19_13.3)
+// CHECK:STDOUT:   %PrintChar.ref.loc20: %PrintChar.type.7a7 = name_ref PrintChar, file.%PrintChar.decl [concrete = constants.%PrintChar.772]
+// CHECK:STDOUT:   %.loc20_13.1: Core.CharLiteral = char_value U+0031 [concrete = constants.%.75c]
+// CHECK:STDOUT:   %impl.elem0.loc20: %.601 = impl_witness_access constants.%ImplicitAs.impl_witness.1ff, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc20: <bound method> = bound_method %.loc20_13.1, %impl.elem0.loc20 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound.17b]
+// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc20: init %char = call %bound_method.loc20(%.loc20_13.1) [concrete = constants.%int_49]
+// CHECK:STDOUT:   %.loc20_13.2: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc20 [concrete = constants.%int_49]
+// CHECK:STDOUT:   %.loc20_13.3: %char = converted %.loc20_13.1, %.loc20_13.2 [concrete = constants.%int_49]
+// CHECK:STDOUT:   %PrintChar.call.loc20: init %i32 = call %PrintChar.ref.loc20(%.loc20_13.3)
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %PrintChar.ref.loc20: %PrintChar.type.b3c = name_ref PrintChar, imports.%Core.PrintChar [concrete = constants.%PrintChar.063]
-// CHECK:STDOUT:   %.loc20_18.1: Core.CharLiteral = char_value U+0032 [concrete = constants.%.f8d]
-// CHECK:STDOUT:   %impl.elem0.loc20: %.1e6 = impl_witness_access constants.%ImplicitAs.impl_witness.780, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
-// CHECK:STDOUT:   %bound_method.loc20: <bound method> = bound_method %.loc20_18.1, %impl.elem0.loc20 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound.e67]
-// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc20: init %char = call %bound_method.loc20(%.loc20_18.1) [concrete = constants.%int_50]
-// CHECK:STDOUT:   %.loc20_18.2: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc20 [concrete = constants.%int_50]
-// CHECK:STDOUT:   %.loc20_18.3: %char = converted %.loc20_18.1, %.loc20_18.2 [concrete = constants.%int_50]
-// CHECK:STDOUT:   %PrintChar.call.loc20: init %i32 = call %PrintChar.ref.loc20(%.loc20_18.3)
+// CHECK:STDOUT:   %PrintChar.ref.loc21: %PrintChar.type.b3c = name_ref PrintChar, imports.%Core.PrintChar [concrete = constants.%PrintChar.063]
+// CHECK:STDOUT:   %.loc21_18.1: Core.CharLiteral = char_value U+0032 [concrete = constants.%.f8d]
+// CHECK:STDOUT:   %impl.elem0.loc21: %.601 = impl_witness_access constants.%ImplicitAs.impl_witness.1ff, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc21: <bound method> = bound_method %.loc21_18.1, %impl.elem0.loc21 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound.e67]
+// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc21: init %char = call %bound_method.loc21(%.loc21_18.1) [concrete = constants.%int_50]
+// CHECK:STDOUT:   %.loc21_18.2: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc21 [concrete = constants.%int_50]
+// CHECK:STDOUT:   %.loc21_18.3: %char = converted %.loc21_18.1, %.loc21_18.2 [concrete = constants.%int_50]
+// CHECK:STDOUT:   %PrintChar.call.loc21: init %i32 = call %PrintChar.ref.loc21(%.loc21_18.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -57,19 +57,19 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.ff5: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.ce9: %ptr.as.Copy.impl.Op.type.ff5 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.0e0: <witness> = impl_witness imports.%Copy.impl_witness_table.367, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.b51: <witness> = impl_witness imports.%Copy.impl_witness_table.8d2, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.3f6: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.4f6: %Int.as.Copy.impl.Op.type.3f6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.987: %Copy.type = facet_value %i32, (%Copy.impl_witness.0e0) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d09: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.987) [concrete]
-// CHECK:STDOUT:   %.7a6: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d09, %Copy.facet.987 [concrete]
+// CHECK:STDOUT:   %Copy.facet.1e1: %Copy.type = facet_value %i32, (%Copy.impl_witness.b51) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.1e1) [concrete]
+// CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet.1e1 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.fa4: <witness> = impl_witness imports.%Copy.impl_witness_table.4f1, @ptr.as.Copy.impl(%Class) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.67e: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%Class) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.6c2: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Class) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.8fa: %ptr.as.Copy.impl.Op.type.6c2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.7b4: %Copy.type = facet_value %ptr.7ee, (%Copy.impl_witness.fa4) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.8bf: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.7b4) [concrete]
-// CHECK:STDOUT:   %.4c3: type = fn_type_with_self_type %Copy.WithSelf.Op.type.8bf, %Copy.facet.7b4 [concrete]
+// CHECK:STDOUT:   %Copy.facet.7e8: %Copy.type = facet_value %ptr.7ee, (%Copy.impl_witness.67e) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.707: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.7e8) [concrete]
+// CHECK:STDOUT:   %.8ed: type = fn_type_with_self_type %Copy.WithSelf.Op.type.707, %Copy.facet.7e8 [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.8fa, @ptr.as.Copy.impl.Op(%Class) [concrete]
 // CHECK:STDOUT:   %MakeReorder.type: type = fn_type @MakeReorder [concrete]
 // CHECK:STDOUT:   %MakeReorder: %MakeReorder.type = struct_value () [concrete]
@@ -86,9 +86,9 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.367 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.e5f: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.ff5) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.ce9)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.4f1 = impl_witness_table (%Core.import_ref.e5f), @ptr.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness_table.fb0 = impl_witness_table (%Core.import_ref.e5f), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -164,14 +164,14 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %next.ref: %ptr.7ee = name_ref next, %next
 // CHECK:STDOUT:   %.loc21_31.1: %struct_type.n.next = struct_literal (%n.ref, %next.ref)
-// CHECK:STDOUT:   %impl.elem0.loc21_16: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0.loc21_16: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc21_16.1: <bound method> = bound_method %n.ref, %impl.elem0.loc21_16
 // CHECK:STDOUT:   %specific_fn.loc21_16: <specific function> = specific_function %impl.elem0.loc21_16, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc21_16.2: <bound method> = bound_method %n.ref, %specific_fn.loc21_16
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc21_16.2(%n.ref)
 // CHECK:STDOUT:   %.loc21_31.2: ref %i32 = class_element_access %return.param, element0
 // CHECK:STDOUT:   %.loc21_31.3: init %i32 to %.loc21_31.2 = in_place_init %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %impl.elem0.loc21_27: %.4c3 = impl_witness_access constants.%Copy.impl_witness.fa4, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8fa]
+// CHECK:STDOUT:   %impl.elem0.loc21_27: %.8ed = impl_witness_access constants.%Copy.impl_witness.67e, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8fa]
 // CHECK:STDOUT:   %bound_method.loc21_27.1: <bound method> = bound_method %next.ref, %impl.elem0.loc21_27
 // CHECK:STDOUT:   %specific_fn.loc21_27: <specific function> = specific_function %impl.elem0.loc21_27, @ptr.as.Copy.impl.Op(constants.%Class) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc21_27.2: <bound method> = bound_method %next.ref, %specific_fn.loc21_27
@@ -188,14 +188,14 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %next.ref: %ptr.7ee = name_ref next, %next
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc25_31.1: %struct_type.next.n = struct_literal (%next.ref, %n.ref)
-// CHECK:STDOUT:   %impl.elem0.loc25_30: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0.loc25_30: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc25_30.1: <bound method> = bound_method %n.ref, %impl.elem0.loc25_30
 // CHECK:STDOUT:   %specific_fn.loc25_30: <specific function> = specific_function %impl.elem0.loc25_30, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc25_30.2: <bound method> = bound_method %n.ref, %specific_fn.loc25_30
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc25_30.2(%n.ref)
 // CHECK:STDOUT:   %.loc25_31.2: ref %i32 = class_element_access %return.param, element1
 // CHECK:STDOUT:   %.loc25_31.3: init %i32 to %.loc25_31.2 = in_place_init %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %impl.elem0.loc25_19: %.4c3 = impl_witness_access constants.%Copy.impl_witness.fa4, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8fa]
+// CHECK:STDOUT:   %impl.elem0.loc25_19: %.8ed = impl_witness_access constants.%Copy.impl_witness.67e, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8fa]
 // CHECK:STDOUT:   %bound_method.loc25_19.1: <bound method> = bound_method %next.ref, %impl.elem0.loc25_19
 // CHECK:STDOUT:   %specific_fn.loc25_19: <specific function> = specific_function %impl.elem0.loc25_19, @ptr.as.Copy.impl.Op(constants.%Class) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc25_19.2: <bound method> = bound_method %next.ref, %specific_fn.loc25_19

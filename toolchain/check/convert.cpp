@@ -955,16 +955,47 @@ struct InheritanceEdge {
 // derived to base.
 using InheritancePath = llvm::SmallVector<InheritanceEdge>;
 
+// Try to complete the type if it's a class type or contains a class type. This
+// allows us to look up information about base and adapt relationships which are
+// defined in the class body.
+static auto TryToCompleteClassType(Context& context, SemIR::TypeId type_id,
+                                   SemIR::LocId loc_id) -> bool {
+  // We want to complete the type if it _is_ a class, or there's a class type
+  // somewhere inside it, such as a tuple with a class.
+  //
+  // TODO: For now, we use a heuristic to find types that may contain a class
+  // type. This matches the types that we recurse into in
+  // TypeCompleter::AddNestedIncompleteTypes.
+  //
+  // FacetType is intentionally omitted from this list. We do not recurse into
+  // facet types looking for class types in TypeCompleter.
+  if (!(context.types().Is<SemIR::ArrayType>(type_id) ||
+        context.types().Is<SemIR::StructType>(type_id) ||
+        context.types().Is<SemIR::TupleType>(type_id) ||
+        context.types().Is<SemIR::ClassType>(type_id) ||
+        context.types().Is<SemIR::ConstType>(type_id) ||
+        context.types().Is<SemIR::CustomLayoutType>(type_id) ||
+        context.types().Is<SemIR::MaybeUnformedType>(type_id) ||
+        context.types().Is<SemIR::PartialType>(type_id))) {
+    return true;
+  }
+  return TryToCompleteType(context, type_id, loc_id);
+}
+
 // Computes the inheritance path from class `derived_id` to class `base_id`.
 // Returns nullopt if `derived_id` is not a class derived from `base_id`.
 static auto ComputeInheritancePath(Context& context, SemIR::LocId loc_id,
                                    SemIR::TypeId derived_id,
                                    SemIR::TypeId base_id)
     -> std::optional<InheritancePath> {
+  if (!context.types().Is<SemIR::ClassType>(derived_id)) {
+    // Don't try to complete non-class types.
+    return std::nullopt;
+  }
   // We intend for NRVO to be applied to `result`. All `return` statements in
   // this function should `return result;`.
   std::optional<InheritancePath> result(std::in_place);
-  if (!TryToCompleteType(context, derived_id, loc_id)) {
+  if (!TryToCompleteClassType(context, derived_id, loc_id)) {
     // TODO: Should we give an error here? If we don't, and there is an
     // inheritance path when the class is defined, we may have a coherence
     // problem.
@@ -1474,8 +1505,8 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
           context.types().GetTypeIdForTypeInstId(src_pointer_type->pointee_id);
       // Try to complete the pointee types so that we can walk through adapters
       // to their adapted types.
-      TryToCompleteType(context, target_pointee_id, loc_id);
-      TryToCompleteType(context, src_pointee_id, loc_id);
+      TryToCompleteClassType(context, target_pointee_id, loc_id);
+      TryToCompleteClassType(context, src_pointee_id, loc_id);
       auto [unqual_target_pointee_type_id, target_quals] =
           sem_ir.types().GetTransitiveUnqualifiedAdaptedType(target_pointee_id);
       auto [unqual_src_pointee_type_id, src_quals] =
@@ -2048,7 +2079,11 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // TODO: Is there a risk of coherence problems if the source type is
   // incomplete, but a conversion would have been possible or would have behaved
   // differently if it were complete?
-  TryToCompleteType(context, context.insts().Get(expr_id).type_id(), loc_id);
+  // TODO: We should not need to do this unless we're looking for a base or
+  // adapt. But lower crashes without it, so we must be failing to complete a
+  // type somewhere else when it is required.
+  TryToCompleteClassType(context, context.insts().Get(expr_id).type_id(),
+                         loc_id);
 
   // Check whether any builtin conversion applies.
   expr_id = PerformBuiltinConversion(context, loc_id, expr_id, target);

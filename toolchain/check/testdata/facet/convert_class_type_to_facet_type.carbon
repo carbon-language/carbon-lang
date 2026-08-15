@@ -31,6 +31,7 @@ fn F() {
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %.629: <witness> = impl_self_witness %Goat, @Animal [concrete]
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness @Goat.as.Animal.impl.%Animal.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%Animal.impl_witness) [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
@@ -68,6 +69,7 @@ fn F() {
 // CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc18: <witness> = impl_self_witness @Goat.as.Animal.impl.%Goat.ref, @Animal [concrete = constants.%.629]
 // CHECK:STDOUT:   %WalkAnimal.decl: %WalkAnimal.type = fn_decl @WalkAnimal [concrete = constants.%WalkAnimal] {
 // CHECK:STDOUT:     %A.patt.loc20_31.1: %pattern_type = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc20_31.2 (constants.%A.patt)]
 // CHECK:STDOUT:   } {

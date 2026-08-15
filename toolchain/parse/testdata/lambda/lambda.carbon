@@ -66,121 +66,125 @@ fn G() {
 }
 
 // CHECK:STDOUT: - filename: basic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:           {kind: 'AutoTypeLiteral', text: 'auto'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'LambdaIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:           {kind: 'ReturnStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'Lambda', text: 'fn', subtree_size: 19},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 26},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:           {kind: 'AutoTypeLiteral', text: 'auto'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'LambdaIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'TerseBodyArrow', text: '=>'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:       {kind: 'Lambda', text: 'fn', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 16},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'c'},
-// CHECK:STDOUT:           {kind: 'AutoTypeLiteral', text: 'auto'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'LambdaIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'Lambda', text: 'fn', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─LambdaIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │ ╭─ImplicitParamListStart '['
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─ImplicitParamList ']'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │ │ ├─ReturnType '->'
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │ │ ├─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │ │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ ├─Lambda 'fn'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─LambdaIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ ├─TerseBodyArrow '=>'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ ├─Lambda 'fn'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'c'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─LambdaIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ ├─Lambda 'fn'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_unconsumed_lambda_introducer.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'RequireIntroducer', text: 'require'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'j'},
-// CHECK:STDOUT:             {kind: 'LambdaIntroducer', text: 'fn'},
-// CHECK:STDOUT:                 {kind: 'InvalidParse', text: '>', has_error: yes},
-// CHECK:STDOUT:                 {kind: 'InvalidParse', text: '', has_error: yes},
-// CHECK:STDOUT:               {kind: 'InfixOperatorGreater', text: '>', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'ReturnType', text: '->', subtree_size: 4},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: '', has_error: yes},
-// CHECK:STDOUT:           {kind: 'Lambda', text: 'fn', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'PrefixOperatorMinus', text: '-', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'InfixOperatorPercent', text: '%', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'RequireDecl', text: '>', has_error: yes, subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─RequireIntroducer 'require'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'j'
+// CHECK:STDOUT:   │ │ │   ╭─LambdaIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │   │   ╭─InvalidParse '>' has_error
+// CHECK:STDOUT:   │ │ │   │   ├─InvalidParse '' has_error
+// CHECK:STDOUT:   │ │ │   │ ╭─InfixOperatorGreater '>' has_error
+// CHECK:STDOUT:   │ │ │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ │ │   ├─InvalidParse '' has_error
+// CHECK:STDOUT:   │ │ │ ╭─Lambda 'fn' has_error
+// CHECK:STDOUT:   │ │ ├─PrefixOperatorMinus '-'
+// CHECK:STDOUT:   │ ├─InfixOperatorPercent '%'
+// CHECK:STDOUT:   ├─RequireDecl '>' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_expected_body.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:             {kind: 'AutoTypeLiteral', text: 'auto'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:           {kind: 'LambdaIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:         {kind: 'Lambda', text: 'fn', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ │ ╭─LambdaIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ├─Lambda 'fn' has_error
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_expected_body_after_return_type.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'G'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:             {kind: 'AutoTypeLiteral', text: 'auto'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:           {kind: 'LambdaIntroducer', text: 'fn'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:         {kind: 'Lambda', text: 'fn', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 18},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'G'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ │ ╭─LambdaIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │ │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ├─ReturnType '->'
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ├─Lambda 'fn' has_error
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
