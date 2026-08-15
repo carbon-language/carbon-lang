@@ -13,12 +13,9 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
-#include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/FormatVariadic.h"
 
 #ifdef __ARM_ACLE
 #include <arm_acle.h>
@@ -72,9 +69,7 @@ class HashCode : public Printable<HashCode> {
   // other recursive hashing where that is needed or more efficient.
   explicit operator uint64_t() const { return value_; }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << llvm::formatv("{0:x16}", value_);
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
   uint64_t value_ = 0;
@@ -527,30 +522,6 @@ inline auto CarbonHashValue(const T (&arg)[N], uint64_t seed) -> HashCode {
   return CarbonHashValue(llvm::ArrayRef(arg), seed);
 }
 
-inline auto CarbonHashValue(llvm::APInt value, uint64_t seed) -> HashCode {
-  Hasher hasher(seed);
-  if (LLVM_LIKELY(value.isSingleWord())) {
-    hasher.Hash(value.getBitWidth(), value.getZExtValue());
-  } else {
-    hasher.HashRaw(value.getBitWidth());
-    hasher.HashSizedBytes(
-        llvm::ArrayRef(value.getRawData(), value.getNumWords()));
-  }
-  return static_cast<HashCode>(hasher);
-}
-
-inline auto CarbonHashValue(llvm::APFloat value, uint64_t seed) -> HashCode {
-  Hasher hasher(seed);
-  // Hashing floating point numbers is complex and depends on the specific
-  // internal semantics of `APFloat`, so delegate to the LLVM hashing framework
-  // here. We re-hash the result to mix in our seed. All of this is a bit
-  // inefficient, and we can revisit this to provide a dedicated implementation
-  // if it becomes a bottleneck.
-  using llvm::hash_value;
-  hasher.HashRaw(hash_value(value));
-  return static_cast<HashCode>(hasher);
-}
-
 template <typename... Ts>
 inline auto CarbonHashValue(const std::tuple<Ts...>& value, uint64_t seed)
     -> HashCode {
@@ -566,6 +537,16 @@ inline auto CarbonHashValue(const std::pair<T, U>& value, uint64_t seed)
   hasher.Hash(value.first, value.second);
   return static_cast<HashCode>(hasher);
 }
+
+// Extension point for types defined outside of Carbon that cannot be found by
+// ADL in their own namespace and cannot be declared before this point.
+template <typename T>
+struct CustomHashValue;
+
+template <typename T>
+concept HasCustomHashValue = requires(const T& value, uint64_t seed) {
+  { CustomHashValue<T>::Hash(value, seed) } -> std::same_as<HashCode>;
+};
 
 // Implementation detail predicate to detect if there is a `CarbonHashValue`
 // overload available for a particular type, either in this namespace or found
@@ -618,14 +599,19 @@ concept CanHashAsRawDataType = std::same_as<T, std::nullptr_t> ||
 // `HasCarbonHashValue`, this must not be moved above any of those overloads.
 template <typename T>
 inline auto DispatchImpl(const T& value, uint64_t seed) -> HashCode {
-  // If we have an explicit overload for `CarbonHashValue`, call it. This may be
-  // provided above or via ADL, and is preferred as it represents an explicit
-  // request for how the type is hashed.
   if constexpr (HasCarbonHashValue<T>) {
+    // If we have an explicit overload for `CarbonHashValue`, call it. This may
+    // be provided above or via ADL, and is preferred as it represents an
+    // explicit request for how the type is hashed.
     return CarbonHashValue(value, seed);
+  } else if constexpr (HasCustomHashValue<T>) {
+    // If we have an explicit specialization for `CustomHashValue`, call it.
+    // This is a fallback explicit hashing path that doesn't require ADL or
+    // being in this header.
+    return CustomHashValue<T>::Hash(value, seed);
   } else if constexpr (CanHashAsRawDataType<T>) {
-    // There was no explicit overload to call, but the type allows us to hash it
-    // as raw data, do so.
+    // There was no explicit overload or specialization to call, but the type
+    // allows us to hash it as raw data, do so.
     Hasher hasher(seed);
     hasher.HashRaw(MapToRawDataType(value));
     return static_cast<HashCode>(hasher);

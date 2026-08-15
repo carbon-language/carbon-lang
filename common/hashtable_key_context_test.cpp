@@ -7,6 +7,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "common/hashing_llvm.h"
+
 namespace Carbon {
 namespace {
 

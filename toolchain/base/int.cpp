@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <string>
 
+#include "common/hashing_llvm.h"
 #include "toolchain/base/canonical_value_store_impl.h"
 #include "toolchain/base/value_store_impl.h"
 
