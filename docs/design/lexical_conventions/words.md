@@ -109,6 +109,7 @@ The following words are interpreted as keywords:
 -   `true`
 -   `type`
 -   `typeof`
+-   `unsafe`
 -   `unused`
 -   `val`
 -   `var`

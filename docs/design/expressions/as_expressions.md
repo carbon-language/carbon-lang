@@ -15,6 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Built-in types](#built-in-types)
     -   [Data types](#data-types)
     -   [Compatible types](#compatible-types)
+-   [`unsafe as` expressions](#unsafe-as-expressions)
 -   [Extensibility](#extensibility)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -66,7 +67,8 @@ to follow these guidelines.
 
 ## Precedence and associativity
 
-`as` expressions are non-associative.
+`as` and `unsafe as` expressions are non-associative and have the same
+precedence.
 
 ```
 var b: bool = true;
@@ -155,22 +157,72 @@ The following conversion is supported by `as`:
 -   `T` -> `U` if `T` is
     [compatible](/docs/design/classes.md#compatible-types) with `U`.
 
-**Future work:** We may need a mechanism to restrict which conversions between
-adapters are permitted and which code can perform them. Some of the conversions
-permitted by this rule may only be allowed in certain contexts.
+An [unsafe adapter](/docs/design/classes.md#unsafe-adapters) restricts this: any
+conversion between compatible types that crosses an `unsafe adapt` is only
+available with [`unsafe as`](#unsafe-as-expressions).
+
+## `unsafe as` expressions
+
+Some conversions can violate a type's invariants or lead to undefined behavior
+if their preconditions are not met. These are written with `unsafe as`:
+
+```
+var p: const i32* = Get();
+// Removing `const` is an unsafe conversion.
+var q: i32* = p unsafe as i32*;
+```
+
+An `unsafe as` expression can perform any conversion that `as` can, as well as
+conversions across an [`unsafe adapt`](/docs/design/classes.md#unsafe-adapters)
+and pointer reinterpretation (`T* unsafe as U*`). It can also remove the type
+qualifiers `const`,
+[`partial`](/docs/design/classes.md#partial-class-type), and
+[`MaybeUnformed`](/docs/design/values.md#using-an-object-that-might-be-unformed).
+Adding `const` or `partial` is always a safe conversion, and adding
+`MaybeUnformed` is safe for value expressions, `const` references and pointers,
+and tracked `ref` bindings. Removing a qualifier (or adding `MaybeUnformed` to
+an untracked mutable pointer `T*` -> `Core.MaybeUnformed(T)*`) requires
+`unsafe as` unless one of the following exceptions applies:
+
+-   Removing `const` requires `unsafe as` when the result is still a reference
+    expression. When the conversion produces a value or initializing expression,
+    removing `const` is safe because the result does not refer to the original
+    object.
+-   Removing `partial` requires `unsafe as` for a non-initializing expression
+    when the class is not `final`. It is safe when the class is `final` or for
+    an initializing expression, because the vtable pointer is initialized as
+    part of that conversion.
+-   Removing `MaybeUnformed` from an expression of static type
+    `Core.MaybeUnformed(T)` always requires `unsafe as`, and is only available
+    for a value or reference expression; see
+    [Using an object that might be unformed](/docs/design/values.md#using-an-object-that-might-be-unformed)
+    for how a declared variable of type `T` is checked.
+
+The same rule applies through a pointer: converting `T*` to `U*` requires
+`unsafe as` whenever the qualifiers on `T` and `U` do not permit a safe
+reference conversion from `T` to `U`.
 
 ## Extensibility
 
 Explicit casts can be defined for user-defined types such as
-[classes](/docs/design/classes.md) by implementing the `As` interface:
+[classes](/docs/design/classes.md) by implementing the `As` interface, and
+unsafe casts by implementing `UnsafeAs`:
 
 ```
-interface As(Dest: type) {
+interface UnsafeAs(Dest: type) {
   fn Convert(self) -> Dest;
+}
+
+interface As(Dest: type) {
+  extend final impl as UnsafeAs(Dest);
 }
 ```
 
-The expression `x as U` is rewritten to `x.(As(U).Convert)()`.
+The expression `x as U` is rewritten to `x.(As(U).Convert)()`, and
+`x unsafe as U` to `x.(UnsafeAs(U).Convert)()`. Because `As` extends `UnsafeAs`,
+implementing `As` also makes the conversion available with `unsafe as`. Built-in
+conversions between compatible types and qualifier conversions preserve the
+operand's expression category and continue to refer to the same storage.
 
 **Note:** This rewrite causes the expression `U` to be implicitly converted to
 type `type`. The program is invalid if this conversion is not possible.
@@ -182,9 +234,12 @@ type `type`. The program is invalid if this conversion is not possible.
 -   [`as` only performs implicit conversions](/proposals/p000845-as-expressions.md#as-only-performs-implicit-conversions)
 -   [Integer to bool conversions](/proposals/p000845-as-expressions.md#integer-to-bool-conversions)
 -   [Bool to integer conversions](/proposals/p000845-as-expressions.md#bool-to-integer-conversions)
+-   [Spelling unsafe conversions as `unsafe_as`](/proposals/p007640-reworking-unformed-state.md#spelling-unsafe-conversions-as-unsafe_as)
 
 ## References
 
 -   [Implicit conversions in C++](https://en.cppreference.com/w/cpp/language/implicit_conversion)
 -   Proposal
     [#845: `as` expressions](https://github.com/carbon-language/carbon-lang/pull/845).
+-   Proposal
+    [#7640: Reworking unformed state](https://github.com/carbon-language/carbon-lang/pull/7640).
