@@ -7,6 +7,7 @@
 
 // Libraries should include this header instead of raw_ostream.
 
+#include <compare>
 #include <concepts>
 #include <ostream>
 #include <type_traits>
@@ -22,6 +23,29 @@ namespace Carbon {
 template <typename DerivedT>
 // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
 class Printable {
+ public:
+  // Comparisons of the base class itself, which is empty and so always compares
+  // equal, allowing children to default their own comparison operators.
+  //
+  // The operand is a constrained template parameter rather than simply
+  // `const Printable&` so that these are only viable for comparing the base
+  // class subobjects themselves. An overload taking `const Printable&` would
+  // also be viable when comparing two `DerivedT` objects by converting them to
+  // the base class, and would then both make children that provide no
+  // comparison silently compare equal and displace the comparisons of children
+  // that provide them through a conversion of their own, as `EnumBase` does.
+  template <typename T>
+    requires std::same_as<T, Printable>
+  constexpr auto operator==(const T& /*rhs*/) const noexcept -> bool {
+    return true;
+  }
+  template <typename T>
+    requires std::same_as<T, Printable>
+  constexpr auto operator<=>(const T& /*rhs*/) const noexcept
+      -> std::strong_ordering {
+    return std::strong_ordering::equal;
+  }
+
   // Supports printing to llvm::raw_ostream.
   friend auto operator<<(llvm::raw_ostream& out, const DerivedT& obj)
       -> llvm::raw_ostream& {
