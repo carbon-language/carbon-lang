@@ -242,6 +242,19 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
+    case Lex::TokenKind::Dollar: {
+      auto dollar = context.Consume();
+      if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
+                                           NodeKind::IntLiteral)) {
+        CARBON_DIAGNOSTIC(ExpectedUnsignedIntLiteralAfterDollar, Error,
+                          "expected unsigned integer literal after `$`");
+        context.emitter().Emit(*context.position(),
+                               ExpectedUnsignedIntLiteralAfterDollar);
+      }
+      context.AddLeafNode(NodeKind::PositionalParamExpr, dollar);
+      context.PushState(state);
+      break;
+    }
     default: {
       // If not already diagnosed in the lexer, diagnose it here.
       if (token_kind != Lex::TokenKind::Error) {

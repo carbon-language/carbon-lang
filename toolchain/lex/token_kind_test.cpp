@@ -17,7 +17,7 @@ using ::testing::MatchesRegex;
 // We restrict symbols to punctuation characters that are expected to be widely
 // available on modern keyboards used for programming.
 constexpr llvm::StringLiteral SymbolRegex =
-    R"([\[\]{}!@#%^&*()/?\\|;:.,<>=+~-]+)";
+    R"([\[\]{}!@#%^&$*()/?\\|;:.,<>=+~-]+)";
 
 // We restrict keywords to be lowercase ASCII letters and underscores with a few
 // specific exceptions.

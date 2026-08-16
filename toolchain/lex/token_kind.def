@@ -90,6 +90,7 @@ CARBON_SYMBOL_TOKEN(Amp,                 "&")
 CARBON_SYMBOL_TOKEN(At,                  "@")
 CARBON_SYMBOL_TOKEN(Backslash,           "\\")
 CARBON_SYMBOL_TOKEN(Caret,               "^")
+CARBON_SYMBOL_TOKEN(Dollar,               "$")
 CARBON_TOKEN_WITH_VIRTUAL_NODE(
   CARBON_SYMBOL_TOKEN(Colon,               ":"))
 CARBON_SYMBOL_TOKEN(Equal,               "=")

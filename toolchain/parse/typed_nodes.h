@@ -1823,6 +1823,9 @@ struct NamedConstraintDefinition {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
+using PositionalParamExpr = LeafNode<NodeKind::PositionalParamExpr,
+                                     Lex::DollarTokenIndex, NodeCategory::Expr>;
+
 // ---------------------------------------------------------------------------
 
 // A complete source file. Note that there is no corresponding parse node for

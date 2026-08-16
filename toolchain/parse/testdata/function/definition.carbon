@@ -18,6 +18,40 @@ fn foo(bar: i64, baz: i64) {
   foo(baz, bar + baz);
 }
 
+// --- with_positional_params.carbon
+
+fn foo {
+  foo($0, $42, $86);
+}
+
+// --- fail_positional_param_negative_int.carbon
+
+fn foo {
+  // CHECK:STDERR: fail_positional_param_negative_int.carbon:[[@LINE+8]]:8: error: expected unsigned integer literal after `$` [ExpectedUnsignedIntLiteralAfterDollar]
+  // CHECK:STDERR:   foo($-1);
+  // CHECK:STDERR:        ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_positional_param_negative_int.carbon:[[@LINE+4]]:8: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR:   foo($-1);
+  // CHECK:STDERR:        ^
+  // CHECK:STDERR:
+  foo($-1);
+}
+
+// --- fail_positional_param_float.carbon
+
+fn foo {
+  // CHECK:STDERR: fail_positional_param_float.carbon:[[@LINE+8]]:8: error: expected unsigned integer literal after `$` [ExpectedUnsignedIntLiteralAfterDollar]
+  // CHECK:STDERR:   foo($1.0);
+  // CHECK:STDERR:        ^~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_positional_param_float.carbon:[[@LINE+4]]:8: error: expected `,` or `)` [UnexpectedTokenAfterListElement]
+  // CHECK:STDERR:   foo($1.0);
+  // CHECK:STDERR:        ^~~
+  // CHECK:STDERR:
+  foo($1.0);
+}
+
 // --- with_return_type.carbon
 
 fn foo() -> f64 {
@@ -112,6 +146,54 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'baz'
 // CHECK:STDOUT:   │ │   ├─InfixOperatorPlus '+'
 // CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: with_positional_params.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'foo'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'foo'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   ├─IntLiteral '42'
+// CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   ├─IntLiteral '86'
+// CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_positional_param_negative_int.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'foo'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'foo'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   │ ╭─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ │   │ ├─IntLiteral '1'
+// CHECK:STDOUT:   │ │   ├─InfixOperatorMinus '-'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_positional_param_float.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'foo'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'foo'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

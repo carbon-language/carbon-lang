@@ -536,6 +536,8 @@ CARBON_PARSE_STATE(Expr)
 // ^~~~
 // Self
 // ^~~~
+// $
+// ^
 //   1. ExprInPostfixLoop
 //
 //  {
