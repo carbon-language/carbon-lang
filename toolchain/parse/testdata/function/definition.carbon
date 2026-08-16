@@ -21,7 +21,8 @@ fn foo(bar: i64, baz: i64) {
 // --- with_positional_params.carbon
 
 fn foo {
-  foo($0, $42, $86);
+  foo($0, $42);
+  return $86;
 }
 
 // --- fail_positional_param_negative_int.carbon
@@ -41,11 +42,7 @@ fn foo {
 // --- fail_positional_param_float.carbon
 
 fn foo {
-  // CHECK:STDERR: fail_positional_param_float.carbon:[[@LINE+8]]:8: error: expected unsigned integer literal after `$` [ExpectedUnsignedIntLiteralAfterDollar]
-  // CHECK:STDERR:   foo($1.0);
-  // CHECK:STDERR:        ^~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_positional_param_float.carbon:[[@LINE+4]]:8: error: expected `,` or `)` [UnexpectedTokenAfterListElement]
+  // CHECK:STDERR: fail_positional_param_float.carbon:[[@LINE+4]]:8: error: expected unsigned integer literal after `$` [ExpectedUnsignedIntLiteralAfterDollar]
   // CHECK:STDERR:   foo($1.0);
   // CHECK:STDERR:        ^~~
   // CHECK:STDERR:
@@ -157,16 +154,17 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'foo'
 // CHECK:STDOUT:   │ │   ╭─CallExprStart '('
-// CHECK:STDOUT:   │ │   ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │   │ ╭─IntLiteral '0'
 // CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$'
 // CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
-// CHECK:STDOUT:   │ │   ├─IntLiteral '42'
-// CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$'
-// CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
-// CHECK:STDOUT:   │ │   ├─IntLiteral '86'
+// CHECK:STDOUT:   │ │   │ ╭─IntLiteral '42'
 // CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$'
 // CHECK:STDOUT:   │ │ ╭─CallExpr ')'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │ ╭─IntLiteral '86'
+// CHECK:STDOUT:   │ │ ├─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ ├─ReturnStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -177,9 +175,10 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'foo'
 // CHECK:STDOUT:   │ │   ╭─CallExprStart '('
-// CHECK:STDOUT:   │ │   │ ╭─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ │   │   ╭─InvalidParse '-' has_error
+// CHECK:STDOUT:   │ │   │ ╭─PositionalParamExpr '$' has_error
 // CHECK:STDOUT:   │ │   │ ├─IntLiteral '1'
-// CHECK:STDOUT:   │ │   ├─InfixOperatorMinus '-'
+// CHECK:STDOUT:   │ │   ├─InfixOperatorMinus '-' has_error
 // CHECK:STDOUT:   │ │ ╭─CallExpr ')'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
@@ -192,7 +191,8 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'foo'
 // CHECK:STDOUT:   │ │   ╭─CallExprStart '('
-// CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ │   │ ╭─InvalidParse '1.0' has_error
+// CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$' has_error
 // CHECK:STDOUT:   │ │ ╭─CallExpr ')' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'

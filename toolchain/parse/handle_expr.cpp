@@ -250,8 +250,11 @@ auto HandleExprInPostfix(Context& context) -> void {
                           "expected unsigned integer literal after `$`");
         context.emitter().Emit(*context.position(),
                                ExpectedUnsignedIntLiteralAfterDollar);
+        context.AddInvalidParse(*context.position());
+        context.ReturnErrorOnState();
+        state.has_error = true;
       }
-      context.AddLeafNode(NodeKind::PositionalParamExpr, dollar);
+      context.AddNode(NodeKind::PositionalParamExpr, dollar, state.has_error);
       context.PushState(state);
       break;
     }

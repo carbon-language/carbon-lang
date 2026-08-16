@@ -1823,8 +1823,13 @@ struct NamedConstraintDefinition {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
-using PositionalParamExpr = LeafNode<NodeKind::PositionalParamExpr,
-                                     Lex::DollarTokenIndex, NodeCategory::Expr>;
+struct PositionalParamExpr {
+  static constexpr auto Kind = NodeKind::PositionalParamExpr.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  IntLiteralId value;
+  Lex::DollarTokenIndex token;
+};
 
 // ---------------------------------------------------------------------------
 
