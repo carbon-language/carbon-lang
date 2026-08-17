@@ -178,7 +178,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
 // CHECK:STDOUT:   %pattern_type.3b9: type = pattern_type %AdaptCopyable [concrete]
 // CHECK:STDOUT:   %c.param_patt.a0c: %pattern_type.3b9 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt.9a3: %pattern_type.3b9 = at_binding_pattern c, %c.param_patt.a0c [concrete]
+// CHECK:STDOUT:   %c.patt.10d: %pattern_type.3b9 = wrapper_binding_pattern c, %c.param_patt.a0c [concrete]
 // CHECK:STDOUT:   %.748: Core.Form = init_form %AdaptCopyable [concrete]
 // CHECK:STDOUT:   %return.param_patt.c61: %pattern_type.3b9 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.539: %pattern_type.3b9 = return_slot_pattern %return.param_patt.c61, %AdaptCopyable [concrete]
@@ -198,7 +198,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.type.28f: type = tuple_type (%AdaptCopyable, %u32) [concrete]
 // CHECK:STDOUT:   %pattern_type.c42: type = pattern_type %tuple.type.28f [concrete]
 // CHECK:STDOUT:   %c.param_patt.ccf: %pattern_type.c42 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt.314: %pattern_type.c42 = at_binding_pattern c, %c.param_patt.ccf [concrete]
+// CHECK:STDOUT:   %c.patt.199: %pattern_type.c42 = wrapper_binding_pattern c, %c.param_patt.ccf [concrete]
 // CHECK:STDOUT:   %.ac9: Core.Form = init_form %tuple.type.28f [concrete]
 // CHECK:STDOUT:   %return.param_patt.1e8: %pattern_type.c42 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.ada: %pattern_type.c42 = return_slot_pattern %return.param_patt.1e8, %tuple.type.28f [concrete]
@@ -237,7 +237,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %AdaptCopyable.decl: type = class_decl @AdaptCopyable [concrete = constants.%AdaptCopyable] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.3b9 = value_param_pattern [concrete = constants.%c.param_patt.a0c]
-// CHECK:STDOUT:     %c.patt: %pattern_type.3b9 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.9a3]
+// CHECK:STDOUT:     %c.patt: %pattern_type.3b9 = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.10d]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.3b9 = out_param_pattern [concrete = constants.%return.param_patt.c61]
 // CHECK:STDOUT:     %return.patt: %pattern_type.3b9 = return_slot_pattern %return.param_patt, %AdaptCopyable.ref.loc8_27 [concrete = constants.%return.patt.539]
 // CHECK:STDOUT:   } {
@@ -251,7 +251,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InTuple.decl: %InTuple.type = fn_decl @InTuple [concrete = constants.%InTuple] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.c42 = value_param_pattern [concrete = constants.%c.param_patt.ccf]
-// CHECK:STDOUT:     %c.patt: %pattern_type.c42 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.314]
+// CHECK:STDOUT:     %c.patt: %pattern_type.c42 = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.199]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c42 = out_param_pattern [concrete = constants.%return.param_patt.1e8]
 // CHECK:STDOUT:     %return.patt: %pattern_type.c42 = return_slot_pattern %return.param_patt, %.loc27_59.2 [concrete = constants.%return.patt.ada]
 // CHECK:STDOUT:   } {
@@ -367,7 +367,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %complete_type.6c4: <witness> = complete_type_witness %tuple.type.e55 [concrete]
 // CHECK:STDOUT:   %pattern_type.ea1: type = pattern_type %AdaptTuple [concrete]
 // CHECK:STDOUT:   %c.param_patt.a12: %pattern_type.ea1 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt.b46: %pattern_type.ea1 = at_binding_pattern c, %c.param_patt.a12 [concrete]
+// CHECK:STDOUT:   %c.patt.0c5: %pattern_type.ea1 = wrapper_binding_pattern c, %c.param_patt.a12 [concrete]
 // CHECK:STDOUT:   %.6bf: Core.Form = init_form %AdaptTuple [concrete]
 // CHECK:STDOUT:   %return.param_patt.511: %pattern_type.ea1 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.ead: %pattern_type.ea1 = return_slot_pattern %return.param_patt.511, %AdaptTuple [concrete]
@@ -395,7 +395,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.type.e88: type = tuple_type (%AdaptTuple, %u32) [concrete]
 // CHECK:STDOUT:   %pattern_type.996: type = pattern_type %tuple.type.e88 [concrete]
 // CHECK:STDOUT:   %c.param_patt.677: %pattern_type.996 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt.0c5: %pattern_type.996 = at_binding_pattern c, %c.param_patt.677 [concrete]
+// CHECK:STDOUT:   %c.patt.b6f: %pattern_type.996 = wrapper_binding_pattern c, %c.param_patt.677 [concrete]
 // CHECK:STDOUT:   %.c2f: Core.Form = init_form %tuple.type.e88 [concrete]
 // CHECK:STDOUT:   %return.param_patt.446: %pattern_type.996 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.70a: %pattern_type.996 = return_slot_pattern %return.param_patt.446, %tuple.type.e88 [concrete]
@@ -447,7 +447,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %AdaptTuple.decl: type = class_decl @AdaptTuple [concrete = constants.%AdaptTuple] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.ea1 = value_param_pattern [concrete = constants.%c.param_patt.a12]
-// CHECK:STDOUT:     %c.patt: %pattern_type.ea1 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.b46]
+// CHECK:STDOUT:     %c.patt: %pattern_type.ea1 = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.0c5]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.ea1 = out_param_pattern [concrete = constants.%return.param_patt.511]
 // CHECK:STDOUT:     %return.patt: %pattern_type.ea1 = return_slot_pattern %return.param_patt, %AdaptTuple.ref.loc8_24 [concrete = constants.%return.patt.ead]
 // CHECK:STDOUT:   } {
@@ -461,7 +461,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InTuple.decl: %InTuple.type = fn_decl @InTuple [concrete = constants.%InTuple] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.996 = value_param_pattern [concrete = constants.%c.param_patt.677]
-// CHECK:STDOUT:     %c.patt: %pattern_type.996 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.0c5]
+// CHECK:STDOUT:     %c.patt: %pattern_type.996 = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.b6f]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.996 = out_param_pattern [concrete = constants.%return.param_patt.446]
 // CHECK:STDOUT:     %return.patt: %pattern_type.996 = return_slot_pattern %return.param_patt, %.loc13_53.2 [concrete = constants.%return.patt.70a]
 // CHECK:STDOUT:   } {
@@ -687,7 +687,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type.d14: type = pattern_type %AdaptNoncopyable [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.d14 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.d14 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.d14 = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %.a97: Core.Form = init_form %AdaptNoncopyable [concrete]
 // CHECK:STDOUT:   %return.param_patt.f81: %pattern_type.d14 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.1dc: %pattern_type.d14 = return_slot_pattern %return.param_patt.f81, %AdaptNoncopyable [concrete]
@@ -724,7 +724,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %AdaptNoncopyable.decl: type = class_decl @AdaptNoncopyable [concrete = constants.%AdaptNoncopyable] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.d14 = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.d14 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.d14 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.d14 = out_param_pattern [concrete = constants.%return.param_patt.f81]
 // CHECK:STDOUT:     %return.patt: %pattern_type.d14 = return_slot_pattern %return.param_patt, %AdaptNoncopyable.ref.loc12_30 [concrete = constants.%return.patt.1dc]
 // CHECK:STDOUT:   } {
@@ -807,7 +807,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %complete_type.591: <witness> = complete_type_witness %tuple.type.227 [concrete]
 // CHECK:STDOUT:   %pattern_type.be3: type = pattern_type %AdaptNoncopyableIndirect [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.be3 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.be3 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.be3 = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %.284: Core.Form = init_form %AdaptNoncopyableIndirect [concrete]
 // CHECK:STDOUT:   %return.param_patt.6c3: %pattern_type.be3 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.de6: %pattern_type.be3 = return_slot_pattern %return.param_patt.6c3, %AdaptNoncopyableIndirect [concrete]
@@ -857,7 +857,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %AdaptNoncopyableIndirect.decl: type = class_decl @AdaptNoncopyableIndirect [concrete = constants.%AdaptNoncopyableIndirect] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.be3 = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.be3 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.be3 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.be3 = out_param_pattern [concrete = constants.%return.param_patt.6c3]
 // CHECK:STDOUT:     %return.patt: %pattern_type.be3 = return_slot_pattern %return.param_patt, %AdaptNoncopyableIndirect.ref.loc12_38 [concrete = constants.%return.patt.de6]
 // CHECK:STDOUT:   } {
@@ -974,7 +974,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %complete_type.db4: <witness> = complete_type_witness %struct_type.e.f [concrete]
 // CHECK:STDOUT:   %pattern_type.27f: type = pattern_type %AdaptStruct [concrete]
 // CHECK:STDOUT:   %g.param_patt: %pattern_type.27f = value_param_pattern [concrete]
-// CHECK:STDOUT:   %g.patt: %pattern_type.27f = at_binding_pattern g, %g.param_patt [concrete]
+// CHECK:STDOUT:   %g.patt: %pattern_type.27f = wrapper_binding_pattern g, %g.param_patt [concrete]
 // CHECK:STDOUT:   %.ae3: Core.Form = init_form %AdaptStruct [concrete]
 // CHECK:STDOUT:   %return.param_patt.427: %pattern_type.27f = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.0e8: %pattern_type.27f = return_slot_pattern %return.param_patt.427, %AdaptStruct [concrete]
@@ -1003,7 +1003,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.type.e00: type = tuple_type (%AdaptStruct, %u32) [concrete]
 // CHECK:STDOUT:   %pattern_type.418: type = pattern_type %tuple.type.e00 [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type.418 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt: %pattern_type.418 = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.418 = wrapper_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %.70d: Core.Form = init_form %tuple.type.e00 [concrete]
 // CHECK:STDOUT:   %return.param_patt.9c4: %pattern_type.418 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.3e9: %pattern_type.418 = return_slot_pattern %return.param_patt.9c4, %tuple.type.e00 [concrete]
@@ -1055,7 +1055,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %AdaptStruct.decl: type = class_decl @AdaptStruct [concrete = constants.%AdaptStruct] {} {}
 // CHECK:STDOUT:   %I.decl: %I.type = fn_decl @I [concrete = constants.%I] {
 // CHECK:STDOUT:     %g.param_patt: %pattern_type.27f = value_param_pattern [concrete = constants.%g.param_patt]
-// CHECK:STDOUT:     %g.patt: %pattern_type.27f = at_binding_pattern g, %g.param_patt [concrete = constants.%g.patt]
+// CHECK:STDOUT:     %g.patt: %pattern_type.27f = wrapper_binding_pattern g, %g.param_patt [concrete = constants.%g.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.27f = out_param_pattern [concrete = constants.%return.param_patt.427]
 // CHECK:STDOUT:     %return.patt: %pattern_type.27f = return_slot_pattern %return.param_patt, %AdaptStruct.ref.loc8_25 [concrete = constants.%return.patt.0e8]
 // CHECK:STDOUT:   } {
@@ -1069,7 +1069,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InTuple.decl: %InTuple.type = fn_decl @InTuple [concrete = constants.%InTuple] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.418 = value_param_pattern [concrete = constants.%c.param_patt]
-// CHECK:STDOUT:     %c.patt: %pattern_type.418 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.418 = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.418 = out_param_pattern [concrete = constants.%return.param_patt.9c4]
 // CHECK:STDOUT:     %return.patt: %pattern_type.418 = return_slot_pattern %return.param_patt, %.loc13_55.2 [concrete = constants.%return.patt.3e9]
 // CHECK:STDOUT:   } {

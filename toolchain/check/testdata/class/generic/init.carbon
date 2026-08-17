@@ -76,7 +76,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.as_type.74b: type = facet_access_type %T.283 [symbolic]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %T.as_type.74b [symbolic]
 // CHECK:STDOUT:   %x.param_patt.e3c: %pattern_type.44a = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.a06: %pattern_type.44a = at_binding_pattern x, %x.param_patt.e3c [symbolic]
+// CHECK:STDOUT:   %x.patt.ecd: %pattern_type.44a = wrapper_binding_pattern x, %x.param_patt.e3c [symbolic]
 // CHECK:STDOUT:   %.2b9: Core.Form = init_form %T.as_type.74b [symbolic]
 // CHECK:STDOUT:   %return.param_patt.7e9: %pattern_type.44a = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.c4f: %pattern_type.44a = return_slot_pattern %return.param_patt.7e9, %T.as_type.74b [symbolic]
@@ -111,7 +111,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %x.param_patt.cee: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.fbe: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt.cee [concrete]
+// CHECK:STDOUT:   %x.patt.e3b: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt.cee [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
@@ -164,7 +164,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %InitFromStructGeneric.decl: %InitFromStructGeneric.type = fn_decl @InitFromStructGeneric [concrete = constants.%InitFromStructGeneric] {
 // CHECK:STDOUT:     %T.patt.loc9_35.1: %pattern_type.709 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_35.2 (constants.%T.patt.478)]
 // CHECK:STDOUT:     %x.param_patt.loc9_64.1: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = value_param_pattern [symbolic = %x.param_patt.loc9_64.2 (constants.%x.param_patt.e3c)]
-// CHECK:STDOUT:     %x.patt.loc9_64.1: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = at_binding_pattern x, %x.param_patt.loc9_64.1 [symbolic = %x.patt.loc9_64.2 (constants.%x.patt.a06)]
+// CHECK:STDOUT:     %x.patt.loc9_64.1: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = wrapper_binding_pattern x, %x.param_patt.loc9_64.1 [symbolic = %x.patt.loc9_64.2 (constants.%x.patt.ecd)]
 // CHECK:STDOUT:     %return.param_patt.loc9_72.1: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = out_param_pattern [symbolic = %return.param_patt.loc9_72.2 (constants.%return.param_patt.7e9)]
 // CHECK:STDOUT:     %return.patt.loc9_69.1: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = return_slot_pattern %return.param_patt.loc9_72.1, %.loc9_72.3 [symbolic = %return.patt.loc9_69.2 (constants.%return.patt.c4f)]
 // CHECK:STDOUT:   } {
@@ -197,7 +197,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructSpecific.decl: %InitFromStructSpecific.type = fn_decl @InitFromStructSpecific [concrete = constants.%InitFromStructSpecific] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt.cee]
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.fbe]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.e3b]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc14_38 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -217,7 +217,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.as_type.loc9_66.1: type = facet_access_type %T.loc9_35.1 [symbolic = %T.as_type.loc9_66.1 (constants.%T.as_type.74b)]
 // CHECK:STDOUT:   %pattern_type.loc9: type = pattern_type %T.as_type.loc9_66.1 [symbolic = %pattern_type.loc9 (constants.%pattern_type.44a)]
 // CHECK:STDOUT:   %x.param_patt.loc9_64.2: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = value_param_pattern [symbolic = %x.param_patt.loc9_64.2 (constants.%x.param_patt.e3c)]
-// CHECK:STDOUT:   %x.patt.loc9_64.2: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = at_binding_pattern x, %x.param_patt.loc9_64.2 [symbolic = %x.patt.loc9_64.2 (constants.%x.patt.a06)]
+// CHECK:STDOUT:   %x.patt.loc9_64.2: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = wrapper_binding_pattern x, %x.param_patt.loc9_64.2 [symbolic = %x.patt.loc9_64.2 (constants.%x.patt.ecd)]
 // CHECK:STDOUT:   %.loc9_72.2: Core.Form = init_form %T.as_type.loc9_66.1 [symbolic = %.loc9_72.2 (constants.%.2b9)]
 // CHECK:STDOUT:   %return.param_patt.loc9_72.2: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = out_param_pattern [symbolic = %return.param_patt.loc9_72.2 (constants.%return.param_patt.7e9)]
 // CHECK:STDOUT:   %return.patt.loc9_69.2: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = return_slot_pattern %return.param_patt.loc9_72.2, %T.as_type.loc9_66.1 [symbolic = %return.patt.loc9_69.2 (constants.%return.patt.c4f)]
@@ -369,7 +369,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.as_type.loc9_66.1 => constants.%T.as_type.74b
 // CHECK:STDOUT:   %pattern_type.loc9 => constants.%pattern_type.44a
 // CHECK:STDOUT:   %x.param_patt.loc9_64.2 => constants.%x.param_patt.e3c
-// CHECK:STDOUT:   %x.patt.loc9_64.2 => constants.%x.patt.a06
+// CHECK:STDOUT:   %x.patt.loc9_64.2 => constants.%x.patt.ecd
 // CHECK:STDOUT:   %.loc9_72.2 => constants.%.2b9
 // CHECK:STDOUT:   %return.param_patt.loc9_72.2 => constants.%return.param_patt.7e9
 // CHECK:STDOUT:   %return.patt.loc9_69.2 => constants.%return.patt.c4f
@@ -389,7 +389,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.f84 [symbolic]
 // CHECK:STDOUT:   %pattern_type.2c66b4.2: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %x.param_patt.1f4: %pattern_type.2c66b4.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.f93: %pattern_type.2c66b4.2 = at_binding_pattern x, %x.param_patt.1f4 [symbolic]
+// CHECK:STDOUT:   %x.patt.cec: %pattern_type.2c66b4.2 = wrapper_binding_pattern x, %x.param_patt.1f4 [symbolic]
 // CHECK:STDOUT:   %.1ce700.2: Core.Form = init_form %T.as_type [symbolic]
 // CHECK:STDOUT:   %return.param_patt.bf4475.2: %pattern_type.2c66b4.2 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.f44: %pattern_type.2c66b4.2 = return_slot_pattern %return.param_patt.bf4475.2, %T.as_type [symbolic]
@@ -410,7 +410,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %x.param_patt.cee: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.fbe: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt.cee [concrete]
+// CHECK:STDOUT:   %x.patt.e3b: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt.cee [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
@@ -445,7 +445,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %InitFromAdaptedGeneric.decl: %InitFromAdaptedGeneric.type = fn_decl @InitFromAdaptedGeneric [concrete = constants.%InitFromAdaptedGeneric] {
 // CHECK:STDOUT:     %T.patt.loc9_36.1: %pattern_type.e81 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_36.2 (constants.%T.patt.fe6)]
 // CHECK:STDOUT:     %x.param_patt.loc9_50.1: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = value_param_pattern [symbolic = %x.param_patt.loc9_50.2 (constants.%x.param_patt.1f4)]
-// CHECK:STDOUT:     %x.patt.loc9_50.1: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = at_binding_pattern x, %x.param_patt.loc9_50.1 [symbolic = %x.patt.loc9_50.2 (constants.%x.patt.f93)]
+// CHECK:STDOUT:     %x.patt.loc9_50.1: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern x, %x.param_patt.loc9_50.1 [symbolic = %x.patt.loc9_50.2 (constants.%x.patt.cec)]
 // CHECK:STDOUT:     %return.param_patt.loc9_58.1: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc9_58.2 (constants.%return.param_patt.bf4475.2)]
 // CHECK:STDOUT:     %return.patt.loc9_55.1: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc9_58.1, %.loc9_58.3 [symbolic = %return.patt.loc9_55.2 (constants.%return.patt.f44)]
 // CHECK:STDOUT:   } {
@@ -471,7 +471,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromAdaptedSpecific.decl: %InitFromAdaptedSpecific.type = fn_decl @InitFromAdaptedSpecific [concrete = constants.%InitFromAdaptedSpecific] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt.cee]
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.fbe]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.e3b]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc13_39 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -491,7 +491,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.as_type.loc9_52.1: type = facet_access_type %T.loc9_36.1 [symbolic = %T.as_type.loc9_52.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc9_52.1 [symbolic = %pattern_type (constants.%pattern_type.2c66b4.2)]
 // CHECK:STDOUT:   %x.param_patt.loc9_50.2: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = value_param_pattern [symbolic = %x.param_patt.loc9_50.2 (constants.%x.param_patt.1f4)]
-// CHECK:STDOUT:   %x.patt.loc9_50.2: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = at_binding_pattern x, %x.param_patt.loc9_50.2 [symbolic = %x.patt.loc9_50.2 (constants.%x.patt.f93)]
+// CHECK:STDOUT:   %x.patt.loc9_50.2: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern x, %x.param_patt.loc9_50.2 [symbolic = %x.patt.loc9_50.2 (constants.%x.patt.cec)]
 // CHECK:STDOUT:   %.loc9_58.2: Core.Form = init_form %T.as_type.loc9_52.1 [symbolic = %.loc9_58.2 (constants.%.1ce700.2)]
 // CHECK:STDOUT:   %return.param_patt.loc9_58.2: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc9_58.2 (constants.%return.param_patt.bf4475.2)]
 // CHECK:STDOUT:   %return.patt.loc9_55.2: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc9_58.2, %T.as_type.loc9_52.1 [symbolic = %return.patt.loc9_55.2 (constants.%return.patt.f44)]
@@ -558,7 +558,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.as_type.loc9_52.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2c66b4.2
 // CHECK:STDOUT:   %x.param_patt.loc9_50.2 => constants.%x.param_patt.1f4
-// CHECK:STDOUT:   %x.patt.loc9_50.2 => constants.%x.patt.f93
+// CHECK:STDOUT:   %x.patt.loc9_50.2 => constants.%x.patt.cec
 // CHECK:STDOUT:   %.loc9_58.2 => constants.%.1ce700.2
 // CHECK:STDOUT:   %return.param_patt.loc9_58.2 => constants.%return.param_patt.bf4475.2
 // CHECK:STDOUT:   %return.patt.loc9_55.2 => constants.%return.patt.f44

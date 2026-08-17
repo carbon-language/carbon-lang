@@ -473,7 +473,7 @@ class V {
 // CHECK:STDOUT:   %ptr.976: type = ptr_type %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.d23: type = pattern_type %ptr.976 [concrete]
 // CHECK:STDOUT:   %d.param_patt.9b7: %pattern_type.d23 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %d.patt.1fc: %pattern_type.d23 = at_binding_pattern d, %d.param_patt.9b7 [concrete]
+// CHECK:STDOUT:   %d.patt.336: %pattern_type.d23 = wrapper_binding_pattern d, %d.param_patt.9b7 [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr.0e0: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %.866: Core.Form = init_form %ptr.0e0 [concrete]
@@ -498,7 +498,7 @@ class V {
 // CHECK:STDOUT:   %AcceptVal: %AcceptVal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.2f5: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %d.param_patt.0f5: %pattern_type.2f5 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %d.patt.e5a: %pattern_type.2f5 = at_binding_pattern d, %d.param_patt.0f5 [concrete]
+// CHECK:STDOUT:   %d.patt.0e6: %pattern_type.2f5 = wrapper_binding_pattern d, %d.param_patt.0f5 [concrete]
 // CHECK:STDOUT:   %ConvertVal.type: type = fn_type @ConvertVal [concrete]
 // CHECK:STDOUT:   %ConvertVal: %ConvertVal.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -518,7 +518,7 @@ class V {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %ConvertPtr.decl: %ConvertPtr.type = fn_decl @ConvertPtr [concrete = constants.%ConvertPtr] {
 // CHECK:STDOUT:     %d.param_patt: %pattern_type.d23 = value_param_pattern [concrete = constants.%d.param_patt.9b7]
-// CHECK:STDOUT:     %d.patt: %pattern_type.d23 = at_binding_pattern d, %d.param_patt [concrete = constants.%d.patt.1fc]
+// CHECK:STDOUT:     %d.patt: %pattern_type.d23 = wrapper_binding_pattern d, %d.param_patt [concrete = constants.%d.patt.336]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.cb0 = out_param_pattern [concrete = constants.%return.param_patt.b43]
 // CHECK:STDOUT:     %return.patt: %pattern_type.cb0 = return_slot_pattern %return.param_patt, %ptr.loc7_43 [concrete = constants.%return.patt.363]
 // CHECK:STDOUT:   } {
@@ -538,7 +538,7 @@ class V {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertVal.decl: %ConvertVal.type = fn_decl @ConvertVal [concrete = constants.%ConvertVal] {
 // CHECK:STDOUT:     %d.param_patt: %pattern_type.2f5 = value_param_pattern [concrete = constants.%d.param_patt.0f5]
-// CHECK:STDOUT:     %d.patt: %pattern_type.2f5 = at_binding_pattern d, %d.param_patt [concrete = constants.%d.patt.e5a]
+// CHECK:STDOUT:     %d.patt: %pattern_type.2f5 = wrapper_binding_pattern d, %d.param_patt [concrete = constants.%d.patt.0e6]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %.loc15: type = splice_block %Derived.ref [concrete = constants.%Derived] {

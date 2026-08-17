@@ -61,7 +61,7 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.f84 [symbolic]
 // CHECK:STDOUT:   %pattern_type.2c66b4.2: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %n.param_patt: %pattern_type.2c66b4.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %n.patt.8c9: %pattern_type.2c66b4.2 = at_binding_pattern n, %n.param_patt [symbolic]
+// CHECK:STDOUT:   %n.patt.364: %pattern_type.2c66b4.2 = wrapper_binding_pattern n, %n.param_patt [symbolic]
 // CHECK:STDOUT:   %.1ce700.2: Core.Form = init_form %T.as_type [symbolic]
 // CHECK:STDOUT:   %return.param_patt.bf4475.2: %pattern_type.2c66b4.2 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.f44: %pattern_type.2c66b4.2 = return_slot_pattern %return.param_patt.bf4475.2, %T.as_type [symbolic]
@@ -69,7 +69,7 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.e18: type = pattern_type %Class [symbolic]
 // CHECK:STDOUT:   %self.param_patt.aaa: %pattern_type.e18 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.d8a: %pattern_type.e18 = at_binding_pattern self, %self.param_patt.aaa [symbolic]
+// CHECK:STDOUT:   %self.patt.f4e: %pattern_type.e18 = wrapper_binding_pattern self, %self.param_patt.aaa [symbolic]
 // CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G, @Class(%T.f84) [symbolic]
 // CHECK:STDOUT:   %Class.G: %Class.G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.d83: <witness> = require_complete_type %T.as_type [symbolic]
@@ -128,7 +128,7 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Class.F.decl: @Class.%Class.F.type (%Class.F.type) = fn_decl @Class.F [symbolic = @Class.%Class.F (constants.%Class.F)] {
 // CHECK:STDOUT:       %n.param_patt.loc6_9.1: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = value_param_pattern [symbolic = %n.param_patt.loc6_9.2 (constants.%n.param_patt)]
-// CHECK:STDOUT:       %n.patt.loc6_9.1: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = at_binding_pattern n, %n.param_patt.loc6_9.1 [symbolic = %n.patt.loc6_9.2 (constants.%n.patt.8c9)]
+// CHECK:STDOUT:       %n.patt.loc6_9.1: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern n, %n.param_patt.loc6_9.1 [symbolic = %n.patt.loc6_9.2 (constants.%n.patt.364)]
 // CHECK:STDOUT:       %return.param_patt.loc6_17.1: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc6_17.2 (constants.%return.param_patt.bf4475.2)]
 // CHECK:STDOUT:       %return.patt.loc6_14.1: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc6_17.1, %.loc6_17.3 [symbolic = %return.patt.loc6_14.2 (constants.%return.patt.f44)]
 // CHECK:STDOUT:     } {
@@ -148,7 +148,7 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.G.decl: @Class.%Class.G.type (%Class.G.type) = fn_decl @Class.G [symbolic = @Class.%Class.G (constants.%Class.G)] {
 // CHECK:STDOUT:       %self.param_patt.loc10_8.1: @Class.G.%pattern_type.loc10_8 (%pattern_type.e18) = value_param_pattern [symbolic = %self.param_patt.loc10_8.2 (constants.%self.param_patt.aaa)]
-// CHECK:STDOUT:       %self.patt.loc10_8.1: @Class.G.%pattern_type.loc10_8 (%pattern_type.e18) = at_binding_pattern self, %self.param_patt.loc10_8.1 [symbolic = %self.patt.loc10_8.2 (constants.%self.patt.d8a)]
+// CHECK:STDOUT:       %self.patt.loc10_8.1: @Class.G.%pattern_type.loc10_8 (%pattern_type.e18) = wrapper_binding_pattern self, %self.param_patt.loc10_8.1 [symbolic = %self.patt.loc10_8.2 (constants.%self.patt.f4e)]
 // CHECK:STDOUT:       %return.param_patt.loc10_17.1: @Class.G.%pattern_type.loc10_17 (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc10_17.2 (constants.%return.param_patt.bf4475.2)]
 // CHECK:STDOUT:       %return.patt.loc10_14.1: @Class.G.%pattern_type.loc10_17 (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc10_17.1, %.loc10_17.3 [symbolic = %return.patt.loc10_14.2 (constants.%return.patt.f44)]
 // CHECK:STDOUT:     } {
@@ -183,7 +183,7 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:   %T.as_type.loc6_11.1: type = facet_access_type %T [symbolic = %T.as_type.loc6_11.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc6_11.1 [symbolic = %pattern_type (constants.%pattern_type.2c66b4.2)]
 // CHECK:STDOUT:   %n.param_patt.loc6_9.2: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = value_param_pattern [symbolic = %n.param_patt.loc6_9.2 (constants.%n.param_patt)]
-// CHECK:STDOUT:   %n.patt.loc6_9.2: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = at_binding_pattern n, %n.param_patt.loc6_9.2 [symbolic = %n.patt.loc6_9.2 (constants.%n.patt.8c9)]
+// CHECK:STDOUT:   %n.patt.loc6_9.2: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern n, %n.param_patt.loc6_9.2 [symbolic = %n.patt.loc6_9.2 (constants.%n.patt.364)]
 // CHECK:STDOUT:   %.loc6_17.2: Core.Form = init_form %T.as_type.loc6_11.1 [symbolic = %.loc6_17.2 (constants.%.1ce700.2)]
 // CHECK:STDOUT:   %return.param_patt.loc6_17.2: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc6_17.2 (constants.%return.param_patt.bf4475.2)]
 // CHECK:STDOUT:   %return.patt.loc6_14.2: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc6_17.2, %T.as_type.loc6_11.1 [symbolic = %return.patt.loc6_14.2 (constants.%return.patt.f44)]
@@ -216,7 +216,7 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %pattern_type.loc10_8: type = pattern_type %Class [symbolic = %pattern_type.loc10_8 (constants.%pattern_type.e18)]
 // CHECK:STDOUT:   %self.param_patt.loc10_8.2: @Class.G.%pattern_type.loc10_8 (%pattern_type.e18) = value_param_pattern [symbolic = %self.param_patt.loc10_8.2 (constants.%self.param_patt.aaa)]
-// CHECK:STDOUT:   %self.patt.loc10_8.2: @Class.G.%pattern_type.loc10_8 (%pattern_type.e18) = at_binding_pattern self, %self.param_patt.loc10_8.2 [symbolic = %self.patt.loc10_8.2 (constants.%self.patt.d8a)]
+// CHECK:STDOUT:   %self.patt.loc10_8.2: @Class.G.%pattern_type.loc10_8 (%pattern_type.e18) = wrapper_binding_pattern self, %self.param_patt.loc10_8.2 [symbolic = %self.patt.loc10_8.2 (constants.%self.patt.f4e)]
 // CHECK:STDOUT:   %T.as_type.loc10_17.1: type = facet_access_type %T [symbolic = %T.as_type.loc10_17.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %.loc10_17.2: Core.Form = init_form %T.as_type.loc10_17.1 [symbolic = %.loc10_17.2 (constants.%.1ce700.2)]
 // CHECK:STDOUT:   %pattern_type.loc10_17: type = pattern_type %T.as_type.loc10_17.1 [symbolic = %pattern_type.loc10_17 (constants.%pattern_type.2c66b4.2)]
@@ -275,7 +275,7 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:   %T.as_type.loc6_11.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2c66b4.2
 // CHECK:STDOUT:   %n.param_patt.loc6_9.2 => constants.%n.param_patt
-// CHECK:STDOUT:   %n.patt.loc6_9.2 => constants.%n.patt.8c9
+// CHECK:STDOUT:   %n.patt.loc6_9.2 => constants.%n.patt.364
 // CHECK:STDOUT:   %.loc6_17.2 => constants.%.1ce700.2
 // CHECK:STDOUT:   %return.param_patt.loc6_17.2 => constants.%return.param_patt.bf4475.2
 // CHECK:STDOUT:   %return.patt.loc6_14.2 => constants.%return.patt.f44
@@ -286,7 +286,7 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %pattern_type.loc10_8 => constants.%pattern_type.e18
 // CHECK:STDOUT:   %self.param_patt.loc10_8.2 => constants.%self.param_patt.aaa
-// CHECK:STDOUT:   %self.patt.loc10_8.2 => constants.%self.patt.d8a
+// CHECK:STDOUT:   %self.patt.loc10_8.2 => constants.%self.patt.f4e
 // CHECK:STDOUT:   %T.as_type.loc10_17.1 => constants.%T.as_type
 // CHECK:STDOUT:   %.loc10_17.2 => constants.%.1ce700.2
 // CHECK:STDOUT:   %pattern_type.loc10_17 => constants.%pattern_type.2c66b4.2

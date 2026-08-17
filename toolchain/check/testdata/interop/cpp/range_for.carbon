@@ -863,7 +863,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type: type = facet_access_type %R [symbolic]
 // CHECK:STDOUT:   %pattern_type.073: type = pattern_type %R.as_type [symbolic]
 // CHECK:STDOUT:   %r.param_patt.d39: %pattern_type.073 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %r.patt.de1: %pattern_type.073 = at_binding_pattern r, %r.param_patt.d39 [symbolic]
+// CHECK:STDOUT:   %r.patt.5af: %pattern_type.073 = wrapper_binding_pattern r, %r.param_patt.d39 [symbolic]
 // CHECK:STDOUT:   %facet_type.037: type = facet_type <@IntFitsIn, @IntFitsIn(%Int.67af24.2) & @AnyInt> [symbolic]
 // CHECK:STDOUT:   %From.6a4: %facet_type.037 = symbolic_binding From, 1 [symbolic]
 // CHECK:STDOUT:   %From.as_type.as.ImplicitAs.impl.Convert.type.7fa: type = fn_type @From.as_type.as.ImplicitAs.impl.Convert, @From.as_type.as.ImplicitAs.impl(%To, %From.6a4) [symbolic]
@@ -968,7 +968,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Iterate.facet.fdf: %Iterate.type = facet_value %MutableRange, (%Iterate.impl_witness.0b0) [concrete]
 // CHECK:STDOUT:   %facet_value.8a3: %Iterate_where.type.01c = facet_value %MutableRange, (%Iterate.impl_witness.0b0) [concrete]
 // CHECK:STDOUT:   %r.param_patt.c79: %pattern_type.e635 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %r.patt.16f: %pattern_type.e635 = at_binding_pattern r, %r.param_patt.c79 [concrete]
+// CHECK:STDOUT:   %r.patt.94f: %pattern_type.e635 = wrapper_binding_pattern r, %r.param_patt.c79 [concrete]
 // CHECK:STDOUT:   %Iterator.260: type = class_type @Iterator.2 [concrete]
 // CHECK:STDOUT:   %ConstRange.Begin.type: type = fn_type @ConstRange.Begin [concrete]
 // CHECK:STDOUT:   %ConstRange.Begin: %ConstRange.Begin.type = struct_value () [concrete]
@@ -1003,7 +1003,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Iterate.facet.4c8: %Iterate.type = facet_value %ConstRange, (%Iterate.impl_witness.bb2) [concrete]
 // CHECK:STDOUT:   %facet_value.9af: %Iterate_where.type.01c = facet_value %ConstRange, (%Iterate.impl_witness.bb2) [concrete]
 // CHECK:STDOUT:   %r.param_patt.83e: %pattern_type.0ba = value_param_pattern [concrete]
-// CHECK:STDOUT:   %r.patt.116: %pattern_type.0ba = at_binding_pattern r, %r.param_patt.83e [concrete]
+// CHECK:STDOUT:   %r.patt.c21: %pattern_type.0ba = wrapper_binding_pattern r, %r.param_patt.83e [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type.5e7: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.fdf) [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.08a: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.fdf) [concrete]
 // CHECK:STDOUT:   %.641: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.5e7, %Iterate.facet.fdf [concrete]
@@ -1353,7 +1353,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type.loc30_61.1 => constants.%R.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.073
 // CHECK:STDOUT:   %r.param_patt.loc30_59.2 => constants.%r.param_patt.d39
-// CHECK:STDOUT:   %r.patt.loc30_59.2 => constants.%r.patt.de1
+// CHECK:STDOUT:   %r.patt.loc30_59.2 => constants.%r.patt.5af
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.8a3) {
@@ -1362,7 +1362,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type.loc30_61.1 => constants.%MutableRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e635
 // CHECK:STDOUT:   %r.param_patt.loc30_59.2 => constants.%r.param_patt.c79
-// CHECK:STDOUT:   %r.patt.loc30_59.2 => constants.%r.patt.16f
+// CHECK:STDOUT:   %r.patt.loc30_59.2 => constants.%r.patt.94f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc30 => constants.%complete_type.357
@@ -1393,7 +1393,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type.loc30_61.1 => constants.%ConstRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.0ba
 // CHECK:STDOUT:   %r.param_patt.loc30_59.2 => constants.%r.param_patt.83e
-// CHECK:STDOUT:   %r.patt.loc30_59.2 => constants.%r.patt.116
+// CHECK:STDOUT:   %r.patt.loc30_59.2 => constants.%r.patt.c21
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc30 => constants.%complete_type.357
@@ -2546,7 +2546,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type: type = facet_access_type %R [symbolic]
 // CHECK:STDOUT:   %pattern_type.d35: type = pattern_type %R.as_type [symbolic]
 // CHECK:STDOUT:   %r.param_patt.bc2: %pattern_type.d35 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %r.patt.f03: %pattern_type.d35 = at_binding_pattern r, %r.param_patt.bc2 [symbolic]
+// CHECK:STDOUT:   %r.patt.47e: %pattern_type.d35 = wrapper_binding_pattern r, %r.param_patt.bc2 [symbolic]
 // CHECK:STDOUT:   %i.patt: %pattern_type.fb7 = value_binding_pattern i [concrete]
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness.757: <witness> = lookup_impl_witness %R, @Iterate [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.737: %Iterate.type = facet_value %R.as_type, (%Iterate.lookup_impl_witness.757) [symbolic]
@@ -2630,7 +2630,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Iterate.facet.212: %Iterate.type = facet_value %ConstRange, (%Iterate.impl_witness.526) [concrete]
 // CHECK:STDOUT:   %facet_value.eb1: %Iterate_where.type.e6d = facet_value %ConstRange, (%Iterate.impl_witness.526) [concrete]
 // CHECK:STDOUT:   %r.param_patt.a73: %pattern_type.025 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %r.patt.0e2: %pattern_type.025 = at_binding_pattern r, %r.param_patt.a73 [concrete]
+// CHECK:STDOUT:   %r.patt.0b5: %pattern_type.025 = wrapper_binding_pattern r, %r.param_patt.a73 [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type.8e0: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.212) [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.2d3: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.212) [concrete]
 // CHECK:STDOUT:   %.835: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.8e0, %Iterate.facet.212 [concrete]
@@ -2878,7 +2878,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type.loc20_61.1 => constants.%R.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d35
 // CHECK:STDOUT:   %r.param_patt.loc20_59.2 => constants.%r.param_patt.bc2
-// CHECK:STDOUT:   %r.patt.loc20_59.2 => constants.%r.patt.f03
+// CHECK:STDOUT:   %r.patt.loc20_59.2 => constants.%r.patt.47e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.eb1) {
@@ -2887,7 +2887,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type.loc20_61.1 => constants.%ConstRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.025
 // CHECK:STDOUT:   %r.param_patt.loc20_59.2 => constants.%r.param_patt.a73
-// CHECK:STDOUT:   %r.patt.loc20_59.2 => constants.%r.patt.0e2
+// CHECK:STDOUT:   %r.patt.loc20_59.2 => constants.%r.patt.0b5
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc20 => constants.%complete_type.357
@@ -2979,7 +2979,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type: type = facet_access_type %R [symbolic]
 // CHECK:STDOUT:   %pattern_type.d35: type = pattern_type %R.as_type [symbolic]
 // CHECK:STDOUT:   %r.param_patt.bc2: %pattern_type.d35 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %r.patt.f03: %pattern_type.d35 = at_binding_pattern r, %r.param_patt.bc2 [symbolic]
+// CHECK:STDOUT:   %r.patt.47e: %pattern_type.d35 = wrapper_binding_pattern r, %r.param_patt.bc2 [symbolic]
 // CHECK:STDOUT:   %i.patt: %pattern_type.fb7 = value_binding_pattern i [concrete]
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness.757: <witness> = lookup_impl_witness %R, @Iterate [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.737: %Iterate.type = facet_value %R.as_type, (%Iterate.lookup_impl_witness.757) [symbolic]
@@ -3063,7 +3063,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Iterate.facet.24a: %Iterate.type = facet_value %MutableRange, (%Iterate.impl_witness.15e) [concrete]
 // CHECK:STDOUT:   %facet_value.6bc: %Iterate_where.type.e6d = facet_value %MutableRange, (%Iterate.impl_witness.15e) [concrete]
 // CHECK:STDOUT:   %r.param_patt.aeb: %pattern_type.992 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %r.patt.fe7: %pattern_type.992 = at_binding_pattern r, %r.param_patt.aeb [concrete]
+// CHECK:STDOUT:   %r.patt.892: %pattern_type.992 = wrapper_binding_pattern r, %r.param_patt.aeb [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type.4f1: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.24a) [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.e92: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.24a) [concrete]
 // CHECK:STDOUT:   %.534: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.4f1, %Iterate.facet.24a [concrete]
@@ -3313,7 +3313,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type.loc22_61.1 => constants.%R.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d35
 // CHECK:STDOUT:   %r.param_patt.loc22_59.2 => constants.%r.param_patt.bc2
-// CHECK:STDOUT:   %r.patt.loc22_59.2 => constants.%r.patt.f03
+// CHECK:STDOUT:   %r.patt.loc22_59.2 => constants.%r.patt.47e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.6bc) {
@@ -3322,7 +3322,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type.loc22_61.1 => constants.%MutableRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.992
 // CHECK:STDOUT:   %r.param_patt.loc22_59.2 => constants.%r.param_patt.aeb
-// CHECK:STDOUT:   %r.patt.loc22_59.2 => constants.%r.patt.fe7
+// CHECK:STDOUT:   %r.patt.loc22_59.2 => constants.%r.patt.892
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc22 => constants.%complete_type.357
@@ -3419,7 +3419,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type: type = facet_access_type %R [symbolic]
 // CHECK:STDOUT:   %pattern_type.17d: type = pattern_type %R.as_type [symbolic]
 // CHECK:STDOUT:   %r.param_patt.90c: %pattern_type.17d = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %r.patt.d6c: %pattern_type.17d = at_binding_pattern r, %r.param_patt.90c [symbolic]
+// CHECK:STDOUT:   %r.patt.db8: %pattern_type.17d = wrapper_binding_pattern r, %r.param_patt.90c [symbolic]
 // CHECK:STDOUT:   %i.patt: %pattern_type.e41 = value_binding_pattern i [concrete]
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness.173: <witness> = lookup_impl_witness %R, @Iterate [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.b38: %Iterate.type = facet_value %R.as_type, (%Iterate.lookup_impl_witness.173) [symbolic]
@@ -3497,7 +3497,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Iterate.facet.eeb: %Iterate.type = facet_value %ConstRange, (%Iterate.impl_witness.228) [concrete]
 // CHECK:STDOUT:   %facet_value.811: %Iterate_where.type.f9d = facet_value %ConstRange, (%Iterate.impl_witness.228) [concrete]
 // CHECK:STDOUT:   %r.param_patt.a73: %pattern_type.025 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %r.patt.0e2: %pattern_type.025 = at_binding_pattern r, %r.param_patt.a73 [concrete]
+// CHECK:STDOUT:   %r.patt.0b5: %pattern_type.025 = wrapper_binding_pattern r, %r.param_patt.a73 [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type.3de: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.eeb) [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.6bd: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.eeb) [concrete]
 // CHECK:STDOUT:   %.f54: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.3de, %Iterate.facet.eeb [concrete]
@@ -3780,7 +3780,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type.loc27_73.1 => constants.%R.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.17d
 // CHECK:STDOUT:   %r.param_patt.loc27_71.2 => constants.%r.param_patt.90c
-// CHECK:STDOUT:   %r.patt.loc27_71.2 => constants.%r.patt.d6c
+// CHECK:STDOUT:   %r.patt.loc27_71.2 => constants.%r.patt.db8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.811) {
@@ -3789,7 +3789,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type.loc27_73.1 => constants.%ConstRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.025
 // CHECK:STDOUT:   %r.param_patt.loc27_71.2 => constants.%r.param_patt.a73
-// CHECK:STDOUT:   %r.patt.loc27_71.2 => constants.%r.patt.0e2
+// CHECK:STDOUT:   %r.patt.loc27_71.2 => constants.%r.patt.0b5
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc27 => constants.%complete_type.357
@@ -3857,7 +3857,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type: type = facet_access_type %R [symbolic]
 // CHECK:STDOUT:   %pattern_type.17d: type = pattern_type %R.as_type [symbolic]
 // CHECK:STDOUT:   %r.param_patt: %pattern_type.17d = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %r.patt: %pattern_type.17d = at_binding_pattern r, %r.param_patt [symbolic]
+// CHECK:STDOUT:   %r.patt: %pattern_type.17d = wrapper_binding_pattern r, %r.param_patt [symbolic]
 // CHECK:STDOUT:   %i.patt: %pattern_type.e41 = value_binding_pattern i [concrete]
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness.173: <witness> = lookup_impl_witness %R, @Iterate [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.b38: %Iterate.type = facet_value %R.as_type, (%Iterate.lookup_impl_witness.173) [symbolic]
@@ -4186,7 +4186,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type: type = facet_access_type %R [symbolic]
 // CHECK:STDOUT:   %pattern_type.17d: type = pattern_type %R.as_type [symbolic]
 // CHECK:STDOUT:   %r.param_patt.90c: %pattern_type.17d = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %r.patt.d6c: %pattern_type.17d = at_binding_pattern r, %r.param_patt.90c [symbolic]
+// CHECK:STDOUT:   %r.patt.db8: %pattern_type.17d = wrapper_binding_pattern r, %r.param_patt.90c [symbolic]
 // CHECK:STDOUT:   %i.patt: %pattern_type.e41 = value_binding_pattern i [concrete]
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness.173: <witness> = lookup_impl_witness %R, @Iterate [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.b38: %Iterate.type = facet_value %R.as_type, (%Iterate.lookup_impl_witness.173) [symbolic]
@@ -4260,7 +4260,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Iterate.facet.878: %Iterate.type = facet_value %MutableAndConstRange, (%Iterate.impl_witness.c1c) [concrete]
 // CHECK:STDOUT:   %facet_value.530: %Iterate_where.type.f9d = facet_value %MutableAndConstRange, (%Iterate.impl_witness.c1c) [concrete]
 // CHECK:STDOUT:   %r.param_patt.8bb: %pattern_type.394 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %r.patt.ac4: %pattern_type.394 = at_binding_pattern r, %r.param_patt.8bb [concrete]
+// CHECK:STDOUT:   %r.patt.429: %pattern_type.394 = wrapper_binding_pattern r, %r.param_patt.8bb [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type.5d8: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.878) [concrete]
 // CHECK:STDOUT:   %Iterate.WithSelf.Next.type.1eb: type = fn_type @Iterate.WithSelf.Next, @Iterate.WithSelf(%Iterate.facet.878) [concrete]
 // CHECK:STDOUT:   %.2a5: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type.5d8, %Iterate.facet.878 [concrete]
@@ -4545,7 +4545,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type.loc34_73.1 => constants.%R.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.17d
 // CHECK:STDOUT:   %r.param_patt.loc34_71.2 => constants.%r.param_patt.90c
-// CHECK:STDOUT:   %r.patt.loc34_71.2 => constants.%r.patt.d6c
+// CHECK:STDOUT:   %r.patt.loc34_71.2 => constants.%r.patt.db8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestIterate(constants.%facet_value.530) {
@@ -4554,7 +4554,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %R.as_type.loc34_73.1 => constants.%MutableAndConstRange
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.394
 // CHECK:STDOUT:   %r.param_patt.loc34_71.2 => constants.%r.param_patt.8bb
-// CHECK:STDOUT:   %r.patt.loc34_71.2 => constants.%r.patt.ac4
+// CHECK:STDOUT:   %r.patt.loc34_71.2 => constants.%r.patt.429
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc34 => constants.%complete_type.357

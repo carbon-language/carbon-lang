@@ -106,7 +106,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %C.e8d: type = class_type @C, @C(%Z.facet.4d3) [symbolic]
 // CHECK:STDOUT:   %pattern_type.ddf: type = pattern_type %C.e8d [symbolic]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type.ddf = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %c.patt: %pattern_type.ddf = at_binding_pattern c, %c.param_patt [symbolic]
+// CHECK:STDOUT:   %c.patt: %pattern_type.ddf = wrapper_binding_pattern c, %c.param_patt [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%Self.37e) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F: %I.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.WithSelf.%I.WithSelf.F.decl [concrete]
@@ -189,7 +189,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F)] {
 // CHECK:STDOUT:     %c.param_patt.loc24_9.1: @I.WithSelf.F.%pattern_type (%pattern_type.ddf) = value_param_pattern [symbolic = %c.param_patt.loc24_9.2 (constants.%c.param_patt)]
-// CHECK:STDOUT:     %c.patt.loc24_9.1: @I.WithSelf.F.%pattern_type (%pattern_type.ddf) = at_binding_pattern c, %c.param_patt.loc24_9.1 [symbolic = %c.patt.loc24_9.2 (constants.%c.patt)]
+// CHECK:STDOUT:     %c.patt.loc24_9.1: @I.WithSelf.F.%pattern_type (%pattern_type.ddf) = wrapper_binding_pattern c, %c.param_patt.loc24_9.1 [symbolic = %c.patt.loc24_9.2 (constants.%c.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: @I.WithSelf.F.%C.loc24_18.1 (%C.e8d) = value_param call_param0
 // CHECK:STDOUT:     %.loc24_18.2: type = splice_block %C.loc24_18.2 [symbolic = %C.loc24_18.1 (constants.%C.e8d)] {
@@ -283,7 +283,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %C.loc24_18.1: type = class_type @C, @C(%Z.facet.loc24_18.1) [symbolic = %C.loc24_18.1 (constants.%C.e8d)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C.loc24_18.1 [symbolic = %pattern_type (constants.%pattern_type.ddf)]
 // CHECK:STDOUT:   %c.param_patt.loc24_9.2: @I.WithSelf.F.%pattern_type (%pattern_type.ddf) = value_param_pattern [symbolic = %c.param_patt.loc24_9.2 (constants.%c.param_patt)]
-// CHECK:STDOUT:   %c.patt.loc24_9.2: @I.WithSelf.F.%pattern_type (%pattern_type.ddf) = at_binding_pattern c, %c.param_patt.loc24_9.2 [symbolic = %c.patt.loc24_9.2 (constants.%c.patt)]
+// CHECK:STDOUT:   %c.patt.loc24_9.2: @I.WithSelf.F.%pattern_type (%pattern_type.ddf) = wrapper_binding_pattern c, %c.param_patt.loc24_9.2 [symbolic = %c.patt.loc24_9.2 (constants.%c.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%c.param: @I.WithSelf.F.%C.loc24_18.1 (%C.e8d));
 // CHECK:STDOUT: }
@@ -390,7 +390,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %C.526: type = class_type @C, @C(%Z.facet.416) [symbolic]
 // CHECK:STDOUT:   %pattern_type.d24: type = pattern_type %C.526 [symbolic]
 // CHECK:STDOUT:   %c.param_patt.6ae: %pattern_type.d24 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %c.patt.2df: %pattern_type.d24 = at_binding_pattern c, %c.param_patt.6ae [symbolic]
+// CHECK:STDOUT:   %c.patt.93c: %pattern_type.d24 = wrapper_binding_pattern c, %c.param_patt.6ae [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %.0ce: <witness> = impl_self_witness %U, @Z [symbolic]
 // CHECK:STDOUT:   %Z.impl_witness.d6c: <witness> = impl_witness imports.%Z.impl_witness_table, @U.as.Z.impl(%U) [symbolic]
@@ -428,7 +428,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %C.82a: type = class_type @C, @C(%Z.facet.c6a) [concrete]
 // CHECK:STDOUT:   %pattern_type.3b9: type = pattern_type %C.82a [concrete]
 // CHECK:STDOUT:   %c.param_patt.6af: %pattern_type.3b9 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt.dab: %pattern_type.3b9 = at_binding_pattern c, %c.param_patt.6af [concrete]
+// CHECK:STDOUT:   %c.patt.816: %pattern_type.3b9 = wrapper_binding_pattern c, %c.param_patt.6af [concrete]
 // CHECK:STDOUT:   %D.as.I.impl.F.type: type = fn_type @D.as.I.impl.F, @D.as.I.impl(%N) [symbolic]
 // CHECK:STDOUT:   %D.as.I.impl.F: %D.as.I.impl.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %D, (%I.impl_witness) [symbolic]
@@ -588,7 +588,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   impl: %D.loc20_23.2 as %I.ref {
 // CHECK:STDOUT:     %D.as.I.impl.F.decl: @D.as.I.impl.%D.as.I.impl.F.type (%D.as.I.impl.F.type) = fn_decl @D.as.I.impl.F [symbolic = @D.as.I.impl.%D.as.I.impl.F (constants.%D.as.I.impl.F)] {
 // CHECK:STDOUT:       %c.param_patt: %pattern_type.3b9 = value_param_pattern [concrete = constants.%c.param_patt.6af]
-// CHECK:STDOUT:       %c.patt: %pattern_type.3b9 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.dab]
+// CHECK:STDOUT:       %c.patt: %pattern_type.3b9 = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.816]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %c.param: %C.82a = value_param call_param0
 // CHECK:STDOUT:       %.loc21_22.1: type = splice_block %C [concrete = constants.%C.82a] {
@@ -660,7 +660,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Z.facet) [symbolic = %C (constants.%C.526)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [symbolic = %pattern_type (constants.%pattern_type.d24)]
 // CHECK:STDOUT:   %c.param_patt: @I.WithSelf.F.%pattern_type (%pattern_type.d24) = value_param_pattern [symbolic = %c.param_patt (constants.%c.param_patt.6ae)]
-// CHECK:STDOUT:   %c.patt: @I.WithSelf.F.%pattern_type (%pattern_type.d24) = at_binding_pattern c, %c.param_patt [symbolic = %c.patt (constants.%c.patt.2df)]
+// CHECK:STDOUT:   %c.patt: @I.WithSelf.F.%pattern_type (%pattern_type.d24) = wrapper_binding_pattern c, %c.param_patt [symbolic = %c.patt (constants.%c.patt.93c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -731,7 +731,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %C => constants.%C.526
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d24
 // CHECK:STDOUT:   %c.param_patt => constants.%c.param_patt.6ae
-// CHECK:STDOUT:   %c.patt => constants.%c.patt.2df
+// CHECK:STDOUT:   %c.patt => constants.%c.patt.93c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.frozen.3a0) {
@@ -805,6 +805,6 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %C => constants.%C.82a
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.3b9
 // CHECK:STDOUT:   %c.param_patt => constants.%c.param_patt.6af
-// CHECK:STDOUT:   %c.patt => constants.%c.patt.dab
+// CHECK:STDOUT:   %c.patt => constants.%c.patt.816
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

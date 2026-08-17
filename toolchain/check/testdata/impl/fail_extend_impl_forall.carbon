@@ -40,7 +40,7 @@ class C {
 // CHECK:STDOUT:   %Self: %GenericInterface.type.4e1 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %x.param_patt: %pattern_type.51d = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt: %pattern_type.51d = at_binding_pattern x, %x.param_patt [symbolic]
+// CHECK:STDOUT:   %x.patt: %pattern_type.51d = wrapper_binding_pattern x, %x.param_patt [symbolic]
 // CHECK:STDOUT:   %GenericInterface.WithSelf.F.type: type = fn_type @GenericInterface.WithSelf.F, @GenericInterface.WithSelf(%T, %Self) [symbolic]
 // CHECK:STDOUT:   %GenericInterface.WithSelf.F: %GenericInterface.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %GenericInterface.assoc_type: type = assoc_entity_type @GenericInterface, @GenericInterface(%T) [symbolic]
@@ -87,7 +87,7 @@ class C {
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %GenericInterface.WithSelf.F.decl: @GenericInterface.WithSelf.%GenericInterface.WithSelf.F.type (%GenericInterface.WithSelf.F.type) = fn_decl @GenericInterface.WithSelf.F [symbolic = @GenericInterface.WithSelf.%GenericInterface.WithSelf.F (constants.%GenericInterface.WithSelf.F)] {
 // CHECK:STDOUT:       %x.param_patt.loc16_9.1: @GenericInterface.WithSelf.F.%pattern_type (%pattern_type.51d) = value_param_pattern [symbolic = %x.param_patt.loc16_9.2 (constants.%x.param_patt)]
-// CHECK:STDOUT:       %x.patt.loc16_9.1: @GenericInterface.WithSelf.F.%pattern_type (%pattern_type.51d) = at_binding_pattern x, %x.param_patt.loc16_9.1 [symbolic = %x.patt.loc16_9.2 (constants.%x.patt)]
+// CHECK:STDOUT:       %x.patt.loc16_9.1: @GenericInterface.WithSelf.F.%pattern_type (%pattern_type.51d) = wrapper_binding_pattern x, %x.param_patt.loc16_9.1 [symbolic = %x.patt.loc16_9.2 (constants.%x.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @GenericInterface.WithSelf.F.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @GenericInterface.%T.loc15_29.2 [symbolic = %T (constants.%T)]
@@ -120,7 +120,7 @@ class C {
 // CHECK:STDOUT:   impl: %Self.ref as %GenericInterface.type.loc24_53.2 {
 // CHECK:STDOUT:     %C.as.GenericInterface.impl.F.decl: @C.as.GenericInterface.impl.%C.as.GenericInterface.impl.F.type (%C.as.GenericInterface.impl.F.type) = fn_decl @C.as.GenericInterface.impl.F [symbolic = @C.as.GenericInterface.impl.%C.as.GenericInterface.impl.F (constants.%C.as.GenericInterface.impl.F)] {
 // CHECK:STDOUT:       %x.param_patt.loc25_18.1: @C.as.GenericInterface.impl.F.%pattern_type (%pattern_type.51d) = value_param_pattern [symbolic = %x.param_patt.loc25_18.2 (constants.%x.param_patt)]
-// CHECK:STDOUT:       %x.patt.loc25_18.1: @C.as.GenericInterface.impl.F.%pattern_type (%pattern_type.51d) = at_binding_pattern x, %x.param_patt.loc25_18.1 [symbolic = %x.patt.loc25_18.2 (constants.%x.patt)]
+// CHECK:STDOUT:       %x.patt.loc25_18.1: @C.as.GenericInterface.impl.F.%pattern_type (%pattern_type.51d) = wrapper_binding_pattern x, %x.param_patt.loc25_18.1 [symbolic = %x.patt.loc25_18.2 (constants.%x.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @C.as.GenericInterface.impl.F.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.as.GenericInterface.impl.%T.loc24_24.2 [symbolic = %T (constants.%T)]
@@ -165,7 +165,7 @@ class C {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %x.param_patt.loc16_9.2: @GenericInterface.WithSelf.F.%pattern_type (%pattern_type.51d) = value_param_pattern [symbolic = %x.param_patt.loc16_9.2 (constants.%x.param_patt)]
-// CHECK:STDOUT:   %x.patt.loc16_9.2: @GenericInterface.WithSelf.F.%pattern_type (%pattern_type.51d) = at_binding_pattern x, %x.param_patt.loc16_9.2 [symbolic = %x.patt.loc16_9.2 (constants.%x.patt)]
+// CHECK:STDOUT:   %x.patt.loc16_9.2: @GenericInterface.WithSelf.F.%pattern_type (%pattern_type.51d) = wrapper_binding_pattern x, %x.param_patt.loc16_9.2 [symbolic = %x.patt.loc16_9.2 (constants.%x.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @GenericInterface.WithSelf.F.%T (%T));
 // CHECK:STDOUT: }
@@ -174,7 +174,7 @@ class C {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %x.param_patt.loc25_18.2: @C.as.GenericInterface.impl.F.%pattern_type (%pattern_type.51d) = value_param_pattern [symbolic = %x.param_patt.loc25_18.2 (constants.%x.param_patt)]
-// CHECK:STDOUT:   %x.patt.loc25_18.2: @C.as.GenericInterface.impl.F.%pattern_type (%pattern_type.51d) = at_binding_pattern x, %x.param_patt.loc25_18.2 [symbolic = %x.patt.loc25_18.2 (constants.%x.patt)]
+// CHECK:STDOUT:   %x.patt.loc25_18.2: @C.as.GenericInterface.impl.F.%pattern_type (%pattern_type.51d) = wrapper_binding_pattern x, %x.param_patt.loc25_18.2 [symbolic = %x.patt.loc25_18.2 (constants.%x.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete)]

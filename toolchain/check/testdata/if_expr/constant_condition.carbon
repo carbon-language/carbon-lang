@@ -115,7 +115,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc27_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %t.param_patt: %pattern_type.98f = value_param_pattern [concrete]
-// CHECK:STDOUT:   %t.patt: %pattern_type.98f = at_binding_pattern t, %t.param_patt [concrete]
+// CHECK:STDOUT:   %t.patt: %pattern_type.98f = wrapper_binding_pattern t, %t.param_patt [concrete]
 // CHECK:STDOUT:   %PartiallyConstant.type: type = fn_type @PartiallyConstant [concrete]
 // CHECK:STDOUT:   %PartiallyConstant: %PartiallyConstant.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -199,7 +199,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PartiallyConstant.decl: %PartiallyConstant.type = fn_decl @PartiallyConstant [concrete = constants.%PartiallyConstant] {
 // CHECK:STDOUT:     %t.param_patt: %pattern_type.98f = value_param_pattern [concrete = constants.%t.param_patt]
-// CHECK:STDOUT:     %t.patt: %pattern_type.98f = at_binding_pattern t, %t.param_patt [concrete = constants.%t.patt]
+// CHECK:STDOUT:     %t.patt: %pattern_type.98f = wrapper_binding_pattern t, %t.param_patt [concrete = constants.%t.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {

@@ -63,13 +63,13 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   %Class.Get.ceb: %Class.Get.type.49d = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %x.param_patt.91d: %pattern_type.51d = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.800: %pattern_type.51d = at_binding_pattern x, %x.param_patt.91d [symbolic]
+// CHECK:STDOUT:   %x.patt.260: %pattern_type.51d = wrapper_binding_pattern x, %x.param_patt.91d [symbolic]
 // CHECK:STDOUT:   %Class.GetNoDeduce.type.83e: type = fn_type @Class.GetNoDeduce, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %Class.GetNoDeduce.a04: %Class.GetNoDeduce.type.83e = struct_value () [symbolic]
 // CHECK:STDOUT:   %Class.d74: type = class_type @Class, @Class(%U) [symbolic]
 // CHECK:STDOUT:   %pattern_type.cc0: type = pattern_type %Class.d74 [symbolic]
 // CHECK:STDOUT:   %self.param_patt.814: %pattern_type.cc0 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.868: %pattern_type.cc0 = at_binding_pattern self, %self.param_patt.814 [symbolic]
+// CHECK:STDOUT:   %self.patt.788: %pattern_type.cc0 = wrapper_binding_pattern self, %self.param_patt.814 [symbolic]
 // CHECK:STDOUT:   %.822: Core.Form = init_form %U [symbolic]
 // CHECK:STDOUT:   %pattern_type.946: type = pattern_type %U [symbolic]
 // CHECK:STDOUT:   %return.param_patt.6dd: %pattern_type.946 = out_param_pattern [symbolic]
@@ -91,7 +91,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   %Class.30a: type = class_type @Class, @Class(%A) [concrete]
 // CHECK:STDOUT:   %pattern_type.89e: type = pattern_type %Class.30a [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type.89e = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt: %pattern_type.89e = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.89e = wrapper_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %tuple.9aa: %tuple.type.24b = tuple_value (%A, %B) [concrete]
 // CHECK:STDOUT:   %tuple.type.1e7: type = tuple_type (%A, %B) [concrete]
 // CHECK:STDOUT:   %.7f5: Core.Form = init_form %tuple.type.1e7 [concrete]
@@ -112,7 +112,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %x.param_patt.4c3: %pattern_type.9ef = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.313: %pattern_type.9ef = at_binding_pattern x, %x.param_patt.4c3 [concrete]
+// CHECK:STDOUT:   %x.patt.e63: %pattern_type.9ef = wrapper_binding_pattern x, %x.param_patt.4c3 [concrete]
 // CHECK:STDOUT:   %Class.GetNoDeduce.specific_fn.931: <specific function> = specific_function %Class.GetNoDeduce.c1e, @Class.GetNoDeduce(%A, %B) [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
 // CHECK:STDOUT:   %.367: ref %A = temporary invalid, %A.val [concrete]
@@ -126,7 +126,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   %CallMethodSelfDeduce.type: type = fn_type @CallMethodSelfDeduce [concrete]
 // CHECK:STDOUT:   %CallMethodSelfDeduce: %CallMethodSelfDeduce.type = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.225: %pattern_type.89e = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.39c: %pattern_type.89e = at_binding_pattern self, %self.param_patt.225 [concrete]
+// CHECK:STDOUT:   %self.patt.94c: %pattern_type.89e = wrapper_binding_pattern self, %self.param_patt.225 [concrete]
 // CHECK:STDOUT:   %Class.F.specific_fn.0bd: <specific function> = specific_function %Class.F.805, @Class.F(%A, %A) [concrete]
 // CHECK:STDOUT:   %complete_type.c44: <witness> = complete_type_witness %tuple.type.1e7 [concrete]
 // CHECK:STDOUT: }
@@ -164,7 +164,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [concrete = constants.%CallGenericMethod] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.89e = value_param_pattern [concrete = constants.%c.param_patt]
-// CHECK:STDOUT:     %c.patt: %pattern_type.89e = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.89e = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c6 = out_param_pattern [concrete = constants.%return.param_patt.1be]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7c6 = return_slot_pattern %return.param_patt, %.loc24_43.3 [concrete = constants.%return.patt.709]
 // CHECK:STDOUT:   } {
@@ -185,7 +185,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericMethodWithNonDeducedParam.decl: %CallGenericMethodWithNonDeducedParam.type = fn_decl @CallGenericMethodWithNonDeducedParam [concrete = constants.%CallGenericMethodWithNonDeducedParam] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.89e = value_param_pattern [concrete = constants.%c.param_patt]
-// CHECK:STDOUT:     %c.patt: %pattern_type.89e = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.89e = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c6 = out_param_pattern [concrete = constants.%return.param_patt.1be]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7c6 = return_slot_pattern %return.param_patt, %.loc28_62.3 [concrete = constants.%return.patt.709]
 // CHECK:STDOUT:   } {
@@ -206,7 +206,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallMethodSelfDeduce.decl: %CallMethodSelfDeduce.type = fn_decl @CallMethodSelfDeduce [concrete = constants.%CallMethodSelfDeduce] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.89e = value_param_pattern [concrete = constants.%c.param_patt]
-// CHECK:STDOUT:     %c.patt: %pattern_type.89e = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.89e = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.9ef = out_param_pattern [concrete = constants.%return.param_patt.f0c]
 // CHECK:STDOUT:     %return.patt: %pattern_type.9ef = return_slot_pattern %return.param_patt, %A.ref.loc32_41 [concrete = constants.%return.patt.a6d]
 // CHECK:STDOUT:   } {
@@ -273,7 +273,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.GetNoDeduce.decl: @Class.%Class.GetNoDeduce.type (%Class.GetNoDeduce.type.83e) = fn_decl @Class.GetNoDeduce [symbolic = @Class.%Class.GetNoDeduce (constants.%Class.GetNoDeduce.a04)] {
 // CHECK:STDOUT:       %x.param_patt.loc20_19.1: @Class.GetNoDeduce.%pattern_type.loc20_19 (%pattern_type.51d) = value_param_pattern [symbolic = %x.param_patt.loc20_19.2 (constants.%x.param_patt.91d)]
-// CHECK:STDOUT:       %x.patt.loc20_19.1: @Class.GetNoDeduce.%pattern_type.loc20_19 (%pattern_type.51d) = at_binding_pattern x, %x.param_patt.loc20_19.1 [symbolic = %x.patt.loc20_19.2 (constants.%x.patt.800)]
+// CHECK:STDOUT:       %x.patt.loc20_19.1: @Class.GetNoDeduce.%pattern_type.loc20_19 (%pattern_type.51d) = wrapper_binding_pattern x, %x.param_patt.loc20_19.1 [symbolic = %x.patt.loc20_19.2 (constants.%x.patt.260)]
 // CHECK:STDOUT:       %U.patt.loc20_33.1: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc20_33.2 (constants.%U.patt)]
 // CHECK:STDOUT:       %return.param_patt.loc20_49.1: @Class.GetNoDeduce.%pattern_type.loc20_49 (%pattern_type.eee) = out_param_pattern [symbolic = %return.param_patt.loc20_49.2 (constants.%return.param_patt.a41)]
 // CHECK:STDOUT:       %return.patt.loc20_41.1: @Class.GetNoDeduce.%pattern_type.loc20_49 (%pattern_type.eee) = return_slot_pattern %return.param_patt.loc20_49.1, %.loc20_49.4 [symbolic = %return.patt.loc20_41.2 (constants.%return.patt.453)]
@@ -297,7 +297,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:     %Class.F.decl: @Class.%Class.F.type (%Class.F.type.982) = fn_decl @Class.F [symbolic = @Class.%Class.F (constants.%Class.F.c63)] {
 // CHECK:STDOUT:       %U.patt.loc21_9.1: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc21_9.2 (constants.%U.patt)]
 // CHECK:STDOUT:       %self.param_patt.loc21_21.1: @Class.F.%pattern_type.loc21_21 (%pattern_type.cc0) = value_param_pattern [symbolic = %self.param_patt.loc21_21.2 (constants.%self.param_patt.814)]
-// CHECK:STDOUT:       %self.patt.loc21_21.1: @Class.F.%pattern_type.loc21_21 (%pattern_type.cc0) = at_binding_pattern self, %self.param_patt.loc21_21.1 [symbolic = %self.patt.loc21_21.2 (constants.%self.patt.868)]
+// CHECK:STDOUT:       %self.patt.loc21_21.1: @Class.F.%pattern_type.loc21_21 (%pattern_type.cc0) = wrapper_binding_pattern self, %self.param_patt.loc21_21.1 [symbolic = %self.patt.loc21_21.2 (constants.%self.patt.788)]
 // CHECK:STDOUT:       %return.param_patt.loc21_36.1: @Class.F.%pattern_type.loc21_36 (%pattern_type.946) = out_param_pattern [symbolic = %return.param_patt.loc21_36.2 (constants.%return.param_patt.6dd)]
 // CHECK:STDOUT:       %return.patt.loc21_33.1: @Class.F.%pattern_type.loc21_36 (%pattern_type.946) = return_slot_pattern %return.param_patt.loc21_36.1, %U.ref.loc21_36 [symbolic = %return.patt.loc21_33.2 (constants.%return.patt.4dd)]
 // CHECK:STDOUT:     } {
@@ -364,7 +364,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %pattern_type.loc20_19: type = pattern_type %T [symbolic = %pattern_type.loc20_19 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %x.param_patt.loc20_19.2: @Class.GetNoDeduce.%pattern_type.loc20_19 (%pattern_type.51d) = value_param_pattern [symbolic = %x.param_patt.loc20_19.2 (constants.%x.param_patt.91d)]
-// CHECK:STDOUT:   %x.patt.loc20_19.2: @Class.GetNoDeduce.%pattern_type.loc20_19 (%pattern_type.51d) = at_binding_pattern x, %x.param_patt.loc20_19.2 [symbolic = %x.patt.loc20_19.2 (constants.%x.patt.800)]
+// CHECK:STDOUT:   %x.patt.loc20_19.2: @Class.GetNoDeduce.%pattern_type.loc20_19 (%pattern_type.51d) = wrapper_binding_pattern x, %x.param_patt.loc20_19.2 [symbolic = %x.patt.loc20_19.2 (constants.%x.patt.260)]
 // CHECK:STDOUT:   %U.patt.loc20_33.2: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc20_33.2 (constants.%U.patt)]
 // CHECK:STDOUT:   %U.loc20_33.1: type = symbolic_binding U, 1 [symbolic = %U.loc20_33.1 (constants.%U)]
 // CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%T, %U.loc20_33.1) [symbolic = %tuple (constants.%tuple.4b9)]
@@ -399,7 +399,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   %Class.loc21_30.1: type = class_type @Class, @Class(%U.loc21_9.1) [symbolic = %Class.loc21_30.1 (constants.%Class.d74)]
 // CHECK:STDOUT:   %pattern_type.loc21_21: type = pattern_type %Class.loc21_30.1 [symbolic = %pattern_type.loc21_21 (constants.%pattern_type.cc0)]
 // CHECK:STDOUT:   %self.param_patt.loc21_21.2: @Class.F.%pattern_type.loc21_21 (%pattern_type.cc0) = value_param_pattern [symbolic = %self.param_patt.loc21_21.2 (constants.%self.param_patt.814)]
-// CHECK:STDOUT:   %self.patt.loc21_21.2: @Class.F.%pattern_type.loc21_21 (%pattern_type.cc0) = at_binding_pattern self, %self.param_patt.loc21_21.2 [symbolic = %self.patt.loc21_21.2 (constants.%self.patt.868)]
+// CHECK:STDOUT:   %self.patt.loc21_21.2: @Class.F.%pattern_type.loc21_21 (%pattern_type.cc0) = wrapper_binding_pattern self, %self.param_patt.loc21_21.2 [symbolic = %self.patt.loc21_21.2 (constants.%self.patt.788)]
 // CHECK:STDOUT:   %.loc21_36.2: Core.Form = init_form %U.loc21_9.1 [symbolic = %.loc21_36.2 (constants.%.822)]
 // CHECK:STDOUT:   %pattern_type.loc21_36: type = pattern_type %U.loc21_9.1 [symbolic = %pattern_type.loc21_36 (constants.%pattern_type.946)]
 // CHECK:STDOUT:   %return.param_patt.loc21_36.2: @Class.F.%pattern_type.loc21_36 (%pattern_type.946) = out_param_pattern [symbolic = %return.param_patt.loc21_36.2 (constants.%return.param_patt.6dd)]
@@ -511,7 +511,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %pattern_type.loc20_19 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %x.param_patt.loc20_19.2 => constants.%x.param_patt.91d
-// CHECK:STDOUT:   %x.patt.loc20_19.2 => constants.%x.patt.800
+// CHECK:STDOUT:   %x.patt.loc20_19.2 => constants.%x.patt.260
 // CHECK:STDOUT:   %U.patt.loc20_33.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc20_33.1 => constants.%U
 // CHECK:STDOUT:   %tuple => constants.%tuple.4b9
@@ -547,7 +547,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   %Class.loc21_30.1 => constants.%Class.d74
 // CHECK:STDOUT:   %pattern_type.loc21_21 => constants.%pattern_type.cc0
 // CHECK:STDOUT:   %self.param_patt.loc21_21.2 => constants.%self.param_patt.814
-// CHECK:STDOUT:   %self.patt.loc21_21.2 => constants.%self.patt.868
+// CHECK:STDOUT:   %self.patt.loc21_21.2 => constants.%self.patt.788
 // CHECK:STDOUT:   %.loc21_36.2 => constants.%.822
 // CHECK:STDOUT:   %pattern_type.loc21_36 => constants.%pattern_type.946
 // CHECK:STDOUT:   %return.param_patt.loc21_36.2 => constants.%return.param_patt.6dd
@@ -560,7 +560,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   %Class.loc21_30.1 => constants.%Class.d74
 // CHECK:STDOUT:   %pattern_type.loc21_21 => constants.%pattern_type.cc0
 // CHECK:STDOUT:   %self.param_patt.loc21_21.2 => constants.%self.param_patt.814
-// CHECK:STDOUT:   %self.patt.loc21_21.2 => constants.%self.patt.868
+// CHECK:STDOUT:   %self.patt.loc21_21.2 => constants.%self.patt.788
 // CHECK:STDOUT:   %.loc21_36.2 => constants.%.822
 // CHECK:STDOUT:   %pattern_type.loc21_36 => constants.%pattern_type.946
 // CHECK:STDOUT:   %return.param_patt.loc21_36.2 => constants.%return.param_patt.6dd
@@ -608,7 +608,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   %T => constants.%A
 // CHECK:STDOUT:   %pattern_type.loc20_19 => constants.%pattern_type.9ef
 // CHECK:STDOUT:   %x.param_patt.loc20_19.2 => constants.%x.param_patt.4c3
-// CHECK:STDOUT:   %x.patt.loc20_19.2 => constants.%x.patt.313
+// CHECK:STDOUT:   %x.patt.loc20_19.2 => constants.%x.patt.e63
 // CHECK:STDOUT:   %U.patt.loc20_33.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc20_33.1 => constants.%B
 // CHECK:STDOUT:   %tuple => constants.%tuple.9aa
@@ -631,7 +631,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:   %Class.loc21_30.1 => constants.%Class.30a
 // CHECK:STDOUT:   %pattern_type.loc21_21 => constants.%pattern_type.89e
 // CHECK:STDOUT:   %self.param_patt.loc21_21.2 => constants.%self.param_patt.225
-// CHECK:STDOUT:   %self.patt.loc21_21.2 => constants.%self.patt.39c
+// CHECK:STDOUT:   %self.patt.loc21_21.2 => constants.%self.patt.94c
 // CHECK:STDOUT:   %.loc21_36.2 => constants.%.cbf
 // CHECK:STDOUT:   %pattern_type.loc21_36 => constants.%pattern_type.9ef
 // CHECK:STDOUT:   %return.param_patt.loc21_36.2 => constants.%return.param_patt.f0c

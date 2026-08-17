@@ -239,7 +239,7 @@ interface C {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.be0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.671: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %self.param_patt.b05: %pattern_type.671 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.153: %pattern_type.671 = at_binding_pattern self, %self.param_patt.b05 [symbolic]
+// CHECK:STDOUT:   %self.patt.c7e: %pattern_type.671 = wrapper_binding_pattern self, %self.param_patt.b05 [symbolic]
 // CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type.5c3: type = fn_type @DefaultMethod.WithSelf.M, @DefaultMethod.WithSelf(%Self.be0) [symbolic]
 // CHECK:STDOUT:   %DefaultMethod.WithSelf.M.ff1: %DefaultMethod.WithSelf.M.type.5c3 = struct_value () [symbolic]
 // CHECK:STDOUT:   %DefaultMethod.assoc_type: type = assoc_entity_type @DefaultMethod [concrete]
@@ -265,7 +265,7 @@ interface C {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.70f: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %t.param_patt: %pattern_type.70f = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %t.patt: %pattern_type.70f = at_binding_pattern t, %t.param_patt [symbolic]
+// CHECK:STDOUT:   %t.patt: %pattern_type.70f = wrapper_binding_pattern t, %t.param_patt [symbolic]
 // CHECK:STDOUT:   %CallMethod.type: type = fn_type @CallMethod [concrete]
 // CHECK:STDOUT:   %CallMethod: %CallMethod.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.5bd: <witness> = require_complete_type %T.as_type [symbolic]
@@ -275,7 +275,7 @@ interface C {
 // CHECK:STDOUT:   %.506: type = fn_type_with_self_type %DefaultMethod.WithSelf.M.type.0cf, %T [symbolic]
 // CHECK:STDOUT:   %impl.elem0.f26: %.506 = impl_witness_access %DefaultMethod.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %self.param_patt.382: %pattern_type.70f = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.634: %pattern_type.70f = at_binding_pattern self, %self.param_patt.382 [symbolic]
+// CHECK:STDOUT:   %self.patt.99e: %pattern_type.70f = wrapper_binding_pattern self, %self.param_patt.382 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.583: <specific function> = specific_impl_function %impl.elem0.f26, @DefaultMethod.WithSelf.M(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -294,7 +294,7 @@ interface C {
 // CHECK:STDOUT:   %CallMethod.decl: %CallMethod.type = fn_decl @CallMethod [concrete = constants.%CallMethod] {
 // CHECK:STDOUT:     %T.patt.loc17_16.1: %pattern_type.336 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc17_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %t.param_patt.loc17_34.1: @CallMethod.%pattern_type (%pattern_type.70f) = value_param_pattern [symbolic = %t.param_patt.loc17_34.2 (constants.%t.param_patt)]
-// CHECK:STDOUT:     %t.patt.loc17_34.1: @CallMethod.%pattern_type (%pattern_type.70f) = at_binding_pattern t, %t.param_patt.loc17_34.1 [symbolic = %t.patt.loc17_34.2 (constants.%t.patt)]
+// CHECK:STDOUT:     %t.patt.loc17_34.1: @CallMethod.%pattern_type (%pattern_type.70f) = wrapper_binding_pattern t, %t.param_patt.loc17_34.1 [symbolic = %t.patt.loc17_34.2 (constants.%t.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_18: type = splice_block %DefaultMethod.ref [concrete = constants.%DefaultMethod.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -334,7 +334,7 @@ interface C {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %DefaultMethod.WithSelf.M.decl: @DefaultMethod.WithSelf.%DefaultMethod.WithSelf.M.type (%DefaultMethod.WithSelf.M.type.5c3) = fn_decl @DefaultMethod.WithSelf.M [symbolic = @DefaultMethod.WithSelf.%DefaultMethod.WithSelf.M (constants.%DefaultMethod.WithSelf.M.ff1)] {
 // CHECK:STDOUT:     %self.param_patt.loc10_23.1: @DefaultMethod.WithSelf.M.%pattern_type (%pattern_type.671) = value_param_pattern [symbolic = %self.param_patt.loc10_23.2 (constants.%self.param_patt.b05)]
-// CHECK:STDOUT:     %self.patt.loc10_23.1: @DefaultMethod.WithSelf.M.%pattern_type (%pattern_type.671) = at_binding_pattern self, %self.param_patt.loc10_23.1 [symbolic = %self.patt.loc10_23.2 (constants.%self.patt.153)]
+// CHECK:STDOUT:     %self.patt.loc10_23.1: @DefaultMethod.WithSelf.M.%pattern_type (%pattern_type.671) = wrapper_binding_pattern self, %self.param_patt.loc10_23.1 [symbolic = %self.patt.loc10_23.2 (constants.%self.patt.c7e)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @DefaultMethod.WithSelf.M.%Self.as_type.loc10_23.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc10_23.1: type = splice_block %.loc10_23.2 [symbolic = %Self.as_type.loc10_23.1 (constants.%Self.as_type)] {
@@ -368,7 +368,7 @@ interface C {
 // CHECK:STDOUT:   %Self.as_type.loc10_23.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc10_23.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc10_23.1 [symbolic = %pattern_type (constants.%pattern_type.671)]
 // CHECK:STDOUT:   %self.param_patt.loc10_23.2: @DefaultMethod.WithSelf.M.%pattern_type (%pattern_type.671) = value_param_pattern [symbolic = %self.param_patt.loc10_23.2 (constants.%self.param_patt.b05)]
-// CHECK:STDOUT:   %self.patt.loc10_23.2: @DefaultMethod.WithSelf.M.%pattern_type (%pattern_type.671) = at_binding_pattern self, %self.param_patt.loc10_23.2 [symbolic = %self.patt.loc10_23.2 (constants.%self.patt.153)]
+// CHECK:STDOUT:   %self.patt.loc10_23.2: @DefaultMethod.WithSelf.M.%pattern_type (%pattern_type.671) = wrapper_binding_pattern self, %self.param_patt.loc10_23.2 [symbolic = %self.patt.loc10_23.2 (constants.%self.patt.c7e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc10_23.1 [symbolic = %require_complete (constants.%require_complete.09c)]
@@ -410,7 +410,7 @@ interface C {
 // CHECK:STDOUT:   %T.as_type.loc17_36.1: type = facet_access_type %T.loc17_16.1 [symbolic = %T.as_type.loc17_36.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc17_36.1 [symbolic = %pattern_type (constants.%pattern_type.70f)]
 // CHECK:STDOUT:   %t.param_patt.loc17_34.2: @CallMethod.%pattern_type (%pattern_type.70f) = value_param_pattern [symbolic = %t.param_patt.loc17_34.2 (constants.%t.param_patt)]
-// CHECK:STDOUT:   %t.patt.loc17_34.2: @CallMethod.%pattern_type (%pattern_type.70f) = at_binding_pattern t, %t.param_patt.loc17_34.2 [symbolic = %t.patt.loc17_34.2 (constants.%t.patt)]
+// CHECK:STDOUT:   %t.patt.loc17_34.2: @CallMethod.%pattern_type (%pattern_type.70f) = wrapper_binding_pattern t, %t.param_patt.loc17_34.2 [symbolic = %t.patt.loc17_34.2 (constants.%t.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc17_36.1 [symbolic = %require_complete (constants.%require_complete.5bd)]
@@ -456,7 +456,7 @@ interface C {
 // CHECK:STDOUT:   %Self.as_type.loc10_23.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.671
 // CHECK:STDOUT:   %self.param_patt.loc10_23.2 => constants.%self.param_patt.b05
-// CHECK:STDOUT:   %self.patt.loc10_23.2 => constants.%self.patt.153
+// CHECK:STDOUT:   %self.patt.loc10_23.2 => constants.%self.patt.c7e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallFn(constants.%d) {
@@ -494,7 +494,7 @@ interface C {
 // CHECK:STDOUT:   %Self.as_type.loc10_23.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.70f
 // CHECK:STDOUT:   %self.param_patt.loc10_23.2 => constants.%self.param_patt.382
-// CHECK:STDOUT:   %self.patt.loc10_23.2 => constants.%self.patt.634
+// CHECK:STDOUT:   %self.patt.loc10_23.2 => constants.%self.patt.99e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- final_interfaces.carbon
@@ -512,7 +512,7 @@ interface C {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.e80 [symbolic]
 // CHECK:STDOUT:   %pattern_type.32b: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %self.param_patt.724: %pattern_type.32b = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.478: %pattern_type.32b = at_binding_pattern self, %self.param_patt.724 [symbolic]
+// CHECK:STDOUT:   %self.patt.537: %pattern_type.32b = wrapper_binding_pattern self, %self.param_patt.724 [symbolic]
 // CHECK:STDOUT:   %FinalMethod.WithSelf.M.type.efa: type = fn_type @FinalMethod.WithSelf.M, @FinalMethod.WithSelf(%Self.e80) [symbolic]
 // CHECK:STDOUT:   %FinalMethod.WithSelf.M.68b: %FinalMethod.WithSelf.M.type.efa = struct_value () [symbolic]
 // CHECK:STDOUT:   %FinalMethod.assoc_type: type = assoc_entity_type @FinalMethod [concrete]
@@ -538,7 +538,7 @@ interface C {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.ab8: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %t.param_patt: %pattern_type.ab8 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %t.patt: %pattern_type.ab8 = at_binding_pattern t, %t.param_patt [symbolic]
+// CHECK:STDOUT:   %t.patt: %pattern_type.ab8 = wrapper_binding_pattern t, %t.param_patt [symbolic]
 // CHECK:STDOUT:   %CallMethod.type: type = fn_type @CallMethod [concrete]
 // CHECK:STDOUT:   %CallMethod: %CallMethod.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.3b2: <witness> = require_complete_type %T.as_type [symbolic]
@@ -548,7 +548,7 @@ interface C {
 // CHECK:STDOUT:   %.e9f: type = fn_type_with_self_type %FinalMethod.WithSelf.M.type.913, %T [symbolic]
 // CHECK:STDOUT:   %impl.elem0.24d: %.e9f = impl_witness_access %FinalMethod.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %self.param_patt.4d4: %pattern_type.ab8 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.87d: %pattern_type.ab8 = at_binding_pattern self, %self.param_patt.4d4 [symbolic]
+// CHECK:STDOUT:   %self.patt.bc8: %pattern_type.ab8 = wrapper_binding_pattern self, %self.param_patt.4d4 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.2e2: <specific function> = specific_impl_function %impl.elem0.24d, @FinalMethod.WithSelf.M(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -567,7 +567,7 @@ interface C {
 // CHECK:STDOUT:   %CallMethod.decl: %CallMethod.type = fn_decl @CallMethod [concrete = constants.%CallMethod] {
 // CHECK:STDOUT:     %T.patt.loc17_16.1: %pattern_type.af4 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc17_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %t.param_patt.loc17_32.1: @CallMethod.%pattern_type (%pattern_type.ab8) = value_param_pattern [symbolic = %t.param_patt.loc17_32.2 (constants.%t.param_patt)]
-// CHECK:STDOUT:     %t.patt.loc17_32.1: @CallMethod.%pattern_type (%pattern_type.ab8) = at_binding_pattern t, %t.param_patt.loc17_32.1 [symbolic = %t.patt.loc17_32.2 (constants.%t.patt)]
+// CHECK:STDOUT:     %t.patt.loc17_32.1: @CallMethod.%pattern_type (%pattern_type.ab8) = wrapper_binding_pattern t, %t.param_patt.loc17_32.1 [symbolic = %t.patt.loc17_32.2 (constants.%t.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_18: type = splice_block %FinalMethod.ref [concrete = constants.%FinalMethod.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -607,7 +607,7 @@ interface C {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %FinalMethod.WithSelf.M.decl: @FinalMethod.WithSelf.%FinalMethod.WithSelf.M.type (%FinalMethod.WithSelf.M.type.efa) = fn_decl @FinalMethod.WithSelf.M [symbolic = @FinalMethod.WithSelf.%FinalMethod.WithSelf.M (constants.%FinalMethod.WithSelf.M.68b)] {
 // CHECK:STDOUT:     %self.param_patt.loc10_21.1: @FinalMethod.WithSelf.M.%pattern_type (%pattern_type.32b) = value_param_pattern [symbolic = %self.param_patt.loc10_21.2 (constants.%self.param_patt.724)]
-// CHECK:STDOUT:     %self.patt.loc10_21.1: @FinalMethod.WithSelf.M.%pattern_type (%pattern_type.32b) = at_binding_pattern self, %self.param_patt.loc10_21.1 [symbolic = %self.patt.loc10_21.2 (constants.%self.patt.478)]
+// CHECK:STDOUT:     %self.patt.loc10_21.1: @FinalMethod.WithSelf.M.%pattern_type (%pattern_type.32b) = wrapper_binding_pattern self, %self.param_patt.loc10_21.1 [symbolic = %self.patt.loc10_21.2 (constants.%self.patt.537)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @FinalMethod.WithSelf.M.%Self.as_type.loc10_21.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc10_21.1: type = splice_block %.loc10_21.2 [symbolic = %Self.as_type.loc10_21.1 (constants.%Self.as_type)] {
@@ -641,7 +641,7 @@ interface C {
 // CHECK:STDOUT:   %Self.as_type.loc10_21.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc10_21.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc10_21.1 [symbolic = %pattern_type (constants.%pattern_type.32b)]
 // CHECK:STDOUT:   %self.param_patt.loc10_21.2: @FinalMethod.WithSelf.M.%pattern_type (%pattern_type.32b) = value_param_pattern [symbolic = %self.param_patt.loc10_21.2 (constants.%self.param_patt.724)]
-// CHECK:STDOUT:   %self.patt.loc10_21.2: @FinalMethod.WithSelf.M.%pattern_type (%pattern_type.32b) = at_binding_pattern self, %self.param_patt.loc10_21.2 [symbolic = %self.patt.loc10_21.2 (constants.%self.patt.478)]
+// CHECK:STDOUT:   %self.patt.loc10_21.2: @FinalMethod.WithSelf.M.%pattern_type (%pattern_type.32b) = wrapper_binding_pattern self, %self.param_patt.loc10_21.2 [symbolic = %self.patt.loc10_21.2 (constants.%self.patt.537)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc10_21.1 [symbolic = %require_complete (constants.%require_complete.e87)]
@@ -683,7 +683,7 @@ interface C {
 // CHECK:STDOUT:   %T.as_type.loc17_34.1: type = facet_access_type %T.loc17_16.1 [symbolic = %T.as_type.loc17_34.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc17_34.1 [symbolic = %pattern_type (constants.%pattern_type.ab8)]
 // CHECK:STDOUT:   %t.param_patt.loc17_32.2: @CallMethod.%pattern_type (%pattern_type.ab8) = value_param_pattern [symbolic = %t.param_patt.loc17_32.2 (constants.%t.param_patt)]
-// CHECK:STDOUT:   %t.patt.loc17_32.2: @CallMethod.%pattern_type (%pattern_type.ab8) = at_binding_pattern t, %t.param_patt.loc17_32.2 [symbolic = %t.patt.loc17_32.2 (constants.%t.patt)]
+// CHECK:STDOUT:   %t.patt.loc17_32.2: @CallMethod.%pattern_type (%pattern_type.ab8) = wrapper_binding_pattern t, %t.param_patt.loc17_32.2 [symbolic = %t.patt.loc17_32.2 (constants.%t.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc17_34.1 [symbolic = %require_complete (constants.%require_complete.3b2)]
@@ -729,7 +729,7 @@ interface C {
 // CHECK:STDOUT:   %Self.as_type.loc10_21.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.32b
 // CHECK:STDOUT:   %self.param_patt.loc10_21.2 => constants.%self.param_patt.724
-// CHECK:STDOUT:   %self.patt.loc10_21.2 => constants.%self.patt.478
+// CHECK:STDOUT:   %self.patt.loc10_21.2 => constants.%self.patt.537
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallFn(constants.%d) {
@@ -767,7 +767,7 @@ interface C {
 // CHECK:STDOUT:   %Self.as_type.loc10_21.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.ab8
 // CHECK:STDOUT:   %self.param_patt.loc10_21.2 => constants.%self.param_patt.4d4
-// CHECK:STDOUT:   %self.patt.loc10_21.2 => constants.%self.patt.87d
+// CHECK:STDOUT:   %self.patt.loc10_21.2 => constants.%self.patt.bc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- default_function.carbon
@@ -1020,14 +1020,14 @@ interface C {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt.303: %pattern_type.98b = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.49a718.1: %pattern_type.98b = at_binding_pattern self, %self.param_patt.303 [concrete]
+// CHECK:STDOUT:   %self.patt.36a3f7.1: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt.303 [concrete]
 // CHECK:STDOUT:   %C.G.type: type = fn_type @C.G [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.G: %C.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DefaultMethod.type: type = facet_type <@DefaultMethod> [concrete]
 // CHECK:STDOUT:   %.3e0: <witness> = impl_self_witness %C, @DefaultMethod [concrete]
 // CHECK:STDOUT:   %DefaultMethod.impl_witness: <witness> = impl_witness @C.as.DefaultMethod.impl.%DefaultMethod.impl_witness_table [concrete]
-// CHECK:STDOUT:   %self.patt.49a718.2: %pattern_type.98b = at_binding_pattern self, %self.param_patt.303 [concrete]
+// CHECK:STDOUT:   %self.patt.36a3f7.2: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt.303 [concrete]
 // CHECK:STDOUT:   %C.as.DefaultMethod.impl.M.type: type = fn_type @C.as.DefaultMethod.impl.M [concrete]
 // CHECK:STDOUT:   %C.as.DefaultMethod.impl.M: %C.as.DefaultMethod.impl.M.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DefaultMethod.facet: %DefaultMethod.type = facet_value %C, (%DefaultMethod.impl_witness) [concrete]
@@ -1060,7 +1060,7 @@ interface C {
 // CHECK:STDOUT: impl @C.as.DefaultMethod.impl: %Self.ref as %DefaultMethod.ref {
 // CHECK:STDOUT:   %C.as.DefaultMethod.impl.M.decl: %C.as.DefaultMethod.impl.M.type = fn_decl @C.as.DefaultMethod.impl.M [concrete = constants.%C.as.DefaultMethod.impl.M] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.98b = value_param_pattern [concrete = constants.%self.param_patt.303]
-// CHECK:STDOUT:     %self.patt: %pattern_type.98b = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.49a718.2]
+// CHECK:STDOUT:     %self.patt: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.36a3f7.2]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
@@ -1078,7 +1078,7 @@ interface C {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %C.G.decl: %C.G.type = fn_decl @C.G [concrete = constants.%C.G] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.98b = value_param_pattern [concrete = constants.%self.param_patt.303]
-// CHECK:STDOUT:     %self.patt: %pattern_type.98b = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.49a718.1]
+// CHECK:STDOUT:     %self.patt: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.36a3f7.1]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]

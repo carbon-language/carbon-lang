@@ -88,7 +88,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Derived.e87: type = class_type @Derived, @Derived(%T.as_type) [symbolic]
 // CHECK:STDOUT:   %pattern_type.ebc: type = pattern_type %Derived.e87 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.203: %pattern_type.ebc = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.c37: %pattern_type.ebc = at_binding_pattern x, %x.param_patt.203 [symbolic]
+// CHECK:STDOUT:   %x.patt.2d0: %pattern_type.ebc = wrapper_binding_pattern x, %x.param_patt.203 [symbolic]
 // CHECK:STDOUT:   %.1ce700.2: Core.Form = init_form %T.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.2c66b4.2: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %return.param_patt.bf4475.2: %pattern_type.2c66b4.2 = out_param_pattern [symbolic]
@@ -179,7 +179,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Derived.loc13_44.1 => constants.%Derived.e87
 // CHECK:STDOUT:   %pattern_type.loc13_33 => constants.%pattern_type.ebc
 // CHECK:STDOUT:   %x.param_patt.loc13_33.2 => constants.%x.param_patt.203
-// CHECK:STDOUT:   %x.patt.loc13_33.2 => constants.%x.patt.c37
+// CHECK:STDOUT:   %x.patt.loc13_33.2 => constants.%x.patt.2d0
 // CHECK:STDOUT:   %.loc13_50.2 => constants.%.1ce700.2
 // CHECK:STDOUT:   %pattern_type.loc13_50 => constants.%pattern_type.2c66b4.2
 // CHECK:STDOUT:   %return.param_patt.loc13_50.2 => constants.%return.param_patt.bf4475.2
@@ -193,7 +193,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Derived.loc19_41.1 => constants.%Derived.e87
 // CHECK:STDOUT:   %pattern_type.loc19_30 => constants.%pattern_type.ebc
 // CHECK:STDOUT:   %x.param_patt.loc19_30.2 => constants.%x.param_patt.203
-// CHECK:STDOUT:   %x.patt.loc19_30.2 => constants.%x.patt.c37
+// CHECK:STDOUT:   %x.patt.loc19_30.2 => constants.%x.patt.2d0
 // CHECK:STDOUT:   %.loc19_47.2 => constants.%.1ce700.2
 // CHECK:STDOUT:   %pattern_type.loc19_47 => constants.%pattern_type.2c66b4.2
 // CHECK:STDOUT:   %return.param_patt.loc19_47.2 => constants.%return.param_patt.bf4475.2

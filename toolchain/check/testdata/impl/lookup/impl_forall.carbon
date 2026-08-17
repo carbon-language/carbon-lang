@@ -65,7 +65,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %require_complete.45eab2.1: <witness> = require_complete_type %I.type.3fe556.2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.44a178.1: type = pattern_type %A.47a1de.2 [symbolic]
 // CHECK:STDOUT:   %self.param_patt.a903c4.1: %pattern_type.44a178.1 = ref_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.4f0789.1: %pattern_type.44a178.1 = at_binding_pattern self, %self.param_patt.a903c4.1 [symbolic]
+// CHECK:STDOUT:   %self.patt.3da0cc.1: %pattern_type.44a178.1 = wrapper_binding_pattern self, %self.param_patt.a903c4.1 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f8f9.2: type = ptr_type %V.67d [symbolic]
 // CHECK:STDOUT:   %.cb6cb9.2: Core.Form = init_form %ptr.e8f8f9.2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4b84.2: type = pattern_type %ptr.e8f8f9.2 [symbolic]
@@ -92,7 +92,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %ptr.5ab: type = ptr_type %A.47a1de.3 [symbolic]
 // CHECK:STDOUT:   %pattern_type.c61: type = pattern_type %ptr.5ab [symbolic]
 // CHECK:STDOUT:   %a.param_patt.537: %pattern_type.c61 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %a.patt.60b: %pattern_type.c61 = at_binding_pattern a, %a.param_patt.537 [symbolic]
+// CHECK:STDOUT:   %a.patt.16d: %pattern_type.c61 = wrapper_binding_pattern a, %a.param_patt.537 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f8f9.4: type = ptr_type %W [symbolic]
 // CHECK:STDOUT:   %.cb6cb9.4: Core.Form = init_form %ptr.e8f8f9.4 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4b84.4: type = pattern_type %ptr.e8f8f9.4 [symbolic]
@@ -135,7 +135,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %.f98: type = fn_type_with_self_type %I.WithSelf.F.type.2da, %I.facet.cc9 [concrete]
 // CHECK:STDOUT:   %pattern_type.1ff: type = pattern_type %A.940 [concrete]
 // CHECK:STDOUT:   %self.param_patt.0f0: %pattern_type.1ff = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.975: %pattern_type.1ff = at_binding_pattern self, %self.param_patt.0f0 [concrete]
+// CHECK:STDOUT:   %self.patt.990: %pattern_type.1ff = wrapper_binding_pattern self, %self.param_patt.0f0 [concrete]
 // CHECK:STDOUT:   %A.as.I.impl.F.specific_fn: <specific function> = specific_function %A.as.I.impl.F.837, @A.as.I.impl.F(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %A.elem.339: type = unbound_element_type %A.940, %empty_struct_type [concrete]
 // CHECK:STDOUT:   %struct_type.n.91c: type = struct_type {.n: %empty_struct_type} [concrete]
@@ -191,7 +191,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   impl: %A.loc12_26.2 as %I.type.loc12_34.2 {
 // CHECK:STDOUT:     %A.as.I.impl.F.decl: @A.as.I.impl.%A.as.I.impl.F.type (%A.as.I.impl.F.type.d1ec9e.1) = fn_decl @A.as.I.impl.F [symbolic = @A.as.I.impl.%A.as.I.impl.F (constants.%A.as.I.impl.F.d83bf5.1)] {
 // CHECK:STDOUT:       %self.param_patt.loc13_12.1: @A.as.I.impl.F.%pattern_type.loc13_12 (%pattern_type.44a178.1) = ref_param_pattern [symbolic = %self.param_patt.loc13_12.2 (constants.%self.param_patt.a903c4.1)]
-// CHECK:STDOUT:       %self.patt.loc13_12.1: @A.as.I.impl.F.%pattern_type.loc13_12 (%pattern_type.44a178.1) = at_binding_pattern self, %self.param_patt.loc13_12.1 [symbolic = %self.patt.loc13_12.2 (constants.%self.patt.4f0789.1)]
+// CHECK:STDOUT:       %self.patt.loc13_12.1: @A.as.I.impl.F.%pattern_type.loc13_12 (%pattern_type.44a178.1) = wrapper_binding_pattern self, %self.param_patt.loc13_12.1 [symbolic = %self.patt.loc13_12.2 (constants.%self.patt.3da0cc.1)]
 // CHECK:STDOUT:       %return.param_patt.loc13_22.1: @A.as.I.impl.F.%pattern_type.loc13_22 (%pattern_type.4f4b84.2) = out_param_pattern [symbolic = %return.param_patt.loc13_22.2 (constants.%return.param_patt.27f587.2)]
 // CHECK:STDOUT:       %return.patt.loc13_18.1: @A.as.I.impl.F.%pattern_type.loc13_22 (%pattern_type.4f4b84.2) = return_slot_pattern %return.param_patt.loc13_22.1, %ptr.loc13_22.2 [symbolic = %return.patt.loc13_18.2 (constants.%return.patt.d67681.2)]
 // CHECK:STDOUT:     } {
@@ -220,7 +220,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%V) [symbolic = %A (constants.%A.47a1de.2)]
 // CHECK:STDOUT:   %pattern_type.loc13_12: type = pattern_type %A [symbolic = %pattern_type.loc13_12 (constants.%pattern_type.44a178.1)]
 // CHECK:STDOUT:   %self.param_patt.loc13_12.2: @A.as.I.impl.F.%pattern_type.loc13_12 (%pattern_type.44a178.1) = ref_param_pattern [symbolic = %self.param_patt.loc13_12.2 (constants.%self.param_patt.a903c4.1)]
-// CHECK:STDOUT:   %self.patt.loc13_12.2: @A.as.I.impl.F.%pattern_type.loc13_12 (%pattern_type.44a178.1) = at_binding_pattern self, %self.param_patt.loc13_12.2 [symbolic = %self.patt.loc13_12.2 (constants.%self.patt.4f0789.1)]
+// CHECK:STDOUT:   %self.patt.loc13_12.2: @A.as.I.impl.F.%pattern_type.loc13_12 (%pattern_type.44a178.1) = wrapper_binding_pattern self, %self.param_patt.loc13_12.2 [symbolic = %self.patt.loc13_12.2 (constants.%self.patt.3da0cc.1)]
 // CHECK:STDOUT:   %ptr.loc13_22.1: type = ptr_type %V [symbolic = %ptr.loc13_22.1 (constants.%ptr.e8f8f9.2)]
 // CHECK:STDOUT:   %.loc13_22.1: Core.Form = init_form %ptr.loc13_22.1 [symbolic = %.loc13_22.1 (constants.%.cb6cb9.2)]
 // CHECK:STDOUT:   %pattern_type.loc13_22: type = pattern_type %ptr.loc13_22.1 [symbolic = %pattern_type.loc13_22 (constants.%pattern_type.4f4b84.2)]
@@ -330,7 +330,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %A => constants.%A.47a1de.2
 // CHECK:STDOUT:   %pattern_type.loc13_12 => constants.%pattern_type.44a178.1
 // CHECK:STDOUT:   %self.param_patt.loc13_12.2 => constants.%self.param_patt.a903c4.1
-// CHECK:STDOUT:   %self.patt.loc13_12.2 => constants.%self.patt.4f0789.1
+// CHECK:STDOUT:   %self.patt.loc13_12.2 => constants.%self.patt.3da0cc.1
 // CHECK:STDOUT:   %ptr.loc13_22.1 => constants.%ptr.e8f8f9.2
 // CHECK:STDOUT:   %.loc13_22.1 => constants.%.cb6cb9.2
 // CHECK:STDOUT:   %pattern_type.loc13_22 => constants.%pattern_type.4f4b84.2
@@ -345,7 +345,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %ptr.loc19_32.1 => constants.%ptr.5ab
 // CHECK:STDOUT:   %pattern_type.loc19_26 => constants.%pattern_type.c61
 // CHECK:STDOUT:   %a.param_patt.loc19_26.2 => constants.%a.param_patt.537
-// CHECK:STDOUT:   %a.patt.loc19_26.2 => constants.%a.patt.60b
+// CHECK:STDOUT:   %a.patt.loc19_26.2 => constants.%a.patt.16d
 // CHECK:STDOUT:   %ptr.loc19_39.1 => constants.%ptr.e8f8f9.4
 // CHECK:STDOUT:   %.loc19_39.1 => constants.%.cb6cb9.4
 // CHECK:STDOUT:   %pattern_type.loc19_39 => constants.%pattern_type.4f4b84.4
@@ -386,7 +386,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %A => constants.%A.940
 // CHECK:STDOUT:   %pattern_type.loc13_12 => constants.%pattern_type.1ff
 // CHECK:STDOUT:   %self.param_patt.loc13_12.2 => constants.%self.param_patt.0f0
-// CHECK:STDOUT:   %self.patt.loc13_12.2 => constants.%self.patt.975
+// CHECK:STDOUT:   %self.patt.loc13_12.2 => constants.%self.patt.990
 // CHECK:STDOUT:   %ptr.loc13_22.1 => constants.%ptr.c28
 // CHECK:STDOUT:   %.loc13_22.1 => constants.%.9ba
 // CHECK:STDOUT:   %pattern_type.loc13_22 => constants.%pattern_type.1cc

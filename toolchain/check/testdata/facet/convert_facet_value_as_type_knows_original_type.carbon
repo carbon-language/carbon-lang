@@ -241,7 +241,7 @@ fn F[A: J, B: A](x: C(A, B)) {
 // CHECK:STDOUT:   %x.param_patt: %pattern_type.bac = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %x.patt.390072.2: %pattern_type.bac = at_binding_pattern x, %x.param_patt [symbolic]
+// CHECK:STDOUT:   %x.patt.843041.2: %pattern_type.bac = wrapper_binding_pattern x, %x.param_patt [symbolic]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%A, %B) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -274,6 +274,6 @@ fn F[A: J, B: A](x: C(A, B)) {
 // CHECK:STDOUT:   %C.loc25_27.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type.loc25_19 => constants.%pattern_type.bac
 // CHECK:STDOUT:   %x.param_patt.loc25_19.2 => constants.%x.param_patt
-// CHECK:STDOUT:   %x.patt.loc25_19.2 => constants.%x.patt.390072.2
+// CHECK:STDOUT:   %x.patt.loc25_19.2 => constants.%x.patt.843041.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

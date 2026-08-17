@@ -67,9 +67,9 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %Int.67af24.1: type = class_type @Int, @Int(%N) [symbolic]
 // CHECK:STDOUT:   %pattern_type.142cb7.1: type = pattern_type %Int.67af24.1 [symbolic]
 // CHECK:STDOUT:   %start.param_patt.b2c: %pattern_type.142cb7.1 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %start.patt.9ef: %pattern_type.142cb7.1 = at_binding_pattern start, %start.param_patt.b2c [symbolic]
+// CHECK:STDOUT:   %start.patt.f48: %pattern_type.142cb7.1 = wrapper_binding_pattern start, %start.param_patt.b2c [symbolic]
 // CHECK:STDOUT:   %end.param_patt.8ab: %pattern_type.142cb7.1 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %end.patt.960: %pattern_type.142cb7.1 = at_binding_pattern end, %end.param_patt.8ab [symbolic]
+// CHECK:STDOUT:   %end.patt.5d9: %pattern_type.142cb7.1 = wrapper_binding_pattern end, %end.param_patt.8ab [symbolic]
 // CHECK:STDOUT:   %.5c3: Core.Form = init_form %IntRange.2c4 [symbolic]
 // CHECK:STDOUT:   %pattern_type.1ea: type = pattern_type %IntRange.2c4 [symbolic]
 // CHECK:STDOUT:   %return.param_patt.262: %pattern_type.1ea = out_param_pattern [symbolic]
@@ -114,14 +114,14 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %.84c: <witness> = impl_self_witness %IntRange.2c4, @Iterate [symbolic]
 // CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.as.Iterate.impl.%Iterate.impl_witness_table, @IntRange.as.Iterate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %self.param_patt.5cc: %pattern_type.1ea = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.13b: %pattern_type.1ea = at_binding_pattern self, %self.param_patt.5cc [symbolic]
+// CHECK:STDOUT:   %self.patt.b4c: %pattern_type.1ea = wrapper_binding_pattern self, %self.param_patt.5cc [symbolic]
 // CHECK:STDOUT:   %return.patt.434: %pattern_type.142cb7.1 = return_slot_pattern %return.param_patt.5a2679.1, %Int.67af24.1 [symbolic]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.type: type = fn_type @IntRange.as.Iterate.impl.NewCursor, @IntRange.as.Iterate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor: %IntRange.as.Iterate.impl.NewCursor.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.41e: type = ptr_type %Int.67af24.1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.833: type = pattern_type %ptr.41e [symbolic]
 // CHECK:STDOUT:   %cursor.param_patt.328: %pattern_type.833 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %cursor.patt.652: %pattern_type.833 = at_binding_pattern cursor, %cursor.param_patt.328 [symbolic]
+// CHECK:STDOUT:   %cursor.patt.15e: %pattern_type.833 = wrapper_binding_pattern cursor, %cursor.param_patt.328 [symbolic]
 // CHECK:STDOUT:   %OptionalStorage.lookup_impl_witness.a32: <witness> = lookup_impl_witness %Int.67af24.1, @OptionalStorage [symbolic]
 // CHECK:STDOUT:   %.368: require_specific_def_type = require_specific_def @T.as_type.as.OptionalStorage.impl(%facet_value) [symbolic]
 // CHECK:STDOUT:   %OptionalStorage.facet.b99: %OptionalStorage.type = facet_value %Int.67af24.1, (%OptionalStorage.lookup_impl_witness.a32) [symbolic]
@@ -195,7 +195,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %end.param_patt.c55: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %end.patt.367: %pattern_type.6b6 = at_binding_pattern end, %end.param_patt.c55 [concrete]
+// CHECK:STDOUT:   %end.patt.b81: %pattern_type.6b6 = wrapper_binding_pattern end, %end.param_patt.c55 [concrete]
 // CHECK:STDOUT:   %IntRange.bbd: type = class_type @IntRange, @IntRange(%int_32) [concrete]
 // CHECK:STDOUT:   %.9fd: Core.Form = init_form %IntRange.bbd [concrete]
 // CHECK:STDOUT:   %pattern_type.0f3: type = pattern_type %IntRange.bbd [concrete]
@@ -214,7 +214,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %complete_type.ec7: <witness> = complete_type_witness %struct_type.start.end.e93 [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %start.param_patt.619: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %start.patt.304: %pattern_type.6b6 = at_binding_pattern start, %start.param_patt.619 [concrete]
+// CHECK:STDOUT:   %start.patt.71a: %pattern_type.6b6 = wrapper_binding_pattern start, %start.param_patt.619 [concrete]
 // CHECK:STDOUT:   %IntRange.Make.specific_fn: <specific function> = specific_function %IntRange.Make.9ef, @IntRange.Make(%int_32) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.914: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
@@ -273,11 +273,11 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %Core.import_ref.ef7: @OrderedWith.WithSelf.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2) = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, loaded [symbolic = @OrderedWith.WithSelf.%assoc0 (constants.%assoc0.13c)]
 // CHECK:STDOUT:   %Core.import_ref.e7a: @OrderedWith.WithSelf.%OrderedWith.WithSelf.Less.type (%OrderedWith.WithSelf.Less.type.b87) = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, loaded [symbolic = @OrderedWith.WithSelf.%OrderedWith.WithSelf.Less (constants.%OrderedWith.WithSelf.Less.9e1)]
 // CHECK:STDOUT:   %Core.import_ref.447 = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.c1c: @Int.as.OrderedWith.impl.ab3.%Int.as.OrderedWith.impl.Less.type (%Int.as.OrderedWith.impl.Less.type.89b) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.OrderedWith.impl.ab3.%Int.as.OrderedWith.impl.Less (constants.%Int.as.OrderedWith.impl.Less.050)]
+// CHECK:STDOUT:   %Core.import_ref.c1c8: @Int.as.OrderedWith.impl.ab3.%Int.as.OrderedWith.impl.Less.type (%Int.as.OrderedWith.impl.Less.type.89b) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.OrderedWith.impl.ab3.%Int.as.OrderedWith.impl.Less (constants.%Int.as.OrderedWith.impl.Less.050)]
 // CHECK:STDOUT:   %Core.import_ref.30c = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.664 = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.9d4 = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %OrderedWith.impl_witness_table.087 = impl_witness_table (%Core.import_ref.c1c, %Core.import_ref.30c, %Core.import_ref.664, %Core.import_ref.9d4), @Int.as.OrderedWith.impl.ab3 [concrete]
+// CHECK:STDOUT:   %OrderedWith.impl_witness_table.087 = impl_witness_table (%Core.import_ref.c1c8, %Core.import_ref.30c, %Core.import_ref.664, %Core.import_ref.9d4), @Int.as.OrderedWith.impl.ab3 [concrete]
 // CHECK:STDOUT:   %Core.Inc: type = import_ref Core//prelude/operators/arithmetic, Inc, loaded [concrete = constants.%Inc.type]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
@@ -304,7 +304,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Range.decl: %Range.type = fn_decl @Range [concrete = constants.%Range] {
 // CHECK:STDOUT:     %end.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%end.param_patt.c55]
-// CHECK:STDOUT:     %end.patt: %pattern_type.6b6 = at_binding_pattern end, %end.param_patt [concrete = constants.%end.patt.367]
+// CHECK:STDOUT:     %end.patt: %pattern_type.6b6 = wrapper_binding_pattern end, %end.param_patt [concrete = constants.%end.patt.b81]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.0f3 = out_param_pattern [concrete = constants.%return.param_patt.108]
 // CHECK:STDOUT:     %return.patt: %pattern_type.0f3 = return_slot_pattern %return.param_patt, %IntRange.loc26 [concrete = constants.%return.patt.7d9]
 // CHECK:STDOUT:   } {
@@ -342,7 +342,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   impl: %Self.ref as %Iterate.ref {
 // CHECK:STDOUT:     %IntRange.as.Iterate.impl.NewCursor.decl: @IntRange.as.Iterate.impl.%IntRange.as.Iterate.impl.NewCursor.type (%IntRange.as.Iterate.impl.NewCursor.type) = fn_decl @IntRange.as.Iterate.impl.NewCursor [symbolic = @IntRange.as.Iterate.impl.%IntRange.as.Iterate.impl.NewCursor (constants.%IntRange.as.Iterate.impl.NewCursor)] {
 // CHECK:STDOUT:       %self.param_patt.loc10_18.1: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_18 (%pattern_type.1ea) = value_param_pattern [symbolic = %self.param_patt.loc10_18.2 (constants.%self.param_patt.5cc)]
-// CHECK:STDOUT:       %self.patt.loc10_18.1: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_18 (%pattern_type.1ea) = at_binding_pattern self, %self.param_patt.loc10_18.1 [symbolic = %self.patt.loc10_18.2 (constants.%self.patt.13b)]
+// CHECK:STDOUT:       %self.patt.loc10_18.1: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_18 (%pattern_type.1ea) = wrapper_binding_pattern self, %self.param_patt.loc10_18.1 [symbolic = %self.patt.loc10_18.2 (constants.%self.patt.b4c)]
 // CHECK:STDOUT:       %return.param_patt.loc10_37.1: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_37 (%pattern_type.142cb7.1) = out_param_pattern [symbolic = %return.param_patt.loc10_37.2 (constants.%return.param_patt.5a2679.1)]
 // CHECK:STDOUT:       %return.patt.loc10_24.1: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_37 (%pattern_type.142cb7.1) = return_slot_pattern %return.param_patt.loc10_37.1, %Int.loc10_37.2 [symbolic = %return.patt.loc10_24.2 (constants.%return.patt.434)]
 // CHECK:STDOUT:     } {
@@ -362,9 +362,9 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %IntRange.as.Iterate.impl.Next.decl: @IntRange.as.Iterate.impl.%IntRange.as.Iterate.impl.Next.type (%IntRange.as.Iterate.impl.Next.type) = fn_decl @IntRange.as.Iterate.impl.Next [symbolic = @IntRange.as.Iterate.impl.%IntRange.as.Iterate.impl.Next (constants.%IntRange.as.Iterate.impl.Next)] {
 // CHECK:STDOUT:       %self.param_patt.loc11_13.1: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_13 (%pattern_type.1ea) = value_param_pattern [symbolic = %self.param_patt.loc11_13.2 (constants.%self.param_patt.5cc)]
-// CHECK:STDOUT:       %self.patt.loc11_13.1: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_13 (%pattern_type.1ea) = at_binding_pattern self, %self.param_patt.loc11_13.1 [symbolic = %self.patt.loc11_13.2 (constants.%self.patt.13b)]
+// CHECK:STDOUT:       %self.patt.loc11_13.1: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_13 (%pattern_type.1ea) = wrapper_binding_pattern self, %self.param_patt.loc11_13.1 [symbolic = %self.patt.loc11_13.2 (constants.%self.patt.b4c)]
 // CHECK:STDOUT:       %cursor.param_patt.loc11_25.1: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_25 (%pattern_type.833) = value_param_pattern [symbolic = %cursor.param_patt.loc11_25.2 (constants.%cursor.param_patt.328)]
-// CHECK:STDOUT:       %cursor.patt.loc11_25.1: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_25 (%pattern_type.833) = at_binding_pattern cursor, %cursor.param_patt.loc11_25.1 [symbolic = %cursor.patt.loc11_25.2 (constants.%cursor.patt.652)]
+// CHECK:STDOUT:       %cursor.patt.loc11_25.1: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_25 (%pattern_type.833) = wrapper_binding_pattern cursor, %cursor.param_patt.loc11_25.1 [symbolic = %cursor.patt.loc11_25.2 (constants.%cursor.patt.15e)]
 // CHECK:STDOUT:       %return.param_patt.loc11_69.1: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_69 (%pattern_type.b38) = out_param_pattern [symbolic = %return.param_patt.loc11_69.2 (constants.%return.param_patt.4bb)]
 // CHECK:STDOUT:       %return.patt.loc11_41.1: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_69 (%pattern_type.b38) = return_slot_pattern %return.param_patt.loc11_69.1, %Optional.loc11_69.2 [symbolic = %return.patt.loc11_41.2 (constants.%return.patt.427)]
 // CHECK:STDOUT:     } {
@@ -430,9 +430,9 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %IntRange.Make.decl: @IntRange.%IntRange.Make.type (%IntRange.Make.type.522) = fn_decl @IntRange.Make [symbolic = @IntRange.%IntRange.Make (constants.%IntRange.Make.8ef)] {
 // CHECK:STDOUT:       %start.param_patt.loc5_16.1: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = value_param_pattern [symbolic = %start.param_patt.loc5_16.2 (constants.%start.param_patt.b2c)]
-// CHECK:STDOUT:       %start.patt.loc5_16.1: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = at_binding_pattern start, %start.param_patt.loc5_16.1 [symbolic = %start.patt.loc5_16.2 (constants.%start.patt.9ef)]
+// CHECK:STDOUT:       %start.patt.loc5_16.1: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = wrapper_binding_pattern start, %start.param_patt.loc5_16.1 [symbolic = %start.patt.loc5_16.2 (constants.%start.patt.f48)]
 // CHECK:STDOUT:       %end.param_patt.loc5_34.1: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = value_param_pattern [symbolic = %end.param_patt.loc5_34.2 (constants.%end.param_patt.8ab)]
-// CHECK:STDOUT:       %end.patt.loc5_34.1: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = at_binding_pattern end, %end.param_patt.loc5_34.1 [symbolic = %end.patt.loc5_34.2 (constants.%end.patt.960)]
+// CHECK:STDOUT:       %end.patt.loc5_34.1: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = wrapper_binding_pattern end, %end.param_patt.loc5_34.1 [symbolic = %end.patt.loc5_34.2 (constants.%end.patt.5d9)]
 // CHECK:STDOUT:       %return.param_patt.loc5_52.1: @IntRange.Make.%pattern_type.loc5_52 (%pattern_type.1ea) = out_param_pattern [symbolic = %return.param_patt.loc5_52.2 (constants.%return.param_patt.262)]
 // CHECK:STDOUT:       %return.patt.loc5_49.1: @IntRange.Make.%pattern_type.loc5_52 (%pattern_type.1ea) = return_slot_pattern %return.param_patt.loc5_52.1, %Self.ref [symbolic = %return.patt.loc5_49.2 (constants.%return.patt.dbf)]
 // CHECK:STDOUT:     } {
@@ -518,9 +518,9 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %Int.loc5_28.1: type = class_type @Int, @Int(%N) [symbolic = %Int.loc5_28.1 (constants.%Int.67af24.1)]
 // CHECK:STDOUT:   %pattern_type.loc5_16: type = pattern_type %Int.loc5_28.1 [symbolic = %pattern_type.loc5_16 (constants.%pattern_type.142cb7.1)]
 // CHECK:STDOUT:   %start.param_patt.loc5_16.2: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = value_param_pattern [symbolic = %start.param_patt.loc5_16.2 (constants.%start.param_patt.b2c)]
-// CHECK:STDOUT:   %start.patt.loc5_16.2: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = at_binding_pattern start, %start.param_patt.loc5_16.2 [symbolic = %start.patt.loc5_16.2 (constants.%start.patt.9ef)]
+// CHECK:STDOUT:   %start.patt.loc5_16.2: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = wrapper_binding_pattern start, %start.param_patt.loc5_16.2 [symbolic = %start.patt.loc5_16.2 (constants.%start.patt.f48)]
 // CHECK:STDOUT:   %end.param_patt.loc5_34.2: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = value_param_pattern [symbolic = %end.param_patt.loc5_34.2 (constants.%end.param_patt.8ab)]
-// CHECK:STDOUT:   %end.patt.loc5_34.2: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = at_binding_pattern end, %end.param_patt.loc5_34.2 [symbolic = %end.patt.loc5_34.2 (constants.%end.patt.960)]
+// CHECK:STDOUT:   %end.patt.loc5_34.2: @IntRange.Make.%pattern_type.loc5_16 (%pattern_type.142cb7.1) = wrapper_binding_pattern end, %end.param_patt.loc5_34.2 [symbolic = %end.patt.loc5_34.2 (constants.%end.patt.5d9)]
 // CHECK:STDOUT:   %IntRange: type = class_type @IntRange, @IntRange(%N) [symbolic = %IntRange (constants.%IntRange.2c4)]
 // CHECK:STDOUT:   %.loc5_52.1: Core.Form = init_form %IntRange [symbolic = %.loc5_52.1 (constants.%.5c3)]
 // CHECK:STDOUT:   %pattern_type.loc5_52: type = pattern_type %IntRange [symbolic = %pattern_type.loc5_52 (constants.%pattern_type.1ea)]
@@ -577,7 +577,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %IntRange: type = class_type @IntRange, @IntRange(%N) [symbolic = %IntRange (constants.%IntRange.2c4)]
 // CHECK:STDOUT:   %pattern_type.loc10_18: type = pattern_type %IntRange [symbolic = %pattern_type.loc10_18 (constants.%pattern_type.1ea)]
 // CHECK:STDOUT:   %self.param_patt.loc10_18.2: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_18 (%pattern_type.1ea) = value_param_pattern [symbolic = %self.param_patt.loc10_18.2 (constants.%self.param_patt.5cc)]
-// CHECK:STDOUT:   %self.patt.loc10_18.2: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_18 (%pattern_type.1ea) = at_binding_pattern self, %self.param_patt.loc10_18.2 [symbolic = %self.patt.loc10_18.2 (constants.%self.patt.13b)]
+// CHECK:STDOUT:   %self.patt.loc10_18.2: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_18 (%pattern_type.1ea) = wrapper_binding_pattern self, %self.param_patt.loc10_18.2 [symbolic = %self.patt.loc10_18.2 (constants.%self.patt.b4c)]
 // CHECK:STDOUT:   %Int.loc10_37.1: type = class_type @Int, @Int(%N) [symbolic = %Int.loc10_37.1 (constants.%Int.67af24.1)]
 // CHECK:STDOUT:   %.loc10_37.1: Core.Form = init_form %Int.loc10_37.1 [symbolic = %.loc10_37.1 (constants.%.df5d8d.1)]
 // CHECK:STDOUT:   %pattern_type.loc10_37: type = pattern_type %Int.loc10_37.1 [symbolic = %pattern_type.loc10_37 (constants.%pattern_type.142cb7.1)]
@@ -620,12 +620,12 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %IntRange: type = class_type @IntRange, @IntRange(%N) [symbolic = %IntRange (constants.%IntRange.2c4)]
 // CHECK:STDOUT:   %pattern_type.loc11_13: type = pattern_type %IntRange [symbolic = %pattern_type.loc11_13 (constants.%pattern_type.1ea)]
 // CHECK:STDOUT:   %self.param_patt.loc11_13.2: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_13 (%pattern_type.1ea) = value_param_pattern [symbolic = %self.param_patt.loc11_13.2 (constants.%self.param_patt.5cc)]
-// CHECK:STDOUT:   %self.patt.loc11_13.2: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_13 (%pattern_type.1ea) = at_binding_pattern self, %self.param_patt.loc11_13.2 [symbolic = %self.patt.loc11_13.2 (constants.%self.patt.13b)]
+// CHECK:STDOUT:   %self.patt.loc11_13.2: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_13 (%pattern_type.1ea) = wrapper_binding_pattern self, %self.param_patt.loc11_13.2 [symbolic = %self.patt.loc11_13.2 (constants.%self.patt.b4c)]
 // CHECK:STDOUT:   %Int.loc11_37.1: type = class_type @Int, @Int(%N) [symbolic = %Int.loc11_37.1 (constants.%Int.67af24.1)]
 // CHECK:STDOUT:   %ptr.loc11_38.1: type = ptr_type %Int.loc11_37.1 [symbolic = %ptr.loc11_38.1 (constants.%ptr.41e)]
 // CHECK:STDOUT:   %pattern_type.loc11_25: type = pattern_type %ptr.loc11_38.1 [symbolic = %pattern_type.loc11_25 (constants.%pattern_type.833)]
 // CHECK:STDOUT:   %cursor.param_patt.loc11_25.2: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_25 (%pattern_type.833) = value_param_pattern [symbolic = %cursor.param_patt.loc11_25.2 (constants.%cursor.param_patt.328)]
-// CHECK:STDOUT:   %cursor.patt.loc11_25.2: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_25 (%pattern_type.833) = at_binding_pattern cursor, %cursor.param_patt.loc11_25.2 [symbolic = %cursor.patt.loc11_25.2 (constants.%cursor.patt.652)]
+// CHECK:STDOUT:   %cursor.patt.loc11_25.2: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_25 (%pattern_type.833) = wrapper_binding_pattern cursor, %cursor.param_patt.loc11_25.2 [symbolic = %cursor.patt.loc11_25.2 (constants.%cursor.patt.15e)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc11_37.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.173)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc11_37.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.df6)]
 // CHECK:STDOUT:   %facet_value: %facet_type.f48 = facet_value %Int.loc11_37.1, (%Destroy.lookup_impl_witness, %Copy.lookup_impl_witness) [symbolic = %facet_value (constants.%facet_value)]
@@ -845,9 +845,9 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %Int.loc5_28.1 => constants.%Int.67af24.1
 // CHECK:STDOUT:   %pattern_type.loc5_16 => constants.%pattern_type.142cb7.1
 // CHECK:STDOUT:   %start.param_patt.loc5_16.2 => constants.%start.param_patt.b2c
-// CHECK:STDOUT:   %start.patt.loc5_16.2 => constants.%start.patt.9ef
+// CHECK:STDOUT:   %start.patt.loc5_16.2 => constants.%start.patt.f48
 // CHECK:STDOUT:   %end.param_patt.loc5_34.2 => constants.%end.param_patt.8ab
-// CHECK:STDOUT:   %end.patt.loc5_34.2 => constants.%end.patt.960
+// CHECK:STDOUT:   %end.patt.loc5_34.2 => constants.%end.patt.5d9
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.2c4
 // CHECK:STDOUT:   %.loc5_52.1 => constants.%.5c3
 // CHECK:STDOUT:   %pattern_type.loc5_52 => constants.%pattern_type.1ea
@@ -880,7 +880,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.2c4
 // CHECK:STDOUT:   %pattern_type.loc10_18 => constants.%pattern_type.1ea
 // CHECK:STDOUT:   %self.param_patt.loc10_18.2 => constants.%self.param_patt.5cc
-// CHECK:STDOUT:   %self.patt.loc10_18.2 => constants.%self.patt.13b
+// CHECK:STDOUT:   %self.patt.loc10_18.2 => constants.%self.patt.b4c
 // CHECK:STDOUT:   %Int.loc10_37.1 => constants.%Int.67af24.1
 // CHECK:STDOUT:   %.loc10_37.1 => constants.%.df5d8d.1
 // CHECK:STDOUT:   %pattern_type.loc10_37 => constants.%pattern_type.142cb7.1
@@ -893,12 +893,12 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.2c4
 // CHECK:STDOUT:   %pattern_type.loc11_13 => constants.%pattern_type.1ea
 // CHECK:STDOUT:   %self.param_patt.loc11_13.2 => constants.%self.param_patt.5cc
-// CHECK:STDOUT:   %self.patt.loc11_13.2 => constants.%self.patt.13b
+// CHECK:STDOUT:   %self.patt.loc11_13.2 => constants.%self.patt.b4c
 // CHECK:STDOUT:   %Int.loc11_37.1 => constants.%Int.67af24.1
 // CHECK:STDOUT:   %ptr.loc11_38.1 => constants.%ptr.41e
 // CHECK:STDOUT:   %pattern_type.loc11_25 => constants.%pattern_type.833
 // CHECK:STDOUT:   %cursor.param_patt.loc11_25.2 => constants.%cursor.param_patt.328
-// CHECK:STDOUT:   %cursor.patt.loc11_25.2 => constants.%cursor.patt.652
+// CHECK:STDOUT:   %cursor.patt.loc11_25.2 => constants.%cursor.patt.15e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%Destroy.lookup_impl_witness.173
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.lookup_impl_witness.df6
 // CHECK:STDOUT:   %facet_value => constants.%facet_value
@@ -935,9 +935,9 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %Int.loc5_28.1 => constants.%i32
 // CHECK:STDOUT:   %pattern_type.loc5_16 => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %start.param_patt.loc5_16.2 => constants.%start.param_patt.619
-// CHECK:STDOUT:   %start.patt.loc5_16.2 => constants.%start.patt.304
+// CHECK:STDOUT:   %start.patt.loc5_16.2 => constants.%start.patt.71a
 // CHECK:STDOUT:   %end.param_patt.loc5_34.2 => constants.%end.param_patt.c55
-// CHECK:STDOUT:   %end.patt.loc5_34.2 => constants.%end.patt.367
+// CHECK:STDOUT:   %end.patt.loc5_34.2 => constants.%end.patt.b81
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.bbd
 // CHECK:STDOUT:   %.loc5_52.1 => constants.%.9fd
 // CHECK:STDOUT:   %pattern_type.loc5_52 => constants.%pattern_type.0f3
@@ -988,9 +988,9 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %return.patt.ca9: %pattern_type.1ea = return_slot_pattern %return.param_patt.262, invalid [symbolic]
 // CHECK:STDOUT:   %.5c3: Core.Form = init_form %IntRange.2c4 [symbolic]
 // CHECK:STDOUT:   %end.param_patt.8ab: %pattern_type.142cb7.1 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %end.patt.960: %pattern_type.142cb7.1 = at_binding_pattern end, %end.param_patt.8ab [symbolic]
+// CHECK:STDOUT:   %end.patt.5d9: %pattern_type.142cb7.1 = wrapper_binding_pattern end, %end.param_patt.8ab [symbolic]
 // CHECK:STDOUT:   %start.param_patt: %pattern_type.142cb7.1 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %start.patt.9ef: %pattern_type.142cb7.1 = at_binding_pattern start, %start.param_patt [symbolic]
+// CHECK:STDOUT:   %start.patt.f48: %pattern_type.142cb7.1 = wrapper_binding_pattern start, %start.param_patt [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.df6: <witness> = lookup_impl_witness %Int.67af24.1, @Copy [symbolic]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %Int.67af24.1, (%Copy.lookup_impl_witness.df6) [symbolic]
@@ -1157,9 +1157,9 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic = %Int (constants.%Int.67af24.1)]
 // CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Int [symbolic = %pattern_type.1 (constants.%pattern_type.142cb7.1)]
 // CHECK:STDOUT:   %start.param_patt: @IntRange.Make.%pattern_type.1 (%pattern_type.142cb7.1) = value_param_pattern [symbolic = %start.param_patt (constants.%start.param_patt)]
-// CHECK:STDOUT:   %start.patt: @IntRange.Make.%pattern_type.1 (%pattern_type.142cb7.1) = at_binding_pattern start, %start.param_patt [symbolic = %start.patt (constants.%start.patt.9ef)]
+// CHECK:STDOUT:   %start.patt: @IntRange.Make.%pattern_type.1 (%pattern_type.142cb7.1) = wrapper_binding_pattern start, %start.param_patt [symbolic = %start.patt (constants.%start.patt.f48)]
 // CHECK:STDOUT:   %end.param_patt: @IntRange.Make.%pattern_type.1 (%pattern_type.142cb7.1) = value_param_pattern [symbolic = %end.param_patt (constants.%end.param_patt.8ab)]
-// CHECK:STDOUT:   %end.patt: @IntRange.Make.%pattern_type.1 (%pattern_type.142cb7.1) = at_binding_pattern end, %end.param_patt [symbolic = %end.patt (constants.%end.patt.960)]
+// CHECK:STDOUT:   %end.patt: @IntRange.Make.%pattern_type.1 (%pattern_type.142cb7.1) = wrapper_binding_pattern end, %end.param_patt [symbolic = %end.patt (constants.%end.patt.5d9)]
 // CHECK:STDOUT:   %IntRange: type = class_type @IntRange, @IntRange(%N) [symbolic = %IntRange (constants.%IntRange.2c4)]
 // CHECK:STDOUT:   %.1: Core.Form = init_form %IntRange [symbolic = %.1 (constants.%.5c3)]
 // CHECK:STDOUT:   %pattern_type.2: type = pattern_type %IntRange [symbolic = %pattern_type.2 (constants.%pattern_type.1ea)]
@@ -1228,9 +1228,9 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %Int => constants.%Int.67af24.1
 // CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.142cb7.1
 // CHECK:STDOUT:   %start.param_patt => constants.%start.param_patt
-// CHECK:STDOUT:   %start.patt => constants.%start.patt.9ef
+// CHECK:STDOUT:   %start.patt => constants.%start.patt.f48
 // CHECK:STDOUT:   %end.param_patt => constants.%end.param_patt.8ab
-// CHECK:STDOUT:   %end.patt => constants.%end.patt.960
+// CHECK:STDOUT:   %end.patt => constants.%end.patt.5d9
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.2c4
 // CHECK:STDOUT:   %.1 => constants.%.5c3
 // CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.1ea

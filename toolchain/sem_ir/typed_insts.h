@@ -2477,7 +2477,7 @@ struct WrapperBinding {
 struct WrapperBindingPattern {
   static constexpr auto Kind =
       InstKind::WrapperBindingPattern.Define<Parse::NodeId>(
-          {.ir_name = "at_binding_pattern",
+          {.ir_name = "wrapper_binding_pattern",
            .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
