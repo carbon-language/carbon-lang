@@ -34,6 +34,18 @@ static auto StringifyTypeOfInst(const SemIR::File& sem_ir,
                                       sem_ir.types().GetTypeInstId(type_id));
 }
 
+// Produces a message response indicating that the textDocument parameter was
+// invalid.
+template <typename ResponseType>
+static auto HandleBadTextDocument(
+    llvm::StringRef file,
+    llvm::function_ref<auto(llvm::Expected<ResponseType>)->void> on_done)
+    -> void {
+  on_done(llvm::make_error<clang::clangd::LSPError>(
+      llvm::formatv("Unknown textDocument `{0}`", file),
+      clang::clangd::ErrorCode::InvalidParams));
+}
+
 // Implements `textDocument/hover`:
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_hover
 auto HandleHover(
@@ -42,6 +54,7 @@ auto HandleHover(
         on_done) -> void {
   auto* file = context.LookupFile(params.textDocument.uri.file());
   if (!file) {
+    HandleBadTextDocument(params.textDocument.uri.file(), on_done);
     return;
   }
   auto info = FindPositionInfo(*file, params.position);
@@ -75,6 +88,7 @@ static auto HandleGoto(
         on_done) -> void {
   auto* file = context.LookupFile(params.textDocument.uri.file());
   if (!file) {
+    HandleBadTextDocument(params.textDocument.uri.file(), on_done);
     return;
   }
   auto info = FindPositionInfo(*file, params.position);
@@ -138,6 +152,7 @@ auto HandleReferences(
         on_done) -> void {
   auto* file = context.LookupFile(params.textDocument.uri.file());
   if (!file) {
+    HandleBadTextDocument(params.textDocument.uri.file(), on_done);
     return;
   }
   auto info = FindPositionInfo(*file, params.position);
