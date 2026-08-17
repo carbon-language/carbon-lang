@@ -2401,6 +2401,10 @@ struct VarStorage {
 
   // If this storage was created for a `var` pattern, the pattern. Otherwise,
   // such as the implicit storage in `for`, this is `None`.
+  //
+  // TODO: remove this field, because it will almost invariably violate the
+  // topological ordering of insts. See docs/check/pattern_matching.md for
+  // details.
   AbsoluteInstId pattern_id;
 };
 

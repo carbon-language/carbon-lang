@@ -19,9 +19,13 @@
 
 #ifndef NDEBUG
 
-#include "toolchain/lex/tokenized_buffer.h"
+#include <string>
+
+#include "toolchain/lex/token_index.h"
 
 namespace Carbon::Lex {
+
+class TokenizedBuffer;
 
 auto Dump(const TokenizedBuffer& tokens, TokenIndex token) -> std::string;
 

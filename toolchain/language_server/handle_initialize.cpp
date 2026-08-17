@@ -37,4 +37,14 @@ auto HandleInitialize(
   on_done(reply);
 }
 
+// Implements `initialized`:
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initialized
+auto HandleInitialized(Context& /*context*/,
+                       const clang::clangd::NoParams& /*params*/) -> void {
+  // Nothing to do, but every client sends this, so we handle it rather than
+  // warning about an unsupported notification.
+  // TODO: This is when we would use `client/registerCapability` for any
+  // capabilities we want to register dynamically.
+}
+
 }  // namespace Carbon::LanguageServer

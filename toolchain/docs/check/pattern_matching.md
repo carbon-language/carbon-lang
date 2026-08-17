@@ -13,6 +13,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Pattern instructions](#pattern-instructions)
 -   [Instruction ordering](#instruction-ordering)
+    -   [Name references and expressions in patterns](#name-references-and-expressions-in-patterns)
+    -   [Storage and initializing expressions](#storage-and-initializing-expressions)
+    -   [The final ordering](#the-final-ordering)
 -   [Parser-driven pattern block pushing](#parser-driven-pattern-block-pushing)
 -   [Function parameters](#function-parameters)
     -   [`Call` parameters and arguments](#call-parameters-and-arguments)
@@ -36,6 +39,13 @@ The SemIR for a pattern-matching operation is emitted in three steps:
 3.  **Match:** Traverse the pattern SemIR from step 1 (sometimes in conjunction
     with the scrutinee SemIR) to emit SemIR that actually performs pattern
     matching.
+
+Note that steps 1 and 2 emit insts in bottom-up order (as usual for SemIR), but
+step 3 will traverse the pattern and scrutinee insts in top-down order.
+
+However, the resulting insts do not necessarily appear in that order in the
+SemIR, and in some cases instructions that belong to the later steps are
+emitted in earlier steps, for reasons discussed [below](#instruction-ordering).
 
 ## Pattern instructions
 
@@ -74,83 +84,188 @@ emit non-pattern instructions as well. For example, in a pattern like
 SemIR must be emitted during the initial traversal of the parse tree, as with
 any other expression.
 
-All the pattern instructions for a given full-pattern are grouped together in a
-distinct block that contains only pattern instructions. Consequently,
+All the pattern instructions for a given
+[full-pattern](/docs/design/pattern_matching.md#overview) are grouped together
+in a distinct block that contains only pattern instructions, for reasons
+discussed [below](#name-references-and-expressions-in-patterns). Consequently,
 `Check::Context` maintains `pattern_block_stack` as a separate `InstBlockStack`
 for pattern blocks, and operations like `AddInst` automatically put
 newly-created pattern insts on that stack.
 
 ## Instruction ordering
 
-The SemIR produced in the first two steps is (like most SemIR) generally in
-post-order, reflecting the order of the parse tree. However, the match step
-traversal is performed pre-order, starting with the root instruction of the
-pattern and traversing into its dependencies.
+Consider the following Carbon code (using the currently-hypothetical `if let`):
 
-In some cases it is necessary for the pattern step to allocate instructions that
-won't actually be emitted until the match step, because they are responsible for
-performing pattern matching. When that happens, they are allocated but not added
-to a block, and their IDs are stored in the `Check::Context` so that they can be
-spliced into the current block at the appropriate point in the match step.
+```carbon
+if (let (var n: i32, n) = (f(), x)) ...
+```
 
-Currently this happens in two cases, which are handled using two maps in
-`Check::Context` from pattern instruction IDs to the corresponding match
-instruction IDs:
+You might expect the SemIR for that code to reflect the 3-step process of
+creating it, for example:
 
--   A name binding can be used within the same pattern that declares it:
+```
+// Step 1: traverse the pattern.
+%n_patt: %i32_pattern = ref_binding_pattern n
+%n_var_patt: %i32_pattern = var_pattern %n_patt
+%n_ref: ref i32 = name_ref n, %n
+%n_expr_patt: %i32_pattern = expr_pattern %n_ref
+%pattern: %i32_pair_pattern = tuple_pattern (%n_var_patt, %n_expr_patt)
 
-    ```carbon
-    match (x) {
-      case (n: i32, n) => ...
-    ```
+// Step 2: evaluate the scrutinee.
+%call: init i32 to %n_var = call %F
+%x_ref: i32 = name_ref x
+%scrutinee: %i32_pair = tuple_literal (%call, %x_ref)
 
-    For this to work, the name `n` needs to be added to the scope as soon as we
-    handle its declaration, and it needs to resolve to the `ValueBinding`
-    instruction that binds a value to that name. This means that the
-    `ValueBinding` instruction needs to be allocated during the pattern step,
-    even though it is part of matching, not part of the pattern.
-    `Context::bind_name_map` stores these `ValueBinding`s, keyed by the
-    corresponding `ValueBindingPattern` instruction.
--   A `var` pattern allocates storage during matching, which is represented by a
-    `VarStorage` instruction. For local and class-scope `var` patterns, this
-    instruction must be allocated at the end of the pattern step, so that it can
-    be used as the output parameter of scrutinee expression evaluation during
-    the scrutinee step, but doesn't get added to the instruction block that's
-    meant to capture sub-expressions (see below). `FullPatternStack` is
-    responsible for the mapping from `VarPattern` insts to the corresponding
-    `VarStorage` insts.
+// Step 3: match the pattern with the scrutinee
+%n_var: ref i32 = var_storage
+%n: ref i32 = ref_binding %n_var
+%equal: init bool = call %Core.EqWith.Op(%n_ref, %x_ref)
+if %equal then br !if.then else br !if.else
+```
 
-As noted earlier, the pattern step can also emit non-pattern instructions to
-evaluate expressions that are embedded in the pattern, such as the type
-expressions of binding patterns, and expressions that are used as patterns
-themselves (although those have not been implemented yet). The parse tree
-doesn't mark these situations in advance: any given subpattern might turn out to
-be one that emits non-pattern instructions. To handle these situations, we
-speculatively prepare to build an `ExprRegion` whenever we are about to begin
-handling a pattern that might be a binding or expression pattern, and then
-either consume or discard the region once we've passed the point where the
-expression (if any) would appear. This is handled by `BeginExprRegionForPattern`,
-`ConsumeExprRegionForPattern`, `EndExprRegionForPattern`, and
-`EndEmptyExprRegionForPattern`.
+However, we require SemIR to be topologically ordered, and the above code
+violates that in two places:
 
-One further complication here is that the type expression can contain control
-flow (such as an `if` expression). Consequently, we can't represent the type
-expression SemIR as a single block; instead, we represent the SemIR for a given
-type expression as a
-[single-entry, single-exit (SE/SE) region](https://en.wikipedia.org/wiki/Single-entry_single-exit),
-potentially consisting of multiple blocks.
+-   `%n_ref` takes the value of the referenced name (in this case `%n`) as an
+    operand. `%n_ref` is part of the pattern, so it belongs in step 1, but `%n`
+    is a name binding created during pattern matching in step 3. In general
+    this can happen any time a pattern contains an expression that uses the
+    name of a binding that was declared earlier in the same pattern.
+-   `%call` is an initializing expression, so it takes the storage to initialize
+    (`%n_ref` in this case) as an output parameter. `%call` is part of the
+    initializer, so it belongs in step 2, but `%n_ref` is part of step 3. In
+    general this can be a problem any time a `var` pattern is initialized from
+    a local initializing expression.
 
-> **Note:** The original motivation for rigorously excluding non-pattern
-> instructions from the pattern block may no longer apply. In particular, it may
-> make sense to put non-pattern instructions in the pattern block when they
-> represent an expression that is part of the pattern. If so, substantial parts
-> of this design might change. See
-> [issue #5351](https://github.com/carbon-language/carbon-lang/issues/5351).
+> **Note:** In practice `%call` actually won't have an output parameter because
+> `i32` doesn't have a pointer initializing representation, but we're ignoring
+> that to keep the example concrete.
+
+In both cases, the non-topological order reflects a deeper problem: at the point
+where we want to create the instruction, one of its operands doesn't yet exist.
+Furthermore, to the extent that we solve that problem by creating the operand
+inst earlier, we still have the problem of how to _find_ that operand inst when
+we need it.
+
+We solve these two classes of problems in different ways.
+
+### Name references and expressions in patterns
+
+To solve the ordering problems for name references, we reorder both the insts
+that represent the pattern, and the insts that represent expressions within it
+(such as expression patterns and the types of binding patterns). Specifically,
+we sequence the expression insts so that they are evaluated in step 3, when
+matching the subpattern they're part of. This ensures that any name references
+in the expression will appear after the name bindings they refer to,
+because a binding can only be used lexically after it's been declared,
+and pattern matching proceeds in lexical order. Then, since the pattern insts
+will refer to those expression insts, we sequence all pattern insts after the
+step 3 insts. This respects the topological ordering, because within a
+pattern-matching operation, non-pattern insts may be generated from the
+pattern insts, but can't actually depend on them.
+
+> **TODO:** As of this writing, a `var_storage` inst takes the `var_pattern`
+> it was generated from as an operand, which violates this requirement and can
+> lead to violations of the topological ordering. We need to fix this.
+
+Note that the pattern insts and the expression insts are still created in step
+1, but we defer actually adding them to the current inst block in order to
+achieve that ordering. We accomplish that as follows:
+
+During step 1:
+
+-   When we emit a pattern inst, we add it to a separate pattern block
+    (on a separate pattern block stack).
+-   When we are about to handle an expression within a pattern (such as an
+    expression pattern or the type part of a binding pattern), we push an
+    `ExprRegion` onto the `inst_block_stack` to capture the expression insts.
+    Then, at the end of handling the expression, we pop the `ExprRegion` and
+    store its ID at the end of the expression, so that we can splice the
+    expression evaluation into the pattern matching SemIR later. This is
+    handled by the `ExprRegionForPattern` functions in
+    `toolchain/check/pattern.h`.
+-   When we handle a binding pattern, we eagerly create a binding inst (in
+    addition to a binding pattern inst), and add its ID to name lookup so that
+    we can resolve references to that name. However, we create the binding in a
+    placeholder state with no value, and we do not add it to any block yet. We
+    also add the binding inst and the `ExprRegion` for its type expression to
+    `bind_name_map` so that they can later be looked up using the binding
+    pattern as a key.
+-   When we handle a name expression (during step 1 or at any other time), we
+    look up its name to find the ID of the binding, create a `name_ref` with
+    that binding as its value operand, and add it to the current inst block.
+
+Then, during step 3:
+
+-   When we match a binding pattern inst with its scrutinee, we look up the
+    corresponding binding inst in `bind_name_map`, set its value operand to the
+    scrutinee ID, and add it to the current inst block (as if we had just
+    created it). The same `bind_name_map` lookup also returns the `ExprRegion`
+    for the binding's type expression, which we splice onto the top of the
+    `inst_block_stack`.
+-   When we match an expression pattern inst, we splice the `ExprRegion` onto
+    the top of the `inst_block_stack`, and then compare it with the scrutinee
+    (Note: expression pattern matching is not yet implemented).
+
+Finally, after step 3, we splice the pattern block into the main inst block.
+For local pattern matches, we mark this splicing with a `name_binding_decl`
+inst.
+
+### Storage and initializing expressions
+
+To solve the ordering problems with initializing expressions like `%call`:
+
+While traversing the parse tree in step 1, we create and emit `var_storage`
+insts, and track them in the `FullPatternStack` for later reuse. This ensures
+that they are sequenced before the insts in step 2 that initialize them.
+
+Then, when evaluating the initializer in step 2, we set its output operand to a
+placeholder ID.
+
+Finally in step 3, when we bring the `var_pattern` and its initializer together,
+we look up the corresponding `var_storage` inst in the `FullPatternStack`, and
+then rewrite the initializer inst to have the `var_storage` inst as its output
+operand (or in some cases, make a rewritten copy of it; see `Initialize` in
+`convert.h` for details about this process).
+
+Note that when the full pattern is part of a parameter list, we create the
+`var_storage` inst on demand in step 3, because parameters currently can't have
+initializers, so this problem doesn't come up.
+
+### The final ordering
+
+Combining the solutions to those two problems, the emitted SemIR for our example
+will actually look something like this:
+
+```
+// Step 1: traverse the pattern.
+%n_var: ref i32 = var_storage
+
+// Step 2: traverse the scrutinee.
+%call: init i32 to %n_var = call %F
+%x_ref: i32 = name_ref x, %x
+%scrutinee: %i32_pair = tuple_literal (%call, %x_ref)
+
+// Step 3: match the pattern with the scrutinee
+%n: ref i32 = ref_binding %n_var
+%n_ref: ref i32 = name_ref n, %n
+%equal: init bool = call %Core.EqWith.Op(%n_ref, %x_ref)
+
+name_binding_decl {
+  // Step 1: traverse the pattern.
+  %n_patt: %i32_pattern = ref_binding_pattern n
+  %n_var_patt: %i32_pattern = var_pattern %n_patt
+  %n_expr_patt: %i32_pattern = expr_pattern %n_ref
+  %pattern: %i32_pair_pattern = tuple_pattern (%n_var_patt, %n_expr_patt)
+}
+if %equal then br !if.then else br !if.else
+```
 
 ## Parser-driven pattern block pushing
 
-At the same time as all of that, we have to manage the _pattern_ block stack as
-well. We attempt to do this precisely rather than speculatively, by leveraging
+In order to produce correct pattern blocks, we need to ensure that a new pattern
+block is pushed onto the stack at the start of every full-pattern, and popped
+at the end. We attempt to do this precisely rather than speculatively, by leveraging
 the parser to precisely mark the nodes immediately before full-patterns, and
 pushing the pattern block stack when we handle those nodes. We then rely on
 signals from both the parser and the node stack to determine when to pop from
