@@ -84,9 +84,10 @@ emit non-pattern instructions as well. For example, in a pattern like
 SemIR must be emitted during the initial traversal of the parse tree, as with
 any other expression.
 
-All the pattern instructions for a given full-pattern are grouped together in a
-distinct block that contains only pattern instructions, for reasons discussed
-[below](#name-references-and-expressions-in-patterns). Consequently,
+All the pattern instructions for a given
+[full-pattern](/docs/design/pattern_matching.md#overview) are grouped together
+in a distinct block that contains only pattern instructions, for reasons
+discussed [below](#name-references-and-expressions-in-patterns). Consequently,
 `Check::Context` maintains `pattern_block_stack` as a separate `InstBlockStack`
 for pattern blocks, and operations like `AddInst` automatically put
 newly-created pattern insts on that stack.
@@ -212,16 +213,20 @@ inst.
 
 ### Storage and initializing expressions
 
-To solve the ordering problems with initializing expressions like `%call`, we
-create and emit `var_storage` insts during the initial traversal of the pattern
-in step 1, and track them in the `FullPatternStack` for later reuse. This
-ensures that they are sequenced before the insts in step 2 that initialize them.
+To solve the ordering problems with initializing expressions like `%call`:
+
+While traversing the parse tree in step 1, we create and emit `var_storage`
+insts, and track them in the `FullPatternStack` for later reuse. This ensures
+that they are sequenced before the insts in step 2 that initialize them.
+
 Then, when evaluating the initializer in step 2, we set its output operand to a
-placeholder ID. Finally, when we bring the `var_pattern` and its initializer
-together in step 3, we look up the corresponding `var_storage` inst in the
-`FullPatternStack`, and then rewrite the initializer inst to have the
-`var_storage` inst as its output operand (or in some cases, make a rewritten
-copy of it; see `Initialize` in `convert.h` for details about this process).
+placeholder ID.
+
+Finally in step 3, when we bring the `var_pattern` and its initializer together,
+we look up the corresponding `var_storage` inst in the `FullPatternStack`, and
+then rewrite the initializer inst to have the `var_storage` inst as its output
+operand (or in some cases, make a rewritten copy of it; see `Initialize` in
+`convert.h` for details about this process).
 
 Note that when the full pattern is part of a parameter list, we create the
 `var_storage` inst on demand in step 3, because parameters currently can't have
