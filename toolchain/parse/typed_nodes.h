@@ -1823,6 +1823,7 @@ struct NamedConstraintDefinition {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
+// `$0`
 struct PositionalParamExpr {
   static constexpr auto Kind = NodeKind::PositionalParamExpr.Define(
       {.category = NodeCategory::Expr, .child_count = 1});

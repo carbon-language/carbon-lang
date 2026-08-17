@@ -21,8 +21,7 @@ fn foo(bar: i64, baz: i64) {
 // --- with_positional_params.carbon
 
 fn foo {
-  foo($0, $42);
-  return $86;
+  foo($0, $42 + $86);
 }
 
 // --- fail_positional_param_negative_int.carbon
@@ -157,14 +156,13 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:   │ │   │ ╭─IntLiteral '0'
 // CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$'
 // CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
-// CHECK:STDOUT:   │ │   │ ╭─IntLiteral '42'
-// CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ │   │   ╭─IntLiteral '42'
+// CHECK:STDOUT:   │ │   │ ╭─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ │   │ │ ╭─IntLiteral '86'
+// CHECK:STDOUT:   │ │   │ ├─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ │   ├─InfixOperatorPlus '+'
 // CHECK:STDOUT:   │ │ ╭─CallExpr ')'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
-// CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
-// CHECK:STDOUT:   │ │ │ ╭─IntLiteral '86'
-// CHECK:STDOUT:   │ │ ├─PositionalParamExpr '$'
-// CHECK:STDOUT:   │ ├─ReturnStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
