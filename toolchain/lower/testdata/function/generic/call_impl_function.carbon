@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_impl_function.carbon
 
 
-interface SomeInterface(T:! type) {
+interface SomeInterface(T: type) {
   fn F(x: T) -> T;
 }
 
@@ -32,7 +32,7 @@ impl ImplsSomeInterface as SomeInterface(i32) {
 // }
 
 
-fn CallGenericMethod(T:! type, U:! SomeInterface(T), x: T) -> T {
+fn CallGenericMethod(generic T: type, generic U: SomeInterface(T), x: T) -> T {
   return U.F(x);
 }
 
@@ -57,12 +57,12 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %CallGenericMethod.call = call i32 @_CCallGenericMethod.Main.a8a4675a2f98891e(i32 10), !dbg !15
+// CHECK:STDOUT:   %CallGenericMethod.call = call i32 @_CCallGenericMethod.Main.61896b64459d8f86(i32 10), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CCallGenericMethod.Main.a8a4675a2f98891e(i32 %x) #0 !dbg !17 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CCallGenericMethod.Main.61896b64459d8f86(i32 %x) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %SomeInterface.WithSelf.F.call = call i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.84588f41d61dafba.Main"(i32 %x), !dbg !20
 // CHECK:STDOUT:   ret i32 %SomeInterface.WithSelf.F.call, !dbg !21
@@ -90,7 +90,7 @@ fn G() {
 // CHECK:STDOUT: !14 = !{null}
 // CHECK:STDOUT: !15 = !DILocation(line: 40, column: 3, scope: !12)
 // CHECK:STDOUT: !16 = !DILocation(line: 39, column: 1, scope: !12)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "CallGenericMethod", linkageName: "_CCallGenericMethod.Main.a8a4675a2f98891e", scope: null, file: !1, line: 35, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !18)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "CallGenericMethod", linkageName: "_CCallGenericMethod.Main.61896b64459d8f86", scope: null, file: !1, line: 35, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !18)
 // CHECK:STDOUT: !18 = !{!19}
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !20 = !DILocation(line: 36, column: 10, scope: !17)

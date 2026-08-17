@@ -14,10 +14,10 @@ library "[[@TEST_NAME]]";
 
 interface I {
   // CHECK:STDERR: fail_tuple_pattern.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   let (T:! type, U:! type);
+  // CHECK:STDERR:   let (T: type, U: type);
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  let (T:! type, U:! type);
+  let (T: type, U: type);
 }
 
 // --- fail_tuple_pattern_with_default.carbon
@@ -26,10 +26,10 @@ library "[[@TEST_NAME]]";
 
 interface I {
   // CHECK:STDERR: fail_tuple_pattern_with_default.carbon:[[@LINE+4]]:15: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   default let (T:! type, U:! type) = ({}, {});
+  // CHECK:STDERR:   default let (T: type, U: type) = ({}, {});
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
-  default let (T:! type, U:! type) = ({}, {});
+  default let (T: type, U: type) = ({}, {});
 }
 
 // --- fail_var_pattern.carbon
@@ -38,10 +38,10 @@ library "[[@TEST_NAME]]";
 
 interface I {
   // CHECK:STDERR: fail_var_pattern.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   let var T:! type;
+  // CHECK:STDERR:   let var T: type;
   // CHECK:STDERR:       ^~~
   // CHECK:STDERR:
-  let var T:! type;
+  let var T: type;
 }
 
 // --- fail_var_pattern_with_default.carbon
@@ -50,10 +50,10 @@ library "[[@TEST_NAME]]";
 
 interface I {
   // CHECK:STDERR: fail_var_pattern_with_default.carbon:[[@LINE+4]]:15: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   default let var T:! type = {};
+  // CHECK:STDERR:   default let var T: type = {};
   // CHECK:STDERR:               ^~~
   // CHECK:STDERR:
-  default let var T:! type = {};
+  default let var T: type = {};
 }
 
 // --- fail_not_constant.carbon
@@ -61,11 +61,11 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:8: error: found runtime binding pattern in associated constant declaration; expected a `:!` binding [ExpectedAssociatedConstantColonExclaim]
-  // CHECK:STDERR:   let a: {.b: ()};
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:7: error: phase keyword is not allowed on an associated constant [PhaseKeywordInAssociatedConstant]
+  // CHECK:STDERR:   let runtime a: {.b: ()};
+  // CHECK:STDERR:       ^~~~~~~
   // CHECK:STDERR:
-  let a: {.b: ()};
+  let runtime a: {.b: ()};
 }
 
 // --- fail_template.carbon
@@ -73,13 +73,24 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_template.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   let template T:! type;
+  // CHECK:STDERR: fail_template.carbon:[[@LINE+4]]:7: error: phase keyword is not allowed on an associated constant [PhaseKeywordInAssociatedConstant]
+  // CHECK:STDERR:   let template T: type;
   // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
-  let template T:! type;
+  let template T: type;
 }
 
+// --- fail_generic.carbon
+
+library "[[@TEST_NAME]]";
+
+interface I {
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:7: error: phase keyword is not allowed on an associated constant [PhaseKeywordInAssociatedConstant]
+  // CHECK:STDERR:   let generic a: type;
+  // CHECK:STDERR:       ^~~~~~~
+  // CHECK:STDERR:
+  let generic a: type;
+}
 
 // --- fail_underscore.carbon
 
@@ -87,110 +98,141 @@ library "[[@TEST_NAME]]";
 
 interface I {
   // CHECK:STDERR: fail_underscore.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   let _:! {};
+  // CHECK:STDERR:   let _: {};
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  let _:! {};
+  let _: {};
+}
+
+// --- fail_missing_colon.carbon
+
+library "[[@TEST_NAME]]";
+
+interface I {
+  // CHECK:STDERR: fail_missing_colon.carbon:[[@LINE+4]]:8: error: expected `:` in associated constant declaration [ExpectedAssociatedConstantColon]
+  // CHECK:STDERR:   let a;
+  // CHECK:STDERR:        ^
+  // CHECK:STDERR:
+  let a;
 }
 
 
 // CHECK:STDOUT: - filename: fail_tuple_pattern.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"tuple_pattern"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"tuple_pattern"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_tuple_pattern_with_default.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"tuple_pattern_with_default"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'DefaultModifier', text: 'default'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"tuple_pattern_with_default"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ │ ├─DefaultModifier 'default'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_var_pattern.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"var_pattern"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"var_pattern"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_var_pattern_with_default.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"var_pattern_with_default"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'DefaultModifier', text: 'default'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"var_pattern_with_default"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ │ ├─DefaultModifier 'default'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_not_constant.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"not_constant"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"not_constant"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_template.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"template"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"template"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_generic.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"generic"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_underscore.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"underscore"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"underscore"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_missing_colon.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"missing_colon"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -215,7 +215,7 @@ struct Assign {
   InstId rhs_id;
 };
 
-// An associated constant declaration in an interface, such as `let T:! type;`.
+// An associated constant declaration in an interface, such as `let T: type;`.
 struct AssociatedConstantDecl {
   static constexpr auto Kind =
       InstKind::AssociatedConstantDecl
@@ -729,8 +729,7 @@ struct FacetType {
        .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
-  // TODO: Rename this to facet_type_info_id.
-  FacetTypeId facet_type_id;
+  DeclaredFacetTypeId declared_facet_type_id;
 };
 
 // A facet value is a general value of type FacetType. This consists of a type
@@ -956,6 +955,23 @@ struct ImplDecl {
   // The declaration block, containing the impl's deduced parameters and its
   // self type and interface type.
   DeclInstBlockId decl_block_id;
+};
+
+// A witness that `.Self` implements an interface, which is currently being
+// implemented. Only appears inside an `impl ... as` declaration, and acts as a
+// placeholder that is substituted to point to the `ImplWitness` once it is
+// constructed.
+struct ImplSelfWitness {
+  static constexpr auto Kind = InstKind::ImplSelfWitness.Define<Parse::NodeId>(
+      {.ir_name = "impl_self_witness",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+  // Always the type of the builtin `WitnessType` singleton instruction.
+  TypeId type_id;
+  // Initially the `.Self` facet value used in the impl lookup query.
+  InstId period_self;
+  // The interface of the impl being declared.
+  SpecificInterfaceId specific_interface_id;
 };
 
 // A witness that a type implements an interface.
@@ -1289,6 +1305,16 @@ struct MarkInPlaceInit {
   // meaning.
   InstId src_id;
   DestInstId dest_id;
+};
+
+// A `match_first` declaration.
+struct MatchFirstDecl {
+  static constexpr auto Kind =
+      InstKind::MatchFirstDecl.Define<Parse::MatchFirstDefinitionStartId>(
+          {.ir_name = "match_first",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+  SemIR::InstId enclosing_scope_inst_id;
 };
 
 // A type that holds an object representation of another type, that may or may
@@ -1641,7 +1667,7 @@ struct RequirementBaseFacetType {
   static constexpr auto Kind =
       InstKind::RequirementBaseFacetType.Define<Parse::NodeId>(
           {.ir_name = "requirement_base_facet_type",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression
@@ -1658,7 +1684,7 @@ struct RequirementEquivalent {
   static constexpr auto Kind =
       InstKind::RequirementEquivalent.Define<Parse::RequirementEqualEqualId>(
           {.ir_name = "requirement_equivalent",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression
@@ -1673,7 +1699,7 @@ struct RequirementImpls {
   static constexpr auto Kind =
       InstKind::RequirementImpls.Define<Parse::RequirementImplsId>(
           {.ir_name = "requirement_impls",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression
@@ -1688,12 +1714,53 @@ struct RequirementRewrite {
   static constexpr auto Kind =
       InstKind::RequirementRewrite.Define<Parse::RequirementEqualId>(
           {.ir_name = "requirement_rewrite",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // No type since not an expression
   InstId lhs_id;
   InstId rhs_id;
+};
+
+// An observation that two expressions evaluate to the same constant, as
+// specified by an `expr == expr` clause in an `observe` declaration.
+struct ObserveEquivalent {
+  static constexpr auto Kind =
+      InstKind::ObserveEquivalent.Define<Parse::ObserveEqualEqualId>(
+          {.ir_name = "observe_equivalent",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
+// An observation that the LHS expression is a facet type that implements the
+// interface on the RHS and meets any constraints in the RHS, as specified by an
+// `expr impls expr` clause in an `observe` declaration.
+struct ObserveImpls {
+  static constexpr auto Kind =
+      InstKind::ObserveImpls.Define<Parse::ObserveImplsId>(
+          {.ir_name = "observe_impls",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  // No type since not an expression
+  InstId lhs_id;
+  InstId rhs_id;
+};
+
+// An `observe ...` declaration.
+struct ObserveDecl {
+  static constexpr auto Kind =
+      InstKind::ObserveDecl.Define<Parse::ObserveDeclId>(
+          {.ir_name = "observe_decl",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  // No type since not an expression
+  ObserveId observe_id;
 };
 
 struct Return {
@@ -1782,6 +1849,7 @@ struct SpecificConstant {
   static constexpr auto Kind = InstKind::SpecificConstant.Define<Parse::NodeId>(
       {.ir_name = "specific_constant",
        .expr_category = ComputedExprCategory::SameAsFirstOperand,
+       .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
        .is_lowered = false});
 
   TypeId type_id;
@@ -1945,7 +2013,7 @@ struct StructValue {
   InstBlockId elements_id;
 };
 
-// Binds a symbolic name, such as `x` in `let x:! i32 = 7;`. See AnyBinding for
+// Binds a symbolic name, such as `x` in `let x: i32 = 7;`. See AnyBinding for
 // member documentation.
 struct SymbolicBinding {
   static constexpr auto Kind = InstKind::SymbolicBinding.Define<Parse::NodeId>(
@@ -2378,10 +2446,10 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of `ImplWitness`, `CustomWitness`, and `LookupImplWitness`
-// instructions. The latter will evaluate at some point during specific
-// computation into one of the former two, and their types should not change in
-// the process.
+// The type of `ImplWitness`, `CustomWitness`,  `ImplSelfWitness`, and
+// `LookupImplWitness` instructions. The latter will evaluate at some point
+// during specific computation into one of first two, and their types should not
+// change in the process.
 //
 // Also the type of `RequireCompleteType` instructions.
 //

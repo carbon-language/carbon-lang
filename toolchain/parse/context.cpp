@@ -52,6 +52,22 @@ auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
   *node_impl = Tree::NodeImpl(kind, has_error, token);
 }
 
+auto Context::ConsumeAndAddOpenCurlyBrace(Lex::TokenIndex default_token,
+                                          NodeKind start_kind)
+    -> std::optional<Lex::TokenIndex> {
+  if (auto open_curly = ConsumeIf(Lex::TokenKind::OpenCurlyBrace)) {
+    AddLeafNode(start_kind, *open_curly, /*has_error=*/false);
+    return open_curly;
+  } else {
+    CARBON_DIAGNOSTIC(ExpectedCurlyBraceAfter, Error,
+                      "expected `{` after `{0}`", Lex::TokenKind);
+    emitter_.Emit(*position_, ExpectedCurlyBraceAfter,
+                  tokens().GetKind(default_token));
+    AddLeafNode(start_kind, default_token, /*has_error=*/true);
+    return std::nullopt;
+  }
+}
+
 auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
                                      NodeKind start_kind)
     -> std::optional<Lex::TokenIndex> {

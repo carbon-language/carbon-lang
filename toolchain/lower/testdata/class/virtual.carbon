@@ -142,7 +142,7 @@ fn Use() {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self) { }
 }
 
@@ -150,7 +150,7 @@ base class Base(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! Core.Destroy) {
+base class Base(T: Core.Destroy) {
   virtual fn F(unused self) {
     var _: T;
   }
@@ -170,7 +170,7 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T: type) {
   virtual fn F(unused self) { }
 }
 
@@ -232,7 +232,7 @@ fn Use() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_CFn:thunk:Intermediate.Classes:Derived.Classes"(ptr %self) #1 !dbg !15 {
+// CHECK:STDOUT: define weak_odr void @"_CFn:thunk:Intermediate.Classes:Derived.Classes"(ptr %self) #1 !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CFn.Derived.Classes(ptr %self), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !18
@@ -770,7 +770,7 @@ fn Use() {
 // CHECK:STDOUT: declare void @_CF.Derived.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_CF:thunk:Base.Main:Derived.Main"(ptr %self) #0 !dbg !4 {
+// CHECK:STDOUT: define weak_odr void @"_CF:thunk:Base.Main:Derived.Main"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Derived.Main(ptr %self), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !10
@@ -1138,7 +1138,7 @@ fn Use() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_CF:thunk:Base.Main:Derived.Main"(ptr sret({}) %return, ptr %self, ptr %n) #1 !dbg !12 {
+// CHECK:STDOUT: define weak_odr void @"_CF:thunk:Base.Main:Derived.Main"(ptr sret({}) %return, ptr %self, ptr %n) #1 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc17_52.2.temp = alloca {}, align 1, !dbg !16
 // CHECK:STDOUT:   %.5.temp = alloca {}, align 1, !dbg !17

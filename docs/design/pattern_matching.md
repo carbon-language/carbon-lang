@@ -156,19 +156,23 @@ or template compile-time:
 
 -   A _runtime binding pattern_ binds to a dynamic value at runtime. It is the
     default for explicit function parameters and local bindings.
--   A _symbolic binding pattern_ (or generic binding pattern) binds to a
+-   A _checked generic binding pattern_ binds to a symbolic constant: a
     compile-time value that is not known when type checking. It is the default
     for deduced function parameters and parameters to compile-time entities.
-    Explicit function parameters are only symbolic binding patterns if they are
-    declared using the `generic` keyword.
--   A _template binding pattern_ binds to a compile-time value that is known
-    when type checking. It is declared using the `template` keyword.
+    Explicit function parameters are only checked generic binding patterns if
+    they are declared using the `generic` keyword.
+    [Associated constants](generics/details.md#associated-constants) are always
+    checked generic binding patterns, and do not allow a phase keyword.
+-   A _template generic binding pattern_ binds to a template constant: a
+    compile-time value that is known when type checking. It is declared using
+    the `template` keyword. Expressions using such a binding are dependent and
+    are late type checked once the binding's value is known.
 
 > **Future work:** If Carbon supports deduced runtime parameters in the future,
 > the `runtime` keyword will be used to explicitly declare those runtime binding
 > patterns.
 
-A symbolic or template binding pattern is collectively called a _compile-time
+A checked or template binding pattern is collectively called a _compile-time
 binding pattern_. A compile-time binding pattern cannot appear inside a `var`
 pattern.
 
@@ -181,13 +185,13 @@ components:
     entire reference" if it's a variable binding pattern, or "durable non-entire
     reference" if it's a non-variable reference binding pattern.
 -   The phase is "runtime", "symbolic", or "template" depending on whether the
-    pattern is a runtime, symbolic, or template binding pattern.
+    pattern is a runtime, checked, or template binding pattern.
 
 During pattern matching, the scrutinee is implicitly converted as needed to have
 the same extended type, and the binding is _bound_ to (and consumes) the result
 of these conversions. This makes a runtime or template binding a kind of
 reusable alias for the converted scrutinee expression, with the same extended
-type and value. Symbolic bindings are more complex: the binding will have the
+type and value. Checked bindings are more complex: the binding will have the
 same type, category, and phase as the converted scrutinee expression, but its
 constant value is an opaque symbol introduced by the binding, which the type
 system knows to be equal to the converted scrutinee expression.

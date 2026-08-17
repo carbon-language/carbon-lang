@@ -11,28 +11,40 @@ auto HandlePattern(Context& context) -> void {
   auto state = context.PopState();
   switch (context.PositionKind()) {
     case Lex::TokenKind::OpenParen:
-      context.PushStateForPattern(StateKind::PatternListAsTuple,
-                                  state.in_var_pattern, state.in_unused_pattern,
-                                  state.ambient_precedence);
+      context.PushStateForPattern(
+          StateKind::PatternListAsTuple, state.in_var_pattern,
+          state.in_unused_pattern, state.in_field_shorthand_pattern,
+          state.binding_context, state.ambient_precedence);
+      break;
+    case Lex::TokenKind::OpenCurlyBrace:
+      context.PushStateForPattern(
+          StateKind::PatternListAsStruct, state.in_var_pattern,
+          state.in_unused_pattern, state.in_field_shorthand_pattern,
+          state.binding_context, state.ambient_precedence);
       break;
     case Lex::TokenKind::Var:
-      context.PushStateForPattern(StateKind::VariablePattern,
-                                  state.in_var_pattern, state.in_unused_pattern,
-                                  state.ambient_precedence);
+      context.PushStateForPattern(
+          StateKind::VariablePattern, state.in_var_pattern,
+          state.in_unused_pattern, state.in_field_shorthand_pattern,
+          state.binding_context, state.ambient_precedence);
       break;
     case Lex::TokenKind::Unused:
-      context.PushStateForPattern(StateKind::UnusedPattern,
-                                  state.in_var_pattern, state.in_unused_pattern,
-                                  state.ambient_precedence);
+      context.PushStateForPattern(
+          StateKind::UnusedPattern, state.in_var_pattern,
+          state.in_unused_pattern, state.in_field_shorthand_pattern,
+          state.binding_context, state.ambient_precedence);
       break;
     case Lex::TokenKind::Template:
+    case Lex::TokenKind::Generic:
+    case Lex::TokenKind::Runtime:
     case Lex::TokenKind::Ref:
     // `self` is always a binding, even when its type is omitted (and so is not
     // followed by a `:`).
     case Lex::TokenKind::SelfValueIdentifier:
-      context.PushStateForPattern(StateKind::BindingPattern,
-                                  state.in_var_pattern, state.in_unused_pattern,
-                                  state.ambient_precedence);
+      context.PushStateForPattern(
+          StateKind::BindingPattern, state.in_var_pattern,
+          state.in_unused_pattern, state.in_field_shorthand_pattern,
+          state.binding_context, state.ambient_precedence);
       break;
     default:
       if (context.PositionKind().is_word() &&
@@ -40,10 +52,14 @@ auto HandlePattern(Context& context) -> void {
               .is_binding_pattern_operator()) {
         context.PushStateForPattern(
             StateKind::BindingPattern, state.in_var_pattern,
-            state.in_unused_pattern, state.ambient_precedence);
+            state.in_unused_pattern, state.in_field_shorthand_pattern,
+            state.binding_context, state.ambient_precedence);
         break;
       }
-      context.PushState(StateKind::ExprPattern);
+      context.PushStateForPattern(
+          StateKind::ExprPattern, state.in_var_pattern, state.in_unused_pattern,
+          state.in_field_shorthand_pattern, state.binding_context,
+          state.ambient_precedence);
       context.PushStateForExpr(state.ambient_precedence);
       break;
   }

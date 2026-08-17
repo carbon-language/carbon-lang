@@ -8,6 +8,7 @@
 #include <variant>
 
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -39,13 +40,26 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_facet_type_const_id,
                        bool diagnose = true) -> SemIR::InstBlockIdOrError;
 
+// Construct witnesses for a `facet_value` from the facet type of a `.Self`.
+//
+// This does not actually perform lookup, but constructs witnesses anyways, so
+// can't be used in most cases. This is specifically for the case where we are
+// replacing `.Self` with another facet. Since it is replacing `.Self` we know
+// that it implements the facet type of the `.Self`. So we can construct
+// witnesses for the interfaces in that facet type.
+auto MakeWitnessesForPeriodSelfTypeWithoutLookup(Context& context,
+                                                 SemIR::LocId loc_id,
+                                                 SemIR::ConstantId facet_value,
+                                                 SemIR::ConstantId period_self)
+    -> SemIR::InstBlockIdOrError;
+
 // Returns whether the query matches against the given impl. This is like a
 // `LookupImplWitness` operation but for a single interface, and against only
 // the single impl.
 auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
                        SemIR::SpecificInterface query_specific_interface,
-                       SemIR::ImplId target_impl) -> bool;
+                       SemIR::ImplId target_impl_id) -> bool;
 
 // Given a self facet, returns the canonical query self for a LookupImplWitness
 // instruction. The canonicalization looks through `FacetValue` and makes a

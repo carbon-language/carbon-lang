@@ -75,7 +75,7 @@ module.exports = grammar({
     comment: ($) => token(seq('//', /.*/)),
 
     // NOTE: this must be before ident rule to increase its priority.
-    // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p002015.md#syntax
+    // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p002015-numeric-type-literal-syntax.md#syntax
     numeric_type_literal: ($) => /[iuf][1-9][0-9]*/,
 
     ident: ($) => /[A-Za-z_][A-Za-z0-9_]*/,

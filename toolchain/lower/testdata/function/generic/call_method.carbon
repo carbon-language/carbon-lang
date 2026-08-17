@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_method.carbon
 
 class C {
-  fn F[T:! Core.Copy](unused self, x: T) -> T {
+  fn F[T: Core.Copy](unused self, x: T) -> T {
     return x;
   }
 }
@@ -38,7 +38,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !9
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc22_14 = load i32, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.5bd8d5767580997a(ptr %c.var, i32 %.loc22_14), !dbg !11
+// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.4d6ceefeb7f772f4(ptr %c.var, i32 %.loc22_14), !dbg !11
 // CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %n.var), !dbg !9
 // CHECK:STDOUT:   call void @"_COp.807eb4f2d3ed7e54:core.Destroy.Core"(ptr %c.var), !dbg !8
 // CHECK:STDOUT:   ret i32 %C.F.call, !dbg !12
@@ -63,7 +63,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.5bd8d5767580997a(ptr %self, i32 %x) #0 !dbg !26 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.4d6ceefeb7f772f4(ptr %self, i32 %x) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !32
 // CHECK:STDOUT: }
@@ -103,7 +103,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: !23 = !{!24}
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !19, type: !22)
 // CHECK:STDOUT: !25 = !DILocation(line: 20, column: 3, scope: !19)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.5bd8d5767580997a", scope: null, file: !1, line: 14, type: !27, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !29)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.4d6ceefeb7f772f4", scope: null, file: !1, line: 14, type: !27, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !29)
 // CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
 // CHECK:STDOUT: !28 = !{!7, !22, !7}
 // CHECK:STDOUT: !29 = !{!30, !31}

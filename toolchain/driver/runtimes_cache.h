@@ -36,15 +36,13 @@ namespace Carbon {
 // build of these components into their designated subdirectories, including
 // synchronizing between different threads or processes trying to build the same
 // component.
-//
-// TODO: Add libc++ to the runtimes tree.
-// TODO: Add the Core library to the runtimes tree.
 class Runtimes {
  public:
   class Builder;
   class Cache;
 
   enum Component {
+    CarbonCore,
     ClangResourceDir,
     LibUnwind,
     Libcxx,
@@ -153,6 +151,8 @@ class Runtimes {
   // This uses `std::string_view` to simply using with paths.
   static constexpr auto ComponentPath(Component component) -> std::string_view {
     switch (component) {
+      case CarbonCore:
+        return "core";
       case ClangResourceDir:
         return "clang_resource_dir";
       case LibUnwind:

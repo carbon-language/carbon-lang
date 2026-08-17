@@ -30,7 +30,7 @@ let c: MakeUnformed(C*) = MakeNullC();
 library "[[@TEST_NAME]]";
 
 fn MakeUnformed(t: type) -> type = "maybe_unformed.make_type";
-fn MakeNull(T:! type) -> MakeUnformed(T*) = "pointer.make_null";
+fn MakeNull(generic T: type) -> MakeUnformed(T*) = "pointer.make_null";
 
 class C {}
 

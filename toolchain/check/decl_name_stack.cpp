@@ -239,7 +239,7 @@ static auto GetAssociatedEntityScope(Context& context,
 }
 
 // Push a scope corresponding to a name qualifier. For example, for
-// `fn Class(T:! type).F(n: i32)` we will push the scope for `Class(T:! type)`
+// `fn Class(T: type).F(n: i32)` we will push the scope for `Class(T: type)`
 // between the scope containing the declaration of `T` and the scope
 // containing the declaration of `n`.
 //
@@ -488,7 +488,7 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
             name_context.resolved_inst_id);
         return InvalidResult;
       }
-      // The scope and generic of an `I(T:! type)` is the outer
+      // The scope and generic of an `I(T: type)` is the outer
       // interface-without-self. That is the generic where parameters appear.
       // However when moving to the next qualifier, we need to move to the
       // interface-with-self for the associated entity name.

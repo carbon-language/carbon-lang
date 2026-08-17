@@ -23,12 +23,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Qualified member names and compound member access](#qualified-member-names-and-compound-member-access)
     -   [Access](#access)
 -   [Checked-generic functions](#checked-generic-functions)
-    -   [Symbolic facet bindings](#symbolic-facet-bindings)
+    -   [Checked facet bindings](#checked-facet-bindings)
     -   [Return type](#return-type)
 -   [Interfaces recap](#interfaces-recap)
 -   [Facet types](#facet-types)
     -   [Identified facet types](#identified-facet-types)
 -   [Named constraints](#named-constraints)
+    -   [Rewrites and same-type constraints in a named constraint](#rewrites-and-same-type-constraints-in-a-named-constraint)
+    -   [Constraints that don't depend on `.Self`](#constraints-that-dont-depend-on-self)
     -   [Subtyping between facet types](#subtyping-between-facet-types)
 -   [Combining interfaces by anding facet types](#combining-interfaces-by-anding-facet-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
@@ -43,7 +45,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Use case: Defining an impl for use by other types](#use-case-defining-an-impl-for-use-by-other-types)
     -   [Use case: Private impl](#use-case-private-impl)
     -   [Use case: Accessing interface names](#use-case-accessing-interface-names)
-    -   [Future work: Adapter with stricter invariants](#future-work-adapter-with-stricter-invariants)
 -   [Associated constants](#associated-constants)
     -   [Associated functions](#associated-functions)
 -   [Associated facets](#associated-facets)
@@ -315,7 +316,7 @@ Assert(p1.Add(p1) == p2);
 ```
 
 For more on how `extend` affects member access, see
-[member access](../expressions/member_access.md#extend).
+[member access](/docs/design/expressions/member_access.md#extend).
 
 Without `extend`, those methods may only be accessed with
 [qualified member names and compound member access](#qualified-member-names-and-compound-member-access):
@@ -685,13 +686,13 @@ fn AddAndScaleGeneric[T: Vector](a: T, b: T, s: f64) -> T {
 var v: Point_Extend = AddAndScaleGeneric(a, w, 2.5);
 ```
 
-Here `T` is a facet whose type is `Vector`. It declares a _symbolic binding_
+Here `T` is a facet whose type is `Vector`. It declares a _checked binding_
 since it did not use the `template` keyword to mark it as a _template binding_.
 
 > **References:** The syntax for compile-time bindings was decided in
 > [proposal #7254](https://github.com/carbon-language/carbon-lang/pull/7254).
 
-Since this symbolic binding pattern is in a function declaration, it marks a
+Since this checked binding pattern is in a function declaration, it marks a
 _[checked](terminology.md#checked-versus-template-parameters)
 [generic parameter](terminology.md#generic-means-compile-time-parameterized)_.
 That means its value must be known to the caller at compile-time, but we will
@@ -701,11 +702,11 @@ the body of `AddAndScaleGeneric`'s definition.
 Note that types may also be given compile-time parameters, see the
 ["parameterized types" section](#parameterized-types).
 
-### Symbolic facet bindings
+### Checked facet bindings
 
 In our example, `T` is a facet which may be used in type position in the rest of
 the function. Furthermore, since it omits the keyword `template` prefix, this is
-a symbolic binding. so we need to be able to typecheck the body of the function
+a checked binding, so we need to be able to typecheck the body of the function
 without knowing the specific value `T` from the caller.
 
 This typechecking is done by looking at the constraint on `T`. In the example,
@@ -863,7 +864,7 @@ An interface's name may be used in a few different contexts:
 -   as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access), and
 -   as a [facet type](terminology.md#facet-type) for
-    [a facet binding](#symbolic-facet-bindings).
+    [a facet binding](#checked-facet-bindings).
 
 While interfaces are examples of facet types, facet types are a more general
 concept, for which interfaces are a building block.
@@ -893,8 +894,8 @@ This recovers the original type for the facet, so
 `(Point_Inline as Vector) as type` is `Point_Inline` again.
 
 However, when a facet type like `Vector` is used as the binding type of a
-symbolic binding, the
-[symbolic facet binding](#symbolic-facet-bindings) `T` is disassociated with
+checked binding, the
+[checked facet binding](#checked-facet-bindings) `T` is disassociated with
 whatever facet value `T` is eventually bound to. Instead, `T` is treated as an
 [archetype](terminology.md#archetype), with the members and
 [member access](/docs/design/expressions/member_access.md) determined by the
@@ -1022,7 +1023,7 @@ whenever an interface may be. This includes all of these
     [a qualified name](#qualified-member-names-and-compound-member-access). For
     example, `VectorLegoFish.VAdd` refers to the same name as `Vector.Add`.
 -   A named constraint may be used as a [facet type](terminology.md#facet-type)
-    for [a facet binding](#symbolic-facet-bindings).
+    for [a facet binding](#checked-facet-bindings).
 
 We don't expect developers to directly define many named constraints, but other
 constructs we do expect them to use will be defined in terms of them. For
@@ -1110,12 +1111,81 @@ class ImplementsS {
 }
 ```
 
+### Rewrites and same-type constraints in a named constraint
+
+A `require` statement may include rewrite or same-type constraints. In the case
+of `extend require`, the rewrites are
+[preserved as such](appendix-rewrite-constraints.md#combining-constraints-with-extend).
+But otherwise, any rewrite constraint in the
+[identified facet type](#identified-facet-types) of the `require` is
+[treated as a same-type constraint](appendix-rewrite-constraints.md#combining-constraints-with-require-and-impls)
+instead.
+
+### Constraints that don't depend on `.Self`
+
+> **TODO:** Link to section explaining when identifying a facet type happens when
+> [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md)
+> is applied to these docs.
+
+When identifying a facet type, we collect all constraints found in the facet
+type and named constraints. Each constraint must depend on `.Self` in some way
+in order to be found in future impl lookups involving the facet being
+constrained. Thus, if there is no dependency on `.Self` in a constraint, it must
+be satisfied immediately for the identify to complete successfully.
+
+```carbon
+constraint N(T: type) {
+  require impls Z where .Z1 = {};
+}
+```
+
+When the above named constraint is identified as part of a facet type as
+`C impls N(.Self)`, the resulting requirement `Z where .Z1 = {}` is only
+constraining `C`, and not `.Self` from the top-level top-level facet type. So we
+require that `C impls (Z where .Z1 = {})` is already true in order to successfully
+identify.
+
+```carbon
+interface Z(V: type) {
+  let Z1: type;
+  let Z2: type;
+}
+
+constraint M(T2: type, U2: type) {
+  extend require impls Z(U2) where .Z1 = {} and .Z2 == ();
+}
+
+interface Y {
+  fn YY();
+}
+
+class C;
+
+fn F(U: Y where C impls Z(.Self) where .Z1 = {} and .Z2 == (),
+     T: Y where C impls M(.Self, U)) {
+  // Member access into `T` causes its type to be identified, which succeeds.
+  // The identified facet type requires
+  // `C impls Z(U) where .Z1 = {} and .Z2 == ()` which is true from the facet
+  // type of `U`.
+  T.YY();
+}
+
+fn G(U: Y where C impls Z(.Self),
+     T: Y where C impls M(.Self, U));
+  // ❌ Error: The type of `T` can not be identified.
+  // Member access into `T` causes its type to be identified, which fails.
+  // The identified facet type requires
+  // `C impls Z(U) where .Z1 = {} and .Z2 == ()` which we don't know to be
+  // true here.
+  T.YY();
+```
+
 ### Subtyping between facet types
 
 There is a subtyping relationship between facet types that allows calls of one
 generic function from another as long as it has a subset of the requirements.
 
-Given a symbolic facet binding `T` with facet type `I1`, it satisfies a facet
+Given a checked facet binding `T` with facet type `I1`, it satisfies a facet
 type `I2` as long as the requirements of `I1` are a superset of the requirements
 of `I2`. This means a value `x: T` may be passed to functions requiring types to
 satisfy `I2`, as in this example:
@@ -1362,7 +1432,7 @@ fn DoHashAndEquals[T: Hashable](x: T) {
 > interface doesn't impl the interfaces it extends, as adopted in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
 > Should link to
-> [`extend` in member access](../expressions/member_access.md#extend).
+> [`extend` in member access](/docs/design/expressions/member_access.md#extend).
 
 When implementing an interface, we allow implementing the aliased names as well.
 In the case of `Hashable` above, this includes all the members of `Equatable`,
@@ -1729,10 +1799,9 @@ be detected in function overloading.
 Since interfaces may only be implemented for a type once, and we limit where
 implementations may be added to a type, there is a need to allow the user to
 switch the type of a value to access different interface implementations. Carbon
-therefore provides a way to create new types
-[compatible with](terminology.md#compatible-types) existing types with different
-APIs, in particular with different interface implementations, by
-[adapting](terminology.md#adapting-a-type) them:
+therefore provides [adapters](/docs/design/classes.md#adapters) as a way to create new types
+[compatible with](/docs/design/classes.md#compatible-types) existing types with different
+APIs, in particular with different interface implementations:
 
 ```carbon
 interface Printable {
@@ -1764,60 +1833,11 @@ class FormattedSongByTitle {
 This allows developers to provide implementations of new interfaces (as in
 `SongByTitle`), provide different implementations of the same interface (as in
 `FormattedSong`), or mix and match implementations from other compatible types
-(as in `FormattedSongByTitle`). The rules are:
+(as in `FormattedSongByTitle`).
 
--   You can add any declaration that you could add to a class except for
-    declarations that would change the representation of the type. This means
-    you can add methods, functions, interface implementations, and aliases, but
-    not fields, base classes, or virtual functions. The specific implementations
-    of virtual functions are part of the type representation, and so no virtual
-    functions may be overridden in an adapter either.
--   The adapted type is compatible with the original type, and that relationship
-    is an equivalence class, so all of `Song`, `SongByTitle`, `FormattedSong`,
-    and `FormattedSongByTitle` end up compatible with each other.
--   Since adapted types are compatible with the original type, you may
-    explicitly cast between them, but there is no implicit conversion between
-    these types.
-
-Inside an adapter, the `Self` type matches the adapter. Members of the original
-type may be accessed either by a cast:
-
-```carbon
-class SongByTitle {
-  adapt Song;
-  extend impl as Ordered {
-    fn Less(self, rhs: Self) -> bool {
-      return (self as Song).Title() < (rhs as Song).Title();
-    }
-  }
-}
-```
-
-or using a qualified member access expression:
-
-```carbon
-class SongByTitle {
-  adapt Song;
-  extend impl as Ordered {
-    fn Less(self, rhs: Self) -> bool {
-      return self.(Song.Title)() < rhs.(Song.Title)();
-    }
-  }
-}
-```
-
-**Comparison with other languages:** This matches the Rust idiom called
-"newtype", which is used to implement traits on types while avoiding
-[coherence](terminology.md#coherence) problems, see
-[here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
-and
-[here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
-Rust's mechanism doesn't directly support reusing implementations, though some
-of that is provided by macros defined in libraries. Haskell has a
-[`newtype` feature](https://wiki.haskell.org/Newtype) as well. Haskell's feature
-doesn't directly support reusing implementations either, but the most popular
-compiler provides it as
-[an extension](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/newtype_deriving.html).
+For the definition of adapters, including what declarations can be added to an
+adapter, compatibility rules, member access, and casting between adapted types,
+see [adapters in the class design](/docs/design/classes.md#adapters).
 
 ### Adapter compatibility
 
@@ -1844,7 +1864,7 @@ var thriller_count: Optional(i32) =
     play_count.Find(Song("Thriller"));
 ```
 
-Since the `KeyT` and `ValueT` are symbolic parameters, the `Find` function is a
+Since the `KeyT` and `ValueT` are checked parameters, the `Find` function is a
 checked generic, and it can only use the capabilities of `KeyT` and `ValueT`
 specified as requirements. This allows us to evaluate when we can convert
 between two different arguments to a parameterized type. Consider two adapters
@@ -1881,7 +1901,7 @@ the API of the original type. The two most common cases expected are adding and
 replacing an interface implementation. Users would indicate that an adapter
 starts from the original type's existing API by using the `extend` keyword
 before `adapt`, which
-[extends member access to lookup names in the adapted class](../expressions/member_access.md#extend)
+[extends member access to lookup names in the adapted class](/docs/design/expressions/member_access.md#extend)
 along with `impl` lookup:
 
 ```carbon
@@ -2145,21 +2165,6 @@ fn Render(w: Window) {
 }
 ```
 
-### Future work: Adapter with stricter invariants
-
-**Future work:** Rust also uses the newtype idiom to create types with
-additional invariants or other information encoded in the type
-([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
-[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
-[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
-This is used to record in the type system that some data has passed validation
-checks, like `ValidDate` with the same data layout as `Date`. Or to record the
-units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
-versus `Meters`. We should have some way of restricting the casts between a type
-and an adapter to address this use case. One possibility would be to add the
-keyword `private` before `adapt`, so you might write
-`extend private adapt Date;`.
-
 ## Associated constants
 
 > **TODO:** Update this section to reflect the new rules and guidance on
@@ -2383,7 +2388,7 @@ fn PeekAtTopOfStack[StackType: StackAssociatedFacet](s: StackType*)
 Inside the checked-generic function `PeekAtTopOfStack`, the `ElementType`
 associated facet member of `StackType` is an
 [archetype](terminology.md#archetype), like other
-[symbolic facet bindings](#symbolic-facet-bindings). This means
+[checked facet bindings](#checked-facet-bindings). This means
 `StackType.ElementType` has the API dictated by the declaration of `ElementType`
 in the interface `StackAssociatedFacet`.
 
@@ -2557,8 +2562,8 @@ class Complex {
 All interface parameters are checked by default. This reflects these two
 properties of these parameters:
 
--   They must be resolved at compile-time, and so can't be passed regular
-    dynamic values.
+-   They must be resolved at compile-time, and so can't be passed runtime
+    values.
 -   We allow either symbolic or template values to be passed in.
 
 **Future work:** We might also allow `template` bindings for interface
@@ -2628,7 +2633,7 @@ support parameters. Those parameters work the same way as for interfaces.
 
 ## Where constraints
 
-So far, we have restricted a [symbolic facet binding](#symbolic-facet-bindings)
+So far, we have restricted a [checked facet binding](#checked-facet-bindings)
 by saying it has to implement an interface or a set of interfaces. There are a
 variety of other constraints we would like to be able to express, such as
 applying restrictions to associated constants. This is done using the `where`
@@ -2670,7 +2675,7 @@ member of another. The `where` operator is not associative, so a type expression
 using multiple must use round parens `(`...`)` to specify grouping.
 
 The scope of a facet type formed by a `where` declaration
-[extends](../expressions/member_access.md#extend) the scope of its first
+[extends](/docs/design/expressions/member_access.md#extend) the scope of its first
 operand, and the resulting facet type is complete if that scope it extends is
 complete.
 
@@ -2858,7 +2863,7 @@ constraint ContainerIsSlice {
 
 The `.Self` construct follows these rules:
 
--   A generic binding `X` introduces a checked generic binding `.Self: type`, where
+-   A checked binding `X` introduces a checked generic binding `.Self: type`, where
 
     references to `.Self` are resolved to `X`. This allows you to use `.Self` as
     an interface parameter as in `X: I(.Self)`.
@@ -2874,7 +2879,7 @@ The `.Self` construct follows these rules:
     to the same facet binding.
 -   `.Self` may not be on the left side of the `=` in a rewrite constraint.
 
-So in `X: A where ...` (where `X` is a generic binding), `.Self` is
+So in `X: A where ...` (where `X` is a checked binding), `.Self` is
 
 introduced twice, after the `:` and the `where`. This is allowed since both
 times it means `X`. After the `:`, `.Self` has the type `type`, which gets
@@ -3256,6 +3261,34 @@ the expression `G.E.N.E.N` is one equality away from `G.N.E.N` and so it is
 allowed. This is true even though `G.N.E.N` isn't the type expression
 immediately prior to `G.E.N.E.N`.
 
+An `observe` declaration inside an `interface` definition may only refer to
+names dependent on:
+
+-   `.Self`,
+-   generic parameters, and
+-   associated constants that are part of the enclosing `interface`.
+
+Equivalence chains may include at most one unrelated value.
+`observe .. == .. impls` declarations may include unrelated values that
+immediately satisfy the `impls` constraint.
+
+The `observe` declaration in the example below is allowed because `X.T` and
+`Y.T` are equivalent to `i32`, and `i32` directly satisfies the `Core.AddWith`
+constraint.
+
+```carbon
+interface A {
+    let T: type;
+}
+
+interface B {
+    let X: A where .T == i32;
+    let Y: A where .T == i32;
+
+    observe .X.T == i32 == .Y.T impls AddWith;
+}
+```
+
 After an `observe` declaration, all of the listed type expressions are
 considered equal to each other using a single `where` equality. In this example,
 the `observe` declaration in the `Transitive` interface definition provides the
@@ -3387,7 +3420,7 @@ there is a `where` clause modifying it.
 An implements constraint can be applied to [`.Self`](#recursive-constraints), as
 in `I where .Self impls C`. This has the same requirements as `I & C`, but that
 `where` clause does not affect the API. This means that a
-[symbolic facet binding](#symbolic-facet-bindings) with that facet type, so `T`
+[checked facet binding](#checked-facet-bindings) with that facet type, so `T`
 in `T: I where .Self impls C`, is represented by an
 [archetype](terminology.md#archetype) that implements both `I` and `C`, but only
 [extends](terminology.md#extending-an-impl) `I`.
@@ -3433,7 +3466,7 @@ fn PrintValueOrDefault[
 ```
 
 In this case, Carbon will accept the definition and infer the needed constraints
-on the symbolic facet parameter. This is both more concise for the author of the
+on the checked facet parameter. This is both more concise for the author of the
 code and follows the
 ["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
 This redundancy is undesirable since it means if the needed constraints for
@@ -3445,7 +3478,7 @@ will have already satisfied these constraints.
 This implied constraint is equivalent to the explicit constraint that each
 parameter and return type [is legal](#must-be-legal-type-argument-constraints).
 
-> **Note:** These implied constraints affect the _requirements_ of a symbolic
+> **Note:** These implied constraints affect the _requirements_ of a checked
 > facet parameter, but not its _member names_. This way you can always look at
 > the declaration to see how name resolution works, without having to look up
 > the definitions of everything it is used as an argument to.
@@ -3758,7 +3791,7 @@ interface Graph {
 #### Parameterized type implements interface
 
 There are times when a function will pass a
-[symbolic facet parameter](#symbolic-facet-bindings) of the function as an
+[checked facet parameter](#checked-facet-bindings) of the function as an
 argument to a [parameterized type](#parameterized-types), and the function needs
 the result to implement a specific interface.
 
@@ -3796,7 +3829,7 @@ PrintThree(i, i, i);
 #### Another type implements parameterized interface
 
 In this case, we need some other type to implement an interface parameterized by
-a [symbolic facet parameter](#symbolic-facet-bindings). The syntax for this case
+a [checked facet parameter](#checked-facet-bindings). The syntax for this case
 follows the previous case, except now the `.Self` parameter is on the interface
 to the right of the `impls`. For example, we might need a type parameter `T` to
 support explicit conversion from an `i32`:
@@ -3813,7 +3846,7 @@ fn Double[T: Mul where i32 impls As(.Self)](x: T) -> T {
 
 #### Must be legal type argument constraints
 
-Now consider the case that the symbolic facet parameter is going to be used as
+Now consider the case that the checked facet parameter is going to be used as
 an argument to a [parameterized type](#parameterized-types) in a function body,
 but not in the signature. If the parameterized type was explicitly mentioned in
 the signature, the [implied constraint](#implied-constraints) feature would
@@ -3936,7 +3969,7 @@ Given a type `U`, define the facet type `CompatibleWith(U)` as follows:
 
 > `CompatibleWith(U)` is a facet type whose values are facets `T` such that
 > `T as type` and `U as type` are
-> [compatible types](terminology.md#compatible-types). That is values of `T` and
+> [compatible types](/docs/design/classes.md#compatible-types). That is values of `T` and
 > `U` as types can be cast back and forth without any change in representation
 > (for example `T` is an [adapter](#adapting-types) for `U`).
 
@@ -4229,8 +4262,8 @@ extend `C`, as an alternative to
 [using an adapter](#use-case-accessing-interface-names), or to simplify inlining
 of a generic function while preserving semantics.
 
-To get a template binding instead of symbolic binding, add the `template`
-keyword before the binding pattern, as in:
+To get a template generic binding instead of a checked generic binding, use
+`let template`, as in:
 
 ```carbon
 fn TemplateLet(...) {
@@ -4242,8 +4275,8 @@ fn TemplateLet(...) {
 }
 ```
 
-which introduces a template constant `T` with type `C` and value `U`. This is
-roughly equivalent to:
+which introduces a template generic binding `T: C`, bound to the value `U`.
+Uses of `T` are then template constants. This is roughly equivalent to:
 
 ```carbon
 fn TemplateLet(...) {
@@ -4786,7 +4819,8 @@ difference.
 #### Prioritization rule
 
 > **TODO:** Document the changes to prioritization adopted in
-> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md).
+> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md) and
+> [#7493: Disallow impl in match_first twice](/proposals/p007493-disallow-impl-in-match-first-twice.md).
 
 Since at most one library can contain `impl` definitions with a given type
 structure, all `impl` definitions with a given type structure must be in the
@@ -5403,7 +5437,7 @@ An incomplete `C` cannot be used in the following contexts:
 -   ❌ `interface `...` { extend require impls C; }` or
     `constraint `...` { extend require impls C; }`
     -   An `extend` declaration requires the target scope to be complete. See
-        [`extend` in member access](../expressions/member_access.md#extend).
+        [`extend` in member access](/docs/design/expressions/member_access.md#extend).
 -   ❌ `T: C` ... `T impls A` where `T` is a checked binding, and `A` is an
     interface or named constraint different from `C`
     -   Need to see the definition of `C` to see if it implies `A`.

@@ -27,7 +27,7 @@ impl library "[[@TEST_NAME]]";
 
 //@include-in-dumps
 
-fn F(_:! N) {}
+fn F(generic _: N) {}
 
 // CHECK:STDOUT: --- import.carbon
 // CHECK:STDOUT:
@@ -44,8 +44,8 @@ fn F(_:! N) {}
 // CHECK:STDOUT:   %BitAndWith.type.802: type = facet_type <@BitAndWith, @BitAndWith(type)> [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness imports.%BitAndWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.802 = facet_value type, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.38f: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(type, %BitAndWith.facet) [concrete]
-// CHECK:STDOUT:   %.d56: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.38f, %BitAndWith.facet [concrete]
+// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.76f: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(type, %BitAndWith.facet) [concrete]
+// CHECK:STDOUT:   %.eef: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.76f, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %Y.type, %type.as.BitAndWith.impl.Op [concrete]
@@ -109,7 +109,7 @@ fn F(_:! N) {}
 // CHECK:STDOUT:     %Self.as_type.loc9_11.1: type = facet_access_type @N.%Self [symbolic = %Self.as_type.loc9_11.2 (constants.%Self.as_type.138)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:     %impl.elem0: %.d56 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:     %impl.elem0: %.eef = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %Y.ref, %impl.elem0 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
 // CHECK:STDOUT:     %type.as.BitAndWith.impl.Op.call: init type = call %bound_method(%Y.ref, %Z.ref) [concrete = constants.%facet_type]
 // CHECK:STDOUT:   }
@@ -147,7 +147,7 @@ fn F(_:! N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %N.type: type = facet_type <@N> [concrete]
 // CHECK:STDOUT:   %Self.f45: %N.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
@@ -174,7 +174,7 @@ fn F(_:! N) {}
 // CHECK:STDOUT:   %Main.import_ref.e73 = import_ref Main//import, loc5_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.28a = import_ref Main//import, loc4_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5f6: type = import_ref Main//import, loc9_11, loaded [symbolic = @N.WithSelf.Self.as_type.impls.facet_type.require.%Self.as_type (constants.%Self.as_type.190)]
-// CHECK:STDOUT:   %Main.import_ref.624: init type = import_ref Main//import, loc9_19, loaded [concrete = constants.%facet_type]
+// CHECK:STDOUT:   %Main.import_ref.9c9: init type = import_ref Main//import, loc9_19, loaded [concrete = constants.%facet_type]
 // CHECK:STDOUT:   %Main.import_ref.423e3a.2: %N.type = import_ref Main//import, loc7_14, loaded [symbolic = constants.%Self.f45]
 // CHECK:STDOUT:   %Main.import_ref.364 = import_ref Main//import, loc7_14, unloaded
 // CHECK:STDOUT: }
@@ -191,13 +191,13 @@ fn F(_:! N) {}
 // CHECK:STDOUT:   %default.import.loc1_22.2 = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %_.patt.loc5_7.1: %pattern_type.9a5 = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc5_7.2 (constants.%_.patt)]
+// CHECK:STDOUT:     %_.patt.loc5_15.1: %pattern_type.9a5 = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc5_15.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5: type = splice_block %N.ref [concrete = constants.%N.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %N.ref: type = name_ref N, imports.%Main.N [concrete = constants.%N.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_.loc5_7.2: %N.type = symbolic_binding _, 0 [symbolic = %_.loc5_7.1 (constants.%_)]
+// CHECK:STDOUT:     %_.loc5_15.2: %N.type = symbolic_binding _, 0 [symbolic = %_.loc5_15.1 (constants.%_)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -223,7 +223,7 @@ fn F(_:! N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @N.WithSelf.Self.as_type.impls.facet_type.require {
-// CHECK:STDOUT:     require imports.%Main.import_ref.5f6 impls imports.%Main.import_ref.624
+// CHECK:STDOUT:     require imports.%Main.import_ref.5f6 impls imports.%Main.import_ref.9c9
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -232,9 +232,9 @@ fn F(_:! N) {}
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.190)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%_.loc5_7.2: %N.type) {
-// CHECK:STDOUT:   %_.patt.loc5_7.2: %pattern_type.9a5 = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc5_7.2 (constants.%_.patt)]
-// CHECK:STDOUT:   %_.loc5_7.1: %N.type = symbolic_binding _, 0 [symbolic = %_.loc5_7.1 (constants.%_)]
+// CHECK:STDOUT: generic fn @F(%_.loc5_15.2: %N.type) {
+// CHECK:STDOUT:   %_.patt.loc5_15.2: %pattern_type.9a5 = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc5_15.2 (constants.%_.patt)]
+// CHECK:STDOUT:   %_.loc5_15.1: %N.type = symbolic_binding _, 0 [symbolic = %_.loc5_15.1 (constants.%_)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -256,7 +256,7 @@ fn F(_:! N) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
-// CHECK:STDOUT:   %_.patt.loc5_7.2 => constants.%_.patt
-// CHECK:STDOUT:   %_.loc5_7.1 => constants.%_
+// CHECK:STDOUT:   %_.patt.loc5_15.2 => constants.%_.patt
+// CHECK:STDOUT:   %_.loc5_15.1 => constants.%_
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

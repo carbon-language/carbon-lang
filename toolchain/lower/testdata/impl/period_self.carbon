@@ -16,18 +16,18 @@ library "[[@TEST_NAME]]";
 
 interface J {}
 
-class A(T:! type) {}
+class A(T: type) {}
 class B {}
 
-impl forall [T:! type] A(T) as J {}
+impl forall [T: type] A(T) as J {}
 
-impl forall [T:! type where A(.Self) impls J] A(T) as Core.As(T*) {
+impl forall [T: type where A(.Self) impls J] A(T) as Core.As(T*) {
   fn Convert(self) -> T* {
     return self as T*;
   }
 }
 
-fn F[T:! type](x: A(T)) {
+fn F[T: type](x: A(T)) {
   x as T*;
 }
 
@@ -66,13 +66,13 @@ fn G(a: A(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.a6a60dfee2d7d273(ptr %x) #0 !dbg !12 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.8c89b09ee520ceaa"(ptr %x), !dbg !16
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.06ad18aa23ecf9a8"(ptr %x), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.8c89b09ee520ceaa"(ptr %self) #0 !dbg !18 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.8c89b09ee520ceaa"(ptr %self), !dbg !23
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.06ad18aa23ecf9a8"(ptr %self) #0 !dbg !18 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.06ad18aa23ecf9a8"(ptr %self), !dbg !23
 // CHECK:STDOUT:   ret ptr %1, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -99,7 +99,7 @@ fn G(a: A(B)) {
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !12, type: !7)
 // CHECK:STDOUT: !16 = !DILocation(line: 18, column: 3, scope: !12)
 // CHECK:STDOUT: !17 = !DILocation(line: 17, column: 1, scope: !12)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.8c89b09ee520ceaa", scope: null, file: !13, line: 12, type: !19, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !21)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.06ad18aa23ecf9a8", scope: null, file: !13, line: 12, type: !19, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !21)
 // CHECK:STDOUT: !19 = !DISubroutineType(types: !20)
 // CHECK:STDOUT: !20 = !{!7, !7}
 // CHECK:STDOUT: !21 = !{!22}

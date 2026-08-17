@@ -8,7 +8,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type_completion.h"
-#include "toolchain/sem_ir/facet_type_info.h"
+#include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -227,8 +227,8 @@ auto GetGenericNamedConstraintType(Context& context,
 auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                       SemIR::SpecificId specific_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::FacetType>(
-      context,
-      FacetTypeFromInterface(context, interface_id, specific_id).facet_type_id);
+      context, FacetTypeFromInterface(context, interface_id, specific_id)
+                   .declared_facet_type_id);
 }
 
 auto GetNamedConstraintType(Context& context,
@@ -237,13 +237,14 @@ auto GetNamedConstraintType(Context& context,
   return GetTypeImpl<SemIR::FacetType>(
       context,
       FacetTypeFromNamedConstraint(context, named_constraint_id, specific_id)
-          .facet_type_id);
+          .declared_facet_type_id);
 }
 
-auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
+auto GetFacetType(Context& context,
+                  const SemIR::DeclaredFacetType& declared_facet_type)
     -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::FacetType>(context,
-                                       context.facet_types().Add(info));
+  return GetTypeImpl<SemIR::FacetType>(
+      context, context.declared_facet_types().Add(declared_facet_type));
 }
 
 auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)

@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_DRIVER_COMPILE_OPTIONS_H_
 #define CARBON_TOOLCHAIN_DRIVER_COMPILE_OPTIONS_H_
 
-#include <memory>
-
 #include "common/command_line.h"
 #include "common/error.h"
 #include "common/ostream.h"
@@ -19,6 +17,7 @@
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/lower/lower.h"
+#include "toolchain/parse/parse.h"
 
 namespace Carbon {
 
@@ -31,6 +30,10 @@ namespace Carbon {
 //
 // Members are documented in their respective `Build` functions.
 struct CompileOptions {
+  CompileOptions() = default;
+  explicit CompileOptions(const CodegenOptions* cg_options)
+      : codegen_options(cg_options) {}
+
   enum class Phase : int8_t {
     Lex,
     Parse,
@@ -43,8 +46,20 @@ struct CompileOptions {
   friend auto operator<<(llvm::raw_ostream& out, Phase phase)
       -> llvm::raw_ostream&;
 
-  auto BuildForCompileSubcommand(CommandLine::CommandBuilder& b) -> void;
-  auto BuildForBuildSubcommand(CommandLine::CommandBuilder& b) -> void;
+  // Will use the provided `cg_options` to initialize the `codegen_options`
+  // member variable. This is provided separately so we can call `Build()`
+  // at a specific time in the initialization sequence for the correct priority
+  // of the Codegen Options build flags and help documentation.
+  auto BuildForCompileSubcommand(CommandLine::CommandBuilder& b,
+                                 CodegenOptions* cg_options) -> void;
+  auto BuildForBuildSubcommand(CommandLine::CommandBuilder& b,
+                               CodegenOptions* cg_options) -> void;
+
+  // It's possible to specify flags that will break the compile. In particular
+  // specifying `--no-prelude-import` and `--include-carbon-core` will cause
+  // the Core compilation to fail. This function quietly disables Carbon Core
+  // inclusion if the prelude import is disabled.
+  auto FixupFlags() -> void;
 
   // Validate that the compile options make sense for the compilation phase
   // selected.
@@ -66,8 +81,10 @@ struct CompileOptions {
       -> ErrorOr<std::shared_ptr<clang::CompilerInvocation>>;
 
   Lower::OptimizationLevel opt_level = Lower::OptimizationLevel::Debug;
-  std::shared_ptr<CodegenOptions> codegen_options =
-      std::make_shared<CodegenOptions>();
+
+  // This pointer is set by `Build*()` functions, in other use cases this
+  // pointer will need to be set manually.
+  const CodegenOptions* codegen_options = nullptr;
 
   llvm::SmallVector<llvm::StringRef> input_filenames;
   llvm::SmallVector<llvm::StringRef> clang_args;
@@ -95,16 +112,17 @@ struct CompileOptions {
   bool dump_mem_usage = false;
   bool dump_timings = false;
   bool stream_errors = false;
-  bool preorder_parse_tree = false;
+  Parse::ParseOptions::DumpFormat parse_dump_format;
   bool builtin_sem_ir = false;
-  bool prelude_import = false;
-  bool output_last_input_only = false;
+  bool prelude_import = true;
+  bool include_carbon_core = true;
 
   llvm::SmallVector<llvm::StringRef> exclude_dump_file_prefixes;
 
   llvm::StringRef sem_ir_crash_dump;
 
   bool mangle_string_fingerprint = false;
+  bool share_cpp_ast = false;
 
   // Get the LLVM optimization level corresponding to a Carbon optimization
   // level.

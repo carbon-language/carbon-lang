@@ -31,12 +31,14 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
-#include "toolchain/sem_ir/facet_type_info.h"
+#include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/observe.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -131,6 +133,10 @@ class Context {
     return require_impls_stack_;
   }
 
+  auto observe_stack() -> ArrayStack<SemIR::ObserveId>& {
+    return observe_stack_;
+  }
+
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
   auto decl_introducer_state_stack() -> DeclIntroducerStateStack& {
@@ -222,6 +228,17 @@ class Context {
 
   auto region_stack() -> RegionStack& { return region_stack_; }
 
+  // The `MatchFirstDecl` and state of the `match_first` block that we are
+  // currently checking.
+  struct MatchFirstContext {
+    SemIR::InstId decl_id;
+    bool is_final;
+    int block_size = 0;
+  };
+  auto match_first_context() -> std::optional<MatchFirstContext>& {
+    return match_first_context_;
+  }
+
   // An ongoing impl lookup, used to ensure termination.
   struct ImplLookupStackEntry {
     SemIR::ConstantId query_self_const_id;
@@ -242,7 +259,7 @@ class Context {
   using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::ConstantId>;
   auto impl_lookup_cache() -> ImplLookupCacheMap& { return impl_lookup_cache_; }
 
-  auto impl_lookup_no_symbolic_final_lookups() -> int& {
+  auto impl_lookup_no_symbolic_final_lookups() -> int32_t& {
     return impl_lookup_no_symbolic_final_lookups_;
   }
 
@@ -284,6 +301,18 @@ class Context {
 
   auto where_stack() -> llvm::SmallVector<WhereStackEntry>& {
     return where_stack_;
+  }
+
+  auto binding_type_where_count() -> int32_t& {
+    return binding_type_where_count_;
+  }
+
+  struct DeclaringImplDecl {
+    SemIR::ConstantId self_id;
+    SemIR::SpecificInterface specific_interface;
+  };
+  auto declaring_impl_decls() -> llvm::SmallVector<DeclaringImplDecl>& {
+    return declaring_impl_decls_;
   }
 
   // Data about a form expression.
@@ -343,6 +372,7 @@ class Context {
     return sem_ir().cpp_overload_sets();
   }
   auto functions() -> SemIR::FunctionStore& { return sem_ir().functions(); }
+  auto thunks() -> SemIR::ThunkStore& { return sem_ir().thunks(); }
   auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }
   auto fields() -> SemIR::FieldStore& { return sem_ir().fields(); }
   auto vtables() -> SemIR::VtableStore& { return sem_ir().vtables(); }
@@ -356,11 +386,15 @@ class Context {
   auto require_impls_blocks() -> SemIR::RequireImplsBlockStore& {
     return sem_ir().require_impls_blocks();
   }
+  auto observes() -> SemIR::ObserveStore& { return sem_ir().observes(); }
+  auto observe_blocks() -> SemIR::ObserveBlockStore& {
+    return sem_ir().observe_blocks();
+  }
   auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
   }
-  auto facet_types() -> SemIR::FacetTypeInfoStore& {
-    return sem_ir().facet_types();
+  auto declared_facet_types() -> SemIR::DeclaredFacetTypeStore& {
+    return sem_ir().declared_facet_types();
   }
   auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();
@@ -464,6 +498,10 @@ class Context {
   // definitions.
   RequireImplsStack require_impls_stack_;
 
+  // The stack of Observe for in-progress Interface and Function
+  // definitions.
+  ArrayStack<SemIR::ObserveId> observe_stack_;
+
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
 
@@ -542,6 +580,9 @@ class Context {
   // Stack of single-entry regions being built.
   RegionStack region_stack_;
 
+  // The statte of the `match_first` block that we are currently checking.
+  std::optional<MatchFirstContext> match_first_context_;
+
   // Tracks all ongoing impl lookups in order to ensure that lookup terminates
   // via the acyclic rule and the termination rule.
   llvm::SmallVector<ImplLookupStackEntry> impl_lookup_stack_;
@@ -554,7 +595,7 @@ class Context {
   // prevent cycles. This is incremented while replacing `.Self` in a facet type
   // from an impl lookup query that we are searching for a witness for the
   // query.
-  int impl_lookup_no_symbolic_final_lookups_ = 0;
+  int32_t impl_lookup_no_symbolic_final_lookups_ = 0;
 
   // Tracks impl lookup queries that lead to concrete witness results, along
   // with those results. Used to verify that the same queries produce the same
@@ -565,6 +606,15 @@ class Context {
   // Tracks information about constraints in the current `where` expression
   // being checked so that they can be used by later constraints.
   llvm::SmallVector<WhereStackEntry> where_stack_;
+
+  // Counts the number of `where` expressions in the type of the binding
+  // currently being checked.
+  int32_t binding_type_where_count_ = 0;
+
+  // Track impl declarations that are underway. If we're declaring an impl for
+  // `C as I`, an impl lookup query for `C as I` or `.Self as I` should find
+  // that impl being declared (even though it does not yet exist).
+  llvm::SmallVector<DeclaringImplDecl> declaring_impl_decls_;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;

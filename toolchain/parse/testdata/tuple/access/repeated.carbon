@@ -11,20 +11,20 @@
 let x: i32 = tuple.0.1.2;
 
 // CHECK:STDOUT: - filename: repeated.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'tuple'},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:           {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '2'},
-// CHECK:STDOUT:       {kind: 'MemberAccessExpr', text: '.', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 13},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'tuple'
+// CHECK:STDOUT:   │ │     ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │   ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │   ├─IntLiteral '1'
+// CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │ ├─IntLiteral '2'
+// CHECK:STDOUT:   │ ├─MemberAccessExpr '.'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -14,8 +14,8 @@ namespace {
 
 // Provides command-line options common to both `compile` and `link`
 // subcommands.
-auto BuildSharedOptions(CommandLine::CommandBuilder& b, CompileOptions* options)
-    -> void {
+auto BuildSharedOptions(CommandLine::CommandBuilder& b, CompileOptions* options,
+                        CodegenOptions* cg_options) -> void {
   b.AddStringPositionalArg(
       {
           .name = "FILE",
@@ -82,7 +82,8 @@ Selects the amount of optimization to perform.
   // Include the common code generation options at this point to render it
   // after the more common options above, but before the more unusual options
   // below.
-  options->codegen_options->Build(b);
+  cg_options->Build(b);
+  options->codegen_options = cg_options;
 
   b.AddFlag(
       {
@@ -121,9 +122,10 @@ Whether to use the implicit prelude import. Enabled by default.
 
 }  // namespace
 
-auto CompileOptions::BuildForCompileSubcommand(CommandLine::CommandBuilder& b)
+auto CompileOptions::BuildForCompileSubcommand(CommandLine::CommandBuilder& b,
+                                               CodegenOptions* cg_options)
     -> void {
-  BuildSharedOptions(b, this);
+  BuildSharedOptions(b, this, cg_options);
 
   b.AddOneOfOption(
       {
@@ -235,20 +237,35 @@ Dump the parse tree to stdout when parsed.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_parse_tree); });
-  b.AddFlag(
+
+  b.AddOneOfOption(
       {
-          .name = "preorder-parse-tree",
+          .name = "parse-dump-format",
           .help = R"""(
-When dumping the parse tree, reorder it so that it is in preorder rather than
-postorder.
+The format to use for parse tree dumps. 'pretty' (the default) prints the
+tree in postorder, visualizing the tree structure with box-drawing
+characters. 'yaml-postorder' prints the tree in postorder as unstructured yaml
+(a flat list of nodes), indented to suggest the tree structure. 'yaml-preorder'
+prints the tree as structured yaml (with children nested under parents).
 )""",
       },
-      [&](auto& arg_b) { arg_b.Set(&preorder_parse_tree); });
+      [&](auto& arg_b) {
+        using DumpFormat = Parse::ParseOptions::DumpFormat;
+        arg_b.SetOneOf(
+            {
+                arg_b.OneOfValue("pretty", DumpFormat::PrettyPostorder)
+                    .Default(true),
+                arg_b.OneOfValue("yaml-postorder", DumpFormat::YamlPostorder),
+                arg_b.OneOfValue("yaml-preorder", DumpFormat::YamlPreorder),
+            },
+            &parse_dump_format);
+      });
+
   b.AddFlag(
       {
           .name = "dump-raw-sem-ir",
           .help = R"""(
-Dump the raw JSON structure of SemIR to stdout when built.
+Dump the raw YAML structure of SemIR to stdout when built.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_raw_sem_ir); });
@@ -357,17 +374,6 @@ Excludes files with the given prefix from dumps.
 )""",
       },
       [&](auto& arg_b) { arg_b.Append(&exclude_dump_file_prefixes); });
-  b.AddFlag(
-      {
-          .name = "output-last-input-only",
-          .help = R"""(
-Only write output for the last input file, ignoring all others.
-
-TODO: This is a temporary workaround and should be removed once separate
-compilation is better implemented.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&output_last_input_only); });
   b.AddStringOption(
       {
           .name = "sem-ir-crash-dump",
@@ -386,11 +392,45 @@ Use the string form of the fingerprint from mangling instead of the hash form.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&mangle_string_fingerprint); });
+  b.AddFlag(
+      {
+          .name = "include-carbon-core",
+          .help = R"""(
+Automatically include the Core libraries files in the compilation.
+
+Note this refers to the Core libraries files other than the prelude, the
+inclusion of which is currently controlled by the `prelude_import` flag. If
+the `prelude_import` flag is set to false, this is also silently set to false.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&include_carbon_core);
+      });
+  b.AddFlag(
+      {
+          .name = "share-cpp-ast",
+          .help = R"""(
+Share a single Clang ASTContext across all compiled files.
+
+TODO: This is a temporary measure and will be enabled by default and removed
+once this mode is fully implemented.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&share_cpp_ast); });
 }
 
-auto CompileOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b)
+auto CompileOptions::BuildForBuildSubcommand(CommandLine::CommandBuilder& b,
+                                             CodegenOptions* cg_options)
     -> void {
-  BuildSharedOptions(b, this);
+  include_carbon_core = true;
+  BuildSharedOptions(b, this, cg_options);
+}
+
+auto CompileOptions::FixupFlags() -> void {
+  if (!prelude_import) {
+    include_carbon_core = false;
+  }
 }
 
 auto CompileOptions::ValidatePhase(Diagnostics::NoLocEmitter& emitter) const

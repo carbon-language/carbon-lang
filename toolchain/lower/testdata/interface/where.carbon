@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
   fn F();
 }
 
@@ -34,14 +34,14 @@ class C {}
 class D {}
 class E {}
 
-interface I(T:! type) { fn F(self); }
-interface J(T:! type) {}
+interface I(T: type) { fn F(self); }
+interface J(T: type) {}
 
 impl D as J(E) {}
 
 // The type of `T` is not `.Self`-dependent, because `.Self` appears after
 // `where`.
-impl forall [T:! type where D impls J(.Self)] C as I(T) {
+impl forall [T: type where D impls J(.Self)] C as I(T) {
   fn F(unused self) {}
 }
 
@@ -86,7 +86,7 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr %a) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF.C.Main:I.5d7343568c0b5715.Main.776dc56337046b6c"(ptr %a), !dbg !10
+// CHECK:STDOUT:   call void @"_CF.C.Main:I.5d7343568c0b5715.Main.c8e85d84fc558684"(ptr %a), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -97,7 +97,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CF.C.Main:I.5d7343568c0b5715.Main.776dc56337046b6c"(ptr %self) #0 !dbg !16 {
+// CHECK:STDOUT: define linkonce_odr void @"_CF.C.Main:I.5d7343568c0b5715.Main.c8e85d84fc558684"(ptr %self) #0 !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
@@ -123,7 +123,7 @@ fn G() {
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null}
 // CHECK:STDOUT: !15 = !DILocation(line: 23, column: 1, scope: !12)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main:I.5d7343568c0b5715.Main.776dc56337046b6c", scope: null, file: !1, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !17)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main:I.5d7343568c0b5715.Main.c8e85d84fc558684", scope: null, file: !1, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !17)
 // CHECK:STDOUT: !17 = !{!18}
 // CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !16, type: !7)
 // CHECK:STDOUT: !19 = !DILocation(line: 16, column: 3, scope: !16)

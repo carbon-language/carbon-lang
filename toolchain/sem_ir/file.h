@@ -24,11 +24,12 @@
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/cpp_file.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
+#include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/entity_name.h"
-#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/field.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/import_cpp.h"
@@ -38,6 +39,7 @@
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/named_constraint.h"
+#include "toolchain/sem_ir/observe.h"
 #include "toolchain/sem_ir/require_impls.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
@@ -196,15 +198,24 @@ class File : public Printable<File> {
   auto require_impls_blocks() const -> const RequireImplsBlockStore& {
     return require_impls_blocks_;
   }
+  auto observes() -> ObserveStore& { return observes_; }
+  auto observes() const -> const ObserveStore& { return observes_; }
+  auto observe_blocks() -> ObserveBlockStore& { return observe_blocks_; }
+  auto observe_blocks() const -> const ObserveBlockStore& {
+    return observe_blocks_;
+  }
   auto associated_constants() -> AssociatedConstantStore& {
     return associated_constants_;
   }
   auto associated_constants() const -> const AssociatedConstantStore& {
     return associated_constants_;
   }
-  // TODO: Rename these to `facet_type_infos`.
-  auto facet_types() -> FacetTypeInfoStore& { return facet_types_; }
-  auto facet_types() const -> const FacetTypeInfoStore& { return facet_types_; }
+  auto declared_facet_types() -> DeclaredFacetTypeStore& {
+    return declared_facet_types_;
+  }
+  auto declared_facet_types() const -> const DeclaredFacetTypeStore& {
+    return declared_facet_types_;
+  }
 
   // If `class_id` is an imported C++ class, appends the Clang mangled name of
   // its type to `out` and returns true. Otherwise returns false and leaves
@@ -375,11 +386,17 @@ class File : public Printable<File> {
   // Storage for blocks of RequireImpls.
   RequireImplsBlockStore require_impls_blocks_;
 
+  // Storage for observes.
+  ObserveStore observes_;
+
+  // Storage for blocks of Observe.
+  ObserveBlockStore observe_blocks_;
+
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;
 
-  // Storage for facet types.
-  FacetTypeInfoStore facet_types_;
+  // Storage for declared facet types.
+  DeclaredFacetTypeStore declared_facet_types_;
 
   // Storage for identified facet types.
   IdentifiedFacetTypeStore identified_facet_types_;

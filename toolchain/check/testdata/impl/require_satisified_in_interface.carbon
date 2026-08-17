@@ -23,7 +23,7 @@ interface Y {
 impl () as Y;
 
 // () needs to impl Z at the start of the definition.
-// CHECK:STDERR: fail_missing_extend_require_for_concrete_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `()` implements `Z` [RequireImplsNotImplemented]
+// CHECK:STDERR: fail_missing_extend_require_for_concrete_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `()` implements `Z` [InterfaceRequireImplsNotImplemented]
 // CHECK:STDERR: impl () as Y {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -42,7 +42,7 @@ interface Y {
 impl () as Y;
 
 // () needs to impl Z at the start of the definition.
-// CHECK:STDERR: fail_missing_require_for_concrete_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `()` implements `Z` [RequireImplsNotImplemented]
+// CHECK:STDERR: fail_missing_require_for_concrete_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `()` implements `Z` [InterfaceRequireImplsNotImplemented]
 // CHECK:STDERR: impl () as Y {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -58,14 +58,14 @@ interface Y {
 }
 
 // T does not need to impl Z yet.
-impl forall [T:! type] T as Y;
+impl forall [T: type] T as Y;
 
 // T needs to impl Z at the start of the definition.
-// CHECK:STDERR: fail_missing_extend_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `T` implements `Z` [RequireImplsNotImplemented]
-// CHECK:STDERR: impl forall [T:! type] T as Y {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_missing_extend_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `T` implements `Z` [InterfaceRequireImplsNotImplemented]
+// CHECK:STDERR: impl forall [T: type] T as Y {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] T as Y {}
+impl forall [T: type] T as Y {}
 
 // --- fail_missing_require_for_symbolic_type.carbon
 library "[[@TEST_NAME]]";
@@ -77,29 +77,29 @@ interface Y {
 }
 
 // T does not need to impl Z yet.
-impl forall [T:! type] T as Y;
+impl forall [T: type] T as Y;
 
 // T needs to impl Z at the start of the definition.
-// CHECK:STDERR: fail_missing_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `T` implements `Z` [RequireImplsNotImplemented]
-// CHECK:STDERR: impl forall [T:! type] T as Y {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_missing_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `T` implements `Z` [InterfaceRequireImplsNotImplemented]
+// CHECK:STDERR: impl forall [T: type] T as Y {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl forall [T:! type] T as Y {}
+impl forall [T: type] T as Y {}
 
 // --- fail_missing_extend_require_double.carbon
 library "[[@TEST_NAME]]";
 
-interface Z1(T:! type) {}
-interface Z2(T:! type) {}
+interface Z1(T: type) {}
+interface Z2(T: type) {}
 
 class A;
 class B;
 
-interface Y(U:! type) {
+interface Y(U: type) {
   extend require impls Z1(U) & Z2(B);
 }
 
-// CHECK:STDERR: fail_missing_extend_require_double.carbon:[[@LINE+4]]:1: error: interface `Y(A)` being implemented requires that `()` implements `Z1(A) & Z2(B)` [RequireImplsNotImplemented]
+// CHECK:STDERR: fail_missing_extend_require_double.carbon:[[@LINE+4]]:1: error: interface `Y(A)` being implemented requires that `()` implements `Z1(A) & Z2(B)` [InterfaceRequireImplsNotImplemented]
 // CHECK:STDERR: impl () as Y(A) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -108,17 +108,17 @@ impl () as Y(A) {}
 // --- fail_missing_require_double.carbon
 library "[[@TEST_NAME]]";
 
-interface Z1(T:! type) {}
-interface Z2(T:! type) {}
+interface Z1(T: type) {}
+interface Z2(T: type) {}
 
 class A;
 class B;
 
-interface Y(U:! type) {
+interface Y(U: type) {
   require impls Z1(U) & Z2(B);
 }
 
-// CHECK:STDERR: fail_missing_require_double.carbon:[[@LINE+4]]:1: error: interface `Y(A)` being implemented requires that `()` implements `Z1(A) & Z2(B)` [RequireImplsNotImplemented]
+// CHECK:STDERR: fail_missing_require_double.carbon:[[@LINE+4]]:1: error: interface `Y(A)` being implemented requires that `()` implements `Z1(A) & Z2(B)` [InterfaceRequireImplsNotImplemented]
 // CHECK:STDERR: impl () as Y(A) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -160,17 +160,17 @@ interface Y {
 }
 
 // T does not need to impl Z1/Z2 yet.
-impl forall [T:! type] T as Y;
+impl forall [T: type] T as Y;
 
 // Now we know T impls Z1 and Z2.
-impl forall [T:! type] T as Z1;
-impl forall [T:! type] T as Z2;
+impl forall [T: type] T as Z1;
+impl forall [T: type] T as Z2;
 
 // So no error here.
-impl forall [T:! type] T as Y {}
+impl forall [T: type] T as Y {}
 
-impl forall [T:! type] T as Z1 {}
-impl forall [T:! type] T as Z2 {}
+impl forall [T: type] T as Z1 {}
+impl forall [T: type] T as Z2 {}
 
 // --- require_for_symbolic_type_impl_matches_same_interface.carbon
 library "[[@TEST_NAME]]";
@@ -184,18 +184,18 @@ interface Y {
 }
 
 // This only matches T that impl Z1 and Z2 so no error here.
-impl forall [T:! Z1 & Z2] T as Y {}
+impl forall [T: Z1 & Z2] T as Y {}
 
 // --- require_for_generic_interfaces.carbon
 library "[[@TEST_NAME]]";
 
-interface Z1(T:! type) {}
-interface Z2(T:! type) {}
+interface Z1(T: type) {}
+interface Z2(T: type) {}
 
 class A;
 class B;
 
-interface Y(U:! type) {
+interface Y(U: type) {
   extend require impls Z1(U);
   require impls Z2(B);
 }
@@ -216,18 +216,18 @@ impl () as Z2(B) {}
 // --- fail_require_non_self_missing.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
 class C;
 
-interface Y(U:! type) {
+interface Y(U: type) {
   // `Self` must appear somewhere in the require decl, so it's in the interface
   // specific because we want to test a different self-type.
   require C impls Z(Self);
 }
 
 // Y requires that C impls Z(Self), but it does not do so.
-// CHECK:STDERR: fail_require_non_self_missing.carbon:[[@LINE+4]]:1: error: interface `Y(())` being implemented requires that `C` implements `Z(())` [RequireImplsNotImplemented]
+// CHECK:STDERR: fail_require_non_self_missing.carbon:[[@LINE+4]]:1: error: interface `Y(())` being implemented requires that `C` implements `Z(())` [InterfaceRequireImplsNotImplemented]
 // CHECK:STDERR: impl () as Y(()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -236,11 +236,11 @@ impl () as Y(()) {}
 // --- require_non_self.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
 class C;
 
-interface Y(U:! type) {
+interface Y(U: type) {
   // `Self` must appear somewhere in the require decl, so it's in the interface
   // specific because we want to test a different self-type.
   require C impls Z(Self);
@@ -264,15 +264,15 @@ interface C {
   require impls B;
 }
 
-impl forall [T:! B] T as A { fn AA() {} }
+impl forall [T: B] T as A { fn AA() {} }
 
 // When we get to the definition we check that anything B requires is satisfied.
 // - The interface B requires A, so we must check T impls A.
 // - The impl for A requires T impls B.
 // - This impl is what provides T impls B.
-impl forall [T:! C] T as B {}
+impl forall [T: C] T as B {}
 
-fn F(T:! C) {
+fn F(generic T: C) {
   // If things go wrong, we find the impl `T as B`, but inside its definition is
   // a lookup for `T as A`, which (through deducing `T`) includes a lookup for
   // `T as B`. This creates a cycle of evaluating `T as B` recursively.
@@ -286,25 +286,25 @@ fn F(T:! C) {
 // --- fail_impl_requires_itself_cycle_with_monomorphization_error.carbon
 library "[[@TEST_NAME]]";
 
-class W(T:! type) {
+class W(T: type) {
   adapt {};
 }
 
-interface A(N:! Core.IntLiteral) {
+interface A(N: Core.IntLiteral) {
   fn AA() -> W(array((), N));
 }
-interface B(N:! Core.IntLiteral) {
+interface B(N: Core.IntLiteral) {
   require impls A(N);
 }
-interface C(N:! Core.IntLiteral) {
+interface C(N: Core.IntLiteral) {
   require impls B(N);
 }
 
-impl forall [N:! Core.IntLiteral, T:! B(N)] T as A(N) {
+impl forall [N: Core.IntLiteral, T: B(N)] T as A(N) {
   fn AA() -> W(array((), N)) { return {} as W(array((), N)); }
 }
 
-impl forall [N:! Core.IntLiteral, T:! C(N)] T as B(N) {
+impl forall [N: Core.IntLiteral, T: C(N)] T as B(N) {
   // The definition here does not contain the lookups verifying that C(N) impls
   // `A(N)`, so they do not get re-evaluated for a specific `N`. That doesn't
   // prevent us from producing a reasonable diagnostic when that `N` causes an
@@ -314,7 +314,7 @@ impl forall [N:! Core.IntLiteral, T:! C(N)] T as B(N) {
   // `T as B(N)` implies `T as A(N)`.
 }
 
-fn F(T:! C(-1)) {
+fn F(generic T: C(-1)) {
   // CHECK:STDERR: fail_impl_requires_itself_cycle_with_monomorphization_error.carbon:[[@LINE+7]]:3: error: unable to monomorphize specific `AA()` [ResolvingSpecificHere]
   // CHECK:STDERR:   T.(A(-1).AA)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~

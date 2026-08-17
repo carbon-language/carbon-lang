@@ -14,6 +14,7 @@
 #include "llvm/ADT/Any.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/TypeName.h"
 #include "toolchain/diagnostics/consumer.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/kind.h"
@@ -217,6 +218,9 @@ class Emitter {
   // This is best effort as the registered callback can in practice do nothing,
   // but that would be highly unusual.
   auto CheckHasContext() -> void { CARBON_CHECK(!context_fns_.empty()); }
+
+  // Returns the consumer for this emitter.
+  auto consumer() const -> Consumer& { return *consumer_; }
 
  protected:
   // Callback type used to report context messages from ConvertLoc.
@@ -530,7 +534,7 @@ auto Emitter<LocT>::MakeAny(Arg arg) -> llvm::Any {
   using Storage = Internal::DiagnosticTypeForArg<Arg>::StorageType;
   CARBON_CHECK(llvm::any_cast<Storage>(&converted),
                "Failed to convert argument of type {0} to its storage type {1}",
-               typeid(Arg).name(), typeid(Storage).name());
+               llvm::getTypeName<Arg>(), llvm::getTypeName<Storage>());
   return converted;
 }
 

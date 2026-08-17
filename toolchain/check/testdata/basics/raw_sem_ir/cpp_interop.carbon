@@ -61,7 +61,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     clang_decl_id50000005: {key: {decl: "inline void f__carbon_thunk()", clang_decl_signature_id: clang_decl_signature_id50000000}, inst_id: inst50000032}
 // CHECK:STDOUT:     clang_decl_id50000006: {key: {decl: "void f(X x = {})", clang_decl_signature_id: clang_decl_signature_id50000001}, inst_id: inst5000003D}
 // CHECK:STDOUT:     clang_decl_id50000007: {key: {decl: "inline void f__carbon_thunk(X * _Nonnull x)", clang_decl_signature_id: clang_decl_signature_id50000001}, inst_id: inst50000047}
-// CHECK:STDOUT:     clang_decl_id50000008: {key: {decl: "X * _Nonnull global"}, inst_id: inst50000054}
+// CHECK:STDOUT:     clang_decl_id50000008: {key: {decl: "X * _Nonnull global"}, inst_id: inst50000052}
 // CHECK:STDOUT:   clang_decl_signatures:
 // CHECK:STDOUT:     clang_decl_signature_id50000000: {kind: normal, num_params: 0}
 // CHECK:STDOUT:     clang_decl_signature_id50000001: {kind: normal, num_params: 1, modes: [value]}
@@ -76,10 +76,10 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     entity_name50000003: {name: name4, parent_scope: name_scope50000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function50000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block50000007, call_params_id: inst_block50000008, body: [inst_block5000000B]}
-// CHECK:STDOUT:     function50000001: {name: name3, parent_scope: name_scope50000001, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty}
-// CHECK:STDOUT:     function50000002: {name: name6, parent_scope: name_scope50000001, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty}
-// CHECK:STDOUT:     function50000003: {name: name3, parent_scope: name_scope50000001, call_param_patterns_id: inst_block5000000F, call_params_id: inst_block50000010}
-// CHECK:STDOUT:     function50000004: {name: name6, parent_scope: name_scope50000001, call_param_patterns_id: inst_block50000015, call_params_id: inst_block50000016}
+// CHECK:STDOUT:     function50000001: {name: name3, parent_scope: name_scope50000001, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, cpp_thunk_decl: inst50000032}
+// CHECK:STDOUT:     function50000002: {name: name6, parent_scope: name_scope50000001, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, cpp_thunk_callee: inst5000002F}
+// CHECK:STDOUT:     function50000003: {name: name3, parent_scope: name_scope50000001, call_param_patterns_id: inst_block5000000F, call_params_id: inst_block50000010, cpp_thunk_decl: inst50000047}
+// CHECK:STDOUT:     function50000004: {name: name6, parent_scope: name_scope50000001, call_param_patterns_id: inst_block50000015, call_params_id: inst_block50000016, cpp_thunk_callee: inst5000003D}
 // CHECK:STDOUT:   classes:
 // CHECK:STDOUT:     class50000000:   {name: name2, parent_scope: name_scope50000001, self_type_id: type(inst50000014), inheritance_kind: Base, is_dynamic: 0, scope_id: name_scope50000002, body_block_id: inst_block5000000C, adapt_id: inst<none>, base_id: inst<none>, complete_type_witness_id: inst50000027, vtable_decl_id: inst<none>}}
 // CHECK:STDOUT:   interfaces:      {}
@@ -180,7 +180,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:   facet_types:     {}
+// CHECK:STDOUT:   declared_facet_types: {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst(TypeType)':  {kind: TypeType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(AutoType)':  {kind: AutoType, type: type(TypeType)}

@@ -306,10 +306,10 @@ static auto TryFindValueInRewriteConstraints(
   auto access_interface =
       context.specific_interfaces().Get(specific_interface_id);
 
-  auto access_self_facet_type_id =
+  auto access_self_declared_facet_type_id =
       context.types()
           .GetAs<SemIR::FacetType>(access_self_type_id)
-          .facet_type_id;
+          .declared_facet_type_id;
   // TODO: We could consider something better than linear search here, such as a
   // map. However that would probably require heap allocations which may be
   // worse overall since the number of rewrite constraints is generally low. If
@@ -317,8 +317,8 @@ static auto TryFindValueInRewriteConstraints(
   // grouped together, as in ResolveFacetTypeRewriteConstraints(), and limited
   // to just the `ImplWitnessAccess` entries, then a binary search may work
   // here.
-  for (const auto& rewrite : context.facet_types()
-                                 .Get(access_self_facet_type_id)
+  for (const auto& rewrite : context.declared_facet_types()
+                                 .Get(access_self_declared_facet_type_id)
                                  .rewrite_constraints) {
     // Look at each rewrite constraint in the self facet's type. If the LHS is
     // an `ImplWitnessAccess` into the same interface that `inst` is indexing
@@ -348,13 +348,13 @@ static auto TryFindValueInRewriteConstraints(
 
     // The LHS of a rewrite can be an arbitrary type. For example:
     // ```
-    //   T:! Z where C impls (Y(.Self) where .Y1 = {})
+    //   T: Z where C impls (Y(.Self) where .Y1 = {})
     // ```
     // The rewrite in the facet type will be `(C as Y(T)).Y1 = {}`.
     //
     // It can also be another ImplWitnessAccess. For example:
     // ```
-    //   T:! Z where .Z1 impls (Y where .Y1 = {})
+    //   T: Z where .Z1 impls (Y where .Y1 = {})
     // ```
     // The rewrite in the facet type will be `((T as Z).Z1 as Y).Y1 = {}`.
     //
@@ -371,7 +371,7 @@ static auto TryFindValueInRewriteConstraints(
     // TODO: Requiring the rewrite to be against `.Self` is actually
     // insufficient. For a facet like
     // ```
-    // T:! type where C impls (Z(.Self) where .Z1 = ())
+    // T: type where C impls (Z(.Self) where .Z1 = ())
     // ```
     // and an access like `C.(Z(T).Z1)`, the root of the access is `C`. If we
     // search `T` for a witness, we'd need the inner-most self facet to be `C`
@@ -645,8 +645,35 @@ auto EvalConstantInst(Context& context, SemIR::RequireSpecificDefinition inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::SpecificConstant inst)
-    -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+                      SemIR::SpecificConstant inst) -> ConstantEvalResult {
+  // The SpecificConstant can refer to a constant in the definition region of
+  // the generic. This can happen during substitution. If it does, resolve the
+  // definition region now.
+  //
+  // TODO: This is somewhat unprincipled; it's not clear this is the right way
+  // to address this problem. We mostly don't need this because eval blocks for
+  // generics contain instructions to cause specifics to be resolved as needed,
+  // but substitution doesn't run those. Other options to consider:
+  //
+  // *   Detect this case in Subst and resolve the specific there instead. This
+  //     could be limited to the case where we are substituting into a
+  //     non-canonical instruction.
+  // *   Move away from using Subst in general, and rely on eval blocks
+  //     containing instructions to resolve specifics as needed. This would
+  //     require us to build more generics, for contexts where we currently use
+  //     Subst but could form a specific instead.
+  auto const_id = context.constant_values().GetAttached(inst.inst_id);
+  if (const_id.has_value() && const_id.is_symbolic()) {
+    const auto& symbolic_const =
+        context.constant_values().GetSymbolicConstant(const_id);
+    if (symbolic_const.index.has_value() &&
+        symbolic_const.index.region() == SemIR::GenericInstIndex::Definition) {
+      ResolveSpecificDefinition(context, SemIR::LocId(inst_id),
+                                inst.specific_id);
+    }
+  }
+
   // Pull the constant value out of the specific.
   return ConstantEvalResult::Existing(SemIR::GetConstantValueInSpecific(
       context.sem_ir(), inst.specific_id, inst.inst_id));

@@ -43,7 +43,7 @@ struct Generic : public Printable<Generic> {
   InstBlockId bindings_id;
   // The self specific of this generic, which is a specific where every generic
   // parameter's argument is that same parameter. For example, the self specific
-  // of `Vector(T:! type)` is `Vector(T)`.
+  // of `Vector(T: type)` is `Vector(T)`.
   SpecificId self_specific_id;
 
   // The following members are set at the end of the corresponding region of the

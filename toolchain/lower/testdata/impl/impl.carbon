@@ -40,7 +40,7 @@ class A {}
 class B {}
 class C {}
 
-interface I(T:! type) {
+interface I(T: type) {
   fn F(self) -> T;
 }
 
@@ -57,7 +57,7 @@ fn F1(x: C, y: C) {
   var unused b: B = y.(I(B).F)();
 }
 
-fn F2[T:! I(A), U:! I(B)](x: T, y: U) {
+fn F2[T: I(A), U: I(B)](x: T, y: U) {
   var unused a: A = x.F();
   var unused b: B = y.F();
 }
@@ -69,7 +69,7 @@ library "[[@TEST_NAME]]";
 class A {}
 class B {}
 
-class C(T:! type) {}
+class C(T: type) {}
 
 interface I {
   fn F();

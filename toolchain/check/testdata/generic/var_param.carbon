@@ -19,7 +19,7 @@ impl i32 as I {
 }
 
 //@dump-sem-ir-begin
-fn TestOp[T:! I](unused var x: T) {}
+fn TestOp[T: I](unused var x: T) {}
 //@dump-sem-ir-end
 
 fn Test(x: i32) {
@@ -42,7 +42,7 @@ fn Test(x: i32) {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT:   %T.patt.1df: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.dda: %I.type = symbolic_binding T, 0 [symbolic]
@@ -59,55 +59,55 @@ fn Test(x: i32) {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.0e0: <witness> = impl_witness imports.%Copy.impl_witness_table.367, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.b51: <witness> = impl_witness imports.%Copy.impl_witness_table.8d2, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.3f6: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.4f6: %Int.as.Copy.impl.Op.type.3f6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.0e0) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d09: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.7a6: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d09, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.b51) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc22_25.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc22_24.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.367 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {
 // CHECK:STDOUT:     %T.patt.loc22_12.1: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc22_12.2 (constants.%T.patt.1df)]
-// CHECK:STDOUT:     %x.patt.loc22_30.1: @TestOp.%pattern_type (%pattern_type.b3a) = ref_binding_pattern x [symbolic = %x.patt.loc22_30.2 (constants.%x.patt.414)]
-// CHECK:STDOUT:     %x.param_patt.loc22_25.1: @TestOp.%pattern_type (%pattern_type.b3a) = var_param_pattern %x.patt.loc22_30.1 [symbolic = %x.param_patt.loc22_25.2 (constants.%x.param_patt.1e1)]
+// CHECK:STDOUT:     %x.patt.loc22_29.1: @TestOp.%pattern_type (%pattern_type.b3a) = ref_binding_pattern x [symbolic = %x.patt.loc22_29.2 (constants.%x.patt.414)]
+// CHECK:STDOUT:     %x.param_patt.loc22_24.1: @TestOp.%pattern_type (%pattern_type.b3a) = var_param_pattern %x.patt.loc22_29.1 [symbolic = %x.param_patt.loc22_24.2 (constants.%x.param_patt.1e1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc22_15: type = splice_block %I.ref [concrete = constants.%I.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc22_14: type = splice_block %I.ref [concrete = constants.%I.type] {
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc22_12.2: %I.type = symbolic_binding T, 0 [symbolic = %T.loc22_12.1 (constants.%T.dda)]
-// CHECK:STDOUT:     %x.param: ref @TestOp.%T.as_type.loc22_32.1 (%T.as_type.b38) = ref_param call_param0
-// CHECK:STDOUT:     %.loc22_32.1: type = splice_block %.loc22_32.2 [symbolic = %T.as_type.loc22_32.1 (constants.%T.as_type.b38)] {
+// CHECK:STDOUT:     %x.param: ref @TestOp.%T.as_type.loc22_31.1 (%T.as_type.b38) = ref_param call_param0
+// CHECK:STDOUT:     %.loc22_31.1: type = splice_block %.loc22_31.2 [symbolic = %T.as_type.loc22_31.1 (constants.%T.as_type.b38)] {
 // CHECK:STDOUT:       %T.ref: %I.type = name_ref T, %T.loc22_12.2 [symbolic = %T.loc22_12.1 (constants.%T.dda)]
-// CHECK:STDOUT:       %T.as_type.loc22_32.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc22_32.1 (constants.%T.as_type.b38)]
-// CHECK:STDOUT:       %.loc22_32.2: type = converted %T.ref, %T.as_type.loc22_32.2 [symbolic = %T.as_type.loc22_32.1 (constants.%T.as_type.b38)]
+// CHECK:STDOUT:       %T.as_type.loc22_31.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc22_31.1 (constants.%T.as_type.b38)]
+// CHECK:STDOUT:       %.loc22_31.2: type = converted %T.ref, %T.as_type.loc22_31.2 [symbolic = %T.as_type.loc22_31.1 (constants.%T.as_type.b38)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: ref @TestOp.%T.as_type.loc22_32.1 (%T.as_type.b38) = wrapper_binding x, %x.param
+// CHECK:STDOUT:     %x: ref @TestOp.%T.as_type.loc22_31.1 (%T.as_type.b38) = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TestOp(%T.loc22_12.2: %I.type) {
 // CHECK:STDOUT:   %T.patt.loc22_12.2: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc22_12.2 (constants.%T.patt.1df)]
 // CHECK:STDOUT:   %T.loc22_12.1: %I.type = symbolic_binding T, 0 [symbolic = %T.loc22_12.1 (constants.%T.dda)]
-// CHECK:STDOUT:   %T.as_type.loc22_32.1: type = facet_access_type %T.loc22_12.1 [symbolic = %T.as_type.loc22_32.1 (constants.%T.as_type.b38)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc22_32.1 [symbolic = %pattern_type (constants.%pattern_type.b3a)]
-// CHECK:STDOUT:   %x.patt.loc22_30.2: @TestOp.%pattern_type (%pattern_type.b3a) = ref_binding_pattern x [symbolic = %x.patt.loc22_30.2 (constants.%x.patt.414)]
-// CHECK:STDOUT:   %x.param_patt.loc22_25.2: @TestOp.%pattern_type (%pattern_type.b3a) = var_param_pattern %x.patt.loc22_30.2 [symbolic = %x.param_patt.loc22_25.2 (constants.%x.param_patt.1e1)]
+// CHECK:STDOUT:   %T.as_type.loc22_31.1: type = facet_access_type %T.loc22_12.1 [symbolic = %T.as_type.loc22_31.1 (constants.%T.as_type.b38)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc22_31.1 [symbolic = %pattern_type (constants.%pattern_type.b3a)]
+// CHECK:STDOUT:   %x.patt.loc22_29.2: @TestOp.%pattern_type (%pattern_type.b3a) = ref_binding_pattern x [symbolic = %x.patt.loc22_29.2 (constants.%x.patt.414)]
+// CHECK:STDOUT:   %x.param_patt.loc22_24.2: @TestOp.%pattern_type (%pattern_type.b3a) = var_param_pattern %x.patt.loc22_29.2 [symbolic = %x.param_patt.loc22_24.2 (constants.%x.param_patt.1e1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc22_32.1 [symbolic = %require_complete (constants.%require_complete.27c)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc22_31.1 [symbolic = %require_complete (constants.%require_complete.27c)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: ref @TestOp.%T.as_type.loc22_32.1 (%T.as_type.b38)) {
+// CHECK:STDOUT:   fn(%x.param: ref @TestOp.%T.as_type.loc22_31.1 (%T.as_type.b38)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -122,12 +122,12 @@ fn Test(x: i32) {
 // CHECK:STDOUT:   %I.facet.loc27_11.2: %I.type = facet_value constants.%i32, (constants.%I.impl_witness) [concrete = constants.%I.facet]
 // CHECK:STDOUT:   %.loc27_11.2: %I.type = converted constants.%i32, %I.facet.loc27_11.2 [concrete = constants.%I.facet]
 // CHECK:STDOUT:   %TestOp.specific_fn: <specific function> = specific_function %TestOp.ref, @TestOp(constants.%I.facet) [concrete = constants.%TestOp.specific_fn]
-// CHECK:STDOUT:   %impl.elem0: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc27_10.1: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc27_10.2: <bound method> = bound_method %x.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc27_10.2(%x.ref)
-// CHECK:STDOUT:   %x.var: ref %i32 = var_storage @TestOp.%x.param_patt.loc22_25.1
+// CHECK:STDOUT:   %x.var: ref %i32 = var_storage @TestOp.%x.param_patt.loc22_24.1
 // CHECK:STDOUT:   assign %x.var, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %TestOp.call: init %empty_tuple.type = call %TestOp.specific_fn(%x.var)
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %x.var, constants.%Destroy.Op.1a2547.2
@@ -135,9 +135,9 @@ fn Test(x: i32) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc22_25.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc22_24.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc22_25.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.Op.loc22_24.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -145,19 +145,19 @@ fn Test(x: i32) {
 // CHECK:STDOUT: specific @TestOp(constants.%T.dda) {
 // CHECK:STDOUT:   %T.patt.loc22_12.2 => constants.%T.patt.1df
 // CHECK:STDOUT:   %T.loc22_12.1 => constants.%T.dda
-// CHECK:STDOUT:   %T.as_type.loc22_32.1 => constants.%T.as_type.b38
+// CHECK:STDOUT:   %T.as_type.loc22_31.1 => constants.%T.as_type.b38
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b3a
-// CHECK:STDOUT:   %x.patt.loc22_30.2 => constants.%x.patt.414
-// CHECK:STDOUT:   %x.param_patt.loc22_25.2 => constants.%x.param_patt.1e1
+// CHECK:STDOUT:   %x.patt.loc22_29.2 => constants.%x.patt.414
+// CHECK:STDOUT:   %x.param_patt.loc22_24.2 => constants.%x.param_patt.1e1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestOp(constants.%I.facet) {
 // CHECK:STDOUT:   %T.patt.loc22_12.2 => constants.%T.patt.1df
 // CHECK:STDOUT:   %T.loc22_12.1 => constants.%I.facet
-// CHECK:STDOUT:   %T.as_type.loc22_32.1 => constants.%i32
+// CHECK:STDOUT:   %T.as_type.loc22_31.1 => constants.%i32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
-// CHECK:STDOUT:   %x.patt.loc22_30.2 => constants.%x.patt.aaf
-// CHECK:STDOUT:   %x.param_patt.loc22_25.2 => constants.%x.param_patt.8f9
+// CHECK:STDOUT:   %x.patt.loc22_29.2 => constants.%x.patt.aaf
+// CHECK:STDOUT:   %x.param_patt.loc22_24.2 => constants.%x.param_patt.8f9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a

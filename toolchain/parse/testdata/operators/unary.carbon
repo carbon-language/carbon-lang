@@ -25,42 +25,40 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: fail_space_before.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:           {kind: 'BoolLiteralFalse', text: 'false'},
-// CHECK:STDOUT:         {kind: 'IfCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IfStatement', text: 'if', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:         {kind: 'PrefixOperatorMinusMinus', text: '--', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 15},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │   ├─BoolLiteralFalse 'false'
+// CHECK:STDOUT:   │ │ ╭─IfCondition ')'
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ ├─IfStatement 'if'
+// CHECK:STDOUT:   │ │   ╭─IntLiteral '0'
+// CHECK:STDOUT:   │ │ ╭─PrefixOperatorMinusMinus '--'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: todo_fail_space_before_op_with_keyword.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:           {kind: 'BoolLiteralFalse', text: 'false'},
-// CHECK:STDOUT:         {kind: 'IfCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IfStatement', text: 'if', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'BoolLiteralFalse', text: 'false'},
-// CHECK:STDOUT:         {kind: 'PrefixOperatorMinusMinus', text: '--', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 15},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │   ├─BoolLiteralFalse 'false'
+// CHECK:STDOUT:   │ │ ╭─IfCondition ')'
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ ├─IfStatement 'if'
+// CHECK:STDOUT:   │ │   ╭─BoolLiteralFalse 'false'
+// CHECK:STDOUT:   │ │ ╭─PrefixOperatorMinusMinus '--'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -88,4 +88,11 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
   return start_loc.getLocWithOffset(offset);
 }
 
+auto AddImportIRInst(SemIR::File& file, clang::SourceLocation clang_source_loc)
+    -> SemIR::ImportIRInstId {
+  SemIR::ClangSourceLocId clang_source_loc_id =
+      file.clang_source_locs().Add(clang_source_loc);
+  return file.import_ir_insts().Add(SemIR::ImportIRInst(clang_source_loc_id));
+}
+
 }  // namespace Carbon::Check

@@ -15,8 +15,8 @@ compiling these source files.
  2 files changed, 336 insertions(+), 36 deletions(-)
  create mode 100644 utils/bazel/llvm-project-overlay/compiler-rt/compiler-rt.bzl
 
-diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
 index 0c5e0af4cb48..ae4a99d6885c 100644
+diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
 --- a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
 +++ b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
 @@ -3,6 +3,7 @@
@@ -58,10 +58,36 @@ index 0c5e0af4cb48..ae4a99d6885c 100644
  )
  
  BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS = [
-@@ -269,6 +276,28 @@ filegroup(
+@@ -269,6 +276,55 @@ filegroup(
      srcs = glob(BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS),
  )
  
++BUILTINS_LIBC_MATH_EXCLUDES = [
++    # Sources requiring COMPILER_RT_USE_LIBC_MATH (e.g. LIBC_NAMESPACE::shared::*).
++    "lib/builtins/adddf3.cpp",
++    "lib/builtins/addtf3.cpp",
++    "lib/builtins/addsf3.cpp",
++    "lib/builtins/divdf3.cpp",
++    "lib/builtins/divsf3.cpp",
++    "lib/builtins/divtf3.cpp",
++    "lib/builtins/extenddftf2.cpp",
++    "lib/builtins/extendsfdf2.cpp",
++    "lib/builtins/extendsftf2.cpp",
++    "lib/builtins/extendxftf2.cpp",
++    "lib/builtins/muldf3.cpp",
++    "lib/builtins/mulsf3.cpp",
++    "lib/builtins/multf3.cpp",
++    "lib/builtins/negdf2.cpp",
++    "lib/builtins/negsf2.cpp",
++    "lib/builtins/subdf3.cpp",
++    "lib/builtins/subsf3.cpp",
++    "lib/builtins/subtf3.cpp",
++    "lib/builtins/truncdfsf2.cpp",
++    "lib/builtins/trunctfdf2.cpp",
++    "lib/builtins/trunctfsf2.cpp",
++    "lib/builtins/trunctfxf2.cpp",
++]
++
 +# Source files for portable components of the compiler builtins library.
 +filegroup(
 +    name = "builtins_generic_srcs",
@@ -79,7 +105,8 @@ index 0c5e0af4cb48..ae4a99d6885c 100644
 +            BUILTINS_TF_EXCLUDES +
 +            BUILTINS_TF_SRCS_PATTERNS +
 +            BUILTINS_ATOMICS_SRCS +
-+            BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS
++            BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS +
++            BUILTINS_LIBC_MATH_EXCLUDES
 +        ),
 +    ),
 +)
@@ -87,7 +114,7 @@ index 0c5e0af4cb48..ae4a99d6885c 100644
  # Apple-platform specific SME source file.
  filegroup(
      name = "builtins_aarch64_apple_sme_srcs",
-@@ -341,11 +370,14 @@ AARCH64_OUTLINE_ATOMICS_FMT = "lib/builtins/aarch64/outline_atomic_{0}{1}_{2}.S"
+@@ -341,11 +389,14 @@ AARCH64_OUTLINE_ATOMICS_FMT = "lib/builtins/aarch64/outline_atomic_{0}{1}_{2}.S"
  
  # Source files for the AArch64 architecture-specific builtins.
  filegroup(
@@ -103,7 +130,7 @@ index 0c5e0af4cb48..ae4a99d6885c 100644
      ] + [
          AARCH64_OUTLINE_ATOMICS_FMT.format(pat, size, model)
          for (pat, size, model) in AARCH64_OUTLINE_ATOMICS
-@@ -365,10 +397,20 @@ filegroup(
+@@ -365,10 +416,20 @@ filegroup(
              "lib/builtins/aarch64/lse.S",
              # These files are provided by SME-specific file groups above.
              "lib/builtins/aarch64/*sme*",
@@ -124,7 +151,7 @@ index 0c5e0af4cb48..ae4a99d6885c 100644
  BUILTINS_ARM_VFP_SRCS_PATTERNS = [
      "lib/builtins/arm/*vfp*.S",
      "lib/builtins/arm/*vfp*.c",
-@@ -385,9 +427,19 @@ filegroup(
+@@ -385,9 +446,19 @@ filegroup(
      ),
  )
  
@@ -145,7 +172,7 @@ index 0c5e0af4cb48..ae4a99d6885c 100644
      srcs = glob(
          [
              "lib/builtins/arm/*.S",
-@@ -396,14 +448,52 @@ filegroup(
+@@ -396,14 +467,52 @@ filegroup(
              "lib/builtins/arm/*.h",
          ],
          allow_empty = True,
@@ -202,7 +229,7 @@ index 0c5e0af4cb48..ae4a99d6885c 100644
          [
              "lib/builtins/ppc/*.S",
              "lib/builtins/ppc/*.c",
-@@ -414,19 +504,66 @@ filegroup(
+@@ -414,19 +523,66 @@ filegroup(
      ),
  )
  
@@ -272,7 +299,7 @@ index 0c5e0af4cb48..ae4a99d6885c 100644
  # Source files for the x86 architecture specific builtins (both 32-bit and
  # 64-bit).
  filegroup(
-@@ -439,8 +576,14 @@ filegroup(
+@@ -439,8 +595,14 @@ filegroup(
  
  # Source files for the x86-64 architecture specific builtins.
  filegroup(
@@ -289,7 +316,7 @@ index 0c5e0af4cb48..ae4a99d6885c 100644
          [
              "lib/builtins/x86_64/*.S",
              "lib/builtins/x86_64/*.c",
-@@ -448,13 +591,29 @@ filegroup(
+@@ -448,13 +610,29 @@ filegroup(
              "lib/builtins/x86_64/*.h",
          ],
          allow_empty = True,
@@ -321,7 +348,7 @@ index 0c5e0af4cb48..ae4a99d6885c 100644
          [
              "lib/builtins/i386/*.S",
              "lib/builtins/i386/*.c",
-@@ -466,28 +625,16 @@ filegroup(
+@@ -466,6 +644,10 @@ filegroup(
              # This file is used for both i386 and x86_64 and so included in the
              # broader x86 sources.
              "lib/builtins/i386/fp_mode.c",
@@ -332,7 +359,33 @@ index 0c5e0af4cb48..ae4a99d6885c 100644
          ],
      ),
  )
- 
+@@ -473,48 +655,5 @@
+-BUILTINS_LIBC_MATH_EXCLUDES = [
+-    # Sources requiring COMPILER_RT_USE_LIBC_MATH (e.g. LIBC_NAMESPACE::shared::*).
+-    "lib/builtins/adddf3.cpp",
+-    "lib/builtins/addtf3.cpp",
+-    "lib/builtins/addsf3.cpp",
+-    "lib/builtins/divdf3.cpp",
+-    "lib/builtins/divsf3.cpp",
+-    "lib/builtins/divtf3.cpp",
+-    "lib/builtins/extenddftf2.cpp",
+-    "lib/builtins/extendsfdf2.cpp",
+-    "lib/builtins/extendsftf2.cpp",
+-    "lib/builtins/extendxftf2.cpp",
+-    "lib/builtins/muldf3.cpp",
+-    "lib/builtins/mulsf3.cpp",
+-    "lib/builtins/multf3.cpp",
+-    "lib/builtins/negdf2.cpp",
+-    "lib/builtins/negsf2.cpp",
+-    "lib/builtins/subdf3.cpp",
+-    "lib/builtins/subsf3.cpp",
+-    "lib/builtins/subtf3.cpp",
+-    "lib/builtins/truncdfsf2.cpp",
+-    "lib/builtins/trunctfdf2.cpp",
+-    "lib/builtins/trunctfsf2.cpp",
+-    "lib/builtins/trunctfxf2.cpp",
+-]
+-
 -# Source files for portable components of the compiler builtins library.
 -filegroup(
 -    name = "builtins_generic_srcs",
@@ -350,7 +403,8 @@ index 0c5e0af4cb48..ae4a99d6885c 100644
 -            BUILTINS_TF_EXCLUDES +
 -            BUILTINS_TF_SRCS_PATTERNS +
 -            BUILTNS_ATOMICS_SRCS +
--            BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS
+-            BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS +
+-            BUILTINS_LIBC_MATH_EXCLUDES
 -        ),
 -    ),
 +make_filtered_builtins_srcs_groups(

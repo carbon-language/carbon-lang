@@ -78,9 +78,6 @@ static auto BuildInterfaceDecl(Context& context,
     auto existing_interface_decl = existing_decl->As<SemIR::InterfaceDecl>();
     interface_decl.interface_id = existing_interface_decl.interface_id;
     interface_decl.type_id = existing_interface_decl.type_id;
-    // TODO: If the new declaration is a definition, keep its parameter
-    // and implicit parameter lists rather than the ones from the
-    // previous declaration.
 
     auto prev_decl_generic_id =
         context.interfaces().Get(interface_decl.interface_id).generic_id;
@@ -110,6 +107,10 @@ static auto BuildInterfaceDecl(Context& context,
 
   // Write the interface ID into the InterfaceDecl.
   ReplaceInstBeforeConstantUse(context, decl_inst_id, interface_decl);
+
+  if (!is_definition && context.sem_ir().is_impl()) {
+    context.definitions_required_by_decl().push_back(decl_inst_id);
+  }
 
   return {interface_decl.interface_id, decl_inst_id};
 }
@@ -198,6 +199,7 @@ auto HandleParseNode(Context& context,
 
   context.inst_block_stack().Push();
   context.require_impls_stack().Push(interface_id);
+  context.observe_stack().PushArray();
   // We use the arg stack to build the witness table type.
   context.args_type_info_stack().Push();
 
@@ -229,9 +231,14 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
       context.require_impls_stack().PeekTop());
   context.require_impls_stack().Pop();
 
+  auto observe_block_id =
+      context.observe_blocks().Add(context.observe_stack().PeekArray());
+  context.observe_stack().PopArray();
+
   auto& interface_info = context.interfaces().Get(interface_id);
   if (!interface_info.associated_entities_id.has_value()) {
     interface_info.require_impls_block_id = require_impls_block_id;
+    interface_info.observe_block_id = observe_block_id;
     // This marks the interface type as fully defined.
     interface_info.associated_entities_id = associated_entities_id;
   }

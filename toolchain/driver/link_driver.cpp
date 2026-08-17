@@ -4,9 +4,56 @@
 
 #include "toolchain/driver/link_driver.h"
 
+#include "common/filesystem.h"
+#include "toolchain/base/runtimes_build_info.h"
+#include "toolchain/driver/carbon_runtimes.h"
+
 namespace Carbon {
 
 LinkDriver::LinkDriver(LinkOptions* options) : options_(options) {}
+
+namespace {
+
+auto object_search(Filesystem::DirRef base_dir, std::filesystem::path base_path,
+                   llvm::SmallVector<std::string>& prelude_paths) -> void {
+  llvm::SmallVector<std::filesystem::path> work_paths({"."});
+  while (!work_paths.empty()) {
+    auto relative_path = work_paths.back();
+    work_paths.pop_back();
+    auto relative_dir = base_dir.OpenDir(relative_path);
+    CARBON_CHECK(relative_dir.ok());
+    llvm::SmallVector<std::filesystem::path> relative_sub_paths;
+    llvm::SmallVector<std::filesystem::path> relative_file_paths;
+    CARBON_CHECK(
+        relative_dir
+            ->AppendEntriesIf(relative_sub_paths, relative_file_paths,
+                              [&relative_dir](llvm::StringRef name) -> bool {
+                                auto path = std::filesystem::path(name.str());
+                                auto stat = relative_dir->Stat(path);
+                                CARBON_CHECK(stat.ok());
+                                if (stat->is_dir()) {
+                                  return true;
+                                }
+                                return path.extension() == ".o";
+                              })
+            .ok());
+    llvm::append_range(
+        work_paths,
+        llvm::map_range(relative_sub_paths,
+                        [relative_path](std::filesystem::path sub_path) {
+                          return relative_path / sub_path;
+                        }));
+    llvm::append_range(
+        prelude_paths,
+        llvm::map_range(
+            relative_file_paths,
+            [relative_path, base_path](std::filesystem::path file_path) {
+              return (base_path / relative_path / file_path).string();
+            }));
+  }
+}
+
+}  // namespace
 
 auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
   // TODO: Currently we use the Clang driver to link. This works well on Unix
@@ -45,6 +92,51 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
     return {.success = false};
   }
 
+  // Find or build the Carbon Core runtimes for linking the prelude into the
+  // binary.
+  bool include_prelude = false;
+  std::filesystem::path core_path;
+  Filesystem::DirRef runtimes_dir;
+  std::filesystem::path runtimes_path;
+  std::optional<Runtimes> runtimes_cache;
+  if (options_->link_prelude_files) {
+    if (driver_env.prebuilt_runtimes) {
+      auto error_or_path =
+          driver_env.prebuilt_runtimes->Get(Runtimes::CarbonCore);
+      CARBON_CHECK(error_or_path.ok(),
+                   "Prebuilt runtimes failed to fetch for Carbon prelude: {}",
+                   error_or_path.error().message());
+      core_path = std::move(*error_or_path);
+      runtimes_dir = driver_env.prebuilt_runtimes->base_dir();
+      runtimes_path = driver_env.prebuilt_runtimes->base_path();
+      include_prelude = true;
+    } else if (driver_env.build_runtimes_on_demand) {
+      Runtimes::Cache::Features features = {
+          .target = options_->codegen_options->target.str()};
+      auto runtimes_or_error = driver_env.runtimes_cache.Lookup(features);
+      CARBON_CHECK(runtimes_or_error.ok(), "Runtimes cache lookup failed: {}",
+                   runtimes_or_error.error().message());
+      auto runtimes = std::move(*runtimes_or_error);
+      CarbonPreludeBuilder prelude_builder(&driver_env, &runtimes,
+                                           options_->codegen_options);
+      auto path_or_error = std::move(prelude_builder).Build();
+      if (!path_or_error.ok()) {
+        CARBON_DIAGNOSTIC(LinkCarbonPreludeBuildFailed, Error,
+                          "Failed to build Carbon prelude during linking: {0}",
+                          std::string);
+        driver_env.emitter.Emit(LinkCarbonPreludeBuildFailed,
+                                path_or_error.error().message());
+        return {.success = false};
+      }
+      core_path = std::move(*path_or_error);
+      runtimes_dir = runtimes.base_dir();
+      runtimes_path = runtimes.base_path();
+      // Keep the Runtimes object in scope so we can use it during linking.
+      runtimes_cache = std::move(runtimes);
+      include_prelude = true;
+    }
+  }
+
   // Note that we append any extra Clang args before our object filenames. This
   // allows us to propagate object filenames that collide with Clang flags using
   // `--` before the filenames. While in theory, this could create a problem in
@@ -53,6 +145,29 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
   clang_args.append(options_->extra_clang_args.begin(),
                     options_->extra_clang_args.end());
   clang_args.push_back("--");
+
+  // Append the Carbon prelude object files to the link.
+  // TODO: should also be able to link in the rest of the Core object files,
+  // if needed.
+  llvm::SmallVector<std::string> prelude_paths;
+  if (include_prelude) {
+    // Open subdirectory specifically for the object files relative to the
+    // runtimes base path.
+    auto relative_path = core_path.lexically_relative(runtimes_path);
+    auto core_dir_or_error = runtimes_dir.OpenDir(relative_path);
+    CARBON_CHECK(core_dir_or_error.ok(),
+                 "Failed to open prelude binaries directory at {}, error: {}",
+                 runtimes_path / relative_path, core_dir_or_error.error());
+    auto core_dir = std::move(*core_dir_or_error);
+    object_search(core_dir, core_path, prelude_paths);
+    CARBON_CHECK(!prelude_paths.empty(), "Found no prelude files at {}",
+                 runtimes_path / relative_path);
+    llvm::append_range(
+        clang_args, llvm::map_range(prelude_paths, [](const std::string& path) {
+          return llvm::StringRef(path);
+        }));
+  }
+
   clang_args.append(options_->object_filenames.begin(),
                     options_->object_filenames.end());
 

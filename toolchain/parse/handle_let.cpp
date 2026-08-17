@@ -19,33 +19,48 @@ auto HandleLet(Context& context) -> void {
 
   context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/false,
                               /*in_unused_pattern=*/false,
+                              /*in_field_shorthand_pattern=*/false,
+                              BindingContext::ExplicitParam,
                               PrecedenceGroup::ForTopLevelPattern());
 }
 
 auto HandleAssociatedConstant(Context& context) -> void {
   auto state = context.PopState();
 
-  // Parse the associated constant pattern: identifier :! type
+  // Parse the associated constant pattern: identifier : type. The binding is a
+  // checked generic by context, so no phase keyword is used.
   auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier);
   if (!identifier) {
-    CARBON_DIAGNOSTIC(ExpectedAssociatedConstantIdentifier, Error,
-                      "expected identifier in associated constant declaration");
-    context.emitter().Emit(*context.position(),
-                           ExpectedAssociatedConstantIdentifier);
+    auto kind = context.PositionKind();
+    if (kind == Lex::TokenKind::Generic || kind == Lex::TokenKind::Runtime ||
+        kind == Lex::TokenKind::Template) {
+      // Diagnose a phase keyword specifically, rather than reporting a missing
+      // associated constant name.
+      CARBON_DIAGNOSTIC(
+          PhaseKeywordInAssociatedConstant, Error,
+          "phase keyword is not allowed on an associated constant");
+      context.emitter().Emit(*context.position(),
+                             PhaseKeywordInAssociatedConstant);
+    } else {
+      CARBON_DIAGNOSTIC(
+          ExpectedAssociatedConstantIdentifier, Error,
+          "expected identifier in associated constant declaration");
+      context.emitter().Emit(*context.position(),
+                             ExpectedAssociatedConstantIdentifier);
+    }
     state.has_error = true;
   }
 
-  auto colon_exclaim = context.ConsumeIf(Lex::TokenKind::ColonExclaim);
-  if (identifier && !colon_exclaim) {
-    CARBON_DIAGNOSTIC(ExpectedAssociatedConstantColonExclaim, Error,
-                      "found runtime binding pattern in associated constant "
-                      "declaration; expected a `:!` binding");
+  auto colon = context.ConsumeIf(Lex::TokenKind::Colon);
+  if (identifier && !colon) {
+    CARBON_DIAGNOSTIC(ExpectedAssociatedConstantColon, Error,
+                      "expected `:` in associated constant declaration");
     context.emitter().Emit(*context.position(),
-                           ExpectedAssociatedConstantColonExclaim);
+                           ExpectedAssociatedConstantColon);
     state.has_error = true;
   }
 
-  if (!identifier || !colon_exclaim) {
+  if (!identifier || !colon) {
     auto end_token = context.SkipPastLikelyEnd(*(context.position() - 1));
     context.AddNode(NodeKind::AssociatedConstantDecl, end_token,
                     /*has_error=*/true);
@@ -54,7 +69,7 @@ auto HandleAssociatedConstant(Context& context) -> void {
   }
 
   context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature, *identifier);
-  state.token = *colon_exclaim;
+  state.token = *colon;
   context.PushState(state, StateKind::LetFinishAsAssociatedConstant);
   context.PushState(state, StateKind::LetAfterPatternAsAssociatedConstant);
   context.PushState(StateKind::Expr);

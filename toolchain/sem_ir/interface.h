@@ -40,6 +40,7 @@ struct InterfaceFields {
   // The following members are set at the `}` of the interface definition.
 
   RequireImplsBlockId require_impls_block_id = RequireImplsBlockId::None;
+  ObserveBlockId observe_block_id = ObserveBlockId::None;
   InstBlockId associated_entities_id = InstBlockId::None;
 };
 
@@ -66,6 +67,21 @@ struct Interface : public EntityWithParamsBase,
   // between the braces of the interface.
   auto is_being_defined() const -> bool {
     return has_definition_started() && !is_complete();
+  }
+
+  // When merging a declaration and definition, prefer things which would point
+  // at the definition for diagnostics.
+  auto MergeDefinition(const Interface& definition) -> void {
+    EntityWithParamsBase::MergeBaseDefinition(definition);
+    scope_with_self_id = definition.scope_with_self_id;
+    scope_without_self_id = definition.scope_without_self_id;
+    body_block_without_self_id = definition.body_block_without_self_id;
+    body_block_with_self_id = definition.body_block_with_self_id;
+    self_param_id = definition.self_param_id;
+    core_interface = definition.core_interface;
+    require_impls_block_id = definition.require_impls_block_id;
+    observe_block_id = definition.observe_block_id;
+    associated_entities_id = definition.associated_entities_id;
   }
 };
 

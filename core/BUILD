@@ -2,13 +2,13 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("//bazel/carbon_rules:defs.bzl", "carbon_library")
 load("//bazel/manifest:defs.bzl", "manifest")
 
 # Raw prelude files.
-# TODO: This includes all of Core, not just the prelude.
 filegroup(
     name = "prelude_files",
-    srcs = glob(["**/*.carbon"]),
+    srcs = ["prelude.carbon"] + glob(["prelude/**/*.carbon"]),
     visibility = ["//visibility:public"],
 )
 
@@ -27,5 +27,39 @@ filegroup(
         ":prelude_files",
         ":prelude_manifest.txt",
     ],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "core_library_files",
+    srcs = glob(
+        include = ["**/*.carbon"],
+        exclude = [
+            "prelude.carbon",
+            "prelude/**",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+manifest(
+    name = "core_library_manifest.txt",
+    srcs = [":core_library_files"],
+    strip_package_dir = True,
+)
+
+filegroup(
+    name = "core_library",
+    srcs = [
+        ":core_library_files",
+        ":core_library_manifest.txt",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+carbon_library(
+    name = "io",
+    srcs = ["io.impl.carbon"],
+    hdrs = ["io.carbon"],
     visibility = ["//visibility:public"],
 )

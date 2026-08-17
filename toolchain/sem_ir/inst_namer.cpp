@@ -53,6 +53,13 @@ class InstNamer::NamingContext {
   auto AddStructTypeInstName(StructType struct_ty, llvm::StringRef type_suffix,
                              llvm::StringRef name_suffix) -> void;
 
+  // Adds the instruction's name by `EntityNameId`.
+  //
+  // Prefer this over AddInstNameId when the inst has an EntityNameId, as the
+  // resulting name may have annotations added from the EntityName.
+  auto AddInstEntityNameId(EntityNameId entity_name_id,
+                           llvm::StringRef suffix = "") -> void;
+
   // Adds the instruction's name by `NameId`.
   auto AddInstNameId(NameId name_id, llvm::StringRef suffix = "") -> void {
     AddInstName((sem_ir().names().GetIRBaseName(name_id) + suffix).str());
@@ -188,6 +195,10 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
       offset += sem_ir_->named_constraints().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<NamedConstraintWithSelfId>:
+
+      offset += sem_ir_->observes().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<ObserveId>:
 
       offset += sem_ir_->require_impls().size();
       [[fallthrough]];
@@ -635,6 +646,36 @@ auto InstNamer::PushEntity(FunctionId function_id, ScopeId scope_id,
   PushBlockId(scope_id, fn.call_params_id);
 }
 
+auto InstNamer::PushEntity(ObserveId observe_id, ScopeId /*scope_id*/,
+                           Scope& scope) -> void {
+  const auto& observe = sem_ir_->observes().Get(observe_id);
+  LocId observe_loc(observe.decl_id);
+
+  llvm::StringRef scope_prefix;
+  CARBON_KIND_SWITCH(sem_ir_->insts().Get(observe.enclosing_scope_inst_id)) {
+    case CARBON_KIND(SemIR::InterfaceWithSelfDecl interface): {
+      scope_prefix = MaybePushEntity(interface.interface_id);
+      break;
+    }
+    case CARBON_KIND(SemIR::FunctionDecl fn): {
+      scope_prefix = MaybePushEntity(fn.function_id);
+      break;
+    }
+    default: {
+      scope_prefix = "<unexpected scope>";
+      break;
+    }
+  }
+
+  // TODO: Currently observe declarations in the same scope have the same name.
+  // Generate unique names for them like we do when we are pushing
+  // RequireImplsId entity.
+  scope.name =
+      globals_.AllocateName(*this, observe_loc,
+                            llvm::formatv("{0}{1}observe", scope_prefix,
+                                          scope_prefix.empty() ? "" : "."));
+}
+
 auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
                            Scope& scope) -> void {
   const auto& require = sem_ir_->require_impls().Get(require_impls_id);
@@ -854,6 +895,19 @@ auto InstNamer::NamingContext::AddStructTypeInstName(
   AddInstName(out.TakeStr());
 }
 
+auto InstNamer::NamingContext::AddInstEntityNameId(EntityNameId entity_name_id,
+                                                   llvm::StringRef suffix)
+    -> void {
+  RawStringOstream name;
+  const auto& entity_name = sem_ir().entity_names().Get(entity_name_id);
+  name << sem_ir().names().GetIRBaseName(entity_name.name_id);
+  if (entity_name.is_frozen_period_self) {
+    name << ".frozen";
+  }
+  name << suffix;
+  AddInstName(name.TakeStr());
+}
+
 auto InstNamer::NamingContext::AddIntOrFloatTypeName(char type_literal_prefix,
                                                      InstId bit_width_id,
                                                      llvm::StringRef suffix)
@@ -915,15 +969,15 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND_ANY(AnyBindingOrExportDecl, inst): {
-      AddInstNameId(sem_ir().entity_names().Get(inst.entity_name_id).name_id);
+      AddInstEntityNameId(inst.entity_name_id);
       return;
     }
     case CARBON_KIND_ANY(AnyBindingPattern, inst): {
-      auto name_id = NameId::Underscore;
       if (inst.entity_name_id.has_value()) {
-        name_id = sem_ir().entity_names().Get(inst.entity_name_id).name_id;
+        AddInstEntityNameId(inst.entity_name_id, ".patt");
+      } else {
+        AddInstNameId(NameId::Underscore, ".patt");
       }
-      AddInstNameId(name_id, ".patt");
       return;
     }
     case CARBON_KIND(BoolLiteral inst): {
@@ -1002,7 +1056,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(CppTemplateNameType inst): {
-      AddInstNameId(sem_ir().entity_names().Get(inst.name_id).name_id, ".type");
+      AddInstEntityNameId(inst.name_id, ".type");
       return;
     }
     case CustomWitness::Kind: {
@@ -1018,43 +1072,40 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(FacetAccessType inst): {
-      auto name_id = SemIR::NameId::None;
       if (auto name =
               sem_ir().insts().TryGetAs<NameRef>(inst.facet_value_inst_id)) {
-        name_id = name->name_id;
+        AddInstNameId(name->name_id, ".as_type");
       } else if (auto bind = sem_ir().insts().TryGetAs<SymbolicBinding>(
                      inst.facet_value_inst_id)) {
-        name_id = sem_ir().entity_names().Get(bind->entity_name_id).name_id;
-      }
-      if (name_id.has_value()) {
-        AddInstNameId(name_id, ".as_type");
+        AddInstEntityNameId(bind->entity_name_id, ".as_type");
       } else {
         AddInstName("as_type");
       }
       return;
     }
     case CARBON_KIND(FacetType inst): {
-      const auto& facet_type_info =
-          sem_ir().facet_types().Get(inst.facet_type_id);
-      bool has_where = facet_type_info.other_requirements ||
-                       !facet_type_info.self_impls_constraints.empty() ||
-                       !facet_type_info.self_impls_named_constraints.empty() ||
-                       !facet_type_info.type_impls_interfaces.empty() ||
-                       !facet_type_info.type_impls_named_constraints.empty() ||
-                       !facet_type_info.rewrite_constraints.empty();
-      if (facet_type_info.extend_constraints.size() == 1 &&
-          facet_type_info.extend_named_constraints.empty()) {
+      const auto& declared_facet_type =
+          sem_ir().declared_facet_types().Get(inst.declared_facet_type_id);
+      bool has_where =
+          declared_facet_type.other_requirements ||
+          !declared_facet_type.self_impls_constraints.empty() ||
+          !declared_facet_type.self_impls_named_constraints.empty() ||
+          !declared_facet_type.type_impls_interfaces.empty() ||
+          !declared_facet_type.type_impls_named_constraints.empty() ||
+          !declared_facet_type.rewrite_constraints.empty();
+      if (declared_facet_type.extend_constraints.size() == 1 &&
+          declared_facet_type.extend_named_constraints.empty()) {
         AddEntityNameAndMaybePush(
-            facet_type_info.extend_constraints.front().interface_id,
+            declared_facet_type.extend_constraints.front().interface_id,
             has_where ? "_where.type" : ".type");
-      } else if (facet_type_info.extend_named_constraints.size() == 1 &&
-                 facet_type_info.extend_constraints.empty()) {
+      } else if (declared_facet_type.extend_named_constraints.size() == 1 &&
+                 declared_facet_type.extend_constraints.empty()) {
         AddEntityNameAndMaybePush(
-            facet_type_info.extend_named_constraints.front()
+            declared_facet_type.extend_named_constraints.front()
                 .named_constraint_id,
             has_where ? "_where.type" : ".type");
-      } else if (facet_type_info.extend_constraints.empty() &&
-                 facet_type_info.extend_named_constraints.empty()) {
+      } else if (declared_facet_type.extend_constraints.empty() &&
+                 declared_facet_type.extend_named_constraints.empty()) {
         AddInstName(has_where ? "type_where" : "type");
       } else {
         AddInstName("facet_type");
@@ -1064,9 +1115,9 @@ auto InstNamer::NamingContext::NameInst() -> void {
     case CARBON_KIND(FacetValue inst): {
       if (auto facet_type =
               sem_ir().types().TryGetAs<FacetType>(inst.type_id)) {
-        const auto& facet_type_info =
-            sem_ir().facet_types().Get(facet_type->facet_type_id);
-        if (auto single = facet_type_info.TryAsSingleExtend()) {
+        const auto& declared_facet_type = sem_ir().declared_facet_types().Get(
+            facet_type->declared_facet_type_id);
+        if (auto single = declared_facet_type.TryAsSingleExtend()) {
           CARBON_KIND_SWITCH(*single) {
             case CARBON_KIND(SemIR::SpecificInterface interface): {
               AddEntityNameAndMaybePush(interface.interface_id, ".facet");
@@ -1080,7 +1131,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
           }
           return;
         }
-        if (facet_type_info.HasNoConstraints()) {
+        if (declared_facet_type.HasNoConstraints()) {
           if (auto class_ty =
                   sem_ir().insts().TryGetAs<ClassType>(inst.type_inst_id)) {
             AddEntityNameAndMaybePush(class_ty->class_id, ".type.facet");
@@ -1290,6 +1341,18 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstNameId(sem_ir().name_scopes().Get(inst.name_scope_id).name_id());
       return;
     }
+    case CARBON_KIND(ObserveDecl inst): {
+      AddEntityNameAndMaybePush(inst.observe_id, ".decl");
+      return;
+    }
+    case ObserveEquivalent::Kind: {
+      AddInstName("eq");
+      return;
+    }
+    case ObserveImpls::Kind: {
+      AddInstName("impls");
+      return;
+    }
     case CARBON_KIND_ANY(AnyParam, inst): {
       AddInstNameId(inst.pretty_name_id, ".param");
       return;
@@ -1318,6 +1381,22 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.require_impls_id, ".decl");
       auto require_scope_id = inst_namer_->GetScopeFor(inst.require_impls_id);
       PushBlockId(require_scope_id, inst.decl_block_id);
+      return;
+    }
+    case Carbon::SemIR::RequirementBaseFacetType::Kind: {
+      AddInstName("base_facet_type");
+      return;
+    }
+    case Carbon::SemIR::RequirementEquivalent::Kind: {
+      AddInstName("equiv");
+      return;
+    }
+    case Carbon::SemIR::RequirementImpls::Kind: {
+      AddInstName("impls");
+      return;
+    }
+    case Carbon::SemIR::RequirementRewrite::Kind: {
+      AddInstName("rewrite");
       return;
     }
     case ReturnSlotPattern::Kind: {
@@ -1380,9 +1459,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       } else if (auto template_name_ty =
                      sem_ir().types().TryGetAs<CppTemplateNameType>(
                          inst.type_id)) {
-        AddInstNameId(
-            sem_ir().entity_names().Get(template_name_ty->name_id).name_id,
-            ".template");
+        AddInstEntityNameId(template_name_ty->name_id, ".template");
       } else {
         if (sem_ir().inst_blocks().Get(inst.elements_id).empty()) {
           AddInstName("empty_struct");

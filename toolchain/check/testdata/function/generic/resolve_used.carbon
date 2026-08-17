@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn ErrorIfNIsZero(N:! Core.IntLiteral) {
+fn ErrorIfNIsZero(generic N: Core.IntLiteral) {
   // Check that we resolve the definition of a used specific function by
   // ensuring we produce an error when doing so. Notionally this error is
   // produced as a result of instantiating the `Core.Int` template, although
@@ -43,7 +43,7 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %N.patt: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
@@ -83,13 +83,13 @@ fn CallNegative() {
 // CHECK:STDOUT:   %pattern_type.d0e: type = pattern_type %i0 [concrete]
 // CHECK:STDOUT:   %v.patt.53c: %pattern_type.d0e = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:   %v.var_patt.0d0: %pattern_type.d0e = var_pattern %v.patt.53c [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.8d2: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%i0) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.0a7: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%i0) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.baf: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%i0) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.38a: %T.as.DefaultOrUnformed.impl.Op.type.baf = struct_value () [concrete]
 // CHECK:STDOUT:   %.060: require_specific_def_type = require_specific_def @T.as.DefaultOrUnformed.impl(%i0) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.4e3: %DefaultOrUnformed.type = facet_value %i0, (%DefaultOrUnformed.impl_witness.8d2) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.WithSelf.Op.type.7c9: type = fn_type @DefaultOrUnformed.WithSelf.Op, @DefaultOrUnformed.WithSelf(%DefaultOrUnformed.facet.4e3) [concrete]
-// CHECK:STDOUT:   %.21a: type = fn_type_with_self_type %DefaultOrUnformed.WithSelf.Op.type.7c9, %DefaultOrUnformed.facet.4e3 [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.6c8: %DefaultOrUnformed.type = facet_value %i0, (%DefaultOrUnformed.impl_witness.0a7) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.WithSelf.Op.type.2b9: type = fn_type @DefaultOrUnformed.WithSelf.Op, @DefaultOrUnformed.WithSelf(%DefaultOrUnformed.facet.6c8) [concrete]
+// CHECK:STDOUT:   %.b06: type = fn_type_with_self_type %DefaultOrUnformed.WithSelf.Op.type.2b9, %DefaultOrUnformed.facet.6c8 [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.38a, @T.as.DefaultOrUnformed.impl.Op(%i0) [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
@@ -112,7 +112,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
 // CHECK:STDOUT:   %Core.import_ref.cc8: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.150) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.53a)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.374 = impl_witness_table (%Core.import_ref.cc8), @T.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.cc8), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,24 +124,24 @@ fn CallNegative() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ErrorIfNIsZero.decl: %ErrorIfNIsZero.type = fn_decl @ErrorIfNIsZero [concrete = constants.%ErrorIfNIsZero] {
-// CHECK:STDOUT:     %N.patt.loc4_20.1: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_20.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.patt.loc4_28.1: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_28.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4: type = splice_block %IntLiteral.ref [concrete = Core.IntLiteral] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Core.ref.loc4: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_20.2: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_20.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc4_28.2: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_28.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallNegative.decl: %CallNegative.type = fn_decl @CallNegative [concrete = constants.%CallNegative] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ErrorIfNIsZero(%N.loc4_20.2: Core.IntLiteral) {
-// CHECK:STDOUT:   %N.patt.loc4_20.2: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_20.2 (constants.%N.patt)]
-// CHECK:STDOUT:   %N.loc4_20.1: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_20.1 (constants.%N)]
+// CHECK:STDOUT: generic fn @ErrorIfNIsZero(%N.loc4_28.2: Core.IntLiteral) {
+// CHECK:STDOUT:   %N.patt.loc4_28.2: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_28.2 (constants.%N.patt)]
+// CHECK:STDOUT:   %N.loc4_28.1: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_28.1 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Int.loc9_27.2: type = class_type @Int, @Int(%N.loc4_20.1) [symbolic = %Int.loc9_27.2 (constants.%Int)]
+// CHECK:STDOUT:   %Int.loc9_27.2: type = class_type @Int, @Int(%N.loc4_28.1) [symbolic = %Int.loc9_27.2 (constants.%Int)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc9_27.2 [symbolic = %require_complete (constants.%require_complete.4df)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Int.loc9_27.2 [symbolic = %pattern_type (constants.%pattern_type.142)]
 // CHECK:STDOUT:   %v.patt.loc9_15.2: @ErrorIfNIsZero.%pattern_type (%pattern_type.142) = ref_binding_pattern v [symbolic = %v.patt.loc9_15.2 (constants.%v.patt.834)]
@@ -174,7 +174,7 @@ fn CallNegative() {
 // CHECK:STDOUT:     %.loc9_27: type = splice_block %Int.loc9_27.1 [symbolic = %Int.loc9_27.2 (constants.%Int)] {
 // CHECK:STDOUT:       %Core.ref.loc9: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Int.ref: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
-// CHECK:STDOUT:       %N.ref: Core.IntLiteral = name_ref N, %N.loc4_20.2 [symbolic = %N.loc4_20.1 (constants.%N)]
+// CHECK:STDOUT:       %N.ref: Core.IntLiteral = name_ref N, %N.loc4_28.2 [symbolic = %N.loc4_28.1 (constants.%N)]
 // CHECK:STDOUT:       %Int.loc9_27.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc9_27.2 (constants.%Int)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%Int.loc9_27.2 (%Int) = wrapper_binding v, %v.var
@@ -210,13 +210,13 @@ fn CallNegative() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%N) {
-// CHECK:STDOUT:   %N.patt.loc4_20.2 => constants.%N.patt
-// CHECK:STDOUT:   %N.loc4_20.1 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc4_28.2 => constants.%N.patt
+// CHECK:STDOUT:   %N.loc4_28.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%int_0) {
-// CHECK:STDOUT:   %N.patt.loc4_20.2 => constants.%N.patt
-// CHECK:STDOUT:   %N.loc4_20.1 => constants.%int_0
+// CHECK:STDOUT:   %N.patt.loc4_28.2 => constants.%N.patt
+// CHECK:STDOUT:   %N.loc4_28.1 => constants.%int_0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Int.loc9_27.2 => constants.%i0
@@ -225,10 +225,10 @@ fn CallNegative() {
 // CHECK:STDOUT:   %v.patt.loc9_15.2 => constants.%v.patt.53c
 // CHECK:STDOUT:   %v.var_patt.loc9_3.2 => constants.%v.var_patt.0d0
 // CHECK:STDOUT:   %.loc9_28.3 => constants.%.060
-// CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness => constants.%DefaultOrUnformed.impl_witness.8d2
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc9_28.2 => constants.%DefaultOrUnformed.facet.4e3
-// CHECK:STDOUT:   %DefaultOrUnformed.WithSelf.Op.type => constants.%DefaultOrUnformed.WithSelf.Op.type.7c9
-// CHECK:STDOUT:   %.loc9_28.4 => constants.%.21a
+// CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness => constants.%DefaultOrUnformed.impl_witness.0a7
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc9_28.2 => constants.%DefaultOrUnformed.facet.6c8
+// CHECK:STDOUT:   %DefaultOrUnformed.WithSelf.Op.type => constants.%DefaultOrUnformed.WithSelf.Op.type.2b9
+// CHECK:STDOUT:   %.loc9_28.4 => constants.%.b06
 // CHECK:STDOUT:   %impl.elem0.loc9_28.2 => constants.%T.as.DefaultOrUnformed.impl.Op.38a
 // CHECK:STDOUT:   %specific_impl_fn.loc9_28.2 => constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.df9

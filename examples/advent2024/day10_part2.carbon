@@ -5,7 +5,6 @@
 // https://adventofcode.com/2024/day/10
 
 import Core library "io";
-import Core library "range";
 
 import library "day10_common";
 import library "io_utils";

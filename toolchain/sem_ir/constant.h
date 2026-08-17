@@ -63,7 +63,7 @@ enum class ConstantDependence : uint8_t {
 // parameterized by the `bind_symbolic_name` constant insts that it depends on,
 // whereas an attached constant explicitly binds them to parameters of the
 // enclosing generic. It's the difference between "`Vector(T)` where `T` is some
-// value of type `type`" and "`Vector(T)` where `T` is the `T:! type` parameter
+// value of type `type`" and "`Vector(T)` where `T` is the `T: type` parameter
 // of this particular enclosing generic".
 //
 // TODO: consider instead keeping this metadata in a separate hash map keyed by

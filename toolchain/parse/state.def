@@ -53,7 +53,10 @@
                                      Variant4)                           \
   CARBON_PARSE_STATE_VARIANT(Kind, Variant1)                             \
   CARBON_PARSE_STATE_VARIANTS3(Kind, Variant2, Variant3, Variant4)
-
+#define CARBON_PARSE_STATE_VARIANTS5(Kind, Variant1, Variant2, Variant3, \
+                                     Variant4, Variant5)                 \
+  CARBON_PARSE_STATE_VARIANT(Kind, Variant1)                             \
+  CARBON_PARSE_STATE_VARIANTS4(Kind, Variant2, Variant3, Variant4, Variant5)
 // Used as a default for State initialization in some cases. Should
 // not be put on the state stack.
 CARBON_PARSE_STATE(Invalid)
@@ -387,6 +390,10 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // library ...    (in packaging directives)
 // ^~~~~~~
 //   1. Library
+//
+// match_first ...
+// ^~~~~~~~~
+//   1. MatchFirst
 //
 // namespace ...
 // ^~~~~~~~~
@@ -919,6 +926,21 @@ CARBON_PARSE_STATE(Import)
 //   (state done)
 CARBON_PARSE_STATE(Library)
 
+// Handles `match_first` and opens the block.
+//
+// match_first { ...
+// ^~~~~~~~~~~~~
+//   1. DeclScopeLoopAsRegular
+//   2. MatchFirstFinish
+CARBON_PARSE_STATE(MatchFirst)
+
+// Handles closing the `match_first` block.
+//
+// match_first { ... }
+//                   ^
+//   (state done)
+CARBON_PARSE_STATE(MatchFirstFinish)
+
 // Handles `namespace`.
 //
 // namespace ...
@@ -975,13 +997,26 @@ CARBON_PARSE_STATE(AliasAfterName)
 CARBON_PARSE_STATE(AliasFinish)
 
 // Starts parsing a pattern in a comma-separated list. The variants mark
-// whether it is part of an implicit parameter list or a tuple pattern.
+// whether it is part of an implicit parameter list, struct pattern or a tuple
+// pattern.
 //
 //  ...
 // ^
 //   1. Pattern
-//   2. PatternListElementFinishAs(Tuple|Explicit|Implicit)
-CARBON_PARSE_STATE_VARIANTS3(PatternListElement, Tuple, Explicit, Implicit)
+//   2. PatternListElementFinishAs(Tuple|Struct|Explicit|Implicit)
+//
+//  .foo = ... (variant is Struct)
+// ^
+//   1. PeriodAsStruct
+//   2. StructPatternFieldAfterDesignator
+//   3  PatternListElementFinishAsStruct
+//
+//  _ ... (variant is Struct)
+// ^
+//  1. StructPatternUnderscore
+//  2. PatternListElementFinishAsStruct
+CARBON_PARSE_STATE_VARIANTS4(PatternListElement, Tuple, Struct, Explicit,
+                             Implicit)
 
 // Finishes parsing a pattern in a comma-separated list, including the
 // optional trailing `,`. If there are more patterns, enqueues another
@@ -992,29 +1027,35 @@ CARBON_PARSE_STATE_VARIANTS3(PatternListElement, Tuple, Explicit, Implicit)
 //   (state done)
 //   SPECIAL: parent becomes PatternListFinishAsTuple
 //
+// ... , }  (variant is Struct)
+//     ^
+//   (state done)
+//
 // ... , ]  (variant is Implicit)
 //     ^
 //   (state done)
 //
 // ... , ...
 //     ^
-//   1. PatternListElementAs(Tuple|Explicit|Implicit)
+//   1. PatternListElementAs(Tuple|Struct|Explicit|Implicit)
 //   SPECIAL (variant is Tuple): parent becomes PatternListFinishAsTuple
 //
 // ...
 //    ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(PatternListElementFinish, Tuple, Explicit,
+CARBON_PARSE_STATE_VARIANTS4(PatternListElementFinish, Tuple, Struct, Explicit,
                              Implicit)
 
-// Handles processing of a tuple pattern (parentheses) or implicit parameter
-// list (square brackets).
+// Handles processing of a tuple pattern (parentheses), implicit parameter
+// list (square brackets) or struct pattern (braces).
 //
 // ( )        (variant is Tuple or Explicit)
 // ^
 // [ ]        (variant is Implicit)
 // ^
-//   1. PatternListFinishAs(Tuple|Explicit|Implicit)
+// { }        (variant is Struct)
+// ^
+//   1. PatternListFinishAs(Tuple|Struct|Explicit|Implicit)
 //
 // ( ... )    (variant is Explicit)
 // ^
@@ -1027,17 +1068,68 @@ CARBON_PARSE_STATE_VARIANTS3(PatternListElementFinish, Tuple, Explicit,
 // ^
 //   1. PatternListElementAsTuple
 //   2. PatternListFinishAsParen             (SPECIAL: may be replaced)
-CARBON_PARSE_STATE_VARIANTS3(PatternList, Tuple, Explicit, Implicit)
+//
+// { ... }    (variant is Struct)
+// ^
+//   1. PatternListElementAsStruct
+//   2. PatternListFinishAsStruct
+CARBON_PARSE_STATE_VARIANTS4(PatternList, Tuple, Struct, Explicit, Implicit)
 
-// Handles processing of a parameter list `]` or `)`.
+// Handles processing of a parameter list `]`, `)` or `}`.
 //
 // ( ... )    (variant is Paren, Tuple or Explicit)
 //       ^
 // [ ... ]    (variant is Implicit)
 //       ^
+// { ... }    (variant is Struct)
+//       ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS4(PatternListFinish, Paren, Tuple, Explicit,
+CARBON_PARSE_STATE_VARIANTS5(PatternListFinish, Paren, Tuple, Struct, Explicit,
                              Implicit)
+
+//
+// ... ,
+//    ^
+//   (state done)
+//
+// ... }
+//    ^
+//   (state done)
+CARBON_PARSE_STATE(StructPatternDesignatedFieldFinish)
+
+// Handles a struct pattern parameter after the initial designator.
+// .foo = ...
+//      ^
+//   1. Pattern
+//   2. StructPatternDesignatedFieldFinish
+//
+// .foo ??? = ...
+//      ^~~~~
+//   1. Pattern
+//   2. StructPatternDesignatedFieldFinish
+//
+// .foo ??? , ...
+//      ^~~~
+//   1. StructPatternDesignatedFieldFinish
+//
+// .foo ??? } ...
+//      ^~~~
+//   1. StructPatternDesignatedFieldFinish
+CARBON_PARSE_STATE(StructPatternFieldAfterDesignator)
+
+// Handles the processing of an '_' element in a struct pattern
+//  _ }
+//  ^
+//   (state done)
+//
+//  _ : ???
+// ^
+// 1. BindingPattern
+//
+//  _ :? ???
+// ^
+// 1. BindingPattern
+CARBON_PARSE_STATE(StructPatternUnderscore)
 
 // Handles the processing of a `(condition)` up through the expression.
 //

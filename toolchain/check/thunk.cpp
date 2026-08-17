@@ -383,7 +383,8 @@ auto BuildThunkDefinitionForExport(Context& context,
                                    SemIR::FunctionId thunk_function_id,
                                    SemIR::FunctionId callee_function_id,
                                    SemIR::InstId thunk_id,
-                                   SemIR::InstId callee_id) -> void {
+                                   SemIR::InstId callee_id,
+                                   bool export_as_constructor) -> void {
   auto& thunk_function = context.functions().Get(thunk_function_id);
   auto& callee_function = context.functions().Get(callee_function_id);
 
@@ -397,21 +398,27 @@ auto BuildThunkDefinitionForExport(Context& context,
     param_pattern_ids =
         context.inst_blocks().Get(thunk_function.param_patterns_id);
   }
-  llvm::SmallVector<SemIR::InstId> call_param_ids(
+  llvm::ArrayRef<SemIR::InstId> call_param_ids(
       context.inst_blocks().Get(thunk_function.call_params_id));
 
+  // If the thunk has an explicit output parameter, it is not passed to the
+  // callee function. The output parameter is normally last, but comes first
+  // for constructors.
+  auto out_param_id = SemIR::InstId::None;
   if (thunk_has_return_param) {
-    param_pattern_ids = param_pattern_ids.drop_back();
-    call_param_ids.pop_back();
+    if (export_as_constructor) {
+      param_pattern_ids.consume_front();
+      out_param_id = call_param_ids.consume_front();
+    } else {
+      param_pattern_ids.consume_back();
+      out_param_id = call_param_ids.consume_back();
+    }
   }
 
   auto call_id = BuildThunkCall(context, thunk_function_id, callee_id,
                                 param_pattern_ids, call_param_ids,
                                 /*override_self_type_id=*/SemIR::TypeId::None);
-  if (thunk_has_return_param) {
-    auto out_param_id =
-        context.inst_blocks().Get(thunk_function.call_params_id).back();
-
+  if (out_param_id.has_value()) {
     SemIR::LocId loc_id(out_param_id);
     auto init_id = InitializeExisting(context, loc_id, out_param_id, call_id,
                                       /*for_return=*/true);
@@ -452,6 +459,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // names here.
   if (context.functions().Get(callee.function_id).special_function_kind !=
           SemIR::Function::SpecialFunctionKind::HasCppThunk &&
+      !override_self_type_id.has_value() &&
       CheckFunctionTypeMatches(
           context, context.functions().Get(callee.function_id),
           context.functions().Get(signature_id), signature_specific_id,

@@ -2,13 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TESTING_BASE_UNIFIED_DIFF_MATCHER_H_
-#define CARBON_TESTING_BASE_UNIFIED_DIFF_MATCHER_H_
+#ifndef CARBON_TESTING_BASE_UNIFIED_DIFF_H_
+#define CARBON_TESTING_BASE_UNIFIED_DIFF_H_
 
 #include <gmock/gmock.h>
 
 #include <algorithm>
 #include <optional>
+#include <ostream>
+#include <sstream>
 #include <string>
 #include <utility>
 
@@ -19,27 +21,24 @@
 
 namespace Carbon::Testing {
 
-// Matcher that compares the elements of two containers and produces a unified
-// diff on failure.
-template <typename Container>
-class UnifiedDiffMatcher {
+// Compares the elements of two containers and prints a unified diff when
+// streamed to an ostream.
+template <typename ExpectedContainer, typename ActualContainer>
+class UnifiedDiff {
  public:
-  explicit UnifiedDiffMatcher(Container expected)
-      : expected_(std::move(expected)) {}
+  explicit UnifiedDiff(const ExpectedContainer& expected,
+                       const ActualContainer& actual, bool check_subset = false)
+      : expected_(expected), actual_(actual), check_subset_(check_subset) {}
 
-  // Matches `actual` against `expected_`. Returns true on a match; returns
-  // false and prints a unified diff to `listener` on a mismatch.
-  template <typename ActualContainer>
-  auto MatchAndExplain(const ActualContainer& actual,
-                       testing::MatchResultListener* listener) const -> bool;
-
-  auto DescribeTo(std::ostream* os) const -> void {
-    *os << "matches elements with unified diff";
+  friend auto operator<<(std::ostream& os, const UnifiedDiff& diff)
+      -> std::ostream& {
+    diff.Print(&os);
+    return os;
   }
 
-  auto DescribeNegationTo(std::ostream* os) const -> void {
-    *os << "does not match elements with unified diff";
-  }
+  // Prints the unified diff to `os`, or prints nothing if `expected_` and
+  // `actual_` match.
+  auto Print(std::ostream* os) const -> void;
 
  private:
   // A 2D array, stored contiguously. Rows correspond to `expected_`'s elements,
@@ -71,45 +70,41 @@ class UnifiedDiffMatcher {
   }
 
   // Returns true if every element in `expected_` matches the corresponding
-  // element in `actual`. Stores comparisons in `match_results`.
-  template <typename ActualContainer>
-  auto IsEqual(const ActualContainer& actual,
-               Table<MatchResult>& match_results) const -> bool;
+  // element in `actual_`. Stores comparisons in `match_results`.
+  auto IsEqual(Table<MatchResult>& match_results) const -> bool;
 
   // Populates `subsequences` with the longest common matching subsequences
-  // found when comparing `actual` and `expected_`. Stores comparisons in
+  // found when comparing `actual_` and `expected_`. Stores comparisons in
   // `match_results`.
-  template <typename ActualContainer>
-  auto GetLongestCommonSubsequences(const ActualContainer& actual,
-                                    Table<MatchResult>& match_results,
+  auto GetLongestCommonSubsequences(Table<MatchResult>& match_results,
                                     Table<int>& subsequences) const -> void;
 
   // Prints the unified diff.
-  template <typename ActualContainer>
-  auto PrintDiff(const ActualContainer& actual,
-                 Table<MatchResult>& match_results,
-                 const Table<int>& subsequences,
-                 testing::MatchResultListener* listener) const -> void;
+  auto PrintDiff(Table<MatchResult>& match_results,
+                 const Table<int>& subsequences, std::ostream* os) const
+      -> void;
 
-  // The expected elements.
-  Container expected_;
+  // The expected and actual elements.
+  const ExpectedContainer& expected_;
+  const ActualContainer& actual_;
+  // Whether we are checking that `expected_` is a subset of `actual_`.
+  bool check_subset_;
 };
 
-// Returns a polymorphic matcher that acts similarly to
-// ElementsAreArray but produces a unified diff on failure.
-template <typename Container>
-auto ElementsAreArrayWithUnifiedDiff(Container expected) {
-  return testing::MakePolymorphicMatcher(
-      UnifiedDiffMatcher<Container>(std::move(expected)));
-}
+template <typename ExpectedContainer, typename ActualContainer>
+UnifiedDiff(const ExpectedContainer&, const ActualContainer&)
+    -> UnifiedDiff<ExpectedContainer, ActualContainer>;
+template <typename ExpectedContainer, typename ActualContainer>
+UnifiedDiff(const ExpectedContainer&, const ActualContainer&, bool)
+    -> UnifiedDiff<ExpectedContainer, ActualContainer>;
 
 // -----------------------------------------------------------------------------
 // Internal implementation details follow.
 // -----------------------------------------------------------------------------
 
-template <typename Container>
+template <typename ExpectedContainer, typename ActualContainer>
 template <typename T>
-class UnifiedDiffMatcher<Container>::Table {
+class UnifiedDiff<ExpectedContainer, ActualContainer>::Table {
  public:
   // Constructs a table with dimensions of expected_size and actual_size,
   // corresponding to the containers being compared.
@@ -134,36 +129,29 @@ class UnifiedDiffMatcher<Container>::Table {
   llvm::SmallVector<T> data_;
 };
 
-template <typename Container>
-template <typename ActualContainer>
-auto UnifiedDiffMatcher<Container>::MatchAndExplain(
-    const ActualContainer& actual, testing::MatchResultListener* listener) const
-    -> bool {
-  Table<MatchResult> match_results(expected_.size(), std::size(actual),
+template <typename ExpectedContainer, typename ActualContainer>
+auto UnifiedDiff<ExpectedContainer, ActualContainer>::Print(
+    std::ostream* os) const -> void {
+  Table<MatchResult> match_results(expected_.size(), std::size(actual_),
                                    MatchResult::Unknown);
 
-  if (IsEqual(actual, match_results)) {
-    return true;
+  if (IsEqual(match_results)) {
+    return;
   }
 
-  if (listener->IsInterested()) {
-    Table<int> subsequences(expected_.size() + 1, std::size(actual) + 1, 0);
-    GetLongestCommonSubsequences(actual, match_results, subsequences);
-    PrintDiff(actual, match_results, subsequences, listener);
-  }
-  return false;
+  Table<int> subsequences(expected_.size() + 1, std::size(actual_) + 1, 0);
+  GetLongestCommonSubsequences(match_results, subsequences);
+  PrintDiff(match_results, subsequences, os);
 }
 
-template <typename Container>
-template <typename ActualContainer>
-auto UnifiedDiffMatcher<Container>::IsEqual(
-    const ActualContainer& actual, Table<MatchResult>& match_results) const
-    -> bool {
-  if (expected_.size() != std::size(actual)) {
+template <typename ExpectedContainer, typename ActualContainer>
+auto UnifiedDiff<ExpectedContainer, ActualContainer>::IsEqual(
+    Table<MatchResult>& match_results) const -> bool {
+  if (expected_.size() != std::size(actual_)) {
     return false;
   }
 
-  for (auto [i, actual_element] : llvm::enumerate(actual)) {
+  for (auto [i, actual_element] : llvm::enumerate(actual_)) {
     if (!IsElementMatch(i, i, actual_element, match_results)) {
       return false;
     }
@@ -171,13 +159,12 @@ auto UnifiedDiffMatcher<Container>::IsEqual(
   return true;
 }
 
-template <typename Container>
-template <typename ActualContainer>
-auto UnifiedDiffMatcher<Container>::GetLongestCommonSubsequences(
-    const ActualContainer& actual, Table<MatchResult>& match_results,
-    Table<int>& subsequences) const -> void {
+template <typename ExpectedContainer, typename ActualContainer>
+auto UnifiedDiff<ExpectedContainer, ActualContainer>::
+    GetLongestCommonSubsequences(Table<MatchResult>& match_results,
+                                 Table<int>& subsequences) const -> void {
   for (auto expected_index : llvm::seq(expected_.size())) {
-    for (auto [actual_index, actual_element] : llvm::enumerate(actual)) {
+    for (auto [actual_index, actual_element] : llvm::enumerate(actual_)) {
       int subsequence_value;
       if (IsElementMatch(expected_index, actual_index, actual_element,
                          match_results)) {
@@ -196,12 +183,10 @@ auto UnifiedDiffMatcher<Container>::GetLongestCommonSubsequences(
   }
 }
 
-template <typename Container>
-template <typename ActualContainer>
-auto UnifiedDiffMatcher<Container>::PrintDiff(
-    const ActualContainer& actual, Table<MatchResult>& match_results,
-    const Table<int>& subsequences,
-    testing::MatchResultListener* listener) const -> void {
+template <typename ExpectedContainer, typename ActualContainer>
+auto UnifiedDiff<ExpectedContainer, ActualContainer>::PrintDiff(
+    Table<MatchResult>& match_results, const Table<int>& subsequences,
+    std::ostream* os) const -> void {
   // A line in the diff output.
   struct DiffLine {
     enum class Kind { Match, ActualOnly, ExpectedOnly };
@@ -213,12 +198,12 @@ auto UnifiedDiffMatcher<Container>::PrintDiff(
 
   llvm::SmallVector<DiffLine> diff;
   // Reserve a quick upper bound of the size.
-  diff.reserve(expected_.size() + std::size(actual));
+  diff.reserve(expected_.size() + std::size(actual_));
 
   // Reconstruct the diff by backtracking from the end of the table.
   int expected_index = expected_.size() - 1;
-  int actual_index = std::size(actual) - 1;
-  auto actual_it = std::end(actual) - 1;
+  int actual_index = std::size(actual_) - 1;
+  auto actual_it = std::end(actual_) - 1;
   while (expected_index >= 0 || actual_index >= 0) {
     auto match_result = (expected_index >= 0 && actual_index >= 0)
                             ? match_results.Get(expected_index, actual_index)
@@ -274,27 +259,57 @@ auto UnifiedDiffMatcher<Container>::PrintDiff(
     }
   }
 
-  *listener << "unified diff (- expected, + actual):\n";
+  *os << "unified diff (- expected, + actual)";
+  if (check_subset_) {
+    *os << " [+ lines are normal]";
+  }
+  *os << ":\n";
   for (const auto& range : print_ranges) {
-    *listener << "=== diff in expected elements "
-              << diff[range.end].expected_index + 1 << " to "
-              << diff[range.begin].expected_index + 1 << " (1-based index):\n";
+    if (check_subset_) {
+      // In check_subset mode, only print diff ranges that contain unmatched
+      // expected lines.
+      bool has_expected_only = false;
+      for (auto i : llvm::seq_inclusive(range.begin, range.end)) {
+        if (diff[i].kind == DiffLine::Kind::ExpectedOnly) {
+          has_expected_only = true;
+          break;
+        }
+      }
+      if (!has_expected_only) {
+        continue;
+      }
+    }
+    *os << "=== diff in expected elements "
+        << diff[range.end].expected_index + 1 << " to "
+        << diff[range.begin].expected_index + 1 << " (1-based index):\n";
     for (auto i : llvm::reverse(llvm::seq_inclusive(range.begin, range.end))) {
       const auto& line = diff[i];
       if (line.kind == DiffLine::Kind::Match) {
-        *listener << "  " << *line.actual_value << "\n";
+        *os << " " << *line.actual_value << "\n";
       } else if (line.kind == DiffLine::Kind::ActualOnly) {
-        *listener << "+ " << *line.actual_value << "\n";
+        *os << "+" << *line.actual_value << "\n";
       } else {
-        *listener << "- ";
-        expected_[line.expected_index].DescribeTo(listener->stream());
-        *listener << "\n";
+        *os << "-";
+        // Strip off the extra decoration that `StrEq` adds.
+        // TODO: Also tidy up the `MatchesRegex` description. Maybe we shouldn't
+        // be building a list of matchers at all.
+        std::stringstream ss;
+        expected_[line.expected_index].DescribeTo(&ss);
+        std::string desc = ss.str();
+        llvm::StringRef desc_ref = desc;
+        if (desc_ref.consume_front("is equal to \"") &&
+            desc_ref.consume_back("\"")) {
+          *os << desc_ref.str();
+        } else {
+          *os << desc;
+        }
+        *os << "\n";
       }
     }
   }
-  *listener << "=== diff end\n";
+  *os << "=== diff end\n";
 }
 
 }  // namespace Carbon::Testing
 
-#endif  // CARBON_TESTING_BASE_UNIFIED_DIFF_MATCHER_H_
+#endif  // CARBON_TESTING_BASE_UNIFIED_DIFF_H_

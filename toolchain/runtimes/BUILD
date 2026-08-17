@@ -204,6 +204,13 @@ filegroup(
     ],
 )
 
+filegroup(
+    name = "carbon_core",
+    srcs = [
+        "//core:prelude_files",
+    ],
+)
+
 # Currently, we're only installing the subset of LLVM's libc internals needed to
 # build libc++. At some point, we should ship LLVM's libc itself, and that will
 # likely expand this to cover more of the source. However, we'll still want to

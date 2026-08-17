@@ -17,7 +17,7 @@ library "[[@TEST_NAME]]";
 class A {}
 class B {}
 
-fn F(unused T:! type) {}
+fn F(unused generic T: type) {}
 
 // Requires a conversion from (type, type) -> type.
 fn G() {
@@ -36,7 +36,7 @@ impl A as Core.ImplicitAs(type) {
   eval fn Convert(unused self) -> type { return B; }
 }
 
-fn F(unused T:! type) {}
+fn F(unused generic T: type) {}
 
 // Requires a conversion from A -> type.
 fn G() {
@@ -56,7 +56,7 @@ impl A as Core.ImplicitAs(B) {
   fn Convert(self) -> B;
 }
 
-fn F(unused T:! type, unused b: B) {}
+fn F(unused generic T: type, unused b: B) {}
 
 fn G(a: A) {
   // This should only call the implicit conversion function from A to B once,
@@ -105,14 +105,14 @@ fn G(a: A) {
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.type.572c06.1: type = fn_type @A.as.ImplicitAs.impl.Convert.loc7_40.1 [concrete]
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.dbe75c.1: %A.as.ImplicitAs.impl.Convert.type.572c06.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.5f1 = facet_value %A, (%ImplicitAs.impl_witness) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.51c: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(type, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.474: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(type, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.type.572c06.2: type = fn_type @A.as.ImplicitAs.impl.Convert.loc7_40.2 [concrete]
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.dbe75c.2: %A.as.ImplicitAs.impl.Convert.type.572c06.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
-// CHECK:STDOUT:   %.dd5: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.51c, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %.787: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.474, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.bound.5ecf75.1: <bound method> = bound_method %A.val, %A.as.ImplicitAs.impl.Convert.dbe75c.2 [concrete]
 // CHECK:STDOUT:   %.367: ref %A = temporary invalid, %A.val [concrete]
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.bound.5ecf75.2: <bound method> = bound_method %A.val, %A.as.ImplicitAs.impl.Convert.dbe75c.1 [concrete]
@@ -130,7 +130,7 @@ fn G(a: A) {
 // CHECK:STDOUT:   %.loc16_6.2: ref %A = temporary_storage
 // CHECK:STDOUT:   %.loc16_6.3: init %A to %.loc16_6.2 = class_init () [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc16_8.1: init %A = converted %.loc16_6.1, %.loc16_6.3 [concrete = constants.%A.val]
-// CHECK:STDOUT:   %impl.elem0: %.dd5 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%A.as.ImplicitAs.impl.Convert.dbe75c.2]
+// CHECK:STDOUT:   %impl.elem0: %.787 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%A.as.ImplicitAs.impl.Convert.dbe75c.2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16_8.1, %impl.elem0 [concrete = constants.%A.as.ImplicitAs.impl.Convert.bound.5ecf75.1]
 // CHECK:STDOUT:   %.loc16_8.2: ref %A = temporary %.loc16_6.2, %.loc16_8.1 [concrete = constants.%.367]
 // CHECK:STDOUT:   %.loc16_8.3: %A = acquire_value %.loc16_8.2 [concrete = constants.%A.val]
@@ -164,12 +164,12 @@ fn G(a: A) {
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.type: type = fn_type @A.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert: %A.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.1bc = facet_value %A, (%ImplicitAs.impl_witness) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.6c1: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%B, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.554: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%B, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %.33d: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.6c1, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %.3de: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.554, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc16_9.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -181,7 +181,7 @@ fn G(a: A) {
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %.loc16_10: type = converted %.loc16_6, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_tuple.type) [concrete = constants.%F.specific_fn]
-// CHECK:STDOUT:   %impl.elem0: %.33d = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%A.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %impl.elem0: %.3de = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%A.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc16_9.1: ref %B = temporary_storage
 // CHECK:STDOUT:   %A.as.ImplicitAs.impl.Convert.call: init %B to %.loc16_9.1 = call %bound_method(%a.ref)
