@@ -78,7 +78,7 @@ auto FindPositionInfo(const Context::File& file,
     return {};
   }
 
-  PositionInfo info = {.token = token};
+  PositionInfo info = {.file = &file, .token = token};
   auto insts = index->InstsForToken(token);
   for (auto inst_id : insts) {
     // Prefer a name reference: a token such as the name in `fn F()` also has

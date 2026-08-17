@@ -34,16 +34,34 @@ static auto StringifyTypeOfInst(const SemIR::File& sem_ir,
                                       sem_ir.types().GetTypeInstId(type_id));
 }
 
-// Produces a message response indicating that the textDocument parameter was
-// invalid.
+// Given a position-based query, returns the corresponding position information.
+// If the request is invalid or there is no instruction at that position,
+// produces a response to the query: an InvalidParams error or a
+// default-constructed reply, as appropriate.
+//
+// TODO: If a default-constructed response is not the correct way to handle an
+// invalid location, we will need to extend this function to accept a fallback
+// value. For now, it's right for all the queries we support.
 template <typename ResponseType>
-static auto HandleBadTextDocument(
-    llvm::StringRef file,
+static auto FindInstAtPositionOrFail(
+    Context& context, const clang::clangd::TextDocumentPositionParams& params,
     llvm::function_ref<auto(llvm::Expected<ResponseType>)->void> on_done)
-    -> void {
-  on_done(llvm::make_error<clang::clangd::LSPError>(
-      llvm::formatv("Unknown textDocument `{0}`", file),
-      clang::clangd::ErrorCode::InvalidParams));
+    -> PositionInfo {
+  auto* file = context.LookupFile(params.textDocument.uri.file());
+  if (!file) {
+    on_done(llvm::make_error<clang::clangd::LSPError>(
+        llvm::formatv("Unknown textDocument `{0}`",
+                      params.textDocument.uri.file()),
+        clang::clangd::ErrorCode::InvalidParams));
+    return {};
+  }
+
+  auto info = FindPositionInfo(*file, params.position);
+  if (!info.has_inst()) {
+    on_done(ResponseType());
+  }
+
+  return info;
 }
 
 // Implements `textDocument/hover`:
@@ -52,21 +70,14 @@ auto HandleHover(
     Context& context, const clang::clangd::TextDocumentPositionParams& params,
     llvm::function_ref<auto(llvm::Expected<clang::clangd::Hover>)->void>
         on_done) -> void {
-  auto* file = context.LookupFile(params.textDocument.uri.file());
-  if (!file) {
-    HandleBadTextDocument(params.textDocument.uri.file(), on_done);
-    return;
-  }
-  auto info = FindPositionInfo(*file, params.position);
+  auto info = FindInstAtPositionOrFail(context, params, on_done);
   if (!info.has_inst()) {
-    // No hover text. LSP allows a null result, which suppresses the popup.
-    on_done(clang::clangd::Hover{});
     return;
   }
 
-  const auto& sem_ir = *file->sem_ir();
+  const auto& sem_ir = *info.file->sem_ir();
   RawStringOstream text;
-  text << "```carbon\n" << file->tokens().GetTokenText(info.token);
+  text << "```carbon\n" << info.file->tokens().GetTokenText(info.token);
   if (auto type = StringifyTypeOfInst(sem_ir, info.inst_id); !type.empty()) {
     text << ": " << type;
   }
@@ -75,7 +86,7 @@ auto HandleHover(
   on_done(clang::clangd::Hover{
       .contents = {.kind = clang::clangd::MarkupKind::Markdown,
                    .value = text.TakeStr()},
-      .range = GetTokenRange(file->tokens(), info.token)});
+      .range = GetTokenRange(info.file->tokens(), info.token)});
 }
 
 // Shared implementation of the goto-style requests, which differ only in which
@@ -86,18 +97,12 @@ static auto HandleGoto(
     llvm::function_ref<
         auto(llvm::Expected<std::vector<clang::clangd::Location>>)->void>
         on_done) -> void {
-  auto* file = context.LookupFile(params.textDocument.uri.file());
-  if (!file) {
-    HandleBadTextDocument(params.textDocument.uri.file(), on_done);
-    return;
-  }
-  auto info = FindPositionInfo(*file, params.position);
+  auto info = FindInstAtPositionOrFail(context, params, on_done);
   if (!info.has_inst()) {
-    on_done(std::vector<clang::clangd::Location>());
     return;
   }
 
-  const auto& sem_ir = *file->sem_ir();
+  const auto& sem_ir = *info.file->sem_ir();
   auto target_id = GetReferencedInst(sem_ir, info.inst_id);
   if (use_type) {
     auto type_id = sem_ir.insts().Get(target_id).type_id();
@@ -109,7 +114,7 @@ static auto HandleGoto(
   }
 
   std::vector<clang::clangd::Location> locations;
-  if (auto location = GetInstLocation(*file, target_id)) {
+  if (auto location = GetInstLocation(*info.file, target_id)) {
     locations.push_back(*location);
   }
   on_done(std::move(locations));
@@ -150,20 +155,14 @@ auto HandleReferences(
     llvm::function_ref<
         auto(llvm::Expected<std::vector<clang::clangd::Location>>)->void>
         on_done) -> void {
-  auto* file = context.LookupFile(params.textDocument.uri.file());
-  if (!file) {
-    HandleBadTextDocument(params.textDocument.uri.file(), on_done);
-    return;
-  }
-  auto info = FindPositionInfo(*file, params.position);
+  auto info = FindInstAtPositionOrFail(context, params, on_done);
   if (!info.has_inst()) {
-    on_done(std::vector<clang::clangd::Location>());
     return;
   }
 
-  const auto& sem_ir = *file->sem_ir();
+  const auto& sem_ir = *info.file->sem_ir();
   auto target_token =
-      GetInstNameToken(*file, GetReferencedInst(sem_ir, info.inst_id));
+      GetInstNameToken(*info.file, GetReferencedInst(sem_ir, info.inst_id));
   if (!target_token.has_value()) {
     on_done(std::vector<clang::clangd::Location>());
     return;
@@ -175,16 +174,17 @@ auto HandleReferences(
   // the IR.
   std::vector<clang::clangd::Location> locations;
   if (params.context.includeDeclaration) {
-    locations.push_back({.uri = file->uri(),
-                         .range = GetTokenRange(file->tokens(), target_token)});
+    locations.push_back(
+        {.uri = info.file->uri(),
+         .range = GetTokenRange(info.file->tokens(), target_token)});
   }
   for (auto [inst_id, inst] : sem_ir.insts().enumerate()) {
     auto name_ref = inst.TryAs<SemIR::NameRef>();
     if (!name_ref ||
-        GetInstNameToken(*file, name_ref->value_id) != target_token) {
+        GetInstNameToken(*info.file, name_ref->value_id) != target_token) {
       continue;
     }
-    if (auto location = GetInstLocation(*file, inst_id)) {
+    if (auto location = GetInstLocation(*info.file, inst_id)) {
       locations.push_back(*location);
     }
   }

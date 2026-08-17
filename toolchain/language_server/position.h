@@ -31,6 +31,9 @@ auto FindToken(const Lex::TokenizedBuffer& tokens,
 
 // What a request at a source position refers to.
 struct PositionInfo {
+  // The file that the request points into.
+  const Context::File* file = nullptr;
+
   // The token at the position, or `None` if there isn't one.
   Lex::TokenIndex token = Lex::TokenIndex::None;
 
