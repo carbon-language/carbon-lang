@@ -15,7 +15,7 @@ fn Terse() => 42;
 fn Builtin() = "int.make_type_32";
 
 // --- STDIN
-[[@LSP-CALL:initialize]]
+[[@LSP-CALL:initialize:"capabilities": {}]]
 [[@LSP-NOTIFY:textDocument/didOpen:
   "textDocument": {
     "uri": "file:/fn_definition.carbon",
@@ -29,7 +29,7 @@ fn Builtin() = "int.make_type_32";
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
-// CHECK:STDOUT: Content-Length: 316{{\r}}
+// CHECK:STDOUT: Content-Length: 352{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
@@ -40,6 +40,7 @@ fn Builtin() = "int.make_type_32";
 // CHECK:STDOUT:       "definitionProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
 // CHECK:STDOUT:       "hoverProvider": true,
+// CHECK:STDOUT:       "positionEncoding": "utf-16",
 // CHECK:STDOUT:       "referencesProvider": true,
 // CHECK:STDOUT:       "textDocumentSync": 2,
 // CHECK:STDOUT:       "typeDefinitionProvider": true

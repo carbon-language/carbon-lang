@@ -290,7 +290,7 @@ export function activate(context: ExtensionContext) {
 
   const clientOptions: LanguageClientOptions = {
     documentSelector: [
-      { language: 'carbon' },
+      { scheme: 'file', language: 'carbon' },
     ],
   };
 

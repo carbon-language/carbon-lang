@@ -464,7 +464,7 @@ that to a later proposal.
 
 In this proposal, assignment is a statement. It could instead be an expression
 as it is in C and C++. The arguments against assignment-as-an-expression
-include 1) it complicates reasoning about the ordering of side-effects and 2) it
+include (1) it complicates reasoning about the ordering of side-effects and (2) it
 can cause confusion between `=` and `==`
 [(SEI CERT C Coding Standard)](https://wiki.sei.cmu.edu/confluence/display/c/EXP45-C.+Do+not+perform+assignments+in+selection+statements)
 [Visual Studio Warning](https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-4-c4706?view=vs-2019).

@@ -123,6 +123,19 @@ class Context {
 
   auto files() -> Map<std::string, File>& { return files_; }
 
+  // The encoding used to measure `Position::character` on the wire, negotiated
+  // during `initialize`. Either UTF-8, in which case we can use our column
+  // (byte) counts directly, or UTF-16 for clients without UTF-8 support, such
+  // as VS Code.
+  // TODO: Convert positions when the encoding is `UTF16`, or remove UTF-16
+  // support entirely if VS Code starts accepting UTF-8 positions.
+  auto position_encoding() const -> clang::clangd::OffsetEncoding {
+    return position_encoding_;
+  }
+  auto SetPositionEncoding(clang::clangd::OffsetEncoding encoding) -> void {
+    position_encoding_ = encoding;
+  }
+
   auto prelude_import() const -> bool { return prelude_import_; }
 
  private:
@@ -139,6 +152,10 @@ class Context {
 
   // Content of files managed by the language client.
   Map<std::string, File> files_;
+
+  // Set during `initialize`; UTF-16 is the protocol default until then.
+  clang::clangd::OffsetEncoding position_encoding_ =
+      clang::clangd::OffsetEncoding::UTF16;
 
   bool prelude_import_;
 };

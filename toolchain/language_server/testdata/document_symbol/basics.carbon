@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/document_symbol/basics.carbon
 
 // --- STDIN
-[[@LSP-CALL:initialize]]
+[[@LSP-CALL:initialize:"capabilities": {}]]
 [[@LSP-NOTIFY:textDocument/didOpen:
   "textDocument": {"uri": "file:/empty.carbon", "languageId": "carbon",
                    "text": ""}
@@ -36,7 +36,7 @@
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDOUT: Content-Length: 316{{\r}}
+// CHECK:STDOUT: Content-Length: 352{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
@@ -47,6 +47,7 @@
 // CHECK:STDOUT:       "definitionProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
 // CHECK:STDOUT:       "hoverProvider": true,
+// CHECK:STDOUT:       "positionEncoding": "utf-16",
 // CHECK:STDOUT:       "referencesProvider": true,
 // CHECK:STDOUT:       "textDocumentSync": 2,
 // CHECK:STDOUT:       "typeDefinitionProvider": true
