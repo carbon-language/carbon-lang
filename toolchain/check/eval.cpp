@@ -2216,6 +2216,7 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
 // Assumes lhs and rhs have same bit width.
 static auto OverflowAdd(const llvm::APInt& lhs, const llvm::APInt& rhs)
     -> llvm::APInt {
+  CARBON_CHECK(lhs.getBitWidth() == rhs.getBitWidth());
   bool is_negative = lhs.isNegative();
 
   bool overflow = false;
