@@ -78,7 +78,7 @@ fn F(x: i512) {
   // CHECK:STDERR:   Cpp.foo(x);
   // CHECK:STDERR:           ^
   // CHECK:STDERR:
-  // CHECK:STDERR: min_prelude/parts/int.carbon:10:1: error: semantics TODO: `interop with specific class` [SemanticsTodo]
+  // CHECK:STDERR: min_prelude/parts/int.carbon:10:1: error: semantics TODO: `interop with non-identifier package name` [SemanticsTodo]
   // CHECK:STDERR: class Int(N: IntLiteral) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

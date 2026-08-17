@@ -115,6 +115,19 @@ auto HandleDidChangeTextDocument(
   }
 }
 
+// Implements `textDocument/didSave`:
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_didSave
+auto HandleDidSaveTextDocument(
+    Context& /*context*/,
+    const clang::clangd::DidSaveTextDocumentParams& /*params*/) -> void {
+  // Saving doesn't change the content we're tracking: we always use the text
+  // provided by the client, which is already up-to-date from `didChange`. We
+  // handle this rather than warning about an unsupported notification.
+  // TODO: Other open files that import this one may now be stale, because they
+  // read it from disk rather than from the client. Re-check them here, or
+  // handle `workspace/didChangeWatchedFiles` instead.
+}
+
 // Implements `textDocument/didClose`:
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_didClose
 auto HandleDidCloseTextDocument(

@@ -7,6 +7,7 @@
 
 #include <cstdint>
 
+#include "common/check.h"
 #include "common/enum_base.h"
 #include "common/ostream.h"
 #include "toolchain/lex/token_kind.h"
