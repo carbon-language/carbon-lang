@@ -71,6 +71,7 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/source:source_buffer",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
+        "@llvm-project//llvm:Support",
     ],
 )
 

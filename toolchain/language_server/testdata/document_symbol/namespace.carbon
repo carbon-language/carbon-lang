@@ -14,7 +14,7 @@ namespace Foo;
 fn Bar() {}
 
 // --- STDIN
-[[@LSP-CALL:initialize]]
+[[@LSP-CALL:initialize:"capabilities": {}]]
 [[@LSP-NOTIFY:textDocument/didOpen:
   "textDocument": {
     "uri": "file:/namespace.carbon",
@@ -28,7 +28,7 @@ fn Bar() {}
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
-// CHECK:STDOUT: Content-Length: 146{{\r}}
+// CHECK:STDOUT: Content-Length: 182{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
@@ -36,6 +36,7 @@ fn Bar() {}
 // CHECK:STDOUT:   "result": {
 // CHECK:STDOUT:     "capabilities": {
 // CHECK:STDOUT:       "documentSymbolProvider": true,
+// CHECK:STDOUT:       "positionEncoding": "utf-16",
 // CHECK:STDOUT:       "textDocumentSync": 2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
