@@ -312,7 +312,8 @@ class C(N: i32) {
 }
 
 fn F() {
-  // Requires `C(-1)` to be complete, which requires `A(-1)` to be complete, which requires `B(array(i32, -1))` to be complete.
+  // Requires `C(-1)` to be complete, which requires `A(-1)` to be
+  // complete, which requires `B(array(i32, -1))` to be complete.
   var c: C(-1);
 }
 ```
@@ -1034,10 +1035,10 @@ steps of member access (like `impl` lookup and instance binding) by rewriting
 compound member access expressions into calls to methods on user-implementable
 interfaces.
 
-This does not change how typical member access is written or read in Carbon code. Under the hood, for a compound member access
-expression `x.(y)` where `x` has type `T` and `y` has type `U`, the compiler
-rewrites the expression into a call to an interface method on one of three
-interfaces:
+This does not change how typical member access is written or read in Carbon
+code. Under the hood, for a compound member access expression `x.(y)` where `x`
+has type `T` and `y` has type `U`, the compiler rewrites the expression into a
+call to an interface method on one of three interfaces:
 
 ```carbon
 // An interface to identify the result type of member binding.
@@ -1079,7 +1080,8 @@ by how they rewrite into the `x.(y)` form using these two rules:
         the `T.(`\_\_\_`)` form.
 -   `x->y` and `x->(y)` are interpreted as `(*x).y` and `(*x).(y)` respectively.
 
-These interfaces may be used as constraints, allowing a generic function to perform binding.
+These interfaces may be used as constraints, allowing a generic function to
+perform binding.
 
 ```carbon
 fn CallsMethodWithValueBinding
@@ -1089,7 +1091,8 @@ fn CallsMethodWithValueBinding
 }
 ```
 
-This generic function may be called with the name of any method that is callable on `x` with no arguments, as in:
+This generic function may be called with the name of any method that is
+callable on `x` with no arguments, as in:
 
 ```carbon
 interface I {
@@ -1133,12 +1136,15 @@ let x: C = {};
 x.F();
 ```
 
--   The member `C.F` has a unique, empty type which is unnamed, but we will refer to as `__TypeOf_C_F`.
--   An adapter type is generated to adapt `C`, which we will refer to as `__Binding_C_F`.
--   `__TypeOf_C_F` implements `BindToValue(C)` and `BindToRef(C)` with `Op` returning
+-   The member `C.F` has a unique, empty type which is unnamed, but we will
+    refer to as `__TypeOf_C_F`.
+-   An adapter type is generated to adapt `C`, which we will refer to as
     `__Binding_C_F`.
--   The implementation of the member binding interfaces allow implicit conversions, to support
-    calling a method from a base type on an object of a derived type. See
+-   `__TypeOf_C_F` implements `BindToValue(C)` and `BindToRef(C)` with `Op`
+    returning `__Binding_C_F`.
+-   The implementation of the member binding interfaces allow implicit
+    conversions, to support calling a method from a base type on an object of a
+    derived type. See
     ["Inheritance and other implicit conversions" in proposal #3720](/proposals/p003720-member-binding-operators.md#inheritance-and-other-implicit-conversions).
 -   `__Binding_C_F` implements the `Call(())` interface, which maps to the
     actual method implementation body:
@@ -1155,8 +1161,8 @@ impl __Binding_C_F as Call(()) with .Result = i32 {
 Note that the implementation of the `Call` operator needs to use a compiler
 intrinsic to avoid recursive application of these same rules.
 
-The result is that the expression `x.F` is a bound method value of type `__Binding_C_F`
-(adapting `x`) that can be called like a function.
+The result is that the expression `x.F` is a bound method value of type
+`__Binding_C_F` (adapting `x`) that can be called like a function.
 
 #### Fields
 
@@ -1171,7 +1177,8 @@ var x: C = {.m = 7};
 x.m = 42;
 ```
 
--   The member `C.m` has an unnamed unique type which we will call `__TypeOf_C_m`.
+-   The member `C.m` has an unnamed unique type which we will call
+    `__TypeOf_C_m`.
 -   `__TypeOf_C_m` implements `BindToValue(C)` with `.Result = i32`, returning
     the value of `m` by way of a compiler intrinsic:
 
@@ -1202,7 +1209,8 @@ Tuple types and struct types have their fields implemented in the same way.
 
 #### Non-instance members
 
-Classes may also have non-instance members. This includes non-instance member functions and static member variables, as in:
+Classes may also have non-instance members. This includes non-instance member
+functions and static member variables, as in:
 
 ```carbon
 class C {
@@ -1216,14 +1224,14 @@ C.s = 3;
 
 Non-instance members use `BindToType` when accessed on a type facet:
 
--   For `fn NonInstance()` in class `C`, its type `__TypeOf_C_NonInstance` implements
-    `BindToType(C)` with `.Result = __TypeBinding_C_NonInstance`.
+-   For `fn NonInstance()` in class `C`, its type `__TypeOf_C_NonInstance`
+    implements `BindToType(C)` with `.Result = __TypeBinding_C_NonInstance`.
 -   To support calling directly on a type facet, `__TypeOf_C_NonInstance` also
     implements `Call(())` directly (supporting `C.NonInstance()`).
 -   To support calling on value/reference instances `x.NonInstance()`,
-    `__TypeOf_C_NonInstance` implements `BindToValue(C)` and `BindToRef(C)` returning
-    a bound adapter whose `Call` implementation ignores its `self` argument,
-    effectively discarding the evaluated instance `x`.
+    `__TypeOf_C_NonInstance` implements `BindToValue(C)` and `BindToRef(C)`
+    returning a bound adapter whose `Call` implementation ignores its `self`
+    argument, effectively discarding the evaluated instance `x`.
 
 #### Interface members and `impl` lookup
 
@@ -1241,11 +1249,12 @@ class C {
 }
 ```
 
--   The `I.F` member has an unnamed unique type, which we will refer to a `__TypeOf_I_F`.
--   `__TypeOf_I_F` implements `BindToValue(T)` for all types `T impls I` returning
-    `__Binding_I_F(T)` (which adapts `T`).
--   The actual implementation of `I` for `T` is resolved during generic matching
-    when `Call.Op` is called on the adapter:
+-   The `I.F` member has an unnamed unique type, which we will refer to a
+    `__TypeOf_I_F`.
+-   `__TypeOf_I_F` implements `BindToValue(T)` for all types `T impls I`
+    returning `__Binding_I_F(T)` (which adapts `T`).
+-   The actual implementation of `I` for `T` is resolved during generic
+    matching when `Call.Op` is called on the adapter:
 
     ```carbon
     impl forall [T: I] __TypeOf_I_F as BindToValue(T) {
@@ -1264,13 +1273,20 @@ class C {
     }
     ```
 
--   The type of an interface method taking `ref self` would also implement `BindToRef(T)`.
--   In all cases, the type of an interface member would implement `BindToType(T)` for all types `T impls I`. The result would depend on the specifics of the member, but generally would be a value of a unique empty type associated with the specific interface member, parameterized by `T`. This value could then be bound to an instance of `T` in a succeeding operation.
+-   The type of an interface method taking `ref self` would also implement
+    `BindToRef(T)`.
+-   In all cases, the type of an interface member would implement
+    `BindToType(T)` for all types `T impls I`. The result would depend on the
+    specifics of the member, but generally would be a value of a unique empty
+    type associated with the specific interface member, parameterized by `T`.
+    This value could then be bound to an instance of `T` in a succeeding
+    operation.
 
 ### Member binding restrictions
 
-The restrictions that only certain compound member accesses are valid are naturally enforced by whether the
-member's type implements the required `BindToValue`, `BindToRef`, or `BindToType` interfaces.
+The restrictions that only certain compound member accesses are valid are
+naturally enforced by whether the member's type implements the required
+`BindToValue`, `BindToRef`, or `BindToType` interfaces.
 
 ```carbon
 class C {
@@ -1285,10 +1301,12 @@ v.(C.(C.F))();
 ```
 
 `v.(v.F)` fails because the bound method
-adapter does not implement member binding interfaces, following the rules of [instance binding](#instance-binding).
+adapter does not implement member binding interfaces, following the rules of
+[instance binding](#instance-binding).
 
-However, `C.(C.F)` is an allowed [vacuous member access](#vacuous-member-access),
-so `__TypeOf_C_F` needs to implement `BindToType(C)` in addition to `BindToValue(C)` and `BindToRef(C)`.
+However, `C.(C.F)` is an allowed
+[vacuous member access](#vacuous-member-access), so `__TypeOf_C_F` needs to
+implement `BindToType(C)` in addition to `BindToValue(C)` and `BindToRef(C)`.
 
 ## Precedence and associativity
 
