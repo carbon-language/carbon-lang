@@ -14,7 +14,9 @@
 
 #include "common/check.h"
 #include "common/hashing.h"
+#include "common/hashtable_key_context.h"
 #include "common/map.h"
+#include "common/set.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/ADT/STLExtras.h"
@@ -525,6 +527,57 @@ struct SearchState {
   Kind closer_inserted;
 };
 
+// What makes a search state distinct: the open-bracket stack, plus which
+// closer, if any, was just inserted before the current token. Two nodes in a
+// layer that agree on this are interchangeable and get merged, which is what
+// `RegionSearch::layer_dedup_` looks up. This is a view of a node's state, or
+// of a prospective one that has no node yet, so it must not outlive what it
+// names.
+//
+// Only the `OpenBracketKey` part of each stack entry participates, since that's
+// all `OpenBracketInfo`'s `operator==` compares and all the hash below reads.
+struct StateKey {
+  llvm::ArrayRef<OpenBracketInfo> stack;
+  Kind closer_inserted;
+
+  friend auto operator==(const StateKey& lhs, const StateKey& rhs) -> bool {
+    return lhs.closer_inserted == rhs.closer_inserted && lhs.stack == rhs.stack;
+  }
+};
+
+// Hashes the whole of each stack entry's key, and nothing outside it, so that
+// equal states always hash equal.
+auto CarbonHashValue(const StateKey& key, uint64_t seed) -> HashCode {
+  Hasher hasher(seed);
+  hasher.Hash(key.closer_inserted, key.stack.size());
+  for (const OpenBracketKey& entry : key.stack) {
+    hasher.HashRaw(entry);
+  }
+  return static_cast<HashCode>(hasher);
+}
+
+// Lets the dedup table key on the search state itself while storing only a node
+// index, so no stack is copied into the table. Lookups pass a `StateKey`
+// directly; a stored index is translated back into one through the node list.
+//
+// Holds the node list by pointer, not by `ArrayRef`, because inserting a node
+// reallocates it.
+class LayerDedupKeyContext
+    : public TranslatingKeyContext<LayerDedupKeyContext> {
+ public:
+  explicit LayerDedupKeyContext(const llvm::SmallVector<BeamNode, 0>* nodes
+                                [[clang::lifetimebound]])
+      : nodes_(nodes) {}
+
+  auto TranslateKey(int32_t node_index) const -> StateKey {
+    const BeamNode& node = (*nodes_)[node_index];
+    return {.stack = node.stack, .closer_inserted = node.closer_inserted};
+  }
+
+ private:
+  const llvm::SmallVector<BeamNode, 0>* nodes_;
+};
+
 }  // namespace
 
 static auto Snapshot(const BeamNode& node) -> SearchState {
@@ -601,23 +654,6 @@ static auto SolveNaive(llvm::ArrayRef<Item> items,
     corrections.push_back(ReplaceWithError(
         open, BracketDiagnosticKind::UnmatchedOpening, "Naive_UnclosedAtEnd"));
   }
-}
-
-// A search state is identified by its open-bracket stack plus which closer (if
-// any) was just inserted before the current token; this hash keys the per-layer
-// dedup map.
-//
-// The whole of each stack entry's key is hashed, and nothing outside the key
-// is, so that equal stacks always hash equal: the search relies on that to find
-// a state to merge into.
-static auto StateHash(llvm::ArrayRef<OpenBracketInfo> stack,
-                      Kind closer_inserted) -> uint64_t {
-  Hasher hasher;
-  hasher.Hash(closer_inserted, stack.size());
-  for (const OpenBracketKey& key : stack) {
-    hasher.HashRaw(key);
-  }
-  return static_cast<uint64_t>(static_cast<HashCode>(hasher));
 }
 
 // Whether two parent edges represent the same predecessor and the same repair,
@@ -1800,10 +1836,10 @@ class RegionSearch {
   // cost of any state still worth expanding.
   int32_t min_goal_cost_ = std::numeric_limits<int32_t>::max();
   llvm::SmallVector<int32_t> current_layer_;
-  // Maps a state hash to the index in `nodes_` of that state in the layer
-  // currently being built, for merging. Kept across layers only to reuse its
-  // allocation.
-  Map<uint64_t, int32_t> layer_dedup_;
+  // The states in the layer currently being built, named by their index in
+  // `nodes_` and keyed on the state itself, so that reaching a state already in
+  // the layer merges into it. Kept across layers only to reuse its allocation.
+  Set<int32_t, /*SmallSize=*/0, LayerDedupKeyContext> layer_dedup_;
 };
 
 }  // namespace
@@ -1818,21 +1854,11 @@ auto RegionSearch::AddToLayer(llvm::SmallVectorImpl<int32_t>& layer,
   if (next_cost > min_goal_cost_) {
     return;
   }
-  uint64_t stack_hash = StateHash(next_stack, closer_inserted);
-  if (int32_t* hash_match = layer_dedup_[stack_hash]) {
-    if (nodes_[*hash_match].stack == next_stack &&
-        nodes_[*hash_match].closer_inserted == closer_inserted) {
-      MergeIntoNode(*hash_match, next_cost, edge, worklist);
-      return;
-    }
-    // On hash collision, fall back to a linear scan over the layer.
-    for (int32_t idx : layer) {
-      if (nodes_[idx].stack == next_stack &&
-          nodes_[idx].closer_inserted == closer_inserted) {
-        MergeIntoNode(idx, next_cost, edge, worklist);
-        return;
-      }
-    }
+  LayerDedupKeyContext key_context(&nodes_);
+  StateKey key = {.stack = next_stack, .closer_inserted = closer_inserted};
+  if (auto existing = layer_dedup_.Lookup(key, key_context)) {
+    MergeIntoNode(existing.key(), next_cost, edge, worklist);
+    return;
   }
   auto new_idx = static_cast<int32_t>(nodes_.size());
   nodes_.push_back(BeamNode{
@@ -1843,7 +1869,7 @@ auto RegionSearch::AddToLayer(llvm::SmallVectorImpl<int32_t>& layer,
       .parent_edges = {edge},
   });
   layer.push_back(new_idx);
-  layer_dedup_.Update(stack_hash, new_idx);
+  layer_dedup_.Insert(new_idx, key_context);
   if (worklist) {
     worklist->push_back(new_idx);
   }
@@ -1879,11 +1905,10 @@ auto RegionSearch::PruneBeam(llvm::SmallVectorImpl<int32_t>& layer) -> void {
 }
 
 auto RegionSearch::InsertBracketsBefore(int32_t item_idx) -> void {
-  // Seed the dedup map with the states already in the layer, so that an
+  // Seed the dedup table with the states already in the layer, so that an
   // insertion reaching one of them merges into it instead of duplicating it.
   for (int32_t idx : current_layer_) {
-    layer_dedup_.Update(
-        StateHash(nodes_[idx].stack, nodes_[idx].closer_inserted), idx);
+    layer_dedup_.Insert(idx, LayerDedupKeyContext(&nodes_));
   }
   InsertSyntheticClosers(item_idx);
   InsertSyntheticOpeners(item_idx);
