@@ -339,6 +339,11 @@ BENCHMARK(BM_RegionSizeCliff)->RangeMultiplier(2)->Range(128, 2048);
 // they measure recovery in the place it actually runs, against source shaped
 // like real Carbon code. Each damaged variant has an undamaged counterpart, and
 // the difference between the two is what recovery costs.
+//
+// Note that `SourceGen` seeds itself from entropy, so while the size and shape
+// of the generated file are stable from run to run, its exact contents are not,
+// and neither is which declaration the damage below lands in. Treat a single
+// run of these as approximate; the benchmarks above are the reproducible ones.
 
 // How many lines of generated source each of these benchmarks works on. Big
 // enough to hold many declarations, small enough to keep the suite quick.
