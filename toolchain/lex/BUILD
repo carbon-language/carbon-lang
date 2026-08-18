@@ -221,6 +221,27 @@ cc_library(
     ],
 )
 
+cc_binary(
+    name = "mismatched_brackets_benchmark",
+    testonly = 1,
+    srcs = ["mismatched_brackets_benchmark.cpp"],
+    deps = [
+        ":lex",
+        ":mismatched_brackets",
+        ":token_index",
+        ":tokenized_buffer",
+        "//common:check",
+        "//testing/base:benchmark_main",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/benchmarking:source_gen_lib",
+        "//toolchain/diagnostics:emitter",
+        "//toolchain/diagnostics:null_diagnostics",
+        "//toolchain/source:source_buffer",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "mismatched_brackets_test",
     size = "small",
