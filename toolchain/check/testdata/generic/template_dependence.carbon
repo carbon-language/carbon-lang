@@ -43,7 +43,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %ptr.125: type = ptr_type %ptr.e8f8f9.1 [template]
 // CHECK:STDOUT:   %pattern_type.8bb: type = pattern_type %ptr.125 [template]
 // CHECK:STDOUT:   %x.param_patt: %pattern_type.8bb = value_param_pattern [template]
-// CHECK:STDOUT:   %x.patt: %pattern_type.8bb = at_binding_pattern x, %x.param_patt [template]
+// CHECK:STDOUT:   %x.patt: %pattern_type.8bb = wrapper_binding_pattern x, %x.param_patt [template]
 // CHECK:STDOUT:   %.cb6cb9.1: Core.Form = init_form %ptr.e8f8f9.1 [template]
 // CHECK:STDOUT:   %pattern_type.4f4b84.1: type = pattern_type %ptr.e8f8f9.1 [template]
 // CHECK:STDOUT:   %return.param_patt.27f587.1: %pattern_type.4f4b84.1 = out_param_pattern [template]
@@ -66,7 +66,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc5_16.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_16.2 (constants.%T.patt.d47011.1)]
 // CHECK:STDOUT:     %x.param_patt.loc5_25.1: @F.%pattern_type.loc5_25 (%pattern_type.8bb) = value_param_pattern [template = %x.param_patt.loc5_25.2 (constants.%x.param_patt)]
-// CHECK:STDOUT:     %x.patt.loc5_25.1: @F.%pattern_type.loc5_25 (%pattern_type.8bb) = at_binding_pattern x, %x.param_patt.loc5_25.1 [template = %x.patt.loc5_25.2 (constants.%x.patt)]
+// CHECK:STDOUT:     %x.patt.loc5_25.1: @F.%pattern_type.loc5_25 (%pattern_type.8bb) = wrapper_binding_pattern x, %x.param_patt.loc5_25.1 [template = %x.patt.loc5_25.2 (constants.%x.patt)]
 // CHECK:STDOUT:     %return.param_patt.loc5_36.1: @F.%pattern_type.loc5_36 (%pattern_type.4f4b84.1) = out_param_pattern [template = %return.param_patt.loc5_36.2 (constants.%return.param_patt.27f587.1)]
 // CHECK:STDOUT:     %return.patt.loc5_32.1: @F.%pattern_type.loc5_36 (%pattern_type.4f4b84.1) = return_slot_pattern %return.param_patt.loc5_36.1, %ptr.loc5_36 [template = %return.patt.loc5_32.2 (constants.%return.patt.d67)]
 // CHECK:STDOUT:   } {
@@ -97,7 +97,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %ptr.loc5_29.1: type = ptr_type %ptr.loc5_28.1 [template = %ptr.loc5_29.1 (constants.%ptr.125)]
 // CHECK:STDOUT:   %pattern_type.loc5_25: type = pattern_type %ptr.loc5_29.1 [template = %pattern_type.loc5_25 (constants.%pattern_type.8bb)]
 // CHECK:STDOUT:   %x.param_patt.loc5_25.2: @F.%pattern_type.loc5_25 (%pattern_type.8bb) = value_param_pattern [template = %x.param_patt.loc5_25.2 (constants.%x.param_patt)]
-// CHECK:STDOUT:   %x.patt.loc5_25.2: @F.%pattern_type.loc5_25 (%pattern_type.8bb) = at_binding_pattern x, %x.param_patt.loc5_25.2 [template = %x.patt.loc5_25.2 (constants.%x.patt)]
+// CHECK:STDOUT:   %x.patt.loc5_25.2: @F.%pattern_type.loc5_25 (%pattern_type.8bb) = wrapper_binding_pattern x, %x.param_patt.loc5_25.2 [template = %x.patt.loc5_25.2 (constants.%x.patt)]
 // CHECK:STDOUT:   %.loc5_36.1: Core.Form = init_form %ptr.loc5_28.1 [template = %.loc5_36.1 (constants.%.cb6cb9.1)]
 // CHECK:STDOUT:   %pattern_type.loc5_36: type = pattern_type %ptr.loc5_28.1 [template = %pattern_type.loc5_36 (constants.%pattern_type.4f4b84.1)]
 // CHECK:STDOUT:   %return.param_patt.loc5_36.2: @F.%pattern_type.loc5_36 (%pattern_type.4f4b84.1) = out_param_pattern [template = %return.param_patt.loc5_36.2 (constants.%return.param_patt.27f587.1)]

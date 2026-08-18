@@ -111,10 +111,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt.303: %pattern_type.98b = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.49a: %pattern_type.98b = at_binding_pattern self, %self.param_patt.303 [concrete]
+// CHECK:STDOUT:   %self.patt.36a: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt.303 [concrete]
 // CHECK:STDOUT:   %pattern_type.ea5: type = pattern_type %SubscriptType.f8f [concrete]
 // CHECK:STDOUT:   %subscript.param_patt.5ee: %pattern_type.ea5 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %subscript.patt.a6f: %pattern_type.ea5 = at_binding_pattern subscript, %subscript.param_patt.5ee [concrete]
+// CHECK:STDOUT:   %subscript.patt.32e: %pattern_type.ea5 = wrapper_binding_pattern subscript, %subscript.param_patt.5ee [concrete]
 // CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.d74 = facet_value %C, (%IndexWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %IndexWith.WithSelf.At.type.724: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%SubscriptType.f8f, %IndexWith.facet) [concrete]
 // CHECK:STDOUT:   %.4d0: Core.Form = init_form %ElementType [concrete]
@@ -218,9 +218,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %IndexWith.type {
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.decl: %C.as.IndexWith.impl.At.type = fn_decl @C.as.IndexWith.impl.At [concrete = constants.%C.as.IndexWith.impl.At] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.98b = value_param_pattern [concrete = constants.%self.param_patt.303]
-// CHECK:STDOUT:     %self.patt: %pattern_type.98b = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.49a]
+// CHECK:STDOUT:     %self.patt: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.36a]
 // CHECK:STDOUT:     %subscript.param_patt: %pattern_type.ea5 = value_param_pattern [concrete = constants.%subscript.param_patt.5ee]
-// CHECK:STDOUT:     %subscript.patt: %pattern_type.ea5 = at_binding_pattern subscript, %subscript.param_patt [concrete = constants.%subscript.patt.a6f]
+// CHECK:STDOUT:     %subscript.patt: %pattern_type.ea5 = wrapper_binding_pattern subscript, %subscript.param_patt [concrete = constants.%subscript.patt.32e]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.67c = out_param_pattern [concrete = constants.%return.param_patt.41c]
 // CHECK:STDOUT:     %return.patt: %pattern_type.67c = return_slot_pattern %return.param_patt, %ElementType.ref [concrete = constants.%return.patt.66a]
 // CHECK:STDOUT:   } {
@@ -325,10 +325,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @tuple.type.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.8b4: type = pattern_type %tuple.type.748 [concrete]
 // CHECK:STDOUT:   %self.param_patt.284: %pattern_type.8b4 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.dd1: %pattern_type.8b4 = at_binding_pattern self, %self.param_patt.284 [concrete]
+// CHECK:STDOUT:   %self.patt.7ae: %pattern_type.8b4 = wrapper_binding_pattern self, %self.param_patt.284 [concrete]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %subscript.param_patt.d18: %pattern_type.dc0 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %subscript.patt.f21: %pattern_type.dc0 = at_binding_pattern subscript, %subscript.param_patt.d18 [concrete]
+// CHECK:STDOUT:   %subscript.patt.0b6: %pattern_type.dc0 = wrapper_binding_pattern subscript, %subscript.param_patt.d18 [concrete]
 // CHECK:STDOUT:   %.a44: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %return.param_patt.89a: %pattern_type.98b = out_param_pattern [concrete]
@@ -425,9 +425,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT: impl @tuple.type.as.IndexWith.impl: %.loc8_11.2 as %IndexWith.type {
 // CHECK:STDOUT:   %tuple.type.as.IndexWith.impl.At.decl: %tuple.type.as.IndexWith.impl.At.type = fn_decl @tuple.type.as.IndexWith.impl.At [concrete = constants.%tuple.type.as.IndexWith.impl.At] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.8b4 = value_param_pattern [concrete = constants.%self.param_patt.284]
-// CHECK:STDOUT:     %self.patt: %pattern_type.8b4 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.dd1]
+// CHECK:STDOUT:     %self.patt: %pattern_type.8b4 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.7ae]
 // CHECK:STDOUT:     %subscript.param_patt: %pattern_type.dc0 = value_param_pattern [concrete = constants.%subscript.param_patt.d18]
-// CHECK:STDOUT:     %subscript.patt: %pattern_type.dc0 = at_binding_pattern subscript, %subscript.param_patt [concrete = constants.%subscript.patt.f21]
+// CHECK:STDOUT:     %subscript.patt: %pattern_type.dc0 = wrapper_binding_pattern subscript, %subscript.param_patt [concrete = constants.%subscript.patt.0b6]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98b = out_param_pattern [concrete = constants.%return.param_patt.89a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref [concrete = constants.%return.patt.e4a]
 // CHECK:STDOUT:   } {
@@ -528,10 +528,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt.303: %pattern_type.98b = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.49a: %pattern_type.98b = at_binding_pattern self, %self.param_patt.303 [concrete]
+// CHECK:STDOUT:   %self.patt.36a: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt.303 [concrete]
 // CHECK:STDOUT:   %pattern_type.ea5: type = pattern_type %SubscriptType.f8f [concrete]
 // CHECK:STDOUT:   %subscript.param_patt.5ee: %pattern_type.ea5 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %subscript.patt.a6f: %pattern_type.ea5 = at_binding_pattern subscript, %subscript.param_patt.5ee [concrete]
+// CHECK:STDOUT:   %subscript.patt.32e: %pattern_type.ea5 = wrapper_binding_pattern subscript, %subscript.param_patt.5ee [concrete]
 // CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.d74 = facet_value %C, (%IndexWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %.4d0: Core.Form = init_form %ElementType [concrete]
 // CHECK:STDOUT:   %pattern_type.67c: type = pattern_type %ElementType [concrete]
@@ -618,9 +618,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %IndexWith.type {
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.decl: %C.as.IndexWith.impl.At.type = fn_decl @C.as.IndexWith.impl.At [concrete = constants.%C.as.IndexWith.impl.At] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.98b = value_param_pattern [concrete = constants.%self.param_patt.303]
-// CHECK:STDOUT:     %self.patt: %pattern_type.98b = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.49a]
+// CHECK:STDOUT:     %self.patt: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.36a]
 // CHECK:STDOUT:     %subscript.param_patt: %pattern_type.ea5 = value_param_pattern [concrete = constants.%subscript.param_patt.5ee]
-// CHECK:STDOUT:     %subscript.patt: %pattern_type.ea5 = at_binding_pattern subscript, %subscript.param_patt [concrete = constants.%subscript.patt.a6f]
+// CHECK:STDOUT:     %subscript.patt: %pattern_type.ea5 = wrapper_binding_pattern subscript, %subscript.param_patt [concrete = constants.%subscript.patt.32e]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.67c = out_param_pattern [concrete = constants.%return.param_patt.41c]
 // CHECK:STDOUT:     %return.patt: %pattern_type.67c = return_slot_pattern %return.param_patt, %ElementType.ref [concrete = constants.%return.patt.66a]
 // CHECK:STDOUT:   } {

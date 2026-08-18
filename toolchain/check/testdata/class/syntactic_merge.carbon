@@ -1210,7 +1210,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.912: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %self.param_patt: %pattern_type.912 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt: %pattern_type.912 = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:   %self.patt: %pattern_type.912 = wrapper_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   %Base.F.type.48cdab.1: type = fn_type @Base.F.loc7 [concrete]
 // CHECK:STDOUT:   %Base.F.bd5be1.1: %Base.F.type.48cdab.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete]
@@ -1226,7 +1226,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %Base.F.decl: %Base.F.type.48cdab.2 = fn_decl @Base.F.loc17 [concrete = constants.%Base.F.bd5be1.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.912 = ref_param_pattern [concrete = constants.%self.param_patt]
-// CHECK:STDOUT:     %self.patt: %pattern_type.912 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
+// CHECK:STDOUT:     %self.patt: %pattern_type.912 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %Base = ref_param call_param0
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
@@ -1238,7 +1238,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %.loc5: %Base.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %Base.F.decl: %Base.F.type.48cdab.1 = fn_decl @Base.F.loc7 [concrete = constants.%Base.F.bd5be1.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.912 = ref_param_pattern [concrete = constants.%self.param_patt]
-// CHECK:STDOUT:     %self.patt: %pattern_type.912 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
+// CHECK:STDOUT:     %self.patt: %pattern_type.912 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %Base = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]

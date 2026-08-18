@@ -31,7 +31,7 @@ fn F(generic T: type, p: T**) -> T* {
 // CHECK:STDOUT:   %ptr.125: type = ptr_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %pattern_type.8bb: type = pattern_type %ptr.125 [symbolic]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type.8bb = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %p.patt: %pattern_type.8bb = at_binding_pattern p, %p.param_patt [symbolic]
+// CHECK:STDOUT:   %p.patt: %pattern_type.8bb = wrapper_binding_pattern p, %p.param_patt [symbolic]
 // CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %return.param_patt.27f: %pattern_type.4f4 = out_param_pattern [symbolic]

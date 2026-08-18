@@ -66,7 +66,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness @RuntimeConvertFrom.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.598: type = pattern_type %RuntimeConvertFrom [concrete]
 // CHECK:STDOUT:   %self.param_patt.c41: %pattern_type.598 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.65f: %pattern_type.598 = at_binding_pattern self, %self.param_patt.c41 [concrete]
+// CHECK:STDOUT:   %self.patt.61f: %pattern_type.598 = wrapper_binding_pattern self, %self.param_patt.c41 [concrete]
 // CHECK:STDOUT:   %.aac: Core.Form = init_form %RuntimeConvertTo [concrete]
 // CHECK:STDOUT:   %pattern_type.c10: type = pattern_type %RuntimeConvertTo [concrete]
 // CHECK:STDOUT:   %return.param_patt.183: %pattern_type.c10 = out_param_pattern [concrete]
@@ -84,7 +84,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %A: %tuple.elem0 = symbolic_binding A, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.b2f: type = pattern_type %HoldsType.a83 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.321: %pattern_type.b2f = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.a80: %pattern_type.b2f = at_binding_pattern x, %x.param_patt.321 [symbolic]
+// CHECK:STDOUT:   %x.patt.a1d: %pattern_type.b2f = wrapper_binding_pattern x, %x.param_patt.321 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HoldsType.a83 [symbolic]
@@ -92,7 +92,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %HoldsType.9f2: type = class_type @HoldsType, @HoldsType(%tuple.162) [concrete]
 // CHECK:STDOUT:   %pattern_type.905: type = pattern_type %HoldsType.9f2 [concrete]
 // CHECK:STDOUT:   %holds_to.param_patt: %pattern_type.905 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %holds_to.patt: %pattern_type.905 = at_binding_pattern holds_to, %holds_to.param_patt [concrete]
+// CHECK:STDOUT:   %holds_to.patt: %pattern_type.905 = wrapper_binding_pattern holds_to, %holds_to.param_patt [concrete]
 // CHECK:STDOUT:   %from.patt: %pattern_type.598 = symbolic_binding_pattern from, 0 [symbolic]
 // CHECK:STDOUT:   %from: %RuntimeConvertFrom = symbolic_binding from, 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -101,7 +101,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %from, %RuntimeConvertFrom.as.ImplicitAs.impl.Convert [symbolic]
 // CHECK:STDOUT:   %A.patt.797: %pattern_type.c10 = symbolic_binding_pattern A, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.fbd: %pattern_type.905 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.32c: %pattern_type.905 = at_binding_pattern x, %x.param_patt.fbd [concrete]
+// CHECK:STDOUT:   %x.patt.755: %pattern_type.905 = wrapper_binding_pattern x, %x.param_patt.fbd [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc40_19.2 [concrete]
@@ -154,7 +154,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:     %T.patt.loc27_7.1: %pattern_type.f1e = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %A.patt.loc27_35.1: @F.%pattern_type.loc27_35 (%pattern_type.e66) = symbolic_binding_pattern A, 1 [symbolic = %A.patt.loc27_35.2 (constants.%A.patt.aee)]
 // CHECK:STDOUT:     %x.param_patt.loc27_50.1: @F.%pattern_type.loc27_50 (%pattern_type.b2f) = value_param_pattern [symbolic = %x.param_patt.loc27_50.2 (constants.%x.param_patt.321)]
-// CHECK:STDOUT:     %x.patt.loc27_50.1: @F.%pattern_type.loc27_50 (%pattern_type.b2f) = at_binding_pattern x, %x.param_patt.loc27_50.1 [symbolic = %x.patt.loc27_50.2 (constants.%x.patt.a80)]
+// CHECK:STDOUT:     %x.patt.loc27_50.1: @F.%pattern_type.loc27_50 (%pattern_type.b2f) = wrapper_binding_pattern x, %x.param_patt.loc27_50.1 [symbolic = %x.patt.loc27_50.2 (constants.%x.patt.a1d)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc27_16.1: type = splice_block %.loc27_16.3 [concrete = constants.%tuple.type] {
 // CHECK:STDOUT:       %.Self.frozen.loc27_7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -180,7 +180,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %holds_to.param_patt: %pattern_type.905 = value_param_pattern [concrete = constants.%holds_to.param_patt]
-// CHECK:STDOUT:     %holds_to.patt: %pattern_type.905 = at_binding_pattern holds_to, %holds_to.param_patt [concrete = constants.%holds_to.patt]
+// CHECK:STDOUT:     %holds_to.patt: %pattern_type.905 = wrapper_binding_pattern holds_to, %holds_to.param_patt [concrete = constants.%holds_to.patt]
 // CHECK:STDOUT:     %from.patt.loc29_61.1: %pattern_type.598 = symbolic_binding_pattern from, 0 [symbolic = %from.patt.loc29_61.2 (constants.%from.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %holds_to.param: %HoldsType.9f2 = value_param call_param0
@@ -204,7 +204,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT: impl @RuntimeConvertFrom.as.ImplicitAs.impl: %RuntimeConvertFrom.ref as %ImplicitAs.type {
 // CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.decl: %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.type = fn_decl @RuntimeConvertFrom.as.ImplicitAs.impl.Convert [concrete = constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.598 = value_param_pattern [concrete = constants.%self.param_patt.c41]
-// CHECK:STDOUT:     %self.patt: %pattern_type.598 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.65f]
+// CHECK:STDOUT:     %self.patt: %pattern_type.598 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.61f]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c10 = out_param_pattern [concrete = constants.%return.param_patt.183]
 // CHECK:STDOUT:     %return.patt: %pattern_type.c10 = return_slot_pattern %return.param_patt, %RuntimeConvertTo.ref [concrete = constants.%return.patt.b01]
 // CHECK:STDOUT:   } {
@@ -275,7 +275,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %HoldsType.loc27_63.1: type = class_type @HoldsType, @HoldsType(%T.loc27_7.1) [symbolic = %HoldsType.loc27_63.1 (constants.%HoldsType.a83)]
 // CHECK:STDOUT:   %pattern_type.loc27_50: type = pattern_type %HoldsType.loc27_63.1 [symbolic = %pattern_type.loc27_50 (constants.%pattern_type.b2f)]
 // CHECK:STDOUT:   %x.param_patt.loc27_50.2: @F.%pattern_type.loc27_50 (%pattern_type.b2f) = value_param_pattern [symbolic = %x.param_patt.loc27_50.2 (constants.%x.param_patt.321)]
-// CHECK:STDOUT:   %x.patt.loc27_50.2: @F.%pattern_type.loc27_50 (%pattern_type.b2f) = at_binding_pattern x, %x.param_patt.loc27_50.2 [symbolic = %x.patt.loc27_50.2 (constants.%x.patt.a80)]
+// CHECK:STDOUT:   %x.patt.loc27_50.2: @F.%pattern_type.loc27_50 (%pattern_type.b2f) = wrapper_binding_pattern x, %x.param_patt.loc27_50.2 [symbolic = %x.patt.loc27_50.2 (constants.%x.patt.a1d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HoldsType.loc27_63.1 [symbolic = %require_complete (constants.%require_complete)]
@@ -339,7 +339,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %HoldsType.loc27_63.1 => constants.%HoldsType.a83
 // CHECK:STDOUT:   %pattern_type.loc27_50 => constants.%pattern_type.b2f
 // CHECK:STDOUT:   %x.param_patt.loc27_50.2 => constants.%x.param_patt.321
-// CHECK:STDOUT:   %x.patt.loc27_50.2 => constants.%x.patt.a80
+// CHECK:STDOUT:   %x.patt.loc27_50.2 => constants.%x.patt.a1d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%tuple.162) {
@@ -364,6 +364,6 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %HoldsType.loc27_63.1 => constants.%HoldsType.9f2
 // CHECK:STDOUT:   %pattern_type.loc27_50 => constants.%pattern_type.905
 // CHECK:STDOUT:   %x.param_patt.loc27_50.2 => constants.%x.param_patt.fbd
-// CHECK:STDOUT:   %x.patt.loc27_50.2 => constants.%x.patt.32c
+// CHECK:STDOUT:   %x.patt.loc27_50.2 => constants.%x.patt.755
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

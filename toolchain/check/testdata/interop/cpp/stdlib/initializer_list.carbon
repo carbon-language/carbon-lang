@@ -72,7 +72,7 @@ fn F() {
 // CHECK:STDOUT:   %array_type: type = array_type %int_3.1ba, %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.771: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %_.param_patt: %pattern_type.771 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %_.patt.a48: %pattern_type.771 = at_binding_pattern _, %_.param_patt [concrete]
+// CHECK:STDOUT:   %_.patt.03c: %pattern_type.771 = wrapper_binding_pattern _, %_.param_patt [concrete]
 // CHECK:STDOUT:   %.0ee: Core.Form = init_form %initializer_list [concrete]
 // CHECK:STDOUT:   %return.param_patt.199: %pattern_type.7fc = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.07e: %pattern_type.7fc = return_slot_pattern %return.param_patt.199, %initializer_list [concrete]
@@ -156,7 +156,7 @@ fn F() {
 // CHECK:STDOUT: generated {
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.f8e97d.1: %initializer_list.initializer_list.type.0fbcd7.1 = fn_decl @initializer_list.initializer_list.loc8 [concrete = constants.%initializer_list.initializer_list.0db5f6.1] {
 // CHECK:STDOUT:     %_.param_patt: %pattern_type.771 = value_param_pattern [concrete = constants.%_.param_patt]
-// CHECK:STDOUT:     %_.patt: %pattern_type.771 = at_binding_pattern _, %_.param_patt [concrete = constants.%_.patt.a48]
+// CHECK:STDOUT:     %_.patt: %pattern_type.771 = wrapper_binding_pattern _, %_.param_patt [concrete = constants.%_.patt.03c]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7fc = out_param_pattern [concrete = constants.%return.param_patt.199]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7fc = return_slot_pattern %return.param_patt, constants.%initializer_list [concrete = constants.%return.patt.07e]
 // CHECK:STDOUT:   } {
@@ -168,7 +168,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.f8e97d.2: %initializer_list.initializer_list.type.0fbcd7.2 = fn_decl @initializer_list.initializer_list.loc10 [concrete = constants.%initializer_list.initializer_list.0db5f6.2] {
 // CHECK:STDOUT:     %_.param_patt: %pattern_type.771 = value_param_pattern [concrete = constants.%_.param_patt]
-// CHECK:STDOUT:     %_.patt: %pattern_type.771 = at_binding_pattern _, %_.param_patt [concrete = constants.%_.patt.a48]
+// CHECK:STDOUT:     %_.patt: %pattern_type.771 = wrapper_binding_pattern _, %_.param_patt [concrete = constants.%_.patt.03c]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7fc = out_param_pattern [concrete = constants.%return.param_patt.199]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7fc = return_slot_pattern %return.param_patt, constants.%initializer_list [concrete = constants.%return.patt.07e]
 // CHECK:STDOUT:   } {
@@ -180,7 +180,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.f8e97d.3: %initializer_list.initializer_list.type.0fbcd7.3 = fn_decl @initializer_list.initializer_list.loc12 [concrete = constants.%initializer_list.initializer_list.0db5f6.3] {
 // CHECK:STDOUT:     %_.param_patt: %pattern_type.771 = value_param_pattern [concrete = constants.%_.param_patt]
-// CHECK:STDOUT:     %_.patt: %pattern_type.771 = at_binding_pattern _, %_.param_patt [concrete = constants.%_.patt.a48]
+// CHECK:STDOUT:     %_.patt: %pattern_type.771 = wrapper_binding_pattern _, %_.param_patt [concrete = constants.%_.patt.03c]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7fc = out_param_pattern [concrete = constants.%return.param_patt.199]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7fc = return_slot_pattern %return.param_patt, constants.%initializer_list [concrete = constants.%return.patt.07e]
 // CHECK:STDOUT:   } {

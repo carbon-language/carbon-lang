@@ -281,7 +281,7 @@ fn Var() {
 // CHECK:STDOUT:   %ptr: type = ptr_type %u8 [concrete]
 // CHECK:STDOUT:   %pattern_type.015: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %return.param_patt.d05: %pattern_type.015 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.cb2: %pattern_type.015 = at_binding_pattern r#return, %return.param_patt.d05 [concrete]
+// CHECK:STDOUT:   %return.patt.f47: %pattern_type.015 = wrapper_binding_pattern r#return, %return.param_patt.d05 [concrete]
 // CHECK:STDOUT:   %ReturnU8__carbon_thunk.type: type = fn_type @ReturnU8__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ReturnU8__carbon_thunk: %ReturnU8__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -300,7 +300,7 @@ fn Var() {
 // CHECK:STDOUT:   %ReturnU8.cpp_overload_set.value: %ReturnU8.cpp_overload_set.type = cpp_overload_set_value @ReturnU8.cpp_overload_set [concrete = constants.%ReturnU8.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnU8__carbon_thunk.decl: %ReturnU8__carbon_thunk.type = fn_decl @ReturnU8__carbon_thunk [concrete = constants.%ReturnU8__carbon_thunk] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.015 = value_param_pattern [concrete = constants.%return.param_patt.d05]
-// CHECK:STDOUT:     %return.patt: %pattern_type.015 = at_binding_pattern r#return, %return.param_patt [concrete = constants.%return.patt.cb2]
+// CHECK:STDOUT:     %return.patt: %pattern_type.015 = wrapper_binding_pattern r#return, %return.param_patt [concrete = constants.%return.patt.f47]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %return.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr [concrete = constants.%ptr] {

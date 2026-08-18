@@ -297,7 +297,7 @@ fn G() {
 // CHECK:STDOUT:   %.512: Core.Form = ref_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %x.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -305,7 +305,7 @@ fn G() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete = constants.%x.param_patt]
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.512] {
@@ -339,7 +339,7 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %x.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %x.var_patt: %pattern_type.6b6 = var_pattern %x.param_patt [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.var_patt [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.var_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -371,7 +371,7 @@ fn G() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.6b6 = var_pattern %x.param_patt [concrete = constants.%x.var_patt]
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.var_patt [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.var_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.795f] {
@@ -419,7 +419,7 @@ fn G() {
 // CHECK:STDOUT:   %.c2a: Core.Form = value_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -447,7 +447,7 @@ fn G() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt]
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.c2a] {
@@ -484,7 +484,7 @@ fn G() {
 // CHECK:STDOUT:   %.9f9: Core.Form = ref_form %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %x.param_patt: %pattern_type = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type = wrapper_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -492,7 +492,7 @@ fn G() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type = ref_param_pattern [concrete = constants.%x.param_patt]
-// CHECK:STDOUT:     %x.patt: %pattern_type = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: ref %empty_tuple.type = ref_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: Core.Form = splice_block %.loc4_15.2 [concrete = constants.%.9f9] {
@@ -658,12 +658,12 @@ fn G() {
 // CHECK:STDOUT:   %.42f: type = type_component_of %Fm [symbolic]
 // CHECK:STDOUT:   %pattern_type.177: type = pattern_type %.42f [symbolic]
 // CHECK:STDOUT:   %.f15: %pattern_type.177 = splice_inst @F.%.loc4_30.3 [template]
-// CHECK:STDOUT:   %v.patt.0b3: %pattern_type.177 = at_binding_pattern v, %.f15 [template]
+// CHECK:STDOUT:   %v.patt.664: %pattern_type.177 = wrapper_binding_pattern v, %.f15 [template]
 // CHECK:STDOUT:   %.677: %pattern_type.177 = splice_inst @F.%.loc4_37.3 [template]
 // CHECK:STDOUT:   %return.patt.113: %pattern_type.177 = return_slot_pattern %.677, %.42f [template]
 // CHECK:STDOUT:   %.cfa: <instruction> = form_param_pattern_action %Fm, v [template]
 // CHECK:STDOUT:   %.26b: %pattern_type.177 = splice_inst %.cfa [template]
-// CHECK:STDOUT:   %v.patt.cda: %pattern_type.177 = at_binding_pattern v, %.26b [template]
+// CHECK:STDOUT:   %v.patt.cee: %pattern_type.177 = wrapper_binding_pattern v, %.26b [template]
 // CHECK:STDOUT:   %.94f: <instruction> = out_form_param_pattern_action %Fm [template]
 // CHECK:STDOUT:   %.1ac: %pattern_type.177 = splice_inst %.94f [template]
 // CHECK:STDOUT:   %return.patt.333: %pattern_type.177 = return_slot_pattern %.1ac, %.42f [template]
@@ -714,7 +714,7 @@ fn G() {
 // CHECK:STDOUT:       %v.var_patt.13561f.2: %pattern_type.6b6 = var_pattern %v.param_patt.e9ad17.3 [concrete = %v.var_patt.13561f.1]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.patt.b2b: %pattern_type.6b6 = at_binding_pattern v, %v.var_patt.13561f.1 [concrete]
+// CHECK:STDOUT:   %v.patt.775: %pattern_type.6b6 = wrapper_binding_pattern v, %v.var_patt.13561f.1 [concrete]
 // CHECK:STDOUT:   %inst.out_param_pattern: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %return.param_patt.a9a4c7.2: %pattern_type.6b6 = out_param_pattern [concrete = %return.param_patt.a9a4c7.1]
 // CHECK:STDOUT:   }
@@ -735,7 +735,7 @@ fn G() {
 // CHECK:STDOUT:   %inst.ref_param_pattern: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %v.param_patt.e9ad17.2: %pattern_type.6b6 = ref_param_pattern [concrete = %v.param_patt.e9ad17.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.patt.5c0: %pattern_type.6b6 = at_binding_pattern v, %v.param_patt.e9ad17.1 [concrete]
+// CHECK:STDOUT:   %v.patt.a24: %pattern_type.6b6 = wrapper_binding_pattern v, %v.param_patt.e9ad17.1 [concrete]
 // CHECK:STDOUT:   %.ae0167.1: %pattern_type.6b6 = ref_return_pattern [concrete]
 // CHECK:STDOUT:   %inst.ref_return_pattern: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.ae0167.2: %pattern_type.6b6 = ref_return_pattern [concrete = %.ae0167.1]
@@ -748,7 +748,7 @@ fn G() {
 // CHECK:STDOUT:   %inst.value_param_pattern: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %v.param_patt.733534.2: %pattern_type.6b6 = value_param_pattern [concrete = %v.param_patt.733534.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.patt.971: %pattern_type.6b6 = at_binding_pattern v, %v.param_patt.733534.1 [concrete]
+// CHECK:STDOUT:   %v.patt.808: %pattern_type.6b6 = wrapper_binding_pattern v, %v.param_patt.733534.1 [concrete]
 // CHECK:STDOUT:   %.1a588f.1: %pattern_type.6b6 = value_return_pattern [concrete]
 // CHECK:STDOUT:   %inst.value_return_pattern: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.1a588f.2: %pattern_type.6b6 = value_return_pattern [concrete = %.1a588f.1]
@@ -802,7 +802,7 @@ fn G() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %Fm.patt.loc4_16.1: %pattern_type.13f = symbolic_binding_pattern Fm, 0 [symbolic = %Fm.patt.loc4_16.2 (constants.%Fm.patt)]
 // CHECK:STDOUT:     %.loc4_30.2: @F.%pattern_type (%pattern_type.177) = splice_inst %.loc4_30.3 [template = %.loc4_30.4 (constants.%.f15)]
-// CHECK:STDOUT:     %v.patt.loc4_30.1: @F.%pattern_type (%pattern_type.177) = at_binding_pattern v, %.loc4_30.2 [template = %v.patt.loc4_30.2 (constants.%v.patt.0b3)]
+// CHECK:STDOUT:     %v.patt.loc4_30.1: @F.%pattern_type (%pattern_type.177) = wrapper_binding_pattern v, %.loc4_30.2 [template = %v.patt.loc4_30.2 (constants.%v.patt.664)]
 // CHECK:STDOUT:     %.loc4_37.2: @F.%pattern_type (%pattern_type.177) = splice_inst %.loc4_37.3 [template = %.loc4_37.4 (constants.%.677)]
 // CHECK:STDOUT:     %return.patt.loc4_37.1: @F.%pattern_type (%pattern_type.177) = return_slot_pattern %.loc4_37.2, %.loc4_41 [template = %return.patt.loc4_37.2 (constants.%return.patt.113)]
 // CHECK:STDOUT:   } {
@@ -833,7 +833,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc4_30.3: <instruction> = form_param_pattern_action %Fm.ref.loc4_33, v [template]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.loc4_33.1 [symbolic = %pattern_type (constants.%pattern_type.177)]
 // CHECK:STDOUT:   %.loc4_30.4: @F.%pattern_type (%pattern_type.177) = splice_inst %.loc4_30.3 [template = %.loc4_30.4 (constants.%.f15)]
-// CHECK:STDOUT:   %v.patt.loc4_30.2: @F.%pattern_type (%pattern_type.177) = at_binding_pattern v, %.loc4_30.4 [template = %v.patt.loc4_30.2 (constants.%v.patt.0b3)]
+// CHECK:STDOUT:   %v.patt.loc4_30.2: @F.%pattern_type (%pattern_type.177) = wrapper_binding_pattern v, %.loc4_30.4 [template = %v.patt.loc4_30.2 (constants.%v.patt.664)]
 // CHECK:STDOUT:   %.loc4_37.3: <instruction> = out_form_param_pattern_action %Fm.ref.loc4_41 [template]
 // CHECK:STDOUT:   %.loc4_37.4: @F.%pattern_type (%pattern_type.177) = splice_inst %.loc4_37.3 [template = %.loc4_37.4 (constants.%.677)]
 // CHECK:STDOUT:   %return.patt.loc4_37.2: @F.%pattern_type (%pattern_type.177) = return_slot_pattern %.loc4_37.4, %.loc4_33.1 [template = %return.patt.loc4_37.2 (constants.%return.patt.113)]
@@ -938,7 +938,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc4_30.3 => constants.%.cfa
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.177
 // CHECK:STDOUT:   %.loc4_30.4 => constants.%.26b
-// CHECK:STDOUT:   %v.patt.loc4_30.2 => constants.%v.patt.cda
+// CHECK:STDOUT:   %v.patt.loc4_30.2 => constants.%v.patt.cee
 // CHECK:STDOUT:   %.loc4_37.3 => constants.%.94f
 // CHECK:STDOUT:   %.loc4_37.4 => constants.%.1ac
 // CHECK:STDOUT:   %return.patt.loc4_37.2 => constants.%return.patt.333
@@ -953,7 +953,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc4_30.3 => constants.%inst.splice_block
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %.loc4_30.4 => constants.%v.var_patt.13561f.1
-// CHECK:STDOUT:   %v.patt.loc4_30.2 => constants.%v.patt.b2b
+// CHECK:STDOUT:   %v.patt.loc4_30.2 => constants.%v.patt.775
 // CHECK:STDOUT:   %.loc4_37.3 => constants.%inst.out_param_pattern
 // CHECK:STDOUT:   %.loc4_37.4 => constants.%return.param_patt.a9a4c7.1
 // CHECK:STDOUT:   %return.patt.loc4_37.2 => constants.%return.patt.e1b
@@ -971,7 +971,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc4_30.3 => constants.%inst.ref_param_pattern
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %.loc4_30.4 => constants.%v.param_patt.e9ad17.1
-// CHECK:STDOUT:   %v.patt.loc4_30.2 => constants.%v.patt.5c0
+// CHECK:STDOUT:   %v.patt.loc4_30.2 => constants.%v.patt.a24
 // CHECK:STDOUT:   %.loc4_37.3 => constants.%inst.ref_return_pattern
 // CHECK:STDOUT:   %.loc4_37.4 => constants.%.ae0167.1
 // CHECK:STDOUT:   %return.patt.loc4_37.2 => constants.%return.patt.c62
@@ -989,7 +989,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc4_30.3 => constants.%inst.value_param_pattern
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %.loc4_30.4 => constants.%v.param_patt.733534.1
-// CHECK:STDOUT:   %v.patt.loc4_30.2 => constants.%v.patt.971
+// CHECK:STDOUT:   %v.patt.loc4_30.2 => constants.%v.patt.808
 // CHECK:STDOUT:   %.loc4_37.3 => constants.%inst.value_return_pattern
 // CHECK:STDOUT:   %.loc4_37.4 => constants.%.1a588f.1
 // CHECK:STDOUT:   %return.patt.loc4_37.2 => constants.%return.patt.45a

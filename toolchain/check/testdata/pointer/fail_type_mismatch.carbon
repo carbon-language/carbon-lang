@@ -32,7 +32,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   %ptr.bf9: type = ptr_type %const.c48 [concrete]
 // CHECK:STDOUT:   %pattern_type.db0: type = pattern_type %ptr.bf9 [concrete]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type.db0 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt: %pattern_type.db0 = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type.db0 = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %const.987: type = const_type %ptr.c28 [concrete]
 // CHECK:STDOUT:   %.45c: Core.Form = init_form %const.987 [concrete]
@@ -62,7 +62,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ConstMismatch.decl: %ConstMismatch.type = fn_decl @ConstMismatch [concrete = constants.%ConstMismatch] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.db0 = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type.db0 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.db0 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.3c6 = out_param_pattern [concrete = constants.%return.param_patt.b04]
 // CHECK:STDOUT:     %return.patt: %pattern_type.3c6 = return_slot_pattern %return.param_patt, %const.loc15_35 [concrete = constants.%return.patt.f8c]
 // CHECK:STDOUT:   } {

@@ -145,7 +145,7 @@ void G() {
 // CHECK:STDOUT:   %Self.as_type.c84: type = facet_access_type %Self.37e [symbolic]
 // CHECK:STDOUT:   %pattern_type.c60: type = pattern_type %Self.as_type.c84 [symbolic]
 // CHECK:STDOUT:   %self.param_patt.a33: %pattern_type.c60 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.696: %pattern_type.c60 = at_binding_pattern self, %self.param_patt.a33 [symbolic]
+// CHECK:STDOUT:   %self.patt.85e: %pattern_type.c60 = wrapper_binding_pattern self, %self.param_patt.a33 [symbolic]
 // CHECK:STDOUT:   %.8fc: Core.Form = init_form %Self.as_type.c84 [symbolic]
 // CHECK:STDOUT:   %return.param_patt.434: %pattern_type.c60 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.44a: %pattern_type.c60 = return_slot_pattern %return.param_patt.434, %Self.as_type.c84 [symbolic]
@@ -159,7 +159,7 @@ void G() {
 // CHECK:STDOUT:   %I.impl_witness.ca2: <witness> = impl_witness @A.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %self.param_patt.04e: %pattern_type.9ef = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.312: %pattern_type.9ef = at_binding_pattern self, %self.param_patt.04e [concrete]
+// CHECK:STDOUT:   %self.patt.7cd: %pattern_type.9ef = wrapper_binding_pattern self, %self.param_patt.04e [concrete]
 // CHECK:STDOUT:   %.cbf: Core.Form = init_form %A [concrete]
 // CHECK:STDOUT:   %return.param_patt.f0c: %pattern_type.9ef = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.a6d: %pattern_type.9ef = return_slot_pattern %return.param_patt.f0c, %A [concrete]
@@ -177,7 +177,7 @@ void G() {
 // CHECK:STDOUT:   %I.impl_witness.b14: <witness> = impl_witness @B.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.e39: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %self.param_patt.f1f: %pattern_type.e39 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.4eb: %pattern_type.e39 = at_binding_pattern self, %self.param_patt.f1f [concrete]
+// CHECK:STDOUT:   %self.patt.4c3: %pattern_type.e39 = wrapper_binding_pattern self, %self.param_patt.f1f [concrete]
 // CHECK:STDOUT:   %.d83: Core.Form = init_form %B [concrete]
 // CHECK:STDOUT:   %return.param_patt.934: %pattern_type.e39 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.911: %pattern_type.e39 = return_slot_pattern %return.param_patt.934, %B [concrete]
@@ -195,7 +195,7 @@ void G() {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.b3a: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %t.param_patt.5db: %pattern_type.b3a = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %t.patt.030: %pattern_type.b3a = at_binding_pattern t, %t.param_patt.5db [symbolic]
+// CHECK:STDOUT:   %t.patt.d48: %pattern_type.b3a = wrapper_binding_pattern t, %t.param_patt.5db [symbolic]
 // CHECK:STDOUT:   %.0ce: Core.Form = init_form %T.as_type [symbolic]
 // CHECK:STDOUT:   %return.param_patt.b82: %pattern_type.b3a = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.2e6: %pattern_type.b3a = return_slot_pattern %return.param_patt.b82, %T.as_type [symbolic]
@@ -208,7 +208,7 @@ void G() {
 // CHECK:STDOUT:   %.8a9: type = fn_type_with_self_type %I.WithSelf.Doit.type.860, %T [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.8a9 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %self.param_patt.58e: %pattern_type.b3a = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.300: %pattern_type.b3a = at_binding_pattern self, %self.param_patt.58e [symbolic]
+// CHECK:STDOUT:   %self.patt.b4c: %pattern_type.b3a = wrapper_binding_pattern self, %self.param_patt.58e [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @I.WithSelf.Doit(%T) [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc16_9.2 [concrete]
@@ -224,10 +224,10 @@ void G() {
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.09e: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.6e5) [concrete]
 // CHECK:STDOUT:   %.dca: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.09e, %Destroy.facet.6e5 [concrete]
 // CHECK:STDOUT:   %t.param_patt.169: %pattern_type.9ef = value_param_pattern [concrete]
-// CHECK:STDOUT:   %t.patt.ee8: %pattern_type.9ef = at_binding_pattern t, %t.param_patt.169 [concrete]
+// CHECK:STDOUT:   %t.patt.490: %pattern_type.9ef = wrapper_binding_pattern t, %t.param_patt.169 [concrete]
 // CHECK:STDOUT:   %F.specific_fn.9d8: <specific function> = specific_function %F, @F(%I.facet.f31) [concrete]
 // CHECK:STDOUT:   %t.param_patt.267: %pattern_type.e39 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %t.patt.062: %pattern_type.e39 = at_binding_pattern t, %t.param_patt.267 [concrete]
+// CHECK:STDOUT:   %t.patt.614: %pattern_type.e39 = wrapper_binding_pattern t, %t.param_patt.267 [concrete]
 // CHECK:STDOUT:   %F.specific_fn.480: <specific function> = specific_function %F, @F(%I.facet.a68) [concrete]
 // CHECK:STDOUT:   %.760: type = fn_type_with_self_type %I.WithSelf.Doit.type.808, %I.facet.f31 [concrete]
 // CHECK:STDOUT:   %.10f: type = fn_type_with_self_type %I.WithSelf.Doit.type.a07, %I.facet.a68 [concrete]
@@ -246,7 +246,7 @@ void G() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc24_7.1: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc24_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %t.param_patt.loc24_13.1: @F.%pattern_type (%pattern_type.b3a) = value_param_pattern [symbolic = %t.param_patt.loc24_13.2 (constants.%t.param_patt.5db)]
-// CHECK:STDOUT:     %t.patt.loc24_13.1: @F.%pattern_type (%pattern_type.b3a) = at_binding_pattern t, %t.param_patt.loc24_13.1 [symbolic = %t.patt.loc24_13.2 (constants.%t.patt.030)]
+// CHECK:STDOUT:     %t.patt.loc24_13.1: @F.%pattern_type (%pattern_type.b3a) = wrapper_binding_pattern t, %t.param_patt.loc24_13.1 [symbolic = %t.patt.loc24_13.2 (constants.%t.patt.d48)]
 // CHECK:STDOUT:     %return.param_patt.loc24_21.1: @F.%pattern_type (%pattern_type.b3a) = out_param_pattern [symbolic = %return.param_patt.loc24_21.2 (constants.%return.param_patt.b82)]
 // CHECK:STDOUT:     %return.patt.loc24_18.1: @F.%pattern_type (%pattern_type.b3a) = return_slot_pattern %return.param_patt.loc24_21.1, %.loc24_21.3 [symbolic = %return.patt.loc24_18.2 (constants.%return.patt.2e6)]
 // CHECK:STDOUT:   } {
@@ -284,7 +284,7 @@ void G() {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.WithSelf.Doit.decl: @I.WithSelf.%I.WithSelf.Doit.type (%I.WithSelf.Doit.type.26f) = fn_decl @I.WithSelf.Doit [symbolic = @I.WithSelf.%I.WithSelf.Doit (constants.%I.WithSelf.Doit.11f)] {
 // CHECK:STDOUT:     %self.param_patt.loc6_11.1: @I.WithSelf.Doit.%pattern_type (%pattern_type.c60) = value_param_pattern [symbolic = %self.param_patt.loc6_11.2 (constants.%self.param_patt.a33)]
-// CHECK:STDOUT:     %self.patt.loc6_11.1: @I.WithSelf.Doit.%pattern_type (%pattern_type.c60) = at_binding_pattern self, %self.param_patt.loc6_11.1 [symbolic = %self.patt.loc6_11.2 (constants.%self.patt.696)]
+// CHECK:STDOUT:     %self.patt.loc6_11.1: @I.WithSelf.Doit.%pattern_type (%pattern_type.c60) = wrapper_binding_pattern self, %self.param_patt.loc6_11.1 [symbolic = %self.patt.loc6_11.2 (constants.%self.patt.85e)]
 // CHECK:STDOUT:     %return.param_patt.loc6_20.1: @I.WithSelf.Doit.%pattern_type (%pattern_type.c60) = out_param_pattern [symbolic = %return.param_patt.loc6_20.2 (constants.%return.param_patt.434)]
 // CHECK:STDOUT:     %return.patt.loc6_17.1: @I.WithSelf.Doit.%pattern_type (%pattern_type.c60) = return_slot_pattern %return.param_patt.loc6_20.1, %.loc6_20.2 [symbolic = %return.patt.loc6_17.2 (constants.%return.patt.44a)]
 // CHECK:STDOUT:   } {
@@ -315,7 +315,7 @@ void G() {
 // CHECK:STDOUT: impl @A.as.I.impl: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %A.as.I.impl.Doit.decl: %A.as.I.impl.Doit.type = fn_decl @A.as.I.impl.Doit [concrete = constants.%A.as.I.impl.Doit] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.9ef = value_param_pattern [concrete = constants.%self.param_patt.04e]
-// CHECK:STDOUT:     %self.patt: %pattern_type.9ef = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.312]
+// CHECK:STDOUT:     %self.patt: %pattern_type.9ef = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.7cd]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.9ef = out_param_pattern [concrete = constants.%return.param_patt.f0c]
 // CHECK:STDOUT:     %return.patt: %pattern_type.9ef = return_slot_pattern %return.param_patt, %Self.ref.loc11_29 [concrete = constants.%return.patt.a6d]
 // CHECK:STDOUT:   } {
@@ -339,7 +339,7 @@ void G() {
 // CHECK:STDOUT: impl @B.as.I.impl: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %B.as.I.impl.Doit.decl: %B.as.I.impl.Doit.type = fn_decl @B.as.I.impl.Doit [concrete = constants.%B.as.I.impl.Doit] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.e39 = value_param_pattern [concrete = constants.%self.param_patt.f1f]
-// CHECK:STDOUT:     %self.patt: %pattern_type.e39 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.4eb]
+// CHECK:STDOUT:     %self.patt: %pattern_type.e39 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.4c3]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.e39 = out_param_pattern [concrete = constants.%return.param_patt.934]
 // CHECK:STDOUT:     %return.patt: %pattern_type.e39 = return_slot_pattern %return.param_patt, %Self.ref.loc18_29 [concrete = constants.%return.patt.911]
 // CHECK:STDOUT:   } {
@@ -395,7 +395,7 @@ void G() {
 // CHECK:STDOUT:   %Self.as_type.loc6_11.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc6_11.1 (constants.%Self.as_type.c84)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc6_11.1 [symbolic = %pattern_type (constants.%pattern_type.c60)]
 // CHECK:STDOUT:   %self.param_patt.loc6_11.2: @I.WithSelf.Doit.%pattern_type (%pattern_type.c60) = value_param_pattern [symbolic = %self.param_patt.loc6_11.2 (constants.%self.param_patt.a33)]
-// CHECK:STDOUT:   %self.patt.loc6_11.2: @I.WithSelf.Doit.%pattern_type (%pattern_type.c60) = at_binding_pattern self, %self.param_patt.loc6_11.2 [symbolic = %self.patt.loc6_11.2 (constants.%self.patt.696)]
+// CHECK:STDOUT:   %self.patt.loc6_11.2: @I.WithSelf.Doit.%pattern_type (%pattern_type.c60) = wrapper_binding_pattern self, %self.param_patt.loc6_11.2 [symbolic = %self.patt.loc6_11.2 (constants.%self.patt.85e)]
 // CHECK:STDOUT:   %.loc6_20.1: Core.Form = init_form %Self.as_type.loc6_11.1 [symbolic = %.loc6_20.1 (constants.%.8fc)]
 // CHECK:STDOUT:   %return.param_patt.loc6_20.2: @I.WithSelf.Doit.%pattern_type (%pattern_type.c60) = out_param_pattern [symbolic = %return.param_patt.loc6_20.2 (constants.%return.param_patt.434)]
 // CHECK:STDOUT:   %return.patt.loc6_17.2: @I.WithSelf.Doit.%pattern_type (%pattern_type.c60) = return_slot_pattern %return.param_patt.loc6_20.2, %Self.as_type.loc6_11.1 [symbolic = %return.patt.loc6_17.2 (constants.%return.patt.44a)]
@@ -425,7 +425,7 @@ void G() {
 // CHECK:STDOUT:   %T.as_type.loc24_15.1: type = facet_access_type %T.loc24_7.1 [symbolic = %T.as_type.loc24_15.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc24_15.1 [symbolic = %pattern_type (constants.%pattern_type.b3a)]
 // CHECK:STDOUT:   %t.param_patt.loc24_13.2: @F.%pattern_type (%pattern_type.b3a) = value_param_pattern [symbolic = %t.param_patt.loc24_13.2 (constants.%t.param_patt.5db)]
-// CHECK:STDOUT:   %t.patt.loc24_13.2: @F.%pattern_type (%pattern_type.b3a) = at_binding_pattern t, %t.param_patt.loc24_13.2 [symbolic = %t.patt.loc24_13.2 (constants.%t.patt.030)]
+// CHECK:STDOUT:   %t.patt.loc24_13.2: @F.%pattern_type (%pattern_type.b3a) = wrapper_binding_pattern t, %t.param_patt.loc24_13.2 [symbolic = %t.patt.loc24_13.2 (constants.%t.patt.d48)]
 // CHECK:STDOUT:   %.loc24_21.2: Core.Form = init_form %T.as_type.loc24_15.1 [symbolic = %.loc24_21.2 (constants.%.0ce)]
 // CHECK:STDOUT:   %return.param_patt.loc24_21.2: @F.%pattern_type (%pattern_type.b3a) = out_param_pattern [symbolic = %return.param_patt.loc24_21.2 (constants.%return.param_patt.b82)]
 // CHECK:STDOUT:   %return.patt.loc24_18.2: @F.%pattern_type (%pattern_type.b3a) = return_slot_pattern %return.param_patt.loc24_21.2, %T.as_type.loc24_15.1 [symbolic = %return.patt.loc24_18.2 (constants.%return.patt.2e6)]
@@ -524,7 +524,7 @@ void G() {
 // CHECK:STDOUT:   %Self.as_type.loc6_11.1 => constants.%Self.as_type.c84
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c60
 // CHECK:STDOUT:   %self.param_patt.loc6_11.2 => constants.%self.param_patt.a33
-// CHECK:STDOUT:   %self.patt.loc6_11.2 => constants.%self.patt.696
+// CHECK:STDOUT:   %self.patt.loc6_11.2 => constants.%self.patt.85e
 // CHECK:STDOUT:   %.loc6_20.1 => constants.%.8fc
 // CHECK:STDOUT:   %return.param_patt.loc6_20.2 => constants.%return.param_patt.434
 // CHECK:STDOUT:   %return.patt.loc6_17.2 => constants.%return.patt.44a
@@ -542,7 +542,7 @@ void G() {
 // CHECK:STDOUT:   %Self.as_type.loc6_11.1 => constants.%A
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9ef
 // CHECK:STDOUT:   %self.param_patt.loc6_11.2 => constants.%self.param_patt.04e
-// CHECK:STDOUT:   %self.patt.loc6_11.2 => constants.%self.patt.312
+// CHECK:STDOUT:   %self.patt.loc6_11.2 => constants.%self.patt.7cd
 // CHECK:STDOUT:   %.loc6_20.1 => constants.%.cbf
 // CHECK:STDOUT:   %return.param_patt.loc6_20.2 => constants.%return.param_patt.f0c
 // CHECK:STDOUT:   %return.patt.loc6_17.2 => constants.%return.patt.a6d
@@ -560,7 +560,7 @@ void G() {
 // CHECK:STDOUT:   %Self.as_type.loc6_11.1 => constants.%B
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e39
 // CHECK:STDOUT:   %self.param_patt.loc6_11.2 => constants.%self.param_patt.f1f
-// CHECK:STDOUT:   %self.patt.loc6_11.2 => constants.%self.patt.4eb
+// CHECK:STDOUT:   %self.patt.loc6_11.2 => constants.%self.patt.4c3
 // CHECK:STDOUT:   %.loc6_20.1 => constants.%.d83
 // CHECK:STDOUT:   %return.param_patt.loc6_20.2 => constants.%return.param_patt.934
 // CHECK:STDOUT:   %return.patt.loc6_17.2 => constants.%return.patt.911
@@ -572,7 +572,7 @@ void G() {
 // CHECK:STDOUT:   %T.as_type.loc24_15.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b3a
 // CHECK:STDOUT:   %t.param_patt.loc24_13.2 => constants.%t.param_patt.5db
-// CHECK:STDOUT:   %t.patt.loc24_13.2 => constants.%t.patt.030
+// CHECK:STDOUT:   %t.patt.loc24_13.2 => constants.%t.patt.d48
 // CHECK:STDOUT:   %.loc24_21.2 => constants.%.0ce
 // CHECK:STDOUT:   %return.param_patt.loc24_21.2 => constants.%return.param_patt.b82
 // CHECK:STDOUT:   %return.patt.loc24_18.2 => constants.%return.patt.2e6
@@ -590,7 +590,7 @@ void G() {
 // CHECK:STDOUT:   %Self.as_type.loc6_11.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b3a
 // CHECK:STDOUT:   %self.param_patt.loc6_11.2 => constants.%self.param_patt.58e
-// CHECK:STDOUT:   %self.patt.loc6_11.2 => constants.%self.patt.300
+// CHECK:STDOUT:   %self.patt.loc6_11.2 => constants.%self.patt.b4c
 // CHECK:STDOUT:   %.loc6_20.1 => constants.%.0ce
 // CHECK:STDOUT:   %return.param_patt.loc6_20.2 => constants.%return.param_patt.b82
 // CHECK:STDOUT:   %return.patt.loc6_17.2 => constants.%return.patt.2e6
@@ -602,7 +602,7 @@ void G() {
 // CHECK:STDOUT:   %T.as_type.loc24_15.1 => constants.%A
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9ef
 // CHECK:STDOUT:   %t.param_patt.loc24_13.2 => constants.%t.param_patt.169
-// CHECK:STDOUT:   %t.patt.loc24_13.2 => constants.%t.patt.ee8
+// CHECK:STDOUT:   %t.patt.loc24_13.2 => constants.%t.patt.490
 // CHECK:STDOUT:   %.loc24_21.2 => constants.%.cbf
 // CHECK:STDOUT:   %return.param_patt.loc24_21.2 => constants.%return.param_patt.f0c
 // CHECK:STDOUT:   %return.patt.loc24_18.2 => constants.%return.patt.a6d
@@ -614,7 +614,7 @@ void G() {
 // CHECK:STDOUT:   %T.as_type.loc24_15.1 => constants.%A
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9ef
 // CHECK:STDOUT:   %t.param_patt.loc24_13.2 => constants.%t.param_patt.169
-// CHECK:STDOUT:   %t.patt.loc24_13.2 => constants.%t.patt.ee8
+// CHECK:STDOUT:   %t.patt.loc24_13.2 => constants.%t.patt.490
 // CHECK:STDOUT:   %.loc24_21.2 => constants.%.cbf
 // CHECK:STDOUT:   %return.param_patt.loc24_21.2 => constants.%return.param_patt.f0c
 // CHECK:STDOUT:   %return.patt.loc24_18.2 => constants.%return.patt.a6d
@@ -634,7 +634,7 @@ void G() {
 // CHECK:STDOUT:   %T.as_type.loc24_15.1 => constants.%B
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e39
 // CHECK:STDOUT:   %t.param_patt.loc24_13.2 => constants.%t.param_patt.267
-// CHECK:STDOUT:   %t.patt.loc24_13.2 => constants.%t.patt.062
+// CHECK:STDOUT:   %t.patt.loc24_13.2 => constants.%t.patt.614
 // CHECK:STDOUT:   %.loc24_21.2 => constants.%.d83
 // CHECK:STDOUT:   %return.param_patt.loc24_21.2 => constants.%return.param_patt.934
 // CHECK:STDOUT:   %return.patt.loc24_18.2 => constants.%return.patt.911
@@ -646,7 +646,7 @@ void G() {
 // CHECK:STDOUT:   %T.as_type.loc24_15.1 => constants.%B
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e39
 // CHECK:STDOUT:   %t.param_patt.loc24_13.2 => constants.%t.param_patt.267
-// CHECK:STDOUT:   %t.patt.loc24_13.2 => constants.%t.patt.062
+// CHECK:STDOUT:   %t.patt.loc24_13.2 => constants.%t.patt.614
 // CHECK:STDOUT:   %.loc24_21.2 => constants.%.d83
 // CHECK:STDOUT:   %return.param_patt.loc24_21.2 => constants.%return.param_patt.934
 // CHECK:STDOUT:   %return.patt.loc24_18.2 => constants.%return.patt.911

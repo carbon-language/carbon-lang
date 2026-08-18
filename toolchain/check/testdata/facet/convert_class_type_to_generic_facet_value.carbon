@@ -459,7 +459,7 @@ fn G() {
 // CHECK:STDOUT:   %U: %Generic.type.ee14e9.2 = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %t.param_patt.513: %pattern_type.51d = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %t.patt.dcb: %pattern_type.51d = at_binding_pattern t, %t.param_patt.513 [symbolic]
+// CHECK:STDOUT:   %t.patt.c64: %pattern_type.51d = wrapper_binding_pattern t, %t.param_patt.513 [symbolic]
 // CHECK:STDOUT:   %CallGenericMethod.type: type = fn_type @CallGenericMethod [concrete]
 // CHECK:STDOUT:   %CallGenericMethod: %CallGenericMethod.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
@@ -471,7 +471,7 @@ fn G() {
 // CHECK:STDOUT:   %U.patt.e09: %pattern_type.de1 = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.485: type = pattern_type %GenericParam [concrete]
 // CHECK:STDOUT:   %t.param_patt.4d1: %pattern_type.485 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %t.patt.0d5: %pattern_type.485 = at_binding_pattern t, %t.param_patt.4d1 [concrete]
+// CHECK:STDOUT:   %t.patt.89c: %pattern_type.485 = wrapper_binding_pattern t, %t.param_patt.4d1 [concrete]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%GenericParam, %Generic.facet) [concrete]
 // CHECK:STDOUT:   %.b65: ref %GenericParam = temporary invalid, %GenericParam.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -521,7 +521,7 @@ fn G() {
 // CHECK:STDOUT:     %T.patt.loc15_23.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_23.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc15_47.1: @CallGenericMethod.%pattern_type.loc15_47 (%pattern_type.4e0) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc15_47.2 (constants.%U.patt.8a6)]
 // CHECK:STDOUT:     %t.param_patt.loc15_69.1: @CallGenericMethod.%pattern_type.loc15_69 (%pattern_type.51d) = value_param_pattern [symbolic = %t.param_patt.loc15_69.2 (constants.%t.param_patt.513)]
-// CHECK:STDOUT:     %t.patt.loc15_69.1: @CallGenericMethod.%pattern_type.loc15_69 (%pattern_type.51d) = at_binding_pattern t, %t.param_patt.loc15_69.1 [symbolic = %t.patt.loc15_69.2 (constants.%t.patt.dcb)]
+// CHECK:STDOUT:     %t.patt.loc15_69.1: @CallGenericMethod.%pattern_type.loc15_69 (%pattern_type.51d) = wrapper_binding_pattern t, %t.param_patt.loc15_69.1 [symbolic = %t.patt.loc15_69.2 (constants.%t.patt.c64)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_25.1: type = splice_block %.loc15_25.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen.loc15_23: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -612,7 +612,7 @@ fn G() {
 // CHECK:STDOUT:   %U.loc15_47.1: @CallGenericMethod.%Generic.type.loc15_58.1 (%Generic.type.ee14e9.2) = symbolic_binding U, 1 [symbolic = %U.loc15_47.1 (constants.%U)]
 // CHECK:STDOUT:   %pattern_type.loc15_69: type = pattern_type %T.loc15_23.1 [symbolic = %pattern_type.loc15_69 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %t.param_patt.loc15_69.2: @CallGenericMethod.%pattern_type.loc15_69 (%pattern_type.51d) = value_param_pattern [symbolic = %t.param_patt.loc15_69.2 (constants.%t.param_patt.513)]
-// CHECK:STDOUT:   %t.patt.loc15_69.2: @CallGenericMethod.%pattern_type.loc15_69 (%pattern_type.51d) = at_binding_pattern t, %t.param_patt.loc15_69.2 [symbolic = %t.patt.loc15_69.2 (constants.%t.patt.dcb)]
+// CHECK:STDOUT:   %t.patt.loc15_69.2: @CallGenericMethod.%pattern_type.loc15_69 (%pattern_type.51d) = wrapper_binding_pattern t, %t.param_patt.loc15_69.2 [symbolic = %t.patt.loc15_69.2 (constants.%t.patt.c64)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc15_23.1 [symbolic = %require_complete (constants.%require_complete)]
@@ -705,7 +705,7 @@ fn G() {
 // CHECK:STDOUT:   %U.loc15_47.1 => constants.%U
 // CHECK:STDOUT:   %pattern_type.loc15_69 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %t.param_patt.loc15_69.2 => constants.%t.param_patt.513
-// CHECK:STDOUT:   %t.patt.loc15_69.2 => constants.%t.patt.dcb
+// CHECK:STDOUT:   %t.patt.loc15_69.2 => constants.%t.patt.c64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) {
@@ -717,7 +717,7 @@ fn G() {
 // CHECK:STDOUT:   %U.loc15_47.1 => constants.%Generic.facet
 // CHECK:STDOUT:   %pattern_type.loc15_69 => constants.%pattern_type.485
 // CHECK:STDOUT:   %t.param_patt.loc15_69.2 => constants.%t.param_patt.4d1
-// CHECK:STDOUT:   %t.patt.loc15_69.2 => constants.%t.patt.0d5
+// CHECK:STDOUT:   %t.patt.loc15_69.2 => constants.%t.patt.89c
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
