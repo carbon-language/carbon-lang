@@ -8,6 +8,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
@@ -304,6 +305,109 @@ static auto CheckFunctionEvaluationModeMatches(
   return false;
 }
 
+static auto CheckDefaultValueConsistency(Context& context,
+                                         const SemIR::Function& new_function,
+                                         const SemIR::Function& prev_function,
+                                         bool diagnose) -> bool {
+  if (!prev_function.call_param_default_values_id.has_value()) {
+    CARBON_CHECK(!new_function.call_param_default_values_id.has_value());
+    return true;
+  }
+  CARBON_CHECK(new_function.call_param_default_values_id.has_value());
+
+  auto prev_value_inst_ids =
+      context.inst_blocks().Get(prev_function.call_param_default_values_id);
+  auto new_value_inst_ids =
+      context.inst_blocks().Get(new_function.call_param_default_values_id);
+  CARBON_CHECK(prev_value_inst_ids.size() == new_value_inst_ids.size());
+
+  llvm::SmallVector<size_t> indices_without_values;
+  llvm::SmallVector<size_t> indices_with_different_values;
+  for (size_t i = 0; i < prev_value_inst_ids.size(); ++i) {
+    if (!prev_value_inst_ids[i].has_value() &&
+        !new_value_inst_ids[i].has_value()) {
+      indices_without_values.push_back(i);
+    } else if (prev_value_inst_ids[i].has_value() &&
+               new_value_inst_ids[i].has_value()) {
+      context.inst_block_stack().Push();
+      auto prev_constant_id = TryEvalInst(context, prev_value_inst_ids[i]);
+      CARBON_CHECK(prev_constant_id != SemIR::ConstantId::NotConstant);
+      auto new_constant_id = TryEvalInst(context, new_value_inst_ids[i]);
+      CARBON_CHECK(new_constant_id != SemIR::ConstantId::NotConstant);
+      context.inst_block_stack().PopAndDiscard();
+      if (prev_constant_id != new_constant_id) {
+        indices_with_different_values.push_back(i);
+      }
+    }
+  }
+
+  bool check_ok =
+      indices_without_values.empty() && indices_with_different_values.empty();
+
+  if (check_ok || !diagnose) {
+    return check_ok;
+  }
+
+  auto extract_loc_ids =
+      [&context](
+          llvm::ArrayRef<SemIR::InstId> pattern_insts,
+          size_t highest_index_needed,
+          llvm::SmallVector<LocIdForDiagnostics>& locations_out) -> void {
+    for (auto inst_id : pattern_insts) {
+      if (context.insts().Is<SemIR::DefaultValuePattern>(inst_id)) {
+        locations_out.push_back(LocIdForDiagnostics(inst_id));
+        if (locations_out.size() > highest_index_needed) {
+          break;
+        }
+      }
+    }
+  };
+
+  size_t highest_index_needed =
+      indices_without_values.empty() ? 0 : indices_without_values.back();
+  highest_index_needed = std::max(highest_index_needed,
+                                  indices_with_different_values.empty()
+                                      ? 0
+                                      : indices_with_different_values.back());
+  llvm::SmallVector<LocIdForDiagnostics> prev_param_locations;
+
+  // TODO: for imported functions   we don't seem to have the previous parameter
+  // pattern block, so we can't add their locations to the diagnostic.
+  if (prev_function.param_patterns_id.has_value()) {
+    extract_loc_ids(context.inst_blocks().Get(prev_function.param_patterns_id),
+                    highest_index_needed, prev_param_locations);
+  }
+
+  llvm::SmallVector<LocIdForDiagnostics> new_param_locations;
+  extract_loc_ids(context.inst_blocks().Get(new_function.param_patterns_id),
+                  highest_index_needed, new_param_locations);
+  CARBON_CHECK(new_param_locations.size() > highest_index_needed);
+
+  for (auto index : indices_without_values) {
+    CARBON_DIAGNOSTIC(PatternDefaultValueNeverSpecified, Error,
+                      "no value for default number {0} is ever specified.",
+                      size_t);
+    CARBON_DIAGNOSTIC(PatternDefaultValueNeverSpecifiedNote, Note,
+                      "previous declaration here.");
+    auto diag = context.emitter().Build(
+        new_param_locations[index], PatternDefaultValueNeverSpecified, index);
+    if (index < prev_param_locations.size()) {
+      diag.Note(prev_param_locations[index],
+                PatternDefaultValueNeverSpecifiedNote);
+    }
+    diag.Emit();
+  }
+
+  for (auto index : indices_with_different_values) {
+    CARBON_DIAGNOSTIC(PatternDefaultValueDiffers, Error,
+                      "default value differs from the previous declaration.");
+    context.emitter().Emit(new_param_locations[index],
+                           PatternDefaultValueDiffers);
+  }
+
+  return false;
+}
+
 auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& new_function,
                               const SemIR::Function& prev_function,
@@ -320,6 +424,10 @@ auto CheckFunctionTypeMatches(Context& context,
   }
   if (!CheckFunctionEvaluationModeMatches(context, new_function, prev_function,
                                           diagnose)) {
+    return false;
+  }
+  if (!CheckDefaultValueConsistency(context, new_function, prev_function,
+                                    diagnose)) {
     return false;
   }
   return true;

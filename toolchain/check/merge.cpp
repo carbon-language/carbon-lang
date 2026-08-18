@@ -5,6 +5,7 @@
 #include "toolchain/check/merge.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -323,6 +324,21 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         }
         break;
       }
+      case CARBON_KIND(SemIR::DefaultValuePattern new_default_value_pattern): {
+        auto prev_default_value_pattern =
+            prev_param_pattern.As<SemIR::DefaultValuePattern>();
+
+        // Add the subpattern to merge checking.
+        pattern_stack.push_back(
+            {.prev_id = prev_default_value_pattern.subpattern_id,
+             .new_id = new_default_value_pattern.subpattern_id});
+
+        // The node kind comparison should catch this on the mismatched patterns
+        // prior to this, so the indices should never mismatch.
+        CARBON_CHECK(prev_default_value_pattern.default_value_id.index ==
+                     new_default_value_pattern.default_value_id.index);
+        break;
+      }
       default: {
         CARBON_FATAL("Unexpected inst kind in parameter pattern: {0}",
                      new_param_pattern.kind());
@@ -499,6 +515,14 @@ static auto CheckRedeclParamSyntax(Context& context,
         ++new_iter;
         continue;
       }
+      // We don't require default values to be repeated on re-declaration,
+      // so skip over any comparisons to unspecified default values.
+      if (prev_node_kind == Parse::NodeKind::DefaultValueUnspecified ||
+          new_node_kind == Parse::NodeKind::DefaultValueUnspecified) {
+        ++prev_iter;
+        ++new_iter;
+        continue;
+      }
       if (!diagnose) {
         return false;
       }
@@ -656,6 +680,42 @@ static auto FillPrevEntityInfo(Context& context,
         declared_facet_type.extend_named_constraints[0].named_constraint_id;
     prev_type_id = SemIR::TypeId::None;
     prev_import_ir_id = import_ir_inst.ir_id();
+  }
+}
+
+auto MergeFunctionParamDefaultValues(Context& context,
+                                     SemIR::Function& prev_function,
+                                     const SemIR::Function& new_function)
+    -> void {
+  if (!prev_function.call_param_default_values_id.has_value()) {
+    CARBON_CHECK(!new_function.call_param_default_values_id.has_value());
+    return;
+  }
+  CARBON_CHECK(new_function.call_param_default_values_id.has_value());
+
+  auto prev_value_inst_ids =
+      context.inst_blocks().Get(prev_function.call_param_default_values_id);
+  auto new_value_inst_ids =
+      context.inst_blocks().Get(new_function.call_param_default_values_id);
+  CARBON_CHECK(prev_value_inst_ids.size() == new_value_inst_ids.size());
+
+  llvm::SmallVector<SemIR::InstId> merged_value_inst_ids;
+  bool merge_has_new_info = false;
+  merged_value_inst_ids.reserve(prev_value_inst_ids.size());
+
+  for (size_t i = 0; i < prev_value_inst_ids.size(); ++i) {
+    auto merged_value_inst_id = prev_value_inst_ids[i];
+    if (!merged_value_inst_id.has_value() &&
+        new_value_inst_ids[i].has_value()) {
+      merged_value_inst_id = new_value_inst_ids[i];
+      merge_has_new_info = true;
+    }
+    merged_value_inst_ids.push_back(merged_value_inst_id);
+  }
+
+  if (merge_has_new_info) {
+    auto merged_block_id = context.inst_blocks().Add(merged_value_inst_ids);
+    prev_function.call_param_default_values_id = merged_block_id;
   }
 }
 
@@ -833,6 +893,10 @@ auto TryMergeRedecl(Context& context,
 
   if (is_definition) {
     prev_entity.MergeDefinition(entity_info.new_entity);
+    if constexpr (IsFunction) {
+      MergeFunctionParamDefaultValues(context, prev_entity,
+                                      entity_info.new_entity);
+    }
   }
 
   auto replace_prev_inst = prev_import_ir_id.has_value();

@@ -154,7 +154,12 @@ auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
 
 auto HandleParseNode(Context& context, Parse::DefaultValueUnspecifiedId node_id)
     -> bool {
-  return context.TODO(node_id, "pattern default values");
+  // Add a new instruction block to discard this instruction after it is
+  // processed by the owning DefaultValuePattern.
+  context.inst_block_stack().Push();
+  context.node_stack().Push(
+      node_id, AddInst<SemIR::UnspecifiedValue>(context, node_id, {}));
+  return true;
 }
 
 auto HandleParseNode(Context& context,
@@ -181,23 +186,32 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
     return false;
   }
 
-  auto expr_const_id = TryEvalInst(context, expr_inst_id);
-  if (expr_const_id == SemIR::ConstantId::NotConstant) {
-    CARBON_DIAGNOSTIC(PatternDefaultValueNotConstant, Error,
-                      "default value for pattern must be constant");
-    context.emitter().Emit(LocIdForDiagnostics(expr_node_id),
-                           PatternDefaultValueNotConstant);
-    return false;
-  }
+  // Evaluate the default value constant, if specified.
+  SemIR::InstId value_inst_id = SemIR::InstId::None;
+  if (!context.insts().Is<SemIR::UnspecifiedValue>(expr_inst_id)) {
+    auto expr_const_id = TryEvalInst(context, expr_inst_id);
+    if (expr_const_id == SemIR::ConstantId::NotConstant) {
+      CARBON_DIAGNOSTIC(PatternDefaultValueNotConstant, Error,
+                        "default value for pattern must be constant");
+      context.emitter().Emit(
+          LocIdForDiagnostics(context.insts().GetCanonicalLocId(expr_inst_id)),
+          PatternDefaultValueNotConstant);
+      return false;
+    }
 
-  // Look up the instruction associated with the evaluated constant.
-  auto constant_inst_id = context.constant_values().GetInstId(expr_const_id);
-  CARBON_CHECK(constant_inst_id != SemIR::InstId::None);
+    // Look up the instruction associated with the evaluated constant.
+    value_inst_id = context.constant_values().GetInstId(expr_const_id);
+    CARBON_CHECK(value_inst_id.has_value());
+  } else {
+    // Remove and discard the temporary block we issued the unspecified function
+    // value on.
+    context.inst_block_stack().PopAndDiscard();
+  }
 
   // Add the value to the default values array in the full pattern stack, for
   // recovery later in the NameComponent.
   auto default_value_id =
-      context.full_pattern_stack().AddDefaultValue(constant_inst_id);
+      context.full_pattern_stack().AddDefaultValue(value_inst_id);
 
   // Next on the node stack should be the pattern for which this default was
   // specified. We pop that so we can issue the DefaultValuePattern in its
