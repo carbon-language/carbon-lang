@@ -20,6 +20,11 @@ auto HandleDidCloseTextDocument(
     Context& context, const clang::clangd::DidCloseTextDocumentParams& params)
     -> void;
 
+// Acknowledges that a document was saved.
+auto HandleDidSaveTextDocument(
+    Context& context, const clang::clangd::DidSaveTextDocumentParams& params)
+    -> void;
+
 // Updates the content of already-open documents.
 auto HandleDidOpenTextDocument(
     Context& context, const clang::clangd::DidOpenTextDocumentParams& params)
@@ -32,11 +37,15 @@ auto HandleDocumentSymbol(
         auto(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)->void>
         on_done) -> void;
 
-// Tells the client what features are supported.
+// Tells the client what features are supported, and negotiates the position
+// encoding.
 auto HandleInitialize(
-    Context& /*context*/,
-    const clang::clangd::NoParams& /*client_capabilities*/,
+    Context& context, const clang::clangd::InitializeParams& params,
     llvm::function_ref<auto(llvm::Expected<llvm::json::Object>)->void> on_done)
+    -> void;
+
+// Acknowledges that the client finished initializing.
+auto HandleInitialized(Context& context, const clang::clangd::NoParams& params)
     -> void;
 
 // Prepares LSP for shutdown.

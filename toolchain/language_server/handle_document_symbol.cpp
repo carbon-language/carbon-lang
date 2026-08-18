@@ -109,14 +109,9 @@ static auto GetTokenRange(const Lex::TokenizedBuffer& tokens,
 static auto GetSymbolRange(const Parse::TreeAndSubtrees& tree_and_subtrees,
                            const Parse::NodeId& ast_node)
     -> clang::clangd::Range {
-  const auto& tokens = tree_and_subtrees.tree().tokens();
-
-  // The left-most node will always be the first node in postorder traversal.
-  auto start_node = *tree_and_subtrees.postorder(ast_node).begin();
-
-  auto start_token = tree_and_subtrees.tree().node_token(start_node);
-  auto end_token = tree_and_subtrees.tree().node_token(ast_node);
-  return GetTokenRange(tokens, start_token, end_token);
+  auto token_range = tree_and_subtrees.GetSubtreeTokenRange(ast_node);
+  return GetTokenRange(tree_and_subtrees.tree().tokens(), token_range.begin,
+                       token_range.end);
 }
 
 auto HandleDocumentSymbol(

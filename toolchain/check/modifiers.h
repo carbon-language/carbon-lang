@@ -55,8 +55,8 @@ auto RestrictExternModifierOnDecl(Context& context,
 // `parent_scope_id` may be None for a declaration in a block scope.
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          DeclIntroducerState& introducer,
-                                         SemIR::NameScopeId parent_scope_id)
-    -> void;
+                                         SemIR::NameScopeId parent_scope_id,
+                                         bool is_definition) -> void;
 
 }  // namespace Carbon::Check
 

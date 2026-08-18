@@ -186,7 +186,6 @@ cc_library(
     hdrs = ["lex.h"],
     deps = [
         ":character_set",
-        ":dump",
         ":helpers",
         ":numeric_literal",
         ":string_literal",
@@ -210,8 +209,8 @@ cc_library(
     srcs = ["dump.cpp"],
     hdrs = ["dump.h"],
     deps = [
+        ":token_index",
         ":tokenized_buffer",
-        "//common:ostream",
         "//common:raw_string_ostream",
     ],
     # Always link dump methods.

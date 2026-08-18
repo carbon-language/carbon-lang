@@ -90,11 +90,11 @@ void G() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-// CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+4]]:1: error: semantics TODO: `interop with specific class` [SemanticsTodo]
-// CHECK:STDERR: class A(T: type) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 class A(T: type) {
+  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+4]]:3: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
+  // CHECK:STDERR:   fn F[U: type](x: T, y: U);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   fn F[U: type](x: T, y: U);
 }
 alias B = A(i32);
@@ -104,15 +104,11 @@ void f() {
   // TODO: this currently fails because `B` can't be imported, but the intent
   // is to test a generic function within an enclosing generic scope.
   //
-  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+8]]:11: error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
-  // CHECK:STDERR:   Carbon::B b;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+4]]:11: error: no type named 'B' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    26 |   Carbon::B b;
-  // CHECK:STDERR:       |   ~~~~~~~~^
-  // CHECK:STDERR:
   Carbon::B b;
+  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+4]]:5: error: no member named 'F' in 'Carbon::A<int>' [CppInteropParseError]
+  // CHECK:STDERR:    23 |   b.F(1, 2);
+  // CHECK:STDERR:       |   ~ ^
+  // CHECK:STDERR:
   b.F(1, 2);
 }
 ''';

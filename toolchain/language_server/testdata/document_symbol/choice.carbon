@@ -16,7 +16,7 @@ choice Colors {
 }
 
 // --- STDIN
-[[@LSP-CALL:initialize]]
+[[@LSP-CALL:initialize:"capabilities": {}]]
 [[@LSP-NOTIFY:textDocument/didOpen:
   "textDocument": {
     "uri": "file:/choice.carbon",
@@ -30,7 +30,7 @@ choice Colors {
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
-// CHECK:STDOUT: Content-Length: 146{{\r}}
+// CHECK:STDOUT: Content-Length: 182{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
@@ -38,6 +38,7 @@ choice Colors {
 // CHECK:STDOUT:   "result": {
 // CHECK:STDOUT:     "capabilities": {
 // CHECK:STDOUT:       "documentSymbolProvider": true,
+// CHECK:STDOUT:       "positionEncoding": "utf-16",
 // CHECK:STDOUT:       "textDocumentSync": 2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }

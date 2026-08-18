@@ -253,7 +253,7 @@ TEST_F(LexerTest, HandlesNumericLiteral) {
   auto token_1_5e9 = token_1_234_567 + 1;
   auto value_1_5e9 =
       value_stores.reals().Get(buffer.GetRealLiteral(*token_1_5e9));
-  EXPECT_EQ(value_1_5e9.mantissa.getZExtValue(), 15);
+  EXPECT_EQ(value_1_5e9.mantissa.getSExtValue(), 15);
   EXPECT_EQ(value_1_5e9.exponent.getSExtValue(), 8);
   EXPECT_EQ(value_1_5e9.is_decimal, true);
 }
