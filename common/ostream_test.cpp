@@ -24,6 +24,13 @@ namespace {
 
 using ::testing::ElementsAre;
 
+// Whether two types can be compared with both `==` and `<=>`.
+template <typename LhsT, typename RhsT>
+concept Comparable = requires(const LhsT& lhs, const RhsT& rhs) {
+  lhs == rhs;
+  lhs <=> rhs;
+};
+
 // A child that defaults its comparisons with member declarations.
 struct Point : Printable<Point> {
   int x;
@@ -205,6 +212,17 @@ TEST(PrintableTest, NoComparisonWithoutDefaulting) {
   static_assert(!std::three_way_comparable<Opaque>);
 
   EXPECT_EQ(PrintToString(Opaque(1)), "1");
+}
+
+TEST(PrintableTest, NoComparisonBetweenBaseAndChild) {
+  // The base class comparisons are viable only between two base class
+  // subobjects, and so don't apply to comparing a child with one, whether or
+  // not the child provides comparisons of its own.
+  static_assert(Comparable<Printable<Opaque>, Printable<Opaque>>);
+  static_assert(!Comparable<Printable<Opaque>, Opaque>);
+  static_assert(!Comparable<Opaque, Printable<Opaque>>);
+  static_assert(!Comparable<Printable<Label>, Label>);
+  static_assert(!Comparable<Label, Printable<Label>>);
 }
 
 TEST(PrintableTest, ComparisonThroughConversion) {
