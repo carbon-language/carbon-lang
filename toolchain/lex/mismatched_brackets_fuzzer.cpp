@@ -123,7 +123,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   }
 
   // Every kind except `FileEnd`, which only ever appears as the final token.
-  constexpr int32_t NumGeneratedKinds =
+  constexpr auto NumGeneratedKinds =
       static_cast<int32_t>(BracketTokenKind::Other);
   static_assert(static_cast<int32_t>(BracketTokenKind::FileEnd) ==
                 NumGeneratedKinds - 1);

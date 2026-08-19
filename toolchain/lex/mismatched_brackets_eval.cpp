@@ -25,6 +25,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -391,7 +392,7 @@ static auto MakeDeletionCase(const TokenizedBuffer& buffer,
         valid_offsets.push_back(buffer.GetByteOffset(TokenIndex(idx)));
       }
     }
-    TokenIndex succ = TokenIndex(run_end + 1);
+    auto succ = TokenIndex(run_end + 1);
     while (succ.index < buffer.size() && is_deleted[succ.index]) {
       succ = TokenIndex(succ.index + 1);
     }
@@ -467,7 +468,7 @@ static auto MakeTruncateCase(const TokenizedBuffer& buffer,
     }
   }
 
-  int32_t eof = static_cast<int32_t>(corrupted.size());
+  auto eof = static_cast<int32_t>(corrupted.size());
   std::vector<DeletedToken> expected;
   for (TokenKind open_kind : llvm::reverse(stack)) {
     expected.push_back(DeletedToken{
@@ -658,7 +659,7 @@ static auto CollectSuggestions(const TokenizedBuffer& buffer,
         !(kind.is_opening_symbol() || kind.is_closing_symbol())) {
       continue;
     }
-    TokenIndex succ = TokenIndex(t.index + 1);
+    auto succ = TokenIndex(t.index + 1);
     while (succ.index < buffer.size() && buffer.IsRecoveryToken(succ)) {
       succ = TokenIndex(succ.index + 1);
     }
@@ -1168,31 +1169,33 @@ auto Evaluator::MaybeDumpTrial(const FileContext& file, const DSpec& spec,
     return;
   }
 
-  llvm::errs() << "\n=== " << dump_label << " TRIAL in "
-               << file.candidate.filename << " (D=" << spec.label << ") ===\n";
+  llvm::errs() << llvm::formatv(
+      R"(
+=== {0} TRIAL in {1} (D={2}) ===
+)",
+      dump_label, file.candidate.filename, spec.label);
   for (const auto& del : deleted_tokens) {
-    llvm::errs() << "  Deleted token: kind=" << del.kind.name()
-                 << " at byte=" << del.byte_offset << " (line=" << del.line
-                 << ", col=" << del.column << ")\n";
+    llvm::errs() << llvm::formatv(
+        "  Deleted token: kind={0} at byte={1} (line={2}, col={3})\n",
+        del.kind.name(), del.byte_offset, del.line, del.column);
   }
-  llvm::errs() << "  Suggestions (" << suggestions.size() << "):\n";
+  llvm::errs() << llvm::formatv("  Suggestions ({0}):\n", suggestions.size());
   for (const auto& s : suggestions) {
-    llvm::errs() << "    Suggestion (" << s.rule_name
-                 << "): kind=" << s.kind.name() << " at byte=" << s.byte_offset
-                 << " (line=" << s.line << ", col=" << s.column << ")\n";
+    llvm::errs() << llvm::formatv(
+        "    Suggestion ({0}): kind={1} at byte={2} (line={3}, col={4})\n",
+        s.rule_name, s.kind.name(), s.byte_offset, s.line, s.column);
   }
-  llvm::errs() << "  Raw corrections (" << corrections.size() << "):\n";
+  llvm::errs() << llvm::formatv("  Raw corrections ({0}):\n",
+                                corrections.size());
   for (const auto& c : corrections) {
-    llvm::errs() << "    "
-                 << (c.fix_action == BracketFixAction::InsertBefore
-                         ? "InsertBefore"
-                     : c.fix_action == BracketFixAction::InsertAfter
-                         ? "InsertAfter"
-                         : "ReplaceWithError")
-                 << " kind=" << c.fix_token_kind.name()
-                 << " tok=" << c.fix_token_index.index
-                 << (c.is_tied ? " TIED" : "") << " rule=" << c.rule_name
-                 << "\n";
+    llvm::StringRef action =
+        c.fix_action == BracketFixAction::InsertBefore  ? "InsertBefore"
+        : c.fix_action == BracketFixAction::InsertAfter ? "InsertAfter"
+                                                        : "ReplaceWithError";
+    llvm::errs() << llvm::formatv("    {0} kind={1} tok={2}{3} rule={4}\n",
+                                  action, c.fix_token_kind.name(),
+                                  c.fix_token_index.index,
+                                  c.is_tied ? " TIED" : "", c.rule_name);
   }
   // Center the excerpt on the first deletion, or on the first suggestion when
   // there was nothing to delete (a truncation with nothing left open) yet
@@ -1203,57 +1206,63 @@ auto Evaluator::MaybeDumpTrial(const FileContext& file, const DSpec& spec,
   } else if (!suggestions.empty()) {
     center = suggestions.front().byte_offset;
   }
-  llvm::errs() << "--- Corrupted Text Sample ---\n";
   int32_t print_start = std::max(0, center - 100);
   int32_t print_end =
       std::min(static_cast<int32_t>(corrupted_text.size()), center + 100);
-  llvm::errs() << corrupted_text.substr(print_start, print_end - print_start)
-               << "\n";
-  llvm::errs() << "===============================\n\n";
+  llvm::errs() << llvm::formatv(
+      R"(--- Corrupted Text Sample ---
+{0}
+===============================
+
+)",
+      corrupted_text.substr(print_start, print_end - print_start));
 }
 
 static auto PrintJsonReport(const EvalOptions& options, const Corpus& corpus,
                             const Report& report) -> void {
-  llvm::outs() << "{\n";
-  llvm::outs() << "  \"seed\": " << options.base_seed << ",\n";
-  llvm::outs() << "  \"total_trials\": " << options.total_trials << ",\n";
-  llvm::outs() << "  \"files_tested\": " << corpus.files.size() << ",\n";
-  llvm::outs() << "  \"total_bracket_pairs\": " << corpus.total_clean_pairs
-               << ",\n";
-  llvm::outs() << "  \"scenarios\": [\n";
+  llvm::outs() << llvm::formatv(
+      R"({{
+  "seed": {0},
+  "total_trials": {1},
+  "files_tested": {2},
+  "total_bracket_pairs": {3},
+  "scenarios": [)",
+      options.base_seed, options.total_trials, corpus.files.size(),
+      corpus.total_clean_pairs);
+  llvm::ListSeparator sep(",");
   for (auto [i, spec] : llvm::enumerate(options.d_specs)) {
     const auto& stats = report.stats_by_level[i];
-    llvm::outs() << "    {\n";
-    llvm::outs() << "      \"d_spec\": \"" << spec.label << "\",\n";
-    llvm::outs() << "      \"total\": " << stats.total << ",\n";
-    llvm::outs() << "      \"correct\": " << stats.correct << ",\n";
-    llvm::outs() << "      \"partial\": " << stats.partial << ",\n";
-    llvm::outs() << "      \"none\": " << stats.none << ",\n";
-    llvm::outs() << "      \"incorrect\": " << stats.incorrect << ",\n";
-    llvm::outs() << llvm::formatv("      \"correct_pct\": {0:F1},\n",
-                                  stats.CorrectPct());
-    llvm::outs() << llvm::formatv("      \"partial_pct\": {0:F1},\n",
-                                  stats.PartialPct());
-    llvm::outs() << llvm::formatv("      \"none_pct\": {0:F1},\n",
-                                  stats.NonePct());
-    llvm::outs() << llvm::formatv("      \"incorrect_pct\": {0:F1},\n",
-                                  stats.IncorrectPct());
-    llvm::outs() << llvm::formatv("      \"safety_pct\": {0:F1},\n",
-                                  stats.SafetyPct());
-    llvm::outs() << llvm::formatv("      \"accuracy_pct\": {0:F1}\n",
-                                  stats.AccuracyPct());
-    llvm::outs() << (i + 1 < options.d_specs.size() ? "    },\n" : "    }\n");
+    llvm::outs() << llvm::formatv(
+        R"({0}
+    {{
+      "d_spec": "{1}",
+      "total": {2},
+      "correct": {3},
+      "partial": {4},
+      "none": {5},
+      "incorrect": {6},
+      "correct_pct": {7:F1},
+      "partial_pct": {8:F1},
+      "none_pct": {9:F1},
+      "incorrect_pct": {10:F1},
+      "safety_pct": {11:F1},
+      "accuracy_pct": {12:F1}
+    })",
+        llvm::StringRef(sep), spec.label, stats.total, stats.correct,
+        stats.partial, stats.none, stats.incorrect, stats.CorrectPct(),
+        stats.PartialPct(), stats.NonePct(), stats.IncorrectPct(),
+        stats.SafetyPct(), stats.AccuracyPct());
   }
-  llvm::outs() << "  ]\n";
-  llvm::outs() << "}\n";
+  llvm::outs() << "\n  ]\n}\n";
 }
 
 static auto PrintLevelTable(const EvalOptions& options, const Report& report)
     -> void {
-  llvm::outs() << "## Overall Performance by Deletion Level (D)\n\n";
-  llvm::outs() << "| Deletion Level (D) | Total Trials | Correct | Partial | "
-                  "None | Incorrect | Safety (%) | Accuracy (%) |\n";
-  llvm::outs() << "|:---|---:|---:|---:|---:|---:|---:|---:|\n";
+  llvm::outs() << R"(## Overall Performance by Deletion Level (D)
+
+| Deletion Level (D) | Total Trials | Correct | Partial | None | Incorrect | Safety (%) | Accuracy (%) |
+|:---|---:|---:|---:|---:|---:|---:|---:|
+)";
   for (auto [i, spec] : llvm::enumerate(options.d_specs)) {
     const auto& stats = report.stats_by_level[i];
     llvm::outs() << llvm::formatv(
@@ -1269,11 +1278,13 @@ static auto PrintLevelTable(const EvalOptions& options, const Report& report)
 
 static auto PrintRuleTable(const EvalOptions& options, const Report& report)
     -> void {
-  llvm::outs() << "## Suggestion Rule Breakdown (D = "
-               << options.RuleLevelLabel() << ")\n\n";
-  llvm::outs() << "| Rule | Total | Correct | Incorrect | "
-                  "Precision (%) |\n";
-  llvm::outs() << "|:---|---:|---:|---:|---:|\n";
+  llvm::outs() << llvm::formatv(
+      R"(## Suggestion Rule Breakdown (D = {0})
+
+| Rule | Total | Correct | Incorrect | Precision (%) |
+|:---|---:|---:|---:|---:|
+)",
+      options.RuleLevelLabel());
   for (const auto& [name, stat] : report.stats_by_rule) {
     int total = stat.correct + stat.incorrect;
     double prec = total == 0 ? 100.0 : (100.0 * stat.correct) / total;
@@ -1288,11 +1299,13 @@ static auto PrintPerFileTables(const EvalOptions& options, const Report& report)
     -> void {
   llvm::outs() << "## Per-File Breakdown\n\n";
   for (const auto& file : report.results_by_file) {
-    llvm::outs() << "### `" << file.filename << "` (" << file.clean_pairs_count
-                 << " pairs)\n\n";
-    llvm::outs() << "| D | Total | Correct | Partial | None | Incorrect | "
-                    "Safety | Accuracy |\n";
-    llvm::outs() << "|:---|---:|---:|---:|---:|---:|---:|---:|\n";
+    llvm::outs() << llvm::formatv(
+        R"(### `{0}` ({1} pairs)
+
+| D | Total | Correct | Partial | None | Incorrect | Safety | Accuracy |
+|:---|---:|---:|---:|---:|---:|---:|---:|
+)",
+        file.filename, file.clean_pairs_count);
     for (auto [i, spec] : llvm::enumerate(options.d_specs)) {
       const auto& stats = file.stats_by_level[i];
       llvm::outs() << llvm::formatv(
@@ -1334,13 +1347,13 @@ static auto SummarizeDistances(const std::map<int, int>& hist)
 }
 
 static auto PrintWrongCloseTable(const Report& report) -> void {
-  llvm::outs() << "## Wrong-Close Distance (incorrect trials)\n\n";
-  llvm::outs()
-      << "Signed token distance from the correct anchor to the "
-         "nearest same-kind close (+ = closed later / swallowing).\n\n";
-  llvm::outs() << "| Deleted kind | Wrong | Later | Earlier | No close | "
-                  "Median | P90 | Max |\n";
-  llvm::outs() << "|:---|---:|---:|---:|---:|---:|---:|---:|\n";
+  llvm::outs() << R"(## Wrong-Close Distance (incorrect trials)
+
+Signed token distance from the correct anchor to the nearest same-kind close (+ = closed later / swallowing).
+
+| Deleted kind | Wrong | Later | Earlier | No close | Median | P90 | Max |
+|:---|---:|---:|---:|---:|---:|---:|---:|
+)";
   for (const auto& [kind, stat] : report.wrong_close_by_kind) {
     int total = stat.later + stat.earlier + stat.no_close;
     DistanceSummary dist = SummarizeDistances(stat.token_dist_hist);
@@ -1354,35 +1367,33 @@ static auto PrintWrongCloseTable(const Report& report) -> void {
 }
 
 static auto PrintMetricDefinitions() -> void {
-  llvm::outs() << "## Metric Definitions\n\n";
-  llvm::outs()
-      << "- **Correct**: Suggested correct locations for all removed tokens.\n";
-  llvm::outs() << "- **Partial**: Suggested correct locations for some removed "
-                  "tokens, and gave no suggestions for others.\n";
-  llvm::outs()
-      << "- **None**: Gave no suggestions for any removed tokens (e.g., "
-         "recovered cleanly with errors and no hallucinated notes).\n";
-  llvm::outs() << "- **Incorrect**: Suggested a location for any removed token "
-                  "that was not where the token was removed from.\n";
-  llvm::outs() << "- **Safety**: Percentage of trials with no incorrect "
-                  "suggestions `(Correct + Partial + None) / Total`.\n";
-  llvm::outs() << "- **Accuracy**: Precision of suggestions when suggestions "
-                  "were made `Correct / (Correct + Incorrect)`.\n";
+  llvm::outs() << R"(## Metric Definitions
+
+- **Correct**: Suggested correct locations for all removed tokens.
+- **Partial**: Suggested correct locations for some removed tokens, and gave no suggestions for others.
+- **None**: Gave no suggestions for any removed tokens (e.g., recovered cleanly with errors and no hallucinated notes).
+- **Incorrect**: Suggested a location for any removed token that was not where the token was removed from.
+- **Safety**: Percentage of trials with no incorrect suggestions `(Correct + Partial + None) / Total`.
+- **Accuracy**: Precision of suggestions when suggestions were made `Correct / (Correct + Incorrect)`.
+)";
 }
 
 static auto PrintMarkdownReport(const EvalOptions& options,
                                 const Corpus& corpus, const Report& report)
     -> void {
-  llvm::outs() << "# Bracket Recovery Measurement Report\n\n";
-  llvm::outs() << "- **Corruption mode**: " << options.mode_name << "\n";
-  llvm::outs() << "- **Files tested**: " << corpus.files.size() << " files ("
-               << corpus.total_clean_pairs << " clean matched bracket pairs)\n";
-  llvm::outs() << "- **Total trials per configuration**: "
-               << options.total_trials << "\n";
-  llvm::outs() << "- **Random seed**: " << options.base_seed << "\n";
+  llvm::outs() << llvm::formatv(
+      R"(# Bracket Recovery Measurement Report
+
+- **Corruption mode**: {0}
+- **Files tested**: {1} files ({2} clean matched bracket pairs)
+- **Total trials per configuration**: {3}
+- **Random seed**: {4}
+)",
+      options.mode_name, corpus.files.size(), corpus.total_clean_pairs,
+      options.total_trials, options.base_seed);
   if (report.merged_skips > 0) {
-    llvm::outs() << "- **Trials skipped (token fusion)**: "
-                 << report.merged_skips << "\n";
+    llvm::outs() << llvm::formatv("- **Trials skipped (token fusion)**: {0}\n",
+                                  report.merged_skips);
   }
   llvm::outs() << "\n";
 

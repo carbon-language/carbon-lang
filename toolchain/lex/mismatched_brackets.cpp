@@ -543,18 +543,18 @@ struct StateKey {
   friend auto operator==(const StateKey& lhs, const StateKey& rhs) -> bool {
     return lhs.closer_inserted == rhs.closer_inserted && lhs.stack == rhs.stack;
   }
-};
 
-// Hashes the whole of each stack entry's key, and nothing outside it, so that
-// equal states always hash equal.
-auto CarbonHashValue(const StateKey& key, uint64_t seed) -> HashCode {
-  Hasher hasher(seed);
-  hasher.Hash(key.closer_inserted, key.stack.size());
-  for (const OpenBracketKey& entry : key.stack) {
-    hasher.HashRaw(entry);
+  // Hashes the whole of each stack entry's key, and nothing outside it, so that
+  // equal states always hash equal.
+  friend auto CarbonHashValue(const StateKey& key, uint64_t seed) -> HashCode {
+    Hasher hasher(seed);
+    hasher.Hash(key.closer_inserted, key.stack.size());
+    for (const OpenBracketKey& entry : key.stack) {
+      hasher.HashRaw(entry);
+    }
+    return static_cast<HashCode>(hasher);
   }
-  return static_cast<HashCode>(hasher);
-}
+};
 
 // Lets the dedup table key on the search state itself while storing only a node
 // index, so no stack is copied into the table. Lookups pass a `StateKey`
@@ -1553,29 +1553,43 @@ static auto EnumerateOptimalPaths(llvm::ArrayRef<BeamNode> nodes,
     -> llvm::SmallVector<llvm::SmallVector<BracketCorrection>> {
   llvm::SmallVector<llvm::SmallVector<BracketCorrection>> all_paths;
   llvm::SmallVector<BracketCorrection> current_path;
-  auto dfs = [&](auto& self, int32_t node_idx) -> void {
-    if (all_paths.size() >= MaxOptimalPaths) {
-      return;
-    }
-    const auto& node = nodes[node_idx];
+  struct StackFrame {
+    int32_t node_index;
+    int32_t edge_index = 0;
+  };
+  llvm::SmallVector<StackFrame> stack;
+  for (int32_t goal_idx : goal_node_indices) {
+    stack.push_back({.node_index = goal_idx, .edge_index = 0});
+  }
+  while (!stack.empty()) {
+    auto& frame = stack.back();
+    const auto& node = nodes[frame.node_index];
     if (node.parent_edges.empty()) {
       // The root, so `current_path` is now a complete repair, in reverse.
       all_paths.push_back(current_path);
       std::reverse(all_paths.back().begin(), all_paths.back().end());
-      return;
-    }
-    for (const auto& edge : node.parent_edges) {
-      if (edge.has_correction) {
-        current_path.push_back(edge.correction);
+      stack.pop_back();
+      if (all_paths.size() >= MaxOptimalPaths) {
+        break;
       }
-      self(self, edge.parent_node_index);
-      if (edge.has_correction) {
+      continue;
+    }
+    if (frame.edge_index > 0) {
+      const auto& prev_edge = node.parent_edges[frame.edge_index - 1];
+      if (prev_edge.has_correction) {
         current_path.pop_back();
       }
     }
-  };
-  for (int32_t goal_idx : goal_node_indices) {
-    dfs(dfs, goal_idx);
+    if (static_cast<size_t>(frame.edge_index) < node.parent_edges.size()) {
+      const auto& edge = node.parent_edges[frame.edge_index];
+      ++frame.edge_index;
+      if (edge.has_correction) {
+        current_path.push_back(edge.correction);
+      }
+      stack.push_back({.node_index = edge.parent_node_index, .edge_index = 0});
+    } else {
+      stack.pop_back();
+    }
   }
   return all_paths;
 }
