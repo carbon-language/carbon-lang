@@ -146,6 +146,16 @@ fn AsType[template T: type](x: T, template U: type) {
 class D {}
 
 fn Test(d: D) {
+  // CHECK:STDERR: fail_cannot_as_type.carbon:[[@LINE+10]]:3: error: unable to monomorphize specific `AsType(D, i32)` [ResolvingSpecificHere]
+  // CHECK:STDERR:   AsType(d, i32);
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_cannot_as_type.carbon:[[@LINE-9]]:14: note: cannot convert expression of type `D` to `i32` with `as` [ConversionFailure]
+  // CHECK:STDERR:   let _: U = x as U;
+  // CHECK:STDERR:              ^~~~~~
+  // CHECK:STDERR: fail_cannot_as_type.carbon:[[@LINE-12]]:14: note: type `D` does not implement interface `Core.As(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   let _: U = x as U;
+  // CHECK:STDERR:              ^~~~~~
+  // CHECK:STDERR:
   AsType(d, i32);
 }
 
@@ -511,7 +521,13 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %x.param_patt.cee: %pattern_type.6b6 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %x.patt.e3b: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt.cee [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %As.type.155: type = facet_type <@As, @As(%i32)> [concrete]
+// CHECK:STDOUT:   %As.impl_witness.80e: <witness> = impl_witness @C.as.As.impl.%As.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %C.as.As.impl.Convert.type: type = fn_type @C.as.As.impl.Convert [concrete]
+// CHECK:STDOUT:   %C.as.As.impl.Convert: %C.as.As.impl.Convert.type = struct_value () [concrete]
+// CHECK:STDOUT:   %As.facet: %As.type.155 = facet_value %C, (%As.impl_witness.80e) [concrete]
+// CHECK:STDOUT:   %As.WithSelf.Convert.type.087: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%i32, %As.facet) [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.cdf: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT:   %x.param_patt.0f9: %pattern_type.98b = value_param_pattern [concrete]
@@ -520,12 +536,27 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %inst.as_compatible.1ff: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.775: %i32 = as_compatible @AsType.%x.ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.5a8: <instruction> = convert_action %.775, %U.091, element7 [template]
-// CHECK:STDOUT:   %.ef5: <instruction> = convert_to_category_action @AsType.%.loc6_16.2, element1 [template]
+// CHECK:STDOUT:   %inst.splice_block.5e1: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.093: %i32 = splice_block %.775 {}
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %inst.splice_block.520: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.b12: %i32 = splice_block %.093 {}
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.as_compatible.d98: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.f8c: %C = as_compatible @AsType.%x.ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.14b: <instruction> = convert_action %.f8c, %U.091, element7 [template]
+// CHECK:STDOUT:   %.419: type = fn_type_with_self_type %As.WithSelf.Convert.type.087, %As.facet [concrete]
+// CHECK:STDOUT:   %inst.splice_block.550: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.24f: %i32 = splice_block %.0bd {
+// CHECK:STDOUT:       %impl.elem0.47b: %.419 = impl_witness_access %As.impl_witness.80e, element0 [concrete = %C.as.As.impl.Convert]
+// CHECK:STDOUT:       %bound_method: <bound method> = bound_method %.f8c, %impl.elem0.47b
+// CHECK:STDOUT:       %C.as.As.impl.Convert.call: init %i32 = call %bound_method(%.f8c)
+// CHECK:STDOUT:       %.0bd: %i32 = value_of_initializer %C.as.As.impl.Convert.call
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %inst.splice_block.022: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.77f: %i32 = splice_block %.24f {}
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -566,7 +597,7 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %pattern_type.loc6: type = pattern_type %U.loc5_45.1 [template = %pattern_type.loc6 (constants.%pattern_type.946)]
 // CHECK:STDOUT:   %_.patt.loc6_8.2: @AsType.%pattern_type.loc6 (%pattern_type.946) = value_binding_pattern _ [template = %_.patt.loc6_8.2 (constants.%_.patt.972)]
 // CHECK:STDOUT:   %.loc6_16.4: <instruction> = refine_type_action %x.ref, %T.loc5_21.1 [template]
-// CHECK:STDOUT:   %.loc6_16.5: <instruction> = convert_action %.loc6_16.1, constants.%U.091, element7 [template]
+// CHECK:STDOUT:   %.loc6_16.5: <instruction> = convert_action %.loc6_16.1, %U.loc5_45.1, element7 [template]
 // CHECK:STDOUT:   %.loc6_16.6: <instruction> = convert_to_category_action %.loc6_16.2, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @AsType.%T.loc5_21.1 (%T.67db0b.1)) {
@@ -610,8 +641,8 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %pattern_type.loc6 => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %_.patt.loc6_8.2 => constants.%_.patt.bed
 // CHECK:STDOUT:   %.loc6_16.4 => constants.%inst.as_compatible.1ff
-// CHECK:STDOUT:   %.loc6_16.5 => constants.%.5a8
-// CHECK:STDOUT:   %.loc6_16.6 => constants.%.ef5
+// CHECK:STDOUT:   %.loc6_16.5 => constants.%inst.splice_block.5e1
+// CHECK:STDOUT:   %.loc6_16.6 => constants.%inst.splice_block.520
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AsType(constants.%C, constants.%i32) {
@@ -629,7 +660,7 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %pattern_type.loc6 => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %_.patt.loc6_8.2 => constants.%_.patt.bed
 // CHECK:STDOUT:   %.loc6_16.4 => constants.%inst.as_compatible.d98
-// CHECK:STDOUT:   %.loc6_16.5 => constants.%.14b
-// CHECK:STDOUT:   %.loc6_16.6 => constants.%.ef5
+// CHECK:STDOUT:   %.loc6_16.5 => constants.%inst.splice_block.550
+// CHECK:STDOUT:   %.loc6_16.6 => constants.%inst.splice_block.022
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
