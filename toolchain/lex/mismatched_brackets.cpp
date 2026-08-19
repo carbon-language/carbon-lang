@@ -21,6 +21,7 @@
 #include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/base/index_base.h"
 
 namespace Carbon::Lex {
 
@@ -289,11 +290,15 @@ struct OpenBracketInfo : OpenBracketKey {
 };
 
 // Names a stack of open brackets held in an `OpenStackStore`.
-using OpenStackId = int32_t;
+struct OpenStackId : public IdBase<OpenStackId> {
+  // The empty stack, which every search starts from. Interning gives it no
+  // cell, so it needs an id of its own.
+  static const OpenStackId Empty;
 
-// The empty stack, which every search starts from. Interning gives it no cell,
-// so it needs an id of its own.
-constexpr OpenStackId EmptyOpenStack = -1;
+  using IdBase::IdBase;
+};
+
+inline constexpr OpenStackId OpenStackId::Empty = OpenStackId(NoneIndex);
 
 // What distinguishes one stack from another: the bracket on top, and the stack
 // below it. Only the `OpenBracketKey` part of the bracket takes part, since
@@ -304,17 +309,16 @@ struct OpenStackCellKey {
 
   friend auto operator==(const OpenStackCellKey& lhs,
                          const OpenStackCellKey& rhs) -> bool = default;
+
+  friend auto CarbonHashValue(const OpenStackCellKey& key, uint64_t seed)
+      -> HashCode {
+    static_assert(std::has_unique_object_representations_v<OpenStackCellKey>,
+                  "Padding would leave indeterminate bytes for hashing.");
+    Hasher hasher(seed);
+    hasher.HashRaw(key);
+    return static_cast<HashCode>(hasher);
+  }
 };
-
-static_assert(std::has_unique_object_representations_v<OpenStackCellKey>,
-              "Padding would leave indeterminate bytes for hashing.");
-
-inline auto CarbonHashValue(const OpenStackCellKey& key, uint64_t seed)
-    -> HashCode {
-  Hasher hasher(seed);
-  hasher.HashRaw(key);
-  return static_cast<HashCode>(hasher);
-}
 
 // Holds the open-bracket stacks the search reaches.
 //
@@ -333,7 +337,7 @@ class OpenStackStore {
   auto Push(OpenStackId stack, const OpenBracketInfo& entry) -> OpenStackId {
     auto result =
         intern_.Insert(OpenStackCellKey{.parent = stack, .entry = entry},
-                       static_cast<OpenStackId>(cells_.size()));
+                       OpenStackId(cells_.size()));
     if (result.is_inserted()) {
       cells_.push_back({
           .parent = stack,
@@ -349,30 +353,31 @@ class OpenStackStore {
 
   // The stack below the top of `stack`, which must not be empty.
   auto Pop(OpenStackId stack) const -> OpenStackId {
-    return cells_[stack].parent;
+    return cells_[stack.index].parent;
   }
 
   // The bracket on top of `stack`, which must not be empty.
   auto Top(OpenStackId stack) const -> const OpenBracketInfo& {
-    return cells_[stack].entry;
+    return cells_[stack.index].entry;
   }
 
   auto IsEmpty(OpenStackId stack) const -> bool {
-    return stack == EmptyOpenStack;
+    return stack == OpenStackId::Empty;
   }
 
   auto Depth(OpenStackId stack) const -> int32_t {
-    return IsEmpty(stack) ? 0 : cells_[stack].depth;
+    return IsEmpty(stack) ? 0 : cells_[stack.index].depth;
   }
 
   // Whether any bracket in `stack` is synthetic.
   auto HasSynthetic(OpenStackId stack) const -> bool {
-    return !IsEmpty(stack) && cells_[stack].has_synthetic;
+    return !IsEmpty(stack) && cells_[stack.index].has_synthetic;
   }
 
   // Whether `stack` holds an opener of kind `kind`.
   auto Contains(OpenStackId stack, BracketTokenKind kind) const -> bool {
-    return !IsEmpty(stack) && (cells_[stack].open_kinds & KindBit(kind)) != 0;
+    return !IsEmpty(stack) &&
+           (cells_[stack.index].open_kinds & KindBit(kind)) != 0;
   }
 
  private:
@@ -390,7 +395,7 @@ class OpenStackStore {
   }
 
   auto OpenKinds(OpenStackId stack) const -> uint8_t {
-    return IsEmpty(stack) ? 0 : cells_[stack].open_kinds;
+    return IsEmpty(stack) ? 0 : cells_[stack.index].open_kinds;
   }
 
   llvm::SmallVector<Cell, 0> cells_;
@@ -2283,7 +2288,7 @@ auto RegionSearch::CloseAtRegionEnd() -> llvm::SmallVector<int32_t> {
       finish_cost += CostToCloseAtEnd(open);
       nodes_.push_back(BeamNode{
           .item_index = static_cast<int32_t>(items_.size()),
-          .stack = EmptyOpenStack,
+          .stack = OpenStackId::Empty,
           .cost = finish_cost,
           .parent_edges = {{
               .parent_node_index = parent,
@@ -2318,7 +2323,7 @@ auto RegionSearch::Solve(llvm::SmallVectorImpl<BracketCorrection>& corrections)
     -> void {
   nodes_.push_back(BeamNode{
       .item_index = 0,
-      .stack = EmptyOpenStack,
+      .stack = OpenStackId::Empty,
       .cost = 0,
       .parent_edges = {},
   });

@@ -215,6 +215,7 @@ cc_library(
         "//common:check",
         "//common:hashing",
         "//common:map",
+        "//toolchain/base:index_base",
         "@llvm-project//llvm:Support",
     ],
 )
