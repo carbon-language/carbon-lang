@@ -96,13 +96,6 @@ fn TestIndex(s: Core.Slice(i32), i: u64) -> i32 {
   //@dump-sem-ir-end
 }
 
-
-
-
-
-
-
-
 // --- array_to_slice_pointer.carbon
 
 library "[[@TEST_NAME]]";
