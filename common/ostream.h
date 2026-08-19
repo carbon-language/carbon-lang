@@ -26,21 +26,9 @@ class Printable {
   // Comparisons of the base class itself, which is empty and so always compares
   // equal, allowing children to default their own comparison operators.
   //
-  // Both operands are the same constrained template parameter rather than
-  // simply `const Printable&` so that these are only viable for comparing two
-  // base class subobjects. An overload taking `const Printable&` would also be
-  // viable when comparing two `DerivedT` objects by converting them to the base
-  // class, and would then both make children that provide no comparison
-  // silently compare equal and displace the comparisons of children that
-  // provide them through a conversion of their own, as `EnumBase` does. Member
-  // operators would constrain only their right operand, and so would stay
-  // viable for comparing a `DerivedT` object with a base class subobject.
-  //
-  // These are hidden friends rather than namespace-scope functions so that they
-  // aren't candidates for unrelated comparisons. This header is included nearly
-  // everywhere, so at namespace scope in `Carbon` these would be candidates for
-  // essentially every comparison in the codebase, with deduction succeeding and
-  // only the constraint rejecting them.
+  // These are templated so that they are only used when the types of the
+  // arguments are exactly `Printable`, rather than a derived class, and are
+  // hidden friends so that they aren't candidates for unrelated comparisons.
   template <typename T>
     requires std::same_as<T, Printable>
   friend constexpr auto operator==(const T& /*lhs*/, const T& /*rhs*/) noexcept
