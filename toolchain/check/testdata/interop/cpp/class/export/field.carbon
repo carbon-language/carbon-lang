@@ -48,6 +48,24 @@ void F() {
 }
 ''';
 
+// --- class_field.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class ClassField {}
+
+class ClassWithClassField {
+  var c: ClassField;
+}
+
+inline Cpp '''
+void g() {
+  // In order for this to work, we need both class definitions to be exported to
+  // Clang.
+  Carbon::ClassWithClassField c;
+}
+''';
+
 // --- fail_nonexistent_field.carbon
 library "[[@TEST_NAME]]";
 import Cpp;
