@@ -5,6 +5,7 @@
 #include "toolchain/check/action.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
@@ -69,7 +70,8 @@ auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
 template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT> &&
            SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::AbsoluteInstId,
-                       SemIR::CallParamIndex, SemIR::NameId>
+                       SemIR::CallParamIndex, SemIR::NameId,
+                       SemIR::ElementIndex>
 static auto OperandDependence(Context& /*context*/, IdT /*id*/)
     -> SemIR::ConstantDependence {
   return SemIR::ConstantDependence::None;
