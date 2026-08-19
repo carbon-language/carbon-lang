@@ -18,13 +18,8 @@
 
 namespace Carbon {
 
-// CRTP base class for printable types. Children (DerivedT) must implement:
-// - auto Print(llvm::raw_ostream& out) const -> void
-template <typename DerivedT>
-// NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
-class Printable {
-  // Comparisons of the base class itself, which is empty and so always compares
-// CRTP base class for printable types. Derived classes (DerivedT) must implement:
+// CRTP base class for printable types. Derived classes (DerivedT) must
+// implement:
 // - auto Print(llvm::raw_ostream& out) const -> void
 template <typename DerivedT>
 // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
