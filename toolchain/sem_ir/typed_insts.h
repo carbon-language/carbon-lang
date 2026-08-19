@@ -929,6 +929,24 @@ struct FunctionDecl {
   DeclInstBlockId decl_block_id;
 };
 
+// The type of a function pointer.
+struct FunctionPtrType {
+  static constexpr auto Kind =
+      InstKind::FunctionPtrType.Define<Parse::FnPtrTypeLiteralId>(
+          {.ir_name = "fn_ptr_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  // Always TypeType.
+  TypeId type_id;
+
+  // The forms of the function's syntactic parameters.
+  InstBlockId param_forms_id;
+
+  // The function's return form.
+  InstId return_form_id;
+};
+
 // The type of a function.
 struct FunctionType {
   static constexpr auto Kind =

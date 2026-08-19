@@ -304,6 +304,11 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
             TypeStructure::ConcreteTypeStart::Array);
         break;
       }
+      case CARBON_KIND(Step::FunctionPtrStart _): {
+        AppendStructuralConcreteOpenParen(
+            TypeStructure::ConcreteTypeStart::FnPtr);
+        break;
+      }
       case CARBON_KIND(Step::ConstStart _): {
         AppendStructuralConcreteOpenParen(
             TypeStructure::ConcreteTypeStart::Const);

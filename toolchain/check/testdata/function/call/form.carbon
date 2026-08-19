@@ -179,11 +179,10 @@ fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
 fn G() {
   var x: i32;
-  // CHECK:STDERR: fail_form_generic_missing_ref_tag.carbon:[[@LINE+8]]:20: error: argument to `ref` parameter not marked with `ref` [RefParamNoRefTag]
+  // CHECK:STDERR: fail_form_generic_missing_ref_tag.carbon:[[@LINE+7]]:20: error: argument to `ref` parameter not marked with `ref` [RefParamNoRefTag]
   // CHECK:STDERR:   F(form(ref i32), x);
   // CHECK:STDERR:                    ^
-  // CHECK:STDERR: fail_form_generic_missing_ref_tag.carbon: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fail_form_generic_missing_ref_tag.carbon:[[@LINE-8]]:36: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_form_generic_missing_ref_tag.carbon:[[@LINE-7]]:36: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: fn F(generic Fm: Core.Form, unused x:? Fm) {}
   // CHECK:STDERR:                                    ^~~~~~
   // CHECK:STDERR:

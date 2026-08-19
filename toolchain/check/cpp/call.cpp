@@ -82,6 +82,9 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
     case CARBON_KIND(SemIR::CalleeNonFunction _): {
       CARBON_FATAL("overloads should produce functions");
     }
+    case CARBON_KIND(SemIR::CalleeFunctionPtr _): {
+      CARBON_FATAL("overloads should produce functions");
+    }
   }
 }
 

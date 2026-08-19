@@ -56,6 +56,11 @@ auto BuildThunkDefinitionForExport(Context& context,
 auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
                        const SemIR::Class& class_info) -> SemIR::FunctionId;
 
+// Returns the FunctionDecl of a thunk that wraps function pointers with the
+// given type. See `fn_ptr.md` for details.
+auto GetOrCreateFunctionPtrThunk(Context& context, SemIR::TypeId type_id)
+    -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_THUNK_H_

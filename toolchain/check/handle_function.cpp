@@ -833,14 +833,40 @@ auto HandleParseNode(Context& context, Parse::FunctionTerseDefinitionId node_id)
   return context.TODO(node_id, "HandleFunctionTerseDefinition");
 }
 
-auto HandleParseNode(Context& context, Parse::FnPtrTypeLiteralId node_id)
-    -> bool {
-  return context.TODO(node_id, "HandleFnPtrTypeLiteral");
-}
-
 auto HandleParseNode(Context& context, Parse::FnPtrTypeLiteralReturnId node_id)
     -> bool {
-  return context.TODO(node_id, "HandleFnPtrTypeLiteralReturn");
+  auto [expr_node_id, inst_id] = context.node_stack().PopExprWithNodeId();
+  auto form_inst_id = ConvertToValueOfType(context, expr_node_id, inst_id,
+                                           SemIR::FormType::TypeId);
+  context.node_stack().Push(node_id, form_inst_id);
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::FnPtrTypeLiteralId node_id)
+    -> bool {
+  auto return_form_inst_id =
+      context.node_stack().Pop<Parse::NodeKind::FnPtrTypeLiteralReturn>();
+
+  auto params_inst_id =
+      context.node_stack().Pop<Parse::NodeKind::TupleLiteral>();
+  auto params_tuple =
+      context.insts().GetAs<SemIR::TupleLiteral>(params_inst_id);
+  auto params_block = context.inst_blocks().Get(params_tuple.elements_id);
+
+  llvm::SmallVector<SemIR::InstId> converted_param_ids;
+  for (auto inst_id : params_block) {
+    converted_param_ids.push_back(ConvertToValueOfType(
+        context, SemIR::LocId(inst_id), inst_id, SemIR::FormType::TypeId));
+  }
+  auto param_forms_id = context.inst_blocks().Add(converted_param_ids);
+
+  auto value_id = AddInst<SemIR::FunctionPtrType>(
+      context, node_id,
+      SemIR::FunctionPtrType{.type_id = SemIR::TypeType::TypeId,
+                             .param_forms_id = param_forms_id,
+                             .return_form_id = return_form_inst_id});
+  context.node_stack().Push(node_id, value_id);
+  return true;
 }
 
 }  // namespace Carbon::Check

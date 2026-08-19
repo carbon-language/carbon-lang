@@ -143,6 +143,10 @@ class TypeIterator::Step {
   struct ArrayStart {
     TypeId type_id;
   };
+  // Followed by the return type and any parameter types.
+  struct FunctionPtrStart {
+    TypeId type_id;
+  };
   // Simple wrapped types, followed by the inner type.
   struct ConstStart {};
   struct MaybeUnformedStart {};
@@ -228,8 +232,8 @@ class TypeIterator::Step {
       SymbolicValue, StructFieldName, ClassStartOnly, StructStartOnly,
       TupleStartOnly, InterfaceStartOnly, NamedConstraintStartOnly, ClassStart,
       StructStart, TupleStart, InterfaceStart, NamedConstraintStart, IntStart,
-      ArrayStart, ConstStart, MaybeUnformedStart, PartialStart, PointerStart,
-      End, Done, Error>;
+      ArrayStart, FunctionPtrStart, ConstStart, MaybeUnformedStart,
+      PartialStart, PointerStart, End, Done, Error>;
 
   template <typename T>
   auto Is() const -> bool {

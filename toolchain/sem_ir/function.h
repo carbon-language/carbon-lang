@@ -51,6 +51,9 @@ struct FunctionFields {
     // A function that was imported from C++, for which we generated a
     // `CppThunk`. `special_function_kind_data` is the `InstId` of that thunk.
     HasCppThunk,
+    // A thunk that calls a function pointer. `special_function_kind_data` is
+    // unused.
+    FunctionPtrThunk,
   };
 
   // Kinds of virtual modifiers that can apply to functions.
@@ -364,6 +367,13 @@ struct Function : public EntityWithParamsBase,
     special_function_kind = SpecialFunctionKind::HasCppThunk;
     special_function_kind_data = AnyRawId(decl_id.index);
   }
+
+  // Sets that this function is a thunk that represents a function pointer
+  // call. See `fn_ptr.md` for details.
+  auto SetFunctionPtrCall() -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::FunctionPtrThunk;
+  }
 };
 
 using FunctionStore = ValueStore<FunctionId, Function, Tag<CheckIRId>>;
@@ -392,8 +402,13 @@ struct CalleeFunction {
   // The bound `Self` type or facet value. `None` if not a bound interface
   // member.
   InstId self_type_id;
-  // The bound `self` parameter. `None` if not a method.
+  // The bound `self` argument. `None` if not a method.
   InstId self_id;
+};
+
+// Information about a callee that's a function pointer.
+struct CalleeFunctionPtr {
+  InstId function_ptr_id;
 };
 
 // Information about a callee that may be a generic type, or could be an
@@ -402,7 +417,7 @@ struct CalleeNonFunction {};
 
 // A variant combining the callee forms.
 using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
-                            CalleeNonFunction>;
+                            CalleeFunctionPtr, CalleeNonFunction>;
 
 // Returns information for the function corresponding to callee_id in
 // caller_specific_id.

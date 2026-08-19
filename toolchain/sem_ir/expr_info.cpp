@@ -22,6 +22,23 @@ static auto AsAnyInstId(IdAndKind arg) -> InstId {
   return arg.As<SemIR::AbsoluteInstId>();
 }
 
+static auto FormToCategory(const File* ir, InstId return_form_id)
+    -> ExprCategory {
+  auto return_form = ir->insts().Get(return_form_id);
+  CARBON_KIND_SWITCH(return_form) {
+    case CARBON_KIND(InitForm _):
+      return ExprCategory::ReprInitializing;
+    case CARBON_KIND(RefForm _):
+      return ExprCategory::DurableRef;
+    case CARBON_KIND(ValueForm _):
+      return ExprCategory::Value;
+    case CARBON_KIND(ErrorInst _):
+      return ExprCategory::Error;
+    default:
+      CARBON_FATAL("Unexpected form inst kind: {0}", return_form);
+  }
+}
+
 struct ExprCategoryResult {
   ExprCategory category;
   InstId inner_inst_id;
@@ -72,19 +89,7 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
               // Treat as equivalent to `-> ()`.
               return ExprCategory::ReprInitializing;
             }
-            auto return_form = ir->insts().Get(return_form_id);
-            CARBON_KIND_SWITCH(return_form) {
-              case CARBON_KIND(InitForm _):
-                return ExprCategory::ReprInitializing;
-              case CARBON_KIND(RefForm _):
-                return ExprCategory::DurableRef;
-              case CARBON_KIND(ValueForm _):
-                return ExprCategory::Value;
-              case CARBON_KIND(ErrorInst _):
-                return ExprCategory::Error;
-              default:
-                CARBON_FATAL("Unexpected inst kind: {0}", return_form);
-            }
+            return FormToCategory(ir, return_form_id);
           }
           case CARBON_KIND(SemIR::CalleeNonFunction _): {
             return ExprCategory::NotExpr;
@@ -92,6 +97,12 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
           case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
             // TODO: support `ref` returns from C++.
             return ExprCategory::ReprInitializing;
+          }
+          case CARBON_KIND(SemIR::CalleeFunctionPtr function_ptr): {
+            auto ptr_type_id =
+                ir->insts().Get(function_ptr.function_ptr_id).type_id();
+            auto ptr_type = ir->types().GetAs<FunctionPtrType>(ptr_type_id);
+            return FormToCategory(ir, ptr_type.return_form_id);
           }
         }
       } else if constexpr (std::same_as<TypedInstT, SpliceInst>) {

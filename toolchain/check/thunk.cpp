@@ -563,4 +563,57 @@ auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
   return thunk_function_id;
 }
 
+static auto BuildFunctionPtrThunk(Context& context,
+                                  SemIR::TypeId fn_ptr_type_id)
+    -> SemIR::InstId {
+  auto fn_ptr_type =
+      context.types().GetAs<SemIR::FunctionPtrType>(fn_ptr_type_id);
+  auto param_form_ids = context.inst_blocks().Get(fn_ptr_type.param_forms_id);
+  llvm::SmallVector<SemIR::TypeId> param_type_ids;
+  llvm::SmallVector<ParamPatternKind> param_kinds;
+  param_type_ids.reserve(param_form_ids.size());
+  param_kinds.reserve(param_form_ids.size());
+  for (auto param_form_id : param_form_ids) {
+    auto param_form =
+        context.insts().GetAs<SemIR::AnyPrimitiveForm>(param_form_id);
+    param_type_ids.push_back(
+        context.types().GetTypeIdForTypeInstId(param_form.type_component_id));
+    switch (param_form.kind) {
+      case SemIR::InitForm::Kind:
+        param_kinds.push_back(ParamPatternKind::Var);
+        break;
+      case SemIR::RefForm::Kind:
+        param_kinds.push_back(ParamPatternKind::Ref);
+        break;
+      case SemIR::ValueForm::Kind:
+        param_kinds.push_back(ParamPatternKind::Value);
+        break;
+      default:
+        CARBON_FATAL("Unexpected kind for parameter form {0}", param_form);
+    }
+  }
+  auto [fn_decl_id, fn_id] = MakeGeneratedFunctionDecl(
+      context, SemIR::LocId::None,
+      {.parent_scope_id = SemIR::NameScopeId::Package,
+       .name_id = SemIR::NameId::ForIdentifier(
+           context.identifiers().Add("__fn_ptr_thunk")),
+       .self_type_id = fn_ptr_type_id,
+       .self_kind = ParamPatternKind::Value,
+       .param_type_ids = param_type_ids,
+       .param_kinds = param_kinds,
+       .return_form = FormExprAsForm(context, SemIR::LocId::None,
+                                     fn_ptr_type.return_form_id)});
+  auto& fn = context.functions().Get(fn_id);
+  fn.SetFunctionPtrCall();
+  return fn_decl_id;
+}
+
+auto GetOrCreateFunctionPtrThunk(Context& context, SemIR::TypeId type_id)
+    -> SemIR::InstId {
+  return context.function_ptr_thunks()
+      .Insert(type_id,
+              [&]() { return BuildFunctionPtrThunk(context, type_id); })
+      .value();
+}
+
 }  // namespace Carbon::Check

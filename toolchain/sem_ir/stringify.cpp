@@ -406,6 +406,17 @@ class Stringifier {
                       ">");
   }
 
+  auto StringifyInst(InstId /*inst_id*/, FunctionPtrType inst) -> void {
+    *out_ << "__fn_ptr(";
+    step_stack_->Push(inst.return_form_id);
+    step_stack_->PushString(") ->? ");
+    auto params = sem_ir_->inst_blocks().Get(inst.param_forms_id);
+    llvm::ListSeparator sep;
+    for (auto ref : llvm::reverse(params)) {
+      step_stack_->Push(ref, &sep);
+    }
+  }
+
   auto StringifyInst(InstId /*inst_id*/, FunctionType inst) -> void {
     const auto& fn = sem_ir_->functions().Get(inst.function_id);
     *out_ << "<type of ";
@@ -562,6 +573,12 @@ class Stringifier {
     }
   }
 
+  auto StringifyInst(InstId /*inst_id*/, InitForm inst) -> void {
+    *out_ << "form(init ";
+    step_stack_->PushString(")");
+    step_stack_->Push(inst.type_component_inst_id);
+  }
+
   auto StringifyInst(InstId /*inst_id*/, IntType inst) -> void {
     *out_ << "<builtin ";
     step_stack_->PushString(">");
@@ -612,6 +629,12 @@ class Stringifier {
 
   auto StringifyInst(InstId /*inst_id*/, PointerType inst) -> void {
     step_stack_->Push(inst.pointee_id, "*");
+  }
+
+  auto StringifyInst(InstId /*inst_id*/, RefForm inst) -> void {
+    *out_ << "form(ref ";
+    step_stack_->PushString(")");
+    step_stack_->Push(inst.type_component_inst_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, SpecificFunction inst) -> void {
@@ -729,6 +752,12 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, UnboundElementType inst) -> void {
     *out_ << "<unbound element of class ";
     step_stack_->Push(inst.class_type_inst_id, ">");
+  }
+
+  auto StringifyInst(InstId /*inst_id*/, ValueForm inst) -> void {
+    *out_ << "form(val ";
+    step_stack_->PushString(")");
+    step_stack_->Push(inst.type_component_inst_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, VtablePtr /*inst*/) -> void {

@@ -446,6 +446,10 @@ class Context {
     return mangle_string_fingerprint_;
   }
 
+  auto function_ptr_thunks() -> Map<SemIR::TypeId, SemIR::InstId>& {
+    return function_ptr_thunks_;
+  }
+
   // --------------------------------------------------------------------------
   // End of SemIR::File members.
   // --------------------------------------------------------------------------
@@ -623,6 +627,9 @@ class Context {
   CoreIdentifierCache core_identifiers_;
 
   bool mangle_string_fingerprint_;
+
+  // Cache of thunks for function pointer types.
+  Map<SemIR::TypeId, SemIR::InstId> function_ptr_thunks_;
 };
 
 inline constexpr Context::FormExpr Context::FormExpr::Error = {

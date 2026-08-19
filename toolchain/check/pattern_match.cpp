@@ -269,7 +269,8 @@ class MatchContext {
 auto MatchContext::Match(State state, WorkItem entry) -> void {
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context_.emitter(), [&](auto& builder) {
-        if (std::holds_alternative<CallerState*>(state)) {
+        if (std::holds_alternative<CallerState*>(state) &&
+            context_.insts().GetCanonicalLocId(entry.pattern_id).has_value()) {
           CARBON_DIAGNOSTIC(InCallToFunctionParam, Note,
                             "initializing function parameter");
           builder.Note(entry.pattern_id, InCallToFunctionParam);

@@ -123,9 +123,11 @@ auto FileContext::LowerDefinitions() -> void {
 
   // Lower function definitions.
   for (auto [id, fn_info] : sem_ir_->functions().enumerate()) {
-    // If we created a declaration and the function definition is not imported,
-    // build a definition.
+    // If we created a declaration and the function definition is needed but not
+    // imported, build a definition.
     if (functions_.Get(id) && fn_info.definition_id.has_value() &&
+        fn_info.special_function_kind !=
+            SemIR::Function::SpecialFunctionKind::FunctionPtrThunk &&
         !sem_ir().insts().GetImportSource(fn_info.definition_id).has_value()) {
       BuildFunctionDefinition(id);
     }
@@ -444,8 +446,13 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
       {fallback_file, fallback_function_id, fallback_specific_id}};
   auto function_type_info =
       BuildFunctionTypeInfo(llvm::ArrayRef(func_infos, fallback_file ? 2 : 1));
-  auto* llvm_function =
-      GetOrCreateLLVMFunction(function_type_info, function_id, specific_id);
+  llvm::Function* llvm_function = nullptr;
+  // If we're calling a function pointer, we don't need an LLVM function.
+  if (function.special_function_kind !=
+      SemIR::Function::SpecialFunctionKind::FunctionPtrThunk) {
+    llvm_function =
+        GetOrCreateLLVMFunction(function_type_info, function_id, specific_id);
+  }
 
   return {{.type = function_type_info.type,
            .di_type = function_type_info.di_type,

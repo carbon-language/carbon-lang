@@ -745,7 +745,11 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // order.
   std::vector<llvm::Value*> args;
   bool args_ok = true;
-  auto* callee_type = function_info->llvm_function->getFunctionType();
+  // TODO: We should be able to use function_info->type unconditionally, but
+  // that seems to sometimes have the wrong value for C++ thunks.
+  auto* callee_type = function_info->llvm_function != nullptr
+                          ? function_info->llvm_function->getFunctionType()
+                          : function_info->type;
   for (auto index : function_info->lowered_param_indices) {
     args.push_back(context.GetValue(arg_ids[index.index]));
 
@@ -774,7 +778,15 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       return out.TakeStr();
     };
     CARBON_CHECK(args_ok, "Argument mismatch: {0}", describe_call());
-    call = context.builder().CreateCall(llvm_callee, args);
+    if (function.special_function_kind ==
+        SemIR::Function::SpecialFunctionKind::FunctionPtrThunk) {
+      llvm::ArrayRef<llvm::Value*> args_ref = args;
+      llvm::Value* callee_ptr = args_ref.consume_front();
+      call =
+          context.builder().CreateCall(function_info->type, callee_ptr, args);
+    } else {
+      call = context.builder().CreateCall(llvm_callee, args);
+    }
   } else {
     call = HandleVirtualCall(context, args, function, *function_info);
   }

@@ -189,6 +189,23 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
       PushInstId(const_type.inner_id);
       return Step::ConstStart();
     }
+    case CARBON_KIND(FunctionPtrType function_ptr_type): {
+      Push(EndType());
+      auto param_form_ids =
+          sem_ir_->inst_blocks().Get(function_ptr_type.param_forms_id);
+      for (auto param_form_id : llvm::concat<const SemIR::InstId>(
+               llvm::ArrayRef(function_ptr_type.return_form_id),
+               llvm::reverse(param_form_ids))) {
+        // TODO support non-primitive forms
+        auto param_form =
+            sem_ir_->insts().GetAs<AnyPrimitiveForm>(param_form_id);
+        PushInstId(param_form.type_component_id);
+        // TODO should the type structure also reflect the rest of the form
+        // (e.g. the category)?
+      }
+      return Step::FunctionPtrStart(
+          {.type_id = sem_ir_->types().GetTypeIdForTypeInstId(inst_id)});
+    }
     case CARBON_KIND(ImplWitnessAssociatedConstant assoc): {
       PushTypeId(assoc.type_id);
       return std::nullopt;

@@ -298,6 +298,7 @@ static auto CanDestroyType(
     case SemIR::FacetType::Kind:
     case SemIR::FloatType::Kind:
     case SemIR::FormType::Kind:
+    case SemIR::FunctionPtrType::Kind:
     case SemIR::IntLiteralType::Kind:
     case SemIR::IntType::Kind:
     case SemIR::PointerType::Kind:

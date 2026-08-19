@@ -27,6 +27,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/period_self.h"
+#include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -2935,10 +2936,29 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
 static auto GetReturnStorageParamIndexRange(EvalContext& eval_context,
                                             const SemIR::Callee& callee)
     -> std::pair<int, int> {
-  if (const auto* callee_function =
-          std::get_if<SemIR::CalleeFunction>(&callee)) {
-    const auto& function =
-        eval_context.functions().Get(callee_function->function_id);
+  auto function_id = SemIR::FunctionId::None;
+  CARBON_KIND_SWITCH(callee) {
+    case CARBON_KIND(SemIR::CalleeFunction callee_function): {
+      function_id = callee_function.function_id;
+      break;
+    }
+    case CARBON_KIND(SemIR::CalleeFunctionPtr callee_function_ptr): {
+      auto type_id = eval_context.insts()
+                         .Get(callee_function_ptr.function_ptr_id)
+                         .type_id();
+      auto thunk_decl_id =
+          GetOrCreateFunctionPtrThunk(eval_context.context(), type_id);
+      function_id = eval_context.context()
+                        .insts()
+                        .GetAs<SemIR::FunctionDecl>(thunk_decl_id)
+                        .function_id;
+      break;
+    }
+    default:
+      break;
+  }
+  if (function_id.has_value()) {
+    const auto& function = eval_context.functions().Get(function_id);
     return {function.call_param_ranges.return_begin().index,
             function.call_param_ranges.return_end().index};
   }
