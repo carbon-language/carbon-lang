@@ -120,14 +120,17 @@ auto Metrics::CodePointWidth(char32_t code_point) const -> int {
 }
 
 auto Metrics::RenderedCodePoint(char32_t code_point) const -> char32_t {
-  if (charset_ == Charset::Ascii) {
-    return IsPrintableAscii(code_point) ? code_point : U'?';
-  }
   // Printable ASCII is most of what gets drawn, and settling it here keeps it
   // out of the range tables the general answer searches.
   if (IsPrintableAscii(code_point)) {
     return code_point;
   }
+
+  // Fallback if we can't use unicode.
+  if (charset_ == Charset::Ascii) {
+    return U'?';
+  }
+
   // Which code points have no rendering is what a negative width names as well,
   // asked directly rather than through a width that has to encode one to
   // answer.
