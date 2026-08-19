@@ -25,7 +25,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [`impl` lookup for compound member access](#impl-lookup-for-compound-member-access)
 -   [Instance binding](#instance-binding)
 -   [Non-instance members](#non-instance-members)
--   [Vacuous member access](#vacuous-member-access)
+-   [Restrictions on compound member access](#restrictions-on-compound-member-access)
 -   [Member binding interfaces](#member-binding-interfaces)
     -   [Compiler implementation of binding interfaces](#compiler-implementation-of-binding-interfaces)
         -   [Methods](#methods)
@@ -958,38 +958,74 @@ fn CallStaticMethod(c: C) {
 }
 ```
 
-## Vacuous member access
+## Restrictions on compound member access
 
-A compound member access expression where the first operand is not used for
-`impl` lookup or instance binding is valid, even though the first operand is
-redundant.
+Compound member access is rewritten to use
+[member binding interfaces](#member-binding-interfaces). The
+[compiler provides](#compiler-implementation-of-binding-interfaces)
+automatic implementations of these interfaces subject to these restrictions:
 
-Instead, tools such as linters can highlight such code as suspicious on a
-best-effort basis, particularly when the issue is contained in a single
-expression. Such tools may still allow code that performs the same operation
-across multiple statements, as in:
+-   If the first operand is a type, then the second operand must be a member of
+    an interface, triggering [`impl` lookup](#impl-lookup).
 
-```carbon
-class C {
-  fn NonInstance();
-}
+    ```carbon
+    interface I {
+      fn F();
+    }
+    class C {
+      impl as I;
+      fn G();
+    }
+    // ✅ Valid
+    C.(I.F)();
 
-let M:! auto = C.NonInstance;
+    // ❌ Error: `C.G` is not an interface member.
+    C.(C.G)();
+    ```
 
-let v: C = {};
-// ✅ Allowed, even though `v.` is not used.
-v.(M)();
-```
+-   Otherwise, the first operand must be used in some way: a compound member
+    access must result in `impl` lookup, instance binding, or both. We say the
+    member access must be "non-vacuous." Note: simple member access doesn't
+    have the same restrictions, since the first operand is always used for
+    lookup.
 
-> **Note:** Earlier wording restricted vacuous member access by making
-> expressions such as `v.(C.NonInstance)` invalid because the `v.`
-> portion is redundant. That rule was removed by proposal
+-   As an exception, if the second operand names a function, we allow vacuous
+    compound member access. Instead, tools such as linters can highlight such
+    code as suspicious on a best-effort basis, particularly when the issue is
+    contained in a single expression. Such tools may still allow code that
+    performs the same operation across multiple statements, as in:
+
+    ```carbon
+    class C {
+      fn NonInstance();
+    }
+
+    let M:! auto = C.NonInstance;
+
+    let v: C = {};
+    // ✅ Allowed, even though `v.` is not used.
+    v.(M)();
+    ```
+
+-   The compiler-provided binding implementations never produce a result that
+    has a compiler-provided binding implementation.
+
+    ```carbon
+    // `v.(M)` is the result of binding, so applying `v.` again is invalid
+    // ❌ v.(v.(M))();
+    ```
+
+> **Note:** The exception allowing vacuous compound member access with
+> functions was added by proposal
 > [#3720: Member binding operators](/proposals/p003720-member-binding-operators.md#details).
-
-In the case where `M` is an overloaded name, it could be an instance member in some
-cases and a non-instance member in others, depending on the arguments passed.
-This is another reason to delegate this to linters analyzing a whole expression
-on a best-effort basis, rather than a strict rule just about member binding.
+> Previously expressions such as `v.(C.NonInstance)` were invalid because the
+> `v.` portion was considered redundant.
+>
+> Beyond the issue of restricting operations spread across multiple expressions,
+> there was also a concern when `M` is an overloaded name, since it could be an
+> instance member in some cases and a non-instance member in others, depending
+> on the arguments passed. This was another reason to delegate this to linters
+> analyzing a whole expression on a best-effort basis.
 
 ```carbon
 interface Printable {
@@ -1017,14 +1053,23 @@ impl i32 as Factory;
 
 // ✅ OK, member `Make` of interface `Factory`.
 alias X1 = Factory.Make;
-// ⚠️ Suspicious (linter warning), but valid: compound access without impl
-// lookup or instance binding.
+
+// ❌ Invalid. Since `Factory.Make` is an interface member, we perform
+// `impl` lookup and `Factory` is not a type that implements `Factory`.
 alias X2 = Factory.(Factory.Make);
+
 // ✅ OK, member `Make` of `impl i32 as Factory`.
 alias X3 = (i32 as Factory).Make;
+
 // ⚠️ Suspicious (linter warning), but valid: compound access without impl
 // lookup or instance binding.
 alias X4 = i32.((i32 as Factory).Make);
+
+// ⚠️ Suspicious (linter warning), but valid: same as `X4`.
+alias X5 = i64.((i32 as Factory).Make);
+
+// ❌ Invalid: binding something that has already been bound.
+alias X6 = i32.(i32.((i32 as Factory).Make));
 ```
 
 ## Member binding interfaces
@@ -1228,10 +1273,11 @@ Non-instance members use `BindToType` when accessed on a type facet:
     implements `BindToType(C)` with `.Result = __TypeBinding_C_NonInstance`.
 -   To support calling directly on a type facet, `__TypeOf_C_NonInstance` also
     implements `Call(())` directly (supporting `C.NonInstance()`).
--   To support calling on value/reference instances `x.NonInstance()`,
-    `__TypeOf_C_NonInstance` implements `BindToValue(C)` and `BindToRef(C)`
-    returning a bound adapter whose `Call` implementation ignores its `self`
-    argument, effectively discarding the evaluated instance `x`.
+-   To support calling on value/reference instances `x.NonInstance()`, for
+    function members `NonInstance`, `__TypeOf_C_NonInstance` implements
+    `BindToValue(C)` and `BindToRef(C)` returning a bound adapter whose `Call`
+    implementation ignores its `self` argument, effectively discarding the
+    evaluated instance `x`.
 
 #### Interface members and `impl` lookup
 
@@ -1291,22 +1337,30 @@ naturally enforced by whether the member's type implements the required
 ```carbon
 class C {
   fn F(self);
+  fn G();
 }
 
 let v: C = {};
 // ❌ Invalid, instance binding to something already bound.
 v.(v.F)();
-// ✅ Allowed, even though `C.(C.F)` is redundant.
-v.(C.(C.F))();
+// ✅ Allowed, even though `C.G` is non-instance.
+v.(C.G)();
+// ❌ Invalid, accessing a non-interface-member of type.
+C.(C.G)();
 ```
 
-`v.(v.F)` fails because the bound method
-adapter does not implement member binding interfaces, following the rules of
-[instance binding](#instance-binding).
+In this example:
 
-However, `C.(C.F)` is an allowed
-[vacuous member access](#vacuous-member-access), so `__TypeOf_C_F` needs to
-implement `BindToType(C)` in addition to `BindToValue(C)` and `BindToRef(C)`.
+-   `v.(v.F)` fails because the bound method adapter does not implement member
+    binding interfaces, since it already bound, following the rules of
+    [instance binding](#instance-binding) and
+    [compound member access](#restrictions-on-compound-member-access).
+-   `v.(C.G)` is an allowed
+    [vacuous member access](#restrictions-on-compound-member-access), so
+    `__TypeOf_C_F` needs to implement `BindToType(C)` in addition to
+    `BindToValue(C)` and `BindToRef(C)`.
+-   `C.(C.G)` is not valid, so the type of `C.G` does not implement
+    `BindToType(C)`.
 
 ## Precedence and associativity
 
