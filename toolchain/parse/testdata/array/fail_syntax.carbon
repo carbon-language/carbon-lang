@@ -66,21 +66,16 @@ var x: array i32, 1;
 
 // --- fail_no_close_paren.carbon
 
-// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+16]]:13: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+11]]:13: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
 // CHECK:STDERR: var x: array(i32,;
 // CHECK:STDERR:             ^
+// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+8]]:18: note: possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR: var x: array(i32,;
+// CHECK:STDERR:                  ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+12]]:13: error: expected `(` after `array` [ExpectedParenAfter]
+// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+4]]:18: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: var x: array(i32,;
-// CHECK:STDERR:             ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+8]]:13: error: expected `,` in `array(Type, Count)` [ExpectedArrayComma]
-// CHECK:STDERR: var x: array(i32,;
-// CHECK:STDERR:             ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+4]]:13: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR: var x: array(i32,;
-// CHECK:STDERR:             ^
+// CHECK:STDERR:                  ^
 // CHECK:STDERR:
 var x: array(i32,;
 
@@ -198,14 +193,14 @@ var x: array;
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ╭─ArrayExprKeyword 'array'
-// CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen 'array' has_error
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse '(' has_error
-// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma '(' has_error
-// CHECK:STDOUT:   │ │   │ ├─InvalidParse '(' has_error
-// CHECK:STDOUT:   │ │   ├─ArrayExpr 'array' has_error
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen '('
+// CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma ','
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │   ├─ArrayExpr ')' has_error
 // CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
-// CHECK:STDOUT:   ├─VariableDecl ';' has_error
+// CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_no_length.carbon
