@@ -487,18 +487,32 @@ static auto CreateCppFieldDecl(Context& context,
     return nullptr;
   }
 
+  auto clang_loc = GetCppLocation(context, SemIR::LocId(field_inst_id));
+  bool invalid = false;
+
+  // The field is required to have a complete type in the Clang AST, not just in
+  // SemIR.
+  if (context.clang_sema().RequireCompleteSizedType(
+          clang_loc, cpp_type, clang::diag::err_field_incomplete_or_sizeless)) {
+    // Follow Clang in marking the class as invalid if it contains a field with
+    // an incomplete type. In Clang this prevents record layout; it's unclear if
+    // it's necessary for us.
+    record_decl->setInvalidDecl();
+    invalid = true;
+  }
+
   // Get the field's C++ identifier.
   auto* identifier_info = GetClangIdentifierInfo(context, field_decl.name_id);
   CARBON_CHECK(identifier_info, "field with non-identifier name {0}",
                field_decl.name_id);
 
   // Create the `clang::FieldDecl`.
-  auto clang_loc = GetCppLocation(context, SemIR::LocId(field_inst_id));
   auto* cpp_field_decl = clang::FieldDecl::Create(
       context.ast_context(), record_decl, /*StartLoc=*/clang_loc,
       /*IdLoc=*/clang_loc, identifier_info, cpp_type, /*TInfo=*/nullptr,
       /*BW=*/nullptr,
       /*Mutable=*/true, clang::ICIS_NoInit);
+  cpp_field_decl->setInvalidDecl(invalid);
 
   SetCppClassMemberAccess(class_scope, field_decl.name_id, cpp_field_decl);
 
