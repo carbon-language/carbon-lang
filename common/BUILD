@@ -506,6 +506,19 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "ostream_test",
+    size = "small",
+    srcs = ["ostream_test.cpp"],
+    deps = [
+        ":ostream",
+        ":raw_string_ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_library(
     name = "pretty_stack_trace_function",
     hdrs = ["pretty_stack_trace_function.h"],
