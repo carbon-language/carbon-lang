@@ -30,9 +30,14 @@ auto HandleInitialize(
   auto encoding = NegotiatePositionEncoding(params.capabilities);
   context.SetPositionEncoding(encoding);
 
-  llvm::json::Object capabilities{{"documentSymbolProvider", true},
+  llvm::json::Object capabilities{{"declarationProvider", true},
+                                  {"definitionProvider", true},
+                                  {"documentSymbolProvider", true},
+                                  {"hoverProvider", true},
+                                  {"positionEncoding", encoding},
+                                  {"referencesProvider", true},
                                   {"textDocumentSync", /*Incremental=*/2},
-                                  {"positionEncoding", encoding}};
+                                  {"typeDefinitionProvider", true}};
   llvm::json::Object reply{{"capabilities", std::move(capabilities)}};
   on_done(reply);
 }
