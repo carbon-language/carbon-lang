@@ -24,7 +24,13 @@ template <typename DerivedT>
 // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
 class Printable {
   // Comparisons of the base class itself, which is empty and so always compares
-  // equal, allowing children to default their own comparison operators.
+// CRTP base class for printable types. Derived classes (DerivedT) must implement:
+// - auto Print(llvm::raw_ostream& out) const -> void
+template <typename DerivedT>
+// NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
+class Printable {
+  // Comparisons of the base class itself, which is empty and so always compares
+  // equal, allowing derived classes to default their own comparison operators.
   //
   // These are templated so that they are only used when the types of the
   // arguments are exactly `Printable`, rather than a derived class, and are
