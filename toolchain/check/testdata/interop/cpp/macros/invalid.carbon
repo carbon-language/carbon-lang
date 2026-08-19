@@ -10,12 +10,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/macros/invalid.carbon
 
-// --- enums.carbon
+// --- fail_macro_with_error.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-// CHECK:STDERR: enums.carbon:[[@LINE+4]]:1: error: unknown type name 'error' [CppInteropParseError]
+// CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+4]]:1: error: unknown type name 'error' [CppInteropParseError]
 // CHECK:STDERR:     9 | error has_error;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR:
@@ -25,14 +25,14 @@ error has_error;
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: enums.carbon:[[@LINE+11]]:3: error: failed to parse macro Cpp.macro_with_error to a valid constant expression [InCppMacroEvaluation]
+  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+11]]:3: error: failed to parse macro Cpp.macro_with_error to a valid constant expression [InCppMacroEvaluation]
   // CHECK:STDERR:   Cpp.macro_with_error;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: enums.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `macro_with_error` [InCppNameLookup]
+  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `macro_with_error` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.macro_with_error;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: enums.carbon:[[@LINE+4]]:3: error: member name `macro_with_error` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+4]]:3: error: member name `macro_with_error` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   Cpp.macro_with_error;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -40,7 +40,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- enums.carbon
+// CHECK:STDOUT: --- fail_macro_with_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
