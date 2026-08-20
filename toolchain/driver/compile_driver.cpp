@@ -19,11 +19,14 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Passes/OptimizationLevel.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/StandardInstrumentations.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Target/TargetMachine.h"
 #include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
@@ -61,6 +64,8 @@ CompilationUnit::CompilationUnit(
     consumer_ = &*sorting_consumer_;
   }
 }
+
+CompilationUnit::~CompilationUnit() = default;
 
 auto CompilationUnit::IncludeInDumps() -> bool {
   return cache_->include_in_dumps().Get(check_ir_id_);
@@ -420,6 +425,8 @@ auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
 }
 
 CompileDriver::CompileDriver(CompileOptions* options) : options_(options) {}
+
+CompileDriver::~CompileDriver() = default;
 
 auto CompileDriver::Initialize(
     DriverEnv& driver_env,
