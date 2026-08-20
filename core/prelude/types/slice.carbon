@@ -41,8 +41,8 @@ class Slice(T: type) {
 impl forall [T: type, Subscript: ImplicitAs(u64)]
     Slice(T) as IndirectIndexWith(Subscript)
     where .ElementType = T {
-  fn Addr(self, subscript: Subscript) -> T* {
-    return PointerOffset(self.Ptr(), subscript);
+  fn Ref(self, subscript: Subscript) -> ref T {
+    return *PointerOffset(self.Ptr(), subscript);
   }
 }
 

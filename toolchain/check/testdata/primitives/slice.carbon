@@ -755,8 +755,8 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %IndirectIndexWith_where.type.5d0d28.1: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(%u64) where %impl.elem0.114 impls @Copy> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.14f: type = facet_type <@ImplicitAs, @ImplicitAs(%u64)> [concrete]
 // CHECK:STDOUT:   %Subscript: %ImplicitAs.type.14f = symbolic_binding Subscript, 1 [symbolic]
-// CHECK:STDOUT:   %Slice.as.IndirectIndexWith.impl.Addr.type.fde: type = fn_type @Slice.as.IndirectIndexWith.impl.Addr, @Slice.as.IndirectIndexWith.impl(%T.67d, %Subscript) [symbolic]
-// CHECK:STDOUT:   %Slice.as.IndirectIndexWith.impl.Addr.2d5: %Slice.as.IndirectIndexWith.impl.Addr.type.fde = struct_value () [symbolic]
+// CHECK:STDOUT:   %Slice.as.IndirectIndexWith.impl.Ref.type.a3f: type = fn_type @Slice.as.IndirectIndexWith.impl.Ref, @Slice.as.IndirectIndexWith.impl(%T.67d, %Subscript) [symbolic]
+// CHECK:STDOUT:   %Slice.as.IndirectIndexWith.impl.Ref.9c0: %Slice.as.IndirectIndexWith.impl.Ref.type.a3f = struct_value () [symbolic]
 // CHECK:STDOUT:   %To.fe9: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %UInt.e8a755.2: type = class_type @UInt, @UInt(%To.fe9) [symbolic]
 // CHECK:STDOUT:   %From.fe9: Core.IntLiteral = symbolic_binding From, 0 [symbolic]
@@ -780,18 +780,18 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %FromUInt.facet: %FromUInt.type.af0 = facet_value %u64, (%FromUInt.impl_witness.cda) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.81a: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a90, @UInt.as.ImplicitAs.impl.2da(%int_64, %FromUInt.facet) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.14f = facet_value %u64, (%ImplicitAs.impl_witness.81a) [concrete]
-// CHECK:STDOUT:   %IndirectIndexWith.impl_witness.87d: <witness> = impl_witness imports.%IndirectIndexWith.impl_witness_table, @Slice.as.IndirectIndexWith.impl(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.impl_witness.65a: <witness> = impl_witness imports.%IndirectIndexWith.impl_witness_table, @Slice.as.IndirectIndexWith.impl(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.0e0: <witness> = impl_witness imports.%Copy.impl_witness_table.367, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %facet_value.760: %IndirectIndexWith_where.type.5d0d28.1 = facet_value %Slice.c12, (%Copy.impl_witness.0e0, %IndirectIndexWith.impl_witness.87d) [concrete]
-// CHECK:STDOUT:   %IndexWith.impl_witness.539: <witness> = impl_witness imports.%IndexWith.impl_witness_table, @T.as_type.as.IndexWith.impl(%u64, %facet_value.760) [concrete]
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.type.363: type = fn_type @T.as_type.as.IndexWith.impl.At, @T.as_type.as.IndexWith.impl(%u64, %facet_value.760) [concrete]
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.06f: %T.as_type.as.IndexWith.impl.At.type.363 = struct_value () [concrete]
-// CHECK:STDOUT:   %IndexWith.facet.cec: %IndexWith.type.c59 = facet_value %Slice.c12, (%IndexWith.impl_witness.539) [concrete]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.736: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%u64, %IndexWith.facet.cec) [concrete]
-// CHECK:STDOUT:   %.5c9: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.736, %IndexWith.facet.cec [concrete]
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.specific_fn: <specific function> = specific_function %T.as_type.as.IndexWith.impl.At.06f, @T.as_type.as.IndexWith.impl.At(%u64, %facet_value.760) [concrete]
+// CHECK:STDOUT:   %facet_value.d41: %IndirectIndexWith_where.type.5d0d28.1 = facet_value %Slice.c12, (%Copy.impl_witness.0e0, %IndirectIndexWith.impl_witness.65a) [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness.390: <witness> = impl_witness imports.%IndexWith.impl_witness_table, @T.as_type.as.IndexWith.impl(%u64, %facet_value.d41) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.type.51c: type = fn_type @T.as_type.as.IndexWith.impl.At, @T.as_type.as.IndexWith.impl(%u64, %facet_value.d41) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.b05: %T.as_type.as.IndexWith.impl.At.type.51c = struct_value () [concrete]
+// CHECK:STDOUT:   %IndexWith.facet.197: %IndexWith.type.c59 = facet_value %Slice.c12, (%IndexWith.impl_witness.390) [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.962: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%u64, %IndexWith.facet.197) [concrete]
+// CHECK:STDOUT:   %.5df: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.962, %IndexWith.facet.197 [concrete]
+// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.specific_fn: <specific function> = specific_function %T.as_type.as.IndexWith.impl.At.b05, @T.as_type.as.IndexWith.impl.At(%u64, %facet_value.d41) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -799,8 +799,8 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %Core.import_ref.409: @T.as_type.as.IndexWith.impl.%T.as_type.as.IndexWith.impl.At.type (%T.as_type.as.IndexWith.impl.At.type.d25) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.IndexWith.impl.%T.as_type.as.IndexWith.impl.At (constants.%T.as_type.as.IndexWith.impl.At.b0a)]
 // CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.4ca, %Core.import_ref.409), @T.as_type.as.IndexWith.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.6f1: type = import_ref Core//prelude/types/slice, loc{{\d+_\d+}}, loaded [symbolic = @Slice.as.IndirectIndexWith.impl.%T (constants.%T.67d)]
-// CHECK:STDOUT:   %Core.import_ref.874: @Slice.as.IndirectIndexWith.impl.%Slice.as.IndirectIndexWith.impl.Addr.type (%Slice.as.IndirectIndexWith.impl.Addr.type.fde) = import_ref Core//prelude/types/slice, loc{{\d+_\d+}}, loaded [symbolic = @Slice.as.IndirectIndexWith.impl.%Slice.as.IndirectIndexWith.impl.Addr (constants.%Slice.as.IndirectIndexWith.impl.Addr.2d5)]
-// CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.6f1, %Core.import_ref.874), @Slice.as.IndirectIndexWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.c76: @Slice.as.IndirectIndexWith.impl.%Slice.as.IndirectIndexWith.impl.Ref.type (%Slice.as.IndirectIndexWith.impl.Ref.type.a3f) = import_ref Core//prelude/types/slice, loc{{\d+_\d+}}, loaded [symbolic = @Slice.as.IndirectIndexWith.impl.%Slice.as.IndirectIndexWith.impl.Ref (constants.%Slice.as.IndirectIndexWith.impl.Ref.9c0)]
+// CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.6f1, %Core.import_ref.c76), @Slice.as.IndirectIndexWith.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.b7b: @UInt.as.ImplicitAs.impl.2da.%UInt.as.ImplicitAs.impl.Convert.type (%UInt.as.ImplicitAs.impl.Convert.type.181) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @UInt.as.ImplicitAs.impl.2da.%UInt.as.ImplicitAs.impl.Convert (constants.%UInt.as.ImplicitAs.impl.Convert.cd1)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a90 = impl_witness_table (%Core.import_ref.b7b), @UInt.as.ImplicitAs.impl.2da [concrete]
 // CHECK:STDOUT:   %Core.import_ref.ab07f: @UInt.as.FromUInt.impl.%UInt.as.FromUInt.impl.Convert.type (%UInt.as.FromUInt.impl.Convert.type.9ef) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @UInt.as.FromUInt.impl.%UInt.as.FromUInt.impl.Convert (constants.%UInt.as.FromUInt.impl.Convert.131)]
@@ -816,9 +816,9 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Slice.c12 = name_ref s, %s
 // CHECK:STDOUT:   %i.ref: %u64 = name_ref i, %i
-// CHECK:STDOUT:   %impl.elem1: %.5c9 = impl_witness_access constants.%IndexWith.impl_witness.539, element1 [concrete = constants.%T.as_type.as.IndexWith.impl.At.06f]
+// CHECK:STDOUT:   %impl.elem1: %.5df = impl_witness_access constants.%IndexWith.impl_witness.390, element1 [concrete = constants.%T.as_type.as.IndexWith.impl.At.b05]
 // CHECK:STDOUT:   %bound_method.loc6_13.1: <bound method> = bound_method %s.ref, %impl.elem1
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem1, @T.as_type.as.IndexWith.impl.At(constants.%u64, constants.%facet_value.760) [concrete = constants.%T.as_type.as.IndexWith.impl.At.specific_fn]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem1, @T.as_type.as.IndexWith.impl.At(constants.%u64, constants.%facet_value.d41) [concrete = constants.%T.as_type.as.IndexWith.impl.At.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_13.2: <bound method> = bound_method %s.ref, %specific_fn
 // CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.call: init %i32 = call %bound_method.loc6_13.2(%s.ref, %i.ref)
 // CHECK:STDOUT:   return %T.as_type.as.IndexWith.impl.At.call

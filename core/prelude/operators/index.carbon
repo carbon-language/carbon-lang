@@ -13,7 +13,7 @@ interface IndexWith(SubscriptType: type) {
 
 interface IndirectIndexWith(SubscriptType: type) {
   let ElementType: type;
-  fn Addr(self, subscript: SubscriptType) -> ElementType*;
+  fn Ref(self, subscript: SubscriptType) -> ref ElementType;
 }
 
 final impl forall [
@@ -23,6 +23,6 @@ final impl forall [
     ] T as IndexWith(SubscriptType)
         where .ElementType = T.ElementType {
   fn At(self, subscript: SubscriptType) -> ElementType {
-    return *self.Addr(subscript);
+    return self.Ref(subscript);
   }
 }
