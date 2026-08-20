@@ -2063,15 +2063,16 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   if (sem_ir.insts().Get(expr_id).type_id() != target.type_id &&
       target.kind == ConversionTarget::Value) {
     auto target_type_inst_id = context.types().GetTypeInstId(target.type_id);
-    SemIR::ConvertToValueAction convert_action = {
-        .type_id = SemIR::InstType::TypeId,
-        .inst_id = expr_id,
-        .target_type_inst_id = target_type_inst_id};
     // We don't use `HandleAction` here because it would call `PerformAction`
     // inline if it's performable, which would lead to infinite recursion.
-    if (!ActionIsPerformable(context, convert_action)) {
-      return AddDependentActionSplice(context, loc_id, convert_action,
-                                      target_type_inst_id);
+    if (auto splice_inst_id = AddActionSpliceIfDependent(
+            context, loc_id, target_type_inst_id,
+            SemIR::ConvertToValueAction{
+                .type_id = SemIR::InstType::TypeId,
+                .inst_id = expr_id,
+                .target_type_inst_id = target_type_inst_id});
+        splice_inst_id.has_value()) {
+      return splice_inst_id;
     }
   }
 
