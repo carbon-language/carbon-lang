@@ -72,7 +72,7 @@ void CallNonTypeF() {
 }
 ''';
 
-// --- fail_todo_generic_pointer.carbon
+// --- generic_pointer.carbon
 library "[[@TEST_NAME]]";
 import Cpp;
 
