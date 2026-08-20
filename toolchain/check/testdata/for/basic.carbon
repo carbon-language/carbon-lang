@@ -15,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 fn Run() {
-  // TODO: These diagnostics could be better. If nothing else, we should only diagnose once.
+  // TODO: These diagnostics could be better.
   // CHECK:STDERR: fail_not_range.carbon:[[@LINE+4]]:7: error: cannot access member of interface `Core.Iterate` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   for (unused c: {} in {}) {
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~
