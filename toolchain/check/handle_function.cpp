@@ -833,4 +833,14 @@ auto HandleParseNode(Context& context, Parse::FunctionTerseDefinitionId node_id)
   return context.TODO(node_id, "HandleFunctionTerseDefinition");
 }
 
+auto HandleParseNode(Context& context, Parse::FnPtrTypeLiteralId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleFnPtrTypeLiteral");
+}
+
+auto HandleParseNode(Context& context, Parse::FnPtrTypeLiteralReturnId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleFnPtrTypeLiteralReturn");
+}
+
 }  // namespace Carbon::Check

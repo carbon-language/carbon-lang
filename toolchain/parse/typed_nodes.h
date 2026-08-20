@@ -1163,6 +1163,25 @@ struct CallExpr {
   Lex::CloseParenTokenIndex token;
 };
 
+// The return part of a function pointer type literal: `->? d`.
+struct FnPtrTypeLiteralReturn {
+  static constexpr auto Kind =
+      NodeKind::FnPtrTypeLiteralReturn.Define({.child_count = 1});
+
+  Lex::MinusGreaterQuestionTokenIndex token;
+  AnyExprId return_form;
+};
+
+// A function pointer type literal: `__fn_ptr(a, b, c) ->? d`.
+struct FnPtrTypeLiteral {
+  static constexpr auto Kind = NodeKind::FnPtrTypeLiteral.Define(
+      {.category = NodeCategory::Expr, .bracketed_by = TupleLiteral::Kind});
+
+  Lex::FnPtrTokenIndex token;
+  TupleLiteralId parameter_forms;
+  FnPtrTypeLiteralReturnId return_form;
+};
+
 // A member access expression: `a.b` or `a.(b)`.
 struct MemberAccessExpr {
   static constexpr auto Kind = NodeKind::MemberAccessExpr.Define(

@@ -415,6 +415,7 @@ class NodeStack {
       -> std::optional<Id::Kind> {
     switch (node_kind) {
       case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::FnPtrTypeLiteralReturn:
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::MatchFirstDefinitionStart:
       case Parse::NodeKind::ObserveIntroducer:

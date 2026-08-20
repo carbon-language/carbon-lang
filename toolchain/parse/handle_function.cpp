@@ -124,4 +124,45 @@ auto HandleFunctionTerseBodyFinish(Context& context) -> void {
                                      state.has_error);
 }
 
+auto HandleFnPtrTypeLiteral(Context& context) -> void {
+  context.PopState();
+
+  context.PushState(StateKind::FnPtrTypeLiteralReturn);
+  context.ConsumeChecked(Lex::TokenKind::FnPtr);
+  context.PushState(StateKind::TupleLiteral);
+}
+
+auto HandleFnPtrTypeLiteralReturn(Context& context) -> void {
+  auto state = context.PopState();
+
+  if (context.PositionIs(Lex::TokenKind::MinusGreaterQuestion)) {
+    context.PushState(state, StateKind::FnPtrTypeLiteralFinish);
+    context.PushState(StateKind::FnPtrTypeLiteralReturnFinish);
+    context.ConsumeAndDiscard();
+    context.PushStateForExpr(PrecedenceGroup::ForType());
+  } else {
+    CARBON_DIAGNOSTIC(
+        ExpectedReturnFormInFnPtrType, Error,
+        "Missing `->?` return form for function pointer type literal");
+    // TODO: is there a better location we can use here?
+    context.emitter().Emit(*(context.position() - 1),
+                           ExpectedReturnFormInFnPtrType);
+    state.has_error = true;
+    context.PushState(state, StateKind::FnPtrTypeLiteralFinish);
+  }
+}
+
+auto HandleFnPtrTypeLiteralReturnFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.AddNode(NodeKind::FnPtrTypeLiteralReturn, state.token,
+                  state.has_error);
+}
+
+auto HandleFnPtrTypeLiteralFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.AddNode(NodeKind::FnPtrTypeLiteral, state.token, state.has_error);
+}
+
 }  // namespace Carbon::Parse

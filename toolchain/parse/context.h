@@ -207,6 +207,9 @@ class Context {
   //     context.ReplacePlaceholderNode(state.subtree_start, /* replacement */);
   //   }
   //   ```
+  //
+  // This function is a no-op if the indicated position already holds the exact
+  // node value that this function would replace it with.
   auto ReplacePlaceholderNode(int32_t position, NodeKind kind,
                               Lex::TokenIndex token, bool has_error = false)
       -> void;

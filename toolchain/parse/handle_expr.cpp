@@ -84,6 +84,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(StateKind::LambdaIntroducer);
       break;
     }
+    case Lex::TokenKind::FnPtr: {
+      context.PushState(state);
+      context.PushState(StateKind::FnPtrTypeLiteral);
+      break;
+    }
     case Lex::TokenKind::False: {
       context.AddLeafNode(NodeKind::BoolLiteralFalse, context.Consume());
       context.PushState(state);

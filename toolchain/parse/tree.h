@@ -216,6 +216,9 @@ class Tree : public Printable<Tree> {
              << ", token_index: " << token_index_ << "}\n";
     }
 
+    friend auto operator==(const NodeImpl& lhs, const NodeImpl& rhs)
+        -> bool = default;
+
    private:
     // The kind of this node.
     NodeKind kind_;

@@ -60,6 +60,20 @@ auto HandleParenExpr(Context& context) -> void {
   }
 }
 
+auto HandleTupleLiteral(Context& context) -> void {
+  auto state = context.PopState();
+  context.AddLeafNode(NodeKind::TupleLiteralStart,
+                      context.ConsumeChecked(Lex::TokenKind::OpenParen));
+
+  if (context.PositionIs(Lex::TokenKind::CloseParen)) {
+    context.PushState(state, StateKind::TupleLiteralFinish);
+  } else {
+    context.PushState(state, StateKind::TupleLiteralFinish);
+    context.PushState(StateKind::TupleLiteralElementFinish);
+    context.PushState(StateKind::Expr);
+  }
+}
+
 auto HandleExprAfterOpenParenFinish(Context& context) -> void {
   auto state = context.PopState();
 

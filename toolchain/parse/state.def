@@ -144,6 +144,43 @@ CARBON_PARSE_STATE(PrimitiveFormFinish)
 //   (state done)
 CARBON_PARSE_STATE(FormLiteralFinish)
 
+// Handles the start of a function pointer type literal.
+//
+// __fn_ptr ( ...
+// ^~~~~~~~
+//   1. TupleLiteral
+//   2. FnPtrTypeLiteralReturn
+CARBON_PARSE_STATE(FnPtrTypeLiteral)
+
+// Handles the return part of a function pointer type literal.
+//
+// __fn_ptr ( ... ) ->? expr
+//                  ^~~
+//   1. Expr
+//   2. FnPtrTypeLiteralReturnFinish
+//   3. FnPtrTypeLiteralFinish
+//
+// __fn_ptr ( ... ) ???
+//                 ^
+//   1. FnPtrTypeLiteralFinish
+CARBON_PARSE_STATE(FnPtrTypeLiteralReturn)
+
+// Handles the end of the return part of a function pointer type literal.
+//
+// __fn_ptr ( ... ) ->? expr
+//                          ^
+//   (state done)
+CARBON_PARSE_STATE(FnPtrTypeLiteralReturnFinish)
+
+// Handles the end of a function pointer type literal.
+//
+// __fn_ptr ( ... ) ->? expr
+//                          ^
+// __fn_ptr ( ... )
+//                 ^
+//   (state done)
+CARBON_PARSE_STATE(FnPtrTypeLiteralFinish)
+
 // Handles the `{` of a brace expression.
 //
 // {}
@@ -555,7 +592,17 @@ CARBON_PARSE_STATE(Expr)
 //
 //  form
 // ^
-//   1. FormExpr
+//   1. FormLiteral
+//   2. ExprInPostfixLoop
+//
+//  fn
+// ^
+//   1. LambdaIntroducer
+//   2. ExprInPostfixLoop
+//
+//  __fn_ptr ( ... )
+// ^
+//   1. FnPtrTypeLiteralStart
 //   2. ExprInPostfixLoop
 //
 //  ???
@@ -749,9 +796,8 @@ CARBON_PARSE_STATE(FunctionIntroducer)
 // Handles a lambda's introducer.
 //
 // fn ...
-//   ^
-//   1. LambdaIntroducer
-//   2. LambdaAfterIntroducer
+// ^~
+//   1. LambdaAfterIntroducer
 CARBON_PARSE_STATE(LambdaIntroducer)
 
 // Handles processing of a lambda after the introducer.
@@ -1183,6 +1229,18 @@ CARBON_PARSE_STATE(OnlyParenExprFinish)
 //   2. ExprAfterOpenParenFinish
 //   3. ParenExprFinish             (SPECIAL: may be replaced)
 CARBON_PARSE_STATE(ParenExpr)
+
+// Handles the `(` of an expression that's known to be a tuple literal.
+// ( )
+// ^
+//   1. TupleLiteralFinish
+//
+// ( ... )
+// ^
+//   1. Expr
+//   2. TupleLiteralElementFinish
+//   3. TupleLiteralFinish
+CARBON_PARSE_STATE(TupleLiteral)
 
 // Handles the `)` of a tuple literal.
 //

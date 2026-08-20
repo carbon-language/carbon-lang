@@ -235,6 +235,7 @@ CARBON_KEYWORD_TOKEN(Val,                 "val")
 CARBON_TOKEN_WITH_VIRTUAL_NODE(
   CARBON_KEYWORD_TOKEN(Where,             "where"))
 CARBON_KEYWORD_TOKEN(While,               "while")
+CARBON_KEYWORD_TOKEN(FnPtr,               "__fn_ptr")
 
 // clang-format on
 #undef CARBON_DECL_INTRODUCER_TOKEN
