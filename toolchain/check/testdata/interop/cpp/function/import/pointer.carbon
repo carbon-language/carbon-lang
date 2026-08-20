@@ -399,7 +399,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "deduced_pointer_param.h";
 
 fn F() {
-  // These pass or return an Optional(S*) instead of an S*.
+  // These pass or return an Optional(DeducedPointerS*), not a DeducedPointerS*.
 
   //@dump-sem-ir-begin
   var s: Cpp.DeducedPointerS = {};

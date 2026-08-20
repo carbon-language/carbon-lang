@@ -121,9 +121,9 @@ fn CallQualified(d: Cpp.MethodDerived) {
 
 fn CallBaseQualifiedByDerived(d: Cpp.MethodDerived, b: Cpp.MethodBase) {
   //@dump-sem-ir-begin
-  // `Cpp.Derived.f` names a member of `Cpp.Base`, so we allow that to be used
-  // when `self` is a `Cpp.Base` or anything that implicitly converts to
-  // `Cpp.Base`, such as `Cpp.Derived`.
+  // `Cpp.MethodDerived.f` names a member of `Cpp.MethodBase`, so we allow
+  // that to be used when `self` is a `Cpp.MethodBase` or anything that
+  // implicitly converts to `Cpp.MethodBase`, such as `Cpp.MethodDerived`.
   d.(Cpp.MethodDerived.f)();
   b.(Cpp.MethodDerived.f)();
   //@dump-sem-ir-end

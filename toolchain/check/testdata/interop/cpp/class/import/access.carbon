@@ -232,7 +232,8 @@ import Cpp library "non_function_member_private.h";
 class Derived {
   extend base: Cpp.NonFunctionMemberPrivate;
   fn F() {
-    // TODO: `C.static_data` is private, so this should fail.
+    // TODO: `NonFunctionMemberPrivate.static_data` is private, so this
+    // should fail.
     // CHECK:STDERR: fail_import_non_function_member_private_extend_static_within_member_function.carbon:[[@LINE+7]]:47: error: cannot access private member `static_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     let unused unqualified_static_data: i32 = static_data;
     // CHECK:STDERR:                                               ^~~~~~~~~~~

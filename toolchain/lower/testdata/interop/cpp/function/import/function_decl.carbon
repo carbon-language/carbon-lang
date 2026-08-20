@@ -102,7 +102,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "inline_recursive_function_decl.h";
 
 fn MyF() {
-  // This should generate the definition of the inline function `foo1()`.
+  // This should generate the definition of the inline function `rec_foo1()`.
   Cpp.rec_foo2();
 }
 
