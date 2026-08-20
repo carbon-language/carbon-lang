@@ -41,6 +41,20 @@ fn G() {
 }
 //@dump-sem-ir-end
 
+// --- return_ref_class.carbon
+
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-begin
+class C {}
+
+fn ReturnRef() -> ref C;
+
+fn CallReturnRef() {
+  ReturnRef();
+}
+//@dump-sem-ir-end
+
 // --- fail_ref_not_durable_ref.carbon
 
 library "[[@TEST_NAME]]";
@@ -283,6 +297,54 @@ fn G(ref d: D) { F(ref d); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc10_3.2(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- return_ref_class.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %.723: Core.Form = ref_form %C [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %.af6: %pattern_type = ref_return_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type = return_slot_pattern %.af6, %C [concrete]
+// CHECK:STDOUT:   %ReturnRef.type: type = fn_type @ReturnRef [concrete]
+// CHECK:STDOUT:   %ReturnRef: %ReturnRef.type = struct_value () [concrete]
+// CHECK:STDOUT:   %CallReturnRef.type: type = fn_type @CallReturnRef [concrete]
+// CHECK:STDOUT:   %CallReturnRef: %CallReturnRef.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %ReturnRef.decl: %ReturnRef.type = fn_decl @ReturnRef [concrete = constants.%ReturnRef] {
+// CHECK:STDOUT:     %.loc7_19.1: %pattern_type = ref_return_pattern [concrete = constants.%.af6]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %.loc7_19.1, %C.ref [concrete = constants.%return.patt]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc7_19.2: type = ref_tag %C.ref
+// CHECK:STDOUT:     %.loc7_19.3: Core.Form = ref_form %C.ref [concrete = constants.%.723]
+// CHECK:STDOUT:     %.loc7_19.4: ref %C = ref_return
+// CHECK:STDOUT:     %return: ref %C = return_slot %.loc7_19.4
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %CallReturnRef.decl: %CallReturnRef.type = fn_decl @CallReturnRef [concrete = constants.%CallReturnRef] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @ReturnRef() -> ref %C;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CallReturnRef() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %ReturnRef.ref: %ReturnRef.type = name_ref ReturnRef, file.%ReturnRef.decl [concrete = constants.%ReturnRef]
+// CHECK:STDOUT:   %ReturnRef.call: ref %C = call %ReturnRef.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
