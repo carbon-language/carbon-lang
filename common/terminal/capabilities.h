@@ -203,12 +203,13 @@ struct Capabilities {
   // LLVM's `raw_ostream::has_colors()` is not a substitute for the enablement
   // rule above, which recognizes terminals its `TERM` list doesn't.
   //
-  // TODO: Ask the terminal what it draws on with an `OSC 11` query, which is
-  // what `vim`, `delta`, and `bat` do and is the only accurate answer;
-  // `COLORFGBG` is a passive stand-in. It needs machinery this doesn't have:
-  // raw mode to read the reply, a timeout for terminals that never answer and
-  // for the latency of a slow connection, a guard for `TERM=dumb`, and
-  // somewhere to put the reply so it can't be left in the input.
+  // An `OSC 11` query would ask the terminal what it draws on, which is the
+  // only accurate answer and what `vim`, `delta`, and `bat` do. It isn't one a
+  // non-interactive tool can use: the reply has to be waited for, and drawing
+  // with it only when it arrives in time would leave the colors depending on
+  // that. Reading it also consumes whatever was typed ahead for the next shell
+  // command, along with the input a compile may be taking from stdin.
+  // `COLORFGBG` is the passive stand-in that costs none of this.
   static auto Detect(Filesystem::WriteFileRef file,
                      Preferences preferences = {}) -> Capabilities;
 

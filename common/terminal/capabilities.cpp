@@ -191,7 +191,7 @@ auto ChooseBackground(BackgroundPreference preference,
   }
   // The first eight palette entries are the dark half, except that the eighth
   // is white and the ninth is the dark gray that follows it.
-  return index <= 6 || index == 8 ? Background::Dark : Background::Light;
+  return (index <= 6 || index == 8) ? Background::Dark : Background::Light;
 }
 
 // Returns the locale that determines the terminal's character encoding,

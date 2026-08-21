@@ -862,7 +862,8 @@ TEST(BufferTest, MeasureWrapWidth) {
   EXPECT_EQ(buffer.MeasureWrapWidth("a bb ccc"), 3);
   EXPECT_EQ(buffer.MeasureWrapWidth("  spaced  out  "), 6);
 
-  // Newlines and tabs bound a word without taking columns of their own.
+  // A word ends at a newline or a tab, neither of which takes columns of its
+  // own.
   EXPECT_EQ(buffer.MeasureWrapWidth("a\nbb\tccc"), 3);
 
   // A word is measured in the columns it takes, not the bytes it holds.
@@ -1007,8 +1008,8 @@ TEST(BufferDeathTest, WidthMustFitTheGrid) {
 }
 
 TEST(BufferDeathTest, TextMustStartInsideTheGrid) {
-  // The width does not bind unwrapped text, so only a column before the origin
-  // or a row no grid can index is a mistake.
+  // Unwrapped text is not held to the width, so only a column before the
+  // origin or a row no grid can index is a mistake.
   Buffer buffer(10, Charset::Ascii);
   EXPECT_DEATH(buffer.DrawCodePoint(-1, 0, 'a', Style()), "is outside the");
   EXPECT_DEATH(buffer.DrawCodePoint(0, -1, 'a', Style()), "is outside the");

@@ -101,8 +101,8 @@ enum class LineEnd : int8_t {
 // up to `MaxRows` -- so laying out is a question of how many rows something
 // takes, never of how wide the grid will turn out to be.
 //
-// Whether the width binds a drawing is what separates the two ways of drawing
-// text. `DrawText` does not wrap, so text it is given has nowhere else to go:
+// The two ways of drawing text differ in whether what they draw is held to the
+// width. `DrawText` does not wrap, so text it is given has nowhere else to go:
 // it widens the buffer, and `width()` grows past `columns()`.
 // `DrawWrappedText` and line drawing are held to the width, since wrapping has
 // the next row and a line running outside it came from a wrong extent. A
@@ -138,10 +138,10 @@ class Buffer {
   //
   // These are far past anything a terminal displays, and exist so that a cell
   // index stays representable rather than to ration anything. Unlike
-  // `columns()`, they bind every way of drawing: past them nothing is drawn and
-  // the column still advances, so measuring and drawing agree. Clipped rather
-  // than checked, since how far unwrapped text or an overhang runs is a fact
-  // about the text.
+  // `columns()`, every way of drawing is held to them: past them nothing is
+  // drawn and the column still advances, so measuring and drawing agree.
+  // Clipped rather than checked, since how far unwrapped text or an overhang
+  // runs is a fact about the text.
   static constexpr int MaxColumns = 1 << 14;
   static constexpr int MaxRows = 1 << 16;
 
@@ -258,7 +258,7 @@ class Buffer {
 
   // Draws `code_point` at (x, y), which must be a non-negative column and a row
   // inside `MaxRows`, widening the buffer and adding rows as needed to reach
-  // it. One code point is unwrapped text, so the width does not bind it.
+  // it. One code point is unwrapped text, so it is not held to the width.
   //
   // Returns the column after it, which is `x` again for a combining mark since
   // one renders into the column before it. A double-width character takes both
@@ -313,7 +313,7 @@ class Buffer {
   // Nothing here wraps, so text runs off the right of the width when it is
   // longer than the room left, and the buffer widens to hold it. That is what
   // this is for: text that must not be broken, such as a source line quoted as
-  // it was written. A caller that wants the width to bind wants
+  // it was written. A caller that wants the text held to the width wants
   // `DrawWrappedText`.
   //
   // Newlines return to column `margin` on the next row, carriage returns to
@@ -463,7 +463,7 @@ class Buffer {
   }
 
   // Checks that (x, y) is somewhere unwrapped text may start, which the width
-  // does not bind.
+  // does not decide.
   //
   // The text walks check this themselves, together with the bounds particular
   // to each: they are inlined into every text operation, and one check there
