@@ -84,6 +84,25 @@ auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
 auto OperandDependence(Context& context, SemIR::TypeId type_id)
     -> SemIR::ConstantDependence;
 
+// Adds an instruction to the current block to splice in the given instruction
+// value. `result_type_inst_id` specifies the type of the instruction, if known.
+auto AddSpliceInst(Context& context, SemIR::InstId inst_value_id,
+                   SemIR::TypeInstId result_type_inst_id) -> SemIR::InstId;
+
+// Adds an action instruction to the eval block to perform a dependent action.
+// The result is not spliced into the current block. This should be used when
+// the action instruction does not produce a single instruction value, so cannot
+// be spliced directly.
+auto AddDependentActionInst(Context& context, SemIR::LocIdAndInst action)
+    -> SemIR::InstId;
+
+// Convenience wrapper for `AddDependentActionInst`.
+template <typename LocT, typename InstT>
+auto AddDependentActionInst(Context& context, LocT loc, InstT inst)
+    -> SemIR::InstId {
+  return AddDependentActionInst(context, SemIR::LocIdAndInst(loc, inst));
+}
+
 // Adds an instruction to the current block to splice in the result of
 // performing a dependent action.
 auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,

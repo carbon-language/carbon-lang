@@ -2060,8 +2060,34 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
 
     case ConversionTarget::Initializing:
     case ConversionTarget::InPlaceInitializing: {
-      // TODO: Handle dependent initializations.
-      break;
+      auto action_id = AddDependentActionInst(
+          context, loc_id,
+          SemIR::InitializeAction{
+              .type_id = SemIR::InstType::TypeId,
+              .inst_id = expr_id,
+              .target_id = context.bundles().AddCanonical(
+                  SemIR::InitializeAction::Target{
+                      .target_type_inst_id = target_type_inst_id,
+                      .storage_id = target.storage_id,
+                      .in_place = SemIR::BoolValue::From(
+                          target.kind ==
+                          ConversionTarget::InPlaceInitializing)})});
+      auto result_id = AddInstToEvalBlock<SemIR::TupleAccess>(
+          context, loc_id,
+          {.type_id = SemIR::InstType::TypeId,
+           .tuple_id = action_id,
+           .index = SemIR::ElementIndex(0)});
+      auto storage_block_id = AddInstToEvalBlock<SemIR::TupleAccess>(
+          context, loc_id,
+          {.type_id = SemIR::InstType::TypeId,
+           .tuple_id = action_id,
+           .index = SemIR::ElementIndex(1)});
+      // TODO: Walk the initializer, find all the storage arguments, and replace
+      // each of them with a splice.
+      target.storage_access_block->AddInst(
+          loc_id, SemIR::SpliceInst{.type_id = target.type_id,
+                                    .inst_id = storage_block_id});
+      return result_id;
     }
   }
 

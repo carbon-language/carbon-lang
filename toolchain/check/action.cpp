@@ -215,6 +215,21 @@ auto ActionIsPerformable(Context& context, SemIR::Inst action_inst,
              SemIR::ConstantDependence::Template;
 }
 
+auto AddSpliceInst(Context& context, SemIR::InstId inst_value_id,
+                   SemIR::TypeInstId result_type_inst_id) -> SemIR::InstId {
+  if (!result_type_inst_id.has_value()) {
+    result_type_inst_id =
+        AddTypeInst(context, SemIR::LocId(inst_value_id),
+                    SemIR::TypeOfInst{.type_id = SemIR::TypeType::TypeId,
+                                      .inst_id = inst_value_id});
+  }
+  return AddInst(
+      context, SemIR::LocId(inst_value_id),
+      SemIR::SpliceInst{.type_id = context.types().GetTypeIdForTypeInstId(
+                            result_type_inst_id),
+                        .inst_id = inst_value_id});
+}
+
 // Refine one operand of an action. Given an argument from a template, this
 // produces an argument that has the template-dependent parts replaced with
 // their concrete values, so that the action doesn't need to know which specific
@@ -324,23 +339,20 @@ static auto RefineOperands(Context& context, SemIR::LocId loc_id,
   return action;
 }
 
+auto AddDependentActionInst(Context& context,
+                                     SemIR::LocIdAndInst action)
+    -> SemIR::InstId {
+  action.inst = RefineOperands(context, action.loc_id, action.inst);
+  return AddInstToEvalBlock(context, action);
+}
+
 auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
                               SemIR::TypeInstId result_type_inst_id)
     -> SemIR::InstId {
   action.inst = RefineOperands(context, action.loc_id, action.inst);
 
   auto inst_id = AddDependentActionInst(context, action);
-  if (!result_type_inst_id.has_value()) {
-    result_type_inst_id =
-        AddTypeInst(context, action.loc_id,
-                    SemIR::TypeOfInst{.type_id = SemIR::TypeType::TypeId,
-                                      .inst_id = inst_id});
-  }
-  return AddInst(
-      context, action.loc_id,
-      SemIR::SpliceInst{.type_id = context.types().GetTypeIdForTypeInstId(
-                            result_type_inst_id),
-                        .inst_id = inst_id});
+  return AddSpliceInst(context, inst_id, result_type_inst_id);
 }
 
 // Refine one operand of an action that is being performed within a specific.
