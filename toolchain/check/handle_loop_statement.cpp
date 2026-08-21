@@ -224,11 +224,15 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
       context, node_id,
       {.type_id = GetPointerType(context, cursor_type_inst_id),
        .lvalue_id = cursor_var_id});
+  // A range that implements neither fails both lookups; reporting the second
+  // would say the same thing about the same expression a second time.
+  // TODO: We should only perform the impl lookup once.
   auto element_id =
       BuildBinaryOperator(context, node_id,
                           {.interface_name = CoreIdentifier::Iterate,
                            .op_name = CoreIdentifier::Next},
-                          range_id, cursor_addr_id);
+                          range_id, cursor_addr_id,
+                          /*diagnose=*/cursor_id != SemIR::ErrorInst::InstId);
   // We need to convert away from an initializing expression in order to call
   // `HasValue` and then separately pattern-match against the element.
   // TODO: Instead, form a `.Some(pattern_id)` pattern and pattern-match against

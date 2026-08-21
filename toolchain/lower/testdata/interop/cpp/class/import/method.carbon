@@ -79,12 +79,12 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 inline Cpp '''
-struct A {
+struct RefSelfA {
   void f(int x, int y);
 };
 ''';
 
-fn F(ref r: Cpp.A) {
+fn F(ref r: Cpp.RefSelfA) {
   r.f(1, 2);
 }
 
@@ -443,11 +443,11 @@ fn F(ref r: Cpp.A) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr %r) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN1A1fEii(ptr %r, i32 1, i32 2), !dbg !18
+// CHECK:STDOUT:   call void @_ZN8RefSelfA1fEii(ptr %r, i32 1, i32 2), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1A1fEii(ptr noundef nonnull align 1 dereferenceable(1), i32 noundef, i32 noundef) #1
+// CHECK:STDOUT: declare void @_ZN8RefSelfA1fEii(ptr noundef nonnull align 1 dereferenceable(1), i32 noundef, i32 noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }

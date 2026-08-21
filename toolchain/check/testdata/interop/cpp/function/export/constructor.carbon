@@ -20,7 +20,7 @@ class OneArg {
 }
 
 inline Cpp '''
-void f() {
+void CallOneArg() {
   Carbon::OneArg a(42);
 }
 ''';
@@ -30,26 +30,26 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-class OneArg {
-  fn OneArg(self, i: i32) -> Self;
+class FactoryIsMethod {
+  fn FactoryIsMethod(self, i: i32) -> Self;
 }
 
 inline Cpp '''
-void f() {
-  // CHECK:STDERR: fail_factory_is_method.carbon:[[@LINE+13]]:18: error: no matching constructor for initialization of 'Carbon::OneArg' [CppInteropParseError]
-  // CHECK:STDERR:    24 |   Carbon::OneArg a(42);
-  // CHECK:STDERR:       |                  ^ ~~
-  // CHECK:STDERR: fail_factory_is_method.carbon:[[@LINE-9]]:14: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const OneArg' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | class OneArg {
-  // CHECK:STDERR:       |              ^
-  // CHECK:STDERR: fail_factory_is_method.carbon:[[@LINE-12]]:14: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'OneArg' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | class OneArg {
-  // CHECK:STDERR:       |              ^
-  // CHECK:STDERR: fail_factory_is_method.carbon:[[@LINE-15]]:14: note: candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     5 | class OneArg {
-  // CHECK:STDERR:       |              ^
+void CallFactoryIsMethod() {
+  // CHECK:STDERR: fail_factory_is_method.carbon:[[@LINE+13]]:27: error: no matching constructor for initialization of 'Carbon::FactoryIsMethod' [CppInteropParseError]
+  // CHECK:STDERR:    24 |   Carbon::FactoryIsMethod a(42);
+  // CHECK:STDERR:       |                           ^ ~~
+  // CHECK:STDERR: fail_factory_is_method.carbon:[[@LINE-9]]:23: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const FactoryIsMethod' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class FactoryIsMethod {
+  // CHECK:STDERR:       |                       ^
+  // CHECK:STDERR: fail_factory_is_method.carbon:[[@LINE-12]]:23: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'FactoryIsMethod' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class FactoryIsMethod {
+  // CHECK:STDERR:       |                       ^
+  // CHECK:STDERR: fail_factory_is_method.carbon:[[@LINE-15]]:23: note: candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class FactoryIsMethod {
+  // CHECK:STDERR:       |                       ^
   // CHECK:STDERR:
-  Carbon::OneArg a(42);
+  Carbon::FactoryIsMethod a(42);
 }
 ''';
 
@@ -58,26 +58,26 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-class OneArg {
-  fn OneArg(i: i32) -> i32;
+class FactoryDoesntReturnSelf {
+  fn FactoryDoesntReturnSelf(i: i32) -> i32;
 }
 
 inline Cpp '''
-void f() {
-  // CHECK:STDERR: fail_factory_doesnt_return_self.carbon:[[@LINE+13]]:18: error: no matching constructor for initialization of 'Carbon::OneArg' [CppInteropParseError]
-  // CHECK:STDERR:    24 |   Carbon::OneArg a(42);
-  // CHECK:STDERR:       |                  ^ ~~
-  // CHECK:STDERR: fail_factory_doesnt_return_self.carbon:[[@LINE-9]]:14: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const OneArg' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | class OneArg {
-  // CHECK:STDERR:       |              ^
-  // CHECK:STDERR: fail_factory_doesnt_return_self.carbon:[[@LINE-12]]:14: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'OneArg' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | class OneArg {
-  // CHECK:STDERR:       |              ^
-  // CHECK:STDERR: fail_factory_doesnt_return_self.carbon:[[@LINE-15]]:14: note: candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     5 | class OneArg {
-  // CHECK:STDERR:       |              ^
+void CallFactoryDoesntReturnSelf() {
+  // CHECK:STDERR: fail_factory_doesnt_return_self.carbon:[[@LINE+13]]:35: error: no matching constructor for initialization of 'Carbon::FactoryDoesntReturnSelf' [CppInteropParseError]
+  // CHECK:STDERR:    24 |   Carbon::FactoryDoesntReturnSelf a(42);
+  // CHECK:STDERR:       |                                   ^ ~~
+  // CHECK:STDERR: fail_factory_doesnt_return_self.carbon:[[@LINE-9]]:31: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const FactoryDoesntReturnSelf' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class FactoryDoesntReturnSelf {
+  // CHECK:STDERR:       |                               ^
+  // CHECK:STDERR: fail_factory_doesnt_return_self.carbon:[[@LINE-12]]:31: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'FactoryDoesntReturnSelf' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class FactoryDoesntReturnSelf {
+  // CHECK:STDERR:       |                               ^
+  // CHECK:STDERR: fail_factory_doesnt_return_self.carbon:[[@LINE-15]]:31: note: candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class FactoryDoesntReturnSelf {
+  // CHECK:STDERR:       |                               ^
   // CHECK:STDERR:
-  Carbon::OneArg a(42);
+  Carbon::FactoryDoesntReturnSelf a(42);
 }
 ''';
 
@@ -86,26 +86,26 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-class OneArg {
-  fn OneArg(i: i32) -> ref Self;
+class FactoryReturnsByRef {
+  fn FactoryReturnsByRef(i: i32) -> ref Self;
 }
 
 inline Cpp '''
-void f() {
-  // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE+13]]:18: error: no matching constructor for initialization of 'Carbon::OneArg' [CppInteropParseError]
-  // CHECK:STDERR:    24 |   Carbon::OneArg a(42);
-  // CHECK:STDERR:       |                  ^ ~~
-  // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE-9]]:14: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const OneArg' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | class OneArg {
-  // CHECK:STDERR:       |              ^
-  // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE-12]]:14: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'OneArg' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | class OneArg {
-  // CHECK:STDERR:       |              ^
-  // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE-15]]:14: note: candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     5 | class OneArg {
-  // CHECK:STDERR:       |              ^
+void CallFactoryReturnsByRef() {
+  // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE+13]]:31: error: no matching constructor for initialization of 'Carbon::FactoryReturnsByRef' [CppInteropParseError]
+  // CHECK:STDERR:    24 |   Carbon::FactoryReturnsByRef a(42);
+  // CHECK:STDERR:       |                               ^ ~~
+  // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE-9]]:27: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const FactoryReturnsByRef' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class FactoryReturnsByRef {
+  // CHECK:STDERR:       |                           ^
+  // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE-12]]:27: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'FactoryReturnsByRef' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class FactoryReturnsByRef {
+  // CHECK:STDERR:       |                           ^
+  // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE-15]]:27: note: candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:     5 | class FactoryReturnsByRef {
+  // CHECK:STDERR:       |                           ^
   // CHECK:STDERR:
-  Carbon::OneArg a(42);
+  Carbon::FactoryReturnsByRef a(42);
 }
 ''';
 
@@ -125,7 +125,7 @@ class GenericConstructor {
 }
 
 inline Cpp '''
-void f() {
+void CallGenericConstructor() {
   // CHECK:STDERR: fail_todo_call_generic_constructor.carbon:[[@LINE+13]]:30: error: no matching constructor for initialization of 'Carbon::GenericConstructor' [CppInteropParseError]
   // CHECK:STDERR:    30 |   Carbon::GenericConstructor b(0);
   // CHECK:STDERR:       |                              ^ ~
@@ -159,7 +159,7 @@ class GenericClass(T: type) {
 }
 
 inline Cpp '''
-void f() {
+void CallGenericClass() {
   // CHECK:STDERR: fail_todo_call_generic_class_constructor.carbon:[[@LINE+13]]:29: error: no matching constructor for initialization of 'Carbon::GenericClass<int>' [CppInteropParseError]
   // CHECK:STDERR:    30 |   Carbon::GenericClass<int> c(0);
   // CHECK:STDERR:       |                             ^ ~
