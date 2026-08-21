@@ -71,7 +71,7 @@ template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT> &&
            SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::AbsoluteInstId,
                        SemIR::CallParamIndex, SemIR::NameId,
-                       SemIR::ElementIndex>
+                       SemIR::ElementIndex, SemIR::ClangDeclId>
 static auto OperandDependence(Context& /*context*/, IdT /*id*/)
     -> SemIR::ConstantDependence {
   return SemIR::ConstantDependence::None;
