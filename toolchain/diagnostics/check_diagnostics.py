@@ -76,7 +76,7 @@ def load_diagnostic_uses_in(
     # `CARBON_DIAGNOSTIC_ON_SCOPE` declares a diagnostic too; the definitions of
     # both macros name their own parameter, which is not a use.
     for m in re.finditer(
-        r"CARBON_DIAGNOSTIC(?:_ON_SCOPE)?\(\s*(\w+),", content
+        r"(?<!#define )CARBON_DIAGNOSTIC(?:_ON_SCOPE)?\(\s*(\w+),", content
     ):
         diag = m.group(1)
         if diag in IGNORED or diag in ("DiagnosticName",):
