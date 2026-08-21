@@ -83,33 +83,34 @@ var s: Cpp.Simple({} as C) = Cpp.MakeSimple123();
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<bool B> struct Struct {};
-Struct<true> MakeStruct() { return Struct<true>(); }
+template<bool B> struct BoolStruct {};
+BoolStruct<true> MakeBoolStruct() { return BoolStruct<true>(); }
 ''';
 
-var s: Cpp.Struct(true) = Cpp.MakeStruct();
+var s: Cpp.BoolStruct(true) = Cpp.MakeBoolStruct();
 
 // --- float.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<float N> struct Struct {};
-Struct<123.5f> MakeStruct() { return Struct<123.5f>(); }
+template<float N> struct FloatStruct {};
+FloatStruct<123.5f> MakeFloatStruct() { return FloatStruct<123.5f>(); }
 ''';
-let v: Cpp.Struct(123.5) = Cpp.MakeStruct();
+
+let v: Cpp.FloatStruct(123.5) = Cpp.MakeFloatStruct();
 
 // --- pointer.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<const int* _Nonnull P> struct Struct {};
+template<const int* _Nonnull P> struct PtrStruct {};
 static int i = 123;
-Struct<&i> MakeStruct() { return Struct<&i>(); }
+PtrStruct<&i> MakePtrStruct() { return PtrStruct<&i>(); }
 ''';
 
-let xyz: Cpp.Struct(&Cpp.i) = Cpp.MakeStruct();
+let xyz: Cpp.PtrStruct(&Cpp.i) = Cpp.MakePtrStruct();
 
 // --- valid.carbon
 

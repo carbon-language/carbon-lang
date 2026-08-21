@@ -16,7 +16,7 @@
 
 // --- with_definition.h
 
-inline void foo() {}
+inline void inline_with_def() {}
 
 // --- import_with_definition.carbon
 
@@ -26,7 +26,7 @@ import Cpp library "with_definition.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
-  Cpp.foo();
+  Cpp.inline_with_def();
   //@dump-sem-ir-end
 }
 
@@ -37,10 +37,10 @@ fn MyF() {
 // --- without_definition.h
 
 // TODO: Promote this warning to an error by default.
-// CHECK:STDERR: ./without_definition.h:[[@LINE+3]]:13: warning: inline function 'foo' is not defined [CppInteropParseWarning]
-// CHECK:STDERR:     6 | inline void foo();
+// CHECK:STDERR: ./without_definition.h:[[@LINE+3]]:13: warning: inline function 'inline_without_def' is not defined [CppInteropParseWarning]
+// CHECK:STDERR:     6 | inline void inline_without_def();
 // CHECK:STDERR:       |             ^
-inline void foo();
+inline void inline_without_def();
 
 // --- todo_fail_import_without_definition.carbon
 
@@ -50,14 +50,14 @@ import Cpp library "without_definition.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: todo_fail_import_without_definition.carbon:[[@LINE+4]]:11: note: used here [CppInteropParseNote]
-  // CHECK:STDERR:    12 |   Cpp.foo();
-  // CHECK:STDERR:       |           ^
+  // CHECK:STDERR: todo_fail_import_without_definition.carbon:[[@LINE+4]]:26: note: used here [CppInteropParseNote]
+  // CHECK:STDERR:    12 |   Cpp.inline_without_def();
+  // CHECK:STDERR:       |                          ^
   // CHECK:STDERR:
-  Cpp.foo();
+  Cpp.inline_without_def();
 
   // Don't error on repeated calls.
-  Cpp.foo();
+  Cpp.inline_without_def();
   //@dump-sem-ir-end
 }
 
@@ -89,26 +89,26 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
-// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %inline_with_def.cpp_overload_set.type: type = cpp_overload_set_type @inline_with_def.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %inline_with_def.cpp_overload_set.value: %inline_with_def.cpp_overload_set.type = cpp_overload_set_value @inline_with_def.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %inline_with_def.type: type = fn_type @inline_with_def [concrete]
+// CHECK:STDOUT:   %inline_with_def: %inline_with_def.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
+// CHECK:STDOUT:     .inline_with_def = %inline_with_def.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
+// CHECK:STDOUT:   %inline_with_def.cpp_overload_set.value: %inline_with_def.cpp_overload_set.type = cpp_overload_set_value @inline_with_def.cpp_overload_set [concrete = constants.%inline_with_def.cpp_overload_set.value]
+// CHECK:STDOUT:   %inline_with_def.decl: %inline_with_def.type = fn_decl @inline_with_def [concrete = constants.%inline_with_def] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl()
+// CHECK:STDOUT:   %inline_with_def.ref: %inline_with_def.cpp_overload_set.type = name_ref inline_with_def, imports.%inline_with_def.cpp_overload_set.value [concrete = constants.%inline_with_def.cpp_overload_set.value]
+// CHECK:STDOUT:   %inline_with_def.call: init %empty_tuple.type = call imports.%inline_with_def.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -116,29 +116,29 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
-// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %inline_without_def.cpp_overload_set.type: type = cpp_overload_set_type @inline_without_def.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %inline_without_def.cpp_overload_set.value: %inline_without_def.cpp_overload_set.type = cpp_overload_set_value @inline_without_def.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %inline_without_def.type: type = fn_type @inline_without_def [concrete]
+// CHECK:STDOUT:   %inline_without_def: %inline_without_def.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.cpp_overload_set.value
+// CHECK:STDOUT:     .inline_without_def = %inline_without_def.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
+// CHECK:STDOUT:   %inline_without_def.cpp_overload_set.value: %inline_without_def.cpp_overload_set.type = cpp_overload_set_value @inline_without_def.cpp_overload_set [concrete = constants.%inline_without_def.cpp_overload_set.value]
+// CHECK:STDOUT:   %inline_without_def.decl: %inline_without_def.type = fn_decl @inline_without_def [concrete = constants.%inline_without_def] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref.loc12: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %foo.call.loc12: init %empty_tuple.type = call imports.%foo.decl()
+// CHECK:STDOUT:   %inline_without_def.ref.loc12: %inline_without_def.cpp_overload_set.type = name_ref inline_without_def, imports.%inline_without_def.cpp_overload_set.value [concrete = constants.%inline_without_def.cpp_overload_set.value]
+// CHECK:STDOUT:   %inline_without_def.call.loc12: init %empty_tuple.type = call imports.%inline_without_def.decl()
 // CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref.loc15: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %foo.call.loc15: init %empty_tuple.type = call imports.%foo.decl()
+// CHECK:STDOUT:   %inline_without_def.ref.loc15: %inline_without_def.cpp_overload_set.type = name_ref inline_without_def, imports.%inline_without_def.cpp_overload_set.value [concrete = constants.%inline_without_def.cpp_overload_set.value]
+// CHECK:STDOUT:   %inline_without_def.call.loc15: init %empty_tuple.type = call imports.%inline_without_def.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
