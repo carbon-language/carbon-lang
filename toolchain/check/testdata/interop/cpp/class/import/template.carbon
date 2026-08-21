@@ -98,6 +98,30 @@ fn F() {
   v.begin();
 }
 
+// --- use_carbon_class_generic_in_cpp_template_param.carbon
+
+library "[[@TEST_NAME]]";
+import Cpp inline '''
+template<typename T>
+struct A {
+  T t;
+};
+''';
+
+//@dump-sem-ir-begin
+class B(T: type) {
+  // CHECK:STDERR: use_carbon_class_generic_in_cpp_template_param.carbon:[[@LINE+4]]:16: error: semantics TODO: `unsupported type used as template argument` [SemanticsTodo]
+  // CHECK:STDERR:   var a: Cpp.A(T);
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR:
+  var a: Cpp.A(T);
+}
+
+fn F(ref b: B(i32)) {
+  b.a.t = 123;
+}
+//@dump-sem-ir-end
+
 // CHECK:STDOUT: --- use_class_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -270,5 +294,91 @@ fn F() {
 // CHECK:STDOUT:   %.loc21: init %i32 = converted %int_0.loc21, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21 [concrete = constants.%int_0.3c0]
 // CHECK:STDOUT:   assign file.%y.var, %.loc21
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- use_carbon_class_generic_in_cpp_template_param.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %B.type: type = generic_class_type @B [concrete]
+// CHECK:STDOUT:   %B.generic: %B.type = struct_value () [concrete]
+// CHECK:STDOUT:   %B.60e: type = class_type @B, @B(%T) [symbolic]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %B.bd8: type = class_type @B, @B(%i32) [concrete]
+// CHECK:STDOUT:   %pattern_type.fdc: type = pattern_type %B.bd8 [concrete]
+// CHECK:STDOUT:   %b.param_patt: %pattern_type.fdc = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.fdc = wrapper_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %B.decl: %B.type = class_decl @B [concrete = constants.%B.generic] {
+// CHECK:STDOUT:     %T.patt.loc11_10.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_10.2 (constants.%T.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc11_12.1: type = splice_block %.loc11_12.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc11_12.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.loc11_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc11_10.1 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.fdc = ref_param_pattern [concrete = constants.%b.param_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.fdc = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %b.param: ref %B.bd8 = ref_param call_param0
+// CHECK:STDOUT:     %.loc19: type = splice_block %B [concrete = constants.%B.bd8] {
+// CHECK:STDOUT:       %B.ref: %B.type = name_ref B, file.%B.decl [concrete = constants.%B.generic]
+// CHECK:STDOUT:       %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:       %B: type = class_type @B, @B(constants.%i32) [concrete = constants.%B.bd8]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: ref %B.bd8 = wrapper_binding b, %b.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @B(%T.loc11_10.2: type) {
+// CHECK:STDOUT:   %T.patt.loc11_10.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_10.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc11_10.1: type = symbolic_binding T, 0 [symbolic = %T.loc11_10.1 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %.loc16: <error> = field_decl a, element0 [concrete]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%B.60e
+// CHECK:STDOUT:     .T = <poisoned>
+// CHECK:STDOUT:     .a = %.loc16
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%b.param: ref %B.bd8) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %b.ref: ref %B.bd8 = name_ref b, %b
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, @B.%.loc16 [concrete = <error>]
+// CHECK:STDOUT:   %t.ref: <error> = name_ref t, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123]
+// CHECK:STDOUT:   assign %t.ref, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @B(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc11_10.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc11_10.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @B(constants.%i32) {
+// CHECK:STDOUT:   %T.patt.loc11_10.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc11_10.1 => constants.%i32
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
