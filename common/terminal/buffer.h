@@ -101,21 +101,20 @@ enum class LineEnd : int8_t {
 // up to `MaxRows` -- so laying out is a question of how many rows something
 // takes, never of how wide the grid will turn out to be.
 //
-// Coordinates are the caller's to get right. Drawing a line outside the width,
-// or starting text outside it, is a programming error and is checked: a caller
-// deciding where to put something already knows the width, since it is what
-// decided the layout, and a drawing that lands outside it is a bug in that
-// layout rather than something to silently clip. Origins are checked against
-// `MaxRows` the same way, though text that runs off the bottom on its own
-// newlines is clipped rather than checked, as an overhang is.
+// The two ways of drawing text differ in whether what they draw is held to the
+// width. `DrawText` does not wrap, so text it is given has nowhere else to go:
+// it widens the buffer, and `width()` grows past `columns()`.
+// `DrawWrappedText` and line drawing are held to the width, since wrapping has
+// the next row and a line running outside it came from a wrong extent. A
+// drawing of either that starts or ends outside the width is a programming
+// error and is checked; a caller placing one already knows the width, since it
+// is what decided the layout.
 //
-// A row can still end up wider than `columns()`. Text that starts inside the
-// width may run off the right of it: a quoted source line longer than the room
-// left, a double-width character in the last column, and above all a word
-// wrapping cannot break, which is moved to a row of its own and then overhangs
-// it. Breaking that word is the alternative, and it costs a reader the ability
-// to copy or click it. So `width()` can exceed `columns()`, while nothing is
-// ever drawn left of the origin or beyond `MaxColumns`.
+// A wrapped block widens the buffer only by the words in it, never by where it
+// was told to start: a word it cannot break overhangs, for the reason above.
+//
+// Nothing is drawn left of the origin or past `MaxColumns` either way, and text
+// running off the bottom on its own newlines is clipped rather than checked.
 //
 // A combining mark renders into the cell before it, so one with no cell before
 // it -- at column zero, or on a row nothing has been drawn on -- has nowhere to
@@ -138,11 +137,11 @@ class Buffer {
   // The bounds a buffer exists within.
   //
   // These are far past anything a terminal displays, and exist so that a cell
-  // index stays representable rather than to ration anything. `columns()` and
-  // every row drawn into are checked against them, so a caller cannot reach
-  // outside them by asking. What can reach `MaxColumns` without being asked for
-  // is a word overhanging the target width, and that alone is clipped rather
-  // than checked, since how far it overhangs is a fact about the text.
+  // index stays representable rather than to ration anything. Unlike
+  // `columns()`, every way of drawing is held to them: past them nothing is
+  // drawn and the column still advances, so measuring and drawing agree.
+  // Clipped rather than checked, since how far unwrapped text or an overhang
+  // runs is a fact about the text.
   static constexpr int MaxColumns = 1 << 14;
   static constexpr int MaxRows = 1 << 16;
 
@@ -207,8 +206,9 @@ class Buffer {
   // Returns the width everything drawn into the buffer is laid out for.
   auto columns() const -> int { return columns_; }
 
-  // Returns the columns the grid currently holds: `columns()` until something
-  // overhangs it, and at least enough to hold the overhang after that.
+  // Returns the columns the grid currently holds: `columns()` until unwrapped
+  // text or an overhanging word reached past it, and at least enough to hold
+  // what did after that.
   auto width() const -> int { return width_; }
 
   // Returns the number of rows the grid holds, which is one past the last row
@@ -256,15 +256,14 @@ class Buffer {
   // So this is a layout preference rather than a minimum.
   auto MeasureWrapWidth(llvm::StringRef text) const -> int;
 
-  // Draws `code_point` at (x, y), which must be inside `columns()` and
-  // `MaxRows`, adding rows as needed to reach it.
+  // Draws `code_point` at (x, y), which must be a non-negative column and a row
+  // inside `MaxRows`, widening the buffer and adding rows as needed to reach
+  // it. One code point is unwrapped text, so it is not held to the width.
   //
   // Returns the column after it, which is `x` again for a combining mark since
-  // one renders into the column before it. A double-width character starting in
-  // the last column is drawn rather than refused, and takes the column after
-  // it: half a character is not something a terminal can render, so the choice
-  // is between the whole of it and none, and this is the same overhang wrapping
-  // allows a word that fits no row.
+  // one renders into the column before it. A double-width character takes both
+  // its columns wherever it starts: half a character is not something a
+  // terminal can render, so the choice is between the whole of it and none.
   auto DrawCodePoint(int x, int y, char32_t code_point, const Style& style)
       -> DrawEnd;
 
@@ -307,14 +306,15 @@ class Buffer {
   auto DrawBox(int x, int y, int box_width, int box_height, const Style& style)
       -> DrawEnd;
 
-  // Draws `text` starting at (x, y), which must be inside `columns()`, as part
-  // of text whose left edge is `margin`.
+  // Draws `text` starting at (x, y), which must be a column at or right of
+  // `margin` and a row inside `MaxRows`, as part of text whose left edge is
+  // `margin`.
   //
-  // Nothing here wraps, so text with no newline in it runs off the right of the
-  // width when it is longer than the room left, exactly as an overhanging word
-  // does. That is what this is for: a source line is quoted as it was written,
-  // and deciding how much of one to show is the caller's, made against
-  // `columns()` before the quoting starts.
+  // Nothing here wraps, so text runs off the right of the width when it is
+  // longer than the room left, and the buffer widens to hold it. That is what
+  // this is for: text that must not be broken, such as a source line quoted as
+  // it was written. A caller that wants the text held to the width wants
+  // `DrawWrappedText`.
   //
   // Newlines return to column `margin` on the next row, carriage returns to
   // column `margin` on the same row, and tabs advance to the next tab stop,
@@ -462,11 +462,20 @@ class Buffer {
     return cells_[CellIndex(x, y)];
   }
 
-  // Checks that (x, y) is somewhere a drawing may start.
+  // Checks that (x, y) is somewhere unwrapped text may start, which the width
+  // does not decide.
   //
   // The text walks check this themselves, together with the bounds particular
   // to each: they are inlined into every text operation, and one check there
   // costs measurably less than two.
+  auto CheckTextOrigin(int x, int y) const -> void {
+    CARBON_CHECK(x >= 0 && y >= 0 && y < MaxRows,
+                 "Drawing text at ({0}, {1}) is outside the {2} rows a buffer "
+                 "covers.",
+                 x, y, MaxRows);
+  }
+
+  // Checks that (x, y) is somewhere a drawing held to the width may start.
   auto CheckOrigin(int x, int y) const -> void {
     CARBON_CHECK(
         x >= 0 && x < columns_ && y >= 0 && y < MaxRows,

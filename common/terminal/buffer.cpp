@@ -44,11 +44,38 @@ static constexpr std::array<char32_t, 16> Utf8LineGlyphs = {
     U'┼',  // left, right, up, down
 };
 
-// The ASCII stand-ins, which can only distinguish horizontal, vertical, and
-// everything else.
+// The ASCII stand-ins. Each keeps the axis its line runs through, which leaves
+// `+` meaning a crossing and nothing else:
+//
+// - Running through horizontally is `-`, vertically `|`, and both ways `+`.
+// - A tee keeps its through-stroke and leaves the branch to what is drawn
+//   beside it: the dashes either side of a `|` are what `├` and `┤` reach, and
+//   the line under a `-` is what a `┬` reaches. Drawing a tee as `+` reads as
+//   the crossing it is not.
+// - A corner is `.` where its line leaves downward and `'` where it arrives
+//   from above, which is where those characters sit in their cells.
+// - A point, a line between one center and itself, is `.`.
+//
+// What a diagnostic draws is then still told apart: the rule closing a snippet
+// from the one separating two, and the anchor opening a diagnostic from the one
+// carrying it on.
 static constexpr std::array<char32_t, 16> AsciiLineGlyphs = {
-    U'+', U'-', U'-', U'-', U'|', U'+', U'+', U'+',
-    U'|', U'+', U'+', U'+', U'|', U'+', U'+', U'+',
+    U'.',   // (none): a point
+    U'-',   // left
+    U'-',   // right
+    U'-',   // left, right
+    U'|',   // up
+    U'\'',  // left, up
+    U'\'',  // right, up
+    U'-',   // left, right, up
+    U'|',   // down
+    U'.',   // left, down
+    U'.',   // right, down
+    U'-',   // left, right, down
+    U'|',   // up, down
+    U'|',   // left, up, down
+    U'|',   // right, up, down
+    U'+',   // left, right, up, down
 };
 
 // Returns the next tab stop after `x` on a line whose stops are `tab_width`
@@ -170,7 +197,7 @@ auto Buffer::AttachCombiningMark(int x, int y, char32_t code_point) -> void {
 
 auto Buffer::DrawCodePoint(int x, int y, char32_t code_point,
                            const Style& style) -> DrawEnd {
-  CheckOrigin(x, y);
+  CheckTextOrigin(x, y);
   return {.x = PlaceCodePoint(x, y, code_point, style), .y = y};
 }
 
@@ -299,11 +326,10 @@ template <typename PlaceFn>
 auto Buffer::WalkText(int x, int y, int margin, llvm::StringRef text,
                       PlaceFn place) const -> DrawEnd {
   CheckTextSize(text);
-  CARBON_CHECK(
-      margin >= 0 && margin <= x && x < columns_ && y >= 0 && y < MaxRows,
-      "Text at ({0}, {1}) with a margin of {2} is outside the {3} "
-      "columns and {4} rows a buffer covers, or left of its margin.",
-      x, y, margin, columns_, MaxRows);
+  CARBON_CHECK(margin >= 0 && margin <= x && y >= 0 && y < MaxRows,
+               "Text at ({0}, {1}) with a margin of {2} is outside the {3} "
+               "rows a buffer covers, or left of its margin.",
+               x, y, margin, MaxRows);
 
   int cur_x = x;
   int cur_y = y;

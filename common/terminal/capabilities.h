@@ -58,11 +58,33 @@ enum class Preference : int8_t {
   Always,
 };
 
+// What the terminal draws its text on.
+//
+// Nothing about the rendering depends on the exact color, only on which side of
+// the middle it sits: a color chosen to read on one is hard to read on the
+// other.
+enum class Background : int8_t {
+  Dark,
+  Light,
+};
+
+// An explicit statement of what the terminal draws its text on, where `Auto`
+// leaves it to detection.
+//
+// This is a tri-state like `Preference`, but its two settings name the answer
+// rather than turning a feature on and off, so it is an enum of its own.
+enum class BackgroundPreference : int8_t {
+  Auto,
+  Dark,
+  Light,
+};
+
 // An explicit preference for each feature detection decides about, normally
 // parsed from command line flags.
 struct Preferences {
   Preference color = Preference::Auto;
   Preference utf8 = Preference::Auto;
+  BackgroundPreference background = BackgroundPreference::Auto;
 };
 
 // The environment variables that control whether and how color is used.
@@ -129,6 +151,23 @@ auto ChooseColorMode(Preference preference, const ColorEnvironment& env,
 // the other way only makes output plainer.
 auto ChooseCharset(Preference preference, llvm::StringRef locale) -> Charset;
 
+// Returns what the terminal draws its text on, where `colorfgbg` is the value
+// of `COLORFGBG`.
+//
+// That variable is the only thing a process can read without talking to the
+// terminal. `rxvt` and its derivatives set it, as do a few others, to the
+// foreground and background palette indices separated by `;` -- sometimes with
+// a third field between them -- so the background is the last of them. An index
+// of 0 through 6 or 8 is a dark one, 7 and 9 through 15 a light one, and
+// anything outside that range says nothing.
+//
+// It is missing far more often than it is present, and stale when the user
+// changes their theme without restarting, so anything it doesn't answer is
+// treated as dark. Guessing wrong that way costs contrast; guessing wrong the
+// other way puts light text on a light background.
+auto ChooseBackground(BackgroundPreference preference,
+                      llvm::StringRef colorfgbg) -> Background;
+
 // The width to lay out for when nothing says how wide the output is.
 //
 // Layout always has a width to fit, because the alternative is output laid out
@@ -163,6 +202,14 @@ struct Capabilities {
   // are what answer the question and no stream abstraction exposes them.
   // LLVM's `raw_ostream::has_colors()` is not a substitute for the enablement
   // rule above, which recognizes terminals its `TERM` list doesn't.
+  //
+  // An `OSC 11` query would ask the terminal what it draws on, which is the
+  // only accurate answer and what `vim`, `delta`, and `bat` do. It isn't one a
+  // non-interactive tool can use: the reply has to be waited for, and drawing
+  // with it only when it arrives in time would leave the colors depending on
+  // that. Reading it also consumes whatever was typed ahead for the next shell
+  // command, along with the input a compile may be taking from stdin.
+  // `COLORFGBG` is the passive stand-in that costs none of this.
   static auto Detect(Filesystem::WriteFileRef file,
                      Preferences preferences = {}) -> Capabilities;
 
@@ -171,6 +218,9 @@ struct Capabilities {
 
   // The encoding the terminal decodes output with.
   Charset charset = Charset::Ascii;
+
+  // What the terminal draws its text on.
+  Background background = Background::Dark;
 
   // Whether the stream is attached to a terminal at all. Note that color can
   // still be in use when this is false, if the environment forces it.
