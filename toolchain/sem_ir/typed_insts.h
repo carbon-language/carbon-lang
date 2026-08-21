@@ -1984,6 +1984,7 @@ struct SpliceInst {
   static constexpr auto Kind = InstKind::SpliceInst.Define<Parse::NodeId>(
       {.ir_name = "splice_inst",
        .expr_category = ComputedExprCategory::DependsOnOperands,
+       .is_type = InstIsType::Maybe,
        .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
