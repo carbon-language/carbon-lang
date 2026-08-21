@@ -226,6 +226,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
        .lvalue_id = cursor_var_id});
   // A range that implements neither fails both lookups; reporting the second
   // would say the same thing about the same expression a second time.
+  // TODO: We should only perform the impl lookup once.
   auto element_id =
       BuildBinaryOperator(context, node_id,
                           {.interface_name = CoreIdentifier::Iterate,
