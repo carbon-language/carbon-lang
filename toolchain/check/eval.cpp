@@ -173,10 +173,9 @@ class EvalContext {
     }
 
     auto inst_id = specific_eval_info_->values[symbolic_info.index.index()];
-    CARBON_CHECK(inst_id.has_value(),
-                 "Forward reference in eval block: index {0} referenced "
-                 "before evaluation",
-                 symbolic_info.index.index());
+    if (!inst_id.has_value()) {
+      return SemIR::ConstantId::NotConstant;
+    }
     return constant_values().Get(inst_id);
   }
 
@@ -3531,12 +3530,12 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
+    CARBON_CHECK(const_id.has_value(), "Failed to evaluate {0} in eval block",
+                 context.insts().Get(inst_id));
     if (const_id == SemIR::ErrorInst::ConstantId) {
       has_error = true;
     }
     result[i] = context.constant_values().GetInstId(const_id);
-    CARBON_CHECK(result[i].has_value(), "Failed to evaluate {0} in eval block",
-                 context.insts().Get(inst_id));
   }
 
   return {context.inst_blocks().Add(result), has_error};
