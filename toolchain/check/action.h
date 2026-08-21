@@ -21,6 +21,10 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 
 // Performs a conversion action. Defined in convert.cpp.
 auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::ConvertAction action) -> SemIR::InstId;
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::ConvertToCategoryAction action) -> SemIR::InstId;
+auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::ConvertToValueAction action) -> SemIR::InstId;
 
 // Performs a form parameter pattern action. Defined in pattern.cpp.

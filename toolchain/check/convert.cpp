@@ -29,6 +29,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/file.h"
@@ -1709,12 +1710,64 @@ static auto GetConversionInterfaceName(ConversionTarget::Kind kind)
   }
 }
 
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::ConvertToValueAction action) -> SemIR::InstId {
-  return Convert(context, loc_id, action.inst_id,
-                 {.kind = ConversionTarget::Value,
-                  .type_id = context.types().GetTypeIdForTypeInstId(
-                      action.target_type_inst_id)});
+// Performs a user-defined conversion of `expr_id` to `target`, by calling a
+// function from a suitable conversion interface.
+static auto PerformUserDefinedConversion(Context& context, SemIR::LocId loc_id,
+                                         SemIR::InstId expr_id,
+                                         ConversionTarget target)
+    -> SemIR::InstId {
+  if (context.insts().Get(expr_id).type_id() == target.type_id) {
+    return expr_id;
+  }
+
+  SemIR::InstId interface_args[] = {
+      context.types().GetTypeInstId(target.type_id)};
+  Operator op = {
+      .interface_name = GetConversionInterfaceName(target.kind),
+      .interface_args_ref = interface_args,
+      .op_name = CoreIdentifier::Convert,
+  };
+  expr_id = BuildUnaryOperator(
+      context, loc_id, op, expr_id, target.diagnose, [&](auto& builder) {
+        int target_kind_for_diag =
+            target.kind == ConversionTarget::ExplicitAs         ? 1
+            : target.kind == ConversionTarget::ExplicitUnsafeAs ? 2
+                                                                : 0;
+        if (target.type_id == SemIR::TypeType::TypeId ||
+            context.types().Is<SemIR::FacetType>(target.type_id)) {
+          CARBON_DIAGNOSTIC(
+              ConversionFailureNonTypeToFacet, Context,
+              "cannot{0:=0: implicitly|:} convert non-type value of type {1} "
+              "{2:to|into type implementing} {3}"
+              "{0:=1: with `as`|=2: with `unsafe as`|:}",
+              Diagnostics::IntAsSelect, TypeOfInstId, Diagnostics::BoolAsSelect,
+              SemIR::TypeId);
+          builder.Context(loc_id, ConversionFailureNonTypeToFacet,
+                          target_kind_for_diag, expr_id,
+                          target.type_id == SemIR::TypeType::TypeId,
+                          target.type_id);
+        } else {
+          CARBON_DIAGNOSTIC(
+              ConversionFailure, Context,
+              "cannot{0:=0: implicitly|:} convert expression of type "
+              "{1} to {2}{0:=1: with `as`|=2: with `unsafe as`|:}",
+              Diagnostics::IntAsSelect, TypeOfInstId, SemIR::TypeId);
+          builder.Context(loc_id, ConversionFailure, target_kind_for_diag,
+                          expr_id, target.type_id);
+        }
+      });
+
+  // Pull a value directly out of the initializer if possible and wanted.
+  // TODO: Should this be done as part of category conversion instead?
+  if (expr_id != SemIR::ErrorInst::InstId &&
+      SemIR::GetExprCategory(context.sem_ir(), expr_id) ==
+          SemIR::ExprCategory::ReprInitializing &&
+      CanUseValueOfInitializer(context.sem_ir(), target.type_id, target.kind)) {
+    expr_id = AddInst<SemIR::ValueOfInitializer>(
+        context, loc_id, {.type_id = target.type_id, .init_id = expr_id});
+  }
+
+  return expr_id;
 }
 
 // State machine for performing category conversions.
@@ -1799,8 +1852,14 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
       return Done{SemIR::ErrorInst::InstId};
 
     case SemIR::ExprCategory::Dependent:
-      context_.TODO(expr_id, "Support symbolic extended types");
-      return Done{SemIR::ErrorInst::InstId};
+      return Done{AddDependentActionSplice(
+          context_, loc_id_,
+          SemIR::ConvertToCategoryAction{
+              .type_id = SemIR::InstType::TypeId,
+              .inst_id = expr_id,
+              .conversion_kind = SemIR::ElementIndex(target_.kind)},
+          context_.types().GetTypeInstId(
+              context_.insts().Get(expr_id).type_id()))};
 
     case SemIR::ExprCategory::InPlaceInitializing:
     case SemIR::ExprCategory::ReprInitializing:
@@ -1914,6 +1973,127 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
   }
 }
 
+// Performs any necessary category conversions to convert `expr_id` to `target`.
+static auto PerformCategoryConversion(Context& context, SemIR::LocId loc_id,
+                                      SemIR::InstId expr_id,
+                                      ConversionTarget target)
+    -> SemIR::InstId {
+  // For `as`, don't perform any value category conversions. In particular, an
+  // identity conversion shouldn't change the expression category.
+  if (target.is_explicit_as()) {
+    return expr_id;
+  }
+  return CategoryConverter(context, loc_id, target).Convert(expr_id);
+}
+
+// If the conversion from `expr_id` to `target` is template-dependent, adds and
+// returns a conversion action. Otherwise, returns InstId::None.
+static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
+                                        SemIR::InstId expr_id,
+                                        ConversionTarget target)
+    -> SemIR::InstId {
+  if (context.insts().Get(expr_id).type_id() == target.type_id) {
+    // No conversion required.
+    return SemIR::InstId::None;
+  }
+
+  if (OperandDependence(context, expr_id) <
+          SemIR::ConstantDependence::Template &&
+      OperandDependence(context, target.type_id) <
+          SemIR::ConstantDependence::Template) {
+    return SemIR::InstId::None;
+  }
+
+  auto target_type_inst_id = context.types().GetTypeInstId(target.type_id);
+
+  // We don't use `HandleAction` here because it would call `PerformAction`
+  // inline if it's performable, which would lead to infinite recursion.
+  switch (target.kind) {
+    case ConversionTarget::NoOp: {
+      CARBON_FATAL("Already handled");
+    }
+    case ConversionTarget::CppThunkRef: {
+      CARBON_FATAL("Should never be dependent");
+    }
+    case ConversionTarget::Value: {
+      // Special-cased action for the case where we know the target category.
+      return AddDependentActionSplice(
+          context, loc_id,
+          SemIR::ConvertToValueAction{
+              .type_id = SemIR::InstType::TypeId,
+              .inst_id = expr_id,
+              .target_type_inst_id = target_type_inst_id},
+          target_type_inst_id);
+    }
+    case ConversionTarget::ValueOrRef:
+    case ConversionTarget::DurableRef:
+    case ConversionTarget::RefParam:
+    case ConversionTarget::UnmarkedRefParam:
+    case ConversionTarget::ExplicitAs:
+    case ConversionTarget::ExplicitUnsafeAs: {
+      return AddDependentActionSplice(
+          context, loc_id,
+          SemIR::ConvertAction{
+              .type_id = SemIR::InstType::TypeId,
+              .inst_id = expr_id,
+              .target_id =
+                  context.bundles().AddCanonical(SemIR::ConvertAction::Target{
+                      .target_type_inst_id = target_type_inst_id,
+                      .conversion_kind = SemIR::ElementIndex(target.kind)})},
+          target_type_inst_id);
+    }
+
+    case ConversionTarget::Discarded: {
+      // No type conversion is necessary. We may still form an action as part of
+      // category conversion.
+      break;
+    }
+
+    case ConversionTarget::Initializing:
+    case ConversionTarget::InPlaceInitializing: {
+      // TODO: Handle dependent initializations.
+      break;
+    }
+  }
+
+  return SemIR::InstId::None;
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::ConvertAction action) -> SemIR::InstId {
+  const auto& target_bundle = context.bundles().Get(action.target_id);
+  ConversionTarget target = {
+      .kind = ConversionTarget::Kind(target_bundle.conversion_kind.index),
+      .type_id = context.types().GetTypeIdForTypeInstId(
+          target_bundle.target_type_inst_id)};
+
+  auto expr_id =
+      PerformBuiltinConversion(context, loc_id, action.inst_id, target);
+  expr_id = PerformUserDefinedConversion(context, loc_id, expr_id, target);
+  return PerformCategoryConversion(context, loc_id, expr_id, target);
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::ConvertToCategoryAction action) -> SemIR::InstId {
+  ConversionTarget target = {
+      .kind = ConversionTarget::Kind(action.conversion_kind.index),
+      .type_id = context.insts().Get(action.inst_id).type_id()};
+
+  return PerformCategoryConversion(context, loc_id, action.inst_id, target);
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::ConvertToValueAction action) -> SemIR::InstId {
+  ConversionTarget target = {.kind = ConversionTarget::Value,
+                             .type_id = context.types().GetTypeIdForTypeInstId(
+                                 action.target_type_inst_id)};
+
+  auto expr_id =
+      PerformBuiltinConversion(context, loc_id, action.inst_id, target);
+  expr_id = PerformUserDefinedConversion(context, loc_id, expr_id, target);
+  return PerformCategoryConversion(context, loc_id, expr_id, target);
+}
+
 // Returns true if converting `expr_id` to `target` requires `target.type_id`
 // to be complete.
 static auto ConversionNeedsCompleteTarget(Context& context,
@@ -1972,7 +2152,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return expr_id;
   }
 
-  // Handle `ref`-tagged expressions.
+  // Handle `ref`-tagged expressions. After this point, `RefParam` and
+  // `UnmarkedRefParam` are equivalent.
   if (starting_category == SemIR::ExprCategory::RefTagged) {
     if (target.kind != ConversionTarget::RefParam) {
       if (target.diagnose) {
@@ -2059,72 +2240,14 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // `FacetAccessType` when checking the template. But when running the action
   // later, we need to try builtin conversions again, because one may apply that
   // didn't apply in the template definition.
-  // TODO: Support this for targets other than `Value`.
-  if (sem_ir.insts().Get(expr_id).type_id() != target.type_id &&
-      target.kind == ConversionTarget::Value) {
-    auto target_type_inst_id = context.types().GetTypeInstId(target.type_id);
-    // We don't use `HandleAction` here because it would call `PerformAction`
-    // inline if it's performable, which would lead to infinite recursion.
-    if (auto splice_inst_id = AddActionSpliceIfDependent(
-            context, loc_id, target_type_inst_id,
-            SemIR::ConvertToValueAction{
-                .type_id = SemIR::InstType::TypeId,
-                .inst_id = expr_id,
-                .target_type_inst_id = target_type_inst_id});
-        splice_inst_id.has_value()) {
-      return splice_inst_id;
-    }
+  if (auto splice_inst_id =
+          AddConvertActionIfDependent(context, loc_id, expr_id, target);
+      splice_inst_id.has_value()) {
+    return splice_inst_id;
   }
 
   // If this is not a builtin conversion, try an `ImplicitAs` conversion.
-  if (sem_ir.insts().Get(expr_id).type_id() != target.type_id) {
-    SemIR::InstId interface_args[] = {
-        context.types().GetTypeInstId(target.type_id)};
-    Operator op = {
-        .interface_name = GetConversionInterfaceName(target.kind),
-        .interface_args_ref = interface_args,
-        .op_name = CoreIdentifier::Convert,
-    };
-    expr_id = BuildUnaryOperator(
-        context, loc_id, op, expr_id, target.diagnose, [&](auto& builder) {
-          int target_kind_for_diag =
-              target.kind == ConversionTarget::ExplicitAs         ? 1
-              : target.kind == ConversionTarget::ExplicitUnsafeAs ? 2
-                                                                  : 0;
-          if (target.type_id == SemIR::TypeType::TypeId ||
-              sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
-            CARBON_DIAGNOSTIC(
-                ConversionFailureNonTypeToFacet, Context,
-                "cannot{0:=0: implicitly|:} convert non-type value of type {1} "
-                "{2:to|into type implementing} {3}"
-                "{0:=1: with `as`|=2: with `unsafe as`|:}",
-                Diagnostics::IntAsSelect, TypeOfInstId,
-                Diagnostics::BoolAsSelect, SemIR::TypeId);
-            builder.Context(loc_id, ConversionFailureNonTypeToFacet,
-                            target_kind_for_diag, expr_id,
-                            target.type_id == SemIR::TypeType::TypeId,
-                            target.type_id);
-          } else {
-            CARBON_DIAGNOSTIC(
-                ConversionFailure, Context,
-                "cannot{0:=0: implicitly|:} convert expression of type "
-                "{1} to {2}{0:=1: with `as`|=2: with `unsafe as`|:}",
-                Diagnostics::IntAsSelect, TypeOfInstId, SemIR::TypeId);
-            builder.Context(loc_id, ConversionFailure, target_kind_for_diag,
-                            expr_id, target.type_id);
-          }
-        });
-
-    // Pull a value directly out of the initializer if possible and wanted.
-    // TODO: Should this be done as part of category conversion instead?
-    if (expr_id != SemIR::ErrorInst::InstId &&
-        SemIR::GetExprCategory(sem_ir, expr_id) ==
-            SemIR::ExprCategory::ReprInitializing &&
-        CanUseValueOfInitializer(sem_ir, target.type_id, target.kind)) {
-      expr_id = AddInst<SemIR::ValueOfInitializer>(
-          context, loc_id, {.type_id = target.type_id, .init_id = expr_id});
-    }
-  }
+  expr_id = PerformUserDefinedConversion(context, loc_id, expr_id, target);
 
   // Track that we performed a type conversion, if we did so.
   if (original_inner_expr_id != expr_id) {
@@ -2134,16 +2257,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                                          .result_id = expr_id});
   }
 
-  // For `as`, don't perform any value category conversions. In particular, an
-  // identity conversion shouldn't change the expression category.
-  if (target.is_explicit_as()) {
-    return expr_id;
-  }
-
   // Now perform any necessary value category conversions.
-  expr_id = CategoryConverter(context, loc_id, target).Convert(expr_id);
-
-  return expr_id;
+  return PerformCategoryConversion(context, loc_id, expr_id, target);
 }
 
 auto InitializeExisting(Context& context, SemIR::LocId loc_id,

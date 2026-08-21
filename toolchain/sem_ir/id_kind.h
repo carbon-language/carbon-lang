@@ -34,6 +34,7 @@ using IdKind = TypeEnum<
     BoolValue,
     BundleId<CalleePatternMatchAction::Args>,
     BundleId<CallerPatternMatchAction::Args>,
+    BundleId<ConvertAction::Target>,
     CallParamIndex,
     CharId,
     ClangDeclId,
