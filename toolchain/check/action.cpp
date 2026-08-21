@@ -88,14 +88,20 @@ static auto OperandDependence(Context& context,
       context.bundles().GetAsTuple(bundle_id));
 }
 
-static auto OperandDependence(Context& context, SemIR::SpecificId specific_id)
+static auto OperandDependence(Context& context,
+                              SemIR::InstBlockId inst_block_id)
     -> SemIR::ConstantDependence {
-  auto specific = context.specifics().Get(specific_id);
   auto result = SemIR::ConstantDependence::None;
-  for (auto arg_id : context.inst_blocks().Get(specific.args_id)) {
+  for (auto arg_id : context.inst_blocks().Get(inst_block_id)) {
     result = std::max(result, OperandDependence(context, arg_id));
   }
   return result;
+}
+
+static auto OperandDependence(Context& context, SemIR::SpecificId specific_id)
+    -> SemIR::ConstantDependence {
+  auto specific = context.specifics().Get(specific_id);
+  return OperandDependence(context, specific.args_id);
 }
 
 template <typename IdT>
