@@ -214,6 +214,24 @@ static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
   return inst_id;
 }
 
+template <typename DerivedInstIdT>
+  requires SemIR::Internal::IsIdKindType<DerivedInstIdT> &&
+           std::derived_from<DerivedInstIdT, SemIR::InstId>
+static auto RefineTypedOperand(Context& context, SemIR::LocId /*loc_id*/,
+                               DerivedInstIdT inst_id) -> DerivedInstIdT {
+  // Refine an instruction that refers to a value within the current generic to
+  // refer to the corresponding value within the specific. This is analogous to
+  // the work we do to rebuild generic constants in the eval block, but is done
+  // as refinement rather than rebuilding since action instructions *only* live
+  // in the eval block.
+  auto result = GetOrAddInstWithSpecificConstantValue(context, inst_id);
+  if constexpr (requires { DerivedInstIdT(result); }) {
+    return DerivedInstIdT(result);
+  } else {
+    return DerivedInstIdT::UnsafeMake(result);
+  }
+}
+
 template <typename BundleT>
 static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
                                SemIR::BundleId<BundleT> bundle_id)

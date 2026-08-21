@@ -53,6 +53,15 @@ struct DependentInst {
 auto AttachDependentInstToCurrentGeneric(Context& context,
                                          DependentInst dependent_inst) -> void;
 
+// Given an instruction that might have a generic constant value, returns an
+// instruction that has the corresponding specific constant value in the current
+// generic, if any. This is typically not necessary except when manually adding
+// instructions directly to the eval block, for example when building an Action
+// instruction.
+auto GetOrAddInstWithSpecificConstantValue(Context& context,
+                                           SemIR::InstId inst_id)
+    -> SemIR::InstId;
+
 // Discard the information about the current generic entity. This should be
 // called instead of `FinishGenericDecl` if the corresponding `Generic` object
 // would not actually be used, or when recovering from an error.
