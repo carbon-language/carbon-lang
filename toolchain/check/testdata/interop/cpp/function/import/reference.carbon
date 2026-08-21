@@ -462,23 +462,23 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-class X {}
+class XByRef {}
 
 inline Cpp '''c++
-template<typename T> void TakeAnything_ExpectConstLRef(T&&) {
-  static_assert(__is_same(T, const Carbon::X&));
+template<typename T> void TakeAnything_ExpectConstLRef_ByRef(T&&) {
+  static_assert(__is_same(T, const Carbon::XByRef&));
 }
 ''';
 
-fn PassConstRef(ref x: const X) {
-  // CHECK:STDERR: fail_todo_forwarding_reference_by_ref.carbon:[[@LINE+7]]:36: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-  // CHECK:STDERR:   Cpp.TakeAnything_ExpectConstLRef(ref x);
-  // CHECK:STDERR:                                    ^~~~~
-  // CHECK:STDERR: fail_todo_forwarding_reference_by_ref.carbon:[[@LINE-9]]:59: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: template<typename T> void TakeAnything_ExpectConstLRef(T&&) {
-  // CHECK:STDERR:                                                           ^
+fn PassConstRef(ref x: const XByRef) {
+  // CHECK:STDERR: fail_todo_forwarding_reference_by_ref.carbon:[[@LINE+7]]:42: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+  // CHECK:STDERR:   Cpp.TakeAnything_ExpectConstLRef_ByRef(ref x);
+  // CHECK:STDERR:                                          ^~~~~
+  // CHECK:STDERR: fail_todo_forwarding_reference_by_ref.carbon:[[@LINE-9]]:65: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: template<typename T> void TakeAnything_ExpectConstLRef_ByRef(T&&) {
+  // CHECK:STDERR:                                                                 ^
   // CHECK:STDERR:
-  Cpp.TakeAnything_ExpectConstLRef(ref x);
+  Cpp.TakeAnything_ExpectConstLRef_ByRef(ref x);
 }
 
 

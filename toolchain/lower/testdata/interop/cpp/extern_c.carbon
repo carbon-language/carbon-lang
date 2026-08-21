@@ -52,7 +52,7 @@ fn MyF() {
 
 // --- extern_c_variable.h
 
-extern "C" int foo;
+extern "C" int foo_var;
 
 // --- import_extern_c_variable.carbon
 
@@ -61,7 +61,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "extern_c_variable.h";
 
 fn MyF() -> i32 {
-  return Cpp.foo;
+  return Cpp.foo_var;
 }
 
 // ============================================================================
@@ -90,7 +90,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 
 // --- extern_c_with_asm_label.h
 
-extern "C" void foo() __asm__("bar");
+extern "C" void foo_with_asm_label() __asm__("bar");
 
 // --- import_extern_c_with_asm_label.carbon
 
@@ -99,7 +99,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "extern_c_with_asm_label.h";
 
 fn MyF() {
-  Cpp.foo();
+  Cpp.foo_with_asm_label();
 }
 
 // CHECK:STDOUT: ; ---
@@ -192,12 +192,12 @@ fn MyF() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @foo = external global i32, align 4
+// CHECK:STDOUT: @foo_var = external global i32, align 4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CMyF.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7 = load i32, ptr @foo, align 4, !dbg !16
+// CHECK:STDOUT:   %.loc7 = load i32, ptr @foo_var, align 4, !dbg !16
 // CHECK:STDOUT:   ret i32 %.loc7, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

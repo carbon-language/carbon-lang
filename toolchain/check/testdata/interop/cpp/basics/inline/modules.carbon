@@ -38,21 +38,21 @@ library "[[@TEST_NAME]]";
 // TODO: This diagnostic isn't very good.
 import Cpp inline '''
 // CHECK:STDERR: fail_module_in_inline_cpp.carbon:[[@LINE+15]]:1: error: module declaration must not come from an #include directive [CppInteropParseError]
-// CHECK:STDERR:    21 | module Foo;
+// CHECK:STDERR:    21 | module Bar;
 // CHECK:STDERR:       | ^~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_module_in_inline_cpp.carbon:[[@LINE+11]]:1: error: module declaration must occur at the start of the translation unit [CppInteropParseError]
-// CHECK:STDERR:    21 | module Foo;
+// CHECK:STDERR:    21 | module Bar;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: add 'module;' to the start of the file to introduce a global module fragment [CppInteropParseNote]
 // CHECK:STDERR:     1 | ;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_module_in_inline_cpp.carbon:[[@LINE+4]]:8: error: module 'Foo' not found [CppInteropParseError]
-// CHECK:STDERR:    21 | module Foo;
-// CHECK:STDERR:       |        ^~~~
+// CHECK:STDERR: fail_module_in_inline_cpp.carbon:[[@LINE+4]]:8: error: module name 'Foo' specified on command line does not match name of module [CppInteropParseError]
+// CHECK:STDERR:    21 | module Bar;
+// CHECK:STDERR:       |        ^~~
 // CHECK:STDERR:
-module Foo;
+module Bar;
 ''';
 
 // --- fail_global_module_in_inline_cpp.carbon
@@ -74,21 +74,21 @@ module;
 int n;
 
 // CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+15]]:1: error: module declaration must not come from an #include directive [CppInteropParseError]
-// CHECK:STDERR:    33 | module Foo;
+// CHECK:STDERR:    33 | module Baz;
 // CHECK:STDERR:       | ^~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+11]]:1: error: module declaration must occur at the start of the translation unit [CppInteropParseError]
-// CHECK:STDERR:    33 | module Foo;
+// CHECK:STDERR:    33 | module Baz;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR: <carbon Cpp imports>:1:1: note: add 'module;' to the start of the file to introduce a global module fragment [CppInteropParseNote]
 // CHECK:STDERR:     1 | ;
 // CHECK:STDERR:       | ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+4]]:8: error: module 'Foo' not found [CppInteropParseError]
-// CHECK:STDERR:    33 | module Foo;
-// CHECK:STDERR:       |        ^~~~
+// CHECK:STDERR: fail_global_module_in_inline_cpp.carbon:[[@LINE+4]]:8: error: module name 'Foo' specified on command line does not match name of module [CppInteropParseError]
+// CHECK:STDERR:    33 | module Baz;
+// CHECK:STDERR:       |        ^~~
 // CHECK:STDERR:
-module Foo;
+module Baz;
 ''';
 
 // --- fail_import_in_inline_cpp.carbon
