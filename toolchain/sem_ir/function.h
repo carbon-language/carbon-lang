@@ -186,6 +186,10 @@ struct FunctionFields {
   // `thunk_decl_id()` or `cpp_thunk_decl_id()` to access this.
   AnyRawId special_function_kind_data = AnyRawId(AnyRawId::NoneIndex);
 
+  // A count of the top-level explicit parameters that have default values
+  // provided. This is useful for quickly bounds-checking caller argument arity.
+  int32_t default_value_arity = 0;
+
   // The following members are accumulated throughout the function definition.
 
   // A list of the statically reachable code blocks in the body of the

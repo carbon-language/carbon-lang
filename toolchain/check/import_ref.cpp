@@ -2447,7 +2447,8 @@ static auto ImportFunctionDecl(
         .virtual_modifier = import_function.virtual_modifier,
         .virtual_index = import_function.virtual_index,
         .evaluation_mode = import_function.evaluation_mode,
-        .interface_modifier = import_function.interface_modifier}});
+        .interface_modifier = import_function.interface_modifier,
+        .default_value_arity = import_function.default_value_arity}});
 
   // Directly add the function type constant. Don't use `GetFunctionType`
   // because that will evaluate the function type, which we can't do if the
