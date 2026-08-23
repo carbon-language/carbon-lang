@@ -54,36 +54,43 @@ static auto GetTokenForInst(const SemIR::File& sem_ir,
 SemIRIndex::SemIRIndex(const SemIR::File& sem_ir,
                        const Parse::TreeAndSubtrees& tree_and_subtrees) {
   const auto& tokens = tree_and_subtrees.tree().tokens();
-  // Count the instructions per token, leaving a leading zero so that the counts
-  // can be turned into start offsets in place.
-  token_starts_.assign(tokens.size() + 1, 0);
-  int32_t total = 0;
+  // Count the instructions per token. The count for token `i` goes at index
+  // `i + 2`, so that the prefix sum below leaves token `i`'s start offset in
+  // `token_starts_[i + 1]`. That entry serves as the cursor for filling token
+  // `i`'s group, so filling advances it to the start of token `i + 1`, which
+  // is what the finished index needs it to hold. There is one spare entry at
+  // each end: a leading zero for token 0's start, and a trailing cursor slot
+  // that the fill never uses, that we discard at the end. Note that it would
+  // be possible to drop the trailing entry, but that would cost an extra branch
+  // in the loop below.
+  token_starts_.assign(tokens.size() + 2, 0);
   for (auto [inst_id, inst] : sem_ir.insts().enumerate()) {
     auto token = GetTokenForInst(sem_ir, tree_and_subtrees, inst_id);
     if (!token.has_value()) {
       continue;
     }
-    ++token_starts_[token.index + 1];
-    ++total;
+    ++token_starts_[token.index + 2];
   }
 
-  // Turn the counts into start offsets.
+  // Turn the counts into offsets. The last entry becomes the number of
+  // instructions that were indexed.
   for (size_t i = 1; i < token_starts_.size(); ++i) {
     token_starts_[i] += token_starts_[i - 1];
   }
-  CARBON_CHECK(token_starts_.back() == total);
 
-  // Fill each token's group. `next` tracks the next free slot per token, and
-  // ends up equal to the following token's start, so the offsets stay valid.
-  insts_.resize(total, SemIR::InstId::None);
-  llvm::SmallVector<int32_t> next(token_starts_.begin(), token_starts_.end());
+  // Fill each token's group, moving its cursor into its final position.
+  insts_.resize(token_starts_.back(), SemIR::InstId::None);
   for (auto [inst_id, inst] : sem_ir.insts().enumerate()) {
     auto token = GetTokenForInst(sem_ir, tree_and_subtrees, inst_id);
     if (!token.has_value()) {
       continue;
     }
-    insts_[next[token.index]++] = inst_id;
+    insts_[token_starts_[token.index + 1]++] = inst_id;
   }
+
+  // Drop the spare trailing slot now that every cursor has moved into place.
+  token_starts_.pop_back();
+  CARBON_CHECK(static_cast<size_t>(token_starts_.back()) == insts_.size());
 }
 
 auto SemIRIndex::InstsForToken(Lex::TokenIndex token) const
