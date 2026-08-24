@@ -2002,6 +2002,8 @@ static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
       case TokenKind::Or:
         bracket_kind = BracketTokenKind::ComparisonOp;
         break;
+      case TokenKind::FileStart:
+        continue;
       case TokenKind::FileEnd:
         bracket_kind = BracketTokenKind::FileEnd;
         break;
