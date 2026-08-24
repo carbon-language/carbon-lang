@@ -773,9 +773,6 @@ auto EvalConstantInst(Context& context, SemIR::SpliceInst inst)
     return ConstantEvalResult::Existing(
         context.constant_values().Get(inst_value->inst_id));
   }
-  CARBON_CHECK(
-      nested_inst.kind().constant_kind() == SemIR::InstConstantKind::InstAction,
-      "Unexpected inst kind for inst splice: {0}", nested_inst);
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
