@@ -880,7 +880,7 @@ struct FormParamPatternAction {
       InstKind::FormParamPatternAction.Define<Parse::FormBindingPatternId>(
           {.ir_name = "form_param_pattern_action",
            .expr_category = ActionExprCategory(ExprCategory::Pattern),
-           .constant_kind = InstConstantKind::ConstantInstAction,
+           .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
   TypeId type_id;
@@ -1469,7 +1469,7 @@ struct OutFormParamPatternAction {
           .Define<Parse::NodeIdOneOf<Parse::ReturnFormId, Parse::ReturnTypeId>>(
               {.ir_name = "out_form_param_pattern_action",
                .expr_category = ActionExprCategory(ExprCategory::Pattern),
-               .constant_kind = InstConstantKind::ConstantInstAction,
+               .constant_kind = InstConstantKind::InstAction,
                .is_lowered = false});
 
   TypeId type_id;
