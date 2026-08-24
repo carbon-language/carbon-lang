@@ -58,6 +58,8 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %require_complete.ef1: <witness> = require_complete_type %ptr.e8f [template]
 // CHECK:STDOUT:   %Copy.assoc_type: type = assoc_entity_type @Copy [concrete]
 // CHECK:STDOUT:   %assoc0: %Copy.assoc_type = assoc_entity element0, imports.%Core.import_ref.098 [concrete]
+// CHECK:STDOUT:   %.f57: %ptr.e8f = splice_inst @F.%.loc10_10.5 [template]
+// CHECK:STDOUT:   %.7cf: @F.%.loc10_10.8 (@F.%.loc10_10.8) = splice_inst @F.%.loc10_10.7 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -109,16 +111,18 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %require_complete.loc5_25: <witness> = require_complete_type %ptr.loc5_29.1 [template = %require_complete.loc5_25 (constants.%require_complete.fbe)]
 // CHECK:STDOUT:   %require_complete.loc5_32: <witness> = require_complete_type %ptr.loc5_28.1 [template = %require_complete.loc5_32 (constants.%require_complete.ef1)]
 // CHECK:STDOUT:   %.loc10_10.5: <instruction> = refine_type_action %.loc10_10.2, %ptr.loc5_28.1 [template]
-// CHECK:STDOUT:   %.loc10_10.6: <instruction> = compound_member_access_action %.loc10_10.3, constants.%assoc0 [template]
-// CHECK:STDOUT:   %.loc10_10.7: type = type_of_inst %.loc10_10.6 [template]
+// CHECK:STDOUT:   %.loc10_10.6: @F.%ptr.loc5_28.1 (%ptr.e8f) = splice_inst %.loc10_10.5 [template = %.loc10_10.6 (constants.%.f57)]
+// CHECK:STDOUT:   %.loc10_10.7: <instruction> = compound_member_access_action %.loc10_10.3, constants.%assoc0 [template]
+// CHECK:STDOUT:   %.loc10_10.8: type = type_of_inst %.loc10_10.7 [template]
+// CHECK:STDOUT:   %.loc10_10.9: @F.%.loc10_10.8 (@F.%.loc10_10.8) = splice_inst %.loc10_10.7 [template = %.loc10_10.9 (constants.%.7cf)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%ptr.loc5_29.1 (%ptr.125)) -> out %return.param: @F.%ptr.loc5_28.1 (%ptr.e8f) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%ptr.loc5_29.1 (%ptr.125) = name_ref x, %x
 // CHECK:STDOUT:     %.loc10_10.1: ref @F.%ptr.loc5_28.1 (%ptr.e8f) = deref %x.ref
 // CHECK:STDOUT:     %.loc10_10.2: @F.%ptr.loc5_28.1 (%ptr.e8f) = acquire_value %.loc10_10.1
-// CHECK:STDOUT:     %.loc10_10.3: @F.%ptr.loc5_28.1 (%ptr.e8f) = splice_inst %.loc10_10.5
-// CHECK:STDOUT:     %.loc10_10.4: @F.%.loc10_10.7 (@F.%.loc10_10.7) = splice_inst %.loc10_10.6
+// CHECK:STDOUT:     %.loc10_10.3: @F.%ptr.loc5_28.1 (%ptr.e8f) = splice_inst %.loc10_10.5 [template = %.loc10_10.6 (constants.%.f57)]
+// CHECK:STDOUT:     %.loc10_10.4: @F.%.loc10_10.8 (@F.%.loc10_10.8) = splice_inst %.loc10_10.7 [template = %.loc10_10.9 (constants.%.7cf)]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
