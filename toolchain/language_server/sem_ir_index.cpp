@@ -54,15 +54,13 @@ static auto GetTokenForInst(const SemIR::File& sem_ir,
 SemIRIndex::SemIRIndex(const SemIR::File& sem_ir,
                        const Parse::TreeAndSubtrees& tree_and_subtrees) {
   const auto& tokens = tree_and_subtrees.tree().tokens();
-  // Count the instructions per token. The count for token `i` goes at index
-  // `i + 2`, so that the prefix sum below leaves token `i`'s start offset in
-  // `token_starts_[i + 1]`. That entry serves as the cursor for filling token
-  // `i`'s group, so filling advances it to the start of token `i + 1`, which
-  // is what the finished index needs it to hold. There is one spare entry at
-  // each end: a leading zero for token 0's start, and a trailing cursor slot
-  // that the fill never uses, that we discard at the end. Note that it would
-  // be possible to drop the trailing entry, but that would cost an extra branch
-  // in the loop below.
+  // Populate `token_starts_` in three in-place passes. Note that we
+  // need N+1 elements to hold the boundaries of N contiguous intervals,
+  // plus an additional temporary element for reasons discussed below.
+  //
+  // First, we count the instructions per token. The array contents are
+  // shifted by 2: `token_starts[i+2]` will hold the number of insts for
+  // the token with `.index == i`.
   token_starts_.assign(tokens.size() + 2, 0);
   for (auto [inst_id, inst] : sem_ir.insts().enumerate()) {
     auto token = GetTokenForInst(sem_ir, tree_and_subtrees, inst_id);
@@ -72,13 +70,18 @@ SemIRIndex::SemIRIndex(const SemIR::File& sem_ir,
     ++token_starts_[token.index + 2];
   }
 
-  // Turn the counts into offsets. The last entry becomes the number of
-  // instructions that were indexed.
+  // Perform a prefix sum, so that `token_starts_[i+2]` holds the number
+  // of insts for tokens with `.index <= i`, i.e. the end of the interval for
+  // token `i`, and hence `token_starts_[i+1]` is the start of the interval
+  // for token `i`.
   for (size_t i = 1; i < token_starts_.size(); ++i) {
     token_starts_[i] += token_starts_[i - 1];
   }
 
-  // Fill each token's group, moving its cursor into its final position.
+  // Populate `insts_`, using `token_starts_[i+1]` as the index to write the next
+  // inst for token `i`, which is incremented on each write. Thus, at the end of
+  // the loop, `token_starts_[i+1]` is the past-the-end index for token `i`,
+  // i.e. the start index for token `i+1`, which is the final state of `token_starts_`.
   insts_.resize(token_starts_.back(), SemIR::InstId::None);
   for (auto [inst_id, inst] : sem_ir.insts().enumerate()) {
     auto token = GetTokenForInst(sem_ir, tree_and_subtrees, inst_id);
