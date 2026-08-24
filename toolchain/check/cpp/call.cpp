@@ -7,6 +7,7 @@
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/Template.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/cpp/import.h"
@@ -345,9 +346,21 @@ auto PerformCallToCppTemplateName(Context& context, SemIR::LocId loc_id,
                                   SemIR::ClangDeclId template_decl_id,
                                   llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
+  auto args_id = context.inst_blocks().Add(arg_ids);
+  return HandleAction<SemIR::CallCppTemplateAction>(
+      context, loc_id, SemIR::TypeInstId::None,
+      {.type_id = SemIR::InstType::TypeId,
+       .template_decl_id = template_decl_id,
+       .args_id = args_id});
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::CallCppTemplateAction action) -> SemIR::InstId {
   auto* template_decl = dyn_cast<clang::TemplateDecl>(
-      context.clang_decls().Get(template_decl_id).decl());
+      context.clang_decls().Get(action.template_decl_id).decl());
   auto loc = GetCppLocation(context, loc_id);
+
+  auto arg_ids = context.inst_blocks().Get(action.args_id);
 
   // Form a template argument list for this template.
   clang::TemplateArgumentListInfo arg_list(loc, loc);

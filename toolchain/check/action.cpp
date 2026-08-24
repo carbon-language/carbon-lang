@@ -71,7 +71,7 @@ template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT> &&
            SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::AbsoluteInstId,
                        SemIR::CallParamIndex, SemIR::NameId,
-                       SemIR::ElementIndex>
+                       SemIR::ElementIndex, SemIR::ClangDeclId>
 static auto OperandDependence(Context& /*context*/, IdT /*id*/)
     -> SemIR::ConstantDependence {
   return SemIR::ConstantDependence::None;
@@ -88,14 +88,20 @@ static auto OperandDependence(Context& context,
       context.bundles().GetAsTuple(bundle_id));
 }
 
-static auto OperandDependence(Context& context, SemIR::SpecificId specific_id)
+static auto OperandDependence(Context& context,
+                              SemIR::InstBlockId inst_block_id)
     -> SemIR::ConstantDependence {
-  auto specific = context.specifics().Get(specific_id);
   auto result = SemIR::ConstantDependence::None;
-  for (auto arg_id : context.inst_blocks().Get(specific.args_id)) {
+  for (auto arg_id : context.inst_blocks().Get(inst_block_id)) {
     result = std::max(result, OperandDependence(context, arg_id));
   }
   return result;
+}
+
+static auto OperandDependence(Context& context, SemIR::SpecificId specific_id)
+    -> SemIR::ConstantDependence {
+  auto specific = context.specifics().Get(specific_id);
+  return OperandDependence(context, specific.args_id);
 }
 
 template <typename IdT>
@@ -113,6 +119,18 @@ static auto OperandDependence(Context& context, SemIR::IdAndKind arg)
 }
 
 auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool {
+  if (auto action = action_inst.TryAs<SemIR::CallCppTemplateAction>()) {
+    auto args = context.inst_blocks().Get(action->args_id);
+    for (auto arg : args) {
+      auto const_id = context.constant_values().Get(arg);
+      if (const_id.is_symbolic()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   if (auto refine_action = action_inst.TryAs<SemIR::RefineTypeAction>()) {
     // `RefineTypeAction` can be performed whenever the type is not template-
     // dependent, even if we don't know the instruction yet.
