@@ -661,6 +661,8 @@ fn G() {
 // CHECK:STDOUT:   %v.patt.664: %pattern_type.177 = wrapper_binding_pattern v, %.f15 [template]
 // CHECK:STDOUT:   %.677: %pattern_type.177 = splice_inst @F.%.loc4_37.3 [template]
 // CHECK:STDOUT:   %return.patt.113: %pattern_type.177 = return_slot_pattern %.677, %.42f [template]
+// CHECK:STDOUT:   %.5e7cab.1: %.42f = splice_inst @F.%.loc4_30.5 [template]
+// CHECK:STDOUT:   %.6c4f01.1: %.42f = splice_inst @F.%.loc4_37.5 [template]
 // CHECK:STDOUT:   %.cfa: <instruction> = form_param_pattern_action %Fm, v [template]
 // CHECK:STDOUT:   %.26b: %pattern_type.177 = splice_inst %.cfa [template]
 // CHECK:STDOUT:   %v.patt.cee: %pattern_type.177 = wrapper_binding_pattern v, %.26b [template]
@@ -668,7 +670,9 @@ fn G() {
 // CHECK:STDOUT:   %.1ac: %pattern_type.177 = splice_inst %.94f [template]
 // CHECK:STDOUT:   %return.patt.333: %pattern_type.177 = return_slot_pattern %.1ac, %.42f [template]
 // CHECK:STDOUT:   %.095: <instruction> = callee_pattern_match_action %.f15, call_param0 [template]
+// CHECK:STDOUT:   %.5e7cab.2: %.42f = splice_inst %.095 [template]
 // CHECK:STDOUT:   %.efc: <instruction> = callee_pattern_match_action %.677, call_param1 [template]
+// CHECK:STDOUT:   %.6c4f01.2: %.42f = splice_inst %.efc [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -719,6 +723,8 @@ fn G() {
 // CHECK:STDOUT:     %return.param_patt.a9a4c7.2: %pattern_type.6b6 = out_param_pattern [concrete = %return.param_patt.a9a4c7.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a4c7.1, %i32 [concrete]
+// CHECK:STDOUT:   %.b27: %i32 = splice_inst %.095 [template]
+// CHECK:STDOUT:   %.d33: %i32 = splice_inst %.efc [template]
 // CHECK:STDOUT:   %F.specific_fn.8ea: <specific function> = specific_function %F, @F(%.795f) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
@@ -814,13 +820,13 @@ fn G() {
 // CHECK:STDOUT:       %Form.ref: type = name_ref Form, imports.%Core.Form [concrete = Core.Form]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Fm.loc4_16.2: Core.Form = symbolic_binding Fm, 0 [symbolic = %Fm.loc4_16.1 (constants.%Fm)]
-// CHECK:STDOUT:     %.loc4_30.1: @F.%.loc4_33.1 (%.42f) = splice_inst %.loc4_30.5
+// CHECK:STDOUT:     %.loc4_30.1: @F.%.loc4_33.1 (%.42f) = splice_inst %.loc4_30.5 [template = %.loc4_30.6 (constants.%.5e7cab.1)]
 // CHECK:STDOUT:     %.loc4_33.2: Core.Form = splice_block %Fm.ref.loc4_33 [symbolic = %Fm.loc4_16.1 (constants.%Fm)] {
 // CHECK:STDOUT:       %Fm.ref.loc4_33: Core.Form = name_ref Fm, %Fm.loc4_16.2 [symbolic = %Fm.loc4_16.1 (constants.%Fm)]
 // CHECK:STDOUT:       %.loc4_33.3: type = type_component_of %Fm.ref.loc4_33 [symbolic = %.loc4_33.1 (constants.%.42f)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: @F.%.loc4_33.1 (%.42f) = wrapper_binding v, %.loc4_30.1
-// CHECK:STDOUT:     %.loc4_37.1: @F.%.loc4_33.1 (%.42f) = splice_inst %.loc4_37.5
+// CHECK:STDOUT:     %.loc4_37.1: @F.%.loc4_33.1 (%.42f) = splice_inst %.loc4_37.5 [template = %.loc4_37.6 (constants.%.6c4f01.1)]
 // CHECK:STDOUT:     %return: @F.%.loc4_33.1 (%.42f) = return_slot %.loc4_37.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
@@ -838,7 +844,9 @@ fn G() {
 // CHECK:STDOUT:   %.loc4_37.4: @F.%pattern_type (%pattern_type.177) = splice_inst %.loc4_37.3 [template = %.loc4_37.4 (constants.%.677)]
 // CHECK:STDOUT:   %return.patt.loc4_37.2: @F.%pattern_type (%pattern_type.177) = return_slot_pattern %.loc4_37.4, %.loc4_33.1 [template = %return.patt.loc4_37.2 (constants.%return.patt.113)]
 // CHECK:STDOUT:   %.loc4_30.5: <instruction> = callee_pattern_match_action constants.%.f15, call_param0 [template]
+// CHECK:STDOUT:   %.loc4_30.6: @F.%.loc4_33.1 (%.42f) = splice_inst %.loc4_30.5 [template = %.loc4_30.6 (constants.%.5e7cab.1)]
 // CHECK:STDOUT:   %.loc4_37.5: <instruction> = callee_pattern_match_action constants.%.677, call_param1 [template]
+// CHECK:STDOUT:   %.loc4_37.6: @F.%.loc4_33.1 (%.42f) = splice_inst %.loc4_37.5 [template = %.loc4_37.6 (constants.%.6c4f01.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.loc4_33.1 [symbolic = %require_complete (constants.%require_complete.c9b)]
@@ -943,7 +951,9 @@ fn G() {
 // CHECK:STDOUT:   %.loc4_37.4 => constants.%.1ac
 // CHECK:STDOUT:   %return.patt.loc4_37.2 => constants.%return.patt.333
 // CHECK:STDOUT:   %.loc4_30.5 => constants.%.095
+// CHECK:STDOUT:   %.loc4_30.6 => constants.%.5e7cab.2
 // CHECK:STDOUT:   %.loc4_37.5 => constants.%.efc
+// CHECK:STDOUT:   %.loc4_37.6 => constants.%.6c4f01.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%.795f) {
@@ -958,7 +968,9 @@ fn G() {
 // CHECK:STDOUT:   %.loc4_37.4 => constants.%return.param_patt.a9a4c7.1
 // CHECK:STDOUT:   %return.patt.loc4_37.2 => constants.%return.patt.e1b
 // CHECK:STDOUT:   %.loc4_30.5 => constants.%.095
+// CHECK:STDOUT:   %.loc4_30.6 => constants.%.b27
 // CHECK:STDOUT:   %.loc4_37.5 => constants.%.efc
+// CHECK:STDOUT:   %.loc4_37.6 => constants.%.d33
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -976,7 +988,9 @@ fn G() {
 // CHECK:STDOUT:   %.loc4_37.4 => constants.%.ae0167.1
 // CHECK:STDOUT:   %return.patt.loc4_37.2 => constants.%return.patt.c62
 // CHECK:STDOUT:   %.loc4_30.5 => constants.%.095
+// CHECK:STDOUT:   %.loc4_30.6 => constants.%.b27
 // CHECK:STDOUT:   %.loc4_37.5 => constants.%.efc
+// CHECK:STDOUT:   %.loc4_37.6 => constants.%.d33
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -994,7 +1008,9 @@ fn G() {
 // CHECK:STDOUT:   %.loc4_37.4 => constants.%.1a588f.1
 // CHECK:STDOUT:   %return.patt.loc4_37.2 => constants.%return.patt.45a
 // CHECK:STDOUT:   %.loc4_30.5 => constants.%.095
+// CHECK:STDOUT:   %.loc4_30.6 => constants.%.b27
 // CHECK:STDOUT:   %.loc4_37.5 => constants.%.efc
+// CHECK:STDOUT:   %.loc4_37.6 => constants.%.d33
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
