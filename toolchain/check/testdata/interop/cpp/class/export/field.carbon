@@ -14,14 +14,14 @@
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class A {
+class TwoIntFields {
   var x: i32;
   var y: i32;
 }
 
 inline Cpp '''
-void F() {
-  Carbon::A a;
+void AccessTwoFields() {
+  Carbon::TwoIntFields a;
   a.x = 12;
   a.y = 34;
 }
@@ -31,18 +31,18 @@ void F() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-base class A {
+base class BaseWithField {
   var x: i32;
 }
 
-class B {
-  extend base: A;
+class DerivedWithField {
+  extend base: BaseWithField;
   var y: i32;
 }
 
 inline Cpp '''
-void F() {
-  Carbon::B b;
+void AccessInheritedField() {
+  Carbon::DerivedWithField b;
   b.x = 12;
   b.y = 34;
 }
@@ -70,17 +70,17 @@ void g() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class A {}
+class EmptyClass {}
 
 inline Cpp '''
-void F() {
-  Carbon::A a;
-  // CHECK:STDERR: fail_nonexistent_field.carbon:[[@LINE+4]]:5: error: no member named 'x' in 'Carbon::A' [CppInteropParseError]
+void AccessNonexistentField() {
+  Carbon::EmptyClass a;
+  // CHECK:STDERR: fail_nonexistent_field.carbon:[[@LINE+4]]:5: error: no member named 'x' in 'Carbon::EmptyClass' [CppInteropParseError]
   // CHECK:STDERR:    13 |   a.x = 12;
   // CHECK:STDERR:       |   ~ ^
   // CHECK:STDERR:
   a.x = 12;
-  // CHECK:STDERR: fail_nonexistent_field.carbon:[[@LINE+4]]:5: error: no member named 'y' in 'Carbon::A' [CppInteropParseError]
+  // CHECK:STDERR: fail_nonexistent_field.carbon:[[@LINE+4]]:5: error: no member named 'y' in 'Carbon::EmptyClass' [CppInteropParseError]
   // CHECK:STDERR:    18 |   a.y = 34;
   // CHECK:STDERR:       |   ~ ^
   // CHECK:STDERR:
@@ -92,7 +92,7 @@ void F() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class A {
+class UnsupportedFieldType {
   // CHECK:STDERR: fail_unsupported_field_type.carbon:[[@LINE+4]]:7: error: semantics TODO: `failed to map Carbon type to C++` [SemanticsTodo]
   // CHECK:STDERR:   var x: ();
   // CHECK:STDERR:       ^~~~~
@@ -106,14 +106,14 @@ class A {
 }
 
 inline Cpp '''
-void F() {
-  Carbon::A a;
-  // CHECK:STDERR: fail_unsupported_field_type.carbon:[[@LINE+4]]:5: error: no member named 'x' in 'Carbon::A' [CppInteropParseError]
+void AccessUnsupportedField() {
+  Carbon::UnsupportedFieldType a;
+  // CHECK:STDERR: fail_unsupported_field_type.carbon:[[@LINE+4]]:5: error: no member named 'x' in 'Carbon::UnsupportedFieldType' [CppInteropParseError]
   // CHECK:STDERR:    24 |   a.x;
   // CHECK:STDERR:       |   ~ ^
   // CHECK:STDERR:
   a.x;
-  // CHECK:STDERR: fail_unsupported_field_type.carbon:[[@LINE+4]]:5: error: no member named 'y' in 'Carbon::A' [CppInteropParseError]
+  // CHECK:STDERR: fail_unsupported_field_type.carbon:[[@LINE+4]]:5: error: no member named 'y' in 'Carbon::UnsupportedFieldType' [CppInteropParseError]
   // CHECK:STDERR:    29 |   a.y;
   // CHECK:STDERR:       |   ~ ^
   // CHECK:STDERR:
@@ -125,14 +125,14 @@ void F() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class A {
+class AdaptedClass {
   adapt ();
 }
 
 inline Cpp '''
-void F() {
-  Carbon::A a;
-  // CHECK:STDERR: fail_adapter.carbon:[[@LINE+4]]:5: error: no member named 'x' in 'Carbon::A' [CppInteropParseError]
+void AccessAdaptedField() {
+  Carbon::AdaptedClass a;
+  // CHECK:STDERR: fail_adapter.carbon:[[@LINE+4]]:5: error: no member named 'x' in 'Carbon::AdaptedClass' [CppInteropParseError]
   // CHECK:STDERR:    15 |   a.x = 12;
   // CHECK:STDERR:       |   ~ ^
   // CHECK:STDERR:
@@ -145,7 +145,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 // This should not cause a crash.
-class A {
+class InvalidBaseClass {
   // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:16: error: name `Whoops` not found [NameNotFound]
   // CHECK:STDERR:   extend base: Whoops;
   // CHECK:STDERR:                ^~~~~~
@@ -154,15 +154,15 @@ class A {
 }
 
 inline Cpp '''
-Carbon::A x;
+Carbon::InvalidBaseClass invalid_x;
 ''';
 
 // --- fail_private_field.carbon
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class C {
-  fn Make() -> C {
+class ClassWithPrivateField {
+  fn Make() -> ClassWithPrivateField {
     return {.x = 123};
   }
 
@@ -170,9 +170,9 @@ class C {
 }
 
 inline Cpp '''
-int F() {
-  auto c = Carbon::C::Make();
-  // CHECK:STDERR: fail_private_field.carbon:[[@LINE+7]]:12: error: 'x' is a private member of 'Carbon::C' [CppInteropParseError]
+int AccessPrivateField() {
+  auto c = Carbon::ClassWithPrivateField::Make();
+  // CHECK:STDERR: fail_private_field.carbon:[[@LINE+7]]:12: error: 'x' is a private member of 'Carbon::ClassWithPrivateField' [CppInteropParseError]
   // CHECK:STDERR:    22 |   return c.x;
   // CHECK:STDERR:       |            ^
   // CHECK:STDERR: fail_private_field.carbon:[[@LINE-9]]:16: note: implicitly declared private here [CppInteropParseNote]

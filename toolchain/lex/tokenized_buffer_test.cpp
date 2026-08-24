@@ -591,11 +591,14 @@ TEST_F(LexerTest, MatchingGroups) {
 TEST_F(LexerTest, MismatchedGroups) {
   auto& buffer1 = compile_helper_.GetTokenizedBuffer("{");
   EXPECT_TRUE(buffer1.has_errors());
-  EXPECT_THAT(buffer1, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                           {.kind = TokenKind::FileStart},
-                           {.kind = TokenKind::Error, .text = "{"},
-                           {.kind = TokenKind::FileEnd},
-                       }));
+  EXPECT_THAT(
+      buffer1,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::FileStart},
+          {.kind = TokenKind::OpenCurlyBrace, .column = 1},
+          {.kind = TokenKind::CloseCurlyBrace, .column = 2, .recovery = true},
+          {.kind = TokenKind::FileEnd},
+      }));
 
   auto& buffer2 = compile_helper_.GetTokenizedBuffer("}");
   EXPECT_TRUE(buffer2.has_errors());
@@ -618,9 +621,7 @@ TEST_F(LexerTest, MismatchedGroups) {
           {.kind = TokenKind::FileEnd},
       }));
 
-  // Two recovery tokens inserted at the same point: each must be flagged at
-  // its own merged index, not the pre-insertion index of the token it was
-  // inserted before.
+  // `{((}` is recovered by closing both parens before the `}`, i.e. `{(())}`.
   auto& buffer3b = compile_helper_.GetTokenizedBuffer("{((}");
   EXPECT_TRUE(buffer3b.has_errors());
   EXPECT_THAT(
@@ -672,9 +673,12 @@ TEST_F(LexerTest, MismatchedGroups) {
 }
 
 TEST_F(LexerTest, Whitespace) {
+  // The trailing `{(` is recovered by inserting `)` and `}` at end of file,
+  // giving `{()} {()}`.
   auto& buffer = compile_helper_.GetTokenizedBuffer("{( } {(");
 
-  // Whether there should be whitespace before/after each token.
+  // Whether there should be whitespace at each boundary, from before the
+  // first token to after the last.
   bool space[] = {false,
                   // start-of-file
                   true,
@@ -683,13 +687,17 @@ TEST_F(LexerTest, Whitespace) {
                   // (
                   true,
                   // inserted )
-                  true,
+                  false,
                   // }
                   true,
-                  // error {
+                  // {
                   false,
-                  // error (
+                  // (
                   true,
+                  // inserted )
+                  false,
+                  // inserted }
+                  false,
                   // EOF
                   false};
   int pos = 0;

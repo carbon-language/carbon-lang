@@ -5,6 +5,7 @@
 #include "toolchain/check/action.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
@@ -69,7 +70,8 @@ auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
 template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT> &&
            SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::AbsoluteInstId,
-                       SemIR::CallParamIndex, SemIR::NameId>
+                       SemIR::CallParamIndex, SemIR::NameId,
+                       SemIR::ElementIndex>
 static auto OperandDependence(Context& /*context*/, IdT /*id*/)
     -> SemIR::ConstantDependence {
   return SemIR::ConstantDependence::None;
@@ -210,6 +212,24 @@ static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
   // template-dependent.
 
   return inst_id;
+}
+
+template <typename DerivedInstIdT>
+  requires SemIR::Internal::IsIdKindType<DerivedInstIdT> &&
+           std::derived_from<DerivedInstIdT, SemIR::InstId>
+static auto RefineTypedOperand(Context& context, SemIR::LocId /*loc_id*/,
+                               DerivedInstIdT inst_id) -> DerivedInstIdT {
+  // Refine an instruction that refers to a value within the current generic to
+  // refer to the corresponding value within the specific. This is analogous to
+  // the work we do to rebuild generic constants in the eval block, but is done
+  // as refinement rather than rebuilding since action instructions *only* live
+  // in the eval block.
+  auto result = GetOrAddInstWithSpecificConstantValue(context, inst_id);
+  if constexpr (requires { DerivedInstIdT(result); }) {
+    return DerivedInstIdT(result);
+  } else {
+    return DerivedInstIdT::UnsafeMake(result);
+  }
 }
 
 template <typename BundleT>

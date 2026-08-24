@@ -16,7 +16,7 @@
 
 // --- declaration.h
 
-class Bar;
+class DeclBar;
 
 // --- import_declaration.carbon
 
@@ -25,7 +25,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "declaration.h";
 
 //@dump-sem-ir-begin
-fn MyF(bar: Cpp.Bar*);
+fn MyF(bar: Cpp.DeclBar*);
 //@dump-sem-ir-end
 
 // --- fail_use_declaration_as_definition.carbon
@@ -35,15 +35,15 @@ library "[[@TEST_NAME]]";
 import Cpp library "declaration.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:19: error: binding pattern has incomplete type `Bar` in name binding declaration [IncompleteTypeInBindingDecl]
-  // CHECK:STDERR:   var unused bar: Cpp.Bar;
-  // CHECK:STDERR:                   ^~~~~~~
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:19: error: binding pattern has incomplete type `DeclBar` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR:   var unused bar: Cpp.DeclBar;
+  // CHECK:STDERR:                   ^~~~~~~~~~~
   // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./declaration.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class Bar;
+  // CHECK:STDERR: class DeclBar;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  var unused bar: Cpp.Bar;
+  var unused bar: Cpp.DeclBar;
 }
 
 // ============================================================================
@@ -52,7 +52,7 @@ fn MyF() {
 
 // --- definition.h
 
-class Bar {};
+class DefBar {};
 
 // --- import_definition.carbon
 
@@ -61,7 +61,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "definition.h";
 
 //@dump-sem-ir-begin
-fn MyF(bar: Cpp.Bar*);
+fn MyF(bar: Cpp.DefBar*);
 //@dump-sem-ir-end
 
 // ============================================================================
@@ -70,8 +70,8 @@ fn MyF(bar: Cpp.Bar*);
 
 // --- declaration_and_definition.h
 
-class Bar;
-class Bar {};
+class DeclDefBar;
+class DeclDefBar {};
 
 // --- import_declaration_and_definition.carbon
 
@@ -80,7 +80,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "declaration_and_definition.h";
 
 //@dump-sem-ir-begin
-fn MyF(bar: Cpp.Bar*);
+fn MyF(bar: Cpp.DeclDefBar*);
 //@dump-sem-ir-end
 
 // ============================================================================
@@ -89,7 +89,7 @@ fn MyF(bar: Cpp.Bar*);
 
 // --- static_member_function.h
 
-class Bar {
+class StaticMemberFnBar {
  public:
   static auto foo() -> void;
 };
@@ -102,7 +102,7 @@ import Cpp library "static_member_function.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
-  Cpp.Bar.foo();
+  Cpp.StaticMemberFnBar.foo();
   //@dump-sem-ir-end
 }
 
@@ -112,9 +112,9 @@ fn MyF() {
 
 // --- static_data_member.h
 
-class Bar {
+class StaticDataMemberBar {
  public:
-  static Bar* _Nonnull foo;
+  static StaticDataMemberBar* _Nonnull foo;
 };
 
 // --- import_static_data_member.carbon
@@ -125,7 +125,7 @@ import Cpp library "static_data_member.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
-  let unused bar: Cpp.Bar* = Cpp.Bar.foo;
+  let unused bar: Cpp.StaticDataMemberBar* = Cpp.StaticDataMemberBar.foo;
   //@dump-sem-ir-end
 }
 
@@ -135,9 +135,9 @@ fn MyF() {
 
 // --- data_member.h
 
-class Bar {
+class DataMemberBar {
  public:
-  Bar* _Nonnull foo;
+  DataMemberBar* _Nonnull foo;
 };
 
 // --- import_data_member.carbon
@@ -147,8 +147,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "data_member.h";
 
 //@dump-sem-ir-begin
-fn MyF(bar : Cpp.Bar*) {
-  let unused foo_bar: Cpp.Bar* = bar->foo;
+fn MyF(bar : Cpp.DataMemberBar*) {
+  let unused foo_bar: Cpp.DataMemberBar* = bar->foo;
 }
 //@dump-sem-ir-end
 
@@ -158,9 +158,9 @@ fn MyF(bar : Cpp.Bar*) {
 
 // --- dynamic.h
 
-class Bar {
+class DynamicBar {
  public:
-  virtual ~Bar();
+  virtual ~DynamicBar();
   virtual void f();
 };
 
@@ -171,7 +171,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "dynamic.h";
 
 //@dump-sem-ir-begin
-fn MyF(bar: Cpp.Bar*) {
+fn MyF(bar: Cpp.DynamicBar*) {
   bar->f();
 }
 //@dump-sem-ir-end
@@ -182,7 +182,7 @@ fn MyF(bar: Cpp.Bar*) {
 
 // --- to_inherit_public.h
 
-class Bar {
+class ToInheritBar {
  public:
   static auto foo() -> void;
 };
@@ -195,7 +195,7 @@ import Cpp library "to_inherit_public.h";
 
 //@dump-sem-ir-begin
 class Derived {
-  extend base: Cpp.Bar;
+  extend base: Cpp.ToInheritBar;
 }
 
 fn MyF() {
@@ -212,7 +212,7 @@ fn MyF() {
 struct X {};
 
 template<typename T>
-class Bar {};
+class TemplateBar {};
 
 // --- import_template.carbon
 
@@ -221,7 +221,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "template.h";
 
 //@dump-sem-ir-begin
-fn MyF(bar: Cpp.Bar(Cpp.X)*);
+fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 //@dump-sem-ir-end
 
 // --- fail_copy_witness_of_incomplete_class.carbon
@@ -255,8 +255,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT: --- import_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %DeclBar: type = class_type @DeclBar [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %DeclBar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %bar.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:   %bar.patt: %pattern_type = wrapper_binding_pattern bar, %bar.param_patt [concrete]
@@ -266,10 +266,10 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     .DeclBar = %DeclBar.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %DeclBar.decl: type = class_decl @DeclBar [concrete = constants.%DeclBar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -280,8 +280,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
+// CHECK:STDOUT:       %DeclBar.ref: type = name_ref DeclBar, imports.%DeclBar.decl [concrete = constants.%DeclBar]
+// CHECK:STDOUT:       %ptr: type = ptr_type %DeclBar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: %ptr = wrapper_binding bar, %bar.param
 // CHECK:STDOUT:   }
@@ -292,8 +292,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT: --- import_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %DefBar: type = class_type @DefBar [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %DefBar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %bar.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:   %bar.patt: %pattern_type = wrapper_binding_pattern bar, %bar.param_patt [concrete]
@@ -303,10 +303,10 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     .DefBar = %DefBar.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %DefBar.decl: type = class_decl @DefBar [concrete = constants.%DefBar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -317,8 +317,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
+// CHECK:STDOUT:       %DefBar.ref: type = name_ref DefBar, imports.%DefBar.decl [concrete = constants.%DefBar]
+// CHECK:STDOUT:       %ptr: type = ptr_type %DefBar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: %ptr = wrapper_binding bar, %bar.param
 // CHECK:STDOUT:   }
@@ -329,8 +329,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT: --- import_declaration_and_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %DeclDefBar: type = class_type @DeclDefBar [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %DeclDefBar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %bar.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:   %bar.patt: %pattern_type = wrapper_binding_pattern bar, %bar.param_patt [concrete]
@@ -340,10 +340,10 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     .DeclDefBar = %DeclDefBar.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %DeclDefBar.decl: type = class_decl @DeclDefBar [concrete = constants.%DeclDefBar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -354,8 +354,8 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
+// CHECK:STDOUT:       %DeclDefBar.ref: type = name_ref DeclDefBar, imports.%DeclDefBar.decl [concrete = constants.%DeclDefBar]
+// CHECK:STDOUT:       %ptr: type = ptr_type %DeclDefBar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: %ptr = wrapper_binding bar, %bar.param
 // CHECK:STDOUT:   }
@@ -367,38 +367,38 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
-// CHECK:STDOUT:   %Bar.foo.cpp_overload_set.type: type = cpp_overload_set_type @Bar.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %Bar.foo.cpp_overload_set.value: %Bar.foo.cpp_overload_set.type = cpp_overload_set_value @Bar.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %Bar.foo.type: type = fn_type @Bar.foo [concrete]
-// CHECK:STDOUT:   %Bar.foo: %Bar.foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %StaticMemberFnBar: type = class_type @StaticMemberFnBar [concrete]
+// CHECK:STDOUT:   %StaticMemberFnBar.foo.cpp_overload_set.type: type = cpp_overload_set_type @StaticMemberFnBar.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %StaticMemberFnBar.foo.cpp_overload_set.value: %StaticMemberFnBar.foo.cpp_overload_set.type = cpp_overload_set_value @StaticMemberFnBar.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %StaticMemberFnBar.foo.type: type = fn_type @StaticMemberFnBar.foo [concrete]
+// CHECK:STDOUT:   %StaticMemberFnBar.foo: %StaticMemberFnBar.foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     .StaticMemberFnBar = %StaticMemberFnBar.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
-// CHECK:STDOUT:   %Bar.foo.cpp_overload_set.value: %Bar.foo.cpp_overload_set.type = cpp_overload_set_value @Bar.foo.cpp_overload_set [concrete = constants.%Bar.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %Bar.foo.decl: %Bar.foo.type = fn_decl @Bar.foo [concrete = constants.%Bar.foo] {} {}
+// CHECK:STDOUT:   %StaticMemberFnBar.decl: type = class_decl @StaticMemberFnBar [concrete = constants.%StaticMemberFnBar] {} {}
+// CHECK:STDOUT:   %StaticMemberFnBar.foo.cpp_overload_set.value: %StaticMemberFnBar.foo.cpp_overload_set.type = cpp_overload_set_value @StaticMemberFnBar.foo.cpp_overload_set [concrete = constants.%StaticMemberFnBar.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %StaticMemberFnBar.foo.decl: %StaticMemberFnBar.foo.type = fn_decl @StaticMemberFnBar.foo [concrete = constants.%StaticMemberFnBar.foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:   %foo.ref: %Bar.foo.cpp_overload_set.type = name_ref foo, imports.%Bar.foo.cpp_overload_set.value [concrete = constants.%Bar.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call imports.%Bar.foo.decl()
+// CHECK:STDOUT:   %StaticMemberFnBar.ref: type = name_ref StaticMemberFnBar, imports.%StaticMemberFnBar.decl [concrete = constants.%StaticMemberFnBar]
+// CHECK:STDOUT:   %foo.ref: %StaticMemberFnBar.foo.cpp_overload_set.type = name_ref foo, imports.%StaticMemberFnBar.foo.cpp_overload_set.value [concrete = constants.%StaticMemberFnBar.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %StaticMemberFnBar.foo.call: init %empty_tuple.type = call imports.%StaticMemberFnBar.foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_static_data_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
-// CHECK:STDOUT:   %ptr.227: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.227 [concrete]
+// CHECK:STDOUT:   %StaticDataMemberBar: type = class_type @StaticDataMemberBar [concrete]
+// CHECK:STDOUT:   %ptr.a89: type = ptr_type %StaticDataMemberBar [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.a89 [concrete]
 // CHECK:STDOUT:   %bar.patt: %pattern_type = value_binding_pattern bar [concrete]
 // CHECK:STDOUT:   %foo.patt: %pattern_type = ref_binding_pattern foo [concrete]
 // CHECK:STDOUT:   %foo.var_patt: %pattern_type = var_pattern %foo.patt [concrete]
@@ -406,27 +406,27 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     .StaticDataMemberBar = %StaticDataMemberBar.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %StaticDataMemberBar.decl: type = class_decl @StaticDataMemberBar [concrete = constants.%StaticDataMemberBar] {} {}
 // CHECK:STDOUT:   %foo.patt: %pattern_type = ref_binding_pattern foo [concrete = constants.%foo.patt]
 // CHECK:STDOUT:   %foo.var_patt: %pattern_type = var_pattern %foo.patt [concrete = constants.%foo.var_patt]
-// CHECK:STDOUT:   %foo.var: ref %ptr.227 = var_storage %foo.var_patt [concrete]
+// CHECK:STDOUT:   %foo.var: ref %ptr.a89 = var_storage %foo.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc8_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Bar.ref.loc8_33: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:   %foo.ref: ref %ptr.227 = name_ref foo, imports.%foo.var [concrete = imports.%foo.var]
-// CHECK:STDOUT:   %.loc8_37: %ptr.227 = acquire_value %foo.ref
-// CHECK:STDOUT:   %.loc8_26: type = splice_block %ptr [concrete = constants.%ptr.227] {
+// CHECK:STDOUT:   %Cpp.ref.loc8_46: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %StaticDataMemberBar.ref.loc8_49: type = name_ref StaticDataMemberBar, imports.%StaticDataMemberBar.decl [concrete = constants.%StaticDataMemberBar]
+// CHECK:STDOUT:   %foo.ref: ref %ptr.a89 = name_ref foo, imports.%foo.var [concrete = imports.%foo.var]
+// CHECK:STDOUT:   %.loc8_69: %ptr.a89 = acquire_value %foo.ref
+// CHECK:STDOUT:   %.loc8_42: type = splice_block %ptr [concrete = constants.%ptr.a89] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Bar.ref.loc8_22: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc8_22 [concrete = constants.%ptr.227]
+// CHECK:STDOUT:     %StaticDataMemberBar.ref.loc8_22: type = name_ref StaticDataMemberBar, imports.%StaticDataMemberBar.decl [concrete = constants.%StaticDataMemberBar]
+// CHECK:STDOUT:     %ptr: type = ptr_type %StaticDataMemberBar.ref.loc8_22 [concrete = constants.%ptr.a89]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %bar: %ptr.227 = wrapper_binding bar, %.loc8_37
+// CHECK:STDOUT:   %bar: %ptr.a89 = wrapper_binding bar, %.loc8_69
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete = constants.%bar.patt]
 // CHECK:STDOUT:   }
@@ -436,23 +436,23 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT: --- import_data_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
-// CHECK:STDOUT:   %ptr.227: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.227 [concrete]
+// CHECK:STDOUT:   %DataMemberBar: type = class_type @DataMemberBar [concrete]
+// CHECK:STDOUT:   %ptr.ec1: type = ptr_type %DataMemberBar [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.ec1 [concrete]
 // CHECK:STDOUT:   %bar.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:   %bar.patt: %pattern_type = wrapper_binding_pattern bar, %bar.param_patt [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT:   %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete]
-// CHECK:STDOUT:   %Bar.elem: type = unbound_element_type %Bar, %ptr.227 [concrete]
+// CHECK:STDOUT:   %DataMemberBar.elem: type = unbound_element_type %DataMemberBar, %ptr.ec1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     .DataMemberBar = %DataMemberBar.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %DataMemberBar.decl: type = class_decl @DataMemberBar [concrete = constants.%DataMemberBar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -460,29 +460,29 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete = constants.%bar.param_patt]
 // CHECK:STDOUT:     %bar.patt: %pattern_type = wrapper_binding_pattern bar, %bar.param_patt [concrete = constants.%bar.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bar.param: %ptr.227 = value_param call_param0
-// CHECK:STDOUT:     %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.227] {
+// CHECK:STDOUT:     %bar.param: %ptr.ec1 = value_param call_param0
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.ec1] {
 // CHECK:STDOUT:       %Cpp.ref.loc7: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %Bar.ref.loc7: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:       %ptr.loc7: type = ptr_type %Bar.ref.loc7 [concrete = constants.%ptr.227]
+// CHECK:STDOUT:       %DataMemberBar.ref.loc7: type = name_ref DataMemberBar, imports.%DataMemberBar.decl [concrete = constants.%DataMemberBar]
+// CHECK:STDOUT:       %ptr.loc7: type = ptr_type %DataMemberBar.ref.loc7 [concrete = constants.%ptr.ec1]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %bar: %ptr.227 = wrapper_binding bar, %bar.param
+// CHECK:STDOUT:     %bar: %ptr.ec1 = wrapper_binding bar, %bar.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.227) {
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.ec1) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %bar.ref: %ptr.227 = name_ref bar, %bar
-// CHECK:STDOUT:   %.loc8_37.1: ref %Bar = deref %bar.ref
-// CHECK:STDOUT:   %foo.ref: %Bar.elem = name_ref foo, @Bar.%.1 [concrete = @Bar.%.1]
-// CHECK:STDOUT:   %.loc8_37.2: ref %ptr.227 = class_element_access %.loc8_37.1, element0
-// CHECK:STDOUT:   %.loc8_37.3: %ptr.227 = acquire_value %.loc8_37.2
-// CHECK:STDOUT:   %.loc8_30: type = splice_block %ptr.loc8 [concrete = constants.%ptr.227] {
+// CHECK:STDOUT:   %bar.ref: %ptr.ec1 = name_ref bar, %bar
+// CHECK:STDOUT:   %.loc8_47.1: ref %DataMemberBar = deref %bar.ref
+// CHECK:STDOUT:   %foo.ref: %DataMemberBar.elem = name_ref foo, @DataMemberBar.%.1 [concrete = @DataMemberBar.%.1]
+// CHECK:STDOUT:   %.loc8_47.2: ref %ptr.ec1 = class_element_access %.loc8_47.1, element0
+// CHECK:STDOUT:   %.loc8_47.3: %ptr.ec1 = acquire_value %.loc8_47.2
+// CHECK:STDOUT:   %.loc8_40: type = splice_block %ptr.loc8 [concrete = constants.%ptr.ec1] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Bar.ref.loc8: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:     %ptr.loc8: type = ptr_type %Bar.ref.loc8 [concrete = constants.%ptr.227]
+// CHECK:STDOUT:     %DataMemberBar.ref.loc8: type = name_ref DataMemberBar, imports.%DataMemberBar.decl [concrete = constants.%DataMemberBar]
+// CHECK:STDOUT:     %ptr.loc8: type = ptr_type %DataMemberBar.ref.loc8 [concrete = constants.%ptr.ec1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo_bar: %ptr.227 = wrapper_binding foo_bar, %.loc8_37.3
+// CHECK:STDOUT:   %foo_bar: %ptr.ec1 = wrapper_binding foo_bar, %.loc8_47.3
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %foo_bar.patt: %pattern_type = value_binding_pattern foo_bar [concrete = constants.%foo_bar.patt]
 // CHECK:STDOUT:   }
@@ -492,62 +492,62 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT: --- call_dynamic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
-// CHECK:STDOUT:   %ptr.227: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %pattern_type.1b6: type = pattern_type %ptr.227 [concrete]
-// CHECK:STDOUT:   %bar.param_patt: %pattern_type.1b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %bar.patt: %pattern_type.1b6 = wrapper_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:   %DynamicBar: type = class_type @DynamicBar [concrete]
+// CHECK:STDOUT:   %ptr.077: type = ptr_type %DynamicBar [concrete]
+// CHECK:STDOUT:   %pattern_type.e8d: type = pattern_type %ptr.077 [concrete]
+// CHECK:STDOUT:   %bar.param_patt: %pattern_type.e8d = value_param_pattern [concrete]
+// CHECK:STDOUT:   %bar.patt: %pattern_type.e8d = wrapper_binding_pattern bar, %bar.param_patt [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Bar.f.type: type = fn_type @Bar.f [concrete]
-// CHECK:STDOUT:   %Bar.f: %Bar.f.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Bar.f.cpp_overload_set.type: type = cpp_overload_set_type @Bar.f.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %DynamicBar.f.type: type = fn_type @DynamicBar.f [concrete]
+// CHECK:STDOUT:   %DynamicBar.f: %DynamicBar.f.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DynamicBar.f.cpp_overload_set.type: type = cpp_overload_set_type @DynamicBar.f.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %DynamicBar.f.cpp_overload_set.value: %DynamicBar.f.cpp_overload_set.type = cpp_overload_set_value @DynamicBar.f.cpp_overload_set [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     .DynamicBar = %DynamicBar.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
-// CHECK:STDOUT:   %Bar.f.decl: %Bar.f.type = fn_decl @Bar.f [concrete = constants.%Bar.f] {
+// CHECK:STDOUT:   %DynamicBar.decl: type = class_decl @DynamicBar [concrete = constants.%DynamicBar] {} {}
+// CHECK:STDOUT:   %DynamicBar.f.decl: %DynamicBar.f.type = fn_decl @DynamicBar.f [concrete = constants.%DynamicBar.f] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete = constants.%Bar.f.cpp_overload_set.value]
+// CHECK:STDOUT:   %DynamicBar.f.cpp_overload_set.value: %DynamicBar.f.cpp_overload_set.type = cpp_overload_set_value @DynamicBar.f.cpp_overload_set [concrete = constants.%DynamicBar.f.cpp_overload_set.value]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type.1b6 = value_param_pattern [concrete = constants.%bar.param_patt]
-// CHECK:STDOUT:     %bar.patt: %pattern_type.1b6 = wrapper_binding_pattern bar, %bar.param_patt [concrete = constants.%bar.patt]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type.e8d = value_param_pattern [concrete = constants.%bar.param_patt]
+// CHECK:STDOUT:     %bar.patt: %pattern_type.e8d = wrapper_binding_pattern bar, %bar.param_patt [concrete = constants.%bar.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bar.param: %ptr.227 = value_param call_param0
-// CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr.227] {
+// CHECK:STDOUT:     %bar.param: %ptr.077 = value_param call_param0
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr.077] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr.227]
+// CHECK:STDOUT:       %DynamicBar.ref: type = name_ref DynamicBar, imports.%DynamicBar.decl [concrete = constants.%DynamicBar]
+// CHECK:STDOUT:       %ptr: type = ptr_type %DynamicBar.ref [concrete = constants.%ptr.077]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %bar: %ptr.227 = wrapper_binding bar, %bar.param
+// CHECK:STDOUT:     %bar: %ptr.077 = wrapper_binding bar, %bar.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: vtable @Bar.vtable {
+// CHECK:STDOUT: vtable @DynamicBar.vtable {
 // CHECK:STDOUT:   invalid
 // CHECK:STDOUT:   invalid
-// CHECK:STDOUT:   imports.%Bar.f.decl
+// CHECK:STDOUT:   imports.%DynamicBar.f.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.227) {
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.077) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %bar.ref: %ptr.227 = name_ref bar, %bar
-// CHECK:STDOUT:   %.loc8: ref %Bar = deref %bar.ref
-// CHECK:STDOUT:   %f.ref: %Bar.f.cpp_overload_set.type = name_ref f, imports.%Bar.f.cpp_overload_set.value [concrete = constants.%Bar.f.cpp_overload_set.value]
+// CHECK:STDOUT:   %bar.ref: %ptr.077 = name_ref bar, %bar
+// CHECK:STDOUT:   %.loc8: ref %DynamicBar = deref %bar.ref
+// CHECK:STDOUT:   %f.ref: %DynamicBar.f.cpp_overload_set.type = name_ref f, imports.%DynamicBar.f.cpp_overload_set.value [concrete = constants.%DynamicBar.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8, %f.ref
-// CHECK:STDOUT:   %Bar.f.call: init %empty_tuple.type = call imports.%Bar.f.decl(%.loc8)
+// CHECK:STDOUT:   %DynamicBar.f.call: init %empty_tuple.type = call imports.%DynamicBar.f.decl(%.loc8)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -555,27 +555,27 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %ToInheritBar: type = class_type @ToInheritBar [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Bar [concrete]
-// CHECK:STDOUT:   %struct_type.base.825: type = struct_type {.base: %Bar} [concrete]
-// CHECK:STDOUT:   %complete_type.cb3: <witness> = complete_type_witness %struct_type.base.825 [concrete]
+// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %ToInheritBar [concrete]
+// CHECK:STDOUT:   %struct_type.base.188: type = struct_type {.base: %ToInheritBar} [concrete]
+// CHECK:STDOUT:   %complete_type.439: <witness> = complete_type_witness %struct_type.base.188 [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Bar.foo.cpp_overload_set.type: type = cpp_overload_set_type @Bar.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %Bar.foo.cpp_overload_set.value: %Bar.foo.cpp_overload_set.type = cpp_overload_set_value @Bar.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %Bar.foo.type: type = fn_type @Bar.foo [concrete]
-// CHECK:STDOUT:   %Bar.foo: %Bar.foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ToInheritBar.foo.cpp_overload_set.type: type = cpp_overload_set_type @ToInheritBar.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %ToInheritBar.foo.cpp_overload_set.value: %ToInheritBar.foo.cpp_overload_set.type = cpp_overload_set_value @ToInheritBar.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %ToInheritBar.foo.type: type = fn_type @ToInheritBar.foo [concrete]
+// CHECK:STDOUT:   %ToInheritBar.foo: %ToInheritBar.foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     .ToInheritBar = %ToInheritBar.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
-// CHECK:STDOUT:   %Bar.foo.cpp_overload_set.value: %Bar.foo.cpp_overload_set.type = cpp_overload_set_value @Bar.foo.cpp_overload_set [concrete = constants.%Bar.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %Bar.foo.decl: %Bar.foo.type = fn_decl @Bar.foo [concrete = constants.%Bar.foo] {} {}
+// CHECK:STDOUT:   %ToInheritBar.decl: type = class_decl @ToInheritBar [concrete = constants.%ToInheritBar] {} {}
+// CHECK:STDOUT:   %ToInheritBar.foo.cpp_overload_set.value: %ToInheritBar.foo.cpp_overload_set.type = cpp_overload_set_value @ToInheritBar.foo.cpp_overload_set [concrete = constants.%ToInheritBar.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %ToInheritBar.foo.decl: %ToInheritBar.foo.type = fn_decl @ToInheritBar.foo [concrete = constants.%ToInheritBar.foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -585,34 +585,34 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Bar.ref, element0 [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.825 [concrete = constants.%complete_type.cb3]
+// CHECK:STDOUT:   %ToInheritBar.ref: type = name_ref ToInheritBar, imports.%ToInheritBar.decl [concrete = constants.%ToInheritBar]
+// CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %ToInheritBar.ref, element0 [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.188 [concrete = constants.%complete_type.439]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .base = %.loc8
 // CHECK:STDOUT:   .foo = <poisoned>
-// CHECK:STDOUT:   extend %Bar.ref
+// CHECK:STDOUT:   extend %ToInheritBar.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %foo.ref: %Bar.foo.cpp_overload_set.type = name_ref foo, imports.%Bar.foo.cpp_overload_set.value [concrete = constants.%Bar.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call imports.%Bar.foo.decl()
+// CHECK:STDOUT:   %foo.ref: %ToInheritBar.foo.cpp_overload_set.type = name_ref foo, imports.%ToInheritBar.foo.cpp_overload_set.value [concrete = constants.%ToInheritBar.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %ToInheritBar.foo.call: init %empty_tuple.type = call imports.%ToInheritBar.foo.decl()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bar.type: type = cpp_type_template_type Bar [concrete]
-// CHECK:STDOUT:   %Bar.template: %Bar.type = struct_value () [concrete]
+// CHECK:STDOUT:   %TemplateBar.type: type = cpp_type_template_type TemplateBar [concrete]
+// CHECK:STDOUT:   %TemplateBar.template: %TemplateBar.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %TemplateBar: type = class_type @TemplateBar [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %TemplateBar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %bar.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:   %bar.patt: %pattern_type = wrapper_binding_pattern bar, %bar.param_patt [concrete]
@@ -622,13 +622,13 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = %Bar.template
+// CHECK:STDOUT:     .TemplateBar = %TemplateBar.template
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.template: %Bar.type = struct_value () [concrete = constants.%Bar.template]
+// CHECK:STDOUT:   %TemplateBar.template: %TemplateBar.type = struct_value () [concrete = constants.%TemplateBar.template]
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
-// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %TemplateBar.decl: type = class_decl @TemplateBar [concrete = constants.%TemplateBar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -639,10 +639,10 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Cpp.ref.loc7_13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %Bar.ref: %Bar.type = name_ref Bar, imports.%Bar.template [concrete = constants.%Bar.template]
-// CHECK:STDOUT:       %Cpp.ref.loc7_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %TemplateBar.ref: %TemplateBar.type = name_ref TemplateBar, imports.%TemplateBar.template [concrete = constants.%TemplateBar.template]
+// CHECK:STDOUT:       %Cpp.ref.loc7_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %X.ref: type = name_ref X, imports.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:       %ptr: type = ptr_type imports.%Bar.decl [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr: type = ptr_type imports.%TemplateBar.decl [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: %ptr = wrapper_binding bar, %bar.param
 // CHECK:STDOUT:   }

@@ -4,10 +4,6 @@
 
 #include "toolchain/driver/driver_subcommand.h"
 
-#include "llvm/TargetParser/Host.h"
-#include "llvm/TargetParser/Triple.h"
-#include "toolchain/driver/lld_runner.h"
-
 namespace Carbon {
 
 auto DriverSubcommand::TestAndDiagnoseIfFuzzingExternalLibraries(

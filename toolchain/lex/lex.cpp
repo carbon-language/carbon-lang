@@ -4,6 +4,7 @@
 
 #include "toolchain/lex/lex.h"
 
+#include <algorithm>
 #include <array>
 #include <limits>
 #include <optional>
@@ -19,6 +20,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
+#include "toolchain/lex/mismatched_brackets.h"
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
 #include "toolchain/lex/token_index.h"
@@ -82,9 +84,10 @@ class [[clang::internal_linkage]] Lexer {
     bool formed_token_;
   };
 
-  Lexer(SharedValueStores& value_stores, SourceBuffer& source,
-        Diagnostics::Consumer& consumer)
-      : buffer_(value_stores, source),
+  Lexer(const LexOptions& options, SharedValueStores& value_stores,
+        SourceBuffer& source, Diagnostics::Consumer& consumer)
+      : options_(options),
+        buffer_(value_stores, source),
         consumer_(consumer),
         emitter_(&consumer_, &buffer_),
         token_emitter_(&consumer_, &buffer_) {}
@@ -226,6 +229,8 @@ class [[clang::internal_linkage]] Lexer {
 
   // Handles `//@dump-sem-ir-end` for a `DumpSemIRRange`.
   auto EndDumpSemIRRange(const char* diag_loc) -> void;
+
+  LexOptions options_;
 
   TokenizedBuffer buffer_;
 
@@ -1630,36 +1635,22 @@ class Lexer::ErrorRecoveryBuffer {
   explicit ErrorRecoveryBuffer(TokenizedBuffer* buffer) : buffer_(buffer) {}
 
   auto empty() const -> bool {
-    return new_tokens_.empty() && !any_error_tokens_;
+    return insertions_.empty() && !any_error_tokens_;
   }
 
-  // Insert a recovery token of kind `kind` before `insert_before`. Note that we
-  // currently require insertions to be specified in source order, but this
-  // restriction would be easy to relax.
-  auto InsertBefore(TokenIndex insert_before, TokenKind kind) -> void {
-    CARBON_CHECK(insert_before.index > 0,
-                 "Cannot insert before the start of file token.");
-    CARBON_CHECK(
-        insert_before.index < static_cast<int>(buffer_->token_infos_.size()),
-        "Cannot insert after the end of file token.");
-    CARBON_CHECK(
-        new_tokens_.empty() || new_tokens_.back().first <= insert_before,
-        "Insertions performed out of order.");
+  // Insert a recovery token of kind `kind` before `insert_before`. Multiple
+  // insertions before the same token are applied in reverse of the order they
+  // were requested (LIFO). Returns an id that `GetInsertedTokenIndex` maps to
+  // the inserted token, once `Apply` has run.
+  auto InsertBefore(TokenIndex insert_before, TokenKind kind) -> int {
+    return AddInsertion(insert_before, kind, /*is_after=*/false);
+  }
 
-    // If the `insert_before` token has leading whitespace, mark the
-    // inserted token as also having leading whitespace. This avoids changing
-    // whether the prior tokens had leading or trailing whitespace when
-    // inserting.
-    bool insert_leading_space = buffer_->HasLeadingWhitespace(insert_before);
-
-    // Find the end of the token before the target token, and add the new token
-    // there.
-    TokenIndex insert_after(insert_before.index - 1);
-    const auto& prev_info = buffer_->token_infos_.Get(insert_after);
-    int32_t byte_offset =
-        prev_info.byte_offset() + buffer_->GetTokenText(insert_after).size();
-    new_tokens_.push_back(
-        {insert_before, TokenInfo(kind, insert_leading_space, byte_offset)});
+  // Insert a recovery token of kind `kind` after `insert_after`. Multiple
+  // insertions after the same token are applied in the order they were
+  // requested (FIFO). Returns an id as `InsertBefore` does.
+  auto InsertAfter(TokenIndex insert_after, TokenKind kind) -> int {
+    return AddInsertion(insert_after, kind, /*is_after=*/true);
   }
 
   // Replace the given token with an error token. We do this immediately,
@@ -1673,27 +1664,65 @@ class Lexer::ErrorRecoveryBuffer {
 
   // Merge the recovery tokens into the token list of the tokenized buffer.
   auto Apply() -> void {
+    llvm::sort(insertions_);
+
     ValueStore<TokenIndex, TokenInfo> old_tokens =
         std::exchange(buffer_->token_infos_, {});
-    int new_size = old_tokens.size() + new_tokens_.size();
+    int new_size = old_tokens.size() + insertions_.size();
     buffer_->token_infos_.Reserve(new_size);
     buffer_->recovery_tokens_.resize(new_size);
+    inserted_token_index_.assign(insertions_.size(), TokenIndex::None);
+    new_token_index_.assign(old_tokens.size(), TokenIndex::None);
 
-    auto old_tokens_range = old_tokens.enumerate();
-    auto old_tokens_it = old_tokens_range.begin();
-    for (auto [next_offset, info] : new_tokens_) {
-      for (; old_tokens_it->first < next_offset; ++old_tokens_it) {
-        buffer_->token_infos_.Add(old_tokens_it->second);
+    size_t ins_idx = 0;
+    for (TokenIndex old_idx(0);
+         old_idx.index < static_cast<int>(old_tokens.size()); ++old_idx.index) {
+      if (ins_idx == insertions_.size() ||
+          insertions_[ins_idx].target() != old_idx) {
+        // Nothing is inserted before this token: it keeps its leading
+        // whitespace and simply moves across.
+        new_token_index_[old_idx.index] =
+            buffer_->token_infos_.Add(old_tokens.Get(old_idx));
+        continue;
       }
-      // Flag the token just added at its index in the merged list, which
-      // shifts past `next_offset` (the pre-insertion index) once any earlier
-      // insertion has been applied.
-      TokenIndex added = buffer_->AddToken(info);
-      buffer_->recovery_tokens_.set(added.index);
+
+      // At least one insertion goes before this token. `insertions_` is sorted
+      // by target, so they are exactly the next run of entries. The first of
+      // them takes over the token's leading whitespace, so that the whitespace
+      // stays at the start of the run.
+      bool orig_leading_space = old_tokens.Get(old_idx).has_leading_space();
+      bool is_first = true;
+      for (; ins_idx < insertions_.size() &&
+             insertions_[ins_idx].target() == old_idx;
+           ++ins_idx) {
+        TokenInfo info = insertions_[ins_idx].info.WithLeadingSpace(
+            is_first ? orig_leading_space : false);
+        is_first = false;
+        TokenIndex added = buffer_->AddToken(info);
+        buffer_->recovery_tokens_.set(added.index);
+        inserted_token_index_[insertions_[ins_idx].insertion_order] = added;
+      }
+      new_token_index_[old_idx.index] = buffer_->token_infos_.Add(
+          old_tokens.Get(old_idx).WithLeadingSpace(false));
     }
-    for (; old_tokens_it != old_tokens_range.end(); ++old_tokens_it) {
-      buffer_->token_infos_.Add(old_tokens_it->second);
+  }
+
+  // Maps a token index from before `Apply` to the same token's index after it.
+  // `Apply` must have run, except that with no insertions to apply this is the
+  // identity either way.
+  auto GetNewTokenIndex(TokenIndex old_index) const -> TokenIndex {
+    if (insertions_.empty()) {
+      return old_index;
     }
+    CARBON_CHECK(!new_token_index_.empty(),
+                 "Token indexes are only renumbered by `Apply`.");
+    return new_token_index_[old_index.index];
+  }
+
+  // Maps an id returned by `InsertBefore` or `InsertAfter` to the token that
+  // insertion added. `Apply` must have run.
+  auto GetInsertedTokenIndex(int insertion_id) const -> TokenIndex {
+    return inserted_token_index_[insertion_id];
   }
 
   // Perform bracket matching to fix cross-references between tokens. This must
@@ -1722,23 +1751,371 @@ class Lexer::ErrorRecoveryBuffer {
   }
 
  private:
+  struct Insertion {
+    TokenIndex anchor;
+    bool is_after;
+    // Where this insertion came in the sequence of requests, which is both the
+    // id handed back to the caller and the tiebreak between insertions that go
+    // in the same place.
+    int insertion_order;
+    TokenInfo info;
+
+    // The token this insertion goes before, indexed in the stream as it was
+    // before `Apply`. `Apply` sorts insertions by this.
+    auto target() const -> TokenIndex {
+      return is_after ? TokenIndex(anchor.index + 1) : anchor;
+    }
+
+    // Orders insertions as `Apply` emits them, so that sorting produces the
+    // final token order. Insertions are grouped by the token they go before,
+    // because `Apply` walks the old tokens in order, and within a group:
+    //
+    // - An insertion requested as "after the previous token" comes before one
+    //   requested as "before this token", so that each stays on the side of
+    //   the gap it was anchored to.
+    // - A closing bracket comes before an opening one, so that a group ending
+    //   in the gap is closed before a new group is opened in it.
+    // - Otherwise the request order breaks the tie, in the direction that puts
+    //   the earliest request nearest its anchor: first-requested first for
+    //   insertions after a token, last-requested first for insertions before
+    //   one.
+    friend auto operator<(const Insertion& lhs, const Insertion& rhs) -> bool {
+      if (lhs.target() != rhs.target()) {
+        return lhs.target() < rhs.target();
+      }
+      if (lhs.is_after != rhs.is_after) {
+        return lhs.is_after;
+      }
+      bool lhs_is_closing = lhs.info.kind().is_closing_symbol();
+      bool rhs_is_closing = rhs.info.kind().is_closing_symbol();
+      if (lhs_is_closing != rhs_is_closing) {
+        return lhs_is_closing;
+      }
+      return lhs.is_after ? lhs.insertion_order < rhs.insertion_order
+                          : lhs.insertion_order > rhs.insertion_order;
+    }
+  };
+
+  auto AddInsertion(TokenIndex anchor, TokenKind kind, bool is_after) -> int {
+    CARBON_CHECK(anchor.index >= 0, "Invalid anchor token index.");
+    CARBON_CHECK(anchor.index < static_cast<int>(buffer_->token_infos_.size()),
+                 "Cannot insert past the end of file token.");
+    if (!is_after) {
+      CARBON_CHECK(anchor.index > 0,
+                   "Cannot insert before the start of file token.");
+    }
+
+    bool insert_leading_space = false;
+    int32_t byte_offset = 0;
+
+    if (!is_after) {
+      insert_leading_space = buffer_->HasLeadingWhitespace(anchor);
+      TokenIndex insert_after_idx(anchor.index - 1);
+      const auto& prev_info = buffer_->token_infos_.Get(insert_after_idx);
+      byte_offset = prev_info.byte_offset() +
+                    buffer_->GetTokenText(insert_after_idx).size();
+    } else {
+      const auto& anchor_info = buffer_->token_infos_.Get(anchor);
+      byte_offset =
+          anchor_info.byte_offset() + buffer_->GetTokenText(anchor).size();
+      TokenIndex next_tok(anchor.index + 1);
+      if (next_tok.index < static_cast<int>(buffer_->token_infos_.size())) {
+        insert_leading_space = buffer_->HasLeadingWhitespace(next_tok);
+      }
+    }
+
+    int insertion_order = static_cast<int>(insertions_.size());
+    insertions_.push_back({
+        .anchor = anchor,
+        .is_after = is_after,
+        .insertion_order = insertion_order,
+        .info = TokenInfo(kind, insert_leading_space, byte_offset),
+    });
+    return insertion_order;
+  }
+
   TokenizedBuffer* buffer_;
-
-  // A list of tokens to insert into the token stream to fix mismatched
-  // brackets. The first element in each pair is the original token index to
-  // insert the new token before.
-  llvm::SmallVector<std::pair<TokenIndex, TokenInfo>> new_tokens_;
-
-  // Whether we have changed any tokens into error tokens.
+  llvm::SmallVector<Insertion> insertions_;
   bool any_error_tokens_ = false;
+
+  // Filled in by `Apply`: which token each insertion added, indexed by the id
+  // `AddInsertion` handed out.
+  llvm::SmallVector<TokenIndex> inserted_token_index_;
+
+  // Filled in by `Apply`: the new index of each token that existed before it,
+  // indexed by that token's old index.
+  llvm::SmallVector<TokenIndex> new_token_index_;
 };
 
-// Issue an UnmatchedOpening diagnostic.
-static auto DiagnoseUnmatchedOpening(Diagnostics::Emitter<TokenIndex>& emitter,
-                                     TokenIndex opening_token) -> void {
-  CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
-                    "opening symbol without a corresponding closing symbol");
-  emitter.Emit(opening_token, UnmatchedOpening);
+// Returns true if the token kind forms a complete primary expression on its
+// own: an identifier, a literal, `self`, a type keyword, and so on.
+static auto IsLeafTokenKind(TokenKind kind) -> bool {
+  switch (kind) {
+    case TokenKind::Identifier:
+    case TokenKind::IntLiteral:
+    case TokenKind::RealLiteral:
+    case TokenKind::StringLiteral:
+    case TokenKind::CharLiteral:
+    case TokenKind::IntTypeLiteral:
+    case TokenKind::UnsignedIntTypeLiteral:
+    case TokenKind::FloatTypeLiteral:
+    case TokenKind::True:
+    case TokenKind::False:
+    case TokenKind::SelfValueIdentifier:
+    case TokenKind::SelfTypeIdentifier:
+    case TokenKind::Underscore:
+    case TokenKind::Bool:
+    case TokenKind::Type:
+    case TokenKind::Auto:
+    case TokenKind::Array:
+    case TokenKind::Str:
+    case TokenKind::Char:
+    case TokenKind::Core:
+    case TokenKind::Cpp:
+      return true;
+    default:
+      return false;
+  }
+}
+
+static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
+    -> llvm::SmallVector<MismatchedBracketToken> {
+  llvm::SmallVector<MismatchedBracketToken> input_tokens;
+  input_tokens.reserve(buffer.size());
+
+  // Where the previous token in the full stream ended (comments are not
+  // tokens, so they don't interrupt this).
+  int32_t prev_end_byte = -1;
+  int32_t prev_line_index = -1;
+
+  for (auto it = buffer.tokens().begin(); it != buffer.tokens().end(); ++it) {
+    TokenIndex token = *it;
+    auto kind = buffer.GetKind(token);
+    int32_t byte_offset = buffer.GetByteOffset(token);
+    auto token_line = buffer.GetLine(token);
+    bool has_wide_leading_space = prev_end_byte >= 0 &&
+                                  token_line.index == prev_line_index &&
+                                  byte_offset - prev_end_byte >= 2;
+    prev_end_byte =
+        byte_offset + static_cast<int32_t>(buffer.GetTokenText(token).size());
+    prev_line_index = token_line.index;
+
+    bool is_paren_keyword = false;
+    bool is_else_keyword = false;
+    BracketTokenKind bracket_kind;
+    switch (kind) {
+      case TokenKind::OpenParen:
+        bracket_kind = BracketTokenKind::OpenParen;
+        break;
+      case TokenKind::OpenCurlyBrace:
+        bracket_kind = BracketTokenKind::OpenCurlyBrace;
+        break;
+      case TokenKind::OpenSquareBracket:
+        bracket_kind = BracketTokenKind::OpenSquareBracket;
+        break;
+      case TokenKind::CloseParen:
+        bracket_kind = BracketTokenKind::CloseParen;
+        break;
+      case TokenKind::CloseCurlyBrace:
+        bracket_kind = BracketTokenKind::CloseCurlyBrace;
+        break;
+      case TokenKind::CloseSquareBracket:
+        bracket_kind = BracketTokenKind::CloseSquareBracket;
+        break;
+      case TokenKind::Semi:
+        bracket_kind = BracketTokenKind::Semi;
+        break;
+      case TokenKind::Comma:
+        bracket_kind = BracketTokenKind::Comma;
+        break;
+      case TokenKind::Period:
+        bracket_kind = BracketTokenKind::Period;
+        break;
+      case TokenKind::If:
+      case TokenKind::While:
+      case TokenKind::For:
+      case TokenKind::Match:
+        bracket_kind = BracketTokenKind::StatementIntroducer;
+        is_paren_keyword = true;
+        break;
+      case TokenKind::Else: {
+        bracket_kind = BracketTokenKind::StatementIntroducer;
+        // Only a statement `else` (followed by `{` or `if`) normally follows
+        // a `}`; a ternary `if..then..else` is followed by an expression.
+        auto else_next = std::next(it);
+        if (else_next != buffer.tokens().end()) {
+          auto next_kind = buffer.GetKind(*else_next);
+          is_else_keyword = next_kind == TokenKind::OpenCurlyBrace ||
+                            next_kind == TokenKind::If;
+        }
+        break;
+      }
+#define CARBON_DECL_INTRODUCER_TOKEN(kind, name) case TokenKind::kind:
+#include "toolchain/lex/token_kind.def"
+      case TokenKind::Abstract:
+      case TokenKind::Case:
+      case TokenKind::Continue:
+      case TokenKind::Default:
+      case TokenKind::Eval:
+      case TokenKind::Extend:
+      case TokenKind::Final:
+      case TokenKind::Friend:
+      case TokenKind::Inline:
+      case TokenKind::MustEval:
+      case TokenKind::Observe:
+      case TokenKind::Override:
+      case TokenKind::Private:
+      case TokenKind::Protected:
+      case TokenKind::Return:
+      case TokenKind::Returned:
+      case TokenKind::Static:
+      case TokenKind::Virtual:
+        bracket_kind = BracketTokenKind::StatementIntroducer;
+        break;
+      case TokenKind::Forall:
+        bracket_kind = BracketTokenKind::Other;
+        is_paren_keyword = true;
+        break;
+      case TokenKind::Equal:
+        bracket_kind = BracketTokenKind::Assignment;
+        break;
+      case TokenKind::As:
+        bracket_kind = BracketTokenKind::As;
+        break;
+      case TokenKind::MinusGreater:
+      case TokenKind::Where:
+        bracket_kind = BracketTokenKind::StructuralOp;
+        break;
+      case TokenKind::Ref:
+      case TokenKind::Unused:
+      case TokenKind::Template:
+      case TokenKind::Const:
+        bracket_kind = BracketTokenKind::ModifierKeyword;
+        break;
+      case TokenKind::EqualEqual:
+      case TokenKind::ExclaimEqual:
+      case TokenKind::Less:
+      case TokenKind::LessEqual:
+      case TokenKind::Greater:
+      case TokenKind::GreaterEqual:
+      case TokenKind::And:
+      case TokenKind::Or:
+        bracket_kind = BracketTokenKind::ComparisonOp;
+        break;
+      case TokenKind::FileEnd:
+        bracket_kind = BracketTokenKind::FileEnd;
+        break;
+      default:
+        bracket_kind = IsLeafTokenKind(kind) ? BracketTokenKind::Leaf
+                                             : BracketTokenKind::Other;
+        break;
+    }
+
+    auto line = token_line;
+    int32_t line_indent =
+        (kind == TokenKind::FileEnd) ? 0 : buffer.GetIndentColumnNumber(line);
+
+    auto next_it = std::next(it);
+    bool is_at_end_of_line =
+        (next_it == buffer.tokens().end() || buffer.GetLine(*next_it) != line);
+
+    bool is_struct_brace = false;
+    if (kind == TokenKind::OpenCurlyBrace) {
+      if (next_it != buffer.tokens().end()) {
+        auto next_kind = buffer.GetKind(*next_it);
+        if (next_kind == TokenKind::Period ||
+            next_kind == TokenKind::CloseCurlyBrace) {
+          is_struct_brace = true;
+        } else if (next_kind == TokenKind::Identifier) {
+          auto next2_it = std::next(next_it);
+          if (next2_it != buffer.tokens().end() &&
+              buffer.GetKind(*next2_it) == TokenKind::Colon) {
+            is_struct_brace = true;
+          }
+        }
+      }
+    }
+
+    input_tokens.push_back(MismatchedBracketToken{
+        .token_index = token,
+        .kind = bracket_kind,
+        .line = line.index,
+        .line_indent = line_indent,
+        .is_at_end_of_line = is_at_end_of_line,
+        .is_struct_brace = is_struct_brace,
+        .is_paren_keyword = is_paren_keyword,
+        .is_else_keyword = is_else_keyword,
+        .has_leading_space = buffer.HasLeadingWhitespace(token),
+        .has_wide_leading_space = has_wide_leading_space,
+    });
+  }
+
+  return input_tokens;
+}
+
+// The source position where `token` starts. Note that this can't go through
+// `GetTokenText`, which returns the kind's fixed spelling rather than a pointer
+// into the source for most token kinds.
+static auto TokenStartPosition(const TokenizedBuffer& buffer, TokenIndex token)
+    -> const char* {
+  return buffer.source().text().begin() + buffer.GetByteOffset(token);
+}
+
+// The source position just past the end of `token`.
+static auto TokenEndPosition(const TokenizedBuffer& buffer, TokenIndex token)
+    -> const char* {
+  return TokenStartPosition(buffer, token) + buffer.GetTokenText(token).size();
+}
+
+// Where in the source a bracket that `correction` proposes would be written:
+// just past the end of the token it goes after, rather than at the start of the
+// token it goes before. For `f(x` on one line and `;` on the next, that points
+// the suggestion at the position directly after the `x`, where the `)` belongs,
+// instead of down at the `;`. Where the two tokens are separated, the bracket
+// is then placed on the side that matches how it would be written.
+static auto BracketInsertionPosition(const TokenizedBuffer& buffer,
+                                     const BracketCorrection& correction)
+    -> const char* {
+  TokenIndex insert_after =
+      correction.fix_action == BracketFixAction::InsertAfter
+          ? correction.fix_token_index
+          : TokenIndex(correction.fix_token_index.index - 1);
+  // Nothing precedes the first token, so an insertion before it goes at the
+  // very start of the file.
+  if (!insert_after.has_value()) {
+    return TokenStartPosition(buffer, correction.fix_token_index);
+  }
+
+  const char* pos = TokenEndPosition(buffer, insert_after);
+  const char* end = buffer.source().text().end();
+
+  // Advances over the spaces starting at `from`, up to `limit` of them.
+  auto skip_spaces = [end](const char* from, int32_t limit) {
+    for (; limit > 0 && from != end && *from == ' '; --limit) {
+      ++from;
+    }
+    return from;
+  };
+  constexpr int32_t NoLimit = std::numeric_limits<int32_t>::max();
+
+  if (correction.fix_token_kind == TokenKind::CloseCurlyBrace) {
+    // A `}` closing a multi-line scope goes on a line of its own, indented to
+    // line up with the `{` it closes. Point at that column when the next line
+    // is indented far enough to have a position there, and otherwise at the
+    // start of it: a diagnostic can't name the virtual space to the right of
+    // the end of a line, so this is as close as the source gets.
+    if (const char* line_end = skip_spaces(pos, NoLimit);
+        line_end != end && *line_end == '\n') {
+      auto open_line = buffer.GetLine(correction.diagnostic_token_index);
+      pos = skip_spaces(line_end + 1,
+                        buffer.GetIndentColumnNumber(open_line) - 1);
+    }
+  } else if (correction.fix_token_kind.is_opening_symbol()) {
+    // An opening bracket binds to what comes after it, so it belongs on the far
+    // side of any space separating it from the token it follows.
+    pos = skip_spaces(pos, NoLimit);
+  }
+  return pos;
 }
 
 // If brackets didn't pair or nest properly, find a set of places to insert
@@ -1746,83 +2123,80 @@ static auto DiagnoseUnmatchedOpening(Diagnostics::Emitter<TokenIndex>& emitter,
 // token list to describe the fixes.
 auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
   ErrorRecoveryBuffer fixes(&buffer_);
+  auto input_tokens = CollectMismatchedBracketTokens(buffer_);
+  auto corrections = FixMismatchedBrackets(input_tokens);
 
-  // Look for mismatched brackets and decide where to add tokens to fix them.
-  //
-  // TODO: For now, we use a greedy algorithm for this. We could do better by
-  // taking indentation into account. For example:
-  //
-  //     1  fn F() {
-  //     2    if (thing1)
-  //     3      thing2;
-  //     4    }
-  //     5  }
-  //
-  // Here, we'll match the `{` on line 1 with the `}` on line 4, and then
-  // report that the `}` on line 5 is unmatched. Instead, we should notice that
-  // line 1 matches better with line 5 due to indentation, and work out that
-  // the missing `{` was on line 2, also based on indentation.
-  open_groups_.clear();
-  for (auto token : buffer_.tokens()) {
-    auto kind = buffer_.GetKind(token);
-    if (kind.is_opening_symbol()) {
-      open_groups_.push_back(token);
-      continue;
+  // For each correction, the insertion it requested, or -1 if it made none.
+  // Applying the fixes renumbers the token stream, so this is what lets the
+  // corrections be reported against the indexes the caller will see.
+  llvm::SmallVector<int> insertion_ids(corrections.size(), -1);
+
+  for (auto [correction_index, correction] : llvm::enumerate(corrections)) {
+    CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
+                      "opening symbol without a corresponding closing symbol");
+    CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
+                      "closing symbol without a corresponding opening symbol");
+    CARBON_DIAGNOSTIC(PossiblyMissingBracketHere, Note,
+                      "possibly missing `{0}` here", Lex::TokenKind);
+
+    // The note names a position between two tokens, which only the source
+    // pointer emitter can express.
+    auto builder = emitter_.Build(
+        TokenStartPosition(buffer_, correction.diagnostic_token_index),
+        correction.diagnostic_kind == BracketDiagnosticKind::UnmatchedOpening
+            ? UnmatchedOpening
+            : UnmatchedClosing);
+
+    if (correction.fix_action == BracketFixAction::ReplaceWithError) {
+      fixes.ReplaceWithError(correction.fix_token_index);
+    } else if (correction.is_tied) {
+      // The cheapest repairs disagree about where this bracket goes, so give up
+      // on the bracket rather than suggest one of them.
+      fixes.ReplaceWithError(correction.diagnostic_token_index);
+    } else {
+      builder.Note(BracketInsertionPosition(buffer_, correction),
+                   PossiblyMissingBracketHere, correction.fix_token_kind);
+      insertion_ids[correction_index] =
+          correction.fix_action == BracketFixAction::InsertBefore
+              ? fixes.InsertBefore(correction.fix_token_index,
+                                   correction.fix_token_kind)
+              : fixes.InsertAfter(correction.fix_token_index,
+                                  correction.fix_token_kind);
     }
 
-    if (!kind.is_closing_symbol()) {
-      continue;
-    }
-
-    // Find the innermost matching opening symbol.
-    auto opening_it = llvm::find_if(
-        llvm::reverse(open_groups_), [&](TokenIndex opening_token) {
-          return buffer_.token_infos_.Get(opening_token)
-                     .kind()
-                     .closing_symbol() == kind;
-        });
-    if (opening_it == open_groups_.rend()) {
-      CARBON_DIAGNOSTIC(
-          UnmatchedClosing, Error,
-          "closing symbol without a corresponding opening symbol");
-      token_emitter_.Emit(token, UnmatchedClosing);
-      fixes.ReplaceWithError(token);
-      continue;
-    }
-
-    // All intermediate open tokens have no matching close token.
-    for (auto it = open_groups_.rbegin(); it != opening_it; ++it) {
-      DiagnoseUnmatchedOpening(token_emitter_, *it);
-
-      // Add a closing bracket for the unclosed group here.
-      //
-      // TODO: Indicate in the diagnostic that we did this, perhaps by
-      // annotating the snippet.
-      auto opening_kind = buffer_.GetKind(*it);
-      fixes.InsertBefore(token, opening_kind.closing_symbol());
-    }
-
-    open_groups_.erase(opening_it.base() - 1, open_groups_.end());
+    builder.Emit();
   }
 
-  // Diagnose any remaining unmatched opening symbols.
-  for (auto token : open_groups_) {
-    // We don't have a good location to insert a close bracket. Convert the
-    // opening token from a bracket to an error.
-    DiagnoseUnmatchedOpening(token_emitter_, token);
-    fixes.ReplaceWithError(token);
+  buffer_.has_errors_ = true;
+
+  if (!fixes.empty()) {
+    fixes.Apply();
+    fixes.FixTokenCrossReferences();
   }
 
-  CARBON_CHECK(!fixes.empty(), "Didn't find anything to fix");
-  fixes.Apply();
-  fixes.FixTokenCrossReferences();
+  if (options_.bracket_corrections) {
+    // Report the corrections against the token stream the caller sees, rather
+    // than the one recovery started from, which no longer exists. A correction
+    // that inserted a bracket names the inserted token itself; one that only
+    // proposed a bracket, or replaced one with an error, names the token it
+    // still refers to.
+    for (auto [correction_index, correction] : llvm::enumerate(corrections)) {
+      correction.diagnostic_token_index =
+          fixes.GetNewTokenIndex(correction.diagnostic_token_index);
+      correction.fix_token_index =
+          insertion_ids[correction_index] >= 0
+              ? fixes.GetInsertedTokenIndex(insertion_ids[correction_index])
+              : fixes.GetNewTokenIndex(correction.fix_token_index);
+    }
+    *options_.bracket_corrections = std::move(corrections);
+  }
 }
 
 auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
          LexOptions options) -> TokenizedBuffer {
   auto* consumer =
       options.consumer ? options.consumer : &Diagnostics::ConsoleConsumer();
-  auto tokens = Lexer(value_stores, source, *consumer).Lex();
+  auto tokens = Lexer(options, value_stores, source, *consumer).Lex();
 
   if (options.vlog_stream || options.dump_stream) {
     // Flush diagnostics before printing.
