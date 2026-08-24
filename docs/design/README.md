@@ -1193,9 +1193,11 @@ var x: i64 = 42;
 x = 7;
 ```
 
-Variables with a type that has [an unformed state](#unformed-state) do not need
-to be initialized in the variable declaration, but do need to be assigned before
-they are used.
+A variable declaration may omit its initializer. If the type has a default value
+the variable is initialized to it; otherwise, if the type has
+[an unformed state](#unformed-state), the variable is left unformed and needs to
+be assigned before it is used. See
+[declaring a variable with no initializer](values.md#declaring-a-variable-with-no-initializer).
 
 > References:
 >
@@ -2082,36 +2084,28 @@ p->x += 2;
 
 #### Unformed state
 
-Types indicate that they support unformed states by
+An object is _unformed_ when it has been given storage but not a value. Types
+indicate that they support this state by
 [implementing a particular interface](#interfaces-and-implementations),
 otherwise variables of that type must be explicitly initialized when they are
-declared.
+declared or have a default value.
 
-An unformed state for an object is one that satisfies the following properties:
+An unformed object may be assigned from a fully formed value using the type's
+normal assignment implementation, and its destruction is optional: the behavior
+of the program must be equivalent whether the destructor runs or not, including
+not leaking resources.
 
--   Assignment from a fully formed value is correct using the normal assignment
-    implementation for the type.
--   Destruction must be correct using the type's normal destruction
-    implementation.
--   Destruction must be optional. The behavior of the program must be equivalent
-    whether the destructor is run or not for an unformed object, including not
-    leaking resources.
-
-A type might have more than one in-memory representation for the unformed state,
-and those representations may be the same as valid fully formed values for that
-type. For example, all values are legal representations of the unformed state
-for any type with a trivial destructor like `i32`. Types may define additional
-initialization for the [hardened build mode](#build-modes). For example, this
-causes integers to be set to `0` when in unformed state in this mode.
-
-Any operation on an unformed object _other_ than destruction or assignment from
-a fully formed value is an error, even if its in-memory representation is that
-of a valid value for that type.
+The only operations available on an object that might be unformed are those
+provided by the type `Core.MaybeUnformed(T)`, which the object must be converted
+to in order to be used at all.
 
 > References:
 >
+> -   [Unformed state](values.md#unformed-state)
 > -   Proposal
 >     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+> -   Proposal
+>     [#7640: Reworking unformed state](https://github.com/carbon-language/carbon-lang/pull/7640)
 
 #### Move
 

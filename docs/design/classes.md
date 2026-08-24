@@ -59,6 +59,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Assignment with inheritance](#assignment-with-inheritance)
     -   [Compatible types](#compatible-types)
         -   [Adapters](#adapters)
+            -   [Unsafe adapters](#unsafe-adapters)
     -   [Destructors](#destructors)
     -   [Access control](#access-control)
         -   [Private access](#private-access)
@@ -673,9 +674,8 @@ effectively performs an initialization of each of the function's parameters from
 the caller's arguments, and will be valid when those initializations are all
 valid.
 
-A data class has an unformed state if all its members do. Treatment of unformed
-state follows proposal
-[#257](https://github.com/carbon-language/carbon-lang/pull/257).
+A data class has an [unformed state](/docs/design/values.md#unformed-state) if
+all its members do.
 
 Destruction is performed field-wise in reverse order.
 
@@ -1717,6 +1717,25 @@ interfaces that are implemented for the adapted type, as well as applications of
 [Adapting types](/docs/design/generics/details.md#adapting-types) in the generics
 design.
 
+##### Unsafe adapters
+
+An adapter is sometimes used to record an invariant in the type system, such as
+that some data has passed validation, or to expose the storage underneath an
+object. Casting freely between the two types would defeat the point, so such an
+adapter is declared with `unsafe adapt`:
+
+```carbon
+class ValidDate {
+  unsafe adapt Date;
+}
+```
+
+An unsafe adapter has all the same properties as a normal adapter, except that
+the conversions between it and the adapted type are only available with
+[`unsafe as`](/docs/design/expressions/as_expressions.md#unsafe-as-expressions).
+An unsafe adapter can then explicitly implement `As` or `ImplicitAs` to make a
+conversion safe, potentially in only one direction or only under a condition.
+
 **Comparison with other languages:** This is similar to the Rust idiom called
 "newtype", which is used to implement traits on types while avoiding
 [coherence](/docs/design/generics/terminology.md#coherence) problems, see
@@ -1736,10 +1755,8 @@ checks, like `ValidDate` with the same data layout as `Date`. Or to record the
 units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
 versus `Meters`.
 
-> **Future work:** We should have some way of restricting the casts between a type
-> and an adapter to address this use case. One possibility would be to add the
-> keyword `private` before `adapt`, so you might write
-> `extend private adapt Date;`.
+[Unsafe adapters](#unsafe-adapters) restrict the casts between the two types to
+address this use case.
 
 Haskell has a [`newtype` feature](https://wiki.haskell.org/Newtype) as well.
 Haskell's feature doesn't directly support reusing implementations either, but
@@ -2485,6 +2502,14 @@ the type of `U.x`."
     -   [Destructor syntax options](/proposals/p005017-destructor-syntax.md#destructor-syntax-options)
     -   [Destructor name options](/proposals/p005017-destructor-syntax.md#destructor-name-options)
 
+-   [#7640: Reworking unformed state](https://github.com/carbon-language/carbon-lang/pull/7640)
+
+    Revisits [#257](https://github.com/carbon-language/carbon-lang/pull/257)'s
+    decisions against passing unformed objects and against unformed members;
+    both are now expressed with `Core.MaybeUnformed(T)`.
+
+    -   [Using `private adapt` instead of `unsafe adapt`](/proposals/p007640-reworking-unformed-state.md#using-private-adapt-instead-of-unsafe-adapt)
+
 -   [#6008: Replace `impl fn` with `override fn`](https://github.com/carbon-language/carbon-lang/pull/6008)
 
 -   [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)
@@ -2513,4 +2538,5 @@ the type of `U.x`."
 -   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
 -   [#5017: Destructor syntax](https://github.com/carbon-language/carbon-lang/pull/5017)
+-   [#7640: Reworking unformed state](https://github.com/carbon-language/carbon-lang/pull/7640)
 -   [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)

@@ -99,11 +99,16 @@ var v: T;
 v = init;
 ```
 
-This equivalence is not enforced, but when an object is in an unformed state,
-running the assignment function is _optional_, just like running the destructor
-is. If the assignment function is not run, the object will be directly
-initialized from the right-hand side instead. The type is still required to
-implement `AssignWith` for the assignment to be valid.
+An implementation of `AssignWith` may declare its object parameter as
+`MaybeUnformed(Self)`, in which case it is called whether or not the object is
+unformed and is responsible for handling both cases.
+
+When the implementation does not opt in this way, and the object is in an
+[unformed state](/docs/design/values.md#unformed-state), running the assignment
+function is _optional_, just like running the destructor is. If the assignment
+function is not run, the object will be directly initialized from the right-hand
+side instead. The type is still required to implement `AssignWith` for the
+assignment to be valid.
 
 ```
 class C { ... }
@@ -354,3 +359,5 @@ impl MyString as AddAssignWith(like MyString) {
     [#1191: Bitwise and shift operators](https://github.com/carbon-language/carbon-lang/pull/1191)
 -   Proposal
     [#2511: Assignment statements](https://github.com/carbon-language/carbon-lang/pull/2511)
+-   Proposal
+    [#7640: Reworking unformed state](https://github.com/carbon-language/carbon-lang/pull/7640)

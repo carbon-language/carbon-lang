@@ -15,6 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Built-in types](#built-in-types)
     -   [Data types](#data-types)
     -   [Compatible types](#compatible-types)
+-   [`unsafe as` expressions](#unsafe-as-expressions)
 -   [Extensibility](#extensibility)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -155,22 +156,59 @@ The following conversion is supported by `as`:
 -   `T` -> `U` if `T` is
     [compatible](/docs/design/classes.md#compatible-types) with `U`.
 
-**Future work:** We may need a mechanism to restrict which conversions between
-adapters are permitted and which code can perform them. Some of the conversions
-permitted by this rule may only be allowed in certain contexts.
+An [unsafe adapter](/docs/design/classes.md#unsafe-adapters) restricts this: the
+conversions between an unsafe adapter and its adapted type are only available
+with [`unsafe as`](#unsafe-as-expressions).
+
+## `unsafe as` expressions
+
+Some conversions are neither complete nor unsurprising, but are still necessary.
+These are written with `unsafe as`:
+
+```
+var p: const i32* = Get();
+// Removing `const` is an unsafe conversion.
+var q: i32* = p unsafe as i32*;
+```
+
+An `unsafe as` expression can perform any conversion that `as` can. Beyond
+those, it can remove type qualifiers. Carbon has three of these, `const`,
+[`partial`](/docs/design/classes.md#partial-class-type), and
+[`MaybeUnformed`](/docs/design/values.md#using-an-object-that-might-be-unformed).
+Adding a qualifier is a safe conversion. Removing one is not, and the rule
+differs by qualifier:
+
+-   Removing `const` requires `unsafe as` when the result is still a reference
+    expression. When the conversion changes the expression category anyway, no
+    reference to the original object survives, and removing `const` is safe.
+-   Removing `partial` requires `unsafe as` for a non-initializing expression.
+    It is safe for an initializing expression, because the vtable pointer is
+    initialized as part of that conversion.
+-   Removing `MaybeUnformed` always requires `unsafe as`, and is only available
+    for a value or reference expression.
+
+The same rule applies through a pointer: converting `T*` to `U*` requires
+`unsafe as` whenever the qualifiers on `T` are not a subset of those on `U`.
 
 ## Extensibility
 
 Explicit casts can be defined for user-defined types such as
-[classes](/docs/design/classes.md) by implementing the `As` interface:
+[classes](/docs/design/classes.md) by implementing the `As` interface, and
+unsafe casts by implementing `UnsafeAs`:
 
 ```
-interface As(Dest: type) {
+interface UnsafeAs(Dest: type) {
   fn Convert(self) -> Dest;
+}
+
+interface As(Dest: type) {
+  extend final impl as UnsafeAs(Dest);
 }
 ```
 
-The expression `x as U` is rewritten to `x.(As(U).Convert)()`.
+The expression `x as U` is rewritten to `x.(As(U).Convert)()`, and
+`x unsafe as U` to `x.(UnsafeAs(U).Convert)()`. Because `As` extends `UnsafeAs`,
+implementing `As` also makes the conversion available with `unsafe as`.
 
 **Note:** This rewrite causes the expression `U` to be implicitly converted to
 type `type`. The program is invalid if this conversion is not possible.
@@ -182,9 +220,12 @@ type `type`. The program is invalid if this conversion is not possible.
 -   [`as` only performs implicit conversions](/proposals/p000845-as-expressions.md#as-only-performs-implicit-conversions)
 -   [Integer to bool conversions](/proposals/p000845-as-expressions.md#integer-to-bool-conversions)
 -   [Bool to integer conversions](/proposals/p000845-as-expressions.md#bool-to-integer-conversions)
+-   [Spelling unsafe conversions as `unsafe_as`](/proposals/p007640-reworking-unformed-state.md#spelling-unsafe-conversions-as-unsafe_as)
 
 ## References
 
 -   [Implicit conversions in C++](https://en.cppreference.com/w/cpp/language/implicit_conversion)
 -   Proposal
     [#845: `as` expressions](https://github.com/carbon-language/carbon-lang/pull/845).
+-   Proposal
+    [#7640: Reworking unformed state](https://github.com/carbon-language/carbon-lang/pull/7640).
