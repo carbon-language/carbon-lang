@@ -923,8 +923,12 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
 
 // Function template that can be called with an argument of type `T`. Used below
 // to detect which overloads of `GetConstantValue` exist.
+//
+// Marked as maybe unused at it seems the use in a requires isn't tracked by the
+// latest version of Clang's `-Wunused-template`.
+// https://github.com/llvm/llvm-project/issues/218429
 template <typename T>
-static void Accept(T /*arg*/) {}
+[[maybe_unused]] static auto Accept(T /*arg*/) -> void {}
 
 // Determines whether a `GetConstantValue` overload exists for a given ID type.
 // Note that we do not check whether `GetConstantValue` is *callable* with a
@@ -996,13 +1000,6 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
                                          Phase* phase) -> bool {
   inst->type_id = GetTypeOfInst(eval_context, inst_id, *inst, phase);
   return IsConstantOrError(*phase);
-}
-
-template <typename... Types>
-static auto KindHasGetConstantValueOverload(TypeEnum<Types...> e) -> bool {
-  static constexpr std::array<bool, SemIR::IdKind::NumTypes> Values = {
-      (HasGetConstantValueOverload<Types>)...};
-  return Values[e.ToIndex()];
 }
 
 static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
