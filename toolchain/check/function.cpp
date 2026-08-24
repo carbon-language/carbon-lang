@@ -126,24 +126,23 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
           args.self_type_id, args.self_kind);
       param_patterns.push_back(insts.self_param_id);
     }
-    for (auto param_type_id : args.param_type_ids) {
+    for (auto [param_type_id, param_kind] :
+         llvm::zip_equal(args.param_type_ids, args.param_kinds)) {
       auto param_type_region_id = MakeEmptyRegion(
           context, context.types().GetTypeInstId(param_type_id));
-      param_patterns.push_back(AddParamPattern(
-          context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
-          param_type_id, args.param_kind));
+      param_patterns.push_back(
+          AddParamPattern(context, loc_id, SemIR::NameId::Underscore,
+                          param_type_region_id, param_type_id, param_kind));
     }
     insts.param_patterns_id = context.inst_blocks().Add(param_patterns);
   }
   context.full_pattern_stack().EndExplicitParamList();
 
-  // Build and add the return type. We always use an initializing form for now.
-  if (args.return_type_id.has_value()) {
-    auto return_form = ReturnExprAsForm(
-        context, loc_id, context.types().GetTypeInstId(args.return_type_id));
-    insts.return_type_inst_id = return_form.type_component_inst_id;
-    insts.return_form_inst_id = return_form.form_inst_id;
-    insts.return_pattern_id = AddReturnPattern(context, loc_id, return_form);
+  if (args.return_form.form_inst_id.has_value()) {
+    insts.return_type_inst_id = args.return_form.type_component_inst_id;
+    insts.return_form_inst_id = args.return_form.form_inst_id;
+    insts.return_pattern_id =
+        AddReturnPattern(context, loc_id, args.return_form);
   }
 
   auto match_results =

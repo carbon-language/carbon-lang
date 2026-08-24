@@ -6,6 +6,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
@@ -56,15 +57,19 @@ auto MakeBuiltinOperatorFunction(Context& context,
   auto self_type_id = param_types.front();
   auto name_id = context.core_identifiers().AddNameId(op_name);
 
-  auto [decl_id, function_id] =
-      MakeGeneratedFunctionDecl(context, SemIR::LocId::None,
-                                {.parent_scope_id = parent_scope_id,
-                                 .name_id = name_id,
-                                 .self_type_id = self_type_id,
-                                 .self_kind = ParamPatternKind::Value,
-                                 .param_type_ids = param_types.drop_front(),
-                                 .param_kind = ParamPatternKind::Value,
-                                 .return_type_id = return_type_id});
+  llvm::SmallVector<ParamPatternKind> param_kinds(param_types.size() - 1,
+                                                  ParamPatternKind::Value);
+  auto [decl_id, function_id] = MakeGeneratedFunctionDecl(
+      context, SemIR::LocId::None,
+      {.parent_scope_id = parent_scope_id,
+       .name_id = name_id,
+       .self_type_id = self_type_id,
+       .self_kind = ParamPatternKind::Value,
+       .param_type_ids = param_types.drop_front(),
+       .param_kinds = param_kinds,
+       .return_form =
+           ReturnExprAsForm(context, SemIR::LocId::None,
+                            context.types().GetTypeInstId(return_type_id))});
 
   auto& function = context.functions().Get(function_id);
   function.SetCoreWitness(builtin_kind);

@@ -271,8 +271,9 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
                                 {.parent_scope_id = init_list_class.scope_id,
                                  .name_id = init_list_class.name_id,
                                  .param_type_ids = {array_type_id},
-                                 .param_kind = ParamPatternKind::Value,
-                                 .return_type_id = init_list_type_id});
+                                 .param_kinds = {ParamPatternKind::Value},
+                                 .return_form = ReturnExprAsForm(
+                                     context, loc_id, init_list_type_inst_id)});
 
   auto& function = context.functions().Get(function_id);
   CARBON_CHECK(IsValidBuiltinDeclaration(

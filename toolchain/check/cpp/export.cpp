@@ -1294,6 +1294,8 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
                 thunk_param_type_ids.end());
   }
 
+  llvm::SmallVector<ParamPatternKind> thunk_param_kinds(
+      thunk_param_type_ids.size(), ParamPatternKind::Ref);
   auto carbon_thunk_function_id =
       MakeGeneratedFunctionDecl(
           context, loc_id,
@@ -1301,7 +1303,7 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
            .name_id = thunk_name_id,
            .self_type_id = target.GetSelfTypeId(),
            .param_type_ids = thunk_param_type_ids,
-           .param_kind = ParamPatternKind::Ref})
+           .param_kinds = thunk_param_kinds})
           .second;
 
   BuildThunkDefinitionForExport(
