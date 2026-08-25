@@ -100,6 +100,14 @@ static auto VisitAllTemporaryStorageArgs(
       continue;
     }
 
+    // If it's not an initializing expression, it doesn't have a storage
+    // argument.
+    auto category = SemIR::GetExprCategory(context.sem_ir(), init_id);
+    if (category != SemIR::ExprCategory::InPlaceInitializing &&
+        category != SemIR::ExprCategory::ReprInitializing) {
+      continue;
+    }
+
     // For anything else, check for a storage argument, skipping storage that
     // has already been populated.
     auto storage_arg_id =
