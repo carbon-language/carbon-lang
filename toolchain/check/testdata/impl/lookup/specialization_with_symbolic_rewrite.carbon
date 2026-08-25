@@ -153,7 +153,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.4b3 [symbolic]
 // CHECK:STDOUT:   %pattern_type.d37: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %t.param_patt: %pattern_type.d37 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %t.patt: %pattern_type.d37 = at_binding_pattern t, %t.param_patt [symbolic]
+// CHECK:STDOUT:   %t.patt: %pattern_type.d37 = wrapper_binding_pattern t, %t.param_patt [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.df7: <witness> = require_complete_type %T.as_type [symbolic]
@@ -259,7 +259,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc13_15.1: %pattern_type.d7e = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_15.2 (constants.%T.patt.4cc)]
 // CHECK:STDOUT:     %t.param_patt.loc13_24.1: @F.%pattern_type (%pattern_type.d37) = value_param_pattern [symbolic = %t.param_patt.loc13_24.2 (constants.%t.param_patt)]
-// CHECK:STDOUT:     %t.patt.loc13_24.1: @F.%pattern_type (%pattern_type.d37) = at_binding_pattern t, %t.param_patt.loc13_24.1 [symbolic = %t.patt.loc13_24.2 (constants.%t.patt)]
+// CHECK:STDOUT:     %t.patt.loc13_24.1: @F.%pattern_type (%pattern_type.d37) = wrapper_binding_pattern t, %t.param_patt.loc13_24.1 [symbolic = %t.patt.loc13_24.2 (constants.%t.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_20: type = splice_block %Z.type [concrete = constants.%Z.type.963] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
@@ -371,7 +371,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %T.as_type.loc13_26.1: type = facet_access_type %T.loc13_15.1 [symbolic = %T.as_type.loc13_26.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc13_26.1 [symbolic = %pattern_type (constants.%pattern_type.d37)]
 // CHECK:STDOUT:   %t.param_patt.loc13_24.2: @F.%pattern_type (%pattern_type.d37) = value_param_pattern [symbolic = %t.param_patt.loc13_24.2 (constants.%t.param_patt)]
-// CHECK:STDOUT:   %t.patt.loc13_24.2: @F.%pattern_type (%pattern_type.d37) = at_binding_pattern t, %t.param_patt.loc13_24.2 [symbolic = %t.patt.loc13_24.2 (constants.%t.patt)]
+// CHECK:STDOUT:   %t.patt.loc13_24.2: @F.%pattern_type (%pattern_type.d37) = wrapper_binding_pattern t, %t.param_patt.loc13_24.2 [symbolic = %t.patt.loc13_24.2 (constants.%t.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc13_26.1 [symbolic = %require_complete (constants.%require_complete.df7)]
@@ -579,7 +579,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.4b3 [symbolic]
 // CHECK:STDOUT:   %pattern_type.d37: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %t.param_patt: %pattern_type.d37 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %t.patt: %pattern_type.d37 = at_binding_pattern t, %t.param_patt [symbolic]
+// CHECK:STDOUT:   %t.patt: %pattern_type.d37 = wrapper_binding_pattern t, %t.param_patt [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.df7: <witness> = require_complete_type %T.as_type [symbolic]
@@ -705,7 +705,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc14_15.1: %pattern_type.d7e = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_15.2 (constants.%T.patt.4cc)]
 // CHECK:STDOUT:     %t.param_patt.loc14_24.1: @F.%pattern_type.loc14 (%pattern_type.d37) = value_param_pattern [symbolic = %t.param_patt.loc14_24.2 (constants.%t.param_patt)]
-// CHECK:STDOUT:     %t.patt.loc14_24.1: @F.%pattern_type.loc14 (%pattern_type.d37) = at_binding_pattern t, %t.param_patt.loc14_24.1 [symbolic = %t.patt.loc14_24.2 (constants.%t.patt)]
+// CHECK:STDOUT:     %t.patt.loc14_24.1: @F.%pattern_type.loc14 (%pattern_type.d37) = wrapper_binding_pattern t, %t.param_patt.loc14_24.1 [symbolic = %t.patt.loc14_24.2 (constants.%t.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc14_20: type = splice_block %Z.type [concrete = constants.%Z.type.963] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
@@ -828,7 +828,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %T.as_type.loc14_26.1: type = facet_access_type %T.loc14_15.1 [symbolic = %T.as_type.loc14_26.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %pattern_type.loc14: type = pattern_type %T.as_type.loc14_26.1 [symbolic = %pattern_type.loc14 (constants.%pattern_type.d37)]
 // CHECK:STDOUT:   %t.param_patt.loc14_24.2: @F.%pattern_type.loc14 (%pattern_type.d37) = value_param_pattern [symbolic = %t.param_patt.loc14_24.2 (constants.%t.param_patt)]
-// CHECK:STDOUT:   %t.patt.loc14_24.2: @F.%pattern_type.loc14 (%pattern_type.d37) = at_binding_pattern t, %t.param_patt.loc14_24.2 [symbolic = %t.patt.loc14_24.2 (constants.%t.patt)]
+// CHECK:STDOUT:   %t.patt.loc14_24.2: @F.%pattern_type.loc14 (%pattern_type.d37) = wrapper_binding_pattern t, %t.param_patt.loc14_24.2 [symbolic = %t.patt.loc14_24.2 (constants.%t.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type %T.as_type.loc14_26.1 [symbolic = %require_complete.loc14 (constants.%require_complete.df7)]

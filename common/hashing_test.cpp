@@ -492,41 +492,6 @@ struct HashedValue {
 
 using HashedString = HashedValue<std::string>;
 
-template <typename T>
-auto PrintFullWidthHex(llvm::raw_ostream& os, T value) {
-  static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
-                sizeof(T) == 8);
-  // Given the nature of a format string and the good formatting, a nested
-  // conditional seems like the most readable structure.
-  // NOLINTBEGIN(readability-avoid-nested-conditional-operator)
-  os << llvm::formatv(sizeof(T) == 1   ? "{0:x2}"
-                      : sizeof(T) == 2 ? "{0:x4}"
-                      : sizeof(T) == 4 ? "{0:x8}"
-                                       : "{0:x16}",
-                      static_cast<uint64_t>(value));
-  // NOLINTEND(readability-avoid-nested-conditional-operator)
-}
-
-template <typename T>
-  requires std::integral<T>
-auto operator<<(llvm::raw_ostream& os, HashedValue<T> hv)
-    -> llvm::raw_ostream& {
-  os << "hash " << hv.hash << " for value ";
-  PrintFullWidthHex(os, hv.v);
-  return os;
-}
-
-template <typename T, typename U>
-  requires std::integral<T> && std::integral<U>
-auto operator<<(llvm::raw_ostream& os, HashedValue<std::pair<T, U>> hv)
-    -> llvm::raw_ostream& {
-  os << "hash " << hv.hash << " for pair of ";
-  PrintFullWidthHex(os, hv.v.first);
-  os << " and ";
-  PrintFullWidthHex(os, hv.v.second);
-  return os;
-}
-
 struct Collisions {
   int total;
   int median;

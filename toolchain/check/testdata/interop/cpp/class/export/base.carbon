@@ -32,23 +32,23 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-base class A {
+base class LookupBase {
   fn F();
   fn G(n: i32);
 }
 
-class B {
-  extend base: A;
+class LookupDerived {
+  extend base: LookupBase;
   fn G();
 }
 
 inline Cpp '''
 void Qualified() {
-  Carbon::B::F();
-  Carbon::B::G();
+  Carbon::LookupDerived::F();
+  Carbon::LookupDerived::G();
 }
 
-void MemberAccess(Carbon::A *a, Carbon::B *b) {
+void MemberAccess(Carbon::LookupBase *a, Carbon::LookupDerived *b) {
   b->F();
   b->G();
 }
@@ -59,17 +59,17 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-class Final {}
+class FinalClass {}
 
 inline Cpp '''
-// CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+7]]:12: error: base 'Final' is marked 'final' [CppInteropParseError]
-// CHECK:STDERR:    15 | struct A : Carbon::Final {};
+// CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+7]]:12: error: base 'FinalClass' is marked 'final' [CppInteropParseError]
+// CHECK:STDERR:    15 | struct A : Carbon::FinalClass {};
 // CHECK:STDERR:       |            ^
-// CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE-6]]:13: note: 'Final' declared here [CppInteropParseNote]
-// CHECK:STDERR:     5 | class Final {}
-// CHECK:STDERR:       |             ^
+// CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE-6]]:18: note: 'FinalClass' declared here [CppInteropParseNote]
+// CHECK:STDERR:     5 | class FinalClass {}
+// CHECK:STDERR:       |                  ^
 // CHECK:STDERR:
-struct A : Carbon::Final {};
+struct A : Carbon::FinalClass {};
 ''';
 
 // --- fail_abstract.carbon
@@ -84,23 +84,23 @@ struct VirtualDestructor {
 };
 ''';
 
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
-// CHECK:STDERR: abstract class Abstract {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_abstract.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `AbstractWithVdtor` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: abstract class AbstractWithVdtor {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-abstract class Abstract {
+abstract class AbstractWithVdtor {
   extend base: Cpp.VirtualDestructor;
 }
 
 inline Cpp '''
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:18: error: variable type 'Carbon::Abstract' is an abstract class [CppInteropParseError]
-// CHECK:STDERR:    28 | Carbon::Abstract x;
-// CHECK:STDERR:       |                  ^
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE-8]]:25: note: unimplemented pure virtual method '~Abstract' in 'Abstract' [CppInteropParseNote]
-// CHECK:STDERR:    16 | abstract class Abstract {
-// CHECK:STDERR:       |                         ^
+// CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:27: error: variable type 'Carbon::AbstractWithVdtor' is an abstract class [CppInteropParseError]
+// CHECK:STDERR:    28 | Carbon::AbstractWithVdtor x;
+// CHECK:STDERR:       |                           ^
+// CHECK:STDERR: fail_abstract.carbon:[[@LINE-8]]:34: note: unimplemented pure virtual method '~AbstractWithVdtor' in 'AbstractWithVdtor' [CppInteropParseNote]
+// CHECK:STDERR:    16 | abstract class AbstractWithVdtor {
+// CHECK:STDERR:       |                                  ^
 // CHECK:STDERR:
-Carbon::Abstract x;
+Carbon::AbstractWithVdtor x;
 ''';
 
 // --- fail_todo_abstract_nonvirtual_dtor.carbon
@@ -111,17 +111,17 @@ import Cpp;
 // TODO: Find a way to export this to C++ as an abstract class, despite not
 // having a vptr.
 // CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor.carbon:[[@LINE+8]]:1: error: semantics TODO: `exporting abstract class with no abstract methods and non-virtual destructor to C++` [SemanticsTodo]
-// CHECK:STDERR: abstract class Abstract {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: abstract class AbstractNonvirtualDtor {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
-// CHECK:STDERR: abstract class Abstract {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `AbstractNonvirtualDtor` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: abstract class AbstractNonvirtualDtor {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-abstract class Abstract {}
+abstract class AbstractNonvirtualDtor {}
 
 inline Cpp '''
-class Derived : public Carbon::Abstract {};
+class DerivedNonvirtualDtor : public Carbon::AbstractNonvirtualDtor {};
 ''';
 
 // --- fail_todo_abstract_nonvirtual_dtor_but_virtual_fns.carbon
@@ -132,16 +132,16 @@ import Cpp;
 // TODO: We should support generating a base subobject destructor for an
 // abstract class, even though we refuse to generate a complete object
 // destructor.
-// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor_but_virtual_fns.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
-// CHECK:STDERR: abstract class Abstract {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor_but_virtual_fns.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `AbstractWithMethodNoVptr` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: abstract class AbstractWithMethodNoVptr {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-abstract class Abstract {
+abstract class AbstractWithMethodNoVptr {
   abstract fn F(self);
 }
 
 inline Cpp '''
-class Derived : public Carbon::Abstract {
+class DerivedWithMethodNoVptr : public Carbon::AbstractWithMethodNoVptr {
 };
 ''';
 
@@ -153,23 +153,23 @@ import Cpp;
 // TODO: We should support generating a base subobject destructor for an
 // abstract class, even though we refuse to generate a complete object
 // destructor.
-// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
-// CHECK:STDERR: abstract class Abstract {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `AbstractWithMethod` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: abstract class AbstractWithMethod {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-abstract class Abstract {
+abstract class AbstractWithMethod {
   abstract fn F(self);
 }
 
 inline Cpp '''
-// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+7]]:18: error: variable type 'Carbon::Abstract' is an abstract class [CppInteropParseError]
-// CHECK:STDERR:    24 | Carbon::Abstract x;
-// CHECK:STDERR:       |                  ^
-// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE-7]]:22: note: unimplemented pure virtual method 'F' in 'Abstract' [CppInteropParseNote]
+// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+7]]:28: error: variable type 'Carbon::AbstractWithMethod' is an abstract class [CppInteropParseError]
+// CHECK:STDERR:    24 | Carbon::AbstractWithMethod x_abstract;
+// CHECK:STDERR:       |                            ^
+// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE-7]]:22: note: unimplemented pure virtual method 'F' in 'AbstractWithMethod' [CppInteropParseNote]
 // CHECK:STDERR:    13 |   abstract fn F(self);
 // CHECK:STDERR:       |                      ^
 // CHECK:STDERR:
-Carbon::Abstract x;
+Carbon::AbstractWithMethod x_abstract;
 ''';
 
 // --- fail_todo_abstract_method_overridden_in_cpp.carbon
@@ -180,20 +180,20 @@ import Cpp;
 // TODO: We should support generating a base subobject destructor for an
 // abstract class, even though we refuse to generate a complete object
 // destructor.
-// CHECK:STDERR: fail_todo_abstract_method_overridden_in_cpp.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
-// CHECK:STDERR: abstract class Abstract {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_abstract_method_overridden_in_cpp.carbon:[[@LINE+4]]:1: error: cannot access member of interface `Core.Destroy` in type `AbstractToOverride` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: abstract class AbstractToOverride {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-abstract class Abstract {
+abstract class AbstractToOverride {
   abstract fn F(ref self);
 }
 
 // A C++ class that overrides the abstract method can be instantiated.
 inline Cpp '''
-struct Derived : Carbon::Abstract {
+struct DerivedOverriding : Carbon::AbstractToOverride {
   void F() & override {}
 };
-Derived d;
+DerivedOverriding d;
 ''';
 
 // --- override_virtual_dtor.carbon
@@ -202,15 +202,15 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 inline Cpp '''
-struct A {
-  virtual ~A() = 0;
+struct BaseWithPureVdtor {
+  virtual ~BaseWithPureVdtor() = 0;
 };
 ''';
 
-class B {
-  extend base: Cpp.A;
+class DerivedWithVdtor {
+  extend base: Cpp.BaseWithPureVdtor;
 }
 
 inline Cpp '''
-Carbon::B b;
+Carbon::DerivedWithVdtor b;
 ''';

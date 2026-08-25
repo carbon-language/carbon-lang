@@ -10,13 +10,12 @@
 
 fn f() -> i32 {
   match (true) {
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+8]]:21: error: expected `(` after `if` [ExpectedMatchCaseGuardOpenParen]
-    // CHECK:STDERR:     case x: bool if false) => { return 1; }
-    // CHECK:STDERR:                     ^~~~~
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+4]]:26: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
+    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+7]]:26: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
     // CHECK:STDERR:     case x: bool if false) => { return 1; }
     // CHECK:STDERR:                          ^
+    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+4]]:21: note: possibly missing `(` here [PossiblyMissingBracketHere]
+    // CHECK:STDERR:     case x: bool if false) => { return 1; }
+    // CHECK:STDERR:                     ^
     // CHECK:STDERR:
     case x: bool if false) => { return 1; }
   }
@@ -43,12 +42,15 @@ fn f() -> i32 {
 // CHECK:STDOUT:   │ │ │     │ ├─BoolTypeLiteral 'bool'
 // CHECK:STDOUT:   │ │ │     ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │ │     │ ╭─MatchCaseGuardIntroducer 'if'
-// CHECK:STDOUT:   │ │ │     │ ├─MatchCaseGuardStart 'false' has_error
-// CHECK:STDOUT:   │ │ │     │ ├─InvalidParse 'false' has_error
-// CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard 'false' has_error
-// CHECK:STDOUT:   │ │ │   ╭─MatchCase 'false' has_error
-// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart 'false' has_error
-// CHECK:STDOUT:   │ │ ├─MatchHandler 'false' has_error
+// CHECK:STDOUT:   │ │ │     │ ├─MatchCaseGuardStart '('
+// CHECK:STDOUT:   │ │ │     │ ├─BoolLiteralFalse 'false'
+// CHECK:STDOUT:   │ │ │     ├─MatchCaseGuard ')'
+// CHECK:STDOUT:   │ │ │   ╭─MatchCase '=>'
+// CHECK:STDOUT:   │ │ │ ╭─MatchHandlerStart '{'
+// CHECK:STDOUT:   │ │ │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │ │ ├─IntLiteral '1'
+// CHECK:STDOUT:   │ │ │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   │ │ ├─MatchHandler '}'
 // CHECK:STDOUT:   │ ├─MatchStatement '}'
 // CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '0'

@@ -158,7 +158,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.0c6: <witness> = complete_type_witness %struct_type.x.a15 [concrete]
 // CHECK:STDOUT:   %pattern_type.e90: type = pattern_type %Adapter [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.e90 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
@@ -209,7 +209,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Adapter.decl: type = class_decl @Adapter [concrete = constants.%Adapter] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.e90 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc12 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -330,7 +330,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %x.patt.29f: %pattern_type.6b6 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %pattern_type.e90: type = pattern_type %Adapter [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.e90 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
@@ -383,7 +383,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %ImportedAccess.decl: %ImportedAccess.type = fn_decl @ImportedAccess [concrete = constants.%ImportedAccess] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.e90 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc6 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -496,7 +496,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.0c6: <witness> = complete_type_witness %struct_type.x.a15 [concrete]
 // CHECK:STDOUT:   %pattern_type.e90: type = pattern_type %Adapter [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.e90 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %.795f: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
@@ -537,7 +537,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Adapter.decl: type = class_decl @Adapter [concrete = constants.%Adapter] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.e90 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -765,7 +765,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %x.patt.29f: %pattern_type.6b6 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %pattern_type.e90: type = pattern_type %Adapter [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.e90 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %.795f: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
@@ -807,7 +807,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %ImportedAccess.decl: %ImportedAccess.type = fn_decl @ImportedAccess [concrete = constants.%ImportedAccess] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.e90 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -901,7 +901,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Adapter.0d1: type = class_type @Adapter, @Adapter(%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.493: type = pattern_type %Adapter.0d1 [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.493 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.493 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.493 = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
@@ -954,7 +954,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Convert.decl: %Convert.type = fn_decl @Convert [concrete = constants.%Convert] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.493 = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.493 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.493 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc8_32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -1038,7 +1038,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Adapter.0d1: type = class_type @Adapter, @Adapter(%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.493: type = pattern_type %Adapter.0d1 [concrete]
 // CHECK:STDOUT:   %a.param_patt.fdb: %pattern_type.493 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt.113: %pattern_type.493 = at_binding_pattern a, %a.param_patt.fdb [concrete]
+// CHECK:STDOUT:   %a.patt.41c: %pattern_type.493 = wrapper_binding_pattern a, %a.param_patt.fdb [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
@@ -1065,7 +1065,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Adapter.347: type = class_type @Adapter, @Adapter(%C) [concrete]
 // CHECK:STDOUT:   %pattern_type.5db: type = pattern_type %Adapter.347 [concrete]
 // CHECK:STDOUT:   %a.param_patt.95b: %pattern_type.5db = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt.b1b: %pattern_type.5db = at_binding_pattern a, %a.param_patt.95b [concrete]
+// CHECK:STDOUT:   %a.patt.1fc: %pattern_type.5db = wrapper_binding_pattern a, %a.param_patt.95b [concrete]
 // CHECK:STDOUT:   %ImportedConvertLocal.type: type = fn_type @ImportedConvertLocal [concrete]
 // CHECK:STDOUT:   %ImportedConvertLocal: %ImportedConvertLocal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type.c1f: <witness> = complete_type_witness %C [concrete]
@@ -1102,7 +1102,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %ImportedConvert.decl: %ImportedConvert.type = fn_decl @ImportedConvert [concrete = constants.%ImportedConvert] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.493 = value_param_pattern [concrete = constants.%a.param_patt.fdb]
-// CHECK:STDOUT:     %a.patt: %pattern_type.493 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.113]
+// CHECK:STDOUT:     %a.patt: %pattern_type.493 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.41c]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc6_40 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -1121,7 +1121,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %ImportedConvertLocal.decl: %ImportedConvertLocal.type = fn_decl @ImportedConvertLocal [concrete = constants.%ImportedConvertLocal] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.5db = value_param_pattern [concrete = constants.%a.param_patt.95b]
-// CHECK:STDOUT:     %a.patt: %pattern_type.5db = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.b1b]
+// CHECK:STDOUT:     %a.patt: %pattern_type.5db = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.1fc]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {

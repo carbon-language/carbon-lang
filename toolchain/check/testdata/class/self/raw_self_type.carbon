@@ -68,10 +68,10 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:   %Self.7fc: type = class_type @Self [concrete]
 // CHECK:STDOUT:   %pattern_type.bb1: type = pattern_type %MemberNamedSelf [concrete]
 // CHECK:STDOUT:   %x.param_patt: %pattern_type.bb1 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.bb1 = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.bb1 = wrapper_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %pattern_type.917: type = pattern_type %Self.7fc [concrete]
 // CHECK:STDOUT:   %y.param_patt: %pattern_type.917 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt: %pattern_type.917 = at_binding_pattern y, %y.param_patt [concrete]
+// CHECK:STDOUT:   %y.patt: %pattern_type.917 = wrapper_binding_pattern y, %y.param_patt [concrete]
 // CHECK:STDOUT:   %MemberNamedSelf.F.type: type = fn_type @MemberNamedSelf.F [concrete]
 // CHECK:STDOUT:   %MemberNamedSelf.F: %MemberNamedSelf.F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -104,9 +104,9 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:   %MemberNamedSelf.decl: type = class_decl @MemberNamedSelf [concrete = constants.%MemberNamedSelf] {} {}
 // CHECK:STDOUT:   %MemberNamedSelf.F.decl: %MemberNamedSelf.F.type = fn_decl @MemberNamedSelf.F [concrete = constants.%MemberNamedSelf.F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.bb1 = value_param_pattern [concrete = constants.%x.param_patt]
-// CHECK:STDOUT:     %x.patt: %pattern_type.bb1 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.bb1 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %y.param_patt: %pattern_type.917 = value_param_pattern [concrete = constants.%y.param_patt]
-// CHECK:STDOUT:     %y.patt: %pattern_type.917 = at_binding_pattern y, %y.param_patt [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %y.patt: %pattern_type.917 = wrapper_binding_pattern y, %y.param_patt [concrete = constants.%y.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param.loc28: %MemberNamedSelf = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc28_32: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
@@ -131,9 +131,9 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:   %Self.decl: type = class_decl @Self [concrete = constants.%Self.7fc] {} {}
 // CHECK:STDOUT:   %MemberNamedSelf.F.decl: %MemberNamedSelf.F.type = fn_decl @MemberNamedSelf.F [concrete = constants.%MemberNamedSelf.F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.bb1 = value_param_pattern [concrete = constants.%x.param_patt]
-// CHECK:STDOUT:     %x.patt: %pattern_type.bb1 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.bb1 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %y.param_patt: %pattern_type.917 = value_param_pattern [concrete = constants.%y.param_patt]
-// CHECK:STDOUT:     %y.patt: %pattern_type.917 = at_binding_pattern y, %y.param_patt [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %y.patt: %pattern_type.917 = wrapper_binding_pattern y, %y.param_patt [concrete = constants.%y.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param.loc25: %MemberNamedSelf = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc25_11: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]

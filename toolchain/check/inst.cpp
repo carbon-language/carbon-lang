@@ -46,9 +46,7 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
   // Template-dependent instructions are handled separately by
   // `AddDependentActionInst`.
   CARBON_CHECK(
-      inst.kind().constant_kind() !=
-              SemIR::InstConstantKind::ConstantInstAction &&
-          inst.kind().constant_kind() != SemIR::InstConstantKind::InstAction,
+      inst.kind().constant_kind() != SemIR::InstConstantKind::InstAction,
       "Use AddDependentActionInst to add an action instruction");
 
   // Keep track of dependent instructions.

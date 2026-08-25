@@ -16,7 +16,7 @@ choice Colors {
 }
 
 // --- STDIN
-[[@LSP-CALL:initialize]]
+[[@LSP-CALL:initialize:"capabilities": {}]]
 [[@LSP-NOTIFY:textDocument/didOpen:
   "textDocument": {
     "uri": "file:/choice.carbon",
@@ -30,15 +30,21 @@ choice Colors {
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
-// CHECK:STDOUT: Content-Length: 146{{\r}}
+// CHECK:STDOUT: Content-Length: 352{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": {
 // CHECK:STDOUT:     "capabilities": {
+// CHECK:STDOUT:       "declarationProvider": true,
+// CHECK:STDOUT:       "definitionProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
-// CHECK:STDOUT:       "textDocumentSync": 2
+// CHECK:STDOUT:       "hoverProvider": true,
+// CHECK:STDOUT:       "positionEncoding": "utf-16",
+// CHECK:STDOUT:       "referencesProvider": true,
+// CHECK:STDOUT:       "textDocumentSync": 2,
+// CHECK:STDOUT:       "typeDefinitionProvider": true
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }Content-Length: 504{{\r}}

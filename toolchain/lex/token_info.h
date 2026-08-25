@@ -58,6 +58,14 @@ class TokenInfo {
   // state, and look at the next token to check for trailing whitespace.
   auto has_leading_space() const -> bool { return has_leading_space_; }
 
+  // Returns a copy of this token info with the given leading space flag.
+  [[nodiscard]] auto WithLeadingSpace(bool has_leading_space) const
+      -> TokenInfo {
+    TokenInfo info = *this;
+    info.has_leading_space_ = has_leading_space;
+    return info;
+  }
+
   // A collection of methods to access the specific payload included with
   // particular kinds of tokens. Only the specific payload accessor below may
   // be used for an info entry of a token with a particular kind, and these

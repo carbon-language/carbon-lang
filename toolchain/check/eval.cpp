@@ -13,8 +13,11 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "toolchain/base/canonical_value_store.h"
+#include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/check/action.h"
+#include "toolchain/check/context.h"
 #include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval_inst.h"
@@ -29,6 +32,7 @@
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
@@ -169,10 +173,9 @@ class EvalContext {
     }
 
     auto inst_id = specific_eval_info_->values[symbolic_info.index.index()];
-    CARBON_CHECK(inst_id.has_value(),
-                 "Forward reference in eval block: index {0} referenced "
-                 "before evaluation",
-                 symbolic_info.index.index());
+    if (!inst_id.has_value()) {
+      return SemIR::ConstantId::NotConstant;
+    }
     return constant_values().Get(inst_id);
   }
 
@@ -919,8 +922,12 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
 
 // Function template that can be called with an argument of type `T`. Used below
 // to detect which overloads of `GetConstantValue` exist.
+//
+// Marked as maybe unused at it seems the use in a requires isn't tracked by the
+// latest version of Clang's `-Wunused-template`.
+// https://github.com/llvm/llvm-project/issues/218429
 template <typename T>
-static void Accept(T /*arg*/) {}
+[[maybe_unused]] static auto Accept(T /*arg*/) -> void {}
 
 // Determines whether a `GetConstantValue` overload exists for a given ID type.
 // Note that we do not check whether `GetConstantValue` is *callable* with a
@@ -992,13 +999,6 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
                                          Phase* phase) -> bool {
   inst->type_id = GetTypeOfInst(eval_context, inst_id, *inst, phase);
   return IsConstantOrError(*phase);
-}
-
-template <typename... Types>
-static auto KindHasGetConstantValueOverload(TypeEnum<Types...> e) -> bool {
-  static constexpr std::array<bool, SemIR::IdKind::NumTypes> Values = {
-      (HasGetConstantValueOverload<Types>)...};
-  return Values[e.ToIndex()];
 }
 
 static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
@@ -2176,6 +2176,15 @@ static auto PerformBuiltinIntComparison(Context& context,
   return MakeBoolResult(context, bool_type_id, result);
 }
 
+static auto NegateRealLiteral(Real val) -> Real {
+  // Check if negation would overflow.
+  if (val.mantissa.isMinSignedValue()) {
+    val.mantissa = val.mantissa.sext(val.mantissa.getBitWidth() + 1);
+  }
+  val.mantissa.negate();
+  return val;
+}
+
 // Performs a builtin unary float -> float operation.
 static auto PerformBuiltinUnaryFloatOp(Context& context,
                                        SemIR::BuiltinFunctionKind builtin_kind,
@@ -2188,14 +2197,7 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
           context.insts().TryGetAs<SemIR::FloatLiteralValue>(arg_id)) {
     auto real_val = context.reals().Get(literal->real_id);
 
-    // Check if negation would overflow.
-    if (real_val.mantissa.isMinSignedValue()) {
-      real_val.mantissa =
-          real_val.mantissa.sext(real_val.mantissa.getBitWidth() + 1);
-    }
-    real_val.mantissa.negate();
-
-    return MakeFloatLiteralResult(context, std::move(real_val));
+    return MakeFloatLiteralResult(context, NegateRealLiteral(real_val));
   }
 
   auto op = context.insts().GetAs<SemIR::FloatValue>(arg_id);
@@ -2206,12 +2208,227 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
   return MakeFloatResult(context, op.type_id, std::move(op_val));
 }
 
+// Adds two APInts handling overflow by growing result.
+// Assumes lhs and rhs have same bit width.
+static auto OverflowAdd(const llvm::APInt& lhs, const llvm::APInt& rhs)
+    -> llvm::APInt {
+  CARBON_CHECK(lhs.getBitWidth() == rhs.getBitWidth());
+  bool is_negative = lhs.isNegative();
+
+  bool overflow = false;
+  llvm::APInt result = lhs.sadd_ov(rhs, overflow);
+  if (overflow) {
+    unsigned old_width = lhs.getBitWidth();
+    unsigned new_width = old_width + 1;
+    result = result.zext(new_width);
+    if (is_negative) {
+      // For positive value overflow, zero-extension is sufficient, for negative
+      // overflow we need to re-apply the dropped sign bits.
+      result.setBits(old_width, new_width);
+    }
+  }
+  return result;
+}
+
+struct FactoredExponent {
+  int twos = 0;
+  int fives = 0;
+};
+
+// Decomposes Real's exponents into form 2^a * 5^b where a and b are 32-bit
+// ints. Returns nullopt if exponent is too large.
+static auto TryGetFactoredExponent(const Real& real)
+    -> std::optional<FactoredExponent> {
+  if (real.exponent.getSignificantBits() > 32) {
+    // Reject evaluation if we can't fit exponent into int.
+    return std::nullopt;
+  }
+  auto exponent = static_cast<int>(real.exponent.getZExtValue());
+  return FactoredExponent{
+      .twos = exponent,
+      .fives = real.is_decimal ? exponent : 0,
+  };
+}
+
+// Constructs a Real from mantissa and factored exponent.
+static auto RecombineFactoredExponent(llvm::APInt mantissa,
+                                      const FactoredExponent& exponent)
+    -> Real {
+  CARBON_CHECK(exponent.fives == exponent.twos || exponent.fives == 0,
+               "exponent must by dyadic or decadic");
+  return {
+      .mantissa = mantissa,
+      .exponent = llvm::APInt(32, exponent.twos, /*isSigned=*/true),
+      .is_decimal = exponent.fives == exponent.twos,
+  };
+}
+
+// Finds a dyadic or decadic exponent that both lhs and rhs can be converted to.
+static auto FindCommonExponent(FactoredExponent lhs, FactoredExponent rhs)
+    -> FactoredExponent {
+  // In general common exponent of x^a and x^b is x^min(a,b) because we can
+  // always subtract from exponent (and increase mantisssa by factor) but we
+  // can't add to exponent unless factor divides the mantisssa.
+  FactoredExponent min_factors = {
+      .twos = std::min(lhs.twos, rhs.twos),
+      .fives = std::min(lhs.fives, rhs.fives),
+  };
+
+  // If both lhs and rhs have positive 5^n factor, we can convert to dyadic or
+  // decadic real. Choose the one that minimizes mantissa size.
+  // Assume x * 5^n requires 3n bits and x * 2^n requires n bits.
+  int factor_diff = std::abs(min_factors.fives - min_factors.twos);
+  int decadic_bits =
+      min_factors.fives > min_factors.twos ? 3 * factor_diff : factor_diff;
+  if (min_factors.fives >= 0) {
+    int dyadic_bits = 3 * min_factors.fives;
+    if (dyadic_bits < decadic_bits) {
+      // Result will be (likely) smaller if stored as dyadic real.
+      return {
+          .twos = min_factors.twos,
+          .fives = 0,
+      };
+    }
+  }
+
+  int min_exponent = std::min(min_factors.fives, min_factors.twos);
+  return {
+      .twos = min_exponent,
+      .fives = min_exponent,
+  };
+}
+
+// Finds difference between two exponents.
+static auto ComputeExponentDelta(const FactoredExponent& lhs,
+                                 const FactoredExponent& rhs)
+    -> FactoredExponent {
+  return {
+      .twos = lhs.twos - rhs.twos,
+      .fives = lhs.fives - rhs.fives,
+  };
+}
+
+// Estimates additional bits required to apply exponent to an APInt.
+static auto EstimateBitsForExponent(const FactoredExponent& exponent) -> int {
+  CARBON_CHECK(exponent.twos >= 0 && exponent.fives >= 0);
+  return static_cast<int>(std::ceil(std::log2f(5) * exponent.fives)) +
+         exponent.twos;
+}
+
+// Multiplies factored exponent with provided APInt sign, result is sign
+// extended to `bit_width`.
+static auto ApplyFactoredExponent(const FactoredExponent& exponent,
+                                  const llvm::APInt& mantissa,
+                                  unsigned bit_width) -> llvm::APInt {
+  CARBON_CHECK(exponent.twos >= 0 && exponent.fives >= 0);
+  auto result = mantissa.sextOrTrunc(bit_width);
+  if (exponent.twos > 0) {
+    result <<= exponent.twos;
+  }
+  if (exponent.fives > 0) {
+    result *= llvm::APIntOps::pow(llvm::APInt(bit_width, 5), exponent.fives);
+  }
+  return result;
+}
+
+// Adds or subtracts two Real literals.
+// Returns std::nullopt if value would be too large to compute without losing
+// precision.
+static auto TryAddRealLiterals(const Real& lhs, const Real& rhs)
+    -> std::optional<Real> {
+  auto lhs_exponent = TryGetFactoredExponent(lhs);
+  if (!lhs_exponent) {
+    return std::nullopt;
+  }
+  auto rhs_exponent = TryGetFactoredExponent(rhs);
+  if (!rhs_exponent) {
+    return std::nullopt;
+  }
+
+  // Find an exponent we can convert both lhs and rhs to.
+  auto common_exponent = FindCommonExponent(*lhs_exponent, *rhs_exponent);
+  // Find change to mantisssa (in form of factored exponents) so that lhs and
+  // rhs have desired exponent.
+  auto lhs_exponent_delta =
+      ComputeExponentDelta(*lhs_exponent, common_exponent);
+  auto rhs_exponent_delta =
+      ComputeExponentDelta(*rhs_exponent, common_exponent);
+
+  // Assume no overflow during addition, OverflowAdd will grow final result if
+  // necessary.
+  auto bit_width = std::max({
+      lhs.mantissa.getSignificantBits() +
+          EstimateBitsForExponent(lhs_exponent_delta),
+      rhs.mantissa.getSignificantBits() +
+          EstimateBitsForExponent(rhs_exponent_delta),
+      static_cast<unsigned>(IntStore::MinAPWidth),
+  });
+  if (bit_width > IntStore::MaxIntWidth) {
+    // Mantissa is too big.
+    return std::nullopt;
+  }
+
+  auto lhs_mantissa =
+      ApplyFactoredExponent(lhs_exponent_delta, lhs.mantissa, bit_width);
+  auto rhs_mantissa =
+      ApplyFactoredExponent(rhs_exponent_delta, rhs.mantissa, bit_width);
+  return RecombineFactoredExponent(OverflowAdd(lhs_mantissa, rhs_mantissa),
+                                   common_exponent);
+}
+
+// Performs a builtin binary real -> real operation.
+static auto PerformBuiltinBinaryFloatLiteralOp(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::BuiltinFunctionKind builtin_kind, RealId lhs_id, RealId rhs_id)
+    -> SemIR::ConstantId {
+  auto lhs_val = context.reals().Get(lhs_id);
+  auto rhs_val = context.reals().Get(rhs_id);
+
+  Lex::TokenKind op_token;
+  std::optional<Real> result;
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::FloatAdd:
+      result = TryAddRealLiterals(lhs_val, rhs_val);
+      op_token = Lex::TokenKind::Plus;
+      break;
+    case SemIR::BuiltinFunctionKind::FloatSub:
+      result = TryAddRealLiterals(lhs_val, NegateRealLiteral(rhs_val));
+      op_token = Lex::TokenKind::Minus;
+      break;
+    default:
+      CARBON_FATAL("Unexpected operation kind.");
+  }
+
+  if (!result) {
+    CARBON_DIAGNOSTIC(
+        CompileTimeFloatLiteralBinaryOperationOutOfRange, Error,
+        "binary calculation `{0} {1} {2}` would exceed the maximum "
+        "supported integer width of {3}",
+        Real, Lex::TokenKind, Real, int);
+    context.emitter().Emit(loc_id,
+                           CompileTimeFloatLiteralBinaryOperationOutOfRange,
+                           lhs_val, op_token, rhs_val, IntStore::MaxIntWidth);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  return MakeFloatLiteralResult(context, std::move(*result));
+}
+
 // Performs a builtin binary float -> float operation.
-static auto PerformBuiltinBinaryFloatOp(Context& context,
+static auto PerformBuiltinBinaryFloatOp(Context& context, SemIR::LocId loc_id,
                                         SemIR::BuiltinFunctionKind builtin_kind,
                                         SemIR::InstId lhs_id,
                                         SemIR::InstId rhs_id)
     -> SemIR::ConstantId {
+  if (context.insts().Is<SemIR::FloatLiteralValue>(lhs_id)) {
+    auto literal_lhs = context.insts().GetAs<SemIR::FloatLiteralValue>(lhs_id);
+    auto literal_rhs = context.insts().GetAs<SemIR::FloatLiteralValue>(rhs_id);
+
+    return PerformBuiltinBinaryFloatLiteralOp(context, loc_id, builtin_kind,
+                                              literal_lhs.real_id,
+                                              literal_rhs.real_id);
+  }
+
   auto lhs = context.insts().GetAs<SemIR::FloatValue>(lhs_id);
   auto rhs = context.insts().GetAs<SemIR::FloatValue>(rhs_id);
   auto lhs_val = context.floats().Get(lhs.float_id);
@@ -2676,8 +2893,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (phase != Phase::Concrete) {
         break;
       }
-      return PerformBuiltinBinaryFloatOp(context, builtin_kind, arg_ids[0],
-                                         arg_ids[1]);
+      return PerformBuiltinBinaryFloatOp(context, loc_id, builtin_kind,
+                                         arg_ids[0], arg_ids[1]);
     }
 
     // Float comparisons.
@@ -2934,9 +3151,7 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
     if constexpr (ConstantKind == SemIR::InstConstantKind::Always ||
                   ConstantKind == SemIR::InstConstantKind::WheneverPossible) {
       return MakeConstantResult(eval_context.context(), inst, phase);
-    } else if constexpr (ConstantKind ==
-                             SemIR::InstConstantKind::ConstantInstAction ||
-                         ConstantKind == SemIR::InstConstantKind::InstAction) {
+    } else if constexpr (ConstantKind == SemIR::InstConstantKind::InstAction) {
       auto result_inst_id = PerformDelayedAction(
           eval_context.context(), SemIR::LocId(inst_id), inst.As<InstT>());
       if (result_inst_id.has_value()) {
@@ -3310,12 +3525,12 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
+    CARBON_CHECK(const_id.has_value(), "Failed to evaluate {0} in eval block",
+                 context.insts().Get(inst_id));
     if (const_id == SemIR::ErrorInst::ConstantId) {
       has_error = true;
     }
     result[i] = context.constant_values().GetInstId(const_id);
-    CARBON_CHECK(result[i].has_value(), "Failed to evaluate {0} in eval block",
-                 context.insts().Get(inst_id));
   }
 
   return {context.inst_blocks().Add(result), has_error};

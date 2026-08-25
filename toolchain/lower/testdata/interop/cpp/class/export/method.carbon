@@ -31,7 +31,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-class A {
+class ArgsA {
   fn F(self, a: i32) -> i32 {
     self;
     return a;
@@ -39,29 +39,29 @@ class A {
 }
 
 inline Cpp '''
-int CallF() {
-  return Carbon::A().F(123);
+int CallArgsF() {
+  return Carbon::ArgsA().F(123);
 }
 ''';
 
-fn CallCallF() -> i32 { return Cpp.CallF(); }
+fn CallCallF() -> i32 { return Cpp.CallArgsF(); }
 
 // --- static.carbon
 library "[[@TEST_NAME]]";
 
 import Cpp;
 
-class A {
+class StaticA {
   fn F() {}
 }
 
 inline Cpp '''
-void CallF() {
-  Carbon::A::F();
+void CallStaticF() {
+  Carbon::StaticA::F();
 }
 ''';
 
-fn CallCallF() { Cpp.CallF(); }
+fn CallCallF() { Cpp.CallStaticF(); }
 
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'method.carbon'
@@ -119,12 +119,12 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #5 !dbg !22 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.68011419f123494e:core.Destroy.Core"(ptr %self), !dbg !25
+// CHECK:STDOUT:   call void @"_COp.e649d414b9e7644a:core.Destroy.Core"(ptr %self), !dbg !25
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.68011419f123494e:core.Destroy.Core"(ptr %self) #4 !dbg !26 {
+// CHECK:STDOUT: define weak_odr void @"_COp.e649d414b9e7644a:core.Destroy.Core"(ptr %self) #4 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
@@ -173,7 +173,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !23 = !{!24}
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !22, type: !18)
 // CHECK:STDOUT: !25 = !DILocation(line: 5, column: 1, scope: !22)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.68011419f123494e:core.Destroy.Core", scope: null, file: !1, line: 5, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !27)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.e649d414b9e7644a:core.Destroy.Core", scope: null, file: !1, line: 5, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !27)
 // CHECK:STDOUT: !27 = !{!28}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !26, type: !18)
 // CHECK:STDOUT: !29 = !DILocation(line: 5, column: 1, scope: !26)
@@ -188,17 +188,17 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.Carbon::A.0" = type {}
+// CHECK:STDOUT: %"class.Carbon::ArgsA" = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon1AD2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon5ArgsAD2Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define dso_local noundef i32 @_Z5CallFv() #0 {
+// CHECK:STDOUT: define dso_local noundef i32 @_Z9CallArgsFv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ref.tmp = alloca %"class.Carbon::A.0", align 1
+// CHECK:STDOUT:   %ref.tmp = alloca %"class.Carbon::ArgsA", align 1
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #4
-// CHECK:STDOUT:   %call = call noundef i32 @_ZNK6Carbon1A1FEi(ptr noundef nonnull align 1 %ref.tmp, i32 noundef 123)
-// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 1 %ref.tmp) #4
+// CHECK:STDOUT:   %call = call noundef i32 @_ZNK6Carbon5ArgsA1FEi(ptr noundef nonnull align 1 %ref.tmp, i32 noundef 123)
+// CHECK:STDOUT:   call void @_ZN6Carbon5ArgsAD2Ev(ptr noundef nonnull align 1 %ref.tmp) #4
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp) #4
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
@@ -207,7 +207,7 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal noundef i32 @_ZNK6Carbon1A1FEi(ptr noundef nonnull align 1 %this, i32 noundef %0) #2 align 2 {
+// CHECK:STDOUT: define internal noundef i32 @_ZNK6Carbon5ArgsA1FEi(ptr noundef nonnull align 1 %this, i32 noundef %0) #2 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca i32, align 4
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
@@ -215,18 +215,18 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !15
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   call void @_CF__carbon_thunk.A.Main(ptr noundef nonnull align 1 %this1, ptr noundef nonnull align 4 dereferenceable(4) %.addr, ptr noundef nonnull align 4 dereferenceable(4) %retval)
+// CHECK:STDOUT:   call void @_CF__carbon_thunk.ArgsA.Main(ptr noundef nonnull align 1 %this1, ptr noundef nonnull align 4 dereferenceable(4) %.addr, ptr noundef nonnull align 4 dereferenceable(4) %retval)
 // CHECK:STDOUT:   %1 = load i32, ptr %retval, align 4
 // CHECK:STDOUT:   ret i32 %1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon5ArgsAD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.A.Main"(ptr noundef nonnull align 1 %this1)
+// CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.ArgsA.Main"(ptr noundef nonnull align 1 %this1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -234,38 +234,38 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: declare void @llvm.lifetime.end.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CF.A.Main(ptr %self, i32 %a) #4 !dbg !16 {
+// CHECK:STDOUT: define i32 @_CF.ArgsA.Main(ptr %self, i32 %a) #4 !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %a, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #5 !dbg !25 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.ArgsA.Main"(ptr %self) #5 !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.68011419f123494e:core.Destroy.Core"(ptr %self), !dbg !30
+// CHECK:STDOUT:   call void @"_COp.433c867dbc0ac54b:core.Destroy.Core"(ptr %self), !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.68011419f123494e:core.Destroy.Core"(ptr %self) #4 !dbg !31 {
+// CHECK:STDOUT: define weak_odr void @"_COp.433c867dbc0ac54b:core.Destroy.Core"(ptr %self) #4 !dbg !31 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.A.Main(ptr %self, ptr %_, ptr %_1) #4 !dbg !35 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.ArgsA.Main(ptr %self, ptr %_, ptr %_1) #4 !dbg !35 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_29.2 = load i32, ptr %_, align 4, !dbg !42
-// CHECK:STDOUT:   %A.F.call = call i32 @_CF.A.Main(ptr %self, i32 %.loc6_29.2), !dbg !42
-// CHECK:STDOUT:   store i32 %A.F.call, ptr %_1, align 4, !dbg !42
+// CHECK:STDOUT:   %ArgsA.F.call = call i32 @_CF.ArgsA.Main(ptr %self, i32 %.loc6_29.2), !dbg !42
+// CHECK:STDOUT:   store i32 %ArgsA.F.call, ptr %_1, align 4, !dbg !42
 // CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CCallCallF.Main() #4 !dbg !43 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %CallF.call = call i32 @_Z5CallFv(), !dbg !46
-// CHECK:STDOUT:   ret i32 %CallF.call, !dbg !47
+// CHECK:STDOUT:   %CallArgsF.call = call i32 @_Z9CallArgsFv(), !dbg !46
+// CHECK:STDOUT:   ret i32 %CallArgsF.call, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -292,10 +292,10 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
 // CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !12 = !{!13, !13, i64 0}
-// CHECK:STDOUT: !13 = !{!"p1 _ZTSN6Carbon1AE", !14, i64 0}
+// CHECK:STDOUT: !13 = !{!"p1 _ZTSN6Carbon5ArgsAE", !14, i64 0}
 // CHECK:STDOUT: !14 = !{!"any pointer", !10, i64 0}
 // CHECK:STDOUT: !15 = !{!9, !9, i64 0}
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main", scope: null, file: !1, line: 6, type: !17, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !21)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "F", linkageName: "_CF.ArgsA.Main", scope: null, file: !1, line: 6, type: !17, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !21)
 // CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
 // CHECK:STDOUT: !18 = !{!19, !20, !19}
 // CHECK:STDOUT: !19 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -304,17 +304,17 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !16, type: !20)
 // CHECK:STDOUT: !23 = !DILocalVariable(arg: 2, scope: !16, type: !19)
 // CHECK:STDOUT: !24 = !DILocation(line: 8, column: 5, scope: !16)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.A.Main", scope: null, file: !1, line: 5, type: !26, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !28)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.ArgsA.Main", scope: null, file: !1, line: 5, type: !26, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !28)
 // CHECK:STDOUT: !26 = !DISubroutineType(types: !27)
 // CHECK:STDOUT: !27 = !{null, !20}
 // CHECK:STDOUT: !28 = !{!29}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !25, type: !20)
 // CHECK:STDOUT: !30 = !DILocation(line: 5, column: 1, scope: !25)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Op", linkageName: "_COp.68011419f123494e:core.Destroy.Core", scope: null, file: !1, line: 5, type: !26, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !32)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Op", linkageName: "_COp.433c867dbc0ac54b:core.Destroy.Core", scope: null, file: !1, line: 5, type: !26, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !32)
 // CHECK:STDOUT: !32 = !{!33}
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !31, type: !20)
 // CHECK:STDOUT: !34 = !DILocation(line: 5, column: 1, scope: !31)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.A.Main", scope: null, file: !1, line: 6, type: !36, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !38)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.ArgsA.Main", scope: null, file: !1, line: 6, type: !36, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !38)
 // CHECK:STDOUT: !36 = !DISubroutineType(types: !37)
 // CHECK:STDOUT: !37 = !{null, !20, !19, !19}
 // CHECK:STDOUT: !38 = !{!39, !40, !41}
@@ -335,49 +335,49 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define dso_local void @_Z5CallFv() #0 {
+// CHECK:STDOUT: define dso_local void @_Z11CallStaticFv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN6Carbon1A1FEv()
+// CHECK:STDOUT:   call void @_ZN6Carbon7StaticA1FEv()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6Carbon1A1FEv() #1 align 2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon7StaticA1FEv() #1 align 2 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF__carbon_thunk.A.Main()
+// CHECK:STDOUT:   call void @_CF__carbon_thunk.StaticA.Main()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.A.Main() #2 !dbg !12 {
+// CHECK:STDOUT: define void @_CF.StaticA.Main() #2 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #3 !dbg !16 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.StaticA.Main"(ptr %self) #3 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.68011419f123494e:core.Destroy.Core"(ptr %self), !dbg !22
+// CHECK:STDOUT:   call void @"_COp.f6473606999de44c:core.Destroy.Core"(ptr %self), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.68011419f123494e:core.Destroy.Core"(ptr %self) #2 !dbg !23 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f6473606999de44c:core.Destroy.Core"(ptr %self) #2 !dbg !23 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.A.Main() #2 !dbg !27 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.StaticA.Main() #2 !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.A.Main(), !dbg !28
+// CHECK:STDOUT:   call void @_CF.StaticA.Main(), !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCallCallF.Main() #2 !dbg !29 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z5CallFv(), !dbg !30
+// CHECK:STDOUT:   call void @_Z11CallStaticFv(), !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -402,22 +402,22 @@ fn CallCallF() { Cpp.CallF(); }
 // CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
 // CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
 // CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.StaticA.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null}
 // CHECK:STDOUT: !15 = !DILocation(line: 6, column: 3, scope: !12)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.A.Main", scope: null, file: !1, line: 5, type: !17, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !20)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.StaticA.Main", scope: null, file: !1, line: 5, type: !17, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !20)
 // CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
 // CHECK:STDOUT: !18 = !{null, !19}
 // CHECK:STDOUT: !19 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !16, type: !19)
 // CHECK:STDOUT: !22 = !DILocation(line: 5, column: 1, scope: !16)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp.68011419f123494e:core.Destroy.Core", scope: null, file: !1, line: 5, type: !17, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !24)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f6473606999de44c:core.Destroy.Core", scope: null, file: !1, line: 5, type: !17, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !24)
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !23, type: !19)
 // CHECK:STDOUT: !26 = !DILocation(line: 5, column: 1, scope: !23)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.A.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.StaticA.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !28 = !DILocation(line: 6, column: 3, scope: !27)
 // CHECK:STDOUT: !29 = distinct !DISubprogram(name: "CallCallF", linkageName: "_CCallCallF.Main", scope: null, file: !1, line: 15, type: !13, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !30 = !DILocation(line: 15, column: 18, scope: !29)

@@ -103,15 +103,8 @@ auto Internal::FileRefBase::ReadFileToString()
 auto Internal::FileRefBase::WriteFileFromString(llvm::StringRef str)
     -> ErrorOr<Success, FdError> {
   CARBON_RETURN_IF_ERROR(SeekFromBeginning(0));
-  auto bytes = llvm::ArrayRef<std::byte>(
-      reinterpret_cast<const std::byte*>(str.data()), str.size());
-  while (!bytes.empty()) {
-    auto write_result = WriteFromBuffer(bytes);
-    if (!write_result.ok()) {
-      return std::move(write_result).error();
-    }
-    bytes = *write_result;
-  }
+  CARBON_RETURN_IF_ERROR(WriteCompleteBuffer(llvm::ArrayRef<std::byte>(
+      reinterpret_cast<const std::byte*>(str.data()), str.size())));
   CARBON_RETURN_IF_ERROR(Truncate(str.size()));
   return Success();
 }

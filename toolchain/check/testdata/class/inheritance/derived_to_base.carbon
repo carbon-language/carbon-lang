@@ -135,7 +135,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %ptr.6b6: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.fcb: type = pattern_type %ptr.6b6 [concrete]
 // CHECK:STDOUT:   %p.param_patt.9b8: %pattern_type.fcb = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt.d88: %pattern_type.fcb = at_binding_pattern p, %p.param_patt.9b8 [concrete]
+// CHECK:STDOUT:   %p.patt.ffd: %pattern_type.fcb = wrapper_binding_pattern p, %p.param_patt.9b8 [concrete]
 // CHECK:STDOUT:   %ptr.432: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %.d69: Core.Form = init_form %ptr.432 [concrete]
 // CHECK:STDOUT:   %pattern_type.3c8: type = pattern_type %ptr.432 [concrete]
@@ -155,7 +155,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.dbf: type = fn_type_with_self_type %Copy.WithSelf.Op.type.65d, %Copy.facet.482 [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn.bbe: <specific function> = specific_function %ptr.as.Copy.impl.Op.70e, @ptr.as.Copy.impl.Op(%B) [concrete]
 // CHECK:STDOUT:   %p.param_patt.436: %pattern_type.3c8 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt.c38: %pattern_type.3c8 = at_binding_pattern p, %p.param_patt.436 [concrete]
+// CHECK:STDOUT:   %p.patt.8dd: %pattern_type.3c8 = wrapper_binding_pattern p, %p.param_patt.436 [concrete]
 // CHECK:STDOUT:   %ptr.d43: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %.1a4: Core.Form = init_form %ptr.d43 [concrete]
 // CHECK:STDOUT:   %pattern_type.8a5: type = pattern_type %ptr.d43 [concrete]
@@ -174,13 +174,13 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %ConvertCToA: %ConvertCToA.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %c.param_patt.965: %pattern_type.98b = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt.e1a: %pattern_type.98b = at_binding_pattern c, %c.param_patt.965 [concrete]
+// CHECK:STDOUT:   %c.patt.4ae: %pattern_type.98b = wrapper_binding_pattern c, %c.param_patt.965 [concrete]
 // CHECK:STDOUT:   %ConvertValue.type: type = fn_type @ConvertValue [concrete]
 // CHECK:STDOUT:   %ConvertValue: %ConvertValue.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %a.patt.bb7b23.1: %pattern_type.9ef = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   %c.param_patt.200: %pattern_type.fcb = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt.d05: %pattern_type.fcb = at_binding_pattern c, %c.param_patt.200 [concrete]
+// CHECK:STDOUT:   %c.patt.49d: %pattern_type.fcb = wrapper_binding_pattern c, %c.param_patt.200 [concrete]
 // CHECK:STDOUT:   %ConvertRef.type: type = fn_type @ConvertRef [concrete]
 // CHECK:STDOUT:   %ConvertRef: %ConvertRef.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ConvertInit.type: type = fn_type @ConvertInit [concrete]
@@ -241,7 +241,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %ConvertCToB.decl: %ConvertCToB.type = fn_decl @ConvertCToB [concrete = constants.%ConvertCToB] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.fcb = value_param_pattern [concrete = constants.%p.param_patt.9b8]
-// CHECK:STDOUT:     %p.patt: %pattern_type.fcb = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.d88]
+// CHECK:STDOUT:     %p.patt: %pattern_type.fcb = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.ffd]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.3c8 = out_param_pattern [concrete = constants.%return.param_patt.9ba]
 // CHECK:STDOUT:     %return.patt: %pattern_type.3c8 = return_slot_pattern %return.param_patt, %ptr.loc19_27 [concrete = constants.%return.patt.e3e]
 // CHECK:STDOUT:   } {
@@ -259,7 +259,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertBToA.decl: %ConvertBToA.type = fn_decl @ConvertBToA [concrete = constants.%ConvertBToA] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.3c8 = value_param_pattern [concrete = constants.%p.param_patt.436]
-// CHECK:STDOUT:     %p.patt: %pattern_type.3c8 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.c38]
+// CHECK:STDOUT:     %p.patt: %pattern_type.3c8 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.8dd]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.8a5 = out_param_pattern [concrete = constants.%return.param_patt.7a0]
 // CHECK:STDOUT:     %return.patt: %pattern_type.8a5 = return_slot_pattern %return.param_patt, %ptr.loc20_27 [concrete = constants.%return.patt.264]
 // CHECK:STDOUT:   } {
@@ -277,7 +277,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertCToA.decl: %ConvertCToA.type = fn_decl @ConvertCToA [concrete = constants.%ConvertCToA] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.fcb = value_param_pattern [concrete = constants.%p.param_patt.9b8]
-// CHECK:STDOUT:     %p.patt: %pattern_type.fcb = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.d88]
+// CHECK:STDOUT:     %p.patt: %pattern_type.fcb = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.ffd]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.8a5 = out_param_pattern [concrete = constants.%return.param_patt.7a0]
 // CHECK:STDOUT:     %return.patt: %pattern_type.8a5 = return_slot_pattern %return.param_patt, %ptr.loc21_27 [concrete = constants.%return.patt.264]
 // CHECK:STDOUT:   } {
@@ -295,7 +295,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertValue.decl: %ConvertValue.type = fn_decl @ConvertValue [concrete = constants.%ConvertValue] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.98b = value_param_pattern [concrete = constants.%c.param_patt.965]
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.e1a]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.4ae]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -303,7 +303,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertRef.decl: %ConvertRef.type = fn_decl @ConvertRef [concrete = constants.%ConvertRef] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.fcb = value_param_pattern [concrete = constants.%c.param_patt.200]
-// CHECK:STDOUT:     %c.patt: %pattern_type.fcb = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.d05]
+// CHECK:STDOUT:     %c.patt: %pattern_type.fcb = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.49d]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.8a5 = out_param_pattern [concrete = constants.%return.param_patt.7a0]
 // CHECK:STDOUT:     %return.patt: %pattern_type.8a5 = return_slot_pattern %return.param_patt, %ptr.loc27_26 [concrete = constants.%return.patt.264]
 // CHECK:STDOUT:   } {

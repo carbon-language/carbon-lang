@@ -8,10 +8,15 @@
 #include <memory>
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Target/TargetMachine.h"
 #include "toolchain/diagnostics/sorting_consumer.h"
 #include "toolchain/driver/compile_options.h"
 #include "toolchain/driver/driver_env.h"
+
+namespace llvm {
+class LLVMContext;
+class Module;
+class TargetMachine;
+}  // namespace llvm
 
 namespace Carbon {
 
@@ -31,6 +36,7 @@ class CompilationUnit {
                            std::string output_filename,
                            const llvm::Target* target,
                            llvm::LLVMContext* llvm_context);
+  ~CompilationUnit();
 
   // Sets the multi-unit cache and initializes dependent member state.
   auto SetMultiUnitCache(MultiUnitCache* cache) -> void;
@@ -86,6 +92,9 @@ class CompilationUnit {
   auto parse_tree_and_subtrees() const -> const Parse::TreeAndSubtrees& {
     return GetParseTreeAndSubtrees();
   }
+  // Only present once the check phase has run.
+  auto has_sem_ir() const -> bool { return sem_ir_.has_value(); }
+  auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
 
  private:
   // Do codegen. Returns true on success.
@@ -238,6 +247,7 @@ class MultiUnitCache {
 class CompileDriver {
  public:
   explicit CompileDriver(CompileOptions* options);
+  ~CompileDriver();
 
   // Configure the toolchain to compile all input files and dependencies.
   // The `map_input` function maps an input file name to an output file name.

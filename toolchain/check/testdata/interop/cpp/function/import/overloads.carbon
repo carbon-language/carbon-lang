@@ -16,8 +16,8 @@
 
 // --- multiple_functions_no_overloads.h
 
-auto foo(short a) -> void;
-auto bar(short a) -> void;
+auto no_overloads_foo(short a) -> void;
+auto no_overloads_bar(short a) -> void;
 
 // --- import_multiple_functions_no_overloads.carbon
 
@@ -26,13 +26,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "multiple_functions_no_overloads.h";
 
 fn F() {
-  Cpp.bar(1 as i16);
+  Cpp.no_overloads_bar(1 as i16);
 }
 
 // --- overloaded_functions.h
 
-auto foo(short a) -> void;
-auto foo(int a) -> void;
+auto overloaded_foo(short a) -> void;
+auto overloaded_foo(int a) -> void;
 
 // --- import_overloaded_functions.carbon
 
@@ -41,13 +41,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "overloaded_functions.h";
 
 fn F() {
-  Cpp.foo(1 as i32);
+  Cpp.overloaded_foo(1 as i32);
 }
 
 // --- both_overloaded_functions_called.h
 
-auto foo(short a) -> void;
-auto foo(int a) -> void;
+auto both_called_foo(short a) -> void;
+auto both_called_foo(int a) -> void;
 
 // --- import_both_overloaded_functions_called.carbon
 
@@ -56,17 +56,17 @@ library "[[@TEST_NAME]]";
 import Cpp library "both_overloaded_functions_called.h";
 
 fn F() {
-  Cpp.foo(1 as i32);
-  Cpp.foo(1 as i16);
+  Cpp.both_called_foo(1 as i32);
+  Cpp.both_called_foo(1 as i16);
 }
 
 // --- multiple_overloaded_sets.h
 
-auto foo(short a) -> void;
-auto foo(int a) -> void;
+auto multi_set_foo(short a) -> void;
+auto multi_set_foo(int a) -> void;
 
-auto bar(long a) -> void;
-auto bar(int a) -> void;
+auto multi_set_bar(long a) -> void;
+auto multi_set_bar(int a) -> void;
 
 // --- import_multiple_overloaded_sets.carbon
 
@@ -75,8 +75,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "multiple_overloaded_sets.h";
 
 fn F() {
-  Cpp.foo(1 as i32);
-  Cpp.bar(1 as i32);
+  Cpp.multi_set_foo(1 as i32);
+  Cpp.multi_set_bar(1 as i32);
 }
 
 // ============================================================================
@@ -85,17 +85,17 @@ fn F() {
 
 // --- int_literal.h
 
-auto foo(int a) -> int;
-auto foo(unsigned int a) -> unsigned int;
+auto int_literal_foo(int a) -> int;
+auto int_literal_foo(unsigned int a) -> unsigned int;
 
-auto foo(long a) -> long;
-auto foo(unsigned long a) -> unsigned long;
+auto int_literal_foo(long a) -> long;
+auto int_literal_foo(unsigned long a) -> unsigned long;
 
-auto foo(long long a) -> long long;
-auto foo(unsigned long long a) -> unsigned long long;
+auto int_literal_foo(long long a) -> long long;
+auto int_literal_foo(unsigned long long a) -> unsigned long long;
 
-auto foo(__int128 a) -> __int128;
-auto foo(unsigned __int128 a) -> unsigned __int128;
+auto int_literal_foo(__int128 a) -> __int128;
+auto int_literal_foo(unsigned __int128 a) -> unsigned __int128;
 
 // --- import_int_literal.carbon
 
@@ -105,30 +105,30 @@ import Cpp library "int_literal.h";
 
 fn F() {
   // i32_max
-  let unused a: i32 = Cpp.foo(2147483647);
+  let unused a: i32 = Cpp.int_literal_foo(2147483647);
 
   // i32_max + 1
   // It could fit to unsigned int, but only signed integers are considered, so assigned to long.
   // Decimal, hexadecimal and binary integer literals are treated the same when assigning a C++ type.
-  let unused b: i64 = Cpp.foo(2147483648);
-  let unused b_hexa: i64 = Cpp.foo(0x8000_0000);
-  let unused b_binary: i64 = Cpp.foo(0b1000_0000_0000_0000_0000_0000_0000_0000);
+  let unused b: i64 = Cpp.int_literal_foo(2147483648);
+  let unused b_hexa: i64 = Cpp.int_literal_foo(0x8000_0000);
+  let unused b_binary: i64 = Cpp.int_literal_foo(0b1000_0000_0000_0000_0000_0000_0000_0000);
 
   // i64_max
-  let unused c: i64 = Cpp.foo(9223372036854775807);
+  let unused c: i64 = Cpp.int_literal_foo(9223372036854775807);
 
   // i64_max + 1
   // Could fit to unsigned long, but only signed integers are considered, so fitted to _int128.
-  let unused d: i128 = Cpp.foo(9223372036854775808);
+  let unused d: i128 = Cpp.int_literal_foo(9223372036854775808);
 
   // u64_max
-  let unused e: i128 = Cpp.foo(18446744073709551615);
+  let unused e: i128 = Cpp.int_literal_foo(18446744073709551615);
 
   // u64_max + 1
-  let unused f: i128 = Cpp.foo(18446744073709551616);
+  let unused f: i128 = Cpp.int_literal_foo(18446744073709551616);
 
   // i128_max
-  let unused g: i128 = Cpp.foo(170141183460469231731687303715884105727);
+  let unused g: i128 = Cpp.int_literal_foo(170141183460469231731687303715884105727);
 }
 
 // --- fail_import_large_int_literal.carbon
@@ -140,21 +140,21 @@ import Cpp library "int_literal.h";
 fn F() {
   // TODO: get rid of the second error message here.
   // i128_max + 1
-  // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE+8]]:32: error: integer value 170141183460469231731687303715884105728 too large to fit in a signed C++ integer type; requires 129 bits, but max is 128 [IntTooLargeForCppType]
-  // CHECK:STDERR:   let unused h: i128 = Cpp.foo(170141183460469231731687303715884105728);
-  // CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE+8]]:44: error: integer value 170141183460469231731687303715884105728 too large to fit in a signed C++ integer type; requires 129 bits, but max is 128 [IntTooLargeForCppType]
+  // CHECK:STDERR:   let unused h: i128 = Cpp.int_literal_foo(170141183460469231731687303715884105728);
+  // CHECK:STDERR:                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE+4]]:32: error: call argument of type `Core.IntLiteral` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   let unused h: i128 = Cpp.foo(170141183460469231731687303715884105728);
-  // CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE+4]]:44: error: call argument of type `Core.IntLiteral` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR:   let unused h: i128 = Cpp.int_literal_foo(170141183460469231731687303715884105728);
+  // CHECK:STDERR:                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let unused h: i128 = Cpp.foo(170141183460469231731687303715884105728);
+  let unused h: i128 = Cpp.int_literal_foo(170141183460469231731687303715884105728);
 }
 
 // --- negative_int_literal.h
 
-auto foo(long a) -> void;
-auto foo(int a) -> void;
+auto neg_literal_foo(long a) -> void;
+auto neg_literal_foo(int a) -> void;
 
 // --- import_negative_int_literal.carbon
 
@@ -163,13 +163,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "negative_int_literal.h";
 
 fn F() {
-  // selects `auto foo(int a) -> void;`
-  Cpp.foo(-1);
+  // selects `auto neg_literal_foo(int a) -> void;`
+  Cpp.neg_literal_foo(-1);
 }
 
 // --- negative_literal_passed_to_unsigned.h
 
-auto foo(unsigned int a) -> void;
+auto neg_to_unsigned_foo(unsigned int a) -> void;
 
 // --- fail_import_negative_literal_passed_to_unsigned.carbon
 
@@ -178,21 +178,21 @@ library "[[@TEST_NAME]]";
 import Cpp library "negative_literal_passed_to_unsigned.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_negative_literal_passed_to_unsigned.carbon:[[@LINE+8]]:11: error: negative integer value -1 converted to unsigned type `u32` [NegativeIntInUnsignedType]
-  // CHECK:STDERR:   Cpp.foo(-1);
-  // CHECK:STDERR:           ^~
+  // CHECK:STDERR: fail_import_negative_literal_passed_to_unsigned.carbon:[[@LINE+8]]:27: error: negative integer value -1 converted to unsigned type `u32` [NegativeIntInUnsignedType]
+  // CHECK:STDERR:   Cpp.neg_to_unsigned_foo(-1);
+  // CHECK:STDERR:                           ^~
   // CHECK:STDERR: fail_import_negative_literal_passed_to_unsigned.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./negative_literal_passed_to_unsigned.h:2:23: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo(unsigned int a) -> void;
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR: ./negative_literal_passed_to_unsigned.h:2:39: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto neg_to_unsigned_foo(unsigned int a) -> void;
+  // CHECK:STDERR:                                       ^
   // CHECK:STDERR:
-  Cpp.foo(-1);
+  Cpp.neg_to_unsigned_foo(-1);
 }
 
 // --- floating_point_literal.h
 
-auto foo(float a) -> float;
-auto foo(double a) -> double;
+auto float_literal_foo(float a) -> float;
+auto float_literal_foo(double a) -> double;
 
 // --- import_floating_point_literal.carbon
 
@@ -201,7 +201,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "floating_point_literal.h";
 
 fn F() {
-  let unused d: f64 = Cpp.foo(1.0);
+  let unused d: f64 = Cpp.float_literal_foo(1.0);
 }
 
 // --- fail_import_large_floating_point_literal.carbon
@@ -211,15 +211,15 @@ library "[[@TEST_NAME]]";
 import Cpp library "floating_point_literal.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_large_floating_point_literal.carbon:[[@LINE+8]]:11: error: value 18*10^307 too large for floating-point type `f64` [FloatLiteralTooLargeForType]
-  // CHECK:STDERR:   Cpp.foo(1.8e+308);
-  // CHECK:STDERR:           ^~~~~~~~
+  // CHECK:STDERR: fail_import_large_floating_point_literal.carbon:[[@LINE+8]]:25: error: value 18*10^307 too large for floating-point type `f64` [FloatLiteralTooLargeForType]
+  // CHECK:STDERR:   Cpp.float_literal_foo(1.8e+308);
+  // CHECK:STDERR:                         ^~~~~~~~
   // CHECK:STDERR: fail_import_large_floating_point_literal.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./floating_point_literal.h:3:17: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo(double a) -> double;
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR: ./floating_point_literal.h:3:31: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto float_literal_foo(double a) -> double;
+  // CHECK:STDERR:                               ^
   // CHECK:STDERR:
-  Cpp.foo(1.8e+308);
+  Cpp.float_literal_foo(1.8e+308);
 }
 
 // --- struct_init.h
@@ -630,7 +630,7 @@ fn F() {
 
 // --- upsizing.h
 
-auto foo(int a) -> void;
+auto upsizing_foo(int a) -> void;
 
 // --- upsizing.carbon
 
@@ -639,12 +639,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "upsizing.h";
 
 fn F() {
-  Cpp.foo(1 as i16);
+  Cpp.upsizing_foo(1 as i16);
 }
 
 // --- signedness_change.h
 
-auto foo(unsigned int a) -> void;
+auto signedness_foo(unsigned int a) -> void;
 
 // --- fail_signedness_change_rejected.carbon
 
@@ -653,23 +653,23 @@ library "[[@TEST_NAME]]";
 import Cpp library "signedness_change.h";
 
 fn F() {
-  // CHECK:STDERR: fail_signedness_change_rejected.carbon:[[@LINE+11]]:11: error: cannot implicitly convert expression of type `i32` to `u32` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.foo(1 as i32);
-  // CHECK:STDERR:           ^~~~~~~~
-  // CHECK:STDERR: fail_signedness_change_rejected.carbon:[[@LINE+8]]:11: note: type `i32` does not implement interface `Core.ImplicitAs(u32)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   Cpp.foo(1 as i32);
-  // CHECK:STDERR:           ^~~~~~~~
+  // CHECK:STDERR: fail_signedness_change_rejected.carbon:[[@LINE+11]]:22: error: cannot implicitly convert expression of type `i32` to `u32` [ConversionFailure]
+  // CHECK:STDERR:   Cpp.signedness_foo(1 as i32);
+  // CHECK:STDERR:                      ^~~~~~~~
+  // CHECK:STDERR: fail_signedness_change_rejected.carbon:[[@LINE+8]]:22: note: type `i32` does not implement interface `Core.ImplicitAs(u32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   Cpp.signedness_foo(1 as i32);
+  // CHECK:STDERR:                      ^~~~~~~~
   // CHECK:STDERR: fail_signedness_change_rejected.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./signedness_change.h:2:23: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo(unsigned int a) -> void;
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR: ./signedness_change.h:2:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto signedness_foo(unsigned int a) -> void;
+  // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
-  Cpp.foo(1 as i32);
+  Cpp.signedness_foo(1 as i32);
 }
 
 // --- downsizing_rejected.h
 
-auto foo(short a) -> void;
+auto downsizing_foo(short a) -> void;
 
 // --- fail_import_downsizing_rejected.carbon
 
@@ -678,18 +678,18 @@ library "[[@TEST_NAME]]";
 import Cpp library "downsizing_rejected.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_downsizing_rejected.carbon:[[@LINE+11]]:11: error: cannot implicitly convert expression of type `i32` to `i16` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.foo(1 as i32);
-  // CHECK:STDERR:           ^~~~~~~~
-  // CHECK:STDERR: fail_import_downsizing_rejected.carbon:[[@LINE+8]]:11: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   Cpp.foo(1 as i32);
-  // CHECK:STDERR:           ^~~~~~~~
+  // CHECK:STDERR: fail_import_downsizing_rejected.carbon:[[@LINE+11]]:22: error: cannot implicitly convert expression of type `i32` to `i16` [ConversionFailure]
+  // CHECK:STDERR:   Cpp.downsizing_foo(1 as i32);
+  // CHECK:STDERR:                      ^~~~~~~~
+  // CHECK:STDERR: fail_import_downsizing_rejected.carbon:[[@LINE+8]]:22: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   Cpp.downsizing_foo(1 as i32);
+  // CHECK:STDERR:                      ^~~~~~~~
   // CHECK:STDERR: fail_import_downsizing_rejected.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./downsizing_rejected.h:2:16: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo(short a) -> void;
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR: ./downsizing_rejected.h:2:27: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto downsizing_foo(short a) -> void;
+  // CHECK:STDERR:                           ^
   // CHECK:STDERR:
-  Cpp.foo(1 as i32);
+  Cpp.downsizing_foo(1 as i32);
 }
 
 // ============================================================================
@@ -698,7 +698,7 @@ fn F() {
 
 // --- no_viable_function.h
 
-auto foo(short a, int b) -> void;
+auto no_viable_foo(short a, int b) -> void;
 
 // --- fail_import_no_viable_function.carbon
 
@@ -707,15 +707,15 @@ library "[[@TEST_NAME]]";
 import Cpp library "no_viable_function.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+8]]:19: error: no matching function for call to 'foo' [CppInteropParseError]
-  // CHECK:STDERR:    15 |   Cpp.foo(1 as i64);
-  // CHECK:STDERR:       |                   ^
+  // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+8]]:29: error: no matching function for call to 'no_viable_foo' [CppInteropParseError]
+  // CHECK:STDERR:    15 |   Cpp.no_viable_foo(1 as i64);
+  // CHECK:STDERR:       |                             ^
   // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./no_viable_function.h:2:6: note: candidate function not viable: requires 2 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     2 | auto foo(short a, int b) -> void;
-  // CHECK:STDERR:       |      ^   ~~~~~~~~~~~~~~
+  // CHECK:STDERR:     2 | auto no_viable_foo(short a, int b) -> void;
+  // CHECK:STDERR:       |      ^             ~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  Cpp.foo(1 as i64);
+  Cpp.no_viable_foo(1 as i64);
 }
 
 // ============================================================================
@@ -724,8 +724,8 @@ fn F() {
 
 // --- ambiguous_overload.h
 
-auto foo(short a) -> void;
-auto foo(int a) -> void;
+auto ambiguous_foo(short a) -> void;
+auto ambiguous_foo(int a) -> void;
 
 // --- fail_import_ambiguous_overload.carbon
 
@@ -734,19 +734,19 @@ library "[[@TEST_NAME]]";
 import Cpp library "ambiguous_overload.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+12]]:19: error: call to 'foo' is ambiguous [CppInteropParseError]
-  // CHECK:STDERR:    19 |   Cpp.foo(1 as i64);
-  // CHECK:STDERR:       |                   ^
+  // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+12]]:29: error: call to 'ambiguous_foo' is ambiguous [CppInteropParseError]
+  // CHECK:STDERR:    19 |   Cpp.ambiguous_foo(1 as i64);
+  // CHECK:STDERR:       |                             ^
   // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./ambiguous_overload.h:2:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:     2 | auto foo(short a) -> void;
+  // CHECK:STDERR:     2 | auto ambiguous_foo(short a) -> void;
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./ambiguous_overload.h:3:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:     3 | auto foo(int a) -> void;
+  // CHECK:STDERR:     3 | auto ambiguous_foo(int a) -> void;
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR:
-  Cpp.foo(1 as i64);
+  Cpp.ambiguous_foo(1 as i64);
 }
 
 // ============================================================================
@@ -755,8 +755,8 @@ fn F() {
 
 // --- deleted_function.h
 
-auto foo(short a) -> void;
-auto foo(int a) -> void = delete;
+auto deleted_foo(short a) -> void;
+auto deleted_foo(int a) -> void = delete;
 
 // --- fail_import_deleted_function.carbon
 
@@ -765,27 +765,27 @@ library "[[@TEST_NAME]]";
 import Cpp library "deleted_function.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+12]]:19: error: call to deleted function 'foo' [CppInteropParseError]
-  // CHECK:STDERR:    19 |   Cpp.foo(1 as i32);
-  // CHECK:STDERR:       |                   ^
+  // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+12]]:27: error: call to deleted function 'deleted_foo' [CppInteropParseError]
+  // CHECK:STDERR:    19 |   Cpp.deleted_foo(1 as i32);
+  // CHECK:STDERR:       |                           ^
   // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./deleted_function.h:3:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:     3 | auto foo(int a) -> void = delete;
+  // CHECK:STDERR:     3 | auto deleted_foo(int a) -> void = delete;
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./deleted_function.h:2:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:     2 | auto foo(short a) -> void;
+  // CHECK:STDERR:     2 | auto deleted_foo(short a) -> void;
   // CHECK:STDERR:       |      ^
   // CHECK:STDERR:
-  Cpp.foo(1 as i32);
+  Cpp.deleted_foo(1 as i32);
 }
 
 // --- fail_missing_impl.carbon
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-  void foo();
-  void foo(int);
+  void missing_impl_foo();
+  void missing_impl_foo(int);
 ''';
 
 interface I {}
@@ -793,12 +793,12 @@ interface I {}
 fn EchoValue[ValueT: I](unused generic value: ValueT) {}
 
 fn F() {
-  // CHECK:STDERR: fail_missing_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `<type of Cpp.foo>` into type implementing `I` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   EchoValue(Cpp.foo);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_missing_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `<type of Cpp.missing_impl_foo>` into type implementing `I` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   EchoValue(Cpp.missing_impl_foo);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_missing_impl.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn EchoValue[ValueT: I](unused generic value: ValueT) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  EchoValue(Cpp.foo);
+  EchoValue(Cpp.missing_impl_foo);
 }

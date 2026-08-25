@@ -102,7 +102,7 @@ class Derived {
 // CHECK:STDOUT:   %int_7.690: %i32 = int_value 7 [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Base.val, %int_7.690) [concrete]
 // CHECK:STDOUT:   %d.param_patt: %pattern_type.4fd = value_param_pattern [concrete]
-// CHECK:STDOUT:   %d.patt.ad5: %pattern_type.4fd = at_binding_pattern d, %d.param_patt [concrete]
+// CHECK:STDOUT:   %d.patt.cd7: %pattern_type.4fd = wrapper_binding_pattern d, %d.param_patt [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.b59: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.e55: type = tuple_type (%i32, %i32) [concrete]
@@ -163,7 +163,7 @@ class Derived {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
 // CHECK:STDOUT:     %d.param_patt: %pattern_type.4fd = value_param_pattern [concrete = constants.%d.param_patt]
-// CHECK:STDOUT:     %d.patt: %pattern_type.4fd = at_binding_pattern d, %d.param_patt [concrete = constants.%d.patt.ad5]
+// CHECK:STDOUT:     %d.patt: %pattern_type.4fd = wrapper_binding_pattern d, %d.param_patt [concrete = constants.%d.patt.cd7]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.394 = out_param_pattern [concrete = constants.%return.param_patt.a90]
 // CHECK:STDOUT:     %return.patt: %pattern_type.394 = return_slot_pattern %return.param_patt, %.loc17_35.2 [concrete = constants.%return.patt.2ed]
 // CHECK:STDOUT:   } {

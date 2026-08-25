@@ -650,8 +650,8 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-  enum A { a = 1, b = 2 };
-  #define M_A_NO_SCOPE a
+  enum A_NoScope { a_no_scope = 1, b_no_scope = 2 };
+  #define M_A_NO_SCOPE a_no_scope
 ''';
 
 fn F() {
@@ -691,8 +691,8 @@ let p: const i32* = &Cpp.N;
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-   constexpr int a = 1;
-   #define M_CONSTEXPR_NO_SCOPE a
+   constexpr int a_no_scope = 1;
+   #define M_CONSTEXPR_NO_SCOPE a_no_scope
 ''';
 
 fn F() {
@@ -892,8 +892,8 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-int v = 1;
-#define m &v
+int v_ptr = 1;
+#define m &v_ptr
 ''';
 
 fn F() {
@@ -905,14 +905,14 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-struct B {
+struct SubB {
   int c;
 };
-struct A {
-  B b;
+struct SubA {
+  SubB b;
 };
-A a;
-#define m a.b.c
+SubA a_obj;
+#define m a_obj.b.c
 ''';
 
 fn F() {
@@ -956,11 +956,11 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-struct A {
+struct BaseA {
   int n;
 };
-struct B : A {} b;
-#define m b.n
+struct DerivedB : BaseA {} b_obj;
+#define m b_obj.n
 ''';
 
 fn F() {
@@ -2182,15 +2182,15 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %A: type = class_type @A [concrete]
-// CHECK:STDOUT:   %pattern_type.3fa: type = pattern_type %A [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.3fa = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt: %pattern_type.3fa = var_pattern %a.patt [concrete]
-// CHECK:STDOUT:   %B: type = class_type @B [concrete]
-// CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %B [concrete]
-// CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %i32 [concrete]
-// CHECK:STDOUT:   %.401: ref %B = class_element_access imports.%a.var, element0 [concrete]
-// CHECK:STDOUT:   %.8f5: ref %i32 = class_element_access %.401, element0 [concrete]
+// CHECK:STDOUT:   %SubA: type = class_type @SubA [concrete]
+// CHECK:STDOUT:   %pattern_type.0f5: type = pattern_type %SubA [concrete]
+// CHECK:STDOUT:   %a_obj.patt: %pattern_type.0f5 = ref_binding_pattern a_obj [concrete]
+// CHECK:STDOUT:   %a_obj.var_patt: %pattern_type.0f5 = var_pattern %a_obj.patt [concrete]
+// CHECK:STDOUT:   %SubB: type = class_type @SubB [concrete]
+// CHECK:STDOUT:   %SubA.elem: type = unbound_element_type %SubA, %SubB [concrete]
+// CHECK:STDOUT:   %SubB.elem: type = unbound_element_type %SubB, %i32 [concrete]
+// CHECK:STDOUT:   %.d13: ref %SubB = class_element_access imports.%a_obj.var, element0 [concrete]
+// CHECK:STDOUT:   %.010: ref %i32 = class_element_access %.d13, element0 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.914: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
@@ -2210,12 +2210,12 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .m = constants.%.8f5
+// CHECK:STDOUT:     .m = constants.%.010
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.patt: %pattern_type.3fa = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:   %a.var_patt: %pattern_type.3fa = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   %a.var: ref %A = var_storage %a.var_patt [concrete]
+// CHECK:STDOUT:   %a_obj.patt: %pattern_type.0f5 = ref_binding_pattern a_obj [concrete = constants.%a_obj.patt]
+// CHECK:STDOUT:   %a_obj.var_patt: %pattern_type.0f5 = var_pattern %a_obj.patt [concrete = constants.%a_obj.var_patt]
+// CHECK:STDOUT:   %a_obj.var: ref %SubA = var_storage %a_obj.var_patt [concrete]
 // CHECK:STDOUT:   %Core.import_ref.edf: @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1aa = impl_witness_table (%Core.import_ref.edf), @Core.IntLiteral.as.ImplicitAs.impl.0e9 [concrete]
 // CHECK:STDOUT: }
@@ -2224,11 +2224,11 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %b.ref: %A.elem = name_ref b, @A.%.1 [concrete = @A.%.1]
-// CHECK:STDOUT:   %.loc17_6.1: ref %B = class_element_access imports.%a.var, element0 [concrete = constants.%.401]
-// CHECK:STDOUT:   %c.ref: %B.elem = name_ref c, @B.%.1 [concrete = @B.%.1]
-// CHECK:STDOUT:   %.loc17_6.2: ref %i32 = class_element_access %.loc17_6.1, element0 [concrete = constants.%.8f5]
-// CHECK:STDOUT:   %m.ref: ref %i32 = name_ref m, constants.%.8f5 [concrete = constants.%.8f5]
+// CHECK:STDOUT:   %b.ref: %SubA.elem = name_ref b, @SubA.%.1 [concrete = @SubA.%.1]
+// CHECK:STDOUT:   %.loc17_6.1: ref %SubB = class_element_access imports.%a_obj.var, element0 [concrete = constants.%.d13]
+// CHECK:STDOUT:   %c.ref: %SubB.elem = name_ref c, @SubB.%.1 [concrete = @SubB.%.1]
+// CHECK:STDOUT:   %.loc17_6.2: ref %i32 = class_element_access %.loc17_6.1, element0 [concrete = constants.%.010]
+// CHECK:STDOUT:   %m.ref: ref %i32 = name_ref m, constants.%.010 [concrete = constants.%.010]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc17_9.1: <bound method> = bound_method %int_2, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]

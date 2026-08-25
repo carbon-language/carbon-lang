@@ -111,7 +111,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %i.patt.539460.3: %pattern_type.dc4 = ref_binding_pattern i [concrete]
 // CHECK:STDOUT:   %i.var_patt.15311d.3: %pattern_type.dc4 = var_pattern %i.patt.539460.3 [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.647 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.647 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.647 = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.36a = value_binding_pattern b [concrete]
@@ -161,7 +161,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [concrete = constants.%Outer] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.647 = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.647 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.647 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.286 = value_param call_param0
 // CHECK:STDOUT:     %.loc45: type = splice_block %ptr.loc45 [concrete = constants.%ptr.286] {

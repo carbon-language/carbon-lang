@@ -729,13 +729,11 @@ constexpr BuiltinInfo FloatNegate = {"float.negate",
 
 // "float.add": float addition.
 constexpr BuiltinInfo FloatAdd = {
-    "float.add",
-    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
+    "float.add", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
 
 // "float.sub": float subtraction.
 constexpr BuiltinInfo FloatSub = {
-    "float.sub",
-    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
+    "float.sub", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
 
 // "float.mul": float multiplication.
 constexpr BuiltinInfo FloatMul = {
@@ -947,6 +945,11 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
 
     case FloatConvert:
     case FloatConvertInt:
+    case FloatNegate:
+    case FloatAdd:
+    case FloatSub:
+    case FloatMul:
+    case FloatDiv:
     case IntConvert:
     case IntConvertChar:
     case IntConvertFloat:

@@ -2392,7 +2392,8 @@ static auto ImportFunctionDecl(ImportContext& context,
         .return_pattern_id = SemIR::InstId::None,
         .virtual_modifier = import_function.virtual_modifier,
         .virtual_index = import_function.virtual_index,
-        .evaluation_mode = import_function.evaluation_mode}});
+        .evaluation_mode = import_function.evaluation_mode,
+        .interface_modifier = import_function.interface_modifier}});
 
   // Directly add the function type constant. Don't use `GetFunctionType`
   // because that will evaluate the function type, which we can't do if the

@@ -30,7 +30,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.f00: type = pattern_type %ptr.d08 [concrete]
 // CHECK:STDOUT:   %p.param_patt.b89: %pattern_type.f00 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt.204: %pattern_type.f00 = at_binding_pattern p, %p.param_patt.b89 [concrete]
+// CHECK:STDOUT:   %p.patt.f8d: %pattern_type.f00 = wrapper_binding_pattern p, %p.param_patt.b89 [concrete]
 // CHECK:STDOUT:   %.952: Core.Form = init_form %ptr.d08 [concrete]
 // CHECK:STDOUT:   %return.param_patt.7dd: %pattern_type.f00 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.dbe: %pattern_type.f00 = return_slot_pattern %return.param_patt.7dd, %ptr.d08 [concrete]
@@ -51,7 +51,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   %ptr.774: type = ptr_type %const.6a8 [concrete]
 // CHECK:STDOUT:   %pattern_type.8c1: type = pattern_type %ptr.774 [concrete]
 // CHECK:STDOUT:   %p.param_patt.5f6: %pattern_type.8c1 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt.226: %pattern_type.8c1 = at_binding_pattern p, %p.param_patt.5f6 [concrete]
+// CHECK:STDOUT:   %p.patt.f7b: %pattern_type.8c1 = wrapper_binding_pattern p, %p.param_patt.5f6 [concrete]
 // CHECK:STDOUT:   %.af2: Core.Form = init_form %ptr.774 [concrete]
 // CHECK:STDOUT:   %return.param_patt.0fc: %pattern_type.8c1 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e15: %pattern_type.8c1 = return_slot_pattern %return.param_patt.0fc, %ptr.774 [concrete]
@@ -88,7 +88,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Ptr.decl: %Ptr.type = fn_decl @Ptr [concrete = constants.%Ptr] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.f00 = value_param_pattern [concrete = constants.%p.param_patt.b89]
-// CHECK:STDOUT:     %p.patt: %pattern_type.f00 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.204]
+// CHECK:STDOUT:     %p.patt: %pattern_type.f00 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.f8d]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.f00 = out_param_pattern [concrete = constants.%return.param_patt.7dd]
 // CHECK:STDOUT:     %return.patt: %pattern_type.f00 = return_slot_pattern %return.param_patt, %ptr.loc15_23 [concrete = constants.%return.patt.dbe]
 // CHECK:STDOUT:   } {
@@ -106,7 +106,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConstPtr.decl: %ConstPtr.type = fn_decl @ConstPtr [concrete = constants.%ConstPtr] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.8c1 = value_param_pattern [concrete = constants.%p.param_patt.5f6]
-// CHECK:STDOUT:     %p.patt: %pattern_type.8c1 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.226]
+// CHECK:STDOUT:     %p.patt: %pattern_type.8c1 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.f7b]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.8c1 = out_param_pattern [concrete = constants.%return.param_patt.0fc]
 // CHECK:STDOUT:     %return.patt: %pattern_type.8c1 = return_slot_pattern %return.param_patt, %ptr.loc19_42 [concrete = constants.%return.patt.e15]
 // CHECK:STDOUT:   } {

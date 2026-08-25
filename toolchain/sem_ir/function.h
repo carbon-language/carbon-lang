@@ -59,6 +59,10 @@ struct FunctionFields {
   // Kinds of evaluation modifiers that can apply to functions.
   enum class EvaluationMode : uint8_t { None, Eval, MustEval };
 
+  // Kinds of interface modifiers that can apply to functions.
+  // TODO: turn into a CARBON_ENUM for more convenient checks.
+  enum class InterfaceModifier : uint8_t { None, Default, Final };
+
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
 
@@ -170,6 +174,9 @@ struct FunctionFields {
   // function.
   EvaluationMode evaluation_mode = EvaluationMode::None;
 
+  // Which, if any, interface modifier is applied to this function.
+  InterfaceModifier interface_modifier = InterfaceModifier::None;
+
   // The `self` parameter pattern, if any. This is the first pattern in
   // `param_patterns_id` (from EntityWithParamsBase).
   InstId self_param_id = InstId::None;
@@ -185,6 +192,21 @@ struct FunctionFields {
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
   llvm::SmallVector<InstBlockId> body_block_ids = {};
+
+  friend auto operator<<(llvm::raw_ostream& out, InterfaceModifier modifier)
+      -> llvm::raw_ostream& {
+    using enum InterfaceModifier;
+    switch (modifier) {
+      case None:
+        return out << "none";
+      case Default:
+        return out << "default";
+      case Final:
+        return out << "final";
+    }
+
+    CARBON_FATAL("unhandled `ImplModifier` during printing");
+  }
 };
 
 inline constexpr FunctionFields::CallParamIndexRanges
@@ -232,6 +254,9 @@ struct Function : public EntityWithParamsBase,
     if (auto cpp_thunk_callee_val = cpp_thunk_callee();
         cpp_thunk_callee_val.has_value()) {
       out << ", cpp_thunk_callee: " << cpp_thunk_callee_val;
+    }
+    if (interface_modifier != InterfaceModifier::None) {
+      out << ", interface_modifier: " << interface_modifier;
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(

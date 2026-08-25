@@ -114,6 +114,7 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
     }
 
     case Call::Kind:
+    case SpliceInst::Kind:
     case TypeOfInst::Kind: {
       return Step::TemplateType();
     }

@@ -70,15 +70,9 @@ struct MoveOnlyTestData : Printable<TestData> {
   }
   auto Print(llvm::raw_ostream& out) const -> void { out << value; }
 
-  friend auto operator==(const MoveOnlyTestData& lhs,
-                         const MoveOnlyTestData& rhs) -> bool {
-    return lhs.value == rhs.value;
-  }
-
   friend auto operator<=>(const MoveOnlyTestData& lhs,
-                          const MoveOnlyTestData& rhs) -> std::strong_ordering {
-    return lhs.value <=> rhs.value;
-  }
+                          const MoveOnlyTestData& rhs)
+      -> std::strong_ordering = default;
 
   friend auto CarbonHashValue(const MoveOnlyTestData& data, uint64_t seed)
       -> HashCode {

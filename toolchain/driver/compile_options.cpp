@@ -6,6 +6,8 @@
 
 #include <optional>
 
+#include "llvm/MC/TargetRegistry.h"
+#include "llvm/TargetParser/Triple.h"
 #include "toolchain/base/clang_invocation.h"
 
 namespace Carbon {

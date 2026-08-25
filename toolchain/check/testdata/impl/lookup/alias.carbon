@@ -51,7 +51,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %HasF.WithSelf.F.689: %HasF.WithSelf.F.type.722 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = wrapper_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.697: type = fn_type_with_self_type %HasF.WithSelf.F.type.722, %HasF.facet [concrete]
@@ -72,7 +72,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %.loc23: <witness> = impl_self_witness @C.as.HasF.impl.%C.ref, @HasF [concrete = constants.%.ba1]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern [concrete = constants.%c.param_patt]
-// CHECK:STDOUT:     %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc27: type = name_ref C, file.%C.decl [concrete = constants.%C]

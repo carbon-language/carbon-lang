@@ -89,11 +89,7 @@ struct ClangDeclSignature : public Printable<ClangDeclSignature> {
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  auto operator==(const ClangDeclSignature& rhs) const -> bool {
-    return kind == rhs.kind && num_params == rhs.num_params &&
-           passing_modes == rhs.passing_modes &&
-           self_passing_mode == rhs.self_passing_mode;
-  }
+  auto operator==(const ClangDeclSignature& rhs) const -> bool = default;
 
   // Hashing for ClangDeclSignature.
   friend auto CarbonHashValue(const ClangDeclSignature& value, uint64_t seed)
@@ -139,9 +135,7 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  auto operator==(const ClangDeclKey& rhs) const -> bool {
-    return decl == rhs.decl && signature_id == rhs.signature_id;
-  }
+  auto operator==(const ClangDeclKey& rhs) const -> bool = default;
 
   // Hashing for ClangDecl. See common/hashing.h.
   friend auto CarbonHashValue(const ClangDeclKey& value, uint64_t seed)

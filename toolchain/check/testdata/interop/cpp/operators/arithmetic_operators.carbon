@@ -344,14 +344,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.ceb: %facet_type.c2e = symbolic_binding T, 2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.f4e485.2: type = pattern_type %Result.as_type [symbolic]
 // CHECK:STDOUT:   %result.param_patt.6ba: %pattern_type.f4e485.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %result.patt.748373.1: %pattern_type.f4e485.2 = at_binding_pattern result, %result.param_patt.6ba [symbolic]
+// CHECK:STDOUT:   %result.patt.c73b2c.1: %pattern_type.f4e485.2 = wrapper_binding_pattern result, %result.param_patt.6ba [symbolic]
 // CHECK:STDOUT:   %T.as_type.6fc: type = facet_access_type %T.ceb [symbolic]
 // CHECK:STDOUT:   %pattern_type.786: type = pattern_type %T.as_type.6fc [symbolic]
 // CHECK:STDOUT:   %x.param_patt.0c5: %pattern_type.786 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.4db: %pattern_type.786 = at_binding_pattern x, %x.param_patt.0c5 [symbolic]
+// CHECK:STDOUT:   %x.patt.95d: %pattern_type.786 = wrapper_binding_pattern x, %x.param_patt.0c5 [symbolic]
 // CHECK:STDOUT:   %pattern_type.753: type = pattern_type %U.as_type.b61 [symbolic]
 // CHECK:STDOUT:   %y.param_patt.740: %pattern_type.753 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %y.patt.4ae: %pattern_type.753 = at_binding_pattern y, %y.param_patt.740 [symbolic]
+// CHECK:STDOUT:   %y.patt.603: %pattern_type.753 = wrapper_binding_pattern y, %y.param_patt.740 [symbolic]
 // CHECK:STDOUT:   %require_complete.15e: <witness> = require_complete_type %AddWith.type.9da [symbolic]
 // CHECK:STDOUT:   %assoc1.57d: %AddWith.assoc_type.588 = assoc_entity element1, imports.%Core.import_ref.9768 [symbolic]
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.2b1: <witness> = lookup_impl_witness %T.ceb, @AddWith.1, @AddWith.1(%U.as_type.b61) [symbolic]
@@ -390,7 +390,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.as_type.58f: type = facet_access_type %T.bf6 [symbolic]
 // CHECK:STDOUT:   %pattern_type.a10: type = pattern_type %T.as_type.58f [symbolic]
 // CHECK:STDOUT:   %x.param_patt.02e: %pattern_type.a10 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.eb5: %pattern_type.a10 = at_binding_pattern x, %x.param_patt.02e [symbolic]
+// CHECK:STDOUT:   %x.patt.090: %pattern_type.a10 = wrapper_binding_pattern x, %x.param_patt.02e [symbolic]
 // CHECK:STDOUT:   %require_complete.6ff: <witness> = require_complete_type %SubWith.type.b5d [symbolic]
 // CHECK:STDOUT:   %assoc1.178: %SubWith.assoc_type.b0b = assoc_entity element1, imports.%Core.import_ref.b59 [symbolic]
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.ce5: <witness> = lookup_impl_witness %T.bf6, @SubWith.1, @SubWith.1(%U.as_type.b61) [symbolic]
@@ -424,7 +424,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.as_type.83f: type = facet_access_type %T.9a2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.fff: type = pattern_type %T.as_type.83f [symbolic]
 // CHECK:STDOUT:   %x.param_patt.f8f: %pattern_type.fff = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.909: %pattern_type.fff = at_binding_pattern x, %x.param_patt.f8f [symbolic]
+// CHECK:STDOUT:   %x.patt.4d0: %pattern_type.fff = wrapper_binding_pattern x, %x.param_patt.f8f [symbolic]
 // CHECK:STDOUT:   %require_complete.861: <witness> = require_complete_type %MulWith.type.f02 [symbolic]
 // CHECK:STDOUT:   %assoc1.8f7: %MulWith.assoc_type.7b2 = assoc_entity element1, imports.%Core.import_ref.955 [symbolic]
 // CHECK:STDOUT:   %MulWith.lookup_impl_witness.444: <witness> = lookup_impl_witness %T.9a2, @MulWith.1, @MulWith.1(%U.as_type.b61) [symbolic]
@@ -458,7 +458,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.as_type.a74: type = facet_access_type %T.4bb [symbolic]
 // CHECK:STDOUT:   %pattern_type.b83: type = pattern_type %T.as_type.a74 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.21f: %pattern_type.b83 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.46c: %pattern_type.b83 = at_binding_pattern x, %x.param_patt.21f [symbolic]
+// CHECK:STDOUT:   %x.patt.c40: %pattern_type.b83 = wrapper_binding_pattern x, %x.param_patt.21f [symbolic]
 // CHECK:STDOUT:   %require_complete.026: <witness> = require_complete_type %DivWith.type.523 [symbolic]
 // CHECK:STDOUT:   %assoc1.7b1: %DivWith.assoc_type.d8b = assoc_entity element1, imports.%Core.import_ref.8b6 [symbolic]
 // CHECK:STDOUT:   %DivWith.lookup_impl_witness.831: <witness> = lookup_impl_witness %T.4bb, @DivWith.1, @DivWith.1(%U.as_type.b61) [symbolic]
@@ -492,7 +492,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.as_type.1c2: type = facet_access_type %T.999 [symbolic]
 // CHECK:STDOUT:   %pattern_type.01b: type = pattern_type %T.as_type.1c2 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.f25: %pattern_type.01b = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.804: %pattern_type.01b = at_binding_pattern x, %x.param_patt.f25 [symbolic]
+// CHECK:STDOUT:   %x.patt.9f7: %pattern_type.01b = wrapper_binding_pattern x, %x.param_patt.f25 [symbolic]
 // CHECK:STDOUT:   %require_complete.a4a: <witness> = require_complete_type %ModWith.type.937 [symbolic]
 // CHECK:STDOUT:   %assoc1.132: %ModWith.assoc_type.316 = assoc_entity element1, imports.%Core.import_ref.33c [symbolic]
 // CHECK:STDOUT:   %ModWith.lookup_impl_witness.e17: <witness> = lookup_impl_witness %T.999, @ModWith.1, @ModWith.1(%U.as_type.b61) [symbolic]
@@ -511,7 +511,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
 // CHECK:STDOUT:   %pattern_type.203: type = pattern_type %i16 [concrete]
 // CHECK:STDOUT:   %x.param_patt.676: %pattern_type.203 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.26e: %pattern_type.203 = at_binding_pattern x, %x.param_patt.676 [concrete]
+// CHECK:STDOUT:   %x.patt.668: %pattern_type.203 = wrapper_binding_pattern x, %x.param_patt.676 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %i16.builtin: type = int_type signed, %int_16 [concrete]
@@ -545,9 +545,9 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %pattern_type.34a: type = pattern_type %facet_type.225 [concrete]
 // CHECK:STDOUT:   %T.patt.3ec: %pattern_type.34a = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %result.param_patt.be6: %pattern_type.785 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %result.patt.488: %pattern_type.785 = at_binding_pattern result, %result.param_patt.be6 [concrete]
+// CHECK:STDOUT:   %result.patt.a31: %pattern_type.785 = wrapper_binding_pattern result, %result.param_patt.be6 [concrete]
 // CHECK:STDOUT:   %y.param_patt.418: %pattern_type.785 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.4e6: %pattern_type.785 = at_binding_pattern y, %y.param_patt.418 [concrete]
+// CHECK:STDOUT:   %y.patt.890: %pattern_type.785 = wrapper_binding_pattern y, %y.param_patt.418 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.9d5: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.2cc) [concrete]
 // CHECK:STDOUT:   %.6da: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.9d5, %Destroy.facet.2cc [concrete]
 // CHECK:STDOUT:   %facet_type.b15: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%Int16)> [concrete]
@@ -651,9 +651,9 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %pattern_type.c51: type = pattern_type %facet_type.b7b [concrete]
 // CHECK:STDOUT:   %T.patt.5cb: %pattern_type.c51 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.3b0: %pattern_type.785 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.b76: %pattern_type.785 = at_binding_pattern x, %x.param_patt.3b0 [concrete]
+// CHECK:STDOUT:   %x.patt.869: %pattern_type.785 = wrapper_binding_pattern x, %x.param_patt.3b0 [concrete]
 // CHECK:STDOUT:   %y.param_patt.4b4: %pattern_type.203 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.dd3: %pattern_type.203 = at_binding_pattern y, %y.param_patt.4b4 [concrete]
+// CHECK:STDOUT:   %y.patt.162: %pattern_type.203 = wrapper_binding_pattern y, %y.param_patt.4b4 [concrete]
 // CHECK:STDOUT:   %facet_type.cb2: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%i16)> [concrete]
 // CHECK:STDOUT:   %.Self.a84: %facet_type.cb2 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %SubWith.lookup_impl_witness.581: <witness> = lookup_impl_witness %.Self.a84, @SubWith.1, @SubWith.1(%i16) [symbolic_self]
@@ -759,9 +759,9 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %pattern_type.c976: type = pattern_type %facet_type.ecf [concrete]
 // CHECK:STDOUT:   %T.patt.0a8: %pattern_type.c976 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %result.param_patt.e81: %pattern_type.8b4 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %result.patt.830: %pattern_type.8b4 = at_binding_pattern result, %result.param_patt.e81 [concrete]
+// CHECK:STDOUT:   %result.patt.47f: %pattern_type.8b4 = wrapper_binding_pattern result, %result.param_patt.e81 [concrete]
 // CHECK:STDOUT:   %y.param_patt.e0c: %pattern_type.8b4 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.0a3: %pattern_type.8b4 = at_binding_pattern y, %y.param_patt.e0c [concrete]
+// CHECK:STDOUT:   %y.patt.9e1: %pattern_type.8b4 = wrapper_binding_pattern y, %y.param_patt.e0c [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.b76: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.099) [concrete]
 // CHECK:STDOUT:   %.043: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.b76, %Destroy.facet.099 [concrete]
 // CHECK:STDOUT:   %facet_type.44e: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%Int32)> [concrete]
@@ -852,7 +852,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %pattern_type.363: type = pattern_type %facet_type.37e [concrete]
 // CHECK:STDOUT:   %T.patt.ccd: %pattern_type.363 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.27c: %pattern_type.8b4 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.4c9: %pattern_type.8b4 = at_binding_pattern x, %x.param_patt.27c [concrete]
+// CHECK:STDOUT:   %x.patt.740: %pattern_type.8b4 = wrapper_binding_pattern x, %x.param_patt.27c [concrete]
 // CHECK:STDOUT:   %facet_type.983: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%Int16) where %impl.elem0.4a0 = %Int32> [concrete]
 // CHECK:STDOUT:   %Int32.Op.type.83af6e.3: type = fn_type @Int32.Op.3 [concrete]
 // CHECK:STDOUT:   %Int32.Op.4dca31.3: %Int32.Op.type.83af6e.3 = struct_value () [concrete]
@@ -911,7 +911,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.7e8: type = impl_witness_access %AddWith.lookup_impl_witness.085, element0 [symbolic_self]
 // CHECK:STDOUT:   %facet_type.522: type = facet_type <@Destroy & @AddWith.1, @AddWith.1(%Int64) where %impl.elem0.7e8 = %Int64> [concrete]
 // CHECK:STDOUT:   %y.param_patt.a08: %pattern_type.4aa = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.63b: %pattern_type.4aa = at_binding_pattern y, %y.param_patt.a08 [concrete]
+// CHECK:STDOUT:   %y.patt.069: %pattern_type.4aa = wrapper_binding_pattern y, %y.param_patt.a08 [concrete]
 // CHECK:STDOUT:   %AddWith.type.b5b: type = facet_type <@AddWith.1, @AddWith.1(%Int64)> [concrete]
 // CHECK:STDOUT:   %AddWith.assoc_type.0c5: type = assoc_entity_type @AddWith.1, @AddWith.1(%Int64) [concrete]
 // CHECK:STDOUT:   %assoc0.947: %AddWith.assoc_type.0c5 = assoc_entity element0, imports.%Core.import_ref.91f8 [concrete]
@@ -928,7 +928,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %pattern_type.613: type = pattern_type %facet_type.522 [concrete]
 // CHECK:STDOUT:   %T.patt.f5c: %pattern_type.613 = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %result.param_patt.1e1: %pattern_type.4aa = value_param_pattern [concrete]
-// CHECK:STDOUT:   %result.patt.41f: %pattern_type.4aa = at_binding_pattern result, %result.param_patt.1e1 [concrete]
+// CHECK:STDOUT:   %result.patt.93b: %pattern_type.4aa = wrapper_binding_pattern result, %result.param_patt.1e1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.c2c: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.191) [concrete]
 // CHECK:STDOUT:   %.c2e: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.c2c, %Destroy.facet.191 [concrete]
 // CHECK:STDOUT:   %facet_type.502: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%Int64)> [concrete]
@@ -1019,7 +1019,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %pattern_type.46d: type = pattern_type %facet_type.840 [concrete]
 // CHECK:STDOUT:   %T.patt.211: %pattern_type.46d = symbolic_binding_pattern T, 2 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.e68: %pattern_type.4aa = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.52a: %pattern_type.4aa = at_binding_pattern x, %x.param_patt.e68 [concrete]
+// CHECK:STDOUT:   %x.patt.7aa: %pattern_type.4aa = wrapper_binding_pattern x, %x.param_patt.e68 [concrete]
 // CHECK:STDOUT:   %facet_type.99d: type = facet_type <@Destroy & @SubWith.1, @SubWith.1(%Int32) where %impl.elem0.e31 = %Int64> [concrete]
 // CHECK:STDOUT:   %Op.type.442b68.12: type = fn_type @Op.12 [concrete]
 // CHECK:STDOUT:   %Op.72717c.12: %Op.type.442b68.12 = struct_value () [concrete]
@@ -1065,7 +1065,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.343: %pattern_type.643306.2 = var_param_pattern %x.patt.227 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.4: type = pattern_type %U.67d [symbolic]
 // CHECK:STDOUT:   %y.param_patt.be3: %pattern_type.51d1c4.4 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %y.patt.b85: %pattern_type.51d1c4.4 = at_binding_pattern y, %y.param_patt.be3 [symbolic]
+// CHECK:STDOUT:   %y.patt.678: %pattern_type.51d1c4.4 = wrapper_binding_pattern y, %y.param_patt.be3 [symbolic]
 // CHECK:STDOUT:   %AddAssignWith.assoc_type.8ddaf4.2: type = assoc_entity_type @AddAssignWith.1, @AddAssignWith.1(%U.67d) [symbolic]
 // CHECK:STDOUT:   %assoc0.8c5739.2: %AddAssignWith.assoc_type.8ddaf4.2 = assoc_entity element0, imports.%Core.import_ref.3b2 [symbolic]
 // CHECK:STDOUT:   %require_complete.2a8: <witness> = require_complete_type %AddAssignWith.type.2c8890.2 [symbolic]
@@ -1315,11 +1315,11 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.patt.c5b: %pattern_type.4c2 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T.e01: %facet_type.352 = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %y.param_patt.023: %pattern_type.f4e485.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %y.patt.053: %pattern_type.f4e485.2 = at_binding_pattern y, %y.param_patt.023 [symbolic]
+// CHECK:STDOUT:   %y.patt.33f: %pattern_type.f4e485.2 = wrapper_binding_pattern y, %y.param_patt.023 [symbolic]
 // CHECK:STDOUT:   %T.as_type.684: type = facet_access_type %T.e01 [symbolic]
 // CHECK:STDOUT:   %pattern_type.2dd: type = pattern_type %T.as_type.684 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.cbc: %pattern_type.2dd = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.7fb: %pattern_type.2dd = at_binding_pattern x, %x.param_patt.cbc [symbolic]
+// CHECK:STDOUT:   %x.patt.ef5: %pattern_type.2dd = wrapper_binding_pattern x, %x.param_patt.cbc [symbolic]
 // CHECK:STDOUT:   %Negate.lookup_impl_witness.218: <witness> = lookup_impl_witness %T.e01, @Negate [symbolic]
 // CHECK:STDOUT:   %Negate.facet.5e5: %Negate.type = facet_value %T.as_type.684, (%Negate.lookup_impl_witness.218) [symbolic]
 // CHECK:STDOUT:   %Negate.WithSelf.Op.type.d8a: type = fn_type @Negate.WithSelf.Op, @Negate.WithSelf(%Negate.facet.5e5) [symbolic]
@@ -1551,7 +1551,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Core.import_ref.61a: type = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, loaded [concrete = %Result.803]
 // CHECK:STDOUT:   %Result.803: type = assoc_const_decl @Result.5 [concrete] {}
 // CHECK:STDOUT:   %Core.import_ref.33c = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.bdd6: @AddAssignWith.WithSelf.%AddAssignWith.assoc_type (%AddAssignWith.assoc_type.8ddaf4.1) = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, loaded [symbolic = @AddAssignWith.WithSelf.%assoc0 (constants.%assoc0.86d)]
+// CHECK:STDOUT:   %Core.import_ref.bdd: @AddAssignWith.WithSelf.%AddAssignWith.assoc_type (%AddAssignWith.assoc_type.8ddaf4.1) = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, loaded [symbolic = @AddAssignWith.WithSelf.%assoc0 (constants.%assoc0.86d)]
 // CHECK:STDOUT:   %Core.import_ref.3b2: @AddAssignWith.WithSelf.%AddAssignWith.WithSelf.Op.type (%AddAssignWith.WithSelf.Op.type.cd574e.1) = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, loaded [symbolic = @AddAssignWith.WithSelf.%AddAssignWith.WithSelf.Op (constants.%AddAssignWith.WithSelf.Op.106889.1)]
 // CHECK:STDOUT:   %Core.import_ref.87e4 = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.509: @SubAssignWith.WithSelf.%SubAssignWith.assoc_type (%SubAssignWith.assoc_type.6e3877.1) = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, loaded [symbolic = @SubAssignWith.WithSelf.%assoc0 (constants.%assoc0.b8e)]
@@ -1807,7 +1807,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %x.ref: ref @AddAssignWith.loc225.%T.as_type.loc225_60.1 (%T.as_type.50c) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref: @AddAssignWith.loc225.%U.loc225_19.1 (%U.67d) = name_ref y, %y
 // CHECK:STDOUT:     %AddAssignWith.type.loc227: type = facet_type <@AddAssignWith.1, @AddAssignWith.1(constants.%U.67d)> [symbolic = %AddAssignWith.type.loc225_50.1 (constants.%AddAssignWith.type.2c8890.2)]
-// CHECK:STDOUT:     %.loc227_5.1: @AddAssignWith.loc225.%AddAssignWith.assoc_type (%AddAssignWith.assoc_type.8ddaf4.2) = specific_constant imports.%Core.import_ref.bdd6, @AddAssignWith.WithSelf(constants.%U.67d, constants.%Self.792732.1) [symbolic = %assoc0 (constants.%assoc0.8c5739.2)]
+// CHECK:STDOUT:     %.loc227_5.1: @AddAssignWith.loc225.%AddAssignWith.assoc_type (%AddAssignWith.assoc_type.8ddaf4.2) = specific_constant imports.%Core.import_ref.bdd, @AddAssignWith.WithSelf(constants.%U.67d, constants.%Self.792732.1) [symbolic = %assoc0 (constants.%assoc0.8c5739.2)]
 // CHECK:STDOUT:     %Op.ref: @AddAssignWith.loc225.%AddAssignWith.assoc_type (%AddAssignWith.assoc_type.8ddaf4.2) = name_ref Op, %.loc227_5.1 [symbolic = %assoc0 (constants.%assoc0.8c5739.2)]
 // CHECK:STDOUT:     %impl.elem0.loc227_5.1: @AddAssignWith.loc225.%.loc227_5.2 (%.9b1) = impl_witness_access constants.%AddAssignWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc227_5.2 (constants.%impl.elem0.985)]
 // CHECK:STDOUT:     %bound_method.loc227_5.1: <bound method> = bound_method %x.ref, %impl.elem0.loc227_5.1
@@ -2055,14 +2055,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc123_4.1 => constants.%T.ceb
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.f4e485.2
 // CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.6ba
-// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.748373.1
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.c73b2c.1
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%T.as_type.6fc
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.786
 // CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.0c5
-// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.4db
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.95d
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.753
 // CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.740
-// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.4ae
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.603
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Result, constants.%U.f40, constants.%T.bf6) {
@@ -2090,14 +2090,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc134_4.1 => constants.%T.bf6
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.f4e485.2
 // CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.6ba
-// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.748373.1
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.c73b2c.1
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%T.as_type.58f
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.a10
 // CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.02e
-// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.eb5
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.090
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.753
 // CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.740
-// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.4ae
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.603
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Result, constants.%U.f40, constants.%T.9a2) {
@@ -2125,14 +2125,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc145_4.1 => constants.%T.9a2
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.f4e485.2
 // CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.6ba
-// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.748373.1
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.c73b2c.1
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%T.as_type.83f
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.fff
 // CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.f8f
-// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.909
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.4d0
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.753
 // CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.740
-// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.4ae
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.603
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Result, constants.%U.f40, constants.%T.4bb) {
@@ -2160,14 +2160,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc156_4.1 => constants.%T.4bb
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.f4e485.2
 // CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.6ba
-// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.748373.1
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.c73b2c.1
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%T.as_type.a74
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.b83
 // CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.21f
-// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.46c
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.c40
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.753
 // CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.740
-// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.4ae
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.603
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Result, constants.%U.f40, constants.%T.999) {
@@ -2195,14 +2195,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc167_4.1 => constants.%T.999
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.f4e485.2
 // CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.6ba
-// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.748373.1
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.c73b2c.1
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%T.as_type.1c2
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.01b
 // CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.f25
-// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.804
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.9f7
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.753
 // CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.740
-// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.4ae
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.603
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Destroy.facet.2cc, constants.%Destroy.facet.2cc, constants.%facet_value.696) {
@@ -2230,14 +2230,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.696
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.785
 // CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.be6
-// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.488
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.a31
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%i16
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.203
 // CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.676
-// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.26e
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.668
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.785
 // CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.418
-// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.4e6
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.890
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -2283,14 +2283,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.031
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.785
 // CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.be6
-// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.488
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.a31
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%i16
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.203
 // CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.676
-// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.26e
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.668
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.785
 // CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.418
-// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.4e6
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.890
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -2336,14 +2336,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.920
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.785
 // CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.be6
-// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.488
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.a31
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%i16
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.203
 // CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.676
-// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.26e
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.668
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.785
 // CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.418
-// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.4e6
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.890
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -2389,14 +2389,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.ce6
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.785
 // CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.be6
-// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.488
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.a31
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%i16
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.203
 // CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.676
-// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.26e
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.668
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.785
 // CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.418
-// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.4e6
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.890
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -2442,14 +2442,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.cde
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.785
 // CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.be6
-// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.488
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.a31
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%i16
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.203
 // CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.676
-// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.26e
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.668
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.785
 // CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.418
-// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.4e6
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.890
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -2495,14 +2495,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.0c7
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.785
 // CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.be6
-// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.488
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.a31
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.785
 // CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.3b0
-// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.b76
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.869
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.203
 // CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.4b4
-// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.dd3
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.162
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -2548,14 +2548,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.33e
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.785
 // CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.be6
-// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.488
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.a31
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.785
 // CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.3b0
-// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.b76
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.869
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.203
 // CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.4b4
-// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.dd3
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.162
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -2601,14 +2601,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.ba4
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.785
 // CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.be6
-// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.488
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.a31
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.785
 // CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.3b0
-// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.b76
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.869
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.203
 // CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.4b4
-// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.dd3
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.162
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -2654,14 +2654,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.521
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.785
 // CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.be6
-// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.488
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.a31
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.785
 // CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.3b0
-// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.b76
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.869
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.203
 // CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.4b4
-// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.dd3
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.162
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -2707,14 +2707,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.ce1
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.785
 // CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.be6
-// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.488
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.a31
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.785
 // CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.3b0
-// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.b76
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.869
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.203
 // CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.4b4
-// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.dd3
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.162
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -2760,14 +2760,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.17e
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.785
 // CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.3b0
-// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.b76
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.869
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -2813,14 +2813,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.9eb
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.785
 // CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.3b0
-// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.b76
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.869
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -2866,14 +2866,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.9ae
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.785
 // CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.3b0
-// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.b76
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.869
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -2919,14 +2919,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.38c
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.785
 // CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.3b0
-// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.b76
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.869
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -2972,14 +2972,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.68d
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.785
 // CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.3b0
-// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.b76
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.869
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -3025,14 +3025,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.6ea
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.785
 // CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.418
-// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.4e6
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.890
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -3078,14 +3078,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.bcc
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.785
 // CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.418
-// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.4e6
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.890
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -3131,14 +3131,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.795
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.785
 // CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.418
-// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.4e6
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.890
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -3184,14 +3184,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.c8d
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.785
 // CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.418
-// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.4e6
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.890
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -3237,14 +3237,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.da8
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.785
 // CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.418
-// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.4e6
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.890
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -3290,14 +3290,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.f1a
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -3343,14 +3343,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.6fc
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -3396,14 +3396,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.c80
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -3449,14 +3449,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.b2c
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -3502,14 +3502,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.7ec
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.e81
-// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.830
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.47f
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -3555,14 +3555,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.178
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.1e1
-// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.41f
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.93b
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.a08
-// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.63b
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.069
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -3608,14 +3608,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.c78
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.1e1
-// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.41f
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.93b
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.a08
-// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.63b
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.069
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -3661,14 +3661,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.34a
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.1e1
-// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.41f
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.93b
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.a08
-// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.63b
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.069
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -3714,14 +3714,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.dd9
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.1e1
-// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.41f
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.93b
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.a08
-// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.63b
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.069
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -3767,14 +3767,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.ea3
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.1e1
-// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.41f
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.93b
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.740
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.a08
-// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.63b
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.069
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -3820,14 +3820,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc123_4.1 => constants.%facet_value.393
 // CHECK:STDOUT:   %pattern_type.loc124_16 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %result.param_patt.loc124_16.2 => constants.%result.param_patt.1e1
-// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.41f
+// CHECK:STDOUT:   %result.patt.loc124_16.2 => constants.%result.patt.93b
 // CHECK:STDOUT:   %T.as_type.loc124_29.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc124_27 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %x.param_patt.loc124_27.2 => constants.%x.param_patt.e68
-// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.52a
+// CHECK:STDOUT:   %x.patt.loc124_27.2 => constants.%x.patt.7aa
 // CHECK:STDOUT:   %pattern_type.loc124_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc124_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc124_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc124_16 => constants.%complete_type.357
@@ -3873,14 +3873,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc134_4.1 => constants.%facet_value.e02
 // CHECK:STDOUT:   %pattern_type.loc135_16 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %result.param_patt.loc135_16.2 => constants.%result.param_patt.1e1
-// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.41f
+// CHECK:STDOUT:   %result.patt.loc135_16.2 => constants.%result.patt.93b
 // CHECK:STDOUT:   %T.as_type.loc135_29.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc135_27 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %x.param_patt.loc135_27.2 => constants.%x.param_patt.e68
-// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.52a
+// CHECK:STDOUT:   %x.patt.loc135_27.2 => constants.%x.patt.7aa
 // CHECK:STDOUT:   %pattern_type.loc135_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc135_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc135_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc135_16 => constants.%complete_type.357
@@ -3926,14 +3926,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc145_4.1 => constants.%facet_value.dda
 // CHECK:STDOUT:   %pattern_type.loc146_16 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %result.param_patt.loc146_16.2 => constants.%result.param_patt.1e1
-// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.41f
+// CHECK:STDOUT:   %result.patt.loc146_16.2 => constants.%result.patt.93b
 // CHECK:STDOUT:   %T.as_type.loc146_29.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc146_27 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %x.param_patt.loc146_27.2 => constants.%x.param_patt.e68
-// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.52a
+// CHECK:STDOUT:   %x.patt.loc146_27.2 => constants.%x.patt.7aa
 // CHECK:STDOUT:   %pattern_type.loc146_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc146_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc146_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc146_16 => constants.%complete_type.357
@@ -3979,14 +3979,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc156_4.1 => constants.%facet_value.886
 // CHECK:STDOUT:   %pattern_type.loc157_16 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %result.param_patt.loc157_16.2 => constants.%result.param_patt.1e1
-// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.41f
+// CHECK:STDOUT:   %result.patt.loc157_16.2 => constants.%result.patt.93b
 // CHECK:STDOUT:   %T.as_type.loc157_29.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc157_27 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %x.param_patt.loc157_27.2 => constants.%x.param_patt.e68
-// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.52a
+// CHECK:STDOUT:   %x.patt.loc157_27.2 => constants.%x.patt.7aa
 // CHECK:STDOUT:   %pattern_type.loc157_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc157_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc157_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc157_16 => constants.%complete_type.357
@@ -4032,14 +4032,14 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc167_4.1 => constants.%facet_value.20a
 // CHECK:STDOUT:   %pattern_type.loc168_16 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %result.param_patt.loc168_16.2 => constants.%result.param_patt.1e1
-// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.41f
+// CHECK:STDOUT:   %result.patt.loc168_16.2 => constants.%result.patt.93b
 // CHECK:STDOUT:   %T.as_type.loc168_29.1 => constants.%Int64
 // CHECK:STDOUT:   %pattern_type.loc168_27 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %x.param_patt.loc168_27.2 => constants.%x.param_patt.e68
-// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.52a
+// CHECK:STDOUT:   %x.patt.loc168_27.2 => constants.%x.patt.7aa
 // CHECK:STDOUT:   %pattern_type.loc168_33 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc168_33.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc168_33.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc168_16 => constants.%complete_type.357
@@ -4073,7 +4073,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc225_53.2 => constants.%x.param_patt.343
 // CHECK:STDOUT:   %pattern_type.loc225_64 => constants.%pattern_type.51d1c4.4
 // CHECK:STDOUT:   %y.param_patt.loc225_64.2 => constants.%y.param_patt.be3
-// CHECK:STDOUT:   %y.patt.loc225_64.2 => constants.%y.patt.b85
+// CHECK:STDOUT:   %y.patt.loc225_64.2 => constants.%y.patt.678
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubAssignWith.loc231(constants.%U.67d, constants.%T.f6c) {
@@ -4089,7 +4089,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc231_53.2 => constants.%x.param_patt.a45
 // CHECK:STDOUT:   %pattern_type.loc231_64 => constants.%pattern_type.51d1c4.4
 // CHECK:STDOUT:   %y.param_patt.loc231_64.2 => constants.%y.param_patt.be3
-// CHECK:STDOUT:   %y.patt.loc231_64.2 => constants.%y.patt.b85
+// CHECK:STDOUT:   %y.patt.loc231_64.2 => constants.%y.patt.678
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulAssignWith.loc237(constants.%U.67d, constants.%T.64d) {
@@ -4105,7 +4105,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc237_53.2 => constants.%x.param_patt.6c8
 // CHECK:STDOUT:   %pattern_type.loc237_64 => constants.%pattern_type.51d1c4.4
 // CHECK:STDOUT:   %y.param_patt.loc237_64.2 => constants.%y.param_patt.be3
-// CHECK:STDOUT:   %y.patt.loc237_64.2 => constants.%y.patt.b85
+// CHECK:STDOUT:   %y.patt.loc237_64.2 => constants.%y.patt.678
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivAssignWith.loc243(constants.%U.67d, constants.%T.c33) {
@@ -4121,7 +4121,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc243_53.2 => constants.%x.param_patt.660
 // CHECK:STDOUT:   %pattern_type.loc243_64 => constants.%pattern_type.51d1c4.4
 // CHECK:STDOUT:   %y.param_patt.loc243_64.2 => constants.%y.param_patt.be3
-// CHECK:STDOUT:   %y.patt.loc243_64.2 => constants.%y.patt.b85
+// CHECK:STDOUT:   %y.patt.loc243_64.2 => constants.%y.patt.678
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModAssignWith.loc249(constants.%U.67d, constants.%T.bca) {
@@ -4137,7 +4137,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc249_53.2 => constants.%x.param_patt.749
 // CHECK:STDOUT:   %pattern_type.loc249_64 => constants.%pattern_type.51d1c4.4
 // CHECK:STDOUT:   %y.param_patt.loc249_64.2 => constants.%y.param_patt.be3
-// CHECK:STDOUT:   %y.patt.loc249_64.2 => constants.%y.patt.b85
+// CHECK:STDOUT:   %y.patt.loc249_64.2 => constants.%y.patt.678
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddAssignWith.loc225(constants.%i16, constants.%AddAssignWith.facet.e34) {
@@ -4153,7 +4153,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc225_53.2 => constants.%x.param_patt.69a
 // CHECK:STDOUT:   %pattern_type.loc225_64 => constants.%pattern_type.203
 // CHECK:STDOUT:   %y.param_patt.loc225_64.2 => constants.%y.param_patt.4b4
-// CHECK:STDOUT:   %y.patt.loc225_64.2 => constants.%y.patt.dd3
+// CHECK:STDOUT:   %y.patt.loc225_64.2 => constants.%y.patt.162
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc225_53 => constants.%complete_type.357
@@ -4181,7 +4181,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc231_53.2 => constants.%x.param_patt.69a
 // CHECK:STDOUT:   %pattern_type.loc231_64 => constants.%pattern_type.203
 // CHECK:STDOUT:   %y.param_patt.loc231_64.2 => constants.%y.param_patt.4b4
-// CHECK:STDOUT:   %y.patt.loc231_64.2 => constants.%y.patt.dd3
+// CHECK:STDOUT:   %y.patt.loc231_64.2 => constants.%y.patt.162
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc231_53 => constants.%complete_type.357
@@ -4209,7 +4209,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc237_53.2 => constants.%x.param_patt.69a
 // CHECK:STDOUT:   %pattern_type.loc237_64 => constants.%pattern_type.203
 // CHECK:STDOUT:   %y.param_patt.loc237_64.2 => constants.%y.param_patt.4b4
-// CHECK:STDOUT:   %y.patt.loc237_64.2 => constants.%y.patt.dd3
+// CHECK:STDOUT:   %y.patt.loc237_64.2 => constants.%y.patt.162
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc237_53 => constants.%complete_type.357
@@ -4237,7 +4237,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc243_53.2 => constants.%x.param_patt.69a
 // CHECK:STDOUT:   %pattern_type.loc243_64 => constants.%pattern_type.203
 // CHECK:STDOUT:   %y.param_patt.loc243_64.2 => constants.%y.param_patt.4b4
-// CHECK:STDOUT:   %y.patt.loc243_64.2 => constants.%y.patt.dd3
+// CHECK:STDOUT:   %y.patt.loc243_64.2 => constants.%y.patt.162
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc243_53 => constants.%complete_type.357
@@ -4265,7 +4265,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc249_53.2 => constants.%x.param_patt.69a
 // CHECK:STDOUT:   %pattern_type.loc249_64 => constants.%pattern_type.203
 // CHECK:STDOUT:   %y.param_patt.loc249_64.2 => constants.%y.param_patt.4b4
-// CHECK:STDOUT:   %y.patt.loc249_64.2 => constants.%y.patt.dd3
+// CHECK:STDOUT:   %y.patt.loc249_64.2 => constants.%y.patt.162
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc249_53 => constants.%complete_type.357
@@ -4293,7 +4293,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc225_53.2 => constants.%x.param_patt.0c7
 // CHECK:STDOUT:   %pattern_type.loc225_64 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc225_64.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc225_64.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc225_64.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc225_53 => constants.%complete_type.357
@@ -4321,7 +4321,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc231_53.2 => constants.%x.param_patt.0c7
 // CHECK:STDOUT:   %pattern_type.loc231_64 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc231_64.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc231_64.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc231_64.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc231_53 => constants.%complete_type.357
@@ -4349,7 +4349,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc237_53.2 => constants.%x.param_patt.0c7
 // CHECK:STDOUT:   %pattern_type.loc237_64 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc237_64.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc237_64.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc237_64.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc237_53 => constants.%complete_type.357
@@ -4377,7 +4377,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc243_53.2 => constants.%x.param_patt.0c7
 // CHECK:STDOUT:   %pattern_type.loc243_64 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc243_64.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc243_64.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc243_64.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc243_53 => constants.%complete_type.357
@@ -4405,7 +4405,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc249_53.2 => constants.%x.param_patt.0c7
 // CHECK:STDOUT:   %pattern_type.loc249_64 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc249_64.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc249_64.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc249_64.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc249_53 => constants.%complete_type.357
@@ -4433,7 +4433,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc225_53.2 => constants.%x.param_patt.b33
 // CHECK:STDOUT:   %pattern_type.loc225_64 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc225_64.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc225_64.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc225_64.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc225_53 => constants.%complete_type.357
@@ -4461,7 +4461,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc231_53.2 => constants.%x.param_patt.b33
 // CHECK:STDOUT:   %pattern_type.loc231_64 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc231_64.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc231_64.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc231_64.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc231_53 => constants.%complete_type.357
@@ -4489,7 +4489,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc237_53.2 => constants.%x.param_patt.b33
 // CHECK:STDOUT:   %pattern_type.loc237_64 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc237_64.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc237_64.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc237_64.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc237_53 => constants.%complete_type.357
@@ -4517,7 +4517,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc243_53.2 => constants.%x.param_patt.b33
 // CHECK:STDOUT:   %pattern_type.loc243_64 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc243_64.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc243_64.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc243_64.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc243_53 => constants.%complete_type.357
@@ -4545,7 +4545,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %x.param_patt.loc249_53.2 => constants.%x.param_patt.b33
 // CHECK:STDOUT:   %pattern_type.loc249_64 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc249_64.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc249_64.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc249_64.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc249_53 => constants.%complete_type.357
@@ -4588,11 +4588,11 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc293_4.1 => constants.%T.e01
 // CHECK:STDOUT:   %pattern_type.loc294_11 => constants.%pattern_type.f4e485.2
 // CHECK:STDOUT:   %y.param_patt.loc294_11.2 => constants.%y.param_patt.023
-// CHECK:STDOUT:   %y.patt.loc294_11.2 => constants.%y.patt.053
+// CHECK:STDOUT:   %y.patt.loc294_11.2 => constants.%y.patt.33f
 // CHECK:STDOUT:   %T.as_type.loc294_24.1 => constants.%T.as_type.684
 // CHECK:STDOUT:   %pattern_type.loc294_22 => constants.%pattern_type.2dd
 // CHECK:STDOUT:   %x.param_patt.loc294_22.2 => constants.%x.param_patt.cbc
-// CHECK:STDOUT:   %x.patt.loc294_22.2 => constants.%x.patt.7fb
+// CHECK:STDOUT:   %x.patt.loc294_22.2 => constants.%x.patt.ef5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestInc(constants.%Inc.facet.dd2) {
@@ -4639,11 +4639,11 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc293_4.1 => constants.%facet_value.9cc
 // CHECK:STDOUT:   %pattern_type.loc294_11 => constants.%pattern_type.4aa
 // CHECK:STDOUT:   %y.param_patt.loc294_11.2 => constants.%y.param_patt.a08
-// CHECK:STDOUT:   %y.patt.loc294_11.2 => constants.%y.patt.63b
+// CHECK:STDOUT:   %y.patt.loc294_11.2 => constants.%y.patt.069
 // CHECK:STDOUT:   %T.as_type.loc294_24.1 => constants.%Int16
 // CHECK:STDOUT:   %pattern_type.loc294_22 => constants.%pattern_type.785
 // CHECK:STDOUT:   %x.param_patt.loc294_22.2 => constants.%x.param_patt.3b0
-// CHECK:STDOUT:   %x.patt.loc294_22.2 => constants.%x.patt.b76
+// CHECK:STDOUT:   %x.patt.loc294_22.2 => constants.%x.patt.869
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc294_11 => constants.%complete_type.357
@@ -4671,11 +4671,11 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %T.loc293_4.1 => constants.%facet_value.dcd
 // CHECK:STDOUT:   %pattern_type.loc294_11 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %y.param_patt.loc294_11.2 => constants.%y.param_patt.e0c
-// CHECK:STDOUT:   %y.patt.loc294_11.2 => constants.%y.patt.0a3
+// CHECK:STDOUT:   %y.patt.loc294_11.2 => constants.%y.patt.9e1
 // CHECK:STDOUT:   %T.as_type.loc294_24.1 => constants.%Int32
 // CHECK:STDOUT:   %pattern_type.loc294_22 => constants.%pattern_type.8b4
 // CHECK:STDOUT:   %x.param_patt.loc294_22.2 => constants.%x.param_patt.27c
-// CHECK:STDOUT:   %x.patt.loc294_22.2 => constants.%x.patt.4c9
+// CHECK:STDOUT:   %x.patt.loc294_22.2 => constants.%x.patt.740
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc294_11 => constants.%complete_type.357

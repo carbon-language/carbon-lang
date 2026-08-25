@@ -21,26 +21,26 @@ struct Copyable {
   Copyable& operator=(const Copyable&);
   ~Copyable();
 };
-Copyable make();
-void pass(Copyable);
+Copyable make_copyable();
+void pass_copyable(Copyable);
 ''';
 
-var c: Cpp.Copyable = Cpp.make();
+var c: Cpp.Copyable = Cpp.make_copyable();
 
 fn PassGlobal() {
-  Cpp.pass(c);
+  Cpp.pass_copyable(c);
 }
 
 fn PassTemporary() {
-  Cpp.pass(Cpp.make());
+  Cpp.pass_copyable(Cpp.make_copyable());
 }
 
 fn PassValue(c: Cpp.Copyable) {
-  Cpp.pass(c);
+  Cpp.pass_copyable(c);
 }
 
 fn PassRef(ref c: Cpp.Copyable) {
-  Cpp.pass(c);
+  Cpp.pass_copyable(c);
 }
 
 // --- copy_or_move.carbon
@@ -55,26 +55,26 @@ struct CopyOrMove {
   CopyOrMove& operator=(CopyOrMove&&);
   ~CopyOrMove();
 };
-CopyOrMove make();
-void pass(CopyOrMove);
+CopyOrMove make_copy_or_move();
+void pass_copy_or_move(CopyOrMove);
 ''';
 
-var c: Cpp.CopyOrMove = Cpp.make();
+var c: Cpp.CopyOrMove = Cpp.make_copy_or_move();
 
 fn PassGlobal() {
-  Cpp.pass(c);
+  Cpp.pass_copy_or_move(c);
 }
 
 fn PassTemporary() {
-  Cpp.pass(Cpp.make());
+  Cpp.pass_copy_or_move(Cpp.make_copy_or_move());
 }
 
 fn PassValue(c: Cpp.CopyOrMove) {
-  Cpp.pass(c);
+  Cpp.pass_copy_or_move(c);
 }
 
 fn PassRef(ref c: Cpp.CopyOrMove) {
-  Cpp.pass(c);
+  Cpp.pass_copy_or_move(c);
 }
 
 // --- move_only.carbon
@@ -93,19 +93,19 @@ struct MoveOnly {
   MoveOnly& operator=(MoveOnly&&);
   ~MoveOnly();
 };
-MoveOnly make();
-void pass(MoveOnly);
+MoveOnly make_move_only();
+void pass_move_only(MoveOnly);
 ''';
 
-var c: Cpp.MoveOnly = Cpp.make();
+var c: Cpp.MoveOnly = Cpp.make_move_only();
 
 fn PassGlobalByMove() {
   // TODO: This should be accepted.
-  // Cpp.pass(Cpp.std.move(ref c));
+  // Cpp.pass_move_only(Cpp.std.move(ref c));
 }
 
 fn PassTemporary() {
-  Cpp.pass(Cpp.make());
+  Cpp.pass_move_only(Cpp.make_move_only());
 }
 
 // CHECK:STDOUT: ; ---
@@ -120,31 +120,31 @@ fn PassTemporary() {
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_Z4makev.carbon_thunk.(ptr noundef %return) #0 {
+// CHECK:STDOUT: define internal void @_Z13make_copyablev.carbon_thunk.(ptr noundef %return) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !12
-// CHECK:STDOUT:   call void @_Z4makev(ptr dead_on_unwind writable sret(%struct.Copyable) align 1 %0)
+// CHECK:STDOUT:   call void @_Z13make_copyablev(ptr dead_on_unwind writable sret(%struct.Copyable) align 1 %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassGlobal.Main() #1 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4pass8Copyable.carbon_thunk._(ptr @_Cc.Main), !dbg !18
+// CHECK:STDOUT:   call void @_Z13pass_copyable8Copyable.carbon_thunk._(ptr @_Cc.Main), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_Z4pass8Copyable.carbon_thunk._(ptr noundef %0) #0 {
+// CHECK:STDOUT: define internal void @_Z13pass_copyable8Copyable.carbon_thunk._(ptr noundef %0) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.Copyable, align 1
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   call void @_ZN8CopyableC1ERKS_(ptr noundef nonnull align 1 dereferenceable(1) %agg.tmp, ptr noundef nonnull align 1 dereferenceable(1) %1)
-// CHECK:STDOUT:   call void @_Z4pass8Copyable(ptr noundef align 1 %agg.tmp)
+// CHECK:STDOUT:   call void @_Z13pass_copyable8Copyable(ptr noundef align 1 %agg.tmp)
 // CHECK:STDOUT:   call void @_ZN8CopyableD1Ev(ptr noundef nonnull align 1 dereferenceable(1) %agg.tmp) #1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -152,11 +152,11 @@ fn PassTemporary() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassTemporary.Main() #1 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc21_21.1.temp = alloca [1 x i8], align 1, !dbg !21
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_21.1.temp), !dbg !21
-// CHECK:STDOUT:   call void @_Z4makev.carbon_thunk.(ptr %.loc21_21.1.temp), !dbg !21
-// CHECK:STDOUT:   call void @_Z4pass8Copyable.carbon_thunk._(ptr %.loc21_21.1.temp), !dbg !22
-// CHECK:STDOUT:   call void @_ZN8CopyableD1Ev(ptr %.loc21_21.1.temp), !dbg !21
+// CHECK:STDOUT:   %.loc21_39.1.temp = alloca [1 x i8], align 1, !dbg !21
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_39.1.temp), !dbg !21
+// CHECK:STDOUT:   call void @_Z13make_copyablev.carbon_thunk.(ptr %.loc21_39.1.temp), !dbg !21
+// CHECK:STDOUT:   call void @_Z13pass_copyable8Copyable.carbon_thunk._(ptr %.loc21_39.1.temp), !dbg !22
+// CHECK:STDOUT:   call void @_ZN8CopyableD1Ev(ptr %.loc21_39.1.temp), !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -166,14 +166,14 @@ fn PassTemporary() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassValue.Main(ptr %c) #1 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4pass8Copyable.carbon_thunk._(ptr %c), !dbg !30
+// CHECK:STDOUT:   call void @_Z13pass_copyable8Copyable.carbon_thunk._(ptr %c), !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassRef.Main(ptr %c) #1 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4pass8Copyable.carbon_thunk._(ptr %c), !dbg !35
+// CHECK:STDOUT:   call void @_Z13pass_copyable8Copyable.carbon_thunk._(ptr %c), !dbg !35
 // CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -183,13 +183,13 @@ fn PassTemporary() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !37 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4makev.carbon_thunk.(ptr @_Cc.Main), !dbg !38
+// CHECK:STDOUT:   call void @_Z13make_copyablev.carbon_thunk.(ptr @_Cc.Main), !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4makev(ptr dead_on_unwind writable sret(%struct.Copyable) align 1) #4
+// CHECK:STDOUT: declare void @_Z13make_copyablev(ptr dead_on_unwind writable sret(%struct.Copyable) align 1) #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4pass8Copyable(ptr noundef align 1) #4
+// CHECK:STDOUT: declare void @_Z13pass_copyable8Copyable(ptr noundef align 1) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN8CopyableC1ERKS_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #4
 // CHECK:STDOUT:
@@ -224,7 +224,7 @@ fn PassTemporary() {
 // CHECK:STDOUT: !18 = !DILocation(line: 17, column: 3, scope: !15)
 // CHECK:STDOUT: !19 = !DILocation(line: 16, column: 1, scope: !15)
 // CHECK:STDOUT: !20 = distinct !DISubprogram(name: "PassTemporary", linkageName: "_CPassTemporary.Main", scope: null, file: !1, line: 20, type: !16, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !21 = !DILocation(line: 21, column: 12, scope: !20)
+// CHECK:STDOUT: !21 = !DILocation(line: 21, column: 21, scope: !20)
 // CHECK:STDOUT: !22 = !DILocation(line: 21, column: 3, scope: !20)
 // CHECK:STDOUT: !23 = !DILocation(line: 20, column: 1, scope: !20)
 // CHECK:STDOUT: !24 = distinct !DISubprogram(name: "PassValue", linkageName: "_CPassValue.Main", scope: null, file: !1, line: 24, type: !25, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !28)
@@ -256,31 +256,31 @@ fn PassTemporary() {
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_Z4makev.carbon_thunk.(ptr noundef %return) #0 {
+// CHECK:STDOUT: define internal void @_Z17make_copy_or_movev.carbon_thunk.(ptr noundef %return) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !12
-// CHECK:STDOUT:   call void @_Z4makev(ptr dead_on_unwind writable sret(%struct.CopyOrMove) align 1 %0)
+// CHECK:STDOUT:   call void @_Z17make_copy_or_movev(ptr dead_on_unwind writable sret(%struct.CopyOrMove) align 1 %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassGlobal.Main() #1 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4pass10CopyOrMove.carbon_thunk._(ptr @_Cc.Main), !dbg !18
+// CHECK:STDOUT:   call void @_Z17pass_copy_or_move10CopyOrMove.carbon_thunk._(ptr @_Cc.Main), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_Z4pass10CopyOrMove.carbon_thunk._(ptr noundef %0) #0 {
+// CHECK:STDOUT: define internal void @_Z17pass_copy_or_move10CopyOrMove.carbon_thunk._(ptr noundef %0) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.CopyOrMove, align 1
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   call void @_ZN10CopyOrMoveC1ERKS_(ptr noundef nonnull align 1 dereferenceable(1) %agg.tmp, ptr noundef nonnull align 1 dereferenceable(1) %1)
-// CHECK:STDOUT:   call void @_Z4pass10CopyOrMove(ptr noundef align 1 %agg.tmp)
+// CHECK:STDOUT:   call void @_Z17pass_copy_or_move10CopyOrMove(ptr noundef align 1 %agg.tmp)
 // CHECK:STDOUT:   call void @_ZN10CopyOrMoveD1Ev(ptr noundef nonnull align 1 dereferenceable(1) %agg.tmp) #1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -290,21 +290,21 @@ fn PassTemporary() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [1 x i8], align 1, !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !21
-// CHECK:STDOUT:   call void @_Z4makev.carbon_thunk.(ptr %_.var), !dbg !22
-// CHECK:STDOUT:   call void @_Z4pass10CopyOrMove.carbon_thunk.v(ptr %_.var), !dbg !23
+// CHECK:STDOUT:   call void @_Z17make_copy_or_movev.carbon_thunk.(ptr %_.var), !dbg !22
+// CHECK:STDOUT:   call void @_Z17pass_copy_or_move10CopyOrMove.carbon_thunk.v(ptr %_.var), !dbg !23
 // CHECK:STDOUT:   call void @_ZN10CopyOrMoveD1Ev(ptr %_.var), !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_Z4pass10CopyOrMove.carbon_thunk.v(ptr noundef %0) #0 {
+// CHECK:STDOUT: define internal void @_Z17pass_copy_or_move10CopyOrMove.carbon_thunk.v(ptr noundef %0) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.CopyOrMove, align 1
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   call void @_ZN10CopyOrMoveC1EOS_(ptr noundef nonnull align 1 dereferenceable(1) %agg.tmp, ptr noundef nonnull align 1 dereferenceable(1) %1)
-// CHECK:STDOUT:   call void @_Z4pass10CopyOrMove(ptr noundef align 1 %agg.tmp)
+// CHECK:STDOUT:   call void @_Z17pass_copy_or_move10CopyOrMove(ptr noundef align 1 %agg.tmp)
 // CHECK:STDOUT:   call void @_ZN10CopyOrMoveD1Ev(ptr noundef nonnull align 1 dereferenceable(1) %agg.tmp) #1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -315,14 +315,14 @@ fn PassTemporary() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassValue.Main(ptr %c) #1 !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4pass10CopyOrMove.carbon_thunk._(ptr %c), !dbg !31
+// CHECK:STDOUT:   call void @_Z17pass_copy_or_move10CopyOrMove.carbon_thunk._(ptr %c), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassRef.Main(ptr %c) #1 !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4pass10CopyOrMove.carbon_thunk._(ptr %c), !dbg !36
+// CHECK:STDOUT:   call void @_Z17pass_copy_or_move10CopyOrMove.carbon_thunk._(ptr %c), !dbg !36
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -332,13 +332,13 @@ fn PassTemporary() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !38 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4makev.carbon_thunk.(ptr @_Cc.Main), !dbg !39
+// CHECK:STDOUT:   call void @_Z17make_copy_or_movev.carbon_thunk.(ptr @_Cc.Main), !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4makev(ptr dead_on_unwind writable sret(%struct.CopyOrMove) align 1) #4
+// CHECK:STDOUT: declare void @_Z17make_copy_or_movev(ptr dead_on_unwind writable sret(%struct.CopyOrMove) align 1) #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4pass10CopyOrMove(ptr noundef align 1) #4
+// CHECK:STDOUT: declare void @_Z17pass_copy_or_move10CopyOrMove(ptr noundef align 1) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN10CopyOrMoveC1ERKS_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #4
 // CHECK:STDOUT:
@@ -346,7 +346,7 @@ fn PassTemporary() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN10CopyOrMoveD1Ev, { 1, 2, 0 }
-// CHECK:STDOUT: uselistorder ptr @_Z4pass10CopyOrMove, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_Z17pass_copy_or_move10CopyOrMove, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nounwind }
@@ -379,8 +379,8 @@ fn PassTemporary() {
 // CHECK:STDOUT: !18 = !DILocation(line: 19, column: 3, scope: !15)
 // CHECK:STDOUT: !19 = !DILocation(line: 18, column: 1, scope: !15)
 // CHECK:STDOUT: !20 = distinct !DISubprogram(name: "PassTemporary", linkageName: "_CPassTemporary.Main", scope: null, file: !1, line: 22, type: !16, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !21 = !DILocation(line: 13, column: 21, scope: !20)
-// CHECK:STDOUT: !22 = !DILocation(line: 23, column: 12, scope: !20)
+// CHECK:STDOUT: !21 = !DILocation(line: 13, column: 34, scope: !20)
+// CHECK:STDOUT: !22 = !DILocation(line: 23, column: 25, scope: !20)
 // CHECK:STDOUT: !23 = !DILocation(line: 23, column: 3, scope: !20)
 // CHECK:STDOUT: !24 = !DILocation(line: 22, column: 1, scope: !20)
 // CHECK:STDOUT: !25 = distinct !DISubprogram(name: "PassValue", linkageName: "_CPassValue.Main", scope: null, file: !1, line: 26, type: !26, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !29)
@@ -412,12 +412,12 @@ fn PassTemporary() {
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_Z4makev.carbon_thunk.(ptr noundef %return) #0 {
+// CHECK:STDOUT: define internal void @_Z14make_move_onlyv.carbon_thunk.(ptr noundef %return) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !12
-// CHECK:STDOUT:   call void @_Z4makev(ptr dead_on_unwind writable sret(%struct.MoveOnly) align 1 %0)
+// CHECK:STDOUT:   call void @_Z14make_move_onlyv(ptr dead_on_unwind writable sret(%struct.MoveOnly) align 1 %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -432,21 +432,21 @@ fn PassTemporary() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [1 x i8], align 1, !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !20
-// CHECK:STDOUT:   call void @_Z4makev.carbon_thunk.(ptr %_.var), !dbg !21
-// CHECK:STDOUT:   call void @_Z4pass8MoveOnly.carbon_thunk.v(ptr %_.var), !dbg !22
+// CHECK:STDOUT:   call void @_Z14make_move_onlyv.carbon_thunk.(ptr %_.var), !dbg !21
+// CHECK:STDOUT:   call void @_Z14pass_move_only8MoveOnly.carbon_thunk.v(ptr %_.var), !dbg !22
 // CHECK:STDOUT:   call void @_ZN8MoveOnlyD1Ev(ptr %_.var), !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_Z4pass8MoveOnly.carbon_thunk.v(ptr noundef %0) #0 {
+// CHECK:STDOUT: define internal void @_Z14pass_move_only8MoveOnly.carbon_thunk.v(ptr noundef %0) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.MoveOnly, align 1
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   call void @_ZN8MoveOnlyC1EOS_(ptr noundef nonnull align 1 dereferenceable(1) %agg.tmp, ptr noundef nonnull align 1 dereferenceable(1) %1)
-// CHECK:STDOUT:   call void @_Z4pass8MoveOnly(ptr noundef align 1 %agg.tmp)
+// CHECK:STDOUT:   call void @_Z14pass_move_only8MoveOnly(ptr noundef align 1 %agg.tmp)
 // CHECK:STDOUT:   call void @_ZN8MoveOnlyD1Ev(ptr noundef nonnull align 1 dereferenceable(1) %agg.tmp) #1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -460,13 +460,13 @@ fn PassTemporary() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4makev.carbon_thunk.(ptr @_Cc.Main), !dbg !25
+// CHECK:STDOUT:   call void @_Z14make_move_onlyv.carbon_thunk.(ptr @_Cc.Main), !dbg !25
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4makev(ptr dead_on_unwind writable sret(%struct.MoveOnly) align 1) #4
+// CHECK:STDOUT: declare void @_Z14make_move_onlyv(ptr dead_on_unwind writable sret(%struct.MoveOnly) align 1) #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4pass8MoveOnly(ptr noundef align 1) #4
+// CHECK:STDOUT: declare void @_Z14pass_move_only8MoveOnly(ptr noundef align 1) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN8MoveOnlyC1EOS_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #4
 // CHECK:STDOUT:
@@ -503,8 +503,8 @@ fn PassTemporary() {
 // CHECK:STDOUT: !17 = !{null}
 // CHECK:STDOUT: !18 = !DILocation(line: 22, column: 1, scope: !15)
 // CHECK:STDOUT: !19 = distinct !DISubprogram(name: "PassTemporary", linkageName: "_CPassTemporary.Main", scope: null, file: !1, line: 27, type: !16, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !20 = !DILocation(line: 17, column: 19, scope: !19)
-// CHECK:STDOUT: !21 = !DILocation(line: 28, column: 12, scope: !19)
+// CHECK:STDOUT: !20 = !DILocation(line: 17, column: 29, scope: !19)
+// CHECK:STDOUT: !21 = !DILocation(line: 28, column: 22, scope: !19)
 // CHECK:STDOUT: !22 = !DILocation(line: 28, column: 3, scope: !19)
 // CHECK:STDOUT: !23 = !DILocation(line: 27, column: 1, scope: !19)
 // CHECK:STDOUT: !24 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !1, type: !16, spFlags: DISPFlagDefinition, unit: !0)

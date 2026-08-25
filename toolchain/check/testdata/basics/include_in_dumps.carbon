@@ -124,7 +124,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.c60: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %self.param_patt.a33: %pattern_type.c60 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.696: %pattern_type.c60 = at_binding_pattern self, %self.param_patt.a33 [symbolic]
+// CHECK:STDOUT:   %self.patt.85e: %pattern_type.c60 = wrapper_binding_pattern self, %self.param_patt.a33 [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.Op.type.dce: type = fn_type @I.WithSelf.Op, @I.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.Op.c70: %I.WithSelf.Op.type.dce = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
@@ -133,7 +133,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt.303: %pattern_type.98b = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.49a: %pattern_type.98b = at_binding_pattern self, %self.param_patt.303 [concrete]
+// CHECK:STDOUT:   %self.patt.36a: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt.303 [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.Op.type.28d: type = fn_type @I.WithSelf.Op, @I.WithSelf(%I.facet) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.Op.204: %I.WithSelf.Op.type.28d = struct_value () [concrete]
@@ -150,7 +150,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.WithSelf.Op.decl: @I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.dce) = fn_decl @I.WithSelf.Op [symbolic = @I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.c70)] {
 // CHECK:STDOUT:     %self.param_patt.loc8_9.1: @I.WithSelf.Op.%pattern_type (%pattern_type.c60) = value_param_pattern [symbolic = %self.param_patt.loc8_9.2 (constants.%self.param_patt.a33)]
-// CHECK:STDOUT:     %self.patt.loc8_9.1: @I.WithSelf.Op.%pattern_type (%pattern_type.c60) = at_binding_pattern self, %self.param_patt.loc8_9.1 [symbolic = %self.patt.loc8_9.2 (constants.%self.patt.696)]
+// CHECK:STDOUT:     %self.patt.loc8_9.1: @I.WithSelf.Op.%pattern_type (%pattern_type.c60) = wrapper_binding_pattern self, %self.param_patt.loc8_9.1 [symbolic = %self.patt.loc8_9.2 (constants.%self.patt.85e)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @I.WithSelf.Op.%Self.as_type.loc8_9.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc8_9.1: type = splice_block %.loc8_9.2 [symbolic = %Self.as_type.loc8_9.1 (constants.%Self.as_type)] {
@@ -175,7 +175,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Self.as_type.loc8_9.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc8_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc8_9.1 [symbolic = %pattern_type (constants.%pattern_type.c60)]
 // CHECK:STDOUT:   %self.param_patt.loc8_9.2: @I.WithSelf.Op.%pattern_type (%pattern_type.c60) = value_param_pattern [symbolic = %self.param_patt.loc8_9.2 (constants.%self.param_patt.a33)]
-// CHECK:STDOUT:   %self.patt.loc8_9.2: @I.WithSelf.Op.%pattern_type (%pattern_type.c60) = at_binding_pattern self, %self.param_patt.loc8_9.2 [symbolic = %self.patt.loc8_9.2 (constants.%self.patt.696)]
+// CHECK:STDOUT:   %self.patt.loc8_9.2: @I.WithSelf.Op.%pattern_type (%pattern_type.c60) = wrapper_binding_pattern self, %self.param_patt.loc8_9.2 [symbolic = %self.patt.loc8_9.2 (constants.%self.patt.85e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @I.WithSelf.Op.%Self.as_type.loc8_9.1 (%Self.as_type));
 // CHECK:STDOUT: }
@@ -192,7 +192,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Self.as_type.loc8_9.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c60
 // CHECK:STDOUT:   %self.param_patt.loc8_9.2 => constants.%self.param_patt.a33
-// CHECK:STDOUT:   %self.patt.loc8_9.2 => constants.%self.patt.696
+// CHECK:STDOUT:   %self.patt.loc8_9.2 => constants.%self.patt.85e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
@@ -207,7 +207,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Self.as_type.loc8_9.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.98b
 // CHECK:STDOUT:   %self.param_patt.loc8_9.2 => constants.%self.param_patt.303
-// CHECK:STDOUT:   %self.patt.loc8_9.2 => constants.%self.patt.49a
+// CHECK:STDOUT:   %self.patt.loc8_9.2 => constants.%self.patt.36a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_included.carbon
@@ -218,7 +218,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type.98b = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt: %pattern_type.98b = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.98b = wrapper_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -229,7 +229,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.b3a: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %self.param_patt.58e: %pattern_type.b3a = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.300: %pattern_type.b3a = at_binding_pattern self, %self.param_patt.58e [symbolic]
+// CHECK:STDOUT:   %self.patt.b4c: %pattern_type.b3a = wrapper_binding_pattern self, %self.param_patt.58e [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.421 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
@@ -273,7 +273,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.98b = value_param_pattern [concrete = constants.%c.param_patt]
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
@@ -318,7 +318,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.b3a)]
 // CHECK:STDOUT:   %self.param_patt: @I.WithSelf.Op.%pattern_type (%pattern_type.b3a) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.58e)]
-// CHECK:STDOUT:   %self.patt: @I.WithSelf.Op.%pattern_type (%pattern_type.b3a) = at_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.300)]
+// CHECK:STDOUT:   %self.patt: @I.WithSelf.Op.%pattern_type (%pattern_type.b3a) = wrapper_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.b4c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -337,7 +337,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b3a
 // CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.58e
-// CHECK:STDOUT:   %self.patt => constants.%self.patt.300
+// CHECK:STDOUT:   %self.patt => constants.%self.patt.b4c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
@@ -353,7 +353,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type.98b = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt: %pattern_type.98b = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.98b = wrapper_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -395,7 +395,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.98b = value_param_pattern [concrete = constants.%c.param_patt]
-// CHECK:STDOUT:     %c.patt: %pattern_type.98b = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.98b = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]

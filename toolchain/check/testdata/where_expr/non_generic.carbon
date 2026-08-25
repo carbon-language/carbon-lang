@@ -35,7 +35,7 @@ fn NotGenericF(unused U: I where .T == i32) {}
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [concrete]
 // CHECK:STDOUT:   %pattern_type.603: type = pattern_type %I_where.type [concrete]
 // CHECK:STDOUT:   %U.param_patt: %pattern_type.603 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %U.patt: %pattern_type.603 = at_binding_pattern U, %U.param_patt [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.603 = wrapper_binding_pattern U, %U.param_patt [concrete]
 // CHECK:STDOUT:   %NotGenericF.type: type = fn_type @NotGenericF [concrete]
 // CHECK:STDOUT:   %NotGenericF: %NotGenericF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -43,7 +43,7 @@ fn NotGenericF(unused U: I where .T == i32) {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %NotGenericF.decl: %NotGenericF.type = fn_decl @NotGenericF [concrete = constants.%NotGenericF] {
 // CHECK:STDOUT:     %U.param_patt: %pattern_type.603 = value_param_pattern [concrete = constants.%U.param_patt]
-// CHECK:STDOUT:     %U.patt: %pattern_type.603 = at_binding_pattern U, %U.param_patt [concrete = constants.%U.patt]
+// CHECK:STDOUT:     %U.patt: %pattern_type.603 = wrapper_binding_pattern U, %U.param_patt [concrete = constants.%U.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: %I_where.type = value_param call_param0
 // CHECK:STDOUT:     %.loc17_28.1: type = splice_block %.loc17_28.2 [concrete = constants.%I_where.type] {
