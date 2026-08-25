@@ -1263,7 +1263,7 @@ struct InitializeAction {
     // The target type for the conversion.
     TypeInstId target_type_inst_id;
     // The storage for the conversion.
-    SemIR::InstId storage_id;
+    InstId storage_id;
     // Whether this is required to be an in-place initialization.
     BoolValue in_place;
   };

@@ -36,6 +36,7 @@
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/type.h"
@@ -72,6 +73,42 @@ static auto OverwriteTemporaryStorageArg(SemIR::File& sem_ir,
   // target.
   return target.storage_access_block->MergeReplacing(storage_arg_id,
                                                      target.storage_id);
+}
+
+// Walks an expression that might be an initializing expression or might have a
+// compound form that contains initializing expressions, and visits each storage
+// argument found therein.
+static auto VisitAllTemporaryStorageArgs(
+    Context& context, const ConversionTarget& target,
+    SemIR::InstId outer_init_id,
+    llvm::function_ref<auto(SemIR::InstId) -> void> visit)
+    -> void {
+  CARBON_CHECK(target.is_initializer());
+
+  llvm::SmallVector<SemIR::InstId> worklist = {outer_init_id};
+  while (!worklist.empty()) {
+    auto init_id = worklist.pop_back_val();
+
+    // For a tuple or struct literal, visit its elements.
+    if (auto compound_lit_inst =
+            context.insts().TryGetAsIfValid<SemIR::AnyCompoundLiteral>(
+                init_id)) {
+      // Reverse the elements so we pop them in order.
+      auto range = llvm::reverse(
+          context.inst_blocks().Get(compound_lit_inst->elements_id));
+      worklist.append(range.begin(), range.end());
+      continue;
+    }
+
+    // For anything else, check for a storage argument, skipping storage that
+    // has already been populated.
+    auto storage_arg_id =
+        FindStorageArgForInitializer(context.sem_ir(), init_id);
+    if (storage_arg_id.has_value() &&
+        context.insts().Is<SemIR::TemporaryStorage>(storage_arg_id)) {
+      visit(storage_arg_id);
+    }
+  }
 }
 
 // Materializes and returns a temporary initialized from the initializer
@@ -2015,6 +2052,65 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
 
   auto target_type_inst_id = context.types().GetTypeInstId(target.type_id);
 
+  // If we are initializing and have a storage argument, we meed to update any
+  // nested storage arguments within the initializer, but we don't know what to
+  // update them to yet, so create placeholders.
+  if (target.storage_id.has_value()) {
+    // Compute the return type of the action: this is a tuple of N+1 InstTypes,
+    // where N is the number of storage arguments in the initializer.
+    int32_t num_storage_args = 0;
+    VisitAllTemporaryStorageArgs(context, target, expr_id,
+                                 [&](SemIR::InstId _) { ++num_storage_args; });
+    llvm::SmallVector<SemIR::InstId> action_type_elements_id(
+        num_storage_args + 1, SemIR::InstType::TypeInstId);
+    auto action_type_id = GetTupleType(context, action_type_elements_id);
+
+    // Create the initialization action.
+    auto action_id = AddDependentActionInst(
+        context, loc_id,
+        SemIR::InitializeAction{
+            .type_id = action_type_id,
+            .inst_id = expr_id,
+            .target_id =
+                context.bundles().AddCanonical(SemIR::InitializeAction::Target{
+                    .target_type_inst_id = target_type_inst_id,
+                    .storage_id = target.storage_id,
+                    .in_place = SemIR::BoolValue::From(
+                        target.kind ==
+                        ConversionTarget::InPlaceInitializing)})});
+
+    // Extract the first result: this is the instruction that performs the
+    // initialization and produces the result.
+    int32_t index = 0;
+    auto result_id = AddInstToEvalBlock<SemIR::TupleAccess>(
+        context, loc_id,
+        {.type_id = SemIR::InstType::TypeId,
+          .tuple_id = action_id,
+          .index = SemIR::ElementIndex(index++)});
+
+    // Walk the initializer, find all storage arguments, and replace each of
+    // them with a splice.
+    VisitAllTemporaryStorageArgs(
+        context, target, expr_id, [&](SemIR::InstId storage_arg_id) {
+          // Find the storage instructions in the action result.
+          auto storage_inst_id = AddInstToEvalBlock<SemIR::TupleAccess>(
+              context, loc_id,
+              {.type_id = SemIR::InstType::TypeId,
+               .tuple_id = action_id,
+               .index = SemIR::ElementIndex(index++)});
+
+          // Create new storage and replace the current storage argument with
+          // it.
+          auto type_id = context.insts().Get(storage_arg_id).type_id();
+          auto storage_id = target.storage_access_block->AddInst(
+              loc_id,
+              SemIR::SpliceInst{.type_id = type_id, .inst_id = storage_inst_id});
+          target.storage_access_block->MergeReplacing(storage_arg_id,
+                                                      storage_id);
+        });
+    return result_id;
+  }
+
   // We don't use `HandleAction` here because it would call `PerformAction`
   // inline if it's performable, which would lead to infinite recursion.
   switch (target.kind) {
@@ -2039,7 +2135,9 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
     case ConversionTarget::RefParam:
     case ConversionTarget::UnmarkedRefParam:
     case ConversionTarget::ExplicitAs:
-    case ConversionTarget::ExplicitUnsafeAs: {
+    case ConversionTarget::ExplicitUnsafeAs:
+    case ConversionTarget::Initializing:
+    case ConversionTarget::InPlaceInitializing: {
       return AddDependentActionSplice(
           context, loc_id,
           SemIR::ConvertAction{
@@ -2056,38 +2154,6 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
       // No type conversion is necessary. We may still form an action as part of
       // category conversion.
       break;
-    }
-
-    case ConversionTarget::Initializing:
-    case ConversionTarget::InPlaceInitializing: {
-      auto action_id = AddDependentActionInst(
-          context, loc_id,
-          SemIR::InitializeAction{
-              .type_id = SemIR::InstType::TypeId,
-              .inst_id = expr_id,
-              .target_id = context.bundles().AddCanonical(
-                  SemIR::InitializeAction::Target{
-                      .target_type_inst_id = target_type_inst_id,
-                      .storage_id = target.storage_id,
-                      .in_place = SemIR::BoolValue::From(
-                          target.kind ==
-                          ConversionTarget::InPlaceInitializing)})});
-      auto result_id = AddInstToEvalBlock<SemIR::TupleAccess>(
-          context, loc_id,
-          {.type_id = SemIR::InstType::TypeId,
-           .tuple_id = action_id,
-           .index = SemIR::ElementIndex(0)});
-      auto storage_block_id = AddInstToEvalBlock<SemIR::TupleAccess>(
-          context, loc_id,
-          {.type_id = SemIR::InstType::TypeId,
-           .tuple_id = action_id,
-           .index = SemIR::ElementIndex(1)});
-      // TODO: Walk the initializer, find all the storage arguments, and replace
-      // each of them with a splice.
-      target.storage_access_block->AddInst(
-          loc_id, SemIR::SpliceInst{.type_id = target.type_id,
-                                    .inst_id = storage_block_id});
-      return result_id;
     }
   }
 
@@ -2126,6 +2192,31 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
   auto expr_id =
       PerformBuiltinConversion(context, loc_id, action.inst_id, target);
   expr_id = PerformUserDefinedConversion(context, loc_id, expr_id, target);
+  return PerformCategoryConversion(context, loc_id, expr_id, target);
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::InitializeAction action) -> SemIR::InstId {
+  const auto& target_bundle = context.bundles().Get(action.target_id);
+  PendingBlock target_block(&context);
+  ConversionTarget target = {
+      .kind = ConversionTarget::Kind(target_bundle.in_place.ToBool()
+                                         ? ConversionTarget::InPlaceInitializing
+                                         : ConversionTarget::Initializing),
+      .type_id = context.types().GetTypeIdForTypeInstId(
+          target_bundle.target_type_inst_id),
+      .storage_id = target_bundle.storage_id,
+      .storage_access_block = &target_block};
+
+  // TODO: Set some state so that attempted modifications of storage arguments
+  // are tracked and included in our constant result instead of updating the
+  // original template!
+
+  auto expr_id =
+      PerformBuiltinConversion(context, loc_id, action.inst_id, target);
+  expr_id = PerformUserDefinedConversion(context, loc_id, expr_id, target);
+  // TODO: We're returning a single value here! Change the action infrastructure
+  // to support actions that return more than just a single instruction value.
   return PerformCategoryConversion(context, loc_id, expr_id, target);
 }
 
