@@ -12,6 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Member resolution](#member-resolution)
+-   [Member access operations](#member-access-operations)
     -   [Package and namespace members](#package-and-namespace-members)
     -   [Types, extended types, and facets](#types-extended-types-and-facets)
         -   [`extend`](#extend)
@@ -114,19 +115,17 @@ and semantics can be found in the [pointers](/docs/design/values.md#pointers)
 design. The rest of this document describes the semantics using `.` alone for
 simplicity.
 
-A member access expression is processed using the following steps:
+A member access expression is processed using some of the following operations:
 
--   First, the member name to the right of the `.` is
-    [resolved](#member-resolution) to a specific member entity, called `M` in
-    this document.
--   Then, if necessary, [`impl` lookup](#impl-lookup) is performed to map from a
-    member of an interface to a member of the relevant `impl`, potentially
-    updating `M`.
--   Then, if necessary, [instance binding](#instance-binding) is performed to
-    locate the member subobject corresponding to a field name or to build a
+-   For simple member access, qualified name lookup is performed. Here, the
+    member name to the right of `.` is looked up either in the value of the
+    expression to the left of the `.` or in its type.
+-   In some cases, this is followed by [`impl` lookup](#impl-lookup). This
+    maps from a member of an interface to a member of the relevant `impl`.
+-   Lastly in some cases, [instance binding](#instance-binding) is performed
+    to locate the member subobject corresponding to a field name or to build a
     bound method object, producing the result of the member access expression.
--   If [instance binding is not performed](#non-instance-members), the result is
-    `M`.
+    -   [Otherwise](#non-instance-members) the result is the member itself.
 
 Under the hood, these steps are implemented by rewriting member access
 expressions into calls to methods of user-implementable
@@ -134,27 +133,54 @@ expressions into calls to methods of user-implementable
 
 ## Member resolution
 
-The process of _member resolution_ determines which member `M` a member access
-expression is referring to.
+FIXME: Remove references to this section.
 
-For a simple member access, if the first operand is a type, extended type,
-facet, package, or namespace, a search for the member name is performed in the
-first operand. Otherwise, a search for the member name is performed in the type
-of the first operand. In either case, the search must succeed. In the latter
-case, if the result is an instance member, then
-[instance binding](#instance-binding) is performed on the first operand.
+## Member access operations
 
-A search for a name within an extended type searches for the name in its
-[type component](/docs/design/values.md#extended-types). Note that this means
-that the extended type of an expression never affects simple member access into
-that expression, except through its type component.
+The operations used to resolve a member access expression depend on the kind of
+entities involved and whether it is a simple or compound member access.
 
-For a compound member access, the second operand is evaluated as a compile-time
-constant to determine the member being accessed. The evaluation is required to
-succeed and to result in a member of a type, interface, or non-type facet, or a
-value of an integer or integer literal type. If the result is an instance
-member, then [instance binding](#instance-binding) is always performed on the
-first operand.
+For a simple member access `a.b`:
+
+-   If `a` is a namespace, package, type, extended type, or facet, a search for
+    the member name `b` is performed in `a`, called _qualified member name lookup_.
+    -   A search for a name within an extended type searches for the name in
+        its [type component](/docs/design/values.md#extended-types). Note that
+        this means that the extended type of an expression never affects simple
+        member access into that expression, except through its type component.
+    -   If `a` is a facet, the result is the member of the witness identified
+        by `b`.
+    -   Otherwise, if `a` is a type, then perform _type binding_.
+        -   When `b` is an interface member, this does
+            [`impl` lookup](#impl-lookup) to find the implementation of `b`
+            for the type `a`.
+-   Otherwise when `a` is any other kind of value, `b` is looked up in the
+    _type_ of `a` to get a result `M`. `a.b` is rewritten to compound member
+    access `a.(M)`.
+
+A compound member access `a.(M)`, either written directly in the source or as
+the result of a rewritten simple member access, performs _type binding_ if `a`
+is a type, or _member binding_ otherwise:
+
+-   If `M` is an interface member, [`impl` lookup](#impl-lookup) will be performed map from `M` to the corresponding member of the `impl` of that interface for the type
+
+If `a` is not a facet, then
+
+-   If `a` is a type, then _type binding_ is performed.
+    -   If `b` is an interface member, type binding will cause
+-   The second operand is evaluated as a compile-time constant to determine the
+    member being accessed. The evaluation is required to succeed.
+    -   If the result is a member of a type, interface, or non-type facet, or a
+        value of an integer or integer literal type, then the behavior is as
+        defined below.
+    -   The behavior for other cases is determined by [member binding interfaces](#member-binding-interfaces).
+-   If `M` names a member of an interface, then [`impl` lookup](#impl-lookup)
+    is performed.
+-   [Instance binding](#instance-binding) is performed on the first operand.
+
+    This
+will perform [`impl` lookup](#impl-lookup) and then
+[instance binding](#instance-binding) when those are applicable.
 
 ### Package and namespace members
 
@@ -324,7 +350,7 @@ enclosing scope is not complete. This seems reasonable as all names available
 inside the enclosing interface or named constraint are already available or
 would conflict with the ones that are.
 
-> **Alternative considered:** >
+> **Alternative considered:**
 > [Not requiring the target scope to be complete immediately](/proposals/p006395-type-completeness-in-extend.md#alternatives-considered).
 
 ### Tuple indexing
@@ -373,8 +399,10 @@ let n: i32 = p->(e);
 ### Values
 
 If the first operand is not a type, extended type, facet, package, or namespace,
-it does not have member names, and a search is performed into the type of the
-first operand instead.
+it does not have member names. Simple member access `x.y` is rewritten to
+compound member access `x.(T.y)`, where `T` is the type of `x`. A search for `y`
+is performed in `T` (performing [`impl` lookup](#impl-lookup) if `y` is an
+interface member), and the resulting member is bound to `x`.
 
 ```carbon
 interface Printable {
@@ -630,6 +658,10 @@ For a simple member access `a.b` where `b` names a member of an interface `I`:
     -   More generally, if the member was found in something the type extends,
         such as a facet type or mixin, `T` is the type that was initially
         searched, not what it extended.
+-   If `a` is a value, `a.b` is rewritten to `a.(typeof(a)::b)`. Qualified lookup
+    in `typeof(a)` performs `impl` lookup for `typeof(a) as I`, replacing `b`
+    with the corresponding member of `impl typeof(a) as I`. The compound access
+    then binds `a` directly to that member.
 -   Otherwise, `impl` lookup is not performed.
 
 The appropriate `impl T as I` implementation is located. The program is invalid
@@ -921,17 +953,26 @@ doesn't attempt to perform instance binding on `T`, in contrast to `T.(I.M)`.
 
 ## Non-instance members
 
-If instance binding is not performed, the result is the member `M` determined by
-member resolution and `impl` lookup. Evaluating the member access expression
-evaluates the first argument and discards the result.
+When qualified name lookup into a type `C` resolves to a non-instance member `M`
+(such as a static method, static variable, or nested type), the result of `C.M`
+is `M`.
 
-An expression that names an instance member, but for which instance binding is
-not performed, can only be used as the second operand of a compound member
-access or as the target of an `alias` declaration.
+When accessing a non-instance member through an instance `c.M`, the expression
+is rewritten to compound member access `c.(C.M)`:
+
+-   **Non-instance functions**: The compiler provides a binding implementation
+    for non-instance member functions that evaluates the receiver `c`, discards
+    the resulting value, and returns a callable function object.
+-   **Member types and static variables**: Member types and static variables
+    cannot be bound to an instance. Consequently, accessing them through an
+    instance (for example, `c.NestedType` or `c.StaticVar`) is invalid and results in a
+    compile-time error. They must be accessed through the enclosing type (for example,
+    `C.NestedType` or `C.StaticVar`).
 
 ```carbon
 class C {
   fn StaticMethod();
+  static var StaticVar: i32;
   var field: i32;
   class Nested {}
 }
@@ -939,22 +980,25 @@ fn CallStaticMethod(c: C) {
   // ✅ OK, calls `C.StaticMethod`.
   C.StaticMethod();
 
-  // ✅ OK, evaluates expression `c`, discards the result, then
-  // calls `C.StaticMethod`.
+  // ✅ OK, rewrites to `c.(C.StaticMethod)()`. Evaluates `c`,
+  // discards the result, and calls `C.StaticMethod`.
   c.StaticMethod();
 
-  // ❌ Error: name of instance member `C.field` can only be used in
-  // a member access or alias.
+  // ❌ Error: `C.field` is an instance member and cannot be accessed
+  // on type `C` without an instance.
   C.field = 1;
-  // ✅ OK, instance binding is performed by outer member access,
-  // same as `c.field = 1;`
+  // ✅ OK, instance binding binds `field` to `c`.
   c.(C.field) = 1;
 
-  // ✅ OK (also OK with `template`)
+  // ✅ OK, member type accessed on type `C`.
   let generic G: type = C.Nested;
-  // ❌ Error: value of `generic` binding is not compile-time because it
-  // refers to local variable `c`.
-  let generic U: type = c.Nested;
+  // ❌ Error: member types cannot be accessed through an instance `c`.
+  var y: c.Nested;
+
+  // ✅ OK, static variable accessed on type `C`.
+  C.StaticVar = 1;
+  // ❌ Error: static variables cannot be accessed through an instance `c`.
+  c.StaticVar = 1;
 }
 ```
 
@@ -1118,11 +1162,11 @@ interface BindToType(T: type) {
 The other member access operators -- `x.y`, `x->y`, and `x->(y)` -- are defined
 by how they rewrite into the `x.(y)` form using these two rules:
 
--   `x.y` is interpreted using the [member resolution rules](#member-resolution).
-    For example, `x.y` is treated as `x.(T.y)` for non-type values `x` with type
-    `T`.
-    -   Simple member access of a facet `T`, as in `T.y`, is not rewritten into
-        the `T.(`\_\_\_`)` form.
+-   `x.y` is interpreted using the [member resolution rules](#member-resolution):
+    -   If `x` has member names (a namespace, package, type, or facet), `x.y` is
+        resolved by way of qualified name lookup of `y` in `x`.
+    -   Otherwise, `x.y` is rewritten to `x.(M)` where `M` is the result of
+        qualified name lookup of `y` in `typeof(x)`.
 -   `x->y` and `x->(y)` are interpreted as `(*x).y` and `(*x).(y)` respectively.
 
 These interfaces may be used as constraints, allowing a generic function to
@@ -1255,29 +1299,30 @@ Tuple types and struct types have their fields implemented in the same way.
 #### Non-instance members
 
 Classes may also have non-instance members. This includes non-instance member
-functions and static member variables, as in:
+functions, static member variables, and nested types, as in:
 
 ```carbon
 class C {
   fn NonInstance();
   static var s: i32 = 0;
+  class Nested {}
 }
 
 C.NonInstance();
 C.s = 3;
+var n: C.Nested = {};
 ```
 
-Non-instance members use `BindToType` when accessed on a type facet:
-
 -   For `fn NonInstance()` in class `C`, its type `__TypeOf_C_NonInstance`
-    implements `BindToType(C)` with `.Result = __TypeBinding_C_NonInstance`.
--   To support calling directly on a type facet, `__TypeOf_C_NonInstance` also
     implements `Call(())` directly (supporting `C.NonInstance()`).
--   To support calling on value/reference instances `x.NonInstance()`, for
-    function members `NonInstance`, `__TypeOf_C_NonInstance` implements
-    `BindToValue(C)` and `BindToRef(C)` returning a bound adapter whose `Call`
-    implementation ignores its `self` argument, effectively discarding the
-    evaluated instance `x`.
+-   To support calling on value and reference instances (such as `x.NonInstance()`),
+    `__TypeOf_C_NonInstance` implements `BindToValue(C)` and `BindToRef(C)`
+    returning a bound adapter whose `Call` implementation ignores its receiver
+    argument, discarding the evaluated instance `x`.
+-   Types (like `C.Nested`) and static variables (like `C.s`) do not implement
+    `BindToValue(C)` or `BindToRef(C)`. As a result, compound member access
+    `x.(C.Nested)` and simple member access `x.Nested` (as well as `x.s`) fail to
+    compile because no matching binding implementation exists.
 
 #### Interface members and `impl` lookup
 
@@ -1314,7 +1359,13 @@ class C {
     impl __Binding_I_F(C) as Call(()) where .Result = () {
       fn Op(self) {
         inlined_method_call_compiler_intrinsic(
-            <function body (C as I).F>, self as C, ());
+    ```
+
+    ```
+    <function body (C as I).F>, self as C, ());
+    ```
+
+    ```
       }
     }
     ```
@@ -1352,15 +1403,15 @@ C.(C.G)();
 In this example:
 
 -   `v.(v.F)` fails because the bound method adapter does not implement member
-    binding interfaces, since it already bound, following the rules of
+    binding interfaces, since it is already bound, following the rules of
     [instance binding](#instance-binding) and
     [compound member access](#restrictions-on-compound-member-access).
 -   `v.(C.G)` is an allowed
-    [vacuous member access](#restrictions-on-compound-member-access), so
-    `__TypeOf_C_F` needs to implement `BindToType(C)` in addition to
-    `BindToValue(C)` and `BindToRef(C)`.
--   `C.(C.G)` is not valid, so the type of `C.G` does not implement
-    `BindToType(C)`.
+    [vacuous member access](#restrictions-on-compound-member-access), where
+    `__TypeOf_C_G` implements `BindToValue(C)` and `BindToRef(C)` (evaluating
+    and discarding `v`).
+-   `C.(C.G)` is not valid because `C.G` is not an interface member, so the type
+    of `C.G` does not implement `BindToType(C)`.
 
 ## Precedence and associativity
 
