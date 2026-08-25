@@ -5,9 +5,26 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_MERGE_H_
 #define CARBON_TOOLCHAIN_CHECK_MERGE_H_
 
+#include <optional>
+#include <type_traits>
+
+#include "common/check.h"
+#include "common/concepts.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/function.h"
+#include "toolchain/check/import_ref.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/lex/token_kind.h"
+#include "toolchain/sem_ir/class.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
+#include "toolchain/sem_ir/interface.h"
+#include "toolchain/sem_ir/named_constraint.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -108,6 +125,92 @@ inline auto CheckRedeclParamsMatch(Context& context,
                                 SemIR::SpecificId::None, /*diagnose=*/true,
                                 /*check_syntax=*/true);
 }
+
+// Provides type traits and data for merging redeclarations.
+template <typename EntityT>
+struct MergeRedeclEntityInfo;
+
+// Information for merging redeclarations of classes.
+template <>
+struct MergeRedeclEntityInfo<SemIR::Class> {
+  using EntityIdT = SemIR::ClassId;
+  using EntityT = SemIR::Class;
+  using EntityDeclT = SemIR::ClassDecl;
+
+  static constexpr auto DeclTokenKind = Lex::TokenKind::Class;
+
+  EntityDeclT& new_entity_decl;
+  const EntityT& new_entity;
+};
+
+// Information for merging redeclarations of functions.
+template <>
+struct MergeRedeclEntityInfo<SemIR::Function> {
+  using EntityIdT = SemIR::FunctionId;
+  using EntityT = SemIR::Function;
+  using EntityDeclT = SemIR::FunctionDecl;
+
+  static constexpr auto DeclTokenKind = Lex::TokenKind::Fn;
+
+  EntityDeclT& new_entity_decl;
+  const EntityT& new_entity;
+};
+
+// Information for merging redeclarations of interfaces.
+template <>
+struct MergeRedeclEntityInfo<SemIR::Interface> {
+  using EntityIdT = SemIR::InterfaceId;
+  using EntityT = SemIR::Interface;
+  using EntityDeclT = SemIR::InterfaceDecl;
+
+  static constexpr auto DeclTokenKind = Lex::TokenKind::Interface;
+
+  EntityDeclT& new_entity_decl;
+  const EntityT& new_entity;
+};
+
+// Information for merging redeclarations of named constraints.
+template <>
+struct MergeRedeclEntityInfo<SemIR::NamedConstraint> {
+  using EntityIdT = SemIR::NamedConstraintId;
+  using EntityT = SemIR::NamedConstraint;
+  using EntityDeclT = SemIR::NamedConstraintDecl;
+
+  static constexpr auto DeclTokenKind = Lex::TokenKind::Constraint;
+
+  EntityDeclT& new_entity_decl;
+  const EntityT& new_entity;
+};
+
+// Tries to merge new_entity into prev_entity_id. Since new_entity won't have a
+// definition even if one is upcoming, set is_definition to indicate the planned
+// result.
+//
+// If merging is successful, returns the previous declaration.
+// Otherwise, returns nullopt. Prints a diagnostic when appropriate.
+template <typename EntityT>
+auto TryMergeRedecl(Context& context,
+                    const DeclNameStack::NameContext& name_context,
+                    std::optional<SemIR::ScopeLookupResult> lookup_result,
+                    MergeRedeclEntityInfo<EntityT> entity_info,
+                    bool is_definition) -> bool;
+
+extern template auto TryMergeRedecl(Context&, const DeclNameStack::NameContext&,
+                                    std::optional<SemIR::ScopeLookupResult>,
+                                    MergeRedeclEntityInfo<SemIR::Class>, bool)
+    -> bool;
+extern template auto TryMergeRedecl(Context&, const DeclNameStack::NameContext&,
+                                    std::optional<SemIR::ScopeLookupResult>,
+                                    MergeRedeclEntityInfo<SemIR::Function>,
+                                    bool) -> bool;
+extern template auto TryMergeRedecl(Context&, const DeclNameStack::NameContext&,
+                                    std::optional<SemIR::ScopeLookupResult>,
+                                    MergeRedeclEntityInfo<SemIR::Interface>,
+                                    bool) -> bool;
+extern template auto TryMergeRedecl(
+    Context&, const DeclNameStack::NameContext&,
+    std::optional<SemIR::ScopeLookupResult>,
+    MergeRedeclEntityInfo<SemIR::NamedConstraint>, bool) -> bool;
 
 }  // namespace Carbon::Check
 
