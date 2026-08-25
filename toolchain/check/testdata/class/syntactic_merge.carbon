@@ -687,7 +687,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.99696d.1: %C) {
+// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.99696d.1: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT:   %a.patt.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt)]
 // CHECK:STDOUT:   %a.1: %C = symbolic_binding a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:
@@ -702,7 +702,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Bar(imports.%Main.import_ref.99696d.2: %C) {
+// CHECK:STDOUT: generic class @Bar(imports.%Main.import_ref.99696d.2: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT:   %a.patt.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt)]
 // CHECK:STDOUT:   %a.1: %C = symbolic_binding a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:
@@ -1093,7 +1093,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.996: %C) {
+// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.996: %C) [from "alias_two_file.carbon"] {
 // CHECK:STDOUT:   %a.patt.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.1 (constants.%a.patt)]
 // CHECK:STDOUT:   %a.1: %C = symbolic_binding a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:

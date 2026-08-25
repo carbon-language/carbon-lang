@@ -385,7 +385,7 @@ class Class(U: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(imports.%Main.import_ref.b3bc94.1: type) {
+// CHECK:STDOUT: generic class @Class(imports.%Main.import_ref.b3bc94.1: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T.patt.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.1: type = symbolic_binding T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:

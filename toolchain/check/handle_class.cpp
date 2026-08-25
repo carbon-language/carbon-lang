@@ -26,6 +26,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -46,128 +47,6 @@ auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Class>();
   context.decl_name_stack().PushScopeAndStartName();
   return true;
-}
-
-// Tries to merge new_class into prev_class_id. Since new_class won't have a
-// definition even if one is upcoming, set is_definition to indicate the planned
-// result.
-//
-// If merging is successful, returns true and may update the previous class.
-// Otherwise, returns false. Prints a diagnostic when appropriate.
-static auto MergeClassRedecl(Context& context, Parse::AnyClassDeclId node_id,
-                             SemIR::Class& new_class, bool new_is_definition,
-                             SemIR::ClassId prev_class_id,
-                             SemIR::ImportIRId prev_import_ir_id) -> bool {
-  auto& prev_class = context.classes().Get(prev_class_id);
-  SemIR::LocId prev_loc_id(prev_class.latest_decl_id());
-
-  // Check the generic parameters match, if they were specified.
-  if (!CheckRedeclParamsMatch(context, DeclParams(new_class),
-                              DeclParams(prev_class))) {
-    return false;
-  }
-
-  DiagnoseIfInvalidRedecl(
-      context, Lex::TokenKind::Class, prev_class.name_id,
-      RedeclInfo(new_class, node_id, new_is_definition),
-      RedeclInfo(prev_class, prev_loc_id, prev_class.has_definition_started()),
-      prev_import_ir_id);
-
-  if (new_is_definition && prev_class.has_definition_started()) {
-    // Don't attempt to merge multiple definitions.
-    return false;
-  }
-
-  if (new_is_definition) {
-    prev_class.MergeDefinition(new_class);
-  }
-
-  if (prev_import_ir_id.has_value() ||
-      (prev_class.is_extern && !new_class.is_extern)) {
-    prev_class.first_owning_decl_id = new_class.first_owning_decl_id;
-    ReplacePrevInstForMerge(context, new_class.parent_scope_id,
-                            prev_class.name_id, new_class.first_owning_decl_id);
-  }
-  return true;
-}
-
-// Adds the name to name lookup. If there's a conflict, tries to merge. May
-// update class_decl and class_info when merging.
-static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
-                           const DeclNameStack::NameContext& name_context,
-                           SemIR::InstId class_decl_id,
-                           SemIR::ClassDecl& class_decl,
-                           SemIR::Class& class_info, bool is_definition,
-                           SemIR::AccessKind access_kind) -> void {
-  SemIR::ScopeLookupResult lookup_result =
-      context.decl_name_stack().LookupOrAddName(name_context, class_decl_id,
-                                                access_kind);
-  if (lookup_result.is_poisoned()) {
-    // This is a declaration of a poisoned name.
-    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
-                         lookup_result.poisoning_loc_id(), name_context.loc_id);
-    return;
-  }
-
-  if (!lookup_result.is_found()) {
-    return;
-  }
-
-  SemIR::InstId prev_id = lookup_result.target_inst_id();
-
-  auto prev_class_id = SemIR::ClassId::None;
-  auto prev_import_ir_id = SemIR::ImportIRId::None;
-  auto prev = context.insts().Get(prev_id);
-  CARBON_KIND_SWITCH(prev) {
-    case CARBON_KIND(SemIR::ClassDecl class_decl): {
-      prev_class_id = class_decl.class_id;
-      break;
-    }
-    case CARBON_KIND(SemIR::ImportRefLoaded import_ref): {
-      auto import_ir_inst =
-          context.import_ir_insts().Get(import_ref.import_ir_inst_id);
-
-      // Verify the decl so that things like aliases are name conflicts.
-      const auto* import_ir =
-          context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
-      if (!import_ir->insts().Is<SemIR::ClassDecl>(import_ir_inst.inst_id())) {
-        break;
-      }
-
-      // Use the constant value to get the ID.
-      auto decl_value = context.insts().Get(
-          context.constant_values().GetConstantInstId(prev_id));
-      if (auto class_type = decl_value.TryAs<SemIR::ClassType>()) {
-        prev_class_id = class_type->class_id;
-        prev_import_ir_id = import_ir_inst.ir_id();
-      } else if (auto generic_class_type =
-                     context.types().TryGetAs<SemIR::GenericClassType>(
-                         decl_value.type_id())) {
-        prev_class_id = generic_class_type->class_id;
-        prev_import_ir_id = import_ir_inst.ir_id();
-      }
-      break;
-    }
-    default:
-      break;
-  }
-
-  if (!prev_class_id.has_value()) {
-    // This is a redeclaration of something other than a class.
-    DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                          SemIR::LocId(prev_id));
-    return;
-  }
-
-  // TODO: Fix `extern` logic. It doesn't work correctly, but doesn't seem worth
-  // ripping out because existing code may incrementally help.
-  if (MergeClassRedecl(context, node_id, class_info, is_definition,
-                       prev_class_id, prev_import_ir_id)) {
-    // When merging, use the existing entity rather than adding a new one.
-    class_decl.class_id = prev_class_id;
-    class_decl.type_id = prev.type_id();
-    // TODO: Validate that the redeclaration doesn't set an access modifier.
-  }
 }
 
 static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
@@ -223,9 +102,13 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
 
   DiagnoseIfGenericMissingExplicitParameters(context, class_info);
 
-  MergeOrAddName(context, node_id, name_context, class_decl_id, class_decl,
-                 class_info, is_definition,
-                 introducer.modifier_set.GetAccessKind());
+  SemIR::ScopeLookupResult lookup_result =
+      context.decl_name_stack().LookupOrAddName(
+          name_context, class_decl_id, introducer.modifier_set.GetAccessKind());
+  TryMergeRedecl(context, name_context, lookup_result,
+                 MergeRedeclEntityInfo<SemIR::Class>{
+                     .new_entity_decl = class_decl, .new_entity = class_info},
+                 is_definition);
 
   // Create a new class if this isn't a valid redeclaration.
   bool is_new_class = !class_decl.class_id.has_value();
