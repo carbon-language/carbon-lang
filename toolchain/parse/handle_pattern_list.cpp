@@ -43,6 +43,15 @@ auto HandlePatternListElementAsStruct(Context& context) -> void {
       HandlePatternListElement(context, StateKind::StructPatternUnderscore,
                                StateKind::PatternListElementFinishAsStruct);
       break;
+    case Lex::TokenKind::Identifier:
+      // A bare identifier is not a valid struct-pattern element: it must be
+      // either a designated field (`.name = ...`) or a binding pattern
+      // (`name: Type`). Recover by parsing it as a shorthand binding pattern so
+      // the parse tree shape remains valid and checking can diagnose precisely.
+      context.state_stack().back().in_field_shorthand_pattern = true;
+      HandlePatternListElement(context, StateKind::Pattern,
+                               StateKind::PatternListElementFinishAsStruct);
+      break;
     default:
       // Set flag on state which will be popped in HandlePatternListElement.
       context.state_stack().back().in_field_shorthand_pattern = true;
