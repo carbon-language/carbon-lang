@@ -544,9 +544,7 @@ template <typename T>
 struct CustomHashValue;
 
 template <typename T>
-concept HasCustomHashValue = requires(const T& value, uint64_t seed) {
-  { CustomHashValue<T>::Hash(value, seed) } -> std::same_as<HashCode>;
-};
+concept HasCustomHashValue = requires { CustomHashValue<T>::Hash; };
 
 // Implementation detail predicate to detect if there is a `CarbonHashValue`
 // overload available for a particular type, either in this namespace or found
@@ -799,11 +797,13 @@ inline auto Hasher::Hash(const Ts&... values) -> void {
 
   using InternalHashDispatch::CanHashAsRawDataType;
   using InternalHashDispatch::HasCarbonHashValue;
+  using InternalHashDispatch::HasCustomHashValue;
   using InternalHashDispatch::MapToRawDataType;
 
   // Special-case a single element tuple that we will hash as raw data.
-  if constexpr (sizeof...(Ts) == 1 && (... && (!HasCarbonHashValue<Ts> &&
-                                               CanHashAsRawDataType<Ts>))) {
+  if constexpr (sizeof...(Ts) == 1 &&
+                (... && (!HasCarbonHashValue<Ts> && !HasCustomHashValue<Ts> &&
+                         CanHashAsRawDataType<Ts>))) {
     HashRaw(MapToRawDataType(values)...);
     return;
   }
@@ -816,7 +816,7 @@ inline auto Hasher::Hash(const Ts&... values) -> void {
   // a little bit wasteful in some cases, collapsing down to a flat array of
   // 64-bit integers is more efficient to hash.
   auto map_value = []<typename T>(const T& value) -> uint64_t {
-    if constexpr (HasCarbonHashValue<T>) {
+    if constexpr (HasCarbonHashValue<T> || HasCustomHashValue<T>) {
       // Use the top-level `HashValue` to re-dispatch to the custom
       // implementation with a fixed seed.
       return static_cast<uint64_t>(HashValue(value));
@@ -852,11 +852,12 @@ template <typename T>
 inline auto Hasher::HashArray(llvm::ArrayRef<T> values) -> void {
   using InternalHashDispatch::CanHashAsRawDataType;
   using InternalHashDispatch::HasCarbonHashValue;
+  using InternalHashDispatch::HasCustomHashValue;
 
   // This logic similarly mirrors `InternalHashDispatch::DispatchImpl`, but is
   // specialized here to allow us to efficiently process the array when it
   // *doesn't* require recursive hashing.
-  if constexpr (HasCarbonHashValue<T>) {
+  if constexpr (HasCarbonHashValue<T> || HasCustomHashValue<T>) {
     // Use a trivial loop to give consistent behavior for arrays requiring
     // recursive hashing. This isn't terribly efficient, but if clients care
     // they should specialize the entire hashing operation. For simple, tiny
