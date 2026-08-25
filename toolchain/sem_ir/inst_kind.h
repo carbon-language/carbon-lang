@@ -190,6 +190,14 @@ enum class InstConstantKind : int8_t {
   // a generated instruction. Constant evaluation support for types with this
   // constant kind is provided automatically, by calling `PerformDelayedAction`.
   InstAction,
+  // This instruction is a metaprogramming or template instantiation action that
+  // generates one or more instructions. Like `SymbolicOnly`, it may be a
+  // symbolic constant inst depending on its operands, but never a concrete
+  // constant inst. The instruction may or may not have a concrete constant
+  // value that is a tuple of generated instructions. Constant evaluation
+  // support for types with this constant kind is provided automatically, by
+  // calling `PerformDelayedAction`.
+  MultiInstAction,
   // This instruction's operands determine whether it has a constant value,
   // whether it is a constant inst, and/or whether it results in a compile-time
   // error, in ways not expressed by the other InstConstantKinds. For example,
@@ -327,6 +335,12 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     return definition_info(*this).constant_kind;
   }
 
+  // Returns whether this instruction kind is an action instruction.
+  auto is_action() const -> bool {
+    return constant_kind() == InstConstantKind::InstAction ||
+           constant_kind() == InstConstantKind::MultiInstAction;
+  }
+
   // Returns whether we need an `InstId` referring to the instruction to
   // constant evaluate this instruction. If this is set to `true`, then:
   //
@@ -441,6 +455,12 @@ class InstKind::Definition : public InstKind {
   // Returns this instruction kind's category of allowed constants.
   constexpr auto constant_kind() const -> InstConstantKind {
     return info_.constant_kind;
+  }
+
+  // Returns whether this instruction kind is an action instruction.
+  constexpr auto is_action() const -> bool {
+    return constant_kind() == InstConstantKind::InstAction ||
+           constant_kind() == InstConstantKind::MultiInstAction;
   }
 
   // Returns whether constant evaluation of this instruction needs an InstId.

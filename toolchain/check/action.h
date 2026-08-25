@@ -21,6 +21,13 @@ using SpecificParamsForPerformAction =
     std::conditional_t<InstT::Kind.action_needs_specific_id(),
                        auto(SemIR::SpecificId specific_id)->void, auto()->void>;
 
+template <typename InstT>
+// Computes the return type to use for PerformAction for InstT.
+using ReturnTypeForPerformAction =
+    std::conditional_t<InstT::Kind.constant_kind() ==
+                           SemIR::InstConstantKind::MultiInstAction,
+                       llvm::SmallVector<SemIR::InstId>, SemIR::InstId>;
+
 // Computes the function type to use for PerformAction for InstT.
 template <typename InstT,
           typename SpecificParams = SpecificParamsForPerformAction<InstT>>
@@ -29,10 +36,10 @@ struct FunctionTypeForPerformActionImpl {
   using Type = auto() -> void;
 };
 template <typename InstT, typename... SpecificParams>
-  requires(InstT::Kind.constant_kind() == SemIR::InstConstantKind::InstAction)
+  requires(InstT::Kind.is_action())
 struct FunctionTypeForPerformActionImpl<InstT, auto(SpecificParams...)->void> {
   using Type = auto(Context& context, SpecificParams..., SemIR::LocId loc_id,
-                    InstT inst) -> SemIR::InstId;
+                    InstT inst) -> ReturnTypeForPerformAction<InstT>;
 };
 template <typename InstT>
 using FunctionTypeForPerformAction =
@@ -61,6 +68,13 @@ auto PerformAction() -> void = delete;
 // instructions produced by the action. Any instructions generated during
 // `PerformAction` will be spliced into the code at the point where the action
 // was created.
+//
+// For an instruction whose constant kind is MultiInstAction, the overload is
+// the same but should return a `SmallVector<SemIR::InstId>` instead, providing
+// multiple instructions to be spliced into different places in the generic. The
+// first entry in the vector is assumed to be spliced at the current location,
+// and will be replaced by a block containing the instructions generated during
+// `PerformAction`, returning the value of the specified instruction.
 #define CARBON_SEM_IR_INST_KIND(Name) \
   Internal::FunctionTypeForPerformAction<SemIR::Name> PerformAction;
 #include "toolchain/sem_ir/inst_kind.def"
@@ -204,6 +218,8 @@ auto RefineOperandsInSpecific(Context& context, SemIR::SpecificId specific_id,
 
 // Performs an action as a result of evaluation of a template's eval block.
 template <typename ActionT>
+  requires(ActionT::Kind.constant_kind() ==
+           SemIR::InstConstantKind::InstAction)
 auto PerformDelayedAction(Context& context, SemIR::SpecificId specific_id,
                           SemIR::LocId loc_id, ActionT action_inst)
     -> SemIR::InstId {
@@ -219,6 +235,20 @@ auto PerformDelayedAction(Context& context, SemIR::SpecificId specific_id,
   auto inst_id = Internal::CallPerformAction(context, specific_id, loc_id,
                                              refined_action.As<ActionT>());
   return Internal::EndPerformDelayedAction(context, inst_id);
+}
+template <typename ActionT>
+  requires(ActionT::Kind.constant_kind() ==
+           SemIR::InstConstantKind::MultiInstAction)
+auto PerformDelayedAction(Context& context, SemIR::SpecificId specific_id,
+                          SemIR::LocId loc_id, ActionT action_inst)
+    -> llvm::SmallVector<SemIR::InstId> {
+  if (!ActionIsPerformable(context, action_inst, specific_id)) {
+    return {};
+  }
+  Internal::BeginPerformDelayedAction(context);
+  auto inst_ids = PerformAction(context, loc_id, action_inst);
+  inst_ids[0] = Internal::EndPerformDelayedAction(context, inst_ids[0]);
+  return inst_ids;
 }
 
 }  // namespace Carbon::Check

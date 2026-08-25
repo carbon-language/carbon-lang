@@ -2204,7 +2204,13 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 }
 
 auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::InitializeAction action) -> SemIR::InstId {
+                   SemIR::InitializeAction action)
+    -> llvm::SmallVector<SemIR::InstId> {
+  // Build the list of results. We will overwrite the first element (the
+  // resulting initialization expression itself) after we finish conversion.
+  llvm::SmallVector<SemIR::InstId> result_ids;
+  result_ids.push_back(SemIR::InstId::None);
+
   const auto& target_bundle = context.bundles().Get(action.target_id);
   PendingBlock target_block(&context);
   ConversionTarget target = {
@@ -2217,15 +2223,17 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
       .storage_access_block = &target_block};
 
   // TODO: Set some state so that attempted modifications of storage arguments
-  // are tracked and included in our constant result instead of updating the
-  // original template!
+  // are tracked and included in result_ids instead of updating the original
+  // template!
+
+  // TODO: Pass through a `specific_id` so that we properly handle types for
+  // subexpressions.
 
   auto expr_id =
       PerformBuiltinConversion(context, loc_id, action.inst_id, target);
   expr_id = PerformUserDefinedConversion(context, loc_id, expr_id, target);
-  // TODO: We're returning a single value here! Change the action infrastructure
-  // to support actions that return more than just a single instruction value.
-  return PerformCategoryConversion(context, loc_id, expr_id, target);
+  result_ids[0] = PerformCategoryConversion(context, loc_id, expr_id, target);
+  return result_ids;
 }
 
 // Returns true if converting `expr_id` to `target` requires `target.type_id`

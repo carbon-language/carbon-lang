@@ -1256,7 +1256,7 @@ struct InitializeAction {
   static constexpr auto Kind = InstKind::InitializeAction.Define<Parse::NodeId>(
       {.ir_name = "initialize_action",
        .expr_category = ActionExprCategory(ExprCategory::Dependent),
-       .constant_kind = InstConstantKind::InstAction,
+       .constant_kind = InstConstantKind::MultiInstAction,
        .is_lowered = false});
 
   struct Target {
