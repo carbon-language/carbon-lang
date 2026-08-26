@@ -367,13 +367,42 @@ class FunctionContext {
   Map<SemIR::InstId, llvm::Value*> locals_;
 };
 
-// Provides handlers for instructions that occur in a FunctionContext. Although
-// this is declared for all instructions, it should only be defined for
-// instructions which are non-constant and not always typed. See
-// `FunctionContext::LowerInst` for how this is used.
-#define CARBON_SEM_IR_INST_KIND(Name)                              \
-  auto HandleInst(FunctionContext& context, SemIR::InstId inst_id, \
-                  SemIR::Name inst) -> void;
+namespace Internal {
+// Determines whether InstT should have a `HandleInst` function.
+template <typename InstT>
+constexpr bool HasHandleInst =
+    // is_lowered() == false indicates lowering should never see this inst kind.
+    InstT::Kind.is_lowered() &&
+    // Constant instructions never need to be explicitly lowered.
+    InstT::Kind.constant_kind() != SemIR::InstConstantKind::Always &&
+    InstT::Kind.constant_kind() != SemIR::InstConstantKind::AlwaysUnique &&
+    // Instructions that always produce types don't need a `HandleInst` even if
+    // they're not constant, because `type` has an empty runtime representation
+    // and we assume that `InstIsType::Always` implies a lack of side effects.
+    InstT::Kind.is_type() != SemIR::InstIsType::Always;
+
+// Computes the function type to use for HandleInst for InstT.
+template <typename InstT>
+using FunctionTypeForHandleInst = std::conditional_t<
+    HasHandleInst<InstT>,
+    auto(FunctionContext& context, SemIR::InstId inst_id, InstT inst)->void,
+    auto()->void>;
+}  // namespace Internal
+
+// Explicitly delete the overload generated for non-lowered instructions.
+// These all produce the same signature, so we only need to delete it once.
+auto HandleInst() -> void = delete;
+
+// Provides handlers for instructions that occur in a FunctionContext. This
+// should be defined for instructions for which `Internal::HasHandleInst<InstT>`
+// is true. See `FunctionContext::LowerInst` for how this is used.
+//
+// The signature of an overload is:
+//
+//   auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+//                   InstT inst) -> void;
+#define CARBON_SEM_IR_INST_KIND(Name) \
+  Internal::FunctionTypeForHandleInst<SemIR::Name> HandleInst;
 #include "toolchain/sem_ir/inst_kind.def"
 
 }  // namespace Carbon::Lower
