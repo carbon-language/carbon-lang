@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/template_dependence.carbon
 
-// --- fail_todo_type.carbon
+// --- type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -31,7 +31,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 //@dump-sem-ir-end
 
 
-// CHECK:STDOUT: --- fail_todo_type.carbon
+// CHECK:STDOUT: --- type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
