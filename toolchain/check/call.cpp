@@ -7,6 +7,7 @@
 #include <optional>
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
@@ -345,6 +346,23 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                  llvm::ArrayRef<SemIR::InstId> arg_ids, bool is_desugared)
     -> SemIR::InstId {
+  auto args_id = context.bundles().AddCanonical<SemIR::CallAction::Args>(
+      {.callee_id = callee_id,
+       .args_id = context.inst_blocks().Add(arg_ids),
+       .is_desugared = SemIR::BoolValue::From(is_desugared)});
+
+  return HandleAction<SemIR::CallAction>(
+      context, loc_id, SemIR::TypeInstId::None,
+      {.type_id = SemIR::InstType::TypeId, .args_id = args_id});
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::CallAction action) -> SemIR::InstId {
+  auto args = context.bundles().Get(action.args_id);
+  auto callee_id = args.callee_id;
+  auto arg_ids = context.inst_blocks().Get(args.args_id);
+  auto is_desugared = args.is_desugared.ToBool();
+
   // Try treating the callee as a function first.
   auto callee = GetCallee(context.sem_ir(), callee_id);
   CARBON_KIND_SWITCH(callee) {

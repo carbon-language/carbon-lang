@@ -32,6 +32,7 @@ using IdKind = TypeEnum<
     AnyRawId,
     AssociatedConstantId,
     BoolValue,
+    BundleId<CallAction::Args>,
     BundleId<CalleePatternMatchAction::Args>,
     BundleId<CallerPatternMatchAction::Args>,
     BundleId<ConvertAction::Target>,

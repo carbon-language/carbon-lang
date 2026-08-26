@@ -390,6 +390,24 @@ struct Call {
   InstBlockId args_id;
 };
 
+// An action that performs a call.
+struct CallAction {
+  static constexpr auto Kind = InstKind::CallAction.Define<Parse::NodeId>(
+      {.ir_name = "call_action",
+       .expr_category = ActionExprCategory(ExprCategory::Dependent),
+       .constant_kind = InstConstantKind::InstAction,
+       .is_lowered = false});
+
+  struct Args {
+    MetaInstId callee_id;
+    InstBlockId args_id;
+    BoolValue is_desugared;
+  };
+
+  TypeId type_id;
+  BundleId<Args> args_id;
+};
+
 // An action that performs a C++ template call.
 struct CallCppTemplateAction {
   static constexpr auto Kind =
