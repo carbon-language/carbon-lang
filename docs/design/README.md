@@ -483,10 +483,10 @@ programming error:
     to a mathematically incorrect result, such as a two's complement result or
     zero.
 
-The unsigned-integer types may be written `uN`, with `N` a positive multiple of
-8. Unsigned integer types wrap around on overflow; we strongly advise that they
-are not used except when those semantics are desired. These types are intended
-for bit manipulation or modular arithmetic as often found in
+The unsigned-integer types may be written `uN`, with `N` a positive multiple
+of 8. Unsigned integer types wrap around on overflow; we strongly advise that
+they are not used except when those semantics are desired. These types are
+intended for bit manipulation or modular arithmetic as often found in
 [hashing](https://en.wikipedia.org/wiki/Hash_function),
 [cryptography](https://en.wikipedia.org/wiki/Cryptography), and
 [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator) use cases.

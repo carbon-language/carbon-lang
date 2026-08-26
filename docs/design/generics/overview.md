@@ -370,13 +370,13 @@ type using a
 
 A function can have a mix of checked, template, and runtime parameters. Each
 kind of parameter is defined using a different syntax: a checked parameter uses
-a checked binding pattern, a template parameter uses a template binding pattern,
-and a runtime parameter uses a runtime binding pattern. Likewise, it's allowed
-to pass a symbolic or template constant value to a checked or runtime parameter.
-_We have decided to support passing a symbolic constant to a template parameter,
-see [leads issue #2153: Checked generics calling
-templates](https://github.com/carbon-language/carbon-lang/issues/2153), but
-incorporating it into the design is future work._
+a checked binding pattern, a template parameter uses a template binding
+pattern, and a runtime parameter uses a runtime binding pattern. Likewise, it's
+allowed to pass a symbolic or template constant value to a checked or runtime
+parameter. _We have decided to support passing a symbolic constant to a template
+parameter, see
+[leads issue #2153: Checked generics calling templates](https://github.com/carbon-language/carbon-lang/issues/2153),
+but incorporating it into the design is future work._
 
 ### Requiring or extending another interface
 

@@ -283,8 +283,7 @@ satisfy requirements in more situations. In particular, we make these changes:
     -   No part of the `impl` declaration will be excluded from syntactic match.
     -   Every `impl` must be defined in the same file (not just the same
         library) as its declaration.
-        -   However, the definitions of its member functions may be separate
-            in
+        -   However, the definitions of its member functions may be separate in
             the impl file, out of line, as provided in
             [proposal #3763](/proposals/p003763-matching-redeclarations.md#out-of-line-definitions-of-associated-functions).
 -   An `impl` may be forward declared without the interface being defined.

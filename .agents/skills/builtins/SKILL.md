@@ -84,12 +84,12 @@ Inside
     `BuiltinInfo` constant inside `namespace BuiltinFunctionInfo` matching the
     macro-defined name:
 
-     ```cpp
-     // toolchain/sem_ir/builtin_function_kind.cpp
+    ```cpp
+    // toolchain/sem_ir/builtin_function_kind.cpp
 
-     constexpr BuiltinInfo IntConvertFloat = {
-         "int.convert_float", ValidateSignature<auto(AnyInt)->AnyFloat>};
-     ```
+    constexpr BuiltinInfo IntConvertFloat = {
+        "int.convert_float", ValidateSignature<auto(AnyInt)->AnyFloat>};
+    ```
 
 3.  **Establish Compile-Time Residency Status**: Update
     `BuiltinFunctionKind::IsCompTimeOnly` to determine if a call requires
@@ -171,43 +171,31 @@ Inside [handle_call.cpp](../../../toolchain/lower/handle_call.cpp):
 1.  **Map to Native LLVM Instructions**: For runtime-eligible builtins, map the
     call inside `HandleBuiltinCall` to native LLVM IR builder methods:
 
-     ```cpp
-     case SemIR::BuiltinFunctionKind::IntConvertFloat: {
-       auto* operand = context.GetValue(arg_ids[0]);
-       auto* dest_type = context.GetTypeOfInst(inst_id);
-       bool is_signed = IsSignedInt(context, arg_ids[0]);
-       context.SetLocal(
-           inst_id, is_signed
+    ```cpp
+    case SemIR::BuiltinFunctionKind::IntConvertFloat: {
+      auto* operand = context.GetValue(arg_ids[0]);
+      auto* dest_type = context.GetTypeOfInst(inst_id);
+      bool is_signed = IsSignedInt(context, arg_ids[0]);
+      context.SetLocal(
+          inst_id, is_signed
+                       ? context.builder().CreateSIToFP(operand, dest_type)
+                       : context.builder().CreateUIToFP(operand, dest_type));
+      return;
+    }
     ```
-
-    ```
-                ? context.builder().CreateSIToFP(operand, dest_type)
-    ```
-
-    ```
-        : context.builder().CreateUIToFP(operand, dest_type));
-    ```
-
-    ```
-    ```
-
-    ```
-       return;
-     }
-     ```
 
 2.  **Assert on Compile-Time-Only Builtins**: Throw a hard assertion on
     lowering-cases for checked validator builtins that should never hit code
     generation:
 
-```cpp
-case SemIR::BuiltinFunctionKind::IntConvertFloatChecked: {
-CARBON_CHECK(builtin_kind.IsCompTimeOnly(
-context.sem_ir(), arg_ids,
-context.sem_ir().insts().Get(inst_id).type_id()));
-CARBON_FATAL("Missing constant value for call to comptime-only function");
-}
-```
+    ```cpp
+    case SemIR::BuiltinFunctionKind::IntConvertFloatChecked: {
+      CARBON_CHECK(builtin_kind.IsCompTimeOnly(
+          context.sem_ir(), arg_ids,
+          context.sem_ir().insts().Get(inst_id).type_id()));
+      CARBON_FATAL("Missing constant value for call to comptime-only function");
+    }
+    ```
 
 ---
 

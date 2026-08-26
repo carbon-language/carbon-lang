@@ -210,8 +210,8 @@ To use it:
 
 A typical commit workflow looks like:
 
-1.  `git commit` to try committing files. This automatically executes
-    `prek run`, which may fail and leave files modified for cleanup.
+1.  `git commit` to try committing files. This automatically executes `prek
+    run`, which may fail and leave files modified for cleanup.
 2.  `git add .` to add the automatic modifications done by hooks.
 3.  `git commit` again.
 

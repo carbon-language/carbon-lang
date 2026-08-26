@@ -1739,8 +1739,8 @@ versus `Meters`.
 
 > **Future work:** We should have some way of restricting the casts between a
 > type and an adapter to address this use case. One possibility would be to add
-> the keyword `private` before `adapt`, so you might write
-> `extend private adapt Date;`.
+> the keyword `private` before `adapt`, so you might write `extend private adapt
+> Date;`.
 
 Haskell has a [`newtype` feature](https://wiki.haskell.org/Newtype) as well.
 Haskell's feature doesn't directly support reusing implementations either, but

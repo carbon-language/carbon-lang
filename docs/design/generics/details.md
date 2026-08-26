@@ -1140,8 +1140,8 @@ constraint N(T: type) {
 }
 ```
 
-When the above named constraint is identified as part of a facet type as
-`C impls N(.Self)`, the resulting requirement `Z where .Z1 = {}` is only
+When the above named constraint is identified as part of a facet type as `C
+impls N(.Self)`, the resulting requirement `Z where .Z1 = {}` is only
 constraining `C`, and not `.Self` from the top-level top-level facet type. So we
 require that `C impls (Z where .Z1 = {})` is already true in order to
 successfully identify.
@@ -1355,7 +1355,7 @@ For example, in C++,
 requires all containers to also satisfy the requirements of
 `DefaultConstructible`, `CopyConstructible`, `Eq`, and `Swappable`. This is
 already a capability for [facet types in general](#facet-types). For consistency
-we use the same semantics and `require`... `impls` syntax as we do for
+we use the same semantics and `require` ... `impls` syntax as we do for
 [named constraints](#named-constraints):
 
 ```carbon
@@ -2825,8 +2825,7 @@ interface Container {
   let IteratorType: Iterator where .ElementType = ElementType;
 
   // `.Self` means `SliceType`.
-  let SliceType: Container
-      where .Self impls SliceConstraint(ElementType, .Self);
+  let SliceType: Container where .Self impls SliceConstraint(ElementType, .Self);
 
   // `Self` means the type implementing `Container`.
   fn GetSlice(ref self, start: IteratorType, end: IteratorType) -> SliceType;
@@ -3850,13 +3849,13 @@ fn Double[T: Mul where i32 impls As(.Self)](x: T) -> T {
 
 #### Must be legal type argument constraints
 
-Now consider the case that the checked facet parameter is going to be used as an
-argument to a [parameterized type](#parameterized-types) in a function body, but
-not in the signature. If the parameterized type was explicitly mentioned in the
-signature, the [implied constraint](#implied-constraints) feature would ensure
-all of its requirements were met. To say a parameterized type is allowed to be
-passed a specific argument, just write that it `impls type`, which all types do.
-This is a trivial case of a
+Now consider the case that the checked facet parameter is going to be used as
+an argument to a [parameterized type](#parameterized-types) in a function body,
+but not in the signature. If the parameterized type was explicitly mentioned in
+the signature, the [implied constraint](#implied-constraints) feature would
+ensure all of its requirements were met. To say a parameterized type is allowed
+to be passed a specific argument, just write that it `impls type`, which all
+types do. This is a trivial case of a
 [parameterized type implements interface](#parameterized-type-implements-interface)
 `where` constraint.
 
@@ -3971,8 +3970,8 @@ fn DownCast[T: type](p: T*, generic U: type where .Self extends T) -> U*;
 
 Given a type `U`, define the facet type `CompatibleWith(U)` as follows:
 
-> `CompatibleWith(U)` is a facet type whose values are facets `T` such that
-> `T as type` and `U as type` are
+> `CompatibleWith(U)` is a facet type whose values are facets `T` such that `T
+> as type` and `U as type` are
 > [compatible types](/docs/design/classes.md#compatible-types). That is values
 > of `T` and `U` as types can be cast back and forth without any change in
 > representation (for example `T` is an [adapter](#adapting-types) for `U`).

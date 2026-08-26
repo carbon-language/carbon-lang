@@ -75,13 +75,13 @@ declaration (`CARBON_DIAGNOSTIC` or `CARBON_DIAGNOSTIC_ON_SCOPE`).
     block/function body, declare it **locally** inside the function body
     adjacent to its `Emit` trigger:
 
-```cpp
-void ConvertFloatValueToInt(...) {
-CARBON_DIAGNOSTIC(FloatNaNConvertedToInt, Error,
-"cannot convert NaN to integer type {0}", SemIR::TypeId);
-context.emitter().Emit(loc_id, FloatNaNConvertedToInt, dest_type_id);
-}
-```
+    ```cpp
+    void ConvertFloatValueToInt(...) {
+      CARBON_DIAGNOSTIC(FloatNaNConvertedToInt, Error,
+                        "cannot convert NaN to integer type {0}", SemIR::TypeId);
+      context.emitter().Emit(loc_id, FloatNaNConvertedToInt, dest_type_id);
+    }
+    ```
 
 -   **File Scope**: If the diagnostic is shared among multiple functions inside
     the _same_ file, declare it at **file scope** inside the anonymous namespace
@@ -180,12 +180,12 @@ scopes:
 -   `ContextScope`: Automatically converts any diagnostics emitted within its
     scope into sub-notes under a high-level operation descriptor:
 
-```cpp
-ContextScope context_scope(&context.emitter(), [&](ContextBuilder& builder) {
-builder.Context(eval_loc, InCallToEvalFn);
-});
-// any checker error emitted here will automatically append the 'InCallToEvalFn' note
-```
+    ```cpp
+    ContextScope context_scope(&context.emitter(), [&](ContextBuilder& builder) {
+      builder.Context(eval_loc, InCallToEvalFn);
+    });
+    // any checker error emitted here will automatically append the 'InCallToEvalFn' note
+    ```
 
 -   `AnnotationScope`: RAII block scope that automatically attaches blanket note
     annotations to all scoped diagnostics.
@@ -251,10 +251,10 @@ Carbon strictly enforces testing coverage at build-time.
     must catch it using standard CHECK matchers, explicitly tracking the
     matching enum tag in standard error comments:
 
-```carbon
-// CHECK:STDERR: fail_bounds.carbon:[[@LINE+1]]:15: error: cannot convert NaN to integer type `i32` [FloatNaNConvertedToInt]
-let a: i32 = Convert(nan_val);
-```
+    ```carbon
+    // CHECK:STDERR: fail_bounds.carbon:[[@LINE+1]]:15: error: cannot convert NaN to integer type `i32` [FloatNaNConvertedToInt]
+    let a: i32 = Convert(nan_val);
+    ```
 
 3.  **Build Enforcement**: Failing to provide a diagnostic test check matcher
     triggers a build compilation error on the target test
