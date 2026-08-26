@@ -1324,6 +1324,19 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
     }
   }
 
+  // Function pointer types are not library types, so we have to inject their
+  // `Core.Copy` impl here.
+  if (query_is_concrete && core_interface == SemIR::CoreInterface::Copy &&
+      context.constant_values().InstIs<SemIR::FunctionPtrType>(
+          query_self_const_id)) {
+    auto witness_id = BuildPrimitiveCopyWitness(
+        context, loc_id, SemIR::NameScopeId::Package, query_self_const_id,
+        eval_query.query_specific_interface_id);
+    if (witness_id.has_value()) {
+      lookup_result = {.witness_id = context.constant_values().Get(witness_id)};
+    }
+  }
+
   if (mode != EvalImplLookupMode::RecheckPoisonedLookup &&
       lookup_result.witness_id.has_value()) {
     context.impl_lookup_cache().Insert(impl_lookup_cache_key,

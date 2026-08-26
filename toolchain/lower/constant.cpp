@@ -200,6 +200,11 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::AddrOf inst)
   return context.GetConstant(inst.lvalue_id);
 }
 
+static auto EmitAsConstant(ConstantContext& context, SemIR::AddrOfFunction inst)
+    -> llvm::Constant* {
+  return context.GetFunction(inst.function_id);
+}
+
 static auto EmitAsConstant(ConstantContext& context, SemIR::VtablePtr inst)
     -> llvm::Constant* {
   return context.GetVtable(inst.vtable_id, inst.specific_id);

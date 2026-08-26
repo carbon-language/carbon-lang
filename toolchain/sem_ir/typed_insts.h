@@ -139,6 +139,16 @@ struct AddrOf {
   InstId lvalue_id;
 };
 
+struct AddrOfFunction {
+  static constexpr auto Kind = InstKind::AddrOfFunction.Define<Parse::NodeId>(
+      {.ir_name = "addr_of_fn",
+       .expr_category = ExprCategory::Value,
+       .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  FunctionId function_id;
+};
+
 // Binds a name as an alias. See AnyBinding for member documentation.
 struct AliasBinding {
   static constexpr auto Kind = InstKind::AliasBinding.Define<Parse::NodeId>(
@@ -919,7 +929,7 @@ struct FunctionDecl {
   static constexpr auto Kind =
       InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
           {.ir_name = "fn_decl",
-           .expr_category = ExprCategory::NotExpr,
+           .expr_category = ExprCategory::Value,
            .is_lowered = false});
 
   TypeId type_id;

@@ -10,9 +10,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/call/fn_ptr.carbon
 
+fn A(x: i32) -> i32;
+
 fn F() {
-  // TODO: initialize a_ptr
-  var a_ptr: __fn_ptr(form(val i32)) ->? form(var i32);
+  var a_ptr: __fn_ptr(form(val i32)) ->? form(var i32) = A;
   var unused result: i32 = a_ptr(0);
 }
 
@@ -20,16 +21,18 @@ fn F() {
 // CHECK:STDOUT: ; ModuleID = 'fn_ptr.carbon'
 // CHECK:STDOUT: source_filename = "fn_ptr.carbon"
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare i32 @_CA.Main(i32)
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a_ptr.var = alloca ptr, align 8, !dbg !7
 // CHECK:STDOUT:   %result.var = alloca i32, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a_ptr.var), !dbg !7
-// CHECK:STDOUT:   store ptr poison, ptr %a_ptr.var, align 8, !dbg !7
+// CHECK:STDOUT:   store ptr @_CA.Main, ptr %a_ptr.var, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %result.var), !dbg !8
-// CHECK:STDOUT:   %.loc16_28 = load ptr, ptr %a_ptr.var, align 8, !dbg !9
-// CHECK:STDOUT:   %__fn_ptr_thunk.call = call i32 %.loc16_28(ptr %.loc16_28, i32 0), !dbg !9
+// CHECK:STDOUT:   %.loc17_28 = load ptr, ptr %a_ptr.var, align 8, !dbg !9
+// CHECK:STDOUT:   %__fn_ptr_thunk.call = call i32 %.loc17_28(ptr %.loc17_28, i32 0), !dbg !9
 // CHECK:STDOUT:   store i32 %__fn_ptr_thunk.call, ptr %result.var, align 4, !dbg !8
 // CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %result.var), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !10
@@ -57,18 +60,18 @@ fn F() {
 // CHECK:STDOUT: !1 = !DIFile(filename: "fn_ptr.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !1, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !1, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 15, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 16, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 28, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 1, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !1, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
+// CHECK:STDOUT: !7 = !DILocation(line: 16, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 17, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 28, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 1, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !1, line: 17, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null, !14}
 // CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !15 = !{!16}
 // CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
-// CHECK:STDOUT: !17 = !DILocation(line: 16, column: 3, scope: !11)
+// CHECK:STDOUT: !17 = !DILocation(line: 17, column: 3, scope: !11)
 // CHECK:STDOUT:

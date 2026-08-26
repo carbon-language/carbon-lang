@@ -341,6 +341,173 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
                                     .dest_id = return_slot_arg_id});
 }
 
+// Performs a conversion from a function to a function pointer type.
+static auto ConvertFunctionToPointer(Context& context,
+                                     SemIR::FunctionType src_type,
+                                     SemIR::FunctionPtrType dest_type,
+                                     SemIR::InstId value_id,
+                                     ConversionTarget target) -> SemIR::InstId {
+  if (src_type.specific_id.has_value()) {
+    context.TODO(value_id, "consider supporting pointers to generic functions");
+    return SemIR::ErrorInst::InstId;
+  }
+  auto src_function = context.functions().Get(src_type.function_id);
+
+  auto diagnose_compile_time_param =
+      [&](SemIR::InstId param_pattern_id) -> SemIR::InstId {
+    if (target.diagnose) {
+      CARBON_DIAGNOSTIC(
+          FnPtrWithCompileTimeParam, Error,
+          "can't form pointer to function with compile-time parameter");
+      CARBON_DIAGNOSTIC(FnPtrWithCompileTimeParamPattern, Note,
+                        "declared here");
+      context.emitter()
+          .Build(value_id, FnPtrWithCompileTimeParam)
+          .Note(param_pattern_id, FnPtrWithCompileTimeParamPattern)
+          .Emit();
+    }
+    return SemIR::ErrorInst::InstId;
+  };
+
+  if (auto implicit_pattern_ids = context.inst_blocks().GetOrEmpty(
+          src_function.implicit_param_patterns_id);
+      !implicit_pattern_ids.empty()) {
+    return diagnose_compile_time_param(implicit_pattern_ids[0]);
+  }
+
+  auto param_pattern_ids =
+      context.inst_blocks().Get(src_function.param_patterns_id);
+
+  auto param_form_ids = context.inst_blocks().Get(dest_type.param_forms_id);
+
+  struct Entry {
+    SemIR::InstId param_pattern_id;
+    SemIR::InstId target_form_id;
+  };
+  llvm::SmallVector<Entry> worklist;
+  worklist.push_back({.param_pattern_id = src_function.return_pattern_id,
+                      .target_form_id = dest_type.return_form_id});
+  for (auto [param_pattern_id, target_form_id] :
+       llvm::reverse(llvm::zip(param_pattern_ids, param_form_ids))) {
+    worklist.push_back({.param_pattern_id = param_pattern_id,
+                        .target_form_id = target_form_id});
+  }
+
+  auto expect_primitive_form = [&](Entry entry,
+                                   SemIR::InstKind expected_form_kind) -> bool {
+    auto target_form =
+        context.insts().TryGetAs<SemIR::AnyPrimitiveForm>(entry.target_form_id);
+    if (target_form == std::nullopt ||
+        target_form->kind != expected_form_kind) {
+      if (target.diagnose) {
+        // TODO: Here and below, use different phrasing for parameters and
+        // returns, and identify parameters by their number.
+        CARBON_DIAGNOSTIC(
+            FnPtrFormMismatch, Error,
+            "function pointer form does not match function declaration");
+        CARBON_DIAGNOSTIC(FnPtrFormMismatchParamPattern, Note,
+                          "this parameter/return's form is not {0}",
+                          InstIdAsRawType);
+        context.emitter()
+            .Build(value_id, FnPtrFormMismatch)
+            .Note(entry.param_pattern_id, FnPtrFormMismatchParamPattern,
+                  entry.target_form_id)
+            .Emit();
+      }
+      return false;
+    }
+
+    auto pattern_type_id =
+        context.insts().Get(entry.param_pattern_id).type_id();
+    auto scrutinee_type_id =
+        SemIR::ExtractScrutineeType(context.sem_ir(), pattern_type_id);
+    auto target_type_id =
+        context.types().GetTypeIdForTypeInstId(target_form->type_component_id);
+    if (!context.types().AreEqualAcrossDeclarations(scrutinee_type_id,
+                                                    target_type_id)) {
+      CARBON_DIAGNOSTIC(
+          FnPtrDiffersType, Error,
+          "type {0} in function pointer type differs from type {1} in "
+          "function signature",
+          SemIR::TypeId, SemIR::TypeId);
+      CARBON_DIAGNOSTIC(FnPtrDiffersPrevious, Note,
+                        "declared in function signature here");
+      context.emitter()
+          .Build(value_id, FnPtrDiffersType, target_type_id, scrutinee_type_id)
+          .Note(entry.param_pattern_id, FnPtrDiffersPrevious)
+          .Emit();
+      return false;
+    }
+    return true;
+  };
+
+  while (!worklist.empty()) {
+    auto entry = worklist.pop_back_val();
+    auto param_pattern = context.insts().Get(entry.param_pattern_id);
+    CARBON_KIND_SWITCH(param_pattern) {
+      case SemIR::RefBindingPattern::Kind:
+      case SemIR::RefParamPattern::Kind:
+      case SemIR::RefReturnPattern::Kind: {
+        if (!expect_primitive_form(entry, SemIR::RefForm::Kind)) {
+          return SemIR::ErrorInst::InstId;
+        }
+        break;
+      }
+
+      case SemIR::ValueBindingPattern::Kind:
+      case SemIR::ValueParamPattern::Kind:
+      case SemIR::ValueReturnPattern::Kind:
+        if (!expect_primitive_form(entry, SemIR::ValueForm::Kind)) {
+          return SemIR::ErrorInst::InstId;
+        }
+        break;
+
+      case SemIR::VarParamPattern::Kind:
+      case SemIR::VarPattern::Kind:
+      case SemIR::OutParamPattern::Kind:
+        if (!expect_primitive_form(entry, SemIR::InitForm::Kind)) {
+          return SemIR::ErrorInst::InstId;
+        }
+        break;
+
+      case SemIR::SymbolicBindingPattern::Kind: {
+        return diagnose_compile_time_param(entry.param_pattern_id);
+      }
+
+      case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
+        worklist.push_back(
+            {.param_pattern_id = return_slot_pattern.subpattern_id,
+             .target_form_id = entry.target_form_id});
+        break;
+      }
+
+      case CARBON_KIND(SemIR::WrapperBindingPattern wrapper_binding_pattern): {
+        worklist.push_back(
+            {.param_pattern_id = wrapper_binding_pattern.subpattern_id,
+             .target_form_id = entry.target_form_id});
+        break;
+      }
+
+      case SemIR::TuplePattern::Kind:
+        context.TODO(value_id, "add support for tuple parameter patterns");
+        return SemIR::ErrorInst::InstId;
+
+      case SemIR::SpliceInst::Kind:
+      case SemIR::SpecificConstant::Kind:
+      case SemIR::ImportRefLoaded::Kind:
+        context.TODO(value_id, "support indirect pattern constants");
+        return SemIR::ErrorInst::InstId;
+
+      default: {
+        CARBON_FATAL("Inst kind not handled: {0}", param_pattern.kind());
+      }
+    }
+  }
+  return AddInst<SemIR::AddrOfFunction>(
+      context, SemIR::LocId(value_id),
+      {.type_id = target.type_id, .function_id = src_type.function_id});
+}
+
 // Performs a conversion from a tuple to a tuple type. This function only
 // converts the type, and does not perform a final conversion to the requested
 // expression category.
@@ -1465,6 +1632,16 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
             sem_ir.types().TryGetAs<SemIR::TupleType>(value_type_id)) {
       return ConvertTupleToArray(context, *src_tuple_type, *target_array_type,
                                  value_id, target);
+    }
+  }
+
+  // Function types can convert to function pointer types.
+  if (auto fn_ptr_type =
+          context.types().TryGetAs<SemIR::FunctionPtrType>(target.type_id)) {
+    if (auto src_fn_type =
+            context.types().TryGetAs<SemIR::FunctionType>(value_type_id)) {
+      return ConvertFunctionToPointer(context, *src_fn_type, *fn_ptr_type,
+                                      value_id, target);
     }
   }
 

@@ -38,6 +38,13 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::AddrOfFunction inst) -> void {
+  auto function_info = context.specific_file_context().GetFunctionInfo(
+      inst.function_id, SemIR::SpecificId::None);
+  context.SetLocal(inst_id, function_info->llvm_function);
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ArrayIndex inst) -> void {
   auto* array_value = context.GetValue(inst.array_id);
   auto* llvm_type = context.GetTypeOfInst(inst.array_id);
