@@ -570,6 +570,8 @@ CARBON_DIAGNOSTIC_KIND(QualifiedExprInIncompleteFacetTypeScope)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprUnsupported)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprNameNotFound)
 CARBON_DIAGNOSTIC_KIND(UseOfNonExprAsValue)
+CARBON_DIAGNOSTIC_KIND(ExportedFunctionPtrTypeMismatch)
+CARBON_DIAGNOSTIC_KIND(ExportedFromFunction)
 
 // Modifier checking.
 CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedOnDeclaration)

@@ -143,6 +143,13 @@ static auto FindAssociatedImportIRs(
           push_args(specific_id);
           break;
         }
+        case CARBON_KIND(SemIR::ClangFunctionPointerTypeId _): {
+          // C++ function pointer types have no declaration that we can map to an
+          // IR in the usual way, but they can only be associated with the C++
+          // IR anyway.
+          result.push_back(SemIR::ImportIRId::Cpp);
+          break;
+        }
         default: {
           break;
         }

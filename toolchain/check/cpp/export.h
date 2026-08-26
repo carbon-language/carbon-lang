@@ -72,11 +72,11 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
                       SemIR::FieldDecl field_decl,
                       SemIR::SpecificId specific_id) -> clang::FieldDecl*;
 
-// Get a `clang::FunctionDecl` that can be used to call a Carbon function.
-// If the function is generic, a `clang::FunctionTemplateDecl` will be
-// created instead.
-auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                         SemIR::FunctionId function_id) -> clang::NamedDecl*;
+// Returns the `ClangDeclId` of a `clang::FunctionDecl` or
+// `clang::FunctionTemplateDecl` that can be used to call the given function.
+auto GetOrExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
+                              SemIR::FunctionId function_id)
+    -> SemIR::ClangDeclId;
 
 // Exports a Carbon virtual function as a C++ `clang::FunctionDecl` declaration.
 // Does not emit a definition.

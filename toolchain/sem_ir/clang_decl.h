@@ -214,10 +214,20 @@ class ClangDeclStore {
   // Looks up a `ClangDeclId` by `ClangDeclKey`.
   auto LookupId(ClangDeclKey key) const -> ClangDeclId;
 
+  // Looks up a `ClangDeclId by `InstId` and optional `SpecificId`.
+  auto LookupId(InstId inst_id, SpecificId specific_id = SpecificId::None) const
+      -> ClangDeclId;
+
   // Looks up a `ClangDecl` by `InstId` and optional `SpecificId`. Returns
   // nullptr if not found.
   auto Lookup(InstId inst_id, SpecificId specific_id = SpecificId::None) const
-      -> const ClangDecl*;
+      -> const ClangDecl* {
+    if (auto clang_decl_id = LookupId(inst_id, specific_id);
+        clang_decl_id.has_value()) {
+      return &Get(clang_decl_id);
+    }
+    return nullptr;
+  }
 
   auto OutputYaml() const -> Yaml::OutputMapping;
 

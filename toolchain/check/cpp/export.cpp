@@ -1488,8 +1488,8 @@ static auto ExportGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
   return template_decl;
 }
 
-auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                         SemIR::FunctionId callee_function_id)
+static auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
+                                SemIR::FunctionId callee_function_id)
     -> clang::NamedDecl* {
   auto target = BuildFunctionInfo(context, loc_id, callee_function_id);
   if (!target) {
@@ -1505,6 +1505,44 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
   }
 
   return ExportNonGenericFunctionToCpp(context, loc_id, *target);
+}
+
+auto GetOrExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
+                              SemIR::FunctionId function_id)
+    -> SemIR::ClangDeclId {
+  SemIR::Function& function = context.functions().Get(function_id);
+  if (auto clang_decl_id =
+          context.clang_decls().LookupId(function.first_decl_id());
+      clang_decl_id.has_value()) {
+    return clang_decl_id;
+  }
+
+  auto* named_decl = ExportFunctionToCpp(context, loc_id, function_id);
+  if (!named_decl) {
+    return SemIR::ClangDeclId::None;
+  }
+
+  if (auto* function_template_decl =
+          llvm::dyn_cast<clang::FunctionTemplateDecl>(named_decl)) {
+    return context.clang_decls().Add(
+        {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(function_template_decl),
+         .inst_id = function.first_decl_id()});
+  }
+
+  auto* clang_function_decl = llvm::cast<clang::FunctionDecl>(named_decl);
+
+  SemIR::ClangDeclSignature thunk_signature;
+  thunk_signature.kind = SemIR::ClangDeclSignature::Normal;
+  thunk_signature.num_params =
+      static_cast<int32_t>(clang_function_decl->getNumParams());
+  thunk_signature.passing_modes.assign(
+      thunk_signature.num_params,
+      SemIR::ClangDeclSignature::PassingMode::ByValue);
+  return context.clang_decls().Add(
+      {.key = SemIR::ClangDeclKey::ForFunctionDecl(
+           clang_function_decl,
+           context.clang_decl_signatures().Add(std::move(thunk_signature))),
+       .inst_id = function.first_decl_id()});
 }
 
 // Returns whether the given class has any abstract methods.

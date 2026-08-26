@@ -165,9 +165,6 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
   auto MapInstIdToClangDeclOrType(LookupResult lookup)
       -> std::variant<clang::NamedDecl*, clang::QualType>;
 
-  auto GetOrExportFunctionToCpp(SemIR::InstId target_inst_id,
-                                SemIR::FunctionId function_id)
-      -> clang::NamedDecl*;
   // Get a current best-effort location for the current position within C++
   // processing.
   auto GetCurrentCppLocId() -> SemIR::LocId {
@@ -233,8 +230,14 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
           context_->types().GetTypeInstId(target_inst.type_id());
       auto callee = GetCallee(context_->sem_ir(), target_inst_id);
       if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
-        return GetOrExportFunctionToCpp(target_inst_id,
-                                        callee_function->function_id);
+        auto clang_decl_id =
+            GetOrExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
+                                     callee_function->function_id);
+        if (!clang_decl_id.has_value()) {
+          return nullptr;
+        }
+        return llvm::cast<clang::NamedDecl>(
+            context_->clang_decls().Get(clang_decl_id).decl());
       } else if (auto generic_class =
                      context_->insts().TryGetAs<SemIR::GenericClassType>(
                          type_inst_id)) {
@@ -253,46 +256,6 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
     default:
       return nullptr;
   }
-}
-
-auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
-    SemIR::InstId target_inst_id, SemIR::FunctionId function_id)
-    -> clang::NamedDecl* {
-  SemIR::Function& function = context_->functions().Get(function_id);
-  if (const auto* clang_decl =
-          context_->clang_decls().Lookup(function.first_decl_id())) {
-    return cast<clang::NamedDecl>(clang_decl->decl());
-  }
-
-  auto* named_decl =
-      ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id), function_id);
-  if (!named_decl) {
-    return nullptr;
-  }
-
-  if (auto* function_template_decl =
-          llvm::dyn_cast<clang::FunctionTemplateDecl>(named_decl)) {
-    context_->clang_decls().Add(
-        {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(function_template_decl),
-         .inst_id = function.first_decl_id()});
-    return function_template_decl;
-  }
-
-  auto* clang_function_decl = llvm::cast<clang::FunctionDecl>(named_decl);
-
-  SemIR::ClangDeclSignature thunk_signature;
-  thunk_signature.kind = SemIR::ClangDeclSignature::Normal;
-  thunk_signature.num_params =
-      static_cast<int32_t>(clang_function_decl->getNumParams());
-  thunk_signature.passing_modes.assign(
-      thunk_signature.num_params,
-      SemIR::ClangDeclSignature::PassingMode::ByValue);
-  context_->clang_decls().Add(
-      {.key = SemIR::ClangDeclKey::ForFunctionDecl(
-           clang_function_decl,
-           context_->clang_decl_signatures().Add(std::move(thunk_signature))),
-       .inst_id = function.first_decl_id()});
-  return clang_function_decl;
 }
 
 auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {

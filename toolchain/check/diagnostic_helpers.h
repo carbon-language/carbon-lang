@@ -7,6 +7,7 @@
 
 #include <concepts>
 
+#include "clang/AST/TypeBase.h"
 #include "llvm/ADT/APSInt.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
@@ -145,6 +146,15 @@ struct SpecificInterfaceIdAsRawType {
       : specific_interface_id(specific_interface_id) {}
 
   SemIR::SpecificInterfaceId specific_interface_id;
+};
+
+struct ClangType {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
+  explicit(false) ClangType(clang::QualType type) : type(type) {}
+  explicit(false) ClangType(const clang::Type* type) : type(type, 0) {}
+
+  clang::QualType type;
 };
 
 }  // namespace Carbon::Check

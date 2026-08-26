@@ -639,6 +639,18 @@ struct ConvertToValueAction {
   TypeInstId target_type_inst_id;
 };
 
+// A C++ function pointer to a Carbon function.
+struct CppAddrOfFunction {
+  static constexpr auto Kind =
+      InstKind::CppAddrOfFunction.Define<Parse::NodeId>(
+          {.ir_name = "cpp_addr_of_fn",
+           .expr_category = ExprCategory::Value,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  FunctionId function_id;
+};
+
 // The type of an overloaded C++ function.
 struct CppOverloadSetType {
   static constexpr auto Kind =
@@ -952,7 +964,7 @@ struct FunctionDecl {
   static constexpr auto Kind =
       InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
           {.ir_name = "fn_decl",
-           .expr_category = ExprCategory::NotExpr,
+           .expr_category = ExprCategory::Value,
            .is_lowered = false});
 
   TypeId type_id;

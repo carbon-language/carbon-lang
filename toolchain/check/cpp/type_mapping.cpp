@@ -284,6 +284,22 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
     case SemIR::FloatLiteralType::Kind: {
       return context.ast_context().DoubleTy;
     }
+    case CARBON_KIND(SemIR::FunctionType function_type): {
+      auto decl_id =
+          context.functions().Get(function_type.function_id).first_decl_id();
+      auto clang_decl_id = GetOrExportFunctionToCpp(
+          context, SemIR::LocId(decl_id), function_type.function_id);
+      if (!clang_decl_id.has_value()) {
+        return clang::QualType();
+      }
+      clang::QualType clang_fn_type(
+          context.clang_decls().Get(clang_decl_id).decl()->getFunctionType(),
+          0);
+      clang::QualType clang_ptr_type =
+          context.ast_context().getPointerType(clang_fn_type);
+      return context.ast_context().getAttributedType(
+          clang::attr::TypeNonNull, clang_ptr_type, clang_ptr_type);
+    }
     case CARBON_KIND(SemIR::PointerType pointer_type): {
       return WrappedType{
           .inner_type_id =
