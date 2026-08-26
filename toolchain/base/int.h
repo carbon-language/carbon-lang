@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_BASE_INT_H_
 
 #include "common/check.h"
+#include "common/hashing_llvm.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/canonical_value_store.h"

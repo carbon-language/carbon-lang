@@ -13,6 +13,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "common/hashing_llvm.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"

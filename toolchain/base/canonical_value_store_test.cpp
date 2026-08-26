@@ -9,6 +9,7 @@
 
 #include <string>
 
+#include "common/hashing_llvm.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/base/canonical_value_store_impl.h"
