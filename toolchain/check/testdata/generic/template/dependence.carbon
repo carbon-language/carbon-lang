@@ -278,6 +278,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %.869: type = type_of_inst @F.%.loc6_16.3 [template]
 // CHECK:STDOUT:   %.dca: %.869 = splice_inst @F.%.loc6_16.3 [template]
 // CHECK:STDOUT:   %tuple.type.f7a: type = tuple_type (<instruction>) [concrete]
+// CHECK:STDOUT:   %.a65: %tuple.type.a5e = splice_inst @F.%tuple.elem0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -324,8 +325,9 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %.loc6_16.3: <instruction> = call_action (%F.ref, %T.ref.loc6, %U.ref.loc6), false [template]
 // CHECK:STDOUT:   %.loc6_16.4: type = type_of_inst %.loc6_16.3 [template = %.loc6_16.4 (constants.%.869)]
 // CHECK:STDOUT:   %.loc6_16.5: @F.%.loc6_16.4 (%.869) = splice_inst %.loc6_16.3 [template = %.loc6_16.5 (constants.%.dca)]
-// CHECK:STDOUT:   %.loc6_17: %tuple.type.f7a = initialize_action %.loc6_16.2, %tuple.type, %return.param, false [template]
-// CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc6_17, element0 [template]
+// CHECK:STDOUT:   %.loc6_17.2: %tuple.type.f7a = initialize_action %.loc6_16.2, %tuple.type, %return.param, false [template]
+// CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc6_17.2, element0 [template]
+// CHECK:STDOUT:   %.loc6_17.3: @F.%tuple.type (%tuple.type.a5e) = splice_inst %tuple.elem0 [template = %.loc6_17.3 (constants.%.a65)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @F.%tuple.type (%tuple.type.a5e) {
 // CHECK:STDOUT:   !entry:
@@ -334,7 +336,8 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:     %U.ref.loc6: type = name_ref U, %U.loc5_33.2 [symbolic = %U.loc5_33.1 (constants.%U)]
 // CHECK:STDOUT:     %.loc6_16.1: type = type_of_inst %.loc6_16.3 [template = %.loc6_16.4 (constants.%.869)]
 // CHECK:STDOUT:     %.loc6_16.2: @F.%.loc6_16.4 (%.869) = splice_inst %.loc6_16.3 [template = %.loc6_16.5 (constants.%.dca)]
-// CHECK:STDOUT:     return %tuple.elem0 to %return.param
+// CHECK:STDOUT:     %.loc6_17.1: @F.%tuple.type (%tuple.type.a5e) = splice_inst %tuple.elem0 [template = %.loc6_17.3 (constants.%.a65)]
+// CHECK:STDOUT:     return %.loc6_17.1 to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

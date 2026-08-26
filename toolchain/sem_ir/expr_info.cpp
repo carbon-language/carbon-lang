@@ -130,7 +130,10 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
             return action_category->category;
           }
         } else {
-          CARBON_FATAL("Inst doesn't have action category: {0}", action);
+          // TODO: Do we need a way to specify a non-dependent category here?
+          // Perhaps for the first element of a MultiInstAction we should use
+          // the ActionExprCategory on the inst.
+          return ExprCategory::Dependent;
         }
       } else if constexpr (std::same_as<TypedInstT, WrapperBinding>) {
         if (!inst.value_id.has_value()) {

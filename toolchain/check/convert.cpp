@@ -2116,7 +2116,7 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
           target.storage_access_block->MergeReplacing(storage_arg_id,
                                                       storage_id);
         });
-    return result_id;
+    return AddSpliceInst(context, result_id, target_type_inst_id);
   }
 
   // We don't use `HandleAction` here because it would call `PerformAction`

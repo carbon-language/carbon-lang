@@ -187,20 +187,26 @@ fn H() {
 // CHECK:STDOUT:   %v.var_patt.53d: %pattern_type.231 = var_pattern %v.patt.bcc [template]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.type.f7a: type = tuple_type (<instruction>) [concrete]
+// CHECK:STDOUT:   %.d5a: %F.call = splice_inst @UseFGenerically.%tuple.elem0 [template]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Self.0e7: %Destroy.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.d3e: type = fn_type @Destroy.WithSelf.Op.1, @Destroy.WithSelf(%Self.0e7) [symbolic]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.42b: %Destroy.WithSelf.Op.type.d3e = struct_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.assoc_type: type = assoc_entity_type @Destroy [concrete]
 // CHECK:STDOUT:   %assoc0.ae8: %Destroy.assoc_type = assoc_entity element0, imports.%Core.import_ref.918 [concrete]
-// CHECK:STDOUT:   %.d34: type = type_of_inst @UseFGenerically.%.loc11_3.6 [template]
-// CHECK:STDOUT:   %.811: %.d34 = splice_inst @UseFGenerically.%.loc11_3.6 [template]
-// CHECK:STDOUT:   %.7d3: type = type_of_inst @UseFGenerically.%.loc11_3.9 [template]
-// CHECK:STDOUT:   %.3eb: %.7d3 = splice_inst @UseFGenerically.%.loc11_3.9 [template]
+// CHECK:STDOUT:   %.d34: type = type_of_inst @UseFGenerically.%.loc11_3.8 [template]
+// CHECK:STDOUT:   %.811: %.d34 = splice_inst @UseFGenerically.%.loc11_3.8 [template]
+// CHECK:STDOUT:   %.7d3: type = type_of_inst @UseFGenerically.%.loc11_3.11 [template]
+// CHECK:STDOUT:   %.3eb: %.7d3 = splice_inst @UseFGenerically.%.loc11_3.11 [template]
 // CHECK:STDOUT:   %int_3.410: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %v.patt.5c6: %pattern_type.98b = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:   %v.var_patt.a6f: %pattern_type.98b = var_pattern %v.patt.5c6 [concrete]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
+// CHECK:STDOUT:   %inst.class_init: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.664: init %C to @UseFGenerically.%v.var = class_init () [concrete = %C.val]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %tuple.7ce: %tuple.type.f7a = tuple_value (%inst.class_init) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc11_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.6c4ec3.2: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2), @Destroy [concrete]
@@ -245,20 +251,22 @@ fn H() {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %F.call.loc11_20.2 [template = %pattern_type (constants.%pattern_type.231)]
 // CHECK:STDOUT:   %v.patt.loc11_15.2: @UseFGenerically.%pattern_type (%pattern_type.231) = ref_binding_pattern v [template = %v.patt.loc11_15.2 (constants.%v.patt.bcc)]
 // CHECK:STDOUT:   %v.var_patt.loc11_3.2: @UseFGenerically.%pattern_type (%pattern_type.231) = var_pattern %v.patt.loc11_15.2 [template = %v.var_patt.loc11_3.2 (constants.%v.var_patt.53d)]
-// CHECK:STDOUT:   %.loc11_3.5: %tuple.type.f7a = initialize_action %.loc11_25, %F.call.loc11_20.2, %v.var, false [template]
-// CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc11_3.5, element0 [template]
-// CHECK:STDOUT:   %.loc11_3.6: <instruction> = compound_member_access_action %v.var, constants.%assoc0.ae8 [template]
-// CHECK:STDOUT:   %.loc11_3.7: type = type_of_inst %.loc11_3.6 [template = %.loc11_3.7 (constants.%.d34)]
-// CHECK:STDOUT:   %.loc11_3.8: @UseFGenerically.%.loc11_3.7 (%.d34) = splice_inst %.loc11_3.6 [template = %.loc11_3.8 (constants.%.811)]
-// CHECK:STDOUT:   %.loc11_3.9: <instruction> = call_action (%.loc11_3.2), true [template]
-// CHECK:STDOUT:   %.loc11_3.10: type = type_of_inst %.loc11_3.9 [template = %.loc11_3.10 (constants.%.7d3)]
-// CHECK:STDOUT:   %.loc11_3.11: @UseFGenerically.%.loc11_3.10 (%.7d3) = splice_inst %.loc11_3.9 [template = %.loc11_3.11 (constants.%.3eb)]
+// CHECK:STDOUT:   %.loc11_3.6: %tuple.type.f7a = initialize_action %.loc11_25, %F.call.loc11_20.2, %v.var, false [template]
+// CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc11_3.6, element0 [template]
+// CHECK:STDOUT:   %.loc11_3.7: @UseFGenerically.%F.call.loc11_20.2 (%F.call) = splice_inst %tuple.elem0 [template = %.loc11_3.7 (constants.%.d5a)]
+// CHECK:STDOUT:   %.loc11_3.8: <instruction> = compound_member_access_action %v.var, constants.%assoc0.ae8 [template]
+// CHECK:STDOUT:   %.loc11_3.9: type = type_of_inst %.loc11_3.8 [template = %.loc11_3.9 (constants.%.d34)]
+// CHECK:STDOUT:   %.loc11_3.10: @UseFGenerically.%.loc11_3.9 (%.d34) = splice_inst %.loc11_3.8 [template = %.loc11_3.10 (constants.%.811)]
+// CHECK:STDOUT:   %.loc11_3.11: <instruction> = call_action (%.loc11_3.3), true [template]
+// CHECK:STDOUT:   %.loc11_3.12: type = type_of_inst %.loc11_3.11 [template = %.loc11_3.12 (constants.%.7d3)]
+// CHECK:STDOUT:   %.loc11_3.13: @UseFGenerically.%.loc11_3.12 (%.7d3) = splice_inst %.loc11_3.11 [template = %.loc11_3.13 (constants.%.3eb)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %v.var: ref @UseFGenerically.%F.call.loc11_20.2 (%F.call) = var_storage %v.var_patt.loc11_3.1
 // CHECK:STDOUT:     %.loc11_25: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     assign %v.var, %tuple.elem0
+// CHECK:STDOUT:     %.loc11_3.1: @UseFGenerically.%F.call.loc11_20.2 (%F.call) = splice_inst %tuple.elem0 [template = %.loc11_3.7 (constants.%.d5a)]
+// CHECK:STDOUT:     assign %v.var, %.loc11_3.1
 // CHECK:STDOUT:     %.loc11_20.1: type = splice_block %.loc11_20.3 [template = %F.call.loc11_20.2 (constants.%F.call)] {
 // CHECK:STDOUT:       %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:       %X.ref: %i32 = name_ref X, %X.loc10_29.2 [symbolic = %X.loc10_29.1 (constants.%X)]
@@ -271,10 +279,10 @@ fn H() {
 // CHECK:STDOUT:       %v.patt.loc11_15.1: @UseFGenerically.%pattern_type (%pattern_type.231) = ref_binding_pattern v [template = %v.patt.loc11_15.2 (constants.%v.patt.bcc)]
 // CHECK:STDOUT:       %v.var_patt.loc11_3.1: @UseFGenerically.%pattern_type (%pattern_type.231) = var_pattern %v.patt.loc11_15.1 [template = %v.var_patt.loc11_3.2 (constants.%v.var_patt.53d)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc11_3.1: type = type_of_inst %.loc11_3.6 [template = %.loc11_3.7 (constants.%.d34)]
-// CHECK:STDOUT:     %.loc11_3.2: @UseFGenerically.%.loc11_3.7 (%.d34) = splice_inst %.loc11_3.6 [template = %.loc11_3.8 (constants.%.811)]
-// CHECK:STDOUT:     %.loc11_3.3: type = type_of_inst %.loc11_3.9 [template = %.loc11_3.10 (constants.%.7d3)]
-// CHECK:STDOUT:     %.loc11_3.4: @UseFGenerically.%.loc11_3.10 (%.7d3) = splice_inst %.loc11_3.9 [template = %.loc11_3.11 (constants.%.3eb)]
+// CHECK:STDOUT:     %.loc11_3.2: type = type_of_inst %.loc11_3.8 [template = %.loc11_3.9 (constants.%.d34)]
+// CHECK:STDOUT:     %.loc11_3.3: @UseFGenerically.%.loc11_3.9 (%.d34) = splice_inst %.loc11_3.8 [template = %.loc11_3.10 (constants.%.811)]
+// CHECK:STDOUT:     %.loc11_3.4: type = type_of_inst %.loc11_3.11 [template = %.loc11_3.12 (constants.%.7d3)]
+// CHECK:STDOUT:     %.loc11_3.5: @UseFGenerically.%.loc11_3.12 (%.7d3) = splice_inst %.loc11_3.11 [template = %.loc11_3.13 (constants.%.3eb)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -301,14 +309,15 @@ fn H() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.98b
 // CHECK:STDOUT:   %v.patt.loc11_15.2 => constants.%v.patt.5c6
 // CHECK:STDOUT:   %v.var_patt.loc11_3.2 => constants.%v.var_patt.a6f
-// CHECK:STDOUT:   %.loc11_3.5 => invalid
-// CHECK:STDOUT:   %tuple.elem0 => invalid
-// CHECK:STDOUT:   %.loc11_3.6 => constants.%inst.splice_block
-// CHECK:STDOUT:   %.loc11_3.7 => <bound method>
-// CHECK:STDOUT:   %.loc11_3.8 => invalid
-// CHECK:STDOUT:   %.loc11_3.9 => constants.%inst.call
-// CHECK:STDOUT:   %.loc11_3.10 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc11_3.11 => invalid
+// CHECK:STDOUT:   %.loc11_3.6 => constants.%tuple.7ce
+// CHECK:STDOUT:   %tuple.elem0 => constants.%inst.class_init
+// CHECK:STDOUT:   %.loc11_3.7 => constants.%C.val
+// CHECK:STDOUT:   %.loc11_3.8 => constants.%inst.splice_block
+// CHECK:STDOUT:   %.loc11_3.9 => <bound method>
+// CHECK:STDOUT:   %.loc11_3.10 => invalid
+// CHECK:STDOUT:   %.loc11_3.11 => constants.%inst.call
+// CHECK:STDOUT:   %.loc11_3.12 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %.loc11_3.13 => invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_in_place_discarded.carbon

@@ -102,9 +102,8 @@ auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
 template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT> &&
            SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::AbsoluteInstId,
-                       SemIR::CallParamIndex, SemIR::NameId,
-                       SemIR::ElementIndex, SemIR::ClangDeclId,
-                       SemIR::BoolValue>
+                       SemIR::BoolValue, SemIR::CallParamIndex,
+                       SemIR::ClangDeclId, SemIR::ElementIndex, SemIR::NameId>
 static auto OperandDependenceInSpecific(Context& /*context*/,
                                         SemIR::SpecificId /*specific_id*/,
                                         IdT /*id*/)
