@@ -118,6 +118,52 @@ fn F(ref b: B(i32)) {
 }
 //@dump-sem-ir-end
 
+// --- let_cpp_template_constructor.carbon
+
+library "[[@TEST_NAME]]";
+import Cpp inline '''
+template<typename T>
+struct A {};
+''';
+
+// @dump-sem-ir-begin
+fn F(generic T: type) {
+  // CHECK:STDERR: let_cpp_template_constructor.carbon:[[@LINE+4]]:28: error: value of type `<dependent type>` is not callable [CallToNonCallable]
+  // CHECK:STDERR:   let unused a: Cpp.A(T) = Cpp.A(T).A();
+  // CHECK:STDERR:                            ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  let unused a: Cpp.A(T) = Cpp.A(T).A();
+}
+
+fn G() {
+  F(i32);
+}
+// @dump-sem-ir-end
+
+// --- fail_todo_var_cpp_template_constructor.carbon
+
+library "[[@TEST_NAME]]";
+import Cpp inline '''
+template<typename T>
+struct A {};
+''';
+
+fn F(generic T: type) {
+  // CHECK:STDERR: fail_todo_var_cpp_template_constructor.carbon:[[@LINE+8]]:28: error: value of type `<dependent type>` is not callable [CallToNonCallable]
+  // CHECK:STDERR:   var unused a: Cpp.A(T) = Cpp.A(T).A();
+  // CHECK:STDERR:                            ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_var_cpp_template_constructor.carbon:[[@LINE+4]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
+  // CHECK:STDERR:   var unused a: Cpp.A(T) = Cpp.A(T).A();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  var unused a: Cpp.A(T) = Cpp.A(T).A();
+}
+
+fn G() {
+  F(i32);
+}
+
 // CHECK:STDOUT: --- use_class_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
