@@ -1139,7 +1139,8 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst7800021A:    {kind: TupleInit, arg0: inst_block7800008A, arg1: inst78000046, type: type(symbolic_constant78000010)}
 // CHECK:STDOUT:     inst7800021B:    {kind: Converted, arg0: inst78000054, arg1: inst7800021A, type: type(symbolic_constant78000010)}
 // CHECK:STDOUT:     inst7800021C:    {kind: ReturnExpr, arg0: inst7800021B, arg1: inst78000046}
-// CHECK:STDOUT:   bundles:         {}
+// CHECK:STDOUT:   bundles:
+// CHECK:STDOUT:     bundle78000000:  {arg0: any_raw78000207, arg1: any_raw0, arg2: any_raw1}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)
