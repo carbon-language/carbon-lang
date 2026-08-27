@@ -39,13 +39,11 @@ class C {
 // CHECK:STDOUT: fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn G() -> i32 {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   return 3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn H(x: i32, y: i32) -> i32 {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   var z: i32 = x + y;
 // CHECK:STDOUT:   return z;
 // CHECK:STDOUT:

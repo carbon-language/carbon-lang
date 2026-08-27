@@ -65,9 +65,10 @@ class Formatter {
   // line.
   auto EmitComment() -> void;
 
-  // Prepares the line state for starting content at `start_line`. Emits any
-  // pending newline (or an extra blank line if `start_line - prev_end_line_ >=
-  // 2`) and indents the line if empty.
+  // Emits a new line before next token.
+  auto EmitNewLine(int start_line) -> void;
+
+  // Prepares the line state for starting content at `start_line`.
   auto PrepareForStartOfLine(int start_line) -> void;
 
   // Ensures there is a separator before adding new content. May do
@@ -105,6 +106,8 @@ class Formatter {
 
   // The 1-based end line in original source of the previous token or comment.
   int prev_end_line_ = 0;
+
+  Lex::TokenKind prev_token_kind_ = Lex::TokenKind::FileStart;
 };
 
 }  // namespace Carbon::Format

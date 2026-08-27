@@ -56,7 +56,6 @@ fn Run ( ) -> i32 {
 // CHECK:STDOUT: import Core library "io";
 // CHECK:STDOUT:
 // CHECK:STDOUT: // Compute and return the number of primes less than 1000.
-// CHECK:STDOUT:
 // CHECK:STDOUT: class Sieve {
 // CHECK:STDOUT:   impl as Core.UnformedInit {}
 // CHECK:STDOUT:

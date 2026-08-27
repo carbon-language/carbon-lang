@@ -212,6 +212,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto GetLine(CommentIndex comment) const -> LineIndex;
   auto GetLineNumber(CommentIndex comment) const -> int;
 
+  // Returns the first line after the comment.
+  auto GetEndLine(CommentIndex comment) const -> LineIndex;
+
   // Returns tokens as YAML. This prints the tracked token information on a
   // single line for each token. We use the single-line format so that output is
   // compact, and so that tools like `grep` are compatible.

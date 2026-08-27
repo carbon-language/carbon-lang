@@ -4,6 +4,10 @@
 
 #include "toolchain/format/formatter.h"
 
+#include <algorithm>
+
+#include "toolchain/lex/token_kind.h"
+
 namespace Carbon::Format {
 
 auto Formatter::Run() -> bool {
@@ -18,7 +22,6 @@ auto Formatter::Run() -> bool {
     return true;
   }
 
-  Lex::TokenKind prev_token_kind = Lex::TokenKind::FileStart;
   for (auto token : tokens_->tokens()) {
     auto token_kind = tokens_->GetKind(token);
 
@@ -58,8 +61,8 @@ auto Formatter::Run() -> bool {
         break;
 
       case Lex::TokenKind::Else:
-        if (prev_token_kind == Lex::TokenKind::CloseCurlyBrace &&
-            line_state_ == LineState::EndOfLine) {
+        // `else` token should be placed on same line as `}`
+        if (line_state_ == LineState::EndOfLine) {
           line_state_ = LineState::NeedsSeparator;
         }
         PrepareForSpacedContent(token_start_line);
@@ -93,11 +96,11 @@ auto Formatter::Run() -> bool {
           PrepareForPackedContent(token_start_line);
         } else if (token_kind.IsOneOf({Lex::TokenKind::OpenParen,
                                        Lex::TokenKind::OpenSquareBracket}) &&
-                   (prev_token_kind.IsOneOf(
+                   (prev_token_kind_.IsOneOf(
                         {Lex::TokenKind::Identifier, Lex::TokenKind::Array,
                          Lex::TokenKind::CloseParen,
                          Lex::TokenKind::CloseSquareBracket}) ||
-                    prev_token_kind.is_sized_type_literal())) {
+                    prev_token_kind_.is_sized_type_literal())) {
           PrepareForPackedContent(token_start_line);
         } else {
           PrepareForSpacedContent(token_start_line);
@@ -108,10 +111,8 @@ auto Formatter::Run() -> bool {
                           : LineState::NeedsSeparator;
         break;
     }
-    prev_token_kind = token_kind;
-    if (token_kind != Lex::TokenKind::FileStart) {
-      prev_end_line_ = tokens_->GetEndLoc(token).first.index + 1;
-    }
+    prev_token_kind_ = token_kind;
+    prev_end_line_ = tokens_->GetEndLoc(token).first.index + 1;
   }
 
   // Materialize any newline deferred by the final line.
@@ -135,41 +136,41 @@ auto Formatter::EmitComment() -> void {
   } else {
     // A full-line comment (or a trailing comment with nothing left to attach
     // to) is emitted on its own line.
-    RequireEmptyLine();
     int comment_start_line = tokens_->GetLineNumber(comment);
-    PrepareForStartOfLine(comment_start_line);
-    llvm::StringRef remaining = tokens_->GetCommentText(comment);
-    bool first_line = true;
-    while (!remaining.empty()) {
-      auto [line, rest] = remaining.split('\n');
-      remaining = rest;
-      if (!first_line) {
-        out_->indent(indent_);
-      }
-      first_line = false;
-      *out_ << line.ltrim() << "\n";
+    if (line_state_ != LineState::Empty) {
+      EmitNewLine(comment_start_line);
     }
-    int comment_lines = tokens_->GetCommentText(comment).count('\n');
-    prev_end_line_ =
-        comment_start_line + (comment_lines > 0 ? comment_lines - 1 : 0);
+
+    int line_count = 0;
+    // Split comment lines so we can re-apply indent.
+    for (auto line :
+         llvm::split(tokens_->GetCommentText(comment).rtrim(), '\n')) {
+      out_->indent(indent_) << line.trim() << '\n';
+      line_count++;
+    }
+    prev_end_line_ = comment_start_line + line_count - 1;
   }
   // Comment text includes a terminating newline, so just update the state.
+  line_state_ = LineState::Empty;
+}
+
+auto Formatter::EmitNewLine(int start_line) -> void {
+  *out_ << "\n";
+
+  // If source code chose to have an empty line
+  int source_code_gap = start_line - prev_end_line_;
+  if (source_code_gap > 1 &&
+      prev_token_kind_.IsOneOf(
+          {Lex::TokenKind::Semi, Lex::TokenKind::CloseCurlyBrace})) {
+    *out_ << "\n";
+  }
   line_state_ = LineState::Empty;
 }
 
 auto Formatter::PrepareForStartOfLine(int start_line) -> void {
   // Materialize a deferred newline before starting to fill a fresh line.
   if (line_state_ == LineState::EndOfLine) {
-    if (prev_end_line_ > 0 && start_line - prev_end_line_ >= 2) {
-      *out_ << "\n\n";
-    } else {
-      *out_ << "\n";
-    }
-    line_state_ = LineState::Empty;
-  } else if (line_state_ == LineState::Empty) {
-    if (prev_end_line_ > 0 && start_line - prev_end_line_ >= 2) {
-      *out_ << "\n";
-    }
+    EmitNewLine(start_line);
   }
   if (line_state_ == LineState::Empty) {
     out_->indent(indent_);
