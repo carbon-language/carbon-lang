@@ -793,6 +793,12 @@ auto EvalConstantInst(Context& /*context*/, SemIR::StructLiteral inst)
       .type_id = inst.type_id, .elements_id = inst.elements_id});
 }
 
+auto EvalConstantInst(Context& context, SemIR::TemplateInst inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::Existing(
+      context.constant_values().Get(inst.inst_id));
+}
+
 auto EvalConstantInst(Context& context, SemIR::TupleAccess inst)
     -> ConstantEvalResult {
   return PerformAggregateAccess(context, inst);

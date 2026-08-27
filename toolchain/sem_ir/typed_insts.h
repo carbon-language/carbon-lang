@@ -2124,6 +2124,18 @@ struct SymbolicBindingPattern {
   EntityNameId entity_name_id;
 };
 
+// Wraps an instruction and, if that instruction is symbolic, forces it to be
+// evaluated as a template.
+struct TemplateInst {
+  static constexpr auto Kind = InstKind::TemplateInst.Define<Parse::NodeId>(
+      {.ir_name = "template_inst",
+       .expr_category = ActionExprCategory(ExprCategory::Dependent),
+       .is_lowered = false});
+
+  TypeId type_id;
+  InstId inst_id;
+};
+
 // Consumes the initializer `init_id`, uses it to initialize a temporary
 // object, and forms an ephemeral reference to it. If `init_id` has a
 // storage arg, it must be a `TemporaryStorage` inst.
