@@ -61,6 +61,13 @@ auto Formatter::Run() -> bool {
         line_state_ = LineState::HasSeparator;
         break;
 
+      case Lex::TokenKind::PlusPlus:
+      case Lex::TokenKind::MinusMinus:
+        PrepareForSpacedContent();
+        *out_ << tokens_->GetTokenText(token);
+        line_state_ = LineState::HasSeparator;
+        break;
+
       case Lex::TokenKind::Semi:
         PrepareForPackedContent();
         *out_ << ";";
