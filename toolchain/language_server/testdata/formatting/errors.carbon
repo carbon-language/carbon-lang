@@ -4,27 +4,22 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/language_server/testdata/text_document/open_change_close.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/language_server/testdata/formatting/errors.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/text_document/open_change_close.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/formatting/errors.carbon
 
 // --- STDIN
 [[@LSP-CALL:initialize:"capabilities": {}]]
 [[@LSP-NOTIFY:textDocument/didOpen:
-  "textDocument": {"uri": "file:/test.carbon", "languageId": "carbon",
-                   "text": "// Empty"}
+  "textDocument": {"uri": "file:/error.carbon", "languageId": "carbon",
+                   "text": "fn F() {"}
 ]]
-[[@LSP-NOTIFY:textDocument/didChange:
-  "textDocument": {"uri": "file:/test.carbon"},
-  "contentChanges": [{"text": "// Differently empty"}]
-]]
-[[@LSP-NOTIFY:textDocument/didClose:
-  "textDocument": {"uri": "file:/test.carbon"}
+[[@LSP-CALL:textDocument/formatting:
+  "textDocument": {"uri": "file:/error.carbon"},
+  "options": {"tabSize": 2, "insertSpaces": true}
 ]]
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
-
-// --- AUTOUPDATE-SPLIT
 
 // CHECK:STDOUT: Content-Length: 394{{\r}}
 // CHECK:STDOUT: {{\r}}
@@ -44,37 +39,41 @@
 // CHECK:STDOUT:       "typeDefinitionProvider": true
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 144{{\r}}
+// CHECK:STDOUT: }Content-Length: 487{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "method": "textDocument/publishDiagnostics",
 // CHECK:STDOUT:   "params": {
-// CHECK:STDOUT:     "diagnostics": [],
-// CHECK:STDOUT:     "uri": "file:///test.carbon"
+// CHECK:STDOUT:     "diagnostics": [
+// CHECK:STDOUT:       {
+// CHECK:STDOUT:         "message": "opening symbol without a corresponding closing symbol",
+// CHECK:STDOUT:         "range": {
+// CHECK:STDOUT:           "end": {
+// CHECK:STDOUT:             "character": 8,
+// CHECK:STDOUT:             "line": 0
+// CHECK:STDOUT:           },
+// CHECK:STDOUT:           "start": {
+// CHECK:STDOUT:             "character": 7,
+// CHECK:STDOUT:             "line": 0
+// CHECK:STDOUT:           }
+// CHECK:STDOUT:         },
+// CHECK:STDOUT:         "severity": 1,
+// CHECK:STDOUT:         "source": "carbon"
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     ],
+// CHECK:STDOUT:     "uri": "file:///error.carbon"
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 144{{\r}}
-// CHECK:STDOUT: {{\r}}
-// CHECK:STDOUT: {
-// CHECK:STDOUT:   "jsonrpc": "2.0",
-// CHECK:STDOUT:   "method": "textDocument/publishDiagnostics",
-// CHECK:STDOUT:   "params": {
-// CHECK:STDOUT:     "diagnostics": [],
-// CHECK:STDOUT:     "uri": "file:///test.carbon"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 144{{\r}}
-// CHECK:STDOUT: {{\r}}
-// CHECK:STDOUT: {
-// CHECK:STDOUT:   "jsonrpc": "2.0",
-// CHECK:STDOUT:   "method": "textDocument/publishDiagnostics",
-// CHECK:STDOUT:   "params": {
-// CHECK:STDOUT:     "diagnostics": [],
-// CHECK:STDOUT:     "uri": "file:///test.carbon"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 51{{\r}}
+// CHECK:STDOUT: }Content-Length: 49{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 2,
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "result": []
+// CHECK:STDOUT: }Content-Length: 51{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "id": 3,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": null
 // CHECK:STDOUT: }

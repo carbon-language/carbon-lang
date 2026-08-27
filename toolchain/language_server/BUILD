@@ -102,6 +102,7 @@ cc_library(
         "//common:check",
         "//common:raw_string_ostream",
         "//toolchain/base:shared_value_stores",
+        "//toolchain/format",
         "//toolchain/lex",
         "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",
