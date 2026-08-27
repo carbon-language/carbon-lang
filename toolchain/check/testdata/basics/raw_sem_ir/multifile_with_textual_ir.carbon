@@ -231,8 +231,7 @@ fn B() {
 // CHECK:STDOUT:     inst7000001B:    {kind: NameRef, arg0: name1, arg1: inst70000017, type: type(inst70000019)}
 // CHECK:STDOUT:     inst7000001C:    {kind: Call, arg0: inst7000001B, arg1: inst_block_empty, type: type(inst70000014)}
 // CHECK:STDOUT:     inst7000001D:    {kind: Return}
-// CHECK:STDOUT:   bundles:
-// CHECK:STDOUT:     bundle70000000:  {arg0: any_raw7000001B, arg1: any_raw0, arg2: any_raw0}
+// CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)

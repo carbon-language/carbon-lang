@@ -343,26 +343,28 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
   }
 }
 
-auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
-                 llvm::ArrayRef<SemIR::InstId> arg_ids, bool is_desugared)
-    -> SemIR::InstId {
-  auto args_id = context.bundles().AddCanonical<SemIR::CallAction::Args>(
-      {.callee_id = callee_id,
-       .args_id = context.inst_blocks().Add(arg_ids),
-       .is_desugared = SemIR::BoolValue::From(is_desugared)});
-
-  return HandleAction<SemIR::CallAction>(
-      context, loc_id, SemIR::TypeInstId::None,
-      {.type_id = SemIR::InstType::TypeId, .args_id = args_id});
+// Determines whether a call can be performed immediately (i.e. whether it is
+// non-template-dependent).
+static auto IsCallPerformable(Context& context, SemIR::InstId callee_id,
+                              llvm::ArrayRef<SemIR::InstId> arg_ids) -> bool {
+  if (OperandDependence(context, callee_id) ==
+      SemIR::ConstantDependence::Template) {
+    return false;
+  }
+  for (auto arg_id : arg_ids) {
+    if (OperandDependence(context, arg_id) ==
+        SemIR::ConstantDependence::Template) {
+      return false;
+    }
+  }
+  return true;
 }
 
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::CallAction action) -> SemIR::InstId {
-  auto args = context.bundles().Get(action.args_id);
-  auto callee_id = args.callee_id;
-  auto arg_ids = context.inst_blocks().Get(args.args_id);
-  auto is_desugared = args.is_desugared.ToBool();
-
+// Common logic for `PerformCall` and `PerformAction`.
+static auto PerformCallHelper(Context& context, SemIR::LocId loc_id,
+                              SemIR::InstId callee_id,
+                              llvm::ArrayRef<SemIR::InstId> arg_ids,
+                              bool is_desugared) {
   // Try treating the callee as a function first.
   auto callee = GetCallee(context.sem_ir(), callee_id);
   CARBON_KIND_SWITCH(callee) {
@@ -383,6 +385,31 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
                                       overload.self_id, arg_ids, is_desugared);
     }
   }
+}
+
+auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
+                 llvm::ArrayRef<SemIR::InstId> arg_ids, bool is_desugared)
+    -> SemIR::InstId {
+  if (IsCallPerformable(context, callee_id, arg_ids)) {
+    return PerformCallHelper(context, loc_id, callee_id, arg_ids, is_desugared);
+  }
+
+  auto args_id = context.bundles().AddCanonical<SemIR::CallAction::Args>(
+      {.callee_id = callee_id,
+       .args_id = context.inst_blocks().Add(arg_ids),
+       .is_desugared = SemIR::BoolValue::From(is_desugared)});
+
+  return HandleAction<SemIR::CallAction>(
+      context, loc_id, SemIR::TypeInstId::None,
+      {.type_id = SemIR::InstType::TypeId, .args_id = args_id});
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::CallAction action) -> SemIR::InstId {
+  auto args = context.bundles().Get(action.args_id);
+  return PerformCallHelper(context, loc_id, args.callee_id,
+                           context.inst_blocks().Get(args.args_id),
+                           args.is_desugared.ToBool());
 }
 
 }  // namespace Carbon::Check
