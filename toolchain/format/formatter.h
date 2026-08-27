@@ -65,11 +65,9 @@ class Formatter {
   // line.
   auto EmitComment() -> void;
 
-  // Emits a new line before next token.
+  // Emits a new line before next token. If the source code contained multiple
+  // newlines, will emit up to 2 new lines.
   auto EmitNewLine(int start_line) -> void;
-
-  // Prepares the line state for starting content at `start_line`.
-  auto PrepareForStartOfLine(int start_line) -> void;
 
   // Ensures there is a separator before adding new content. May do
   // `PrepareForPackedContent` or output a separator space, dependent on line

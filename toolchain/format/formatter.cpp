@@ -167,7 +167,7 @@ auto Formatter::EmitNewLine(int start_line) -> void {
   line_state_ = LineState::Empty;
 }
 
-auto Formatter::PrepareForStartOfLine(int start_line) -> void {
+auto Formatter::PrepareForPackedContent(int start_line) -> void {
   // Materialize a deferred newline before starting to fill a fresh line.
   if (line_state_ == LineState::EndOfLine) {
     EmitNewLine(start_line);
@@ -176,10 +176,6 @@ auto Formatter::PrepareForStartOfLine(int start_line) -> void {
     out_->indent(indent_);
     line_state_ = LineState::HasSeparator;
   }
-}
-
-auto Formatter::PrepareForPackedContent(int start_line) -> void {
-  PrepareForStartOfLine(start_line);
 }
 
 auto Formatter::RequireEmptyLine() -> void {
