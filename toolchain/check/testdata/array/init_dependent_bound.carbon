@@ -202,7 +202,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %assoc0.ae8: %Destroy.assoc_type = assoc_entity element0, imports.%Core.import_ref.918 [concrete]
 // CHECK:STDOUT:   %.a09: %array_type.3cc = splice_inst @G.%.loc11_3.4 [template]
 // CHECK:STDOUT:   %.b71: @G.%.loc11_3.7 (@G.%.loc11_3.7) = splice_inst @G.%.loc11_3.6 [template]
-// CHECK:STDOUT:   %.807: @G.%.loc11_3.10 (@G.%.loc11_3.10) = splice_inst @G.%.loc11_3.9 [template]
+// CHECK:STDOUT:   %.098: @G.%.loc11_3.10 (@G.%.loc11_3.10) = splice_inst @G.%.loc11_3.9 [template]
 // CHECK:STDOUT:   %From: Core.IntLiteral = symbolic_binding From, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.7cb: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.type.48d: type = fn_type @Int.as.ImplicitAs.impl.Convert, @Int.as.ImplicitAs.impl(%From) [symbolic]
@@ -274,9 +274,9 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %.loc11_3.6: <instruction> = compound_member_access_action %.loc11_3.1, constants.%assoc0.ae8 [template]
 // CHECK:STDOUT:   %.loc11_3.7: type = type_of_inst %.loc11_3.6 [template]
 // CHECK:STDOUT:   %.loc11_3.8: @G.%.loc11_3.7 (@G.%.loc11_3.7) = splice_inst %.loc11_3.6 [template = %.loc11_3.8 (constants.%.b71)]
-// CHECK:STDOUT:   %.loc11_3.9: <instruction> = call_action %.loc11_3.2, (), true [template]
+// CHECK:STDOUT:   %.loc11_3.9: <instruction> = call_action (%.loc11_3.2), true [template]
 // CHECK:STDOUT:   %.loc11_3.10: type = type_of_inst %.loc11_3.9 [template]
-// CHECK:STDOUT:   %.loc11_3.11: @G.%.loc11_3.10 (@G.%.loc11_3.10) = splice_inst %.loc11_3.9 [template = %.loc11_3.11 (constants.%.807)]
+// CHECK:STDOUT:   %.loc11_3.11: @G.%.loc11_3.10 (@G.%.loc11_3.10) = splice_inst %.loc11_3.9 [template = %.loc11_3.11 (constants.%.098)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -299,7 +299,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc11_3.1: @G.%array_type.loc11_31.2 (%array_type.3cc) = splice_inst %.loc11_3.4 [template = %.loc11_3.5 (constants.%.a09)]
 // CHECK:STDOUT:     %.loc11_3.2: @G.%.loc11_3.7 (@G.%.loc11_3.7) = splice_inst %.loc11_3.6 [template = %.loc11_3.8 (constants.%.b71)]
-// CHECK:STDOUT:     %.loc11_3.3: @G.%.loc11_3.10 (@G.%.loc11_3.10) = splice_inst %.loc11_3.9 [template = %.loc11_3.11 (constants.%.807)]
+// CHECK:STDOUT:     %.loc11_3.3: @G.%.loc11_3.10 (@G.%.loc11_3.10) = splice_inst %.loc11_3.9 [template = %.loc11_3.11 (constants.%.098)]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

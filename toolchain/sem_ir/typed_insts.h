@@ -398,14 +398,11 @@ struct CallAction {
        .constant_kind = InstConstantKind::InstAction,
        .is_lowered = false});
 
-  struct Args {
-    MetaInstId callee_id;
-    MetaInstBlockId args_id;
-    BoolValue is_desugared;
-  };
-
   TypeId type_id;
-  BundleId<Args> args_id;
+  // The first element in this block is the callee. The rest are the call
+  // arguments.
+  MetaInstBlockId inst_block_id;
+  BoolValue is_desugared;
 };
 
 // An action that performs a C++ template call.

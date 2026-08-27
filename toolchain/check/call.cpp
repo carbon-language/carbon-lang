@@ -394,22 +394,28 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     return PerformCallHelper(context, loc_id, callee_id, arg_ids, is_desugared);
   }
 
-  auto args_id = context.bundles().AddCanonical<SemIR::CallAction::Args>(
-      {.callee_id = callee_id,
-       .args_id = context.inst_blocks().Add(arg_ids),
-       .is_desugared = SemIR::BoolValue::From(is_desugared)});
+  // Pack the callee and args into an inst block. This is an optimization to
+  // avoid needing a Bundle in the `CallAction`.
+  llvm::SmallVector<SemIR::InstId> inst_ids;
+  inst_ids.reserve(1 + arg_ids.size());
+  inst_ids.push_back(callee_id);
+  inst_ids.append(arg_ids.begin(), arg_ids.end());
+  auto inst_block_id = context.inst_blocks().Add(inst_ids);
 
   return HandleAction<SemIR::CallAction>(
       context, loc_id, SemIR::TypeInstId::None,
-      {.type_id = SemIR::InstType::TypeId, .args_id = args_id});
+      {.type_id = SemIR::InstType::TypeId,
+       .inst_block_id = inst_block_id,
+       .is_desugared = SemIR::BoolValue::From(is_desugared)});
 }
 
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::CallAction action) -> SemIR::InstId {
-  auto args = context.bundles().Get(action.args_id);
-  return PerformCallHelper(context, loc_id, args.callee_id,
-                           context.inst_blocks().Get(args.args_id),
-                           args.is_desugared.ToBool());
+  auto inst_ids = context.inst_blocks().Get(action.inst_block_id);
+  auto callee_id = inst_ids[0];
+  auto arg_ids = inst_ids.slice(1);
+  return PerformCallHelper(context, loc_id, callee_id, arg_ids,
+                           action.is_desugared.ToBool());
 }
 
 }  // namespace Carbon::Check
