@@ -45,10 +45,19 @@ auto OperandDependence(Context& context, SemIR::TypeId type_id)
 
 auto OperandDependence(Context& context, SemIR::InstId inst_id)
     -> SemIR::ConstantDependence {
+  auto inst = context.insts().Get(inst_id);
+
+  // `TemplateInst` promotes any symbolic instruction to template-dependence.
+  if (auto template_inst = inst.TryAs<SemIR::TemplateInst>()) {
+    if (context.constant_values().Get(template_inst->inst_id).is_symbolic()) {
+      return SemIR::ConstantDependence::Template;
+    }
+  }
+
   // An instruction operand makes the instruction dependent if its type or
   // constant value is dependent.
   return std::max(
-      OperandDependence(context, context.insts().Get(inst_id).type_id()),
+      OperandDependence(context, inst.type_id()),
       OperandDependence(context, context.constant_values().Get(inst_id)));
 }
 
