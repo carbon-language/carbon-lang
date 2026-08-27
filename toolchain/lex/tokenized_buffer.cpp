@@ -32,6 +32,14 @@ auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
   return GetLine(token).index + 1;
 }
 
+auto TokenizedBuffer::GetLine(CommentIndex comment) const -> LineIndex {
+  return FindLineIndex(comments_.Get(comment).start);
+}
+
+auto TokenizedBuffer::GetLineNumber(CommentIndex comment) const -> int {
+  return GetLine(comment).index + 1;
+}
+
 auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
   const auto& token_info = token_infos_.Get(token);
   const auto& line_info =

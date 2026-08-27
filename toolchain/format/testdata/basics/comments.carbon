@@ -54,23 +54,30 @@ var poem: String = ''' // No file type indicator, just a comment.
 
 // CHECK:STDOUT: // A comment
 // CHECK:STDOUT: fn F() {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: // Another comment
+// CHECK:STDOUT:
 // CHECK:STDOUT: // Block
 // CHECK:STDOUT:   // comment
+// CHECK:STDOUT:
 // CHECK:STDOUT: class C {
 // CHECK:STDOUT:   // Internal comment
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: // Another
 // CHECK:STDOUT:   // Block
 // CHECK:STDOUT:   //
 // CHECK:STDOUT:   // Comment
+// CHECK:STDOUT:
 // CHECK:STDOUT: // A trailing comment may follow a variable, a function call, or a closing
 // CHECK:STDOUT: // brace, and the formatter keeps it on the line it annotates.
 // CHECK:STDOUT: var count: i32 = 0; // a) A local variable,
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn Render(frame: Frame) {
 // CHECK:STDOUT:   Draw(frame); // b) A function call,
 // CHECK:STDOUT:   Flush();
 // CHECK:STDOUT: } // c) And a closing brace.
+// CHECK:STDOUT:
 // CHECK:STDOUT: // A trailing comment on a block string literal's introducer line is carried
 // CHECK:STDOUT: // within the literal token and is preserved, with or without a file type
 // CHECK:STDOUT: // indicator. A trailing comment after the literal's closing line stays
@@ -78,6 +85,7 @@ var poem: String = ''' // No file type indicator, just a comment.
 // CHECK:STDOUT: var query: String = '''sql // TODO: switch to a prepared statement
 // CHECK:STDOUT:   SELECT * FROM t
 // CHECK:STDOUT:   ''';
+// CHECK:STDOUT:
 // CHECK:STDOUT: var poem: String = ''' // No file type indicator, just a comment.
 // CHECK:STDOUT:   Roses are red.
 // CHECK:STDOUT:   '''; // A trailing comment after the closing line.

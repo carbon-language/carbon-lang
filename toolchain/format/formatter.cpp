@@ -30,6 +30,8 @@ auto Formatter::Run() -> bool {
       EmitComment();
     }
 
+    int token_start_line = tokens_->GetLineNumber(token);
+
     switch (token_kind) {
       case Lex::TokenKind::FileStart:
         break;
@@ -39,7 +41,7 @@ auto Formatter::Run() -> bool {
         break;
 
       case Lex::TokenKind::OpenCurlyBrace:
-        PrepareForSpacedContent();
+        PrepareForSpacedContent(token_start_line);
         *out_ << "{";
         // Check for `{}`.
         if (NextToken(token) != tokens_->GetMatchedClosingToken(token)) {
@@ -50,26 +52,26 @@ auto Formatter::Run() -> bool {
 
       case Lex::TokenKind::CloseCurlyBrace:
         indent_ -= 2;
-        PrepareForPackedContent();
+        PrepareForPackedContent(token_start_line);
         *out_ << "}";
         RequireEmptyLine();
         break;
 
       case Lex::TokenKind::Period:
-        PrepareForPackedContent();
+        PrepareForPackedContent(token_start_line);
         *out_ << ".";
         line_state_ = LineState::HasSeparator;
         break;
 
       case Lex::TokenKind::PlusPlus:
       case Lex::TokenKind::MinusMinus:
-        PrepareForSpacedContent();
+        PrepareForSpacedContent(token_start_line);
         *out_ << tokens_->GetTokenText(token);
         line_state_ = LineState::HasSeparator;
         break;
 
       case Lex::TokenKind::Semi:
-        PrepareForPackedContent();
+        PrepareForPackedContent(token_start_line);
         *out_ << ";";
         RequireEmptyLine();
         break;
@@ -78,16 +80,17 @@ auto Formatter::Run() -> bool {
         if (token_kind.IsOneOf(
                 {Lex::TokenKind::CloseParen, Lex::TokenKind::CloseSquareBracket,
                  Lex::TokenKind::Colon, Lex::TokenKind::Comma})) {
-          PrepareForPackedContent();
+          PrepareForPackedContent(token_start_line);
         } else if (token_kind.IsOneOf({Lex::TokenKind::OpenParen,
                                        Lex::TokenKind::OpenSquareBracket}) &&
                    (prev_token_kind.IsOneOf(
-                        {Lex::TokenKind::Identifier, Lex::TokenKind::CloseParen,
+                        {Lex::TokenKind::Identifier, Lex::TokenKind::Array,
+                         Lex::TokenKind::CloseParen,
                          Lex::TokenKind::CloseSquareBracket}) ||
                     prev_token_kind.is_sized_type_literal())) {
-          PrepareForPackedContent();
+          PrepareForPackedContent(token_start_line);
         } else {
-          PrepareForSpacedContent();
+          PrepareForSpacedContent(token_start_line);
         }
         *out_ << tokens_->GetTokenText(token);
         line_state_ = token_kind.is_opening_symbol()
@@ -96,6 +99,9 @@ auto Formatter::Run() -> bool {
         break;
     }
     prev_token_kind = token_kind;
+    if (token_kind != Lex::TokenKind::FileStart) {
+      prev_end_line_ = tokens_->GetEndLoc(token).first.index + 1;
+    }
   }
 
   // Materialize any newline deferred by the final line.
@@ -115,28 +121,45 @@ auto Formatter::EmitComment() -> void {
     // line still has content because its newline was deferred (`EndOfLine`) or
     // not yet required.
     *out_ << " " << tokens_->GetCommentText(comment);
+    prev_end_line_ = tokens_->GetLineNumber(comment);
   } else {
     // A full-line comment (or a trailing comment with nothing left to attach
     // to) is emitted on its own line.
     RequireEmptyLine();
-    PrepareForSpacedContent();
+    int comment_start_line = tokens_->GetLineNumber(comment);
+    PrepareForStartOfLine(comment_start_line);
     // TODO: We do need to adjust the indent of multi-line comments.
     *out_ << tokens_->GetCommentText(comment);
+    int comment_lines = tokens_->GetCommentText(comment).count('\n');
+    prev_end_line_ =
+        comment_start_line + (comment_lines > 0 ? comment_lines - 1 : 0);
   }
   // Comment text includes a terminating newline, so just update the state.
   line_state_ = LineState::Empty;
 }
 
-auto Formatter::PrepareForPackedContent() -> void {
+auto Formatter::PrepareForStartOfLine(int start_line) -> void {
   // Materialize a deferred newline before starting to fill a fresh line.
   if (line_state_ == LineState::EndOfLine) {
-    *out_ << "\n";
+    if (prev_end_line_ > 0 && start_line - prev_end_line_ >= 2) {
+      *out_ << "\n\n";
+    } else {
+      *out_ << "\n";
+    }
     line_state_ = LineState::Empty;
+  } else if (line_state_ == LineState::Empty) {
+    if (prev_end_line_ > 0 && start_line - prev_end_line_ >= 2) {
+      *out_ << "\n";
+    }
   }
   if (line_state_ == LineState::Empty) {
     out_->indent(indent_);
     line_state_ = LineState::HasSeparator;
   }
+}
+
+auto Formatter::PrepareForPackedContent(int start_line) -> void {
+  PrepareForStartOfLine(start_line);
 }
 
 auto Formatter::RequireEmptyLine() -> void {
@@ -147,12 +170,12 @@ auto Formatter::RequireEmptyLine() -> void {
   }
 }
 
-auto Formatter::PrepareForSpacedContent() -> void {
+auto Formatter::PrepareForSpacedContent(int start_line) -> void {
   if (line_state_ == LineState::NeedsSeparator) {
     *out_ << " ";
     line_state_ = LineState::HasSeparator;
   } else {
-    PrepareForPackedContent();
+    PrepareForPackedContent(start_line);
   }
 }
 
