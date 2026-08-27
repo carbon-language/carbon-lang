@@ -128,8 +128,17 @@ auto Formatter::EmitComment() -> void {
     RequireEmptyLine();
     int comment_start_line = tokens_->GetLineNumber(comment);
     PrepareForStartOfLine(comment_start_line);
-    // TODO: We do need to adjust the indent of multi-line comments.
-    *out_ << tokens_->GetCommentText(comment);
+    llvm::StringRef remaining = tokens_->GetCommentText(comment);
+    bool first_line = true;
+    while (!remaining.empty()) {
+      auto [line, rest] = remaining.split('\n');
+      remaining = rest;
+      if (!first_line) {
+        out_->indent(indent_);
+      }
+      first_line = false;
+      *out_ << line.ltrim() << "\n";
+    }
     int comment_lines = tokens_->GetCommentText(comment).count('\n');
     prev_end_line_ =
         comment_start_line + (comment_lines > 0 ? comment_lines - 1 : 0);

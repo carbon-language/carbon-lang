@@ -58,16 +58,16 @@ var poem: String = ''' // No file type indicator, just a comment.
 // CHECK:STDOUT: // Another comment
 // CHECK:STDOUT:
 // CHECK:STDOUT: // Block
-// CHECK:STDOUT:   // comment
+// CHECK:STDOUT: // comment
 // CHECK:STDOUT:
 // CHECK:STDOUT: class C {
 // CHECK:STDOUT:   // Internal comment
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: // Another
-// CHECK:STDOUT:   // Block
-// CHECK:STDOUT:   //
-// CHECK:STDOUT:   // Comment
+// CHECK:STDOUT: // Block
+// CHECK:STDOUT: //
+// CHECK:STDOUT: // Comment
 // CHECK:STDOUT:
 // CHECK:STDOUT: // A trailing comment may follow a variable, a function call, or a closing
 // CHECK:STDOUT: // brace, and the formatter keeps it on the line it annotates.
