@@ -172,7 +172,7 @@ available on [checking's Context class].
 <!-- google-doc-style-ignore -->
 
 [checking's Context class]:
-    https://github.com/search?q=repo%3Acarbon-language%2Fcarbon-lang+path%3Atoolchain%2Fcheck%2Fcontext.h+%2F%5Cw%2BStore%2F&type=code
+https://github.com/search?q=repo%3Acarbon-language%2Fcarbon-lang+path%3Atoolchain%2Fcheck%2Fcontext.h+%2F%5Cw%2BStore%2F&type=code
 
 <!-- google-doc-style-resume -->
 
