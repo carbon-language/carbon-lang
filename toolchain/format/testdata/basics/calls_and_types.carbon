@@ -16,6 +16,10 @@ fn F ( a : i32 , b : i32 ) -> i32 {
     for ( x : i32 in Core . Range ( 10 ) ) {
       Print ( x ) ;
     }
+  } else if ( a == b ) {
+    Print ( 0 ) ;
+  } else {
+    Print ( 1 ) ;
   }
   while ( a > 0 ) {
     return F ( a - 1 , b ) ;
@@ -31,6 +35,10 @@ fn F ( a : i32 , b : i32 ) -> i32 {
 // CHECK:STDOUT:     for (x: i32 in Core.Range(10)) {
 // CHECK:STDOUT:       Print(x);
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:   } else if (a == b) {
+// CHECK:STDOUT:     Print(0);
+// CHECK:STDOUT:   } else {
+// CHECK:STDOUT:     Print(1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   while (a > 0) {
 // CHECK:STDOUT:     return F(a - 1, b);

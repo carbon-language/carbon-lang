@@ -57,6 +57,16 @@ auto Formatter::Run() -> bool {
         RequireEmptyLine();
         break;
 
+      case Lex::TokenKind::Else:
+        if (prev_token_kind == Lex::TokenKind::CloseCurlyBrace &&
+            line_state_ == LineState::EndOfLine) {
+          line_state_ = LineState::NeedsSeparator;
+        }
+        PrepareForSpacedContent(token_start_line);
+        *out_ << "else";
+        line_state_ = LineState::NeedsSeparator;
+        break;
+
       case Lex::TokenKind::Period:
         PrepareForPackedContent(token_start_line);
         *out_ << ".";
