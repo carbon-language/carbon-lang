@@ -400,7 +400,7 @@ struct CallAction {
 
   struct Args {
     MetaInstId callee_id;
-    InstBlockId args_id;
+    MetaInstBlockId args_id;
     BoolValue is_desugared;
   };
 

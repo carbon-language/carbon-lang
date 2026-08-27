@@ -99,6 +99,12 @@ static auto OperandDependence(Context& context,
   return result;
 }
 
+static auto OperandDependence(Context& context,
+                              SemIR::MetaInstBlockId inst_block_id)
+    -> SemIR::ConstantDependence {
+  return OperandDependence(context, SemIR::InstBlockId{inst_block_id});
+}
+
 static auto OperandDependence(Context& context, SemIR::SpecificId specific_id)
     -> SemIR::ConstantDependence {
   auto specific = context.specifics().Get(specific_id);

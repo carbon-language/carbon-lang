@@ -580,6 +580,19 @@ static auto GetConstantValue(EvalContext& eval_context,
 }
 
 static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::MetaInstBlockId inst_block_id, Phase* phase)
+    -> SemIR::MetaInstBlockId {
+  auto inst_ids = eval_context.inst_blocks().Get(inst_block_id);
+  llvm::SmallVector<SemIR::InstId> new_inst_ids;
+  for (auto inst_id : inst_ids) {
+    new_inst_ids.push_back(
+        GetConstantValue(eval_context, SemIR::MetaInstId{inst_id}, phase));
+  }
+
+  return eval_context.inst_blocks().Add(new_inst_ids);
+}
+
+static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::TypeInstId inst_id, Phase* phase)
     -> SemIR::TypeInstId {
   // The input instruction is a TypeInstId, and eval does not change concrete
@@ -1070,8 +1083,8 @@ template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT> &&
            SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::DestInstId,
                        SemIR::EntityNameId, SemIR::InstBlockId, SemIR::InstId,
-                       SemIR::MetaInstId, SemIR::StructTypeFieldsId,
-                       SemIR::TypeInstId>
+                       SemIR::MetaInstId, SemIR::MetaInstBlockId,
+                       SemIR::StructTypeFieldsId, SemIR::TypeInstId>
 static auto ResolveSpecificDeclForArg(EvalContext& /*eval_context*/, IdT /*id*/)
     -> void {
   // These id types have a GetConstantValue() overload but that overload
