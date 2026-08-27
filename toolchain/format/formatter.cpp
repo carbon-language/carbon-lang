@@ -54,6 +54,12 @@ auto Formatter::Run() -> bool {
         RequireEmptyLine();
         break;
 
+      case Lex::TokenKind::Period:
+        PrepareForPackedContent();
+        *out_ << ".";
+        line_state_ = LineState::HasSeparator;
+        break;
+
       case Lex::TokenKind::Semi:
         PrepareForPackedContent();
         *out_ << ";";
@@ -61,9 +67,9 @@ auto Formatter::Run() -> bool {
         break;
 
       default:
-        if (token_kind.IsOneOf({Lex::TokenKind::CloseParen,
-                                Lex::TokenKind::Colon,
-                                Lex::TokenKind::Comma})) {
+        if (token_kind.IsOneOf(
+                {Lex::TokenKind::CloseParen, Lex::TokenKind::CloseSquareBracket,
+                 Lex::TokenKind::Colon, Lex::TokenKind::Comma})) {
           PrepareForPackedContent();
         } else {
           PrepareForSpacedContent();
