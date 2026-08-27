@@ -18,6 +18,7 @@ auto Formatter::Run() -> bool {
     return true;
   }
 
+  Lex::TokenKind prev_token_kind = Lex::TokenKind::FileStart;
   for (auto token : tokens_->tokens()) {
     auto token_kind = tokens_->GetKind(token);
 
@@ -71,6 +72,13 @@ auto Formatter::Run() -> bool {
                 {Lex::TokenKind::CloseParen, Lex::TokenKind::CloseSquareBracket,
                  Lex::TokenKind::Colon, Lex::TokenKind::Comma})) {
           PrepareForPackedContent();
+        } else if (token_kind.IsOneOf({Lex::TokenKind::OpenParen,
+                                       Lex::TokenKind::OpenSquareBracket}) &&
+                   (prev_token_kind.IsOneOf(
+                        {Lex::TokenKind::Identifier, Lex::TokenKind::CloseParen,
+                         Lex::TokenKind::CloseSquareBracket}) ||
+                    prev_token_kind.is_sized_type_literal())) {
+          PrepareForPackedContent();
         } else {
           PrepareForSpacedContent();
         }
@@ -80,6 +88,7 @@ auto Formatter::Run() -> bool {
                           : LineState::NeedsSeparator;
         break;
     }
+    prev_token_kind = token_kind;
   }
 
   // Materialize any newline deferred by the final line.
