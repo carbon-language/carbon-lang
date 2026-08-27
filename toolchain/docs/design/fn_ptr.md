@@ -32,6 +32,13 @@ fn G(a: Param1T, var b: Param2T) {
 }
 ```
 
+This design was chosen primarily for implementation convenience rather than
+ergonomics, because this is not intended to be a user-facing feature in its
+current form. The caller and callee need to agree on the categories of the
+parameters and return, so the pointer type needs to capture that information.
+The `form` syntax to do that is available for reuse, whereas a more ergonomic
+syntax would require additional implementation work.
+
 ## Syntax
 
 The syntax for a function pointer type is
