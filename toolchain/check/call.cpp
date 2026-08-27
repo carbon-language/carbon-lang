@@ -306,6 +306,24 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Determines whether a C++ template call can be performed immediately
+// (i.e. whether it is non-template-dependent).
+static auto IsCppTemplateCallPerformable(Context& context,
+                                         SemIR::InstId callee_id,
+                                         llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> bool {
+  if (OperandDependence(context, callee_id) ==
+      SemIR::ConstantDependence::Template) {
+    return false;
+  }
+  for (auto arg_id : arg_ids) {
+    if (context.constant_values().Get(arg_id).is_symbolic()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // Performs a call where the callee is a generic type. If it's not a generic
 // type, produces a diagnostic.
 static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
@@ -316,8 +334,30 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
       context.types().GetAsInst(context.insts().Get(callee_id).type_id());
   CARBON_KIND_SWITCH(type_inst) {
     case CARBON_KIND(SemIR::CppTemplateNameType template_name): {
-      return PerformCallToCppTemplateName(context, loc_id,
-                                          template_name.decl_id, arg_ids);
+      if (IsCppTemplateCallPerformable(context, callee_id, arg_ids)) {
+        return PerformCallToCppTemplateName(context, loc_id,
+                                            template_name.decl_id, arg_ids);
+      }
+
+      llvm::SmallVector<SemIR::InstId> inst_ids;
+      inst_ids.push_back(callee_id);
+      // Wrap the template args in a `TemplateInst` so that all symbolic
+      // arguments are treated as templates.
+      for (auto arg_id : arg_ids) {
+        auto arg = context.insts().Get(arg_id);
+        inst_ids.push_back(AddInst(
+            context, SemIR::LocId(arg_id),
+            SemIR::TemplateInst{.type_id = arg.type_id(), .inst_id = arg_id}));
+      }
+
+      auto inst_block_id = context.inst_blocks().Add(inst_ids);
+      return AddDependentActionSplice(
+          context, loc_id,
+          SemIR::CallAction{.type_id = SemIR::InstType::TypeId,
+                            .inst_block_id = inst_block_id,
+                            // Unused for non-function calls.
+                            .is_desugared = SemIR::BoolValue::From(false)},
+          SemIR::TypeInstId::None);
     }
     case CARBON_KIND(SemIR::GenericClassType generic_class): {
       return PerformCallToGenericClass(context, loc_id, generic_class.class_id,
