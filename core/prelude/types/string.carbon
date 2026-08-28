@@ -7,6 +7,8 @@ package Core library "prelude/types/string";
 import library "prelude/copy";
 import library "prelude/default";
 import library "prelude/destroy";
+import library "prelude/iterate";
+import library "prelude/range";
 import library "prelude/types/char";
 import library "prelude/types/uint";
 import library "prelude/operators/index";
@@ -38,12 +40,10 @@ impl String as EqWith(String) {
     if (self.Size() != other.Size()) {
       return false;
     }
-    var i: i64 = 0;
-    while ((i as u64) < self.Size()) {
+    for (i: i64 in IntRange(64).Make(0, self.Size())) {
       if (self[i] != other[i]) {
         return false;
       }
-      i += 1;
     }
     return true;
   }

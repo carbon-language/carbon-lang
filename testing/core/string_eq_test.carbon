@@ -45,10 +45,12 @@ fn Run() -> i32 {
   var empty1: Core.String = "";
   var empty2: Core.String = "";
   if (not Check(empty1 == empty2, "StringEquality_EmptyStringsEqual")) { passed = false; }
-  if (not Check(not (empty1 == s1), "StringEquality_EmptyAndNonEmptyEqualFalse")) { passed = false; }
+  if (not Check(not (empty1 == s1), "StringEquality_EmptyAndNonEmptyEqualFalse")) {
+    passed = false;
+  }
   if (not Check(empty1 != s1, "StringEquality_EmptyAndNonEmptyNotEqual")) { passed = false; }
 
-  // Test 5: Reflexivity (pointer identity fast-path)
+  // Test 5: Reflexivity
   if (not Check(s1 == s1, "StringEquality_Reflexivity")) { passed = false; }
 
   if (passed) {
