@@ -89,6 +89,27 @@ fn G() {
   F(0 as i32);
 }
 
+// --- initialize_from_tuple.carbon
+
+library "[[@TEST_NAME]]";
+
+class X {}
+fn Make() -> X;
+
+//@dump-sem-ir-begin
+// CHECK:STDERR: initialize_from_tuple.carbon:[[@LINE+8]]:35: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fn F[template T: Core.Destroy](x: ) {
+// CHECK:STDERR:                                   ^
+// CHECK:STDERR:
+// CHECK:STDERR: initialize_from_tuple.carbon:[[@LINE+4]]:35: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fn F[template T: Core.Destroy](x: ) {
+// CHECK:STDERR:                                   ^
+// CHECK:STDERR:
+fn F[template T: Core.Destroy]() {
+  var unused w: T = (Make(), Make(), Make());
+}
+//@dump-sem-ir-end
+
 // --- as.carbon
 
 library "[[@TEST_NAME]]";
@@ -679,6 +700,8 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block
 // CHECK:STDOUT:   %.loc6_3.3 => constants.%.4da713.1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- initialize_from_tuple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- as.carbon
 // CHECK:STDOUT:
