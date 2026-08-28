@@ -142,11 +142,11 @@ auto HandleFnPtrTypeLiteralReturn(Context& context) -> void {
     context.PushStateForExpr(PrecedenceGroup::ForType());
   } else {
     CARBON_DIAGNOSTIC(
-        ExpectedReturnFormInFnPtrType, Error,
+        ExpectedReturnFormInFunctionPtrType, Error,
         "Missing `->?` return form for function pointer type literal");
     // TODO: is there a better location we can use here?
     context.emitter().Emit(*(context.position() - 1),
-                           ExpectedReturnFormInFnPtrType);
+                           ExpectedReturnFormInFunctionPtrType);
     state.has_error = true;
     context.PushState(state, StateKind::FnPtrTypeLiteralFinish);
   }

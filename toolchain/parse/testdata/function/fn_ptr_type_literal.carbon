@@ -18,7 +18,7 @@ fn F() {
 // --- fail_no_return_form.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_no_return_form.carbon:[[@LINE+4]]:12: error: Missing `->?` return form for function pointer type literal [ExpectedReturnFormInFnPtrType]
+  // CHECK:STDERR: fail_no_return_form.carbon:[[@LINE+4]]:12: error: Missing `->?` return form for function pointer type literal [ExpectedReturnFormInFunctionPtrType]
   // CHECK:STDERR:   __fn_ptr();
   // CHECK:STDERR:            ^
   // CHECK:STDERR:
@@ -29,7 +29,7 @@ fn F() {
 // --- fail_missing_question_mark.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_missing_question_mark.carbon:[[@LINE+4]]:19: error: Missing `->?` return form for function pointer type literal [ExpectedReturnFormInFnPtrType]
+  // CHECK:STDERR: fail_missing_question_mark.carbon:[[@LINE+4]]:19: error: Missing `->?` return form for function pointer type literal [ExpectedReturnFormInFunctionPtrType]
   // CHECK:STDERR:   __fn_ptr(a, b, c) -> d;
   // CHECK:STDERR:                   ^
   // CHECK:STDERR:
