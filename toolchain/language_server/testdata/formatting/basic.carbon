@@ -64,7 +64,7 @@
 // CHECK:STDOUT:     "diagnostics": [],
 // CHECK:STDOUT:     "uri": "file:///unformatted.carbon"
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 285{{\r}}
+// CHECK:STDOUT: }Content-Length: 284{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 2,
@@ -74,8 +74,8 @@
 // CHECK:STDOUT:       "newText": "fn F () {\n  return;\n}\n",
 // CHECK:STDOUT:       "range": {
 // CHECK:STDOUT:         "end": {
-// CHECK:STDOUT:           "character": 26,
-// CHECK:STDOUT:           "line": 0
+// CHECK:STDOUT:           "character": 0,
+// CHECK:STDOUT:           "line": 1
 // CHECK:STDOUT:         },
 // CHECK:STDOUT:         "start": {
 // CHECK:STDOUT:           "character": 0,
@@ -104,7 +104,7 @@
 // CHECK:STDOUT:       "range": {
 // CHECK:STDOUT:         "end": {
 // CHECK:STDOUT:           "character": 0,
-// CHECK:STDOUT:           "line": 3
+// CHECK:STDOUT:           "line": 4
 // CHECK:STDOUT:         },
 // CHECK:STDOUT:         "start": {
 // CHECK:STDOUT:           "character": 0,
