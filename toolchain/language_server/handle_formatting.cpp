@@ -30,8 +30,6 @@ static auto GetFullDocumentRange(llvm::StringRef text) -> clang::clangd::Range {
   };
 }
 
-// Implements `textDocument/formatting`:
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_formatting
 auto HandleFormatting(
     Context& context, const clang::clangd::DocumentFormattingParams& params,
     llvm::function_ref<
