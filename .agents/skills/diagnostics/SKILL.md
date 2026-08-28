@@ -41,8 +41,8 @@ Diagnostics are handled via three decoupled core components:
     [kind.def](../../../toolchain/diagnostics/kind.def).
 2.  **Emitters**: Specialized formatting pipelines (parameterized on custom
     phase location types `LocT` like `Token` or `LocId`) that convert raw tokens
-    to standardized physical source locations (file, line, column, and the text of
-    the line).
+    to standardized physical source locations (file, line, column, and the text
+    of the line).
 3.  **Consumers**: Pipelines that process, track, filter, and sort diagnostics.
     The default `SortingConsumer` buffers and stable-sorts diagnostics based on
     their `last_byte_offset` matching compiler traversal order to ensure perfect
@@ -292,8 +292,8 @@ Carbon strictly enforces testing coverage at build-time.
     matched name against and leaves any name that isn't a kind alone.
     [check_diagnostics.py](../../../toolchain/diagnostics/check_diagnostics.py)
     is what checks them: it reads the declarations and the testdata directly, so
-    it catches a label with no test, a name matched on that is neither a kind nor
-    a label, and a kind registered in `kind.def` that nothing declares. It runs
-    as a pre-commit hook, which CI runs too, rather than as a bazel test --
+    it catches a label with no test, a name matched on that is neither a kind
+    nor a label, and a kind registered in `kind.def` that nothing declares. It
+    runs as a pre-commit hook, which CI runs too, rather than as a bazel test --
     reading every source file is what it needs and what a test in the sandbox
     cannot do.

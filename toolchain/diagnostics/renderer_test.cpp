@@ -1465,7 +1465,7 @@ TEST(RendererTest, AFormattedSourceLineIsShownWhole) {
 TEST(RendererTest, ASourceLinePastTheTargetIsWindowed) {
   // Past the target it is windowed, the same as a line past a terminal's width:
   // the target is a width to fit, and this is what fitting one means.
-  std::string line(4 * TargetSourceColumns, 'x');
+  std::string line(size_t{4} * TargetSourceColumns, 'x');
   line.replace(200, 4, "HERE");
   Loc loc = {.filename = "foo.carbon",
              .line = line,
@@ -1584,7 +1584,7 @@ TEST(RendererTest, AnUnstatedWidthIsStillATargetToWrapTo) {
   llvm::StringRef rest = wrapped;
   while (!rest.empty()) {
     auto [row, tail] = rest.split('\n');
-    EXPECT_LE(row.size(), 80u) << row.str();
+    EXPECT_LE(row.size(), 80U) << row.str();
     rest = tail;
   }
 }
