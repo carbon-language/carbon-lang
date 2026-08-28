@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/template/call.carbon
 
-// --- fail_dependent_call_nonconst_arg.carbon
+// --- fail_todo_dependent_call_nonconst_arg.carbon
 library "[[@TEST_NAME]]";
 
 class X {}
@@ -19,23 +19,31 @@ fn F[template G: type](H: G, x: X) {
   H(x);
 }
 fn TakeX(unused x: X) {}
-fn TakeY(unused y: Y) {}
 
-// TODO: should work
-// CHECK:STDERR: fail_dependent_call_nonconst_arg.carbon:[[@LINE+7]]:23: error: expression cannot be used as a value [UseOfNonExprAsValue]
+// CHECK:STDERR: fail_todo_dependent_call_nonconst_arg.carbon:[[@LINE+7]]:23: error: expression cannot be used as a value [UseOfNonExprAsValue]
 // CHECK:STDERR: fn GoodCall(x: X) { F(TakeX, x); }
 // CHECK:STDERR:                       ^~~~~
-// CHECK:STDERR: fail_dependent_call_nonconst_arg.carbon:[[@LINE-10]]:24: note: initializing function parameter [InCallToFunctionParam]
+// CHECK:STDERR: fail_todo_dependent_call_nonconst_arg.carbon:[[@LINE-8]]:24: note: initializing function parameter [InCallToFunctionParam]
 // CHECK:STDERR: fn F[template G: type](H: G, x: X) {
 // CHECK:STDERR:                        ^~~~
 // CHECK:STDERR:
 fn GoodCall(x: X) { F(TakeX, x); }
 
+// --- fail_dependent_call_nonconst_arg_wrong_type.carbon
+library "[[@TEST_NAME]]";
+
+class X {}
+class Y {}
+fn F[template G: type](H: G, x: X) {
+  H(x);
+}
+fn TakeY(unused y: Y) {}
+
 // TODO: should fail, but not because of UseOfNonExprAsValue
-// CHECK:STDERR: fail_dependent_call_nonconst_arg.carbon:[[@LINE+7]]:22: error: expression cannot be used as a value [UseOfNonExprAsValue]
+// CHECK:STDERR: fail_dependent_call_nonconst_arg_wrong_type.carbon:[[@LINE+7]]:22: error: expression cannot be used as a value [UseOfNonExprAsValue]
 // CHECK:STDERR: fn BadCall(x: X) { F(TakeY, x); }
 // CHECK:STDERR:                      ^~~~~
-// CHECK:STDERR: fail_dependent_call_nonconst_arg.carbon:[[@LINE-20]]:24: note: initializing function parameter [InCallToFunctionParam]
+// CHECK:STDERR: fail_dependent_call_nonconst_arg_wrong_type.carbon:[[@LINE-9]]:24: note: initializing function parameter [InCallToFunctionParam]
 // CHECK:STDERR: fn F[template G: type](H: G, x: X) {
 // CHECK:STDERR:                        ^~~~
 // CHECK:STDERR:
