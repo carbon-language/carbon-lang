@@ -6,7 +6,9 @@ package Core library "prelude/iterate";
 
 export import library "prelude/copy";
 export import library "prelude/destroy";
-export import library "prelude/types";
+export import library "prelude/types/int";
+export import library "prelude/types/int_literal";
+export import library "prelude/types/optional";
 export import library "prelude/operators";
 
 interface Iterate {
