@@ -71,7 +71,8 @@ template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT> &&
            SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::AbsoluteInstId,
                        SemIR::CallParamIndex, SemIR::NameId,
-                       SemIR::ElementIndex, SemIR::ClangDeclId>
+                       SemIR::ElementIndex, SemIR::ClangDeclId,
+                       SemIR::BoolValue>
 static auto OperandDependence(Context& /*context*/, IdT /*id*/)
     -> SemIR::ConstantDependence {
   return SemIR::ConstantDependence::None;
@@ -96,6 +97,12 @@ static auto OperandDependence(Context& context,
     result = std::max(result, OperandDependence(context, arg_id));
   }
   return result;
+}
+
+static auto OperandDependence(Context& context,
+                              SemIR::MetaInstBlockId inst_block_id)
+    -> SemIR::ConstantDependence {
+  return OperandDependence(context, SemIR::InstBlockId{inst_block_id});
 }
 
 static auto OperandDependence(Context& context, SemIR::SpecificId specific_id)

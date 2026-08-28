@@ -64,6 +64,7 @@ using IdKind = TypeEnum<
     LibraryNameId,
     LocId,
     MetaInstId,
+    MetaInstBlockId,
     NameId,
     NameScopeId,
     NamedConstraintId,

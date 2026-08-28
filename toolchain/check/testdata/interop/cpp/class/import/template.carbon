@@ -118,6 +118,47 @@ fn F(ref b: B(i32)) {
 }
 //@dump-sem-ir-end
 
+// --- let_cpp_template_constructor.carbon
+
+library "[[@TEST_NAME]]";
+import Cpp inline '''
+template<typename T>
+struct A {};
+''';
+
+// @dump-sem-ir-begin
+fn F(generic T: type) {
+  let unused a: Cpp.A(T) = Cpp.A(T).A();
+}
+
+fn G() {
+  F(i32);
+}
+// @dump-sem-ir-end
+
+// --- fail_todo_var_cpp_template_constructor.carbon
+
+library "[[@TEST_NAME]]";
+import Cpp inline '''
+template<typename T>
+struct A {};
+''';
+
+fn F(generic T: type) {
+  var unused a: Cpp.A(T) = Cpp.A(T).A();
+}
+
+fn G() {
+  // CHECK:STDERR: fail_todo_var_cpp_template_constructor.carbon:[[@LINE+7]]:3: error: unable to monomorphize specific `F(i32)` [ResolvingSpecificHere]
+  // CHECK:STDERR:   F(i32);
+  // CHECK:STDERR:   ^
+  // CHECK:STDERR: fail_todo_var_cpp_template_constructor.carbon:[[@LINE-7]]:3: note: value of type `<bound method>` is not callable [CallToNonCallable]
+  // CHECK:STDERR:   var unused a: Cpp.A(T) = Cpp.A(T).A();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  F(i32);
+}
+
 // CHECK:STDOUT: --- use_class_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

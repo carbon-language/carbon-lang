@@ -72,17 +72,20 @@ library "[[@TEST_NAME]]";
 eval fn F(x: i32) -> i32 { return x; }
 
 fn G(generic N: i32) {
-  // CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE+8]]:36: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
+  // CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE+4]]:36: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
   // CHECK:STDERR:   var unused a: array(i32, F(N)) = (0, 1, 2);
   // CHECK:STDERR:                                    ^~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE+4]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   var unused a: array(i32, F(N)) = (0, 1, 2);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var unused a: array(i32, F(N)) = (0, 1, 2);
 }
 
+// CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE+7]]:10: error: unable to monomorphize specific `G(3)` [ResolvingSpecificHere]
+// CHECK:STDERR: fn H() { G(3); }
+// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE-6]]:3: note: value of type `<bound method>` is not callable [CallToNonCallable]
+// CHECK:STDERR:   var unused a: array(i32, F(N)) = (0, 1, 2);
+// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn H() { G(3); }
 
 // --- fail_todo_dependent_call_type.carbon
@@ -95,14 +98,6 @@ eval fn F(_: i32) -> type {
 }
 
 fn UseFGenerically(generic X: i32) {
-  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+8]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   var unused v: F(X) = {};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+4]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   var unused v: F(X) = {};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   var unused v: F(X) = {};
 }
 
@@ -110,7 +105,7 @@ fn UseFSpecifically() {
   // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+7]]:3: error: unable to monomorphize specific `UseFGenerically(3)` [ResolvingSpecificHere]
   // CHECK:STDERR:   UseFGenerically(3);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE-7]]:3: note: cannot access member of interface `Core.ImplicitAs(C)` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE-7]]:3: note: value of type `<bound method>` is not callable [CallToNonCallable]
   // CHECK:STDERR:   var unused v: F(X) = {};
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
