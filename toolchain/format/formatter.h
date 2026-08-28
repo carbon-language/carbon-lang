@@ -102,9 +102,10 @@ class Formatter {
   // The current code indent level, to be added to new lines.
   int indent_ = 0;
 
-  // The 1-based end line in original source of the previous token or comment.
+  // The 0-based end line in original source of the previous token or comment.
   int prev_end_line_ = 0;
 
+  // Kind of the last token before current one.
   Lex::TokenKind prev_token_kind_ = Lex::TokenKind::FileStart;
 };
 

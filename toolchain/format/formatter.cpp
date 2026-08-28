@@ -112,7 +112,7 @@ auto Formatter::Run() -> bool {
         break;
     }
     prev_token_kind_ = token_kind;
-    prev_end_line_ = tokens_->GetEndLoc(token).first.index + 1;
+    prev_end_line_ = tokens_->GetEndLoc(token).first.index;
   }
 
   // Materialize any newline deferred by the final line.
@@ -132,11 +132,11 @@ auto Formatter::EmitComment() -> void {
     // line still has content because its newline was deferred (`EndOfLine`) or
     // not yet required.
     *out_ << " " << tokens_->GetCommentText(comment);
-    prev_end_line_ = tokens_->GetLineNumber(comment);
+    prev_end_line_ = tokens_->GetLine(comment).index;
   } else {
     // A full-line comment (or a trailing comment with nothing left to attach
     // to) is emitted on its own line.
-    int comment_start_line = tokens_->GetLineNumber(comment);
+    int comment_start_line = tokens_->GetLine(comment).index;
     if (line_state_ != LineState::Empty) {
       EmitNewLine(comment_start_line);
     }
