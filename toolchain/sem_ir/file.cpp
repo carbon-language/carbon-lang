@@ -194,6 +194,8 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
 auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
     -> void {
   mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_source_locs_"),
+                    clang_source_locs_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "entity_names_"),
                     entity_names_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
@@ -255,7 +257,7 @@ auto File::AppendCppMangledTypeName(ClassId class_id,
 namespace Carbon {
 template class ValueStore<SemIR::ExprRegionId, SemIR::ExprRegion,
                           Tag<SemIR::CheckIRId>>;
-template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
+template class ValueStore<SemIR::ClangSourceLocId, clang::SourceRange,
                           Tag<SemIR::CheckIRId>>;
 template class ValueStore<SemIR::CustomLayoutId,
                           llvm::MutableArrayRef<SemIR::ObjectSize>,

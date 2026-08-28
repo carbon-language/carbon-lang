@@ -112,12 +112,8 @@ import Cpp library "conversions.h";
 
 fn ConstructorExplicit(s: Cpp.Source) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+7]]:42: error: cannot implicitly convert expression of type `Cpp.Source` to `Cpp.ConditionallyExplicit` [ConversionFailure]
-  // CHECK:STDERR:   let _: Cpp.ConditionallyExplicitTrue = s;
-  // CHECK:STDERR:                                          ^
-  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+4]]:42: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.ConditionallyExplicit)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   let _: Cpp.ConditionallyExplicitTrue = s;
-  // CHECK:STDERR:                                          ^
+  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+3]]:42: error: cannot implicitly convert expression of type `Cpp.Source` to `Cpp.ConditionallyExplicit` [ConversionFailure]
+  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+2]]:42: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.ConditionallyExplicit)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   let _: Cpp.ConditionallyExplicitTrue = s;
   //@dump-sem-ir-end
@@ -547,9 +543,9 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: fn @ConstructorExplicit(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
-// CHECK:STDOUT:   %.loc15_42: %ConditionallyExplicit.9d4 = converted %s.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_13: type = splice_block %ConditionallyExplicitTrue.ref [concrete = constants.%ConditionallyExplicit.9d4] {
-// CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc11_42: %ConditionallyExplicit.9d4 = converted %s.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc11_13: type = splice_block %ConditionallyExplicitTrue.ref [concrete = constants.%ConditionallyExplicit.9d4] {
+// CHECK:STDOUT:     %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ConditionallyExplicitTrue.ref: type = name_ref ConditionallyExplicitTrue, imports.%ConditionallyExplicit.decl.6ab [concrete = constants.%ConditionallyExplicit.9d4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %ConditionallyExplicit.9d4 = wrapper_binding _, <error> [concrete = <error>]
@@ -562,26 +558,26 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: fn @ConversionExplicit(%s.param: %ConditionallyExplicit.3cd) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %ConditionallyExplicit.3cd = name_ref s, %s
-// CHECK:STDOUT:   %.loc21_21.1: ref %Dest.980 = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.ca8 = addr_of %.loc21_21.1
+// CHECK:STDOUT:   %.loc17_21.1: ref %Dest.980 = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr.ca8 = addr_of %.loc17_21.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl(%s.ref, %addr)
-// CHECK:STDOUT:   %.loc21_21.2: init %Dest.980 to %.loc21_21.1 = mark_in_place_init %Dest__carbon_thunk.call
-// CHECK:STDOUT:   %.loc21_21.3: init %Dest.980 = converted %s.ref, %.loc21_21.2
-// CHECK:STDOUT:   %.loc21_21.4: ref %Dest.980 = temporary %.loc21_21.1, %.loc21_21.3
-// CHECK:STDOUT:   %.loc21_21.5: %Dest.980 = acquire_value %.loc21_21.4
-// CHECK:STDOUT:   %.loc21_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
-// CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc17_21.2: init %Dest.980 to %.loc17_21.1 = mark_in_place_init %Dest__carbon_thunk.call
+// CHECK:STDOUT:   %.loc17_21.3: init %Dest.980 = converted %s.ref, %.loc17_21.2
+// CHECK:STDOUT:   %.loc17_21.4: ref %Dest.980 = temporary %.loc17_21.1, %.loc17_21.3
+// CHECK:STDOUT:   %.loc17_21.5: %Dest.980 = acquire_value %.loc17_21.4
+// CHECK:STDOUT:   %.loc17_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
+// CHECK:STDOUT:     %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest.980]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: %Dest.980 = wrapper_binding _, %.loc21_21.5
+// CHECK:STDOUT:   %_: %Dest.980 = wrapper_binding _, %.loc17_21.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Dest.Op.bound: <bound method> = bound_method %.loc21_21.4, constants.%Dest.Op
+// CHECK:STDOUT:   %Dest.Op.bound: <bound method> = bound_method %.loc17_21.4, constants.%Dest.Op
 // CHECK:STDOUT:   %Op.ref: %Dest.cpp_destructor.type = name_ref Op, imports.%Dest.cpp_destructor.decl [concrete = constants.%Dest.cpp_destructor]
-// CHECK:STDOUT:   %Dest.cpp_destructor.bound: <bound method> = bound_method %.loc21_21.4, %Op.ref
-// CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc21_21.4)
+// CHECK:STDOUT:   %Dest.cpp_destructor.bound: <bound method> = bound_method %.loc17_21.4, %Op.ref
+// CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call %Dest.cpp_destructor.bound(%.loc17_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

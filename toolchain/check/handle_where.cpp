@@ -503,9 +503,9 @@ static auto DiagnoseNestedWhere(Context& context, SemIR::LocId loc_id,
       NestedWhereInsideWhere, Error,
       "found `where` expression nested on the right-hand side of `where`");
   auto builder = context.emitter().Build(loc_id, NestedWhereInsideWhere);
-  CARBON_DIAGNOSTIC(NestedWhereInsideWhereOuterNote, Note,
-                    "on right-hand side of `where` here");
-  builder.Note(outer_loc_id, NestedWhereInsideWhereOuterNote);
+  CARBON_DIAGNOSTIC_LABEL(NestedWhereInsideWhereOuterNote, Info,
+                          "on right-hand side of `where` here");
+  builder.Attach(outer_loc_id, NestedWhereInsideWhereOuterNote);
   builder.Emit();
 }
 

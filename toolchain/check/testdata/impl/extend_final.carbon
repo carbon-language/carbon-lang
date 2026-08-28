@@ -31,12 +31,8 @@ library "[[@TEST_NAME]]";
 interface Z {}
 
 class C {
-  // CHECK:STDERR: fail_final_extend_impl.carbon:[[@LINE+7]]:9: error: `extend` must appear before `final` [ModifierMustAppearBefore]
-  // CHECK:STDERR:   final extend impl as Z {}
-  // CHECK:STDERR:         ^~~~~~
-  // CHECK:STDERR: fail_final_extend_impl.carbon:[[@LINE+4]]:3: note: `final` previously appeared here [ModifierPrevious]
-  // CHECK:STDERR:   final extend impl as Z {}
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_final_extend_impl.carbon:[[@LINE+3]]:9-14: error: `extend` must appear before `final` [ModifierMustAppearBefore]
+  // CHECK:STDERR: fail_final_extend_impl.carbon:[[@LINE+2]]:3-7: note: `final` previously appeared here [ModifierPrevious]
   // CHECK:STDERR:
   final extend impl as Z {}
 }
@@ -48,8 +44,6 @@ interface Z {}
 
 class C {}
 
-// CHECK:STDERR: fail_final_extend_impl_outside_class.carbon:[[@LINE+4]]:1: error: `extend impl` can only be used in an interface or class [ExtendImplOutsideClass]
-// CHECK:STDERR: extend final impl C as Z {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_extend_impl_outside_class.carbon:[[@LINE+2]]:1-26: error: `extend impl` can only be used in an interface or class [ExtendImplOutsideClass]
 // CHECK:STDERR:
 extend final impl C as Z {}

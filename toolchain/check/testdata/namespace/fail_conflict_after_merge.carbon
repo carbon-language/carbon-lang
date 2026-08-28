@@ -28,13 +28,9 @@ import library "namespace";
 // imported declaration.
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:4: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn NS();
-// CHECK:STDERR:    ^~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-9]]:1: in import [InImport]
-// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: namespace NS;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:4-5: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_conflict.carbon:[[@LINE-7]]:1 [InImport]
+// CHECK:STDERR: namespace.carbon:4:1-13: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
 fn NS();
 
@@ -42,13 +38,9 @@ fn NS();
 // we don't move it.
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:4: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn NS();
-// CHECK:STDERR:    ^~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-23]]:1: in import [InImport]
-// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: namespace NS;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:4-5: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_conflict.carbon:[[@LINE-17]]:1 [InImport]
+// CHECK:STDERR: namespace.carbon:4:1-13: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
 fn NS();
 
@@ -73,9 +65,9 @@ fn NS();
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %NS.type.20a02b.1: type = fn_type @NS.loc18 [concrete]
+// CHECK:STDOUT:   %NS.type.20a02b.1: type = fn_type @NS.loc14 [concrete]
 // CHECK:STDOUT:   %NS.bab1af.1: %NS.type.20a02b.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %NS.type.20a02b.2: type = fn_type @NS.loc32 [concrete]
+// CHECK:STDOUT:   %NS.type.20a02b.2: type = fn_type @NS.loc24 [concrete]
 // CHECK:STDOUT:   %NS.bab1af.2: %NS.type.20a02b.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -96,12 +88,12 @@ fn NS();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %NS.loc8: <namespace> = namespace imports.%Example.NS, [concrete] {}
-// CHECK:STDOUT:   %NS.decl.loc18: %NS.type.20a02b.1 = fn_decl @NS.loc18 [concrete = constants.%NS.bab1af.1] {} {}
-// CHECK:STDOUT:   %NS.loc22: <namespace> = namespace imports.%Example.NS, [concrete] {}
-// CHECK:STDOUT:   %NS.decl.loc32: %NS.type.20a02b.2 = fn_decl @NS.loc32 [concrete = constants.%NS.bab1af.2] {} {}
+// CHECK:STDOUT:   %NS.decl.loc14: %NS.type.20a02b.1 = fn_decl @NS.loc14 [concrete = constants.%NS.bab1af.1] {} {}
+// CHECK:STDOUT:   %NS.loc18: <namespace> = namespace imports.%Example.NS, [concrete] {}
+// CHECK:STDOUT:   %NS.decl.loc24: %NS.type.20a02b.2 = fn_decl @NS.loc24 [concrete = constants.%NS.bab1af.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NS.loc18();
+// CHECK:STDOUT: fn @NS.loc14();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NS.loc32();
+// CHECK:STDOUT: fn @NS.loc24();
 // CHECK:STDOUT:

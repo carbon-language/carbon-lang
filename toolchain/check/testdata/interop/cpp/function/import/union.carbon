@@ -25,57 +25,29 @@ auto foo2(ForwardDeclaredUnion) -> void;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_param_type.h:4:6: error: argument type 'ForwardDeclaredUnion' is incomplete [CppInteropParseError]
-// CHECK:STDERR:     4 | auto foo1(ForwardDeclaredUnion) -> void;
-// CHECK:STDERR:       |      ^~~~
-// CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'ForwardDeclaredUnion' [CppInteropParseNote]
-// CHECK:STDERR:     2 | union ForwardDeclaredUnion;
-// CHECK:STDERR:       |       ^
+// CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE+3]]:10 [InCppInclude]
+// CHECK:STDERR: ./decl_value_param_type.h:4:6-9: error: argument type 'ForwardDeclaredUnion' is incomplete [CppInteropParseError]
+// CHECK:STDERR: ./decl_value_param_type.h:2:7-26: note: forward declaration of 'ForwardDeclaredUnion' [CppInteropParseNote]
 import Cpp library "decl_value_param_type.h";
 
 fn F(p: Cpp.ForwardDeclaredUnion*) {
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo1(*p);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+5]]:3-14: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:5:6: error: argument type 'ForwardDeclaredUnion' is incomplete [CppInteropParseError]
-  // CHECK:STDERR:     5 | auto foo2(ForwardDeclaredUnion) -> void;
-  // CHECK:STDERR:       |      ^~~~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'ForwardDeclaredUnion' [CppInteropParseNote]
-  // CHECK:STDERR:     2 | union ForwardDeclaredUnion;
-  // CHECK:STDERR:       |       ^
+  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-5]]:10 [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:5:6-9: error: argument type 'ForwardDeclaredUnion' is incomplete [CppInteropParseError]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7-26: note: forward declaration of 'ForwardDeclaredUnion' [CppInteropParseNote]
   Cpp.foo1(*p);
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+28]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo2(*p);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3-14: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-5]]:12: error: forming value of incomplete type `Cpp.ForwardDeclaredUnion` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR:   Cpp.foo1(*p);
-  // CHECK:STDERR:            ^~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-23]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-3]]:12-13: error: forming value of incomplete type `Cpp.ForwardDeclaredUnion` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-12]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: union ForwardDeclaredUnion;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-27]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:4:31: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo1(ForwardDeclaredUnion) -> void;
-  // CHECK:STDERR:                               ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:12: error: forming value of incomplete type `Cpp.ForwardDeclaredUnion` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR:   Cpp.foo2(*p);
-  // CHECK:STDERR:            ^~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-35]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+5]]:12-13: error: forming value of incomplete type `Cpp.ForwardDeclaredUnion` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-17]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: union ForwardDeclaredUnion;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-39]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:5:31: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo2(ForwardDeclaredUnion) -> void;
-  // CHECK:STDERR:                               ^
   // CHECK:STDERR:
   Cpp.foo2(*p);
 }
@@ -282,13 +254,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+8]]:3: error: member access into incomplete class `Cpp.IncompleteUnion` [QualifiedExprInIncompleteClassScope]
-  // CHECK:STDERR:   Cpp.IncompleteUnion.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+4]]:3-25: error: member access into incomplete class `Cpp.IncompleteUnion` [QualifiedExprInIncompleteClassScope]
+  // CHECK:STDERR: included from: fail_import_incomplete.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: union IncompleteUnion;
-  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   Cpp.IncompleteUnion.foo();
 }
@@ -351,36 +319,19 @@ auto foo_decl_value_return() -> DeclValueReturnUnion;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6: error: calling 'foo_decl_value_return' with incomplete return type 'DeclValueReturnUnion' [CppInteropParseError]
-// CHECK:STDERR:     4 | auto foo_decl_value_return() -> DeclValueReturnUnion;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
-// CHECK:STDERR:     4 | auto foo_decl_value_return() -> DeclValueReturnUnion;
-// CHECK:STDERR:       |      ^
-// CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_return_type.h:2:7: note: forward declaration of 'DeclValueReturnUnion' [CppInteropParseNote]
-// CHECK:STDERR:     2 | union DeclValueReturnUnion;
-// CHECK:STDERR:       |       ^
+// CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE+4]]:10 [InCppInclude]
+// CHECK:STDERR: ./decl_value_return_type.h:4:6-26: error: calling 'foo_decl_value_return' with incomplete return type 'DeclValueReturnUnion' [CppInteropParseError]
+// CHECK:STDERR: ./decl_value_return_type.h:4:6-26: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
+// CHECK:STDERR: ./decl_value_return_type.h:2:7-26: note: forward declaration of 'DeclValueReturnUnion' [CppInteropParseNote]
 import Cpp library "decl_value_return_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+16]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_decl_value_return();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+7]]:3-29: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+12]]:3: error: function returns incomplete type `Cpp.DeclValueReturnUnion` [IncompleteTypeInFunctionReturnType]
-  // CHECK:STDERR:   Cpp.foo_decl_value_return();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+5]]:3-29: error: function returns incomplete type `Cpp.DeclValueReturnUnion` [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE-6]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: union DeclValueReturnUnion;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_return_type.h:4:1: note: return type declared here [IncompleteReturnTypeHere]
-  // CHECK:STDERR: auto foo_decl_value_return() -> DeclValueReturnUnion;
-  // CHECK:STDERR: ^
   // CHECK:STDERR:
   Cpp.foo_decl_value_return();
 }

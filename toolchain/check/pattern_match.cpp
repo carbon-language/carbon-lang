@@ -270,9 +270,9 @@ auto MatchContext::Match(State state, WorkItem entry) -> void {
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context_.emitter(), [&](auto& builder) {
         if (std::holds_alternative<CallerState*>(state)) {
-          CARBON_DIAGNOSTIC(InCallToFunctionParam, Note,
-                            "initializing function parameter");
-          builder.Note(entry.pattern_id, InCallToFunctionParam);
+          CARBON_DIAGNOSTIC_LABEL(InCallToFunctionParam, Info,
+                                  "initializing function parameter");
+          builder.Attach(entry.pattern_id, InCallToFunctionParam);
         }
       });
   CARBON_CHECK(stack_.empty());

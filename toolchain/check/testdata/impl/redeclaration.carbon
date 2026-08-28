@@ -49,17 +49,11 @@ class C {
 }
 
 // TODO: This should typecheck (see #5366).
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+12]]:9: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: impl C.(as Z) {}
-// CHECK:STDERR:         ^~
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+6]]:9-10: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+8]]:9: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: impl C.(as Z) {}
-// CHECK:STDERR:         ^~
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+4]]:9-10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+4]]:15: error: expected `as` in `impl` declaration [ImplExpectedAs]
-// CHECK:STDERR: impl C.(as Z) {}
-// CHECK:STDERR:               ^
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+2]]:15: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 impl C.(as Z) {}
 
@@ -75,17 +69,11 @@ class C {
 }
 
 // TODO: This should typecheck (see #5366).
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+12]]:9: error: name `Self` not found [NameNotFound]
-// CHECK:STDERR: impl C.(Self as Z) {}
-// CHECK:STDERR:         ^~~~
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+6]]:9-12: error: name `Self` not found [NameNotFound]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+8]]:20: error: expected `as` in `impl` declaration [ImplExpectedAs]
-// CHECK:STDERR: impl C.(Self as Z) {}
-// CHECK:STDERR:                    ^
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+4]]:20: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: impl C.(Self as Z) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+2]]:1-21: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
 impl C.(Self as Z) {}
 
@@ -99,17 +87,11 @@ class C {
 }
 
 // TODO: This should typecheck (see #5366).
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+12]]:9: error: name `Self` not found [NameNotFound]
-// CHECK:STDERR: impl C.(Self as Z) {}
-// CHECK:STDERR:         ^~~~
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+6]]:9-12: error: name `Self` not found [NameNotFound]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+8]]:20: error: expected `as` in `impl` declaration [ImplExpectedAs]
-// CHECK:STDERR: impl C.(Self as Z) {}
-// CHECK:STDERR:                    ^
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+4]]:20: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: impl C.(Self as Z) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+2]]:1-21: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
 impl C.(Self as Z) {}
 
@@ -123,17 +105,11 @@ class C {
 }
 
 // TODO: This should typecheck (see #5366).
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+12]]:9: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: impl C.(as Z) {}
-// CHECK:STDERR:         ^~
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+6]]:9-10: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+8]]:9: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: impl C.(as Z) {}
-// CHECK:STDERR:         ^~
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+4]]:9-10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+4]]:15: error: expected `as` in `impl` declaration [ImplExpectedAs]
-// CHECK:STDERR: impl C.(as Z) {}
-// CHECK:STDERR:               ^
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+2]]:15: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 impl C.(as Z) {}
 
@@ -146,15 +122,11 @@ class C;
 impl C as Z;
 
 class C {
-  // CHECK:STDERR: fail_redeclaration_inside_class_is_separate_impl.carbon:[[@LINE+3]]:3: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-  // CHECK:STDERR:   impl C as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_redeclaration_inside_class_is_separate_impl.carbon:[[@LINE+1]]:3-15: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
   impl C as Z {}
 }
 
-// CHECK:STDERR: fail_redeclaration_inside_class_is_separate_impl.carbon:[[@LINE+4]]:1: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
-// CHECK:STDERR: impl C as Z {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_redeclaration_inside_class_is_separate_impl.carbon:[[@LINE+2]]:1-13: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
 // CHECK:STDERR:
 impl C as Z {}
 
@@ -167,12 +139,8 @@ class C {
   impl C as Z {}
 }
 
-// CHECK:STDERR: fail_redeclaration_outside_class_is_separate_impl.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-// CHECK:STDERR: impl C as Z {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_redeclaration_outside_class_is_separate_impl.carbon:[[@LINE-6]]:3: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
-// CHECK:STDERR:   impl C as Z {}
-// CHECK:STDERR:   ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_redeclaration_outside_class_is_separate_impl.carbon:[[@LINE+3]]:1-13: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+// CHECK:STDERR: fail_redeclaration_outside_class_is_separate_impl.carbon:[[@LINE-4]]:3-15: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
 // CHECK:STDERR:
 impl C as Z {}
 
@@ -182,9 +150,7 @@ library "[[@TEST_NAME]]";
 interface Z {}
 
 fn F() {
-  // CHECK:STDERR: fail_todo_redeclaration_in_block_scope_is_separate_impl.carbon:[[@LINE+4]]:22: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
-  // CHECK:STDERR:   musteval fn G() -> auto {
-  // CHECK:STDERR:                      ^~~~
+  // CHECK:STDERR: fail_todo_redeclaration_in_block_scope_is_separate_impl.carbon:[[@LINE+2]]:22-25: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
   // CHECK:STDERR:
   musteval fn G() -> auto {
     class C {}
@@ -206,9 +172,7 @@ impl C as Z {}
 // --- fail_redecl_of_imported_impl.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redecl_of_imported_impl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
-// CHECK:STDERR: impl C as Z {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_redecl_of_imported_impl.impl.carbon:[[@LINE+2]]:1-13: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR:
 impl C as Z {}
 
@@ -227,13 +191,9 @@ class D {
   // But that means it overlaps fully with the impl from the api file, which is
   // a separate error.
 
-  // CHECK:STDERR: fail_decl_of_imported_impl_in_new_scope.impl.carbon:[[@LINE+8]]:3: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-  // CHECK:STDERR:   impl C as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_decl_of_imported_impl_in_new_scope.impl.carbon:[[@LINE-10]]:1: in import [InImport]
-  // CHECK:STDERR: decl_of_imported_impl_in_new_scope.carbon:5:1: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
-  // CHECK:STDERR: impl C as Z {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_decl_of_imported_impl_in_new_scope.impl.carbon:[[@LINE+4]]:3-15: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+  // CHECK:STDERR: imported from: fail_decl_of_imported_impl_in_new_scope.impl.carbon:[[@LINE-8]]:1 [InImport]
+  // CHECK:STDERR: decl_of_imported_impl_in_new_scope.carbon:5:1-13: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
   // CHECK:STDERR:
   impl C as Z {}
 }
@@ -246,13 +206,9 @@ interface Z {}
 fn F() {
   class C {}
   impl C as Z;
-  // CHECK:STDERR: fail_redecl_in_fn_scope.carbon:[[@LINE+8]]:3: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
-  // CHECK:STDERR:   impl C as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_redecl_in_fn_scope.carbon:[[@LINE+4]]:3-15: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_redecl_in_fn_scope.carbon:[[@LINE-5]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   impl C as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_redecl_in_fn_scope.carbon:[[@LINE-3]]:3-14: error: impl declared but not defined [ImplMissingDefinition]
   // CHECK:STDERR:
   impl C as Z {}
 }
@@ -268,13 +224,9 @@ fn F() {
 }
 
 fn G() {
-  // CHECK:STDERR: fail_redecl_in_different_fn_scope.carbon:[[@LINE+8]]:3: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
-  // CHECK:STDERR:   impl C as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_redecl_in_different_fn_scope.carbon:[[@LINE+4]]:3-15: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_redecl_in_different_fn_scope.carbon:[[@LINE-8]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   impl C as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_redecl_in_different_fn_scope.carbon:[[@LINE-6]]:3-14: error: impl declared but not defined [ImplMissingDefinition]
   // CHECK:STDERR:
   impl C as Z {}
 }
@@ -288,13 +240,9 @@ fn F() {
   if (true) {
     class C {}
     impl C as Z;
-    // CHECK:STDERR: fail_redecl_in_block_scope.carbon:[[@LINE+8]]:5: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
-    // CHECK:STDERR:     impl C as Z {}
-    // CHECK:STDERR:     ^~~~~~~~~~~~~
+    // CHECK:STDERR: fail_redecl_in_block_scope.carbon:[[@LINE+4]]:5-17: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_redecl_in_block_scope.carbon:[[@LINE-5]]:5: error: impl declared but not defined [ImplMissingDefinition]
-    // CHECK:STDERR:     impl C as Z;
-    // CHECK:STDERR:     ^~~~~~~~~~~~
+    // CHECK:STDERR: fail_redecl_in_block_scope.carbon:[[@LINE-3]]:5-16: error: impl declared but not defined [ImplMissingDefinition]
     // CHECK:STDERR:
     impl C as Z {}
   }
@@ -311,13 +259,9 @@ fn F() {
     impl C as Z;
   }
   if (true) {
-    // CHECK:STDERR: fail_redecl_in_different_block_scope.carbon:[[@LINE+8]]:5: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
-    // CHECK:STDERR:     impl C as Z {}
-    // CHECK:STDERR:     ^~~~~~~~~~~~~
+    // CHECK:STDERR: fail_redecl_in_different_block_scope.carbon:[[@LINE+4]]:5-17: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_redecl_in_different_block_scope.carbon:[[@LINE-7]]:5: error: impl declared but not defined [ImplMissingDefinition]
-    // CHECK:STDERR:     impl C as Z;
-    // CHECK:STDERR:     ^~~~~~~~~~~~
+    // CHECK:STDERR: fail_redecl_in_different_block_scope.carbon:[[@LINE-5]]:5-16: error: impl declared but not defined [ImplMissingDefinition]
     // CHECK:STDERR:
     impl C as Z {}
   }

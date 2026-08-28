@@ -43,13 +43,10 @@ fn G() -> const Cpp.NonNullableParamS;
 
 fn F() {
   var s: const Cpp.NonNullableParamS = G();
-  // CHECK:STDERR: fail_import_non_nullable_pointer_param_using_const_value.carbon:[[@LINE+8]]:32: error: no matching function for call to 'non_nullable_param_foo' [CppInteropParseError]
-  // CHECK:STDERR:    18 |   Cpp.non_nullable_param_foo(&s);
-  // CHECK:STDERR:       |                                ^
-  // CHECK:STDERR: fail_import_non_nullable_pointer_param_using_const_value.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./non_nullable_pointer_param.h:4:6: note: candidate function not viable: 1st argument ('const NonNullableParamS * _Nonnull') would lose const qualifier [CppInteropParseNote]
-  // CHECK:STDERR:     4 | auto non_nullable_param_foo(NonNullableParamS* _Nonnull) -> void;
-  // CHECK:STDERR:       |      ^                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_nullable_pointer_param_using_const_value.carbon:[[@LINE+5]]:3-28: error: no matching function for call to 'non_nullable_param_foo' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_import_non_nullable_pointer_param_using_const_value.carbon:[[@LINE-7]]:10 [InCppInclude]
+  // CHECK:STDERR: ./non_nullable_pointer_param.h:4:6-27: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./non_nullable_pointer_param.h:4:29-55: note: 1st argument ('const NonNullableParamS * _Nonnull') would lose const qualifier [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.non_nullable_param_foo(&s);
 }
@@ -417,12 +414,8 @@ import Cpp library "deduced_pointer_param.h";
 
 fn F() {
   // This could return a null pointer, so should not be given the type `Cpp.DeducedPointerS*`.
-  // CHECK:STDERR: fail_import_deduced_pointer_param_as_optional_pointer.carbon:[[@LINE+7]]:40: error: cannot implicitly convert expression of type `Core.Optional(Cpp.DeducedPointerS* as Core.OptionalStorage)` to `Cpp.DeducedPointerS*` [ConversionFailure]
-  // CHECK:STDERR:   let unused a: Cpp.DeducedPointerS* = Cpp.Indirect({} as Cpp.DeducedPointerS);
-  // CHECK:STDERR:                                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_deduced_pointer_param_as_optional_pointer.carbon:[[@LINE+4]]:40: note: type `Core.Optional(Cpp.DeducedPointerS* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(Cpp.DeducedPointerS*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   let unused a: Cpp.DeducedPointerS* = Cpp.Indirect({} as Cpp.DeducedPointerS);
-  // CHECK:STDERR:                                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_deduced_pointer_param_as_optional_pointer.carbon:[[@LINE+3]]:40-78: error: cannot implicitly convert expression of type `Core.Optional(Cpp.DeducedPointerS* as Core.OptionalStorage)` to `Cpp.DeducedPointerS*` [ConversionFailure]
+  // CHECK:STDERR: fail_import_deduced_pointer_param_as_optional_pointer.carbon:[[@LINE+2]]:40-78: note: type `Core.Optional(Cpp.DeducedPointerS* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(Cpp.DeducedPointerS*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   let unused a: Cpp.DeducedPointerS* = Cpp.Indirect({} as Cpp.DeducedPointerS);
 }

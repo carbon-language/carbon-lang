@@ -23,12 +23,19 @@ namespace Carbon::Testing {
 // should_be_covered should return false when a kind is either untestable or not
 // yet tested.
 //
+// `allow_unlisted_matches` says that the pattern matches names other than
+// kinds, so a match that isn't one is not a stale name to report. Pass it only
+// where those other names have a check of their own, since without it a
+// misspelled kind in a test would go unnoticed. Diagnostics pass it because a
+// line can name a label instead, which `check_diagnostics.py` checks.
+//
 // TODO: Switch `kind_pattern` to `llvm::StringLiteral` if
 // `llvm::StringLiteral::c_str` is added.
 template <typename KindT>
 auto TestKindCoverage(const std::string& manifest_path,
                       const char* kind_pattern, llvm::ArrayRef<KindT> kinds,
-                      llvm::ArrayRef<KindT> untested_kinds) {
+                      llvm::ArrayRef<KindT> untested_kinds,
+                      bool allow_unlisted_matches = false) {
   std::ifstream manifest_in(manifest_path.c_str());
   ASSERT_TRUE(manifest_in.good());
 
@@ -71,6 +78,9 @@ auto TestKindCoverage(const std::string& manifest_path,
   EXPECT_TRUE(missing_kinds.empty()) << "Some kinds have no tests:" << Bullet
                                      << llvm::join(missing_kinds, Bullet);
 
+  if (allow_unlisted_matches) {
+    return;
+  }
   llvm::SmallVector<std::string> unexpected_matches;
   covered_kinds.ForEach(
       [&](const std::string& match) { unexpected_matches.push_back(match); });

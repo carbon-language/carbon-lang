@@ -41,12 +41,8 @@ library "[[@TEST_NAME]]";
 class C {}
 
 fn Foo(a: C);
-// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Foo(unused a: (C)) {}
-// CHECK:STDERR:                  ^
-// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: fn Foo(a: C);
-// CHECK:STDERR:           ^
+// CHECK:STDERR: fail_parens.carbon:[[@LINE+3]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_parens.carbon:[[@LINE-2]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:
 fn Foo(unused a: (C)) {}
 
@@ -56,22 +52,14 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
-// CHECK:STDERR: fn Foo[runtime a: C];
-// CHECK:STDERR:        ^~~~~~~~~~~~
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:8-19: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn Foo[runtime a: C];
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+2]]:1-21: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
 // CHECK:STDERR:
 fn Foo[runtime a: C];
-// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
-// CHECK:STDERR: fn Foo[runtime a: (C)] {}
-// CHECK:STDERR:        ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:8-21: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn Foo[runtime a: (C)] {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+2]]:1-24: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
 // CHECK:STDERR:
 fn Foo[runtime a: (C)] {}
 
@@ -82,12 +70,8 @@ library "[[@TEST_NAME]]";
 class C {}
 
 fn Foo(_: C);
-// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+7]]:11: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Foo(_: r#C) {}
-// CHECK:STDERR:           ^~~
-// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: fn Foo(_: C);
-// CHECK:STDERR:           ^
+// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+3]]:11-13: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE-2]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:
 fn Foo(_: r#C) {}
 
@@ -116,12 +100,8 @@ class C {}
 alias D = C;
 
 fn Foo(a: C);
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:15: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
-// CHECK:STDERR: fn Foo(unused b: D) {}
-// CHECK:STDERR:               ^~~~
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:8: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: fn Foo(a: C);
-// CHECK:STDERR:        ^~~~
+// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+3]]:15-18: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
+// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-2]]:8-11: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR:
 fn Foo(unused b: D) {}
 
@@ -133,12 +113,8 @@ class C {}
 alias D = C;
 
 fn Foo(a: C);
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Foo(unused a: D) {}
-// CHECK:STDERR:                  ^
-// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: fn Foo(a: C);
-// CHECK:STDERR:           ^
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+3]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_alias.carbon:[[@LINE-2]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:
 fn Foo(unused a: D) {}
 
@@ -150,12 +126,8 @@ class C {}
 alias D = C;
 
 fn Foo[a: C]();
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Foo[unused a: D]() {}
-// CHECK:STDERR:                  ^
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: fn Foo[a: C]();
-// CHECK:STDERR:           ^
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+3]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-2]]:11: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:
 fn Foo[unused a: D]() {}
 
@@ -192,16 +164,10 @@ library "[[@TEST_NAME]]";
 class C {}
 
 fn Foo(a: const C);
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:18: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
-// CHECK:STDERR: fn Foo(unused a: const (const C)) {}
-// CHECK:STDERR:                  ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+5]]:18-32: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:24: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn Foo(unused a: const (const C)) {}
-// CHECK:STDERR:                        ^
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:17: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: fn Foo(a: const C);
-// CHECK:STDERR:                 ^
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+3]]:24: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-4]]:17: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:
 fn Foo(unused a: const (const C)) {}
 
@@ -343,7 +309,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %a.patt: %pattern_type = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %Foo.type.11c674.1: type = fn_type @Foo.loc6 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.1: %Foo.type.11c674.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc14 [concrete]
+// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc10 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.2: %Foo.type.11c674.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -361,7 +327,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc14: %Foo.type.11c674.2 = fn_decl @Foo.loc14 [concrete = constants.%Foo.12ccef.2] {
+// CHECK:STDOUT:   %Foo.decl.loc10: %Foo.type.11c674.2 = fn_decl @Foo.loc10 [concrete = constants.%Foo.12ccef.2] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -381,7 +347,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo.loc6(%a.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.loc14(%a.param: %C) {
+// CHECK:STDOUT: fn @Foo.loc10(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -392,20 +358,20 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Foo.type.11c674.1: type = fn_type @Foo.loc14 [concrete]
+// CHECK:STDOUT:   %Foo.type.11c674.1: type = fn_type @Foo.loc10 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.1: %Foo.type.11c674.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc23 [concrete]
+// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc15 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.2: %Foo.type.11c674.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .Foo = %Foo.decl.loc14
+// CHECK:STDOUT:     .Foo = %Foo.decl.loc10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %Foo.decl.loc14: %Foo.type.11c674.1 = fn_decl @Foo.loc14 [concrete = constants.%Foo.12ccef.1] {} {}
-// CHECK:STDOUT:   %Foo.decl.loc23: %Foo.type.11c674.2 = fn_decl @Foo.loc23 [concrete = constants.%Foo.12ccef.2] {} {}
+// CHECK:STDOUT:   %Foo.decl.loc10: %Foo.type.11c674.1 = fn_decl @Foo.loc10 [concrete = constants.%Foo.12ccef.1] {} {}
+// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.11c674.2 = fn_decl @Foo.loc15 [concrete = constants.%Foo.12ccef.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -416,9 +382,9 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.loc14();
+// CHECK:STDOUT: fn @Foo.loc10();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.loc23() {
+// CHECK:STDOUT: fn @Foo.loc15() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -434,7 +400,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %_.patt: %pattern_type = wrapper_binding_pattern _, %_.param_patt [concrete]
 // CHECK:STDOUT:   %Foo.type.11c674.1: type = fn_type @Foo.loc6 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.1: %Foo.type.11c674.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc14 [concrete]
+// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc10 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.2: %Foo.type.11c674.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -452,7 +418,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %_: %C = wrapper_binding _, %_.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc14: %Foo.type.11c674.2 = fn_decl @Foo.loc14 [concrete = constants.%Foo.12ccef.2] {
+// CHECK:STDOUT:   %Foo.decl.loc10: %Foo.type.11c674.2 = fn_decl @Foo.loc10 [concrete = constants.%Foo.12ccef.2] {
 // CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern [concrete = constants.%_.param_patt]
 // CHECK:STDOUT:     %_.patt: %pattern_type = wrapper_binding_pattern _, %_.param_patt [concrete = constants.%_.patt]
 // CHECK:STDOUT:   } {
@@ -472,7 +438,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo.loc6(%_.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.loc14(%_.param: %C) {
+// CHECK:STDOUT: fn @Foo.loc10(%_.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -612,7 +578,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.12ccef.1: %Foo.type.11c674.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %b.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type = wrapper_binding_pattern b, %b.param_patt [concrete]
-// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc15 [concrete]
+// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc11 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.2: %Foo.type.11c674.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -633,7 +599,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.11c674.2 = fn_decl @Foo.loc15 [concrete = constants.%Foo.12ccef.2] {
+// CHECK:STDOUT:   %Foo.decl.loc11: %Foo.type.11c674.2 = fn_decl @Foo.loc11 [concrete = constants.%Foo.12ccef.2] {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type = value_param_pattern [concrete = constants.%b.param_patt]
 // CHECK:STDOUT:     %b.patt: %pattern_type = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:   } {
@@ -653,7 +619,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo.loc7(%a.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.loc15(%b.param: %C) {
+// CHECK:STDOUT: fn @Foo.loc11(%b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -669,7 +635,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %a.patt: %pattern_type = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %Foo.type.11c674.1: type = fn_type @Foo.loc7 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.1: %Foo.type.11c674.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc15 [concrete]
+// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc11 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.2: %Foo.type.11c674.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -690,7 +656,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.11c674.2 = fn_decl @Foo.loc15 [concrete = constants.%Foo.12ccef.2] {
+// CHECK:STDOUT:   %Foo.decl.loc11: %Foo.type.11c674.2 = fn_decl @Foo.loc11 [concrete = constants.%Foo.12ccef.2] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -710,7 +676,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo.loc7(%a.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.loc15(%a.param: %C) {
+// CHECK:STDOUT: fn @Foo.loc11(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -729,7 +695,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.type.11c674.1: type = fn_type @Foo.loc7 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.1: %Foo.type.11c674.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %a.1bf9e8.2: %C = symbolic_binding a, 0 [symbolic]
-// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc15 [concrete]
+// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc11 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.2: %Foo.type.11c674.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -751,14 +717,14 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc7_9.2: %C = symbolic_binding a, 0 [symbolic = %a.loc7_9.1 (constants.%a.1bf9e8.1)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.11c674.2 = fn_decl @Foo.loc15 [concrete = constants.%Foo.12ccef.2] {
-// CHECK:STDOUT:     %a.patt.loc15_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %Foo.decl.loc11: %Foo.type.11c674.2 = fn_decl @Foo.loc11 [concrete = constants.%Foo.12ccef.2] {
+// CHECK:STDOUT:     %a.patt.loc11_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc11_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15: type = splice_block %D.ref [concrete = constants.%C] {
+// CHECK:STDOUT:     %.loc11: type = splice_block %D.ref [concrete = constants.%C] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc15_16.3: %C = symbolic_binding a, 0 [symbolic = %a.loc15_16.2 (constants.%a.1bf9e8.2)]
+// CHECK:STDOUT:     %a.loc11_16.3: %C = symbolic_binding a, 0 [symbolic = %a.loc11_16.2 (constants.%a.1bf9e8.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -777,10 +743,10 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Foo.loc15(%a.loc15_16.3: %C) {
-// CHECK:STDOUT:   %a.patt.loc15_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_16.2 (constants.%a.patt)]
-// CHECK:STDOUT:   %a.loc15_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc15_16.1 (constants.%a.1bf9e8.1)]
-// CHECK:STDOUT:   %a.loc15_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc15_16.2 (constants.%a.1bf9e8.2)]
+// CHECK:STDOUT: generic fn @Foo.loc11(%a.loc11_16.3: %C) {
+// CHECK:STDOUT:   %a.patt.loc11_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc11_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.loc11_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc11_16.1 (constants.%a.1bf9e8.1)]
+// CHECK:STDOUT:   %a.loc11_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc11_16.2 (constants.%a.1bf9e8.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -795,10 +761,10 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc7_9.1 => constants.%a.1bf9e8.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc15(constants.%a.1bf9e8.2) {
-// CHECK:STDOUT:   %a.patt.loc15_16.2 => constants.%a.patt
-// CHECK:STDOUT:   %a.loc15_16.1 => constants.%a.1bf9e8.2
-// CHECK:STDOUT:   %a.loc15_16.2 => constants.%a.1bf9e8.2
+// CHECK:STDOUT: specific @Foo.loc11(constants.%a.1bf9e8.2) {
+// CHECK:STDOUT:   %a.patt.loc11_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.loc11_16.1 => constants.%a.1bf9e8.2
+// CHECK:STDOUT:   %a.loc11_16.2 => constants.%a.1bf9e8.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_in_return.carbon
@@ -964,7 +930,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %a.patt: %pattern_type = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %Foo.type.11c674.1: type = fn_type @Foo.loc6 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.1: %Foo.type.11c674.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc18 [concrete]
+// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc12 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.2: %Foo.type.11c674.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -985,15 +951,15 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %const = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc18: %Foo.type.11c674.2 = fn_decl @Foo.loc18 [concrete = constants.%Foo.12ccef.2] {
+// CHECK:STDOUT:   %Foo.decl.loc12: %Foo.type.11c674.2 = fn_decl @Foo.loc12 [concrete = constants.%Foo.12ccef.2] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %const = value_param call_param0
-// CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_18 [concrete = constants.%const] {
+// CHECK:STDOUT:     %.loc12: type = splice_block %const.loc12_18 [concrete = constants.%const] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const.loc18_25: type = const_type %C.ref [concrete = constants.%const]
-// CHECK:STDOUT:       %const.loc18_18: type = const_type %const.loc18_25 [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc12_25: type = const_type %C.ref [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc12_18: type = const_type %const.loc12_25 [concrete = constants.%const]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %const = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
@@ -1009,7 +975,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo.loc6(%a.param: %const);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.loc18(%a.param: %const) {
+// CHECK:STDOUT: fn @Foo.loc12(%a.param: %const) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

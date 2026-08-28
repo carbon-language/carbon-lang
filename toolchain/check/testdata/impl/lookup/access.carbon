@@ -53,9 +53,7 @@ fn H(generic U: type, generic V: Z where .Z1 = C(U)) {
   // query's.
   //
   // TODO: This should pass.
-  // CHECK:STDERR: fail_todo_impl_witness_access_in_impl_type_structure.carbon:[[@LINE+4]]:3: error: cannot convert type `V` that implements `Z where .(Z.Z1) = C(U)` into type implementing `X(U)` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   V as X(U);
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_impl_witness_access_in_impl_type_structure.carbon:[[@LINE+2]]:3-11: error: cannot convert type `V` that implements `Z where .(Z.Z1) = C(U)` into type implementing `X(U)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:
   V as X(U);
 }

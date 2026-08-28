@@ -25,16 +25,10 @@ fn F() {
   // with a note about the cycle as the reason for impl lookup failing, or the
   // cycle causes an error so the conversion is not diagnosed.
 
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+11]]:3: error: cycle found in search for impl of `Z` for type `Point` [ImplLookupCycle]
-  // CHECK:STDERR:   Point as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE-12]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [T: Z] T as Z {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+5]]:3-12: error: cycle found in search for impl of `Z` for type `Point` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE-10]]:1-27: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+4]]:3: error: cannot convert type `Point` into type implementing `Z` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Point as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+2]]:3-12: error: cannot convert type `Point` into type implementing `Z` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:
   Point as Z;
 }
@@ -51,16 +45,10 @@ impl forall [T: type where .Self impls Z] T as Z {}
 class Point {}
 
 fn F() {
-  // CHECK:STDERR: fail_impl_simple_where_cycle.carbon:[[@LINE+11]]:3: error: cycle found in search for impl of `type where .Self impls Z` for type `Point` [ImplLookupCycle]
-  // CHECK:STDERR:   Point as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_impl_simple_where_cycle.carbon:[[@LINE-8]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [T: type where .Self impls Z] T as Z {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_simple_where_cycle.carbon:[[@LINE+5]]:3-12: error: cycle found in search for impl of `type where .Self impls Z` for type `Point` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_simple_where_cycle.carbon:[[@LINE-6]]:1-50: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_simple_where_cycle.carbon:[[@LINE+4]]:3: error: cannot convert type `Point` into type implementing `Z` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Point as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_impl_simple_where_cycle.carbon:[[@LINE+2]]:3-12: error: cannot convert type `Point` into type implementing `Z` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:
   Point as Z;
 }
@@ -77,16 +65,10 @@ impl forall [T: Z & Y] T as Z {}
 class Point {}
 
 fn F() {
-  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+11]]:3: error: cycle found in search for impl of `Z & Y` for type `Point` [ImplLookupCycle]
-  // CHECK:STDERR:   Point as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE-8]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [T: Z & Y] T as Z {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+5]]:3-12: error: cycle found in search for impl of `Z & Y` for type `Point` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE-6]]:1-31: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+4]]:3: error: cannot convert type `Point` into type implementing `Z` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Point as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+2]]:3-12: error: cannot convert type `Point` into type implementing `Z` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:
   Point as Z;
 }
@@ -106,22 +88,12 @@ impl forall [T: Z] T as X {}
 class C {}
 
 fn F() {
-  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+17]]:3: error: cycle found in search for impl of `Z` for type `C` [ImplLookupCycle]
-  // CHECK:STDERR:   C as Z;
-  // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE-9]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [T: Y] T as Z {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE-13]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [T: X] T as Y {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE-14]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [T: Z] T as X {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+7]]:3-8: error: cycle found in search for impl of `Z` for type `C` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE-7]]:1-27: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE-9]]:1-27: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE-8]]:1-27: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+4]]:3: error: cannot convert type `C` into type implementing `Z` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   C as Z;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+2]]:3-8: error: cannot convert type `C` into type implementing `Z` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:
   C as Z;
 }
@@ -141,66 +113,32 @@ class D {}
 fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
 
 fn F() {
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+17]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `C` [ImplLookupCycle]
-  // CHECK:STDERR:   Compare({} as C, {} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-12]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [U: type, T: ComparableWith(U)]
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3-27: error: cycle found in search for impl of `ComparableWith(C)` for type `C` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-10]]:1-43: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-5]]:1-69: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `ComparableWith(C)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Compare({} as C, {} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-16]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+3]]:3-27: error: cannot convert type `C` into type implementing `ComparableWith(C)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-8]]:1-69: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Compare({} as C, {} as C);
 
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+20]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `D` [ImplLookupCycle]
-  // CHECK:STDERR:   Compare({} as C, {} as D);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-31]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [U: type, T: ComparableWith(U)]
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-34]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [U: type, T: ComparableWith(U)]
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-31]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+8]]:3-27: error: cycle found in search for impl of `ComparableWith(C)` for type `D` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-19]]:1-43: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-20]]:1-43: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-15]]:1-69: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: error: cannot convert type `D` into type implementing `ComparableWith(C)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Compare({} as C, {} as D);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-38]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+3]]:3-27: error: cannot convert type `D` into type implementing `ComparableWith(C)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-18]]:1-69: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Compare({} as C, {} as D);
 
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+20]]:3: error: cycle found in search for impl of `ComparableWith(D)` for type `C` [ImplLookupCycle]
-  // CHECK:STDERR:   Compare({} as D, {} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-53]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [U: type, T: ComparableWith(U)]
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-56]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [U: type, T: ComparableWith(U)]
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-53]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+8]]:3-27: error: cycle found in search for impl of `ComparableWith(D)` for type `C` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-29]]:1-43: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-30]]:1-43: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-25]]:1-69: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `ComparableWith(D)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Compare({} as D, {} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-60]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+3]]:3-27: error: cannot convert type `C` into type implementing `ComparableWith(D)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-28]]:1-69: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Compare({} as D, {} as C);
 }
@@ -268,21 +206,13 @@ impl C as ComparableTo(D) {}
 // T is always ComparableWith(T).
 impl forall [T: type] T as ComparableWith(T) {}
 // If U is ComparableTo(T), U is ComparableWith(T).
-// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-// CHECK:STDERR: impl forall [T: type, U: ComparableTo(T)] U as ComparableWith(T) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE-5]]:1: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
-// CHECK:STDERR: impl forall [T: type] T as ComparableWith(T) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE+3]]:1-66: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE-3]]:1-46: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
 // CHECK:STDERR:
 impl forall [T: type, U: ComparableTo(T)] U as ComparableWith(T) {}
 // If U is ComparableTo(T), T is ComparableWith(U).
-// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-// CHECK:STDERR: impl forall [T: type, U: ComparableTo(T)] T as ComparableWith(U) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE-14]]:1: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
-// CHECK:STDERR: impl forall [T: type] T as ComparableWith(T) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE+3]]:1-66: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE-8]]:1-46: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
 // CHECK:STDERR:
 impl forall [T: type, U: ComparableTo(T)] T as ComparableWith(U) {}
 

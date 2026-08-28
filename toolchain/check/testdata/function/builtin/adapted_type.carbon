@@ -45,9 +45,7 @@ class MyIntLiteral {
   adapt {};
 }
 
-// CHECK:STDERR: fail_bad_adapt.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.make_type_signed" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_adapt.carbon:[[@LINE+2]]:1-33: error: invalid signature for builtin function "int.make_type_signed" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 
@@ -287,10 +285,10 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %N.param_patt: %pattern_type.129 = value_param_pattern [concrete = constants.%N.param_patt]
 // CHECK:STDOUT:     %N.patt: %pattern_type.129 = wrapper_binding_pattern N, %N.param_patt [concrete = constants.%N.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc12_28.1 [concrete = constants.%return.patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc10_28.1 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_28.1: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.loc12_28.2: Core.Form = init_form %.loc12_28.1 [concrete = constants.%.805]
+// CHECK:STDOUT:     %.loc10_28.1: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc10_28.2: Core.Form = init_form %.loc10_28.1 [concrete = constants.%.805]
 // CHECK:STDOUT:     %N.param: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
 // CHECK:STDOUT:     %N: %MyIntLiteral = wrapper_binding N, %N.param

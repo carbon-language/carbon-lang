@@ -12,9 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_too_few_values.carbon
 
-// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+4]]:29: error: missing value for field `b` in struct initialization [StructInitMissingFieldInLiteral]
-// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
-// CHECK:STDERR:                             ^~~~~~~~
+// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+2]]:29-36: error: missing value for field `b` in struct initialization [StructInitMissingFieldInLiteral]
 // CHECK:STDERR:
 var x: {.a: i32, .b: i32} = {.a = 1};
 
@@ -71,9 +69,9 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.b = var_storage %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc19: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b] {
-// CHECK:STDOUT:     %i32.loc19_13: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc19_22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc17: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b] {
+// CHECK:STDOUT:     %i32.loc17_13: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc17_22: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.b = wrapper_binding x, %x.var [concrete = %x.var]
@@ -86,15 +84,15 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc19_36.1: %struct_type.a = struct_literal (%int_1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc17_36.1: %struct_type.a = struct_literal (%int_1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %impl.elem0: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc19_36.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc17_36.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc19_36.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc19_36.2(%int_1) [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc19_36.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc19_36.3: ref %i32 = struct_access file.%x.var, element0 [concrete = constants.%.58a]
-// CHECK:STDOUT:   %.loc19_36.4: init %i32 to %.loc19_36.3 = in_place_init %.loc19_36.2 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %bound_method.loc17_36.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc17_36.2(%int_1) [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc17_36.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc17_36.3: ref %i32 = struct_access file.%x.var, element0 [concrete = constants.%.58a]
+// CHECK:STDOUT:   %.loc17_36.4: init %i32 to %.loc17_36.3 = in_place_init %.loc17_36.2 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

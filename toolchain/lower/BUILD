@@ -72,6 +72,8 @@ cc_library(
         "//common:vlog",
         "//toolchain/base:fixed_size_value_store",
         "//toolchain/base:kind_switch",
+        "//toolchain/diagnostics:emitter",
+        "//toolchain/diagnostics:renderer",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:absolute_node_ref",
         "//toolchain/sem_ir:clang_decl",

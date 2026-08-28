@@ -302,8 +302,11 @@ class File : public Printable<File> {
   auto expr_regions() -> ExprRegionStore& { return expr_regions_; }
   auto expr_regions() const -> const ExprRegionStore& { return expr_regions_; }
 
+  // A C++ location is a range, the way a parse node is a subtree: the extent is
+  // what a diagnostic underlines. Most of them are a single position, stored as
+  // a range that begins and ends there.
   using ClangSourceLocStore =
-      ValueStore<ClangSourceLocId, clang::SourceLocation, Tag<CheckIRId>>;
+      ValueStore<ClangSourceLocId, clang::SourceRange, Tag<CheckIRId>>;
   auto clang_source_locs() -> ClangSourceLocStore& {
     return clang_source_locs_;
   }
@@ -484,7 +487,7 @@ class File : public Printable<File> {
 namespace Carbon {
 extern template class ValueStore<SemIR::ExprRegionId, SemIR::ExprRegion,
                                  Tag<SemIR::CheckIRId>>;
-extern template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
+extern template class ValueStore<SemIR::ClangSourceLocId, clang::SourceRange,
                                  Tag<SemIR::CheckIRId>>;
 extern template class ValueStore<SemIR::CustomLayoutId,
                                  llvm::MutableArrayRef<SemIR::ObjectSize>,

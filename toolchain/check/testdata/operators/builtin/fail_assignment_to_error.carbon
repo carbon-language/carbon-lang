@@ -13,14 +13,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_assignment_to_error.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_assignment_to_error.carbon:[[@LINE+4]]:3: error: name `undeclared` not found [NameNotFound]
-  // CHECK:STDERR:   undeclared = 42;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_assignment_to_error.carbon:[[@LINE+2]]:3-12: error: name `undeclared` not found [NameNotFound]
   // CHECK:STDERR:
   undeclared = 42;
-  // CHECK:STDERR: fail_assignment_to_error.carbon:[[@LINE+4]]:4: error: name `also_undeclared` not found [NameNotFound]
-  // CHECK:STDERR:   *also_undeclared = 42;
-  // CHECK:STDERR:    ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_assignment_to_error.carbon:[[@LINE+2]]:4-18: error: name `also_undeclared` not found [NameNotFound]
   // CHECK:STDERR:
   *also_undeclared = 42;
 }
@@ -54,12 +50,12 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %int_42.loc20: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
+// CHECK:STDOUT:   %int_42.loc18: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
 // CHECK:STDOUT:   assign %undeclared.ref, <error>
 // CHECK:STDOUT:   %also_undeclared.ref: <error> = name_ref also_undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc25: ref <error> = deref <error> [concrete = <error>]
-// CHECK:STDOUT:   %int_42.loc25: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
-// CHECK:STDOUT:   assign %.loc25, <error>
+// CHECK:STDOUT:   %.loc21: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_42.loc21: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
+// CHECK:STDOUT:   assign %.loc21, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

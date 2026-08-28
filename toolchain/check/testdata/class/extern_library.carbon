@@ -14,9 +14,7 @@
 
 // --- fail_todo.carbon
 
-// CHECK:STDERR: fail_todo.carbon:[[@LINE+4]]:1: error: semantics TODO: `extern library` [SemanticsTodo]
-// CHECK:STDERR: extern library "foo" class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo.carbon:[[@LINE+2]]:1-29: error: semantics TODO: `extern library` [SemanticsTodo]
 // CHECK:STDERR:
 extern library "foo" class C;
 

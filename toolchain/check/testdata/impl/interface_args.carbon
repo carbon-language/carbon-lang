@@ -47,9 +47,7 @@ fn G(a: A) { a.(Action(B).Op)(); }
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_action.impl.carbon:[[@LINE+4]]:14: error: cannot access member of interface `Action(C)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
-// CHECK:STDERR: fn G(a: A) { a.(Action(C).Op)(); }
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_action.impl.carbon:[[@LINE+2]]:14-29: error: cannot access member of interface `Action(C)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR:
 fn G(a: A) { a.(Action(C).Op)(); }
 
@@ -92,17 +90,13 @@ import Core;
 class C {}
 
 fn MakeC() -> C {
-  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+4]]:10: error: cannot convert type `A` into type implementing `Factory(C)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   return A.(Factory(C).Make)();
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+2]]:10-28: error: cannot convert type `A` into type implementing `Factory(C)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:
   return A.(Factory(C).Make)();
 }
 
 fn InstanceC(a: A) -> C {
-  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Factory(C)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a.(Factory(C).Method)();
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+2]]:10-30: error: cannot access member of interface `Factory(C)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a.(Factory(C).Method)();
 }
@@ -868,8 +862,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Action.ref: %Action.type.538 = name_ref Action, imports.%Main.Action [concrete = constants.%Action.generic]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %Action.type: type = facet_type <@Action, @Action(constants.%C)> [concrete = constants.%Action.type.0f0]
-// CHECK:STDOUT:   %.loc8: %Action.assoc_type.35c = specific_constant imports.%Main.import_ref.00f, @Action.WithSelf(constants.%C, constants.%Self.ea2) [concrete = constants.%assoc0.940]
-// CHECK:STDOUT:   %Op.ref: %Action.assoc_type.35c = name_ref Op, %.loc8 [concrete = constants.%assoc0.940]
+// CHECK:STDOUT:   %.loc6: %Action.assoc_type.35c = specific_constant imports.%Main.import_ref.00f, @Action.WithSelf(constants.%C, constants.%Self.ea2) [concrete = constants.%assoc0.940]
+// CHECK:STDOUT:   %Op.ref: %Action.assoc_type.35c = name_ref Op, %.loc6 [concrete = constants.%assoc0.940]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1661,10 +1655,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.9ef = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type.9ef = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98b = out_param_pattern [concrete = constants.%return.param_patt.89a]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref.loc16 [concrete = constants.%return.patt.e4a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref.loc14 [concrete = constants.%return.patt.e4a]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc16: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc16: Core.Form = init_form %C.ref.loc16 [concrete = constants.%.a44]
+// CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc14: Core.Form = init_form %C.ref.loc14 [concrete = constants.%.a44]
 // CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:     %a: %A = wrapper_binding a, %a.param
@@ -1752,10 +1746,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.9da = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
-// CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc11: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%C)> [concrete = constants.%Factory.type.8fc]
-// CHECK:STDOUT:   %.loc13: %Factory.assoc_type.fc0 = specific_constant imports.%Main.import_ref.a26, @Factory.WithSelf(constants.%C, constants.%Self.3e3) [concrete = constants.%assoc0.c53]
-// CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.fc0 = name_ref Make, %.loc13 [concrete = constants.%assoc0.c53]
+// CHECK:STDOUT:   %.loc11: %Factory.assoc_type.fc0 = specific_constant imports.%Main.import_ref.a26, @Factory.WithSelf(constants.%C, constants.%Self.3e3) [concrete = constants.%assoc0.c53]
+// CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.fc0 = name_ref Make, %.loc11 [concrete = constants.%assoc0.c53]
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1763,10 +1757,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.9da = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
-// CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc17: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%C)> [concrete = constants.%Factory.type.8fc]
-// CHECK:STDOUT:   %.loc21: %Factory.assoc_type.fc0 = specific_constant imports.%Main.import_ref.1ef, @Factory.WithSelf(constants.%C, constants.%Self.3e3) [concrete = constants.%assoc1.f6c]
-// CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.fc0 = name_ref Method, %.loc21 [concrete = constants.%assoc1.f6c]
+// CHECK:STDOUT:   %.loc17: %Factory.assoc_type.fc0 = specific_constant imports.%Main.import_ref.1ef, @Factory.WithSelf(constants.%C, constants.%Self.3e3) [concrete = constants.%assoc1.f6c]
+// CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.fc0 = name_ref Method, %.loc17 [concrete = constants.%assoc1.f6c]
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

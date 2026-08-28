@@ -36,9 +36,7 @@ impl X as C(X).GenericAndParams(X) {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:13: error: parameters of generic types must be constant [GenericParamMustBeConstant]
-// CHECK:STDERR: interface A[runtime T: type]() {}
-// CHECK:STDERR:             ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+2]]:13-27: error: parameters of generic types must be constant [GenericParamMustBeConstant]
 // CHECK:STDERR:
 interface A[runtime T: type]() {}
 
@@ -46,9 +44,7 @@ interface A[runtime T: type]() {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+4]]:13: error: parameters of generic types must be constant [GenericParamMustBeConstant]
-// CHECK:STDERR: interface A(runtime T: type) {}
-// CHECK:STDERR:             ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+2]]:13-27: error: parameters of generic types must be constant [GenericParamMustBeConstant]
 // CHECK:STDERR:
 interface A(runtime T: type) {}
 
@@ -56,9 +52,7 @@ interface A(runtime T: type) {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_implicit_params_only_empty.carbon:[[@LINE+4]]:14: error: expected explicit parameters after implicit parameters [GenericMissingExplicitParameters]
-// CHECK:STDERR: interface Bar[] {}
-// CHECK:STDERR:              ^~
+// CHECK:STDERR: fail_implicit_params_only_empty.carbon:[[@LINE+2]]:14-15: error: expected explicit parameters after implicit parameters [GenericMissingExplicitParameters]
 // CHECK:STDERR:
 interface Bar[] {}
 
@@ -66,9 +60,7 @@ interface Bar[] {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_implicit_params_only.carbon:[[@LINE+4]]:14: error: expected explicit parameters after implicit parameters [GenericMissingExplicitParameters]
-// CHECK:STDERR: interface Bar[T: type] {}
-// CHECK:STDERR:              ^~~~~~~~~
+// CHECK:STDERR: fail_implicit_params_only.carbon:[[@LINE+2]]:14-22: error: expected explicit parameters after implicit parameters [GenericMissingExplicitParameters]
 // CHECK:STDERR:
 interface Bar[T: type] {}
 
@@ -568,30 +560,30 @@ interface Bar[T: type] {}
 // CHECK:STDOUT:     .Bar = %Bar.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type.3f0 = interface_decl @Bar [concrete = constants.%Bar.generic] {
-// CHECK:STDOUT:     %T.patt.loc8_16.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_16.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc6_16.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_18.1: type = splice_block %.loc8_18.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc6_18.1: type = splice_block %.loc6_18.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc8_18.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc6_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc8_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_16.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc6_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Bar(%T.loc8_16.2: type) {
-// CHECK:STDOUT:   %T.patt.loc8_16.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_16.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc8_16.1: type = symbolic_binding T, 0 [symbolic = %T.loc8_16.1 (constants.%T)]
+// CHECK:STDOUT: generic interface @Bar(%T.loc6_16.2: type) {
+// CHECK:STDOUT:   %T.patt.loc6_16.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_16.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc6_16.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_16.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Bar.type: type = facet_type <@Bar, @Bar(%T.loc8_16.1)> [symbolic = %Bar.type (constants.%Bar.type.e6f)]
-// CHECK:STDOUT:   %Self.loc8_24.2: @Bar.%Bar.type (%Bar.type.e6f) = symbolic_binding Self, 1 [symbolic = %Self.loc8_24.2 (constants.%Self)]
+// CHECK:STDOUT:   %Bar.type: type = facet_type <@Bar, @Bar(%T.loc6_16.1)> [symbolic = %Bar.type (constants.%Bar.type.e6f)]
+// CHECK:STDOUT:   %Self.loc6_24.2: @Bar.%Bar.type (%Bar.type.e6f) = symbolic_binding Self, 1 [symbolic = %Self.loc6_24.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc8_24.1: @Bar.%Bar.type (%Bar.type.e6f) = symbolic_binding Self, 1 [symbolic = %Self.loc8_24.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc6_24.1: @Bar.%Bar.type (%Bar.type.e6f) = symbolic_binding Self, 1 [symbolic = %Self.loc6_24.2 (constants.%Self)]
 // CHECK:STDOUT:     %Bar.WithSelf.decl = interface_with_self_decl @Bar [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc8_24.1
+// CHECK:STDOUT:     .Self = %Self.loc6_24.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -599,8 +591,8 @@ interface Bar[T: type] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc8_16.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc8_16.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_16.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc6_16.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar.WithSelf(constants.%T, constants.%Self) {}

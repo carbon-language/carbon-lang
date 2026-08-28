@@ -50,20 +50,12 @@ class JustJ {
 }
 
 fn Call() {
-  // CHECK:STDERR: fail_combine_facets_bad_call.carbon:[[@LINE+7]]:3: error: cannot convert type `JustI` into type implementing `I & J` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   TakeIJ(JustI);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_combine_facets_bad_call.carbon:[[@LINE-14]]:26: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn TakeIJ(unused generic T: TypeAnd(I, J)) {}
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_combine_facets_bad_call.carbon:[[@LINE+3]]:3-15: error: cannot convert type `JustI` into type implementing `I & J` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_combine_facets_bad_call.carbon:[[@LINE-12]]:26-41: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   TakeIJ(JustI);
-  // CHECK:STDERR: fail_combine_facets_bad_call.carbon:[[@LINE+7]]:3: error: cannot convert type `JustJ` into type implementing `I & J` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   TakeIJ(JustJ);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_combine_facets_bad_call.carbon:[[@LINE-22]]:26: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn TakeIJ(unused generic T: TypeAnd(I, J)) {}
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_combine_facets_bad_call.carbon:[[@LINE+3]]:3-15: error: cannot convert type `JustJ` into type implementing `I & J` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_combine_facets_bad_call.carbon:[[@LINE-16]]:26-41: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   TakeIJ(JustJ);
 }
@@ -72,32 +64,22 @@ fn Call() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "type.and" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooFew(a: type) -> type = "type.and";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-28: error: invalid signature for builtin function "type.and" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooFew(a: type) -> type = "type.and";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "type.and" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooMany(a: type, b: type, c: type) -> type = "type.and";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-47: error: invalid signature for builtin function "type.and" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooMany(a: type, b: type, c: type) -> type = "type.and";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "type.and" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ParamNotType(a: {}, b: {}) -> type = "type.and";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-39: error: invalid signature for builtin function "type.and" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn ParamNotType(a: {}, b: {}) -> type = "type.and";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "type.and" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ResultNotType(a: type, b: type) -> {} = "type.and";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-42: error: invalid signature for builtin function "type.and" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn ResultNotType(a: type, b: type) -> {} = "type.and";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "type.and" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ResultNotSpecified(a: type, b: type) = "type.and";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-41: error: invalid signature for builtin function "type.and" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn ResultNotSpecified(a: type, b: type) = "type.and";

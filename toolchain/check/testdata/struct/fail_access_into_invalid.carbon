@@ -13,9 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_access_into_invalid.carbon
 
 
-// CHECK:STDERR: fail_access_into_invalid.carbon:[[@LINE+4]]:10: error: name `a` not found [NameNotFound]
-// CHECK:STDERR: fn F() { a.b; }
-// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_access_into_invalid.carbon:[[@LINE+2]]:10: error: name `a` not found [NameNotFound]
 // CHECK:STDERR:
 fn F() { a.b; }
 

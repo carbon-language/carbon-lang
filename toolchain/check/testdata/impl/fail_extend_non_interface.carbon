@@ -13,9 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_extend_non_interface.carbon
 
 class C {
-  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+4]]:3: error: impl as non-facet type `i32` [ImplAsNonFacetType]
-  // CHECK:STDERR:   extend impl as i32;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+2]]:3-21: error: impl as non-facet type `i32` [ImplAsNonFacetType]
   // CHECK:STDERR:
   extend impl as i32;
 }

@@ -539,12 +539,12 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       // scopes directly on the facet type.
       if (!RequireCompleteType(
               context, base_type_id, SemIR::LocId(base_id), [&](auto& builder) {
-                CARBON_DIAGNOSTIC(
-                    IncompleteTypeInMemberAccessOfFacet, Context,
+                CARBON_DIAGNOSTIC_CONTEXT(
+                    IncompleteTypeInMemberAccessOfFacet,
                     "member access into facet of incomplete type {0}",
                     SemIR::TypeId);
-                builder.Context(base_id, IncompleteTypeInMemberAccessOfFacet,
-                                base_type_id);
+                builder.Attach(base_id, IncompleteTypeInMemberAccessOfFacet,
+                               base_type_id);
               })) {
         // If the scope is invalid in AppendLookupScopesForConstant we still
         // return true and proceed with lookup, just ignoring that scope.
@@ -583,11 +583,11 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   // done to give a better error than "invalid use of" an incomplete type?
   if (!RequireCompleteType(
           context, base_type_id, SemIR::LocId(base_id), [&](auto& builder) {
-            CARBON_DIAGNOSTIC(
-                IncompleteTypeInMemberAccess, Context,
+            CARBON_DIAGNOSTIC_CONTEXT(
+                IncompleteTypeInMemberAccess,
                 "member access into object of incomplete type {0}",
                 TypeOfInstId);
-            builder.Context(base_id, IncompleteTypeInMemberAccess, base_id);
+            builder.Attach(base_id, IncompleteTypeInMemberAccess, base_id);
           })) {
     return SemIR::ErrorInst::InstId;
   }

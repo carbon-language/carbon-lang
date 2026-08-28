@@ -611,14 +611,14 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   if (complete_type_id.is_concrete()) {
     Diagnostics::ContextScope diagnostic_context(
         &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Context,
-                            "{0} evaluates to incomplete type {1}",
-                            InstIdAsType, InstIdAsType);
-          builder.Context(inst_id, IncompleteTypeInMonomorphization,
-                          context.insts()
-                              .GetAs<SemIR::RequireCompleteType>(inst_id)
-                              .complete_type_inst_id,
-                          inst.complete_type_inst_id);
+          CARBON_DIAGNOSTIC_CONTEXT(IncompleteTypeInMonomorphization,
+                                    "{0} evaluates to incomplete type {1}",
+                                    InstIdAsType, InstIdAsType);
+          builder.Attach(inst_id, IncompleteTypeInMonomorphization,
+                         context.insts()
+                             .GetAs<SemIR::RequireCompleteType>(inst_id)
+                             .complete_type_inst_id,
+                         inst.complete_type_inst_id);
         });
     // We use TryToCompleteType() instead of RequireCompleteType() because we
     // are currently evaluating a RequireCompleteType instruction, and calling

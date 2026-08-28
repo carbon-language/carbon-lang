@@ -9,27 +9,19 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/var/fail_in_interface.carbon
 
 interface I {
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   let var a: ();
-  // CHECK:STDERR:       ^~~
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+2]]:7-9: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   let var a: ();
 
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:   var b: ();
-  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+2]]:3-5: error: unrecognized declaration introducer [UnrecognizedDecl]
   // CHECK:STDERR:
   var b: ();
 
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   let var c: ();
-  // CHECK:STDERR:       ^~~
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+2]]:7-9: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   let var c: ();
 
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:   var d: ();
-  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+2]]:3-5: error: unrecognized declaration introducer [UnrecognizedDecl]
   // CHECK:STDERR:
   var d: ();
 }

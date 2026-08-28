@@ -52,12 +52,8 @@ class B {}
 
 fn F(generic T: Generic(A));
 fn G(generic T: Generic(B)) {
-  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `Generic(B)` into type implementing `Generic(A)` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   F(T);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE-5]]:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(generic T: Generic(A));
-  // CHECK:STDERR:              ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+3]]:3-6: error: cannot convert type `T` that implements `Generic(B)` into type implementing `Generic(A)` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE-3]]:14-26: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   F(T);
 }
@@ -67,12 +63,8 @@ library "[[@TEST_NAME]]";
 
 interface Generic(T: type) {}
 
-// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+7]]:24: error: 2 arguments passed to generic interface expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fn F(unused generic T: Generic((), ())) {}
-// CHECK:STDERR:                        ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE-5]]:1: note: calling generic interface declared here [InCallToEntity]
-// CHECK:STDERR: interface Generic(T: type) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+3]]:24-38: error: 2 arguments passed to generic interface expecting 1 argument [CallArgCountMismatch]
+// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE-3]]:1-28: note: calling generic interface declared here [InCallToEntity]
 // CHECK:STDERR:
 fn F(unused generic T: Generic((), ())) {}
 
@@ -595,13 +587,13 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc10_15.1: %Generic.type.57d = symbolic_binding T, 0 [symbolic = %T.loc10_15.1 (constants.%T.f18)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc18_6.2: type = facet_access_type %T.loc10_15.1 [symbolic = %T.as_type.loc18_6.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %T.as_type.loc14_6.2: type = facet_access_type %T.loc10_15.1 [symbolic = %T.as_type.loc14_6.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref: %Generic.type.57d = name_ref T, %T.loc10_15.2 [symbolic = %T.loc10_15.1 (constants.%T.f18)]
-// CHECK:STDOUT:     %T.as_type.loc18_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc18_6.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %T.as_type.loc14_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc14_6.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -671,8 +663,8 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.30d = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
-// CHECK:STDOUT:       %.loc12_33: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc12_37: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc8_33: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc8_37: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T: <error> = symbolic_binding T, 0 [concrete = <error>]
 // CHECK:STDOUT:   }

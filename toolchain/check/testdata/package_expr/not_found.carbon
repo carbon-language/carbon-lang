@@ -14,9 +14,7 @@
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_direct.carbon:[[@LINE+4]]:23: error: member name `x` not found in `Main` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   var unused y: i32 = package.x;
-  // CHECK:STDERR:                       ^~~~~~~~~
+  // CHECK:STDERR: fail_direct.carbon:[[@LINE+2]]:23-31: error: member name `x` not found in `Main` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   var unused y: i32 = package.x;
 }
@@ -27,9 +25,7 @@ library "[[@TEST_NAME]]";
 private interface Private {}
 
 fn F() {
-  // CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:3: error: member name `DoesNotExist` not found in `Private` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR:   package.Private.DoesNotExist;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_nested.carbon:[[@LINE+2]]:3-30: error: member name `DoesNotExist` not found in `Private` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:
   package.Private.DoesNotExist;
 }

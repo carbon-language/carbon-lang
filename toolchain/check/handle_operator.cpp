@@ -390,10 +390,10 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
 
         // TODO: Check for any facet here, rather than only a type.
         if (not_pointer_type_id == SemIR::TypeType::TypeId) {
-          CARBON_DIAGNOSTIC(
-              DerefOfType, Note,
+          CARBON_DIAGNOSTIC_LABEL(
+              DerefOfType, Info,
               "to form a pointer type, write the `*` after the pointee type");
-          builder.Note(LocIdForDiagnostics::TokenOnly(node_id), DerefOfType);
+          builder.Attach(LocIdForDiagnostics::TokenOnly(node_id), DerefOfType);
         }
 
         builder.Emit();

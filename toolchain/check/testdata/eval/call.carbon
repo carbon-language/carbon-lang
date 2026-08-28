@@ -26,9 +26,7 @@ eval fn F() -> i32 { return 3; }
 
 // Ensure we get an error about the over-sized initializer and aren't just
 // treating all `eval fn` calls as silent errors.
-// CHECK:STDERR: fail_call_wrong_value.carbon:[[@LINE+4]]:26: error: cannot initialize array of 3 elements from 4 initializers [ArrayInitFromLiteralArgCountMismatch]
-// CHECK:STDERR: var a: array(i32, F()) = (0, 1, 2, 3);
-// CHECK:STDERR:                          ^~~~~~~~~~~~
+// CHECK:STDERR: fail_call_wrong_value.carbon:[[@LINE+2]]:26-37: error: cannot initialize array of 3 elements from 4 initializers [ArrayInitFromLiteralArgCountMismatch]
 // CHECK:STDERR:
 var a: array(i32, F()) = (0, 1, 2, 3);
 
@@ -38,9 +36,7 @@ library "[[@TEST_NAME]]";
 
 fn F() -> i32 { return 3; }
 
-// CHECK:STDERR: fail_call_fn_not_eval.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var a: array(i32, F()) = (0, 1, 2);
-// CHECK:STDERR:                   ^~~
+// CHECK:STDERR: fail_call_fn_not_eval.carbon:[[@LINE+2]]:19-21: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR:
 var a: array(i32, F()) = (0, 1, 2);
 
@@ -51,9 +47,7 @@ library "[[@TEST_NAME]]";
 eval fn F() -> i32;
 
 // TODO: We should be able to diagnose this better.
-// CHECK:STDERR: fail_call_eval_fn_not_defined.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var a: array(i32, F()) = (0, 1, 2);
-// CHECK:STDERR:                   ^~~
+// CHECK:STDERR: fail_call_eval_fn_not_defined.carbon:[[@LINE+2]]:19-21: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR:
 var a: array(i32, F()) = (0, 1, 2);
 
@@ -72,13 +66,9 @@ library "[[@TEST_NAME]]";
 eval fn F(x: i32) -> i32 { return x; }
 
 fn G(generic N: i32) {
-  // CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE+8]]:36: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
-  // CHECK:STDERR:   var unused a: array(i32, F(N)) = (0, 1, 2);
-  // CHECK:STDERR:                                    ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE+4]]:36-44: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE+4]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   var unused a: array(i32, F(N)) = (0, 1, 2);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE+2]]:3-32: error: value of type `<dependent type>` is not callable [CallToNonCallable]
   // CHECK:STDERR:
   var unused a: array(i32, F(N)) = (0, 1, 2);
 }
@@ -95,24 +85,16 @@ eval fn F(_: i32) -> type {
 }
 
 fn UseFGenerically(generic X: i32) {
-  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+8]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   var unused v: F(X) = {};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+4]]:3-20: error: value of type `<dependent type>` is not callable [CallToNonCallable]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+4]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   var unused v: F(X) = {};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+2]]:3-20: error: value of type `<dependent type>` is not callable [CallToNonCallable]
   // CHECK:STDERR:
   var unused v: F(X) = {};
 }
 
 fn UseFSpecifically() {
-  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+7]]:3: error: unable to monomorphize specific `UseFGenerically(3)` [ResolvingSpecificHere]
-  // CHECK:STDERR:   UseFGenerically(3);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE-7]]:3: note: cannot access member of interface `Core.ImplicitAs(C)` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   var unused v: F(X) = {};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE+3]]:3-17: error: unable to monomorphize specific `UseFGenerically(3)` [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_todo_dependent_call_type.carbon:[[@LINE-5]]:3-20: note: cannot access member of interface `Core.ImplicitAs(C)` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   UseFGenerically(3);
 }
@@ -154,9 +136,7 @@ eval fn G(v: (i32, i32, i32)) -> i32 { return v.1; }
 fn H() {
   // TODO: The call to the function is a constant, but the `temporary` instruction wrapping it is not.
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_return_in_place_tuple.carbon:[[@LINE+4]]:28: error: array bound is not a constant [InvalidArrayExpr]
-  // CHECK:STDERR:   var unused a: array(i32, G(F())) = (1, 2);
-  // CHECK:STDERR:                            ^~~~~~
+  // CHECK:STDERR: fail_todo_return_in_place_tuple.carbon:[[@LINE+2]]:28-33: error: array bound is not a constant [InvalidArrayExpr]
   // CHECK:STDERR:
   var unused a: array(i32, G(F())) = (1, 2);
   //@dump-sem-ir-end
@@ -325,7 +305,7 @@ fn H() {
 // CHECK:STDOUT:   %.e1e: ref %tuple.type.555 = temporary invalid, %tuple.479 [concrete]
 // CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %tuple.ad8: %tuple.type.f94 = tuple_value (%int_1.5b8, %int_2.ecc) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc17_32.3 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc15_32.3 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.e1e, %Destroy.Op.1a2547.3 [concrete]
 // CHECK:STDOUT: }
@@ -391,7 +371,7 @@ fn H() {
 // CHECK:STDOUT:   %a.var: ref <error> = var_storage %a.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %.loc17_43: %tuple.type.f94 = tuple_literal (%int_1, %int_2) [concrete = constants.%tuple.ad8]
+// CHECK:STDOUT:   %.loc15_43: %tuple.type.f94 = tuple_literal (%int_1, %int_2) [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %a: <error> = wrapper_binding a, <error> [concrete = <error>]
@@ -403,14 +383,14 @@ fn H() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc17_32.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc15_32.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc17_32.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.Op.loc15_32.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc17_32.3(%self.param: ref %tuple.type.555) {
+// CHECK:STDOUT: fn @Destroy.Op.loc15_32.3(%self.param: ref %tuple.type.555) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

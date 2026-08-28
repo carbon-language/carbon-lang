@@ -34,13 +34,9 @@ extern fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: fn A() {}
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern fn A();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+4]]:1-8: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: imported from: fail_extern_api.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: extern_api.carbon:4:1-14: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn A() {}
 
@@ -54,13 +50,9 @@ fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern fn A() {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern_impl.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+4]]:1-15: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: imported from: fail_extern_impl.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: extern_impl.carbon:4:1-7: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 extern fn A() {}
 
@@ -74,13 +66,9 @@ fn A() {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+8]]:1: error: redeclaration of `fn A` is redundant [RedeclRedundant]
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: redecl_after_def.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: fn A() {}
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+4]]:1-7: error: redeclaration of `fn A` is redundant [RedeclRedundant]
+// CHECK:STDERR: imported from: fail_redecl_after_def.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: redecl_after_def.carbon:4:1-8: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn A();
 
@@ -94,13 +82,9 @@ fn A() {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+8]]:1: error: redefinition of `fn A` [RedeclRedef]
-// CHECK:STDERR: fn A() {}
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: redef_after_def.carbon:4:1: note: previously defined here [RedeclPrevDef]
-// CHECK:STDERR: fn A() {}
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+4]]:1-8: error: redefinition of `fn A` [RedeclRedef]
+// CHECK:STDERR: imported from: fail_redef_after_def.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: redef_after_def.carbon:4:1-8: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR:
 fn A() {}
 
@@ -115,13 +99,9 @@ alias B = A;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+8]]:4: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn B() {}
-// CHECK:STDERR:    ^
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+4]]:4: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_def_alias.impl.carbon:[[@LINE-3]]:1 [InImport]
 // CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: alias B = A;
-// CHECK:STDERR:       ^
 // CHECK:STDERR:
 fn B() {}
 
@@ -297,7 +277,7 @@ fn B() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type.9f4a6d.1: type = fn_type @A.1 [concrete]
 // CHECK:STDOUT:   %A.921eb9.1: %A.type.9f4a6d.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.9f4a6d.2: type = fn_type @A.loc12 [concrete]
+// CHECK:STDOUT:   %A.type.9f4a6d.2: type = fn_type @A.loc8 [concrete]
 // CHECK:STDOUT:   %A.921eb9.2: %A.type.9f4a6d.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -311,12 +291,12 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_31.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_31.2 = import <none>
-// CHECK:STDOUT:   %A.decl: %A.type.9f4a6d.2 = fn_decl @A.loc12 [concrete = constants.%A.921eb9.2] {} {}
+// CHECK:STDOUT:   %A.decl: %A.type.9f4a6d.2 = fn_decl @A.loc8 [concrete = constants.%A.921eb9.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.1 [from "redef_after_def.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.loc12() {
+// CHECK:STDOUT: fn @A.loc8() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

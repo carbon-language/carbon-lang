@@ -39,9 +39,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+4]]:20: error: unsupported floating-point bit width 931 [CompileTimeFloatBitWidth]
-// CHECK:STDERR: var invalid_float: Float(931);
-// CHECK:STDERR:                    ^~~~~~~~~~
+// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+2]]:20-29: error: unsupported floating-point bit width 931 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:
 var invalid_float: Float(931);
 
@@ -52,9 +50,7 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 var dyn_size: i32 = 64;
-// CHECK:STDERR: fail_dyn_size.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-// CHECK:STDERR: var dyn: Float(dyn_size);
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_dyn_size.carbon:[[@LINE+2]]:10-24: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR:
 var dyn: Float(dyn_size);
 

@@ -14,24 +14,18 @@
 
 interface Interface { }
 
-// CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+4]]:14: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
-// CHECK:STDERR: fn Interface.F() {}
-// CHECK:STDERR:              ^
+// CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+2]]:14: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
 // CHECK:STDERR:
 fn Interface.F() {}
 
 // Nesting interfaces like this is not valid, but make sure we don't crash.
 interface Outer {
   interface Inner {
-    // CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+4]]:8: error: name `Outer` not found [NameNotFound]
-    // CHECK:STDERR:     fn Outer.F();
-    // CHECK:STDERR:        ^~~~~
+    // CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+2]]:8-12: error: name `Outer` not found [NameNotFound]
     // CHECK:STDERR:
     fn Outer.F();
   }
-  // CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+4]]:12: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
-  // CHECK:STDERR:   fn Inner.F();
-  // CHECK:STDERR:            ^
+  // CHECK:STDERR: fail_add_member_outside_definition.carbon:[[@LINE+2]]:12: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
   // CHECK:STDERR:
   fn Inner.F();
 }
@@ -47,9 +41,9 @@ interface Outer {
 // CHECK:STDOUT:   %Self.a58: %Outer.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%Self.a58)> [symbolic]
 // CHECK:STDOUT:   %Self.279: %Inner.type = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %Inner.WithSelf.F.type.445c54.1: type = fn_type @Inner.WithSelf.F.loc30, @Inner.WithSelf(%Self.a58, %Self.279) [symbolic]
+// CHECK:STDOUT:   %Inner.WithSelf.F.type.445c54.1: type = fn_type @Inner.WithSelf.F.loc26, @Inner.WithSelf(%Self.a58, %Self.279) [symbolic]
 // CHECK:STDOUT:   %Inner.WithSelf.F.cae502.1: %Inner.WithSelf.F.type.445c54.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Inner.WithSelf.F.type.445c54.2: type = fn_type @Inner.WithSelf.F.loc36, @Inner.WithSelf(%Self.a58, %Self.279) [symbolic]
+// CHECK:STDOUT:   %Inner.WithSelf.F.type.445c54.2: type = fn_type @Inner.WithSelf.F.loc30, @Inner.WithSelf(%Self.a58, %Self.279) [symbolic]
 // CHECK:STDOUT:   %Inner.WithSelf.F.cae502.2: %Inner.WithSelf.F.type.445c54.2 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -81,7 +75,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Inner.decl: type = interface_decl @Inner [symbolic = @Outer.WithSelf.%Inner.type (constants.%Inner.type)] {} {}
-// CHECK:STDOUT:   %Inner.WithSelf.F.decl: @Outer.WithSelf.%Inner.WithSelf.F.type (%Inner.WithSelf.F.type.445c54.2) = fn_decl @Inner.WithSelf.F.loc36 [symbolic = @Outer.WithSelf.%Inner.WithSelf.F (constants.%Inner.WithSelf.F.cae502.2)] {} {}
+// CHECK:STDOUT:   %Inner.WithSelf.F.decl: @Outer.WithSelf.%Inner.WithSelf.F.type (%Inner.WithSelf.F.type.445c54.2) = fn_decl @Inner.WithSelf.F.loc30 [symbolic = @Outer.WithSelf.%Inner.WithSelf.F (constants.%Inner.WithSelf.F.cae502.2)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -93,19 +87,19 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Inner(@Outer.%Self: %Outer.type) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.loc25_19.2: %Outer.type = symbolic_binding Self, 0 [symbolic = %Self.loc25_19.2 (constants.%Self.a58)]
-// CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%Self.loc25_19.2)> [symbolic = %Inner.type (constants.%Inner.type)]
-// CHECK:STDOUT:   %Self.loc25_19.3: @Inner.%Inner.type (%Inner.type) = symbolic_binding Self, 1 [symbolic = %Self.loc25_19.3 (constants.%Self.279)]
+// CHECK:STDOUT:   %Self.loc23_19.2: %Outer.type = symbolic_binding Self, 0 [symbolic = %Self.loc23_19.2 (constants.%Self.a58)]
+// CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%Self.loc23_19.2)> [symbolic = %Inner.type (constants.%Inner.type)]
+// CHECK:STDOUT:   %Self.loc23_19.3: @Inner.%Inner.type (%Inner.type) = symbolic_binding Self, 1 [symbolic = %Self.loc23_19.3 (constants.%Self.279)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc25_19.1: @Inner.%Inner.type (%Inner.type) = symbolic_binding Self, 1 [symbolic = %Self.loc25_19.3 (constants.%Self.279)]
+// CHECK:STDOUT:     %Self.loc23_19.1: @Inner.%Inner.type (%Inner.type) = symbolic_binding Self, 1 [symbolic = %Self.loc23_19.3 (constants.%Self.279)]
 // CHECK:STDOUT:     %Inner.WithSelf.decl = interface_with_self_decl @Inner [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
-// CHECK:STDOUT:     %Inner.WithSelf.F.decl: @Inner.WithSelf.%Inner.WithSelf.F.type (%Inner.WithSelf.F.type.445c54.1) = fn_decl @Inner.WithSelf.F.loc30 [symbolic = @Inner.WithSelf.%Inner.WithSelf.F (constants.%Inner.WithSelf.F.cae502.1)] {} {}
+// CHECK:STDOUT:     %Inner.WithSelf.F.decl: @Inner.WithSelf.%Inner.WithSelf.F.type (%Inner.WithSelf.F.type.445c54.1) = fn_decl @Inner.WithSelf.F.loc26 [symbolic = @Inner.WithSelf.%Inner.WithSelf.F (constants.%Inner.WithSelf.F.cae502.1)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc25_19.1
+// CHECK:STDOUT:     .Self = %Self.loc23_19.1
 // CHECK:STDOUT:     .F = @Outer.WithSelf.%Inner.WithSelf.F.decl
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
@@ -122,11 +116,11 @@ interface Outer {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Inner.WithSelf.F.loc30(@Outer.%Self: %Outer.type, @Inner.%Self.loc25_19.1: @Inner.%Inner.type (%Inner.type)) {
+// CHECK:STDOUT: generic fn @Inner.WithSelf.F.loc26(@Outer.%Self: %Outer.type, @Inner.%Self.loc23_19.1: @Inner.%Inner.type (%Inner.type)) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Inner.WithSelf.F.loc36(@Outer.%Self: %Outer.type, @Inner.%Self.loc25_19.1: @Inner.%Inner.type (%Inner.type)) {
+// CHECK:STDOUT: generic fn @Inner.WithSelf.F.loc30(@Outer.%Self: %Outer.type, @Inner.%Self.loc23_19.1: @Inner.%Inner.type (%Inner.type)) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -138,14 +132,14 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%Self.a58) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.loc25_19.2 => constants.%Self.a58
+// CHECK:STDOUT:   %Self.loc23_19.2 => constants.%Self.a58
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type
-// CHECK:STDOUT:   %Self.loc25_19.3 => constants.%Self.279
+// CHECK:STDOUT:   %Self.loc23_19.3 => constants.%Self.279
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner.WithSelf(constants.%Self.a58, constants.%Self.279) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner.WithSelf.F.loc30(constants.%Self.a58, constants.%Self.279) {}
+// CHECK:STDOUT: specific @Inner.WithSelf.F.loc26(constants.%Self.a58, constants.%Self.279) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner.WithSelf.F.loc36(constants.%Self.a58, constants.%Self.279) {}
+// CHECK:STDOUT: specific @Inner.WithSelf.F.loc30(constants.%Self.a58, constants.%Self.279) {}
 // CHECK:STDOUT:

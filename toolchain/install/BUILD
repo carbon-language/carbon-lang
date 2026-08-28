@@ -121,6 +121,7 @@ cc_binary(
         "//common:bazel_working_dir",
         "//common:error",
         "//common:exe_path",
+        "//common:filesystem",
         "//common:init_llvm",
         "//common:version_stamp",
         "//toolchain/base:install_paths",

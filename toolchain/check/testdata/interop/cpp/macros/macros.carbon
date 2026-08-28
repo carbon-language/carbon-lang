@@ -41,7 +41,7 @@ fn F() {
 }
 
 // --- bad_suffix.h
-// CHECK:STDERR: ./bad_suffix.h:[[@LINE+1]]:24: in expansion of macro defined here [InCppMacroExpansion]
+// CHECK:STDERR: expanded from macro defined at: ./bad_suffix.h:[[@LINE+1]]:24 [InCppMacroExpansion]
 #define CONFIG_VALUE 42f
 
 // --- fail_import_bad_suffix.carbon
@@ -51,31 +51,19 @@ library "[[@TEST_NAME]]";
 import Cpp library "bad_suffix.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+20]]:6: error: invalid digit 'f' in decimal constant [CppInteropParseError]
-  // CHECK:STDERR:    27 |   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:       |      ^
-  // CHECK:STDERR:     2 | #define CONFIG_VALUE 42f
-  // CHECK:STDERR:       |                        ^
-  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+15]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+8]]:6: error: invalid digit 'f' in decimal constant [CppInteropParseError]
+  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+7]]:3-18: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+11]]:3: error: failed to parse macro Cpp.CONFIG_VALUE to a valid constant expression [InCppMacroEvaluation]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+5]]:3-18: error: failed to parse macro Cpp.CONFIG_VALUE to a valid constant expression [InCppMacroEvaluation]
+  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+4]]:3-18: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+4]]:3: error: member name `CONFIG_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+2]]:3-18: error: member name `CONFIG_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   Cpp.CONFIG_VALUE;
 }
 
 // --- integer_literal_too_big.h
-// CHECK:STDERR: ./integer_literal_too_big.h:[[@LINE+1]]:22: in expansion of macro defined here [InCppMacroExpansion]
+// CHECK:STDERR: expanded from macro defined at: ./integer_literal_too_big.h:[[@LINE+1]]:22 [InCppMacroExpansion]
 #define CONFIG_VALUE 18446744073709551616
 
 // --- fail_import_integer_literal_too_big.carbon
@@ -85,14 +73,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "integer_literal_too_big.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+9]]:6: error: integer literal is too large to be represented in any integer type [CppInteropParseError]
-  // CHECK:STDERR:    16 |   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:       |      ^
-  // CHECK:STDERR:     2 | #define CONFIG_VALUE 18446744073709551616
-  // CHECK:STDERR:       |                      ^
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+3]]:6: error: integer literal is too large to be represented in any integer type [CppInteropParseError]
+  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+2]]:3-18: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
   // CHECK:STDERR:
   Cpp.CONFIG_VALUE;
 }
@@ -104,9 +86,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "integer_literal_replacement_token.h";
 
 fn F() {
-  // CHECK:STDERR: fail_assign_to_object_like_macro.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE = 3;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_assign_to_object_like_macro.carbon:[[@LINE+2]]:3-18: error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:
   Cpp.CONFIG_VALUE = 3;
 }
@@ -126,9 +106,7 @@ import Cpp library "macro_in_nested_scope.h";
 fn F() {
   let unused a: i32 = Cpp.CONFIG_VALUE;
 
-  // CHECK:STDERR: fail_import_macro_in_nested_scope.carbon:[[@LINE+4]]:23: error: member name `CONFIG_VALUE` not found in `Cpp.N` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let unused b: i32 = Cpp.N.CONFIG_VALUE;
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_macro_in_nested_scope.carbon:[[@LINE+2]]:23-40: error: member name `CONFIG_VALUE` not found in `Cpp.N` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   let unused b: i32 = Cpp.N.CONFIG_VALUE;
 }
@@ -168,16 +146,10 @@ import Cpp library "no_replacement_token.h";
 
 fn F() {
   // TODO: Get rid of the second error.
-  // CHECK:STDERR: fail_import_no_replacement_token.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: macro with 0 replacement tokens` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.MACRO_NAME;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_no_replacement_token.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `MACRO_NAME` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.MACRO_NAME;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_no_replacement_token.carbon:[[@LINE+5]]:3-16: error: semantics TODO: `Unsupported: macro with 0 replacement tokens` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_no_replacement_token.carbon:[[@LINE+4]]:3-16: note: in `Cpp` name lookup for `MACRO_NAME` [InCppNameLookup]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_no_replacement_token.carbon:[[@LINE+4]]:3: error: member name `MACRO_NAME` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.MACRO_NAME;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_no_replacement_token.carbon:[[@LINE+2]]:3-16: error: member name `MACRO_NAME` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   Cpp.MACRO_NAME;
 }
@@ -292,40 +264,22 @@ library "[[@TEST_NAME]]";
 import Cpp library "unsupported_string_literal_types.h";
 
 fn F() {
- // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+11]]:2: error: semantics TODO: `Unsupported: string literal type: const char16_t[6]` [SemanticsTodo]
- // CHECK:STDERR:  Cpp.Utf16Greeting;
- // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
- // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `Utf16Greeting` [InCppNameLookup]
- // CHECK:STDERR:  Cpp.Utf16Greeting;
- // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+5]]:2-18: error: semantics TODO: `Unsupported: string literal type: const char16_t[6]` [SemanticsTodo]
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+4]]:2-18: note: in `Cpp` name lookup for `Utf16Greeting` [InCppNameLookup]
  // CHECK:STDERR:
- // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+4]]:2: error: member name `Utf16Greeting` not found in `Cpp` [MemberNameNotFoundInInstScope]
- // CHECK:STDERR:  Cpp.Utf16Greeting;
- // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+2]]:2-18: error: member name `Utf16Greeting` not found in `Cpp` [MemberNameNotFoundInInstScope]
  // CHECK:STDERR:
  Cpp.Utf16Greeting;
- // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+11]]:2: error: semantics TODO: `Unsupported: string literal type: const char32_t[6]` [SemanticsTodo]
- // CHECK:STDERR:  Cpp.Utf32Greeting;
- // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
- // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `Utf32Greeting` [InCppNameLookup]
- // CHECK:STDERR:  Cpp.Utf32Greeting;
- // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+5]]:2-18: error: semantics TODO: `Unsupported: string literal type: const char32_t[6]` [SemanticsTodo]
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+4]]:2-18: note: in `Cpp` name lookup for `Utf32Greeting` [InCppNameLookup]
  // CHECK:STDERR:
- // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+4]]:2: error: member name `Utf32Greeting` not found in `Cpp` [MemberNameNotFoundInInstScope]
- // CHECK:STDERR:  Cpp.Utf32Greeting;
- // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+2]]:2-18: error: member name `Utf32Greeting` not found in `Cpp` [MemberNameNotFoundInInstScope]
  // CHECK:STDERR:
  Cpp.Utf32Greeting;
- // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+11]]:2: error: semantics TODO: `Unsupported: string literal type: const wchar_t[6]` [SemanticsTodo]
- // CHECK:STDERR:  Cpp.WideGreeting;
- // CHECK:STDERR:  ^~~~~~~~~~~~~~~~
- // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `WideGreeting` [InCppNameLookup]
- // CHECK:STDERR:  Cpp.WideGreeting;
- // CHECK:STDERR:  ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+5]]:2-17: error: semantics TODO: `Unsupported: string literal type: const wchar_t[6]` [SemanticsTodo]
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+4]]:2-17: note: in `Cpp` name lookup for `WideGreeting` [InCppNameLookup]
  // CHECK:STDERR:
- // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+4]]:2: error: member name `WideGreeting` not found in `Cpp` [MemberNameNotFoundInInstScope]
- // CHECK:STDERR:  Cpp.WideGreeting;
- // CHECK:STDERR:  ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+2]]:2-17: error: member name `WideGreeting` not found in `Cpp` [MemberNameNotFoundInInstScope]
  // CHECK:STDERR:
  Cpp.WideGreeting;
 }
@@ -339,16 +293,10 @@ import Cpp inline '''
 ''';
 
 fn F() {
- // CHECK:STDERR: fail_bad_string.carbon:[[@LINE+11]]:2: error: failed to parse macro Cpp.BadString to a valid constant expression [InCppMacroEvaluation]
- // CHECK:STDERR:  Cpp.BadString;
- // CHECK:STDERR:  ^~~~~~~~~~~~~
- // CHECK:STDERR: fail_bad_string.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `BadString` [InCppNameLookup]
- // CHECK:STDERR:  Cpp.BadString;
- // CHECK:STDERR:  ^~~~~~~~~~~~~
+ // CHECK:STDERR: fail_bad_string.carbon:[[@LINE+5]]:2-14: error: failed to parse macro Cpp.BadString to a valid constant expression [InCppMacroEvaluation]
+ // CHECK:STDERR: fail_bad_string.carbon:[[@LINE+4]]:2-14: note: in `Cpp` name lookup for `BadString` [InCppNameLookup]
  // CHECK:STDERR:
- // CHECK:STDERR: fail_bad_string.carbon:[[@LINE+4]]:2: error: member name `BadString` not found in `Cpp` [MemberNameNotFoundInInstScope]
- // CHECK:STDERR:  Cpp.BadString;
- // CHECK:STDERR:  ^~~~~~~~~~~~~
+ // CHECK:STDERR: fail_bad_string.carbon:[[@LINE+2]]:2-14: error: member name `BadString` not found in `Cpp` [MemberNameNotFoundInInstScope]
  // CHECK:STDERR:
  Cpp.BadString;
 }
@@ -382,16 +330,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "unsupported_floating_point_literal_macro.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: long double` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.MyLongDouble;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `MyLongDouble` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.MyLongDouble;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+5]]:3-18: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: long double` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+4]]:3-18: note: in `Cpp` name lookup for `MyLongDouble` [InCppNameLookup]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+4]]:3: error: member name `MyLongDouble` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.MyLongDouble;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+2]]:3-18: error: member name `MyLongDouble` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   Cpp.MyLongDouble;
 }
@@ -403,9 +345,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "floating_point_literal_macro.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_assign_to_float.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
-  // CHECK:STDERR:   Cpp.MyDouble = 1.0;
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_assign_to_float.carbon:[[@LINE+2]]:3-14: error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:
   Cpp.MyDouble = 1.0;
 }
@@ -458,7 +398,7 @@ fn F() {
 
 // --- multiple_characters.h
 
-// CHECK:STDERR: ./multiple_characters.h:[[@LINE+1]]:24: in expansion of macro defined here [InCppMacroExpansion]
+// CHECK:STDERR: expanded from macro defined at: ./multiple_characters.h:[[@LINE+1]]:24 [InCppMacroExpansion]
 #define MULTIPLE_CHARS 'AB'
 
 // --- import_multiple_characters.carbon
@@ -468,14 +408,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "multiple_characters.h";
 
 fn F() {
- // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+9]]:25: warning: multi-character character constant [CppInteropParseWarning]
- // CHECK:STDERR:    16 |  let unused a: i32 = Cpp.MULTIPLE_CHARS;
- // CHECK:STDERR:       |                         ^
- // CHECK:STDERR:     3 | #define MULTIPLE_CHARS 'AB'
- // CHECK:STDERR:       |                        ^
- // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:22: note: in `Cpp` name lookup for `MULTIPLE_CHARS` [InCppNameLookup]
- // CHECK:STDERR:  let unused a: i32 = Cpp.MULTIPLE_CHARS;
- // CHECK:STDERR:                      ^~~~~~~~~~~~~~~~~~
+ // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+3]]:25: warning: multi-character character constant [CppInteropParseWarning]
+ // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+2]]:22-39: note: in `Cpp` name lookup for `MULTIPLE_CHARS` [InCppNameLookup]
  // CHECK:STDERR:
  let unused a: i32 = Cpp.MULTIPLE_CHARS;
 }
@@ -493,40 +427,22 @@ library "[[@TEST_NAME]]";
 import Cpp library "unsupported_character_literal_types.h";
 
 fn F() {
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: char16_t` [SemanticsTodo]
- // CHECK:STDERR:  let unused a: char = Cpp.M_UTF16_CHAR;
- // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `M_UTF16_CHAR` [InCppNameLookup]
- // CHECK:STDERR:  let unused a: char = Cpp.M_UTF16_CHAR;
- // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+5]]:23-38: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: char16_t` [SemanticsTodo]
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:23-38: note: in `Cpp` name lookup for `M_UTF16_CHAR` [InCppNameLookup]
  // CHECK:STDERR:
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:23: error: member name `M_UTF16_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
- // CHECK:STDERR:  let unused a: char = Cpp.M_UTF16_CHAR;
- // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+2]]:23-38: error: member name `M_UTF16_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
  // CHECK:STDERR:
  let unused a: char = Cpp.M_UTF16_CHAR;
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: char32_t` [SemanticsTodo]
- // CHECK:STDERR:  let unused b: char = Cpp.M_UTF32_CHAR;
- // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `M_UTF32_CHAR` [InCppNameLookup]
- // CHECK:STDERR:  let unused b: char = Cpp.M_UTF32_CHAR;
- // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+5]]:23-38: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: char32_t` [SemanticsTodo]
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:23-38: note: in `Cpp` name lookup for `M_UTF32_CHAR` [InCppNameLookup]
  // CHECK:STDERR:
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:23: error: member name `M_UTF32_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
- // CHECK:STDERR:  let unused b: char = Cpp.M_UTF32_CHAR;
- // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+2]]:23-38: error: member name `M_UTF32_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
  // CHECK:STDERR:
  let unused b: char = Cpp.M_UTF32_CHAR;
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: wchar_t` [SemanticsTodo]
- // CHECK:STDERR:  let unused c: char = Cpp.M_WIDE_CHAR;
- // CHECK:STDERR:                       ^~~~~~~~~~~~~~~
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `M_WIDE_CHAR` [InCppNameLookup]
- // CHECK:STDERR:  let unused c: char = Cpp.M_WIDE_CHAR;
- // CHECK:STDERR:                       ^~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+5]]:23-37: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: wchar_t` [SemanticsTodo]
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:23-37: note: in `Cpp` name lookup for `M_WIDE_CHAR` [InCppNameLookup]
  // CHECK:STDERR:
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:23: error: member name `M_WIDE_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
- // CHECK:STDERR:  let unused c: char = Cpp.M_WIDE_CHAR;
- // CHECK:STDERR:                       ^~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+2]]:23-37: error: member name `M_WIDE_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
  // CHECK:STDERR:
  let unused c: char = Cpp.M_WIDE_CHAR;
 }
@@ -538,9 +454,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "character_literals.h";
 
 fn F() {
- // CHECK:STDERR: fail_assign_to_character_literals.carbon:[[@LINE+4]]:2: error: expression is not assignable [AssignmentToNonAssignable]
- // CHECK:STDERR:  Cpp.M_LOWERCASE = 'b';
- // CHECK:STDERR:  ^~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_assign_to_character_literals.carbon:[[@LINE+2]]:2-16: error: expression is not assignable [AssignmentToNonAssignable]
  // CHECK:STDERR:
  Cpp.M_LOWERCASE = 'b';
 }
@@ -592,9 +506,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "boolean_literal_macro.h";
 
 fn F() {
- // CHECK:STDERR: fail_assign_to_boolean_literal_macro.carbon:[[@LINE+4]]:2: error: expression is not assignable [AssignmentToNonAssignable]
- // CHECK:STDERR:  Cpp.M_TRUE = false;
- // CHECK:STDERR:  ^~~~~~~~~~
+ // CHECK:STDERR: fail_assign_to_boolean_literal_macro.carbon:[[@LINE+2]]:2-11: error: expression is not assignable [AssignmentToNonAssignable]
  // CHECK:STDERR:
  Cpp.M_TRUE = false;
 }
@@ -738,9 +650,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "macro_undefined.h";
 
 fn F() {
-  // CHECK:STDERR: fail_macro_undefined.carbon:[[@LINE+4]]:23: error: member name `UNDEF_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let unused a: i32 = Cpp.UNDEF_VALUE;
-  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_macro_undefined.carbon:[[@LINE+2]]:23-37: error: member name `UNDEF_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   let unused a: i32 = Cpp.UNDEF_VALUE;
 }
@@ -773,14 +683,9 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: import_macro_defined_twice.carbon:[[@LINE+9]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./macro_defined_twice.h:3:9: warning: 'TWICE_DEF' macro redefined [CppInteropParseWarning]
-// CHECK:STDERR:     3 | #define TWICE_DEF 2
-// CHECK:STDERR:       |         ^
-// CHECK:STDERR: import_macro_defined_twice.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./macro_defined_twice.h:2:9: note: previous definition is here [CppInteropParseNote]
-// CHECK:STDERR:     2 | #define TWICE_DEF 1
-// CHECK:STDERR:       |         ^
+// CHECK:STDERR: included from: import_macro_defined_twice.carbon:[[@LINE+4]]:10 [InCppInclude]
+// CHECK:STDERR: ./macro_defined_twice.h:3:9-17: warning: 'TWICE_DEF' macro redefined [CppInteropParseWarning]
+// CHECK:STDERR: ./macro_defined_twice.h:2:9-17: note: previous definition is here [CppInteropParseNote]
 // CHECK:STDERR:
 import Cpp library "macro_defined_twice.h";
 
@@ -805,9 +710,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "function_like_macros.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_function_like_macros.carbon:[[@LINE+4]]:23: error: member name `MAX` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let unused a: i32 = Cpp.MAX(1,2);
-  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_function_like_macros.carbon:[[@LINE+2]]:23-29: error: member name `MAX` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   let unused a: i32 = Cpp.MAX(1,2);
 }
@@ -827,9 +730,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "predefined_macros.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_predefined_macros.carbon:[[@LINE+4]]:30: error: member name `__LINE__` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let unused line_num: i32 = Cpp.__LINE__;
-  // CHECK:STDERR:                              ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_predefined_macros.carbon:[[@LINE+2]]:30-41: error: member name `__LINE__` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   let unused line_num: i32 = Cpp.__LINE__;
 }
@@ -854,9 +755,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "header_guard_macros.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_header_guard_macros.carbon:[[@LINE+4]]:3: error: member name `HEADER_GUARD_MACRO_H_` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.HEADER_GUARD_MACRO_H_;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_header_guard_macros.carbon:[[@LINE+2]]:3-27: error: member name `HEADER_GUARD_MACRO_H_` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   Cpp.HEADER_GUARD_MACRO_H_;
 }
@@ -934,19 +833,11 @@ Struct s;
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+14]]:3: error: semantics TODO: `lvalue path contains an array type` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.m = 2;
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+11]]:3: note: in `Cpp` name lookup for `m` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.m = 2;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+6]]:3-7: error: semantics TODO: `lvalue path contains an array type` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+5]]:3-7: note: in `Cpp` name lookup for `m` [InCppNameLookup]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Core.IntLiteral` to `array(i32, 3)` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.m = 2;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(array(i32, 3))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   Cpp.m = 2;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `Core.IntLiteral` to `array(i32, 3)` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_assign_array.carbon:[[@LINE+2]]:3-11: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(array(i32, 3))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   Cpp.m = 2;
 }
@@ -964,16 +855,10 @@ struct DerivedB : BaseA {} b_obj;
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_todo_assign_base_class_member.carbon:[[@LINE+11]]:3: error: semantics TODO: `lvalue path contains a base class subobject` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.m = 2;
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_todo_assign_base_class_member.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `m` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.m = 2;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_assign_base_class_member.carbon:[[@LINE+5]]:3-7: error: semantics TODO: `lvalue path contains a base class subobject` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_assign_base_class_member.carbon:[[@LINE+4]]:3-7: note: in `Cpp` name lookup for `m` [InCppNameLookup]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_assign_base_class_member.carbon:[[@LINE+4]]:3: error: member name `m` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.m = 2;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_assign_base_class_member.carbon:[[@LINE+2]]:3-7: error: member name `m` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   Cpp.m = 2;
 }
@@ -2116,7 +2001,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %TWICE_DEF.ref: %i32 = name_ref TWICE_DEF, constants.%int_2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %TWICE_DEF.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = value_binding_pattern a [concrete = constants.%a.patt]

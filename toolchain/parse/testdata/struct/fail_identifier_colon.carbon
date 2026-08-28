@@ -8,9 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_identifier_colon.carbon
 
-// CHECK:STDERR: fail_identifier_colon.carbon:[[@LINE+4]]:9: error: expected `.field: field_type` or `.field = value` [ExpectedStructLiteralField]
-// CHECK:STDERR: var x: {a:} = {};
-// CHECK:STDERR:         ^
+// CHECK:STDERR: fail_identifier_colon.carbon:[[@LINE+2]]:9: error: expected `.field: field_type` or `.field = value` [ExpectedStructLiteralField]
 // CHECK:STDERR:
 var x: {a:} = {};
 

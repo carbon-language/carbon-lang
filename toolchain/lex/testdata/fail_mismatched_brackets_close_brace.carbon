@@ -62,32 +62,16 @@ fn F() {
 // --- AUTOUPDATE-SPLIT
 
 // CHECK:STDERR: fail_dedent_inside_scope.carbon:7:10: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR:   if (x) {
-// CHECK:STDERR:          ^
 // CHECK:STDERR: fail_dedent_inside_scope.carbon:9:3: note: possibly missing `}` here [PossiblyMissingBracketHere]
-// CHECK:STDERR:   bar();
-// CHECK:STDERR:   ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_missing_brace_before_else.carbon:8:10: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR:   if (C) {
-// CHECK:STDERR:          ^
 // CHECK:STDERR: fail_missing_brace_before_else.carbon:10:3: note: possibly missing `}` here [PossiblyMissingBracketHere]
-// CHECK:STDERR:   else {
-// CHECK:STDERR:   ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_missing_brace_in_class.carbon:5:9: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: class C {
-// CHECK:STDERR:         ^
 // CHECK:STDERR: fail_missing_brace_in_class.carbon:7:1: note: possibly missing `}` here [PossiblyMissingBracketHere]
-// CHECK:STDERR: fn F() {
-// CHECK:STDERR: ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_unclosed_at_eof.carbon:4:8: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: fn F() {
-// CHECK:STDERR:        ^
 // CHECK:STDERR: fail_unclosed_at_eof.carbon:6:1: note: possibly missing `}` here [PossiblyMissingBracketHere]
-// CHECK:STDERR:
-// CHECK:STDERR: ^
 // CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_dedent_inside_scope.carbon
 // CHECK:STDOUT:   tokens:

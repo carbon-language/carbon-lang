@@ -42,36 +42,20 @@ library "[[@TEST_NAME]]";
 import Core;
 
 fn CheckFail() {
-  // CHECK:STDERR: fail_narrowing.carbon:[[@LINE+7]]:3: error: cannot convert type `i64` into type implementing `Core.IntFitsIn(i32)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Core.CheckFitsIn(1 as i64, 2 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: core.carbon:6:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_narrowing.carbon:[[@LINE+3]]:3-38: error: cannot convert type `i64` into type implementing `Core.IntFitsIn(i32)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: core.carbon:6:1-68: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as i64, 2 as i32);
-  // CHECK:STDERR: fail_narrowing.carbon:[[@LINE+7]]:3: error: cannot convert type `i64` into type implementing `Core.IntFitsIn(u32)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Core.CheckFitsIn(1 as i64, 2 as u32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: core.carbon:6:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_narrowing.carbon:[[@LINE+3]]:3-38: error: cannot convert type `i64` into type implementing `Core.IntFitsIn(u32)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: core.carbon:6:1-68: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as i64, 2 as u32);
-  // CHECK:STDERR: fail_narrowing.carbon:[[@LINE+7]]:3: error: cannot convert type `u64` into type implementing `Core.IntFitsIn(i32)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Core.CheckFitsIn(1 as u64, 2 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: core.carbon:6:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_narrowing.carbon:[[@LINE+3]]:3-38: error: cannot convert type `u64` into type implementing `Core.IntFitsIn(i32)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: core.carbon:6:1-68: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as u64, 2 as i32);
-  // CHECK:STDERR: fail_narrowing.carbon:[[@LINE+7]]:3: error: cannot convert type `u64` into type implementing `Core.IntFitsIn(u32)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Core.CheckFitsIn(1 as u64, 2 as u32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: core.carbon:6:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_narrowing.carbon:[[@LINE+3]]:3-38: error: cannot convert type `u64` into type implementing `Core.IntFitsIn(u32)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: core.carbon:6:1-68: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as u64, 2 as u32);
 }
@@ -83,20 +67,12 @@ library "[[@TEST_NAME]]";
 import Core;
 
 fn CheckFail() {
-  // CHECK:STDERR: fail_same_size_sign_change.carbon:[[@LINE+7]]:3: error: cannot convert type `u32` into type implementing `Core.IntFitsIn(i32)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Core.CheckFitsIn(1 as u32, 2 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: core.carbon:6:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_same_size_sign_change.carbon:[[@LINE+3]]:3-38: error: cannot convert type `u32` into type implementing `Core.IntFitsIn(i32)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: core.carbon:6:1-68: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as u32, 2 as i32);
-  // CHECK:STDERR: fail_same_size_sign_change.carbon:[[@LINE+7]]:3: error: cannot convert type `i32` into type implementing `Core.IntFitsIn(u32)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Core.CheckFitsIn(1 as i32, 2 as u32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: core.carbon:6:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_same_size_sign_change.carbon:[[@LINE+3]]:3-38: error: cannot convert type `i32` into type implementing `Core.IntFitsIn(u32)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: core.carbon:6:1-68: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as i32, 2 as u32);
 }
@@ -108,12 +84,8 @@ library "[[@TEST_NAME]]";
 import Core;
 
 fn CheckFail() {
-  // CHECK:STDERR: fail_signed_to_wider_unsigned.carbon:[[@LINE+7]]:3: error: cannot convert type `i32` into type implementing `Core.IntFitsIn(u32)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Core.CheckFitsIn(1 as i32, 2 as u32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: core.carbon:6:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_signed_to_wider_unsigned.carbon:[[@LINE+3]]:3-38: error: cannot convert type `i32` into type implementing `Core.IntFitsIn(u32)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: core.carbon:6:1-68: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as i32, 2 as u32);
 }

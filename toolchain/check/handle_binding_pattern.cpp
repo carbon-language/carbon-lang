@@ -101,9 +101,9 @@ static auto IsValidParamForIntroducer(Context& context, SemIR::LocId loc_id,
         auto builder =
             context.emitter().Build(loc_id, GenericParamMustBeConstant);
         if (is_var) {
-          CARBON_DIAGNOSTIC(VarParamIsRuntime, Note,
-                            "`var` parameters are runtime");
-          builder.Note(loc_id, VarParamIsRuntime);
+          CARBON_DIAGNOSTIC_LABEL(VarParamIsRuntime, Info,
+                                  "`var` parameters are runtime");
+          builder.Attach(loc_id, VarParamIsRuntime);
         }
         builder.Emit();
         return false;
@@ -364,12 +364,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   };
 
   auto abstract_diagnostic_context = [&](auto& builder) {
-    CARBON_DIAGNOSTIC(AbstractTypeInVarPattern, Context,
-                      "binding pattern has abstract type {0} in `var` "
-                      "pattern",
-                      SemIR::TypeId);
-    builder.Context(type_expr.node_id, AbstractTypeInVarPattern,
-                    type_expr.type_component_id);
+    CARBON_DIAGNOSTIC_CONTEXT(AbstractTypeInVarPattern,
+                              "binding pattern has abstract type {0} in `var` "
+                              "pattern",
+                              SemIR::TypeId);
+    builder.Attach(type_expr.node_id, AbstractTypeInVarPattern,
+                   type_expr.type_component_id);
   };
 
   // A `self` binding must be the first parameter in the explicit parameter
@@ -508,12 +508,13 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         return context.TODO(node_id, "support local form bindings");
       }
       auto incomplete_diagnostic_context = [&](auto& builder) {
-        CARBON_DIAGNOSTIC(IncompleteTypeInBindingDecl, Context,
-                          "binding pattern has incomplete type {0} in name "
-                          "binding declaration",
-                          InstIdAsType);
-        builder.Context(type_expr.node_id, IncompleteTypeInBindingDecl,
-                        type_expr.inst_id);
+        CARBON_DIAGNOSTIC_CONTEXT(
+            IncompleteTypeInBindingDecl,
+            "binding pattern has incomplete type {0} in name "
+            "binding declaration",
+            InstIdAsType);
+        builder.Attach(type_expr.node_id, IncompleteTypeInBindingDecl,
+                       type_expr.inst_id);
       };
       if (node_kind == Parse::NodeKind::VarBindingPattern) {
         if (!RequireConcreteType(

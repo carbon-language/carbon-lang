@@ -10,9 +10,7 @@
 
 virtual namespace B
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `namespace` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR: impl namespace
-// CHECK:STDERR: ^~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-4: error: `namespace` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 impl namespace
 

@@ -2,7 +2,8 @@
 name: Diagnostics
 description:
     Instructions for declaring, formatting, emitting, testing, and styling
-    diagnostic messages (errors, warnings, notes) in the Carbon toolchain.
+    diagnostic messages (errors, warnings, and the labels that explain them) in
+    the Carbon toolchain.
 ---
 
 # Diagnostics in the Carbon Toolchain
@@ -15,7 +16,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 The Carbon compiler features a highly-engineered, context-aware diagnostics
 framework designed to deliver precise, readable, and highly targetable
-diagnostic output (errors, warnings, notes). This document establishes strict
+diagnostic output (errors, warnings, and the labels that explain them). This
+document establishes strict
 rules for declaring, formatting, emitting, testing, and styling compiler
 diagnostics.
 
@@ -39,8 +41,8 @@ Diagnostics are handled via three decoupled core components:
     [kind.def](../../../toolchain/diagnostics/kind.def).
 2.  **Emitters**: Specialized formatting pipelines (parameterized on custom
     phase location types `LocT` like `Token` or `LocId`) that convert raw tokens
-    to standardized physical source locations (file, line, column, and text
-    snippet).
+    to standardized physical source locations (file, line, column, and the text
+    of the line).
 3.  **Consumers**: Pipelines that process, track, filter, and sort diagnostics.
     The default `SortingConsumer` buffers and stable-sorts diagnostics based on
     their `last_byte_offset` matching compiler traversal order to ensure perfect
@@ -86,7 +88,7 @@ declaration (`CARBON_DIAGNOSTIC` or `CARBON_DIAGNOSTIC_ON_SCOPE`).
 -   **File Scope**: If the diagnostic is shared among multiple functions inside
     the _same_ file, declare it at **file scope** inside the anonymous namespace
     of the `.cpp` file.
--   **Global Scope**: If a diagnostic (such as a shared helper note) is reused
+-   **Global Scope**: If a diagnostic (such as a shared helper label) is reused
     _across different physical files_, define it in a shared header (e.g.
     context/check helpers) and mark it `extern` where applicable, ensuring the
     macro is only invoked once.
@@ -155,40 +157,66 @@ Custom structures can define how they serialize inside diagnostics using the
 
 ### Fluent Builder Pattern
 
-For compound diagnostics requiring multiple sub-notes, carets, or custom code
-overrides, use `Build` to chain actions fluently:
+A diagnostic is one message plus the labels that mark the source explaining it.
+Use `Build` to state the message and `Attach` to mark each place the reader has
+to look, chained fluently:
 
 ```cpp
+CARBON_DIAGNOSTIC_LABEL(ModifierPrevious, Info, "`{0}` previously appeared here",
+                        Lex::TokenKind);
+
 context.emitter()
     .Build(second_node, ModifierRepeated, context.token_kind(second_node))
-    .Note(first_node, ModifierPrevious, context.token_kind(first_node))
-    .OverrideSnippet("custom snippet...")
+    .Attach(first_node, ModifierPrevious, context.token_kind(first_node))
     .Emit();
 ```
+
+Labels are declared with `CARBON_DIAGNOSTIC_LABEL` where they are attached,
+and are not registered in `kind.def`; `check_diagnostics.py` checks that each
+one is attached and covered. A label is either `Primary` -- the range
+the message itself is about -- or `Info`, for somewhere else the reader must
+look; those two are the only categories, because anything not read against the
+code it names is not a label. `Attach(loc)` with no label marks a range
+wordlessly, which is what to use when a label would only restate the message.
+
+Every diagnostic should attach at least one label; a message with nothing
+attached has nothing to show. See
+[diagnostics.md](../../../toolchain/docs/diagnostics.md) for which range to pick
+and when a label earns words.
 
 > [!SAFETY] Emitter builders are marked `[[nodiscard]]`. To prevent a developer
 > from creating a builder but failing to terminal-chain `.Emit()`, the builder
 > uses an rvalue overload `Emit() &&` that triggers a compile-time
 > `static_assert(false)`. You must save the builder to an lvalue or execute the
-> chain exactly as `emitter.Build(...).Note(...).Emit()`.
+> chain exactly as `emitter.Build(...).Attach(...).Emit()`.
 
 ### RAII Context & Annotation Scopes
 
-Manage large checking structures requiring blanket note context using RAII block
+Manage large checking structures requiring blanket context using RAII block
 scopes:
 
--   `ContextScope`: Automatically converts any diagnostics emitted within its
-    scope into sub-notes under a high-level operation descriptor:
+-   `ContextScope`: Attaches a context to every diagnostic emitted within its
+    scope, describing the higher-level operation that failed because of it. A
+    context is declared with `CARBON_DIAGNOSTIC_CONTEXT`, or
+    `CARBON_DIAGNOSTIC_SOFT_CONTEXT` for one dropped when the diagnostic
+    already has a context:
 
     ```cpp
-    ContextScope context_scope(&context.emitter(), [&](ContextBuilder& builder) {
-      builder.Context(eval_loc, InCallToEvalFn);
-    });
-    // any checker error emitted here will automatically append the 'InCallToEvalFn' note
+    Diagnostics::ContextScope diagnostic_context(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC_CONTEXT(
+              QualifiedDeclInIncompleteClassScope,
+              "cannot declare a member of incomplete class {0}", SemIR::TypeId);
+          builder.Attach(loc_id, QualifiedDeclInIncompleteClassScope,
+                         context.classes().Get(class_id).self_type_id);
+        });
     ```
 
--   `AnnotationScope`: RAII block scope that automatically attaches blanket note
-    annotations to all scoped diagnostics.
+    A context is not a label: its text stands alone as a sentence, which is why
+    it leads the diagnostic rather than following it.
+
+-   `AnnotationScope`: RAII block scope that attaches labels to every diagnostic
+    emitted within it, using the same `Builder` as a direct emission.
 
 ---
 
@@ -257,5 +285,15 @@ Carbon strictly enforces testing coverage at build-time.
     ```
 
 3.  **Build Enforcement**: Failing to provide a diagnostic test check matcher
-    triggers a build compilation error on the target test
+    triggers a failure on the target test
     `//toolchain/diagnostics:coverage_test`.
+4.  **Label Enforcement**: A label is declared where it is attached rather than
+    in a central registry, so `coverage_test` has no list of labels to compare a
+    matched name against and leaves any name that isn't a kind alone.
+    [check_diagnostics.py](../../../toolchain/diagnostics/check_diagnostics.py)
+    is what checks them: it reads the declarations and the testdata directly, so
+    it catches a label with no test, a name matched on that is neither a kind
+    nor a label, and a kind registered in `kind.def` that nothing declares. It
+    runs as a pre-commit hook, which CI runs too, rather than as a bazel test --
+    reading every source file is what it needs and what a test in the sandbox
+    cannot do.

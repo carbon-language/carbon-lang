@@ -59,6 +59,7 @@ cc_library(
         "//toolchain/check",
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:file_diagnostics",
+        "//toolchain/diagnostics:renderer",
         "//toolchain/driver:codegen_options",
         "//toolchain/driver:compile_driver",
         "//toolchain/driver:compile_options",

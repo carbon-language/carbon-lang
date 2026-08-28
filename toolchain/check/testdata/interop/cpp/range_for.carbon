@@ -260,33 +260,17 @@ fn TestIterate[R: Core.Iterate where .ElementType = f64](r: R) {
 }
 
 fn TestIterateDriver(var m: Cpp.N.MutableRange) {
-  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+28]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR:   TestIterate(m);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+12]]:3-16: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon: note: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-21]]:34: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   friend auto begin(MutableRange&) -> Iterator;
-  // CHECK:STDERR:                                  ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:41:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn Begin(self) -> Iterator;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = f64](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-19]]:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:41:3-29: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-15]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+14]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR:   TestIterate(m);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+6]]:3-16: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon: note: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-34]]:32: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   friend auto end(MutableRange&) -> Iterator;
-  // CHECK:STDERR:                                ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn End(self) -> Sentinel;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = f64](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-24]]:32: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3-27: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE-21]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   TestIterate(m);
 }
@@ -390,50 +374,24 @@ fn TestIterate[R: Core.Iterate where .ElementType = Cpp.DiffMutableADL.ValueType
 }
 
 fn TestIterateDriver(var m: Cpp.DiffMutableADL.MutableRange) {
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+45]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR:   TestIterate(m);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+19]]:3-16: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon: note: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-21]]:34: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   friend auto begin(MutableRange&) -> Iterator;
-  // CHECK:STDERR:                                  ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:41:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn Begin(self) -> Iterator;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = Cpp.DiffMutableADL.ValueType](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-19]]:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:41:3-29: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-15]]:1-89: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+31]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR:   TestIterate(m);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+13]]:3-16: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon: note: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-34]]:32: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   friend auto end(MutableRange&) -> Sentinel;
-  // CHECK:STDERR:                                ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn End(self) -> Sentinel;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = Cpp.DiffMutableADL.ValueType](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-24]]:32: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3-27: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-21]]:1-89: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+17]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR:   TestIterate(m);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+14]]:3: note: semantics TODO: `Rewriting operator== using operator== is not supported` [SemanticsTodo]
-  // CHECK:STDERR:   TestIterate(m);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-45]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = Cpp.DiffMutableADL.ValueType](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+7]]:3-16: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+6]]:3-16: note: semantics TODO: `Rewriting operator== using operator== is not supported` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-25]]:1-89: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.DiffMutableADL.MutableRange` into type implementing `Core.Iterate where .(Core.Iterate.ElementType) = Cpp.DiffMutableADL.ValueType as Core.Destroy & Core.Copy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   TestIterate(m);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-52]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = Cpp.DiffMutableADL.ValueType](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+3]]:3-16: error: cannot convert type `Cpp.DiffMutableADL.MutableRange` into type implementing `Core.Iterate where .(Core.Iterate.ElementType) = Cpp.DiffMutableADL.ValueType as Core.Destroy & Core.Copy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE-28]]:1-89: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   TestIterate(m);
 }
@@ -442,9 +400,7 @@ fn TestRangeFor(var m: Cpp.DiffMutableADL.MutableRange) {
   var sum: Cpp.DiffMutableADL.ValueType = Cpp.DiffMutableADL.ValueType.ValueType();
 
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+4]]:7: error: cannot access member of interface `Core.Iterate` in type `Cpp.DiffMutableADL.MutableRange` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   for (i: Cpp.DiffMutableADL.ValueType in m) {
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+2]]:7-44: error: cannot access member of interface `Core.Iterate` in type `Cpp.DiffMutableADL.MutableRange` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   for (i: Cpp.DiffMutableADL.ValueType in m) {
     sum += i;
@@ -497,33 +453,17 @@ fn TestIterate[R: Core.Iterate where .ElementType = Cpp.OverloadADL.ValueType](r
 }
 
 fn TestIterateDriver(var mc: Cpp.OverloadADL.MutableAndConstRange) {
-  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE+28]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR:   TestIterate(mc);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE+12]]:3-17: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR: fail_todo_adl_overloads.carbon: note: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-24]]:44: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:     friend auto begin(MutableAndConstRange&) -> Iterator;
-  // CHECK:STDERR:                                            ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:41:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn Begin(self) -> Iterator;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-21]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = Cpp.OverloadADL.ValueType](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-22]]:44: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:41:3-29: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-15]]:1-86: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE+14]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR:   TestIterate(mc);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE+6]]:3-17: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
   // CHECK:STDERR: fail_todo_adl_overloads.carbon: note: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-37]]:42: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:     friend auto end(MutableAndConstRange&) -> Iterator;
-  // CHECK:STDERR:                                          ^
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn End(self) -> Sentinel;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TestIterate[R: Core.Iterate where .ElementType = Cpp.OverloadADL.ValueType](r: R) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-27]]:42: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:42:3-27: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE-21]]:1-86: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   TestIterate(mc);
 }
@@ -618,172 +558,88 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
               var begin_function_deleted: Cpp.BeginFunctionDeleted,
               var end_function_deleted: Cpp.EndFunctionDeleted)
 {
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.NoBeginEnd` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(no_begin_end);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-19]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-20: error: cannot convert type `Cpp.NoBeginEnd` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-17]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(no_begin_end);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.NoBeginMethod` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(no_begin_method);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-28]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-23: error: cannot convert type `Cpp.NoBeginMethod` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-22]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(no_begin_method);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.NoEndMethod` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(no_end_method);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-37]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-21: error: cannot convert type `Cpp.NoEndMethod` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-27]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(no_end_method);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.NoBeginADL` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(no_begin_adl);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-46]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-20: error: cannot convert type `Cpp.NoBeginADL` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-32]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(no_begin_adl);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.NoEndADL` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(no_end_adl);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-55]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-18: error: cannot convert type `Cpp.NoEndADL` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-37]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(no_end_adl);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.BeginMethodEndADL` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(begin_method_end_adl);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-64]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-28: error: cannot convert type `Cpp.BeginMethodEndADL` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-42]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(begin_method_end_adl);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.BeginADLEndMethod` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(begin_adl_end_method);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-73]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-28: error: cannot convert type `Cpp.BeginADLEndMethod` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-47]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(begin_adl_end_method);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.BeginFieldEndMethod` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(begin_field_end_method);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-82]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-30: error: cannot convert type `Cpp.BeginFieldEndMethod` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-52]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(begin_field_end_method);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.BeginMethodEndField` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(begin_method_end_field);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-91]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-30: error: cannot convert type `Cpp.BeginMethodEndField` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-57]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(begin_method_end_field);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR:   Test(begin_method_deleted);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9: note: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    63 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
-  // CHECK:STDERR:       |         ^
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-123]]:8: note: 'begin' has been explicitly marked deleted here [CppInteropParseNote]
-  // CHECK:STDERR:    44 |   auto begin() = delete;
-  // CHECK:STDERR:       |        ^
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-106]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+8]]:3-28: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9-17: note: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-83]]:8-12: note: 'begin' has been explicitly marked deleted here [CppInteropParseNote]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-64]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.BeginMethodDeleted` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(begin_method_deleted);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-113]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-28: error: cannot convert type `Cpp.BeginMethodDeleted` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-67]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(begin_method_deleted);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR:   Test(end_method_deleted);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9: note: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    63 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
-  // CHECK:STDERR:       |         ^
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-139]]:8: note: 'end' has been explicitly marked deleted here [CppInteropParseNote]
-  // CHECK:STDERR:    50 |   auto end() = delete;
-  // CHECK:STDERR:       |        ^
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-128]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+8]]:3-26: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9-17: note: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-87]]:8-10: note: 'end' has been explicitly marked deleted here [CppInteropParseNote]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-74]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.EndMethodDeleted` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(end_method_deleted);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-135]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-26: error: cannot convert type `Cpp.EndMethodDeleted` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-77]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(end_method_deleted);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR:   Test(begin_function_deleted);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9: note: call to deleted function 'begin' [CppInteropParseError]
-  // CHECK:STDERR:    63 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
-  // CHECK:STDERR:       |         ^~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-157]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:    54 |   friend auto begin(const BeginFunctionDeleted&) = delete;
-  // CHECK:STDERR:       |               ^
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-150]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+8]]:3-30: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9-17: note: call to deleted function 'begin' [CppInteropParseError]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-93]]:15-19: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-84]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.BeginFunctionDeleted` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(begin_function_deleted);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-157]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-30: error: cannot convert type `Cpp.BeginFunctionDeleted` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-87]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(begin_function_deleted);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+20]]:3: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR:   Test(end_function_deleted);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9: note: call to deleted function 'end' [CppInteropParseError]
-  // CHECK:STDERR:    63 |   alias ValueType = Self.(Iterator).(CppIterator.ValueType);
-  // CHECK:STDERR:       |         ^~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-173]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:    60 |   friend auto end(const EndFunctionDeleted&) = delete;
-  // CHECK:STDERR:       |               ^
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-172]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+8]]:3-28: error: facet type `Core.CppRange where .(Core.CppRangeForIterate.Iterator).(Core.CppUnsafeDeref.Result) impls Core.Copy` can not be identified [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR: {{.*}}/prelude/iterate.carbon:63:9-17: note: call to deleted function 'end' [CppInteropParseError]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-97]]:15-17: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-94]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.EndFunctionDeleted` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Test(end_function_deleted);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-179]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-28: error: cannot convert type `Cpp.EndFunctionDeleted` into type implementing `Core.Iterate` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-97]]:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Test(end_function_deleted);
 }
@@ -3234,72 +3090,72 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %m.ref: ref %MutableRange = name_ref m, %m
 // CHECK:STDOUT:   %impl.elem2: %.534 = impl_witness_access constants.%Iterate.impl_witness.15e, element2 [concrete = constants.%T.as_type.as.Iterate.impl.NewCursor.f6c]
-// CHECK:STDOUT:   %bound_method.loc68_19.1: <bound method> = bound_method %m.ref, %impl.elem2
-// CHECK:STDOUT:   %facet_value.loc68_19.1: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableRange, (constants.%custom_witness.df9cc1.3, constants.%Copy.impl_witness.0d6, constants.%custom_witness.902, constants.%custom_witness.c08, constants.%custom_witness.05b, constants.%custom_witness.491, constants.%custom_witness.ed8) [concrete = constants.%facet_value.bed]
-// CHECK:STDOUT:   %.loc68_19.1: %CppRange_where.type.d682d6.1 = converted constants.%MutableRange, %facet_value.loc68_19.1 [concrete = constants.%facet_value.bed]
-// CHECK:STDOUT:   %facet_value.loc68_19.2: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableRange, (constants.%custom_witness.df9cc1.3, constants.%Copy.impl_witness.0d6, constants.%custom_witness.902, constants.%custom_witness.c08, constants.%custom_witness.05b, constants.%custom_witness.491, constants.%custom_witness.ed8) [concrete = constants.%facet_value.bed]
-// CHECK:STDOUT:   %.loc68_19.2: %CppRange_where.type.d682d6.1 = converted constants.%MutableRange, %facet_value.loc68_19.2 [concrete = constants.%facet_value.bed]
-// CHECK:STDOUT:   %specific_fn.loc68_19.1: <specific function> = specific_function %impl.elem2, @T.as_type.as.Iterate.impl.NewCursor(constants.%facet_value.bed) [concrete = constants.%T.as_type.as.Iterate.impl.NewCursor.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc68_19.2: <bound method> = bound_method %m.ref, %specific_fn.loc68_19.1
+// CHECK:STDOUT:   %bound_method.loc52_19.1: <bound method> = bound_method %m.ref, %impl.elem2
+// CHECK:STDOUT:   %facet_value.loc52_19.1: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableRange, (constants.%custom_witness.df9cc1.3, constants.%Copy.impl_witness.0d6, constants.%custom_witness.902, constants.%custom_witness.c08, constants.%custom_witness.05b, constants.%custom_witness.491, constants.%custom_witness.ed8) [concrete = constants.%facet_value.bed]
+// CHECK:STDOUT:   %.loc52_19.1: %CppRange_where.type.d682d6.1 = converted constants.%MutableRange, %facet_value.loc52_19.1 [concrete = constants.%facet_value.bed]
+// CHECK:STDOUT:   %facet_value.loc52_19.2: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableRange, (constants.%custom_witness.df9cc1.3, constants.%Copy.impl_witness.0d6, constants.%custom_witness.902, constants.%custom_witness.c08, constants.%custom_witness.05b, constants.%custom_witness.491, constants.%custom_witness.ed8) [concrete = constants.%facet_value.bed]
+// CHECK:STDOUT:   %.loc52_19.2: %CppRange_where.type.d682d6.1 = converted constants.%MutableRange, %facet_value.loc52_19.2 [concrete = constants.%facet_value.bed]
+// CHECK:STDOUT:   %specific_fn.loc52_19.1: <specific function> = specific_function %impl.elem2, @T.as_type.as.Iterate.impl.NewCursor(constants.%facet_value.bed) [concrete = constants.%T.as_type.as.Iterate.impl.NewCursor.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc52_19.2: <bound method> = bound_method %m.ref, %specific_fn.loc52_19.1
 // CHECK:STDOUT:   %var: ref %tuple.type.dd0 = var_storage invalid
-// CHECK:STDOUT:   %.loc68_18.1: %MutableRange = acquire_value %m.ref
-// CHECK:STDOUT:   %T.as_type.as.Iterate.impl.NewCursor.call: init %tuple.type.dd0 to %var = call %bound_method.loc68_19.2(%.loc68_18.1)
+// CHECK:STDOUT:   %.loc52_18.1: %MutableRange = acquire_value %m.ref
+// CHECK:STDOUT:   %T.as_type.as.Iterate.impl.NewCursor.call: init %tuple.type.dd0 to %var = call %bound_method.loc52_19.2(%.loc52_18.1)
 // CHECK:STDOUT:   assign %var, %T.as_type.as.Iterate.impl.NewCursor.call
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr: %ptr.a4f = addr_of %var
 // CHECK:STDOUT:   %impl.elem3: %.8b9 = impl_witness_access constants.%Iterate.impl_witness.15e, element3 [concrete = constants.%T.as_type.as.Iterate.impl.Next.630]
-// CHECK:STDOUT:   %bound_method.loc68_19.3: <bound method> = bound_method %m.ref, %impl.elem3
-// CHECK:STDOUT:   %facet_value.loc68_19.3: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableRange, (constants.%custom_witness.df9cc1.3, constants.%Copy.impl_witness.0d6, constants.%custom_witness.902, constants.%custom_witness.c08, constants.%custom_witness.05b, constants.%custom_witness.491, constants.%custom_witness.ed8) [concrete = constants.%facet_value.bed]
-// CHECK:STDOUT:   %.loc68_19.3: %CppRange_where.type.d682d6.1 = converted constants.%MutableRange, %facet_value.loc68_19.3 [concrete = constants.%facet_value.bed]
-// CHECK:STDOUT:   %facet_value.loc68_19.4: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableRange, (constants.%custom_witness.df9cc1.3, constants.%Copy.impl_witness.0d6, constants.%custom_witness.902, constants.%custom_witness.c08, constants.%custom_witness.05b, constants.%custom_witness.491, constants.%custom_witness.ed8) [concrete = constants.%facet_value.bed]
-// CHECK:STDOUT:   %.loc68_19.4: %CppRange_where.type.d682d6.1 = converted constants.%MutableRange, %facet_value.loc68_19.4 [concrete = constants.%facet_value.bed]
-// CHECK:STDOUT:   %specific_fn.loc68_19.2: <specific function> = specific_function %impl.elem3, @T.as_type.as.Iterate.impl.Next(constants.%facet_value.bed) [concrete = constants.%T.as_type.as.Iterate.impl.Next.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc68_19.4: <bound method> = bound_method %m.ref, %specific_fn.loc68_19.2
-// CHECK:STDOUT:   %.loc68_19.5: ref %Optional.e07 = temporary_storage
-// CHECK:STDOUT:   %.loc68_18.2: %MutableRange = acquire_value %m.ref
-// CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.call: init %Optional.e07 to %.loc68_19.5 = call %bound_method.loc68_19.4(%.loc68_18.2, %addr)
-// CHECK:STDOUT:   %.loc68_19.6: ref %Optional.e07 = temporary %.loc68_19.5, %T.as_type.as.Iterate.impl.Next.call
-// CHECK:STDOUT:   %.loc68_19.7: %Optional.HasValue.type.43a = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.4d5) [concrete = constants.%Optional.HasValue.1c0]
-// CHECK:STDOUT:   %HasValue.ref: %Optional.HasValue.type.43a = name_ref HasValue, %.loc68_19.7 [concrete = constants.%Optional.HasValue.1c0]
-// CHECK:STDOUT:   %Optional.HasValue.bound: <bound method> = bound_method %.loc68_19.6, %HasValue.ref
+// CHECK:STDOUT:   %bound_method.loc52_19.3: <bound method> = bound_method %m.ref, %impl.elem3
+// CHECK:STDOUT:   %facet_value.loc52_19.3: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableRange, (constants.%custom_witness.df9cc1.3, constants.%Copy.impl_witness.0d6, constants.%custom_witness.902, constants.%custom_witness.c08, constants.%custom_witness.05b, constants.%custom_witness.491, constants.%custom_witness.ed8) [concrete = constants.%facet_value.bed]
+// CHECK:STDOUT:   %.loc52_19.3: %CppRange_where.type.d682d6.1 = converted constants.%MutableRange, %facet_value.loc52_19.3 [concrete = constants.%facet_value.bed]
+// CHECK:STDOUT:   %facet_value.loc52_19.4: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableRange, (constants.%custom_witness.df9cc1.3, constants.%Copy.impl_witness.0d6, constants.%custom_witness.902, constants.%custom_witness.c08, constants.%custom_witness.05b, constants.%custom_witness.491, constants.%custom_witness.ed8) [concrete = constants.%facet_value.bed]
+// CHECK:STDOUT:   %.loc52_19.4: %CppRange_where.type.d682d6.1 = converted constants.%MutableRange, %facet_value.loc52_19.4 [concrete = constants.%facet_value.bed]
+// CHECK:STDOUT:   %specific_fn.loc52_19.2: <specific function> = specific_function %impl.elem3, @T.as_type.as.Iterate.impl.Next(constants.%facet_value.bed) [concrete = constants.%T.as_type.as.Iterate.impl.Next.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc52_19.4: <bound method> = bound_method %m.ref, %specific_fn.loc52_19.2
+// CHECK:STDOUT:   %.loc52_19.5: ref %Optional.e07 = temporary_storage
+// CHECK:STDOUT:   %.loc52_18.2: %MutableRange = acquire_value %m.ref
+// CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.call: init %Optional.e07 to %.loc52_19.5 = call %bound_method.loc52_19.4(%.loc52_18.2, %addr)
+// CHECK:STDOUT:   %.loc52_19.6: ref %Optional.e07 = temporary %.loc52_19.5, %T.as_type.as.Iterate.impl.Next.call
+// CHECK:STDOUT:   %.loc52_19.7: %Optional.HasValue.type.43a = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.4d5) [concrete = constants.%Optional.HasValue.1c0]
+// CHECK:STDOUT:   %HasValue.ref: %Optional.HasValue.type.43a = name_ref HasValue, %.loc52_19.7 [concrete = constants.%Optional.HasValue.1c0]
+// CHECK:STDOUT:   %Optional.HasValue.bound: <bound method> = bound_method %.loc52_19.6, %HasValue.ref
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %HasValue.ref, @Optional.HasValue(constants.%OptionalStorage.facet.4d5) [concrete = constants.%Optional.HasValue.specific_fn.0a6]
-// CHECK:STDOUT:   %bound_method.loc68_19.5: <bound method> = bound_method %.loc68_19.6, %Optional.HasValue.specific_fn
-// CHECK:STDOUT:   %.loc68_19.8: %Optional.e07 = acquire_value %.loc68_19.6
-// CHECK:STDOUT:   %Optional.HasValue.call: init bool = call %bound_method.loc68_19.5(%.loc68_19.8)
-// CHECK:STDOUT:   %.loc68_19.9: bool = value_of_initializer %Optional.HasValue.call
-// CHECK:STDOUT:   %.loc68_19.10: bool = converted %Optional.HasValue.call, %.loc68_19.9
-// CHECK:STDOUT:   if %.loc68_19.10 br !for.body else br !for.done
+// CHECK:STDOUT:   %bound_method.loc52_19.5: <bound method> = bound_method %.loc52_19.6, %Optional.HasValue.specific_fn
+// CHECK:STDOUT:   %.loc52_19.8: %Optional.e07 = acquire_value %.loc52_19.6
+// CHECK:STDOUT:   %Optional.HasValue.call: init bool = call %bound_method.loc52_19.5(%.loc52_19.8)
+// CHECK:STDOUT:   %.loc52_19.9: bool = value_of_initializer %Optional.HasValue.call
+// CHECK:STDOUT:   %.loc52_19.10: bool = converted %Optional.HasValue.call, %.loc52_19.9
+// CHECK:STDOUT:   if %.loc52_19.10 br !for.body else br !for.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.body:
-// CHECK:STDOUT:   %.loc68_19.11: %Optional.Get.type.a84 = specific_constant imports.%Core.import_ref.dab, @Optional(constants.%OptionalStorage.facet.4d5) [concrete = constants.%Optional.Get.4e0]
-// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.a84 = name_ref Get, %.loc68_19.11 [concrete = constants.%Optional.Get.4e0]
-// CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc68_19.6, %Get.ref
+// CHECK:STDOUT:   %.loc52_19.11: %Optional.Get.type.a84 = specific_constant imports.%Core.import_ref.dab, @Optional(constants.%OptionalStorage.facet.4d5) [concrete = constants.%Optional.Get.4e0]
+// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.a84 = name_ref Get, %.loc52_19.11 [concrete = constants.%Optional.Get.4e0]
+// CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc52_19.6, %Get.ref
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%OptionalStorage.facet.4d5) [concrete = constants.%Optional.Get.specific_fn.3a1]
-// CHECK:STDOUT:   %bound_method.loc68_19.6: <bound method> = bound_method %.loc68_19.6, %Optional.Get.specific_fn
-// CHECK:STDOUT:   %.loc68_19.12: %Optional.e07 = acquire_value %.loc68_19.6
-// CHECK:STDOUT:   %Optional.Get.call: init %f64.dc1 = call %bound_method.loc68_19.6(%.loc68_19.12)
-// CHECK:STDOUT:   %.loc68_19.13: %f64.dc1 = value_of_initializer %Optional.Get.call
-// CHECK:STDOUT:   %.loc68_19.14: %f64.dc1 = converted %Optional.Get.call, %.loc68_19.13
-// CHECK:STDOUT:   %f64.loc68: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %i: %f64.dc1 = wrapper_binding i, %.loc68_19.14
+// CHECK:STDOUT:   %bound_method.loc52_19.6: <bound method> = bound_method %.loc52_19.6, %Optional.Get.specific_fn
+// CHECK:STDOUT:   %.loc52_19.12: %Optional.e07 = acquire_value %.loc52_19.6
+// CHECK:STDOUT:   %Optional.Get.call: init %f64.dc1 = call %bound_method.loc52_19.6(%.loc52_19.12)
+// CHECK:STDOUT:   %.loc52_19.13: %f64.dc1 = value_of_initializer %Optional.Get.call
+// CHECK:STDOUT:   %.loc52_19.14: %f64.dc1 = converted %Optional.Get.call, %.loc52_19.13
+// CHECK:STDOUT:   %f64.loc52: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
+// CHECK:STDOUT:   %i: %f64.dc1 = wrapper_binding i, %.loc52_19.14
 // CHECK:STDOUT:   %sum.ref: ref %f64.dc1 = name_ref sum, %sum
 // CHECK:STDOUT:   %i.ref: %f64.dc1 = name_ref i, %i
-// CHECK:STDOUT:   %impl.elem0.loc69: %.918 = impl_witness_access constants.%AddAssignWith.impl_witness.402, element0 [concrete = constants.%Float.as.AddAssignWith.impl.Op.ac1]
-// CHECK:STDOUT:   %bound_method.loc69_9.1: <bound method> = bound_method %sum.ref, %impl.elem0.loc69
-// CHECK:STDOUT:   %specific_fn.loc69: <specific function> = specific_function %impl.elem0.loc69, @Float.as.AddAssignWith.impl.Op(constants.%int_64) [concrete = constants.%Float.as.AddAssignWith.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc69_9.2: <bound method> = bound_method %sum.ref, %specific_fn.loc69
-// CHECK:STDOUT:   %Float.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc69_9.2(%sum.ref, %i.ref)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc68_19.1: <bound method> = bound_method %.loc68_19.6, constants.%Destroy.Op.1a2547.9
-// CHECK:STDOUT:   %Destroy.Op.call.loc68_19.1: init %empty_tuple.type = call %Destroy.Op.bound.loc68_19.1(%.loc68_19.6)
+// CHECK:STDOUT:   %impl.elem0.loc53: %.918 = impl_witness_access constants.%AddAssignWith.impl_witness.402, element0 [concrete = constants.%Float.as.AddAssignWith.impl.Op.ac1]
+// CHECK:STDOUT:   %bound_method.loc53_9.1: <bound method> = bound_method %sum.ref, %impl.elem0.loc53
+// CHECK:STDOUT:   %specific_fn.loc53: <specific function> = specific_function %impl.elem0.loc53, @Float.as.AddAssignWith.impl.Op(constants.%int_64) [concrete = constants.%Float.as.AddAssignWith.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc53_9.2: <bound method> = bound_method %sum.ref, %specific_fn.loc53
+// CHECK:STDOUT:   %Float.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc53_9.2(%sum.ref, %i.ref)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc52_19.1: <bound method> = bound_method %.loc52_19.6, constants.%Destroy.Op.1a2547.9
+// CHECK:STDOUT:   %Destroy.Op.call.loc52_19.1: init %empty_tuple.type = call %Destroy.Op.bound.loc52_19.1(%.loc52_19.6)
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   %Destroy.Op.bound.loc68_19.2: <bound method> = bound_method %.loc68_19.6, constants.%Destroy.Op.1a2547.9
-// CHECK:STDOUT:   %Destroy.Op.call.loc68_19.2: init %empty_tuple.type = call %Destroy.Op.bound.loc68_19.2(%.loc68_19.6)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc68_19.3: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.10
-// CHECK:STDOUT:   %Destroy.Op.call.loc68_19.3: init %empty_tuple.type = call %Destroy.Op.bound.loc68_19.3(%var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc52_19.2: <bound method> = bound_method %.loc52_19.6, constants.%Destroy.Op.1a2547.9
+// CHECK:STDOUT:   %Destroy.Op.call.loc52_19.2: init %empty_tuple.type = call %Destroy.Op.bound.loc52_19.2(%.loc52_19.6)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc52_19.3: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.10
+// CHECK:STDOUT:   %Destroy.Op.call.loc52_19.3: init %empty_tuple.type = call %Destroy.Op.bound.loc52_19.3(%var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4081,16 +3937,16 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.next:
-// CHECK:STDOUT:   %addr.loc94: <error> = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc66: <error> = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   %HasValue.ref: <error> = name_ref HasValue, <error> [concrete = <error>]
 // CHECK:STDOUT:   if <error> br !for.body else br !for.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.body:
 // CHECK:STDOUT:   %Get.ref: <error> = name_ref Get, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc94: type = splice_block %ValueType.ref.loc94 [concrete = constants.%ValueType] {
-// CHECK:STDOUT:     %Cpp.ref.loc94: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %DiffMutableADL.ref.loc94: <namespace> = name_ref DiffMutableADL, imports.%DiffMutableADL [concrete = imports.%DiffMutableADL]
-// CHECK:STDOUT:     %ValueType.ref.loc94: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
+// CHECK:STDOUT:   %.loc66: type = splice_block %ValueType.ref.loc66 [concrete = constants.%ValueType] {
+// CHECK:STDOUT:     %Cpp.ref.loc66: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %DiffMutableADL.ref.loc66: <namespace> = name_ref DiffMutableADL, imports.%DiffMutableADL [concrete = imports.%DiffMutableADL]
+// CHECK:STDOUT:     %ValueType.ref.loc66: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i: %ValueType = wrapper_binding i, <error> [concrete = <error>]
 // CHECK:STDOUT:   %sum.ref: ref %ValueType = name_ref sum, %sum
@@ -4457,81 +4313,81 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %mc.ref: ref %MutableAndConstRange = name_ref mc, %mc
 // CHECK:STDOUT:   %impl.elem2: %.e94 = impl_witness_access constants.%Iterate.impl_witness.e93, element2 [concrete = constants.%T.as_type.as.Iterate.impl.NewCursor.237]
-// CHECK:STDOUT:   %bound_method.loc80_42.1: <bound method> = bound_method %mc.ref, %impl.elem2
-// CHECK:STDOUT:   %facet_value.loc80_42.1: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableAndConstRange, (constants.%custom_witness.ca2, constants.%custom_witness.1c5, constants.%custom_witness.660, constants.%custom_witness.a79, constants.%custom_witness.d56, constants.%custom_witness.68a, constants.%custom_witness.2ef) [concrete = constants.%facet_value.94c]
-// CHECK:STDOUT:   %.loc80_42.1: %CppRange_where.type.d682d6.1 = converted constants.%MutableAndConstRange, %facet_value.loc80_42.1 [concrete = constants.%facet_value.94c]
-// CHECK:STDOUT:   %facet_value.loc80_42.2: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableAndConstRange, (constants.%custom_witness.ca2, constants.%custom_witness.1c5, constants.%custom_witness.660, constants.%custom_witness.a79, constants.%custom_witness.d56, constants.%custom_witness.68a, constants.%custom_witness.2ef) [concrete = constants.%facet_value.94c]
-// CHECK:STDOUT:   %.loc80_42.2: %CppRange_where.type.d682d6.1 = converted constants.%MutableAndConstRange, %facet_value.loc80_42.2 [concrete = constants.%facet_value.94c]
-// CHECK:STDOUT:   %specific_fn.loc80_42.1: <specific function> = specific_function %impl.elem2, @T.as_type.as.Iterate.impl.NewCursor(constants.%facet_value.94c) [concrete = constants.%T.as_type.as.Iterate.impl.NewCursor.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc80_42.2: <bound method> = bound_method %mc.ref, %specific_fn.loc80_42.1
+// CHECK:STDOUT:   %bound_method.loc64_42.1: <bound method> = bound_method %mc.ref, %impl.elem2
+// CHECK:STDOUT:   %facet_value.loc64_42.1: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableAndConstRange, (constants.%custom_witness.ca2, constants.%custom_witness.1c5, constants.%custom_witness.660, constants.%custom_witness.a79, constants.%custom_witness.d56, constants.%custom_witness.68a, constants.%custom_witness.2ef) [concrete = constants.%facet_value.94c]
+// CHECK:STDOUT:   %.loc64_42.1: %CppRange_where.type.d682d6.1 = converted constants.%MutableAndConstRange, %facet_value.loc64_42.1 [concrete = constants.%facet_value.94c]
+// CHECK:STDOUT:   %facet_value.loc64_42.2: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableAndConstRange, (constants.%custom_witness.ca2, constants.%custom_witness.1c5, constants.%custom_witness.660, constants.%custom_witness.a79, constants.%custom_witness.d56, constants.%custom_witness.68a, constants.%custom_witness.2ef) [concrete = constants.%facet_value.94c]
+// CHECK:STDOUT:   %.loc64_42.2: %CppRange_where.type.d682d6.1 = converted constants.%MutableAndConstRange, %facet_value.loc64_42.2 [concrete = constants.%facet_value.94c]
+// CHECK:STDOUT:   %specific_fn.loc64_42.1: <specific function> = specific_function %impl.elem2, @T.as_type.as.Iterate.impl.NewCursor(constants.%facet_value.94c) [concrete = constants.%T.as_type.as.Iterate.impl.NewCursor.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc64_42.2: <bound method> = bound_method %mc.ref, %specific_fn.loc64_42.1
 // CHECK:STDOUT:   %var: ref %tuple.type.de6 = var_storage invalid
-// CHECK:STDOUT:   %.loc80_40.1: %MutableAndConstRange = acquire_value %mc.ref
-// CHECK:STDOUT:   %T.as_type.as.Iterate.impl.NewCursor.call: init %tuple.type.de6 to %var = call %bound_method.loc80_42.2(%.loc80_40.1)
+// CHECK:STDOUT:   %.loc64_40.1: %MutableAndConstRange = acquire_value %mc.ref
+// CHECK:STDOUT:   %T.as_type.as.Iterate.impl.NewCursor.call: init %tuple.type.de6 to %var = call %bound_method.loc64_42.2(%.loc64_40.1)
 // CHECK:STDOUT:   assign %var, %T.as_type.as.Iterate.impl.NewCursor.call
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.next:
-// CHECK:STDOUT:   %addr.loc80: %ptr.b95 = addr_of %var
+// CHECK:STDOUT:   %addr.loc64: %ptr.b95 = addr_of %var
 // CHECK:STDOUT:   %impl.elem3: %.d53 = impl_witness_access constants.%Iterate.impl_witness.e93, element3 [concrete = constants.%T.as_type.as.Iterate.impl.Next.1b2]
-// CHECK:STDOUT:   %bound_method.loc80_42.3: <bound method> = bound_method %mc.ref, %impl.elem3
-// CHECK:STDOUT:   %facet_value.loc80_42.3: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableAndConstRange, (constants.%custom_witness.ca2, constants.%custom_witness.1c5, constants.%custom_witness.660, constants.%custom_witness.a79, constants.%custom_witness.d56, constants.%custom_witness.68a, constants.%custom_witness.2ef) [concrete = constants.%facet_value.94c]
-// CHECK:STDOUT:   %.loc80_42.3: %CppRange_where.type.d682d6.1 = converted constants.%MutableAndConstRange, %facet_value.loc80_42.3 [concrete = constants.%facet_value.94c]
-// CHECK:STDOUT:   %facet_value.loc80_42.4: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableAndConstRange, (constants.%custom_witness.ca2, constants.%custom_witness.1c5, constants.%custom_witness.660, constants.%custom_witness.a79, constants.%custom_witness.d56, constants.%custom_witness.68a, constants.%custom_witness.2ef) [concrete = constants.%facet_value.94c]
-// CHECK:STDOUT:   %.loc80_42.4: %CppRange_where.type.d682d6.1 = converted constants.%MutableAndConstRange, %facet_value.loc80_42.4 [concrete = constants.%facet_value.94c]
-// CHECK:STDOUT:   %specific_fn.loc80_42.2: <specific function> = specific_function %impl.elem3, @T.as_type.as.Iterate.impl.Next(constants.%facet_value.94c) [concrete = constants.%T.as_type.as.Iterate.impl.Next.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc80_42.4: <bound method> = bound_method %mc.ref, %specific_fn.loc80_42.2
-// CHECK:STDOUT:   %.loc80_42.5: ref %Optional.3cc = temporary_storage
-// CHECK:STDOUT:   %.loc80_40.2: %MutableAndConstRange = acquire_value %mc.ref
-// CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.call: init %Optional.3cc to %.loc80_42.5 = call %bound_method.loc80_42.4(%.loc80_40.2, %addr.loc80)
-// CHECK:STDOUT:   %.loc80_42.6: ref %Optional.3cc = temporary %.loc80_42.5, %T.as_type.as.Iterate.impl.Next.call
-// CHECK:STDOUT:   %.loc80_42.7: %Optional.HasValue.type.f78 = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.33d) [concrete = constants.%Optional.HasValue.519]
-// CHECK:STDOUT:   %HasValue.ref: %Optional.HasValue.type.f78 = name_ref HasValue, %.loc80_42.7 [concrete = constants.%Optional.HasValue.519]
-// CHECK:STDOUT:   %Optional.HasValue.bound: <bound method> = bound_method %.loc80_42.6, %HasValue.ref
+// CHECK:STDOUT:   %bound_method.loc64_42.3: <bound method> = bound_method %mc.ref, %impl.elem3
+// CHECK:STDOUT:   %facet_value.loc64_42.3: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableAndConstRange, (constants.%custom_witness.ca2, constants.%custom_witness.1c5, constants.%custom_witness.660, constants.%custom_witness.a79, constants.%custom_witness.d56, constants.%custom_witness.68a, constants.%custom_witness.2ef) [concrete = constants.%facet_value.94c]
+// CHECK:STDOUT:   %.loc64_42.3: %CppRange_where.type.d682d6.1 = converted constants.%MutableAndConstRange, %facet_value.loc64_42.3 [concrete = constants.%facet_value.94c]
+// CHECK:STDOUT:   %facet_value.loc64_42.4: %CppRange_where.type.d682d6.1 = facet_value constants.%MutableAndConstRange, (constants.%custom_witness.ca2, constants.%custom_witness.1c5, constants.%custom_witness.660, constants.%custom_witness.a79, constants.%custom_witness.d56, constants.%custom_witness.68a, constants.%custom_witness.2ef) [concrete = constants.%facet_value.94c]
+// CHECK:STDOUT:   %.loc64_42.4: %CppRange_where.type.d682d6.1 = converted constants.%MutableAndConstRange, %facet_value.loc64_42.4 [concrete = constants.%facet_value.94c]
+// CHECK:STDOUT:   %specific_fn.loc64_42.2: <specific function> = specific_function %impl.elem3, @T.as_type.as.Iterate.impl.Next(constants.%facet_value.94c) [concrete = constants.%T.as_type.as.Iterate.impl.Next.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc64_42.4: <bound method> = bound_method %mc.ref, %specific_fn.loc64_42.2
+// CHECK:STDOUT:   %.loc64_42.5: ref %Optional.3cc = temporary_storage
+// CHECK:STDOUT:   %.loc64_40.2: %MutableAndConstRange = acquire_value %mc.ref
+// CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.call: init %Optional.3cc to %.loc64_42.5 = call %bound_method.loc64_42.4(%.loc64_40.2, %addr.loc64)
+// CHECK:STDOUT:   %.loc64_42.6: ref %Optional.3cc = temporary %.loc64_42.5, %T.as_type.as.Iterate.impl.Next.call
+// CHECK:STDOUT:   %.loc64_42.7: %Optional.HasValue.type.f78 = specific_constant imports.%Core.import_ref.bb6, @Optional(constants.%OptionalStorage.facet.33d) [concrete = constants.%Optional.HasValue.519]
+// CHECK:STDOUT:   %HasValue.ref: %Optional.HasValue.type.f78 = name_ref HasValue, %.loc64_42.7 [concrete = constants.%Optional.HasValue.519]
+// CHECK:STDOUT:   %Optional.HasValue.bound: <bound method> = bound_method %.loc64_42.6, %HasValue.ref
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %HasValue.ref, @Optional.HasValue(constants.%OptionalStorage.facet.33d) [concrete = constants.%Optional.HasValue.specific_fn.b3a]
-// CHECK:STDOUT:   %bound_method.loc80_42.5: <bound method> = bound_method %.loc80_42.6, %Optional.HasValue.specific_fn
-// CHECK:STDOUT:   %.loc80_42.8: %Optional.3cc = acquire_value %.loc80_42.6
-// CHECK:STDOUT:   %Optional.HasValue.call: init bool = call %bound_method.loc80_42.5(%.loc80_42.8)
-// CHECK:STDOUT:   %.loc80_42.9: bool = value_of_initializer %Optional.HasValue.call
-// CHECK:STDOUT:   %.loc80_42.10: bool = converted %Optional.HasValue.call, %.loc80_42.9
-// CHECK:STDOUT:   if %.loc80_42.10 br !for.body else br !for.done
+// CHECK:STDOUT:   %bound_method.loc64_42.5: <bound method> = bound_method %.loc64_42.6, %Optional.HasValue.specific_fn
+// CHECK:STDOUT:   %.loc64_42.8: %Optional.3cc = acquire_value %.loc64_42.6
+// CHECK:STDOUT:   %Optional.HasValue.call: init bool = call %bound_method.loc64_42.5(%.loc64_42.8)
+// CHECK:STDOUT:   %.loc64_42.9: bool = value_of_initializer %Optional.HasValue.call
+// CHECK:STDOUT:   %.loc64_42.10: bool = converted %Optional.HasValue.call, %.loc64_42.9
+// CHECK:STDOUT:   if %.loc64_42.10 br !for.body else br !for.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.body:
-// CHECK:STDOUT:   %.loc80_42.11: %Optional.Get.type.9c5 = specific_constant imports.%Core.import_ref.dab, @Optional(constants.%OptionalStorage.facet.33d) [concrete = constants.%Optional.Get.323]
-// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.9c5 = name_ref Get, %.loc80_42.11 [concrete = constants.%Optional.Get.323]
-// CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc80_42.6, %Get.ref
+// CHECK:STDOUT:   %.loc64_42.11: %Optional.Get.type.9c5 = specific_constant imports.%Core.import_ref.dab, @Optional(constants.%OptionalStorage.facet.33d) [concrete = constants.%Optional.Get.323]
+// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.9c5 = name_ref Get, %.loc64_42.11 [concrete = constants.%Optional.Get.323]
+// CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc64_42.6, %Get.ref
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%OptionalStorage.facet.33d) [concrete = constants.%Optional.Get.specific_fn.d62]
-// CHECK:STDOUT:   %bound_method.loc80_42.6: <bound method> = bound_method %.loc80_42.6, %Optional.Get.specific_fn
-// CHECK:STDOUT:   %.loc80_42.12: ref %ValueType = temporary_storage
-// CHECK:STDOUT:   %.loc80_42.13: %Optional.3cc = acquire_value %.loc80_42.6
-// CHECK:STDOUT:   %Optional.Get.call: init %ValueType to %.loc80_42.12 = call %bound_method.loc80_42.6(%.loc80_42.13)
-// CHECK:STDOUT:   %.loc80_42.14: ref %ValueType = temporary %.loc80_42.12, %Optional.Get.call
-// CHECK:STDOUT:   %.loc80_42.15: %ValueType = acquire_value %.loc80_42.14
-// CHECK:STDOUT:   %.loc80_26: type = splice_block %ValueType.ref.loc80 [concrete = constants.%ValueType] {
-// CHECK:STDOUT:     %Cpp.ref.loc80: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %OverloadADL.ref.loc80: <namespace> = name_ref OverloadADL, imports.%OverloadADL [concrete = imports.%OverloadADL]
-// CHECK:STDOUT:     %ValueType.ref.loc80: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
+// CHECK:STDOUT:   %bound_method.loc64_42.6: <bound method> = bound_method %.loc64_42.6, %Optional.Get.specific_fn
+// CHECK:STDOUT:   %.loc64_42.12: ref %ValueType = temporary_storage
+// CHECK:STDOUT:   %.loc64_42.13: %Optional.3cc = acquire_value %.loc64_42.6
+// CHECK:STDOUT:   %Optional.Get.call: init %ValueType to %.loc64_42.12 = call %bound_method.loc64_42.6(%.loc64_42.13)
+// CHECK:STDOUT:   %.loc64_42.14: ref %ValueType = temporary %.loc64_42.12, %Optional.Get.call
+// CHECK:STDOUT:   %.loc64_42.15: %ValueType = acquire_value %.loc64_42.14
+// CHECK:STDOUT:   %.loc64_26: type = splice_block %ValueType.ref.loc64 [concrete = constants.%ValueType] {
+// CHECK:STDOUT:     %Cpp.ref.loc64: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %OverloadADL.ref.loc64: <namespace> = name_ref OverloadADL, imports.%OverloadADL [concrete = imports.%OverloadADL]
+// CHECK:STDOUT:     %ValueType.ref.loc64: type = name_ref ValueType, imports.%ValueType.decl [concrete = constants.%ValueType]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i: %ValueType = wrapper_binding i, %.loc80_42.15
+// CHECK:STDOUT:   %i: %ValueType = wrapper_binding i, %.loc64_42.15
 // CHECK:STDOUT:   %sum.ref: ref %ValueType = name_ref sum, %sum
 // CHECK:STDOUT:   %i.ref: %ValueType = name_ref i, %i
-// CHECK:STDOUT:   %.loc81_12: ref %ValueType = value_as_ref %i.ref
-// CHECK:STDOUT:   %addr.loc81: %ptr.6ed = addr_of %.loc81_12
-// CHECK:STDOUT:   %.loc81_9.1: %ptr.403 = as_compatible %addr.loc81
-// CHECK:STDOUT:   %.loc81_9.2: %ptr.403 = converted %addr.loc81, %.loc81_9.1
-// CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk.call: ref %ValueType = call imports.%operator_PlusEqual__carbon_thunk.decl(%sum.ref, %.loc81_9.2)
-// CHECK:STDOUT:   %ValueType.Op.bound.loc80: <bound method> = bound_method %.loc80_42.14, constants.%ValueType.Op.038ea9.1
-// CHECK:STDOUT:   %Op.ref.loc80: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
-// CHECK:STDOUT:   %ValueType.cpp_destructor.bound.loc80: <bound method> = bound_method %.loc80_42.14, %Op.ref.loc80
-// CHECK:STDOUT:   %ValueType.cpp_destructor.call.loc80: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc80(%.loc80_42.14)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc80_42.1: <bound method> = bound_method %.loc80_42.6, constants.%Destroy.Op.1a2547.7
-// CHECK:STDOUT:   %Destroy.Op.call.loc80_42.1: init %empty_tuple.type = call %Destroy.Op.bound.loc80_42.1(%.loc80_42.6)
+// CHECK:STDOUT:   %.loc65_12: ref %ValueType = value_as_ref %i.ref
+// CHECK:STDOUT:   %addr.loc65: %ptr.6ed = addr_of %.loc65_12
+// CHECK:STDOUT:   %.loc65_9.1: %ptr.403 = as_compatible %addr.loc65
+// CHECK:STDOUT:   %.loc65_9.2: %ptr.403 = converted %addr.loc65, %.loc65_9.1
+// CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk.call: ref %ValueType = call imports.%operator_PlusEqual__carbon_thunk.decl(%sum.ref, %.loc65_9.2)
+// CHECK:STDOUT:   %ValueType.Op.bound.loc64: <bound method> = bound_method %.loc64_42.14, constants.%ValueType.Op.038ea9.1
+// CHECK:STDOUT:   %Op.ref.loc64: %ValueType.cpp_destructor.type = name_ref Op, imports.%ValueType.cpp_destructor.decl [concrete = constants.%ValueType.cpp_destructor]
+// CHECK:STDOUT:   %ValueType.cpp_destructor.bound.loc64: <bound method> = bound_method %.loc64_42.14, %Op.ref.loc64
+// CHECK:STDOUT:   %ValueType.cpp_destructor.call.loc64: init %empty_tuple.type = call %ValueType.cpp_destructor.bound.loc64(%.loc64_42.14)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc64_42.1: <bound method> = bound_method %.loc64_42.6, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:   %Destroy.Op.call.loc64_42.1: init %empty_tuple.type = call %Destroy.Op.bound.loc64_42.1(%.loc64_42.6)
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   %Destroy.Op.bound.loc80_42.2: <bound method> = bound_method %.loc80_42.6, constants.%Destroy.Op.1a2547.7
-// CHECK:STDOUT:   %Destroy.Op.call.loc80_42.2: init %empty_tuple.type = call %Destroy.Op.bound.loc80_42.2(%.loc80_42.6)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc80_42.3: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.8
-// CHECK:STDOUT:   %Destroy.Op.call.loc80_42.3: init %empty_tuple.type = call %Destroy.Op.bound.loc80_42.3(%var)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc64_42.2: <bound method> = bound_method %.loc64_42.6, constants.%Destroy.Op.1a2547.7
+// CHECK:STDOUT:   %Destroy.Op.call.loc64_42.2: init %empty_tuple.type = call %Destroy.Op.bound.loc64_42.2(%.loc64_42.6)
+// CHECK:STDOUT:   %Destroy.Op.bound.loc64_42.3: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.8
+// CHECK:STDOUT:   %Destroy.Op.call.loc64_42.3: init %empty_tuple.type = call %Destroy.Op.bound.loc64_42.3(%var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

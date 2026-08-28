@@ -62,15 +62,9 @@ fn F[T: type](a: array(T, 2)) -> T { return F(a); }
 fn G() -> C {
   // TODO: We succeed at deducing T here but fail to convert. Is this the right behavior?
   var a: array(C, 3) = ({}, {}, {});
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+10]]:12: error: cannot implicitly convert expression of type `array(C, 3)` to `array(C, 2)` [ConversionFailure]
-  // CHECK:STDERR:   return F(a);
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+7]]:12: note: type `array(C, 3)` does not implement interface `Core.ImplicitAs(array(C, 2))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return F(a);
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE-11]]:15: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn F[T: type](a: array(T, 2)) -> T { return F(a); }
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+4]]:12: error: cannot implicitly convert expression of type `array(C, 3)` to `array(C, 2)` [ConversionFailure]
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+3]]:12: note: type `array(C, 3)` does not implement interface `Core.ImplicitAs(array(C, 2))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE-7]]:15-28: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   return F(a);
 }
@@ -87,15 +81,9 @@ fn F[N: Core.IntLiteral](unused a: array(C, N)) -> i32 { return N; }
 fn G() -> i32 {
   // TODO: We succeed at deducing N here but fail to convert. Is this the right behavior?
   var a: array(D, 3) = ({}, {}, {});
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+10]]:12: error: cannot implicitly convert expression of type `array(D, 3)` to `array(C, 3)` [ConversionFailure]
-  // CHECK:STDERR:   return F(a);
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:12: note: type `array(D, 3)` does not implement interface `Core.ImplicitAs(array(C, 3))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return F(a);
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-11]]:33: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn F[N: Core.IntLiteral](unused a: array(C, N)) -> i32 { return N; }
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:12: error: cannot implicitly convert expression of type `array(D, 3)` to `array(C, 3)` [ConversionFailure]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:12: note: type `array(D, 3)` does not implement interface `Core.ImplicitAs(array(C, 3))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-7]]:33-46: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   return F(a);
 }
@@ -115,12 +103,8 @@ fn G() -> i32 {
   // which we can't deduce through. We should decide if we want to support
   // deductions of that form. If not, it'd be nice to diagnose this situation
   // better.
-  // CHECK:STDERR: fail_bound_type_mismatch.carbon:[[@LINE+7]]:10: error: cannot deduce value for generic parameter `N` [DeductionIncomplete]
-  // CHECK:STDERR:   return F(a);
-  // CHECK:STDERR:          ^~~~
-  // CHECK:STDERR: fail_bound_type_mismatch.carbon:[[@LINE-12]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F[N: i32](unused a: array(C, N)) -> i32 { return N; }
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_bound_type_mismatch.carbon:[[@LINE+3]]:10-13: error: cannot deduce value for generic parameter `N` [DeductionIncomplete]
+  // CHECK:STDERR: fail_bound_type_mismatch.carbon:[[@LINE-10]]:1-44: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   return F(a);
 }
@@ -135,12 +119,8 @@ fn F[N: i32](unused a: array(C, N)) {}
 fn G() {
   // TODO: Deduce N as 3 from the tuple's size.
   //
-  // CHECK:STDERR: fail_todo_array_length_from_tuple.carbon:[[@LINE+7]]:3: error: cannot deduce value for generic parameter `N` [DeductionIncomplete]
-  // CHECK:STDERR:   F(({}, {}, {}));
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_array_length_from_tuple.carbon:[[@LINE-8]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F[N: i32](unused a: array(C, N)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_array_length_from_tuple.carbon:[[@LINE+3]]:3-17: error: cannot deduce value for generic parameter `N` [DeductionIncomplete]
+  // CHECK:STDERR: fail_todo_array_length_from_tuple.carbon:[[@LINE-6]]:1-37: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   F(({}, {}, {}));
 }
@@ -1001,7 +981,7 @@ fn G() {
 // CHECK:STDOUT:   %a.ref: ref %array_type.9a3 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.e0d]
 // CHECK:STDOUT:   %.loc8_11.1: ref %C = splice_block %return.param {}
-// CHECK:STDOUT:   %.loc21: %array_type.cc9 = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc15: %array_type.cc9 = converted %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init %C to %.loc8_11.1 = call %F.specific_fn(<error>)
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
@@ -1269,7 +1249,7 @@ fn G() {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.cec = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_3.1ba) [concrete = constants.%F.specific_fn]
-// CHECK:STDOUT:   %.loc22: %array_type.9a3 = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16: %array_type.9a3 = converted %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(<error>)
 // CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.3
 // CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
@@ -1682,10 +1662,10 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc17_7: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc17_11: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc17_15: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc17_16: %tuple.type = tuple_literal (%.loc17_7, %.loc17_11, %.loc17_15) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc13_7: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc13_11: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc13_15: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc13_16: %tuple.type = tuple_literal (%.loc13_7, %.loc13_11, %.loc13_15) [concrete = constants.%tuple]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

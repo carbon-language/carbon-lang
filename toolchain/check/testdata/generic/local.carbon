@@ -29,12 +29,8 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   // TODO: Decide on what behavior we want here. We don't reject the corresponding case outside of a function.
-  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+7]]:9: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-  // CHECK:STDERR:   class C(C: type) {
-  // CHECK:STDERR:         ^
-  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+4]]:11: note: name is previously declared here [NameDeclPrevious]
-  // CHECK:STDERR:   class C(C: type) {
-  // CHECK:STDERR:           ^~~~~~~
+  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+3]]:9: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
+  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+2]]:11-17: note: name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:
   class C(C: type) {
   }
@@ -265,9 +261,9 @@ class C(C: type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%C.loc13_12.2: type) {
-// CHECK:STDOUT:   %C.patt.loc13_12.2: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc13_12.2 (constants.%C.patt)]
-// CHECK:STDOUT:   %C.loc13_12.1: type = symbolic_binding C, 0 [symbolic = %C.loc13_12.1 (constants.%C.67d)]
+// CHECK:STDOUT: generic class @C(%C.loc9_12.2: type) {
+// CHECK:STDOUT:   %C.patt.loc9_12.2: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc9_12.2 (constants.%C.patt)]
+// CHECK:STDOUT:   %C.loc9_12.1: type = symbolic_binding C, 0 [symbolic = %C.loc9_12.1 (constants.%C.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -283,20 +279,20 @@ class C(C: type) {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %C.patt.loc13_12.1: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc13_12.2 (constants.%C.patt)]
+// CHECK:STDOUT:     %C.patt.loc9_12.1: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc9_12.2 (constants.%C.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_14.1: type = splice_block %.loc13_14.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc9_14.1: type = splice_block %.loc9_14.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc13_14.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc9_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %C.loc13_12.2: type = symbolic_binding C, 0 [symbolic = %C.loc13_12.1 (constants.%C.67d)]
+// CHECK:STDOUT:     %C.loc9_12.2: type = symbolic_binding C, 0 [symbolic = %C.loc9_12.1 (constants.%C.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%C.67d) {
-// CHECK:STDOUT:   %C.patt.loc13_12.2 => constants.%C.patt
-// CHECK:STDOUT:   %C.loc13_12.1 => constants.%C.67d
+// CHECK:STDOUT:   %C.patt.loc9_12.2 => constants.%C.patt
+// CHECK:STDOUT:   %C.loc9_12.1 => constants.%C.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nonlocal_param_shadows_class.carbon

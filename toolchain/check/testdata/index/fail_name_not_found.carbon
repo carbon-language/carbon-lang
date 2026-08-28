@@ -13,9 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_name_not_found.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_name_not_found.carbon:[[@LINE+4]]:23: error: name `a` not found [NameNotFound]
-  // CHECK:STDERR:   var unused b: i32 = a[0];
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR: fail_name_not_found.carbon:[[@LINE+2]]:23: error: name `a` not found [NameNotFound]
   // CHECK:STDERR:
   var unused b: i32 = a[0];
 }
@@ -36,7 +34,7 @@ fn Main() {
 // CHECK:STDOUT:   %b.var_patt: %pattern_type.6b6 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc20_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc18_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -78,9 +76,9 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc20_3.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT: fn @Destroy.Op.loc18_3.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc20_3.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.Op.loc18_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

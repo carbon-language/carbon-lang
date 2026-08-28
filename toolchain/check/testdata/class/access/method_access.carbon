@@ -20,9 +20,7 @@ class X {
 
 fn G(x: X) {
   // TODO: Produce a better diagnostic for this case.
-  // CHECK:STDERR: fail_multiple_bindings.carbon:[[@LINE+4]]:3: error: member name of type `<bound method>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
-  // CHECK:STDERR:   x.(x.F)();
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_multiple_bindings.carbon:[[@LINE+2]]:3-9: error: member name of type `<bound method>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:
   x.(x.F)();
 }
@@ -82,11 +80,11 @@ fn G(x: X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%x.param: %X) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref.loc12_3: %X = name_ref x, %x
-// CHECK:STDOUT:   %x.ref.loc12_6: %X = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc10_3: %X = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc10_6: %X = name_ref x, %x
 // CHECK:STDOUT:   %F.ref: %X.F.type = name_ref F, @X.%X.F.decl [concrete = constants.%X.F]
-// CHECK:STDOUT:   %X.F.bound: <bound method> = bound_method %x.ref.loc12_6, %F.ref
-// CHECK:STDOUT:   %X.F.call: init %empty_tuple.type = call %X.F.bound(%x.ref.loc12_6)
+// CHECK:STDOUT:   %X.F.bound: <bound method> = bound_method %x.ref.loc10_6, %F.ref
+// CHECK:STDOUT:   %X.F.call: init %empty_tuple.type = call %X.F.bound(%x.ref.loc10_6)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

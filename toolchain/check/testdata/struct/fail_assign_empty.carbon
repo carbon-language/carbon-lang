@@ -12,9 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_assign_empty.carbon
 
-// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+4]]:20: error: missing value for field `a` in struct initialization [StructInitMissingFieldInLiteral]
-// CHECK:STDERR: var x: {.a: i32} = {};
-// CHECK:STDERR:                    ^~
+// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+2]]:20-21: error: missing value for field `a` in struct initialization [StructInitMissingFieldInLiteral]
 // CHECK:STDERR:
 var x: {.a: i32} = {};
 
@@ -49,7 +47,7 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var_storage %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc19: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
+// CHECK:STDOUT:   %.loc17: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
@@ -62,7 +60,7 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc17: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

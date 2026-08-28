@@ -382,11 +382,11 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
     -> void {
   Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Context,
-                          "cannot declare a member of incomplete class {0}",
-                          SemIR::TypeId);
-        builder.Context(loc_id, QualifiedDeclInIncompleteClassScope,
-                        context.classes().Get(class_id).self_type_id);
+        CARBON_DIAGNOSTIC_CONTEXT(
+            QualifiedDeclInIncompleteClassScope,
+            "cannot declare a member of incomplete class {0}", SemIR::TypeId);
+        builder.Attach(loc_id, QualifiedDeclInIncompleteClassScope,
+                       context.classes().Get(class_id).self_type_id);
       });
   DiagnoseIncompleteClass(context, class_id);
 }
@@ -398,11 +398,11 @@ static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
     SemIR::InstId interface_inst_id) -> void {
   Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(QualifiedDeclInUndefinedInterfaceScope, Context,
-                          "cannot declare a member of undefined interface {0}",
-                          InstIdAsType);
-        builder.Context(loc_id, QualifiedDeclInUndefinedInterfaceScope,
-                        interface_inst_id);
+        CARBON_DIAGNOSTIC_CONTEXT(
+            QualifiedDeclInUndefinedInterfaceScope,
+            "cannot declare a member of undefined interface {0}", InstIdAsType);
+        builder.Attach(loc_id, QualifiedDeclInUndefinedInterfaceScope,
+                       interface_inst_id);
       });
   DiagnoseIncompleteInterface(context, interface_id);
 }
@@ -415,11 +415,11 @@ static auto DiagnoseQualifiedDeclInImportedPackage(Context& context,
     -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackage, Error,
                     "imported packages cannot be used for declarations");
-  CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackageSource, Note,
-                    "package imported here");
+  CARBON_DIAGNOSTIC_LABEL(QualifiedDeclOutsidePackageSource, Info,
+                          "package imported here");
   context.emitter()
       .Build(use_loc_id, QualifiedDeclOutsidePackage)
-      .Note(import_loc_id, QualifiedDeclOutsidePackageSource)
+      .Attach(import_loc_id, QualifiedDeclOutsidePackageSource)
       .Emit();
 }
 
@@ -431,11 +431,11 @@ static auto DiagnoseQualifiedDeclInNonScope(
   CARBON_DIAGNOSTIC(QualifiedNameInNonScope, Error,
                     "name qualifiers are only allowed for entities that "
                     "provide a scope");
-  CARBON_DIAGNOSTIC(QualifiedNameNonScopeEntity, Note,
-                    "referenced non-scope entity declared here");
+  CARBON_DIAGNOSTIC_LABEL(QualifiedNameNonScopeEntity, Info,
+                          "referenced non-scope entity declared here");
   context.emitter()
       .Build(use_loc_id, QualifiedNameInNonScope)
-      .Note(non_scope_entity_loc_id, QualifiedNameNonScopeEntity)
+      .Attach(non_scope_entity_loc_id, QualifiedNameNonScopeEntity)
       .Emit();
 }
 

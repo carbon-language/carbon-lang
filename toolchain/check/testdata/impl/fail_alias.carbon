@@ -20,12 +20,8 @@ alias AC = C;
 
 impl AC as AI {}
 
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:1: error: redefinition of `impl AC as AI` [ImplRedefinition]
-// CHECK:STDERR: impl AC as AI {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_alias.carbon:[[@LINE-5]]:1: note: previous definition was here [ImplPreviousDefinition]
-// CHECK:STDERR: impl AC as AI {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+3]]:1-15: error: redefinition of `impl AC as AI` [ImplRedefinition]
+// CHECK:STDERR: fail_alias.carbon:[[@LINE-3]]:1-15: note: previous definition was here [ImplPreviousDefinition]
 // CHECK:STDERR:
 impl AC as AI {}
 
@@ -64,7 +60,7 @@ impl AC as AI {}
 // CHECK:STDOUT:     %AC.ref: type = name_ref AC, file.%AC [concrete = constants.%C]
 // CHECK:STDOUT:     %AI.ref: type = name_ref AI, file.%AI [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc30: <witness> = impl_self_witness @C.as.I.impl.e103db.2.%AC.ref, @I [concrete = constants.%.b7f]
+// CHECK:STDOUT:   %.loc26: <witness> = impl_self_witness @C.as.I.impl.e103db.2.%AC.ref, @I [concrete = constants.%.b7f]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

@@ -14,12 +14,8 @@
 
 interface Interface {
   fn F();
-  // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE+7]]:3: error: redeclaration of `fn F` is redundant [RedeclRedundant]
-  // CHECK:STDERR:   fn F();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE-4]]:3: note: previously declared here [RedeclPrevDecl]
-  // CHECK:STDERR:   fn F();
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE+3]]:3-9: error: redeclaration of `fn F` is redundant [RedeclRedundant]
+  // CHECK:STDERR: fail_redeclare_member.carbon:[[@LINE-2]]:3-9: note: previously declared here [RedeclPrevDecl]
   // CHECK:STDERR:
   fn F();
 }
@@ -49,7 +45,7 @@ interface Interface {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Interface.WithSelf.F.decl.loc16: @Interface.WithSelf.%Interface.WithSelf.F.type (%Interface.WithSelf.F.type) = fn_decl @Interface.WithSelf.F [symbolic = @Interface.WithSelf.%Interface.WithSelf.F (constants.%Interface.WithSelf.F)] {} {}
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.WithSelf.F.decl.loc16 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Interface.WithSelf.F.decl.loc24: @Interface.WithSelf.%Interface.WithSelf.F.type (%Interface.WithSelf.F.type) = fn_decl @Interface.WithSelf.F [symbolic = @Interface.WithSelf.%Interface.WithSelf.F (constants.%Interface.WithSelf.F)] {} {}
+// CHECK:STDOUT:   %Interface.WithSelf.F.decl.loc20: @Interface.WithSelf.%Interface.WithSelf.F.type (%Interface.WithSelf.F.type) = fn_decl @Interface.WithSelf.F [symbolic = @Interface.WithSelf.%Interface.WithSelf.F (constants.%Interface.WithSelf.F)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

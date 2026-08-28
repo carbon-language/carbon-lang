@@ -165,25 +165,17 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface Modifiers {
-  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+4]]:3: error: TODO: `default` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
-  // CHECK:STDERR:   default fn DefaultFunction();
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+2]]:3-9: error: TODO: `default` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
   // CHECK:STDERR:
   default fn DefaultFunction();
-  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+4]]:3: error: TODO: `default` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
-  // CHECK:STDERR:   default fn DefaultMethod(self);
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+2]]:3-9: error: TODO: `default` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
   // CHECK:STDERR:
   default fn DefaultMethod(self);
 
-  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+4]]:3: error: TODO: `final` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
-  // CHECK:STDERR:   final fn FinalFunction();
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+2]]:3-7: error: TODO: `final` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
   // CHECK:STDERR:
   final fn FinalFunction();
-  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+4]]:3: error: TODO: `final` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
-  // CHECK:STDERR:   final fn FinalMethod(self);
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+2]]:3-7: error: TODO: `final` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
   // CHECK:STDERR:
   final fn FinalMethod(self);
 }
@@ -194,13 +186,9 @@ library "[[@TEST_NAME]]";
 import library "final_interfaces";
 
 class C {
-  // CHECK:STDERR: fail_impl_final.carbon:[[@LINE+8]]:3: error: attempted to implement `M`, which is final in interface `FinalMethod` [ImplFinalFunction]
-  // CHECK:STDERR:   impl as FinalMethod {
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_final.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: final_interfaces.carbon:10:3: note: associated function M declared here [AssociatedFunctionHere]
-  // CHECK:STDERR:   final fn M(unused self) {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_final.carbon:[[@LINE+4]]:3-23: error: attempted to implement `M`, which is final in interface `FinalMethod` [ImplFinalFunction]
+  // CHECK:STDERR: imported from: fail_impl_final.carbon:[[@LINE-4]]:1 [InImport]
+  // CHECK:STDERR: final_interfaces.carbon:10:3-27: note: associated function M declared here [AssociatedFunctionHere]
   // CHECK:STDERR:
   impl as FinalMethod {
     fn M(unused self) { }
@@ -212,14 +200,10 @@ class C {
 library "[[@TEST_NAME]]";
 
 interface C {
-  // CHECK:STDERR: fail_modified_associated_constants.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
-  // CHECK:STDERR:   default let T: type = C;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_modified_associated_constants.carbon:[[@LINE+2]]:3-9: error: semantics TODO: `interface modifier` [SemanticsTodo]
   // CHECK:STDERR:
   default let T: type = C;
-  // CHECK:STDERR: fail_modified_associated_constants.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
-  // CHECK:STDERR:   final let U: type = C;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_modified_associated_constants.carbon:[[@LINE+2]]:3-7: error: semantics TODO: `interface modifier` [SemanticsTodo]
   // CHECK:STDERR:
   final let U: type = C;
 }

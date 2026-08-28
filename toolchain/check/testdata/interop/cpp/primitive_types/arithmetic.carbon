@@ -52,12 +52,8 @@ import Cpp;
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_unsupported_types.carbon:[[@LINE+7]]:25: error: semantics TODO: `Unsupported: builtin type: long double` [SemanticsTodo]
-  // CHECK:STDERR:   let cpp_long_double : Cpp.long_double = 1.0 as f64;
-  // CHECK:STDERR:                         ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_unsupported_types.carbon:[[@LINE+4]]:25: note: in `Cpp` name lookup for `long_double` [InCppNameLookup]
-  // CHECK:STDERR:   let cpp_long_double : Cpp.long_double = 1.0 as f64;
-  // CHECK:STDERR:                         ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_unsupported_types.carbon:[[@LINE+3]]:25-39: error: semantics TODO: `Unsupported: builtin type: long double` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_unsupported_types.carbon:[[@LINE+2]]:25-39: note: in `Cpp` name lookup for `long_double` [InCppNameLookup]
   // CHECK:STDERR:
   let cpp_long_double : Cpp.long_double = 1.0 as f64;
   let unused carbon_long_double: f64 = cpp_long_double;
@@ -71,9 +67,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 fn F() {
-  // CHECK:STDERR: fail_not_builtin.carbon:[[@LINE+4]]:28: error: member name `not_builtin` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let unused not_builtin : Cpp.not_builtin = 1;
-  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_not_builtin.carbon:[[@LINE+2]]:28-42: error: member name `not_builtin` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   let unused not_builtin : Cpp.not_builtin = 1;
 }
@@ -87,9 +81,7 @@ namespace MyNamespace {}
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_lookup_in_other_scopes.carbon:[[@LINE+4]]:21: error: member name `long` not found in `Cpp.MyNamespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let unused long : Cpp.MyNamespace.long = 1;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_lookup_in_other_scopes.carbon:[[@LINE+2]]:21-40: error: member name `long` not found in `Cpp.MyNamespace` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   let unused long : Cpp.MyNamespace.long = 1;
 }
@@ -499,21 +491,21 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6da]
-// CHECK:STDOUT:   %f64.loc15: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
+// CHECK:STDOUT:   %f64.loc11: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %impl.elem0: %.a08 = impl_witness_access constants.%As.impl_witness.355, element0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.20d]
-// CHECK:STDOUT:   %bound_method.loc15_47.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc11_47.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.As.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc15_47.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call: init %f64.dc1 = call %bound_method.loc15_47.2(%float) [concrete = constants.%float.3b9]
-// CHECK:STDOUT:   %.loc15_47.1: %f64.dc1 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float.3b9]
-// CHECK:STDOUT:   %.loc15_47.2: %f64.dc1 = converted %float, %.loc15_47.1 [concrete = constants.%float.3b9]
+// CHECK:STDOUT:   %bound_method.loc11_47.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call: init %f64.dc1 = call %bound_method.loc11_47.2(%float) [concrete = constants.%float.3b9]
+// CHECK:STDOUT:   %.loc11_47.1: %f64.dc1 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float.3b9]
+// CHECK:STDOUT:   %.loc11_47.2: %f64.dc1 = converted %float, %.loc11_47.1 [concrete = constants.%float.3b9]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %cpp_long_double: <error> = wrapper_binding cpp_long_double, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_long_double.patt: <error> = value_binding_pattern cpp_long_double [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_long_double.ref: <error> = name_ref cpp_long_double, %cpp_long_double [concrete = <error>]
-// CHECK:STDOUT:   %f64.loc16: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
+// CHECK:STDOUT:   %f64.loc12: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
 // CHECK:STDOUT:   %carbon_long_double: %f64.dc1 = wrapper_binding carbon_long_double, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_long_double.patt: %pattern_type.fb7 = value_binding_pattern carbon_long_double [concrete = constants.%carbon_long_double.patt]

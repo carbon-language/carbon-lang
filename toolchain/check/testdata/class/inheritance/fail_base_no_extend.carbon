@@ -13,9 +13,7 @@
 base class B {}
 
 class C {
-  // CHECK:STDERR: fail_base_no_extend.carbon:[[@LINE+4]]:3: error: missing `extend` before `base` declaration [BaseMissingExtend]
-  // CHECK:STDERR:   base: B;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_base_no_extend.carbon:[[@LINE+2]]:3-10: error: missing `extend` before `base` declaration [BaseMissingExtend]
   // CHECK:STDERR:
   base: B;
 }

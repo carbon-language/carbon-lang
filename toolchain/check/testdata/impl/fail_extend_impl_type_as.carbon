@@ -15,35 +15,23 @@
 interface I {}
 
 class C {
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:3: error: cannot `extend` an `impl` with an explicit self type [ExtendImplSelfAs]
-  // CHECK:STDERR:   extend impl i32 as I {}
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+2]]:3-8: error: cannot `extend` an `impl` with an explicit self type [ExtendImplSelfAs]
   // CHECK:STDERR:
   extend impl i32 as I {}
 }
 
 class D {
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+7]]:3: error: cannot `extend` an `impl` with an explicit self type [ExtendImplSelfAs]
-  // CHECK:STDERR:   extend impl D as I;
-  // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:15: note: remove the explicit `Self` type here [ExtendImplSelfAsDefault]
-  // CHECK:STDERR:   extend impl D as I;
-  // CHECK:STDERR:               ^
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+3]]:3-8: error: cannot `extend` an `impl` with an explicit self type [ExtendImplSelfAs]
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+2]]:15: note: remove the explicit `Self` type here [ExtendImplSelfAsDefault]
   // CHECK:STDERR:
   extend impl D as I;
 }
 
 class E {
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+11]]:3: error: cannot `extend` an `impl` with an explicit self type [ExtendImplSelfAs]
-  // CHECK:STDERR:   extend impl Self as I {}
-  // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+8]]:15: note: remove the explicit `Self` type here [ExtendImplSelfAsDefault]
-  // CHECK:STDERR:   extend impl Self as I {}
-  // CHECK:STDERR:               ^~~~
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+5]]:3-8: error: cannot `extend` an `impl` with an explicit self type [ExtendImplSelfAs]
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:15-18: note: remove the explicit `Self` type here [ExtendImplSelfAsDefault]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE-11]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   extend impl D as I;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE-7]]:3-21: error: impl declared but not defined [ImplMissingDefinition]
   // CHECK:STDERR:
   extend impl Self as I {}
 }
@@ -125,7 +113,7 @@ class E {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness <error>, @I [concrete = <error>]
+// CHECK:STDOUT:   %.loc20: <witness> = impl_self_witness <error>, @I [concrete = <error>]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -140,7 +128,7 @@ class E {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc33: <witness> = impl_self_witness @D.as.I.impl.%D.ref, @I [concrete = constants.%.393]
+// CHECK:STDOUT:   %.loc27: <witness> = impl_self_witness @D.as.I.impl.%D.ref, @I [concrete = constants.%.393]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -156,7 +144,7 @@ class E {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [concrete = constants.%E]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc48: <witness> = impl_self_witness @E.as.I.impl.%Self.ref, @I [concrete = constants.%.e0d]
+// CHECK:STDOUT:   %.loc36: <witness> = impl_self_witness @E.as.I.impl.%Self.ref, @I [concrete = constants.%.e0d]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

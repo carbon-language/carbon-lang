@@ -87,12 +87,9 @@ template<int N> void fn_arg_not_template_arg_f();
 
 fn Call() {
   // We treat this as a function argument, even though that makes the call fail.
-  // CHECK:STDERR: fail_function_arg_not_template_arg.carbon:[[@LINE+7]]:34: error: no matching function for call to 'fn_arg_not_template_arg_f' [CppInteropParseError]
-  // CHECK:STDERR:    17 |   Cpp.fn_arg_not_template_arg_f(1);
-  // CHECK:STDERR:       |                                  ^
-  // CHECK:STDERR: fail_function_arg_not_template_arg.carbon:[[@LINE-8]]:22: note: candidate function template not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     5 | template<int N> void fn_arg_not_template_arg_f();
-  // CHECK:STDERR:       |                      ^
+  // CHECK:STDERR: fail_function_arg_not_template_arg.carbon:[[@LINE+4]]:3-31: error: no matching function for call to 'fn_arg_not_template_arg_f' [CppInteropParseError]
+  // CHECK:STDERR: fail_function_arg_not_template_arg.carbon:[[@LINE-6]]:22-46: note: candidate function template not viable [CppInteropParseNote]
+  // CHECK:STDERR: fail_function_arg_not_template_arg.carbon:[[@LINE-7]]:47-48: note: requires 0 arguments, but 1 was provided [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.fn_arg_not_template_arg_f(1);
 }

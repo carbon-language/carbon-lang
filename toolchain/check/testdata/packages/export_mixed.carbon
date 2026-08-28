@@ -92,9 +92,7 @@ library "[[@TEST_NAME]]";
 import library "export_import_then_name";
 import library "export_name_then_import";
 
-// CHECK:STDERR: fail_nonexport_use_both.carbon:[[@LINE+4]]:8: error: name `D` not found [NameNotFound]
-// CHECK:STDERR: var d: D = {.y = ()};
-// CHECK:STDERR:        ^
+// CHECK:STDERR: fail_nonexport_use_both.carbon:[[@LINE+2]]:8: error: name `D` not found [NameNotFound]
 // CHECK:STDERR:
 var d: D = {.y = ()};
 
@@ -468,8 +466,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_19: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc11_20: %struct_type.y = struct_literal (%.loc11_19) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc9_19: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc9_20: %struct_type.y = struct_literal (%.loc9_19) [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

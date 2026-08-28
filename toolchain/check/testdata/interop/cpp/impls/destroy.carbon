@@ -77,13 +77,9 @@ class Derived {
 
 fn DestroyClassWithProtectedBaseDestructor() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_destroy_protected_base_destructor.carbon:[[@LINE+8]]:3: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   var unused a: Derived = {.base = {}};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_destroy_protected_base_destructor.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_todo_destroy_protected_base_destructor.carbon:[[@LINE+4]]:3-23: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_todo_destroy_protected_base_destructor.carbon:[[@LINE-9]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:33:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   ~ProtectedDestructor();
-  // CHECK:STDERR:   ^
   // CHECK:STDERR:
   var unused a: Derived = {.base = {}};
   //@dump-sem-ir-end
@@ -102,13 +98,9 @@ class Derived {
 fn DestroyClassWithPrivateBaseDestructor() {
   //@dump-sem-ir-begin
   // TODO: We should not allow this, as the destructor of the base class is private.
-  // CHECK:STDERR: fail_destroy_private_base_destructor.carbon:[[@LINE+8]]:3: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   var unused a: Derived = {.base = {}};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_private_base_destructor.carbon:[[@LINE-12]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_private_base_destructor.carbon:[[@LINE+4]]:3-23: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_destroy_private_base_destructor.carbon:[[@LINE-10]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:28:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   ~PrivateDestructor();
-  // CHECK:STDERR:   ^
   // CHECK:STDERR:
   var unused a: Derived = {.base = {}};
   //@dump-sem-ir-end
@@ -121,61 +113,36 @@ library "[[@TEST_NAME]]";
 import Cpp library "types.h";
 
 fn AmbiguousDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+20]]:17: error: binding pattern has incomplete type `AmbiguousDestructor` in name binding declaration [IncompleteTypeInBindingDecl]
-  // CHECK:STDERR:   var unused a: Cpp.AmbiguousDestructor = {};
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./types.h:13:7: note: destructor of class 'AmbiguousDestructorT<>' is ambiguous [CppInteropParseError]
-  // CHECK:STDERR:    13 | class AmbiguousDestructorT {
-  // CHECK:STDERR:       |       ^
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./types.h:13:7: note: in instantiation of template class 'AmbiguousDestructorT<>' requested here [CppInteropParseNote]
-  // CHECK:STDERR:    13 | class AmbiguousDestructorT {
-  // CHECK:STDERR:       |       ^
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+7]]:17-39: error: binding pattern has incomplete type `AmbiguousDestructor` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR: included from: fail_destroy_nondestroyable.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: ./types.h:13:7-26: note: destructor of class 'AmbiguousDestructorT<>' is ambiguous [CppInteropParseError]
+  // CHECK:STDERR: ./types.h:13:7-26: note: in instantiation of template class 'AmbiguousDestructorT<>' requested here [CppInteropParseNote]
   // CHECK:STDERR: ./types.h:15:3: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:    15 |   ~AmbiguousDestructorT() requires (N != 1);
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-18]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./types.h:16:3: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:    16 |   ~AmbiguousDestructorT() requires (N != 2);
-  // CHECK:STDERR:       |   ^
   // CHECK:STDERR:
   var unused a: Cpp.AmbiguousDestructor = {};
 }
 
 fn DeletedDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    39 |   var unused a: Cpp.DeletedDestructor = {};
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-30]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+4]]:3-5: error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_destroy_nondestroyable.carbon:[[@LINE-15]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:23:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
-  // CHECK:STDERR:    23 |   ~DeletedDestructor() = delete;
-  // CHECK:STDERR:       |   ^
   // CHECK:STDERR:
   var unused a: Cpp.DeletedDestructor = {};
 }
 
 fn PrivateDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   var unused a: Cpp.PrivateDestructor = {};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-42]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+4]]:3-37: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_destroy_nondestroyable.carbon:[[@LINE-23]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:28:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   ~PrivateDestructor();
-  // CHECK:STDERR:   ^
   // CHECK:STDERR:
   var unused a: Cpp.PrivateDestructor = {};
 }
 
 fn ProtectedDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   var unused a: Cpp.ProtectedDestructor = {};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-54]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+4]]:3-39: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_destroy_nondestroyable.carbon:[[@LINE-31]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:33:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   ~ProtectedDestructor();
-  // CHECK:STDERR:   ^
   // CHECK:STDERR:
   var unused a: Cpp.ProtectedDestructor = {};
 }
@@ -213,13 +180,9 @@ class AdaptNoDestroy {
 fn Make() -> AdaptNoDestroy;
 
 fn F() {
-  // CHECK:STDERR: fail_no_destroy.carbon:[[@LINE+8]]:3: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    21 |   var _: AdaptNoDestroy = Make();
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_no_destroy.carbon:[[@LINE-12]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_no_destroy.carbon:[[@LINE+4]]:3-5: error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_no_destroy.carbon:[[@LINE-10]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:23:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
-  // CHECK:STDERR:    23 |   ~DeletedDestructor() = delete;
-  // CHECK:STDERR:       |   ^
   // CHECK:STDERR:
   var _: AdaptNoDestroy = Make();
 }
@@ -399,22 +362,22 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct.ec1: %.a6c = struct_value () [concrete]
 // CHECK:STDOUT:   %ProtectedDestructor.val: %ProtectedDestructor = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%ProtectedDestructor.val) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc20_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc16_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyClassWithProtectedBaseDestructor() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.var: ref %Derived = var_storage %a.var_patt
-// CHECK:STDOUT:   %.loc20_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc20_38.1: %struct_type.base.f5e = struct_literal (%.loc20_37.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc20_38.2: ref %.a6c = class_element_access %a.var, element0
-// CHECK:STDOUT:   %.loc20_37.2: init %.a6c to %.loc20_38.2 = class_init () [concrete = constants.%empty_struct.ec1]
-// CHECK:STDOUT:   %.loc20_38.3: init %.a6c = converted %.loc20_37.1, %.loc20_37.2 [concrete = constants.%empty_struct.ec1]
-// CHECK:STDOUT:   %.loc20_38.4: init %ProtectedDestructor = as_compatible %.loc20_38.3 [concrete = constants.%ProtectedDestructor.val]
-// CHECK:STDOUT:   %.loc20_38.5: init %Derived to %a.var = class_init (%.loc20_38.4) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc20_3: init %Derived = converted %.loc20_38.1, %.loc20_38.5 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   assign %a.var, %.loc20_3
+// CHECK:STDOUT:   %.loc16_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc16_38.1: %struct_type.base.f5e = struct_literal (%.loc16_37.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc16_38.2: ref %.a6c = class_element_access %a.var, element0
+// CHECK:STDOUT:   %.loc16_37.2: init %.a6c to %.loc16_38.2 = class_init () [concrete = constants.%empty_struct.ec1]
+// CHECK:STDOUT:   %.loc16_38.3: init %.a6c = converted %.loc16_37.1, %.loc16_37.2 [concrete = constants.%empty_struct.ec1]
+// CHECK:STDOUT:   %.loc16_38.4: init %ProtectedDestructor = as_compatible %.loc16_38.3 [concrete = constants.%ProtectedDestructor.val]
+// CHECK:STDOUT:   %.loc16_38.5: init %Derived to %a.var = class_init (%.loc16_38.4) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc16_3: init %Derived = converted %.loc16_38.1, %.loc16_38.5 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   assign %a.var, %.loc16_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %a: ref %Derived = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -426,12 +389,12 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc20_3.1(%self.param: ref %struct_type.base.454) {
+// CHECK:STDOUT: fn @Destroy.Op.loc16_3.1(%self.param: ref %struct_type.base.454) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc20_3.2(%self.param: ref %Derived) {
+// CHECK:STDOUT: fn @Destroy.Op.loc16_3.2(%self.param: ref %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -454,22 +417,22 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct.d8b: %.c73 = struct_value () [concrete]
 // CHECK:STDOUT:   %PrivateDestructor.val: %PrivateDestructor = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%PrivateDestructor.val) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc21_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc17_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyClassWithPrivateBaseDestructor() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.var: ref %Derived = var_storage %a.var_patt
-// CHECK:STDOUT:   %.loc21_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc21_38.1: %struct_type.base.f5e = struct_literal (%.loc21_37.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc21_38.2: ref %.c73 = class_element_access %a.var, element0
-// CHECK:STDOUT:   %.loc21_37.2: init %.c73 to %.loc21_38.2 = class_init () [concrete = constants.%empty_struct.d8b]
-// CHECK:STDOUT:   %.loc21_38.3: init %.c73 = converted %.loc21_37.1, %.loc21_37.2 [concrete = constants.%empty_struct.d8b]
-// CHECK:STDOUT:   %.loc21_38.4: init %PrivateDestructor = as_compatible %.loc21_38.3 [concrete = constants.%PrivateDestructor.val]
-// CHECK:STDOUT:   %.loc21_38.5: init %Derived to %a.var = class_init (%.loc21_38.4) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc21_3: init %Derived = converted %.loc21_38.1, %.loc21_38.5 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   assign %a.var, %.loc21_3
+// CHECK:STDOUT:   %.loc17_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc17_38.1: %struct_type.base.f5e = struct_literal (%.loc17_37.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc17_38.2: ref %.c73 = class_element_access %a.var, element0
+// CHECK:STDOUT:   %.loc17_37.2: init %.c73 to %.loc17_38.2 = class_init () [concrete = constants.%empty_struct.d8b]
+// CHECK:STDOUT:   %.loc17_38.3: init %.c73 = converted %.loc17_37.1, %.loc17_37.2 [concrete = constants.%empty_struct.d8b]
+// CHECK:STDOUT:   %.loc17_38.4: init %PrivateDestructor = as_compatible %.loc17_38.3 [concrete = constants.%PrivateDestructor.val]
+// CHECK:STDOUT:   %.loc17_38.5: init %Derived to %a.var = class_init (%.loc17_38.4) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc17_3: init %Derived = converted %.loc17_38.1, %.loc17_38.5 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   assign %a.var, %.loc17_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %a: ref %Derived = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -481,12 +444,12 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc21_3.1(%self.param: ref %struct_type.base.9aa) {
+// CHECK:STDOUT: fn @Destroy.Op.loc17_3.1(%self.param: ref %struct_type.base.9aa) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc21_3.2(%self.param: ref %Derived) {
+// CHECK:STDOUT: fn @Destroy.Op.loc17_3.2(%self.param: ref %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

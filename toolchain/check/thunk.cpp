@@ -330,9 +330,9 @@ static auto StartThunkFunctionDefinition(Context& context,
   // note the callee.
   Diagnostics::AnnotationScope annot_scope(
       &context.emitter(), [&](DiagnosticBuilder& builder) {
-        CARBON_DIAGNOSTIC(ThunkCallee, Note,
-                          "while building thunk calling this function");
-        builder.Note(callee_id, ThunkCallee);
+        CARBON_DIAGNOSTIC_LABEL(ThunkCallee, Info,
+                                "while building thunk calling this function");
+        builder.Attach(callee_id, ThunkCallee);
       });
 
   StartFunctionDefinition(context, thunk_id, function_id);
@@ -352,11 +352,12 @@ static auto BuildThunkDefinition(Context& context,
   // the signature.
   Diagnostics::AnnotationScope annot_scope(
       &context.emitter(), [&](DiagnosticBuilder& builder) {
-        CARBON_DIAGNOSTIC(
-            ThunkSignature, Note,
+        CARBON_DIAGNOSTIC_LABEL(
+            ThunkSignature, Info,
             "while building thunk to match the signature of this function");
-        builder.Note(context.functions().Get(signature_id).first_owning_decl_id,
-                     ThunkSignature);
+        builder.Attach(
+            context.functions().Get(signature_id).first_owning_decl_id,
+            ThunkSignature);
       });
 
   const auto& function = context.functions().Get(function_id);
