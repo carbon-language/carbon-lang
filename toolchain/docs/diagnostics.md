@@ -44,8 +44,8 @@ When emitting, the resulting formatted message is passed to a `Consumer`.
 `Consumer`s handle output of diagnostic messages after they've been formatted by
 an Emitter. Important consumers are:
 
--   [ConsoleConsumer](/toolchain/diagnostics/stream_consumer.cpp): prints diagnostics
-    to console.
+-   [ConsoleConsumer](/toolchain/diagnostics/stream_consumer.cpp): prints
+    diagnostics to console.
 
 -   [ErrorTrackingConsumer](/toolchain/diagnostics/consumer.h): counts the
     number of errors produced, particularly so that it can be determined whether
@@ -333,28 +333,28 @@ it marks the right thing:
     message already names the token, so the range marks it and says nothing.
 
 Some ranges cannot be attached at all, and the reason is worth knowing before
-trying. A diagnostic can only mark source that something in hand still names, and
-several layers discard that on the way:
+trying. A diagnostic can only mark source that something in hand still names,
+and several layers discard that on the way:
 
 -   **Desugaring drops where each operand was written.** An operator becomes a
-    call whose arguments are conversion insts created at the operator's location,
-    so a diagnostic raised while evaluating that call -- division by zero, integer
-    overflow, a shift out of range -- can name the operation but not the operand.
-    `SemIR::Converted` keeps an `original_id` for tooling, but the argument on
-    this path is not a `Converted`, so following it does not reach the operand.
-    `Convert` works around the same gap for `ConversionFailure` by holding the
-    expression it was given. Closing it properly means the desugaring recording
-    where each operand was written.
+    call whose arguments are conversion insts created at the operator's
+    location, so a diagnostic raised while evaluating that call -- division by
+    zero, integer overflow, a shift out of range -- can name the operation but
+    not the operand. `SemIR::Converted` keeps an `original_id` for tooling, but
+    the argument on this path is not a `Converted`, so following it does not
+    reach the operand. `Convert` works around the same gap for
+    `ConversionFailure` by holding the expression it was given. Closing it
+    properly means the desugaring recording where each operand was written.
 
 -   **Some scopes have no declaration.** `extend impl` and `impl as` outside a
-    class are only ever reached from a namespace -- the file or package -- or from
-    a scope with no instruction, so there is nothing to mark as the scope they
-    ended up in.
+    class are only ever reached from a namespace -- the file or package -- or
+    from a scope with no instruction, so there is nothing to mark as the scope
+    they ended up in.
 
 Where that is the case, attach nothing and leave a TODO saying which range it
 should be and what would make it available. A label whose location names a file
-but no line draws no anchor and reads as pointing at nothing, which is worse than
-the message alone. `check-toolchain-diagnostics` fails a label no testdata
+but no line draws no anchor and reads as pointing at nothing, which is worse
+than the message alone. `check-toolchain-diagnostics` fails a label no testdata
 reaches, which is how to find one whose location never resolves.
 
 The obvious source being a dead end is not the same as no source existing, and

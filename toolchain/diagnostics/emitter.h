@@ -413,7 +413,7 @@ auto Emitter<LocT>::Builder::Attach(LocT loc, LabelCategory category)
   llvm::SmallVector<LocationInfo, 0> location_info;
   Loc loc_value = ConvertLoc(LocT(loc), location_info);
   labels_.push_back(Label{.category = category,
-                          .loc = std::move(loc_value),
+                          .loc = loc_value,
                           .location_info = std::move(location_info)});
   return *this;
 }
@@ -490,7 +490,7 @@ auto Emitter<LocT>::Builder::ConvertLoc(
       location_info.empty()) {
     last_byte_offset_ = converted.last_byte_offset;
   }
-  return std::move(converted.loc);
+  return converted.loc;
 }
 
 template <typename LocT>
