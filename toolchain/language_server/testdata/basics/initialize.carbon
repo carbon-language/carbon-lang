@@ -9,27 +9,72 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/basics/initialize.carbon
 
 // --- STDIN
-[[@LSP-CALL:initialize]]
+// A client that offers UTF-8 gets it, so that no position conversion is
+// needed. A client that offers only UTF-16, or that predates LSP 3.17 and
+// offers nothing, gets the protocol default of UTF-16.
+[[@LSP-CALL:initialize:"capabilities": {"general": {"positionEncodings": ["utf-8", "utf-16"]}}]]
+[[@LSP-CALL:initialize:"capabilities": {"general": {"positionEncodings": ["utf-16"]}}]]
+[[@LSP-CALL:initialize:"capabilities": {}]]
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDOUT: Content-Length: 146{{\r}}
+// CHECK:STDOUT: Content-Length: 351{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": {
 // CHECK:STDOUT:     "capabilities": {
+// CHECK:STDOUT:       "declarationProvider": true,
+// CHECK:STDOUT:       "definitionProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
-// CHECK:STDOUT:       "textDocumentSync": 2
+// CHECK:STDOUT:       "hoverProvider": true,
+// CHECK:STDOUT:       "positionEncoding": "utf-8",
+// CHECK:STDOUT:       "referencesProvider": true,
+// CHECK:STDOUT:       "textDocumentSync": 2,
+// CHECK:STDOUT:       "typeDefinitionProvider": true
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }Content-Length: 352{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "id": 2,
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "result": {
+// CHECK:STDOUT:     "capabilities": {
+// CHECK:STDOUT:       "declarationProvider": true,
+// CHECK:STDOUT:       "definitionProvider": true,
+// CHECK:STDOUT:       "documentSymbolProvider": true,
+// CHECK:STDOUT:       "hoverProvider": true,
+// CHECK:STDOUT:       "positionEncoding": "utf-16",
+// CHECK:STDOUT:       "referencesProvider": true,
+// CHECK:STDOUT:       "textDocumentSync": 2,
+// CHECK:STDOUT:       "typeDefinitionProvider": true
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }Content-Length: 352{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "id": 3,
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "result": {
+// CHECK:STDOUT:     "capabilities": {
+// CHECK:STDOUT:       "declarationProvider": true,
+// CHECK:STDOUT:       "definitionProvider": true,
+// CHECK:STDOUT:       "documentSymbolProvider": true,
+// CHECK:STDOUT:       "hoverProvider": true,
+// CHECK:STDOUT:       "positionEncoding": "utf-16",
+// CHECK:STDOUT:       "referencesProvider": true,
+// CHECK:STDOUT:       "textDocumentSync": 2,
+// CHECK:STDOUT:       "typeDefinitionProvider": true
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }Content-Length: 51{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
-// CHECK:STDOUT:   "id": 2,
+// CHECK:STDOUT:   "id": 4,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": null
 // CHECK:STDOUT: }

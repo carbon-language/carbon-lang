@@ -73,6 +73,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Enum.ref.loc8_24: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %a.ref.loc8: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0.loc8: %.1e6 = impl_witness_access constants.%custom_witness.d0d, element0 [concrete = constants.%Enum.Op]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %a.ref.loc8, %impl.elem0.loc8 [concrete = constants.%Enum.Op.bound.ff6]
 // CHECK:STDOUT:   %Enum.Op.call.loc8: init %Enum = call %bound_method.loc8(%a.ref.loc8) [concrete = constants.%int_0]

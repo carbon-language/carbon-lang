@@ -260,15 +260,15 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.53a: %T.as.DefaultOrUnformed.impl.Op.type.150 = struct_value () [symbolic]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.3c6: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%array_type) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.b2c: %DefaultOrUnformed.type = facet_value %array_type, (%DefaultOrUnformed.impl_witness.3c6) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.cd3: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%array_type) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.20f: %DefaultOrUnformed.type = facet_value %array_type, (%DefaultOrUnformed.impl_witness.cd3) [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple, %empty_tuple, %empty_tuple) [concrete]
 // CHECK:STDOUT:   %pattern_type.8c1: type = pattern_type %tuple.type [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.8c1 = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:   %b.var_patt: %pattern_type.8c1 = var_pattern %b.patt [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.762: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%tuple.type) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.38b: %DefaultOrUnformed.type = facet_value %tuple.type, (%DefaultOrUnformed.impl_witness.762) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.b33: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%tuple.type) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.f59: %DefaultOrUnformed.type = facet_value %tuple.type, (%DefaultOrUnformed.impl_witness.b33) [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc8_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc7 [concrete]
@@ -277,14 +277,14 @@ var a: array(1, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.import_ref.cc8: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.150) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.53a)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.374 = impl_witness_table (%Core.import_ref.cc8), @T.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.cc8), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.var: ref %array_type = var_storage %a.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc7: %DefaultOrUnformed.type = facet_value constants.%array_type, (constants.%DefaultOrUnformed.impl_witness.3c6) [concrete = constants.%DefaultOrUnformed.facet.b2c]
-// CHECK:STDOUT:   %.loc7_29.1: %DefaultOrUnformed.type = converted constants.%array_type, %DefaultOrUnformed.facet.loc7 [concrete = constants.%DefaultOrUnformed.facet.b2c]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc7: %DefaultOrUnformed.type = facet_value constants.%array_type, (constants.%DefaultOrUnformed.impl_witness.cd3) [concrete = constants.%DefaultOrUnformed.facet.20f]
+// CHECK:STDOUT:   %.loc7_29.1: %DefaultOrUnformed.type = converted constants.%array_type, %DefaultOrUnformed.facet.loc7 [concrete = constants.%DefaultOrUnformed.facet.20f]
 // CHECK:STDOUT:   %as_type.loc7: type = facet_access_type %.loc7_29.1 [concrete = constants.%array_type]
 // CHECK:STDOUT:   %.loc7_29.2: type = converted %.loc7_29.1, %as_type.loc7 [concrete = constants.%array_type]
 // CHECK:STDOUT:   <elided>
@@ -303,8 +303,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.035 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %tuple.type = var_storage %b.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%tuple.type, (constants.%DefaultOrUnformed.impl_witness.762) [concrete = constants.%DefaultOrUnformed.facet.38b]
-// CHECK:STDOUT:   %.loc8_29.1: %DefaultOrUnformed.type = converted constants.%tuple.type, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.38b]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8: %DefaultOrUnformed.type = facet_value constants.%tuple.type, (constants.%DefaultOrUnformed.impl_witness.b33) [concrete = constants.%DefaultOrUnformed.facet.f59]
+// CHECK:STDOUT:   %.loc8_29.1: %DefaultOrUnformed.type = converted constants.%tuple.type, %DefaultOrUnformed.facet.loc8 [concrete = constants.%DefaultOrUnformed.facet.f59]
 // CHECK:STDOUT:   %as_type.loc8: type = facet_access_type %.loc8_29.1 [concrete = constants.%tuple.type]
 // CHECK:STDOUT:   %.loc8_29.2: type = converted %.loc8_29.1, %as_type.loc8 [concrete = constants.%tuple.type]
 // CHECK:STDOUT:   <elided>

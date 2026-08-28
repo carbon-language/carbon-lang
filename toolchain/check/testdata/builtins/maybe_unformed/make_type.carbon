@@ -64,7 +64,7 @@ fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:   %.2ba: type = maybe_unformed_type %.a8d [concrete]
 // CHECK:STDOUT:   %pattern_type.ce6: type = pattern_type %.2ba [concrete]
 // CHECK:STDOUT:   %b.param_patt: %pattern_type.ce6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %b.patt: %pattern_type.ce6 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.ce6 = wrapper_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -76,7 +76,7 @@ fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.ce6 = value_param_pattern [concrete = constants.%b.param_patt]
-// CHECK:STDOUT:     %b.patt: %pattern_type.ce6 = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.ce6 = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %.2ba = value_param call_param0
 // CHECK:STDOUT:     %.loc7_29.1: type = splice_block %.loc7_29.3 [concrete = constants.%.2ba] {

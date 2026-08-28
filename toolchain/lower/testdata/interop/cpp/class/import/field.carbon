@@ -12,7 +12,7 @@
 
 // --- struct.h
 
-struct A {
+struct StructA {
   int n;
   alignas(16) int m;
 };
@@ -25,11 +25,11 @@ import Cpp library "struct.h";
 
 // TODO: We generate 4-byte-aligned loads here, and should generate
 // 16-byte-aligned loads as Clang does.
-fn AccessN(a: Cpp.A) -> i32 {
+fn AccessN(a: Cpp.StructA) -> i32 {
   return a.n;
 }
 
-fn AccessM(a: Cpp.A) -> i32 {
+fn AccessM(a: Cpp.StructA) -> i32 {
   return a.m;
 }
 
@@ -41,17 +41,17 @@ import Cpp library "struct.h";
 
 // TODO: We generate 4-byte-aligned stores here, and should generate
 // 16-byte-aligned stores as Clang does.
-fn AssignN(p: Cpp.A*) {
+fn AssignN(p: Cpp.StructA*) {
   p->n = 1;
 }
 
-fn AssignM(p: Cpp.A*) {
+fn AssignM(p: Cpp.StructA*) {
   p->m = 1;
 }
 
 // --- union.h
 
-union A {
+union UnionA {
   int n;
   int m;
 };
@@ -62,11 +62,11 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "union.h";
 
-fn AccessN(a: Cpp.A) -> i32 {
+fn AccessN(a: Cpp.UnionA) -> i32 {
   return a.n;
 }
 
-fn AccessM(a: Cpp.A) -> i32 {
+fn AccessM(a: Cpp.UnionA) -> i32 {
   return a.m;
 }
 
@@ -76,17 +76,17 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "union.h";
 
-fn AssignN(p: Cpp.A*) {
+fn AssignN(p: Cpp.UnionA*) {
   p->n = 1;
 }
 
-fn AssignM(p: Cpp.A*) {
+fn AssignM(p: Cpp.UnionA*) {
   p->m = 1;
 }
 
 // --- anon_union.h
 
-struct A {
+struct AnonUnionA {
   int x;
   union {
     int n;
@@ -100,11 +100,11 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "anon_union.h";
 
-fn AccessN(a: Cpp.A) -> i32 {
+fn AccessN(a: Cpp.AnonUnionA) -> i32 {
   return a.n;
 }
 
-fn AccessP(a: Cpp.A) -> i32 {
+fn AccessP(a: Cpp.AnonUnionA) -> i32 {
   return *a.p;
 }
 

@@ -33,30 +33,6 @@ using ::testing::HasSubstr;
 using Testing::IsSuccess;
 using ::testing::StrEq;
 
-// NOLINTNEXTLINE(modernize-use-trailing-return-type): Macro based function.
-MATCHER_P(TextSymbolNamed, name_matcher, "") {
-  llvm::Expected<llvm::StringRef> name = arg.getName();
-  if (auto error = name.takeError()) {
-    *result_listener << "with an error instead of a name: " << error;
-    return false;
-  }
-  if (!testing::ExplainMatchResult(name_matcher, *name, result_listener)) {
-    return false;
-  }
-  // We have to dig out the section to determine if this was a text symbol.
-  auto expected_section_it = arg.getSection();
-  if (auto error = expected_section_it.takeError()) {
-    *result_listener << "without a section: " << error;
-    return false;
-  }
-  llvm::object::SectionRef section = **expected_section_it;
-  if (!section.isText()) {
-    *result_listener << "in the non-text section: " << *section.getName();
-    return false;
-  }
-  return true;
-}
-
 class ClangRunnerTest : public ::testing::Test {
  public:
   InstallPaths install_paths_ =

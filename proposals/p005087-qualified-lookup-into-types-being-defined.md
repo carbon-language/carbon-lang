@@ -116,7 +116,8 @@ Such a name lookup only finds names that were declared prior to the lookup, in
 line with the
 [information accumulation principle](/docs/project/principles/information_accumulation.md).
 If the name is first declared after the point at which it is looked up, the
-later declaration of the name is rejected by to the poisoning rule [described earlier](#background].
+later declaration of the name is rejected by to the poisoning rule [described
+earlier](#background].
 
 ```carbon
 base class A {

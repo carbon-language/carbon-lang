@@ -273,7 +273,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %n.param_patt: %pattern_type.cb1 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %n.patt: %pattern_type.cb1 = at_binding_pattern n, %n.param_patt [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.cb1 = wrapper_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple, %empty_tuple) [concrete]
 // CHECK:STDOUT:   %.e3a: Core.Form = init_form %tuple.type [concrete]
@@ -290,7 +290,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.cb1 = value_param_pattern [concrete = constants.%n.param_patt]
-// CHECK:STDOUT:     %n.patt: %pattern_type.cb1 = at_binding_pattern n, %n.param_patt [concrete = constants.%n.patt]
+// CHECK:STDOUT:     %n.patt: %pattern_type.cb1 = wrapper_binding_pattern n, %n.param_patt [concrete = constants.%n.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.5b8 = out_param_pattern [concrete = constants.%return.param_patt]
 // CHECK:STDOUT:     %return.patt: %pattern_type.5b8 = return_slot_pattern %return.param_patt, %.loc16_25.4 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {

@@ -228,28 +228,28 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-struct ExplicitObjectParam {
-  void F(this ExplicitObjectParam, _BitInt(23) x);
+struct ExplicitObjectParamUnsupported {
+  void F(this ExplicitObjectParamUnsupported, _BitInt(23) x);
 };
 ''';
 
-fn Call(e: Cpp.ExplicitObjectParam) {
+fn Call(e: Cpp.ExplicitObjectParamUnsupported) {
   // CHECK:STDERR: fail_call_explicit_object_param_with_unsupported_type_param.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
-  // CHECK:STDERR:   e.(Cpp.ExplicitObjectParam.F)(1);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   e.(Cpp.ExplicitObjectParamUnsupported.F)(1);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  e.(Cpp.ExplicitObjectParam.F)(1);
+  e.(Cpp.ExplicitObjectParamUnsupported.F)(1);
 }
 
 // --- explicit_object_param_overloaded.h
 
-struct Another {
+struct AnotherOverloaded {
 };
 
-struct ExplicitObjectParam {
-  void F(this ExplicitObjectParam);
+struct ExplicitObjectParamOverloaded {
+  void F(this ExplicitObjectParamOverloaded);
   void F(this int);
-  void F(this Another);
+  void F(this AnotherOverloaded);
 };
 
 // --- call_explicit_object_param_overloaded.carbon
@@ -258,11 +258,11 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "explicit_object_param_overloaded.h";
 
-fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
+fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) {
   //@dump-sem-ir-begin
   e.F();
-  n.(Cpp.ExplicitObjectParam.F)();
-  a.(Cpp.ExplicitObjectParam.F)();
+  n.(Cpp.ExplicitObjectParamOverloaded.F)();
+  a.(Cpp.ExplicitObjectParamOverloaded.F)();
   //@dump-sem-ir-end
 }
 
@@ -721,32 +721,32 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT: --- call_explicit_object_param_overloaded.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %ExplicitObjectParam: type = class_type @ExplicitObjectParam [concrete]
+// CHECK:STDOUT:   %ExplicitObjectParamOverloaded: type = class_type @ExplicitObjectParamOverloaded [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Another: type = class_type @Another [concrete]
-// CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.type: type = cpp_overload_set_type @ExplicitObjectParam.F.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.value: %ExplicitObjectParam.F.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.F.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.900: type = ptr_type %ExplicitObjectParam [concrete]
+// CHECK:STDOUT:   %AnotherOverloaded: type = class_type @AnotherOverloaded [concrete]
+// CHECK:STDOUT:   %ExplicitObjectParamOverloaded.F.cpp_overload_set.type: type = cpp_overload_set_type @ExplicitObjectParamOverloaded.F.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %ExplicitObjectParamOverloaded.F.cpp_overload_set.value: %ExplicitObjectParamOverloaded.F.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParamOverloaded.F.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %ptr.fb2: type = ptr_type %ExplicitObjectParamOverloaded [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.8cce43.1: type = fn_type @F__carbon_thunk.1 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.a92106.1: %F__carbon_thunk.type.8cce43.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.8cce43.2: type = fn_type @F__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.a92106.2: %F__carbon_thunk.type.8cce43.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.bad: type = ptr_type %Another [concrete]
+// CHECK:STDOUT:   %ptr.9e5: type = ptr_type %AnotherOverloaded [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.8cce43.3: type = fn_type @F__carbon_thunk.3 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.a92106.3: %F__carbon_thunk.type.8cce43.3 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .ExplicitObjectParam = %ExplicitObjectParam.decl
-// CHECK:STDOUT:     .Another = %Another.decl
+// CHECK:STDOUT:     .ExplicitObjectParamOverloaded = %ExplicitObjectParamOverloaded.decl
+// CHECK:STDOUT:     .AnotherOverloaded = %AnotherOverloaded.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ExplicitObjectParam.decl: type = class_decl @ExplicitObjectParam [concrete = constants.%ExplicitObjectParam] {} {}
-// CHECK:STDOUT:   %Another.decl: type = class_decl @Another [concrete = constants.%Another] {} {}
-// CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.value: %ExplicitObjectParam.F.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.F.cpp_overload_set [concrete = constants.%ExplicitObjectParam.F.cpp_overload_set.value]
+// CHECK:STDOUT:   %ExplicitObjectParamOverloaded.decl: type = class_decl @ExplicitObjectParamOverloaded [concrete = constants.%ExplicitObjectParamOverloaded] {} {}
+// CHECK:STDOUT:   %AnotherOverloaded.decl: type = class_decl @AnotherOverloaded [concrete = constants.%AnotherOverloaded] {} {}
+// CHECK:STDOUT:   %ExplicitObjectParamOverloaded.F.cpp_overload_set.value: %ExplicitObjectParamOverloaded.F.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParamOverloaded.F.cpp_overload_set [concrete = constants.%ExplicitObjectParamOverloaded.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %F__carbon_thunk.decl.828b0d.1: %F__carbon_thunk.type.8cce43.1 = fn_decl @F__carbon_thunk.1 [concrete = constants.%F__carbon_thunk.a92106.1] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -764,27 +764,27 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%e.param: %ExplicitObjectParam, %n.param: %i32, %a.param: %Another) {
+// CHECK:STDOUT: fn @Call(%e.param: %ExplicitObjectParamOverloaded, %n.param: %i32, %a.param: %AnotherOverloaded) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %e.ref: %ExplicitObjectParam = name_ref e, %e
-// CHECK:STDOUT:   %F.ref.loc8: %ExplicitObjectParam.F.cpp_overload_set.type = name_ref F, imports.%ExplicitObjectParam.F.cpp_overload_set.value [concrete = constants.%ExplicitObjectParam.F.cpp_overload_set.value]
+// CHECK:STDOUT:   %e.ref: %ExplicitObjectParamOverloaded = name_ref e, %e
+// CHECK:STDOUT:   %F.ref.loc8: %ExplicitObjectParamOverloaded.F.cpp_overload_set.type = name_ref F, imports.%ExplicitObjectParamOverloaded.F.cpp_overload_set.value [concrete = constants.%ExplicitObjectParamOverloaded.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %e.ref, %F.ref.loc8
-// CHECK:STDOUT:   %.loc8: ref %ExplicitObjectParam = value_as_ref %e.ref
-// CHECK:STDOUT:   %addr.loc8: %ptr.900 = addr_of %.loc8
+// CHECK:STDOUT:   %.loc8: ref %ExplicitObjectParamOverloaded = value_as_ref %e.ref
+// CHECK:STDOUT:   %addr.loc8: %ptr.fb2 = addr_of %.loc8
 // CHECK:STDOUT:   %F__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%F__carbon_thunk.decl.828b0d.1(%addr.loc8)
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ExplicitObjectParam.ref.loc9: type = name_ref ExplicitObjectParam, imports.%ExplicitObjectParam.decl [concrete = constants.%ExplicitObjectParam]
-// CHECK:STDOUT:   %F.ref.loc9: %ExplicitObjectParam.F.cpp_overload_set.type = name_ref F, imports.%ExplicitObjectParam.F.cpp_overload_set.value [concrete = constants.%ExplicitObjectParam.F.cpp_overload_set.value]
+// CHECK:STDOUT:   %ExplicitObjectParamOverloaded.ref.loc9: type = name_ref ExplicitObjectParamOverloaded, imports.%ExplicitObjectParamOverloaded.decl [concrete = constants.%ExplicitObjectParamOverloaded]
+// CHECK:STDOUT:   %F.ref.loc9: %ExplicitObjectParamOverloaded.F.cpp_overload_set.type = name_ref F, imports.%ExplicitObjectParamOverloaded.F.cpp_overload_set.value [concrete = constants.%ExplicitObjectParamOverloaded.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %n.ref, %F.ref.loc9
 // CHECK:STDOUT:   %F__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%F__carbon_thunk.decl.828b0d.2(%n.ref)
-// CHECK:STDOUT:   %a.ref: %Another = name_ref a, %a
+// CHECK:STDOUT:   %a.ref: %AnotherOverloaded = name_ref a, %a
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ExplicitObjectParam.ref.loc10: type = name_ref ExplicitObjectParam, imports.%ExplicitObjectParam.decl [concrete = constants.%ExplicitObjectParam]
-// CHECK:STDOUT:   %F.ref.loc10: %ExplicitObjectParam.F.cpp_overload_set.type = name_ref F, imports.%ExplicitObjectParam.F.cpp_overload_set.value [concrete = constants.%ExplicitObjectParam.F.cpp_overload_set.value]
+// CHECK:STDOUT:   %ExplicitObjectParamOverloaded.ref.loc10: type = name_ref ExplicitObjectParamOverloaded, imports.%ExplicitObjectParamOverloaded.decl [concrete = constants.%ExplicitObjectParamOverloaded]
+// CHECK:STDOUT:   %F.ref.loc10: %ExplicitObjectParamOverloaded.F.cpp_overload_set.type = name_ref F, imports.%ExplicitObjectParamOverloaded.F.cpp_overload_set.value [concrete = constants.%ExplicitObjectParamOverloaded.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %a.ref, %F.ref.loc10
-// CHECK:STDOUT:   %.loc10: ref %Another = value_as_ref %a.ref
-// CHECK:STDOUT:   %addr.loc10: %ptr.bad = addr_of %.loc10
+// CHECK:STDOUT:   %.loc10: ref %AnotherOverloaded = value_as_ref %a.ref
+// CHECK:STDOUT:   %addr.loc10: %ptr.9e5 = addr_of %.loc10
 // CHECK:STDOUT:   %F__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%F__carbon_thunk.decl.828b0d.3(%addr.loc10)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

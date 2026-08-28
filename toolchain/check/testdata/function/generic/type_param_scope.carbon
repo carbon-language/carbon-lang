@@ -31,7 +31,7 @@ fn F(generic T: type, n: T*) -> T* {
 // CHECK:STDOUT:   %ptr: type = ptr_type %T.67d [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr [symbolic]
 // CHECK:STDOUT:   %n.param_patt: %pattern_type.4f4 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %n.patt: %pattern_type.4f4 = at_binding_pattern n, %n.param_patt [symbolic]
+// CHECK:STDOUT:   %n.patt: %pattern_type.4f4 = wrapper_binding_pattern n, %n.param_patt [symbolic]
 // CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr [symbolic]
 // CHECK:STDOUT:   %return.param_patt.27f: %pattern_type.4f4 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.d67: %pattern_type.4f4 = return_slot_pattern %return.param_patt.27f, %ptr [symbolic]

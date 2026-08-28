@@ -130,18 +130,7 @@ struct DeclaredFacetType : Printable<DeclaredFacetType> {
   auto IsExtendedOnly() const -> bool;
 
   friend auto operator==(const DeclaredFacetType& lhs,
-                         const DeclaredFacetType& rhs) -> bool {
-    return lhs.extend_constraints == rhs.extend_constraints &&
-           lhs.self_impls_constraints == rhs.self_impls_constraints &&
-           lhs.extend_named_constraints == rhs.extend_named_constraints &&
-           lhs.self_impls_named_constraints ==
-               rhs.self_impls_named_constraints &&
-           lhs.type_impls_interfaces == rhs.type_impls_interfaces &&
-           lhs.type_impls_named_constraints ==
-               rhs.type_impls_named_constraints &&
-           lhs.rewrite_constraints == rhs.rewrite_constraints &&
-           lhs.other_requirements == rhs.other_requirements;
-  }
+                         const DeclaredFacetType& rhs) -> bool = default;
 };
 
 constexpr DeclaredFacetType::RewriteConstraint

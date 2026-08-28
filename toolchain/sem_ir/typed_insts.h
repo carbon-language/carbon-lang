@@ -390,6 +390,36 @@ struct Call {
   InstBlockId args_id;
 };
 
+// An action that performs a call.
+struct CallAction {
+  static constexpr auto Kind = InstKind::CallAction.Define<Parse::NodeId>(
+      {.ir_name = "call_action",
+       .expr_category = ActionExprCategory(ExprCategory::Dependent),
+       .constant_kind = InstConstantKind::InstAction,
+       .is_lowered = false});
+
+  TypeId type_id;
+  // The first element in this block is the callee. The rest are the call
+  // arguments.
+  MetaInstBlockId inst_block_id;
+  BoolValue is_desugared;
+};
+
+// An action that performs a C++ template call.
+struct CallCppTemplateAction {
+  static constexpr auto Kind =
+      InstKind::CallCppTemplateAction.Define<Parse::NodeId>(
+          {.ir_name = "call_template_action",
+           .expr_category = ActionExprCategory(ExprCategory::Value),
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+  ClangDeclId template_decl_id;
+  // Template arguments.
+  InstBlockId args_id;
+};
+
 // An action that performs callee-side pattern matching for a single syntactic
 // parameter.
 struct CalleePatternMatchAction {
@@ -530,6 +560,20 @@ struct CompleteTypeWitness {
   TypeInstId object_repr_type_inst_id;
 };
 
+// An action that performs compound member access.
+struct CompoundMemberAccessAction {
+  static constexpr auto Kind =
+      InstKind::CompoundMemberAccessAction.Define<Parse::NodeId>(
+          {.ir_name = "compound_member_access_action",
+           .expr_category = ActionExprCategory(ExprCategory::Dependent),
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId base_id;
+  MetaInstId member_expr_id;
+};
+
 // Indicates `const` on a type, such as `var x: const i32`.
 struct ConstType {
   static constexpr auto Kind =
@@ -555,6 +599,44 @@ struct Converted {
   // purposes and has no associated semantics.
   AbsoluteInstId original_id;
   InstId result_id;
+};
+
+// An action that performs a general non-initializing conversion to a given
+// target.
+struct ConvertAction {
+  static constexpr auto Kind = InstKind::ConvertAction.Define<Parse::NodeId>(
+      {.ir_name = "convert_action",
+       .expr_category = ActionExprCategory(ExprCategory::Dependent),
+       .constant_kind = InstConstantKind::InstAction,
+       .is_lowered = false});
+
+  struct Target {
+    // The target type for the conversion.
+    TypeInstId target_type_inst_id;
+    // The target conversion kind, a member of the ConversionTarget::Kind enum.
+    // TODO: Consider moving that type into SemIR so we can use it from here.
+    ElementIndex conversion_kind;
+  };
+
+  TypeId type_id;
+  MetaInstId inst_id;
+  BundleId<Target> target_id;
+};
+
+// An action that performs a category conversion to the given target category.
+struct ConvertToCategoryAction {
+  static constexpr auto Kind =
+      InstKind::ConvertToCategoryAction.Define<Parse::NodeId>(
+          {.ir_name = "convert_to_category_action",
+           .expr_category = ActionExprCategory(ExprCategory::Dependent),
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId inst_id;
+  // The target conversion kind, a member of the ConversionTarget::Kind enum.
+  // TODO: Consider moving that type into SemIR so we can use it from here.
+  ElementIndex conversion_kind;
 };
 
 // An action that performs simple conversion to a value expression of a given
@@ -828,7 +910,7 @@ struct FormParamPatternAction {
       InstKind::FormParamPatternAction.Define<Parse::FormBindingPatternId>(
           {.ir_name = "form_param_pattern_action",
            .expr_category = ActionExprCategory(ExprCategory::Pattern),
-           .constant_kind = InstConstantKind::ConstantInstAction,
+           .constant_kind = InstConstantKind::InstAction,
            .is_lowered = false});
 
   TypeId type_id;
@@ -1417,7 +1499,7 @@ struct OutFormParamPatternAction {
           .Define<Parse::NodeIdOneOf<Parse::ReturnFormId, Parse::ReturnTypeId>>(
               {.ir_name = "out_form_param_pattern_action",
                .expr_category = ActionExprCategory(ExprCategory::Pattern),
-               .constant_kind = InstConstantKind::ConstantInstAction,
+               .constant_kind = InstConstantKind::InstAction,
                .is_lowered = false});
 
   TypeId type_id;
@@ -1932,6 +2014,7 @@ struct SpliceInst {
   static constexpr auto Kind = InstKind::SpliceInst.Define<Parse::NodeId>(
       {.ir_name = "splice_inst",
        .expr_category = ComputedExprCategory::DependsOnOperands,
+       .is_type = InstIsType::Maybe,
        .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
@@ -2401,6 +2484,10 @@ struct VarStorage {
 
   // If this storage was created for a `var` pattern, the pattern. Otherwise,
   // such as the implicit storage in `for`, this is `None`.
+  //
+  // TODO: remove this field, because it will almost invariably violate the
+  // topological ordering of insts. See docs/check/pattern_matching.md for
+  // details.
   AbsoluteInstId pattern_id;
 };
 
@@ -2473,7 +2560,7 @@ struct WrapperBinding {
 struct WrapperBindingPattern {
   static constexpr auto Kind =
       InstKind::WrapperBindingPattern.Define<Parse::NodeId>(
-          {.ir_name = "at_binding_pattern",
+          {.ir_name = "wrapper_binding_pattern",
            .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::Always,
            .is_lowered = false});

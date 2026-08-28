@@ -239,8 +239,8 @@ How does this arise?
         operator is applied.
     -   If it is a reference expression, the "member binding to reference"
         (`BindToRef`) operator is applied.
-    -   If it is a value expression, the "member binding to value" (`BindToValue`)
-        operator is applied.
+    -   If it is a value expression, the "member binding to value"
+        (`BindToValue`) operator is applied.
 3.  The result of the member binding has a type that implements the call
     interface.
 

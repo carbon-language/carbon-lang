@@ -128,8 +128,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %C.as.AddWith.impl.F.type: type = fn_type @C.as.AddWith.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.AddWith.impl.F: %C.as.AddWith.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AddWith.facet: %AddWith.type.236 = facet_value %C, (%AddWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %AddWith.WithSelf.F.type.3e6: type = fn_type @AddWith.WithSelf.F, @AddWith.WithSelf(%C, %AddWith.facet) [concrete]
-// CHECK:STDOUT:   %AddWith.WithSelf.F.8e0: %AddWith.WithSelf.F.type.3e6 = struct_value () [concrete]
+// CHECK:STDOUT:   %AddWith.WithSelf.F.type.ece: type = fn_type @AddWith.WithSelf.F, @AddWith.WithSelf(%C, %AddWith.facet) [concrete]
+// CHECK:STDOUT:   %AddWith.WithSelf.F.7b5: %AddWith.WithSelf.F.type.ece = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -239,8 +239,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:   %AddWith.type => constants.%AddWith.type.236
 // CHECK:STDOUT:   %Self => constants.%AddWith.facet
-// CHECK:STDOUT:   %AddWith.WithSelf.F.type => constants.%AddWith.WithSelf.F.type.3e6
-// CHECK:STDOUT:   %AddWith.WithSelf.F => constants.%AddWith.WithSelf.F.8e0
+// CHECK:STDOUT:   %AddWith.WithSelf.F.type => constants.%AddWith.WithSelf.F.type.ece
+// CHECK:STDOUT:   %AddWith.WithSelf.F => constants.%AddWith.WithSelf.F.7b5
 // CHECK:STDOUT:   %AddWith.assoc_type => constants.%AddWith.assoc_type.cec
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.b8b
 // CHECK:STDOUT: }

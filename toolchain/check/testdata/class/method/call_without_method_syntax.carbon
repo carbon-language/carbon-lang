@@ -46,7 +46,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %Point: type = class_type @Point [concrete]
 // CHECK:STDOUT:   %pattern_type.9d8: type = pattern_type %Point [concrete]
 // CHECK:STDOUT:   %self.param_patt.b38: %pattern_type.9d8 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.60a: %pattern_type.9d8 = at_binding_pattern self, %self.param_patt.b38 [concrete]
+// CHECK:STDOUT:   %self.patt.5e8: %pattern_type.9d8 = wrapper_binding_pattern self, %self.param_patt.b38 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -59,7 +59,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %Point.Get.type: type = fn_type @Point.Get [concrete]
 // CHECK:STDOUT:   %Point.Get: %Point.Get.type = struct_value () [concrete]
 // CHECK:STDOUT:   %other.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %other.patt: %pattern_type.9d8 = at_binding_pattern other, %other.param_patt [concrete]
+// CHECK:STDOUT:   %other.patt: %pattern_type.9d8 = wrapper_binding_pattern other, %other.param_patt [concrete]
 // CHECK:STDOUT:   %Point.First.type: type = fn_type @Point.First [concrete]
 // CHECK:STDOUT:   %Point.First: %Point.First.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Point.elem: type = unbound_element_type %Point, %i32 [concrete]
@@ -68,19 +68,19 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.0e0: <witness> = impl_witness imports.%Copy.impl_witness_table.367, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.b51: <witness> = impl_witness imports.%Copy.impl_witness_table.8d2, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.3f6: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.4f6: %Int.as.Copy.impl.Op.type.3f6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.0e0) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d09: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.7a6: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d09, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.b51) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt: %pattern_type.9d8 = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type.9d8 = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %CallGet.type: type = fn_type @CallGet [concrete]
 // CHECK:STDOUT:   %CallGet: %CallGet.type = struct_value () [concrete]
 // CHECK:STDOUT:   %q.param_patt: %pattern_type.9d8 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %q.patt: %pattern_type.9d8 = at_binding_pattern q, %q.param_patt [concrete]
+// CHECK:STDOUT:   %q.patt: %pattern_type.9d8 = wrapper_binding_pattern q, %q.param_patt [concrete]
 // CHECK:STDOUT:   %CallFirst.type: type = fn_type @CallFirst [concrete]
 // CHECK:STDOUT:   %CallFirst: %CallFirst.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CallViaAlias.type: type = fn_type @CallViaAlias [concrete]
@@ -97,7 +97,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.367 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -112,7 +112,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %Point.decl: type = class_decl @Point [concrete = constants.%Point] {} {}
 // CHECK:STDOUT:   %CallGet.decl: %CallGet.type = fn_decl @CallGet [concrete = constants.%CallGet] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type.9d8 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.9d8 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -126,9 +126,9 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFirst.decl: %CallFirst.type = fn_decl @CallFirst [concrete = constants.%CallFirst] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type.9d8 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.9d8 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %q.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%q.param_patt]
-// CHECK:STDOUT:     %q.patt: %pattern_type.9d8 = at_binding_pattern q, %q.param_patt [concrete = constants.%q.patt]
+// CHECK:STDOUT:     %q.patt: %pattern_type.9d8 = wrapper_binding_pattern q, %q.param_patt [concrete = constants.%q.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -145,7 +145,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallViaAlias.decl: %CallViaAlias.type = fn_decl @CallViaAlias [concrete = constants.%CallViaAlias] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type.9d8 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.9d8 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -162,7 +162,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT: class @Point {
 // CHECK:STDOUT:   %Point.Get.decl: %Point.Get.type = fn_decl @Point.Get [concrete = constants.%Point.Get] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%self.param_patt.b38]
-// CHECK:STDOUT:     %self.patt: %pattern_type.9d8 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.60a]
+// CHECK:STDOUT:     %self.patt: %pattern_type.9d8 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.5e8]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -176,9 +176,9 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Point.First.decl: %Point.First.type = fn_decl @Point.First [concrete = constants.%Point.First] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%self.param_patt.b38]
-// CHECK:STDOUT:     %self.patt: %pattern_type.9d8 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.60a]
+// CHECK:STDOUT:     %self.patt: %pattern_type.9d8 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.5e8]
 // CHECK:STDOUT:     %other.param_patt: %pattern_type.9d8 = value_param_pattern [concrete = constants.%other.param_patt]
-// CHECK:STDOUT:     %other.patt: %pattern_type.9d8 = at_binding_pattern other, %other.param_patt [concrete = constants.%other.patt]
+// CHECK:STDOUT:     %other.patt: %pattern_type.9d8 = wrapper_binding_pattern other, %other.param_patt [concrete = constants.%other.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -211,7 +211,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %x.ref: %Point.elem = name_ref x, @Point.%.loc7 [concrete = @Point.%.loc7]
 // CHECK:STDOUT:   %.loc4_36.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc4_36.2: %i32 = acquire_value %.loc4_36.1
-// CHECK:STDOUT:   %impl.elem0: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc4_36.1: <bound method> = bound_method %.loc4_36.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc4_36.2: <bound method> = bound_method %.loc4_36.2, %specific_fn
@@ -225,7 +225,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   %x.ref: %Point.elem = name_ref x, @Point.%.loc7 [concrete = @Point.%.loc7]
 // CHECK:STDOUT:   %.loc5_59.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc5_59.2: %i32 = acquire_value %.loc5_59.1
-// CHECK:STDOUT:   %impl.elem0: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc5_59.1: <bound method> = bound_method %.loc5_59.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc5_59.2: <bound method> = bound_method %.loc5_59.2, %specific_fn

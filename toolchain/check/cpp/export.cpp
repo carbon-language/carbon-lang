@@ -168,14 +168,101 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
   return decl_context;
 }
 
+static auto GetClassTypeInstId(Context& context, SemIR::ClassId class_id,
+                               SemIR::SpecificId specific_id)
+    -> SemIR::TypeInstId {
+  auto type_id = GetClassType(context, class_id, specific_id);
+  return context.types().GetTypeInstId(type_id);
+}
+
+// Creates a `clang::ClassTemplateSpecializationDecl`, and registers it
+// with the `ClassTemplateDecl` and `clang_decls`.
+static auto CreateClassTemplateSpecializationDecl(
+    Context& context, clang::ClassTemplateDecl* class_template_decl,
+    llvm::ArrayRef<clang::TemplateArgument> template_args,
+    SemIR::TypeInstId class_type_inst_id)
+    -> clang::ClassTemplateSpecializationDecl* {
+  auto* class_template_specialization_decl =
+      clang::ClassTemplateSpecializationDecl::Create(
+          context.ast_context(),
+          class_template_decl->getTemplatedDecl()->getTagKind(),
+          class_template_decl->getDeclContext(),
+          class_template_decl->getTemplatedDecl()->getBeginLoc(),
+          class_template_decl->getLocation(), class_template_decl,
+          template_args,
+          /*StrictPackMatch=*/false,
+          /*PrevDecl=*/nullptr);
+  class_template_decl->AddSpecialization(class_template_specialization_decl,
+                                         /*InsertPos=*/nullptr);
+  class_template_specialization_decl->setHasExternalLexicalStorage();
+  class_template_specialization_decl->setHasExternalVisibleStorage();
+
+  // Create and store the `ClangDecl`.
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
+      class_template_specialization_decl);
+  context.clang_decls().Add({.key = key, .inst_id = class_type_inst_id});
+
+  return class_template_specialization_decl;
+}
+
+// Exports a specific Carbon class into C++ as a template class specialization.
+//
+// If the specific class has already been exported, returns the existing C++
+// decl.  Otherwise, creates a new C++ class template specialization and
+// returns it. Returns nullptr if the class could not be exported and an error
+// was diagnosed.
+static auto ExportClassSpecificToCpp(Context& context, SemIR::LocId loc_id,
+                                     SemIR::ClassType class_type)
+    -> clang::ClassTemplateSpecializationDecl* {
+  CARBON_CHECK(class_type.specific_id.has_value());
+
+  // Use existing export if possible.
+  auto class_type_inst_id =
+      GetClassTypeInstId(context, class_type.class_id, class_type.specific_id);
+  if (const auto* clang_decl =
+          context.clang_decls().Lookup(class_type_inst_id)) {
+    return cast<clang::ClassTemplateSpecializationDecl>(clang_decl->decl());
+  }
+
+  // Ensure the generic class is exported, and get its `ClassTemplateDecl`.
+  auto generic_class_type_id = GetGenericClassType(context, class_type.class_id,
+                                                   SemIR::SpecificId::None);
+  auto generic_class_type =
+      context.types().GetAs<SemIR::GenericClassType>(generic_class_type_id);
+  auto* class_template_decl =
+      ExportGenericClassToCpp(context, generic_class_type);
+  if (!class_template_decl) {
+    return nullptr;
+  }
+
+  llvm::SmallVector<clang::TemplateArgument> template_args;
+  const auto specific = context.specifics().Get(class_type.specific_id);
+  auto specific_args = context.inst_blocks().Get(specific.args_id);
+  for (auto specific_arg_inst_id : specific_args) {
+    // TODO: also handle non-type args. Such args can't happen here yet, since
+    // the `ExportGenericClassToCpp` call above already checks for them.
+
+    auto cpp_type = MapToCppType(
+        context, context.types().GetTypeIdForTypeInstId(specific_arg_inst_id));
+    if (cpp_type.isNull()) {
+      context.TODO(loc_id, "failed to map specific type arg to C++");
+      return nullptr;
+    }
+
+    template_args.push_back(cpp_type);
+  }
+
+  return CreateClassTemplateSpecializationDecl(
+      context, class_template_decl, template_args, class_type_inst_id);
+}
+
 auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
     -> clang::TagDecl* {
   const auto& class_info = context.classes().Get(class_type.class_id);
   SemIR::LocId loc_id(class_info.first_decl_id());
 
   if (class_type.specific_id.has_value()) {
-    context.TODO(loc_id, "interop with specific class");
-    return nullptr;
+    return ExportClassSpecificToCpp(context, loc_id, class_type);
   }
 
   // If this class was produced by importing a C++ declaration or has
@@ -299,18 +386,18 @@ static auto MakeSpecificForTemplateArgs(
   return MakeSpecific(context, loc_id, generic_id, specific_arg_ids);
 }
 
-auto ExportGenericClassToCpp(Context& context, SemIR::InstId inst_id,
+auto ExportGenericClassToCpp(Context& context,
                              SemIR::GenericClassType generic_class_type)
     -> clang::ClassTemplateDecl* {
   // Use existing export if possible.
   const auto& class_info = context.classes().Get(generic_class_type.class_id);
-  if (const auto* clang_decl =
-          context.clang_decls().Lookup(class_info.first_decl_id())) {
+  auto decl_id = class_info.first_decl_id();
+  if (const auto* clang_decl = context.clang_decls().Lookup(decl_id)) {
     return cast<clang::ClassTemplateDecl>(clang_decl->decl());
   }
 
   // Map the parent scope into the C++ AST.
-  SemIR::LocId loc_id(inst_id);
+  SemIR::LocId loc_id(decl_id);
   auto* decl_context =
       ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
   if (!decl_context) {
@@ -333,22 +420,15 @@ auto ExportGenericClassToCpp(Context& context, SemIR::InstId inst_id,
 
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
       cast<clang::Decl>(class_template_decl));
-  context.clang_decls().Add({.key = key, .inst_id = inst_id});
+  context.clang_decls().Add({.key = key, .inst_id = decl_id});
 
   return class_template_decl;
-}
-
-static auto GetClassTypeInstId(Context& context, SemIR::ClassId class_id,
-                               SemIR::SpecificId specific_id)
-    -> SemIR::TypeInstId {
-  auto type_id = GetClassType(context, class_id, specific_id);
-  return context.types().GetTypeInstId(type_id);
 }
 
 auto ExportClassSpecializationToCpp(
     Context& context, clang::ClassTemplateDecl* class_template_decl,
     llvm::ArrayRef<clang::TemplateArgument> template_args) -> bool {
-  // Map from the `clang::ClassTemplateDecl` to the Carbon `GenericClassType`.
+  // Map from the `clang::ClassTemplateDecl` to the Carbon `ClassDecl`.
   auto clang_decl_id =
       context.clang_decls().LookupId(SemIR::ClangDeclKey(class_template_decl));
   if (clang_decl_id == SemIR::ClangDeclId::None) {
@@ -358,10 +438,9 @@ auto ExportClassSpecializationToCpp(
   if (clang_decl.is_imported) {
     return false;
   }
-  auto generic_class_type =
-      context.insts().GetAs<SemIR::GenericClassType>(clang_decl.inst_id);
+  auto class_decl = context.insts().GetAs<SemIR::ClassDecl>(clang_decl.inst_id);
 
-  const auto& class_info = context.classes().Get(generic_class_type.class_id);
+  const auto& class_info = context.classes().Get(class_decl.class_id);
   SemIR::LocId loc_id(class_info.first_decl_id());
 
   auto specific_id = MakeSpecificForTemplateArgs(
@@ -370,27 +449,10 @@ auto ExportClassSpecializationToCpp(
     return false;
   }
 
-  auto* class_template_specialization_decl =
-      clang::ClassTemplateSpecializationDecl::Create(
-          context.ast_context(),
-          class_template_decl->getTemplatedDecl()->getTagKind(),
-          class_template_decl->getDeclContext(),
-          class_template_decl->getTemplatedDecl()->getBeginLoc(),
-          class_template_decl->getLocation(), class_template_decl,
-          template_args,
-          /*StrictPackMatch=*/false,
-          /*PrevDecl=*/nullptr);
-  class_template_decl->AddSpecialization(class_template_specialization_decl,
-                                         /*InsertPos=*/nullptr);
-  class_template_specialization_decl->setHasExternalLexicalStorage();
-  class_template_specialization_decl->setHasExternalVisibleStorage();
-
-  // Create and store the `ClangDeclId`.
   auto class_type_inst_id =
-      GetClassTypeInstId(context, generic_class_type.class_id, specific_id);
-  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
-      class_template_specialization_decl);
-  context.clang_decls().Add({.key = key, .inst_id = class_type_inst_id});
+      GetClassTypeInstId(context, class_decl.class_id, specific_id);
+  CreateClassTemplateSpecializationDecl(context, class_template_decl,
+                                        template_args, class_type_inst_id);
 
   return true;
 }
@@ -425,18 +487,32 @@ static auto CreateCppFieldDecl(Context& context,
     return nullptr;
   }
 
+  auto clang_loc = GetCppLocation(context, SemIR::LocId(field_inst_id));
+  bool invalid = false;
+
+  // The field is required to have a complete type in the Clang AST, not just in
+  // SemIR.
+  if (context.clang_sema().RequireCompleteSizedType(
+          clang_loc, cpp_type, clang::diag::err_field_incomplete_or_sizeless)) {
+    // Follow Clang in marking the class as invalid if it contains a field with
+    // an incomplete type. In Clang this prevents record layout; it's unclear if
+    // it's necessary for us.
+    record_decl->setInvalidDecl();
+    invalid = true;
+  }
+
   // Get the field's C++ identifier.
   auto* identifier_info = GetClangIdentifierInfo(context, field_decl.name_id);
   CARBON_CHECK(identifier_info, "field with non-identifier name {0}",
                field_decl.name_id);
 
   // Create the `clang::FieldDecl`.
-  auto clang_loc = GetCppLocation(context, SemIR::LocId(field_inst_id));
   auto* cpp_field_decl = clang::FieldDecl::Create(
       context.ast_context(), record_decl, /*StartLoc=*/clang_loc,
       /*IdLoc=*/clang_loc, identifier_info, cpp_type, /*TInfo=*/nullptr,
       /*BW=*/nullptr,
       /*Mutable=*/true, clang::ICIS_NoInit);
+  cpp_field_decl->setInvalidDecl(invalid);
 
   SetCppClassMemberAccess(class_scope, field_decl.name_id, cpp_field_decl);
 
@@ -1218,6 +1294,8 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
                 thunk_param_type_ids.end());
   }
 
+  llvm::SmallVector<ParamPatternKind> thunk_param_kinds(
+      thunk_param_type_ids.size(), ParamPatternKind::Ref);
   auto carbon_thunk_function_id =
       MakeGeneratedFunctionDecl(
           context, loc_id,
@@ -1225,7 +1303,7 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
            .name_id = thunk_name_id,
            .self_type_id = target.GetSelfTypeId(),
            .param_type_ids = thunk_param_type_ids,
-           .param_kind = ParamPatternKind::Ref})
+           .param_kinds = thunk_param_kinds})
           .second;
 
   BuildThunkDefinitionForExport(

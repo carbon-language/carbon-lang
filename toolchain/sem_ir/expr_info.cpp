@@ -219,6 +219,13 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
         init_id = init.base_init_id;
         continue;
       }
+      case CARBON_KIND(SpliceBlock splice): {
+        if (!allow_transitive) {
+          return InstId::None;
+        }
+        init_id = splice.result_id;
+        continue;
+      }
       case CARBON_KIND(ArrayInit init): {
         return init.dest_id;
       }

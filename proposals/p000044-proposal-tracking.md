@@ -667,13 +667,13 @@ may create them for bucketing work, they are non-essential):
 
 1.  Create the PR, for example #456, naming the proposal p0456.md.
 2.  Update the labels of #456 when progressing a proposal.
-    1.  Don't bother putting the status in p0456.md: people should rely on the PR
-        labels since it's in the same place.
+    1.  Don't bother putting the status in p0456.md: people should rely on the
+        PR labels since it's in the same place.
 3.  When a decision is made, add it as a comment to #456.
     1.  This does not replace the Discourse Forum topic announcing a decision.
     2.  Comments on the decision should go in Discourse Forums.
-    3.  The author is asked to link to the decision in p0456.md before the commit
-        is approved.
+    3.  The author is asked to link to the decision in p0456.md before the
+        commit is approved.
 4.  If declined/deferred proposals are committed, it would be best to add a
     status in p0456.md before committing.
 

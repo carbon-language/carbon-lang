@@ -78,10 +78,10 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %x.param_patt: %pattern_type.cb1 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.7ba44d.1: %pattern_type.cb1 = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:   %x.patt.2180a6.1: %pattern_type.cb1 = wrapper_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %F.type.eb3ec9.2: type = fn_type @F.loc23 [concrete]
 // CHECK:STDOUT:   %F.7088cc.2: %F.type.eb3ec9.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %x.patt.7ba44d.2: %pattern_type.cb1 = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:   %x.patt.2180a6.2: %pattern_type.cb1 = wrapper_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %G.type.f42045.1: type = fn_type @G.loc25 [concrete]
 // CHECK:STDOUT:   %G.4228ed.1: %G.type.f42045.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type.f42045.2: type = fn_type @G.loc33 [concrete]
@@ -125,7 +125,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %F.decl.loc15: %F.type.eb3ec9.1 = fn_decl @F.loc15 [concrete = constants.%F.7088cc.1] {} {}
 // CHECK:STDOUT:   %F.decl.loc23: %F.type.eb3ec9.2 = fn_decl @F.loc23 [concrete = constants.%F.7088cc.2] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern [concrete = constants.%x.param_patt]
-// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.7ba44d.1]
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.2180a6.1]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc23_17.1: type = splice_block %.loc23_17.3 [concrete = constants.%empty_tuple.type] {
@@ -136,7 +136,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl.loc25: %G.type.f42045.1 = fn_decl @G.loc25 [concrete = constants.%G.4228ed.1] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern [concrete = constants.%x.param_patt]
-// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.7ba44d.2]
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.2180a6.2]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc25_10.1: type = splice_block %.loc25_10.3 [concrete = constants.%empty_tuple.type] {
@@ -148,7 +148,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %G.decl.loc33: %G.type.f42045.2 = fn_decl @G.loc33 [concrete = constants.%G.4228ed.2] {} {}
 // CHECK:STDOUT:   %H.decl.loc35: %H.type.c0bf33.1 = fn_decl @H.loc35 [concrete = constants.%H.aacb46.1] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern [concrete = constants.%x.param_patt]
-// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.7ba44d.2]
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.2180a6.2]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc35_10.1: type = splice_block %.loc35_10.3 [concrete = constants.%empty_tuple.type] {
@@ -159,7 +159,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl.loc40: %H.type.c0bf33.2 = fn_decl @H.loc40 [concrete = constants.%H.aacb46.2] {
 // CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern [concrete = <error>]
-// CHECK:STDOUT:     %x.patt: <error> = at_binding_pattern x, %x.param_patt [concrete = <error>]
+// CHECK:STDOUT:     %x.patt: <error> = wrapper_binding_pattern x, %x.param_patt [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc40: type = type_literal <error> [concrete = <error>]

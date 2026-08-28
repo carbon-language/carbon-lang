@@ -52,8 +52,8 @@ interface I {}
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type.8e70aa.2: type = facet_type <@I.loc14_13.2> [concrete]
-// CHECK:STDOUT:   %Self: %I.type.8e70aa.2 = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -61,14 +61,12 @@ interface I {}
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.loc14_13.2 [concrete = constants.%I.type.8e70aa.2] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I.loc14_13.1;
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @I.loc14_13.2 {
-// CHECK:STDOUT:   %Self: %I.type.8e70aa.2 = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I.loc14_13.2 [concrete]
+// CHECK:STDOUT: interface @I [from "a.carbon"] {
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

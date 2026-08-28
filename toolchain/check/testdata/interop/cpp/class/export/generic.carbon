@@ -14,46 +14,58 @@
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class C(T: type) {
+class GenericClass(T: type) {
   var t: T;
 }
 
 inline Cpp '''
-void F() {
-  Carbon::C<int> c;
+void FGeneric() {
+  Carbon::GenericClass<int> c;
   c.t = 123;
 }
 ''';
 
-// --- fail_todo_specific_alias.carbon
+// --- specific_alias.carbon
 library "[[@TEST_NAME]]";
 import Cpp;
 
-// CHECK:STDERR: fail_todo_specific_alias.carbon:[[@LINE+4]]:1: error: semantics TODO: `interop with specific class` [SemanticsTodo]
-// CHECK:STDERR: class C(T: type) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-class C(T: type) {
+class SpecificClass(T: type) {
   var t: T;
 }
-alias A = C(i32);
+alias AliasInt = SpecificClass(i32);
 
 inline Cpp '''
-void F() {
-  // CHECK:STDERR: fail_todo_specific_alias.carbon:[[@LINE+8]]:11: error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
-  // CHECK:STDERR:   Carbon::A a;
+void FSpecific() {
+  Carbon::AliasInt a;
+  a.t = 123;
+}
+''';
+
+// --- fail_unsupported_specific_arg.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+// CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+4]]:1: error: semantics TODO: `failed to map specific type arg to C++` [SemanticsTodo]
+// CHECK:STDERR: class UnsupportedClass(T: type) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+class UnsupportedClass(T: type) {
+  var t: T;
+}
+alias AliasEmptyTuple = UnsupportedClass(());
+
+inline Cpp '''
+void FUnsupported() {
+  // CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+8]]:11: error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
+  // CHECK:STDERR:   Carbon::AliasEmptyTuple a;
   // CHECK:STDERR:           ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_specific_alias.carbon:[[@LINE+4]]:11: error: no type named 'A' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    23 |   Carbon::A a;
+  // CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+4]]:11: error: no type named 'AliasEmptyTuple' in namespace 'Carbon' [CppInteropParseError]
+  // CHECK:STDERR:    23 |   Carbon::AliasEmptyTuple a;
   // CHECK:STDERR:       |   ~~~~~~~~^
   // CHECK:STDERR:
-  Carbon::A a;
-  // CHECK:STDERR: fail_todo_specific_alias.carbon:[[@LINE+4]]:3: error: use of undeclared identifier 'c' [CppInteropParseError]
-  // CHECK:STDERR:    28 |   c.t = 123;
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR:
-  c.t = 123;
+  Carbon::AliasEmptyTuple a;
+  a.t = 123;
 }
 ''';
 
@@ -61,7 +73,7 @@ void F() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class C(T: type) {
+class ClassWithMethod(T: type) {
   // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:3: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
   // CHECK:STDERR:   fn M(unused ref self) {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
@@ -70,9 +82,9 @@ class C(T: type) {
 }
 
 inline Cpp '''
-void F() {
-  Carbon::C<int> c;
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:5: error: no member named 'M' in 'Carbon::C<int>' [CppInteropParseError]
+void FMethodCall() {
+  Carbon::ClassWithMethod<int> c;
+  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:5: error: no member named 'M' in 'Carbon::ClassWithMethod<int>' [CppInteropParseError]
   // CHECK:STDERR:    19 |   c.M();
   // CHECK:STDERR:       |   ~ ^
   // CHECK:STDERR:

@@ -19,9 +19,14 @@
 
 #ifndef NDEBUG
 
-#include "toolchain/parse/tree.h"
+#include <string>
+
+#include "toolchain/lex/token_index.h"
+#include "toolchain/parse/node_ids.h"
 
 namespace Carbon::Parse {
+
+class Tree;
 
 auto Dump(const Tree& tree, Lex::TokenIndex token) -> std::string;
 auto Dump(const Tree& tree, NodeId node_id) -> std::string;

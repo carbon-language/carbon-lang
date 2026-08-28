@@ -1711,11 +1711,12 @@ class SongByTitle {
 }
 ```
 
-An adapter can also preserve the API and interface implementations of the original
-type using `extend adapt`. For details on how an extending adapter implements
-interfaces that are implemented for the adapted type, as well as applications of adapters to generics, see
-[Adapting types](/docs/design/generics/details.md#adapting-types) in the generics
-design.
+An adapter can also preserve the API and interface implementations of the
+original type using `extend adapt`. For details on how an extending adapter
+implements interfaces that are implemented for the adapted type, as well as
+applications of adapters to generics, see
+[Adapting types](/docs/design/generics/details.md#adapting-types) in the
+generics design.
 
 **Comparison with other languages:** This is similar to the Rust idiom called
 "newtype", which is used to implement traits on types while avoiding
@@ -1736,10 +1737,10 @@ checks, like `ValidDate` with the same data layout as `Date`. Or to record the
 units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
 versus `Meters`.
 
-> **Future work:** We should have some way of restricting the casts between a type
-> and an adapter to address this use case. One possibility would be to add the
-> keyword `private` before `adapt`, so you might write
-> `extend private adapt Date;`.
+> **Future work:** We should have some way of restricting the casts between a
+> type and an adapter to address this use case. One possibility would be to add
+> the keyword `private` before `adapt`, so you might write `extend private adapt
+> Date;`.
 
 Haskell has a [`newtype` feature](https://wiki.haskell.org/Newtype) as well.
 Haskell's feature doesn't directly support reusing implementations either, but

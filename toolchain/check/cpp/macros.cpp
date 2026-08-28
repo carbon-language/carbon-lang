@@ -84,7 +84,7 @@ auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
     parser.ConsumeAnyToken(true);
   }
 
-  if (!success) {
+  if (!success || result_expr->containsErrors()) {
     CARBON_DIAGNOSTIC(
         InCppMacroEvaluation, Error,
         "failed to parse macro Cpp.{0} to a valid constant expression",

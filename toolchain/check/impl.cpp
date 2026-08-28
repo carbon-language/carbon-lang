@@ -712,13 +712,33 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
         auto lookup_result =
             LookupNameInExactScope(context, SemIR::LocId(decl_id), fn.name_id,
                                    impl.scope_id, impl_scope);
+        using InterfaceModifier = SemIR::Function::InterfaceModifier;
         if (lookup_result.is_found()) {
+          if (fn.interface_modifier == InterfaceModifier::Final) {
+            CARBON_DIAGNOSTIC(ImplFinalFunction, Error,
+                              "attempted to implement `{0}`, which is final in "
+                              "interface `{1}`",
+                              SemIR::NameId, SemIR::NameId);
+            auto builder =
+                context.emitter().Build(impl.definition_id, ImplFinalFunction,
+                                        fn.name_id, interface.name_id);
+            NoteAssociatedFunction(context, builder, fn_type->function_id);
+            builder.Emit();
+            witness_value = SemIR::ErrorInst::InstId;
+            break;
+          }
           used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_value = CheckAssociatedFunctionImplementation(
               context, *fn_type,
               context.generics().GetSelfSpecific(impl.generic_id),
               lookup_result.target_inst_id(),
               /*defer_thunk_definition=*/true);
+          break;
+        }
+
+        if (fn.interface_modifier != InterfaceModifier::None) {
+          witness_value = decl_id;
+          break;
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,

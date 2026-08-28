@@ -435,7 +435,10 @@ struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 3});
 
-  AnyRuntimeBindingPatternName name;
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
+              RuntimeBindingName>
+      name;
   BindingPatternTypeStartId introducer;
   Lex::ColonTokenIndex token;
   AnyExprId type;

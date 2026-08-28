@@ -239,7 +239,7 @@ interface A(T: type) {
 // CHECK:STDOUT:   %U.as_type: type = facet_access_type %U [symbolic]
 // CHECK:STDOUT:   %pattern_type.b3a: type = pattern_type %U.as_type [symbolic]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.b3a = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %a.patt: %pattern_type.b3a = at_binding_pattern a, %a.param_patt [symbolic]
+// CHECK:STDOUT:   %a.patt: %pattern_type.b3a = wrapper_binding_pattern a, %a.param_patt [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.as_type [symbolic]
@@ -258,7 +258,7 @@ interface A(T: type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %U.patt.loc9_7.1: %pattern_type.6cb = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc9_7.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %a.param_patt.loc9_13.1: @F.%pattern_type (%pattern_type.b3a) = value_param_pattern [symbolic = %a.param_patt.loc9_13.2 (constants.%a.param_patt)]
-// CHECK:STDOUT:     %a.patt.loc9_13.1: @F.%pattern_type (%pattern_type.b3a) = at_binding_pattern a, %a.param_patt.loc9_13.1 [symbolic = %a.patt.loc9_13.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt.loc9_13.1: @F.%pattern_type (%pattern_type.b3a) = wrapper_binding_pattern a, %a.param_patt.loc9_13.1 [symbolic = %a.patt.loc9_13.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_9: type = splice_block %I.ref [concrete = constants.%I.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -302,7 +302,7 @@ interface A(T: type) {
 // CHECK:STDOUT:   %U.as_type.loc9_15.1: type = facet_access_type %U.loc9_7.1 [symbolic = %U.as_type.loc9_15.1 (constants.%U.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %U.as_type.loc9_15.1 [symbolic = %pattern_type (constants.%pattern_type.b3a)]
 // CHECK:STDOUT:   %a.param_patt.loc9_13.2: @F.%pattern_type (%pattern_type.b3a) = value_param_pattern [symbolic = %a.param_patt.loc9_13.2 (constants.%a.param_patt)]
-// CHECK:STDOUT:   %a.patt.loc9_13.2: @F.%pattern_type (%pattern_type.b3a) = at_binding_pattern a, %a.param_patt.loc9_13.2 [symbolic = %a.patt.loc9_13.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.patt.loc9_13.2: @F.%pattern_type (%pattern_type.b3a) = wrapper_binding_pattern a, %a.param_patt.loc9_13.2 [symbolic = %a.patt.loc9_13.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.as_type.loc9_15.1 [symbolic = %require_complete (constants.%require_complete)]

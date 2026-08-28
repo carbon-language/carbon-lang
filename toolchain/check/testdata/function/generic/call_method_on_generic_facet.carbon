@@ -70,8 +70,8 @@ fn G() {
 // CHECK:STDOUT:   %ImplsGeneric.as.Generic.impl.F.type: type = fn_type @ImplsGeneric.as.Generic.impl.F [concrete]
 // CHECK:STDOUT:   %ImplsGeneric.as.Generic.impl.F: %ImplsGeneric.as.Generic.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Generic.facet: %Generic.type.b40 = facet_value %ImplsGeneric, (%Generic.impl_witness) [concrete]
-// CHECK:STDOUT:   %Generic.WithSelf.F.type.c45: type = fn_type @Generic.WithSelf.F, @Generic.WithSelf(%GenericParam, %Generic.facet) [concrete]
-// CHECK:STDOUT:   %Generic.WithSelf.F.d7c: %Generic.WithSelf.F.type.c45 = struct_value () [concrete]
+// CHECK:STDOUT:   %Generic.WithSelf.F.type.7ef: type = fn_type @Generic.WithSelf.F, @Generic.WithSelf(%GenericParam, %Generic.facet) [concrete]
+// CHECK:STDOUT:   %Generic.WithSelf.F.e1b: %Generic.WithSelf.F.type.7ef = struct_value () [concrete]
 // CHECK:STDOUT:   %Other.type: type = facet_type <@Other> [concrete]
 // CHECK:STDOUT:   %Self.41e: %Other.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Other.WithSelf.G.type.eee: type = fn_type @Other.WithSelf.G, @Other.WithSelf(%Self.41e) [symbolic]
@@ -83,8 +83,8 @@ fn G() {
 // CHECK:STDOUT:   %ImplsGeneric.as.Other.impl.G.type: type = fn_type @ImplsGeneric.as.Other.impl.G [concrete]
 // CHECK:STDOUT:   %ImplsGeneric.as.Other.impl.G: %ImplsGeneric.as.Other.impl.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Other.facet: %Other.type = facet_value %ImplsGeneric, (%Other.impl_witness) [concrete]
-// CHECK:STDOUT:   %Other.WithSelf.G.type.933: type = fn_type @Other.WithSelf.G, @Other.WithSelf(%Other.facet) [concrete]
-// CHECK:STDOUT:   %Other.WithSelf.G.4ce: %Other.WithSelf.G.type.933 = struct_value () [concrete]
+// CHECK:STDOUT:   %Other.WithSelf.G.type.0fb: type = fn_type @Other.WithSelf.G, @Other.WithSelf(%Other.facet) [concrete]
+// CHECK:STDOUT:   %Other.WithSelf.G.06b: %Other.WithSelf.G.type.0fb = struct_value () [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Generic.type.ee14e9.2: type = facet_type <@Generic, @Generic(%T)> [symbolic]
@@ -112,7 +112,7 @@ fn G() {
 // CHECK:STDOUT:   %U.patt.e09: %pattern_type.de1 = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%GenericParam, %Generic.facet) [concrete]
 // CHECK:STDOUT:   %complete_type.35b: <witness> = complete_type_witness %Generic.type.b40 [concrete]
-// CHECK:STDOUT:   %.1fa: type = fn_type_with_self_type %Generic.WithSelf.F.type.c45, %Generic.facet [concrete]
+// CHECK:STDOUT:   %.636: type = fn_type_with_self_type %Generic.WithSelf.F.type.7ef, %Generic.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -350,8 +350,8 @@ fn G() {
 // CHECK:STDOUT:   %Scalar => constants.%GenericParam
 // CHECK:STDOUT:   %Generic.type => constants.%Generic.type.b40
 // CHECK:STDOUT:   %Self => constants.%Generic.facet
-// CHECK:STDOUT:   %Generic.WithSelf.F.type => constants.%Generic.WithSelf.F.type.c45
-// CHECK:STDOUT:   %Generic.WithSelf.F => constants.%Generic.WithSelf.F.d7c
+// CHECK:STDOUT:   %Generic.WithSelf.F.type => constants.%Generic.WithSelf.F.type.7ef
+// CHECK:STDOUT:   %Generic.WithSelf.F => constants.%Generic.WithSelf.F.e1b
 // CHECK:STDOUT:   %Generic.assoc_type => constants.%Generic.assoc_type.c13
 // CHECK:STDOUT:   %assoc0.loc16_9.2 => constants.%assoc0.b4a
 // CHECK:STDOUT: }
@@ -370,8 +370,8 @@ fn G() {
 // CHECK:STDOUT: specific @Other.WithSelf(constants.%Other.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Other.facet
-// CHECK:STDOUT:   %Other.WithSelf.G.type => constants.%Other.WithSelf.G.type.933
-// CHECK:STDOUT:   %Other.WithSelf.G => constants.%Other.WithSelf.G.4ce
+// CHECK:STDOUT:   %Other.WithSelf.G.type => constants.%Other.WithSelf.G.type.0fb
+// CHECK:STDOUT:   %Other.WithSelf.G => constants.%Other.WithSelf.G.06b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Other.WithSelf.G(constants.%Other.facet) {}
@@ -431,8 +431,8 @@ fn G() {
 // CHECK:STDOUT:   %U.as_type.loc34_4.2 => constants.%ImplsGeneric
 // CHECK:STDOUT:   %Generic.assoc_type => constants.%Generic.assoc_type.c13
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.b4a
-// CHECK:STDOUT:   %Generic.WithSelf.F.type => constants.%Generic.WithSelf.F.type.c45
-// CHECK:STDOUT:   %.loc34_4.3 => constants.%.1fa
+// CHECK:STDOUT:   %Generic.WithSelf.F.type => constants.%Generic.WithSelf.F.type.7ef
+// CHECK:STDOUT:   %.loc34_4.3 => constants.%.636
 // CHECK:STDOUT:   %Generic.lookup_impl_witness => constants.%Generic.impl_witness
 // CHECK:STDOUT:   %impl.elem0.loc34_4.2 => constants.%ImplsGeneric.as.Generic.impl.F
 // CHECK:STDOUT:   %specific_impl_fn.loc34_4.2 => constants.%ImplsGeneric.as.Generic.impl.F

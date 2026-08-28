@@ -485,11 +485,13 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         }
         break;
       }
-      case SemIR::InterfaceDecl::Kind: {
-        // TODO: Handle `interface` as well, once we can test it without
-        // triggering
-        // https://github.com/carbon-language/carbon-lang/issues/4071.
-        CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
+      case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+        auto& interface =
+            context_.interfaces().Get(interface_decl.interface_id);
+        if (!interface.is_complete()) {
+          emitter_.Emit(decl_inst_id, MissingDefinitionInImpl);
+        }
+        break;
       }
       default: {
         CARBON_FATAL("Unexpected inst in definitions_required_by_decl: {0}",

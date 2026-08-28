@@ -64,8 +64,8 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %BitAndWith.type.802: type = facet_type <@BitAndWith, @BitAndWith(type)> [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness imports.%BitAndWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.802 = facet_value type, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.38f: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(type, %BitAndWith.facet) [concrete]
-// CHECK:STDOUT:   %.d56: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.38f, %BitAndWith.facet [concrete]
+// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.76f: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(type, %BitAndWith.facet) [concrete]
+// CHECK:STDOUT:   %.eef: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.76f, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %Copy.type, %type.as.BitAndWith.impl.Op [concrete]
@@ -76,7 +76,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.as_type.74b: type = facet_access_type %T.283 [symbolic]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %T.as_type.74b [symbolic]
 // CHECK:STDOUT:   %x.param_patt.e3c: %pattern_type.44a = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.a06: %pattern_type.44a = at_binding_pattern x, %x.param_patt.e3c [symbolic]
+// CHECK:STDOUT:   %x.patt.ecd: %pattern_type.44a = wrapper_binding_pattern x, %x.param_patt.e3c [symbolic]
 // CHECK:STDOUT:   %.2b9: Core.Form = init_form %T.as_type.74b [symbolic]
 // CHECK:STDOUT:   %return.param_patt.7e9: %pattern_type.44a = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.c4f: %pattern_type.44a = return_slot_pattern %return.param_patt.7e9, %T.as_type.74b [symbolic]
@@ -111,7 +111,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %x.param_patt.cee: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.fbe: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt.cee [concrete]
+// CHECK:STDOUT:   %x.patt.e3b: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt.cee [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
@@ -130,12 +130,12 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %v.var_patt.68c: %pattern_type.82c = var_pattern %v.patt.675 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.0e0: <witness> = impl_witness imports.%Copy.impl_witness_table.367, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.b51: <witness> = impl_witness imports.%Copy.impl_witness_table.8d2, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.3f6: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.4f6: %Int.as.Copy.impl.Op.type.3f6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.987: %Copy.type = facet_value %i32, (%Copy.impl_witness.0e0) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d09: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.987) [concrete]
-// CHECK:STDOUT:   %.7a6: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d09, %Copy.facet.987 [concrete]
+// CHECK:STDOUT:   %Copy.facet.1e1: %Copy.type = facet_value %i32, (%Copy.impl_witness.b51) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.1e1) [concrete]
+// CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet.1e1 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc15_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
@@ -157,14 +157,14 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %BitAndWith.impl_witness_table = impl_witness_table (%Core.import_ref.9c3), @type.as.BitAndWith.impl [concrete]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.367 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %InitFromStructGeneric.decl: %InitFromStructGeneric.type = fn_decl @InitFromStructGeneric [concrete = constants.%InitFromStructGeneric] {
 // CHECK:STDOUT:     %T.patt.loc9_35.1: %pattern_type.709 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_35.2 (constants.%T.patt.478)]
 // CHECK:STDOUT:     %x.param_patt.loc9_64.1: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = value_param_pattern [symbolic = %x.param_patt.loc9_64.2 (constants.%x.param_patt.e3c)]
-// CHECK:STDOUT:     %x.patt.loc9_64.1: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = at_binding_pattern x, %x.param_patt.loc9_64.1 [symbolic = %x.patt.loc9_64.2 (constants.%x.patt.a06)]
+// CHECK:STDOUT:     %x.patt.loc9_64.1: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = wrapper_binding_pattern x, %x.param_patt.loc9_64.1 [symbolic = %x.patt.loc9_64.2 (constants.%x.patt.ecd)]
 // CHECK:STDOUT:     %return.param_patt.loc9_72.1: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = out_param_pattern [symbolic = %return.param_patt.loc9_72.2 (constants.%return.param_patt.7e9)]
 // CHECK:STDOUT:     %return.patt.loc9_69.1: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = return_slot_pattern %return.param_patt.loc9_72.1, %.loc9_72.3 [symbolic = %return.patt.loc9_69.2 (constants.%return.patt.c4f)]
 // CHECK:STDOUT:   } {
@@ -178,7 +178,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:       %Copy.ref: type = name_ref Copy, imports.%Core.Copy [concrete = constants.%Copy.type]
 // CHECK:STDOUT:       %Core.ref.loc9_49: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Destroy.ref: type = name_ref Destroy, imports.%Core.Destroy [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:       %impl.elem0.loc9: %.d56 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:       %impl.elem0.loc9: %.eef = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
 // CHECK:STDOUT:       %bound_method.loc9: <bound method> = bound_method %Copy.ref, %impl.elem0.loc9 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
 // CHECK:STDOUT:       %type.as.BitAndWith.impl.Op.call: init type = call %bound_method.loc9(%Copy.ref, %Destroy.ref) [concrete = constants.%facet_type]
 // CHECK:STDOUT:       %.loc9_47.2: type = value_of_initializer %type.as.BitAndWith.impl.Op.call [concrete = constants.%facet_type]
@@ -197,7 +197,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructSpecific.decl: %InitFromStructSpecific.type = fn_decl @InitFromStructSpecific [concrete = constants.%InitFromStructSpecific] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt.cee]
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.fbe]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.e3b]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc14_38 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -217,7 +217,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.as_type.loc9_66.1: type = facet_access_type %T.loc9_35.1 [symbolic = %T.as_type.loc9_66.1 (constants.%T.as_type.74b)]
 // CHECK:STDOUT:   %pattern_type.loc9: type = pattern_type %T.as_type.loc9_66.1 [symbolic = %pattern_type.loc9 (constants.%pattern_type.44a)]
 // CHECK:STDOUT:   %x.param_patt.loc9_64.2: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = value_param_pattern [symbolic = %x.param_patt.loc9_64.2 (constants.%x.param_patt.e3c)]
-// CHECK:STDOUT:   %x.patt.loc9_64.2: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = at_binding_pattern x, %x.param_patt.loc9_64.2 [symbolic = %x.patt.loc9_64.2 (constants.%x.patt.a06)]
+// CHECK:STDOUT:   %x.patt.loc9_64.2: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = wrapper_binding_pattern x, %x.param_patt.loc9_64.2 [symbolic = %x.patt.loc9_64.2 (constants.%x.patt.ecd)]
 // CHECK:STDOUT:   %.loc9_72.2: Core.Form = init_form %T.as_type.loc9_66.1 [symbolic = %.loc9_72.2 (constants.%.2b9)]
 // CHECK:STDOUT:   %return.param_patt.loc9_72.2: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = out_param_pattern [symbolic = %return.param_patt.loc9_72.2 (constants.%return.param_patt.7e9)]
 // CHECK:STDOUT:   %return.patt.loc9_69.2: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.44a) = return_slot_pattern %return.param_patt.loc9_72.2, %T.as_type.loc9_66.1 [symbolic = %return.patt.loc9_69.2 (constants.%return.patt.c4f)]
@@ -310,7 +310,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %v.var: ref %Class.a32 = var_storage %v.var_patt
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %.loc15_30.1: %struct_type.k.e7c = struct_literal (%x.ref)
-// CHECK:STDOUT:   %impl.elem0.loc15: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0.loc15: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc15_29.1: <bound method> = bound_method %x.ref, %impl.elem0.loc15
 // CHECK:STDOUT:   %specific_fn.loc15: <specific function> = specific_function %impl.elem0.loc15, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_29.2: <bound method> = bound_method %x.ref, %specific_fn.loc15
@@ -336,7 +336,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %k.ref: %Class.elem.8f3 = name_ref k, @Class.%.loc5 [concrete = @Class.%.loc5]
 // CHECK:STDOUT:   %.loc16_11.1: ref %i32 = class_element_access %v.ref, element0
 // CHECK:STDOUT:   %.loc16_11.2: %i32 = acquire_value %.loc16_11.1
-// CHECK:STDOUT:   %impl.elem0.loc16: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0.loc16: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc16_11.1: <bound method> = bound_method %.loc16_11.2, %impl.elem0.loc16
 // CHECK:STDOUT:   %specific_fn.loc16: <specific function> = specific_function %impl.elem0.loc16, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_11.2: <bound method> = bound_method %.loc16_11.2, %specific_fn.loc16
@@ -369,7 +369,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.as_type.loc9_66.1 => constants.%T.as_type.74b
 // CHECK:STDOUT:   %pattern_type.loc9 => constants.%pattern_type.44a
 // CHECK:STDOUT:   %x.param_patt.loc9_64.2 => constants.%x.param_patt.e3c
-// CHECK:STDOUT:   %x.patt.loc9_64.2 => constants.%x.patt.a06
+// CHECK:STDOUT:   %x.patt.loc9_64.2 => constants.%x.patt.ecd
 // CHECK:STDOUT:   %.loc9_72.2 => constants.%.2b9
 // CHECK:STDOUT:   %return.param_patt.loc9_72.2 => constants.%return.param_patt.7e9
 // CHECK:STDOUT:   %return.patt.loc9_69.2 => constants.%return.patt.c4f
@@ -389,7 +389,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.f84 [symbolic]
 // CHECK:STDOUT:   %pattern_type.2c66b4.2: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %x.param_patt.1f4: %pattern_type.2c66b4.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.f93: %pattern_type.2c66b4.2 = at_binding_pattern x, %x.param_patt.1f4 [symbolic]
+// CHECK:STDOUT:   %x.patt.cec: %pattern_type.2c66b4.2 = wrapper_binding_pattern x, %x.param_patt.1f4 [symbolic]
 // CHECK:STDOUT:   %.1ce700.2: Core.Form = init_form %T.as_type [symbolic]
 // CHECK:STDOUT:   %return.param_patt.bf4475.2: %pattern_type.2c66b4.2 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.f44: %pattern_type.2c66b4.2 = return_slot_pattern %return.param_patt.bf4475.2, %T.as_type [symbolic]
@@ -410,7 +410,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %x.param_patt.cee: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.fbe: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt.cee [concrete]
+// CHECK:STDOUT:   %x.patt.e3b: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt.cee [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
@@ -419,12 +419,12 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %Adapt.f89: type = class_type @Adapt, @Adapt(%i32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.0e0: <witness> = impl_witness imports.%Copy.impl_witness_table.367, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.b51: <witness> = impl_witness imports.%Copy.impl_witness_table.8d2, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.3f6: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.4f6: %Int.as.Copy.impl.Op.type.3f6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.0e0) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d09: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.7a6: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d09, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.b51) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -438,14 +438,14 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.367 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %InitFromAdaptedGeneric.decl: %InitFromAdaptedGeneric.type = fn_decl @InitFromAdaptedGeneric [concrete = constants.%InitFromAdaptedGeneric] {
 // CHECK:STDOUT:     %T.patt.loc9_36.1: %pattern_type.e81 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_36.2 (constants.%T.patt.fe6)]
 // CHECK:STDOUT:     %x.param_patt.loc9_50.1: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = value_param_pattern [symbolic = %x.param_patt.loc9_50.2 (constants.%x.param_patt.1f4)]
-// CHECK:STDOUT:     %x.patt.loc9_50.1: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = at_binding_pattern x, %x.param_patt.loc9_50.1 [symbolic = %x.patt.loc9_50.2 (constants.%x.patt.f93)]
+// CHECK:STDOUT:     %x.patt.loc9_50.1: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern x, %x.param_patt.loc9_50.1 [symbolic = %x.patt.loc9_50.2 (constants.%x.patt.cec)]
 // CHECK:STDOUT:     %return.param_patt.loc9_58.1: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc9_58.2 (constants.%return.param_patt.bf4475.2)]
 // CHECK:STDOUT:     %return.patt.loc9_55.1: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc9_58.1, %.loc9_58.3 [symbolic = %return.patt.loc9_55.2 (constants.%return.patt.f44)]
 // CHECK:STDOUT:   } {
@@ -471,7 +471,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromAdaptedSpecific.decl: %InitFromAdaptedSpecific.type = fn_decl @InitFromAdaptedSpecific [concrete = constants.%InitFromAdaptedSpecific] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt.cee]
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = at_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.fbe]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.e3b]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc13_39 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -491,7 +491,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.as_type.loc9_52.1: type = facet_access_type %T.loc9_36.1 [symbolic = %T.as_type.loc9_52.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc9_52.1 [symbolic = %pattern_type (constants.%pattern_type.2c66b4.2)]
 // CHECK:STDOUT:   %x.param_patt.loc9_50.2: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = value_param_pattern [symbolic = %x.param_patt.loc9_50.2 (constants.%x.param_patt.1f4)]
-// CHECK:STDOUT:   %x.patt.loc9_50.2: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = at_binding_pattern x, %x.param_patt.loc9_50.2 [symbolic = %x.patt.loc9_50.2 (constants.%x.patt.f93)]
+// CHECK:STDOUT:   %x.patt.loc9_50.2: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern x, %x.param_patt.loc9_50.2 [symbolic = %x.patt.loc9_50.2 (constants.%x.patt.cec)]
 // CHECK:STDOUT:   %.loc9_58.2: Core.Form = init_form %T.as_type.loc9_52.1 [symbolic = %.loc9_58.2 (constants.%.1ce700.2)]
 // CHECK:STDOUT:   %return.param_patt.loc9_58.2: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc9_58.2 (constants.%return.param_patt.bf4475.2)]
 // CHECK:STDOUT:   %return.patt.loc9_55.2: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc9_58.2, %T.as_type.loc9_52.1 [symbolic = %return.patt.loc9_55.2 (constants.%return.patt.f44)]
@@ -544,7 +544,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %i32.loc14_31: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc14_28.1: %i32 = as_compatible %.loc14_13.2
 // CHECK:STDOUT:   %.loc14_28.2: %i32 = converted %.loc14_13.2, %.loc14_28.1
-// CHECK:STDOUT:   %impl.elem0: %.7a6 = impl_witness_access constants.%Copy.impl_witness.0e0, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc14_28.1: <bound method> = bound_method %.loc14_28.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14_28.2: <bound method> = bound_method %.loc14_28.2, %specific_fn
@@ -558,7 +558,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.as_type.loc9_52.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2c66b4.2
 // CHECK:STDOUT:   %x.param_patt.loc9_50.2 => constants.%x.param_patt.1f4
-// CHECK:STDOUT:   %x.patt.loc9_50.2 => constants.%x.patt.f93
+// CHECK:STDOUT:   %x.patt.loc9_50.2 => constants.%x.patt.cec
 // CHECK:STDOUT:   %.loc9_58.2 => constants.%.1ce700.2
 // CHECK:STDOUT:   %return.param_patt.loc9_58.2 => constants.%return.param_patt.bf4475.2
 // CHECK:STDOUT:   %return.patt.loc9_55.2 => constants.%return.patt.f44

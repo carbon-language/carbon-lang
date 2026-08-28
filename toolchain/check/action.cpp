@@ -5,6 +5,7 @@
 #include "toolchain/check/action.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
@@ -69,7 +70,9 @@ auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
 template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT> &&
            SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::AbsoluteInstId,
-                       SemIR::CallParamIndex, SemIR::NameId>
+                       SemIR::CallParamIndex, SemIR::NameId,
+                       SemIR::ElementIndex, SemIR::ClangDeclId,
+                       SemIR::BoolValue>
 static auto OperandDependence(Context& /*context*/, IdT /*id*/)
     -> SemIR::ConstantDependence {
   return SemIR::ConstantDependence::None;
@@ -86,14 +89,26 @@ static auto OperandDependence(Context& context,
       context.bundles().GetAsTuple(bundle_id));
 }
 
-static auto OperandDependence(Context& context, SemIR::SpecificId specific_id)
+static auto OperandDependence(Context& context,
+                              SemIR::InstBlockId inst_block_id)
     -> SemIR::ConstantDependence {
-  auto specific = context.specifics().Get(specific_id);
   auto result = SemIR::ConstantDependence::None;
-  for (auto arg_id : context.inst_blocks().Get(specific.args_id)) {
+  for (auto arg_id : context.inst_blocks().Get(inst_block_id)) {
     result = std::max(result, OperandDependence(context, arg_id));
   }
   return result;
+}
+
+static auto OperandDependence(Context& context,
+                              SemIR::MetaInstBlockId inst_block_id)
+    -> SemIR::ConstantDependence {
+  return OperandDependence(context, SemIR::InstBlockId{inst_block_id});
+}
+
+static auto OperandDependence(Context& context, SemIR::SpecificId specific_id)
+    -> SemIR::ConstantDependence {
+  auto specific = context.specifics().Get(specific_id);
+  return OperandDependence(context, specific.args_id);
 }
 
 template <typename IdT>
@@ -111,6 +126,18 @@ static auto OperandDependence(Context& context, SemIR::IdAndKind arg)
 }
 
 auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool {
+  if (auto action = action_inst.TryAs<SemIR::CallCppTemplateAction>()) {
+    auto args = context.inst_blocks().Get(action->args_id);
+    for (auto arg : args) {
+      auto const_id = context.constant_values().Get(arg);
+      if (const_id.is_symbolic()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   if (auto refine_action = action_inst.TryAs<SemIR::RefineTypeAction>()) {
     // `RefineTypeAction` can be performed whenever the type is not template-
     // dependent, even if we don't know the instruction yet.
@@ -210,6 +237,24 @@ static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
   // template-dependent.
 
   return inst_id;
+}
+
+template <typename DerivedInstIdT>
+  requires SemIR::Internal::IsIdKindType<DerivedInstIdT> &&
+           std::derived_from<DerivedInstIdT, SemIR::InstId>
+static auto RefineTypedOperand(Context& context, SemIR::LocId /*loc_id*/,
+                               DerivedInstIdT inst_id) -> DerivedInstIdT {
+  // Refine an instruction that refers to a value within the current generic to
+  // refer to the corresponding value within the specific. This is analogous to
+  // the work we do to rebuild generic constants in the eval block, but is done
+  // as refinement rather than rebuilding since action instructions *only* live
+  // in the eval block.
+  auto result = GetOrAddInstWithSpecificConstantValue(context, inst_id);
+  if constexpr (requires { DerivedInstIdT(result); }) {
+    return DerivedInstIdT(result);
+  } else {
+    return DerivedInstIdT::UnsafeMake(result);
+  }
 }
 
 template <typename BundleT>

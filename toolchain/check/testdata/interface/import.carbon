@@ -79,10 +79,10 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.53a: %T.as.DefaultOrUnformed.impl.Op.type.150 = struct_value () [symbolic]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.c59: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.374, @T.as.DefaultOrUnformed.impl(%struct_type.f) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.ef0: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%struct_type.f) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.095: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%struct_type.f) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.3cc: %T.as.DefaultOrUnformed.impl.Op.type.095 = struct_value () [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %struct_type.f, (%DefaultOrUnformed.impl_witness.c59) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %struct_type.f, (%DefaultOrUnformed.impl_witness.ef0) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.3cc, @T.as.DefaultOrUnformed.impl.Op(%struct_type.f) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -94,7 +94,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
 // CHECK:STDOUT:   %Core.import_ref.cc8: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.150) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.53a)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.374 = impl_witness_table (%Core.import_ref.cc8), @T.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.cc8), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -182,7 +182,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%struct_type.f, (constants.%DefaultOrUnformed.impl_witness.c59) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%struct_type.f, (constants.%DefaultOrUnformed.impl_witness.ef0) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc20_33.1: %DefaultOrUnformed.type = converted constants.%struct_type.f, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc20_33.1 [concrete = constants.%struct_type.f]
 // CHECK:STDOUT:   %.loc20_33.2: type = converted %.loc20_33.1, %as_type [concrete = constants.%struct_type.f]
@@ -214,7 +214,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Self.4e8: %Empty.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.894: type = pattern_type %Empty.type [concrete]
 // CHECK:STDOUT:   %e.param_patt.a16: %pattern_type.894 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %e.patt.2d7: %pattern_type.894 = at_binding_pattern e, %e.param_patt.a16 [concrete]
+// CHECK:STDOUT:   %e.patt.639: %pattern_type.894 = wrapper_binding_pattern e, %e.param_patt.a16 [concrete]
 // CHECK:STDOUT:   %UseEmpty.type: type = fn_type @UseEmpty [concrete]
 // CHECK:STDOUT:   %UseEmpty: %UseEmpty.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Basic.type: type = facet_type <@Basic> [concrete]
@@ -223,7 +223,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Basic.WithSelf.F: %Basic.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.7fe: type = pattern_type %Basic.type [concrete]
 // CHECK:STDOUT:   %e.param_patt.7a3: %pattern_type.7fe = value_param_pattern [concrete]
-// CHECK:STDOUT:   %e.patt.cd2: %pattern_type.7fe = at_binding_pattern e, %e.param_patt.7a3 [concrete]
+// CHECK:STDOUT:   %e.patt.8fd: %pattern_type.7fe = wrapper_binding_pattern e, %e.param_patt.7a3 [concrete]
 // CHECK:STDOUT:   %UseBasic.type: type = fn_type @UseBasic [concrete]
 // CHECK:STDOUT:   %UseBasic: %UseBasic.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [concrete]
@@ -232,7 +232,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %ForwardDeclared.WithSelf.F: %ForwardDeclared.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.566: type = pattern_type %ForwardDeclared.type [concrete]
 // CHECK:STDOUT:   %f.param_patt: %pattern_type.566 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %f.patt.8a1: %pattern_type.566 = at_binding_pattern f, %f.param_patt [concrete]
+// CHECK:STDOUT:   %f.patt.6f0: %pattern_type.566 = wrapper_binding_pattern f, %f.param_patt [concrete]
 // CHECK:STDOUT:   %UseForwardDeclared.type: type = fn_type @UseForwardDeclared [concrete]
 // CHECK:STDOUT:   %UseForwardDeclared: %UseForwardDeclared.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Basic.assoc_type: type = assoc_entity_type @Basic [concrete]
@@ -255,12 +255,12 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.ff5: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.ce9: %ptr.as.Copy.impl.Op.type.ff5 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.fe0: <witness> = impl_witness imports.%Copy.impl_witness_table.4f1, @ptr.as.Copy.impl(%ForwardDeclared.type) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.909: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%ForwardDeclared.type) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.c30: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%ForwardDeclared.type) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.a7b: %ptr.as.Copy.impl.Op.type.c30 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.b71, (%Copy.impl_witness.fe0) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.b52: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.a22: type = fn_type_with_self_type %Copy.WithSelf.Op.type.b52, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.b71, (%Copy.impl_witness.909) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.4d3: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.a63: type = fn_type_with_self_type %Copy.WithSelf.Op.type.4d3, %Copy.facet [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.bound: <bound method> = bound_method %addr, %ptr.as.Copy.impl.Op.a7b [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.a7b, @ptr.as.Copy.impl.Op(%ForwardDeclared.type) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %addr, %ptr.as.Copy.impl.Op.specific_fn [concrete]
@@ -296,7 +296,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var_storage constants.%f_ref.var_patt [concrete]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.e5f: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.ff5) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.ce9)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.4f1 = impl_witness_table (%Core.import_ref.e5f), @ptr.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness_table.fb0 = impl_witness_table (%Core.import_ref.e5f), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -319,7 +319,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [concrete = constants.%UseEmpty] {
 // CHECK:STDOUT:     %e.param_patt: %pattern_type.894 = value_param_pattern [concrete = constants.%e.param_patt.a16]
-// CHECK:STDOUT:     %e.patt: %pattern_type.894 = at_binding_pattern e, %e.param_patt [concrete = constants.%e.patt.2d7]
+// CHECK:STDOUT:     %e.patt: %pattern_type.894 = wrapper_binding_pattern e, %e.param_patt [concrete = constants.%e.patt.639]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Empty.type = value_param call_param0
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, imports.%Main.Empty [concrete = constants.%Empty.type]
@@ -327,7 +327,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseBasic.decl: %UseBasic.type = fn_decl @UseBasic [concrete = constants.%UseBasic] {
 // CHECK:STDOUT:     %e.param_patt: %pattern_type.7fe = value_param_pattern [concrete = constants.%e.param_patt.7a3]
-// CHECK:STDOUT:     %e.patt: %pattern_type.7fe = at_binding_pattern e, %e.param_patt [concrete = constants.%e.patt.cd2]
+// CHECK:STDOUT:     %e.patt: %pattern_type.7fe = wrapper_binding_pattern e, %e.param_patt [concrete = constants.%e.patt.8fd]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Basic.type = value_param call_param0
 // CHECK:STDOUT:     %Basic.ref: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
@@ -335,7 +335,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseForwardDeclared.decl: %UseForwardDeclared.type = fn_decl @UseForwardDeclared [concrete = constants.%UseForwardDeclared] {
 // CHECK:STDOUT:     %f.param_patt: %pattern_type.566 = value_param_pattern [concrete = constants.%f.param_patt]
-// CHECK:STDOUT:     %f.patt: %pattern_type.566 = at_binding_pattern f, %f.param_patt [concrete = constants.%f.patt.8a1]
+// CHECK:STDOUT:     %f.patt: %pattern_type.566 = wrapper_binding_pattern f, %f.param_patt [concrete = constants.%f.patt.6f0]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %f.param: %ForwardDeclared.type = value_param call_param0
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
@@ -421,7 +421,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %f_ref.ref: ref %struct_type.f = name_ref f_ref, imports.%Main.f_ref [concrete = imports.%f_ref.var]
 // CHECK:STDOUT:   %.loc16: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0 [concrete = constants.%.594]
 // CHECK:STDOUT:   %addr: %ptr.b71 = addr_of %.loc16 [concrete = constants.%addr]
-// CHECK:STDOUT:   %impl.elem0: %.a22 = impl_witness_access constants.%Copy.impl_witness.fe0, element0 [concrete = constants.%ptr.as.Copy.impl.Op.a7b]
+// CHECK:STDOUT:   %impl.elem0: %.a63 = impl_witness_access constants.%Copy.impl_witness.909, element0 [concrete = constants.%ptr.as.Copy.impl.Op.a7b]
 // CHECK:STDOUT:   %bound_method.loc16_27.1: <bound method> = bound_method %addr, %impl.elem0 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%ForwardDeclared.type) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_27.2: <bound method> = bound_method %addr, %specific_fn [concrete = constants.%bound_method]

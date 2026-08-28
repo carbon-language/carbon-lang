@@ -228,12 +228,11 @@ static auto AddGenericTypeToEvalBlock(Context& context, SemIR::LocId loc_id,
 }
 
 // Adds instructions to compute the substituted value of `inst_id` in each
-// specific into the eval block for the current generic region. Returns a
-// symbolic constant instruction ID that refers to the substituted constant
-// value in each specific.
-static auto AddGenericConstantToEvalBlock(Context& context,
-                                          SemIR::InstId inst_id)
-    -> SemIR::ConstantId {
+// specific into the eval block for the current generic region. Returns the
+// instruction within the eval block that computes the substituted constant.
+static auto AddGenericConstantInstToEvalBlock(Context& context,
+                                              SemIR::InstId inst_id)
+    -> SemIR::InstId {
   CARBON_CHECK(context.constant_values().Get(inst_id).is_symbolic(),
                "Adding generic constant {0} with non-symbolic value {1}",
                context.insts().Get(inst_id),
@@ -248,7 +247,27 @@ static auto AddGenericConstantToEvalBlock(Context& context,
   CARBON_CHECK(new_inst_id != const_inst_id,
                "No substitutions performed for generic constant {0}",
                context.insts().Get(inst_id));
+  return new_inst_id;
+}
+
+// Adds instructions to compute the substituted value of `inst_id` in each
+// specific into the eval block for the current generic region. Returns a
+// symbolic constant instruction ID that refers to the substituted constant
+// value in each specific.
+static auto AddGenericConstantToEvalBlock(Context& context,
+                                          SemIR::InstId inst_id)
+    -> SemIR::ConstantId {
+  auto new_inst_id = AddGenericConstantInstToEvalBlock(context, inst_id);
   return context.constant_values().GetAttached(new_inst_id);
+}
+
+auto GetOrAddInstWithSpecificConstantValue(Context& context,
+                                           SemIR::InstId inst_id)
+    -> SemIR::InstId {
+  if (!context.constant_values().Get(inst_id).is_symbolic()) {
+    return inst_id;
+  }
+  return AddGenericConstantInstToEvalBlock(context, inst_id);
 }
 
 // Adds an instruction that performs a template action to the eval block for the

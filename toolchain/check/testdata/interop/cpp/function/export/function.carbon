@@ -10,46 +10,51 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/function/export/function.carbon
 
-// --- other.carbon
+// --- other_function.carbon
 
-package Other;
+package OtherFunction;
 fn F1() {}
-fn F2() -> i32 { return 0; }
-fn F3(_: i32) {}
-
-fn HasGenericArg(generic T: type, a: T) { a; }
-fn HasDeducedArg[T: type](a: T) { a; }
 
 // --- function.carbon
 
 library "[[@TEST_NAME]]";
 
-import Other;
+import OtherFunction;
 import Cpp inline '''
-void G() {
-  Carbon::Other::F1();
+void CallF1() {
+  Carbon::OtherFunction::F1();
 }
 ''';
+
+// --- other_return_int.carbon
+
+package OtherReturnInt;
+fn F2() -> i32 { return 0; }
 
 // --- return_int.carbon
 
 library "[[@TEST_NAME]]";
 
-import Other;
+import OtherReturnInt;
 import Cpp inline '''
-int G() {
-  return Carbon::Other::F2();
+int CallF2() {
+  return Carbon::OtherReturnInt::F2();
 }
 ''';
+
+// --- other_args.carbon
+
+package OtherArgs;
+fn F3(_: i32) {}
 
 // --- args.carbon
 
 library "[[@TEST_NAME]]";
 
-import Other;
+import OtherArgs;
 import Cpp inline '''
-void G() {
-  Carbon::Other::F3(123);
+void CallF3() {
+  Carbon::OtherArgs::F3(123);
 }
 ''';
 
@@ -59,12 +64,12 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn F(ref n: i32);
+fn RefF(ref n: i32);
 
 inline Cpp '''
-void G() {
+void CallRefF() {
   int n = 0;
-  Carbon::F(n);
+  Carbon::RefF(n);
 }
 ''';
 
@@ -74,40 +79,50 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-fn F();
+fn UsingF();
 
 inline Cpp '''
-using Carbon::F;
-void G() { F(); }
+using Carbon::UsingF;
+void CallUsingF() { UsingF(); }
 ''';
+
+// --- other_generic.carbon
+
+package OtherGeneric;
+fn HasGenericArg(generic T: type, a: T) { a; }
 
 // --- fail_todo_generic.carbon
 
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: other.carbon:7:1: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
+// CHECK:STDERR: other_generic.carbon:3:1: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
 // CHECK:STDERR: fn HasGenericArg(generic T: type, a: T) { a; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: other.carbon:7:1: note: calling function declared here [InCallToEntity]
+// CHECK:STDERR: other_generic.carbon:3:1: note: calling function declared here [InCallToEntity]
 // CHECK:STDERR: fn HasGenericArg(generic T: type, a: T) { a; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-import Other;
+import OtherGeneric;
 import Cpp inline '''
-void G() {
-  Carbon::Other::HasGenericArg<int>(123);
+void CallHasGenericArg() {
+  Carbon::OtherGeneric::HasGenericArg<int>(123);
 }
 ''';
+
+// --- other_deduced.carbon
+
+package OtherDeduced;
+fn HasDeducedArg[T: type](a: T) { a; }
 
 // --- deduced.carbon
 
 library "[[@TEST_NAME]]";
 
-import Other;
+import OtherDeduced;
 import Cpp inline '''
-void G() {
-  Carbon::Other::HasDeducedArg(123);
+void CallHasDeducedArg() {
+  Carbon::OtherDeduced::HasDeducedArg(123);
 }
 ''';

@@ -844,6 +844,21 @@ class DeclInstBlockId : public InstBlockId {
   using InstBlockId::InstBlockId;
 };
 
+// An ID of an instruction block that is referenced as a meta-operand of an
+// action. This is analogous to a `MetaInstId`, but for an instructions block
+// instead of an instruction.
+class MetaInstBlockId : public InstBlockId {
+ public:
+  static constexpr llvm::StringLiteral Label = "meta_inst_block";
+
+  // Support implicit conversion from InstBlockId so that InstBlockId and
+  // MetaInstBlockId have the same interface.
+  explicit(false) constexpr MetaInstBlockId(InstBlockId inst_block_id)
+      : InstBlockId(inst_block_id) {}
+
+  using InstBlockId::InstBlockId;
+};
+
 // An ID of an instruction block that is used as a label in a branch instruction
 // or similar. This is a block that is not nested within the instruction, but
 // instead exists elsewhere in the enclosing executable region. This should

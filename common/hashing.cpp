@@ -6,7 +6,13 @@
 
 #include <cstddef>
 
+#include "llvm/Support/FormatVariadic.h"
+
 namespace Carbon {
+
+auto HashCode::Print(llvm::raw_ostream& out) const -> void {
+  out << llvm::formatv("{0:x16}", value_);
+}
 
 auto Hasher::HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes) -> void {
   const std::byte* data_ptr = bytes.data();

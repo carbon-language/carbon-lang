@@ -191,8 +191,8 @@ will have to be inside `F` since it uses the name `C` which is introduced inside
 the scope of `F`. Thus if `F` is generic, all users of the `impl` will share a
 consistent view of any generic bindings used by the `impl` declaration.
 
-3.  A name is introduced in a scope nested within the scope containing the `impl`
-    declaration.
+3.  A name is introduced in a scope nested within the scope containing the
+    `impl` declaration.
 
 ```carbon
 fn F() {
