@@ -24,8 +24,6 @@ library "[[@TEST_NAME]]";
 import Cpp library "header.h";
 
 fn F[T: type](unused x: T) {
-  // TODO: This should be treated as being template-dependent on T,
-  // and we should perform the call during monomorphization.
   var unused v: Cpp.S(T);
 }
 
