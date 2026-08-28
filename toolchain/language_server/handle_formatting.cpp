@@ -16,17 +16,10 @@ namespace Carbon::LanguageServer {
 
 // Returns the range covering the entire document text.
 static auto GetFullDocumentRange(llvm::StringRef text) -> clang::clangd::Range {
-  int line = llvm::count(text, '\n');
-  int character = 0;
-  size_t last_newline = text.rfind('\n');
-  if (last_newline == llvm::StringRef::npos) {
-    character = static_cast<int>(text.size());
-  } else {
-    character = static_cast<int>(text.size() - (last_newline + 1));
-  }
+  int line_count = llvm::count(text, '\n') + 1;
   return clang::clangd::Range{
       .start = {.line = 0, .character = 0},
-      .end = {.line = line, .character = character},
+      .end = {.line = line_count, .character = 0},
   };
 }
 
