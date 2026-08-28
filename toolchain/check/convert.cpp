@@ -357,13 +357,13 @@ static auto ConvertFunctionToPointer(Context& context,
       [&](SemIR::InstId param_pattern_id) -> SemIR::InstId {
     if (target.diagnose) {
       CARBON_DIAGNOSTIC(
-          FnPtrWithCompileTimeParam, Error,
+          FunctionPtrWithCompileTimeParam, Error,
           "can't form pointer to function with compile-time parameter");
-      CARBON_DIAGNOSTIC(FnPtrWithCompileTimeParamPattern, Note,
+      CARBON_DIAGNOSTIC(FunctionPtrWithCompileTimeParamPattern, Note,
                         "declared here");
       context.emitter()
-          .Build(value_id, FnPtrWithCompileTimeParam)
-          .Note(param_pattern_id, FnPtrWithCompileTimeParamPattern)
+          .Build(value_id, FunctionPtrWithCompileTimeParam)
+          .Note(param_pattern_id, FunctionPtrWithCompileTimeParamPattern)
           .Emit();
     }
     return SemIR::ErrorInst::InstId;
@@ -403,14 +403,14 @@ static auto ConvertFunctionToPointer(Context& context,
         // TODO: Here and below, use different phrasing for parameters and
         // returns, and identify parameters by their number.
         CARBON_DIAGNOSTIC(
-            FnPtrFormMismatch, Error,
+            FunctionPtrFormMismatch, Error,
             "function pointer form does not match function declaration");
-        CARBON_DIAGNOSTIC(FnPtrFormMismatchParamPattern, Note,
+        CARBON_DIAGNOSTIC(FunctionPtrFormMismatchParamPattern, Note,
                           "this parameter/return's form is not {0}",
                           InstIdAsRawType);
         context.emitter()
-            .Build(value_id, FnPtrFormMismatch)
-            .Note(entry.param_pattern_id, FnPtrFormMismatchParamPattern,
+            .Build(value_id, FunctionPtrFormMismatch)
+            .Note(entry.param_pattern_id, FunctionPtrFormMismatchParamPattern,
                   entry.target_form_id)
             .Emit();
       }
@@ -426,15 +426,16 @@ static auto ConvertFunctionToPointer(Context& context,
     if (!context.types().AreEqualAcrossDeclarations(scrutinee_type_id,
                                                     target_type_id)) {
       CARBON_DIAGNOSTIC(
-          FnPtrDiffersType, Error,
+          FunctionPtrDiffersType, Error,
           "type {0} in function pointer type differs from type {1} in "
           "function signature",
           SemIR::TypeId, SemIR::TypeId);
-      CARBON_DIAGNOSTIC(FnPtrDiffersPrevious, Note,
+      CARBON_DIAGNOSTIC(FunctionPtrDiffersPrevious, Note,
                         "declared in function signature here");
       context.emitter()
-          .Build(value_id, FnPtrDiffersType, target_type_id, scrutinee_type_id)
-          .Note(entry.param_pattern_id, FnPtrDiffersPrevious)
+          .Build(value_id, FunctionPtrDiffersType, target_type_id,
+                 scrutinee_type_id)
+          .Note(entry.param_pattern_id, FunctionPtrDiffersPrevious)
           .Emit();
       return false;
     }

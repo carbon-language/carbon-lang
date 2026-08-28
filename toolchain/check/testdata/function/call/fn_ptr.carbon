@@ -45,10 +45,10 @@ library "[[@TEST_NAME]]";
 fn A(x: i32) -> i32;
 
 fn F() {
-  // CHECK:STDERR: fail_param_category_mismatch.carbon:[[@LINE+7]]:65: error: function pointer form does not match function declaration [FnPtrFormMismatch]
+  // CHECK:STDERR: fail_param_category_mismatch.carbon:[[@LINE+7]]:65: error: function pointer form does not match function declaration [FunctionPtrFormMismatch]
   // CHECK:STDERR:   var unused a_ptr: __fn_ptr(form(ref i32)) ->? form(var i32) = A;
   // CHECK:STDERR:                                                                 ^
-  // CHECK:STDERR: fail_param_category_mismatch.carbon:[[@LINE-6]]:6: note: this parameter/return's form is not form(ref i32) [FnPtrFormMismatchParamPattern]
+  // CHECK:STDERR: fail_param_category_mismatch.carbon:[[@LINE-6]]:6: note: this parameter/return's form is not form(ref i32) [FunctionPtrFormMismatchParamPattern]
   // CHECK:STDERR: fn A(x: i32) -> i32;
   // CHECK:STDERR:      ^~~~~~
   // CHECK:STDERR:
@@ -61,10 +61,10 @@ library "[[@TEST_NAME]]";
 fn A(x: i32) -> i32;
 
 fn F() {
-  // CHECK:STDERR: fail_return_category_mismatch.carbon:[[@LINE+7]]:65: error: function pointer form does not match function declaration [FnPtrFormMismatch]
+  // CHECK:STDERR: fail_return_category_mismatch.carbon:[[@LINE+7]]:65: error: function pointer form does not match function declaration [FunctionPtrFormMismatch]
   // CHECK:STDERR:   var unused a_ptr: __fn_ptr(form(val i32)) ->? form(ref i32) = A;
   // CHECK:STDERR:                                                                 ^
-  // CHECK:STDERR: fail_return_category_mismatch.carbon:[[@LINE-6]]:17: note: this parameter/return's form is not form(ref i32) [FnPtrFormMismatchParamPattern]
+  // CHECK:STDERR: fail_return_category_mismatch.carbon:[[@LINE-6]]:17: note: this parameter/return's form is not form(ref i32) [FunctionPtrFormMismatchParamPattern]
   // CHECK:STDERR: fn A(x: i32) -> i32;
   // CHECK:STDERR:                 ^~~
   // CHECK:STDERR:
@@ -77,10 +77,10 @@ library "[[@TEST_NAME]]";
 fn A(x: i32) -> i32;
 
 fn F() {
-  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE+7]]:65: error: type `i64` in function pointer type differs from type `i32` in function signature [FnPtrDiffersType]
+  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE+7]]:65: error: type `i64` in function pointer type differs from type `i32` in function signature [FunctionPtrDiffersType]
   // CHECK:STDERR:   var unused a_ptr: __fn_ptr(form(val i64)) ->? form(var i32) = A;
   // CHECK:STDERR:                                                                 ^
-  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE-6]]:6: note: declared in function signature here [FnPtrDiffersPrevious]
+  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE-6]]:6: note: declared in function signature here [FunctionPtrDiffersPrevious]
   // CHECK:STDERR: fn A(x: i32) -> i32;
   // CHECK:STDERR:      ^~~~~~
   // CHECK:STDERR:
@@ -93,10 +93,10 @@ library "[[@TEST_NAME]]";
 fn A(x: i32) -> i32;
 
 fn F() {
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+7]]:65: error: type `i64` in function pointer type differs from type `i32` in function signature [FnPtrDiffersType]
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+7]]:65: error: type `i64` in function pointer type differs from type `i32` in function signature [FunctionPtrDiffersType]
   // CHECK:STDERR:   var unused a_ptr: __fn_ptr(form(val i32)) ->? form(var i64) = A;
   // CHECK:STDERR:                                                                 ^
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE-6]]:17: note: declared in function signature here [FnPtrDiffersPrevious]
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE-6]]:17: note: declared in function signature here [FunctionPtrDiffersPrevious]
   // CHECK:STDERR: fn A(x: i32) -> i32;
   // CHECK:STDERR:                 ^~~
   // CHECK:STDERR:
@@ -109,10 +109,10 @@ library "[[@TEST_NAME]]";
 fn A[x: i32]() -> i32;
 
 fn F() {
-  // CHECK:STDERR: fail_implicit_param.carbon:[[@LINE+7]]:65: error: can't form pointer to function with compile-time parameter [FnPtrWithCompileTimeParam]
+  // CHECK:STDERR: fail_implicit_param.carbon:[[@LINE+7]]:65: error: can't form pointer to function with compile-time parameter [FunctionPtrWithCompileTimeParam]
   // CHECK:STDERR:   var unused a_ptr: __fn_ptr(form(val i32)) ->? form(var i32) = A;
   // CHECK:STDERR:                                                                 ^
-  // CHECK:STDERR: fail_implicit_param.carbon:[[@LINE-6]]:6: note: declared here [FnPtrWithCompileTimeParamPattern]
+  // CHECK:STDERR: fail_implicit_param.carbon:[[@LINE-6]]:6: note: declared here [FunctionPtrWithCompileTimeParamPattern]
   // CHECK:STDERR: fn A[x: i32]() -> i32;
   // CHECK:STDERR:      ^~~~~~
   // CHECK:STDERR:
@@ -125,10 +125,10 @@ library "[[@TEST_NAME]]";
 fn A(generic x: i32) -> i32;
 
 fn F() {
-  // CHECK:STDERR: fail_explicit_generic_param.carbon:[[@LINE+7]]:65: error: can't form pointer to function with compile-time parameter [FnPtrWithCompileTimeParam]
+  // CHECK:STDERR: fail_explicit_generic_param.carbon:[[@LINE+7]]:65: error: can't form pointer to function with compile-time parameter [FunctionPtrWithCompileTimeParam]
   // CHECK:STDERR:   var unused a_ptr: __fn_ptr(form(val i32)) ->? form(var i32) = A;
   // CHECK:STDERR:                                                                 ^
-  // CHECK:STDERR: fail_explicit_generic_param.carbon:[[@LINE-6]]:14: note: declared here [FnPtrWithCompileTimeParamPattern]
+  // CHECK:STDERR: fail_explicit_generic_param.carbon:[[@LINE-6]]:14: note: declared here [FunctionPtrWithCompileTimeParamPattern]
   // CHECK:STDERR: fn A(generic x: i32) -> i32;
   // CHECK:STDERR:              ^~~~~~
   // CHECK:STDERR:
