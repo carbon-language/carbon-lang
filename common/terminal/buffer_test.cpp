@@ -6,7 +6,6 @@
 
 #include <gtest/gtest.h>
 
-#include <limits>
 #include <optional>
 #include <string>
 
@@ -171,18 +170,222 @@ TEST(BufferTest, Tees) {
             "│ │ │\n"
             "╰─┴─╯\n");
 
-  // The same table in ASCII, where every tee keeps its through-stroke and only
-  // the crossing in the middle is a `+`.
+  // The same table in ASCII: only the crossing in the middle is a `+`, a tee
+  // where a line leaves sideways is `|`, and a tee where a line leaves upward
+  // or downward is the corner glyph for that direction.
   Buffer ascii(5, Charset::Ascii);
   ascii.DrawBox(0, 0, 5, 5, Style());
   ascii.DrawHorizontalLine(0, 2, 5, Style());
   ascii.DrawVerticalLine(2, 0, 5, Style());
   EXPECT_EQ(Render(ascii),
-            ".---.\n"
+            ".-.-.\n"
             "| | |\n"
             "|-+-|\n"
             "| | |\n"
-            "'---'\n");
+            "'-'-'\n");
+}
+
+TEST(BufferTest, HeavyLines) {
+  // A heavy line keeps the same geometry as a light one, drawn in the heavy
+  // glyphs, ends included.
+  Buffer heavy(4, Charset::Utf8);
+  heavy.DrawHorizontalLine(0, 0, 4, Style(), LineEnd::Center, LineEnd::Center,
+                           LineWeight::Heavy);
+  heavy.DrawVerticalLine(0, 1, 3, Style(), LineEnd::Center, LineEnd::Center,
+                         LineWeight::Heavy);
+  EXPECT_EQ(Render(heavy),
+            "╺━━╸\n"
+            "╻\n"
+            "┃\n"
+            "╹\n");
+
+  // Heavy lines join each other the way light ones do, into heavy junctions.
+  Buffer joined(5, Charset::Utf8);
+  joined.DrawHorizontalLine(0, 0, 5, Style(), LineEnd::Edge, LineEnd::Edge,
+                            LineWeight::Heavy);
+  joined.DrawVerticalLine(2, 0, 3, Style(), LineEnd::Center, LineEnd::Center,
+                          LineWeight::Heavy);
+  joined.DrawHorizontalLine(2, 2, 3, Style(), LineEnd::Center, LineEnd::Edge,
+                            LineWeight::Heavy);
+  EXPECT_EQ(Render(joined),
+            "━━┳━━\n"
+            "  ┃\n"
+            "  ┗━━\n");
+}
+
+TEST(BufferTest, HeavyAndLightLinesMix) {
+  // Weight is recorded per direction, so a heavy line crossing a light one
+  // draws a junction that is heavy left and right and light up and down.
+  Buffer cross(3, Charset::Utf8);
+  cross.DrawHorizontalLine(0, 1, 3, Style(), LineEnd::Edge, LineEnd::Edge,
+                           LineWeight::Heavy);
+  cross.DrawVerticalLine(1, 0, 3, Style(), LineEnd::Edge, LineEnd::Edge);
+  EXPECT_EQ(Render(cross),
+            " │\n"
+            "━┿━\n"
+            " │\n");
+
+  // A light line leaving a heavy one downward: each line keeps its own weight
+  // in the tee.
+  Buffer tee(4, Charset::Utf8);
+  tee.DrawHorizontalLine(0, 0, 4, Style(), LineEnd::Edge, LineEnd::Edge,
+                         LineWeight::Heavy);
+  tee.DrawVerticalLine(1, 0, 2, Style(), LineEnd::Center, LineEnd::Center);
+  EXPECT_EQ(Render(tee),
+            "━┯━━\n"
+            " ╵\n");
+
+  // A line's weight in a cell is that of whatever drew it last, as a cell's
+  // style is: a heavy line drawn over a light one leaves it heavy, and a light
+  // one drawn over part of a heavy one lightens the stretch it covers and
+  // nothing else.
+  Buffer overdrawn(3, Charset::Utf8);
+  overdrawn.DrawHorizontalLine(0, 0, 3, Style());
+  overdrawn.DrawHorizontalLine(0, 0, 3, Style(), LineEnd::Center,
+                               LineEnd::Center, LineWeight::Heavy);
+  EXPECT_EQ(Render(overdrawn), "╺━╸\n");
+
+  Buffer lightened(4, Charset::Utf8);
+  lightened.DrawHorizontalLine(0, 0, 4, Style(), LineEnd::Edge, LineEnd::Edge,
+                               LineWeight::Heavy);
+  lightened.DrawHorizontalLine(2, 0, 2, Style(), LineEnd::Edge, LineEnd::Edge);
+  EXPECT_EQ(Render(lightened), "━━──\n");
+}
+
+TEST(BufferTest, HeavyLinesInAscii) {
+  // ASCII has no weights, so a heavy horizontal line becomes `^`, including
+  // the tee where a heavy vertical line leaves it.
+  Buffer underline(8, Charset::Ascii);
+  underline.DrawHorizontalLine(0, 0, 7, Style(), LineEnd::Edge, LineEnd::Edge,
+                               LineWeight::Heavy);
+  underline.DrawVerticalLine(3, 0, 2, Style(), LineEnd::Center, LineEnd::Center,
+                             LineWeight::Heavy);
+  EXPECT_EQ(Render(underline),
+            "^^^^^^^\n"
+            "   |\n");
+
+  // So does the top cell of a heavy vertical line, which no line enters from
+  // above, so the line is `^` above `|`.
+  Buffer vertical(3, Charset::Ascii);
+  vertical.DrawVerticalLine(1, 0, 3, Style(), LineEnd::Center, LineEnd::Center,
+                            LineWeight::Heavy);
+  EXPECT_EQ(Render(vertical),
+            " ^\n"
+            " |\n"
+            " |\n");
+
+  // A light line leaving the heavy underline downward keeps the light tee's
+  // `.`, which `^` would hide, while a heavy line leaving it downward keeps the
+  // `^`.
+  Buffer tees(7, Charset::Ascii);
+  tees.DrawHorizontalLine(0, 0, 7, Style(), LineEnd::Edge, LineEnd::Edge,
+                          LineWeight::Heavy);
+  tees.DrawVerticalLine(2, 0, 2, Style(), LineEnd::Center, LineEnd::Center);
+  tees.DrawVerticalLine(5, 0, 2, Style(), LineEnd::Center, LineEnd::Center,
+                        LineWeight::Heavy);
+  EXPECT_EQ(Render(tees),
+            "^^.^^^^\n"
+            "  |  |\n");
+
+  // A cell a line enters from above keeps its light glyph, so the crossing is
+  // `+`, and the heavy vertical line is drawn as a light one.
+  Buffer crossed(3, Charset::Ascii);
+  crossed.DrawHorizontalLine(0, 1, 3, Style(), LineEnd::Edge, LineEnd::Edge,
+                             LineWeight::Heavy);
+  crossed.DrawVerticalLine(1, 0, 3, Style(), LineEnd::Edge, LineEnd::Edge,
+                           LineWeight::Heavy);
+  EXPECT_EQ(Render(crossed),
+            " |\n"
+            "^+^\n"
+            " |\n");
+}
+
+TEST(BufferTest, CrossingLinePassesBehindEarlierLines) {
+  // A crossing line joins the line its first cell holds. Below that, it has a
+  // gap where it crosses an earlier line, which stays unbroken, and the two
+  // don't join.
+  Buffer buffer(5, Charset::Utf8);
+  buffer.DrawHorizontalLine(0, 0, 5, Style(), LineEnd::Edge, LineEnd::Edge);
+  buffer.DrawHorizontalLine(0, 2, 5, Style(), LineEnd::Edge, LineEnd::Edge);
+  buffer.DrawCrossingVerticalLine(2, 0, 4, Style());
+  EXPECT_EQ(Render(buffer),
+            "──┬──\n"
+            "  │\n"
+            "─────\n"
+            "  │\n");
+
+  // The same crossing in ASCII, where the tee is the corner glyph for the line
+  // leaving downward and the crossed line is unbroken.
+  Buffer ascii(5, Charset::Ascii);
+  ascii.DrawHorizontalLine(0, 0, 5, Style(), LineEnd::Edge, LineEnd::Edge);
+  ascii.DrawHorizontalLine(0, 2, 5, Style(), LineEnd::Edge, LineEnd::Edge);
+  ascii.DrawCrossingVerticalLine(2, 0, 4, Style());
+  EXPECT_EQ(Render(ascii),
+            "--.--\n"
+            "  |\n"
+            "-----\n"
+            "  |\n");
+
+  // Weight plays no part in it: a heavy line drawn first stays whole the
+  // same way.
+  Buffer heavy(5, Charset::Utf8);
+  heavy.DrawHorizontalLine(0, 0, 5, Style(), LineEnd::Edge, LineEnd::Edge);
+  heavy.DrawHorizontalLine(0, 1, 5, Style(), LineEnd::Edge, LineEnd::Edge,
+                           LineWeight::Heavy);
+  heavy.DrawCrossingVerticalLine(2, 0, 4, Style());
+  EXPECT_EQ(Render(heavy),
+            "──┬──\n"
+            "━━━━━\n"
+            "  │\n"
+            "  │\n");
+}
+
+TEST(BufferTest, CrossingLineResumesFromAnEdge) {
+  // A crossing line starting at an edge enters its first cell from above, so
+  // it continues a line broken off above a stretch it skipped, and it still
+  // has a gap where it crosses an earlier line.
+  Buffer buffer(5, Charset::Utf8);
+  buffer.DrawHorizontalLine(0, 0, 5, Style(), LineEnd::Edge, LineEnd::Edge);
+  buffer.DrawText(0, 1, "words", Style());
+  buffer.DrawHorizontalLine(0, 3, 5, Style(), LineEnd::Edge, LineEnd::Edge);
+  buffer.DrawCrossingVerticalLine(2, 0, 1, Style());
+  buffer.DrawCrossingVerticalLine(2, 2, 3, Style(), LineEnd::Edge);
+  EXPECT_EQ(Render(buffer),
+            "──┬──\n"
+            "words\n"
+            "  │\n"
+            "─────\n"
+            "  │\n");
+}
+
+TEST(BufferTest, CrossingLineSharesAColumnWithoutRedrawing) {
+  // A crossing line leaves the cells of an earlier line in its column as they
+  // are, so that line keeps its weight.
+  Buffer buffer(3, Charset::Utf8);
+  buffer.DrawHorizontalLine(0, 0, 3, Style(), LineEnd::Edge, LineEnd::Edge);
+  buffer.DrawVerticalLine(1, 0, 3, Style(), LineEnd::Center, LineEnd::Center,
+                          LineWeight::Heavy);
+  buffer.DrawCrossingVerticalLine(1, 0, 3, Style());
+  EXPECT_EQ(Render(buffer),
+            "─┰─\n"
+            " ┃\n"
+            " ╹\n");
+}
+
+TEST(BufferTest, CrossingLineStaysClearOfText) {
+  // The line skips text, and blank cells directly beside text, where a line
+  // could be mistaken for part of a word.
+  Buffer buffer(6, Charset::Utf8);
+  buffer.DrawHorizontalLine(0, 0, 6, Style(), LineEnd::Edge, LineEnd::Edge);
+  buffer.DrawText(0, 1, "ab", Style());
+  buffer.DrawText(0, 3, "abc", Style());
+  buffer.DrawCrossingVerticalLine(2, 0, 5, Style());
+  EXPECT_EQ(Render(buffer),
+            "──┬───\n"
+            "ab\n"
+            "  │\n"
+            "abc\n"
+            "  │\n");
 }
 
 TEST(BufferTest, ALineBetweenOneCenterAndItselfIsAPoint) {
@@ -671,6 +874,61 @@ TEST(BufferTest, TabWidthComesFromCapabilities) {
   Buffer clamped(capabilities);
   clamped.DrawText(0, 0, "a\tb", Style());
   EXPECT_EQ(Render(clamped), "a b\n");
+}
+
+TEST(BufferTest, WrappedTextKeepsAQuotedRunWhole) {
+  // With a quote character, the spaces between a pair of quotes are not
+  // breaks, so the quoted run wraps to the next row whole.
+  Buffer buffer(20, Charset::Utf8);
+  buffer.DrawWrappedText(0, 0, 0, 20, "type `{.a: i32}` is not", Style(), '`');
+  EXPECT_EQ(Render(buffer),
+            "type `{.a: i32}` is\n"
+            "not\n");
+
+  Buffer split(14, Charset::Utf8);
+  split.DrawWrappedText(0, 0, 0, 14, "type `{.a: i32}` is not", Style(), '`');
+  EXPECT_EQ(Render(split),
+            "type\n"
+            "`{.a: i32}` is\n"
+            "not\n");
+
+  // Without one, the same text breaks inside the quotes like anywhere else.
+  Buffer unquoted(14, Charset::Utf8);
+  unquoted.DrawWrappedText(0, 0, 0, 14, "type `{.a: i32}` is not", Style());
+  EXPECT_EQ(Render(unquoted),
+            "type `{.a:\n"
+            "i32}` is not\n");
+
+  // A quote with no partner on its line is an ordinary character, so the text
+  // after it still breaks at its spaces.
+  Buffer stray(14, Charset::Utf8);
+  stray.DrawWrappedText(0, 0, 0, 14, "a `stray quote and more words", Style(),
+                        '`');
+  EXPECT_EQ(Render(stray),
+            "a `stray quote\n"
+            "and more words\n");
+
+  // Nor does a run reach across a newline the caller wrote.
+  Buffer lines(14, Charset::Utf8);
+  lines.DrawWrappedText(0, 0, 0, 14, "a `b\nc d` e f g h", Style(), '`');
+  EXPECT_EQ(Render(lines),
+            "a `b\n"
+            "c d` e f g h\n");
+
+  // A word can't hold a tab or carriage return, so a quoted run doesn't reach
+  // across one either.
+  Buffer tabbed(14, Charset::Utf8);
+  tabbed.DrawWrappedText(0, 0, 0, 14, "a `b\tc` d", Style(), '`');
+  EXPECT_EQ(Render(tabbed), "a `b    c` d\n");
+  EXPECT_EQ(buffer.MeasureWrapWidth("`b\tc`", '`'), 2);
+  EXPECT_EQ(buffer.MeasureWrapWidth("`b\rc`", '`'), 2);
+
+  // Measuring agrees: the quoted run is the widest word.
+  EXPECT_EQ(buffer.MeasureWrapWidth("type `{.a: i32}` is not", '`'), 11);
+  EXPECT_EQ(buffer.MeasureWrapWidth("type `{.a: i32}` is not"), 5);
+  EXPECT_EQ(
+      buffer.MeasureWrappedText(0, 0, 0, 14, "type `{.a: i32}` is not", '`'),
+      DrawEnd(3, 2));
 }
 
 TEST(BufferTest, WrappedTextKeepsTheBreaksItIsGiven) {
