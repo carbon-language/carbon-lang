@@ -18,7 +18,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Nushell and miette](#nushell-and-miette)
     -   [Clang and GCC](#clang-and-gcc)
 -   [The rendered form](#the-rendered-form)
-    -   [Rows](#rows)
+    -   [The parts of a frame](#the-parts-of-a-frame)
+    -   [Finding the message](#finding-the-message)
+    -   [Hanging the words](#hanging-the-words)
     -   [Several files in one diagnostic](#several-files-in-one-diagnostic)
     -   [The compact form](#the-compact-form)
     -   [Diagnostics from C++ interop](#diagnostics-from-c-interop)
@@ -28,7 +30,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Fitting the terminal](#fitting-the-terminal)
 -   [Normalizing source text](#normalizing-source-text)
 -   [Examples](#examples)
-    -   [Three labels on one line](#three-labels-on-one-line)
+    -   [Several labels on one line](#several-labels-on-one-line)
     -   [Several files, reached by an import](#several-files-reached-by-an-import)
     -   [Without color or Unicode](#without-color-or-unicode)
 -   [Implementation](#implementation)
@@ -48,330 +50,385 @@ the terminal can't render it. [Diagnostics](/toolchain/docs/diagnostics.md)
 covers how one is produced and worded.
 
 Rendering is built on [`common/terminal`](/common/terminal), which detects
-terminal capabilities, models color and style, measures how many columns text
-takes, and stages a grid of styled cells that is serialized once. Layout here
-decides what to show and asks that grid how much room it takes, rather than
-keeping its own idea of how wide a string is.
+capabilities, models color and style, measures text, and stages a grid of styled
+cells. Layout decides what to show and asks the grid how much room it takes.
 
 The audience is a person glancing at an error. Editors get diagnostics from the
-[language server](/toolchain/language_server), which carries structure rather
-than text, and output being captured rather than read has
-[`--no-diagnostic-snippets`](#the-compact-form).
+[language server](/toolchain/language_server) as structure, so editor
+integration is out of scope, and so is what a complete build should hand an
+agent, which is a separate question. A build log gets one line per fact from
+[`--no-diagnostic-snippets`](#the-compact-form), and a golden test file gets the
+drawing minus what moving a line would re-render from
+[`--no-diagnostic-line-numbers`](#testing).
 
 ## What a diagnostic is made of
 
-A diagnostic reports one problem. Its **message** is the sentence saying what is
-wrong: it stands alone, makes sense read with nothing around it, and carries the
+A diagnostic reports one problem. Its **message** is the sentence saying what
+is wrong. It is read hung off the range it marks in the rendered form and alone
+in the compact form or an editor, so it is worded for both, and it carries the
 location an editor would jump a cursor to.
 
-Attached to that message are **labels**. A label is a range of source with
-optional text saying what that range has to do with the problem. It is read
-against the code it marks rather than on its own, which is what separates it
-from a message: `declared here` is not a sentence anyone would want to read by
-itself. A label with no text marks its range and says nothing, which is how a
-diagnostic points at the code its message is about without repeating the message
-against it.
+**Labels** are attached to the message. A label is a range of source with
+optional words saying what that range has to do with the problem, read against
+the code it marks: `declared here` is not a sentence anyone would read alone. A
+label with no words marks its range and says nothing, which is how a diagnostic
+points at the code its message is about without repeating the message. That is
+the only place a wordless mark earns its ink; on any other line it points at
+nothing the reader can act on.
 
-A label states whether its range is `Primary`, directly part of the problem, or
-`Info`, explaining it without being part of it. That is `rustc`'s primary and
-secondary span distinction, moved from the renderer's guess about a message's
-level to something the diagnostic states. A primary range is underlined in the
-level's color and its line marked in the margin; an informational one takes the
-note color.
+A label's range is `Primary`, directly part of the problem, or `Info`,
+explaining it, as `rustc` distinguishes primary from secondary spans and Clang a
+diagnostic from its notes. A primary range takes the level's color and marks
+its line in the margin; an informational one takes the note color.
 
-Two other things reach the renderer attached to a diagnostic, and neither is
-read against the source it names:
+Two other things reach the renderer, each with words that stand as a sentence:
 
--   A **context** names the operation the problem happened inside. It is a
-    sentence in its own right, so where there is one it leads the diagnostic in
-    place of the message, and the message is then read against the code like
-    anything else explaining it.
+-   A **context** names the operation the problem happened inside. Its
+    sentence is the one the level word leads, hung off the operation's range
+    with the message's emphasis, and the message then hangs off its own range
+    like a label, still in the level's color. Nested contexts read outermost
+    in.
 
 -   **Location information** is one step in the path by which a location was
-    reached: an import, an `#include`, a macro expansion. It marks no source of
-    its own, and draws above the file it leads to.
+    reached: an import, an `#include`, a macro expansion. It draws as a single
+    `<text>: <location>` row above the anchor of the file it leads to, with no
+    snippet. This document calls those rows the **path**.
 
 ## Prior art
 
+Every renderer here is shown the same diagnostic, one argument passed to a
+function declared with none. The `rustc`, Clang, and GCC blocks are those
+compilers' own output on the equivalent program; the `ariadne` and `miette`
+blocks are the Carbon diagnostic fed through those libraries.
+
 ### Rust
 
-`rustc` leads with the message and puts the location on a line of its own,
-inside a gutter that frames the source:
+`rustc` leads with the message, puts the location on its own row inside the
+gutter, and hangs the first label on the underline row:
 
 ```
-error[E0308]: mismatched types
- --> src/main.rs:4:5
+error[E0061]: this function takes 0 arguments but 1 argument was supplied
+ --> run0.rs:4:3
   |
-4 |     "hello"
-  |     ^ expected `i32`, found `&str`
+4 |   run0(1);
+  |   ^^^^ - unexpected argument of type `{integer}`
+  |
+note: function defined here
+ --> run0.rs:1:4
+  |
+1 | fn run0() {}
+  |    ^^^^
 ```
 
-Most of what we take is from here: the message first, because what went wrong
-is what is being read and where it happened is a coordinate to consult
-afterward.
+A five-row fix-it follows. Taken from here: the words that matter most are read
+against the code, and `^` against `-` tells a primary range from a secondary one
+without color. Not taken: the frame per message, which makes one problem read
+as two blocks with two location rows.
 
 ### Ariadne
 
-`ariadne` puts the location in a tab rather than on a row of its own, hangs
-labels off the spans they describe, and sweeps back to the left margin to close:
+`ariadne` puts the location in the frame's opening row, hangs labels off their
+ranges, and runs one frame through every file:
 
 ```
-Error: can't compare apples with oranges
-   ╭─┤ <unknown>:1:1 │
+Error: 1 argument passed to function expecting 0 arguments
+   ╭─[ foo.carbon:4:3 ]
    │
- 1 │ apple == orange;
-   │ ──┬──    ───┬──
-   │   ╰─────────│──── This is an apple
-   │             │
-   │             ╰──── This is an orange
+ 4 │   Run0(1);
+   │   ───┬───
+   │      ╰───── 1 argument passed here
+   │
+   ├─[ lib.carbon:1:1 ]
+   │
+ 1 │ fn Run0() {}
+   │ ──────┬─────
+   │       ╰─────── calling function declared here, expecting 0 arguments
 ───╯
 ```
 
-Hanging a label off its span is the arrangement we take: it is read against the
-code it is about rather than several rows away from it.
+Both of those are taken.
 
 ### Nushell and miette
 
-Nushell renders through `miette`, which closes the frame into a box:
+Nushell renders through `miette`, which closes the frame into a box and sets
+annotations off from source with `·`:
 
 ```
-Error: nu::parser::unknown_flag
-
-  × The `ls` command doesn't have flag `never-gonna-give-you-up`.
-   ╭─[entry #1:1:8]
- 1 │ ls -a --never-gonna-give-you-up /tmp
-   ·        ────────────┬────────────
-   ·                    ╰── unknown flag
+  × 1 argument passed to function expecting 0 arguments
+   ╭─[foo.carbon:4:3]
+ 3 │ fn Call() {
+ 4 │   Run0(1);
+   ·   ───┬───
+   ·      ╰── 1 argument passed here
+ 5 │ }
    ╰────
 ```
 
-The closed frame is what we take, along with the annotation separator `·` and
-the location in the frame's opening rather than on a row of its own.
+The closed frame, short close, and separator are taken. A `miette` report holds
+one source, so the second file cannot appear.
 
 ### Clang and GCC
 
-Both lead with the location and put the source under a gutter:
+Both lead with the location. Clang answers in six rows, the density to hold
+ourselves against:
 
 ```
-t.cpp:2:11: error: invalid conversion from 'const char*' to 'int' [-fpermissive]
-    2 |   int x = "foo";
-      |           ^~~~~
+foo.cpp:4:3: error: no matching function for call to 'Run0'
+    4 |   Run0(1);
+      |   ^~~~
+./lib.h:1:6: note: candidate function not viable: requires 0 arguments, but 1 was provided
+    1 | void Run0();
+      |      ^
 ```
 
-This is the shape a C++ developer reads every day, and the argument for it is
-`file:line:column:` at the start of the line, which every editor and build tool
-has historically parsed. Not taking it regardless is the first entry under
-[Alternatives considered](#alternatives-considered).
+GCC adds an `In function` line and an `In file included from` line before the
+note, which Clang leaves out. The argument for this shape is `file:line:column:`
+at the start of every line, which every tool has historically parsed; not
+taking it is the first entry under
+[Alternatives considered](#alternatives-considered). One Clang choice is taken:
+the include stack is printed for the error's own location, never for a note's.
+
+On this diagnostic the form here spends ten rows with a snippet of both files,
+against Clang's six, GCC's eight, `miette`'s eight with one file, `ariadne`'s
+thirteen, and `rustc`'s eleven before its suggestion.
 
 ## The rendered form
 
-The message is the headline, and everything else hangs inside one frame beneath
-it:
+A diagnostic is one frame, and the sentence stating the problem hangs inside
+it, off the exact range that is wrong:
 
 ```
-error: 1 argument passed to function expecting 0 arguments
        ╭─┤ foo.carbon:4:3
-       ┆
 ->   4 │   Run0(1);
-       ·   ───┬───
-       ·      ╰──┤ 1 argument passed here
-       ├────────────
-       │ ╭── imported from: foo.carbon:2:1
-       ├─┤ lib.carbon:1:1
-       │
+       ·   ━━━┳━━━
+       ·      ┗━━┫ error: 1 argument passed to function expecting 0 arguments
+       ┆
+       ├─┤ lib.carbon:1:4
      1 │ fn Run0() {}
-       · ──────┬─────
-       ·       ╰──┤ calling function declared here, expecting 0 arguments
-       ╰────────────
+       ·    ──┬─
+       ·      ╰──┤ calling function declared here
+       ╰────
 ```
 
-There is one frame per diagnostic rather than one per message, so a reader
-scanning build output sees where one problem ends and the next begins. Each file
-it points into gets an anchor of its own inside that frame, under the path by
-which that file was reached.
+### The parts of a frame
 
-Ranges in one file share one view of it, in source order with the lines between
-them elided, so an error and a declaration above it read as one piece of code,
-even where that puts a label above the message it explains.
+```
+       ╷ ╭── imported from: c.carbon:2:1        path row
+       ├─┤ b.carbon:3:1                         anchor
+->   3 │ fn Shape() {}                          source row, marked in the margin
+       · ━━━━━━┳━━━━━                           annotation row: the mark
+       ·       ┗━━┫ error: duplicate name ...   label row: connector, bar, words
+       ┆                                        elision
+       ├─┤ a.carbon:3:7                         anchor for a second file
+     3 │ class Shape {}                         source row
+       ·       ──┬──                            annotation row
+       ·         ╰──┤ previously declared here  label row
+       ╰────                                    close
+```
 
-### Rows
+-   The **frame** runs from the `╭` of the first anchor to the `╰────`
+    **close**.
 
-Line numbers are right-aligned in a four-column field, and the frame runs down
-the column after it, so the frame sits in one column for every diagnostic in a
-file under ten thousand lines rather than stepping with each number's digits. A
-wider number pushes the frame right. Content starts two columns past the frame.
+-   An **anchor**, `╭─┤ <file>:<line>:<column>`, names the location of the part
+    that opened the snippet under it: the message's, or a label's for a file
+    the message is not in. It is a location to go to, not the first row shown:
+    ranges in one file share one view of it in source order, so a declaration
+    above the problem is drawn above the message, and the anchor's line can
+    name a row further down. Unknown parts of the location drop from the
+    right. The frame's first anchor opens with `╭`, any other with `├`.
 
-Every row in the picture above is one of these:
+-   A **source row** is a line of the file, numbered in the gutter. Every line
+    holding a range that is part of the problem is marked `->` in the
+    **margin**, and its number takes the level's color.
 
--   The headline, `<level>: <message>` at column zero, is the only row outside
-    the frame.
+-   An **annotation row** holds the **marks**, the underlines under ranges,
+    with `·` in place of the frame so it doesn't read as source. The message's
+    mark is heavy; every other mark is light, in the level's colors for a
+    range that is part of the problem and the note color for one that only
+    explains it. Everything marking one line goes on one row.
 
--   An anchor, `╭─┤ <file>:<line>:<column>`, names where the rows under it come
-    from, dropping parts of the location from the right as they become unknown.
-    It opens with `╭` as the frame's topmost row and `├` otherwise.
+-   A **label row** carries the words hanging off a mark: a **connector**
+    leaves the mark through a tee and reaches the **bar** framing the words,
+    `╰──┤`. The message's row is a label row led by the **level word**,
+    `error:`, with bold words and a heavy connector and bar.
 
--   A source row is a line of that file, with its number outside the frame.
-    Every line holding a range that is part of the problem is marked `->` in
-    the margin, and its number takes the headline's color.
+-   An **elision row**, `┆`, dots the frame across whatever isn't contiguous:
+    skipped lines, or the step to the next anchor. A single skipped line is
+    shown instead, at the same cost.
 
--   An annotation row marks something in the source above it, using `·` in place
-    of the frame so that it doesn't read as source. A range that is part of the
-    problem is underlined in the level's color, one that only explains it in the
-    note color. Everything marking one line is drawn on one annotation row, and
-    ranges that overlap are drawn widest first.
+-   A **path row**, `╭── <text>: <location>`, sits above an anchor and says how
+    that file was reached, its line running down into the anchor's bracket.
 
-    The message's own extent is drawn here only when nothing better marks its
-    line: a range attached as part of the problem there stands in for it. The
-    message's location is a point chosen for an editor to put a cursor on, where
-    an attached range says what the problem covers.
+-   A **message row**, `├─ note: <text>`, carries words whose location names at
+    most a file, so no snippet can open. A diagnostic whose own location names
+    only a file opens its frame with `╭─ error: <text>`, and its anchor then
+    opens the snippet for whatever else is in that file. Today a message row
+    means the problem is in code the compiler generated; removing them is
+    [future work](#future-work).
 
--   A label row is the text hanging off an underline, framed by a bar down its
-    left side, with a `╰──┤` connector reaching it. The connector tees into the
-    middle of the range, and every label on one underline takes a row of its
-    own, drawn rightmost first so no connector crosses another.
+### Finding the message
 
--   An elision row is `┆`, standing in for lines that were skipped. A single
-    skipped line is shown instead, since it costs the same row. A snippet always
-    starts one row below its anchor, so the code never runs on from the filename
-    above it.
+There is no headline. Everything that makes the message findable sits on it:
+the level word, its weight and color, the heavy mark, and the `->` in the
+margin of its line. With color the red `error:` is where the eye lands; without
+it the `->` leads to the heavy mark and down its connector into the sentence.
+The reading order is the same either way: the sentence and its code, the other
+labels as needed, and the anchors as coordinates for when it is time to go
+there.
 
--   A separator row, `├────────────`, closes off one snippet before the next,
-    and `╰────────────` closes the frame. Both are long enough to read as
-    dividers rather than as another branch off it.
+The cost is that the message is not at a fixed row of its frame, since a
+declaration above the problem is drawn first. The fixed positions to scan for
+in a long log are the `╭` that opens every diagnostic and the `->` in column
+zero. A frame opening with a message row has no `->`.
 
--   A path row, `╭── <message>: <location>`, sits above the anchor of the file
-    it leads to and says how that file was reached: `imported from`,
-    `included from`. Its line runs down into that anchor, so a chain of them
-    reads as one descent into the file the snippet shows. Several stack,
-    outermost first.
+One frame per diagnostic, rather than one per message, is what shows a reader
+where one problem ends and the next begins. Each file the diagnostic points into
+gets an anchor inside that frame, and the frame dots through `┆` rather than
+breaking.
 
--   A message row, `├─ note: <text>`, carries words with no source to hang them
-    against: their location names at most a file, so there is no snippet for an
-    anchor to open. Today that means the problem is in code the compiler
-    generated, and [future work](#future-work) is to restructure those
-    diagnostics until nothing lands here. It is the one row the picture above
-    doesn't reach:
+The message hangs off its own range unless a primary range contains its
+location, in which case that range stands in for it entirely: the message's
+location is a point chosen for a cursor, and the range says what the problem
+covers. Overlapping ranges are drawn widest first, so the narrowest mark on a
+column shows, except that the heavy mark is drawn last so nothing repaints it. A
+range inside it shows only as the tee its connector leaves the heavy stroke by,
+or not at all if it has no words.
 
-    ```
-    ├────────────
-    ├─ note: type `A` does not implement interface `Core.Copy`
-    ╰────────────
-    ```
+### Hanging the words
 
-An underline, and the connector and bar of the label hanging from it, take the
-color of the message they belong to, following `rustc`. The label's own words do
-not: color belongs on what they point at rather than on a run of prose. Nor do
-the marks take weight, since bold reaches line-drawing glyphs unevenly across
-terminals; only the message and the level word leading it are bold, and the
-compact form leaves even the message unbolded.
+The rows under an annotation row hold the words hanging off its marks, laid out
+by these rules in this order.
 
-Ranges that touch would run together into one mark, so an end that meets another
-range stops at the center of its cell, leaving a gap. An end gives way only
-where the range can still carry its label without it, and where nothing is left
-to tee into, the connector is drawn down the column in place of the mark, from
-the center of that cell so that two single columns side by side read as two
-marks rather than one stroke two columns wide. ASCII has no half cell and gives
-both the gap and that distinction up.
+**Order.** The rows read top to bottom the way the code reads left to right: the
+message first, then each label in the order of its range. Each label's words
+start two columns right of the words above, so the indentation steps with the
+order.
+
+**Meeting the words.** A connector reaches the bar on the first row of its words,
+where the level word is, so a reader following the heavy line lands where the
+sentence begins. The bar continues down every row the words wrap onto.
+
+**Placement.** Every label's words, the message's included, start right of every
+connector's column, so a connector descending to a later label runs beside the
+words above it, never behind them.
+
+**Crossings.** Reading order makes a later connector descend through rows
+already hung. Earlier rows keep their ink: the descending line breaks around
+each run it meets in a single cell, never at a junction, and the gap says the
+two don't connect. On a terminal wide enough that nothing wraps this is the
+common shape: a label right of a one-row message descends `┬`, a gap, `╰`,
+with no vertical cell showing. The tee and the corner carry it.
+
+**Out-dented blocks.** Words that cannot hang, because their widest word does not
+fit right of the connector, are out-dented to the source's column (see
+[Fitting the terminal](#fitting-the-terminal)). A block owns its rows outright,
+blank cells included, so a connector descending past it skips those rows and
+resumes below.
+
+**Quoted code.** Wrapping breaks at spaces, except inside backticks: a quoted
+type or snippet moves to the next row whole or overhangs like a path.
+
+A mark and the connector and bar of its label take the color of the message they
+belong to, following `rustc`; the label's words do not, since color belongs on
+what they point at. Only the message's marks are heavy and bold: the heavy
+strokes carry the emphasis where a terminal ignores bold on line art, and bold
+matches the marks to the words where it doesn't.
+
+Ranges that touch would run together, so an end that meets another range stops
+at the center of its cell, leaving a gap, but only where the range can still
+carry its label without it. A one-column mark that gives an end away has
+nothing to tee into, so its connector is drawn down the column in place of it,
+from the cell's center, and two such columns side by side read as two marks.
+ASCII has no half cell and gives the gap up.
 
 ### Several files in one diagnostic
 
-Each file a diagnostic points into gets an anchor of its own, in the order the
-parts reach it, and the frame runs down through all of them. The path above each
-anchor reads in the order it was walked, outermost first.
+Each file a diagnostic points into gets an anchor, in the order the parts reach
+it, and the frame runs down through all of them.
 
-A path is dim: it says how the reader got somewhere rather than anything about
-their code, and it is the one place the rendering can grow without bound, since
-an include chain is as deep as it is. Its rows read `<message>: <location>`,
-which is why they say `included from` rather than `in file included here`.
+Only the path to the problem itself is drawn: the message's own location and a
+context's, never a label's. How the file holding a declaration was reached is
+rarely worth a reader's time, since there is one `import` to find and the
+filename already names the file; Clang and GCC suppress note include stacks for
+the same reason. Where the problem itself is in a reached file, as when two
+imports collide, the path is the part of the reader's own build that led there.
+
+A path is dim: it says how the reader got somewhere, not what is wrong, and an
+include chain is as deep as it is. Its rows read `<text>: <location>`, which is
+why they say `included from` rather than `in file included here`.
 
 ### The compact form
 
 Where there is no source to frame, the terminal is under 60 columns wide, or
 `--no-diagnostic-snippets` asked for it, a diagnostic renders as one line per
-part -- the message, and each label with words of its own -- led by its
-location, which carries the extent of the part's range after the column:
+part with words, each led by its location and the extent of its range (none for
+a single column):
 
 ```
-missing.carbon: error: error opening file for read: No such file or directory
+missing.carbon: error: unable to open file: No such file or directory
 foo.carbon:4:3-9: error: 1 argument passed to function expecting 0 arguments
-foo.carbon:1:1-12: note: calling function declared here
+lib.carbon:1:4-7: note: calling function declared here
 ```
 
-Nothing here is positioned against a line number, which is what a build log and
-a golden file want, and the range's extent survives losing the underline that
-would have drawn it.
-
-This is `rustc`'s `--error-format=short`, keeping the location that `miette`'s
-`ErrorStyle::Short` drops and the extent that Clang keeps behind
+Nothing is positioned against a line number, which is what a build log wants,
+and the extent survives losing the underline. This is `rustc`'s
+`--error-format=short`, keeping the location `miette`'s `ErrorStyle::Short`
+drops and the extent Clang keeps behind
 `-fdiagnostics-print-source-range-info`.
 
-Sixty columns is a guess. Nothing is derived from it and no layout depends on
-it being right; move it if it turns out to be wrong.
+Sixty columns is a guess; nothing depends on it being right.
 
 ### Diagnostics from C++ interop
 
-Clang's diagnostics are drawn here rather than by Clang. What arrives from it is
-a message, a location, the ranges it would underline, and the changes it
-suggests, and each becomes the thing it corresponds to: the ranges become marks,
-the notes and fix-its become labels. A fix-it becomes a label saying what to do,
-which is more use than Clang's own rendering of it, since a label survives the
-compact form and an inline rendering does not; carrying the edit as data and
-drawing it as a diff is [future work](#future-work).
+Clang's diagnostics are drawn here rather than by Clang. Its message, location,
+ranges, and fix-its each become the thing they correspond to. The diagnostic's
+own ranges become wordless marks, since they are part of the problem; a note's
+words hang on its location and its ranges are dropped, since a wordless mark on
+another line says nothing. A fix-it becomes a label saying what to do, which
+survives the compact form where an inline rendering would not; carrying the edit
+as data is [future work](#future-work).
 
-A Clang location names a token, so it is measured and marked across the whole of
-it rather than in the column it starts in.
+A Clang location names a token, so it is marked across the whole token.
 `SemIR::ConvertClangRangeToLoc` turns a Clang range into the location the
-renderer wants, and both the path that has a Carbon `Context` and the one that
-doesn't go through it, so a C++ diagnostic lands where a Carbon one does.
+renderer wants, on both the path with a Carbon `Context` and the one without.
 
-The overload-resolution candidate notes are written as
+Overload-resolution candidate notes are written as
 `<what was considered>: <why it was not viable>` and mark the source the second
-half is about, so each of those becomes two labels: the candidate on the
-declaration the note names, and the reason on what Clang marked. The notes this
-is done to are listed by diagnostic kind rather than recognized from their
-text, since a note that merely contains a colon would be split in the wrong
-place.
+half is about, so each becomes two labels: the candidate on the declaration the
+note names, and the reason on what Clang marked. The notes split are listed by
+kind, since any note might contain a colon. Moving the split upstream is
+[future work](#future-work).
 
-TODO: Try to move that split upstream. Clang knows which half is which and
-which argument the reason is about, and then formats both into one string; a
-note that carried its halves separately would serve Clang's own rendering too,
-and would leave nothing here to take apart. Until then the list has to be
-revisited when one of these notes is reworded, and a candidate note written the
-same way but not on the list renders as a single label.
-
-The `#include` stack and the macro expansion stack reach the diagnostic as
-location information, like any other path a location was reached by: they read
-`included from` and `expanded from macro defined at` above the anchor.
-
-TODO: A diagnostic located inside a macro expansion shows the presumed line
-number of the expansion site but the source text of the macro definition, so
-the two disagree; the snippet should follow the coordinates the number names.
+The `#include` and macro expansion stacks arrive as location information and
+read `included from`, `imported from module at`, and `expanded from macro
+defined at` above the anchor of the message's own location. They are left out
+for a note's, as Clang leaves them out.
 
 ## Style
 
 ### The palette
 
-Styles are named for what they mark, so nothing outside the palette names a
-color and changing one is a single edit.
+Styles are named for what they mark, so changing a color is one edit.
 
-| Element                      | Style               | Rationale                                                                                       |
-| :--------------------------- | :------------------ | :---------------------------------------------------------------------------------------------- |
-| `error`                      | bold, bright red    | Clang, GCC, and `rustc` all agree.                                                              |
-| `warning`                    | bold, bright yellow | `rustc`'s choice. Clang and GCC use magenta, which reads as an error to most people.            |
-| `note`                       | bold, bright cyan   | GCC's choice, and distinct from both error and warning at any brightness.                       |
-| Message                      | bold, no color      | The longest run of text in the output; color belongs on what it points at.                      |
-| Frame                        | bold, bright blue   | `rustc`'s choice. Deliberately not dim, which several terminals don't implement.                |
-| Line numbers                 | bright blue         | Not bold, so the one number colored as the reported line is the one that stands out.            |
-| Location in an anchor        | plain               | Already delimited by the frame's bracket; color would only compete.                             |
-| Location in the compact form | bold                | Leads the line with nothing around it, so it needs to be findable on its own.                   |
-| Underline, connector, bar    | the level color     | Ties a mark to the message that explains it. Not bold: several terminals leave line drawing alone. |
-| Path to a location           | dim                 | How the reader got here, not what is wrong; it should be skippable at a glance.                 |
-| Kind                         | dim                 | Only present under a flag, and never the thing being read.                                      |
+| Element                      | Style                 | Rationale                                                                                   |
+| :--------------------------- | :-------------------- | :------------------------------------------------------------------------------------------ |
+| `error`                      | bold, bright red      | Clang, GCC, and `rustc` agree.                                                              |
+| `warning`                    | bold, bright yellow   | `rustc`'s choice and the conventional caution color; Clang and GCC use magenta.             |
+| `note`                       | bold, bright cyan     | GCC's choice; distinct from error and warning at any brightness.                            |
+| Message                      | bold, no color        | The longest run of text; color belongs on what it points at. Bold only when hung against code. |
+| Frame                        | bold, bright blue     | `rustc`'s choice. Not dim, which several terminals don't implement.                        |
+| Line numbers                 | bright blue           | Not bold, so the one number colored as the reported line stands out.                        |
+| Location in an anchor        | plain                 | The bracket already delimits it.                                                            |
+| Location in the compact form | bold                  | Leads the line with nothing around it.                                                      |
+| The message's marks          | the level color, bold | One assembly from range to sentence.                                                        |
+| Other marks and connectors   | the theme's ramp      | Ties a mark to its words. Not bold or heavy: that emphasis is the message's alone.          |
+| Path                         | dim                   | How the reader got here, not what is wrong.                                                 |
+| Kind                         | dim                   | Only present under a flag.                                                                  |
 
-On a terminal with only the sixteen named colors, those are what is emitted, so
-they render through the palette the user already chose. Where the terminal can
-express more, colors are chosen here and given as RGB, and each of the three
-themes gets a ramp of three:
+On a terminal with only the sixteen named colors those are emitted, so they
+render through the palette the user chose; that is what carries bright yellow,
+which as an RGB value fails against white. Where the terminal can express more,
+colors are given as RGB, and each theme gets a ramp of three:
 
 |         | dark background               | light background              |
 | :------ | :---------------------------- | :---------------------------- |
@@ -380,385 +437,363 @@ themes gets a ramp of three:
 | Note    | `#00829a` `#00bcbc` `#00f3c6` | `#005967` `#007f7f` `#00a78e` |
 
 A ramp is handed out darker, center, lighter, so several ranges on one line read
-as a progression rather than as unrelated colors, and a range with no others of
-its theme beside it takes the center.
+as a progression; a range with no others of its theme beside it takes the
+center. The message's mark always takes the center, and the other problem
+ranges on its line walk the ramp with the center left out.
 
-The three centers sit at one lightness. Bright yellow is over four times the
-luminance of bright red, which would otherwise put a warning above an error on
-an axis that clearly reads as importance. Lightness varies inside a theme but
-not across them: inside a theme a step says "a different range", where across
-themes it would say "a more important one".
+The three centers sit at one lightness: bright yellow is over four times the
+luminance of bright red, which would put a warning above an error on an axis
+that reads as importance. Lightness varies inside a theme, where a step says "a
+different range", but not across themes, where it would say "a more important
+one".
 
-There are two palettes because a color picked to read against black is hard to
-read against white. Which one is used follows `Capabilities::background`, so
-`--terminal-background` and `COLORFGBG` reach it, and a terminal that says
-nothing is taken to be dark.
-
-Dim is used only where a terminal that ignores it loses nothing. A path row at
-full strength is still the text it was, where dimmed line numbers at full
-strength make the frame read as loudly as the code, so line numbers take a color
-instead.
+Which palette is used follows `Capabilities::background`, reached by
+`--terminal-background` and `COLORFGBG`; a terminal that says nothing is taken
+to be dark. Dim is used only where a terminal that ignores it loses nothing: a
+path at full strength is still the text it was, where dimmed line numbers at
+full strength would make the frame as loud as the code.
 
 ### Character set
 
-| Element              | `Charset::Utf8` | `Charset::Ascii` |
-| :------------------- | :-------------- | :--------------- |
-| Frame and connectors | `│ ╭ ├ ╰ ─ ┤`   | `\| . \| ' - \|` |
-| Annotation separator | `·`             | `:`              |
-| Elision              | `┆`             | `:`              |
-| Underlines           | `─ ┬ ╷ ╴ ╶`     | `- - \| - -`     |
-| The margin's pointer | `->`            | `->`             |
+| Element                     | `Charset::Utf8`   | `Charset::Ascii`         |
+| :-------------------------- | :---------------- | :----------------------- |
+| Frame and connectors        | `│ ╭ ├ ╰ ─ ┤ ╯`   | `\| . \| ' - \| '`       |
+| Frame stub above a path row | `╷`               | `\|`                     |
+| Annotation separator        | `·`               | `:`                      |
+| Elision                     | `┆`               | `:`                      |
+| Light marks                 | `─ ┬ ╷ ╴ ╶`       | `- . \| - -`             |
+| The message's marks         | `━ ┳ ┗ ┫ ┃ ╻ ╸ ╺` | `^ ^ ' \| \| ^ ^ ^`      |
+| Out-dented message's reach  | `┏ ┛`             | `. '`                    |
+| A label's tee on the heavy  | `┯`               | `.`                      |
+| The margin's pointer        | `->`              | `->`                     |
 
-The last two underline glyphs are the ends that stop at the center of their
-cell, leaving the gap between touching ranges; ASCII has no half cell and
-gives the gap up.
+The last two light marks and the last two heavy ones are ends that stop at the
+center of their cell, the gap between touching ranges.
 
-The frame, an anchor's bracket, an underline, and a label's connector are all
-drawn as lines through `Terminal::Buffer`, which picks the glyph for the
-character set and forms the corners and tees where lines meet. Only the rows
-below the frame's are chosen here, and each is one column wide either way, so
-the frame lands in the same columns in both character sets.
+Everything is drawn as lines through `Terminal::Buffer`, which picks the glyph
+for the character set and forms corners and tees where lines meet, so a
+connector joins an underline at a junction and a light connector on the heavy
+underline forms `┯`. Each glyph is one column in both character sets, so the
+frame lands in the same columns. A label's connector never joins the message's:
+sharing its column it leaves the shared stretch heavy, and crossing its rows it
+gaps.
 
-Underlines are line drawing rather than a run of characters, which is what lets
-a label's connector join one at a junction the buffer forms; a run of `~` has
-none to offer. A wavy underline isn't available at all, since Unicode has no
-one-column wavy character.
+ASCII has no weights, so weight degrades to one distinction. A cell holding a
+heavy stroke that no line enters from above is `^`, the emphatic underline C++
+compilers taught everyone: the heavy run, the tee the message's own connector
+leaves it by, and a one-column mark the connector stands in for. The connector
+below keeps a label's strokes. A light tee degrades to `.`, the corner for a
+line leaving downward, on a light run or the heavy one: the dashes either side
+draw the through-stroke, and the branch is what the cell has to say when the
+connector below may be rows away with only gaps between. `+` is a crossing
+where lines connect, which a diagnostic never draws.
 
-The ASCII stand-ins keep the axis a line runs through, which leaves `+` meaning
-a crossing and nothing else. The one crossing a diagnostic ever draws is a
-later label's connector passing through the line an out-dented label reaches
-back with. A corner is `.` where its line leaves downward and `'` where it
-arrives from above.
+A run of `~` would offer a connector no junction, and Unicode has no one-column
+wavy character. A glyph also has to be one column in practice, not only by the
+width tables: fonts draw dingbats, emoji-presentation shapes, and everything
+East Asian Ambiguous across two columns, which is why the margin's pointer is
+two ASCII characters.
 
-Being one column by the width tables isn't enough to use a glyph. A font is
-free to draw one across two columns whatever the tables say, and terminals fall
-back to whatever font has the glyph: the dingbats, the geometric shapes with an
-emoji presentation, and everything East Asian Ambiguous all get claimed by fonts
-that draw them wide. That is why the margin's mark is two ASCII characters.
-
-Color and character set are independent, so disabling one never disables the
-other. Every distinction the rendering makes is carried by something other than
-color -- the level word, the frame's shape, the annotation separator -- so plain
-output loses appearance and no information.
+Color and character set are independent, and every distinction is carried by
+something other than color, so plain output loses appearance and no information.
 
 ## Fitting the terminal
 
-What a diagnostic says and the source it says it about compete for the width,
-and they are not equal: nothing a diagnostic says is ever dropped, and source
-outside an underlined span is what gives way.
+Nothing a diagnostic says is ever dropped; source outside a marked range is what
+gives way. The width comes from `COLUMNS` if exported, otherwise from the
+terminal with `TIOCGWINSZ`, and otherwise is the width code is formatted to plus
+the gutter, so a formatted line is shown whole.
 
-There is always a width to fit, taken from `COLUMNS` if it is exported and
-otherwise from the terminal with `TIOCGWINSZ`. If neither is available, the
-target is the width code is formatted to plus what the gutter costs, so a
-formatted line is shown whole and a longer one is still windowed.
+-   A source line too wide is windowed around its range, with `...` at each
+    elided end and the underline shifted to match, since a wrapped source line
+    and a wrapped underline would land on different rows. Ranges sharing a line
+    share one window.
 
--   A source line too wide is elided rather than wrapped, windowed around its
-    span, with `...` marking each elided end and the underline shifted to
-    match. A wrapped source line and a wrapped underline would land on
-    different rows, and the alignment between them is the whole point of a
-    snippet. Spans sharing a line share one window.
+-   Words longer than the width wrap into a column of their own, past the
+    level word, rather than at column zero where a continuation reads as
+    another diagnostic. Wrapping breaks only at spaces outside backticks, so a
+    path, a URL, or a quoted type overhangs rather than splitting.
 
--   A message longer than the width wraps into a column of its own, under
-    itself and past the level word, rather than being left for the terminal to
-    wrap at column zero where a continuation reads as another diagnostic.
-    Wrapping breaks at spaces only, so a path or a type name overhangs rather
-    than being split.
+-   Connectors slide left before any words wrap. Since words start right of
+    every connector, room for one label's words is every connector's to make:
+    each connector right of where the words need to start slides within its
+    own range, only as far as the widest words ask, whoever's words they are.
 
--   A label slides its connector left before it wraps, as far as it has to and
-    never past where its range starts. Where even one unbreakable word is wider
-    than what is left, the label is out-dented to the column the source starts
-    in, and the top of its bar turns right along the row under the underline to
-    reach back to the connector.
+-   A label whose widest word cannot hang even then is out-dented to the
+    source's column, keeping its place in the reading order, with the top of
+    its bar turning right to reach back to its connector. Several such blocks
+    stack in that order.
 
 ## Normalizing source text
 
-Source text is normalized before it is measured or drawn, so the underline lands
-under the right characters whatever the file contains. Tabs expand to the next
-eight-column stop. Bytes with no printable rendering become `<XX>` in hex. A
-trailing carriage return is dropped. Under `Charset::Utf8` everything else is
-handed to `Terminal::Buffer`, which measures double-width characters as two
-columns and combining marks as none, and replaces invalid UTF-8. Under
-`Charset::Ascii` -- chosen from the locale, since the locale says how bytes
-will be decoded whether or not a terminal is attached -- every byte outside
-printable ASCII is escaped, since there is no telling what a terminal decoding
-some other encoding would draw.
-
-The span's start and end are then measured against the normalized text through
-the same buffer that will draw it, which is what guarantees the two agree.
+Source text is normalized before it is measured or drawn. Tabs expand to
+eight-column stops, bytes with no printable rendering become `<XX>`, and a
+trailing carriage return is dropped. Under `Charset::Utf8` the buffer measures
+double-width characters as two columns and combining marks as none, and
+replaces invalid UTF-8. Under `Charset::Ascii`, chosen from the locale since
+the locale says how bytes will be decoded, every byte outside printable ASCII
+is escaped. The range's ends are measured against the normalized text through
+the buffer that draws it, so the two agree.
 
 ## Examples
 
-These are generated from the renderer itself, on a terminal that renders
-24-bit color and Unicode; the last shows what a terminal that takes neither
-gets. Regenerating them is by hand for now -- see the HTML rendering target
-under [Future work](#future-work).
+These are the renderer's output on a terminal with 24-bit color and Unicode,
+and last on one with neither, transcribed by hand; the tour CI checks is
+`toolchain/diagnostics/testdata/fail_diagnostics_demo.carbon`. Generating them
+is the HTML target under [Future work](#future-work).
 
-### Three labels on one line
+### Several labels on one line
 
-The operator and both its operands are marked on the row below the source, and
-the labels naming them are drawn right to left so their connectors never
-cross. The three problem ranges walk the error theme's ramp, darker to
-lighter, and the operator's label ties the syntax to the interface the message
-reports missing, which is a rule the reader has no other way to learn from the
-error.
+The message hangs off the operator, which ties the syntax to the interface it
+reports missing, a rule the reader has no other way to learn. The operands are
+labeled with the types they contributed, since a type is nothing the source can
+show. The marks walk the error ramp around the message's center, the labels
+read in operand order stepping right, and the right operand's connector runs
+beside the message, crossing its run in single cells. That connector stands at
+its range's start rather than its middle: the message's words wanted the
+columns.
 
-<!-- Each example is the renderer's terminal output with its ANSI styling
-transcribed into inline-styled HTML, so that the rendered markdown shows the
-colors. Read this section rendered rather than raw. -->
+<!-- The colored examples are the renderer's terminal output with its ANSI
+styling transcribed into inline-styled HTML, so that the rendered markdown
+shows the colors; the colorless one is a plain code fence. Read this section
+rendered rather than raw. -->
 
 <!-- rumdl-disable -->
 
 <pre>
-<span style="color:#ff7261;font-weight:bold">error: </span><span style="font-weight:bold">type `i32` does not implement interface `Core.MulWith(bool)`
-</span>       <span style="color:#69f;font-weight:bold">╭─┤</span> example2.carbon:137:16
-       <span style="color:#69f;font-weight:bold">┆
-</span><span style="color:#ff7261;font-weight:bold">-&gt;</span> <span style="color:#ff7261;font-weight:bold">137</span> <span style="color:#69f;font-weight:bold">│</span>   return count * flag + cell[n];
-       <span style="color:#ff7261">·</span>          <span style="color:#b55600">──┬──</span> <span style="color:#ff7261">┬</span> <span style="color:#ffbcc8">──┬─
-</span>       <span style="color:#ff7261">·</span>            <span style="color:#b55600">│</span>   <span style="color:#ff7261">│</span>   <span style="color:#ffbcc8">╰──┤</span> right operand has type `bool`
-       <span style="color:#ff7261">·</span>            <span style="color:#b55600">│</span>   <span style="color:#ff7261">╰──┤</span> `*` requires an impl of `Core.MulWith`
-       <span style="color:#ff7261">·</span>            <span style="color:#b55600">╰──┤</span> left operand has type `i32`
-       <span style="color:#69f;font-weight:bold">╰────────────</span>
+       <span style="color:#69f;font-weight:bold">╭─┤</span> example.carbon:4:16
+<span style="color:#ff7261;font-weight:bold">-&gt;</span>   <span style="color:#ff7261;font-weight:bold">4</span> <span style="color:#69f;font-weight:bold">│</span>   return count * flag;
+       <span style="color:#ff7261">·</span>          <span style="color:#b55600">──┬──</span> <span style="color:#ff7261;font-weight:bold">┳</span> <span style="color:#ffbcc8">┬───
+</span>       <span style="color:#ff7261">·</span>            <span style="color:#b55600">│</span>   <span style="color:#ff7261;font-weight:bold">┗━━━━┫</span> <span style="color:#ff7261;font-weight:bold">error: </span><span style="font-weight:bold">type `i32` does not implement interface
+</span>       <span style="color:#ff7261">·</span>            <span style="color:#b55600">│</span>     <span style="color:#ffbcc8">│</span>  <span style="color:#ff7261;font-weight:bold">┃</span>        <span style="font-weight:bold">`Core.MulWith(bool)`
+</span>       <span style="color:#ff7261">·</span>            <span style="color:#b55600">╰──────────┤</span> left operand has type `i32`
+       <span style="color:#ff7261">·</span>                  <span style="color:#ffbcc8">╰──────┤</span> right operand has type `bool`
+       <span style="color:#69f;font-weight:bold">╰────</span>
 </pre>
 
 <!-- rumdl-enable -->
 
 ### Several files, reached by an import
 
-The path rows are dim, so the two anchors read before the steps leading to them.
-The problem's range takes the level's color and the one explaining it the note
-color.
+The problem is in an imported file, so the path by which the reader's own build
+reached it draws above its anchor, dim. The declaration it collides with gets a
+bare anchor, since a label's path is never drawn, and the note marks the name.
 
 <!-- rumdl-disable -->
 
 <pre>
-<span style="color:#ff7261;font-weight:bold">error: </span><span style="font-weight:bold">duplicate name `Shape` being declared in the same scope
-</span>       <span style="color:#69f;font-weight:bold">╷</span> <span style="color:#69f;font-weight:bold">╭──</span> <span style="opacity:.65">imported from: c.carbon:1:1
+       <span style="color:#69f;font-weight:bold">╷</span> <span style="color:#69f;font-weight:bold">╭──</span> <span style="opacity:.65">imported from: c.carbon:2:1
 </span>       <span style="color:#69f;font-weight:bold">├─┤</span> b.carbon:3:1
-       <span style="color:#69f;font-weight:bold">┆
-</span><span style="color:#ff7261;font-weight:bold">-&gt;</span>   <span style="color:#ff7261;font-weight:bold">3</span> <span style="color:#69f;font-weight:bold">│</span> fn Shape() {}
-       <span style="color:#ff7261">·</span> <span style="color:#ff7261">────────────
-</span>       <span style="color:#69f;font-weight:bold">├────────────
-</span>       <span style="color:#69f;font-weight:bold">│</span> <span style="color:#69f;font-weight:bold">╭──</span> <span style="opacity:.65">imported from: c.carbon:1:1
-</span>       <span style="color:#69f;font-weight:bold">├─┤</span> a.carbon:3:1
-       <span style="color:#69f;font-weight:bold">┆
-</span>     <span style="color:#69f">3</span> <span style="color:#69f;font-weight:bold">│</span> class Shape {}
-       <span style="color:#ff7261">·</span> <span style="color:#00bcbc">──────┬──────
-</span>       <span style="color:#ff7261">·</span>       <span style="color:#00bcbc">╰──┤</span> name is previously declared here
-       <span style="color:#69f;font-weight:bold">╰────────────</span>
+<span style="color:#ff7261;font-weight:bold">-&gt;</span>   <span style="color:#ff7261;font-weight:bold">3</span> <span style="color:#69f;font-weight:bold">│</span> fn Shape() {}
+       <span style="color:#ff7261">·</span> <span style="color:#ff7261;font-weight:bold">━━━━━━┳━━━━━
+</span>       <span style="color:#ff7261">·</span>       <span style="color:#ff7261;font-weight:bold">┗━━┫</span> <span style="color:#ff7261;font-weight:bold">error: </span><span style="font-weight:bold">duplicate name `Shape` in the same scope
+</span>       <span style="color:#69f;font-weight:bold">┆
+</span>       <span style="color:#69f;font-weight:bold">├─┤</span> a.carbon:3:7
+     <span style="color:#69f">3</span> <span style="color:#69f;font-weight:bold">│</span> class Shape {}
+       <span style="color:#ff7261">·</span>       <span style="color:#00bcbc">──┬──
+</span>       <span style="color:#ff7261">·</span>         <span style="color:#00bcbc">╰──┤</span> previously declared here
+       <span style="color:#69f;font-weight:bold">╰────</span>
 </pre>
 
 <!-- rumdl-enable -->
 
 ### Without color or Unicode
 
-The frame degrades to the characters `Terminal::Buffer` draws lines with, and
-the underline to `-`. Nothing is dropped, and the shapes still differ: the
-rule closing the frame is not the one that would separate two snippets, and
-the connector turning into a label is not the bar it turns into.
+The message's mark degrades to `^`, every other mark to `-` with a `.` where a
+label leaves it, and the `->`, the `^` run, and the level word still say where
+to look first:
 
-<!-- rumdl-disable -->
-
-<pre>
-error: 1 argument passed to function expecting 0 arguments
-       .-| example.carbon:6:3
+```
+       .-| foo.carbon:4:3
+->   4 |   Run0(1);
+       :   ^^^^^^^
+       :      '--| error: 1 argument passed to function expecting 0 arguments
        :
-     3 | fn Run0() {}
-       : -----------
-       :      '--| calling function declared here, expecting 0 arguments
-       :
--&gt;   6 |   Run0(1);
-       :   -------
-       :      '--| 1 argument passed here
-       '------------
-</pre>
-
-<!-- rumdl-enable -->
+       |-| lib.carbon:1:4
+     1 | fn Run0() {}
+       :    --.-
+       :      '--| calling function declared here
+       '----
+```
 
 ## Implementation
 
-Rendering is a `Diagnostics::Renderer` in
-[`toolchain/diagnostics`](/toolchain/diagnostics), holding the terminal
-capabilities and drawing a `Diagnostic` into a `Terminal::Buffer`. `Loc` is
-data: a filename, a line and column, an extent in bytes, the line's text, and
-the file it came from, and nothing that draws any of them. `StreamConsumer`
-owns a renderer and writes the rendered bytes to its stream. The crash
-handlers that print a location and a snippet go through `PrintSnippet`, which
-draws one span in plain ASCII and shares the normalizing, measuring, and
-windowing rather than the layout.
+`Diagnostics::Renderer` in [`toolchain/diagnostics`](/toolchain/diagnostics)
+holds the terminal capabilities and draws a `Diagnostic` into a
+`Terminal::Buffer`. `Loc` is data and draws nothing. `StreamConsumer` owns a
+renderer and writes its bytes to a stream. The crash handlers' `PrintSnippet`
+draws one range in plain ASCII, sharing the normalizing and windowing but not
+the layout.
 
-Everything the frame is made of is drawn as lines through the buffer, so every
-corner and tee is a junction it forms rather than a glyph named here, and the
-ASCII fallback is whatever it draws lines with.
+Three invariants shape the code:
 
-The renderer repairs what it is given rather than failing on it -- a range
-running past the line it names is clamped, a location missing its parts still
-draws -- because it must never be the reason a compiler dies while reporting a
-problem.
+-   Everything is drawn as lines through the buffer, so every corner and tee is
+    a junction it forms, and the ASCII fallback is whatever it draws lines
+    with. The message's marks are the same lines drawn heavy.
 
-`Terminal::Capabilities::Detect` needs a file descriptor, and diagnostics are
-written to a `llvm::raw_ostream` that may have none, so the driver takes the
-error stream's descriptor alongside the stream. Where there is none, as in
-`file_test` and in unit tests, nothing is detected: detection must not make test
-output depend on the environment a test happens to run in. The width comes from
-`COLUMNS` where it is exported and from `TIOCGWINSZ` otherwise, `COLUMNS` first
-because exporting it is a deliberate statement about the width.
+-   The renderer repairs what it is given rather than failing: a range past the
+    end of its line is clamped, a location missing parts still draws, and
+    overlapping ranges are drawn. Rendering must never be why a compiler dies
+    while reporting a problem.
 
-Nothing is rendered until a diagnostic is emitted, so the cost of drawing is
-entirely in the error path; what every run pays is one `Detect` on the error
-stream. Within that path the buffer is sized to what is drawn, escape sequences
-are computed only where the style changes between adjacent cells, and each
-diagnostic reaches the stream as a single write, which is what keeps it from
-interleaving with another writer partway through.
+-   Nothing depends on the environment unless something measured it.
+    `Terminal::Capabilities::Detect` needs a file descriptor, so the driver
+    passes the error stream's alongside the stream, and where there is none,
+    as in tests, nothing is detected.
+
+Nothing is rendered until a diagnostic is emitted; every run pays one `Detect`.
+Escape sequences are computed only where the style changes between cells, and
+each diagnostic reaches the stream as one write, so it never interleaves with
+another writer.
 
 ### Command line flags
 
 -   `--color=auto|always|never` selects whether to emit color.
--   `--terminal-unicode=auto|always|never` selects whether to draw with box
-    drawing characters, detecting it from the locale by default.
--   `--terminal-background=auto|dark|light` sets the background the text is
-    drawn on, read from `COLORFGBG` by default and assumed dark otherwise.
--   `--no-diagnostic-snippets` drops the source a diagnostic shows, rendering
-    every diagnostic in [the compact form](#the-compact-form).
+-   `--terminal-unicode=auto|always|never` selects box drawing, detected from
+    the locale by default.
+-   `--terminal-background=auto|dark|light` sets the background, read from
+    `COLORFGBG` by default and assumed dark otherwise.
+-   `--no-diagnostic-snippets` renders every diagnostic in
+    [the compact form](#the-compact-form).
+-   `--no-diagnostic-line-numbers` withholds the gutter's numbers and names any
+    later file without a position, leaving the layout the numbered one. This
+    is the form [golden files capture](#testing).
+-   `--include-diagnostic-kind` appends each part's kind, `[NameNotFound]`,
+    dim. Tests match on it.
 
 ### Testing
 
-`renderer_test.cpp` covers the layout directly: the frame's arithmetic, each
-level, missing location parts, tabs, double-width characters, invalid UTF-8,
-spans that run past the end of a line, windowing under both character sets,
-several spans on one line, and the compact form. The arrangements ranges on one
-row can take are swept rather than named one at a time. Each thing a label gives
-up as the width runs out is covered separately -- framed where it wraps, slid,
-out-dented -- because they are chosen one after another, and a test pinning only
-the last would not say which step was wrong. Color is pinned in
-`ColorMode::Ansi16`, where every distinction has to survive sixteen colors,
-and in `Truecolor` for what only exists there: the chosen palettes, the light
-background's, and the ramp a rotation walks.
+`renderer_test.cpp` pins the layout: each row kind, every level, the shapes
+ranges on one row can take (swept rather than named), each thing the line gives
+up as the width runs out (covered separately, since they are chosen one after
+another), both character sets, and color in `Ansi16` and `Truecolor`.
+`renderer_fuzzer` builds a diagnostic from arbitrary input and checks that it
+renders without crashing.
 
-`renderer_fuzzer` builds a diagnostic from its input -- any capabilities, any
-location, ranges past the end of a line, control bytes and invalid UTF-8 in
-every text field -- and draws it with snippets and without, checking the one
-thing that has to hold for every shape: that it renders without crashing.
+File tests cover the rendering end to end. `toolchain/diagnostics/testdata`
+keeps full numbering, and its `fail_rendering.carbon` pins the ASCII form. Every
+other `file_test` runs with `--terminal-unicode=always` and
+`--no-diagnostic-line-numbers`, so its goldens are the frames nearly every
+terminal gets with one location apiece, the leading anchor's, which autoupdate
+maintains as a `[[@LINE...]]` offset. Full numbering would tie a golden to the
+positions of its own `CHECK` lines, and an anchor in a second file names lines
+no offset can express. The rows above the leading anchor, the path, take its
+location in `ToolchainFileTest::FinalizeCheckLines` so a frame moves as one
+block.
 
-`toolchain/diagnostics/testdata` covers the rendering end to end through the
-real compiler. Every other `file_test` runs with `--no-diagnostic-snippets`, so
-its goldens are one line per part with the range spelled in the location: those
-tests are about which diagnostics fire and what they mark, and a frame under
-each one ties the golden to the line numbers of its own `CHECK` lines. A test
-that is about the drawing asks for `--diagnostic-snippets` in its `ARGS` line;
-`ToolchainFileTest::Run` applies the default rather than `GetDefaultArgs`, so a
-test writing its own `ARGS` line still renders compactly unless it asks not
-to.
+Goldens differ from what a user sees in two ways: every file test also passes
+`--include-diagnostic-kind`, so a wrapped block may take a row the kind alone
+pushed it onto, and a test writing any snippet or line-number flag in `ARGS`
+opts out of the default numbering, which the diagnostics tour relies on.
 
 ## Future work
 
-None of this is needed for the rendering to be useful, and some of it is as much
-a change to what a diagnostic carries as to how one is drawn.
+None of this is needed for the rendering to be useful.
 
--   Removing location-less notes. The goal is every note attached to some
-    location: what reaches the renderer with only a filename today --
-    conversions inside compiler-generated thunks, monomorphization, C++ imports
-    without a mapped location -- restructured to carry one, and a diagnostic
-    genuinely about a file as a whole anchored at the file's start or end, with
-    a friendly rendering of that shape that integrates with the rest of the
-    frame. The message row stays, since the renderer draws whatever it is
-    handed, but nothing the toolchain emits should reach it.
+-   Removing location-less notes: everything that reaches the renderer with
+    only a filename, such as conversions in compiler-generated thunks and C++
+    imports without a mapped location, restructured to carry one, and a
+    diagnostic about a file as a whole anchored at its start or end.
 
--   Ranges that span several lines. A `Loc` carries one line of text, so a range
-    covering more is clamped to the first of them, which for a declaration
-    written across several lines is usually its least informative part.
+-   Ranges spanning several lines, which are clamped to their first line today,
+    usually a declaration's least informative part.
 
--   Labels that route compose poorly with each other and with a mark left at
-    the frame's own column. Each out-dents to that column and reaches back
-    along a full-width rule, so several of them stack into a web of rules and
-    crossings, and a single-column mark there -- which a span windowed off the
-    line leaves -- shares the column with a routed bar and reads as one line.
-    A rule that routes a label's leftward neighbors with it, or stacks routed
-    labels below the ones still hanging, would keep the reach-backs from
-    interleaving.
+-   Two ranges on one line too far apart to share a window. The one outside the
+    window is marked at its edge, over the `...`, rather than getting its own
+    view of the line.
 
--   Two spans on one line too far apart to share a window. A snippet shows one
-    window of a line, so the span outside it is marked at the window's edge
-    rather than over its own source; its label then points at the `...` that
-    stands in for what was elided. Showing the far span its own view of the
-    line, the way spans on different lines each get one, would say where it
-    really is.
+-   Marking ranges within the source row, with color on or behind the text,
+    where past two or three the underlines stack faster than a reader can match
+    them; it has to leave the row no worse to read without color.
 
--   Labels in one file interleaved with labels in another -- C++ overload
-    candidates split across headers -- break the one-view-per-file grouping,
-    since the grouping gathers only a run of same-file parts and the path
-    dedup compares only the previous one. Gathering every part of a file under
-    its one anchor regardless of order would restore it.
+-   Styling within a message, so quoted code can be emphasized. The arguments
+    are user data, so scanning for delimiters is wrong; structured styled runs
+    (`rustc`) and semantic markup in the format string (GCC) are worth
+    weighing.
 
--   Marking several spans within a source row, with color on the text or
-    behind it, rather than an annotation row apiece; past two or three the
-    underlines stack up faster than a reader can match them back. Anything
-    drawn on the source row has to leave it no worse to read with no color.
+-   Semantic highlight roles, GCC's idea: a parameter named `expected` or
+    `actual` keeps one color across the diagnostic. Carbon's parameters are
+    already typed.
 
--   Styling within a message, so the code a message quotes can be emphasized.
-    The arguments are user data, so scanning the formatted text for delimiters
-    is the wrong answer; worth weighing are structured styled runs (`rustc`)
-    and semantic markup in the format string (GCC).
+-   Fix-it hints as data, one structure for Carbon's and Clang's: a range,
+    replacement text, and a confidence, so `carbon fix`, an editor, and the
+    renderer work from the same edit. Render them as GCC does, a unified diff
+    of the line as written and as fixed, which also covers a fix that inserts
+    or removes whole lines; Clang's replacement text under a column reads as
+    another annotation.
 
--   Semantic highlight roles, GCC's idea: a diagnostic names a parameter as
-    `expected` or `actual`, and the renderer keeps a role one color across the
-    diagnostic. Carbon's diagnostic parameters are already typed, which is
-    most of what this needs.
+-   Splitting Clang's candidate notes upstream, where Clang knows which half is
+    which, so nothing here has to take them apart by kind.
 
--   Fix-it hints. Carbon diagnostics don't carry them yet, and the ones Clang
-    hands over arrive as labels wording the edit ("insert `;` here") rather
-    than as the edit itself. The plan is one structure for both: a span,
-    replacement text, and how confident the diagnostic is, carried as data so
-    that `carbon fix`, an editor, and the renderer all work from the same
-    edit. The rendering should follow GCC's example rather than Clang's,
-    shaped as a unified diff: the line as written and the line as the fix
-    leaves it, marked as what goes and what arrives. Clang prints the
-    replacement text alone under the column it lands in, which reads as
-    another annotation rather than as an edit, and says nothing for a fix
-    that inserts or removes whole lines; a diff carries both.
+-   A diagnostic inside a macro expansion shows the expansion site's line number
+    with the macro definition's text; the snippet should follow the number.
 
--   A second rendering target, starting with HTML. A cell carries its style as
-    data until `Terminal::Buffer::Render` turns runs of it into escape
-    sequences, so a sink emitting `<span>` elements would walk the same grid.
-    What that buys first is this document, whose examples are regenerated by
-    hand today; GCC templates its source-printing layer on a text-or-HTML
-    parameter for the same reason.
+-   An HTML target. A cell carries its style as data until
+    `Terminal::Buffer::Render`, so a sink emitting `<span>` elements would
+    walk the same grid, and this document's examples would stop being
+    transcribed by hand.
 
--   A screen reader mode. Read aloud, all of this is a line of code followed
-    by a line of punctuation; the answer is probably a different form -- the
-    level and location in words, the range quoted rather than underlined --
-    and needs someone who uses a screen reader to say whether it works.
+-   A screen reader mode, probably a different form with the level and
+    location in words and the range quoted, which needs a screen reader user to
+    judge.
 
 ## Alternatives considered
 
--   Clang and GCC's location-first header, which keeps `file:line:column:` at
-    the start of every line. The message is what the reader is there for, and
-    the tooling argument for the location is served by the language server and
-    by the compact form.
+-   A headline row above the frame, as an earlier iteration read. It spends a
+    row saying at a distance what the message says better on its mark, and
+    splits the cues a reader finds a diagnostic by between the headline and
+    the mark below. What it buys, a fixed row to scan for, the `╭` corner and
+    the margin's `->` buy instead.
 
--   A frame per message, as `rustc` draws. Simpler to generate, but it leaves
-    one diagnostic looking like several.
+-   Stacking labels rightmost first, so no connector crosses another. Every
+    line stayed whole, but the rows read in reverse and the message could land
+    mid-stack. Reading order is worth more than unbroken connectors.
 
--   Closing the anchor into `ariadne`'s tab, `╭─┤ file:1:1 │`. The closing
-    bracket makes the location look like a caption for the frame rather than the
-    place the snippet below it comes from.
+-   Meeting wrapped words at their middle row, where a brace would. A reader
+    following the heavy line then lands partway through the sentence.
 
--   Hanging the path below the anchor instead of above it, so the location the
-    reader cares about comes first. It only reads correctly with the steps
-    reversed, because each row's subject is the file named on the row above it.
+-   Out-denting a label before its words fail to fit, whenever hanging would
+    wrap deeply. At seventy columns a message anchored far right can wrap four
+    ways in a twenty-column column where out-denting would give two clean
+    rows. Hanging is kept: out-denting costs a reach-back row and moves the
+    words away from their mark, and a threshold would be one more guess.
 
--   Underlining with `~`, as Clang does. A run of characters offers a connector
-    no junction to join, so a label has to drop from the row below and leave a
-    gap, and the mark no longer degrades through the same line drawing as the
-    rest of the frame.
+-   Clang and GCC's location-first header. The message is what the reader is
+    there for, and the tooling case for the location is served by the language
+    server and the compact form.
 
--   Highlighting the span in the source row with reverse video instead of
-    underlining below it, which halves the rows a snippet takes. It depends on
-    color to say anything at all, and vertical space is not what is scarce here.
+-   A frame per message, as `rustc` draws: simpler, but one diagnostic looks
+    like several.
 
--   Emoji for the severity. The recognizable ones need a variation selector
-    and are one column wide in some terminals and two in others, and a font
-    that draws one in color ignores the color asked for -- which is the very
-    thing separating a warning from an error at a glance.
+-   A frame per file, separated by blank lines: a blank line stops meaning
+    "next diagnostic", and it spends more rows.
+
+-   A heavier frame, with a blank row under each anchor, a rule between
+    snippets, and a full-width close. Each was a row drawing nothing the
+    neighboring rows didn't already say.
+
+-   A path above every anchor. On anything explanatory it restates the
+    filename, and it was reliably the most eye-catching text in the frame
+    while being the least worth reading.
+
+-   Closing the anchor after the location, `╭─┤ file:1:1 │`, as `ariadne`
+    draws it: the location then looks like a caption rather than where the
+    snippet comes from.
+
+-   Hanging the path below the anchor. It only reads correctly with the steps
+    reversed, since each row's subject is the file named on the row above.
+
+-   Underlining with `~`, as Clang does: a run of characters offers a connector
+    no junction, and doesn't degrade through the same line drawing as the
+    frame.
+
+-   Reverse video on the source row instead of an underline, which halves a
+    snippet's rows. It says nothing without color, and the annotation row is
+    where every connector tees in.
+
+-   Emoji for the severity. They are one column in some terminals and two in
+    others, and a font drawing one in color ignores the color asked for, the
+    very thing separating a warning from an error.
 
 ## References
 
@@ -771,5 +806,5 @@ a change to what a diagnostic carries as to how one is drawn.
 -   [`miette`](https://github.com/zkat/miette), the renderer Nushell uses.
 -   [GCC diagnostic message formatting options](https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Message-Formatting-Options.html)
 -   [`gcc/text-art`](https://gcc.gnu.org/git/?p=gcc.git;a=tree;f=gcc/text-art),
-    GCC's canvas of styled cells, which is the closest thing in another compiler
-    to what `Terminal::Buffer` is.
+    GCC's canvas of styled cells, the closest thing in another compiler to
+    `Terminal::Buffer`.
