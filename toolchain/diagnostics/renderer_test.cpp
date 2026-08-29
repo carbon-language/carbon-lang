@@ -318,7 +318,7 @@ TEST(RendererTest, MergedShowsOneViewOfTheFile) {
                  "       .-| foo.carbon:4:3\n"
                  "       |\n"
                  "     1 | fn Run0() {}\n"
-                 "       : ------------\n"
+                 "       : ------.-----\n"
                  "       :       '--| declared here\n"
                  "       :\n"
                  "->   4 |   Run0(1);\n"
@@ -337,7 +337,7 @@ TEST(RendererTest, MergedShowsASingleSkippedLine) {
                                               "       .-| foo.carbon:3:1\n"
                                               "       |\n"
                                               "     1 | fn Run0() {}\n"
-                                              "       : --\n"
+                                              "       : -.\n"
                                               "       :  '--| here\n"
                                               "     2 |\n"
                                               "->   3 | fn Main() {\n"
@@ -366,7 +366,7 @@ TEST(RendererTest, NotesInAnotherFileGetTheirOwnAnchor) {
                  "       |-| bar.carbon:9:1\n"
                  "       :\n"
                  "     9 | class C {\n"
-                 "       : ---------\n"
+                 "       : ----.----\n"
                  "       :     '--| declared here\n"
                  "       '------------\n"
                  ""));
@@ -387,7 +387,7 @@ TEST(RendererTest, APrimaryLabelTeesIntoItsRange) {
                  "       .-| foo.carbon:4:3\n"
                  "       :\n"
                  "->   4 |   Run0(1);\n"
-                 "       :   -------\n"
+                 "       :   ---.---\n"
                  "       :      '--| 1 argument passed here\n"
                  "       '------------\n"
                  ""));
@@ -507,7 +507,7 @@ TEST(RendererTest, RepeatedSpansAreOneMark) {
                                               "       .-| foo.carbon:4:3\n"
                                               "       :\n"
                                               "->   4 |   Run0(1);\n"
-                                              "       :   -------\n"
+                                              "       :   ---.---\n"
                                               "       :      '--| wrong\n"
                                               "       '------------\n"
                                               ""));
@@ -528,7 +528,7 @@ TEST(RendererTest, ARangeCoveringOthersIsRepairedRatherThanStacked) {
                                               "       .-| foo.carbon:4:3\n"
                                               "       :\n"
                                               "->   4 |   Run0(1);\n"
-                                              "       :   -------\n"
+                                              "       :   --.--.-\n"
                                               "       :     |  '--| argument\n"
                                               "       :     '--| callee\n"
                                               "       '------------\n"
@@ -549,7 +549,7 @@ TEST(RendererTest, ALabelOnASingleColumnRangeDropsStraightDown) {
                                               "       .-| foo.carbon:4:8\n"
                                               "       :\n"
                                               "->   4 |   Run0(1);\n"
-                                              "       :   ---- -\n"
+                                              "       :   --.- .\n"
                                               "       :     |  '--| with this\n"
                                               "       :     '--| indexed here\n"
                                               "       '------------\n"
@@ -851,7 +851,7 @@ TEST(RendererTest, AsciiDrawsAdjacentRangesWithoutTheGap) {
                  "       .-| foo.carbon:4:3\n"
                  "       :\n"
                  "->   4 |   Run0(1);\n"
-                 "       :   -------\n"
+                 "       :   -----.-\n"
                  "       :        '--| with these\n"
                  "       '------------\n"
                  ""));
@@ -885,7 +885,7 @@ TEST(RendererTest, TwoSpansOnOneLineShareItsRow) {
                                               "       .-| foo.carbon:1:4\n"
                                               "       |\n"
                                               "->   1 | fn Run0() {}\n"
-                                              "       : -- ----\n"
+                                              "       : -. ----\n"
                                               "       :  '--| here\n"
                                               "       '------------\n"
                                               ""));
@@ -917,7 +917,7 @@ TEST(RendererTest, LabelsOnOneLineHangRightToLeft) {
          "       .-| foo.carbon:3:16\n"
          "       :\n"
          "->   3 |   return count * flag;\n"
-         "       :          -----   ----\n"
+         "       :          --.--   --.-\n"
          "       :            |       '--| right operand has type `bool`\n"
          "       :            '--| left operand has type `i32`\n"
          "       '------------\n"
@@ -950,7 +950,7 @@ TEST(RendererTest, SpansOnOneLineShareOneWindow) {
          "->   1 | "
          "...xxxxxxxxxxxxxxxxFIRSTxxxxxxxxxxxxxxxSECONDxxxxxxxxxxxxxxxxxxxxxxx."
          "..\n"
-         "       :                    -----               ------\n"
+         "       :                    -----               ---.--\n"
          "       :                                           '--| and here\n"
          "       '------------\n"
          ""));
@@ -981,7 +981,7 @@ TEST(RendererTest, MultipleFilesEachGetAnAnchor) {
                  "       |-| a.carbon:3:1\n"
                  "       :\n"
                  "     3 | class Shape {}\n"
-                 "       : --------------\n"
+                 "       : -------.------\n"
                  "       :        '--| previously declared\n"
                  "       '------------\n"
                  ""));
@@ -1016,7 +1016,7 @@ TEST(RendererTest, ContextLeadsIntoTheAnchorItReached) {
                  "       |-| a.carbon:3:1\n"
                  "       :\n"
                  "     3 | class Shape {}\n"
-                 "       : --------------\n"
+                 "       : -------.------\n"
                  "       :        '--| previously declared\n"
                  "       '------------\n"
                  ""));
@@ -1051,7 +1051,7 @@ TEST(RendererTest, ContextStepsStackInOrder) {
                  "       |-| inner.h:7:6\n"
                  "       :\n"
                  "     7 | void Use(int, int);\n"
-                 "       :      ---\n"
+                 "       :      -.-\n"
                  "       :       '--| candidate not viable\n"
                  "       '------------\n"
                  ""));
@@ -1288,7 +1288,7 @@ TEST(RendererTest, AnnotationsTakeTheColorOfTheirMessage) {
   // color, so each mark matches the words that explain it. Neither is bold: a
   // mark's weight says nothing a terminal renders reliably.
   EXPECT_THAT(rendered, HasSubstr("\x1b[93m-------\n"));
-  EXPECT_THAT(rendered, HasSubstr("\x1b[96m------------\n"));
+  EXPECT_THAT(rendered, HasSubstr("\x1b[96m------.-----\n"));
   // The line the problem is on takes the level's color and its weight. Every
   // other line number is as light as the frame it belongs to, so the one being
   // reported is the one that stands out.
@@ -1308,7 +1308,7 @@ TEST(RendererTest, TheFrameSeparatorIsFrame) {
   // color on every row -- including the note's, whose underline and words are
   // the note color beside it. Coloring it per row made it read as belonging to
   // whichever range was there rather than to the frame.
-  EXPECT_THAT(rendered, HasSubstr("\x1b[93m:\x1b[0m \x1b[96m------------"));
+  EXPECT_THAT(rendered, HasSubstr("\x1b[93m:\x1b[0m \x1b[96m------.-----"));
   EXPECT_THAT(rendered, HasSubstr("\x1b[93m:\x1b[0m       \x1b[96m'--|"));
 }
 
@@ -1505,7 +1505,7 @@ TEST(RendererTest, LineShownBetweenTwoSpansIsWindowedToo) {
                  "       .-| foo.carbon:3:1\n"
                  "       |\n"
                  "     1 | short\n"
-                 "       : ----\n"
+                 "       : --.-\n"
                  "       :   '--| and\n"
                  "     2 | "
                  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -1738,7 +1738,7 @@ TEST(RendererTest, ALabelIsFramedWhenItWraps) {
          "       .-| foo.carbon:2:11\n"
          "       :\n"
          "->   2 |   NeedsIt(\"definitely not the right type\");\n"
-         "       :           ------------------------------\n"
+         "       :           .-----------------------------\n"
          "       :           '--| type `str` does not implement interface\n"
          "       :              | `Core.ImplicitAs(i32)` at all\n"
          "       '------------\n"
@@ -1829,7 +1829,7 @@ TEST(RendererTest, ARoutedLabelUnderAscii) {
          "       .-| foo.carbon:2:11\n"
          "       :\n"
          "->   2 |   NeedsIt(\"definitely not the right type\");\n"
-         "       :           ------------------------------\n"
+         "       :           .-----------------------------\n"
          "       : .---------'\n"
          "       : | type `str` does not implement interface\n"
          "       : | "
@@ -2133,7 +2133,7 @@ TEST(RendererTest, ARangeOnAnotherLineDoesNotStandInForTheLocation) {
                  "       : --\n"
                  "       :\n"
                  "->   4 |   Run0(1);\n"
-                 "       :   -------\n"
+                 "       :   ---.---\n"
                  "       :      '--| here\n"
                  "       '------------\n"
                  ""));
@@ -2345,7 +2345,7 @@ TEST(RendererTest, AMergedPairWithoutFileTextStillElides) {
                                               "       : --\n"
                                               "       :\n"
                                               "     3 | third line\n"
-                                              "       : --\n"
+                                              "       : -.\n"
                                               "       :  '--| here\n"
                                               "       '------------\n"
                                               ""));
@@ -2408,7 +2408,7 @@ TEST(RendererTest, AContextLeadsTheFrameAndTheMessageHangs) {
                  "->   3 | fn Main() {\n"
                  "       :    ----\n"
                  "->   4 |   Run0(1);\n"
-                 "       :   -------\n"
+                 "       :   ---.---\n"
                  "       :      '--| no matching call\n"
                  "       '------------\n"
                  ""));
