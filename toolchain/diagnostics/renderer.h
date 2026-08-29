@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_RENDERER_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_RENDERER_H_
 
-#include <cstdint>
 #include <string>
 
 #include "common/ostream.h"
@@ -22,26 +21,25 @@ struct PreparedPart;
 
 // Draws diagnostics for a terminal.
 //
-// A diagnostic renders as its headline, and then a frame holding everything
-// that explains it: which file, the source there, and the text of each label
-// against the code it marks.
+// A diagnostic renders as one frame holding a snippet of each file it points
+// into. The message's text is placed under the range that is wrong, which has a
+// heavy underline, and begins with the level word. Every label is placed under
+// the range it is attached to.
 //
-//   error: 1 argument passed to function expecting 0 arguments
 //          ╭─┤ foo.carbon:19:3
-//          │
 //        1 │ fn Run0() {}
 //          · ──────┬─────
 //          ·       ╰──┤ calling function declared here
 //          ┆
 //   ->  19 │   Run0(1);
-//          ·   ───┬───
-//          ·      ╰──┤ 1 argument passed here
-//          ╰────────────
+//          ·   ━━━┳━━━
+//          ·      ┗━━┫ error: invalid arguments in function call
+//          ╰────
 //
 // With snippets off, each part of the diagnostic is one line, led by its
 // location and the extent of its range:
 //
-//   foo.carbon:19:3-9: error: 1 argument passed to function expecting 0
+//   foo.carbon:19:3-9: error: invalid arguments in function call
 //   foo.carbon:1:1-12: note: calling function declared here
 //
 // See /toolchain/docs/diagnostics_rendering.md for the full form, the palette,
@@ -91,7 +89,7 @@ class Renderer {
   // Renders the framed form into the geometry `Render` chose.
   auto RenderFramed(Terminal::OutputBufferRef out,
                     llvm::MutableArrayRef<Internal::PreparedPart> parts,
-                    int headline, Level level, int frame_x, int content_x,
+                    int leading, Level level, int frame_x, int content_x,
                     int source_columns, int columns) const -> void;
 
   Terminal::Capabilities capabilities_;
