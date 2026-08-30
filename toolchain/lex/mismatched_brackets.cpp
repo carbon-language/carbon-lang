@@ -309,16 +309,10 @@ struct OpenStackCellKey {
 
   friend auto operator==(const OpenStackCellKey& lhs,
                          const OpenStackCellKey& rhs) -> bool = default;
-
-  friend auto CarbonHashValue(const OpenStackCellKey& key, uint64_t seed)
-      -> HashCode {
-    static_assert(std::has_unique_object_representations_v<OpenStackCellKey>,
-                  "Padding would leave indeterminate bytes for hashing.");
-    Hasher hasher(seed);
-    hasher.HashRaw(key);
-    return static_cast<HashCode>(hasher);
-  }
 };
+
+static_assert(std::has_unique_object_representations_v<OpenStackCellKey>,
+              "Padding would leave indeterminate bytes for hashing.");
 
 // Holds the open-bracket stacks the search reaches.
 //
@@ -480,13 +474,16 @@ static auto GetOuterStatementIntroducerIndent(
 // token it stepped on, or of the enclosing statement introducer if it reaches
 // one.
 //
-// Every step of that walk depends only on the token it is standing on, so the
-// walks from all the tokens share their tails and can be solved in one pass.
-// `walk_result[j]` is what the walk starting at token `j` answers, or
-// `NeedsCaller` when the walk stops before it steps on anything, in which case
-// the answer is the caller's own indentation. Each entry depends only on
-// entries below it, so a single forward pass fills the table, and the answer
-// for token `i` reads the entry for `i - 1`.
+// Performing a separate walk from every token would be quadratic, so dynamic
+// programming is used to compute all of the walks in one pass. Every step of a
+// walk depends only on the token it is standing on, so the walk from token `j`
+// is one step followed by the walk from some earlier token, and its result can
+// be computed from a table of the earlier walks' results: `walk_result[j]`
+// holds the result of the walk starting at token `j`, or `NeedsCaller` when
+// that walk stops before it steps on anything, in which case the result is the
+// caller's own indentation. Each entry depends only on entries at lower
+// indices, so a single forward pass fills the table, and the answer for token
+// `i` is read from the entry for `i - 1`.
 static auto ComputeAssociatedLineIndents(
     llvm::ArrayRef<MismatchedBracketToken> tokens,
     llvm::ArrayRef<int32_t> match_partner) -> llvm::SmallVector<int32_t> {
@@ -1711,15 +1708,17 @@ static auto EnumerateOptimalPaths(llvm::ArrayRef<BeamNode> nodes,
 }
 
 // Finds which of the first optimal path's corrections the optimal repairs
-// disagree about. Each of its corrections must be answered by one making the
-// same repair, named by `repair_key`, in every other path; one with no
-// counterpart in some path is tied.
+// disagree about, treating the first path as the baseline. Two corrections
+// make the same repair when `repair_key` gives them the same key. A baseline
+// correction is agreed upon when every other path contains a counterpart
+// correction making the same repair; if some path has no counterpart for it,
+// it is marked as tied.
 //
-// Repairs are matched by key rather than pairwise, which works because making
-// the same repair is an equivalence relation: the baseline's `n`th correction
-// with a given key is answered by a path exactly when that path has at least
-// `n` corrections with that key. So all that matters is, for each key the
-// baseline uses, the fewest corrections any path has with it.
+// Counterparts are found by counting corrections per key rather than by
+// pairing corrections up individually: the baseline's `n`th correction with a
+// given key has a counterpart in another path exactly when that path has at
+// least `n` corrections with that key. So it suffices to know, for each key
+// the baseline uses, the fewest corrections any path makes with that key.
 static auto FindTiedCorrections(
     llvm::ArrayRef<llvm::SmallVector<BracketCorrection>> all_paths,
     llvm::function_ref<uint64_t(const BracketCorrection&)> repair_key)

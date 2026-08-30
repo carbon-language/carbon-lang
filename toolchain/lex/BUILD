@@ -236,6 +236,7 @@ cc_binary(
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/source:source_buffer",
+        "@abseil-cpp//absl/random",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],

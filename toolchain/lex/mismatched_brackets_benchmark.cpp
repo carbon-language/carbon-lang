@@ -4,11 +4,14 @@
 
 #include <benchmark/benchmark.h>
 
-#include <random>
+#include <algorithm>
+#include <memory>
 #include <string>
 #include <utility>
 
+#include "absl/random/random.h"
 #include "common/check.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
@@ -93,22 +96,7 @@ class SourceBuilder {
   bool at_line_start_ = true;
 };
 
-// A deterministic generator, so that a benchmark measures the same input on
-// every run and across builds.
-class Rng {
- public:
-  explicit Rng(uint64_t seed) : gen_(seed) {}
-
-  // A number in [0, bound).
-  auto Next(int bound) -> int {
-    return static_cast<int>(gen_() % static_cast<uint64_t>(bound));
-  }
-
- private:
-  std::mt19937_64 gen_;
-};
-
-// The bracket kinds a nesting pattern picks from.
+// The bracket kinds a nesting pattern cycles through.
 constexpr Kind OpenKinds[] = {Kind::OpenParen, Kind::OpenSquareBracket,
                               Kind::OpenCurlyBrace};
 
@@ -178,13 +166,12 @@ enum class NestDamage : uint8_t { None, Innermost, Alternating };
 
 static auto DeepNest(int n, NestDamage damage)
     -> llvm::SmallVector<MismatchedBracketToken> {
-  Rng rng(n);
   SourceBuilder builder;
   AddDeclHeader(builder);
 
   llvm::SmallVector<Kind> open_kinds;
   for (int i = 0; i < n; ++i) {
-    Kind open = OpenKinds[rng.Next(std::size(OpenKinds))];
+    Kind open = OpenKinds[i % std::size(OpenKinds)];
     open_kinds.push_back(open);
     builder.EndLine(IndentWidth * (i + 1)).AddAll({Kind::Leaf, open});
   }
@@ -337,26 +324,15 @@ BENCHMARK(BM_RegionSizeCliff)->RangeMultiplier(2)->Range(128, 2048);
 
 // The benchmarks below run whole generated source files through the lexer, so
 // they measure recovery in the place it actually runs, against source shaped
-// like real Carbon code. Each damaged variant has an undamaged counterpart, and
-// the difference between the two is what recovery costs.
+// like real Carbon code. They are modeled on the compile benchmarks, but where
+// those sweep the phases of compilation, these sweep damage strategies applied
+// to the generated source, including no damage at all: the difference between
+// a damaged variant and the undamaged control is what recovery costs.
 //
 // Note that `SourceGen` seeds itself from entropy, so while the size and shape
-// of the generated file are stable from run to run, its exact contents are not,
-// and neither is which declaration the damage below lands in. Treat a single
-// run of these as approximate; the benchmarks above are the reproducible ones.
-
-// How many lines of generated source each of these benchmarks works on. Big
-// enough to hold many declarations, small enough to keep the suite quick.
-constexpr int TargetSourceLines = 2000;
-
-// The representative source these benchmarks damage. Generated once, since
-// generation is far more expensive than lexing it.
-static auto RepresentativeSource() -> llvm::StringRef {
-  static const auto* source =
-      new std::string(Testing::SourceGen::Global().GenApiFileDenseDecls(
-          TargetSourceLines, Testing::SourceGen::DenseDeclParams{}));
-  return *source;
-}
+// of the generated files are stable from run to run, their exact contents are
+// not, and neither is where the damage below lands. Treat a single run of these
+// as approximate; the benchmarks above are the reproducible ones.
 
 // The byte offsets of every bracket in `text`. Brackets inside comments are
 // included, which is fine: the generated comments contain none.
@@ -390,13 +366,13 @@ static auto DeleteOffsets(llvm::StringRef text, llvm::ArrayRef<size_t> offsets)
 static auto DeleteBrackets(llvm::StringRef text, int one_in) -> std::string {
   auto offsets = BracketOffsets(text);
   CARBON_CHECK(!offsets.empty(), "Generated source has no brackets.");
-  Rng rng(one_in);
+  absl::BitGen rng;
 
   llvm::SmallVector<size_t> deleted;
   int count = std::max<int>(1, offsets.size() / one_in);
   llvm::SmallVector<size_t> remaining = offsets;
   for (int i = 0; i < count && !remaining.empty(); ++i) {
-    int pick = rng.Next(remaining.size());
+    int pick = absl::Uniform<int>(rng, 0, remaining.size());
     deleted.push_back(remaining[pick]);
     remaining.erase(remaining.begin() + pick);
   }
@@ -429,7 +405,7 @@ static auto SplitIntoHunks(llvm::StringRef text)
 // closers that would end it are not.
 static auto TruncateHunks(llvm::StringRef text, int one_in) -> std::string {
   auto hunks = SplitIntoHunks(text);
-  Rng rng(one_in);
+  absl::BitGen rng;
 
   // The hunks with a line that could be truncated at.
   llvm::SmallVector<size_t> candidates;
@@ -444,7 +420,7 @@ static auto TruncateHunks(llvm::StringRef text, int one_in) -> std::string {
 
   int count = std::max<int>(1, candidates.size() / one_in);
   for (int i = 0; i < count && !candidates.empty(); ++i) {
-    int pick = rng.Next(candidates.size());
+    int pick = absl::Uniform<int>(rng, 0, candidates.size());
     auto& hunk = hunks[candidates[pick]];
     candidates.erase(candidates.begin() + pick);
 
@@ -454,7 +430,8 @@ static auto TruncateHunks(llvm::StringRef text, int one_in) -> std::string {
         closing_lines.push_back(index);
       }
     }
-    hunk.resize(closing_lines[rng.Next(closing_lines.size())]);
+    hunk.resize(
+        closing_lines[absl::Uniform<int>(rng, 0, closing_lines.size())]);
   }
 
   llvm::SmallVector<llvm::StringRef> lines;
@@ -481,8 +458,6 @@ class LexBenchHelper {
     return Lex::Lex(value_stores_, *source_, options);
   }
 
-  auto text() const -> llvm::StringRef { return text_; }
-
  private:
   std::string text_;
   SharedValueStores value_stores_;
@@ -491,46 +466,119 @@ class LexBenchHelper {
   std::optional<SourceBuffer> source_;
 };
 
-// Lexes `text` end to end, reporting throughput against its size.
-static auto RunLexBenchmark(benchmark::State& state, std::string text) -> void {
-  LexBenchHelper helper(std::move(text));
-  for (auto _ : state) {
-    TokenizedBuffer buffer = helper.Lex();
-    benchmark::DoNotOptimize(buffer);
+// The damage strategies the whole-file benchmarks sweep. `None` is the
+// control: recovery never runs, so it measures the lexer alone.
+enum class Damage : uint8_t {
+  None,
+  OneBracketDeleted,
+  EighthOfBracketsDeleted,
+  OneHunkTruncated,
+  EighthOfHunksTruncated,
+};
+
+// Applies `damage` to `text`.
+static auto ApplyDamage(std::string text, Damage damage) -> std::string {
+  switch (damage) {
+    case Damage::None:
+      return text;
+    case Damage::OneBracketDeleted:
+      return DeleteBrackets(text, BracketOffsets(text).size());
+    case Damage::EighthOfBracketsDeleted:
+      return DeleteBrackets(text, 8);
+    case Damage::OneHunkTruncated:
+      return TruncateHunks(text, SplitIntoHunks(text).size());
+    case Damage::EighthOfHunksTruncated:
+      return TruncateHunks(text, 8);
   }
-  state.SetBytesProcessed(state.iterations() * helper.text().size());
-  state.counters["lines_per_second"] = benchmark::Counter(
-      helper.text().count('\n'), benchmark::Counter::kIsIterationInvariantRate);
 }
 
-// The control for every damaged variant below: the same source, undamaged, so
-// recovery never runs.
-auto BM_LexRepresentativeSource(benchmark::State& state) -> void {
-  RunLexBenchmark(state, RepresentativeSource().str());
+// Benchmark on multiple files of the same size but with different source code
+// in order to avoid branch prediction perfectly learning a particular file's
+// structure and shape, and to average over where the random damage lands. We
+// enforce an upper bound to avoid excessive benchmark time and a lower bound to
+// avoid anchoring on a single source file that may have unrepresentative
+// content.
+//
+// For simplicity, we compute a number of files from the target line count as a
+// heuristic, clamped to the range below.
+static auto ComputeFileCount(int target_lines) -> int {
+  constexpr int MinFiles = 8;
+  [[maybe_unused]] constexpr int MaxFiles = 128;
+  int file_count = (1024 * 1024) / target_lines;
+#ifndef NDEBUG
+  // Use a smaller number of files in debug builds where lexing is slower,
+  // capping at the release-mode minimum.
+  return std::max(1, std::min(MinFiles, file_count));
+#else
+  return std::max(MinFiles, std::min(MaxFiles, file_count));
+#endif
 }
-BENCHMARK(BM_LexRepresentativeSource);
 
-auto BM_LexOneBracketDeleted(benchmark::State& state) -> void {
-  llvm::StringRef text = RepresentativeSource();
-  RunLexBenchmark(state, DeleteBrackets(text, BracketOffsets(text).size()));
-}
-BENCHMARK(BM_LexOneBracketDeleted);
+// Lexes a batch of generated API files of `state.range(0)` target lines each,
+// damaged according to `D`.
+template <Damage D>
+static auto BM_LexApiFileDenseDecls(benchmark::State& state) -> void {
+  Testing::SourceGen gen;
 
-auto BM_LexEighthOfBracketsDeleted(benchmark::State& state) -> void {
-  RunLexBenchmark(state, DeleteBrackets(RepresentativeSource(), 8));
-}
-BENCHMARK(BM_LexEighthOfBracketsDeleted);
+  int target_lines = state.range(0);
+  int num_files = ComputeFileCount(target_lines);
 
-auto BM_LexOneHunkTruncated(benchmark::State& state) -> void {
-  llvm::StringRef text = RepresentativeSource();
-  RunLexBenchmark(state, TruncateHunks(text, SplitIntoHunks(text).size()));
-}
-BENCHMARK(BM_LexOneHunkTruncated);
+  llvm::SmallVector<std::unique_ptr<LexBenchHelper>> helpers;
+  helpers.reserve(num_files);
 
-auto BM_LexEighthOfHunksTruncated(benchmark::State& state) -> void {
-  RunLexBenchmark(state, TruncateHunks(RepresentativeSource(), 8));
+  double total_bytes = 0.0;
+  double total_lines = 0.0;
+  for ([[maybe_unused]] auto _ : llvm::seq(num_files)) {
+    std::string source =
+        ApplyDamage(gen.GenApiFileDenseDecls(
+                        target_lines, Testing::SourceGen::DenseDeclParams{}),
+                    D);
+    total_bytes += source.size();
+    total_lines += llvm::count(source, '\n');
+    helpers.push_back(std::make_unique<LexBenchHelper>(std::move(source)));
+  }
+
+  state.counters["Bytes"] = benchmark::Counter(
+      total_bytes / num_files, benchmark::Counter::kIsIterationInvariantRate);
+  state.counters["Lines"] = benchmark::Counter(
+      total_lines / num_files, benchmark::Counter::kIsIterationInvariantRate);
+
+  // We benchmark in batches of files to avoid benchmarking any peculiarities of
+  // a single file.
+  while (state.KeepRunningBatch(num_files)) {
+    for (ssize_t i = 0; i < num_files;) {
+      // We block optimizing `i` as that has proven both more effective at
+      // blocking the loop from being optimized away and avoiding disruption of
+      // the generated code that we're benchmarking.
+      benchmark::DoNotOptimize(i);
+
+      TokenizedBuffer buffer = helpers[i]->Lex();
+
+      // We use the lex result to step through the files, establishing a
+      // dependency between each lex and the next. This doesn't fully allow us
+      // to measure latency rather than throughput, but minimizes any skew in
+      // measurements from speculating the start of the next lex.
+      i += static_cast<ssize_t>(buffer.size() != 0);
+    }
+  }
 }
-BENCHMARK(BM_LexEighthOfHunksTruncated);
+
+// Applies the shared range configuration used by every whole-file benchmark:
+// 256-line test cases through 256k-line test cases, matching the compile
+// benchmarks.
+static auto ConfigureLexBenchmark(benchmark::Benchmark* b) -> void {
+  b->RangeMultiplier(4)->Range(256, static_cast<int64_t>(256 * 1024));
+}
+
+BENCHMARK(BM_LexApiFileDenseDecls<Damage::None>)->Apply(ConfigureLexBenchmark);
+BENCHMARK(BM_LexApiFileDenseDecls<Damage::OneBracketDeleted>)
+    ->Apply(ConfigureLexBenchmark);
+BENCHMARK(BM_LexApiFileDenseDecls<Damage::EighthOfBracketsDeleted>)
+    ->Apply(ConfigureLexBenchmark);
+BENCHMARK(BM_LexApiFileDenseDecls<Damage::OneHunkTruncated>)
+    ->Apply(ConfigureLexBenchmark);
+BENCHMARK(BM_LexApiFileDenseDecls<Damage::EighthOfHunksTruncated>)
+    ->Apply(ConfigureLexBenchmark);
 
 }  // namespace
 }  // namespace Carbon::Lex
