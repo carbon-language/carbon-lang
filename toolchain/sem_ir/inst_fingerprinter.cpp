@@ -694,7 +694,10 @@ struct Worklist {
           init_size - 1 < cycle_detector_index * 2) {
         CARBON_CHECK(
             todo[init_size - 1] != todo[cycle_detector_index],
-            "Fingerprinting got stuck in a cycle:{0}", [&]() -> std::string {
+            "Fingerprinting got stuck in a cycle"
+#ifndef NDEBUG
+            ":{0}",
+            [&]() -> std::string {
               RawStringOstream out;
               for (auto [next_sem_ir, next] : llvm::ArrayRef(todo).slice(
                        cycle_detector_index,
@@ -704,7 +707,9 @@ struct Worklist {
                            next);
               }
               return out.TakeStr();
-            }());
+            }()
+#endif
+        );
       } else {
         // We've left the region of the stack in which we're looking for this
         // item. Switch to looking for the current item.
