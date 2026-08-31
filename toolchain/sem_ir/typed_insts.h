@@ -2114,7 +2114,7 @@ struct SymbolicBindingPattern {
 struct TemplateInst {
   static constexpr auto Kind = InstKind::TemplateInst.Define<Parse::NodeId>(
       {.ir_name = "template_inst",
-       .expr_category = ActionExprCategory(ExprCategory::Dependent),
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
        .is_lowered = false});
 
   TypeId type_id;
