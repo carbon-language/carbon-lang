@@ -127,7 +127,7 @@ auto FileContext::LowerDefinitions() -> void {
     // imported, build a definition.
     if (functions_.Get(id) && fn_info.definition_id.has_value() &&
         fn_info.special_function_kind !=
-            SemIR::Function::SpecialFunctionKind::FunctionPtrThunk &&
+            SemIR::Function::SpecialFunctionKind::FunctionPointerThunk &&
         !sem_ir().insts().GetImportSource(fn_info.definition_id).has_value()) {
       BuildFunctionDefinition(id);
     }
@@ -449,7 +449,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   llvm::Function* llvm_function = nullptr;
   // If we're calling a function pointer, we don't need an LLVM function.
   if (function.special_function_kind !=
-      SemIR::Function::SpecialFunctionKind::FunctionPtrThunk) {
+      SemIR::Function::SpecialFunctionKind::FunctionPointerThunk) {
     llvm_function =
         GetOrCreateLLVMFunction(function_type_info, function_id, specific_id);
   }

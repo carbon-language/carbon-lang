@@ -144,7 +144,7 @@ class TypeIterator::Step {
     TypeId type_id;
   };
   // Followed by the return type and any parameter types.
-  struct FunctionPtrStart {
+  struct FunctionPointerStart {
     TypeId type_id;
   };
   // Simple wrapped types, followed by the inner type.
@@ -232,7 +232,7 @@ class TypeIterator::Step {
       SymbolicValue, StructFieldName, ClassStartOnly, StructStartOnly,
       TupleStartOnly, InterfaceStartOnly, NamedConstraintStartOnly, ClassStart,
       StructStart, TupleStart, InterfaceStart, NamedConstraintStart, IntStart,
-      ArrayStart, FunctionPtrStart, ConstStart, MaybeUnformedStart,
+      ArrayStart, FunctionPointerStart, ConstStart, MaybeUnformedStart,
       PartialStart, PointerStart, End, Done, Error>;
 
   template <typename T>

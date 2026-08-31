@@ -406,7 +406,7 @@ class Stringifier {
                       ">");
   }
 
-  auto StringifyInst(InstId /*inst_id*/, FunctionPtrType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, FunctionPointerType inst) -> void {
     *out_ << "__fn_ptr(";
     step_stack_->Push(inst.return_form_id);
     step_stack_->PushString(") ->? ");

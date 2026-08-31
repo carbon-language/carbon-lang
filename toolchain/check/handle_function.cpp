@@ -860,11 +860,11 @@ auto HandleParseNode(Context& context, Parse::FnPtrTypeLiteralId node_id)
   }
   auto param_forms_id = context.inst_blocks().Add(converted_param_ids);
 
-  auto value_id = AddInst<SemIR::FunctionPtrType>(
+  auto value_id = AddInst<SemIR::FunctionPointerType>(
       context, node_id,
-      SemIR::FunctionPtrType{.type_id = SemIR::TypeType::TypeId,
-                             .param_forms_id = param_forms_id,
-                             .return_form_id = return_form_inst_id});
+      SemIR::FunctionPointerType{.type_id = SemIR::TypeType::TypeId,
+                                 .param_forms_id = param_forms_id,
+                                 .return_form_id = return_form_inst_id});
   context.node_stack().Push(node_id, value_id);
   return true;
 }

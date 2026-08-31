@@ -98,10 +98,10 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
             // TODO: support `ref` returns from C++.
             return ExprCategory::ReprInitializing;
           }
-          case CARBON_KIND(SemIR::CalleeFunctionPtr function_ptr): {
+          case CARBON_KIND(SemIR::CalleeFunctionPointer function_ptr): {
             auto ptr_type_id =
                 ir->insts().Get(function_ptr.function_ptr_id).type_id();
-            auto ptr_type = ir->types().GetAs<FunctionPtrType>(ptr_type_id);
+            auto ptr_type = ir->types().GetAs<FunctionPointerType>(ptr_type_id);
             return FormToCategory(ir, ptr_type.return_form_id);
           }
         }

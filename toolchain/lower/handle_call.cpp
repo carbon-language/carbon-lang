@@ -779,7 +779,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     };
     CARBON_CHECK(args_ok, "Argument mismatch: {0}", describe_call());
     if (function.special_function_kind ==
-        SemIR::Function::SpecialFunctionKind::FunctionPtrThunk) {
+        SemIR::Function::SpecialFunctionKind::FunctionPointerThunk) {
       llvm::ArrayRef<llvm::Value*> args_ref = args;
       llvm::Value* callee_ptr = args_ref.consume_front();
       call =

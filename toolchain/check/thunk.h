@@ -58,7 +58,7 @@ auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
 
 // Returns the FunctionDecl of a thunk that wraps function pointers with the
 // given type. See `fn_ptr.md` for details.
-auto GetOrCreateFunctionPtrThunk(Context& context, SemIR::TypeId type_id)
+auto GetOrCreateFunctionPointerThunk(Context& context, SemIR::TypeId type_id)
     -> SemIR::InstId;
 
 }  // namespace Carbon::Check

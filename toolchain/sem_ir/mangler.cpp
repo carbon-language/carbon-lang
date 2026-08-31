@@ -243,7 +243,7 @@ auto Mangler::MangleImpl(SemIR::FunctionId function_id,
                    function.builtin_function_kind());
     case SemIR::Function::SpecialFunctionKind::HasCppThunk:
       CARBON_FATAL("C++ functions should have been handled earlier");
-    case SemIR::Function::SpecialFunctionKind::FunctionPtrThunk:
+    case SemIR::Function::SpecialFunctionKind::FunctionPointerThunk:
       CARBON_FATAL("Attempting to mangle call to function pointer");
   }
 

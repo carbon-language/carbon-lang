@@ -189,7 +189,7 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
       PushInstId(const_type.inner_id);
       return Step::ConstStart();
     }
-    case CARBON_KIND(FunctionPtrType function_ptr_type): {
+    case CARBON_KIND(FunctionPointerType function_ptr_type): {
       Push(EndType());
       auto param_form_ids =
           sem_ir_->inst_blocks().Get(function_ptr_type.param_forms_id);
@@ -203,7 +203,7 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
         // TODO should the type structure also reflect the rest of the form
         // (e.g. the category)?
       }
-      return Step::FunctionPtrStart(
+      return Step::FunctionPointerStart(
           {.type_id = sem_ir_->types().GetTypeIdForTypeInstId(inst_id)});
     }
     case CARBON_KIND(ImplWitnessAssociatedConstant assoc): {

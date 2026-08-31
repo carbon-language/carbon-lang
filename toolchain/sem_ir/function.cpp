@@ -35,9 +35,9 @@ auto GetCallee(const File& sem_ir, InstId callee_id,
                  "Invalid callee id in a specific context");
   }
 
-  if (sem_ir.types().Is<FunctionPtrType>(
+  if (sem_ir.types().Is<FunctionPointerType>(
           sem_ir.insts().Get(callee_id).type_id())) {
-    return CalleeFunctionPtr{.function_ptr_id = callee_id};
+    return CalleeFunctionPointer{.function_ptr_id = callee_id};
   }
 
   auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);

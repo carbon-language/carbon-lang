@@ -130,7 +130,7 @@ class TypeStructure : public Printable<TypeStructure> {
     Const,
 
     // The return type and parameter types will appear as other entries.
-    FunctionPtr,
+    FunctionPointer,
 
     // The inner type will appear as another entry.
     MaybeUnformed,

@@ -930,9 +930,9 @@ struct FunctionDecl {
 };
 
 // The type of a function pointer.
-struct FunctionPtrType {
+struct FunctionPointerType {
   static constexpr auto Kind =
-      InstKind::FunctionPtrType.Define<Parse::FnPtrTypeLiteralId>(
+      InstKind::FunctionPointerType.Define<Parse::FnPtrTypeLiteralId>(
           {.ir_name = "fn_ptr_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::WheneverPossible});

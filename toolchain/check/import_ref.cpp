@@ -2558,7 +2558,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                     "require thunks indirectly");
       break;
     }
-    case SemIR::Function::SpecialFunctionKind::FunctionPtrThunk: {
+    case SemIR::Function::SpecialFunctionKind::FunctionPointerThunk: {
       CARBON_FATAL(
           "Function pointer thunks are always file-local, and should never be "
           "imported.");

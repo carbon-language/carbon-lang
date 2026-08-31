@@ -563,11 +563,11 @@ auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
   return thunk_function_id;
 }
 
-static auto BuildFunctionPtrThunk(Context& context,
-                                  SemIR::TypeId fn_ptr_type_id)
+static auto BuildFunctionPointerThunk(Context& context,
+                                      SemIR::TypeId fn_ptr_type_id)
     -> SemIR::InstId {
   auto fn_ptr_type =
-      context.types().GetAs<SemIR::FunctionPtrType>(fn_ptr_type_id);
+      context.types().GetAs<SemIR::FunctionPointerType>(fn_ptr_type_id);
   auto param_form_ids = context.inst_blocks().Get(fn_ptr_type.param_forms_id);
   llvm::SmallVector<SemIR::TypeId> param_type_ids;
   llvm::SmallVector<ParamPatternKind> param_kinds;
@@ -604,15 +604,15 @@ static auto BuildFunctionPtrThunk(Context& context,
        .return_form = FormExprAsForm(context, SemIR::LocId::None,
                                      fn_ptr_type.return_form_id)});
   auto& fn = context.functions().Get(fn_id);
-  fn.SetFunctionPtrCall();
+  fn.SetFunctionPointerCall();
   return fn_decl_id;
 }
 
-auto GetOrCreateFunctionPtrThunk(Context& context, SemIR::TypeId type_id)
+auto GetOrCreateFunctionPointerThunk(Context& context, SemIR::TypeId type_id)
     -> SemIR::InstId {
   return context.function_ptr_thunks()
       .Insert(type_id,
-              [&]() { return BuildFunctionPtrThunk(context, type_id); })
+              [&]() { return BuildFunctionPointerThunk(context, type_id); })
       .value();
 }
 

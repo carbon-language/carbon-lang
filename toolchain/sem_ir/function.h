@@ -53,7 +53,7 @@ struct FunctionFields {
     HasCppThunk,
     // A thunk that calls a function pointer. `special_function_kind_data` is
     // unused.
-    FunctionPtrThunk,
+    FunctionPointerThunk,
   };
 
   // Kinds of virtual modifiers that can apply to functions.
@@ -370,9 +370,9 @@ struct Function : public EntityWithParamsBase,
 
   // Sets that this function is a thunk that represents a function pointer
   // call. See `fn_ptr.md` for details.
-  auto SetFunctionPtrCall() -> void {
+  auto SetFunctionPointerCall() -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
-    special_function_kind = SpecialFunctionKind::FunctionPtrThunk;
+    special_function_kind = SpecialFunctionKind::FunctionPointerThunk;
   }
 };
 
@@ -407,7 +407,7 @@ struct CalleeFunction {
 };
 
 // Information about a callee that's a function pointer.
-struct CalleeFunctionPtr {
+struct CalleeFunctionPointer {
   InstId function_ptr_id;
 };
 
@@ -417,7 +417,7 @@ struct CalleeNonFunction {};
 
 // A variant combining the callee forms.
 using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
-                            CalleeFunctionPtr, CalleeNonFunction>;
+                            CalleeFunctionPointer, CalleeNonFunction>;
 
 // Returns information for the function corresponding to callee_id in
 // caller_specific_id.

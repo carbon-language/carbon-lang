@@ -652,7 +652,8 @@ static auto BuildTypeForInst(FileContext& /*context*/,
 }
 
 static auto BuildTypeForInst(FileContext& context,
-                             SemIR::FunctionPtrType /*inst*/) -> LoweredTypes {
+                             SemIR::FunctionPointerType /*inst*/)
+    -> LoweredTypes {
   return {llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0),
           nullptr};
 }

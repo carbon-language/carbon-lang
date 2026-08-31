@@ -2942,12 +2942,12 @@ static auto GetReturnStorageParamIndexRange(EvalContext& eval_context,
       function_id = callee_function.function_id;
       break;
     }
-    case CARBON_KIND(SemIR::CalleeFunctionPtr callee_function_ptr): {
+    case CARBON_KIND(SemIR::CalleeFunctionPointer callee_function_ptr): {
       auto type_id = eval_context.insts()
                          .Get(callee_function_ptr.function_ptr_id)
                          .type_id();
       auto thunk_decl_id =
-          GetOrCreateFunctionPtrThunk(eval_context.context(), type_id);
+          GetOrCreateFunctionPointerThunk(eval_context.context(), type_id);
       function_id = eval_context.context()
                         .insts()
                         .GetAs<SemIR::FunctionDecl>(thunk_decl_id)

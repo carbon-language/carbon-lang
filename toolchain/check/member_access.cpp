@@ -79,7 +79,7 @@ static auto GetSelfIfInstanceMethod(const SemIR::File& sem_ir,
       // `instance.(Class.StaticMethod)()` like we do in pure Carbon code.
       return overload.self_id;
     }
-    case CARBON_KIND(SemIR::CalleeFunctionPtr _): {
+    case CARBON_KIND(SemIR::CalleeFunctionPointer _): {
       return std::nullopt;
     }
     case CARBON_KIND(SemIR::CalleeError _): {

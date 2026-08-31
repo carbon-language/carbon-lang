@@ -297,7 +297,7 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     case SemIR::Function::SpecialFunctionKind::Builtin:
     case SemIR::Function::SpecialFunctionKind::CoreWitness:
     case SemIR::Function::SpecialFunctionKind::CppThunk:
-    case SemIR::Function::SpecialFunctionKind::FunctionPtrThunk: {
+    case SemIR::Function::SpecialFunctionKind::FunctionPointerThunk: {
       return GetOrAddInst<SemIR::Call>(context, loc_id,
                                        {.type_id = return_type_id,
                                         .callee_id = callee_id,
@@ -343,12 +343,13 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
   }
 }
 
-static auto PerformCallToFunctionPtr(Context& context, SemIR::LocId loc_id,
-                                     SemIR::InstId function_ptr_id,
-                                     llvm::ArrayRef<SemIR::InstId> arg_ids,
-                                     bool /*is_desugared*/) -> SemIR::InstId {
+static auto PerformCallToFunctionPointer(Context& context, SemIR::LocId loc_id,
+                                         SemIR::InstId function_ptr_id,
+                                         llvm::ArrayRef<SemIR::InstId> arg_ids,
+                                         bool /*is_desugared*/)
+    -> SemIR::InstId {
   auto type_id = context.insts().Get(function_ptr_id).type_id();
-  auto thunk_decl_id = GetOrCreateFunctionPtrThunk(context, type_id);
+  auto thunk_decl_id = GetOrCreateFunctionPointerThunk(context, type_id);
   auto thunk_decl = context.insts().GetAs<SemIR::FunctionDecl>(thunk_decl_id);
   SemIR::CalleeFunction callee_function = {
       .function_id = thunk_decl.function_id,
@@ -373,9 +374,9 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids,
                                    is_desugared);
     }
-    case CARBON_KIND(SemIR::CalleeFunctionPtr _): {
-      return PerformCallToFunctionPtr(context, loc_id, callee_id, arg_ids,
-                                      is_desugared);
+    case CARBON_KIND(SemIR::CalleeFunctionPointer _): {
+      return PerformCallToFunctionPointer(context, loc_id, callee_id, arg_ids,
+                                          is_desugared);
     }
     case CARBON_KIND(SemIR::CalleeNonFunction _): {
       return PerformCallToNonFunction(context, loc_id, callee_id, arg_ids);
