@@ -312,10 +312,9 @@ static auto IsCppTemplateCallPerformable(Context& context,
                                          SemIR::InstId callee_id,
                                          llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> bool {
-  if (OperandDependence(context, callee_id) ==
-      SemIR::ConstantDependence::Template) {
-    return false;
-  }
+  CARBON_CHECK(OperandDependence(context, callee_id) <
+               SemIR::ConstantDependence::Template);
+
   for (auto arg_id : arg_ids) {
     if (context.constant_values().Get(arg_id).is_symbolic()) {
       return false;
