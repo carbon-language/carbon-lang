@@ -2130,6 +2130,7 @@ struct TemplateInst {
   static constexpr auto Kind = InstKind::TemplateInst.Define<Parse::NodeId>(
       {.ir_name = "template_inst",
        .expr_category = ComputedExprCategory::SameAsFirstOperand,
+       .constant_kind = InstConstantKind::TemplateOnly,
        .is_lowered = false});
 
   TypeId type_id;
