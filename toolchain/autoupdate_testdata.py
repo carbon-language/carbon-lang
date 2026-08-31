@@ -54,12 +54,12 @@ def main() -> None:
         m = re.search(r"-(\w+)/bin$", link)
         if m:
             build_mode = m[1]
-            print(f"Detected --compiation_mode: {build_mode}")
+            print(f"Detected --compilation_mode: {build_mode}")
         else:
             exit(f"Build mode not found in `bazel-bin` symlink: {link}")
     elif args.verbose:
         print(
-            "Detected --compiation_mode: none (no `./bazel-bin`), "
+            "Detected --compilation_mode: none (no `./bazel-bin`), "
             + f"falling back to {build_mode}"
         )
 
