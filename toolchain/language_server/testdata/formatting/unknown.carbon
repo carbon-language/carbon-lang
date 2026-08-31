@@ -4,23 +4,21 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/language_server/testdata/text_document/change_unknown.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/language_server/testdata/formatting/unknown.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/text_document/change_unknown.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/formatting/unknown.carbon
+// CHECK:STDERR: /test.carbon: warning: unknown file requested [LanguageServerFileUnknown]
+// CHECK:STDERR:
 
 // --- STDIN
 [[@LSP-CALL:initialize:"capabilities": {}]]
-[[@LSP-NOTIFY:textDocument/didChange:
+[[@LSP-CALL:textDocument/formatting:
   "textDocument": {"uri": "file:/test.carbon"},
-  "contentChanges": [{"text": "new content"}]
+  "options": {"tabSize": 2, "insertSpaces": true}
 ]]
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
-// --- AUTOUPDATE-SPLIT
-
-// CHECK:STDERR: /test.carbon: warning: unknown file requested [LanguageServerFileUnknown]
-// CHECK:STDERR:
 // CHECK:STDOUT: Content-Length: 394{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
@@ -42,7 +40,7 @@
 // CHECK:STDOUT: }Content-Length: 51{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
-// CHECK:STDOUT:   "id": 2,
+// CHECK:STDOUT:   "id": 3,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": null
 // CHECK:STDOUT: }
