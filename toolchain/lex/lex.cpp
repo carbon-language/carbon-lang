@@ -281,6 +281,7 @@ static constexpr std::array<bool, 256> IsIdStartByteTable = [] {
     table[c] = true;
   }
   table['_'] = true;
+  table['$'] = true;
   return table;
 }();
 
@@ -292,6 +293,8 @@ static constexpr std::array<bool, 256> IsIdByteTable = [] {
   for (char c = '0'; c <= '9'; ++c) {
     table[c] = true;
   }
+  // Identifiers can only have `$` in start.
+  table['$'] = false;
   return table;
 }();
 
@@ -302,6 +305,12 @@ static constexpr std::array<bool, 256> IsIdByteTable = [] {
 static auto ScanForIdentifierPrefixScalar(llvm::StringRef text, ssize_t i)
     -> llvm::StringRef {
   const ssize_t size = text.size();
+  if (i == 0 && !text.empty()) {
+    if (!IsIdStartByteTable[static_cast<unsigned char>(text[i])]) {
+      return "";
+    }
+    ++i;
+  }
   while (i < size && IsIdByteTable[static_cast<unsigned char>(text[i])]) {
     ++i;
   }
@@ -405,6 +414,13 @@ static auto ScanForIdentifierPrefixX86(llvm::StringRef text)
 
   // Use `ssize_t` for performance here as we index memory in a tight loop.
   ssize_t i = 0;
+  if (!text.empty()) {
+    if (!IsIdStartByteTable[static_cast<unsigned char>(text[i])]) {
+      return "";
+    }
+    ++i;
+  }
+
   const ssize_t size = text.size();
   while ((i + 16) <= size) {
     __m128i input =
@@ -639,6 +655,7 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   table['/'] = &DispatchLexCommentOrSlash;
 
   table['_'] = &DispatchLexKeywordOrIdentifier;
+  table['$'] = &DispatchLexKeywordOrIdentifier;
   // Note that we don't use `llvm::seq` because this needs to be `constexpr`
   // evaluated.
   for (unsigned char c = 'a'; c <= 'z'; ++c) {
@@ -1482,8 +1499,11 @@ auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
   }
 
   // Otherwise we have a generic identifier.
+  auto token_kind = identifier_text.starts_with('$')
+                        ? TokenKind::DollarIdentifier
+                        : TokenKind::Identifier;
   return LexTokenWithPayload(
-      TokenKind::Identifier,
+      token_kind,
       buffer_.value_stores_->identifiers().Add(identifier_text).index,
       byte_offset);
 }

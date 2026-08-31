@@ -4,10 +4,11 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/parse/node_ids.h"
 
 namespace Carbon::Check {
-auto HandleParseNode(Context& context, Parse::PositionalParamExprId node_id)
+auto HandleParseNode(Context& context, Parse::DollarIdentifierExprId node_id)
     -> bool {
-  return context.TODO(node_id, "HandlePositionalParamExpr");
+  return context.TODO(node_id, "HandleDollarIdentifierExpr");
 }
 }  // namespace Carbon::Check

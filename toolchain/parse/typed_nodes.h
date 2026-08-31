@@ -147,6 +147,11 @@ using IdentifierNameExpr =
     LeafNode<NodeKind::IdentifierNameExpr, Lex::IdentifierTokenIndex,
              NodeCategory::Expr>;
 
+// `$0`
+using DollarIdentifierExpr =
+    LeafNode<NodeKind::DollarIdentifierExpr, Lex::DollarIdentifierTokenIndex,
+             NodeCategory::Expr>;
+
 // The `self` value and `Self` type identifier keywords. Typically of the form
 // `self: Self`.
 using SelfValueName =
@@ -1823,19 +1828,11 @@ struct NamedConstraintDefinition {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
-// `$0`
-struct PositionalParamExpr {
-  static constexpr auto Kind = NodeKind::PositionalParamExpr.Define(
-      {.category = NodeCategory::Expr, .child_count = 1});
-
-  IntLiteralId value;
-  Lex::DollarTokenIndex token;
-};
-
 // ---------------------------------------------------------------------------
 
-// A complete source file. Note that there is no corresponding parse node for
-// the file. The file is instead the complete contents of the parse tree.
+// A complete source file. Note that there is no corresponding parse node
+// for the file. The file is instead the complete contents of the parse
+// tree.
 struct File {
   FileStartId start;
   llvm::SmallVector<AnyDeclId> decls;

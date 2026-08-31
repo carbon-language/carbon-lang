@@ -21,31 +21,7 @@ fn foo(bar: i64, baz: i64) {
 // --- with_positional_params.carbon
 
 fn foo {
-  foo($0, $42 + $86);
-}
-
-// --- fail_positional_param_negative_int.carbon
-
-fn foo {
-  // CHECK:STDERR: fail_positional_param_negative_int.carbon:[[@LINE+8]]:8: error: expected unsigned integer literal after `$` [ExpectedUnsignedIntLiteralAfterDollar]
-  // CHECK:STDERR:   foo($-1);
-  // CHECK:STDERR:        ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_positional_param_negative_int.carbon:[[@LINE+4]]:8: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
-  // CHECK:STDERR:   foo($-1);
-  // CHECK:STDERR:        ^
-  // CHECK:STDERR:
-  foo($-1);
-}
-
-// --- fail_positional_param_float.carbon
-
-fn foo {
-  // CHECK:STDERR: fail_positional_param_float.carbon:[[@LINE+4]]:8: error: expected unsigned integer literal after `$` [ExpectedUnsignedIntLiteralAfterDollar]
-  // CHECK:STDERR:   foo($1.0);
-  // CHECK:STDERR:        ^~~
-  // CHECK:STDERR:
-  foo($1.0);
+  foo($0, $42.0 + $86);
 }
 
 // --- with_return_type.carbon
@@ -153,45 +129,14 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
 // CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'foo'
 // CHECK:STDOUT:   │ │   ╭─CallExprStart '('
-// CHECK:STDOUT:   │ │   │ ╭─IntLiteral '0'
-// CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ │   ├─DollarIdentifierExpr '$0'
 // CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
-// CHECK:STDOUT:   │ │   │   ╭─IntLiteral '42'
-// CHECK:STDOUT:   │ │   │ ╭─PositionalParamExpr '$'
-// CHECK:STDOUT:   │ │   │ │ ╭─IntLiteral '86'
-// CHECK:STDOUT:   │ │   │ ├─PositionalParamExpr '$'
+// CHECK:STDOUT:   │ │   │   ╭─DollarIdentifierExpr '$42'
+// CHECK:STDOUT:   │ │   │   ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │   │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │   │ ├─DollarIdentifierExpr '$86'
 // CHECK:STDOUT:   │ │   ├─InfixOperatorPlus '+'
 // CHECK:STDOUT:   │ │ ╭─CallExpr ')'
-// CHECK:STDOUT:   │ ├─ExprStatement ';'
-// CHECK:STDOUT:   ├─FunctionDefinition '}'
-// CHECK:STDOUT:   ├─FileEnd ''
-// CHECK:STDOUT:   (root)
-// CHECK:STDOUT: - filename: fail_positional_param_negative_int.carbon
-// CHECK:STDOUT:   ╭─FileStart ''
-// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'foo'
-// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'foo'
-// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
-// CHECK:STDOUT:   │ │   │   ╭─InvalidParse '-' has_error
-// CHECK:STDOUT:   │ │   │ ╭─PositionalParamExpr '$' has_error
-// CHECK:STDOUT:   │ │   │ ├─IntLiteral '1'
-// CHECK:STDOUT:   │ │   ├─InfixOperatorMinus '-' has_error
-// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
-// CHECK:STDOUT:   │ ├─ExprStatement ';'
-// CHECK:STDOUT:   ├─FunctionDefinition '}'
-// CHECK:STDOUT:   ├─FileEnd ''
-// CHECK:STDOUT:   (root)
-// CHECK:STDOUT: - filename: fail_positional_param_float.carbon
-// CHECK:STDOUT:   ╭─FileStart ''
-// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'foo'
-// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'foo'
-// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
-// CHECK:STDOUT:   │ │   │ ╭─InvalidParse '1.0' has_error
-// CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$' has_error
-// CHECK:STDOUT:   │ │ ╭─CallExpr ')' has_error
 // CHECK:STDOUT:   │ ├─ExprStatement ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

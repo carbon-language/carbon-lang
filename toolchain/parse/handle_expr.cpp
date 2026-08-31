@@ -79,6 +79,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
+    case Lex::TokenKind::DollarIdentifier: {
+      context.AddLeafNode(NodeKind::DollarIdentifierExpr, context.Consume());
+      context.PushState(state);
+      break;
+    }
     case Lex::TokenKind::Fn: {
       context.PushState(state);
       context.PushState(StateKind::LambdaIntroducer);
@@ -239,22 +244,6 @@ auto HandleExprInPostfix(Context& context) -> void {
         state.has_error = true;
       }
       context.AddNode(NodeKind::DesignatorExpr, period, state.has_error);
-      context.PushState(state);
-      break;
-    }
-    case Lex::TokenKind::Dollar: {
-      auto dollar = context.Consume();
-      if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
-                                           NodeKind::IntLiteral)) {
-        CARBON_DIAGNOSTIC(ExpectedUnsignedIntLiteralAfterDollar, Error,
-                          "expected unsigned integer literal after `$`");
-        context.emitter().Emit(*context.position(),
-                               ExpectedUnsignedIntLiteralAfterDollar);
-        context.AddInvalidParse(*context.position());
-        context.ReturnErrorOnState();
-        state.has_error = true;
-      }
-      context.AddNode(NodeKind::PositionalParamExpr, dollar, state.has_error);
       context.PushState(state);
       break;
     }

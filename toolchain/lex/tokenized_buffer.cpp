@@ -105,8 +105,9 @@ auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
     return llvm::StringRef();
   }
 
-  CARBON_CHECK(token_info.kind() == TokenKind::Identifier, "{0}",
-               token_info.kind());
+  CARBON_CHECK(token_info.kind() == TokenKind::Identifier ||
+                   token_info.kind() == TokenKind::DollarIdentifier,
+               "{0}", token_info.kind());
 
   // If this is a raw identifier, obtain its spelling from the source text.
   auto ident = value_stores_->identifiers().Get(token_info.ident_id());

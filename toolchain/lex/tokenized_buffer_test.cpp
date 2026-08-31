@@ -369,7 +369,7 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
 }
 
 TEST_F(LexerTest, HandlesGarbageCharacters) {
-  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\\\"\\\n\"x";
+  constexpr char GarbageText[] = "##💩-#\n#\0#12#\n\\\"\\\n\"x";
   auto& buffer = compile_helper_.GetTokenizedBuffer(
       llvm::StringRef(GarbageText, sizeof(GarbageText) - 1));
   EXPECT_TRUE(buffer.has_errors());
@@ -377,24 +377,20 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
       buffer,
       HasTokens(llvm::ArrayRef<ExpectedToken>{
           {.kind = TokenKind::FileStart, .line = 1, .column = 1},
-          {.kind = TokenKind::Dollar, .line = 1, .column = 1},
-          {.kind = TokenKind::Dollar, .line = 1, .column = 2},
           {.kind = TokenKind::Error,
            .line = 1,
-           .column = 3,
+           .column = 1,
            // 💩 takes 4 bytes, and we count column as bytes offset.
-           .text = llvm::StringRef("💩", 4)},
+           .text = llvm::StringRef("##💩", 6)},
           {.kind = TokenKind::Minus, .line = 1, .column = 7},
-          {.kind = TokenKind::Dollar, .line = 1, .column = 8},
+          {.kind = TokenKind::Error, .line = 1, .column = 8, .text = "#"},
           // newline
-          {.kind = TokenKind::Dollar, .line = 2, .column = 1},
           {.kind = TokenKind::Error,
            .line = 2,
-           .column = 2,
-           .text = llvm::StringRef("\0", 1)},
-          {.kind = TokenKind::Dollar, .line = 2, .column = 3},
+           .column = 1,
+           .text = llvm::StringRef("#\0#", 3)},
           {.kind = TokenKind::IntLiteral, .line = 2, .column = 4, .text = "12"},
-          {.kind = TokenKind::Dollar, .line = 2, .column = 6},
+          {.kind = TokenKind::Error, .line = 2, .column = 6, .text = "#"},
           // newline
           {.kind = TokenKind::Backslash, .line = 3, .column = 1, .text = "\\"},
           {.kind = TokenKind::Error, .line = 3, .column = 2, .text = "\"\\"},

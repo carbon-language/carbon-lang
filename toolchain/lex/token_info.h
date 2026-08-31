@@ -64,11 +64,13 @@ class TokenInfo {
   // check that the kind is valid. Some tokens do not include a payload at all
   // and none of these methods may be called.
   auto ident_id() const -> IdentifierId {
-    CARBON_DCHECK(kind() == TokenKind::Identifier);
+    CARBON_DCHECK(kind() == TokenKind::Identifier ||
+                  kind() == TokenKind::DollarIdentifier);
     return IdentifierId(token_payload_);
   }
   auto set_ident_id(IdentifierId ident_id) -> void {
-    CARBON_DCHECK(kind() == TokenKind::Identifier);
+    CARBON_DCHECK(kind() == TokenKind::Identifier ||
+                  kind() == TokenKind::DollarIdentifier);
     token_payload_ = ident_id.index;
   }
 
