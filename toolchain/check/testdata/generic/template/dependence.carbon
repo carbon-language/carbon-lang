@@ -63,11 +63,11 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.b85212.1: %Copy.WithSelf.Op.type.c85f21.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.assoc_type: type = assoc_entity_type @Copy [concrete]
 // CHECK:STDOUT:   %assoc0: %Copy.assoc_type = assoc_entity element0, imports.%Core.import_ref.b5f [concrete]
-// CHECK:STDOUT:   %.e37: type = type_of_inst @F.%.loc6_10.7 [template]
-// CHECK:STDOUT:   %.a2d: %.e37 = splice_inst @F.%.loc6_10.7 [template]
-// CHECK:STDOUT:   %.3bb: type = type_of_inst @F.%.loc6_10.10 [template]
-// CHECK:STDOUT:   %.fab: %.3bb = splice_inst @F.%.loc6_10.10 [template]
-// CHECK:STDOUT:   %.daa: %.3bb = splice_inst @F.%.loc6_12.2 [template]
+// CHECK:STDOUT:   %.8cb: type = type_of_inst @F.%.loc6_10.7 [template]
+// CHECK:STDOUT:   %.c23: %.8cb = splice_inst @F.%.loc6_10.7 [template]
+// CHECK:STDOUT:   %.57c: type = type_of_inst @F.%.loc6_10.10 [template]
+// CHECK:STDOUT:   %.e63: %.57c = splice_inst @F.%.loc6_10.10 [template]
+// CHECK:STDOUT:   %.254: %.57c = splice_inst @F.%.loc6_12.2 [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %ptr.74f: type = ptr_type %ptr.843 [concrete]
@@ -92,7 +92,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.843, (%Copy.impl_witness.5e7) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.9ea: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.b77: type = fn_type_with_self_type %Copy.WithSelf.Op.type.9ea, %Copy.facet [concrete]
-// CHECK:STDOUT:   %inst.splice_block.b7d: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:   %inst.splice_block.426619.1: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.97c: <bound method> = splice_block %bound_method.d03 {
 // CHECK:STDOUT:       %.091: %ptr.843 = specific_inst @F.%.loc6_10.2, @F(%empty_tuple.type)
 // CHECK:STDOUT:       %impl.elem0.227: %.b77 = impl_witness_access %Copy.impl_witness.5e7, element0 [concrete = %ptr.as.Copy.impl.Op.ee1]
@@ -100,14 +100,14 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.ee1, @ptr.as.Copy.impl.Op(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %inst.splice_block.61d: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.d08: init %ptr.843 = splice_block %ptr.as.Copy.impl.Op.call {
 // CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0.227, @ptr.as.Copy.impl.Op(%empty_tuple.type) [concrete = %ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:       %bound_method.733: <bound method> = bound_method %.091, %specific_fn
 // CHECK:STDOUT:       %ptr.as.Copy.impl.Op.call: init %ptr.843 = call %bound_method.733(%.091)
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.splice_block.97e: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:   %inst.splice_block.426619.3: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.db1: init %ptr.843 = splice_block %.d08 {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -184,24 +184,24 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %require_complete.loc5_25: <witness> = require_complete_type %ptr.loc5_29.1 [template = %require_complete.loc5_25 (constants.%require_complete.fbe)]
 // CHECK:STDOUT:   %require_complete.loc5_32: <witness> = require_complete_type %ptr.loc5_28.1 [template = %require_complete.loc5_32 (constants.%require_complete.ef162c.1)]
 // CHECK:STDOUT:   %.loc6_10.7: <instruction> = compound_member_access_action %.loc6_10.2, constants.%assoc0 [template]
-// CHECK:STDOUT:   %.loc6_10.8: type = type_of_inst %.loc6_10.7 [template = %.loc6_10.8 (constants.%.e37)]
-// CHECK:STDOUT:   %.loc6_10.9: @F.%.loc6_10.8 (%.e37) = splice_inst %.loc6_10.7 [template = %.loc6_10.9 (constants.%.a2d)]
+// CHECK:STDOUT:   %.loc6_10.8: type = type_of_inst %.loc6_10.7 [template = %.loc6_10.8 (constants.%.8cb)]
+// CHECK:STDOUT:   %.loc6_10.9: @F.%.loc6_10.8 (%.8cb) = splice_inst %.loc6_10.7 [template = %.loc6_10.9 (constants.%.c23)]
 // CHECK:STDOUT:   %.loc6_10.10: <instruction> = call_action (%.loc6_10.4), true [template]
-// CHECK:STDOUT:   %.loc6_10.11: type = type_of_inst %.loc6_10.10 [template = %.loc6_10.11 (constants.%.3bb)]
-// CHECK:STDOUT:   %.loc6_10.12: @F.%.loc6_10.11 (%.3bb) = splice_inst %.loc6_10.10 [template = %.loc6_10.12 (constants.%.fab)]
+// CHECK:STDOUT:   %.loc6_10.11: type = type_of_inst %.loc6_10.10 [template = %.loc6_10.11 (constants.%.57c)]
+// CHECK:STDOUT:   %.loc6_10.12: @F.%.loc6_10.11 (%.57c) = splice_inst %.loc6_10.10 [template = %.loc6_10.12 (constants.%.e63)]
 // CHECK:STDOUT:   %.loc6_12.2: <instruction> = convert_to_category_action %.loc6_10.6, element10 [template]
-// CHECK:STDOUT:   %.loc6_12.3: @F.%.loc6_10.11 (%.3bb) = splice_inst %.loc6_12.2 [template = %.loc6_12.3 (constants.%.daa)]
+// CHECK:STDOUT:   %.loc6_12.3: @F.%.loc6_10.11 (%.57c) = splice_inst %.loc6_12.2 [template = %.loc6_12.3 (constants.%.254)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%ptr.loc5_29.1 (%ptr.125)) -> out %return.param: @F.%ptr.loc5_28.1 (%ptr.e8f8f9.1) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%ptr.loc5_29.1 (%ptr.125) = name_ref x, %x
 // CHECK:STDOUT:     %.loc6_10.1: ref @F.%ptr.loc5_28.1 (%ptr.e8f8f9.1) = deref %x.ref
 // CHECK:STDOUT:     %.loc6_10.2: @F.%ptr.loc5_28.1 (%ptr.e8f8f9.1) = acquire_value %.loc6_10.1
-// CHECK:STDOUT:     %.loc6_10.3: type = type_of_inst %.loc6_10.7 [template = %.loc6_10.8 (constants.%.e37)]
-// CHECK:STDOUT:     %.loc6_10.4: @F.%.loc6_10.8 (%.e37) = splice_inst %.loc6_10.7 [template = %.loc6_10.9 (constants.%.a2d)]
-// CHECK:STDOUT:     %.loc6_10.5: type = type_of_inst %.loc6_10.10 [template = %.loc6_10.11 (constants.%.3bb)]
-// CHECK:STDOUT:     %.loc6_10.6: @F.%.loc6_10.11 (%.3bb) = splice_inst %.loc6_10.10 [template = %.loc6_10.12 (constants.%.fab)]
-// CHECK:STDOUT:     %.loc6_12.1: @F.%.loc6_10.11 (%.3bb) = splice_inst %.loc6_12.2 [template = %.loc6_12.3 (constants.%.daa)]
+// CHECK:STDOUT:     %.loc6_10.3: type = type_of_inst %.loc6_10.7 [template = %.loc6_10.8 (constants.%.8cb)]
+// CHECK:STDOUT:     %.loc6_10.4: @F.%.loc6_10.8 (%.8cb) = splice_inst %.loc6_10.7 [template = %.loc6_10.9 (constants.%.c23)]
+// CHECK:STDOUT:     %.loc6_10.5: type = type_of_inst %.loc6_10.10 [template = %.loc6_10.11 (constants.%.57c)]
+// CHECK:STDOUT:     %.loc6_10.6: @F.%.loc6_10.11 (%.57c) = splice_inst %.loc6_10.10 [template = %.loc6_10.12 (constants.%.e63)]
+// CHECK:STDOUT:     %.loc6_12.1: @F.%.loc6_10.11 (%.57c) = splice_inst %.loc6_12.2 [template = %.loc6_12.3 (constants.%.254)]
 // CHECK:STDOUT:     return %.loc6_12.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -245,13 +245,13 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc5_25 => constants.%complete_type.2f1
 // CHECK:STDOUT:   %require_complete.loc5_32 => constants.%complete_type.2ab
-// CHECK:STDOUT:   %.loc6_10.7 => constants.%inst.splice_block.b7d
+// CHECK:STDOUT:   %.loc6_10.7 => constants.%inst.splice_block.426619.1
 // CHECK:STDOUT:   %.loc6_10.8 => <bound method>
 // CHECK:STDOUT:   %.loc6_10.9 => invalid
-// CHECK:STDOUT:   %.loc6_10.10 => constants.%inst.splice_block.61d
+// CHECK:STDOUT:   %.loc6_10.10 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc6_10.11 => constants.%ptr.843
 // CHECK:STDOUT:   %.loc6_10.12 => invalid
-// CHECK:STDOUT:   %.loc6_12.2 => constants.%inst.splice_block.97e
+// CHECK:STDOUT:   %.loc6_12.2 => constants.%inst.splice_block.426619.3
 // CHECK:STDOUT:   %.loc6_12.3 => invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -278,7 +278,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %.869: type = type_of_inst @F.%.loc6_16.3 [template]
 // CHECK:STDOUT:   %.dca: %.869 = splice_inst @F.%.loc6_16.3 [template]
 // CHECK:STDOUT:   %tuple.type.f7a: type = tuple_type (<instruction>) [concrete]
-// CHECK:STDOUT:   %.a65: %tuple.type.a5e = splice_inst @F.%tuple.elem0 [template]
+// CHECK:STDOUT:   %.805: %tuple.type.a5e = splice_inst @F.%tuple.elem0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -327,7 +327,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %.loc6_16.5: @F.%.loc6_16.4 (%.869) = splice_inst %.loc6_16.3 [template = %.loc6_16.5 (constants.%.dca)]
 // CHECK:STDOUT:   %.loc6_17.2: %tuple.type.f7a = initialize_action %.loc6_16.2, %tuple.type, %return.param, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc6_17.2, element0 [template]
-// CHECK:STDOUT:   %.loc6_17.3: @F.%tuple.type (%tuple.type.a5e) = splice_inst %tuple.elem0 [template = %.loc6_17.3 (constants.%.a65)]
+// CHECK:STDOUT:   %.loc6_17.3: @F.%tuple.type (%tuple.type.a5e) = splice_inst %tuple.elem0 [template = %.loc6_17.3 (constants.%.805)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @F.%tuple.type (%tuple.type.a5e) {
 // CHECK:STDOUT:   !entry:
@@ -336,7 +336,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:     %U.ref.loc6: type = name_ref U, %U.loc5_33.2 [symbolic = %U.loc5_33.1 (constants.%U)]
 // CHECK:STDOUT:     %.loc6_16.1: type = type_of_inst %.loc6_16.3 [template = %.loc6_16.4 (constants.%.869)]
 // CHECK:STDOUT:     %.loc6_16.2: @F.%.loc6_16.4 (%.869) = splice_inst %.loc6_16.3 [template = %.loc6_16.5 (constants.%.dca)]
-// CHECK:STDOUT:     %.loc6_17.1: @F.%tuple.type (%tuple.type.a5e) = splice_inst %tuple.elem0 [template = %.loc6_17.3 (constants.%.a65)]
+// CHECK:STDOUT:     %.loc6_17.1: @F.%tuple.type (%tuple.type.a5e) = splice_inst %tuple.elem0 [template = %.loc6_17.3 (constants.%.805)]
 // CHECK:STDOUT:     return %.loc6_17.1 to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
