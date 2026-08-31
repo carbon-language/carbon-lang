@@ -341,13 +341,18 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
 
       llvm::SmallVector<SemIR::InstId> inst_ids;
       inst_ids.push_back(callee_id);
-      // Wrap the template args in a `TemplateInst` so that all symbolic
+      // Wrap symbolic template args in a `TemplateInst` so that all symbolic
       // arguments are treated as templates.
       for (auto arg_id : arg_ids) {
-        auto arg = context.insts().Get(arg_id);
-        inst_ids.push_back(AddInst(
-            context, SemIR::LocId(arg_id),
-            SemIR::TemplateInst{.type_id = arg.type_id(), .inst_id = arg_id}));
+        if (context.constant_values().Get(arg_id).is_symbolic()) {
+          auto arg = context.insts().Get(arg_id);
+          inst_ids.push_back(
+              AddInst(context, SemIR::LocId(arg_id),
+                      SemIR::TemplateInst{.type_id = arg.type_id(),
+                                          .inst_id = arg_id}));
+        } else {
+          inst_ids.push_back(arg_id);
+        }
       }
 
       auto inst_block_id = context.inst_blocks().Add(inst_ids);
