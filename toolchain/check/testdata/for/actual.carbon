@@ -297,7 +297,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4: type = splice_block %IntLiteral.ref [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
-// CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:       %Core.ref.loc4: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc4_17.2: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_17.1 (constants.%N)]
@@ -417,14 +417,14 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IntRange.Make.type: type = fn_type @IntRange.Make, @IntRange(%N.loc4_17.1) [symbolic = %IntRange.Make.type (constants.%IntRange.Make.type.522)]
 // CHECK:STDOUT:   %IntRange.Make: @IntRange.%IntRange.Make.type (%IntRange.Make.type.522) = struct_value () [symbolic = %IntRange.Make (constants.%IntRange.Make.8ef)]
-// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N.loc4_17.1) [symbolic = %Int (constants.%Int.67af24.1)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int [symbolic = %require_complete (constants.%require_complete.4dfb92.1)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Int [symbolic = %pattern_type (constants.%pattern_type.142cb7.1)]
+// CHECK:STDOUT:   %Int.loc22_32.2: type = class_type @Int, @Int(%N.loc4_17.1) [symbolic = %Int.loc22_32.2 (constants.%Int.67af24.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc22_32.2 [symbolic = %require_complete (constants.%require_complete.4dfb92.1)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Int.loc22_32.2 [symbolic = %pattern_type (constants.%pattern_type.142cb7.1)]
 // CHECK:STDOUT:   %start.patt: @IntRange.%pattern_type (%pattern_type.142cb7.1) = ref_binding_pattern start [symbolic = %start.patt (constants.%start.patt.477)]
 // CHECK:STDOUT:   %IntRange: type = class_type @IntRange, @IntRange(%N.loc4_17.1) [symbolic = %IntRange (constants.%IntRange.2c4)]
-// CHECK:STDOUT:   %IntRange.elem: type = unbound_element_type %IntRange, %Int [symbolic = %IntRange.elem (constants.%IntRange.elem.bed)]
+// CHECK:STDOUT:   %IntRange.elem: type = unbound_element_type %IntRange, %Int.loc22_32.2 [symbolic = %IntRange.elem (constants.%IntRange.elem.bed)]
 // CHECK:STDOUT:   %end.patt: @IntRange.%pattern_type (%pattern_type.142cb7.1) = ref_binding_pattern end [symbolic = %end.patt (constants.%end.patt.535)]
-// CHECK:STDOUT:   %struct_type.start.end: type = struct_type {.start: @IntRange.%Int (%Int.67af24.1), .end: @IntRange.%Int (%Int.67af24.1)} [symbolic = %struct_type.start.end (constants.%struct_type.start.end.d4d)]
+// CHECK:STDOUT:   %struct_type.start.end: type = struct_type {.start: @IntRange.%Int.loc22_32.2 (%Int.67af24.1), .end: @IntRange.%Int.loc22_32.2 (%Int.67af24.1)} [symbolic = %struct_type.start.end (constants.%struct_type.start.end.d4d)]
 // CHECK:STDOUT:   %complete_type.loc24_1.2: <witness> = complete_type_witness %struct_type.start.end [symbolic = %complete_type.loc24_1.2 (constants.%complete_type.aa1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -499,8 +499,18 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc9: <witness> = impl_self_witness @IntRange.as.Iterate.impl.%Self.ref, @Iterate [symbolic = @IntRange.as.Iterate.impl.%.loc9_87 (constants.%.84c)]
-// CHECK:STDOUT:     %.loc22: @IntRange.%IntRange.elem (%IntRange.elem.bed) = field_decl start, element0 [concrete]
-// CHECK:STDOUT:     %.loc23: @IntRange.%IntRange.elem (%IntRange.elem.bed) = field_decl end, element1 [concrete]
+// CHECK:STDOUT:     %field_decl.loc22: @IntRange.%IntRange.elem (%IntRange.elem.bed) = field_decl start, element0, %Int.loc22_32.1 in [concrete] {
+// CHECK:STDOUT:       %Core.ref.loc22: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:       %Int.ref.loc22: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
+// CHECK:STDOUT:       %N.ref.loc22: Core.IntLiteral = name_ref N, %N.loc4_17.2 [symbolic = %N.loc4_17.1 (constants.%N)]
+// CHECK:STDOUT:       %Int.loc22_32.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc22_32.2 (constants.%Int.67af24.1)]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %field_decl.loc23: @IntRange.%IntRange.elem (%IntRange.elem.bed) = field_decl end, element1, %Int.loc23 in [concrete] {
+// CHECK:STDOUT:       %Core.ref.loc23: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:       %Int.ref.loc23: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
+// CHECK:STDOUT:       %N.ref.loc23: Core.IntLiteral = name_ref N, %N.loc4_17.2 [symbolic = %N.loc4_17.1 (constants.%N)]
+// CHECK:STDOUT:       %Int.loc23: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc22_32.2 (constants.%Int.67af24.1)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc24_1.1: <witness> = complete_type_witness constants.%struct_type.start.end.d4d [symbolic = %complete_type.loc24_1.2 (constants.%complete_type.aa1)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc24_1.1
 // CHECK:STDOUT:
@@ -508,8 +518,8 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:     .Self = constants.%IntRange.2c4
 // CHECK:STDOUT:     .N = <poisoned>
 // CHECK:STDOUT:     .Make = %IntRange.Make.decl
-// CHECK:STDOUT:     .start [private] = %.loc22
-// CHECK:STDOUT:     .end [private] = %.loc23
+// CHECK:STDOUT:     .start [private] = %field_decl.loc22
+// CHECK:STDOUT:     .end [private] = %field_decl.loc23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -599,7 +609,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   fn(%self.param: @IntRange.as.Iterate.impl.NewCursor.%IntRange (%IntRange.2c4)) -> out %return.param: @IntRange.as.Iterate.impl.NewCursor.%Int.loc10_37.1 (%Int.67af24.1) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @IntRange.as.Iterate.impl.NewCursor.%IntRange (%IntRange.2c4) = name_ref self, %self
-// CHECK:STDOUT:     %start.ref: @IntRange.as.Iterate.impl.NewCursor.%IntRange.elem (%IntRange.elem.bed) = name_ref start, @IntRange.%.loc22 [concrete = @IntRange.%.loc22]
+// CHECK:STDOUT:     %start.ref: @IntRange.as.Iterate.impl.NewCursor.%IntRange.elem (%IntRange.elem.bed) = name_ref start, @IntRange.%field_decl.loc22 [concrete = @IntRange.%field_decl.loc22]
 // CHECK:STDOUT:     %.loc10_52.1: ref @IntRange.as.Iterate.impl.NewCursor.%Int.loc10_37.1 (%Int.67af24.1) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc10_52.2: @IntRange.as.Iterate.impl.NewCursor.%Int.loc10_37.1 (%Int.67af24.1) = acquire_value %.loc10_52.1
 // CHECK:STDOUT:     %impl.elem0.loc10_52.1: @IntRange.as.Iterate.impl.NewCursor.%.loc10_52.6 (%.c60) = impl_witness_access constants.%Copy.lookup_impl_witness.df6, element0 [symbolic = %impl.elem0.loc10_52.2 (constants.%impl.elem0.284)]
@@ -713,7 +723,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %value.ref.loc13: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_37.1 (%Int.67af24.1) = name_ref value, %value
 // CHECK:STDOUT:     %self.ref: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.2c4) = name_ref self, %self
-// CHECK:STDOUT:     %end.ref: @IntRange.as.Iterate.impl.Next.%IntRange.elem (%IntRange.elem.bed) = name_ref end, @IntRange.%.loc23 [concrete = @IntRange.%.loc23]
+// CHECK:STDOUT:     %end.ref: @IntRange.as.Iterate.impl.Next.%IntRange.elem (%IntRange.elem.bed) = name_ref end, @IntRange.%field_decl.loc23 [concrete = @IntRange.%field_decl.loc23]
 // CHECK:STDOUT:     %.loc13_23.1: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_37.1 (%Int.67af24.1) = class_element_access %self.ref, element1
 // CHECK:STDOUT:     %.loc13_23.2: @IntRange.as.Iterate.impl.Next.%Int.loc11_37.1 (%Int.67af24.1) = acquire_value %.loc13_23.1
 // CHECK:STDOUT:     %OrderedWith.type.loc13_17.1: type = facet_type <@OrderedWith, @OrderedWith(constants.%Int.67af24.1)> [symbolic = %OrderedWith.type.loc13_17.2 (constants.%OrderedWith.type.6f8)]
@@ -829,7 +839,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IntRange.Make.type => constants.%IntRange.Make.type.522
 // CHECK:STDOUT:   %IntRange.Make => constants.%IntRange.Make.8ef
-// CHECK:STDOUT:   %Int => constants.%Int.67af24.1
+// CHECK:STDOUT:   %Int.loc22_32.2 => constants.%Int.67af24.1
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4dfb92.1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.142cb7.1
 // CHECK:STDOUT:   %start.patt => constants.%start.patt.477
@@ -919,7 +929,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %IntRange.Make.type => constants.%IntRange.Make.type.d27
 // CHECK:STDOUT:   %IntRange.Make => constants.%IntRange.Make.9ef
-// CHECK:STDOUT:   %Int => constants.%i32
+// CHECK:STDOUT:   %Int.loc22_32.2 => constants.%i32
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %start.patt => constants.%start.patt.c23
@@ -1054,8 +1064,8 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %Main.import_ref.e06: <witness> = import_ref Main//lib, loc24_1, loaded [symbolic = @IntRange.%complete_type (constants.%complete_type.aa1)]
 // CHECK:STDOUT:   %Main.import_ref.663 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.ac1 = import_ref Main//lib, loc5_57, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b9f = import_ref Main//lib, loc22_20, unloaded
-// CHECK:STDOUT:   %Main.import_ref.004 = import_ref Main//lib, loc23_18, unloaded
+// CHECK:STDOUT:   %Main.import_ref.a12 = import_ref Main//lib, loc22_20, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b83 = import_ref Main//lib, loc23_18, unloaded
 // CHECK:STDOUT:   %Main.import_ref.6b552a.2: Core.IntLiteral = import_ref Main//lib, loc4_17, loaded [symbolic = @IntRange.%N (constants.%N)]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.edf: @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
@@ -1107,8 +1117,8 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.663
 // CHECK:STDOUT:     .Make = imports.%Main.import_ref.ac1
-// CHECK:STDOUT:     .start [private] = imports.%Main.import_ref.b9f
-// CHECK:STDOUT:     .end [private] = imports.%Main.import_ref.004
+// CHECK:STDOUT:     .start [private] = imports.%Main.import_ref.a12
+// CHECK:STDOUT:     .end [private] = imports.%Main.import_ref.b83
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

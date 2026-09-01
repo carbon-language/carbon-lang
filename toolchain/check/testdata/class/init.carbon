@@ -147,16 +147,21 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc16: %Class.elem.b98 = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   %.loc17: %Class.elem.8da = field_decl next, element1 [concrete]
+// CHECK:STDOUT:   %field_decl.loc16: %Class.elem.b98 = field_decl n, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %field_decl.loc17: %Class.elem.8da = field_decl next, element1, %ptr in [concrete] {
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr.7ee]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n.next [concrete = constants.%complete_type.dc3]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .n = %.loc16
+// CHECK:STDOUT:   .n = %field_decl.loc16
 // CHECK:STDOUT:   .Class = <poisoned>
-// CHECK:STDOUT:   .next = %.loc17
+// CHECK:STDOUT:   .next = %field_decl.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%n.param: %i32, %next.param: %ptr.7ee) -> out %return.param: %Class {

@@ -177,7 +177,9 @@ class A {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %A.AF.decl: %A.AF.type = fn_decl @A.AF [concrete = constants.%A.AF] {} {}
-// CHECK:STDOUT:   %.loc50: %A.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %A.elem = field_decl a, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.a92 [concrete = constants.%complete_type.388]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -185,14 +187,16 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT:   .AF = %A.AF.decl
-// CHECK:STDOUT:   .a = %.loc50
+// CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %B.BF.decl: %B.BF.type = fn_decl @B.BF [concrete = constants.%B.BF] {} {}
-// CHECK:STDOUT:   %.loc20: %B.elem = field_decl b, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %B.elem = field_decl b, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.b.0bf [concrete = constants.%complete_type.330]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -200,7 +204,7 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .C = %C.decl
 // CHECK:STDOUT:   .BF = %B.BF.decl
-// CHECK:STDOUT:   .b = %.loc20
+// CHECK:STDOUT:   .b = %field_decl
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .AF = <poisoned>
@@ -210,7 +214,9 @@ class A {
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %D.DF.decl: %D.DF.type = fn_decl @D.DF [concrete = constants.%D.DF] {} {}
 // CHECK:STDOUT:   %C.CF.decl: %C.CF.type = fn_decl @C.CF [concrete = constants.%C.CF] {} {}
-// CHECK:STDOUT:   %.loc46: %C.elem = field_decl c, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %C.elem = field_decl c, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.c.73d [concrete = constants.%complete_type.8f8]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -218,7 +224,7 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .D = %D.decl
 // CHECK:STDOUT:   .CF = %C.CF.decl
-// CHECK:STDOUT:   .c = %.loc46
+// CHECK:STDOUT:   .c = %field_decl
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>
@@ -229,7 +235,9 @@ class A {
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %D.F.decl: %D.F.type = fn_decl @D.F [concrete = constants.%D.F] {} {}
 // CHECK:STDOUT:   %D.DF.decl: %D.DF.type = fn_decl @D.DF [concrete = constants.%D.DF] {} {}
-// CHECK:STDOUT:   %.loc28: %D.elem = field_decl d, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %D.elem = field_decl d, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.d.bde [concrete = constants.%complete_type.5d0]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -237,7 +245,7 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .F = %D.F.decl
 // CHECK:STDOUT:   .DF = %D.DF.decl
-// CHECK:STDOUT:   .d = %.loc28
+// CHECK:STDOUT:   .d = %field_decl
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>

@@ -75,6 +75,7 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
 // of matching the given binding pattern. The binding is not added to any block,
 // or to `context.bind_name_map()`.
 auto AddBindingForPattern(Context& context, SemIR::LocId name_loc,
+                          SemIR::ExprRegionId type_region_id,
                           SemIR::AnyBindingPattern pattern,
                           SemIR::TypeId binding_type_id, SemIR::InstId value_id)
     -> SemIR::InstId;

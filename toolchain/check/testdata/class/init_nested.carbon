@@ -98,28 +98,36 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %.loc16: %Inner.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   %.loc17: %Inner.elem = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   %field_decl.loc16: %Inner.elem = field_decl a, element0, %i32.loc16 in [concrete] {
+// CHECK:STDOUT:     %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %field_decl.loc17: %Inner.elem = field_decl b, element1, %i32.loc17 in [concrete] {
+// CHECK:STDOUT:     %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.7b9]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .a = %.loc16
-// CHECK:STDOUT:   .b = %.loc17
+// CHECK:STDOUT:   .a = %field_decl.loc16
+// CHECK:STDOUT:   .b = %field_decl.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %.loc23: %Outer.elem = field_decl c, element0 [concrete]
-// CHECK:STDOUT:   %.loc24: %Outer.elem = field_decl d, element1 [concrete]
+// CHECK:STDOUT:   %field_decl.loc23: %Outer.elem = field_decl c, element0, %Inner.ref.loc23 in [concrete] {
+// CHECK:STDOUT:     %Inner.ref.loc23: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %field_decl.loc24: %Outer.elem = field_decl d, element1, %Inner.ref.loc24 in [concrete] {
+// CHECK:STDOUT:     %Inner.ref.loc24: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.c.d.899 [concrete = constants.%complete_type.890]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Outer
 // CHECK:STDOUT:   .Inner = <poisoned>
-// CHECK:STDOUT:   .c = %.loc23
-// CHECK:STDOUT:   .d = %.loc24
+// CHECK:STDOUT:   .c = %field_decl.loc23
+// CHECK:STDOUT:   .d = %field_decl.loc24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeInner() -> out %return.param: %Inner;

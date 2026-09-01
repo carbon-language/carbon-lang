@@ -108,7 +108,9 @@ fn Class(T: type).F(unused self, unused n: T) {}
 // CHECK:STDOUT:   %complete_type.loc18_1.2: <witness> = complete_type_witness %struct_type.a [symbolic = %complete_type.loc18_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc16: @Class.%Class.elem (%Class.elem) = field_decl a, element0 [concrete]
+// CHECK:STDOUT:     %field_decl: @Class.%Class.elem (%Class.elem) = field_decl a, element0, %T.ref in [concrete] {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc15_14.2 [symbolic = %T.loc15_14.1 (constants.%T)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.F.decl: @Class.%Class.F.type (%Class.F.type) = fn_decl @Class.F [symbolic = @Class.%Class.F (constants.%Class.F)] {
 // CHECK:STDOUT:       %self.param_patt.loc20: @Class.F.%pattern_type.loc17_8 (%pattern_type.36e) = value_param_pattern [symbolic = %self.param_patt.loc17 (constants.%self.param_patt)]
 // CHECK:STDOUT:       %self.patt.loc20: @Class.F.%pattern_type.loc17_8 (%pattern_type.36e) = wrapper_binding_pattern self, %self.param_patt.loc20 [symbolic = %self.patt.loc17 (constants.%self.patt)]
@@ -131,7 +133,7 @@ fn Class(T: type).F(unused self, unused n: T) {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .a = %.loc16
+// CHECK:STDOUT:     .a = %field_decl
 // CHECK:STDOUT:     .F = %Class.F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

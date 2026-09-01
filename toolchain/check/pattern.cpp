@@ -108,6 +108,7 @@ auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
 }
 
 auto AddBindingForPattern(Context& context, SemIR::LocId name_loc,
+                          SemIR::ExprRegionId type_region_id,
                           SemIR::AnyBindingPattern pattern,
                           SemIR::TypeId binding_type_id, SemIR::InstId value_id)
     -> SemIR::InstId {
@@ -146,8 +147,13 @@ auto AddBindingForPattern(Context& context, SemIR::LocId name_loc,
         context.fields().Add({.index = SemIR::ElementIndex::None,
                               .name_id = name_id,
                               .initializer_id = SemIR::InstId::None});
-    auto field_decl_id = AddInst<SemIR::FieldDecl>(
-        context, name_loc, {.type_id = field_type_id, .field_id = field_id});
+    auto field_decl_id =
+        AddInst<SemIR::FieldDecl>(context, name_loc,
+                                  {
+                                      .type_id = field_type_id,
+                                      .field_id = field_id,
+                                      .type_region_id = type_region_id,
+                                  });
     context.field_decls_stack().AppendToTop(field_decl_id);
 
     return field_decl_id;
@@ -175,9 +181,9 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
   auto binding_pattern_id =
       AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(context.sem_ir(),
                                                             name_loc, pattern));
-  auto bind_id =
-      AddBindingForPattern(context, name_loc, pattern, scrutinee_type_id,
-                           /*value_id=*/SemIR::InstId::None);
+  auto bind_id = AddBindingForPattern(context, name_loc, type_region_id,
+                                      pattern, scrutinee_type_id,
+                                      /*value_id=*/SemIR::InstId::None);
 
   bool inserted =
       context.bind_name_map()

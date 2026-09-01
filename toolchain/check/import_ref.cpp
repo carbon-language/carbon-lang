@@ -180,6 +180,9 @@ class ImportContext {
   auto import_entity_names() -> const SemIR::EntityNameStore& {
     return import_ir().entity_names();
   }
+  auto import_expr_regions() -> const SemIR::ExprRegionStore& {
+    return import_ir().expr_regions();
+  }
   auto import_facet_types() -> const SemIR::DeclaredFacetTypeStore& {
     return import_ir().declared_facet_types();
   }
@@ -264,6 +267,9 @@ class ImportContext {
   }
   auto local_entity_names() -> SemIR::EntityNameStore& {
     return local_ir().entity_names();
+  }
+  auto local_expr_regions() -> SemIR::ExprRegionStore& {
+    return local_ir().expr_regions();
   }
   auto local_facet_types() -> SemIR::DeclaredFacetTypeStore& {
     return local_ir().declared_facet_types();
@@ -2303,6 +2309,22 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FieldDecl inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
+  // Import the type expr region.
+  auto import_expr_region =
+      resolver.import_expr_regions().Get(inst.type_region_id);
+  SemIR::ExprRegion expr_region{
+      .result_id = AddImportRef(resolver, import_expr_region.result_id)};
+  for (auto import_block_id : import_expr_region.block_ids) {
+    auto import_block = resolver.import_ir().inst_blocks().Get(import_block_id);
+    llvm::SmallVector<SemIR::InstId> block;
+    for (auto inst_id : import_block) {
+      block.push_back(AddImportRef(resolver, inst_id));
+    }
+
+    expr_region.block_ids.push_back(
+        GetLocalCanonicalInstBlockId(resolver, import_block_id, block));
+  }
+
   auto const_id = GetLocalConstantId(resolver, inst.type_id);
   const auto& import_field = resolver.import_ir().fields().Get(inst.field_id);
   auto initializer_id =
@@ -2311,14 +2333,20 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
+  auto type_region_id = resolver.local_expr_regions().Add(expr_region);
+
   auto field_id = resolver.local_ir().fields().Add(
       {.index = import_field.index,
        .name_id = GetLocalNameId(resolver, import_field.name_id),
        .initializer_id = initializer_id});
   return ResolveResult::Unique<SemIR::FieldDecl>(
       resolver, import_inst_id,
-      {.type_id = resolver.local_types().GetTypeIdForTypeConstantId(const_id),
-       .field_id = field_id});
+      {
+          .type_id =
+              resolver.local_types().GetTypeIdForTypeConstantId(const_id),
+          .field_id = field_id,
+          .type_region_id = type_region_id,
+      });
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

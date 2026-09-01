@@ -208,7 +208,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Circle
-// CHECK:STDOUT:   .radius [private] = %.loc4
+// CHECK:STDOUT:   .radius [private] = %field_decl
 // CHECK:STDOUT:   .SOME_INTERNAL_CONSTANT [private] = %SOME_INTERNAL_CONSTANT
 // CHECK:STDOUT:   .SomeInternalFunction [private] = %Circle.SomeInternalFunction.decl
 // CHECK:STDOUT:   .Make = %Circle.Make.decl
@@ -336,7 +336,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Circle
-// CHECK:STDOUT:   .radius [private] = %.loc4
+// CHECK:STDOUT:   .radius [private] = %field_decl
 // CHECK:STDOUT:   .GetRadius = %Circle.GetRadius.decl
 // CHECK:STDOUT:   .SomeInternalFunction [private] = %Circle.SomeInternalFunction.decl
 // CHECK:STDOUT:   .Compute = %Circle.Compute.decl
@@ -345,7 +345,7 @@ class A {
 // CHECK:STDOUT: fn @Circle.GetRadius(%self.param: %Circle) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self
-// CHECK:STDOUT:   %radius.ref: %Circle.elem = name_ref radius, @Circle.%.loc4 [concrete = @Circle.%.loc4]
+// CHECK:STDOUT:   %radius.ref: %Circle.elem = name_ref radius, @Circle.%field_decl [concrete = @Circle.%field_decl]
 // CHECK:STDOUT:   %.loc8_16.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc8_16.2: %i32 = acquire_value %.loc8_16.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

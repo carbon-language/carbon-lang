@@ -275,14 +275,16 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
-// CHECK:STDOUT:   %.loc14: <error> = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: <error> = field_decl a, element0, %Abstract.ref in [concrete] {
+// CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Contains
 // CHECK:STDOUT:   .Abstract = <poisoned>
-// CHECK:STDOUT:   .a = %.loc14
+// CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_var.carbon
@@ -624,7 +626,10 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %.loc7: %Derived.elem.ce6 = base_decl %Abstract.ref, element0 [concrete]
-// CHECK:STDOUT:   %.loc9: %Derived.elem.1ef = field_decl d, element1 [concrete]
+// CHECK:STDOUT:   %field_decl: %Derived.elem.1ef = field_decl d, element1, %.loc9_11.2 in [concrete] {
+// CHECK:STDOUT:     %.loc9_11.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:     %.loc9_11.2: type = converted %.loc9_11.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.d.008 [concrete = constants.%complete_type.3c7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -632,7 +637,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Abstract = <poisoned>
 // CHECK:STDOUT:   .base = %.loc7
-// CHECK:STDOUT:   .d = %.loc9
+// CHECK:STDOUT:   .d = %field_decl
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -662,6 +667,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Derived.elem.ce6: type = unbound_element_type %Derived, %Abstract [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived.elem.1ef: type = unbound_element_type %Derived, %empty_struct_type [concrete]
 // CHECK:STDOUT:   %struct_type.base.d: type = struct_type {.base: %Abstract, .d: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %complete_type.3c7: <witness> = complete_type_witness %struct_type.base.d [concrete]
@@ -719,7 +725,10 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %.loc7: %Derived.elem.ce6 = base_decl %Abstract.ref, element0 [concrete]
-// CHECK:STDOUT:   %.loc9: %Derived.elem.1ef = field_decl d, element1 [concrete]
+// CHECK:STDOUT:   %field_decl: %Derived.elem.1ef = field_decl d, element1, %.loc9_11.2 in [concrete] {
+// CHECK:STDOUT:     %.loc9_11.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc9_11.2: type = converted %.loc9_11.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.d [concrete = constants.%complete_type.3c7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -727,7 +736,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Abstract = <poisoned>
 // CHECK:STDOUT:   .base = %.loc7
-// CHECK:STDOUT:   .d = %.loc9
+// CHECK:STDOUT:   .d = %field_decl
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -815,19 +824,25 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %.loc4: %Abstract.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %Abstract.elem = field_decl a, element0, %.loc4_11.2 in [concrete] {
+// CHECK:STDOUT:     %.loc4_11.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc4_11.2: type = converted %.loc4_11.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.225 [concrete = constants.%complete_type.8c6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
-// CHECK:STDOUT:   .a = %.loc4
+// CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %.loc8: %Derived.elem.ce6 = base_decl %Abstract.ref, element0 [concrete]
-// CHECK:STDOUT:   %.loc10: %Derived.elem.1ef = field_decl d, element1 [concrete]
+// CHECK:STDOUT:   %field_decl: %Derived.elem.1ef = field_decl d, element1, %.loc10_11.2 in [concrete] {
+// CHECK:STDOUT:     %.loc10_11.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc10_11.2: type = converted %.loc10_11.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.d.008 [concrete = constants.%complete_type.3c7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -835,7 +850,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Abstract = <poisoned>
 // CHECK:STDOUT:   .base = %.loc8
-// CHECK:STDOUT:   .d = %.loc10
+// CHECK:STDOUT:   .d = %field_decl
 // CHECK:STDOUT:   .a = <poisoned>
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
@@ -846,7 +861,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %base.ref: %Derived.elem.ce6 = name_ref base, @Derived.%.loc8 [concrete = @Derived.%.loc8]
 // CHECK:STDOUT:   %.loc14_11.1: ref %Abstract = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc14_11.2: %Abstract = acquire_value %.loc14_11.1
-// CHECK:STDOUT:   %a.ref: %Abstract.elem = name_ref a, @Abstract.%.loc4 [concrete = @Abstract.%.loc4]
+// CHECK:STDOUT:   %a.ref: %Abstract.elem = name_ref a, @Abstract.%field_decl [concrete = @Abstract.%field_decl]
 // CHECK:STDOUT:   %.loc14_16.1: ref %empty_struct_type = class_element_access %.loc14_11.2, element0
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc14_16.2: %empty_struct_type = converted %.loc14_16.1, %empty_struct [concrete = constants.%empty_struct]
@@ -858,7 +873,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: fn @Access(%d.param: %Derived) -> out %return.param: %empty_struct_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %a.ref: %Abstract.elem = name_ref a, @Abstract.%.loc4 [concrete = @Abstract.%.loc4]
+// CHECK:STDOUT:   %a.ref: %Abstract.elem = name_ref a, @Abstract.%field_decl [concrete = @Abstract.%field_decl]
 // CHECK:STDOUT:   %.loc18_11.1: %Abstract = as_compatible %d.ref
 // CHECK:STDOUT:   %.loc18_11.2: ref %Abstract = class_element_access %.loc18_11.1, element0
 // CHECK:STDOUT:   %.loc18_11.3: ref %Abstract = converted %d.ref, %.loc18_11.2

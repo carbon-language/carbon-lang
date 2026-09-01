@@ -865,6 +865,7 @@ struct FieldDecl {
 
   TypeId type_id;
   FieldId field_id;
+  ExprRegionId type_region_id;
 };
 
 // The float literal type.

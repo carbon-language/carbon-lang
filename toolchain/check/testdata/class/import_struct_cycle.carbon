@@ -92,14 +92,18 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
-// CHECK:STDOUT:   %.loc10: %Cycle.elem = field_decl c, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %Cycle.elem = field_decl c, element0, %struct_type.b in [concrete] {
+// CHECK:STDOUT:     %Cycle.ref: type = name_ref Cycle, file.%Cycle.decl.loc4 [concrete = constants.%Cycle]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
+// CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %ptr} [concrete = constants.%struct_type.b]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.c [concrete = constants.%complete_type.663]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
 // CHECK:STDOUT:   .Cycle = <poisoned>
-// CHECK:STDOUT:   .c = %.loc10
+// CHECK:STDOUT:   .c = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -152,9 +156,17 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.281: <witness> = import_ref Main//a, loc11_1, loaded [concrete = constants.%complete_type.663]
 // CHECK:STDOUT:   %Main.import_ref.3b0 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.f36: %Cycle.elem = import_ref Main//a, loc10_8, loaded [concrete = %.d77]
+// CHECK:STDOUT:   %Main.import_ref.169: %Cycle.elem = import_ref Main//a, loc10_8, loaded [concrete = %field_decl]
 // CHECK:STDOUT:   %a.var: ref %struct_type.b = var_storage constants.%a.var_patt [concrete]
-// CHECK:STDOUT:   %.d77: %Cycle.elem = field_decl c, element0 [concrete]
+// CHECK:STDOUT:   %Main.import_ref.fd6ceb.1 = import_ref Main//a, loc10_21, unloaded
+// CHECK:STDOUT:   %Main.import_ref.9b0 = import_ref Main//a, loc10_15, unloaded
+// CHECK:STDOUT:   %Main.import_ref.85f = import_ref Main//a, loc10_20, unloaded
+// CHECK:STDOUT:   %Main.import_ref.fd6ceb.2 = import_ref Main//a, loc10_21, unloaded
+// CHECK:STDOUT:   %field_decl: %Cycle.elem = field_decl c, element0, %Main.import_ref.fd6ceb.1 in [concrete] {
+// CHECK:STDOUT:     %Main.import_ref.9b0 = import_ref Main//a, loc10_15, unloaded
+// CHECK:STDOUT:     %Main.import_ref.85f = import_ref Main//a, loc10_20, unloaded
+// CHECK:STDOUT:     %Main.import_ref.fd6ceb.2 = import_ref Main//a, loc10_21, unloaded
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.e5f: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.ff5) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.ce9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.fb0 = impl_witness_table (%Core.import_ref.e5f), @ptr.as.Copy.impl [concrete]
@@ -177,7 +189,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.3b0
-// CHECK:STDOUT:   .c = imports.%Main.import_ref.f36
+// CHECK:STDOUT:   .c = imports.%Main.import_ref.169
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -188,7 +200,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_12.1: ref %ptr.5cd = struct_access %a.ref.loc7_11, element0 [concrete = constants.%.4d3]
 // CHECK:STDOUT:   %.loc7_12.2: %ptr.5cd = acquire_value %.loc7_12.1
 // CHECK:STDOUT:   %.loc7_10: ref %Cycle = deref %.loc7_12.2
-// CHECK:STDOUT:   %c.ref: %Cycle.elem = name_ref c, imports.%Main.import_ref.f36 [concrete = imports.%.d77]
+// CHECK:STDOUT:   %c.ref: %Cycle.elem = name_ref c, imports.%Main.import_ref.169 [concrete = imports.%field_decl]
 // CHECK:STDOUT:   %.loc7_15: ref %struct_type.b = class_element_access %.loc7_10, element0
 // CHECK:STDOUT:   %.loc7_17.1: ref %ptr.5cd = struct_access %.loc7_15, element0
 // CHECK:STDOUT:   %.loc7_17.2: %ptr.5cd = acquire_value %.loc7_17.1

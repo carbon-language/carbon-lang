@@ -247,21 +247,23 @@ fn H(generic U: Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %complete_type.loc7_1.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc7_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc6: @Class.%Class.elem (%Class.elem.959) = field_decl x, element0 [concrete]
+// CHECK:STDOUT:     %field_decl: @Class.%Class.elem (%Class.elem.959) = field_decl x, element0, %T.ref in [concrete] {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc5_14.2 [symbolic = %T.loc5_14.1 (constants.%T.67d)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc7_1.1: <witness> = complete_type_witness constants.%struct_type.x.0c5 [symbolic = %complete_type.loc7_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc7_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.7bc
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .x = %.loc6
+// CHECK:STDOUT:     .x = %field_decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %Class.1b7) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class.1b7 = name_ref c, %c
-// CHECK:STDOUT:   %x.ref: %Class.elem.344 = name_ref x, @Class.%.loc6 [concrete = @Class.%.loc6]
+// CHECK:STDOUT:   %x.ref: %Class.elem.344 = name_ref x, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:   %.loc10_11.1: ref %i32 = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc10_11.2: %i32 = acquire_value %.loc10_11.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -298,7 +300,7 @@ fn H(generic U: Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   fn(%c.param: @G.%Class.loc13_38.1 (%Class.c74ef3.1)) -> out %return.param: @G.%T.as_type.loc13_38.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @G.%Class.loc13_38.1 (%Class.c74ef3.1) = name_ref c, %c
-// CHECK:STDOUT:     %x.ref: @G.%Class.elem (%Class.elem.14b853.1) = name_ref x, @Class.%.loc6 [concrete = @Class.%.loc6]
+// CHECK:STDOUT:     %x.ref: @G.%Class.elem (%Class.elem.14b853.1) = name_ref x, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:     %.loc14_11.1: ref @G.%T.as_type.loc13_38.1 (%T.as_type) = class_element_access %c.ref, element0
 // CHECK:STDOUT:     %.loc14_11.2: @G.%T.as_type.loc13_38.1 (%T.as_type) = acquire_value %.loc14_11.1
 // CHECK:STDOUT:     %impl.elem0.loc14_11.1: @G.%.loc14_11.5 (%.c29330.1) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c332.1, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.bd2456.1)]
@@ -339,7 +341,7 @@ fn H(generic U: Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   fn(%c.param: @H.%Class.loc17_38.1 (%Class.c74ef3.2)) -> out %return.param: @H.%U.as_type.loc17_38.1 (%U.as_type.c1c) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @H.%Class.loc17_38.1 (%Class.c74ef3.2) = name_ref c, %c
-// CHECK:STDOUT:     %x.ref: @H.%Class.elem (%Class.elem.14b853.2) = name_ref x, @Class.%.loc6 [concrete = @Class.%.loc6]
+// CHECK:STDOUT:     %x.ref: @H.%Class.elem (%Class.elem.14b853.2) = name_ref x, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:     %.loc18_11.1: ref @H.%U.as_type.loc17_38.1 (%U.as_type.c1c) = class_element_access %c.ref, element0
 // CHECK:STDOUT:     %.loc18_11.2: @H.%U.as_type.loc17_38.1 (%U.as_type.c1c) = acquire_value %.loc18_11.1
 // CHECK:STDOUT:     %impl.elem0.loc18_11.1: @H.%.loc18_11.5 (%.c29330.2) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c332.2, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.bd2456.2)]

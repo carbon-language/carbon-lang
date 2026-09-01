@@ -133,15 +133,19 @@ fn Test() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc16: %Class.elem = field_decl j, element0 [concrete]
-// CHECK:STDOUT:   %.loc17: %Class.elem = field_decl k, element1 [concrete]
+// CHECK:STDOUT:   %field_decl.loc16: %Class.elem = field_decl j, element0, %i32.loc16 in [concrete] {
+// CHECK:STDOUT:     %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %field_decl.loc17: %Class.elem = field_decl k, element1, %i32.loc17 in [concrete] {
+// CHECK:STDOUT:     %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.j.k [concrete = constants.%complete_type.212]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .j = %.loc16
-// CHECK:STDOUT:   .k = %.loc17
+// CHECK:STDOUT:   .j = %field_decl.loc16
+// CHECK:STDOUT:   .k = %field_decl.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
@@ -162,7 +166,7 @@ fn Test() {
 // CHECK:STDOUT:     %cv.var_patt: %pattern_type.f15 = var_pattern %cv.patt [concrete = constants.%cv.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cv.ref.loc22: ref %Class = name_ref cv, %cv
-// CHECK:STDOUT:   %j.ref.loc22: %Class.elem = name_ref j, @Class.%.loc16 [concrete = @Class.%.loc16]
+// CHECK:STDOUT:   %j.ref.loc22: %Class.elem = name_ref j, @Class.%field_decl.loc16 [concrete = @Class.%field_decl.loc16]
 // CHECK:STDOUT:   %.loc22_5: ref %i32 = class_element_access %cv.ref.loc22, element0
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc22: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
@@ -173,7 +177,7 @@ fn Test() {
 // CHECK:STDOUT:   %.loc22_8: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22 [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   assign %.loc22_5, %.loc22_8
 // CHECK:STDOUT:   %cv.ref.loc23: ref %Class = name_ref cv, %cv
-// CHECK:STDOUT:   %k.ref.loc23: %Class.elem = name_ref k, @Class.%.loc17 [concrete = @Class.%.loc17]
+// CHECK:STDOUT:   %k.ref.loc23: %Class.elem = name_ref k, @Class.%field_decl.loc17 [concrete = @Class.%field_decl.loc17]
 // CHECK:STDOUT:   %.loc23_5: ref %i32 = class_element_access %cv.ref.loc23, element1
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0.loc23: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
@@ -192,7 +196,7 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cj.var: ref %i32 = var_storage %cj.var_patt
 // CHECK:STDOUT:   %c.ref.loc25: %Class = name_ref c, %c
-// CHECK:STDOUT:   %j.ref.loc25: %Class.elem = name_ref j, @Class.%.loc16 [concrete = @Class.%.loc16]
+// CHECK:STDOUT:   %j.ref.loc25: %Class.elem = name_ref j, @Class.%field_decl.loc16 [concrete = @Class.%field_decl.loc16]
 // CHECK:STDOUT:   %.loc25_25.1: ref %i32 = class_element_access %c.ref.loc25, element0
 // CHECK:STDOUT:   %.loc25_25.2: %i32 = acquire_value %.loc25_25.1
 // CHECK:STDOUT:   %impl.elem0.loc25: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -209,7 +213,7 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ck.var: ref %i32 = var_storage %ck.var_patt
 // CHECK:STDOUT:   %c.ref.loc26: %Class = name_ref c, %c
-// CHECK:STDOUT:   %k.ref.loc26: %Class.elem = name_ref k, @Class.%.loc17 [concrete = @Class.%.loc17]
+// CHECK:STDOUT:   %k.ref.loc26: %Class.elem = name_ref k, @Class.%field_decl.loc17 [concrete = @Class.%field_decl.loc17]
 // CHECK:STDOUT:   %.loc26_25.1: ref %i32 = class_element_access %c.ref.loc26, element1
 // CHECK:STDOUT:   %.loc26_25.2: %i32 = acquire_value %.loc26_25.1
 // CHECK:STDOUT:   %impl.elem0.loc26: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
