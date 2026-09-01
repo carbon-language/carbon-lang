@@ -156,12 +156,15 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
 
   // The contract is that no shape of diagnostic, however malformed, is ever the
   // reason a compiler dies while reporting a problem. Every form has to hold to
-  // it, so both are drawn; a crash in either is a crash in the error path.
+  // it, so all of them are drawn; a crash in any is a crash in the error path.
   for (bool snippets : {true, false}) {
-    renderer.set_snippets(snippets);
-    llvm::SmallString<256> rendered;
-    Terminal::OutputBufferRef out(rendered);
-    renderer.Render(out, diagnostic);
+    for (bool line_numbers : {true, false}) {
+      renderer.set_snippets(snippets);
+      renderer.set_line_numbers(line_numbers);
+      llvm::SmallString<256> rendered;
+      Terminal::OutputBufferRef out(rendered);
+      renderer.Render(out, diagnostic);
+    }
   }
 
   return 0;

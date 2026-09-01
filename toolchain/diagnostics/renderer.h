@@ -73,8 +73,18 @@ class Renderer {
   // Sets whether diagnostics show snippets of the source they point at. With
   // them off, every diagnostic takes the compact form: one line per part, led
   // by its location and the extent of its range, positioned against nothing,
-  // which is what a build log and a golden file want.
+  // which suits a build log.
   auto set_snippets(bool value) -> void { snippets_ = value; }
+
+  // Sets whether the framed form shows line numbers. With them off, the gutter
+  // has no numbers, the first location row with a location shows it in full,
+  // and every other location shows only its file name. The layout is the same
+  // as with numbers.
+  //
+  // This is for golden files. Gutter numbers would make a golden depend on
+  // the positions of its own `CHECK` lines, and a second file's location row
+  // names a line that no offset can express.
+  auto set_line_numbers(bool value) -> void { line_numbers_ = value; }
 
   auto set_capabilities(const Terminal::Capabilities& capabilities) -> void {
     capabilities_ = capabilities;
@@ -95,6 +105,7 @@ class Renderer {
   Terminal::Capabilities capabilities_;
   bool include_kind_ = false;
   bool snippets_ = true;
+  bool line_numbers_ = true;
 };
 
 // Returns `loc` as `<filename>:<line>:<column>`, with the parts that are
