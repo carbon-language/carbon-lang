@@ -2330,16 +2330,19 @@ struct UninitializedValue {
   TypeId type_id;
 };
 
+using UnspecifiedValueType =
+    SingletonTypeInst<InstKind::UnspecifiedValueType, "<unspecified_value>">;
+
 // A placeholder value for default values in function definitions.
 struct UnspecifiedValue {
   static constexpr auto Kind =
       InstKind::UnspecifiedValue.Define<Parse::DefaultValueUnspecifiedId>(
           {.ir_name = "unspecified_value",
-           .expr_category = ExprCategory::Value,
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
-  // No type information specified, as the type is not known at inst creation
-  // time.
+  // Always the type of the builtin `UnspecifiedValueType` singleton
+  // instruction.
+  TypeId type_id;
 };
 
 // Initializes an object by performing a base initialization followed by an

@@ -154,11 +154,11 @@ auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
 
 auto HandleParseNode(Context& context, Parse::DefaultValueUnspecifiedId node_id)
     -> bool {
-  // Add a new instruction block to discard this instruction after it is
-  // processed by the owning DefaultValuePattern.
-  context.inst_block_stack().Push();
   context.node_stack().Push(
-      node_id, AddInst<SemIR::UnspecifiedValue>(context, node_id, {}));
+      node_id, AddInst<SemIR::UnspecifiedValue>(
+                   context, node_id,
+                   {.type_id = GetSingletonType(
+                        context, SemIR::UnspecifiedValueType::TypeInstId)}));
   return true;
 }
 
@@ -202,10 +202,6 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
     // Look up the instruction associated with the evaluated constant.
     value_inst_id = context.constant_values().GetInstId(expr_const_id);
     CARBON_CHECK(value_inst_id.has_value());
-  } else {
-    // Remove and discard the temporary block we issued the unspecified function
-    // value on.
-    context.inst_block_stack().PopAndDiscard();
   }
 
   // Add the value to the default values array in the full pattern stack, for
