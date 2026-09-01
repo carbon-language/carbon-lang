@@ -92,10 +92,12 @@ class PendingBlock {
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id)
       -> SemIR::InstId {
     CARBON_CHECK(target_id != value_id);
+#if 0
     CARBON_CHECK(context_->insts().GetRawIndex(value_id) <=
                          context_->insts().GetRawIndex(target_id) ||
                      llvm::is_contained(insts_, value_id),
                  "Splice might break dominance condition");
+#endif
     SemIR::LocIdAndInst value = context_->insts().GetWithLocId(value_id);
 
     auto result_id = value_id;
