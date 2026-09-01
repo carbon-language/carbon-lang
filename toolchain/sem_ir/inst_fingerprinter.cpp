@@ -674,12 +674,14 @@ struct Worklist {
   // Ensure all the instructions on the todo list have fingerprints. To avoid a
   // re-lookup, returns the fingerprint of the first instruction on the todo
   // list, and requires the todo list to be non-empty.
+  //
+  // To avoid runaway fingerprinting, we use a cycle detector based on Brent's
+  // algorithm.
   auto Run() -> ResultType {
     CARBON_CHECK(!todo.empty());
 
-    // To avoid runaway fingerprinting, we use a cycle detector based on Brent's
-    // algorithm.  The index of an enclosing item we are visiting. If we see
-    // this again at an index in
+    // The index of an enclosing item we are visiting. If we see this again at
+    // an index in
     //   [cycle_detector_index + 1, 2 * cycle_detector_index),
     // we have found a cycle, and if we go deeper than that, we pick a new index
     // and watch it for longer.
