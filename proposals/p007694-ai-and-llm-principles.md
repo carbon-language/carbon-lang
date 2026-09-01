@@ -48,12 +48,13 @@ low-effort contributions and focus their time on the high-effort contributions.
 
 ## Background
 
--   [https://llvm.org/docs/AIToolPolicy.html](https://llvm.org/docs/AIToolPolicy.html)
--   [https://blog.rust-lang.org/inside-rust/2026/08/05/rust-langrust-is-adopting-an-llm-policy/](https://blog.rust-lang.org/inside-rust/2026/08/05/rust-langrust-is-adopting-an-llm-policy/)
--   [https://ziglang.org/code-of-conduct/\#strict-no-llm-no-ai-policy](https://ziglang.org/code-of-conduct/#strict-no-llm-no-ai-policy)
--   [https://github.com/ghostty-org/ghostty/blob/main/AI_POLICY.md](https://github.com/ghostty-org/ghostty/blob/main/AI_POLICY.md)
--   [https://lwn.net/Articles/1087134/](https://lwn.net/Articles/1087134/)
--   [https://www.debian.org/vote/2026/vote_002\#texte](https://www.debian.org/vote/2026/vote_002#texte)
+-   <https://llvm.org/docs/AIToolPolicy.html>
+-   <https://blog.rust-lang.org/inside-rust/2026/08/05/rust-langrust-is-adopting-an-llm-policy/>
+-   <https://ziglang.org/code-of-conduct/#strict-no-llm-no-ai-policy>
+-   <https://github.com/ghostty-org/ghostty/blob/main/AI_POLICY.md>
+-   <https://lwn.net/Articles/1087134/>
+-   <https://www.debian.org/vote/2026/vote_002#texte>
+-   <https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/submitting-patches/#ai-assisted-contributions>
 
 ## Proposal
 
@@ -247,10 +248,14 @@ things with the community.
     -   It also works to address the scaling challenges our community would face
         from unbounded AI-powered contributions.
 -   [Language tools and ecosystem](/docs/project/goals.md#language-tools-and-ecosystem)
-    -   The stance of enabling responsible use of AI tooling aligns with
-        Carbon's general goal of being a "batteries included" project and
-        aggressively enabling tool usage throughout the project and for its
-        users. For at least some of its users, that includes AI tooling.
+    -   The stance of enabling users who _do_ use AI tooling to do so
+        effectively aligns with Carbon's general goal of being a "batteries
+        included" project and aggressively enabling tool usage throughout the
+        project and for its users. For at least some of its users, that includes
+        AI tooling.
+    -   Similarly, enabling users who _do not_ use AI tooling to still use
+        Carbon effectively and to retain broad access to expected Carbon tooling
+        aligns with being "batteries included" for those users.
 
 ## Alternatives considered
 
@@ -269,7 +274,7 @@ Advantages:
 Disadvantages:
 
 -   We have seen specific cases where, when used carefully, the project can
-    _significantly_ benefit from AI-powered contributions.
+    significantly benefit from AI-powered contributions.
 -   Developers with extensive experience using AI tools would be unable to
     contribute using their preferred and most productive set of tools.
 -   We would have to remove significant functionality in Carbon that has been
@@ -279,10 +284,29 @@ Currently, the project is successfully capturing significant value from use of
 these tools within the limits these principles outline, and we want to continue
 to get those benefits.
 
-Debian also held a community vote that landed on an
+While several open source projects, notably [Zig] and [Rust], are sharply
+restricting AI tool usage or completely banning it, other open source projects
+are taking a different stance. For example, [LLVM], [Django], and [Ghostty],
+have all adopted similar guidance to what we are proposing, and are working to
+enable _some_ AI powered contributions in ways that are constructive for the
+community. LLVM's stance is of special interest as in general we work hard to
+align Carbon policies with LLVM policies so that the communities can collaborate
+and share as freely as possible.
+
+[Zig]: https://ziglang.org/code-of-conduct/#strict-no-llm-no-ai-policy
+[Rust]: https://blog.rust-lang.org/inside-rust/2026/08/05/rust-langrust-is-adopting-an-llm-policy/
+[LLVM]: https://llvm.org/docs/AIToolPolicy.html
+[Django]: https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/submitting-patches/#ai-assisted-contributions
+[Ghostty]: https://github.com/ghostty-org/ghostty/blob/main/AI_POLICY.md
+
+Debian also recently held a community vote that landed on an
 [option](https://www.debian.org/vote/2026/vote_002#texte) that is very similar
-to the stance being taken by Carbon, and we see that as a strong sign that this
-is an effective compromise for an open source project.
+to the stance being taken by Carbon. While Debian is a Linux distribution and
+very different from Carbon in this regard, it has consistently been a leader in
+the broader open source community, and represents one of the larger community
+_votes_ on specific policies here. We see the alignment between the outcome of
+this vote and what is proposed as a sign that this is an effective compromise
+for an open source project.
 
 ### Yolo-mode / no restrictions on AI usage
 
@@ -291,7 +315,8 @@ The other simple option is to have no restrictions on AI usage in the project.
 However, there are a number of drawbacks that motivated this policy:
 
 -   Unbounded AI contributions have consistently proven to be non-viable for
-    open source projects due to the influx of AI-slop.
+    open source projects due to the influx of low-effort and low-value
+    contributions.
 -   Significantly exacerbates the problem of sustaining our high quality bar in
     the face of widespread AI contributions.
 -   Alienates a large number of developers who do not want to interact with
