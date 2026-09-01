@@ -151,4 +151,14 @@ auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::DefaultValueUnspecifiedId node_id)
+    -> bool {
+  return context.TODO(node_id, "pattern default values");
+}
+
+auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
+    -> bool {
+  return context.TODO(node_id, "pattern default values");
+}
+
 }  // namespace Carbon::Check
