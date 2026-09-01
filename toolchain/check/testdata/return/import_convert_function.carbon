@@ -955,8 +955,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %P.D: type = import_ref P//library, D, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %P.import_ref.6bc: <witness> = import_ref P//library, loc5_35, loaded [concrete = constants.%complete_type.237]
 // CHECK:STDOUT:   %P.import_ref.737 = import_ref P//library, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %P.import_ref.9f8 = import_ref P//library, loc5_16, unloaded
-// CHECK:STDOUT:   %P.import_ref.0cb = import_ref P//library, loc5_28, unloaded
+// CHECK:STDOUT:   %P.import_ref.4b8 = import_ref P//library, loc5_16, unloaded
+// CHECK:STDOUT:   %P.import_ref.0a6 = import_ref P//library, loc5_28, unloaded
 // CHECK:STDOUT:   %P.C: %C.type = import_ref P//library, C, loaded [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %P.import_ref.8f2: <witness> = import_ref P//library, loc4_18, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %P.import_ref.70e = import_ref P//library, inst{{[0-9A-F]+}} [no loc], unloaded
@@ -1078,8 +1078,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%P.import_ref.737
-// CHECK:STDOUT:   .n = imports.%P.import_ref.9f8
-// CHECK:STDOUT:   .m = imports.%P.import_ref.0cb
+// CHECK:STDOUT:   .n = imports.%P.import_ref.4b8
+// CHECK:STDOUT:   .m = imports.%P.import_ref.0a6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(imports.%P.import_ref.d2a: %i32) [from "library.carbon"] {

@@ -822,6 +822,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     // TODO: Consider doing this lazily instead.
     auto field_id =
         context.fields().Add({.index = SemIR::ElementIndex(fields.size()),
+                              .name_id = field_name_id,
                               // TODO: import initializers.
                               .initializer_id = SemIR::InstId::None});
     auto field_decl_id = AddInst(
@@ -830,7 +831,6 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                      SemIR::FieldDecl{
                          .type_id = GetUnboundElementType(
                              context, class_type_inst_id, field_type_inst_id),
-                         .name_id = field_name_id,
                          .field_id = field_id,
                      }));
     // The imported SemIR::FieldDecl represents the original declaration `decl`,

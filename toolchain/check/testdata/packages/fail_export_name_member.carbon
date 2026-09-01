@@ -78,7 +78,7 @@ export C.n;
 // CHECK:STDOUT:   %Foo.C: type = import_ref Foo//a, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.import_ref.9fc: <witness> = import_ref Foo//a, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Foo.import_ref.c61 = import_ref Foo//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Foo.import_ref.e5b = import_ref Foo//a, loc5_8, unloaded
+// CHECK:STDOUT:   %Foo.import_ref.e65 = import_ref Foo//a, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -93,6 +93,6 @@ export C.n;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Foo.import_ref.c61
-// CHECK:STDOUT:   .n = imports.%Foo.import_ref.e5b
+// CHECK:STDOUT:   .n = imports.%Foo.import_ref.e65
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

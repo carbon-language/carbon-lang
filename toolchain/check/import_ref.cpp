@@ -2312,11 +2312,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   auto field_id = resolver.local_ir().fields().Add(
-      {.index = import_field.index, .initializer_id = initializer_id});
+      {.index = import_field.index,
+       .name_id = GetLocalNameId(resolver, import_field.name_id),
+       .initializer_id = initializer_id});
   return ResolveResult::Unique<SemIR::FieldDecl>(
       resolver, import_inst_id,
       {.type_id = resolver.local_types().GetTypeIdForTypeConstantId(const_id),
-       .name_id = GetLocalNameId(resolver, inst.name_id),
        .field_id = field_id});
 }
 

@@ -204,8 +204,8 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.d68 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bc9: %Base.F.type = import_ref Main//a, loc5_13, loaded [concrete = constants.%Base.F]
 // CHECK:STDOUT:   %Main.import_ref.077 = import_ref Main//a, loc6_18, unloaded
-// CHECK:STDOUT:   %Main.import_ref.230: %Base.elem = import_ref Main//a, loc8_8, loaded [concrete = %.11f]
-// CHECK:STDOUT:   %Main.import_ref.9f4 = import_ref Main//a, loc9_15, unloaded
+// CHECK:STDOUT:   %Main.import_ref.3f2: %Base.elem = import_ref Main//a, loc8_8, loaded [concrete = %.bc2]
+// CHECK:STDOUT:   %Main.import_ref.5d1 = import_ref Main//a, loc9_15, unloaded
 // CHECK:STDOUT:   %Main.import_ref.60e: <witness> = import_ref Main//a, loc14_1, loaded [concrete = constants.%complete_type.c02]
 // CHECK:STDOUT:   %Main.import_ref.6e8 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bd6 = import_ref Main//a, loc13_20, unloaded
@@ -213,7 +213,7 @@ fn Run() {
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.edf: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1aa = impl_witness_table (%Core.import_ref.edf), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %.11f: %Base.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %.bc2: %Base.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -247,8 +247,8 @@ fn Run() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.d68
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.bc9
 // CHECK:STDOUT:   .Unused = imports.%Main.import_ref.077
-// CHECK:STDOUT:   .x = imports.%Main.import_ref.230
-// CHECK:STDOUT:   .unused_y = imports.%Main.import_ref.9f4
+// CHECK:STDOUT:   .x = imports.%Main.import_ref.3f2
+// CHECK:STDOUT:   .unused_y = imports.%Main.import_ref.5d1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -288,7 +288,7 @@ fn Run() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.860 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
-// CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%Main.import_ref.230 [concrete = imports.%.11f]
+// CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%Main.import_ref.3f2 [concrete = imports.%.bc2]
 // CHECK:STDOUT:   %.loc8_4.1: ref %Base = as_compatible %a.ref.loc8
 // CHECK:STDOUT:   %.loc8_4.2: ref %Base = class_element_access %.loc8_4.1, element0
 // CHECK:STDOUT:   %.loc8_4.3: ref %Base = converted %a.ref.loc8, %.loc8_4.2

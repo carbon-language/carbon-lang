@@ -144,10 +144,10 @@ auto AddBindingForPattern(Context& context, SemIR::LocId name_loc,
 
     auto field_id =
         context.fields().Add({.index = SemIR::ElementIndex::None,
+                              .name_id = name_id,
                               .initializer_id = SemIR::InstId::None});
     auto field_decl_id = AddInst<SemIR::FieldDecl>(
-        context, name_loc,
-        {.type_id = field_type_id, .name_id = name_id, .field_id = field_id});
+        context, name_loc, {.type_id = field_type_id, .field_id = field_id});
     context.field_decls_stack().AppendToTop(field_decl_id);
 
     return field_decl_id;
