@@ -598,8 +598,8 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
   }
 
   if (fn.call_param_default_values_id.has_value()) {
-    out() << " default_values:";
-    // The default values are encoded as instructions referring to constants,
+    out() << " default_values";
+    // The default values are encoded as canonical instructions,
     // and as such have no location, and so are normally elided when
     // use_dump_sem_ir_ranges_ is true. However, if the function containing
     // these default values is to be printed, it should also include these

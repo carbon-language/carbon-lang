@@ -328,7 +328,6 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         auto prev_default_value_pattern =
             prev_param_pattern.As<SemIR::DefaultValuePattern>();
 
-        // Add the subpattern to merge checking.
         pattern_stack.push_back(
             {.prev_id = prev_default_value_pattern.subpattern_id,
              .new_id = new_default_value_pattern.subpattern_id});
@@ -683,15 +682,17 @@ static auto FillPrevEntityInfo(Context& context,
   }
 }
 
-auto MergeFunctionParamDefaultValues(Context& context,
-                                     SemIR::Function& prev_function,
-                                     const SemIR::Function& new_function)
+// Updates the default values in `prev_function` to include any of those not
+// previously specified and that are now specified in `new_function`.
+static auto MergeFunctionParamDefaultValues(Context& context,
+                                            SemIR::Function& prev_function,
+                                            const SemIR::Function& new_function)
     -> void {
+  CARBON_CHECK(prev_function.call_param_default_values_id.has_value() ==
+               new_function.call_param_default_values_id.has_value());
   if (!prev_function.call_param_default_values_id.has_value()) {
-    CARBON_CHECK(!new_function.call_param_default_values_id.has_value());
     return;
   }
-  CARBON_CHECK(new_function.call_param_default_values_id.has_value());
 
   auto prev_value_inst_ids =
       context.inst_blocks().Get(prev_function.call_param_default_values_id);
@@ -704,13 +705,10 @@ auto MergeFunctionParamDefaultValues(Context& context,
   merged_value_inst_ids.reserve(prev_value_inst_ids.size());
 
   for (size_t i = 0; i < prev_value_inst_ids.size(); ++i) {
-    auto merged_value_inst_id = prev_value_inst_ids[i];
-    if (!merged_value_inst_id.has_value() &&
-        new_value_inst_ids[i].has_value()) {
-      merged_value_inst_id = new_value_inst_ids[i];
-      merge_has_new_info = true;
-    }
-    merged_value_inst_ids.push_back(merged_value_inst_id);
+    bool had_value = prev_value_inst_ids[i].has_value();
+    auto merged_id = had_value ? prev_value_inst_ids[i] : new_value_inst_ids[i];
+    merge_has_new_info |= !had_value && merged_id.has_value();
+    merged_value_inst_ids.push_back(merged_id);
   }
 
   if (merge_has_new_info) {

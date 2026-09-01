@@ -2307,15 +2307,15 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
-  SemIR::DefaultValuePattern result = {
-      .type_id = resolver.local_types().GetTypeIdForTypeConstantId(
-          subpattern.local_type_const_id),
-      .subpattern_id = AddLoadedImportRef(resolver, subpattern),
-      .default_value_id = inst.default_value_id,
-  };
 
-  return ResolveResult::Deduplicated<SemIR::DefaultValuePattern>(resolver,
-                                                                 result);
+  return ResolveResult::Deduplicated<SemIR::DefaultValuePattern>(
+      resolver,
+      {
+          .type_id = resolver.local_types().GetTypeIdForTypeConstantId(
+              subpattern.local_type_const_id),
+          .subpattern_id = AddLoadedImportRef(resolver, subpattern),
+          .default_value_id = inst.default_value_id,
+      });
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2489,10 +2489,13 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_function.call_param_default_values_id);
   llvm::SmallVector<SemIR::InstId> imported_default_values;
   if (call_param_default_values.has_value()) {
-    for (auto import_info : *call_param_default_values) {
-      imported_default_values.push_back(
-          GetLocalConstantInstId(resolver, import_info.import_inst_id));
-    }
+    llvm::append_range(imported_default_values,
+                       llvm::map_range(*call_param_default_values,
+                                       [&resolver](const auto& import_info) {
+                                         return GetLocalConstantInstId(
+                                             resolver,
+                                             import_info.import_inst_id);
+                                       }));
   }
 
   auto return_type_const_id = SemIR::ConstantId::None;

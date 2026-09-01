@@ -182,13 +182,6 @@ struct MergeRedeclEntityInfo<SemIR::NamedConstraint> {
   const EntityT& new_entity;
 };
 
-// Updates the default values in `prev_function` to include any of those not
-// previously specified and that are now specified in `new_function`.
-auto MergeFunctionParamDefaultValues(Context& context,
-                                     SemIR::Function& prev_function,
-                                     const SemIR::Function& new_function)
-    -> void;
-
 // Tries to merge new_entity into prev_entity_id. Since new_entity won't have a
 // definition even if one is upcoming, set is_definition to indicate the planned
 // result.
