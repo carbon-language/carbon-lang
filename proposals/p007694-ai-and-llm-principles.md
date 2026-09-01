@@ -252,11 +252,6 @@ things with the community.
         aggressively enabling tool usage throughout the project and for its
         users. For at least some of its users, that includes AI tooling.
 
-How does this proposal effectively advance Carbon's goals? Rather than
-re-stating the full motivation, this should connect that motivation back to
-Carbon's stated goals and principles. This may evolve during review. Use links
-to appropriate goals and/or principles.
-
 ## Alternatives considered
 
 ### Completely ban generative AI and LLMs in contributions
