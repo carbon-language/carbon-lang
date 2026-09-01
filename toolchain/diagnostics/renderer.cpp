@@ -1752,25 +1752,29 @@ static auto DrawLeadingLabelLine(Buffer& buffer, int x, int underline_y,
                           LineEnd::Edge, LineEnd::Center, weight);
 }
 
-// Draws `number` in the columns before the frame, or nothing when there is no
-// line to name.
+// Draws `number` in the columns before the frame when `numbered` is set, and
+// nothing when there is no line to name.
 //
 // `points_here` is the leading part when its text is placed under this line.
-// It draws `->` in the margin and colors the number to match the level word.
+// It draws `->` in the margin, whether or not the line is numbered, and colors
+// the number to match the level word.
 // Every other number keeps the frame's color, so the line to begin reading at
 // is the one that stands out from the frame.
 static auto DrawLineNumber(Buffer& buffer, int frame_x, int y, int number,
-                           const PreparedPart* points_here) -> void {
+                           bool numbered, const PreparedPart* points_here)
+    -> void {
   if (number <= 0) {
     return;
   }
-  std::string text = std::to_string(number);
   // The line the problem is on takes the leading part's color and weight, and
   // every other line number is left as light as the frame it belongs to, so
   // that the one being reported is the one that stands out rather than every
   // number competing with it.
   Style style = points_here ? points_here->style : FrameStyle().Bold(false);
-  buffer.DrawText(frame_x - 1 - text.size(), y, text, style);
+  if (numbered) {
+    std::string text = std::to_string(number);
+    buffer.DrawText(frame_x - 1 - text.size(), y, text, style);
+  }
   if (points_here) {
     buffer.DrawText(0, y, LineArrow, style);
   }
@@ -1960,6 +1964,21 @@ auto Renderer::Render(Terminal::OutputBufferRef out,
     return;
   }
 
+  // Which parts get location rows doesn't depend on `location`, so this changes
+  // the text drawn and not the rows. The compact form above keeps its numbers,
+  // since autoupdate maintains the location at the start of each of its lines
+  // as an offset.
+  if (!line_numbers_) {
+    bool location_kept = false;
+    for (PreparedPart& part : parts) {
+      if (HasLocationRow(part) && !location_kept && !part.location.empty()) {
+        location_kept = true;
+      } else {
+        part.location = FormatLocation({.filename = part.file});
+      }
+    }
+  }
+
   RenderFramed(out, parts, leading, diagnostic.level, frame_x, content_x,
                source_columns, columns);
 }
@@ -1970,14 +1989,15 @@ namespace {
 class FrameRenderer {
  public:
   FrameRenderer(Buffer& buffer, Charset charset, int frame_x, int content_x,
-                int columns, Style dotted_frame_style)
+                int columns, Style dotted_frame_style, bool numbered)
       : buffer_(&buffer),
         glyphs_(Glyphs::For(charset)),
         charset_(charset),
         frame_x_(frame_x),
         content_x_(content_x),
         columns_(columns),
-        dotted_frame_style_(dotted_frame_style) {}
+        dotted_frame_style_(dotted_frame_style),
+        numbered_(numbered) {}
 
   // Draws `rows` from the buffer's first row, followed by the closing rule.
   auto Draw(llvm::ArrayRef<Row> rows) -> void;
@@ -2042,6 +2062,9 @@ class FrameRenderer {
   // range on that row: the leading part's, which the `->` and the reported
   // line's number also take.
   Style dotted_frame_style_;
+
+  // Whether source rows are drawn with their line numbers.
+  bool numbered_;
 
   // The row the underlines were drawn on, which every label below it connects
   // back up to. A label can be several rows down from it, since the labels on
@@ -2132,7 +2155,8 @@ auto FrameRenderer::DrawPath(const PreparedPart& part, int y) -> int {
 }
 
 auto FrameRenderer::DrawSource(const Row& row, int y) -> int {
-  DrawLineNumber(*buffer_, frame_x_, y, row.line_number, row.points_here);
+  DrawLineNumber(*buffer_, frame_x_, y, row.line_number, numbered_,
+                 row.points_here);
   buffer_->DrawText(content_x_, y, row.text, Style());
   return y + 1;
 }
@@ -2327,7 +2351,7 @@ auto Renderer::RenderFramed(Terminal::OutputBufferRef out,
           .LayOut();
 
   FrameRenderer(buffer, capabilities_.charset, frame_x, content_x, columns,
-                UnderlineStyle(parts[leading].style))
+                UnderlineStyle(parts[leading].style), line_numbers_)
       .Draw(rows);
   buffer.Render(out, capabilities_.color_mode);
 }

@@ -4,7 +4,7 @@
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 //
-// ARGS: --include-diagnostic-kind --diagnostic-snippets compile --phase=check %s
+// ARGS: --include-diagnostic-kind --diagnostic-snippets --terminal-unicode=never compile --phase=check %s
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -12,8 +12,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/diagnostics/testdata/fail_rendering.carbon
 
-// Covers how diagnostics are drawn, which the rest of the test suite turns off.
-// See /toolchain/docs/diagnostics_rendering.md.
+// Covers the numbered ASCII form a plain stream gets. Other file tests capture
+// box drawing, and those outside this directory have no line numbers. See
+// /toolchain/docs/diagnostics_rendering.md.
 
 // --- fail_one_message.carbon
 
