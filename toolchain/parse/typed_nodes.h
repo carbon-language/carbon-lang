@@ -1830,9 +1830,8 @@ struct NamedConstraintDefinition {
 
 // ---------------------------------------------------------------------------
 
-// A complete source file. Note that there is no corresponding parse node
-// for the file. The file is instead the complete contents of the parse
-// tree.
+// A complete source file. Note that there is no corresponding parse node for
+// the file. The file is instead the complete contents of the parse tree.
 struct File {
   FileStartId start;
   llvm::SmallVector<AnyDeclId> decls;
