@@ -116,6 +116,14 @@ class AbsoluteInstId : public InstId {
   using InstId::InstId;
 };
 
+// An id representing the index of the default value constant instruction in
+// a default values instruction block.
+class DefaultValueId : public IdBase<DefaultValueId> {
+ public:
+  static constexpr llvm::StringLiteral Label = "default_value_id";
+  using IdBase::IdBase;
+};
+
 // An ID of an instruction that is used as the destination of an initializing
 // expression. This should only be used as the type of a field within a typed
 // instruction class.

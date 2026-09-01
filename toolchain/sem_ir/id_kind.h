@@ -45,6 +45,7 @@ using IdKind = TypeEnum<
     CustomLayoutId,
     DeclaredFacetTypeId,
     DeclInstBlockId,
+    DefaultValueId,
     DestInstId,
     ElementIndex,
     EntityNameId,
