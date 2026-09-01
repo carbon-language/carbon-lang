@@ -16,19 +16,9 @@ library "[[@TEST_NAME]]";
 
 interface A;
 
-// --- fail_decl_in_api_definition_in_impl.impl.carbon
+// --- decl_in_api_definition_in_impl.impl.carbon
 
 impl library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_decl_in_api_definition_in_impl.impl.carbon:[[@LINE+8]]:1: error: redeclaration of `interface A` is redundant [RedeclRedundant]
-// CHECK:STDERR: interface A;
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_in_api_definition_in_impl.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: decl_in_api_definition_in_impl.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: interface A;
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR:
-interface A;
 
 interface A {}
 
@@ -76,6 +66,28 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 interface C;
 
+// --- decl_in_api_decl_and_definition_in_impl.carbon
+
+library "[[@TEST_NAME]]";
+
+interface D;
+
+// --- fail_decl_in_api_decl_and_definition_in_impl.impl.carbon
+
+impl library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE+8]]:1: error: redeclaration of `interface D` is redundant [RedeclRedundant]
+// CHECK:STDERR: interface D;
+// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR: fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: decl_in_api_decl_and_definition_in_impl.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: interface D;
+// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
+interface D;
+
+interface D {}
+
 // --- decl_only_in_impl.carbon
 
 library "[[@TEST_NAME]]";
@@ -85,7 +97,7 @@ library "[[@TEST_NAME]]";
 impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
-// CHECK:STDERR: interface D;
+// CHECK:STDERR: interface E;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
-interface D;
+interface E;
