@@ -196,7 +196,7 @@ contributors who object to these tools unable to make progress.
 This doesn't mean new contributors must be certain their contribution is
 _correct_, and there can always be parts of the codebase or system that they
 are not yet familiar with. But they need to have the basic expertise to
-understand the _change being made_ and why that change matches their intent
+understand the _change being made_ and why that change matches their intent.
 
 This also doesn't mean that new contributors cannot work on efforts that they
 don't have the expertise to understand at the start. The requirement is that if
