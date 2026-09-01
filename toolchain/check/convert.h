@@ -72,6 +72,10 @@ struct ConversionTarget {
   // depends on. This block will be spliced or merged before any reference to
   // `storage_id`, and may be discarded if `storage_id` is not accessed.
   PendingBlock* storage_access_block = nullptr;
+  // For an initializer during template instantiation, the replacements for
+  // already-spliced storage arguments are written here, for use in the action
+  // result.
+  llvm::MutableArrayRef<SemIR::InstId> template_storage_args = {};
   // Whether failure of conversion is an error and is diagnosed to the user.
   // When looking for a possible conversion but with graceful fallback,
   // `diagnose` should be false. If `diagnose` is false, an `ErrorInst` may be

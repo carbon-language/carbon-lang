@@ -128,6 +128,27 @@ class PendingBlock {
     return result_id;
   }
 
+  // Like MergeReplacing, but just return the resulting instruuction rather than
+  // replacing an existing instruction with it. Does not add the instruction to
+  // a block.
+  auto MergeInNoBlock(SemIR::InstId value_id)
+      -> SemIR::InstId {
+    auto result_id = value_id;
+    if (insts_.size() != 1 || insts_[0] != value_id) {
+      // Create a splice block if the block is not exactly `{value_id}`.
+      result_id = AddInstInNoBlock<SemIR::SpliceBlock>(
+          *context_, SemIR::LocId(value_id),
+          {.type_id = context_->insts().Get(value_id).type_id(),
+           .block_id = context_->inst_blocks().Add(insts_),
+           .result_id = value_id});
+    }
+
+    insts_.clear();
+
+    AddPendingCleanups();
+    return result_id;
+  }
+
  private:
   auto AddPendingCleanups() -> void {
     for (auto id : cleanups_) {

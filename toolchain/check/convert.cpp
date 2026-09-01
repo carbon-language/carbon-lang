@@ -49,6 +49,44 @@
 
 namespace Carbon::Check {
 
+namespace {
+// Information about the kind of instruction referred to by a storage argument.
+struct StorageArgKind {
+  enum Kind {
+    Temporary,
+    Splice,
+    Other
+  };
+
+  // The kind of storage argument.
+  Kind kind;
+  // For a spliced argument in a template, the splice index. Otherwise 0.
+  int index = 0;
+};
+}  // namespace
+
+// Returns information about the kind of instruction referred to by a storage
+// argument.
+static auto GetStorageArgKind(const SemIR::File& sem_ir,
+                              SemIR::InstId storage_arg_id) -> StorageArgKind {
+  if (sem_ir.insts().Is<SemIR::TemporaryStorage>(storage_arg_id)) {
+    return {.kind = StorageArgKind::Temporary};
+  }
+
+  auto storage_id = storage_arg_id;
+  if (auto splice_block = sem_ir.insts().TryGetAs<SemIR::SpliceBlock>(storage_id)) {
+    storage_id = splice_block->result_id;
+  }
+  if (auto splice_id = sem_ir.insts().TryGetAs<SemIR::SpliceInst>(storage_id)) {
+    if (auto tuple_access_id =
+            sem_ir.insts().TryGetAs<SemIR::TupleAccess>(splice_id->inst_id)) {
+      return {.kind = StorageArgKind::Splice,
+              .index = tuple_access_id->index.index};
+    }
+  }
+  return {.kind = StorageArgKind::Other};
+}
+
 // If the initializing expression `init_id` has a storage argument that refers
 // to a temporary, overwrites it with the inst at `target.storage_id`, and
 // returns the ID that should now be used to refer to `init_id`'s storage. Has
@@ -65,14 +103,37 @@ static auto OverwriteTemporaryStorageArg(SemIR::File& sem_ir,
     return SemIR::InstId::None;
   }
   auto storage_arg_id = FindStorageArgForInitializer(sem_ir, init_id);
-  if (!storage_arg_id.has_value() || storage_arg_id == target.storage_id ||
-      !sem_ir.insts().Is<SemIR::TemporaryStorage>(storage_arg_id)) {
+  if (!storage_arg_id.has_value() || storage_arg_id == target.storage_id) {
+    // This instruction does not refer to a nested storage argument, or already
+    // refers to the correct storage.
     return target.storage_id;
   }
-  // Replace the temporary in the storage argument with a reference to our
-  // target.
-  return target.storage_access_block->MergeReplacing(storage_arg_id,
-                                                     target.storage_id);
+
+  switch (auto kind = GetStorageArgKind(sem_ir, storage_arg_id); kind.kind) {
+    case StorageArgKind::Temporary: {
+      // Replace the temporary in the storage argument with a reference to our
+      // target.
+      return target.storage_access_block->MergeReplacing(storage_arg_id,
+                                                         target.storage_id);
+    }
+
+    case StorageArgKind::Splice: {
+      // If the existing storage refers to an instruction splice, provide the
+      // new storage to template instantiation.
+      CARBON_CHECK(kind.index <
+                   static_cast<int>(target.template_storage_args.size()));
+      auto new_storage_id =
+          target.storage_access_block->MergeInNoBlock(target.storage_id);
+      target.template_storage_args[kind.index] = new_storage_id;
+      return new_storage_id;
+    }
+
+    case StorageArgKind::Other: {
+      // Something else is already in the storage argument: leave it alone.
+      // TODO: Should this happen?
+      return target.storage_id;
+    }
+  }
 }
 
 // Walks an expression that might be an initializing expression or might have a
@@ -112,8 +173,7 @@ static auto VisitAllTemporaryStorageArgs(
     // has already been populated.
     auto storage_arg_id =
         FindStorageArgForInitializer(context.sem_ir(), init_id);
-    if (storage_arg_id.has_value() &&
-        context.insts().Is<SemIR::TemporaryStorage>(storage_arg_id)) {
+    if (storage_arg_id.has_value()) {
       visit(storage_arg_id);
     }
   }
@@ -138,7 +198,7 @@ static auto MaterializeTemporary(Context& context, SemIR::InstId init_id)
   }
 
   CARBON_CHECK(
-      sem_ir.insts().Get(storage_id).kind() == SemIR::TemporaryStorage::Kind,
+      GetStorageArgKind(sem_ir, storage_id).kind != StorageArgKind::Other,
       "Storage arg for initializer does not contain a temporary; "
       "initialized multiple times? Have {0}",
       sem_ir.insts().Get(storage_id));
@@ -256,6 +316,7 @@ static auto ConvertAggregateElement(
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
     SemIR::TypeInstId target_elem_type_inst, PendingBlock* target_block,
+    llvm::MutableArrayRef<SemIR::InstId> template_storage_args,
     size_t src_field_index, size_t target_field_index) -> SemIR::InstId {
   auto src_elem_type =
       context.types().GetTypeIdForTypeInstId(src_elem_type_inst);
@@ -284,6 +345,7 @@ static auto ConvertAggregateElement(
   target.storage_id = MakeElementAccessInst<TargetAccessInstT>(
       context, loc_id, target_id, target_elem_type, *target_block,
       target_field_index);
+  target.template_storage_args = template_storage_args;
   return Convert(context, loc_id, src_elem_id, target);
 }
 
@@ -370,7 +432,8 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::ArrayIndex>(
             context, value_loc_id, value_id, src_type_inst_id, literal_elems,
             ConversionTarget::InPlaceInitializing, return_slot_arg_id,
-            array_type.element_type_inst_id, target_block, i, i);
+            array_type.element_type_inst_id, target_block,
+            target.template_storage_args, i, i);
     if (init_id == SemIR::ErrorInst::InstId) {
       return SemIR::ErrorInst::InstId;
     }
@@ -447,7 +510,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::TupleAccess>(
             context, value_loc_id, value_id, src_type_inst_id, literal_elems,
             inner_kind, target.storage_id, dest_type_inst_id,
-            target.storage_access_block, i, i);
+            target.storage_access_block, target.template_storage_args, i, i);
     if (init_id == SemIR::ErrorInst::InstId) {
       return SemIR::ErrorInst::InstId;
     }
@@ -817,7 +880,8 @@ static auto ConvertStructToStructOrClass(
       init_id = ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
           context, value_loc_id, value_id, src_field.type_inst_id,
           literal_elems, inner_kind, target.storage_id, dest_field_type_inst_id,
-          target.storage_access_block, src_field_index, dest_field_index);
+          target.storage_access_block, target.template_storage_args,
+          src_field_index, dest_field_index);
     } else {
       init_id = get_default(dest_field.name_id);
     }
@@ -2207,9 +2271,16 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::InitializeAction action)
     -> llvm::SmallVector<SemIR::InstId> {
   // Build the list of results. We will overwrite the first element (the
-  // resulting initialization expression itself) after we finish conversion.
+  // resulting initialization expression itself) after we finish conversion, and
+  // will overwrite the other elements (the storage arguments) when we encounter
+  // them during initialization.
   llvm::SmallVector<SemIR::InstId> result_ids;
-  result_ids.push_back(SemIR::InstId::None);
+  result_ids.resize(context.inst_blocks()
+                        .Get(context.types()
+                                 .GetAs<SemIR::TupleType>(action.type_id)
+                                 .type_elements_id)
+                        .size(),
+                    SemIR::InstId::None);
 
   const auto& target_bundle = context.bundles().Get(action.target_id);
   PendingBlock target_block(&context);
@@ -2220,19 +2291,40 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
       .type_id = context.types().GetTypeIdForTypeInstId(
           target_bundle.target_type_inst_id),
       .storage_id = target_bundle.storage_id,
-      .storage_access_block = &target_block};
+      .storage_access_block = &target_block,
+      .template_storage_args = result_ids};
 
-  // TODO: Set some state so that attempted modifications of storage arguments
-  // are tracked and included in result_ids instead of updating the original
-  // template!
-
-  // TODO: Pass through a `specific_id` so that we properly handle types for
-  // subexpressions.
-
+  // Perform the initialization. As a side effect, this will update
+  // template_storage_args to refer to parts of storage_id.
   auto expr_id =
       PerformBuiltinConversion(context, loc_id, action.inst_id, target);
   expr_id = PerformUserDefinedConversion(context, loc_id, expr_id, target);
   result_ids[0] = PerformCategoryConversion(context, loc_id, expr_id, target);
+
+  // Put a temporary in any storage argument that we didn't explicitly
+  // initialize.
+  int next_result_index = 1;
+  VisitAllTemporaryStorageArgs(
+      context, target, action.inst_id, [&](SemIR::InstId storage_arg_id) {
+        // TODO: We shouldn't need to do this. Instead, we should turn off
+        // rewriting of `action.inst_id` and map into the specific ourselves
+        // where needed.
+        if (next_result_index >= static_cast<int>(result_ids.size())) {
+          return;
+        }
+        if (!result_ids[next_result_index].has_value()) {
+          result_ids[next_result_index] =
+              AddInstInNoBlock<SemIR::TemporaryStorage>(
+                  context, SemIR::LocId(storage_arg_id),
+                  {.type_id = context.insts().Get(storage_arg_id).type_id()});
+        }
+        ++next_result_index;
+      });
+  CARBON_CHECK(next_result_index == static_cast<int>(result_ids.size()));
+
+  // TODO: Pass through a `specific_id` so that we properly handle types for
+  // subexpressions.
+
   return result_ids;
 }
 
