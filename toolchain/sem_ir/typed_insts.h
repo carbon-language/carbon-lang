@@ -864,8 +864,8 @@ struct FieldDecl {
        .constant_kind = InstConstantKind::AlwaysUnique});
 
   TypeId type_id;
-  NameId name_id;
   FieldId field_id;
+  ExprRegionId type_region_id;
 };
 
 // The float literal type.

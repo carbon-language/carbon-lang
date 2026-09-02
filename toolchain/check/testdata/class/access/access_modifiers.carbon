@@ -192,7 +192,7 @@ class A {
 // CHECK:STDOUT:   %struct: %struct_type.radius.f47 = struct_value (%int_5.64b) [concrete]
 // CHECK:STDOUT:   %Circle.val: %Circle = struct_value (%int_5.eef) [concrete]
 // CHECK:STDOUT:   %circle.patt: %pattern_type.f70 = value_binding_pattern circle [concrete]
-// CHECK:STDOUT:   %radius.patt.a1f: %pattern_type.6b6 = value_binding_pattern radius [concrete]
+// CHECK:STDOUT:   %radius.patt: %pattern_type.6b6 = value_binding_pattern radius [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc20_36.4 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -208,7 +208,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Circle
-// CHECK:STDOUT:   .radius [private] = %.loc4
+// CHECK:STDOUT:   .radius [private] = %field_decl
 // CHECK:STDOUT:   .SOME_INTERNAL_CONSTANT [private] = %SOME_INTERNAL_CONSTANT
 // CHECK:STDOUT:   .SomeInternalFunction [private] = %Circle.SomeInternalFunction.decl
 // CHECK:STDOUT:   .Make = %Circle.Make.decl
@@ -249,7 +249,7 @@ class A {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %radius: %i32 = wrapper_binding radius, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %radius.patt: %pattern_type.6b6 = value_binding_pattern radius [concrete = constants.%radius.patt.a1f]
+// CHECK:STDOUT:     %radius.patt: %pattern_type.6b6 = value_binding_pattern radius [concrete = constants.%radius.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %circle.ref.loc36: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %radius.ref.loc36: <error> = name_ref radius, <error> [concrete = <error>]
@@ -288,7 +288,7 @@ class A {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %x.patt.939: %pattern_type.6b6 = value_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = value_binding_pattern x [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -298,7 +298,7 @@ class A {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %x: %i32 = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = value_binding_pattern x [concrete = constants.%x.patt.939]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -336,7 +336,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Circle
-// CHECK:STDOUT:   .radius [private] = %.loc4
+// CHECK:STDOUT:   .radius [private] = %field_decl
 // CHECK:STDOUT:   .GetRadius = %Circle.GetRadius.decl
 // CHECK:STDOUT:   .SomeInternalFunction [private] = %Circle.SomeInternalFunction.decl
 // CHECK:STDOUT:   .Compute = %Circle.Compute.decl
@@ -345,7 +345,7 @@ class A {
 // CHECK:STDOUT: fn @Circle.GetRadius(%self.param: %Circle) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self
-// CHECK:STDOUT:   %radius.ref: %Circle.elem = name_ref radius, @Circle.%.loc4 [concrete = @Circle.%.loc4]
+// CHECK:STDOUT:   %radius.ref: %Circle.elem = name_ref radius, @Circle.%field_decl [concrete = @Circle.%field_decl]
 // CHECK:STDOUT:   %.loc8_16.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc8_16.2: %i32 = acquire_value %.loc8_16.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

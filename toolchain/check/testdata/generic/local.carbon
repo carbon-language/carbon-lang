@@ -62,8 +62,6 @@ class C(C: type) {
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.c79: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %pattern_type.51d1c4.1: type = pattern_type %T [symbolic]
-// CHECK:STDOUT:   %x.patt.45e: %pattern_type.51d1c4.1 = ref_binding_pattern x [symbolic]
 // CHECK:STDOUT:   %C.elem.7e2: type = unbound_element_type %C.c79, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.x.0c5: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.735: <witness> = complete_type_witness %struct_type.x.0c5 [symbolic]
@@ -74,8 +72,6 @@ class C(C: type) {
 // CHECK:STDOUT:   %C.8eb: type = class_type @C, @C(%i32) [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %x.patt.211: %pattern_type.6b6 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %C.elem.14f: type = unbound_element_type %C.8eb, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.x.a15: type = struct_type {.x: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.0c6: <witness> = complete_type_witness %struct_type.x.a15 [concrete]
@@ -137,22 +133,22 @@ class C(C: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc5_12.1 [symbolic = %require_complete (constants.%require_complete.944)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc5_12.1 [symbolic = %pattern_type (constants.%pattern_type.51d1c4.1)]
-// CHECK:STDOUT:   %x.patt: @C.%pattern_type (%pattern_type.51d1c4.1) = ref_binding_pattern x [symbolic = %x.patt (constants.%x.patt.45e)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc5_12.1) [symbolic = %C (constants.%C.c79)]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T.loc5_12.1 [symbolic = %C.elem (constants.%C.elem.7e2)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T.loc5_12.1 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.0c5)]
 // CHECK:STDOUT:   %complete_type.loc7_3.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc6: @C.%C.elem (%C.elem.7e2) = field_decl x, element0 [concrete]
+// CHECK:STDOUT:     %field_decl: @C.%C.elem (%C.elem.7e2) = field_decl x, element0, %T.ref in [concrete] {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc5_12.2 [symbolic = %T.loc5_12.1 (constants.%T)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc7_3.1: <witness> = complete_type_witness constants.%struct_type.x.0c5 [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc7_3.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.c79
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .x = %.loc6
+// CHECK:STDOUT:     .x = %field_decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -224,8 +220,6 @@ class C(C: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
-// CHECK:STDOUT:   %x.patt => constants.%x.patt.211
 // CHECK:STDOUT:   %C => constants.%C.8eb
 // CHECK:STDOUT:   %C.elem => constants.%C.elem.14f
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.a15

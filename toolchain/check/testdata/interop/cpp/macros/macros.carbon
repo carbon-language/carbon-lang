@@ -2224,9 +2224,9 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %b.ref: %SubA.elem = name_ref b, @SubA.%.1 [concrete = @SubA.%.1]
+// CHECK:STDOUT:   %b.ref: %SubA.elem = name_ref b, @SubA.%field_decl [concrete = @SubA.%field_decl]
 // CHECK:STDOUT:   %.loc17_6.1: ref %SubB = class_element_access imports.%a_obj.var, element0 [concrete = constants.%.d13]
-// CHECK:STDOUT:   %c.ref: %SubB.elem = name_ref c, @SubB.%.1 [concrete = @SubB.%.1]
+// CHECK:STDOUT:   %c.ref: %SubB.elem = name_ref c, @SubB.%field_decl [concrete = @SubB.%field_decl]
 // CHECK:STDOUT:   %.loc17_6.2: ref %i32 = class_element_access %.loc17_6.1, element0 [concrete = constants.%.010]
 // CHECK:STDOUT:   %m.ref: ref %i32 = name_ref m, constants.%.010 [concrete = constants.%.010]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]

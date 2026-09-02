@@ -257,20 +257,20 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: fn @F(%s.param: %Struct) -> out %return.param: %tuple.type.ccd {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref.loc8_11: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %a.ref: %Struct.elem.da9 = name_ref a, @Struct.%.1 [concrete = @Struct.%.1]
+// CHECK:STDOUT:   %a.ref: %Struct.elem.da9 = name_ref a, @Struct.%field_decl.1 [concrete = @Struct.%field_decl.1]
 // CHECK:STDOUT:   %.loc8_12.1: ref %i32 = class_element_access %s.ref.loc8_11, element0
 // CHECK:STDOUT:   %.loc8_12.2: %i32 = acquire_value %.loc8_12.1
 // CHECK:STDOUT:   %s.ref.loc8_16: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %b.ref: %Struct.elem.da9 = name_ref b, @Struct.%.2 [concrete = @Struct.%.2]
+// CHECK:STDOUT:   %b.ref: %Struct.elem.da9 = name_ref b, @Struct.%field_decl.2 [concrete = @Struct.%field_decl.2]
 // CHECK:STDOUT:   %.loc8_17.1: ref %i32 = class_element_access %s.ref.loc8_16, element1
 // CHECK:STDOUT:   %.loc8_17.2: %i32 = acquire_value %.loc8_17.1
 // CHECK:STDOUT:   %s.ref.loc8_22: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %p.ref: %Struct.elem.905 = name_ref p, @Struct.%.3 [concrete = @Struct.%.3]
+// CHECK:STDOUT:   %p.ref: %Struct.elem.905 = name_ref p, @Struct.%field_decl.3 [concrete = @Struct.%field_decl.3]
 // CHECK:STDOUT:   %.loc8_23.1: ref %ptr.d08 = class_element_access %s.ref.loc8_22, element2
 // CHECK:STDOUT:   %.loc8_23.2: %ptr.d08 = acquire_value %.loc8_23.1
 // CHECK:STDOUT:   %.loc8_21.1: ref %i32 = deref %.loc8_23.2
 // CHECK:STDOUT:   %s.ref.loc8_28: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %q.ref: %Struct.elem.a19 = name_ref q, @Struct.%.5 [concrete = @Struct.%.5]
+// CHECK:STDOUT:   %q.ref: %Struct.elem.a19 = name_ref q, @Struct.%field_decl.4 [concrete = @Struct.%field_decl.4]
 // CHECK:STDOUT:   %.loc8_29.1: ref %Optional.5b3 = class_element_access %s.ref.loc8_28, element3
 // CHECK:STDOUT:   %.loc8_29.2: %Optional.5b3 = acquire_value %.loc8_29.1
 // CHECK:STDOUT:   %.loc8_31: %Optional.Get.type.76f = specific_constant imports.%Core.import_ref.497, @Optional(constants.%OptionalStorage.facet) [concrete = constants.%Optional.Get.d19]
@@ -283,7 +283,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %.loc8_36.2: %ptr.d08 = converted %Optional.Get.call, %.loc8_36.1
 // CHECK:STDOUT:   %.loc8_27.1: ref %i32 = deref %.loc8_36.2
 // CHECK:STDOUT:   %s.ref.loc8_40: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %r.ref: %Struct.elem.6a0 = name_ref r, @Struct.%.6 [concrete = @Struct.%.6]
+// CHECK:STDOUT:   %r.ref: %Struct.elem.6a0 = name_ref r, @Struct.%field_decl.5 [concrete = @Struct.%field_decl.5]
 // CHECK:STDOUT:   %.loc8_41.1: ref %const.e2a = class_element_access %s.ref.loc8_40, element4
 // CHECK:STDOUT:   %.loc8_41.2: %const.e2a = acquire_value %.loc8_41.1
 // CHECK:STDOUT:   %.loc8_39.1: ref %i32 = deref %.loc8_41.2
@@ -361,7 +361,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: fn @F(%u.param: %Union) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %Union = name_ref u, %u
-// CHECK:STDOUT:   %a.ref: %Union.elem.291 = name_ref a, @Union.%.1 [concrete = @Union.%.1]
+// CHECK:STDOUT:   %a.ref: %Union.elem.291 = name_ref a, @Union.%field_decl.1 [concrete = @Union.%field_decl.1]
 // CHECK:STDOUT:   %.loc8_11.1: ref %i32 = class_element_access %u.ref, element0
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = acquire_value %.loc8_11.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -375,7 +375,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: fn @G(%u.param: %Union) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %Union = name_ref u, %u
-// CHECK:STDOUT:   %b.ref: %Union.elem.291 = name_ref b, @Union.%.2 [concrete = @Union.%.2]
+// CHECK:STDOUT:   %b.ref: %Union.elem.291 = name_ref b, @Union.%field_decl.2 [concrete = @Union.%field_decl.2]
 // CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %u.ref, element1
 // CHECK:STDOUT:   %.loc14_11.2: %i32 = acquire_value %.loc14_11.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -389,7 +389,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: fn @H(%u.param: %Union) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %Union = name_ref u, %u
-// CHECK:STDOUT:   %p.ref: %Union.elem.d1f = name_ref p, @Union.%.3 [concrete = @Union.%.3]
+// CHECK:STDOUT:   %p.ref: %Union.elem.d1f = name_ref p, @Union.%field_decl.3 [concrete = @Union.%field_decl.3]
 // CHECK:STDOUT:   %.loc20_12.1: ref %ptr.d08 = class_element_access %u.ref, element2
 // CHECK:STDOUT:   %.loc20_12.2: %ptr.d08 = acquire_value %.loc20_12.1
 // CHECK:STDOUT:   %.loc20_10.1: ref %i32 = deref %.loc20_12.2
@@ -432,7 +432,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: fn @F(%s.param: %BitfieldStruct) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %BitfieldStruct = name_ref s, %s
-// CHECK:STDOUT:   %a.ref: %BitfieldStruct.elem = name_ref a, @BitfieldStruct.%.1 [concrete = @BitfieldStruct.%.1]
+// CHECK:STDOUT:   %a.ref: %BitfieldStruct.elem = name_ref a, @BitfieldStruct.%field_decl [concrete = @BitfieldStruct.%field_decl]
 // CHECK:STDOUT:   %.loc8_11.1: ref %i32 = class_element_access %s.ref, element0
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = acquire_value %.loc8_11.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -446,7 +446,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: fn @G(%s.param: %BitfieldUnion) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %BitfieldUnion = name_ref s, %s
-// CHECK:STDOUT:   %c.ref: %BitfieldUnion.elem = name_ref c, @BitfieldUnion.%.1 [concrete = @BitfieldUnion.%.1]
+// CHECK:STDOUT:   %c.ref: %BitfieldUnion.elem = name_ref c, @BitfieldUnion.%field_decl [concrete = @BitfieldUnion.%field_decl]
 // CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %s.ref, element0
 // CHECK:STDOUT:   %.loc14_11.2: %i32 = acquire_value %.loc14_11.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

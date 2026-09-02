@@ -811,8 +811,16 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     }
 
     auto field_name_id = AddIdentifierName(context, field->getName());
+
+    BeginExprRegionForPattern(context);
+
     auto [field_type_inst_id, field_type_id] =
         ImportCppType(context, import_ir_inst_id, field->getType());
+
+    SemIR::ExprRegionId type_region_id =
+        ConsumeExprRegionForPattern(context, field_type_inst_id);
+    EndEmptyExprRegionForPattern(context);
+
     if (!field_type_inst_id.has_value()) {
       // TODO: For now, just skip over fields whose types we can't map.
       continue;
@@ -822,6 +830,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     // TODO: Consider doing this lazily instead.
     auto field_id =
         context.fields().Add({.index = SemIR::ElementIndex(fields.size()),
+                              .name_id = field_name_id,
                               // TODO: import initializers.
                               .initializer_id = SemIR::InstId::None});
     auto field_decl_id = AddInst(
@@ -830,8 +839,9 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                      SemIR::FieldDecl{
                          .type_id = GetUnboundElementType(
                              context, class_type_inst_id, field_type_inst_id),
-                         .name_id = field_name_id,
                          .field_id = field_id,
+                         .type_region_id = type_region_id
+
                      }));
     // The imported SemIR::FieldDecl represents the original declaration `decl`,
     // which is either the field or the indirect field declaration.
