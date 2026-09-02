@@ -1480,8 +1480,9 @@ auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
     auto prev_token = buffer_.tokens().end()[-1];
     auto kind = buffer_.GetKind(prev_token);
     if (kind.is_word()) {
-      CARBON_DIAGNOSTIC(CharacterOnlyAllowedAtStart, Error,
-                        "`$` is only allowed at the start of an identifier");
+      CARBON_DIAGNOSTIC(
+          CharacterOnlyAllowedAtStart, Error,
+          "`$` is only allowed at the start of a positional parameter");
       emitter_.Emit(word.begin(), CharacterOnlyAllowedAtStart);
 
       auto& prev_token_info = buffer_.token_infos_.Get(prev_token);
