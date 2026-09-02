@@ -160,7 +160,7 @@ fn F(x: i32 = 0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param: %i32, %b.param: %i32, %c.param: %i32, %d.param: %i32, %e.param: %i32) default_values: {
+// CHECK:STDOUT: fn @F(%a.param: %i32, %b.param: %i32, %c.param: %i32, %d.param: %i32, %e.param: %i32) default_values {
 // CHECK:STDOUT:   constants.%tuple.326: %tuple.type.c4f = tuple_value (constants.%int_1.5b8, constants.%tuple.b26) [concrete]
 // CHECK:STDOUT: };
 // CHECK:STDOUT:

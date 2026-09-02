@@ -82,7 +82,7 @@ struct FunctionFields {
   // because it is relevant only for a function definition.
   InstBlockId call_params_id;
 
-  // Instructions representing the constant default values for parameters.
+  // Instructions representing the canonical default values for parameters.
   InstBlockId call_param_default_values_id;
 
   // The index ranges within the `Call` parameters that correspond to the
