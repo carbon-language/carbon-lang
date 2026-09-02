@@ -124,7 +124,7 @@ struct LessReturnsBoolish {
   // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+6]]:8: note: type `i32` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   auto operator<(LessReturnsBoolish) const -> int;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:26:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:28:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn Less(self, other: Other) -> bool;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   auto operator<(LessReturnsBoolish) const -> int;
@@ -177,7 +177,7 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-39]]:8: note: type `Core.Optional(i32* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:   auto operator<=(LessEqualReturnsBoolish) const -> int*;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:27:3: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:3: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR:   fn LessOrEquivalent(self, other: Other) -> bool;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+69]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -190,7 +190,7 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-42]]:8: note: type `Cpp.Result` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:   auto operator>=(GreaterEqualReturnsBoolish) const -> Result;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:3: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:31:3: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR:   fn GreaterOrEquivalent(self, other: Other) -> bool;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+56]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -203,7 +203,7 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-40]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:   auto operator<(AllReturnBoolish) const -> double;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:26:3: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:28:3: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR:   fn Less(self, other: Other) -> bool;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+43]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -216,7 +216,7 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-52]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:   auto operator<=(AllReturnBoolish) const -> double;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:27:3: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:3: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR:   fn LessOrEquivalent(self, other: Other) -> bool;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+30]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -229,7 +229,7 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-64]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:   auto operator>(AllReturnBoolish) const -> double;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:28:3: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:30:3: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR:   fn Greater(self, other: Other) -> bool;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+17]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -242,7 +242,7 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-76]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:   auto operator>=(AllReturnBoolish) const -> double;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:3: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:31:3: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR:   fn GreaterOrEquivalent(self, other: Other) -> bool;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+4]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
