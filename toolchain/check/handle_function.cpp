@@ -634,28 +634,29 @@ static auto DiagnoseOutOfOrderDefaults(Context& context,
       llvm::reverse(context.inst_blocks().Get(function.param_patterns_id)));
 
   while (!level_state_stack.empty()) {
-    auto& state = level_state_stack.back();
-    while (!state.subpattern_ids.empty() || !state.pattern_work_list.empty() ||
-           state.current_id.has_value()) {
+    PatternLevelState* state = &level_state_stack.back();
+    while (!state->subpattern_ids.empty() ||
+           !state->pattern_work_list.empty() || state->current_id.has_value()) {
       // If we're not resuming processing a pattern from a nested state, start
       // processing the next subpattern.
-      if (!state.current_id.has_value()) {
-        state.pattern_work_list.push_back(state.subpattern_ids.pop_back_val());
-        state.current_pattern_has_default = false;
+      if (!state->current_id.has_value()) {
+        state->pattern_work_list.push_back(
+            state->subpattern_ids.pop_back_val());
+        state->current_pattern_has_default = false;
       }
-      while (!state.pattern_work_list.empty()) {
-        state.current_id = state.pattern_work_list.pop_back_val();
-        auto inst = context.insts().Get(state.current_id);
+      while (!state->pattern_work_list.empty()) {
+        state->current_id = state->pattern_work_list.pop_back_val();
+        auto inst = context.insts().Get(state->current_id);
         CARBON_KIND_SWITCH(inst) {
           case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
-            state.current_pattern_has_default = true;
-            state.pattern_work_list.push_back(
+            state->current_pattern_has_default = true;
+            state->pattern_work_list.push_back(
                 default_value_pattern.subpattern_id);
             break;
           }
           case CARBON_KIND(
               SemIR::WrapperBindingPattern wrapper_binding_pattern): {
-            state.pattern_work_list.push_back(
+            state->pattern_work_list.push_back(
                 wrapper_binding_pattern.subpattern_id);
             break;
           }
@@ -665,8 +666,9 @@ static auto DiagnoseOutOfOrderDefaults(Context& context,
             if (!elements.empty()) {
               // Start a new state for the nested tuple pattern elements.
               level_state_stack.push_back({});
-              state = level_state_stack.back();
-              llvm::append_range(state.subpattern_ids, llvm::reverse(elements));
+              state = &level_state_stack.back();
+              llvm::append_range(state->subpattern_ids,
+                                 llvm::reverse(elements));
             }
             break;
           }
@@ -678,17 +680,17 @@ static auto DiagnoseOutOfOrderDefaults(Context& context,
       }
       // Finished processing this subpattern, detect a missing default if
       // required.
-      if (state.current_pattern_has_default &&
-          !state.first_pattern_with_default.has_value()) {
-        state.first_pattern_with_default = state.current_id;
-      } else if (!state.current_pattern_has_default &&
-                 state.first_pattern_with_default.has_value()) {
-        state.patterns_missing_defaults.push_back(state.current_id);
+      if (state->current_pattern_has_default &&
+          !state->first_pattern_with_default.has_value()) {
+        state->first_pattern_with_default = state->current_id;
+      } else if (!state->current_pattern_has_default &&
+                 state->first_pattern_with_default.has_value()) {
+        state->patterns_missing_defaults.push_back(state->current_id);
       }
-      state.current_id = SemIR::InstId::None;
+      state->current_id = SemIR::InstId::None;
     }
     // Finished processing this tuple-pattern, emit diagnostics if any.
-    if (!state.patterns_missing_defaults.empty()) {
+    if (!state->patterns_missing_defaults.empty()) {
       CARBON_DIAGNOSTIC(RequiredPatternDefaultValueMissing, Error,
                         "this pattern is missing a required default value.");
       CARBON_DIAGNOSTIC(RequiredPatternDefaultValueFirstDefault, Note,
@@ -697,14 +699,14 @@ static auto DiagnoseOutOfOrderDefaults(Context& context,
       CARBON_DIAGNOSTIC(
           RequiredPatternDefaultValueMissingAdditional, Note,
           "this pattern is also missing a required default value.");
-      auto inst_ref = llvm::ArrayRef(state.patterns_missing_defaults);
+      auto inst_ref = llvm::ArrayRef(state->patterns_missing_defaults);
       auto builder = context.emitter().Build(
           inst_ref.consume_front(), RequiredPatternDefaultValueMissing);
-      builder.Note(state.first_pattern_with_default,
-                   RequiredPatternDefaultValueFirstDefault);
       for (auto inst_id : inst_ref) {
         builder.Note(inst_id, RequiredPatternDefaultValueMissingAdditional);
       }
+      builder.Note(state->first_pattern_with_default,
+                   RequiredPatternDefaultValueFirstDefault);
       builder.Emit();
     }
     level_state_stack.pop_back();

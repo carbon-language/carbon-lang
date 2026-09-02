@@ -959,12 +959,12 @@ auto MatchContext::DoPostWork(State state,
           .GetDefaultValues()[default_value_pattern.default_value_id.index];
   // If a constant was specified, we should be able to convert it into the
   // type of the parameter.
-  if (default_value_inst_id != SemIR::InstId::None) {
+  if (default_value_inst_id.has_value()) {
     // We should be able to convert the supplied constant into the type of
     // the parameter.
-    auto converted_id = TryConvertToValueOfType(
-        context_, context_.insts().GetCanonicalLocId(default_value_inst_id),
-        default_value_inst_id, param_type_id);
+    auto converted_id =
+        TryConvertToValueOfType(context_, SemIR::LocId(default_value_inst_id),
+                                default_value_inst_id, param_type_id);
     if (converted_id == SemIR::ErrorInst::InstId) {
       CARBON_DIAGNOSTIC(
           PatternDefaultValueTypeMismatch, Error,
@@ -975,8 +975,7 @@ auto MatchContext::DoPostWork(State state,
       // value expression and the type of the pattern, but we can't because
       // they are both constants.
       context_.emitter().Emit(
-          LocIdForDiagnostics(
-              context_.insts().GetCanonicalLocId(entry.pattern_id)),
+          LocIdForDiagnostics(SemIR::LocId(entry.pattern_id)),
           PatternDefaultValueTypeMismatch, default_value_inst_id,
           param_inst_id);
     }

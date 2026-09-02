@@ -221,7 +221,6 @@ class FullPatternStack {
   // the stack. Note default values are only supported for explicit parameter
   // lists.
   auto GetDefaultValues() -> llvm::ArrayRef<SemIR::InstId> {
-    CARBON_CHECK(!default_values_stack_.empty());
     return default_values_stack_.PeekArray();
   }
 

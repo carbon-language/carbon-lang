@@ -2489,13 +2489,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_function.call_param_default_values_id);
   llvm::SmallVector<SemIR::InstId> imported_default_values;
   if (call_param_default_values.has_value()) {
+    auto import_fn = [&resolver](const auto& import_info) {
+      return GetLocalConstantInstId(resolver, import_info.import_inst_id);
+    };
     llvm::append_range(imported_default_values,
-                       llvm::map_range(*call_param_default_values,
-                                       [&resolver](const auto& import_info) {
-                                         return GetLocalConstantInstId(
-                                             resolver,
-                                             import_info.import_inst_id);
-                                       }));
+                       llvm::map_range(*call_param_default_values, import_fn));
   }
 
   auto return_type_const_id = SemIR::ConstantId::None;

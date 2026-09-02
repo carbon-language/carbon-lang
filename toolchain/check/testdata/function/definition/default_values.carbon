@@ -236,9 +236,10 @@ fn F(x: i32 = 0) -> i32 { return x; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param.loc8: %i32) -> out %return.param.loc8: %i32 default_values {
+// CHECK:STDOUT: fn @F(%x.param.loc8: %i32) -> out %return.param.loc8: %i32 {
+// CHECK:STDOUT: !default_values:
 // CHECK:STDOUT:   constants.%int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x.loc8
 // CHECK:STDOUT:   %impl.elem0.loc8: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -249,9 +250,10 @@ fn F(x: i32 = 0) -> i32 { return x; }
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%x.param.loc9: %i32) -> out %return.param.loc9: %i32 default_values {
+// CHECK:STDOUT: fn @G(%x.param.loc9: %i32) -> out %return.param.loc9: %i32 {
+// CHECK:STDOUT: !default_values:
 // CHECK:STDOUT:   constants.%int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x.loc9
 // CHECK:STDOUT:   %impl.elem0.loc9: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -262,9 +264,10 @@ fn F(x: i32 = 0) -> i32 { return x; }
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H(%x.param.loc10: %i32) -> out %return.param.loc10: %i32 default_values {
+// CHECK:STDOUT: fn @H(%x.param.loc10: %i32) -> out %return.param.loc10: %i32 {
+// CHECK:STDOUT: !default_values:
 // CHECK:STDOUT:   constants.%int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x.loc10
 // CHECK:STDOUT:   %impl.elem0.loc10: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -328,9 +331,10 @@ fn F(x: i32 = 0) -> i32 { return x; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %i32) -> out %return.param: %i32 default_values [from "repeated_defaults.carbon"] {
+// CHECK:STDOUT: fn @F(%x.param: %i32) -> out %return.param: %i32 [from "repeated_defaults.carbon"] {
+// CHECK:STDOUT: !default_values:
 // CHECK:STDOUT:   constants.%int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %impl.elem0.loc4: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -394,9 +398,10 @@ fn F(x: i32 = 0) -> i32 { return x; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %i32) -> out %return.param: %i32 default_values [from "elided_defaults_in_def.carbon"] {
+// CHECK:STDOUT: fn @F(%x.param: %i32) -> out %return.param: %i32 [from "elided_defaults_in_def.carbon"] {
+// CHECK:STDOUT: !default_values:
 // CHECK:STDOUT:   constants.%int_0: Core.IntLiteral = int_value 0 [concrete]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -460,9 +465,10 @@ fn F(x: i32 = 0) -> i32 { return x; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %i32) -> out %return.param: %i32 default_values [from "elided_defaults_in_decl.carbon"] {
+// CHECK:STDOUT: fn @F(%x.param: %i32) -> out %return.param: %i32 [from "elided_defaults_in_decl.carbon"] {
+// CHECK:STDOUT: !default_values:
 // CHECK:STDOUT:   constants.%int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
-// CHECK:STDOUT: } {
+// CHECK:STDOUT:
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %impl.elem0.loc4: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
