@@ -367,11 +367,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Main.import_ref.9e9: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [concrete = constants.%complete_type.0c6]
 // CHECK:STDOUT:   %Main.import_ref.58b = import_ref Main//adapt_specific_type, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Main.import_ref.57f7b3.1 = import_ref Main//adapt_specific_type, loc5_10, unloaded
-// CHECK:STDOUT:   %Main.import_ref.57f7b3.2 = import_ref Main//adapt_specific_type, loc5_10, unloaded
-// CHECK:STDOUT:   %field_decl: @C.%C.elem (%C.elem.4d5) = field_decl x, element0, %Main.import_ref.57f7b3.1 in [concrete] {
-// CHECK:STDOUT:     %Main.import_ref.57f7b3.2 = import_ref Main//adapt_specific_type, loc5_10, unloaded
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.57f = import_ref Main//adapt_specific_type, loc5_10, unloaded
+// CHECK:STDOUT:   %field_decl: @C.%C.elem (%C.elem.4d5) = field_decl x, element0, %Main.import_ref.57f in [concrete] {}
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
@@ -802,11 +799,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Main.import_ref.58b = import_ref Main//extend_adapt_specific_type_library, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.6b2392.2: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [concrete = constants.%C.3b7]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Main.import_ref.57f7b3.1 = import_ref Main//extend_adapt_specific_type_library, loc8_10, unloaded
-// CHECK:STDOUT:   %Main.import_ref.57f7b3.2 = import_ref Main//extend_adapt_specific_type_library, loc8_10, unloaded
-// CHECK:STDOUT:   %field_decl: @C.%C.elem (%C.elem.4d5) = field_decl x, element0, %Main.import_ref.57f7b3.1 in [concrete] {
-// CHECK:STDOUT:     %Main.import_ref.57f7b3.2 = import_ref Main//extend_adapt_specific_type_library, loc8_10, unloaded
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.57f = import_ref Main//extend_adapt_specific_type_library, loc8_10, unloaded
+// CHECK:STDOUT:   %field_decl: @C.%C.elem (%C.elem.4d5) = field_decl x, element0, %Main.import_ref.57f in [concrete] {}
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

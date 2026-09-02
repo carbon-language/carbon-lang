@@ -559,11 +559,8 @@ class Class(U: type) {
 // CHECK:STDOUT:   %Main.import_ref.895: @CompleteClass.%CompleteClass.F.type (%CompleteClass.F.type.4ea) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%CompleteClass.F (constants.%CompleteClass.F.c7a)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T.67d)]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.69c25e.1 = import_ref Main//foo, loc7_10, unloaded
-// CHECK:STDOUT:   %Main.import_ref.69c25e.2 = import_ref Main//foo, loc7_10, unloaded
-// CHECK:STDOUT:   %field_decl: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.c1f) = field_decl n, element0, %Main.import_ref.69c25e.1 in [concrete] {
-// CHECK:STDOUT:     %Main.import_ref.69c25e.2 = import_ref Main//foo, loc7_10, unloaded
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.69c = import_ref Main//foo, loc7_10, unloaded
+// CHECK:STDOUT:   %field_decl: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.c1f) = field_decl n, element0, %Main.import_ref.69c in [concrete] {}
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]

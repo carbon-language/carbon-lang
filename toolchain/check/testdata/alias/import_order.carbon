@@ -114,13 +114,8 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %Main.import_ref.146: <witness> = import_ref Main//a, loc4_22, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.e47 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.3e4: %C.elem = import_ref Main//a, loc4_16, loaded [concrete = %field_decl]
-// CHECK:STDOUT:   %Main.import_ref.5f5c36.1 = import_ref Main//a, loc4_19, unloaded
-// CHECK:STDOUT:   %Main.import_ref.bf4 = import_ref Main//a, loc4_19, unloaded
-// CHECK:STDOUT:   %Main.import_ref.5f5c36.2 = import_ref Main//a, loc4_19, unloaded
-// CHECK:STDOUT:   %field_decl: %C.elem = field_decl v, element0, %Main.import_ref.5f5c36.1 in [concrete] {
-// CHECK:STDOUT:     %Main.import_ref.bf4 = import_ref Main//a, loc4_19, unloaded
-// CHECK:STDOUT:     %Main.import_ref.5f5c36.2 = import_ref Main//a, loc4_19, unloaded
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.5f5 = import_ref Main//a, loc4_19, unloaded
+// CHECK:STDOUT:   %field_decl: %C.elem = field_decl v, element0, %Main.import_ref.5f5 in [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

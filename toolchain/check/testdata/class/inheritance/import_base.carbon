@@ -217,11 +217,8 @@ fn Run() {
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.edf: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1aa = impl_witness_table (%Core.import_ref.edf), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Main.import_ref.69c25e.1 = import_ref Main//a, loc8_10, unloaded
-// CHECK:STDOUT:   %Main.import_ref.69c25e.2 = import_ref Main//a, loc8_10, unloaded
-// CHECK:STDOUT:   %field_decl: %Base.elem = field_decl x, element0, %Main.import_ref.69c25e.1 in [concrete] {
-// CHECK:STDOUT:     %Main.import_ref.69c25e.2 = import_ref Main//a, loc8_10, unloaded
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.69c = import_ref Main//a, loc8_10, unloaded
+// CHECK:STDOUT:   %field_decl: %Base.elem = field_decl x, element0, %Main.import_ref.69c in [concrete] {}
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

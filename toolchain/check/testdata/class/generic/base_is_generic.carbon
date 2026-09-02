@@ -354,26 +354,20 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.cb0: <witness> = import_ref Main//extend_generic_base, loc10_1, loaded [concrete = constants.%complete_type.620]
 // CHECK:STDOUT:   %Main.import_ref.61b = import_ref Main//extend_generic_base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.a22: %Param.elem = import_ref Main//extend_generic_base, loc9_8, loaded [concrete = %field_decl.438]
+// CHECK:STDOUT:   %Main.import_ref.a22: %Param.elem = import_ref Main//extend_generic_base, loc9_8, loaded [concrete = %field_decl.864]
 // CHECK:STDOUT:   %Main.import_ref.7e3: <witness> = import_ref Main//extend_generic_base, loc6_1, loaded [symbolic = @Base.%complete_type (constants.%complete_type.735)]
 // CHECK:STDOUT:   %Main.import_ref.821 = import_ref Main//extend_generic_base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.be5: @Base.%Base.elem (%Base.elem.a3c) = import_ref Main//extend_generic_base, loc5_8, loaded [concrete = %field_decl.a63]
+// CHECK:STDOUT:   %Main.import_ref.be5: @Base.%Base.elem (%Base.elem.a3c) = import_ref Main//extend_generic_base, loc5_8, loaded [concrete = %field_decl.2df]
 // CHECK:STDOUT:   %Main.import_ref.b3b: type = import_ref Main//extend_generic_base, loc4_18, loaded [symbolic = @Base.%T (constants.%T.67d)]
 // CHECK:STDOUT:   %Main.import_ref.58d: <witness> = import_ref Main//extend_generic_base, loc14_1, loaded [concrete = constants.%complete_type.90c]
 // CHECK:STDOUT:   %Main.import_ref.87c = import_ref Main//extend_generic_base, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.4a4 = import_ref Main//extend_generic_base, loc13_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c669b4.2: type = import_ref Main//extend_generic_base, loc13_26, loaded [concrete = constants.%Base.947]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Main.import_ref.57f7b3.1 = import_ref Main//extend_generic_base, loc5_10, unloaded
-// CHECK:STDOUT:   %Main.import_ref.57f7b3.2 = import_ref Main//extend_generic_base, loc5_10, unloaded
-// CHECK:STDOUT:   %field_decl.a63: @Base.%Base.elem (%Base.elem.a3c) = field_decl x, element0, %Main.import_ref.57f7b3.1 in [concrete] {
-// CHECK:STDOUT:     %Main.import_ref.57f7b3.2 = import_ref Main//extend_generic_base, loc5_10, unloaded
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.69c25e.1 = import_ref Main//extend_generic_base, loc9_10, unloaded
-// CHECK:STDOUT:   %Main.import_ref.69c25e.2 = import_ref Main//extend_generic_base, loc9_10, unloaded
-// CHECK:STDOUT:   %field_decl.438: %Param.elem = field_decl y, element0, %Main.import_ref.69c25e.1 in [concrete] {
-// CHECK:STDOUT:     %Main.import_ref.69c25e.2 = import_ref Main//extend_generic_base, loc9_10, unloaded
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.57f = import_ref Main//extend_generic_base, loc5_10, unloaded
+// CHECK:STDOUT:   %field_decl.2df: @Base.%Base.elem (%Base.elem.a3c) = field_decl x, element0, %Main.import_ref.57f in [concrete] {}
+// CHECK:STDOUT:   %Main.import_ref.69c = import_ref Main//extend_generic_base, loc9_10, unloaded
+// CHECK:STDOUT:   %field_decl.864: %Param.elem = field_decl y, element0, %Main.import_ref.69c in [concrete] {}
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
@@ -449,12 +443,12 @@ fn H() {
 // CHECK:STDOUT: fn @ImportedDoubleFieldAccess(%d.param: %Derived) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %x.ref: %Base.elem.3f2 = name_ref x, imports.%Main.import_ref.be5 [concrete = imports.%field_decl.a63]
+// CHECK:STDOUT:   %x.ref: %Base.elem.3f2 = name_ref x, imports.%Main.import_ref.be5 [concrete = imports.%field_decl.2df]
 // CHECK:STDOUT:   %.loc7_11.1: %Base.947 = as_compatible %d.ref
 // CHECK:STDOUT:   %.loc7_11.2: ref %Base.947 = class_element_access %.loc7_11.1, element0
 // CHECK:STDOUT:   %.loc7_11.3: ref %Base.947 = converted %d.ref, %.loc7_11.2
 // CHECK:STDOUT:   %.loc7_11.4: ref %Param = class_element_access %.loc7_11.3, element0
-// CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, imports.%Main.import_ref.a22 [concrete = imports.%field_decl.438]
+// CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, imports.%Main.import_ref.a22 [concrete = imports.%field_decl.864]
 // CHECK:STDOUT:   %.loc7_13.1: ref %i32 = class_element_access %.loc7_11.4, element0
 // CHECK:STDOUT:   %.loc7_13.2: %i32 = acquire_value %.loc7_13.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

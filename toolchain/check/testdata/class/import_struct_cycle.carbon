@@ -158,15 +158,8 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.3b0 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.169: %Cycle.elem = import_ref Main//a, loc10_8, loaded [concrete = %field_decl]
 // CHECK:STDOUT:   %a.var: ref %struct_type.b = var_storage constants.%a.var_patt [concrete]
-// CHECK:STDOUT:   %Main.import_ref.fd6ceb.1 = import_ref Main//a, loc10_21, unloaded
-// CHECK:STDOUT:   %Main.import_ref.9b0 = import_ref Main//a, loc10_15, unloaded
-// CHECK:STDOUT:   %Main.import_ref.85f = import_ref Main//a, loc10_20, unloaded
-// CHECK:STDOUT:   %Main.import_ref.fd6ceb.2 = import_ref Main//a, loc10_21, unloaded
-// CHECK:STDOUT:   %field_decl: %Cycle.elem = field_decl c, element0, %Main.import_ref.fd6ceb.1 in [concrete] {
-// CHECK:STDOUT:     %Main.import_ref.9b0 = import_ref Main//a, loc10_15, unloaded
-// CHECK:STDOUT:     %Main.import_ref.85f = import_ref Main//a, loc10_20, unloaded
-// CHECK:STDOUT:     %Main.import_ref.fd6ceb.2 = import_ref Main//a, loc10_21, unloaded
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.fd6 = import_ref Main//a, loc10_21, unloaded
+// CHECK:STDOUT:   %field_decl: %Cycle.elem = field_decl c, element0, %Main.import_ref.fd6 in [concrete] {}
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.e5f: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.ff5) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.ce9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.fb0 = impl_witness_table (%Core.import_ref.e5f), @ptr.as.Copy.impl [concrete]
