@@ -1483,10 +1483,13 @@ auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
       CARBON_DIAGNOSTIC(CharacterOnlyAllowedAtStart, Error,
                         "`$` is only allowed at the start of an identifier");
       emitter_.Emit(word.begin(), CharacterOnlyAllowedAtStart);
-      return LexTokenWithPayload(
-          TokenKind::Error,
-          buffer_.GetTokenText(prev_token).size() + word.size(),
-          buffer_.GetByteOffset(prev_token));
+
+      auto& prev_token_info = buffer_.token_infos_.Get(prev_token);
+      auto prev_token_text_size = buffer_.GetTokenText(prev_token).size();
+      prev_token_info = TokenInfo(TokenKind::Error, has_leading_space_,
+                                  prev_token_text_size + word.size(),
+                                  prev_token_info.byte_offset());
+      return LexResult(TokenIndex(buffer_.token_infos_.size() - 1));
     }
   }
 

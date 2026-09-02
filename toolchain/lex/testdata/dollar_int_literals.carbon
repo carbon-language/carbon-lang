@@ -31,59 +31,64 @@ $999999999999
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
 $
-// CHECK:STDOUT:   - { index:  1, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  1, kind:     "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$", has_leading_space: true }
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:2: error: Positional parameters can only contain digits after `$` [InvalidCharacterInDollarIntLiteral]
 // CHECK:STDERR: $foo
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
 $foo
-// CHECK:STDOUT:   - { index:  2, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$foo", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  2, kind:     "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$foo", has_leading_space: true }
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:2: error: Positional parameters can only contain digits after `$` [InvalidCharacterInDollarIntLiteral]
 // CHECK:STDERR: $1a32
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
 $1a32
-// CHECK:STDOUT:   - { index:  3, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$1a32", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  3, kind:     "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$1a32", has_leading_space: true }
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:2: error: Leading zeroes are not allowed in positional parameters [DollarIntLiteralLeadingZero]
 // CHECK:STDERR: $00
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
 $00
-// CHECK:STDOUT:   - { index:  4, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$00", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  4, kind:     "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$00", has_leading_space: true }
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:2: error: Leading zeroes are not allowed in positional parameters [DollarIntLiteralLeadingZero]
 // CHECK:STDERR: $025321
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
 $025321
-// CHECK:STDOUT:   - { index:  5, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$025321", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  5, kind:     "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$025321", has_leading_space: true }
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:2: error: Leading zeroes are not allowed in positional parameters [DollarIntLiteralLeadingZero]
 // CHECK:STDERR: $0x12
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
 $0x12
-// CHECK:STDOUT:   - { index:  6, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$0x12", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  6, kind:     "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$0x12", has_leading_space: true }
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:2: error: Leading zeroes are not allowed in positional parameters [DollarIntLiteralLeadingZero]
 // CHECK:STDERR: $0b1100
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
 $0b1100
-// CHECK:STDOUT:   - { index:  7, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$0b1100", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  7, kind:     "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$0b1100", has_leading_space: true }
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:2: error: invalid digit '$' in decimal numeric literal [InvalidDigit]
 // CHECK:STDERR: 2$63
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
 2$63
-// CHECK:STDOUT:   - { index:  8, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "2$63", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  8, kind:     "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "2$63", has_leading_space: true }
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:4: error: `$` is only allowed at the start of an identifier [CharacterOnlyAllowedAtStart]
 // CHECK:STDERR: abc$37
 // CHECK:STDERR:    ^
 // CHECK:STDERR:
 abc$37
-// CHECK:STDOUT:   - { index:  9, kind: "Identifier", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "abc", identifier: 0, has_leading_space: true }
-// CHECK:STDOUT:   - { index: 10, kind:      "Error", line: {{ *}}[[@LINE-2]], column:   1, indent: 1, spelling: "abc$37" }
+// CHECK:STDOUT:   - { index:  9, kind:     "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "abc$37" }
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:6: error: `$` is only allowed at the start of an identifier [CharacterOnlyAllowedAtStart]
+// CHECK:STDERR: r#foo$0
+// CHECK:STDERR:      ^
+// CHECK:STDERR:
+r#foo$0
+// CHECK:STDOUT:   - { index: 10, kind:     "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "r#foo$0" }
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:2: error: found a positional parameter using 19 digits, which is greater than the limit of 18 [TooManyDollarIntDigits]
 // CHECK:STDERR: $9999999999999999999
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
 $9999999999999999999
-// CHECK:STDOUT:   - { index: 11, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$9999999999999999999", has_leading_space: true }
+// CHECK:STDOUT:   - { index: 11, kind:     "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$9999999999999999999", has_leading_space: true }
