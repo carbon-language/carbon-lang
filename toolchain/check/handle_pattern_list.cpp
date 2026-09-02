@@ -205,6 +205,17 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
        .default_value_id = default_value_id});
   context.node_stack().Push(node_id, default_value_inst_id);
 
+  // We turned off expr region for pattern checking while parsing the default
+  // value expression, so turn it back on again for further pattern checking.
+  BeginExprRegionForPattern(context);
+  return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::DefaultValueExprStartId /*node_id*/) -> bool {
+  // We want to check the default value expression as a normal expression,
+  // and not convert it into a pattern.
+  EndEmptyExprRegionForPattern(context);
   return true;
 }
 

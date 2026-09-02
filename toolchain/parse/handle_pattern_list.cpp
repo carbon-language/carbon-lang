@@ -175,6 +175,10 @@ auto HandlePatternListElementCheckForDefaultValue(Context& context) -> void {
     return;
   }
 
+  // Add the first virtual node surrounding the value expr node, to facilitate
+  // handling in check.
+  context.AddLeafNode(NodeKind::DefaultValueExprStart, *equals_token);
+
   state.token = *equals_token;
   state.kind = StateKind::PatternListElementFinishDefaultValue;
   context.PushState(state);
