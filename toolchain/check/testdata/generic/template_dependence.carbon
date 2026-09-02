@@ -334,7 +334,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %.loc6_16.2: <instruction> = call_action (%F.ref, %T.ref.loc6, %U.ref.loc6), false [template]
 // CHECK:STDOUT:   %.loc6_16.3: type = type_of_inst %.loc6_16.2 [template]
 // CHECK:STDOUT:   %.loc6_16.4: @F.%.loc6_16.3 (@F.%.loc6_16.3) = splice_inst %.loc6_16.2 [template = %.loc6_16.4 (constants.%.dca)]
-// CHECK:STDOUT:   %.loc6_17.8: <instruction> = call_action (constants.%ImplicitAs.generic, constants.%tuple.type.a5e), false [template]
+// CHECK:STDOUT:   %.loc6_17.8: <instruction> = call_action (constants.%ImplicitAs.generic, %tuple.type), false [template]
 // CHECK:STDOUT:   %.loc6_17.9: type = type_of_inst %.loc6_17.8 [template]
 // CHECK:STDOUT:   %.loc6_17.10: @F.%.loc6_17.9 (@F.%.loc6_17.9) = splice_inst %.loc6_17.8 [template = %.loc6_17.10 (constants.%.6c2)]
 // CHECK:STDOUT:   %.loc6_17.11: <instruction> = access_member_action %.loc6_17.1, Convert [template]
