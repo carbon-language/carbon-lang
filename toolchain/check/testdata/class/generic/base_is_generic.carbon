@@ -128,7 +128,7 @@ fn H() {
 // CHECK:STDOUT:   %complete_type.90c: <witness> = complete_type_witness %struct_type.base.a1b [concrete]
 // CHECK:STDOUT:   %pattern_type.746: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %d.param_patt: %pattern_type.746 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %d.patt: %pattern_type.746 = at_binding_pattern d, %d.param_patt [concrete]
+// CHECK:STDOUT:   %d.patt: %pattern_type.746 = wrapper_binding_pattern d, %d.param_patt [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
@@ -181,7 +181,7 @@ fn H() {
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %DoubleFieldAccess.decl: %DoubleFieldAccess.type = fn_decl @DoubleFieldAccess [concrete = constants.%DoubleFieldAccess] {
 // CHECK:STDOUT:     %d.param_patt: %pattern_type.746 = value_param_pattern [concrete = constants.%d.param_patt]
-// CHECK:STDOUT:     %d.patt: %pattern_type.746 = at_binding_pattern d, %d.param_patt [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %d.patt: %pattern_type.746 = wrapper_binding_pattern d, %d.param_patt [concrete = constants.%d.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -317,7 +317,7 @@ fn H() {
 // CHECK:STDOUT:   %complete_type.90c: <witness> = complete_type_witness %struct_type.base.a1b [concrete]
 // CHECK:STDOUT:   %pattern_type.746: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %d.param_patt: %pattern_type.746 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %d.patt: %pattern_type.746 = at_binding_pattern d, %d.param_patt [concrete]
+// CHECK:STDOUT:   %d.patt: %pattern_type.746 = wrapper_binding_pattern d, %d.param_patt [concrete]
 // CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
@@ -380,7 +380,7 @@ fn H() {
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess.decl: %ImportedDoubleFieldAccess.type = fn_decl @ImportedDoubleFieldAccess [concrete = constants.%ImportedDoubleFieldAccess] {
 // CHECK:STDOUT:     %d.param_patt: %pattern_type.746 = value_param_pattern [concrete = constants.%d.param_patt]
-// CHECK:STDOUT:     %d.patt: %pattern_type.746 = at_binding_pattern d, %d.param_patt [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %d.patt: %pattern_type.746 = wrapper_binding_pattern d, %d.param_patt [concrete = constants.%d.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {

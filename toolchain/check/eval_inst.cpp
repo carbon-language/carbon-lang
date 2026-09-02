@@ -773,17 +773,7 @@ auto EvalConstantInst(Context& context, SemIR::SpliceInst inst)
     return ConstantEvalResult::Existing(
         context.constant_values().Get(inst_value->inst_id));
   }
-  switch (nested_inst.kind().constant_kind()) {
-    case SemIR::InstConstantKind::ConstantInstAction:
-      return ConstantEvalResult::NewSamePhase(inst);
-    case SemIR::InstConstantKind::InstAction:
-      // TODO: Consider creating a new `ValueOfInst` instruction analogous to
-      // `TypeOfInst` to defer determining the constant value until we know the
-      // instruction. Alternatively, produce a symbolic `SpliceInst` constant.
-      return ConstantEvalResult::NotConstant;
-    default:
-      CARBON_FATAL("Unexpected inst kind for inst splice: {0}", nested_inst);
-  }
+  return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIR::StructAccess inst)

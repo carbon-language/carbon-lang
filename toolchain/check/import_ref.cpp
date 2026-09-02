@@ -2386,13 +2386,15 @@ static auto ImportFunctionDecl(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_param_patterns_id = SemIR::InstBlockId::None,
         .call_params_id = SemIR::InstBlockId::None,
+        .call_param_default_values_id = SemIR::InstBlockId::None,
         .call_param_ranges = import_function.call_param_ranges,
         .return_type_inst_id = SemIR::TypeInstId::None,
         .return_form_inst_id = SemIR::InstId::None,
         .return_pattern_id = SemIR::InstId::None,
         .virtual_modifier = import_function.virtual_modifier,
         .virtual_index = import_function.virtual_index,
-        .evaluation_mode = import_function.evaluation_mode}});
+        .evaluation_mode = import_function.evaluation_mode,
+        .interface_modifier = import_function.interface_modifier}});
 
   // Directly add the function type constant. Don't use `GetFunctionType`
   // because that will evaluate the function type, which we can't do if the

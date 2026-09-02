@@ -41,18 +41,18 @@ import Cpp;
 inline Cpp '''
 enum S : short {};
 enum I : short {};
-struct B {
+struct EnumB {
   operator S() const;
   operator I() const;
 };
 ''';
 
-fn ConvertToVar(b: Cpp.B) {
+fn ConvertToVar(b: Cpp.EnumB) {
   var unused s: Cpp.S = b;
   var unused i: Cpp.I = b;
 }
 
-fn ConvertToValue(b: Cpp.B) {
+fn ConvertToValue(b: Cpp.EnumB) {
   let unused s: Cpp.S = b;
   let unused i: Cpp.I = b;
 }
@@ -63,16 +63,16 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 inline Cpp '''
-struct B {
+struct IntB {
   operator int() const;
 };
 ''';
 
-fn ConvertToVar(b: Cpp.B) {
+fn ConvertToVar(b: Cpp.IntB) {
   var unused a: Cpp.int = b;
 }
 
-fn ConvertToValue(b: Cpp.B) {
+fn ConvertToValue(b: Cpp.IntB) {
   let unused a: Cpp.int = b;
 }
 
@@ -182,14 +182,14 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT:   %s.var = alloca i16, align 2, !dbg !18
 // CHECK:STDOUT:   %i.var = alloca i16, align 2, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %s.var), !dbg !18
-// CHECK:STDOUT:   call void @_ZNK1Bcv1SEv.carbon_thunk._(ptr %b, ptr %s.var), !dbg !18
+// CHECK:STDOUT:   call void @_ZNK5EnumBcv1SEv.carbon_thunk._(ptr %b, ptr %s.var), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %i.var), !dbg !19
-// CHECK:STDOUT:   call void @_ZNK1Bcv1IEv.carbon_thunk._(ptr %b, ptr %i.var), !dbg !19
+// CHECK:STDOUT:   call void @_ZNK5EnumBcv1IEv.carbon_thunk._(ptr %b, ptr %i.var), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZNK1Bcv1SEv.carbon_thunk._(ptr noundef nonnull align 1 dereferenceable(1) %this, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZNK5EnumBcv1SEv.carbon_thunk._(ptr noundef nonnull align 1 dereferenceable(1) %this, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
@@ -197,13 +197,13 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !24
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !24
 // CHECK:STDOUT:   %1 = load ptr, ptr %this.addr, align 8, !tbaa !21, !nonnull !25
-// CHECK:STDOUT:   %call = call noundef signext i16 @_ZNK1Bcv1SEv(ptr noundef nonnull align 1 dereferenceable(1) %1)
+// CHECK:STDOUT:   %call = call noundef signext i16 @_ZNK5EnumBcv1SEv(ptr noundef nonnull align 1 dereferenceable(1) %1)
 // CHECK:STDOUT:   store i16 %call, ptr %0, align 2, !tbaa !26
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_ZNK1Bcv1IEv.carbon_thunk._(ptr noundef nonnull align 1 dereferenceable(1) %this, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_ZNK5EnumBcv1IEv.carbon_thunk._(ptr noundef nonnull align 1 dereferenceable(1) %this, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
@@ -211,7 +211,7 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !24
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !24
 // CHECK:STDOUT:   %1 = load ptr, ptr %this.addr, align 8, !tbaa !21, !nonnull !25
-// CHECK:STDOUT:   %call = call noundef signext i16 @_ZNK1Bcv1IEv(ptr noundef nonnull align 1 dereferenceable(1) %1)
+// CHECK:STDOUT:   %call = call noundef signext i16 @_ZNK5EnumBcv1IEv(ptr noundef nonnull align 1 dereferenceable(1) %1)
 // CHECK:STDOUT:   store i16 %call, ptr %0, align 2, !tbaa !28
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -222,10 +222,10 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT:   %.loc20_25.1.temp = alloca i16, align 2, !dbg !33
 // CHECK:STDOUT:   %.loc21_25.1.temp = alloca i16, align 2, !dbg !34
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_25.1.temp), !dbg !33
-// CHECK:STDOUT:   call void @_ZNK1Bcv1SEv.carbon_thunk._(ptr %b, ptr %.loc20_25.1.temp), !dbg !33
+// CHECK:STDOUT:   call void @_ZNK5EnumBcv1SEv.carbon_thunk._(ptr %b, ptr %.loc20_25.1.temp), !dbg !33
 // CHECK:STDOUT:   %.loc20_25.5 = load i16, ptr %.loc20_25.1.temp, align 2, !dbg !33
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_25.1.temp), !dbg !34
-// CHECK:STDOUT:   call void @_ZNK1Bcv1IEv.carbon_thunk._(ptr %b, ptr %.loc21_25.1.temp), !dbg !34
+// CHECK:STDOUT:   call void @_ZNK5EnumBcv1IEv.carbon_thunk._(ptr %b, ptr %.loc21_25.1.temp), !dbg !34
 // CHECK:STDOUT:   %.loc21_25.5 = load i16, ptr %.loc21_25.1.temp, align 2, !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
@@ -233,9 +233,9 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef signext i16 @_ZNK1Bcv1SEv(ptr noundef nonnull align 1 dereferenceable(1)) #3
+// CHECK:STDOUT: declare noundef signext i16 @_ZNK5EnumBcv1SEv(ptr noundef nonnull align 1 dereferenceable(1)) #3
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef signext i16 @_ZNK1Bcv1IEv(ptr noundef nonnull align 1 dereferenceable(1)) #3
+// CHECK:STDOUT: declare noundef signext i16 @_ZNK5EnumBcv1IEv(ptr noundef nonnull align 1 dereferenceable(1)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
@@ -271,7 +271,7 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: !19 = !DILocation(line: 16, column: 3, scope: !12)
 // CHECK:STDOUT: !20 = !DILocation(line: 14, column: 1, scope: !12)
 // CHECK:STDOUT: !21 = !{!22, !22, i64 0}
-// CHECK:STDOUT: !22 = !{!"p1 _ZTS1B", !23, i64 0}
+// CHECK:STDOUT: !22 = !{!"p1 _ZTS5EnumB", !23, i64 0}
 // CHECK:STDOUT: !23 = !{!"any pointer", !10, i64 0}
 // CHECK:STDOUT: !24 = !{!23, !23, i64 0}
 // CHECK:STDOUT: !25 = !{}
@@ -297,24 +297,24 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !18
-// CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK1BcviEv.carbon_thunk._(ptr %b), !dbg !18
+// CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK4IntBcviEv.carbon_thunk._(ptr %b), !dbg !18
 // CHECK:STDOUT:   store i32 %__carbon_thunk.call, ptr %a.var, align 4, !dbg !18
-// CHECK:STDOUT:   call void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %a.var), !dbg !18
+// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %a.var), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal noundef i32 @_ZNK1BcviEv.carbon_thunk._(ptr noundef nonnull align 1 dereferenceable(1) %this) #1 {
+// CHECK:STDOUT: define internal noundef i32 @_ZNK4IntBcviEv.carbon_thunk._(ptr noundef nonnull align 1 dereferenceable(1) %this) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !20
 // CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !tbaa !20, !nonnull !23
-// CHECK:STDOUT:   %call = call noundef i32 @_ZNK1BcviEv(ptr noundef nonnull align 1 dereferenceable(1) %0)
+// CHECK:STDOUT:   %call = call noundef i32 @_ZNK4IntBcviEv(ptr noundef nonnull align 1 dereferenceable(1) %0)
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.5e27612b9dd31a14:core.Destroy.Core"(ptr %self) #0 !dbg !24 {
+// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
@@ -322,14 +322,14 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CConvertToValue.Main(ptr %b) #0 !dbg !31 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK1BcviEv.carbon_thunk._(ptr %b), !dbg !34
+// CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK4IntBcviEv.carbon_thunk._(ptr %b), !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef i32 @_ZNK1BcviEv(ptr noundef nonnull align 1 dereferenceable(1)) #3
+// CHECK:STDOUT: declare noundef i32 @_ZNK4IntBcviEv(ptr noundef nonnull align 1 dereferenceable(1)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -361,10 +361,10 @@ fn ConvertToValue(b: Cpp.B) {
 // CHECK:STDOUT: !18 = !DILocation(line: 12, column: 3, scope: !12)
 // CHECK:STDOUT: !19 = !DILocation(line: 11, column: 1, scope: !12)
 // CHECK:STDOUT: !20 = !{!21, !21, i64 0}
-// CHECK:STDOUT: !21 = !{!"p1 _ZTS1B", !22, i64 0}
+// CHECK:STDOUT: !21 = !{!"p1 _ZTS4IntB", !22, i64 0}
 // CHECK:STDOUT: !22 = !{!"any pointer", !10, i64 0}
 // CHECK:STDOUT: !23 = !{}
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5e27612b9dd31a14:core.Destroy.Core", scope: null, file: !1, line: 12, type: !25, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !28)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !1, line: 12, type: !25, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !28)
 // CHECK:STDOUT: !25 = !DISubroutineType(types: !26)
 // CHECK:STDOUT: !26 = !{null, !27}
 // CHECK:STDOUT: !27 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)

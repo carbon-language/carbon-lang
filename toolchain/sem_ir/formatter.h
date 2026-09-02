@@ -273,6 +273,7 @@ class Formatter {
   auto FormatArg(CharId c) -> void { out() << c; }
   auto FormatArg(EntityNameId id) -> void;
   auto FormatArg(DeclaredFacetTypeId id) -> void;
+  auto FormatArg(DefaultValueId id) -> void;
   auto FormatArg(FieldId id) -> void;
   auto FormatArg(IntKind k) -> void { k.Print(out()); }
   auto FormatArg(FloatKind k) -> void { k.Print(out()); }
@@ -287,6 +288,7 @@ class Formatter {
   auto FormatArg(RealId id) -> void;
   auto FormatArg(StringLiteralValueId id) -> void;
   auto FormatArg(ConstantId id) -> void { FormatConstant(id); }
+  auto FormatArg(ClangDeclId id) -> void;
 
   template <typename BundleT>
   auto FormatArg(BundleId<BundleT> bundle_id) -> void {

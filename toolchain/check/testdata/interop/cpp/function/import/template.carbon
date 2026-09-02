@@ -29,9 +29,9 @@ let min_explicit_literal: i32 = Cpp.min(i32, 1, 2);
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<typename> struct X;
-template<typename> struct Y;
-template<template<typename> typename... TT, typename... T> void f(T ...a) {}
+template<typename> struct TemplateTemplateX;
+template<typename> struct TemplateTemplateY;
+template<template<typename> typename... TT, typename... T> void template_template_fn(T ...a) {}
 ''';
 
 fn Call() {
@@ -40,15 +40,15 @@ fn Call() {
 
   // `a` and `b` are not classified as template arguments, so are passed as the
   // function parameter pack `a...`.
-  Cpp.f(a, b);
+  Cpp.template_template_fn(a, b);
 
-  // `Cpp.X` and `Cpp.Y` are classified as template template arguments, so they
+  // `Cpp.TemplateTemplateX` and `Cpp.TemplateTemplateY` are classified as template template arguments, so they
   // are passed as the template parameter pack `TT...`.
-  Cpp.f(Cpp.X, Cpp.Y);
+  Cpp.template_template_fn(Cpp.TemplateTemplateX, Cpp.TemplateTemplateY);
 
   // Pass some template arguments followed by some function arguments.
-  Cpp.f(Cpp.X, Cpp.Y, a, b);
-  Cpp.f(Cpp.X, a, b, a);
+  Cpp.template_template_fn(Cpp.TemplateTemplateX, Cpp.TemplateTemplateY, a, b);
+  Cpp.template_template_fn(Cpp.TemplateTemplateX, a, b, a);
 }
 
 // --- nontype_template_arg.carbon
@@ -56,25 +56,25 @@ fn Call() {
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<int... I, typename... T> void f(T ...a) {}
-template<int I = 0, int J = 0, typename = void, typename... T> void g(T ...a) {}
+template<int... I, typename... T> void nontype_f(T ...a) {}
+template<int I = 0, int J = 0, typename = void, typename... T> void nontype_g(T ...a) {}
 ''';
 
 fn Call() {
   let a: i32 = 0;
   let b: i32 = 0;
 
-  Cpp.f(a, b);
+  Cpp.nontype_f(a, b);
   // TODO: There should be a way to indicate that the arguments are template
-  // arguments, not function arguments, when calling `f`.
-  Cpp.f(1, 2);
+  // arguments, not function arguments, when calling `nontype_f`.
+  Cpp.nontype_f(1, 2);
 
   // Two function arguments.
-  Cpp.g(1, 2);
+  Cpp.nontype_g(1, 2);
   // Three template arguments.
-  Cpp.g(1, 2, i32);
+  Cpp.nontype_g(1, 2, i32);
   // Three template arguments and two function arguments.
-  Cpp.g(1, 2, i32, 3, 4);
+  Cpp.nontype_g(1, 2, i32, 3, 4);
 }
 
 // --- fail_function_arg_not_template_arg.carbon
@@ -82,19 +82,19 @@ fn Call() {
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<int N> void f();
+template<int N> void fn_arg_not_template_arg_f();
 ''';
 
 fn Call() {
   // We treat this as a function argument, even though that makes the call fail.
-  // CHECK:STDERR: fail_function_arg_not_template_arg.carbon:[[@LINE+7]]:10: error: no matching function for call to 'f' [CppInteropParseError]
-  // CHECK:STDERR:    17 |   Cpp.f(1);
-  // CHECK:STDERR:       |          ^
+  // CHECK:STDERR: fail_function_arg_not_template_arg.carbon:[[@LINE+7]]:34: error: no matching function for call to 'fn_arg_not_template_arg_f' [CppInteropParseError]
+  // CHECK:STDERR:    17 |   Cpp.fn_arg_not_template_arg_f(1);
+  // CHECK:STDERR:       |                                  ^
   // CHECK:STDERR: fail_function_arg_not_template_arg.carbon:[[@LINE-8]]:22: note: candidate function template not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     5 | template<int N> void f();
+  // CHECK:STDERR:     5 | template<int N> void fn_arg_not_template_arg_f();
   // CHECK:STDERR:       |                      ^
   // CHECK:STDERR:
-  Cpp.f(1);
+  Cpp.fn_arg_not_template_arg_f(1);
 }
 
 // --- function_arg_not_template_arg_overloaded.carbon
@@ -102,12 +102,12 @@ fn Call() {
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<int N> void f();
-void f(int n);
+template<int N> void overloaded_f();
+void overloaded_f(int n);
 ''';
 
 fn Call() {
-  Cpp.f(1);
+  Cpp.overloaded_f(1);
 }
 
 // --- overloaded_with_different_template_params.carbon
@@ -115,18 +115,18 @@ fn Call() {
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<typename T> struct X;
-struct Y;
+template<typename T> struct OverloadedTemplateX;
+struct OverloadedNonTemplateY;
 
-template<int N, typename T> void f();
-template<typename T> void f();
-template<template<typename> typename T> void f();
+template<int N, typename T> void different_template_params_f();
+template<typename T> void different_template_params_f();
+template<template<typename> typename T> void different_template_params_f();
 ''';
 
 fn Call() {
-  Cpp.f(1, i32);
-  Cpp.f(Cpp.X);
-  Cpp.f(Cpp.Y);
+  Cpp.different_template_params_f(1, i32);
+  Cpp.different_template_params_f(Cpp.OverloadedTemplateX);
+  Cpp.different_template_params_f(Cpp.OverloadedNonTemplateY);
 }
 
 // --- only_call_templates_when_given_template_args.carbon
@@ -137,13 +137,13 @@ import Cpp inline '''
 struct NonTemplate {};
 struct Template {};
 
-NonTemplate f(unsigned char, unsigned char);
-template<typename = void> Template f(unsigned char, int = 0);
+NonTemplate only_call_templates_f(unsigned char, unsigned char);
+template<typename = void> Template only_call_templates_f(unsigned char, int = 0);
 ''';
 
 // Prefers the non-template because it has a better match for the second parameter.
-let x: Cpp.NonTemplate = Cpp.f(1 as u8, 2 as u8);
+let x: Cpp.NonTemplate = Cpp.only_call_templates_f(1 as u8, 2 as u8);
 
 // Calls the template; the non-template is not considered due to the template
 // argument `i32`.
-let y: Cpp.Template = Cpp.f(i32, 1 as u8);
+let y: Cpp.Template = Cpp.only_call_templates_f(i32, 1 as u8);

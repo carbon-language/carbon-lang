@@ -342,12 +342,22 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "hashing_llvm",
+    hdrs = ["hashing_llvm.h"],
+    deps = [
+        ":hashing",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "hashing_test",
     size = "small",
     srcs = ["hashing_test.cpp"],
     deps = [
         ":hashing",
+        ":hashing_llvm",
         ":raw_string_ostream",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
@@ -384,6 +394,7 @@ cc_test(
     size = "small",
     srcs = ["hashtable_key_context_test.cpp"],
     deps = [
+        ":hashing_llvm",
         ":hashtable_key_context",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
@@ -460,6 +471,7 @@ cc_test(
         ":raw_hashtable_test_helpers",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -502,6 +514,19 @@ cc_library(
     name = "ostream",
     hdrs = ["ostream.h"],
     deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "ostream_test",
+    size = "small",
+    srcs = ["ostream_test.cpp"],
+    deps = [
+        ":ostream",
+        ":raw_string_ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -635,6 +660,7 @@ cc_test(
         ":set",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 

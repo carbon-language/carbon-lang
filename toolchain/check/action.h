@@ -9,40 +9,38 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
-// Performs a member access action. Defined in member_access.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::AccessMemberAction action) -> SemIR::InstId;
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::AccessOptionalMemberAction action) -> SemIR::InstId;
+namespace Internal {
+// Computes the function type to use for PerformAction for InstT.
+template <typename InstT>
+using FunctionTypeForPerformAction = std::conditional_t<
+    InstT::Kind.constant_kind() == SemIR::InstConstantKind::InstAction,
+    auto(Context& context, SemIR::LocId loc_id, InstT inst)->SemIR::InstId,
+    auto()->void>;
+}  // namespace Internal
 
-// Performs a conversion action. Defined in convert.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::ConvertToValueAction action) -> SemIR::InstId;
+// Explicitly delete the overload generated for non-action instructions. These
+// all produce the same signature, so we only need to delete it once.
+auto PerformAction() -> void = delete;
 
-// Performs a form parameter pattern action. Defined in pattern.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::FormParamPatternAction action) -> SemIR::InstId;
-
-// Performs an output form parameter pattern action. Defined in pattern.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::OutFormParamPatternAction action) -> SemIR::InstId;
-
-// Performs a caller pattern match action. Defined in pattern_match.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::CallerPatternMatchAction action) -> SemIR::InstId;
-
-// Performs a callee pattern match action. Defined in pattern_match.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::CalleePatternMatchAction action) -> SemIR::InstId;
-
-// Performs a type refinement action, by creating a conversion from an
-// instruction with a template-dependent symbolic type to the corresponding
-// instantiated type.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::RefineTypeAction action) -> SemIR::InstId;
+// Performs an action. Each PerformAction implementation lives with the code
+// that creates and defines the action. For an instruction whose constant kind
+// is InstAction, an overload should be provided with the signature:
+//
+//   auto PerformAction(Context& context, SemIR::LocId loc_id, InstT inst)
+//       -> SemIR::InstId;
+//
+// that returns the value that should be used as the result of evaluating the
+// instructions produced by the action. Any instructions generated during
+// `PerformAction` will be spliced into the code at the point where the action
+// was created.
+#define CARBON_SEM_IR_INST_KIND(Name) \
+  Internal::FunctionTypeForPerformAction<SemIR::Name> PerformAction;
+#include "toolchain/sem_ir/inst_kind.def"
 
 // Determines whether the given action can be performed immediately (i.e.
 // whether it is non-template-dependent).
@@ -75,6 +73,26 @@ auto AddDependentActionSplice(Context& context, LocT loc, InstT inst,
                                   result_type_inst_id);
 }
 
+// Handles a new action if necessary. If the action is not dependent, returns
+// InstId::None. Otherwise, adds the action to the enclosing template's eval
+// block and creates an instruction to splice in the result of the action.
+// `result_type_inst_id` is the type of inst produced by the action. If not
+// known, it can be set to `None`, and a `TypeOfInst` instruction will be added
+// to act as the type of the splice.
+template <typename ActionT, typename LocIdT>
+auto AddActionSpliceIfDependent(Context& context, LocIdT loc_id,
+                                SemIR::TypeInstId expected_result_type_inst_id,
+                                ActionT action_inst) -> SemIR::InstId {
+  CARBON_CHECK(action_inst.type_id == SemIR::InstType::TypeId);
+  if (ActionIsPerformable(context, action_inst)) {
+    return SemIR::InstId::None;
+  }
+  return AddDependentActionSplice(context,
+                                  SemIR::LocIdAndInst::RuntimeVerified(
+                                      context.sem_ir(), loc_id, action_inst),
+                                  expected_result_type_inst_id);
+}
+
 // Handles a new action. If the action is not dependent, it is performed
 // immediately. Otherwise, adds the action to the enclosing template's eval
 // block and creates an instruction to splice in the result of the action.
@@ -85,12 +103,10 @@ template <typename ActionT, typename LocIdT>
 auto HandleAction(Context& context, LocIdT loc_id,
                   SemIR::TypeInstId expected_result_type_inst_id,
                   ActionT action_inst) -> SemIR::InstId {
-  CARBON_CHECK(action_inst.type_id == SemIR::InstType::TypeId);
-  if (!ActionIsPerformable(context, action_inst)) {
-    return AddDependentActionSplice(context,
-                                    SemIR::LocIdAndInst::RuntimeVerified(
-                                        context.sem_ir(), loc_id, action_inst),
-                                    expected_result_type_inst_id);
+  if (auto splice_inst_id = AddActionSpliceIfDependent(
+          context, loc_id, expected_result_type_inst_id, action_inst);
+      splice_inst_id.has_value()) {
+    return splice_inst_id;
   }
 
   auto expected_result_type_id =

@@ -14,13 +14,13 @@
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class C {
+class StaticMethodClass {
   fn M();
 }
 
 inline Cpp '''
-void F() {
-  Carbon::C::M();
+void StaticMethod() {
+  Carbon::StaticMethodClass::M();
 }
 ''';
 
@@ -28,13 +28,13 @@ void F() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class C {
+class MethodLValueClass {
   fn M(self);
 }
 
 inline Cpp '''
-void F() {
-  Carbon::C c;
+void MethodLValue() {
+  Carbon::MethodLValueClass c;
   c.M();
 }
 ''';
@@ -43,13 +43,13 @@ void F() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class C {
+class MethodRValueClass {
   fn M(self);
 }
 
 inline Cpp '''
-void F() {
-  Carbon::C().M();
+void MethodRValue() {
+  Carbon::MethodRValueClass().M();
 }
 ''';
 
@@ -57,12 +57,12 @@ void F() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class C {
+class MethodConstLValueClass {
   fn M(self);
 }
 
 inline Cpp '''
-void F(const Carbon::C& c) {
+void MethodConstLValue(const Carbon::MethodConstLValueClass& c) {
   c.M();
 }
 ''';
@@ -71,13 +71,13 @@ void F(const Carbon::C& c) {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class C {
+class RefMethodLValueClass {
   fn M(ref self);
 }
 
 inline Cpp '''
-void F() {
-  Carbon::C c;
+void RefMethodLValue() {
+  Carbon::RefMethodLValueClass c;
   c.M();
 }
 ''';
@@ -86,20 +86,20 @@ void F() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class C {
+class RefMethodRValueClass {
   fn M(ref self);
 }
 
 inline Cpp '''
-void F() {
+void RefMethodRValue() {
   // CHECK:STDERR: fail_ref_method_rvalue.carbon:[[@LINE+7]]:3: error: 'this' argument to member function 'M' is an rvalue, but function has non-const lvalue ref-qualifier [CppInteropParseError]
-  // CHECK:STDERR:    17 |   Carbon::C().M();
+  // CHECK:STDERR:    17 |   Carbon::RefMethodRValueClass().M();
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR: fail_ref_method_rvalue.carbon:[[@LINE-8]]:17: note: 'M' declared here [CppInteropParseNote]
   // CHECK:STDERR:     5 |   fn M(ref self);
   // CHECK:STDERR:       |                 ^
   // CHECK:STDERR:
-  Carbon::C().M();
+  Carbon::RefMethodRValueClass().M();
 }
 ''';
 
@@ -107,13 +107,13 @@ void F() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class C {
+class RefMethodConstLValueClass {
   fn M(ref self);
 }
 
 inline Cpp '''
-void F(const Carbon::C& c) {
-  // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE+7]]:3: error: 'this' argument to member function 'M' has type 'const Carbon::C', but function is not marked const [CppInteropParseError]
+void RefMethodConstLValue(const Carbon::RefMethodConstLValueClass& c) {
+  // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE+7]]:3: error: 'this' argument to member function 'M' has type 'const Carbon::RefMethodConstLValueClass', but function is not marked const [CppInteropParseError]
   // CHECK:STDERR:    17 |   c.M();
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE-8]]:17: note: 'M' declared here [CppInteropParseNote]

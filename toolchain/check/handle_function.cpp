@@ -95,14 +95,10 @@ static auto DiagnoseModifiers(Context& context,
                                is_definition);
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
                                  parent_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_id);
-
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
-    // TODO: Once we are saving the modifiers for a function, add check that
-    // the function may only be defined if it is marked `default` or `final`.
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
-                 "interface modifier");
-  }
+  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_id,
+                                      is_definition);
+  // TODO: add check that functions in interfaces may only be defined if they
+  // are marked `default` or `final`.
 
   if (!self_param_id.has_value() &&
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
@@ -135,129 +131,14 @@ static auto GetEvaluationMode(const KeywordModifierSet& modifier_set)
       .Default(SemIR::Function::EvaluationMode::None);
 }
 
-// Tries to merge new_function into prev_function_id. Since new_function won't
-// have a definition even if one is upcoming, set is_definition to indicate the
-// planned result.
-//
-// If merging is successful, returns true and may update the previous function.
-// Otherwise, returns false. Prints a diagnostic when appropriate.
-static auto MergeFunctionRedecl(Context& context,
-                                Parse::AnyFunctionDeclId node_id,
-                                SemIR::Function& new_function,
-                                bool new_is_definition,
-                                SemIR::FunctionId prev_function_id,
-                                SemIR::ImportIRId prev_import_ir_id) -> bool {
-  auto& prev_function = context.functions().Get(prev_function_id);
-
-  if (!CheckFunctionTypeMatches(context, new_function, prev_function)) {
-    return false;
-  }
-
-  DiagnoseIfInvalidRedecl(
-      context, Lex::TokenKind::Fn, prev_function.name_id,
-      RedeclInfo(new_function, node_id, new_is_definition),
-      RedeclInfo(prev_function, SemIR::LocId(prev_function.latest_decl_id()),
-                 prev_function.has_definition_started()),
-      prev_import_ir_id);
-  if (new_is_definition && prev_function.has_definition_started()) {
-    return false;
-  }
-
-  if (!prev_function.first_owning_decl_id.has_value()) {
-    prev_function.first_owning_decl_id = new_function.first_owning_decl_id;
-  }
-  if (new_is_definition) {
-    // Track the signature from the definition, so that IDs in the body
-    // match IDs in the signature.
-    prev_function.MergeDefinition(new_function);
-  }
-  if (prev_import_ir_id.has_value()) {
-    ReplacePrevInstForMerge(context, new_function.parent_scope_id,
-                            prev_function.name_id,
-                            new_function.first_owning_decl_id);
-  }
-  return true;
-}
-
-// Check whether this is a redeclaration, merging if needed.
-static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
-                           const DeclNameStack::NameContext& name_context,
-                           SemIR::FunctionDecl& function_decl,
-                           SemIR::Function& function_info, bool is_definition)
-    -> void {
-  // Diagnose if we are declaring a poisoned name. However, don't diagnose at
-  // impl scope: if the name was referenced before being declared, we will have
-  // produced an error already.
-  if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    if (!context.name_scopes().InstIs<SemIR::ImplDecl>(
-            name_context.parent_scope_id)) {
-      DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
-                           name_context.poisoning_loc_id, name_context.loc_id);
-    }
-    return;
-  }
-
-  auto prev_id = name_context.prev_inst_id();
-  if (!prev_id.has_value()) {
-    return;
-  }
-
-  auto prev_function_id = SemIR::FunctionId::None;
-  auto prev_type_id = SemIR::TypeId::None;
-  auto prev_import_ir_id = SemIR::ImportIRId::None;
-  CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
-    case CARBON_KIND(SemIR::AssociatedEntity assoc_entity): {
-      // This is a function in an interface definition scope.
-      auto function_decl =
-          context.insts().GetAs<SemIR::FunctionDecl>(assoc_entity.decl_id);
-      prev_function_id = function_decl.function_id;
-      prev_type_id = function_decl.type_id;
-      break;
-    }
-    case CARBON_KIND(SemIR::FunctionDecl function_decl): {
-      prev_function_id = function_decl.function_id;
-      prev_type_id = function_decl.type_id;
-      break;
-    }
-    case SemIR::ImportRefLoaded::Kind: {
-      auto import_ir_inst = GetCanonicalImportIRInst(context, prev_id);
-
-      // Verify the decl so that things like aliases are name conflicts.
-      const auto* import_ir =
-          context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
-      if (!import_ir->insts().Is<SemIR::FunctionDecl>(
-              import_ir_inst.inst_id())) {
-        break;
-      }
-
-      // Use the type to get the ID.
-      if (auto struct_value = context.insts().TryGetAs<SemIR::StructValue>(
-              context.constant_values().GetConstantInstId(prev_id))) {
-        if (auto function_type = context.types().TryGetAs<SemIR::FunctionType>(
-                struct_value->type_id)) {
-          prev_function_id = function_type->function_id;
-          prev_type_id = struct_value->type_id;
-          prev_import_ir_id = import_ir_inst.ir_id();
-        }
-      }
-      break;
-    }
-    default:
-      break;
-  }
-
-  if (!prev_function_id.has_value()) {
-    DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                          SemIR::LocId(prev_id));
-    return;
-  }
-
-  if (MergeFunctionRedecl(context, node_id, function_info, is_definition,
-                          prev_function_id, prev_import_ir_id)) {
-    // When merging, use the existing function rather than adding a new one.
-    function_decl.function_id = prev_function_id;
-    function_decl.type_id = prev_type_id;
-  }
+// Returns the implementation modifier as an enum.
+static auto GetInterfaceModifier(const KeywordModifierSet& modifier_set)
+    -> SemIR::Function::InterfaceModifier {
+  using enum SemIR::Function::InterfaceModifier;
+  return modifier_set.ToEnum<SemIR::Function::InterfaceModifier>()
+      .Case(KeywordModifierSet::Default, Default)
+      .Case(KeywordModifierSet::Final, Final)
+      .Default(None);
 }
 
 // Adds the declaration to name lookup when appropriate.
@@ -545,6 +426,7 @@ static auto BuildFunctionDecl(Context& context,
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto virtual_modifier = GetVirtualModifier(introducer.modifier_set);
   auto evaluation_mode = GetEvaluationMode(introducer.modifier_set);
+  auto interface_modifier = GetInterfaceModifier(introducer.modifier_set);
 
   // Add the function declaration.
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
@@ -554,26 +436,33 @@ static auto BuildFunctionDecl(Context& context,
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
-  auto function_info =
-      SemIR::Function{name_context.MakeEntityWithParamsBase(
-                          name, decl_id, is_extern, introducer.extern_library),
-                      {.call_param_patterns_id = name.call_param_patterns_id,
-                       .call_params_id = name.call_params_id,
-                       .call_param_ranges = name.param_ranges,
-                       .return_type_inst_id = return_type_inst_id,
-                       .return_form_inst_id = return_form_inst_id,
-                       .return_pattern_id = return_pattern_id,
-                       .virtual_modifier = virtual_modifier,
-                       .evaluation_mode = evaluation_mode,
-                       .self_param_id = self_param_id}};
+  auto function_info = SemIR::Function{
+      name_context.MakeEntityWithParamsBase(name, decl_id, is_extern,
+                                            introducer.extern_library),
+      {
+          .call_param_patterns_id = name.call_param_patterns_id,
+          .call_params_id = name.call_params_id,
+          .call_param_default_values_id = name.call_param_default_values_id,
+          .call_param_ranges = name.param_ranges,
+          .return_type_inst_id = return_type_inst_id,
+          .return_form_inst_id = return_form_inst_id,
+          .return_pattern_id = return_pattern_id,
+          .virtual_modifier = virtual_modifier,
+          .evaluation_mode = evaluation_mode,
+          .interface_modifier = interface_modifier,
+          .self_param_id = self_param_id,
+      }};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
 
   DiagnosePositionalParams(context, function_info);
 
-  TryMergeRedecl(context, node_id, name_context, function_decl, function_info,
-                 is_definition);
+  TryMergeRedecl(
+      context, name_context, std::nullopt,
+      MergeRedeclEntityInfo<SemIR::Function>{.new_entity_decl = function_decl,
+                                             .new_entity = function_info},
+      is_definition);
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.has_value()) {
@@ -629,7 +518,6 @@ static auto CheckUnusedBindingsInPattern(Context& context,
                                          SemIR::InstId pattern_id) -> void {
   llvm::SmallVector<SemIR::InstId> work_list;
   work_list.push_back(pattern_id);
-
   while (!work_list.empty()) {
     auto current_id = work_list.pop_back_val();
     auto inst = context.insts().Get(current_id);
@@ -663,6 +551,10 @@ static auto CheckUnusedBindingsInPattern(Context& context,
         }
         break;
       }
+      case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
+        work_list.push_back(default_value_pattern.subpattern_id);
+        break;
+      }
       default:
         break;
     }
@@ -686,10 +578,143 @@ static auto DiagnoseUnusedMarkersWithoutDefinition(
   }
 }
 
+// For the top-level parameter patterns list, and for any level of nested tuple
+// patterns, ensure that if a subpattern provides a default value, all
+// subsequent patterns at that level of nesting must provide a default value as
+// well.
+// TODO: per https://github.com/carbon-language/carbon-lang/issues/7529, this
+// should also consider automatically supplied defaults for fully-specified
+// tuple subpatterns, and consider them as having a default for the purposes
+// of the out-of-order detection. It will also need to detect the error
+// condition when a default is also specified for those fully-specified tuple
+// subpatterns.
+static auto DiagnoseOutOfOrderDefaults(Context& context,
+                                       SemIR::FunctionId function_id) -> void {
+  const auto& function = context.functions().Get(function_id);
+  if (!function.param_patterns_id.has_value()) {
+    return;
+  }
+
+  struct PatternLevelState {
+    // The inst ids of the subpatterns on this level of tuple subpattern
+    // nesting, treated as a work list, so in reverse order of declaration.
+    llvm::SmallVector<SemIR::InstId> subpattern_ids;
+
+    // If patterns at this level of nesting have default values, this refers
+    // to the first instruction to specify a default, useful for diagnostics.
+    SemIR::InstId first_pattern_with_default = SemIR::InstId::None;
+
+    // If we encounter a tuple-pattern during processing, we suspend processing
+    // of this pattern level, in the middle of processing a single pattern from
+    // root to leaves. So we record the current state of processing of a single
+    // pattern to return to it after processing any tuple subpatterns.
+
+    // True if the current pattern being processed has a default value
+    // specified.
+    bool pattern_has_default = false;
+
+    // The current pattern we are processing, stored separately since it's been
+    // popped from the `pattern_work_list` and already processed, just may need
+    // subsequent processing.
+    SemIR::InstId current_id = SemIR::InstId::None;
+
+    // A work list of patterns to be processed at this level of nesting.
+    llvm::SmallVector<SemIR::InstId> pattern_work_list;
+
+    // A list of subpatterns missing required defaults, to coalesce error
+    // reporting into a single diagnostic and limit diagnostic spam.
+    llvm::SmallVector<SemIR::InstId> patterns_missing_defaults;
+  };
+
+  llvm::SmallVector<PatternLevelState> level_state_stack;
+  level_state_stack.push_back({});
+  for (auto subpattern_id :
+       llvm::reverse(context.inst_blocks().Get(function.param_patterns_id))) {
+    level_state_stack.back().subpattern_ids.push_back(subpattern_id);
+  }
+
+  while (!level_state_stack.empty()) {
+    auto& state = level_state_stack.back();
+    while (!state.subpattern_ids.empty() || !state.pattern_work_list.empty() ||
+           state.current_id.has_value()) {
+      if (!state.current_id.has_value()) {
+        state.pattern_work_list.push_back(state.subpattern_ids.pop_back_val());
+        state.pattern_has_default = false;
+      }
+      while (!state.pattern_work_list.empty()) {
+        state.current_id = state.pattern_work_list.pop_back_val();
+        auto inst = context.insts().Get(state.current_id);
+        CARBON_KIND_SWITCH(inst) {
+          case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
+            state.pattern_has_default = true;
+            state.pattern_work_list.push_back(
+                default_value_pattern.subpattern_id);
+            break;
+          }
+          case CARBON_KIND(
+              SemIR::WrapperBindingPattern wrapper_binding_pattern): {
+            state.pattern_work_list.push_back(
+                wrapper_binding_pattern.subpattern_id);
+            break;
+          }
+          case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
+            auto elements =
+                context.inst_blocks().Get(tuple_pattern.elements_id);
+            if (!elements.empty()) {
+              // Start a new state for the nested tuple pattern elements.
+              level_state_stack.push_back({});
+              state = level_state_stack.back();
+              for (auto element_id : llvm::reverse(elements)) {
+                state.subpattern_ids.push_back(element_id);
+              }
+            }
+            break;
+          }
+          default:
+            break;
+        }
+      }
+      // Finished processing this subpattern, detect a missing default if
+      // required.
+      if (state.pattern_has_default &&
+          !state.first_pattern_with_default.has_value()) {
+        state.first_pattern_with_default = state.current_id;
+      } else if (!state.pattern_has_default &&
+                 state.first_pattern_with_default.has_value()) {
+        state.patterns_missing_defaults.push_back(state.current_id);
+      }
+      state.current_id = SemIR::InstId::None;
+    }
+    // Finished processing this tuple-pattern, emit diagnostics if any.
+    if (!state.patterns_missing_defaults.empty()) {
+      CARBON_DIAGNOSTIC(RequiredPatternDefaultValueMissing, Error,
+                        "this pattern is missing a required default value.");
+      CARBON_DIAGNOSTIC(RequiredPatternDefaultValueFirstDefault, Note,
+                        "all patterns to the right of this first pattern with "
+                        "a default value must also specify a default value.");
+      CARBON_DIAGNOSTIC(
+          RequiredPatternDefaultValueMissingAdditional, Note,
+          "this pattern is also missing a required default value.");
+      auto inst_ref =
+          llvm::ArrayRef<SemIR::InstId>(state.patterns_missing_defaults);
+      auto diag = context.emitter().Build(inst_ref.consume_front(),
+                                          RequiredPatternDefaultValueMissing);
+      diag.Note(state.first_pattern_with_default,
+                RequiredPatternDefaultValueFirstDefault);
+      for (auto inst_id : inst_ref) {
+        diag.Note(inst_id, RequiredPatternDefaultValueMissingAdditional);
+      }
+      diag.Emit();
+    }
+    level_state_stack.pop_back();
+  }
+}
+
 auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
   auto [function_id, decl_id] =
       BuildFunctionDecl(context, node_id, /*is_definition=*/false);
   DiagnoseUnusedMarkersWithoutDefinition(context, function_id);
+  DiagnoseOutOfOrderDefaults(context, function_id);
   context.decl_name_stack().PopScope();
   return true;
 }

@@ -15,15 +15,15 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-class C {
+class ThreeInts {
   var a: i32;
   var b: i32;
   var c: i32;
 }
 
 inline Cpp '''c++
-static_assert(sizeof(Carbon::C) == 12);
-static_assert(alignof(Carbon::C) == 4);
+static_assert(sizeof(Carbon::ThreeInts) == 12);
+static_assert(alignof(Carbon::ThreeInts) == 4);
 ''';
 
 // --- packed.carbon
@@ -31,19 +31,19 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-class C {
+class PointerInt {
   var a: i32*;
   var b: i32;
 }
 
-class D {
-  var c: C;
+class PointerIntInt {
+  var c: PointerInt;
   var d: i32;
 }
 
 inline Cpp '''c++
-static_assert(sizeof(Carbon::C) == 12);
-static_assert(alignof(Carbon::C) == 8);
-static_assert(sizeof(Carbon::D) == 16);
-static_assert(alignof(Carbon::D) == 8);
+static_assert(sizeof(Carbon::PointerInt) == 12);
+static_assert(alignof(Carbon::PointerInt) == 8);
+static_assert(sizeof(Carbon::PointerIntInt) == 16);
+static_assert(alignof(Carbon::PointerIntInt) == 8);
 ''';

@@ -68,7 +68,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %pattern_type.f15: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %self.param_patt.c01: %pattern_type.f15 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.f26: %pattern_type.f15 = at_binding_pattern self, %self.param_patt.c01 [concrete]
+// CHECK:STDOUT:   %self.patt.1f6: %pattern_type.f15 = wrapper_binding_pattern self, %self.param_patt.c01 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -82,7 +82,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F [concrete]
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.b2b: %pattern_type.f15 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.123: %pattern_type.f15 = at_binding_pattern self, %self.param_patt.b2b [concrete]
+// CHECK:STDOUT:   %self.patt.f19: %pattern_type.f15 = wrapper_binding_pattern self, %self.param_patt.b2b [concrete]
 // CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G [concrete]
 // CHECK:STDOUT:   %Class.G: %Class.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
@@ -101,7 +101,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type.f15 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt.dde: %pattern_type.f15 = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:   %c.patt.854: %pattern_type.f15 = wrapper_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [concrete]
 // CHECK:STDOUT:   %Call: %Call.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CallAlias.type: type = fn_type @CallAlias [concrete]
@@ -151,7 +151,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %ptr.7ee: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.8c5: type = pattern_type %ptr.7ee [concrete]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type.8c5 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt: %pattern_type.8c5 = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type.8c5 = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %CallFThroughPointer.type: type = fn_type @CallFThroughPointer [concrete]
 // CHECK:STDOUT:   %CallFThroughPointer: %CallFThroughPointer.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CallGThroughPointer.type: type = fn_type @CallGThroughPointer [concrete]
@@ -206,7 +206,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f15 = value_param_pattern [concrete = constants.%self.param_patt.c01]
-// CHECK:STDOUT:     %self.patt: %pattern_type.f15 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.f26]
+// CHECK:STDOUT:     %self.patt: %pattern_type.f15 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.1f6]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc24 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -220,7 +220,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.f15 = value_param_pattern [concrete = constants.%c.param_patt]
-// CHECK:STDOUT:     %c.patt: %pattern_type.f15 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.dde]
+// CHECK:STDOUT:     %c.patt: %pattern_type.f15 = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.854]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -234,7 +234,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallAlias.decl: %CallAlias.type = fn_decl @CallAlias [concrete = constants.%CallAlias] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.f15 = value_param_pattern [concrete = constants.%c.param_patt]
-// CHECK:STDOUT:     %c.patt: %pattern_type.f15 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.dde]
+// CHECK:STDOUT:     %c.patt: %pattern_type.f15 = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.854]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -266,7 +266,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFThroughPointer.decl: %CallFThroughPointer.type = fn_decl @CallFThroughPointer [concrete = constants.%CallFThroughPointer] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.8c5 = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type.8c5 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.8c5 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -283,7 +283,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGThroughPointer.decl: %CallGThroughPointer.type = fn_decl @CallGThroughPointer [concrete = constants.%CallGThroughPointer] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.8c5 = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type.8c5 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.8c5 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -330,7 +330,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f15 = value_param_pattern [concrete = constants.%self.param_patt.c01]
-// CHECK:STDOUT:     %self.patt: %pattern_type.f15 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.f26]
+// CHECK:STDOUT:     %self.patt: %pattern_type.f15 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.1f6]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc24 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -344,7 +344,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f15 = ref_param_pattern [concrete = constants.%self.param_patt.b2b]
-// CHECK:STDOUT:     %self.patt: %pattern_type.f15 = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.123]
+// CHECK:STDOUT:     %self.patt: %pattern_type.f15 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.f19]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {

@@ -71,11 +71,11 @@ fn Run() {
 // CHECK:STDOUT:   %ForwardDeclared: type = class_type @ForwardDeclared [concrete]
 // CHECK:STDOUT:   %pattern_type.bdf: type = pattern_type %ForwardDeclared [concrete]
 // CHECK:STDOUT:   %self.param_patt.46c: %pattern_type.bdf = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.34d: %pattern_type.bdf = at_binding_pattern self, %self.param_patt.46c [concrete]
+// CHECK:STDOUT:   %self.patt.f4a: %pattern_type.bdf = wrapper_binding_pattern self, %self.param_patt.46c [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.F.type: type = fn_type @ForwardDeclared.F [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.F: %ForwardDeclared.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.a42: %pattern_type.bdf = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.d30: %pattern_type.bdf = at_binding_pattern self, %self.param_patt.a42 [concrete]
+// CHECK:STDOUT:   %self.patt.d7c: %pattern_type.bdf = wrapper_binding_pattern self, %self.param_patt.a42 [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.G.type: type = fn_type @ForwardDeclared.G [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.G: %ForwardDeclared.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [concrete]
@@ -127,7 +127,7 @@ fn Run() {
 // CHECK:STDOUT: class @ForwardDeclared {
 // CHECK:STDOUT:   %ForwardDeclared.F.decl: %ForwardDeclared.F.type = fn_decl @ForwardDeclared.F [concrete = constants.%ForwardDeclared.F] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.bdf = value_param_pattern [concrete = constants.%self.param_patt.46c]
-// CHECK:STDOUT:     %self.patt: %pattern_type.bdf = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.34d]
+// CHECK:STDOUT:     %self.patt: %pattern_type.bdf = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.f4a]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ForwardDeclared = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [concrete = constants.%ForwardDeclared]
@@ -135,7 +135,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclared.G.decl: %ForwardDeclared.G.type = fn_decl @ForwardDeclared.G [concrete = constants.%ForwardDeclared.G] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.bdf = ref_param_pattern [concrete = constants.%self.param_patt.a42]
-// CHECK:STDOUT:     %self.patt: %pattern_type.bdf = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.d30]
+// CHECK:STDOUT:     %self.patt: %pattern_type.bdf = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.d7c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %ForwardDeclared = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [concrete = constants.%ForwardDeclared]

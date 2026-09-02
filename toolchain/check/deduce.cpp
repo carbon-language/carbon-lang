@@ -196,11 +196,6 @@ class DeductionContext {
     worklist_.AddAll(params, args, want_value);
   }
 
-  template <typename ParamT, typename ArgT>
-  auto AddAll(ParamT param, ArgT arg) -> void {
-    worklist_.AddAll(param, arg);
-  }
-
   // Performs all deductions in the deduction worklist. Returns whether
   // deduction succeeded.
   auto Deduce() -> bool;

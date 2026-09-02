@@ -30,12 +30,12 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %struct_type.a.b.b4c: type = struct_type {.a: %i32, .b: %i32} [concrete]
 // CHECK:STDOUT:   %pattern_type.20e3: type = pattern_type %struct_type.a.b.b4c [concrete]
 // CHECK:STDOUT:   %s.param_patt: %pattern_type.20e3 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %s.patt: %pattern_type.20e3 = at_binding_pattern s, %s.param_patt [concrete]
+// CHECK:STDOUT:   %s.patt: %pattern_type.20e3 = wrapper_binding_pattern s, %s.param_patt [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %cond.param_patt: %pattern_type.831 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %cond.patt: %pattern_type.831 = at_binding_pattern cond, %cond.param_patt [concrete]
+// CHECK:STDOUT:   %cond.patt: %pattern_type.831 = wrapper_binding_pattern cond, %cond.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
@@ -96,7 +96,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %s.param_patt: %pattern_type.20e3 = value_param_pattern [concrete = constants.%s.param_patt]
-// CHECK:STDOUT:     %s.patt: %pattern_type.20e3 = at_binding_pattern s, %s.param_patt [concrete = constants.%s.patt]
+// CHECK:STDOUT:     %s.patt: %pattern_type.20e3 = wrapper_binding_pattern s, %s.param_patt [concrete = constants.%s.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %s.param: %struct_type.a.b.b4c = value_param call_param0
 // CHECK:STDOUT:     %.loc15: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.b4c] {
@@ -108,7 +108,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %cond.param_patt: %pattern_type.831 = value_param_pattern [concrete = constants.%cond.param_patt]
-// CHECK:STDOUT:     %cond.patt: %pattern_type.831 = at_binding_pattern cond, %cond.param_patt [concrete = constants.%cond.patt]
+// CHECK:STDOUT:     %cond.patt: %pattern_type.831 = wrapper_binding_pattern cond, %cond.param_patt [concrete = constants.%cond.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %cond.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc17: type = type_literal bool [concrete = bool]

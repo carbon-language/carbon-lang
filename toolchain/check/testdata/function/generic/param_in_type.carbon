@@ -46,7 +46,7 @@ fn F(generic N: i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %ptr: type = ptr_type %array_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.5a4: type = pattern_type %ptr [symbolic]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.5a4 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %a.patt: %pattern_type.5a4 = at_binding_pattern a, %a.param_patt [symbolic]
+// CHECK:STDOUT:   %a.patt: %pattern_type.5a4 = wrapper_binding_pattern a, %a.param_patt [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -73,7 +73,7 @@ fn F(generic N: i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %N.patt.loc15_15.1: %pattern_type.6b6 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc15_15.2 (constants.%N.patt.38a)]
 // CHECK:STDOUT:     %a.param_patt.loc15_23.1: @F.%pattern_type (%pattern_type.5a4) = value_param_pattern [symbolic = %a.param_patt.loc15_23.2 (constants.%a.param_patt)]
-// CHECK:STDOUT:     %a.patt.loc15_23.1: @F.%pattern_type (%pattern_type.5a4) = at_binding_pattern a, %a.param_patt.loc15_23.1 [symbolic = %a.patt.loc15_23.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt.loc15_23.1: @F.%pattern_type (%pattern_type.5a4) = wrapper_binding_pattern a, %a.param_patt.loc15_23.1 [symbolic = %a.patt.loc15_23.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_17: type = splice_block %i32.loc15_17 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -108,7 +108,7 @@ fn F(generic N: i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %ptr.loc15_38.1: type = ptr_type %array_type.loc15_37.1 [symbolic = %ptr.loc15_38.1 (constants.%ptr)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc15_38.1 [symbolic = %pattern_type (constants.%pattern_type.5a4)]
 // CHECK:STDOUT:   %a.param_patt.loc15_23.2: @F.%pattern_type (%pattern_type.5a4) = value_param_pattern [symbolic = %a.param_patt.loc15_23.2 (constants.%a.param_patt)]
-// CHECK:STDOUT:   %a.patt.loc15_23.2: @F.%pattern_type (%pattern_type.5a4) = at_binding_pattern a, %a.param_patt.loc15_23.2 [symbolic = %a.patt.loc15_23.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.patt.loc15_23.2: @F.%pattern_type (%pattern_type.5a4) = wrapper_binding_pattern a, %a.param_patt.loc15_23.2 [symbolic = %a.patt.loc15_23.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @F.%ptr.loc15_38.1 (%ptr));
 // CHECK:STDOUT: }

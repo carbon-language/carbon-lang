@@ -59,7 +59,7 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T.as_type} [symbolic]
 // CHECK:STDOUT:   %pattern_type.662: type = pattern_type %struct_type.a [symbolic]
 // CHECK:STDOUT:   %x.param_patt: %pattern_type.662 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt: %pattern_type.662 = at_binding_pattern x, %x.param_patt [symbolic]
+// CHECK:STDOUT:   %x.patt: %pattern_type.662 = wrapper_binding_pattern x, %x.param_patt [symbolic]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a [symbolic]
@@ -74,7 +74,7 @@ fn B() {
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %T.patt.loc4_7.1: %pattern_type.1d1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.param_patt.loc4_20.1: @A.%pattern_type (%pattern_type.662) = value_param_pattern [symbolic = %x.param_patt.loc4_20.2 (constants.%x.param_patt)]
-// CHECK:STDOUT:     %x.patt.loc4_20.1: @A.%pattern_type (%pattern_type.662) = at_binding_pattern x, %x.param_patt.loc4_20.1 [symbolic = %x.patt.loc4_20.2 (constants.%x.patt)]
+// CHECK:STDOUT:     %x.patt.loc4_20.1: @A.%pattern_type (%pattern_type.662) = wrapper_binding_pattern x, %x.param_patt.loc4_20.1 [symbolic = %x.patt.loc4_20.2 (constants.%x.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_9: type = splice_block %Z.ref [concrete = constants.%Z.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -110,7 +110,7 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a.loc4_28.1: type = struct_type {.a: @A.%T.as_type.loc4_27.1 (%T.as_type)} [symbolic = %struct_type.a.loc4_28.1 (constants.%struct_type.a)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.loc4_28.1 [symbolic = %pattern_type (constants.%pattern_type.662)]
 // CHECK:STDOUT:   %x.param_patt.loc4_20.2: @A.%pattern_type (%pattern_type.662) = value_param_pattern [symbolic = %x.param_patt.loc4_20.2 (constants.%x.param_patt)]
-// CHECK:STDOUT:   %x.patt.loc4_20.2: @A.%pattern_type (%pattern_type.662) = at_binding_pattern x, %x.param_patt.loc4_20.2 [symbolic = %x.patt.loc4_20.2 (constants.%x.patt)]
+// CHECK:STDOUT:   %x.patt.loc4_20.2: @A.%pattern_type (%pattern_type.662) = wrapper_binding_pattern x, %x.param_patt.loc4_20.2 [symbolic = %x.patt.loc4_20.2 (constants.%x.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_28.1 [symbolic = %require_complete (constants.%require_complete)]
@@ -147,7 +147,7 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T.as_type} [symbolic]
 // CHECK:STDOUT:   %pattern_type.662: type = pattern_type %struct_type.a [symbolic]
 // CHECK:STDOUT:   %x.param_patt: %pattern_type.662 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.fcf7db.1: %pattern_type.662 = at_binding_pattern x, %x.param_patt [symbolic]
+// CHECK:STDOUT:   %x.patt.e7f6fb.1: %pattern_type.662 = wrapper_binding_pattern x, %x.param_patt [symbolic]
 // CHECK:STDOUT:   %A.type.9f4: type = fn_type @A.loc4 [concrete]
 // CHECK:STDOUT:   %A.921: %A.type.9f4 = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a [symbolic]
@@ -159,7 +159,7 @@ fn B() {
 // CHECK:STDOUT:   %struct: %struct_type.b = struct_value (%empty_struct) [concrete]
 // CHECK:STDOUT:   %A.type.42a: type = fn_type @A.1 [concrete]
 // CHECK:STDOUT:   %A.b9a: %A.type.42a = struct_value () [concrete]
-// CHECK:STDOUT:   %x.patt.fcf7db.2: %pattern_type.662 = at_binding_pattern x, %x.param_patt [symbolic]
+// CHECK:STDOUT:   %x.patt.e7f6fb.2: %pattern_type.662 = wrapper_binding_pattern x, %x.param_patt [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -184,7 +184,7 @@ fn B() {
 // CHECK:STDOUT:   %A.decl: %A.type.9f4 = fn_decl @A.loc4 [concrete = constants.%A.921] {
 // CHECK:STDOUT:     %T.patt.loc4_7.1: %pattern_type.1d1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.param_patt.loc4_24.1: @A.loc4.%pattern_type (%pattern_type.662) = value_param_pattern [symbolic = %x.param_patt.loc4_24.2 (constants.%x.param_patt)]
-// CHECK:STDOUT:     %x.patt.loc4_24.1: @A.loc4.%pattern_type (%pattern_type.662) = at_binding_pattern x, %x.param_patt.loc4_24.1 [symbolic = %x.patt.loc4_24.2 (constants.%x.patt.fcf7db.1)]
+// CHECK:STDOUT:     %x.patt.loc4_24.1: @A.loc4.%pattern_type (%pattern_type.662) = wrapper_binding_pattern x, %x.param_patt.loc4_24.1 [symbolic = %x.patt.loc4_24.2 (constants.%x.patt.e7f6fb.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_12: type = splice_block %Z.ref [concrete = constants.%Z.type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -219,7 +219,7 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a.loc4_32.1: type = struct_type {.a: @A.loc4.%T.as_type.loc4_31.1 (%T.as_type)} [symbolic = %struct_type.a.loc4_32.1 (constants.%struct_type.a)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.loc4_32.1 [symbolic = %pattern_type (constants.%pattern_type.662)]
 // CHECK:STDOUT:   %x.param_patt.loc4_24.2: @A.loc4.%pattern_type (%pattern_type.662) = value_param_pattern [symbolic = %x.param_patt.loc4_24.2 (constants.%x.param_patt)]
-// CHECK:STDOUT:   %x.patt.loc4_24.2: @A.loc4.%pattern_type (%pattern_type.662) = at_binding_pattern x, %x.param_patt.loc4_24.2 [symbolic = %x.patt.loc4_24.2 (constants.%x.patt.fcf7db.1)]
+// CHECK:STDOUT:   %x.patt.loc4_24.2: @A.loc4.%pattern_type (%pattern_type.662) = wrapper_binding_pattern x, %x.param_patt.loc4_24.2 [symbolic = %x.patt.loc4_24.2 (constants.%x.patt.e7f6fb.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_32.1 [symbolic = %require_complete (constants.%require_complete)]
@@ -249,7 +249,7 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @A.1.%T.as_type (%T.as_type)} [symbolic = %struct_type.a (constants.%struct_type.a)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a [symbolic = %pattern_type (constants.%pattern_type.662)]
 // CHECK:STDOUT:   %x.param_patt: @A.1.%pattern_type (%pattern_type.662) = value_param_pattern [symbolic = %x.param_patt (constants.%x.param_patt)]
-// CHECK:STDOUT:   %x.patt: @A.1.%pattern_type (%pattern_type.662) = at_binding_pattern x, %x.param_patt [symbolic = %x.patt (constants.%x.patt.fcf7db.2)]
+// CHECK:STDOUT:   %x.patt: @A.1.%pattern_type (%pattern_type.662) = wrapper_binding_pattern x, %x.param_patt [symbolic = %x.patt (constants.%x.patt.e7f6fb.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a [symbolic = %require_complete (constants.%require_complete)]
@@ -266,7 +266,7 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a.loc4_32.1 => constants.%struct_type.a
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.662
 // CHECK:STDOUT:   %x.param_patt.loc4_24.2 => constants.%x.param_patt
-// CHECK:STDOUT:   %x.patt.loc4_24.2 => constants.%x.patt.fcf7db.1
+// CHECK:STDOUT:   %x.patt.loc4_24.2 => constants.%x.patt.e7f6fb.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.1(constants.%T) {
@@ -276,6 +276,6 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a => constants.%struct_type.a
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.662
 // CHECK:STDOUT:   %x.param_patt => constants.%x.param_patt
-// CHECK:STDOUT:   %x.patt => constants.%x.patt.fcf7db.2
+// CHECK:STDOUT:   %x.patt => constants.%x.patt.e7f6fb.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

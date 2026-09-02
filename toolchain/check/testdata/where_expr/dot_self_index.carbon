@@ -50,7 +50,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty_where.type.696: type = facet_type <@Empty, @Empty(%T) where %impl.elem0.d8a = %ptr.e8f> [symbolic]
 // CHECK:STDOUT:   %pattern_type.a0f: type = pattern_type %Empty_where.type.696 [symbolic]
 // CHECK:STDOUT:   %U.param_patt.558: %pattern_type.a0f = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %U.patt.e03: %pattern_type.a0f = at_binding_pattern U, %U.param_patt.558 [symbolic]
+// CHECK:STDOUT:   %U.patt.1ea: %pattern_type.a0f = wrapper_binding_pattern U, %U.param_patt.558 [symbolic]
 // CHECK:STDOUT:   %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 1 [symbolic]
 // CHECK:STDOUT:   %V: type = symbolic_binding V, 1 [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
@@ -73,7 +73,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %pattern_type.12c: type = pattern_type %Empty_where.type.944 [concrete]
 // CHECK:STDOUT:   %U.param_patt.a6a: %pattern_type.12c = value_param_pattern [concrete]
 // CHECK:STDOUT:   %complete_type.c56: <witness> = complete_type_witness %Empty.type.39c [concrete]
-// CHECK:STDOUT:   %U.patt.616e51.2: %pattern_type.12c = at_binding_pattern U, %U.param_patt.a6a [concrete]
+// CHECK:STDOUT:   %U.patt.a008b4.2: %pattern_type.12c = wrapper_binding_pattern U, %U.param_patt.a6a [concrete]
 // CHECK:STDOUT:   %complete_type.c21: <witness> = complete_type_witness %Empty_where.type.944 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -81,7 +81,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %T.patt.loc21_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.param_patt.loc21_31.1: @H.%pattern_type (%pattern_type.a0f) = value_param_pattern [symbolic = %U.param_patt.loc21_31.2 (constants.%U.param_patt.558)]
-// CHECK:STDOUT:     %U.patt.loc21_31.1: @H.%pattern_type (%pattern_type.a0f) = at_binding_pattern U, %U.param_patt.loc21_31.1 [symbolic = %U.patt.loc21_31.2 (constants.%U.patt.e03)]
+// CHECK:STDOUT:     %U.patt.loc21_31.1: @H.%pattern_type (%pattern_type.a0f) = wrapper_binding_pattern U, %U.param_patt.loc21_31.1 [symbolic = %U.patt.loc21_31.2 (constants.%U.patt.1ea)]
 // CHECK:STDOUT:     %V.patt.loc21_73.1: %pattern_type.98f = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc21_73.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc21_17.1: type = splice_block %.loc21_17.2 [concrete = type] {
@@ -139,7 +139,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc21_15.1) where %impl.elem0.loc21_48.2 = %ptr.loc21_54.1> [symbolic = %Empty_where.type (constants.%Empty_where.type.696)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Empty_where.type [symbolic = %pattern_type (constants.%pattern_type.a0f)]
 // CHECK:STDOUT:   %U.param_patt.loc21_31.2: @H.%pattern_type (%pattern_type.a0f) = value_param_pattern [symbolic = %U.param_patt.loc21_31.2 (constants.%U.param_patt.558)]
-// CHECK:STDOUT:   %U.patt.loc21_31.2: @H.%pattern_type (%pattern_type.a0f) = at_binding_pattern U, %U.param_patt.loc21_31.2 [symbolic = %U.patt.loc21_31.2 (constants.%U.patt.e03)]
+// CHECK:STDOUT:   %U.patt.loc21_31.2: @H.%pattern_type (%pattern_type.a0f) = wrapper_binding_pattern U, %U.param_patt.loc21_31.2 [symbolic = %U.patt.loc21_31.2 (constants.%U.patt.1ea)]
 // CHECK:STDOUT:   %V.patt.loc21_73.2: %pattern_type.98f = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc21_73.2 (constants.%V.patt)]
 // CHECK:STDOUT:   %V.loc21_73.1: type = symbolic_binding V, 1 [symbolic = %V.loc21_73.1 (constants.%V)]
 // CHECK:STDOUT:
@@ -170,7 +170,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.696
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a0f
 // CHECK:STDOUT:   %U.param_patt.loc21_31.2 => constants.%U.param_patt.558
-// CHECK:STDOUT:   %U.patt.loc21_31.2 => constants.%U.patt.e03
+// CHECK:STDOUT:   %U.patt.loc21_31.2 => constants.%U.patt.1ea
 // CHECK:STDOUT:   %V.patt.loc21_73.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.loc21_73.1 => constants.%V
 // CHECK:STDOUT: }
@@ -193,7 +193,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.944
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.12c
 // CHECK:STDOUT:   %U.param_patt.loc21_31.2 => constants.%U.param_patt.a6a
-// CHECK:STDOUT:   %U.patt.loc21_31.2 => constants.%U.patt.616e51.2
+// CHECK:STDOUT:   %U.patt.loc21_31.2 => constants.%U.patt.a008b4.2
 // CHECK:STDOUT:   %V.patt.loc21_73.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.loc21_73.1 => bool
 // CHECK:STDOUT:

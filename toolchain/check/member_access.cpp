@@ -765,10 +765,11 @@ auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                                 specific_interface);
 }
 
-auto PerformCompoundMemberAccess(
+static auto PerformCompoundMemberAccessAction(
     Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
-    SemIR::InstId member_expr_id, bool diagnose,
-    DiagnosticContextFn missing_impl_diagnostic_context) -> SemIR::InstId {
+    SemIR::InstId member_expr_id, bool diagnose = true,
+    DiagnosticContextFn missing_impl_diagnostic_context = nullptr)
+    -> SemIR::InstId {
   auto base_type_id = context.insts().Get(base_id).type_id();
   auto base_type_const_id = context.types().GetConstantId(base_type_id);
 
@@ -837,6 +838,31 @@ auto PerformCompoundMemberAccess(
   }
 
   return member_id;
+}
+
+auto PerformCompoundMemberAccess(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
+    SemIR::InstId member_expr_id, bool diagnose,
+    DiagnosticContextFn missing_impl_diagnostic_context) -> SemIR::InstId {
+  if (auto splice_inst_id = AddActionSpliceIfDependent(
+          context, loc_id, SemIR::TypeInstId::None,
+          SemIR::CompoundMemberAccessAction{.type_id = SemIR::InstType::TypeId,
+                                            .base_id = base_id,
+                                            .member_expr_id = member_expr_id});
+      splice_inst_id.has_value()) {
+    // TODO: CHECK-fail if diagnose is false. The caller shouldn't be asking us
+    // to check whether a template-dependent compound member access is valid.
+    return splice_inst_id;
+  }
+  return PerformCompoundMemberAccessAction(context, loc_id, base_id,
+                                           member_expr_id, diagnose,
+                                           missing_impl_diagnostic_context);
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::CompoundMemberAccessAction action) -> SemIR::InstId {
+  return PerformCompoundMemberAccessAction(context, loc_id, action.base_id,
+                                           action.member_expr_id);
 }
 
 auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,

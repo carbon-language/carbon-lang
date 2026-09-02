@@ -104,7 +104,7 @@ fn F() {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.653: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %t.param_patt.4f9: %pattern_type.653 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %t.patt.ecc: %pattern_type.653 = at_binding_pattern t, %t.param_patt.4f9 [symbolic]
+// CHECK:STDOUT:   %t.patt.00d: %pattern_type.653 = wrapper_binding_pattern t, %t.param_patt.4f9 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type [symbolic]
@@ -133,7 +133,7 @@ fn F() {
 // CHECK:STDOUT:   %facet_value: %facet_type.22e = facet_value %C, (%Empty.impl_witness, %A.impl_witness, %B.impl_witness) [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %t.param_patt.5f9: %pattern_type.98b = value_param_pattern [concrete]
-// CHECK:STDOUT:   %t.patt.c3d: %pattern_type.98b = at_binding_pattern t, %t.param_patt.5f9 [concrete]
+// CHECK:STDOUT:   %t.patt.429: %pattern_type.98b = wrapper_binding_pattern t, %t.param_patt.5f9 [concrete]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%facet_value) [concrete]
 // CHECK:STDOUT:   %.115: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -190,7 +190,7 @@ fn F() {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt.loc33_7.1: %pattern_type.a67 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc33_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %t.param_patt.loc33_25.1: @G.%pattern_type (%pattern_type.653) = value_param_pattern [symbolic = %t.param_patt.loc33_25.2 (constants.%t.param_patt.4f9)]
-// CHECK:STDOUT:     %t.patt.loc33_25.1: @G.%pattern_type (%pattern_type.653) = at_binding_pattern t, %t.param_patt.loc33_25.1 [symbolic = %t.patt.loc33_25.2 (constants.%t.patt.ecc)]
+// CHECK:STDOUT:     %t.patt.loc33_25.1: @G.%pattern_type (%pattern_type.653) = wrapper_binding_pattern t, %t.param_patt.loc33_25.1 [symbolic = %t.patt.loc33_25.2 (constants.%t.patt.00d)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc33_19.1: type = splice_block %.loc33_19.3 [concrete = constants.%facet_type.22e] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -330,7 +330,7 @@ fn F() {
 // CHECK:STDOUT:   %T.as_type.loc33_27.1: type = facet_access_type %T.loc33_7.1 [symbolic = %T.as_type.loc33_27.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc33_27.1 [symbolic = %pattern_type (constants.%pattern_type.653)]
 // CHECK:STDOUT:   %t.param_patt.loc33_25.2: @G.%pattern_type (%pattern_type.653) = value_param_pattern [symbolic = %t.param_patt.loc33_25.2 (constants.%t.param_patt.4f9)]
-// CHECK:STDOUT:   %t.patt.loc33_25.2: @G.%pattern_type (%pattern_type.653) = at_binding_pattern t, %t.param_patt.loc33_25.2 [symbolic = %t.patt.loc33_25.2 (constants.%t.patt.ecc)]
+// CHECK:STDOUT:   %t.patt.loc33_25.2: @G.%pattern_type (%pattern_type.653) = wrapper_binding_pattern t, %t.param_patt.loc33_25.2 [symbolic = %t.patt.loc33_25.2 (constants.%t.patt.00d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc33_27.1 [symbolic = %require_complete (constants.%require_complete)]
@@ -472,7 +472,7 @@ fn F() {
 // CHECK:STDOUT:   %T.as_type.loc33_27.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.653
 // CHECK:STDOUT:   %t.param_patt.loc33_25.2 => constants.%t.param_patt.4f9
-// CHECK:STDOUT:   %t.patt.loc33_25.2 => constants.%t.patt.ecc
+// CHECK:STDOUT:   %t.patt.loc33_25.2 => constants.%t.patt.00d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty.WithSelf(constants.%T) {
@@ -517,7 +517,7 @@ fn F() {
 // CHECK:STDOUT:   %T.as_type.loc33_27.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.98b
 // CHECK:STDOUT:   %t.param_patt.loc33_25.2 => constants.%t.param_patt.5f9
-// CHECK:STDOUT:   %t.patt.loc33_25.2 => constants.%t.patt.c3d
+// CHECK:STDOUT:   %t.patt.loc33_25.2 => constants.%t.patt.429
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type

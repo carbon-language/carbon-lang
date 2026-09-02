@@ -48,7 +48,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %ptr.64c: type = ptr_type %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.56c: type = pattern_type %ptr.64c [concrete]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type.56c = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt: %pattern_type.56c = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type.56c = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %.952: Core.Form = init_form %ptr.d08 [concrete]
 // CHECK:STDOUT:   %pattern_type.f00: type = pattern_type %ptr.d08 [concrete]
@@ -94,7 +94,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.56c = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type.56c = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.56c = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.f00 = out_param_pattern [concrete = constants.%return.param_patt.7dd]
 // CHECK:STDOUT:     %return.patt: %pattern_type.f00 = return_slot_pattern %return.param_patt, %ptr.loc28_30 [concrete = constants.%return.patt.dbe]
 // CHECK:STDOUT:   } {

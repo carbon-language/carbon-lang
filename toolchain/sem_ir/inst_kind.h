@@ -187,9 +187,6 @@ enum class InstConstantKind : int8_t {
   // a generated instruction. Constant evaluation support for types with this
   // constant kind is provided automatically, by calling `PerformDelayedAction`.
   InstAction,
-  // Equivalent to InstAction, but this instruction is guaranteed to have a
-  // constant value.
-  ConstantInstAction,
   // This instruction's operands determine whether it has a constant value,
   // whether it is a constant inst, and/or whether it results in a compile-time
   // error, in ways not expressed by the other InstConstantKinds. For example,
@@ -427,7 +424,6 @@ class InstKind::Definition : public InstKind {
     // it's a type.
     return is_type() != InstIsType::Never &&
            (constant_kind() == InstConstantKind::Indirect ||
-            constant_kind() == InstConstantKind::ConstantInstAction ||
             constant_kind() == InstConstantKind::SymbolicOnly ||
             constant_kind() == InstConstantKind::SymbolicOrReference);
   }

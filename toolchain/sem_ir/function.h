@@ -59,6 +59,10 @@ struct FunctionFields {
   // Kinds of evaluation modifiers that can apply to functions.
   enum class EvaluationMode : uint8_t { None, Eval, MustEval };
 
+  // Kinds of interface modifiers that can apply to functions.
+  // TODO: turn into a CARBON_ENUM for more convenient checks.
+  enum class InterfaceModifier : uint8_t { None, Default, Final };
+
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
 
@@ -77,6 +81,9 @@ struct FunctionFields {
   // to call_param_patterns_id. This is not populated on imported functions,
   // because it is relevant only for a function definition.
   InstBlockId call_params_id;
+
+  // Instructions representing the constant default values for parameters.
+  InstBlockId call_param_default_values_id;
 
   // The index ranges within the `Call` parameters that correspond to the
   // implicit parameters, explicit parameters, and return.
@@ -170,6 +177,9 @@ struct FunctionFields {
   // function.
   EvaluationMode evaluation_mode = EvaluationMode::None;
 
+  // Which, if any, interface modifier is applied to this function.
+  InterfaceModifier interface_modifier = InterfaceModifier::None;
+
   // The `self` parameter pattern, if any. This is the first pattern in
   // `param_patterns_id` (from EntityWithParamsBase).
   InstId self_param_id = InstId::None;
@@ -185,6 +195,21 @@ struct FunctionFields {
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
   llvm::SmallVector<InstBlockId> body_block_ids = {};
+
+  friend auto operator<<(llvm::raw_ostream& out, InterfaceModifier modifier)
+      -> llvm::raw_ostream& {
+    using enum InterfaceModifier;
+    switch (modifier) {
+      case None:
+        return out << "none";
+      case Default:
+        return out << "default";
+      case Final:
+        return out << "final";
+    }
+
+    CARBON_FATAL("unhandled `ImplModifier` during printing");
+  }
 };
 
 inline constexpr FunctionFields::CallParamIndexRanges
@@ -209,6 +234,9 @@ struct Function : public EntityWithParamsBase,
     if (call_params_id.has_value()) {
       out << ", call_params_id: " << call_params_id;
     }
+    if (call_param_default_values_id.has_value()) {
+      out << ", call_param_default_values_id: " << call_param_default_values_id;
+    }
     if (return_type_inst_id.has_value()) {
       out << ", return_type_inst_id: " << return_type_inst_id;
     }
@@ -232,6 +260,9 @@ struct Function : public EntityWithParamsBase,
     if (auto cpp_thunk_callee_val = cpp_thunk_callee();
         cpp_thunk_callee_val.has_value()) {
       out << ", cpp_thunk_callee: " << cpp_thunk_callee_val;
+    }
+    if (interface_modifier != InterfaceModifier::None) {
+      out << ", interface_modifier: " << interface_modifier;
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
@@ -290,7 +321,8 @@ struct Function : public EntityWithParamsBase,
       -> InstId;
 
   // When merging a declaration and definition, prefer things which would point
-  // at the definition for diagnostics.
+  // at the definition for diagnostics. Note that merging parameter default
+  // values needs more context, so doesn't happen here.
   auto MergeDefinition(const Function& definition) -> void {
     EntityWithParamsBase::MergeBaseDefinition(definition);
     call_param_patterns_id = definition.call_param_patterns_id;
@@ -378,6 +410,12 @@ struct CalleeNonFunction {};
 // A variant combining the callee forms.
 using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
                             CalleeNonFunction>;
+
+// Given a callee expression in a function call, attempt to convert the callee
+// to a `BoundMethod`, minimally unwrapping it while doing so.
+auto TryGetCalleeAsBoundMethod(const File& sem_ir, InstId callee_id,
+                               SpecificId caller_specific_id)
+    -> std::optional<BoundMethod>;
 
 // Returns information for the function corresponding to callee_id in
 // caller_specific_id.

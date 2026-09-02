@@ -53,13 +53,12 @@ fn foo bar;
 
 // --- fail_missing_implicit_close.carbon
 
-// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+8]]:7: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+7]]:7: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
 // CHECK:STDERR: fn Div[();
 // CHECK:STDERR:       ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+4]]:7: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+4]]:10: note: possibly missing `]` here [PossiblyMissingBracketHere]
 // CHECK:STDERR: fn Div[();
-// CHECK:STDERR:       ^
+// CHECK:STDERR:          ^
 // CHECK:STDERR:
 fn Div[();
 
@@ -317,8 +316,12 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT: - filename: fail_missing_implicit_close.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Div'
-// CHECK:STDOUT:   ├─FunctionDecl ';' has_error
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'Div'
+// CHECK:STDOUT:   │ │ ╭─ImplicitParamListStart '['
+// CHECK:STDOUT:   │ │ │ ╭─TuplePatternStart '('
+// CHECK:STDOUT:   │ │ ├─TuplePattern ')'
+// CHECK:STDOUT:   │ ├─ImplicitParamList ']'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_missing_name.carbon

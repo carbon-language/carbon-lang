@@ -414,10 +414,10 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.f6ec4f.2: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %x.param_patt.a58: %pattern_type.f6ec4f.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.140: %pattern_type.f6ec4f.2 = at_binding_pattern x, %x.param_patt.a58 [symbolic]
+// CHECK:STDOUT:   %x.patt.bcb: %pattern_type.f6ec4f.2 = wrapper_binding_pattern x, %x.param_patt.a58 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %U [symbolic]
 // CHECK:STDOUT:   %y.param_patt.be3: %pattern_type.51d1c4.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %y.patt.b85: %pattern_type.51d1c4.2 = at_binding_pattern y, %y.param_patt.be3 [symbolic]
+// CHECK:STDOUT:   %y.patt.678: %pattern_type.51d1c4.2 = wrapper_binding_pattern y, %y.param_patt.be3 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.1d2e6f.2: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%U) [symbolic]
 // CHECK:STDOUT:   %assoc0.c0023b.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element0, imports.%Core.import_ref.e7a [symbolic]
 // CHECK:STDOUT:   %assoc1.3efd77.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element1, imports.%Core.import_ref.3f7 [symbolic]
@@ -468,9 +468,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.d57: type = pattern_type %OrderedWith.type.39d [concrete]
 // CHECK:STDOUT:   %T.patt.67e: %pattern_type.d57 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.e3d: %pattern_type.e66 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.51a: %pattern_type.e66 = at_binding_pattern x, %x.param_patt.e3d [concrete]
+// CHECK:STDOUT:   %x.patt.88c: %pattern_type.e66 = wrapper_binding_pattern x, %x.param_patt.e3d [concrete]
 // CHECK:STDOUT:   %y.param_patt.4a3: %pattern_type.e66 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.397: %pattern_type.e66 = at_binding_pattern y, %y.param_patt.4a3 [concrete]
+// CHECK:STDOUT:   %y.patt.68b: %pattern_type.e66 = wrapper_binding_pattern y, %y.param_patt.4a3 [concrete]
 // CHECK:STDOUT:   %complete_type.e48: <witness> = complete_type_witness %OrderedWith.type.39d [concrete]
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.652: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.517) [concrete]
 // CHECK:STDOUT:   %.92e: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.652, %OrderedWith.facet.517 [concrete]
@@ -582,10 +582,10 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %T.as_type.loc13_52.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type.loc13_50 => constants.%pattern_type.f6ec4f.2
 // CHECK:STDOUT:   %x.param_patt.loc13_50.2 => constants.%x.param_patt.a58
-// CHECK:STDOUT:   %x.patt.loc13_50.2 => constants.%x.patt.140
+// CHECK:STDOUT:   %x.patt.loc13_50.2 => constants.%x.patt.bcb
 // CHECK:STDOUT:   %pattern_type.loc13_56 => constants.%pattern_type.51d1c4.2
 // CHECK:STDOUT:   %y.param_patt.loc13_56.2 => constants.%y.param_patt.be3
-// CHECK:STDOUT:   %y.patt.loc13_56.2 => constants.%y.patt.b85
+// CHECK:STDOUT:   %y.patt.loc13_56.2 => constants.%y.patt.678
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc13(constants.%Ordered, constants.%OrderedWith.facet.517) {
@@ -598,10 +598,10 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %T.as_type.loc13_52.1 => constants.%Ordered
 // CHECK:STDOUT:   %pattern_type.loc13_50 => constants.%pattern_type.e66
 // CHECK:STDOUT:   %x.param_patt.loc13_50.2 => constants.%x.param_patt.e3d
-// CHECK:STDOUT:   %x.patt.loc13_50.2 => constants.%x.patt.51a
+// CHECK:STDOUT:   %x.patt.loc13_50.2 => constants.%x.patt.88c
 // CHECK:STDOUT:   %pattern_type.loc13_56 => constants.%pattern_type.e66
 // CHECK:STDOUT:   %y.param_patt.loc13_56.2 => constants.%y.param_patt.4a3
-// CHECK:STDOUT:   %y.patt.loc13_56.2 => constants.%y.patt.397
+// CHECK:STDOUT:   %y.patt.loc13_56.2 => constants.%y.patt.68b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc13_50 => constants.%complete_type.357
@@ -656,10 +656,10 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.f6ec4f.2: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %x.param_patt.a58: %pattern_type.f6ec4f.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.140: %pattern_type.f6ec4f.2 = at_binding_pattern x, %x.param_patt.a58 [symbolic]
+// CHECK:STDOUT:   %x.patt.bcb: %pattern_type.f6ec4f.2 = wrapper_binding_pattern x, %x.param_patt.a58 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %U [symbolic]
 // CHECK:STDOUT:   %y.param_patt.be3: %pattern_type.51d1c4.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %y.patt.b85: %pattern_type.51d1c4.2 = at_binding_pattern y, %y.param_patt.be3 [symbolic]
+// CHECK:STDOUT:   %y.patt.678: %pattern_type.51d1c4.2 = wrapper_binding_pattern y, %y.param_patt.be3 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.1d2e6f.2: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%U) [symbolic]
 // CHECK:STDOUT:   %assoc0.c0023b.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element0, imports.%Core.import_ref.e7a [symbolic]
 // CHECK:STDOUT:   %assoc1.3efd77.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element1, imports.%Core.import_ref.3f7 [symbolic]
@@ -720,9 +720,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.53b: type = pattern_type %OrderedWith.type.4d9 [concrete]
 // CHECK:STDOUT:   %T.patt.8c1: %pattern_type.53b = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.c7f: %pattern_type.3b4 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.4ff: %pattern_type.3b4 = at_binding_pattern x, %x.param_patt.c7f [concrete]
+// CHECK:STDOUT:   %x.patt.efd: %pattern_type.3b4 = wrapper_binding_pattern x, %x.param_patt.c7f [concrete]
 // CHECK:STDOUT:   %y.param_patt.9d7: %pattern_type.5b2 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.979: %pattern_type.5b2 = at_binding_pattern y, %y.param_patt.9d7 [concrete]
+// CHECK:STDOUT:   %y.patt.9fc: %pattern_type.5b2 = wrapper_binding_pattern y, %y.param_patt.9d7 [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.fe8: type = facet_type <@OrderedWith.1, @OrderedWith.1(%A1)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.31d: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%A1) [concrete]
 // CHECK:STDOUT:   %assoc0.a34: %OrderedWith.assoc_type.31d = assoc_entity element0, imports.%Core.import_ref.e7a [concrete]
@@ -742,9 +742,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.280: type = pattern_type %OrderedWith.type.fe8 [concrete]
 // CHECK:STDOUT:   %T.patt.5de: %pattern_type.280 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.bff: %pattern_type.5b2 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.f3d: %pattern_type.5b2 = at_binding_pattern x, %x.param_patt.bff [concrete]
+// CHECK:STDOUT:   %x.patt.033: %pattern_type.5b2 = wrapper_binding_pattern x, %x.param_patt.bff [concrete]
 // CHECK:STDOUT:   %y.param_patt.257: %pattern_type.3b4 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.774: %pattern_type.3b4 = at_binding_pattern y, %y.param_patt.257 [concrete]
+// CHECK:STDOUT:   %y.patt.ab9: %pattern_type.3b4 = wrapper_binding_pattern y, %y.param_patt.257 [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.9ee: type = facet_type <@OrderedWith.1, @OrderedWith.1(%A2)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.941: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%A2) [concrete]
 // CHECK:STDOUT:   %assoc0.73a: %OrderedWith.assoc_type.941 = assoc_entity element0, imports.%Core.import_ref.e7a [concrete]
@@ -764,9 +764,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %OrderedWith.type.9ee [concrete]
 // CHECK:STDOUT:   %T.patt.e0a: %pattern_type.a96 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.0e6: %pattern_type.d1e = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.94e: %pattern_type.d1e = at_binding_pattern x, %x.param_patt.0e6 [concrete]
+// CHECK:STDOUT:   %x.patt.d0b: %pattern_type.d1e = wrapper_binding_pattern x, %x.param_patt.0e6 [concrete]
 // CHECK:STDOUT:   %y.param_patt.a4f: %pattern_type.9f0 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.912: %pattern_type.9f0 = at_binding_pattern y, %y.param_patt.a4f [concrete]
+// CHECK:STDOUT:   %y.patt.a96: %pattern_type.9f0 = wrapper_binding_pattern y, %y.param_patt.a4f [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.cc8: type = facet_type <@OrderedWith.1, @OrderedWith.1(%B3)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.45f: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%B3) [concrete]
 // CHECK:STDOUT:   %assoc0.2c4: %OrderedWith.assoc_type.45f = assoc_entity element0, imports.%Core.import_ref.e7a [concrete]
@@ -786,9 +786,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.edf: type = pattern_type %OrderedWith.type.cc8 [concrete]
 // CHECK:STDOUT:   %T.patt.8a7: %pattern_type.edf = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.429: %pattern_type.7fe = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.6e2: %pattern_type.7fe = at_binding_pattern x, %x.param_patt.429 [concrete]
+// CHECK:STDOUT:   %x.patt.39e: %pattern_type.7fe = wrapper_binding_pattern x, %x.param_patt.429 [concrete]
 // CHECK:STDOUT:   %y.param_patt.b51: %pattern_type.2dd = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.7b8: %pattern_type.2dd = at_binding_pattern y, %y.param_patt.b51 [concrete]
+// CHECK:STDOUT:   %y.patt.e2b: %pattern_type.2dd = wrapper_binding_pattern y, %y.param_patt.b51 [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.30a: type = facet_type <@OrderedWith.1, @OrderedWith.1(%A3)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.18e: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%A3) [concrete]
 // CHECK:STDOUT:   %assoc0.d97: %OrderedWith.assoc_type.18e = assoc_entity element0, imports.%Core.import_ref.e7a [concrete]
@@ -808,9 +808,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.5db: type = pattern_type %OrderedWith.type.30a [concrete]
 // CHECK:STDOUT:   %T.patt.36b: %pattern_type.5db = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.074: %pattern_type.2dd = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.234: %pattern_type.2dd = at_binding_pattern x, %x.param_patt.074 [concrete]
+// CHECK:STDOUT:   %x.patt.9ae: %pattern_type.2dd = wrapper_binding_pattern x, %x.param_patt.074 [concrete]
 // CHECK:STDOUT:   %y.param_patt.d86: %pattern_type.7fe = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.fd9: %pattern_type.7fe = at_binding_pattern y, %y.param_patt.d86 [concrete]
+// CHECK:STDOUT:   %y.patt.426: %pattern_type.7fe = wrapper_binding_pattern y, %y.param_patt.d86 [concrete]
 // CHECK:STDOUT:   %complete_type.f5b: <witness> = complete_type_witness %OrderedWith.type.4d9 [concrete]
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.bf4: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.370) [concrete]
 // CHECK:STDOUT:   %.e3b: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.bf4, %OrderedWith.facet.370 [concrete]
@@ -958,10 +958,10 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %T.as_type.loc54_52.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type.loc54_50 => constants.%pattern_type.f6ec4f.2
 // CHECK:STDOUT:   %x.param_patt.loc54_50.2 => constants.%x.param_patt.a58
-// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.140
+// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.bcb
 // CHECK:STDOUT:   %pattern_type.loc54_56 => constants.%pattern_type.51d1c4.2
 // CHECK:STDOUT:   %y.param_patt.loc54_56.2 => constants.%y.param_patt.be3
-// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.b85
+// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.678
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc54(constants.%B1, constants.%OrderedWith.facet.370) {
@@ -974,10 +974,10 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %T.as_type.loc54_52.1 => constants.%A1
 // CHECK:STDOUT:   %pattern_type.loc54_50 => constants.%pattern_type.3b4
 // CHECK:STDOUT:   %x.param_patt.loc54_50.2 => constants.%x.param_patt.c7f
-// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.4ff
+// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.efd
 // CHECK:STDOUT:   %pattern_type.loc54_56 => constants.%pattern_type.5b2
 // CHECK:STDOUT:   %y.param_patt.loc54_56.2 => constants.%y.param_patt.9d7
-// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.979
+// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.9fc
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc54_50 => constants.%complete_type.357
@@ -1017,10 +1017,10 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %T.as_type.loc54_52.1 => constants.%B1
 // CHECK:STDOUT:   %pattern_type.loc54_50 => constants.%pattern_type.5b2
 // CHECK:STDOUT:   %x.param_patt.loc54_50.2 => constants.%x.param_patt.bff
-// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.f3d
+// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.033
 // CHECK:STDOUT:   %pattern_type.loc54_56 => constants.%pattern_type.3b4
 // CHECK:STDOUT:   %y.param_patt.loc54_56.2 => constants.%y.param_patt.257
-// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.774
+// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.ab9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc54_50 => constants.%complete_type.357
@@ -1060,10 +1060,10 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %T.as_type.loc54_52.1 => constants.%B2
 // CHECK:STDOUT:   %pattern_type.loc54_50 => constants.%pattern_type.d1e
 // CHECK:STDOUT:   %x.param_patt.loc54_50.2 => constants.%x.param_patt.0e6
-// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.94e
+// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.d0b
 // CHECK:STDOUT:   %pattern_type.loc54_56 => constants.%pattern_type.9f0
 // CHECK:STDOUT:   %y.param_patt.loc54_56.2 => constants.%y.param_patt.a4f
-// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.912
+// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.a96
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc54_50 => constants.%complete_type.357
@@ -1103,10 +1103,10 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %T.as_type.loc54_52.1 => constants.%A3
 // CHECK:STDOUT:   %pattern_type.loc54_50 => constants.%pattern_type.7fe
 // CHECK:STDOUT:   %x.param_patt.loc54_50.2 => constants.%x.param_patt.429
-// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.6e2
+// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.39e
 // CHECK:STDOUT:   %pattern_type.loc54_56 => constants.%pattern_type.2dd
 // CHECK:STDOUT:   %y.param_patt.loc54_56.2 => constants.%y.param_patt.b51
-// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.7b8
+// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.e2b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc54_50 => constants.%complete_type.357
@@ -1146,10 +1146,10 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %T.as_type.loc54_52.1 => constants.%B3
 // CHECK:STDOUT:   %pattern_type.loc54_50 => constants.%pattern_type.2dd
 // CHECK:STDOUT:   %x.param_patt.loc54_50.2 => constants.%x.param_patt.074
-// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.234
+// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.9ae
 // CHECK:STDOUT:   %pattern_type.loc54_56 => constants.%pattern_type.7fe
 // CHECK:STDOUT:   %y.param_patt.loc54_56.2 => constants.%y.param_patt.d86
-// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.fd9
+// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.426
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc54_50 => constants.%complete_type.357

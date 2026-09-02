@@ -13,7 +13,7 @@ class Incomplete {
   fn Foo() {
 
 // --- STDIN
-[[@LSP-CALL:initialize]]
+[[@LSP-CALL:initialize:"capabilities": {}]]
 [[@LSP-NOTIFY:textDocument/didOpen:
   "textDocument": {
     "uri": "file:/incomplete.carbon",
@@ -27,18 +27,25 @@ class Incomplete {
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
-// CHECK:STDOUT: Content-Length: 146{{\r}}
+// CHECK:STDOUT: Content-Length: 394{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": {
 // CHECK:STDOUT:     "capabilities": {
+// CHECK:STDOUT:       "declarationProvider": true,
+// CHECK:STDOUT:       "definitionProvider": true,
+// CHECK:STDOUT:       "documentFormattingProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
-// CHECK:STDOUT:       "textDocumentSync": 2
+// CHECK:STDOUT:       "hoverProvider": true,
+// CHECK:STDOUT:       "positionEncoding": "utf-16",
+// CHECK:STDOUT:       "referencesProvider": true,
+// CHECK:STDOUT:       "textDocumentSync": 2,
+// CHECK:STDOUT:       "typeDefinitionProvider": true
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 1552{{\r}}
+// CHECK:STDOUT: }Content-Length: 834{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "jsonrpc": "2.0",
@@ -47,21 +54,6 @@ class Incomplete {
 // CHECK:STDOUT:     "diagnostics": [
 // CHECK:STDOUT:       {
 // CHECK:STDOUT:         "message": "opening symbol without a corresponding closing symbol",
-// CHECK:STDOUT:         "range": {
-// CHECK:STDOUT:           "end": {
-// CHECK:STDOUT:             "character": 18,
-// CHECK:STDOUT:             "line": 0
-// CHECK:STDOUT:           },
-// CHECK:STDOUT:           "start": {
-// CHECK:STDOUT:             "character": 17,
-// CHECK:STDOUT:             "line": 0
-// CHECK:STDOUT:           }
-// CHECK:STDOUT:         },
-// CHECK:STDOUT:         "severity": 1,
-// CHECK:STDOUT:         "source": "carbon"
-// CHECK:STDOUT:       },
-// CHECK:STDOUT:       {
-// CHECK:STDOUT:         "message": "`class` declarations must either end with a `;` or have a `{ ... }` block for a definition",
 // CHECK:STDOUT:         "range": {
 // CHECK:STDOUT:           "end": {
 // CHECK:STDOUT:             "character": 18,
@@ -89,37 +81,48 @@ class Incomplete {
 // CHECK:STDOUT:         },
 // CHECK:STDOUT:         "severity": 1,
 // CHECK:STDOUT:         "source": "carbon"
-// CHECK:STDOUT:       },
-// CHECK:STDOUT:       {
-// CHECK:STDOUT:         "message": "semantics TODO: `handle invalid parse trees in `check``",
-// CHECK:STDOUT:         "range": {
-// CHECK:STDOUT:           "end": {
-// CHECK:STDOUT:             "character": 18,
-// CHECK:STDOUT:             "line": 0
-// CHECK:STDOUT:           },
-// CHECK:STDOUT:           "start": {
-// CHECK:STDOUT:             "character": 0,
-// CHECK:STDOUT:             "line": 0
-// CHECK:STDOUT:           }
-// CHECK:STDOUT:         },
-// CHECK:STDOUT:         "severity": 1,
-// CHECK:STDOUT:         "source": "carbon"
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     ],
 // CHECK:STDOUT:     "uri": "file:///incomplete.carbon"
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 469{{\r}}
+// CHECK:STDOUT: }Content-Length: 1004{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 2,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": [
 // CHECK:STDOUT:     {
+// CHECK:STDOUT:       "children": [
+// CHECK:STDOUT:         {
+// CHECK:STDOUT:           "kind": 12,
+// CHECK:STDOUT:           "name": "Foo",
+// CHECK:STDOUT:           "range": {
+// CHECK:STDOUT:             "end": {
+// CHECK:STDOUT:               "character": 13,
+// CHECK:STDOUT:               "line": 1
+// CHECK:STDOUT:             },
+// CHECK:STDOUT:             "start": {
+// CHECK:STDOUT:               "character": 2,
+// CHECK:STDOUT:               "line": 1
+// CHECK:STDOUT:             }
+// CHECK:STDOUT:           },
+// CHECK:STDOUT:           "selectionRange": {
+// CHECK:STDOUT:             "end": {
+// CHECK:STDOUT:               "character": 8,
+// CHECK:STDOUT:               "line": 1
+// CHECK:STDOUT:             },
+// CHECK:STDOUT:             "start": {
+// CHECK:STDOUT:               "character": 5,
+// CHECK:STDOUT:               "line": 1
+// CHECK:STDOUT:             }
+// CHECK:STDOUT:           }
+// CHECK:STDOUT:         }
+// CHECK:STDOUT:       ],
 // CHECK:STDOUT:       "kind": 5,
 // CHECK:STDOUT:       "name": "Incomplete",
 // CHECK:STDOUT:       "range": {
 // CHECK:STDOUT:         "end": {
-// CHECK:STDOUT:           "character": 12,
+// CHECK:STDOUT:           "character": 13,
 // CHECK:STDOUT:           "line": 1
 // CHECK:STDOUT:         },
 // CHECK:STDOUT:         "start": {

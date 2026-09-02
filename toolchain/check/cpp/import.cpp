@@ -1963,6 +1963,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .call_param_patterns_id =
                   function_params_insts->call_param_patterns_id,
               .call_params_id = function_params_insts->call_params_id,
+              .call_param_default_values_id = SemIR::InstBlockId::None,
               .call_param_ranges = function_params_insts->param_ranges,
               .return_type_inst_id = function_params_insts->return_type_inst_id,
               .return_form_inst_id = function_params_insts->return_form_inst_id,

@@ -81,7 +81,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %p.param_patt.a12: %pattern_type.4f4 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %p.patt.14c: %pattern_type.4f4 = at_binding_pattern p, %p.param_patt.a12 [symbolic]
+// CHECK:STDOUT:   %p.patt.b16: %pattern_type.4f4 = wrapper_binding_pattern p, %p.param_patt.a12 [symbolic]
 // CHECK:STDOUT:   %.184: Core.Form = init_form %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %return.param_patt.41d: %pattern_type.51d = out_param_pattern [symbolic]
@@ -94,7 +94,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.6b6: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.fcb: type = pattern_type %ptr.6b6 [concrete]
 // CHECK:STDOUT:   %p.param_patt.9b8: %pattern_type.fcb = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt.d88: %pattern_type.fcb = at_binding_pattern p, %p.param_patt.9b8 [concrete]
+// CHECK:STDOUT:   %p.patt.ffd: %pattern_type.fcb = wrapper_binding_pattern p, %p.param_patt.9b8 [concrete]
 // CHECK:STDOUT:   %.a44: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %return.param_patt.89a: %pattern_type.98b = out_param_pattern [concrete]
@@ -124,7 +124,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc6_7.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %p.param_patt.loc6_16.1: @F.%pattern_type.loc6_16 (%pattern_type.4f4) = value_param_pattern [symbolic = %p.param_patt.loc6_16.2 (constants.%p.param_patt.a12)]
-// CHECK:STDOUT:     %p.patt.loc6_16.1: @F.%pattern_type.loc6_16 (%pattern_type.4f4) = at_binding_pattern p, %p.param_patt.loc6_16.1 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.14c)]
+// CHECK:STDOUT:     %p.patt.loc6_16.1: @F.%pattern_type.loc6_16 (%pattern_type.4f4) = wrapper_binding_pattern p, %p.param_patt.loc6_16.1 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.b16)]
 // CHECK:STDOUT:     %return.param_patt.loc6_25.1: @F.%pattern_type.loc6_25 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc6_25.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:     %return.patt.loc6_22.1: @F.%pattern_type.loc6_25 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc6_25.1, %T.ref.loc6_25 [symbolic = %return.patt.loc6_22.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:   } {
@@ -146,7 +146,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.fcb = value_param_pattern [concrete = constants.%p.param_patt.9b8]
-// CHECK:STDOUT:     %p.patt: %pattern_type.fcb = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.d88]
+// CHECK:STDOUT:     %p.patt: %pattern_type.fcb = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.ffd]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98b = out_param_pattern [concrete = constants.%return.param_patt.89a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref.loc8_16 [concrete = constants.%return.patt.e4a]
 // CHECK:STDOUT:   } {
@@ -177,7 +177,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.loc6_19.1: type = ptr_type %T.loc6_7.1 [symbolic = %ptr.loc6_19.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:   %pattern_type.loc6_16: type = pattern_type %ptr.loc6_19.1 [symbolic = %pattern_type.loc6_16 (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:   %p.param_patt.loc6_16.2: @F.%pattern_type.loc6_16 (%pattern_type.4f4) = value_param_pattern [symbolic = %p.param_patt.loc6_16.2 (constants.%p.param_patt.a12)]
-// CHECK:STDOUT:   %p.patt.loc6_16.2: @F.%pattern_type.loc6_16 (%pattern_type.4f4) = at_binding_pattern p, %p.param_patt.loc6_16.2 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.14c)]
+// CHECK:STDOUT:   %p.patt.loc6_16.2: @F.%pattern_type.loc6_16 (%pattern_type.4f4) = wrapper_binding_pattern p, %p.param_patt.loc6_16.2 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.b16)]
 // CHECK:STDOUT:   %.loc6_25.2: Core.Form = init_form %T.loc6_7.1 [symbolic = %.loc6_25.2 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type.loc6_25: type = pattern_type %T.loc6_7.1 [symbolic = %pattern_type.loc6_25 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %return.param_patt.loc6_25.2: @F.%pattern_type.loc6_25 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc6_25.2 (constants.%return.param_patt.41d)]
@@ -215,7 +215,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.loc6_19.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %pattern_type.loc6_16 => constants.%pattern_type.4f4
 // CHECK:STDOUT:   %p.param_patt.loc6_16.2 => constants.%p.param_patt.a12
-// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.14c
+// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.b16
 // CHECK:STDOUT:   %.loc6_25.2 => constants.%.184
 // CHECK:STDOUT:   %pattern_type.loc6_25 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %return.param_patt.loc6_25.2 => constants.%return.param_patt.41d
@@ -233,7 +233,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.loc6_19.1 => constants.%ptr.6b6
 // CHECK:STDOUT:   %pattern_type.loc6_16 => constants.%pattern_type.fcb
 // CHECK:STDOUT:   %p.param_patt.loc6_16.2 => constants.%p.param_patt.9b8
-// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.d88
+// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.ffd
 // CHECK:STDOUT:   %.loc6_25.2 => constants.%.a44
 // CHECK:STDOUT:   %pattern_type.loc6_25 => constants.%pattern_type.98b
 // CHECK:STDOUT:   %return.param_patt.loc6_25.2 => constants.%return.param_patt.89a
@@ -260,7 +260,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.a15: type = ptr_type %const.4ff [symbolic]
 // CHECK:STDOUT:   %pattern_type.26f: type = pattern_type %ptr.a15 [symbolic]
 // CHECK:STDOUT:   %p.param_patt.b08: %pattern_type.26f = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %p.patt.b03: %pattern_type.26f = at_binding_pattern p, %p.param_patt.b08 [symbolic]
+// CHECK:STDOUT:   %p.patt.0f3: %pattern_type.26f = wrapper_binding_pattern p, %p.param_patt.b08 [symbolic]
 // CHECK:STDOUT:   %.184: Core.Form = init_form %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %return.param_patt.41d: %pattern_type.51d = out_param_pattern [symbolic]
@@ -274,7 +274,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.77f: type = ptr_type %const.13f [concrete]
 // CHECK:STDOUT:   %pattern_type.7d2: type = pattern_type %ptr.77f [concrete]
 // CHECK:STDOUT:   %p.param_patt.a6a: %pattern_type.7d2 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt.bb7: %pattern_type.7d2 = at_binding_pattern p, %p.param_patt.a6a [concrete]
+// CHECK:STDOUT:   %p.patt.3ee: %pattern_type.7d2 = wrapper_binding_pattern p, %p.param_patt.a6a [concrete]
 // CHECK:STDOUT:   %.a44: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %return.param_patt.89a: %pattern_type.98b = out_param_pattern [concrete]
@@ -304,7 +304,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc6_7.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %p.param_patt.loc6_16.1: @F.%pattern_type.loc6_16 (%pattern_type.26f) = value_param_pattern [symbolic = %p.param_patt.loc6_16.2 (constants.%p.param_patt.b08)]
-// CHECK:STDOUT:     %p.patt.loc6_16.1: @F.%pattern_type.loc6_16 (%pattern_type.26f) = at_binding_pattern p, %p.param_patt.loc6_16.1 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.b03)]
+// CHECK:STDOUT:     %p.patt.loc6_16.1: @F.%pattern_type.loc6_16 (%pattern_type.26f) = wrapper_binding_pattern p, %p.param_patt.loc6_16.1 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.0f3)]
 // CHECK:STDOUT:     %return.param_patt.loc6_31.1: @F.%pattern_type.loc6_31 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc6_31.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:     %return.patt.loc6_28.1: @F.%pattern_type.loc6_31 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc6_31.1, %T.ref.loc6_31 [symbolic = %return.patt.loc6_28.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:   } {
@@ -327,7 +327,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.7d2 = value_param_pattern [concrete = constants.%p.param_patt.a6a]
-// CHECK:STDOUT:     %p.patt: %pattern_type.7d2 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.bb7]
+// CHECK:STDOUT:     %p.patt: %pattern_type.7d2 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.3ee]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98b = out_param_pattern [concrete = constants.%return.param_patt.89a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref.loc8_22 [concrete = constants.%return.patt.e4a]
 // CHECK:STDOUT:   } {
@@ -360,7 +360,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.loc6_25.1: type = ptr_type %const.loc6_18.1 [symbolic = %ptr.loc6_25.1 (constants.%ptr.a15)]
 // CHECK:STDOUT:   %pattern_type.loc6_16: type = pattern_type %ptr.loc6_25.1 [symbolic = %pattern_type.loc6_16 (constants.%pattern_type.26f)]
 // CHECK:STDOUT:   %p.param_patt.loc6_16.2: @F.%pattern_type.loc6_16 (%pattern_type.26f) = value_param_pattern [symbolic = %p.param_patt.loc6_16.2 (constants.%p.param_patt.b08)]
-// CHECK:STDOUT:   %p.patt.loc6_16.2: @F.%pattern_type.loc6_16 (%pattern_type.26f) = at_binding_pattern p, %p.param_patt.loc6_16.2 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.b03)]
+// CHECK:STDOUT:   %p.patt.loc6_16.2: @F.%pattern_type.loc6_16 (%pattern_type.26f) = wrapper_binding_pattern p, %p.param_patt.loc6_16.2 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.0f3)]
 // CHECK:STDOUT:   %.loc6_31.2: Core.Form = init_form %T.loc6_7.1 [symbolic = %.loc6_31.2 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type.loc6_31: type = pattern_type %T.loc6_7.1 [symbolic = %pattern_type.loc6_31 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %return.param_patt.loc6_31.2: @F.%pattern_type.loc6_31 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc6_31.2 (constants.%return.param_patt.41d)]
@@ -399,7 +399,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.loc6_25.1 => constants.%ptr.a15
 // CHECK:STDOUT:   %pattern_type.loc6_16 => constants.%pattern_type.26f
 // CHECK:STDOUT:   %p.param_patt.loc6_16.2 => constants.%p.param_patt.b08
-// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.b03
+// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.0f3
 // CHECK:STDOUT:   %.loc6_31.2 => constants.%.184
 // CHECK:STDOUT:   %pattern_type.loc6_31 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %return.param_patt.loc6_31.2 => constants.%return.param_patt.41d
@@ -418,7 +418,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.loc6_25.1 => constants.%ptr.77f
 // CHECK:STDOUT:   %pattern_type.loc6_16 => constants.%pattern_type.7d2
 // CHECK:STDOUT:   %p.param_patt.loc6_16.2 => constants.%p.param_patt.a6a
-// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.bb7
+// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.3ee
 // CHECK:STDOUT:   %.loc6_31.2 => constants.%.a44
 // CHECK:STDOUT:   %pattern_type.loc6_31 => constants.%pattern_type.98b
 // CHECK:STDOUT:   %return.param_patt.loc6_31.2 => constants.%return.param_patt.89a
@@ -444,7 +444,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %p.param_patt.a12: %pattern_type.4f4 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %p.patt.14c: %pattern_type.4f4 = at_binding_pattern p, %p.param_patt.a12 [symbolic]
+// CHECK:STDOUT:   %p.patt.b16: %pattern_type.4f4 = wrapper_binding_pattern p, %p.param_patt.a12 [symbolic]
 // CHECK:STDOUT:   %.184: Core.Form = init_form %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %return.param_patt.41d: %pattern_type.51d = out_param_pattern [symbolic]
@@ -458,7 +458,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.77f: type = ptr_type %const [concrete]
 // CHECK:STDOUT:   %pattern_type.7d2: type = pattern_type %ptr.77f [concrete]
 // CHECK:STDOUT:   %p.param_patt.a6a: %pattern_type.7d2 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt.bb7: %pattern_type.7d2 = at_binding_pattern p, %p.param_patt.a6a [concrete]
+// CHECK:STDOUT:   %p.patt.3ee: %pattern_type.7d2 = wrapper_binding_pattern p, %p.param_patt.a6a [concrete]
 // CHECK:STDOUT:   %.ab2: Core.Form = init_form %const [concrete]
 // CHECK:STDOUT:   %pattern_type.1e4: type = pattern_type %const [concrete]
 // CHECK:STDOUT:   %return.param_patt.727: %pattern_type.1e4 = out_param_pattern [concrete]
@@ -488,7 +488,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc6_7.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %p.param_patt.loc6_16.1: @F.%pattern_type.loc6_16 (%pattern_type.4f4) = value_param_pattern [symbolic = %p.param_patt.loc6_16.2 (constants.%p.param_patt.a12)]
-// CHECK:STDOUT:     %p.patt.loc6_16.1: @F.%pattern_type.loc6_16 (%pattern_type.4f4) = at_binding_pattern p, %p.param_patt.loc6_16.1 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.14c)]
+// CHECK:STDOUT:     %p.patt.loc6_16.1: @F.%pattern_type.loc6_16 (%pattern_type.4f4) = wrapper_binding_pattern p, %p.param_patt.loc6_16.1 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.b16)]
 // CHECK:STDOUT:     %return.param_patt.loc6_25.1: @F.%pattern_type.loc6_25 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc6_25.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:     %return.patt.loc6_22.1: @F.%pattern_type.loc6_25 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc6_25.1, %T.ref.loc6_25 [symbolic = %return.patt.loc6_22.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:   } {
@@ -510,7 +510,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.7d2 = value_param_pattern [concrete = constants.%p.param_patt.a6a]
-// CHECK:STDOUT:     %p.patt: %pattern_type.7d2 = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.bb7]
+// CHECK:STDOUT:     %p.patt: %pattern_type.7d2 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.3ee]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.1e4 = out_param_pattern [concrete = constants.%return.param_patt.727]
 // CHECK:STDOUT:     %return.patt: %pattern_type.1e4 = return_slot_pattern %return.param_patt, %const.loc8_22 [concrete = constants.%return.patt.dc5]
 // CHECK:STDOUT:   } {
@@ -543,7 +543,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.loc6_19.1: type = ptr_type %T.loc6_7.1 [symbolic = %ptr.loc6_19.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:   %pattern_type.loc6_16: type = pattern_type %ptr.loc6_19.1 [symbolic = %pattern_type.loc6_16 (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:   %p.param_patt.loc6_16.2: @F.%pattern_type.loc6_16 (%pattern_type.4f4) = value_param_pattern [symbolic = %p.param_patt.loc6_16.2 (constants.%p.param_patt.a12)]
-// CHECK:STDOUT:   %p.patt.loc6_16.2: @F.%pattern_type.loc6_16 (%pattern_type.4f4) = at_binding_pattern p, %p.param_patt.loc6_16.2 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.14c)]
+// CHECK:STDOUT:   %p.patt.loc6_16.2: @F.%pattern_type.loc6_16 (%pattern_type.4f4) = wrapper_binding_pattern p, %p.param_patt.loc6_16.2 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.b16)]
 // CHECK:STDOUT:   %.loc6_25.2: Core.Form = init_form %T.loc6_7.1 [symbolic = %.loc6_25.2 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type.loc6_25: type = pattern_type %T.loc6_7.1 [symbolic = %pattern_type.loc6_25 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %return.param_patt.loc6_25.2: @F.%pattern_type.loc6_25 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc6_25.2 (constants.%return.param_patt.41d)]
@@ -581,7 +581,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.loc6_19.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %pattern_type.loc6_16 => constants.%pattern_type.4f4
 // CHECK:STDOUT:   %p.param_patt.loc6_16.2 => constants.%p.param_patt.a12
-// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.14c
+// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.b16
 // CHECK:STDOUT:   %.loc6_25.2 => constants.%.184
 // CHECK:STDOUT:   %pattern_type.loc6_25 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %return.param_patt.loc6_25.2 => constants.%return.param_patt.41d
@@ -599,7 +599,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.loc6_19.1 => constants.%ptr.77f
 // CHECK:STDOUT:   %pattern_type.loc6_16 => constants.%pattern_type.7d2
 // CHECK:STDOUT:   %p.param_patt.loc6_16.2 => constants.%p.param_patt.a6a
-// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.bb7
+// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.3ee
 // CHECK:STDOUT:   %.loc6_25.2 => constants.%.ab2
 // CHECK:STDOUT:   %pattern_type.loc6_25 => constants.%pattern_type.1e4
 // CHECK:STDOUT:   %return.param_patt.loc6_25.2 => constants.%return.param_patt.727
@@ -626,7 +626,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.a15: type = ptr_type %const.4ff [symbolic]
 // CHECK:STDOUT:   %pattern_type.26f: type = pattern_type %ptr.a15 [symbolic]
 // CHECK:STDOUT:   %p.param_patt.b08: %pattern_type.26f = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %p.patt.b03: %pattern_type.26f = at_binding_pattern p, %p.param_patt.b08 [symbolic]
+// CHECK:STDOUT:   %p.patt.0f3: %pattern_type.26f = wrapper_binding_pattern p, %p.param_patt.b08 [symbolic]
 // CHECK:STDOUT:   %.184: Core.Form = init_form %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %return.param_patt.41d: %pattern_type.51d = out_param_pattern [symbolic]
@@ -639,7 +639,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.6b6: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.fcb: type = pattern_type %ptr.6b6 [concrete]
 // CHECK:STDOUT:   %p.param_patt.9b8: %pattern_type.fcb = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt.d88: %pattern_type.fcb = at_binding_pattern p, %p.param_patt.9b8 [concrete]
+// CHECK:STDOUT:   %p.patt.ffd: %pattern_type.fcb = wrapper_binding_pattern p, %p.param_patt.9b8 [concrete]
 // CHECK:STDOUT:   %const.13f: type = const_type %C [concrete]
 // CHECK:STDOUT:   %.ab2: Core.Form = init_form %const.13f [concrete]
 // CHECK:STDOUT:   %pattern_type.1e4: type = pattern_type %const.13f [concrete]
@@ -668,7 +668,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc6_7.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %p.param_patt.loc6_16.1: @F.%pattern_type.loc6_16 (%pattern_type.26f) = value_param_pattern [symbolic = %p.param_patt.loc6_16.2 (constants.%p.param_patt.b08)]
-// CHECK:STDOUT:     %p.patt.loc6_16.1: @F.%pattern_type.loc6_16 (%pattern_type.26f) = at_binding_pattern p, %p.param_patt.loc6_16.1 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.b03)]
+// CHECK:STDOUT:     %p.patt.loc6_16.1: @F.%pattern_type.loc6_16 (%pattern_type.26f) = wrapper_binding_pattern p, %p.param_patt.loc6_16.1 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.0f3)]
 // CHECK:STDOUT:     %return.param_patt.loc6_31.1: @F.%pattern_type.loc6_31 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc6_31.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:     %return.patt.loc6_28.1: @F.%pattern_type.loc6_31 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc6_31.1, %T.ref.loc6_31 [symbolic = %return.patt.loc6_28.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:   } {
@@ -691,7 +691,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.fcb = value_param_pattern [concrete = constants.%p.param_patt.9b8]
-// CHECK:STDOUT:     %p.patt: %pattern_type.fcb = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.d88]
+// CHECK:STDOUT:     %p.patt: %pattern_type.fcb = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.ffd]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.1e4 = out_param_pattern [concrete = constants.%return.param_patt.727]
 // CHECK:STDOUT:     %return.patt: %pattern_type.1e4 = return_slot_pattern %return.param_patt, %const [concrete = constants.%return.patt.dc5]
 // CHECK:STDOUT:   } {
@@ -724,7 +724,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.loc6_25.1: type = ptr_type %const.loc6_18.1 [symbolic = %ptr.loc6_25.1 (constants.%ptr.a15)]
 // CHECK:STDOUT:   %pattern_type.loc6_16: type = pattern_type %ptr.loc6_25.1 [symbolic = %pattern_type.loc6_16 (constants.%pattern_type.26f)]
 // CHECK:STDOUT:   %p.param_patt.loc6_16.2: @F.%pattern_type.loc6_16 (%pattern_type.26f) = value_param_pattern [symbolic = %p.param_patt.loc6_16.2 (constants.%p.param_patt.b08)]
-// CHECK:STDOUT:   %p.patt.loc6_16.2: @F.%pattern_type.loc6_16 (%pattern_type.26f) = at_binding_pattern p, %p.param_patt.loc6_16.2 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.b03)]
+// CHECK:STDOUT:   %p.patt.loc6_16.2: @F.%pattern_type.loc6_16 (%pattern_type.26f) = wrapper_binding_pattern p, %p.param_patt.loc6_16.2 [symbolic = %p.patt.loc6_16.2 (constants.%p.patt.0f3)]
 // CHECK:STDOUT:   %.loc6_31.2: Core.Form = init_form %T.loc6_7.1 [symbolic = %.loc6_31.2 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type.loc6_31: type = pattern_type %T.loc6_7.1 [symbolic = %pattern_type.loc6_31 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %return.param_patt.loc6_31.2: @F.%pattern_type.loc6_31 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc6_31.2 (constants.%return.param_patt.41d)]
@@ -760,7 +760,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %ptr.loc6_25.1 => constants.%ptr.a15
 // CHECK:STDOUT:   %pattern_type.loc6_16 => constants.%pattern_type.26f
 // CHECK:STDOUT:   %p.param_patt.loc6_16.2 => constants.%p.param_patt.b08
-// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.b03
+// CHECK:STDOUT:   %p.patt.loc6_16.2 => constants.%p.patt.0f3
 // CHECK:STDOUT:   %.loc6_31.2 => constants.%.184
 // CHECK:STDOUT:   %pattern_type.loc6_31 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %return.param_patt.loc6_31.2 => constants.%return.param_patt.41d

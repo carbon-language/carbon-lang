@@ -27,7 +27,7 @@ fn Main() {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %.469: Core.Form = init_form %empty_struct_type [concrete]
 // CHECK:STDOUT:   %return.param_patt: %pattern_type = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %empty_struct_type [concrete]
@@ -44,7 +44,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Echo.decl: %Echo.type = fn_decl @Echo [concrete = constants.%Echo] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete = constants.%return.param_patt]
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc15_20.2 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {

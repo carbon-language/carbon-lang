@@ -37,7 +37,7 @@ fn Use(generic T: I) {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.c60: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %self.param_patt: %pattern_type.c60 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt: %pattern_type.c60 = at_binding_pattern self, %self.param_patt [symbolic]
+// CHECK:STDOUT:   %self.patt: %pattern_type.c60 = wrapper_binding_pattern self, %self.param_patt [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type.dcc: type = fn_type @I.WithSelf.F, @I.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.ec6: %I.WithSelf.F.type.dcc = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
@@ -82,7 +82,7 @@ fn Use(generic T: I) {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.dcc) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.ec6)] {
 // CHECK:STDOUT:     %self.param_patt.loc5_8.1: @I.WithSelf.F.%pattern_type (%pattern_type.c60) = value_param_pattern [symbolic = %self.param_patt.loc5_8.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:     %self.patt.loc5_8.1: @I.WithSelf.F.%pattern_type (%pattern_type.c60) = at_binding_pattern self, %self.param_patt.loc5_8.1 [symbolic = %self.patt.loc5_8.2 (constants.%self.patt)]
+// CHECK:STDOUT:     %self.patt.loc5_8.1: @I.WithSelf.F.%pattern_type (%pattern_type.c60) = wrapper_binding_pattern self, %self.param_patt.loc5_8.1 [symbolic = %self.patt.loc5_8.2 (constants.%self.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.as_type.loc5_8.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc5_8.1: type = splice_block %.loc5_8.2 [symbolic = %Self.as_type.loc5_8.1 (constants.%Self.as_type)] {
@@ -107,7 +107,7 @@ fn Use(generic T: I) {
 // CHECK:STDOUT:   %Self.as_type.loc5_8.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_8.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_8.1 [symbolic = %pattern_type (constants.%pattern_type.c60)]
 // CHECK:STDOUT:   %self.param_patt.loc5_8.2: @I.WithSelf.F.%pattern_type (%pattern_type.c60) = value_param_pattern [symbolic = %self.param_patt.loc5_8.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:   %self.patt.loc5_8.2: @I.WithSelf.F.%pattern_type (%pattern_type.c60) = at_binding_pattern self, %self.param_patt.loc5_8.2 [symbolic = %self.patt.loc5_8.2 (constants.%self.patt)]
+// CHECK:STDOUT:   %self.patt.loc5_8.2: @I.WithSelf.F.%pattern_type (%pattern_type.c60) = wrapper_binding_pattern self, %self.param_patt.loc5_8.2 [symbolic = %self.patt.loc5_8.2 (constants.%self.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc5_8.1 (%Self.as_type));
 // CHECK:STDOUT: }

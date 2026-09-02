@@ -119,7 +119,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %b.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %b.patt: %pattern_type = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type = wrapper_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %If.type: type = fn_type @If [concrete]
 // CHECK:STDOUT:   %If: %If.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -127,7 +127,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [concrete = constants.%If] {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type = value_param_pattern [concrete = constants.%b.param_patt]
-// CHECK:STDOUT:     %b.patt: %pattern_type = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc8: type = type_literal bool [concrete = bool]
@@ -166,7 +166,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %b.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %b.patt: %pattern_type = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type = wrapper_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %If.type: type = fn_type @If [concrete]
 // CHECK:STDOUT:   %If: %If.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -174,7 +174,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [concrete = constants.%If] {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type = value_param_pattern [concrete = constants.%b.param_patt]
-// CHECK:STDOUT:     %b.patt: %pattern_type = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = type_literal bool [concrete = bool]
@@ -203,7 +203,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.831 = wrapper_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %.f34: Core.Form = init_form bool [concrete]
 // CHECK:STDOUT:   %return.param_patt.5a1: %pattern_type.831 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.c0c: %pattern_type.831 = return_slot_pattern %return.param_patt.5a1, bool [concrete]
@@ -230,7 +230,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %If.decl: %If.type = fn_decl @If [concrete = constants.%If] {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern [concrete = constants.%b.param_patt]
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt.5a1]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc4_19.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {

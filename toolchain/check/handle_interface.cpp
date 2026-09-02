@@ -73,12 +73,11 @@ static auto BuildInterfaceDecl(Context& context,
   SemIR::ScopeLookupResult lookup_result =
       context.decl_name_stack().LookupOrAddName(
           name_context, decl_inst_id, introducer.modifier_set.GetAccessKind());
-  if (auto existing_decl = TryGetExistingDecl(context, name, lookup_result,
-                                              interface_info, is_definition)) {
-    auto existing_interface_decl = existing_decl->As<SemIR::InterfaceDecl>();
-    interface_decl.interface_id = existing_interface_decl.interface_id;
-    interface_decl.type_id = existing_interface_decl.type_id;
-
+  if (TryMergeRedecl(
+          context, name_context, lookup_result,
+          MergeRedeclEntityInfo<SemIR::Interface>{
+              .new_entity_decl = interface_decl, .new_entity = interface_info},
+          is_definition)) {
     auto prev_decl_generic_id =
         context.interfaces().Get(interface_decl.interface_id).generic_id;
     FinishGenericRedecl(context, prev_decl_generic_id);
