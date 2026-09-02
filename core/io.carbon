@@ -13,6 +13,7 @@ fn Print(x: i32) = "print.int";
 fn PrintChar(x: char) -> i32 = "print.char";
 
 fn PrintStr(msg: str);
+fn PrintBool(x: bool);
 
 // TODO: Return an `Optional(char)` instead of `i32`.
 fn ReadChar() -> i32 = "read.char";
