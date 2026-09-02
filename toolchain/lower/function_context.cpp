@@ -119,7 +119,7 @@ static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
 // in `requires`-style overloads.
 auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   // Skip over constants. `FileContext::GetConstant` lowers them as needed.
-  if (sem_ir().constant_values().Get(inst_id).is_constant()) {
+  if (IsConstant(inst_id)) {
     return;
   }
 
@@ -166,6 +166,12 @@ auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id, TypeInFile type)
   auto* phi = llvm::PHINode::Create(GetType(type), NumReservedPredecessors);
   phi->insertInto(block, block->begin());
   return phi;
+}
+
+auto FunctionContext::IsConstant(SemIR::InstId inst_id) -> bool {
+  return GetConstantValueInSpecific(specific_sem_ir(), specific_id_, sem_ir(),
+                                    inst_id)
+      .second.is_constant();
 }
 
 auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
@@ -275,7 +281,7 @@ auto FunctionContext::InitializeStorage(TypeInFile type, SemIR::InstId dest_id,
     case SemIR::InitRepr::None:
       break;
     case SemIR::InitRepr::InPlace:
-      if (sem_ir().constant_values().Get(source_id).is_constant()) {
+      if (IsConstant(source_id)) {
         // When initializing from a constant, emission of the source doesn't
         // initialize the destination. Copy the constant value instead.
         // TODO: If the type is small, emit a store rather than a memcpy.

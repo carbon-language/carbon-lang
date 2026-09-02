@@ -362,11 +362,26 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::SpliceInst /*inst*/) -> void {
-  // TODO: Get the constant value of the spliced instruction from the current
-  // specific, and lower the instruction in that constant value.
-  CARBON_FATAL("Template lowering not implemented yet");
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::SpliceInst inst) -> void {
+  auto [inst_ir, inst_value_id] = GetConstantValueInSpecific(
+      context.specific_sem_ir(), context.specific_id(), context.sem_ir(),
+      inst.inst_id);
+  auto inst_value =
+      inst_ir->constant_values().GetInstAs<SemIR::InstValue>(inst_value_id);
+  if (inst_ir == &context.sem_ir()) {
+    // Easy case: same file. Just emit the spliced instruction.
+    context.LowerInst(inst_value.inst_id);
+    context.SetLocal(inst_id, context.GetValue(inst_value.inst_id));
+  } else {
+    // TODO: We don't yet have support for cross-file templates at all. Lowering
+    // the result here would mostly just require that we switch the `sem_ir` on
+    // the `FunctionContext` to instead refer to the `specific_sem_ir`, but we
+    // would also need to handle references from the instantiated instructions
+    // back to the original ones, and we don't even know how to represent those
+    // references yet.
+    CARBON_FATAL("Cross-file template lowering not implemented yet");
+  }
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
