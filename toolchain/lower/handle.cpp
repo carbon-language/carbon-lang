@@ -346,6 +346,17 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::SpecificInst inst) -> void {
+  // If it's valid to refer to inst.inst_id at runtime and it's not constant, it
+  // must be within this function, and hence in the same specific that we're
+  // lowering.
+  CARBON_CHECK(&context.sem_ir() == &context.specific_sem_ir() &&
+                   context.specific_id() == inst.specific_id,
+               "Runtime specific_inst refers to a different specific");
+  context.SetLocal(inst_id, context.GetValue(inst.inst_id));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::SpliceBlock inst) -> void {
   context.LowerBlockContents(inst.block_id);
   context.SetLocal(inst_id, context.GetValue(inst.result_id));

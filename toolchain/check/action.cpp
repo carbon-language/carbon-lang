@@ -11,6 +11,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -18,12 +19,13 @@
 namespace Carbon::Check {
 
 auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::RefineTypeAction action) -> SemIR::InstId {
-  return AddInst<SemIR::AsCompatible>(
+                   SemIR::RefineInstAction action) -> SemIR::InstId {
+  return AddInst<SemIR::SpecificInst>(
       context, loc_id,
-      {.type_id =
-           context.types().GetTypeIdForTypeInstId(action.inst_type_inst_id),
-       .source_id = action.inst_id});
+      {.type_id = GetTypeOfInstInSpecific(context.sem_ir(), action.specific_id,
+                                          action.inst_id),
+       .inst_id = action.inst_id,
+       .specific_id = action.specific_id});
 }
 
 static auto OperandDependence(Context& context, SemIR::ConstantId const_id)
@@ -126,11 +128,19 @@ static auto OperandDependence(Context& context, SemIR::IdAndKind arg)
 }
 
 auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool {
-  if (auto refine_action = action_inst.TryAs<SemIR::RefineTypeAction>()) {
-    // `RefineTypeAction` can be performed whenever the type is not template-
-    // dependent, even if we don't know the instruction yet.
-    return OperandDependence(context, refine_action->inst_type_inst_id) <
-           SemIR::ConstantDependence::Template;
+  if (auto refine_action = action_inst.TryAs<SemIR::RefineInstAction>()) {
+    // `RefineInstAction` is performable once the instruction's type and
+    // constant value are not template-dependent.
+    return OperandDependence(context,
+                             GetTypeOfInstInSpecific(context.sem_ir(),
+                                                     refine_action->specific_id,
+                                                     refine_action->inst_id)) <
+               SemIR::ConstantDependence::Template &&
+           OperandDependence(context,
+                             SemIR::GetConstantValueInSpecific(
+                                 context.sem_ir(), refine_action->specific_id,
+                                 refine_action->inst_id)) <
+               SemIR::ConstantDependence::Template;
   }
 
   // A form-parameterized action is performable if we can see at least the top
@@ -207,25 +217,34 @@ static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
 
   // If the constant value of the instruction is template-dependent and
   // unattached, replace it with a corresponding attached constant value.
-  if (auto const_id = context.constant_values().GetAttached(inst_id);
-      const_id.is_symbolic() &&
+  auto const_id = context.constant_values().GetAttached(inst_id);
+  if (const_id.is_symbolic() &&
       !context.constant_values().IsAttached(const_id)) {
     return GetOrAddInstWithSpecificConstantValue(context, inst_id);
   }
 
-  // If the type of the action argument is dependent, refine to an instruction
-  // with a concrete type.
+  // If the type or constant value of the action argument is dependent, refine
+  // to an instruction with the type and value from the specific.
   if (OperandDependence(context, inst.type_id()) ==
-      SemIR::ConstantDependence::Template) {
+          SemIR::ConstantDependence::Template ||
+      OperandDependence(context, const_id) ==
+          SemIR::ConstantDependence::Template) {
     auto type_inst_id = context.types().GetTypeInstId(inst.type_id());
     inst_id = AddDependentActionSpliceImpl(
         context,
         SemIR::LocIdAndInst(
             loc_id,
-            SemIR::RefineTypeAction{.type_id = GetSingletonType(
-                                        context, SemIR::InstType::TypeInstId),
-                                    .inst_id = inst_id,
-                                    .inst_type_inst_id = type_inst_id}),
+            SemIR::RefineInstAction{
+                .type_id =
+                    GetSingletonType(context, SemIR::InstType::TypeInstId),
+                .inst_id = inst_id,
+                // TODO: Storing the specific_id should not be necessary, and is
+                // wasteful since evaluation will need to recompute it for each
+                // action. Pass it in from eval instead.
+                .specific_id = context.generics().GetSelfSpecific(
+                    context.generic_region_stack()
+                        .PeekPendingGeneric()
+                        .generic_id)}),
         type_inst_id);
   }
 

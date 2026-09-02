@@ -1574,18 +1574,19 @@ struct PointerType {
   TypeInstId pointee_id;
 };
 
-// An action that performs type refinement for an instruction, by creating an
-// instruction that converts from a template symbolic type to a concrete type.
-struct RefineTypeAction {
-  static constexpr auto Kind = InstKind::RefineTypeAction.Define<Parse::NodeId>(
-      {.ir_name = "refine_type_action",
+// An action that performs refinement for an instruction, by creating an
+// instruction that has the same semantics but the specific type and constant
+// value.
+struct RefineInstAction {
+  static constexpr auto Kind = InstKind::RefineInstAction.Define<Parse::NodeId>(
+      {.ir_name = "refine_inst_action",
        .expr_category = ActionExprCategory(ExprCategory::Dependent),
        .constant_kind = InstConstantKind::InstAction,
        .is_lowered = false});
 
   TypeId type_id;
   MetaInstId inst_id;
-  TypeInstId inst_type_inst_id;
+  SpecificId specific_id;
 };
 
 // Represents a reference binding pattern that is not a parameter. See
@@ -1991,6 +1992,29 @@ struct SpecificImplFunction {
   InstId callee_id;
   // The specific instance of the interface function that was called, including
   // all the compile-time arguments.
+  SpecificId specific_id;
+};
+
+// Given an instruction within a generic, represents a corresponding instruction
+// within a specific. Like `SpecificConstant`, this will have the type and
+// constant value of the instruction from the specific, but unlike
+// `SpecificConstant`, there is no implication that the instruction is constant.
+//
+// This does not permit references to instructions from other scopes if they
+// would not otherwise be permitted. Typically, this means that it can only be
+// used to refer to constants and to instructions from the same scope (and hence
+// the same specific) that this instruction occupies.
+//
+// This is used as a convenience during action evaluation to allow an action to
+// refer to its `MetaInstId` operands from the generic with their specific types
+// and constant values.
+struct SpecificInst {
+  static constexpr auto Kind = InstKind::SpecificInst.Define<Parse::NodeId>(
+      {.ir_name = "specific_inst",
+       .expr_category = ComputedExprCategory::DependsOnOperands});
+
+  TypeId type_id;
+  AbsoluteInstId inst_id;
   SpecificId specific_id;
 };
 
