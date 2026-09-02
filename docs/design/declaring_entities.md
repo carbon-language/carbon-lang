@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-Entities may have up to three declarations:
+Entities may have up to four declarations:
 
 -   An optional, owning forward declaration.
     -   For example, `class MyClass;`.
@@ -32,6 +32,9 @@ Entities may have up to three declarations:
 -   A required, owning definition.
     -   For example, `class MyClass { ... }`.
     -   The definition might be the _only_ declaration.
+-   An optional, owning declaration in a `match_first` block.
+    -   This only applies to `impl` declarations.
+    -   This must be in the same file as the first owning declaration.
 -   An optional, non-owning `extern library "<owning_library>"` declaration.
     -   For example, `extern library "OtherLibrary" class MyClass;`.
     -   It must be in a separate library from the definition.
@@ -60,6 +63,12 @@ fn DoSomething() {
   ...
 }
 ```
+
+A `match_first` block contains owning declarations of `impl`s. A declaration
+in a `match_first` block may be the forward declaration or the definition. It
+may also be a fourth declaration that is neither, and which is only allowed to
+exist within such a block. All declarations in a `match_first` block must be
+in the same file as the first owning declaration.
 
 ## Matching redeclarations of an entity
 
