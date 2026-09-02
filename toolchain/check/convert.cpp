@@ -2138,6 +2138,7 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
     auto action_type_id = GetTupleType(context, action_type_elements_id);
 
     // Create the initialization action.
+    // TODO: Refining the inst_id operand here creates problems in lowering, by violating topological order after splicing -- the as_compatible created by refinement is too late in the IR. But not doing so breaks the action machinery somehow.
     auto action_id = AddDependentActionInst(
         context, loc_id,
         SemIR::InitializeAction{
