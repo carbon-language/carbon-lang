@@ -767,6 +767,11 @@ struct InstBlockId : public IdBase<InstBlockId> {
   static const InstBlockId Unreachable;
 
   using IdBase::IdBase;
+
+  // The instruction ID type that should be used to refer to elements of this
+  // block.
+  using InstIdT = InstId;
+
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
@@ -835,6 +840,8 @@ class AbsoluteInstBlockId : public InstBlockId {
       : InstBlockId(inst_block_id) {}
 
   using InstBlockId::InstBlockId;
+
+  using InstIdT = AbsoluteInstId;
 };
 
 // An ID of an instruction block that is used as the declaration block within a
@@ -865,6 +872,8 @@ class MetaInstBlockId : public InstBlockId {
       : InstBlockId(inst_block_id) {}
 
   using InstBlockId::InstBlockId;
+
+  using InstIdT = MetaInstId;
 };
 
 // An ID of an instruction block that is used as a label in a branch instruction
