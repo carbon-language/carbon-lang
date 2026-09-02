@@ -411,6 +411,12 @@ struct CalleeNonFunction {};
 using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
                             CalleeNonFunction>;
 
+// Given a callee expression in a function call, attempt to convert the callee
+// to a `BoundMethod`, minimally unwrapping it while doing so.
+auto TryGetCalleeAsBoundMethod(const File& sem_ir, InstId callee_id,
+                               SpecificId caller_specific_id)
+    -> std::optional<BoundMethod>;
+
 // Returns information for the function corresponding to callee_id in
 // caller_specific_id.
 auto GetCallee(const File& sem_ir, InstId callee_id,

@@ -171,7 +171,8 @@ static auto BuildCalleeSpecificFunction(
   auto generic_callee_id = callee_id;
 
   // Strip off a bound_method so that we can form a constant specific callee.
-  auto bound_method = context.insts().TryGetAs<SemIR::BoundMethod>(callee_id);
+  auto bound_method = SemIR::TryGetCalleeAsBoundMethod(
+      context.sem_ir(), callee_id, SemIR::SpecificId::None);
   if (bound_method) {
     generic_callee_id = bound_method->function_decl_id;
   }
