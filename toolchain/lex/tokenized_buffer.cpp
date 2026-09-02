@@ -93,16 +93,8 @@ auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
 
   // Refer back to the source text to avoid needing to reconstruct the
   // spelling from the size.
-  if (token_info.kind().is_sized_type_literal()) {
-    llvm::StringRef suffix = source_->text()
-                                 .substr(token_info.byte_offset() + 1)
-                                 .take_while(IsDecimalDigit);
-    return llvm::StringRef(suffix.data() - 1, suffix.size() + 1);
-  }
-
-  // Refer back to the source text to avoid needing to reconstruct the
-  // spelling from the size.
-  if (token_info.kind().is_dollar_int_literal()) {
+  if (token_info.kind().is_sized_type_literal() ||
+      token_info.kind().is_dollar_int_literal()) {
     llvm::StringRef suffix = source_->text()
                                  .substr(token_info.byte_offset() + 1)
                                  .take_while(IsDecimalDigit);
