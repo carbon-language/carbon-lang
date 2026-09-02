@@ -602,25 +602,28 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %v.patt.0e7: %pattern_type.2fd = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:   %v.var_patt.259: %pattern_type.2fd = var_pattern %v.patt.0e7 [concrete]
 // CHECK:STDOUT:   %C.val: %C.d8efcc.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %inst.class_init: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.224: init %C.d8efcc.1 to @F.%v.var = class_init () [concrete = %C.val]
+// CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.853: init %C.d8efcc.1 = splice_block %.8cc [concrete = %C.val] {
+// CHECK:STDOUT:       %.032d53.2: ref %C.d8efcc.1 = specific_inst @F.%v.var, @F(%empty_struct_type)
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%inst.class_init) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%inst.splice_block.426619.2) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc7_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.6c4ec3.2: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2), @Destroy [concrete]
 // CHECK:STDOUT:   %Destroy.facet.492: %Destroy.type = facet_value %C.d8efcc.1, (%custom_witness.6c4ec3.2) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.e51: type = fn_type @Destroy.WithSelf.Op.1, @Destroy.WithSelf(%Destroy.facet.492) [concrete]
 // CHECK:STDOUT:   %.441: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.e51, %Destroy.facet.492 [concrete]
-// CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:   %inst.splice_block.426619.3: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.b1d: <bound method> = splice_block %bound_method {
-// CHECK:STDOUT:       %.032: ref %C.d8efcc.1 = specific_inst @F.%v.var, @F(%empty_struct_type)
+// CHECK:STDOUT:       %.032d53.1: ref %C.d8efcc.1 = specific_inst @F.%v.var, @F(%empty_struct_type)
 // CHECK:STDOUT:       %impl.elem0: %.441 = impl_witness_access %custom_witness.6c4ec3.2, element0 [concrete = %Destroy.WithSelf.Op.403171.2]
-// CHECK:STDOUT:       %bound_method: <bound method> = bound_method %.032, %impl.elem0
+// CHECK:STDOUT:       %bound_method: <bound method> = bound_method %.032d53.1, %impl.elem0
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.call: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %.b1d(%.032)
+// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %.b1d(%.032d53.1)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -717,9 +720,9 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %v.patt.loc7_15.2 => constants.%v.patt.0e7
 // CHECK:STDOUT:   %v.var_patt.loc7_3.2 => constants.%v.var_patt.259
 // CHECK:STDOUT:   %.loc7_3.6 => constants.%tuple
-// CHECK:STDOUT:   %tuple.elem0 => constants.%inst.class_init
+// CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc7_3.7 => constants.%C.val
-// CHECK:STDOUT:   %.loc7_3.8 => constants.%inst.splice_block.426619.2
+// CHECK:STDOUT:   %.loc7_3.8 => constants.%inst.splice_block.426619.3
 // CHECK:STDOUT:   %.loc7_3.9 => <bound method>
 // CHECK:STDOUT:   %.loc7_3.10 => invalid
 // CHECK:STDOUT:   %.loc7_3.11 => constants.%inst.call

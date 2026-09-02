@@ -7,6 +7,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/pending_block.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -103,6 +104,21 @@ auto OperandDependence(Context& context, SemIR::TypeId type_id)
 auto AddSpliceInst(Context& context, SemIR::InstId inst_value_id,
                    SemIR::TypeInstId result_type_inst_id) -> SemIR::InstId;
 
+// Returns an instruction with the same meaning as `inst_id`, which is an
+// instruction within a generic, but with the type and constant value that it
+// has within `specific_id`. If `inst_id` is not template-dependent within the
+// generic, it is returned unchanged; otherwise a `SpecificInst` is added to the
+// current block.
+auto AddSpecificInst(Context& context, SemIR::SpecificId specific_id,
+                     SemIR::LocId loc_id, SemIR::InstId inst_id)
+    -> SemIR::InstId;
+
+// Like the above, but any `SpecificInst` is added to `block` instead of to the
+// current block.
+auto AddSpecificInst(Context& context, PendingBlock& block,
+                     SemIR::SpecificId specific_id, SemIR::LocId loc_id,
+                     SemIR::InstId inst_id) -> SemIR::InstId;
+
 // Adds an action instruction to the eval block to perform a dependent action.
 // The result is not spliced into the current block. This should be used when
 // the action instruction does not produce a single instruction value, so cannot
@@ -188,16 +204,31 @@ namespace Internal {
 // directly.
 auto BeginPerformDelayedAction(Context& context) -> void;
 
+// Refines the operands of an action that is about to be performed within
+// `specific_id`, so that they refer to instructions in the specific rather
+// than in the generic. This is an implementation detail of
+// PerformDelayedAction and should not be called directly.
+auto RefineOperandsInSpecific(Context& context, SemIR::SpecificId specific_id,
+                              SemIR::LocId loc_id, SemIR::Inst action)
+    -> SemIR::Inst;
+
 // Calls the PerformAction function for the given action, passing in the
 // relevant arguments.
 template <typename ActionT>
 auto CallPerformAction(Context& context, SemIR::SpecificId specific_id,
                        SemIR::LocId loc_id, ActionT action_inst)
-    -> SemIR::InstId {
+    -> ReturnTypeForPerformAction<ActionT> {
   if constexpr (ActionT::Kind.action_needs_specific_id()) {
+    // If the action takes a `SpecificId`, it's assumed to do whatever
+    // refinement of its operands is necessary itself.
     return PerformAction(context, specific_id, loc_id, action_inst);
   } else {
-    return PerformAction(context, loc_id, action_inst);
+    // Refine the operands of the action so that they refer to instructions in
+    // the specific rather than in the generic. Any instructions this creates
+    // are included in the block of instructions produced by the action.
+    SemIR::Inst refined_action = Internal::RefineOperandsInSpecific(
+        context, specific_id, loc_id, action_inst);
+    return PerformAction(context, loc_id, refined_action.As<ActionT>());
   }
 }
 
@@ -206,20 +237,11 @@ auto CallPerformAction(Context& context, SemIR::SpecificId specific_id,
 // directly.
 auto EndPerformDelayedAction(Context& context, SemIR::InstId result_id)
     -> SemIR::InstId;
-
-// Refines the operands of an action that is about to be performed within
-// `specific_id`, so that they refer to instructions in the specific rather
-// than in the generic. This is an implementation detail of
-// PerformDelayedAction and should not be called directly.
-auto RefineOperandsInSpecific(Context& context, SemIR::SpecificId specific_id,
-                              SemIR::LocId loc_id, SemIR::Inst action)
-    -> SemIR::Inst;
 }  // namespace Internal
 
 // Performs an action as a result of evaluation of a template's eval block.
 template <typename ActionT>
-  requires(ActionT::Kind.constant_kind() ==
-           SemIR::InstConstantKind::InstAction)
+  requires(ActionT::Kind.constant_kind() == SemIR::InstConstantKind::InstAction)
 auto PerformDelayedAction(Context& context, SemIR::SpecificId specific_id,
                           SemIR::LocId loc_id, ActionT action_inst)
     -> SemIR::InstId {
@@ -227,13 +249,8 @@ auto PerformDelayedAction(Context& context, SemIR::SpecificId specific_id,
     return SemIR::InstId::None;
   }
   Internal::BeginPerformDelayedAction(context);
-  // Refine the operands of the action so that they refer to instructions in
-  // the specific rather than in the generic. Any instructions this creates are
-  // included in the block of instructions produced by the action.
-  SemIR::Inst refined_action = Internal::RefineOperandsInSpecific(
-      context, specific_id, loc_id, action_inst);
-  auto inst_id = Internal::CallPerformAction(context, specific_id, loc_id,
-                                             refined_action.As<ActionT>());
+  auto inst_id =
+      Internal::CallPerformAction(context, specific_id, loc_id, action_inst);
   return Internal::EndPerformDelayedAction(context, inst_id);
 }
 template <typename ActionT>
@@ -246,7 +263,8 @@ auto PerformDelayedAction(Context& context, SemIR::SpecificId specific_id,
     return {};
   }
   Internal::BeginPerformDelayedAction(context);
-  auto inst_ids = PerformAction(context, loc_id, action_inst);
+  auto inst_ids =
+      Internal::CallPerformAction(context, specific_id, loc_id, action_inst);
   inst_ids[0] = Internal::EndPerformDelayedAction(context, inst_ids[0]);
   return inst_ids;
 }

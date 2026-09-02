@@ -123,14 +123,14 @@ fn G() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.splice_block.426619.4: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.50e: init %S = splice_block %T.as_type.as.DefaultOrUnformed.impl.Op.call {
+// CHECK:STDOUT:     %.f69: init %S = splice_block %T.as_type.as.DefaultOrUnformed.impl.Op.call {
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.572: ref %.e69 = splice_block @F.%v.var {}
-// CHECK:STDOUT:       %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %S to %.572 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn.e6b3f4.2()
+// CHECK:STDOUT:       %.b794a6.2: ref %S = specific_inst @F.%v.var, @F(%X)
+// CHECK:STDOUT:       %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %S to %.b794a6.2 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn.e6b3f4.2()
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.splice_block.426619.5: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.11c: init %S = splice_block %.50e {}
+// CHECK:STDOUT:     %.c54: init %S = splice_block %.f69 {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%inst.splice_block.426619.5) [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
@@ -143,17 +143,17 @@ fn G() {
 // CHECK:STDOUT:   %.670: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.5df, %Destroy.facet.2e5 [concrete]
 // CHECK:STDOUT:   %inst.splice_block.426619.6: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.e15: <bound method> = splice_block %bound_method {
-// CHECK:STDOUT:       %.b79: ref %S = specific_inst @F.%v.var, @F(%X)
+// CHECK:STDOUT:       %.b794a6.1: ref %S = specific_inst @F.%v.var, @F(%X)
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %impl.elem0.c3e: %.670 = impl_witness_access %custom_witness.e7a31c.2, element0 [concrete = %S.Op.4dca31.2]
-// CHECK:STDOUT:       %bound_method: <bound method> = bound_method %.b79, %impl.elem0.c3e
+// CHECK:STDOUT:       %bound_method: <bound method> = bound_method %.b794a6.1, %impl.elem0.c3e
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.splice_block.426619.7: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.0fc: init %empty_tuple.type = splice_block %S.cpp_destructor.call {
 // CHECK:STDOUT:       %Op.ref.6a0: %S.cpp_destructor.type = name_ref Op, imports.%S.cpp_destructor.decl [concrete = %S.cpp_destructor]
-// CHECK:STDOUT:       %S.cpp_destructor.bound: <bound method> = bound_method %.b79, %Op.ref.6a0
-// CHECK:STDOUT:       %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.b79)
+// CHECK:STDOUT:       %S.cpp_destructor.bound: <bound method> = bound_method %.b794a6.1, %Op.ref.6a0
+// CHECK:STDOUT:       %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.b794a6.1)
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

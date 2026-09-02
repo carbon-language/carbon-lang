@@ -760,15 +760,15 @@ fn G() {
 // CHECK:STDOUT:   %A__carbon_thunk.type: type = fn_type @A__carbon_thunk [concrete]
 // CHECK:STDOUT:   %A__carbon_thunk: %A__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %inst.splice_block.426619.4: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.ae3: init %A = splice_block %.cee {
-// CHECK:STDOUT:       %.1a1: ref %.e69 = splice_block @F.%a.var {}
-// CHECK:STDOUT:       %addr: %ptr.303 = addr_of %.1a1
+// CHECK:STDOUT:     %.0ff: init %A = splice_block %.24a {
+// CHECK:STDOUT:       %.fe40cc.2: ref %A = specific_inst @F.%a.var, @F(%i32)
+// CHECK:STDOUT:       %addr: %ptr.303 = addr_of %.fe40cc.2
 // CHECK:STDOUT:       %A__carbon_thunk.call: init %empty_tuple.type = call imports.%A__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:       %.cee: init %A to %.1a1 = mark_in_place_init %A__carbon_thunk.call
+// CHECK:STDOUT:       %.24a: init %A to %.fe40cc.2 = mark_in_place_init %A__carbon_thunk.call
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.splice_block.426619.5: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.249: init %A = splice_block %.ae3 {}
+// CHECK:STDOUT:     %.840: init %A = splice_block %.0ff {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%inst.splice_block.426619.5) [concrete]
 // CHECK:STDOUT:   %A.cpp_destructor.type: type = fn_type @A.cpp_destructor [concrete]
@@ -779,13 +779,13 @@ fn G() {
 // CHECK:STDOUT:   %.429: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.d24, %Destroy.facet.bf5 [concrete]
 // CHECK:STDOUT:   %inst.splice_block.426619.6: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.d30: <bound method> = splice_block %bound_method {
-// CHECK:STDOUT:       %.fe4: ref %A = specific_inst @F.%a.var, @F(%i32)
+// CHECK:STDOUT:       %.fe40cc.1: ref %A = specific_inst @F.%a.var, @F(%i32)
 // CHECK:STDOUT:       %impl.elem0: %.429 = impl_witness_access %custom_witness.294, element0 [concrete = %A.cpp_destructor]
-// CHECK:STDOUT:       %bound_method: <bound method> = bound_method %.fe4, %impl.elem0
+// CHECK:STDOUT:       %bound_method: <bound method> = bound_method %.fe40cc.1, %impl.elem0
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.call: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %A.cpp_destructor.call: init %empty_tuple.type = call %.d30(%.fe4)
+// CHECK:STDOUT:     %A.cpp_destructor.call: init %empty_tuple.type = call %.d30(%.fe40cc.1)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -81,7 +81,7 @@ fn G(generic N: i32) {
 
 fn H() { G(3); }
 
-// --- fail_todo_dependent_call_type.carbon
+// --- dependent_call_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -162,7 +162,7 @@ fn H() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_todo_dependent_call_type.carbon
+// CHECK:STDOUT: --- dependent_call_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -203,25 +203,28 @@ fn H() {
 // CHECK:STDOUT:   %v.patt.5c6: %pattern_type.98b = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:   %v.var_patt.a6f: %pattern_type.98b = var_pattern %v.patt.5c6 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %inst.class_init: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.664: init %C to @UseFGenerically.%v.var = class_init () [concrete = %C.val]
+// CHECK:STDOUT:   %inst.splice_block.426619.1: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.d7f: init %C = splice_block %.c83 [concrete = %C.val] {
+// CHECK:STDOUT:       %.6ba47e.2: ref %C = specific_inst @UseFGenerically.%v.var, @UseFGenerically(%int_3.410)
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple.242: %tuple.type.f7a = tuple_value (%inst.class_init) [concrete]
+// CHECK:STDOUT:   %tuple.242: %tuple.type.f7a = tuple_value (%inst.splice_block.426619.1) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc11_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.6c4ec3.2: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2), @Destroy [concrete]
 // CHECK:STDOUT:   %Destroy.facet.b0f: %Destroy.type = facet_value %C, (%custom_witness.6c4ec3.2) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.cb4: type = fn_type @Destroy.WithSelf.Op.1, @Destroy.WithSelf(%Destroy.facet.b0f) [concrete]
 // CHECK:STDOUT:   %.c3c: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.cb4, %Destroy.facet.b0f [concrete]
-// CHECK:STDOUT:   %inst.splice_block: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.eae: <bound method> = splice_block %bound_method.b4b {
-// CHECK:STDOUT:       %.6ba: ref %C = specific_inst @UseFGenerically.%v.var, @UseFGenerically(%int_3.410)
+// CHECK:STDOUT:       %.6ba47e.1: ref %C = specific_inst @UseFGenerically.%v.var, @UseFGenerically(%int_3.410)
 // CHECK:STDOUT:       %impl.elem0.bf4: %.c3c = impl_witness_access %custom_witness.6c4ec3.2, element0 [concrete = %Destroy.WithSelf.Op.403171.2]
-// CHECK:STDOUT:       %bound_method.b4b: <bound method> = bound_method %.6ba, %impl.elem0.bf4
+// CHECK:STDOUT:       %bound_method.b4b: <bound method> = bound_method %.6ba47e.1, %impl.elem0.bf4
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.call: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %.eae(%.6ba)
+// CHECK:STDOUT:     %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %.eae(%.6ba47e.1)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -310,9 +313,9 @@ fn H() {
 // CHECK:STDOUT:   %v.patt.loc11_15.2 => constants.%v.patt.5c6
 // CHECK:STDOUT:   %v.var_patt.loc11_3.2 => constants.%v.var_patt.a6f
 // CHECK:STDOUT:   %.loc11_3.6 => constants.%tuple.242
-// CHECK:STDOUT:   %tuple.elem0 => constants.%inst.class_init
+// CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.1
 // CHECK:STDOUT:   %.loc11_3.7 => constants.%C.val
-// CHECK:STDOUT:   %.loc11_3.8 => constants.%inst.splice_block
+// CHECK:STDOUT:   %.loc11_3.8 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc11_3.9 => <bound method>
 // CHECK:STDOUT:   %.loc11_3.10 => invalid
 // CHECK:STDOUT:   %.loc11_3.11 => constants.%inst.call

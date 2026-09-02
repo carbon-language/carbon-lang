@@ -131,8 +131,7 @@ class PendingBlock {
   // Like MergeReplacing, but just return the resulting instruuction rather than
   // replacing an existing instruction with it. Does not add the instruction to
   // a block.
-  auto MergeInNoBlock(SemIR::InstId value_id)
-      -> SemIR::InstId {
+  auto MergeInNoBlock(SemIR::InstId value_id) -> SemIR::InstId {
     auto result_id = value_id;
     if (insts_.size() != 1 || insts_[0] != value_id) {
       // Create a splice block if the block is not exactly `{value_id}`.

@@ -1257,6 +1257,7 @@ struct InitializeAction {
       {.ir_name = "initialize_action",
        .expr_category = ActionExprCategory(ExprCategory::Dependent),
        .constant_kind = InstConstantKind::MultiInstAction,
+       .action_needs_specific_id = true,
        .is_lowered = false});
 
   struct Target {
