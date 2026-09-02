@@ -74,3 +74,9 @@ $0b1100
 abc$37
 // CHECK:STDOUT:   - { index: 10, kind:       "Identifier", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "abc", identifier: 0, has_leading_space: true }
 // CHECK:STDOUT:   - { index: 11, kind: "DollarIntLiteral", line: {{ *}}[[@LINE-2]], column:   4, indent: 1, spelling: "$37" }
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:2: error: found a positional parameter using 19 digits, which is greater than the limit of 18 [TooManyDollarIntDigits]
+// CHECK:STDERR: $9999999999999999999
+// CHECK:STDERR:  ^
+// CHECK:STDERR:
+$9999999999999999999
+// CHECK:STDOUT:   - { index: 12, kind:            "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$9999999999999999999", has_leading_space: true }
