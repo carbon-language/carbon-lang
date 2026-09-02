@@ -123,7 +123,7 @@ static auto AddStructTypeFields(
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
     if (field_decl.type_id == SemIR::ErrorInst::TypeId) {
       struct_type_fields.push_back(
-          {.name_id = field_decl.name_id,
+          {.name_id = field.name_id,
            .type_inst_id = SemIR::ErrorInst::TypeInstId});
       continue;
     }
@@ -131,7 +131,7 @@ static auto AddStructTypeFields(
         context.sem_ir().types().GetAs<SemIR::UnboundElementType>(
             field_decl.type_id);
     struct_type_fields.push_back(
-        {.name_id = field_decl.name_id,
+        {.name_id = field.name_id,
          .type_inst_id = unbound_element_type.element_type_inst_id});
   }
   auto fields_id =

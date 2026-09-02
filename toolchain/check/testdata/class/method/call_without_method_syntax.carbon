@@ -193,7 +193,9 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: %Point.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %Point.elem = field_decl x, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x [concrete = constants.%complete_type.0c6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -202,13 +204,13 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT:   .Get = %Point.Get.decl
 // CHECK:STDOUT:   .Point = <poisoned>
 // CHECK:STDOUT:   .First = %Point.First.decl
-// CHECK:STDOUT:   .x = %.loc7
+// CHECK:STDOUT:   .x = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Point.Get(%self.param: %Point) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Point = name_ref self, %self
-// CHECK:STDOUT:   %x.ref: %Point.elem = name_ref x, @Point.%.loc7 [concrete = @Point.%.loc7]
+// CHECK:STDOUT:   %x.ref: %Point.elem = name_ref x, @Point.%field_decl [concrete = @Point.%field_decl]
 // CHECK:STDOUT:   %.loc4_36.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc4_36.2: %i32 = acquire_value %.loc4_36.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -222,7 +224,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT: fn @Point.First(%self.param: %Point, %other.param: %Point) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Point = name_ref self, %self
-// CHECK:STDOUT:   %x.ref: %Point.elem = name_ref x, @Point.%.loc7 [concrete = @Point.%.loc7]
+// CHECK:STDOUT:   %x.ref: %Point.elem = name_ref x, @Point.%field_decl [concrete = @Point.%field_decl]
 // CHECK:STDOUT:   %.loc5_59.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc5_59.2: %i32 = acquire_value %.loc5_59.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

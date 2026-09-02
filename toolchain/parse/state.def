@@ -1003,13 +1003,15 @@ CARBON_PARSE_STATE(AliasFinish)
 //  ...
 // ^
 //   1. Pattern
+//   2. PatternListElementCheckForDefaultValue
 //   2. PatternListElementFinishAs(Tuple|Struct|Explicit|Implicit)
 //
 //  .foo = ... (variant is Struct)
 // ^
 //   1. PeriodAsStruct
 //   2. StructPatternFieldAfterDesignator
-//   3  PatternListElementFinishAsStruct
+//   3. PatternListElementCheckForDefaultValue
+//   4. PatternListElementFinishAsStruct
 //
 //  _ ... (variant is Struct)
 // ^
@@ -1017,6 +1019,28 @@ CARBON_PARSE_STATE(AliasFinish)
 //  2. PatternListElementFinishAsStruct
 CARBON_PARSE_STATE_VARIANTS4(PatternListElement, Tuple, Struct, Explicit,
                              Implicit)
+
+// Some pattern list elements support optional default value expressions,
+// this state checks for the `=` and if present parses it before moving on
+// to finish the list element.
+//
+// ... = ...
+//     ^
+//   1. Expr
+//   2. PatternListElementFinishDefaultValue
+//
+//  ...
+//      ^
+//   (state done)
+CARBON_PARSE_STATE(PatternListElementCheckForDefaultValue)
+
+// After parsing the default value Expr this state attaches that Expr
+// as a default value to the pattern.
+//
+// ... = ...
+//           ^
+//   (state done)
+CARBON_PARSE_STATE(PatternListElementFinishDefaultValue)
 
 // Finishes parsing a pattern in a comma-separated list, including the
 // optional trailing `,`. If there are more patterns, enqueues another

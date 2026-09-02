@@ -116,6 +116,14 @@ class AbsoluteInstId : public InstId {
   using InstId::InstId;
 };
 
+// An id representing the index of the default value constant instruction in
+// a default values instruction block.
+class DefaultValueId : public IdBase<DefaultValueId> {
+ public:
+  static constexpr llvm::StringLiteral Label = "default_value_id";
+  using IdBase::IdBase;
+};
+
 // An ID of an instruction that is used as the destination of an initializing
 // expression. This should only be used as the type of a field within a typed
 // instruction class.
@@ -759,6 +767,11 @@ struct InstBlockId : public IdBase<InstBlockId> {
   static const InstBlockId Unreachable;
 
   using IdBase::IdBase;
+
+  // The instruction ID type that should be used to refer to elements of this
+  // block.
+  using InstIdT = InstId;
+
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
@@ -827,6 +840,8 @@ class AbsoluteInstBlockId : public InstBlockId {
       : InstBlockId(inst_block_id) {}
 
   using InstBlockId::InstBlockId;
+
+  using InstIdT = AbsoluteInstId;
 };
 
 // An ID of an instruction block that is used as the declaration block within a
@@ -857,6 +872,8 @@ class MetaInstBlockId : public InstBlockId {
       : InstBlockId(inst_block_id) {}
 
   using InstBlockId::InstBlockId;
+
+  using InstIdT = MetaInstId;
 };
 
 // An ID of an instruction block that is used as a label in a branch instruction

@@ -162,13 +162,17 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc19: %C.elem = field_decl arr, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %C.elem = field_decl arr, element0, %array_type in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_100: Core.IntLiteral = int_value 100 [concrete = constants.%int_100]
+// CHECK:STDOUT:     %array_type: type = array_type %int_100, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.arr.fdc [concrete = constants.%complete_type.18e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .arr = %.loc19
+// CHECK:STDOUT:   .arr = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Wrap.Make(@Wrap.%T.loc15_13.2: type) {

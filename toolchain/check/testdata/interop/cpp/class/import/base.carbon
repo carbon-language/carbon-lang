@@ -662,7 +662,7 @@ class V {
 // CHECK:STDOUT: fn @AccessDirect(%d.param: %FieldDerived) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %FieldDerived = name_ref d, %d
-// CHECK:STDOUT:   %a.ref: %FieldBase.elem = name_ref a, @FieldBase.%.1 [concrete = @FieldBase.%.1]
+// CHECK:STDOUT:   %a.ref: %FieldBase.elem = name_ref a, @FieldBase.%field_decl.1 [concrete = @FieldBase.%field_decl.1]
 // CHECK:STDOUT:   %.loc8_11.1: %FieldBase = as_compatible %d.ref
 // CHECK:STDOUT:   %.loc8_11.2: ref %FieldBase = class_element_access %.loc8_11.1, element0
 // CHECK:STDOUT:   %.loc8_11.3: ref %FieldBase = converted %d.ref, %.loc8_11.2
@@ -681,7 +681,7 @@ class V {
 // CHECK:STDOUT:   %d.ref: %FieldDerived = name_ref d, %d
 // CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %FieldBase.ref: type = name_ref FieldBase, imports.%FieldBase.decl [concrete = constants.%FieldBase]
-// CHECK:STDOUT:   %b.ref: %FieldBase.elem = name_ref b, @FieldBase.%.2 [concrete = @FieldBase.%.2]
+// CHECK:STDOUT:   %b.ref: %FieldBase.elem = name_ref b, @FieldBase.%field_decl.2 [concrete = @FieldBase.%field_decl.2]
 // CHECK:STDOUT:   %.loc14_11.1: %FieldBase = as_compatible %d.ref
 // CHECK:STDOUT:   %.loc14_11.2: ref %FieldBase = class_element_access %.loc14_11.1, element0
 // CHECK:STDOUT:   %.loc14_11.3: ref %FieldBase = converted %d.ref, %.loc14_11.2

@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/template_dependence.carbon
 
-// --- fail_todo_type.carbon
+// --- type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -20,13 +20,6 @@ fn F[template T: type](x: T**) -> T* {
 }
 
 fn G(x: ()**) -> ()* {
-  // CHECK:STDERR: fail_todo_type.carbon:[[@LINE+7]]:10: error: unable to monomorphize specific `F(())` [ResolvingSpecificHere]
-  // CHECK:STDERR:   return F(x);
-  // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_todo_type.carbon:[[@LINE-7]]:10: note: value of type `<bound method>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   return *x;
-  // CHECK:STDERR:          ^~
-  // CHECK:STDERR:
   return F(x);
 }
 //@dump-sem-ir-end
@@ -42,7 +35,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 //@dump-sem-ir-end
 
 
-// CHECK:STDOUT: --- fail_todo_type.carbon
+// CHECK:STDOUT: --- type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
@@ -102,13 +95,21 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.9ea: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.b77: type = fn_type_with_self_type %Copy.WithSelf.Op.type.9ea, %Copy.facet [concrete]
 // CHECK:STDOUT:   %inst.splice_block.64f: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.aaa: <bound method> = splice_block %bound_method {
+// CHECK:STDOUT:     %.aaa: <bound method> = splice_block %bound_method.661 {
 // CHECK:STDOUT:       %impl.elem0.227: %.b77 = impl_witness_access %Copy.impl_witness.5e7, element0 [concrete = %ptr.as.Copy.impl.Op.ee1]
-// CHECK:STDOUT:       %bound_method: <bound method> = bound_method %.34a, %impl.elem0.227
+// CHECK:STDOUT:       %bound_method.661: <bound method> = bound_method %.34a, %impl.elem0.227
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.splice_block.edd: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.432: <error> = splice_block <error> [concrete = <error>] {}
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.ee1, @ptr.as.Copy.impl.Op(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %inst.splice_block.a80: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.e72: init %ptr.843 = splice_block %ptr.as.Copy.impl.Op.call {
+// CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0.227, @ptr.as.Copy.impl.Op(%empty_tuple.type) [concrete = %ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:       %bound_method.b01: <bound method> = bound_method %.34a, %specific_fn
+// CHECK:STDOUT:       %ptr.as.Copy.impl.Op.call: init %ptr.843 = call %bound_method.b01(%.34a)
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %inst.splice_block.333: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.932: init %ptr.843 = splice_block %.e72 {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -251,11 +252,11 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %.loc6_10.8 => constants.%inst.splice_block.64f
 // CHECK:STDOUT:   %.loc6_10.9 => <bound method>
 // CHECK:STDOUT:   %.loc6_10.10 => invalid
-// CHECK:STDOUT:   %.loc6_10.11 => constants.%inst.splice_block.edd
-// CHECK:STDOUT:   %.loc6_10.12 => <error>
-// CHECK:STDOUT:   %.loc6_10.13 => <error>
-// CHECK:STDOUT:   %.loc6_12.2 => <error>
-// CHECK:STDOUT:   %.loc6_12.3 => <error>
+// CHECK:STDOUT:   %.loc6_10.11 => constants.%inst.splice_block.a80
+// CHECK:STDOUT:   %.loc6_10.12 => constants.%ptr.843
+// CHECK:STDOUT:   %.loc6_10.13 => invalid
+// CHECK:STDOUT:   %.loc6_12.2 => constants.%inst.splice_block.333
+// CHECK:STDOUT:   %.loc6_12.3 => invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mixed.carbon
@@ -333,7 +334,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %.loc6_16.2: <instruction> = call_action (%F.ref, %T.ref.loc6, %U.ref.loc6), false [template]
 // CHECK:STDOUT:   %.loc6_16.3: type = type_of_inst %.loc6_16.2 [template]
 // CHECK:STDOUT:   %.loc6_16.4: @F.%.loc6_16.3 (@F.%.loc6_16.3) = splice_inst %.loc6_16.2 [template = %.loc6_16.4 (constants.%.dca)]
-// CHECK:STDOUT:   %.loc6_17.8: <instruction> = call_action (constants.%ImplicitAs.generic, constants.%tuple.type.a5e), false [template]
+// CHECK:STDOUT:   %.loc6_17.8: <instruction> = call_action (constants.%ImplicitAs.generic, %tuple.type), false [template]
 // CHECK:STDOUT:   %.loc6_17.9: type = type_of_inst %.loc6_17.8 [template]
 // CHECK:STDOUT:   %.loc6_17.10: @F.%.loc6_17.9 (@F.%.loc6_17.9) = splice_inst %.loc6_17.8 [template = %.loc6_17.10 (constants.%.6c2)]
 // CHECK:STDOUT:   %.loc6_17.11: <instruction> = access_member_action %.loc6_17.1, Convert [template]

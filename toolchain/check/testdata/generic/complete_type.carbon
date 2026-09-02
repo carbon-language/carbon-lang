@@ -93,8 +93,6 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.47a: type = class_type @A, @A(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
-// CHECK:STDOUT:   %v.patt.a77: %pattern_type.51d = ref_binding_pattern v [symbolic]
 // CHECK:STDOUT:   %A.elem.d41: type = unbound_element_type %A.47a, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.v.a4d: type = struct_type {.v: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.136: <witness> = complete_type_witness %struct_type.v.a4d [symbolic]
@@ -104,8 +102,6 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:   %x.patt: %pattern_type.b3e = wrapper_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.e39: type = pattern_type %B [concrete]
-// CHECK:STDOUT:   %v.patt.f3a: %pattern_type.e39 = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:   %A.elem.483: type = unbound_element_type %A.d32, %B [concrete]
 // CHECK:STDOUT:   %struct_type.v.410: type = struct_type {.v: %B} [concrete]
 // CHECK:STDOUT:   %complete_type.a68: <witness> = complete_type_witness %struct_type.v.410 [concrete]
@@ -167,22 +163,22 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc6_10.1 [symbolic = %require_complete (constants.%require_complete)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc6_10.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %v.patt: @A.%pattern_type (%pattern_type.51d) = ref_binding_pattern v [symbolic = %v.patt (constants.%v.patt.a77)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc6_10.1) [symbolic = %A (constants.%A.47a)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %T.loc6_10.1 [symbolic = %A.elem (constants.%A.elem.d41)]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: @A.%T.loc6_10.1 (%T)} [symbolic = %struct_type.v (constants.%struct_type.v.a4d)]
 // CHECK:STDOUT:   %complete_type.loc8_1.2: <witness> = complete_type_witness %struct_type.v [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.136)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc7: @A.%A.elem (%A.elem.d41) = field_decl v, element0 [concrete]
+// CHECK:STDOUT:     %field_decl: @A.%A.elem (%A.elem.d41) = field_decl v, element0, %T.ref in [concrete] {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_10.2 [symbolic = %T.loc6_10.1 (constants.%T)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc8_1.1: <witness> = complete_type_witness constants.%struct_type.v.a4d [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.136)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc8_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.47a
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .v = %.loc7
+// CHECK:STDOUT:     .v = %field_decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -202,8 +198,6 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => <error>
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e39
-// CHECK:STDOUT:   %v.patt => constants.%v.patt.f3a
 // CHECK:STDOUT:   %A => constants.%A.d32
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.483
 // CHECK:STDOUT:   %struct_type.v => constants.%struct_type.v.410

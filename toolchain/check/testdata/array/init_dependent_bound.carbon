@@ -54,15 +54,7 @@ fn G(template N: i32) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDERR: fail_todo_init_template_dependent_bound.carbon:[[@LINE+7]]:10: error: unable to monomorphize specific `G(3)` [ResolvingSpecificHere]
-// CHECK:STDERR: fn H() { G(3); }
-// CHECK:STDERR:          ^
-// CHECK:STDERR: fail_todo_init_template_dependent_bound.carbon:[[@LINE-7]]:3: note: value of type `<bound method>` is not callable [CallToNonCallable]
-// CHECK:STDERR:   var unused arr: array(i32, N) = (1, 2, 3);
-// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn H() { G(3); }
-
 
 // CHECK:STDOUT: --- generic_empty.carbon
 // CHECK:STDOUT:
@@ -178,6 +170,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %N.patt.38a: %pattern_type.6b6 = symbolic_binding_pattern N, 0, template [template]
@@ -247,8 +240,8 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %bound_method.69b: <bound method> = bound_method %.723, %impl.elem0.ef2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.splice_block.edd: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.432: <error> = splice_block <error> [concrete = <error>] {}
+// CHECK:STDOUT:   %inst.call: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %.6fe(%.723)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -338,8 +331,8 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %.loc11_3.6 => constants.%inst.splice_block.adf
 // CHECK:STDOUT:   %.loc11_3.7 => <bound method>
 // CHECK:STDOUT:   %.loc11_3.8 => invalid
-// CHECK:STDOUT:   %.loc11_3.9 => constants.%inst.splice_block.edd
-// CHECK:STDOUT:   %.loc11_3.10 => <error>
-// CHECK:STDOUT:   %.loc11_3.11 => <error>
+// CHECK:STDOUT:   %.loc11_3.9 => constants.%inst.call
+// CHECK:STDOUT:   %.loc11_3.10 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %.loc11_3.11 => invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -612,6 +612,12 @@ CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)
 CARBON_DIAGNOSTIC_KIND(GenericMissingExplicitParameters)
 
 // Pattern matching diagnostics.
+CARBON_DIAGNOSTIC_KIND(RequiredPatternDefaultValueMissing)
+CARBON_DIAGNOSTIC_KIND(RequiredPatternDefaultValueFirstDefault)
+CARBON_DIAGNOSTIC_KIND(RequiredPatternDefaultValueMissingAdditional)
+CARBON_DIAGNOSTIC_KIND(PatternDefaultValueNotConstant)
+CARBON_DIAGNOSTIC_KIND(PatternDefaultValueNotInParameterList)
+CARBON_DIAGNOSTIC_KIND(PatternDefaultValueTypeMismatch)
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
 
 // Unused diagnostics.

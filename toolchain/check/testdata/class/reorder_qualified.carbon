@@ -86,8 +86,8 @@ class A {
 // CHECK:STDOUT:   %struct_type.a.a92: type = struct_type {.a: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.388: <witness> = complete_type_witness %struct_type.a.a92 [concrete]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
-// CHECK:STDOUT:   %a.patt.17c: %pattern_type.9ef = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt: %pattern_type.9ef = var_pattern %a.patt.17c [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.9ef = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.9ef = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.48c: %struct_type.a.a6c = struct_value (%int_1.5b8) [concrete]
@@ -109,8 +109,8 @@ class A {
 // CHECK:STDOUT:   %int_1.0c6: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value (%int_1.0c6) [concrete]
 // CHECK:STDOUT:   %pattern_type.e78: type = pattern_type %B [concrete]
-// CHECK:STDOUT:   %b.patt.245: %pattern_type.e78 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:   %b.var_patt: %pattern_type.e78 = var_pattern %b.patt.245 [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.e78 = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt: %pattern_type.e78 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.b.a15: type = struct_type {.b: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.26f: %struct_type.b.a15 = struct_value (%int_2.ecc) [concrete]
@@ -119,8 +119,8 @@ class A {
 // CHECK:STDOUT:   %int_2.295: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %B.val: %B = struct_value (%int_2.295) [concrete]
 // CHECK:STDOUT:   %pattern_type.ca8: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %c.patt.a75: %pattern_type.ca8 = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:   %c.var_patt: %pattern_type.ca8 = var_pattern %c.patt.a75 [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.ca8 = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:   %c.var_patt: %pattern_type.ca8 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.c.5b8: type = struct_type {.c: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.d98: %struct_type.c.5b8 = struct_value (%int_3.1ba) [concrete]
@@ -129,8 +129,8 @@ class A {
 // CHECK:STDOUT:   %int_3.410: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%int_3.410) [concrete]
 // CHECK:STDOUT:   %pattern_type.a0b: type = pattern_type %D [concrete]
-// CHECK:STDOUT:   %d.patt.60f: %pattern_type.a0b = ref_binding_pattern d [concrete]
-// CHECK:STDOUT:   %d.var_patt: %pattern_type.a0b = var_pattern %d.patt.60f [concrete]
+// CHECK:STDOUT:   %d.patt: %pattern_type.a0b = ref_binding_pattern d [concrete]
+// CHECK:STDOUT:   %d.var_patt: %pattern_type.a0b = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT:   %struct_type.d.3ea: type = struct_type {.d: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct.5a9: %struct_type.d.3ea = struct_value (%int_4.0c1) [concrete]
@@ -177,7 +177,9 @@ class A {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %A.AF.decl: %A.AF.type = fn_decl @A.AF [concrete = constants.%A.AF] {} {}
-// CHECK:STDOUT:   %.loc50: %A.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %A.elem = field_decl a, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.a92 [concrete = constants.%complete_type.388]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -185,14 +187,16 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT:   .AF = %A.AF.decl
-// CHECK:STDOUT:   .a = %.loc50
+// CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %B.BF.decl: %B.BF.type = fn_decl @B.BF [concrete = constants.%B.BF] {} {}
-// CHECK:STDOUT:   %.loc20: %B.elem = field_decl b, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %B.elem = field_decl b, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.b.0bf [concrete = constants.%complete_type.330]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -200,7 +204,7 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .C = %C.decl
 // CHECK:STDOUT:   .BF = %B.BF.decl
-// CHECK:STDOUT:   .b = %.loc20
+// CHECK:STDOUT:   .b = %field_decl
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .AF = <poisoned>
@@ -210,7 +214,9 @@ class A {
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %D.DF.decl: %D.DF.type = fn_decl @D.DF [concrete = constants.%D.DF] {} {}
 // CHECK:STDOUT:   %C.CF.decl: %C.CF.type = fn_decl @C.CF [concrete = constants.%C.CF] {} {}
-// CHECK:STDOUT:   %.loc46: %C.elem = field_decl c, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %C.elem = field_decl c, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.c.73d [concrete = constants.%complete_type.8f8]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -218,7 +224,7 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .D = %D.decl
 // CHECK:STDOUT:   .CF = %C.CF.decl
-// CHECK:STDOUT:   .c = %.loc46
+// CHECK:STDOUT:   .c = %field_decl
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>
@@ -229,7 +235,9 @@ class A {
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %D.F.decl: %D.F.type = fn_decl @D.F [concrete = constants.%D.F] {} {}
 // CHECK:STDOUT:   %D.DF.decl: %D.DF.type = fn_decl @D.DF [concrete = constants.%D.DF] {} {}
-// CHECK:STDOUT:   %.loc28: %D.elem = field_decl d, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %D.elem = field_decl d, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.d.bde [concrete = constants.%complete_type.5d0]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -237,7 +245,7 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .F = %D.F.decl
 // CHECK:STDOUT:   .DF = %D.DF.decl
-// CHECK:STDOUT:   .d = %.loc28
+// CHECK:STDOUT:   .d = %field_decl
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>
@@ -270,7 +278,7 @@ class A {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a: ref %A = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.9ef = ref_binding_pattern a [concrete = constants.%a.patt.17c]
+// CHECK:STDOUT:     %a.patt: %pattern_type.9ef = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.9ef = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %B = var_storage %b.var_patt
@@ -290,7 +298,7 @@ class A {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, @A.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b: ref %B = wrapper_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.e78 = ref_binding_pattern b [concrete = constants.%b.patt.245]
+// CHECK:STDOUT:     %b.patt: %pattern_type.e78 = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.e78 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt
@@ -310,7 +318,7 @@ class A {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, @B.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = wrapper_binding c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.ca8 = ref_binding_pattern c [concrete = constants.%c.patt.a75]
+// CHECK:STDOUT:     %c.patt: %pattern_type.ca8 = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.ca8 = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %D = var_storage %d.var_patt
@@ -330,7 +338,7 @@ class A {
 // CHECK:STDOUT:   %D.ref: type = name_ref D, @C.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %d: ref %D = wrapper_binding d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.a0b = ref_binding_pattern d [concrete = constants.%d.patt.60f]
+// CHECK:STDOUT:     %d.patt: %pattern_type.a0b = ref_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.a0b = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AF.ref: %A.AF.type = name_ref AF, @A.%A.AF.decl [concrete = constants.%A.AF]

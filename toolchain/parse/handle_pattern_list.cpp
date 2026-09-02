@@ -16,6 +16,18 @@ static auto HandlePatternListElement(Context& context, StateKind pattern_state,
                               state.in_unused_pattern,
                               state.in_field_shorthand_pattern,
                               state.binding_context, state.ambient_precedence);
+
+  // For patterns inside of list elements we normally check for a default value.
+  // Parsing a struct designator is special case as that also is looking for a
+  // required `=` sign, so we handle looking for an optional default value in
+  // that state.
+  if (pattern_state != StateKind::StructPatternFieldAfterDesignator) {
+    context.PushStateForPattern(
+        StateKind::PatternListElementCheckForDefaultValue, state.in_var_pattern,
+        state.in_unused_pattern, state.in_field_shorthand_pattern,
+        state.binding_context, state.ambient_precedence);
+  }
+
   context.PushStateForPattern(pattern_state, state.in_var_pattern,
                               state.in_unused_pattern,
                               state.in_field_shorthand_pattern,
@@ -148,6 +160,46 @@ auto HandleStructPatternUnderscore(Context& context) -> void {
   if (state.has_error) {
     context.ReturnErrorOnState();
   }
+}
+
+auto HandlePatternListElementCheckForDefaultValue(Context& context) -> void {
+  auto state = context.PopState();
+
+  if (state.has_error) {
+    context.ReturnErrorOnState();
+  }
+
+  // Check for the optional `=` indicating a default value.
+  auto equals_token = context.ConsumeIf(Lex::TokenKind::Equal);
+  if (!equals_token) {
+    return;
+  }
+
+  state.token = *equals_token;
+  state.kind = StateKind::PatternListElementFinishDefaultValue;
+  context.PushState(state);
+
+  // Check for the underscore `_` indicating the default value is unspecified.
+  auto underscore = context.ConsumeIf(Lex::TokenKind::Underscore);
+  if (underscore) {
+    context.AddLeafNode(NodeKind::DefaultValueUnspecified, *underscore);
+    return;
+  }
+
+  // No underscore, we parse this as a normal expression.
+  context.PushStateForExpr(state.ambient_precedence);
+}
+
+auto HandlePatternListElementFinishDefaultValue(Context& context) -> void {
+  auto state = context.PopState();
+
+  // Propagate any expr parsing errors upwards to initiate error recovery
+  // at the pattern list level.
+  if (state.has_error) {
+    context.ReturnErrorOnState();
+  }
+
+  context.AddNode(NodeKind::DefaultValuePattern, state.token, state.has_error);
 }
 
 // Handles PatternListElementFinishAs(Tuple|Struct|Explicit|Implicit).

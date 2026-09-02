@@ -121,7 +121,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   fn(%x.param: @AccessDerived.%Derived.loc13_44.1 (%Derived.e87)) -> out %return.param: @AccessDerived.%T.as_type.loc13_44.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @AccessDerived.%Derived.loc13_44.1 (%Derived.e87) = name_ref x, %x
-// CHECK:STDOUT:     %d.ref: @AccessDerived.%Derived.elem (%Derived.elem.eb3) = name_ref d, @Derived.%.loc10 [concrete = @Derived.%.loc10]
+// CHECK:STDOUT:     %d.ref: @AccessDerived.%Derived.elem (%Derived.elem.eb3) = name_ref d, @Derived.%field_decl [concrete = @Derived.%field_decl]
 // CHECK:STDOUT:     %.loc15_11.1: ref @AccessDerived.%T.as_type.loc13_44.1 (%T.as_type) = class_element_access %x.ref, element1
 // CHECK:STDOUT:     %.loc15_11.2: @AccessDerived.%T.as_type.loc13_44.1 (%T.as_type) = acquire_value %.loc15_11.1
 // CHECK:STDOUT:     %impl.elem0.loc15_11.1: @AccessDerived.%.loc15_11.5 (%.c29) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c, element0 [symbolic = %impl.elem0.loc15_11.2 (constants.%impl.elem0.bd2)]
@@ -154,7 +154,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   fn(%x.param: @AccessBase.%Derived.loc19_41.1 (%Derived.e87)) -> out %return.param: @AccessBase.%T.as_type.loc19_41.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @AccessBase.%Derived.loc19_41.1 (%Derived.e87) = name_ref x, %x
-// CHECK:STDOUT:     %b.ref: @AccessBase.%Base.elem (%Base.elem.209) = name_ref b, @Base.%.loc5 [concrete = @Base.%.loc5]
+// CHECK:STDOUT:     %b.ref: @AccessBase.%Base.elem (%Base.elem.209) = name_ref b, @Base.%field_decl [concrete = @Base.%field_decl]
 // CHECK:STDOUT:     %.loc21_11.1: @AccessBase.%Base (%Base.146) = as_compatible %x.ref
 // CHECK:STDOUT:     %.loc21_11.2: ref @AccessBase.%Base (%Base.146) = class_element_access %.loc21_11.1, element0
 // CHECK:STDOUT:     %.loc21_11.3: ref @AccessBase.%Base (%Base.146) = converted %x.ref, %.loc21_11.2

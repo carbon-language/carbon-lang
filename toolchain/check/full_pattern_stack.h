@@ -8,6 +8,7 @@
 #include "common/array_stack.h"
 #include "common/check.h"
 #include "toolchain/check/lexical_lookup.h"
+#include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -120,6 +121,7 @@ class FullPatternStack {
     CARBON_CHECK(kind_stack_.back() == Kind::NotInEitherParamList, "{0}",
                  kind_stack_.back());
     kind_stack_.back() = Kind::ExplicitParamList;
+    default_values_stack_.PushArray();
   }
 
   // Marks the end of the current parameterized entity's explicit parameter
@@ -139,6 +141,7 @@ class FullPatternStack {
   // Marks the end of checking and pattern matching for the current
   // full-pattern.
   auto PopFullPattern() -> void {
+    auto kind = kind_stack_.back();
     kind_stack_.pop_back();
     bind_name_stack_.PopArray();
     int index = next_var_index_stack_.pop_back_val();
@@ -146,6 +149,9 @@ class FullPatternStack {
                                   var_pattern_stack_.PeekArray().size(),
                  "`GetLocalVarStorage` not called for all var patterns");
     var_pattern_stack_.PopArray();
+    if (kind == Kind::ExplicitParamList) {
+      default_values_stack_.PopArray();
+    }
   }
 
   // Records that `name_id` was introduced by the current full-pattern.
@@ -200,6 +206,26 @@ class FullPatternStack {
                  kind_stack_.size());
   }
 
+  // Adds the inst id for a constant value provided as a default value for
+  // any subpattern in the full-pattern. Returns the index of that element
+  // as a `DefaultValueId`. Note default values are only supported for
+  // explicit parameter lists.
+  auto AddDefaultValue(SemIR::InstId inst_id) -> SemIR::DefaultValueId {
+    auto index = SemIR::FromRaw<SemIR::DefaultValueId>(
+        static_cast<int32_t>(default_values_stack_.PeekArray().size()));
+    CARBON_CHECK(kind_stack_.back() == Kind::ExplicitParamList);
+    default_values_stack_.AppendToTop(inst_id);
+    return index;
+  }
+
+  // Returns a reference to the array of default value inst ids at the top of
+  // the stack. Note default values are only supported for explicit parameter
+  // lists.
+  auto GetDefaultValues() -> llvm::ArrayRef<SemIR::InstId> {
+    CARBON_CHECK(!default_values_stack_.empty());
+    return default_values_stack_.PeekArray();
+  }
+
  private:
   LexicalLookup* lookup_;
 
@@ -231,6 +257,10 @@ class FullPatternStack {
   // the corresponding frame of `var_pattern_stack_`, or -1 if the contents
   // of that frame are not ready for consumption.
   llvm::SmallVector<int> next_var_index_stack_;
+
+  // The stack of instructions specifying default values for subpatterns
+  // within this full-pattern.
+  ArrayStack<SemIR::InstId> default_values_stack_;
 };
 
 }  // namespace Carbon::Check

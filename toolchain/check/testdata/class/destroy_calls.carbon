@@ -86,7 +86,7 @@ fn F(generic T: type) {
 
 fn G() { F({}); }
 
-// --- fail_todo_generic_use_inside_template.carbon
+// --- generic_use_inside_template.carbon
 library "[[@TEST_NAME]]";
 
 class C(template T: type) {}
@@ -97,13 +97,6 @@ fn F(template T: type) {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDERR: fail_todo_generic_use_inside_template.carbon:[[@LINE+7]]:10: error: unable to monomorphize specific `F({})` [ResolvingSpecificHere]
-// CHECK:STDERR: fn G() { F({}); }
-// CHECK:STDERR:          ^
-// CHECK:STDERR: fail_todo_generic_use_inside_template.carbon:[[@LINE-7]]:3: note: value of type `<bound method>` is not callable [CallToNonCallable]
-// CHECK:STDERR:   var unused v: C(T) = {};
-// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn G() { F({}); }
 
 // CHECK:STDOUT: --- implicit_return.carbon
@@ -563,7 +556,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%Destroy.Op.1a2547.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_generic_use_inside_template.carbon
+// CHECK:STDOUT: --- generic_use_inside_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
@@ -572,6 +565,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0, template [template]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -644,8 +638,8 @@ fn G() { F({}); }
 // CHECK:STDOUT:       %bound_method: <bound method> = bound_method %.36e, %impl.elem0
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.splice_block.edd: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.432: <error> = splice_block <error> [concrete = <error>] {}
+// CHECK:STDOUT:   %inst.call: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %.99b(%.36e)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -781,8 +775,8 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %.loc7_3.29 => constants.%inst.splice_block.b81
 // CHECK:STDOUT:   %.loc7_3.30 => <bound method>
 // CHECK:STDOUT:   %.loc7_3.31 => invalid
-// CHECK:STDOUT:   %.loc7_3.32 => constants.%inst.splice_block.edd
-// CHECK:STDOUT:   %.loc7_3.33 => <error>
-// CHECK:STDOUT:   %.loc7_3.34 => <error>
+// CHECK:STDOUT:   %.loc7_3.32 => constants.%inst.call
+// CHECK:STDOUT:   %.loc7_3.33 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %.loc7_3.34 => invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

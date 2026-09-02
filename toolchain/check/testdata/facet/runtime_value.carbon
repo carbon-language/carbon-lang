@@ -142,7 +142,7 @@ fn F(T: Z) {
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %i.ref: %C.elem = name_ref i, @C.%.loc6 [concrete = @C.%.loc6]
+// CHECK:STDOUT:   %i.ref: %C.elem = name_ref i, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc13_22.1: ref %I.type = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc13_22.2: %I.type = acquire_value %.loc13_22.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -167,7 +167,7 @@ fn F(T: Z) {
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %ij.ref: %C.elem = name_ref ij, @C.%.loc7 [concrete = @C.%.loc7]
+// CHECK:STDOUT:   %ij.ref: %C.elem = name_ref ij, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc21_22.1: ref %facet_type = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc21_22.2: %facet_type = acquire_value %.loc21_22.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
