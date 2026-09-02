@@ -151,6 +151,21 @@ bazel test //...:all
 
 <!-- google-doc-style-resume -->
 
+You will need to have [Python](https://docs.python.org/3/using/mac.html)
+installed, and to install root certificates in order to use `prek`
+before submitting a PR. To do so, from a terminal run the
+`Install Certificates.command` found at
+`/Applications/Python 3.x/Install Certificates.command`, where `x` is the
+version of Python being used by `prek`. If you're unsure, just do this for
+all installed versions.
+
+If you don't install certificates, `prek` can fail when attempting to make
+https connections with an error like:
+
+```
+urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate
+```
+
 ### Windows
 
 The easiest way to build Carbon on Windows is using WSL. Use `wsl --install` to
