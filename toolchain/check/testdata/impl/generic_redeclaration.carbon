@@ -98,7 +98,7 @@ impl forall [T: type] T as I {
   }
 }
 
-// CHECK:STDOUT: --- fail_todo_same_self_and_interface.carbon
+// CHECK:STDOUT: --- same_self_and_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
@@ -239,45 +239,45 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:   impl_decl @T.as_type.as.Interface.impl.24e [concrete] {
 // CHECK:STDOUT:     %T.patt.loc13_15.1: %pattern_type.2c5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_15.2 (constants.%T.patt.ac1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc28: %J.type = name_ref T, %T.loc28 [symbolic = %T.loc13_15.2 (constants.%T.e40)]
-// CHECK:STDOUT:     %T.as_type.loc28: type = facet_access_type %T.ref.loc28 [symbolic = %T.as_type.loc13_20.2 (constants.%T.as_type.d90)]
-// CHECK:STDOUT:     %.loc28_20: type = converted %T.ref.loc28, %T.as_type.loc28 [symbolic = %T.as_type.loc13_20.2 (constants.%T.as_type.d90)]
-// CHECK:STDOUT:     %Interface.ref.loc28: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
-// CHECK:STDOUT:     %.loc28_17: type = splice_block %J.ref.loc28 [concrete = constants.%J.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc28: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %J.ref.loc28: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
+// CHECK:STDOUT:     %T.ref.loc21: %J.type = name_ref T, %T.loc21 [symbolic = %T.loc13_15.2 (constants.%T.e40)]
+// CHECK:STDOUT:     %T.as_type.loc21: type = facet_access_type %T.ref.loc21 [symbolic = %T.as_type.loc13_20.2 (constants.%T.as_type.d90)]
+// CHECK:STDOUT:     %.loc21_20: type = converted %T.ref.loc21, %T.as_type.loc21 [symbolic = %T.as_type.loc13_20.2 (constants.%T.as_type.d90)]
+// CHECK:STDOUT:     %Interface.ref.loc21: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
+// CHECK:STDOUT:     %.loc21_17: type = splice_block %J.ref.loc21 [concrete = constants.%J.type] {
+// CHECK:STDOUT:       %.Self.frozen.loc21: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %J.ref.loc21: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc28: %J.type = symbolic_binding T, 0 [symbolic = %T.loc13_15.2 (constants.%T.e40)]
+// CHECK:STDOUT:     %T.loc21: %J.type = symbolic_binding T, 0 [symbolic = %T.loc13_15.2 (constants.%T.e40)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc28: <witness> = impl_self_witness @T.as_type.as.Interface.impl.24e.%.loc28_20, @Interface [symbolic = @T.as_type.as.Interface.impl.24e.%.loc13_34 (constants.%.eab)]
+// CHECK:STDOUT:   %.loc21: <witness> = impl_self_witness @T.as_type.as.Interface.impl.24e.%.loc21_20, @Interface [symbolic = @T.as_type.as.Interface.impl.24e.%.loc13_34 (constants.%.eab)]
 // CHECK:STDOUT:   impl_decl @T.as_type.as.Interface.impl.b21 [concrete] {
 // CHECK:STDOUT:     %T.patt.loc14_15.1: %pattern_type.b64 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_15.2 (constants.%T.patt.0ef)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc36: %K.type = name_ref T, %T.loc36 [symbolic = %T.loc14_15.2 (constants.%T.062)]
-// CHECK:STDOUT:     %T.as_type.loc36: type = facet_access_type %T.ref.loc36 [symbolic = %T.as_type.loc14_20.2 (constants.%T.as_type.1ea)]
-// CHECK:STDOUT:     %.loc36_20: type = converted %T.ref.loc36, %T.as_type.loc36 [symbolic = %T.as_type.loc14_20.2 (constants.%T.as_type.1ea)]
-// CHECK:STDOUT:     %Interface.ref.loc36: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
-// CHECK:STDOUT:     %.loc36_17: type = splice_block %K.ref.loc36 [concrete = constants.%K.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc36: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %K.ref.loc36: type = name_ref K, file.%K.decl [concrete = constants.%K.type]
+// CHECK:STDOUT:     %T.ref.loc22: %K.type = name_ref T, %T.loc22 [symbolic = %T.loc14_15.2 (constants.%T.062)]
+// CHECK:STDOUT:     %T.as_type.loc22: type = facet_access_type %T.ref.loc22 [symbolic = %T.as_type.loc14_20.2 (constants.%T.as_type.1ea)]
+// CHECK:STDOUT:     %.loc22_20: type = converted %T.ref.loc22, %T.as_type.loc22 [symbolic = %T.as_type.loc14_20.2 (constants.%T.as_type.1ea)]
+// CHECK:STDOUT:     %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
+// CHECK:STDOUT:     %.loc22_17: type = splice_block %K.ref.loc22 [concrete = constants.%K.type] {
+// CHECK:STDOUT:       %.Self.frozen.loc22: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %K.ref.loc22: type = name_ref K, file.%K.decl [concrete = constants.%K.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc36: %K.type = symbolic_binding T, 0 [symbolic = %T.loc14_15.2 (constants.%T.062)]
+// CHECK:STDOUT:     %T.loc22: %K.type = symbolic_binding T, 0 [symbolic = %T.loc14_15.2 (constants.%T.062)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc36: <witness> = impl_self_witness @T.as_type.as.Interface.impl.b21.%.loc36_20, @Interface [symbolic = @T.as_type.as.Interface.impl.b21.%.loc14_34 (constants.%.2ae)]
+// CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness @T.as_type.as.Interface.impl.b21.%.loc22_20, @Interface [symbolic = @T.as_type.as.Interface.impl.b21.%.loc14_34 (constants.%.2ae)]
 // CHECK:STDOUT:   impl_decl @T.as_type.as.Interface.impl.2b4 [concrete] {
 // CHECK:STDOUT:     %T.patt.loc15_15.1: %pattern_type.25e = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_15.2 (constants.%T.patt.b11)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc44: %L.type = name_ref T, %T.loc44 [symbolic = %T.loc15_15.2 (constants.%T.709)]
-// CHECK:STDOUT:     %T.as_type.loc44: type = facet_access_type %T.ref.loc44 [symbolic = %T.as_type.loc15_20.2 (constants.%T.as_type.56f)]
-// CHECK:STDOUT:     %.loc44_20: type = converted %T.ref.loc44, %T.as_type.loc44 [symbolic = %T.as_type.loc15_20.2 (constants.%T.as_type.56f)]
-// CHECK:STDOUT:     %Interface.ref.loc44: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
-// CHECK:STDOUT:     %.loc44_17: type = splice_block %L.ref.loc44 [concrete = constants.%L.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc44: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %L.ref.loc44: type = name_ref L, file.%L.decl [concrete = constants.%L.type]
+// CHECK:STDOUT:     %T.ref.loc23: %L.type = name_ref T, %T.loc23 [symbolic = %T.loc15_15.2 (constants.%T.709)]
+// CHECK:STDOUT:     %T.as_type.loc23: type = facet_access_type %T.ref.loc23 [symbolic = %T.as_type.loc15_20.2 (constants.%T.as_type.56f)]
+// CHECK:STDOUT:     %.loc23_20: type = converted %T.ref.loc23, %T.as_type.loc23 [symbolic = %T.as_type.loc15_20.2 (constants.%T.as_type.56f)]
+// CHECK:STDOUT:     %Interface.ref.loc23: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
+// CHECK:STDOUT:     %.loc23_17: type = splice_block %L.ref.loc23 [concrete = constants.%L.type] {
+// CHECK:STDOUT:       %.Self.frozen.loc23: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %L.ref.loc23: type = name_ref L, file.%L.decl [concrete = constants.%L.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc44: %L.type = symbolic_binding T, 0 [symbolic = %T.loc15_15.2 (constants.%T.709)]
+// CHECK:STDOUT:     %T.loc23: %L.type = symbolic_binding T, 0 [symbolic = %T.loc15_15.2 (constants.%T.709)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc44: <witness> = impl_self_witness @T.as_type.as.Interface.impl.2b4.%.loc44_20, @Interface [symbolic = @T.as_type.as.Interface.impl.2b4.%.loc15_34 (constants.%.30d)]
+// CHECK:STDOUT:   %.loc23: <witness> = impl_self_witness @T.as_type.as.Interface.impl.2b4.%.loc23_20, @Interface [symbolic = @T.as_type.as.Interface.impl.2b4.%.loc15_34 (constants.%.30d)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
