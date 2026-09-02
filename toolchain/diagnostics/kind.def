@@ -62,6 +62,7 @@ CARBON_DIAGNOSTIC_KIND(ErrorReadingFile)
 // ============================================================================
 
 CARBON_DIAGNOSTIC_KIND(InvalidRealLiteralRadix)
+CARBON_DIAGNOSTIC_KIND(CharacterOnlyAllowedAtStart)
 CARBON_DIAGNOSTIC_KIND(ContentBeforeStringTerminator)
 CARBON_DIAGNOSTIC_KIND(DecimalEscapeSequence)
 CARBON_DIAGNOSTIC_KIND(DollarIntLiteralLeadingZero)

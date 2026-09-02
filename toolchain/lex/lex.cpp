@@ -312,7 +312,7 @@ static auto ScanForIdentifierPrefixScalar(llvm::StringRef text, ssize_t i)
   const ssize_t size = text.size();
   if (i == 0 && !text.empty()) {
     if (!IsIdStartByteTable[static_cast<unsigned char>(text[i])]) {
-      return "";
+      return {};
     }
     ++i;
   }
@@ -421,7 +421,7 @@ static auto ScanForIdentifierPrefixX86(llvm::StringRef text)
   ssize_t i = 0;
   if (!text.empty()) {
     if (!IsIdStartByteTable[static_cast<unsigned char>(text[i])]) {
-      return "";
+      return {};
     }
     ++i;
   }
@@ -1476,24 +1476,38 @@ auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
     return LexResult::NoMatch();
   }
 
+  if (!has_leading_space_) {
+    auto prev_token = buffer_.tokens().end()[-1];
+    auto kind = buffer_.GetKind(prev_token);
+    if (kind.is_word()) {
+      CARBON_DIAGNOSTIC(CharacterOnlyAllowedAtStart, Error,
+                        "`$` is only allowed at the start of an identifier");
+      emitter_.Emit(word.begin(), CharacterOnlyAllowedAtStart);
+      return LexTokenWithPayload(
+          TokenKind::Error,
+          buffer_.GetTokenText(prev_token).size() + word.size(),
+          buffer_.GetByteOffset(prev_token));
+    }
+  }
+
   auto diagnose_invalid_char = [&]() {
     CARBON_DIAGNOSTIC(
         InvalidCharacterInDollarIntLiteral, Error,
-        "Positional parameters can only contain digits after `$`.");
+        "Positional parameters can only contain digits after `$`");
     emitter_.Emit(word.begin() + 1, InvalidCharacterInDollarIntLiteral);
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   };
 
   if (word.size() < 2) {
     CARBON_DIAGNOSTIC(DollarIntLiteralMissingNumber, Error,
-                      "Expected digits after `$`.");
+                      "Expected digits after `$`");
     emitter_.Emit(word.begin() + 1, DollarIntLiteralMissingNumber);
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
   if (word[1] == '0' && word.size() > 2) {
     CARBON_DIAGNOSTIC(
         DollarIntLiteralLeadingZero, Error,
-        "Leading zeroes are not allowed in positional parameters.");
+        "Leading zeroes are not allowed in positional parameters");
     emitter_.Emit(word.begin() + 1, DollarIntLiteralLeadingZero);
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
