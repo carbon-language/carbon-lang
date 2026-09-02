@@ -29,7 +29,8 @@ struct ExprCategoryResult {
 
 // Returns the expression category of `inst_id`, and the ID of the innermost
 // inst visited while determining that category.
-static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
+static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
+                                const File* specific_ir, SpecificId specific_id)
     -> ExprCategoryResult {
   // The overall expression category if the current instruction is a value
   // expression.
@@ -58,6 +59,8 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
         inst_id = import_ir_inst.inst_id();
         return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, Call>) {
+        // TODO: Get the callee in the specific. Note that the callee may be in
+        // a different file.
         auto callee = GetCallee(*ir, inst.callee_id);
         CARBON_KIND_SWITCH(callee) {
           case CARBON_KIND(SemIR::CalleeError _): {
@@ -100,6 +103,20 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
         // when determining the category of the inner instruction.
         return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, SpliceInst>) {
+        auto [inst_value_ir, inst_value_const_id] = GetConstantValueInSpecific(
+            *specific_ir, specific_id, *ir, inst.inst_id);
+        if (inst_value_const_id.is_concrete()) {
+          // If we can pull a concrete inst out of the specific, then swich to
+          // computing the category of that inst.
+          ir = inst_value_ir;
+          inst_id = ir->constant_values()
+                        .GetInstAs<InstValue>(inst_value_const_id)
+                        .inst_id;
+          return std::nullopt;
+        }
+
+        // We don't know which instruction is being spliced. We may still know
+        // the category based on the action that produces the inst.
         auto action = ir->insts().Get(inst.inst_id);
         if (auto* action_category = std::get_if<ActionExprCategory>(
                 &action.kind().expr_category())) {
@@ -181,8 +198,12 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
   }
 }
 
-auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
-  return GetExprCategoryImpl(&file, inst_id).category;
+auto GetExprCategory(const File& file, InstId inst_id,
+                     const File* specific_file, SpecificId specific_id)
+    -> ExprCategory {
+  return GetExprCategoryImpl(&file, inst_id,
+                             specific_file ? specific_file : &file, specific_id)
+      .category;
 }
 
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
@@ -311,7 +332,8 @@ static auto GetDecomposedFormKindForType(const File& sem_ir, TypeId type_id)
 auto GetFormInfo(const File& sem_ir, SemIR::InstId inst_id) -> FormInfo {
   auto inst = sem_ir.insts().Get(inst_id);
 
-  auto [category, inner_inst_id] = GetExprCategoryImpl(&sem_ir, inst_id);
+  auto [category, inner_inst_id] =
+      GetExprCategoryImpl(&sem_ir, inst_id, &sem_ir, SpecificId::None);
   if (inst.type_id() == SemIR::ErrorInst::TypeId) {
     // TODO: Should `GetExprCategory` do this?
     category = ExprCategory::Error;
