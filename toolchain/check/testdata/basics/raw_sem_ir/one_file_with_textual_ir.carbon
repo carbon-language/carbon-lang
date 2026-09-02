@@ -30,11 +30,11 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst5000002E}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst10, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst5000002F}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name50000000: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function50000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block5000000B, call_params_id: inst_block5000000C, return_type_inst_id: inst50000022, return_form_inst_id: inst50000023, return_pattern_id: inst50000028, body: [inst_block5000000F]}
+// CHECK:STDOUT:     function50000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block5000000B, call_params_id: inst_block5000000C, return_type_inst_id: inst50000023, return_form_inst_id: inst50000024, return_pattern_id: inst50000029, body: [inst_block5000000F]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   interfaces:      {}
 // CHECK:STDOUT:   associated_constants: {}
@@ -70,23 +70,23 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(inst50000010)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000010)}
+// CHECK:STDOUT:     'type(inst50000011)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000011)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(inst5000001F)':
-// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst5000001F)}
+// CHECK:STDOUT:     'type(inst50000020)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst50000020)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            8
 // CHECK:STDOUT:         alignment:       8
-// CHECK:STDOUT:     'type(inst5000001C)':
-// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst5000001F)}
+// CHECK:STDOUT:     'type(inst5000001D)':
+// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst50000020)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(inst5000002F)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000010)}
+// CHECK:STDOUT:     'type(inst50000030)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000011)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
@@ -143,109 +143,109 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
-// CHECK:STDOUT:       instF:           concrete_constant(instF)
-// CHECK:STDOUT:       inst50000010:    concrete_constant(inst50000010)
-// CHECK:STDOUT:       inst50000011:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst50000012:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst50000013:    concrete_constant(inst50000010)
-// CHECK:STDOUT:       inst50000014:    concrete_constant(inst50000014)
-// CHECK:STDOUT:       inst50000015:    concrete_constant(inst50000016)
-// CHECK:STDOUT:       inst50000016:    concrete_constant(inst50000016)
-// CHECK:STDOUT:       inst50000017:    concrete_constant(inst50000018)
-// CHECK:STDOUT:       inst50000018:    concrete_constant(inst50000018)
-// CHECK:STDOUT:       inst5000001A:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst5000001B:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst5000001C:    concrete_constant(inst5000001C)
-// CHECK:STDOUT:       inst5000001D:    concrete_constant(inst5000001E)
-// CHECK:STDOUT:       inst5000001E:    concrete_constant(inst5000001E)
+// CHECK:STDOUT:       inst10:          concrete_constant(inst10)
+// CHECK:STDOUT:       inst50000011:    concrete_constant(inst50000011)
+// CHECK:STDOUT:       inst50000012:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst50000013:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst50000014:    concrete_constant(inst50000011)
+// CHECK:STDOUT:       inst50000015:    concrete_constant(inst50000015)
+// CHECK:STDOUT:       inst50000016:    concrete_constant(inst50000017)
+// CHECK:STDOUT:       inst50000017:    concrete_constant(inst50000017)
+// CHECK:STDOUT:       inst50000018:    concrete_constant(inst50000019)
+// CHECK:STDOUT:       inst50000019:    concrete_constant(inst50000019)
+// CHECK:STDOUT:       inst5000001B:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst5000001C:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst5000001D:    concrete_constant(inst5000001D)
+// CHECK:STDOUT:       inst5000001E:    concrete_constant(inst5000001F)
 // CHECK:STDOUT:       inst5000001F:    concrete_constant(inst5000001F)
-// CHECK:STDOUT:       inst50000020:    concrete_constant(inst50000010)
-// CHECK:STDOUT:       inst50000021:    concrete_constant(inst50000010)
-// CHECK:STDOUT:       inst50000022:    concrete_constant(inst5000001C)
-// CHECK:STDOUT:       inst50000023:    concrete_constant(inst50000024)
-// CHECK:STDOUT:       inst50000024:    concrete_constant(inst50000024)
+// CHECK:STDOUT:       inst50000020:    concrete_constant(inst50000020)
+// CHECK:STDOUT:       inst50000021:    concrete_constant(inst50000011)
+// CHECK:STDOUT:       inst50000022:    concrete_constant(inst50000011)
+// CHECK:STDOUT:       inst50000023:    concrete_constant(inst5000001D)
+// CHECK:STDOUT:       inst50000024:    concrete_constant(inst50000025)
 // CHECK:STDOUT:       inst50000025:    concrete_constant(inst50000025)
-// CHECK:STDOUT:       inst50000026:    concrete_constant(inst50000027)
-// CHECK:STDOUT:       inst50000027:    concrete_constant(inst50000027)
-// CHECK:STDOUT:       inst50000028:    concrete_constant(inst50000029)
-// CHECK:STDOUT:       inst50000029:    concrete_constant(inst50000029)
-// CHECK:STDOUT:       inst5000002B:    concrete_constant(inst50000010)
-// CHECK:STDOUT:       inst5000002E:    concrete_constant(inst50000030)
-// CHECK:STDOUT:       inst5000002F:    concrete_constant(inst5000002F)
+// CHECK:STDOUT:       inst50000026:    concrete_constant(inst50000026)
+// CHECK:STDOUT:       inst50000027:    concrete_constant(inst50000028)
+// CHECK:STDOUT:       inst50000028:    concrete_constant(inst50000028)
+// CHECK:STDOUT:       inst50000029:    concrete_constant(inst5000002A)
+// CHECK:STDOUT:       inst5000002A:    concrete_constant(inst5000002A)
+// CHECK:STDOUT:       inst5000002C:    concrete_constant(inst50000011)
+// CHECK:STDOUT:       inst5000002F:    concrete_constant(inst50000031)
 // CHECK:STDOUT:       inst50000030:    concrete_constant(inst50000030)
-// CHECK:STDOUT:       inst50000032:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst50000035:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst50000036:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst50000037:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst50000039:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst5000003A:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst5000003B:    concrete_constant(inst50000012)
-// CHECK:STDOUT:       inst5000003C:    concrete_constant(inst5000001E)
-// CHECK:STDOUT:       inst5000003D:    concrete_constant(inst5000001E)
+// CHECK:STDOUT:       inst50000031:    concrete_constant(inst50000031)
+// CHECK:STDOUT:       inst50000033:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst50000036:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst50000037:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst50000038:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst5000003A:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst5000003B:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst5000003C:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst5000003D:    concrete_constant(inst5000001F)
+// CHECK:STDOUT:       inst5000003E:    concrete_constant(inst5000001F)
 // CHECK:STDOUT:     symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
-// CHECK:STDOUT:       0:               inst5000002E
+// CHECK:STDOUT:       0:               inst5000002F
 // CHECK:STDOUT:     generated:       {}
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block50000005:
-// CHECK:STDOUT:       0:               inst50000011
-// CHECK:STDOUT:       1:               inst50000013
-// CHECK:STDOUT:     inst_block50000006:
-// CHECK:STDOUT:       0:               inst50000017
-// CHECK:STDOUT:     inst_block50000007:
-// CHECK:STDOUT:       0:               inst5000001A
-// CHECK:STDOUT:       1:               inst5000001B
-// CHECK:STDOUT:     inst_block50000008:
-// CHECK:STDOUT:       0:               inst50000010
-// CHECK:STDOUT:       1:               inst50000010
-// CHECK:STDOUT:     inst_block50000009:
 // CHECK:STDOUT:       0:               inst50000012
-// CHECK:STDOUT:       1:               inst50000012
+// CHECK:STDOUT:       1:               inst50000014
+// CHECK:STDOUT:     inst_block50000006:
+// CHECK:STDOUT:       0:               inst50000018
+// CHECK:STDOUT:     inst_block50000007:
+// CHECK:STDOUT:       0:               inst5000001B
+// CHECK:STDOUT:       1:               inst5000001C
+// CHECK:STDOUT:     inst_block50000008:
+// CHECK:STDOUT:       0:               inst50000011
+// CHECK:STDOUT:       1:               inst50000011
+// CHECK:STDOUT:     inst_block50000009:
+// CHECK:STDOUT:       0:               inst50000013
+// CHECK:STDOUT:       1:               inst50000013
 // CHECK:STDOUT:     inst_block5000000A:
-// CHECK:STDOUT:       0:               inst50000020
-// CHECK:STDOUT:       1:               inst50000021
+// CHECK:STDOUT:       0:               inst50000021
+// CHECK:STDOUT:       1:               inst50000022
 // CHECK:STDOUT:     inst_block5000000B:
-// CHECK:STDOUT:       0:               inst50000015
-// CHECK:STDOUT:       1:               inst50000026
+// CHECK:STDOUT:       0:               inst50000016
+// CHECK:STDOUT:       1:               inst50000027
 // CHECK:STDOUT:     inst_block5000000C:
-// CHECK:STDOUT:       0:               inst5000002A
-// CHECK:STDOUT:       1:               inst5000002C
+// CHECK:STDOUT:       0:               inst5000002B
+// CHECK:STDOUT:       1:               inst5000002D
 // CHECK:STDOUT:     inst_block5000000D:
-// CHECK:STDOUT:       0:               inst50000015
-// CHECK:STDOUT:       1:               inst50000017
-// CHECK:STDOUT:       2:               inst50000026
-// CHECK:STDOUT:       3:               inst50000028
+// CHECK:STDOUT:       0:               inst50000016
+// CHECK:STDOUT:       1:               inst50000018
+// CHECK:STDOUT:       2:               inst50000027
+// CHECK:STDOUT:       3:               inst50000029
 // CHECK:STDOUT:     inst_block5000000E:
-// CHECK:STDOUT:       0:               inst5000001A
-// CHECK:STDOUT:       1:               inst5000001B
-// CHECK:STDOUT:       2:               inst5000001D
-// CHECK:STDOUT:       3:               inst50000020
-// CHECK:STDOUT:       4:               inst50000021
-// CHECK:STDOUT:       5:               inst50000022
-// CHECK:STDOUT:       6:               inst50000023
-// CHECK:STDOUT:       7:               inst5000002A
-// CHECK:STDOUT:       8:               inst5000002B
-// CHECK:STDOUT:       9:               inst50000019
-// CHECK:STDOUT:       10:              inst5000002C
-// CHECK:STDOUT:       11:              inst5000002D
+// CHECK:STDOUT:       0:               inst5000001B
+// CHECK:STDOUT:       1:               inst5000001C
+// CHECK:STDOUT:       2:               inst5000001E
+// CHECK:STDOUT:       3:               inst50000021
+// CHECK:STDOUT:       4:               inst50000022
+// CHECK:STDOUT:       5:               inst50000023
+// CHECK:STDOUT:       6:               inst50000024
+// CHECK:STDOUT:       7:               inst5000002B
+// CHECK:STDOUT:       8:               inst5000002C
+// CHECK:STDOUT:       9:               inst5000001A
+// CHECK:STDOUT:       10:              inst5000002D
+// CHECK:STDOUT:       11:              inst5000002E
 // CHECK:STDOUT:     inst_block5000000F:
-// CHECK:STDOUT:       0:               inst50000031
-// CHECK:STDOUT:       1:               inst50000032
-// CHECK:STDOUT:       2:               inst50000033
-// CHECK:STDOUT:       3:               inst50000034
-// CHECK:STDOUT:       4:               inst50000035
-// CHECK:STDOUT:       5:               inst50000036
-// CHECK:STDOUT:       6:               inst50000037
-// CHECK:STDOUT:       7:               inst50000038
-// CHECK:STDOUT:       8:               inst50000039
-// CHECK:STDOUT:       9:               inst5000003A
-// CHECK:STDOUT:       10:              inst5000003B
-// CHECK:STDOUT:       11:              inst5000003C
-// CHECK:STDOUT:       12:              inst5000003D
-// CHECK:STDOUT:       13:              inst5000003E
+// CHECK:STDOUT:       0:               inst50000032
+// CHECK:STDOUT:       1:               inst50000033
+// CHECK:STDOUT:       2:               inst50000034
+// CHECK:STDOUT:       3:               inst50000035
+// CHECK:STDOUT:       4:               inst50000036
+// CHECK:STDOUT:       5:               inst50000037
+// CHECK:STDOUT:       6:               inst50000038
+// CHECK:STDOUT:       7:               inst50000039
+// CHECK:STDOUT:       8:               inst5000003A
+// CHECK:STDOUT:       9:               inst5000003B
+// CHECK:STDOUT:       10:              inst5000003C
+// CHECK:STDOUT:       11:              inst5000003D
+// CHECK:STDOUT:       12:              inst5000003E
+// CHECK:STDOUT:       13:              inst5000003F
 // CHECK:STDOUT:     inst_block50000010:
 // CHECK:STDOUT:       0:               inst50000031
 // CHECK:STDOUT:       1:               inst50000032

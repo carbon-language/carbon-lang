@@ -182,7 +182,7 @@ fn F(x: i32 = 0);
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc5: %pattern_type.6b6 = default_value_pattern %x.patt, index: 0 [concrete = constants.%.e53]
+// CHECK:STDOUT:     %.loc4: %pattern_type.6b6 = default_value_pattern %x.patt, index: 0 [concrete = constants.%.e53]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:     %x.param: %i32 = value_param call_param0
@@ -192,7 +192,7 @@ fn F(x: i32 = 0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %i32) default_values: {
+// CHECK:STDOUT: fn @F(%x.param: %i32) default_values {
 // CHECK:STDOUT:   constants.%int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT: };
 // CHECK:STDOUT:

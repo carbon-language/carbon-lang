@@ -34,7 +34,7 @@
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst10, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
@@ -74,11 +74,11 @@
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   declared_facet_types: {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst10:          {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
-// CHECK:STDOUT:       instF:           concrete_constant(instF)
+// CHECK:STDOUT:       inst10:          concrete_constant(inst10)
 // CHECK:STDOUT:     symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
@@ -87,7 +87,7 @@
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block60000005:
-// CHECK:STDOUT:       0:               instF
+// CHECK:STDOUT:       0:               inst10
 // CHECK:STDOUT:   value_stores:
 // CHECK:STDOUT:     shared_values:
 // CHECK:STDOUT:       ints:            {}
