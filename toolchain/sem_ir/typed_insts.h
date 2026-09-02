@@ -1582,11 +1582,11 @@ struct RefineInstAction {
       {.ir_name = "refine_inst_action",
        .expr_category = ActionExprCategory(ExprCategory::Dependent),
        .constant_kind = InstConstantKind::InstAction,
+       .action_needs_specific_id = true,
        .is_lowered = false});
 
   TypeId type_id;
   MetaInstId inst_id;
-  SpecificId specific_id;
 };
 
 // Represents a reference binding pattern that is not a parameter. See

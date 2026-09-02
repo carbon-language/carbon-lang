@@ -176,13 +176,13 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %N.patt.38a: %pattern_type.6b6 = symbolic_binding_pattern N, 0, template [template]
 // CHECK:STDOUT:   %N.37f: %i32 = symbolic_binding N, 0, template [template]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
-// CHECK:STDOUT:   %.7f4: %i32 = splice_inst @G.%.loc11_30.3 [template]
-// CHECK:STDOUT:   %.e31: Core.IntLiteral = splice_inst @G.%.loc11_30.5 [template]
-// CHECK:STDOUT:   %array_type.a2a: type = array_type %.e31, %i32 [template]
-// CHECK:STDOUT:   %require_complete.609: <witness> = require_complete_type %array_type.a2a [template]
-// CHECK:STDOUT:   %pattern_type.b9d: type = pattern_type %array_type.a2a [template]
-// CHECK:STDOUT:   %arr.patt.cf4: %pattern_type.b9d = ref_binding_pattern arr [template]
-// CHECK:STDOUT:   %arr.var_patt.f9f: %pattern_type.b9d = var_pattern %arr.patt.cf4 [template]
+// CHECK:STDOUT:   %.159: %i32 = splice_inst @G.%.loc11_30.3 [template]
+// CHECK:STDOUT:   %.a08: Core.IntLiteral = splice_inst @G.%.loc11_30.5 [template]
+// CHECK:STDOUT:   %array_type.cbf: type = array_type %.a08, %i32 [template]
+// CHECK:STDOUT:   %require_complete.f6a: <witness> = require_complete_type %array_type.cbf [template]
+// CHECK:STDOUT:   %pattern_type.fca: type = pattern_type %array_type.cbf [template]
+// CHECK:STDOUT:   %arr.patt.184: %pattern_type.fca = ref_binding_pattern arr [template]
+// CHECK:STDOUT:   %arr.var_patt.f2d: %pattern_type.fca = var_pattern %arr.patt.184 [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
@@ -194,9 +194,9 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.42b: %Destroy.WithSelf.Op.type.d3e = struct_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.assoc_type: type = assoc_entity_type @Destroy [concrete]
 // CHECK:STDOUT:   %assoc0.ae8: %Destroy.assoc_type = assoc_entity element0, imports.%Core.import_ref.918 [concrete]
-// CHECK:STDOUT:   %.ab8: %array_type.a2a = splice_inst @G.%.loc11_3.4 [template]
-// CHECK:STDOUT:   %.525: @G.%.loc11_3.7 (@G.%.loc11_3.7) = splice_inst @G.%.loc11_3.6 [template]
-// CHECK:STDOUT:   %.2c6: @G.%.loc11_3.10 (@G.%.loc11_3.10) = splice_inst @G.%.loc11_3.9 [template]
+// CHECK:STDOUT:   %.61d: %array_type.cbf = splice_inst @G.%.loc11_3.4 [template]
+// CHECK:STDOUT:   %.dde: @G.%.loc11_3.7 (@G.%.loc11_3.7) = splice_inst @G.%.loc11_3.6 [template]
+// CHECK:STDOUT:   %.cfd: @G.%.loc11_3.10 (@G.%.loc11_3.10) = splice_inst @G.%.loc11_3.9 [template]
 // CHECK:STDOUT:   %From: Core.IntLiteral = symbolic_binding From, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.7cb: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.type.48d: type = fn_type @Int.as.ImplicitAs.impl.Convert, @Int.as.ImplicitAs.impl(%From) [symbolic]
@@ -229,8 +229,8 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %pattern_type.771: type = pattern_type %array_type.dc7 [concrete]
 // CHECK:STDOUT:   %arr.patt.316: %pattern_type.771 = ref_binding_pattern arr [concrete]
 // CHECK:STDOUT:   %arr.var_patt.c63: %pattern_type.771 = var_pattern %arr.patt.316 [concrete]
-// CHECK:STDOUT:   %inst.specific_inst.3b0: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.5eb: ref %array_type.dc7 = specific_inst @G.%arr.var, @G(%int_3.410)
+// CHECK:STDOUT:   %inst.specific_inst.d8f: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.ef0: ref %array_type.dc7 = specific_inst @G.%arr.var, @G(%int_3.410)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc11_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
@@ -238,14 +238,14 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %Destroy.facet.9a9: %Destroy.type = facet_value %array_type.dc7, (%custom_witness.df9cc1.3) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.642: type = fn_type @Destroy.WithSelf.Op, @Destroy.WithSelf(%Destroy.facet.9a9) [concrete]
 // CHECK:STDOUT:   %.6cd: type = fn_type_with_self_type %Destroy.WithSelf.Op.type.642, %Destroy.facet.9a9 [concrete]
-// CHECK:STDOUT:   %inst.splice_block.455: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.ff9: <bound method> = splice_block %bound_method.647 {
+// CHECK:STDOUT:   %inst.splice_block.de7: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.d24: <bound method> = splice_block %bound_method.6cc {
 // CHECK:STDOUT:       %impl.elem0.ef2: %.6cd = impl_witness_access %custom_witness.df9cc1.3, element0 [concrete = %Destroy.Op.1a2547.3]
-// CHECK:STDOUT:       %bound_method.647: <bound method> = bound_method %.5eb, %impl.elem0.ef2
+// CHECK:STDOUT:       %bound_method.6cc: <bound method> = bound_method %.ef0, %impl.elem0.ef2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.call: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %.ff9(%.5eb)
+// CHECK:STDOUT:     %Destroy.Op.call: init %empty_tuple.type = call %.d24(%.ef0)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -259,47 +259,47 @@ fn H() { G(3); }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc11_30.3: <instruction> = refine_inst_action %N.ref, @G(%N.loc5_16.1) [template]
-// CHECK:STDOUT:   %.loc11_30.4: %i32 = splice_inst %.loc11_30.3 [template = %.loc11_30.4 (constants.%.7f4)]
+// CHECK:STDOUT:   %.loc11_30.3: <instruction> = refine_inst_action %N.ref [template]
+// CHECK:STDOUT:   %.loc11_30.4: %i32 = splice_inst %.loc11_30.3 [template = %.loc11_30.4 (constants.%.159)]
 // CHECK:STDOUT:   %.loc11_30.5: <instruction> = convert_to_value_action %.loc11_30.1, Core.IntLiteral [template]
-// CHECK:STDOUT:   %.loc11_30.6: Core.IntLiteral = splice_inst %.loc11_30.5 [template = %.loc11_30.6 (constants.%.e31)]
-// CHECK:STDOUT:   %array_type.loc11_31.2: type = array_type %.loc11_30.6, constants.%i32 [template = %array_type.loc11_31.2 (constants.%array_type.a2a)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc11_31.2 [template = %require_complete (constants.%require_complete.609)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %array_type.loc11_31.2 [template = %pattern_type (constants.%pattern_type.b9d)]
-// CHECK:STDOUT:   %arr.patt.loc11_17.2: @G.%pattern_type (%pattern_type.b9d) = ref_binding_pattern arr [template = %arr.patt.loc11_17.2 (constants.%arr.patt.cf4)]
-// CHECK:STDOUT:   %arr.var_patt.loc11_3.2: @G.%pattern_type (%pattern_type.b9d) = var_pattern %arr.patt.loc11_17.2 [template = %arr.var_patt.loc11_3.2 (constants.%arr.var_patt.f9f)]
-// CHECK:STDOUT:   %.loc11_3.4: <instruction> = refine_inst_action %arr.var, @G(%N.loc5_16.1) [template]
-// CHECK:STDOUT:   %.loc11_3.5: @G.%array_type.loc11_31.2 (%array_type.a2a) = splice_inst %.loc11_3.4 [template = %.loc11_3.5 (constants.%.ab8)]
+// CHECK:STDOUT:   %.loc11_30.6: Core.IntLiteral = splice_inst %.loc11_30.5 [template = %.loc11_30.6 (constants.%.a08)]
+// CHECK:STDOUT:   %array_type.loc11_31.2: type = array_type %.loc11_30.6, constants.%i32 [template = %array_type.loc11_31.2 (constants.%array_type.cbf)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc11_31.2 [template = %require_complete (constants.%require_complete.f6a)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %array_type.loc11_31.2 [template = %pattern_type (constants.%pattern_type.fca)]
+// CHECK:STDOUT:   %arr.patt.loc11_17.2: @G.%pattern_type (%pattern_type.fca) = ref_binding_pattern arr [template = %arr.patt.loc11_17.2 (constants.%arr.patt.184)]
+// CHECK:STDOUT:   %arr.var_patt.loc11_3.2: @G.%pattern_type (%pattern_type.fca) = var_pattern %arr.patt.loc11_17.2 [template = %arr.var_patt.loc11_3.2 (constants.%arr.var_patt.f2d)]
+// CHECK:STDOUT:   %.loc11_3.4: <instruction> = refine_inst_action %arr.var [template]
+// CHECK:STDOUT:   %.loc11_3.5: @G.%array_type.loc11_31.2 (%array_type.cbf) = splice_inst %.loc11_3.4 [template = %.loc11_3.5 (constants.%.61d)]
 // CHECK:STDOUT:   %.loc11_3.6: <instruction> = compound_member_access_action %.loc11_3.1, constants.%assoc0.ae8 [template]
 // CHECK:STDOUT:   %.loc11_3.7: type = type_of_inst %.loc11_3.6 [template]
-// CHECK:STDOUT:   %.loc11_3.8: @G.%.loc11_3.7 (@G.%.loc11_3.7) = splice_inst %.loc11_3.6 [template = %.loc11_3.8 (constants.%.525)]
+// CHECK:STDOUT:   %.loc11_3.8: @G.%.loc11_3.7 (@G.%.loc11_3.7) = splice_inst %.loc11_3.6 [template = %.loc11_3.8 (constants.%.dde)]
 // CHECK:STDOUT:   %.loc11_3.9: <instruction> = call_action (%.loc11_3.2), true [template]
 // CHECK:STDOUT:   %.loc11_3.10: type = type_of_inst %.loc11_3.9 [template]
-// CHECK:STDOUT:   %.loc11_3.11: @G.%.loc11_3.10 (@G.%.loc11_3.10) = splice_inst %.loc11_3.9 [template = %.loc11_3.11 (constants.%.2c6)]
+// CHECK:STDOUT:   %.loc11_3.11: @G.%.loc11_3.10 (@G.%.loc11_3.10) = splice_inst %.loc11_3.9 [template = %.loc11_3.11 (constants.%.cfd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc11_31.2 (%array_type.a2a) = var_storage %arr.var_patt.loc11_3.1
+// CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc11_31.2 (%array_type.cbf) = var_storage %arr.var_patt.loc11_3.1
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %.loc11_43: %tuple.type = tuple_literal (%int_1, %int_2, %int_3) [concrete = constants.%tuple]
 // CHECK:STDOUT:     assign %arr.var, <error>
-// CHECK:STDOUT:     %.loc11_31: type = splice_block %array_type.loc11_31.1 [template = %array_type.loc11_31.2 (constants.%array_type.a2a)] {
+// CHECK:STDOUT:     %.loc11_31: type = splice_block %array_type.loc11_31.1 [template = %array_type.loc11_31.2 (constants.%array_type.cbf)] {
 // CHECK:STDOUT:       %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %N.ref: %i32 = name_ref N, %N.loc5_16.2 [template = %N.loc5_16.1 (constants.%N.37f)]
-// CHECK:STDOUT:       %.loc11_30.1: %i32 = splice_inst %.loc11_30.3 [template = %.loc11_30.4 (constants.%.7f4)]
-// CHECK:STDOUT:       %.loc11_30.2: Core.IntLiteral = splice_inst %.loc11_30.5 [template = %.loc11_30.6 (constants.%.e31)]
-// CHECK:STDOUT:       %array_type.loc11_31.1: type = array_type %.loc11_30.2, %i32.loc11 [template = %array_type.loc11_31.2 (constants.%array_type.a2a)]
+// CHECK:STDOUT:       %.loc11_30.1: %i32 = splice_inst %.loc11_30.3 [template = %.loc11_30.4 (constants.%.159)]
+// CHECK:STDOUT:       %.loc11_30.2: Core.IntLiteral = splice_inst %.loc11_30.5 [template = %.loc11_30.6 (constants.%.a08)]
+// CHECK:STDOUT:       %array_type.loc11_31.1: type = array_type %.loc11_30.2, %i32.loc11 [template = %array_type.loc11_31.2 (constants.%array_type.cbf)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %arr: ref @G.%array_type.loc11_31.2 (%array_type.a2a) = wrapper_binding arr, %arr.var
+// CHECK:STDOUT:     %arr: ref @G.%array_type.loc11_31.2 (%array_type.cbf) = wrapper_binding arr, %arr.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %arr.patt.loc11_17.1: @G.%pattern_type (%pattern_type.b9d) = ref_binding_pattern arr [template = %arr.patt.loc11_17.2 (constants.%arr.patt.cf4)]
-// CHECK:STDOUT:       %arr.var_patt.loc11_3.1: @G.%pattern_type (%pattern_type.b9d) = var_pattern %arr.patt.loc11_17.1 [template = %arr.var_patt.loc11_3.2 (constants.%arr.var_patt.f9f)]
+// CHECK:STDOUT:       %arr.patt.loc11_17.1: @G.%pattern_type (%pattern_type.fca) = ref_binding_pattern arr [template = %arr.patt.loc11_17.2 (constants.%arr.patt.184)]
+// CHECK:STDOUT:       %arr.var_patt.loc11_3.1: @G.%pattern_type (%pattern_type.fca) = var_pattern %arr.patt.loc11_17.1 [template = %arr.var_patt.loc11_3.2 (constants.%arr.var_patt.f2d)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc11_3.1: @G.%array_type.loc11_31.2 (%array_type.a2a) = splice_inst %.loc11_3.4 [template = %.loc11_3.5 (constants.%.ab8)]
-// CHECK:STDOUT:     %.loc11_3.2: @G.%.loc11_3.7 (@G.%.loc11_3.7) = splice_inst %.loc11_3.6 [template = %.loc11_3.8 (constants.%.525)]
-// CHECK:STDOUT:     %.loc11_3.3: @G.%.loc11_3.10 (@G.%.loc11_3.10) = splice_inst %.loc11_3.9 [template = %.loc11_3.11 (constants.%.2c6)]
+// CHECK:STDOUT:     %.loc11_3.1: @G.%array_type.loc11_31.2 (%array_type.cbf) = splice_inst %.loc11_3.4 [template = %.loc11_3.5 (constants.%.61d)]
+// CHECK:STDOUT:     %.loc11_3.2: @G.%.loc11_3.7 (@G.%.loc11_3.7) = splice_inst %.loc11_3.6 [template = %.loc11_3.8 (constants.%.dde)]
+// CHECK:STDOUT:     %.loc11_3.3: @G.%.loc11_3.10 (@G.%.loc11_3.10) = splice_inst %.loc11_3.9 [template = %.loc11_3.11 (constants.%.cfd)]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -335,9 +335,9 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.771
 // CHECK:STDOUT:   %arr.patt.loc11_17.2 => constants.%arr.patt.316
 // CHECK:STDOUT:   %arr.var_patt.loc11_3.2 => constants.%arr.var_patt.c63
-// CHECK:STDOUT:   %.loc11_3.4 => constants.%inst.specific_inst.3b0
+// CHECK:STDOUT:   %.loc11_3.4 => constants.%inst.specific_inst.d8f
 // CHECK:STDOUT:   %.loc11_3.5 => invalid
-// CHECK:STDOUT:   %.loc11_3.6 => constants.%inst.splice_block.455
+// CHECK:STDOUT:   %.loc11_3.6 => constants.%inst.splice_block.de7
 // CHECK:STDOUT:   %.loc11_3.7 => <bound method>
 // CHECK:STDOUT:   %.loc11_3.8 => invalid
 // CHECK:STDOUT:   %.loc11_3.9 => constants.%inst.call

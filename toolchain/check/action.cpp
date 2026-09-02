@@ -18,14 +18,15 @@
 
 namespace Carbon::Check {
 
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::RefineInstAction action) -> SemIR::InstId {
+auto PerformAction(Context& context, SemIR::SpecificId specific_id,
+                   SemIR::LocId loc_id, SemIR::RefineInstAction action)
+    -> SemIR::InstId {
   return AddInst<SemIR::SpecificInst>(
       context, loc_id,
-      {.type_id = GetTypeOfInstInSpecific(context.sem_ir(), action.specific_id,
+      {.type_id = GetTypeOfInstInSpecific(context.sem_ir(), specific_id,
                                           action.inst_id),
        .inst_id = action.inst_id,
-       .specific_id = action.specific_id});
+       .specific_id = specific_id});
 }
 
 static auto OperandDependence(Context& context, SemIR::ConstantId const_id)
@@ -127,19 +128,18 @@ static auto OperandDependence(Context& context, SemIR::IdAndKind arg)
       [&](auto id) { return OperandDependence(context, id); });
 }
 
-auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool {
+auto ActionIsPerformable(Context& context, SemIR::Inst action_inst,
+                         SemIR::SpecificId specific_id) -> bool {
   if (auto refine_action = action_inst.TryAs<SemIR::RefineInstAction>()) {
     // `RefineInstAction` is performable once the instruction's type and
     // constant value are not template-dependent.
-    return OperandDependence(context,
-                             GetTypeOfInstInSpecific(context.sem_ir(),
-                                                     refine_action->specific_id,
-                                                     refine_action->inst_id)) <
+    return OperandDependence(
+               context, GetTypeOfInstInSpecific(context.sem_ir(), specific_id,
+                                                refine_action->inst_id)) <
                SemIR::ConstantDependence::Template &&
-           OperandDependence(context,
-                             SemIR::GetConstantValueInSpecific(
-                                 context.sem_ir(), refine_action->specific_id,
-                                 refine_action->inst_id)) <
+           OperandDependence(context, SemIR::GetConstantValueInSpecific(
+                                          context.sem_ir(), specific_id,
+                                          refine_action->inst_id)) <
                SemIR::ConstantDependence::Template;
   }
 
@@ -234,17 +234,9 @@ static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
         context,
         SemIR::LocIdAndInst(
             loc_id,
-            SemIR::RefineInstAction{
-                .type_id =
-                    GetSingletonType(context, SemIR::InstType::TypeInstId),
-                .inst_id = inst_id,
-                // TODO: Storing the specific_id should not be necessary, and is
-                // wasteful since evaluation will need to recompute it for each
-                // action. Pass it in from eval instead.
-                .specific_id = context.generics().GetSelfSpecific(
-                    context.generic_region_stack()
-                        .PeekPendingGeneric()
-                        .generic_id)}),
+            SemIR::RefineInstAction{.type_id = GetSingletonType(
+                                        context, SemIR::InstType::TypeInstId),
+                                    .inst_id = inst_id}),
         type_inst_id);
   }
 
