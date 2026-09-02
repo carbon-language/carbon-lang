@@ -147,11 +147,6 @@ using IdentifierNameExpr =
     LeafNode<NodeKind::IdentifierNameExpr, Lex::IdentifierTokenIndex,
              NodeCategory::Expr>;
 
-// `$0`
-using DollarIdentifierExpr =
-    LeafNode<NodeKind::DollarIdentifierExpr, Lex::DollarIdentifierTokenIndex,
-             NodeCategory::Expr>;
-
 // The `self` value and `Self` type identifier keywords. Typically of the form
 // `self: Self`.
 using SelfValueName =
@@ -1827,6 +1822,11 @@ struct NamedConstraintDefinition {
   llvm::SmallVector<AnyDeclId> members;
   Lex::CloseCurlyBraceTokenIndex token;
 };
+
+// `$0`
+using PositionalParamExpr =
+    LeafNode<NodeKind::PositionalParamExpr, Lex::DollarIntLiteralTokenIndex,
+             NodeCategory::Expr>;
 
 // ---------------------------------------------------------------------------
 

@@ -79,11 +79,6 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
-    case Lex::TokenKind::DollarIdentifier: {
-      context.AddLeafNode(NodeKind::DollarIdentifierExpr, context.Consume());
-      context.PushState(state);
-      break;
-    }
     case Lex::TokenKind::Fn: {
       context.PushState(state);
       context.PushState(StateKind::LambdaIntroducer);
@@ -141,6 +136,11 @@ auto HandleExprInPostfix(Context& context) -> void {
     }
     case Lex::TokenKind::FloatTypeLiteral: {
       context.AddLeafNode(NodeKind::FloatTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::DollarIntLiteral: {
+      context.AddLeafNode(NodeKind::PositionalParamExpr, context.Consume());
       context.PushState(state);
       break;
     }

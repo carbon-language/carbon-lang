@@ -188,6 +188,11 @@ class [[clang::internal_linkage]] Lexer {
   auto LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
       -> LexResult;
 
+  // Given a lexed word, determine whether it is a dollar int literal and if so
+  // form the corresponding token,
+  auto LexWordAsDollarIntLiteralToken(llvm::StringRef word, int32_t byte_offset)
+      -> LexResult;
+
   auto LexKeywordOrIdentifier(llvm::StringRef source_text, ssize_t& position)
       -> LexResult;
 
@@ -1465,6 +1470,71 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
   return LexTokenWithPayload(kind, bit_width_payload, byte_offset);
 }
 
+auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
+                                           int32_t byte_offset) -> LexResult {
+  if (!word.starts_with('$')) {
+    return LexResult::NoMatch();
+  }
+
+  auto diagnose_invalid_char = [&]() {
+    CARBON_DIAGNOSTIC(
+        InvalidCharacterInDollarIntLiteral, Error,
+        "Positional parameters can only contain digits after `$`.");
+    emitter_.Emit(word.begin() + 1, InvalidCharacterInDollarIntLiteral);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  };
+
+  if (word.size() < 2) {
+    CARBON_DIAGNOSTIC(DollarIntLiteralMissingNumber, Error,
+                      "Expected digits after `$`.");
+    emitter_.Emit(word.begin() + 1, DollarIntLiteralMissingNumber);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  }
+  if (word[1] == '0' && word.size() > 2) {
+    CARBON_DIAGNOSTIC(
+        DollarIntLiteralLeadingZero, Error,
+        "Leading zeroes are not allowed in positional parameters.");
+    emitter_.Emit(word.begin() + 1, DollarIntLiteralLeadingZero);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  }
+  if ((word[1] < '0' || word[1] > '9')) {
+    return diagnose_invalid_char();
+  }
+
+  auto suffix = word.substr(1);
+  int64_t suffix_value;
+  constexpr ssize_t DigitLimit =
+      std::numeric_limits<decltype(suffix_value)>::digits10;
+  if (suffix.size() > DigitLimit) {
+    // See if this is not actually a dollar int literal.
+    if (!llvm::all_of(suffix, IsDecimalDigit)) {
+      return diagnose_invalid_char();
+    }
+
+    // Otherwise, diagnose and produce an error token.
+    CARBON_DIAGNOSTIC(TooManyDollarIntDigits, Error,
+                      "found a positional parameter using {0} digits, "
+                      "which is greater than the limit of {1}",
+                      size_t, size_t);
+    emitter_.Emit(word.begin() + 1, TooManyDollarIntDigits, suffix.size(),
+                  DigitLimit);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  }
+
+  suffix_value = suffix[0] - '0';
+  for (char c : suffix.drop_front()) {
+    if (!IsDecimalDigit(c)) {
+      return diagnose_invalid_char();
+    }
+    suffix_value = suffix_value * 10 + (c - '0');
+  }
+  CARBON_CHECK(suffix_value >= 0);
+  return LexTokenWithPayload(
+      TokenKind::DollarIntLiteral,
+      buffer_.value_stores_->ints().Add(suffix_value).AsTokenPayload(),
+      byte_offset);
+}
+
 auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
                                    ssize_t& position) -> LexResult {
   if (static_cast<unsigned char>(source_text[position]) > 0x7F) {
@@ -1488,6 +1558,10 @@ auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
           LexWordAsTypeLiteralToken(identifier_text, byte_offset)) {
     return result;
   }
+  if (LexResult result =
+          LexWordAsDollarIntLiteralToken(identifier_text, byte_offset)) {
+    return result;
+  }
 
   // Check if the text matches a keyword token, and if so use that.
   TokenKind kind = llvm::StringSwitch<TokenKind>(identifier_text)
@@ -1499,11 +1573,8 @@ auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
   }
 
   // Otherwise we have a generic identifier.
-  auto token_kind = identifier_text.starts_with('$')
-                        ? TokenKind::DollarIdentifier
-                        : TokenKind::Identifier;
   return LexTokenWithPayload(
-      token_kind,
+      TokenKind::Identifier,
       buffer_.value_stores_->identifiers().Add(identifier_text).index,
       byte_offset);
 }

@@ -7,8 +7,8 @@
 #include "toolchain/parse/node_ids.h"
 
 namespace Carbon::Check {
-auto HandleParseNode(Context& context, Parse::DollarIdentifierExprId node_id)
+auto HandleParseNode(Context& context, Parse::PositionalParamExprId node_id)
     -> bool {
-  return context.TODO(node_id, "HandleDollarIdentifierExpr");
+  return context.TODO(node_id, "HandlePositionalParamExprId");
 }
 }  // namespace Carbon::Check

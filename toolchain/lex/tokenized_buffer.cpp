@@ -100,14 +100,22 @@ auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
     return llvm::StringRef(suffix.data() - 1, suffix.size() + 1);
   }
 
+  // Refer back to the source text to avoid needing to reconstruct the
+  // spelling from the size.
+  if (token_info.kind().is_dollar_int_literal()) {
+    llvm::StringRef suffix = source_->text()
+                                 .substr(token_info.byte_offset() + 1)
+                                 .take_while(IsDecimalDigit);
+    return llvm::StringRef(suffix.data() - 1, suffix.size() + 1);
+  }
+
   if (token_info.kind() == TokenKind::FileStart ||
       token_info.kind() == TokenKind::FileEnd) {
     return llvm::StringRef();
   }
 
-  CARBON_CHECK(token_info.kind() == TokenKind::Identifier ||
-                   token_info.kind() == TokenKind::DollarIdentifier,
-               "{0}", token_info.kind());
+  CARBON_CHECK(token_info.kind() == TokenKind::Identifier, "{0}",
+               token_info.kind());
 
   // If this is a raw identifier, obtain its spelling from the source text.
   auto ident = value_stores_->identifiers().Get(token_info.ident_id());
