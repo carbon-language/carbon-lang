@@ -101,8 +101,6 @@ fn H() {
 // CHECK:STDOUT:   %Base.generic: %Base.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base.798: type = class_type @Base, @Base(%T.67d) [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T.67d [symbolic]
-// CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T.67d [symbolic]
-// CHECK:STDOUT:   %x.patt.719: %pattern_type.51d = ref_binding_pattern x [symbolic]
 // CHECK:STDOUT:   %Base.elem.a3c: type = unbound_element_type %Base.798, %T.67d [symbolic]
 // CHECK:STDOUT:   %struct_type.x.0c5: type = struct_type {.x: %T.67d} [symbolic]
 // CHECK:STDOUT:   %complete_type.735: <witness> = complete_type_witness %struct_type.x.0c5 [symbolic]
@@ -118,8 +116,6 @@ fn H() {
 // CHECK:STDOUT:   %complete_type.620: <witness> = complete_type_witness %struct_type.y [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Base.947: type = class_type @Base, @Base(%Param) [concrete]
-// CHECK:STDOUT:   %pattern_type.116: type = pattern_type %Param [concrete]
-// CHECK:STDOUT:   %x.patt.6d5: %pattern_type.116 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %Base.elem.3f2: type = unbound_element_type %Base.947, %Param [concrete]
 // CHECK:STDOUT:   %struct_type.x.301: type = struct_type {.x: %Param} [concrete]
 // CHECK:STDOUT:   %complete_type.38f: <witness> = complete_type_witness %struct_type.x.301 [concrete]
@@ -201,8 +197,6 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_18.1 [symbolic = %require_complete (constants.%require_complete.944)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_18.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %x.patt: @Base.%pattern_type (%pattern_type.51d) = ref_binding_pattern x [symbolic = %x.patt (constants.%x.patt.719)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.loc4_18.1) [symbolic = %Base (constants.%Base.798)]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %T.loc4_18.1 [symbolic = %Base.elem (constants.%Base.elem.a3c)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @Base.%T.loc4_18.1 (%T.67d)} [symbolic = %struct_type.x (constants.%struct_type.x.0c5)]
@@ -281,8 +275,6 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.620
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.116
-// CHECK:STDOUT:   %x.patt => constants.%x.patt.6d5
 // CHECK:STDOUT:   %Base => constants.%Base.947
 // CHECK:STDOUT:   %Base.elem => constants.%Base.elem.3f2
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.301
@@ -308,15 +300,11 @@ fn H() {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt.d47: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Base.elem.a3c: type = unbound_element_type %Base.798, %T.67d [symbolic]
-// CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T.67d [symbolic]
-// CHECK:STDOUT:   %x.patt.719: %pattern_type.51d = ref_binding_pattern x [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T.67d [symbolic]
 // CHECK:STDOUT:   %Base.947: type = class_type @Base, @Base(%Param) [concrete]
 // CHECK:STDOUT:   %struct_type.x.301: type = struct_type {.x: %Param} [concrete]
 // CHECK:STDOUT:   %complete_type.38f: <witness> = complete_type_witness %struct_type.x.301 [concrete]
 // CHECK:STDOUT:   %Base.elem.3f2: type = unbound_element_type %Base.947, %Param [concrete]
-// CHECK:STDOUT:   %pattern_type.116: type = pattern_type %Param [concrete]
-// CHECK:STDOUT:   %x.patt.6d5: %pattern_type.116 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %struct_type.base.a1b: type = struct_type {.base: %Base.947} [concrete]
 // CHECK:STDOUT:   %complete_type.90c: <witness> = complete_type_witness %struct_type.base.a1b [concrete]
 // CHECK:STDOUT:   %pattern_type.746: type = pattern_type %Derived [concrete]
@@ -424,8 +412,6 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.944)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %x.patt: @Base.%pattern_type (%pattern_type.51d) = ref_binding_pattern x [symbolic = %x.patt (constants.%x.patt.719)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.798)]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %T [symbolic = %Base.elem (constants.%Base.elem.a3c)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @Base.%T (%T.67d)} [symbolic = %struct_type.x (constants.%struct_type.x.0c5)]
@@ -470,8 +456,6 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.620
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.116
-// CHECK:STDOUT:   %x.patt => constants.%x.patt.6d5
 // CHECK:STDOUT:   %Base => constants.%Base.947
 // CHECK:STDOUT:   %Base.elem => constants.%Base.elem.3f2
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.301

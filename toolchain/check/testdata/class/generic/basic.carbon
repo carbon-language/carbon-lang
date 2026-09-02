@@ -63,7 +63,6 @@ class Declaration(T: type);
 // CHECK:STDOUT:   %Class.GetValue.type: type = fn_type @Class.GetValue, @Class(%T.f84) [symbolic]
 // CHECK:STDOUT:   %Class.GetValue: %Class.GetValue.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.d83: <witness> = require_complete_type %T.as_type [symbolic]
-// CHECK:STDOUT:   %k.patt: %pattern_type.2c66b4.2 = ref_binding_pattern k [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.as_type [symbolic]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: %T.as_type} [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k [symbolic]
@@ -130,8 +129,6 @@ class Declaration(T: type);
 // CHECK:STDOUT:   %Class.GetValue: @Class.%Class.GetValue.type (%Class.GetValue.type) = struct_value () [symbolic = %Class.GetValue (constants.%Class.GetValue)]
 // CHECK:STDOUT:   %T.as_type.loc14_10.2: type = facet_access_type %T.loc5_14.1 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc14_10.2 [symbolic = %require_complete (constants.%require_complete.d83)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc14_10.2 [symbolic = %pattern_type (constants.%pattern_type.2c66b4.2)]
-// CHECK:STDOUT:   %k.patt: @Class.%pattern_type (%pattern_type.2c66b4.2) = ref_binding_pattern k [symbolic = %k.patt (constants.%k.patt)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc5_14.1) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.as_type.loc14_10.2 [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @Class.%T.as_type.loc14_10.2 (%T.as_type)} [symbolic = %struct_type.k (constants.%struct_type.k)]
@@ -296,8 +293,6 @@ class Declaration(T: type);
 // CHECK:STDOUT:   %Class.GetValue => constants.%Class.GetValue
 // CHECK:STDOUT:   %T.as_type.loc14_10.2 => constants.%T.as_type
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.d83
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2c66b4.2
-// CHECK:STDOUT:   %k.patt => constants.%k.patt
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
 // CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k

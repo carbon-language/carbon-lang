@@ -344,8 +344,6 @@ fn G() {
 // CHECK:STDOUT:   %.ae6: @B.%.loc12_17.4 (@B.%.loc12_17.4) = splice_inst @B.%.loc12_17.3 [template]
 // CHECK:STDOUT:   %.535: type = splice_inst @B.%.loc12_17.6 [template]
 // CHECK:STDOUT:   %require_complete.01e: <witness> = require_complete_type %.535 [template]
-// CHECK:STDOUT:   %pattern_type.281: type = pattern_type %.535 [template]
-// CHECK:STDOUT:   %a.patt.438: %pattern_type.281 = ref_binding_pattern a [template]
 // CHECK:STDOUT:   %B.elem.7af: type = unbound_element_type %B.60e, %.535 [template]
 // CHECK:STDOUT:   %struct_type.a.be9: type = struct_type {.a: %.535} [template]
 // CHECK:STDOUT:   %complete_type.7ab: <witness> = complete_type_witness %struct_type.a.be9 [template]
@@ -367,8 +365,6 @@ fn G() {
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [concrete]
 // CHECK:STDOUT:   %.ae8: type = custom_layout_type {size=4, align=4, .t@0: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.ece: <witness> = complete_type_witness %.ae8 [concrete]
-// CHECK:STDOUT:   %pattern_type.b78: type = pattern_type %A [concrete]
-// CHECK:STDOUT:   %a.patt.fbf: %pattern_type.b78 = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:   %B.elem.1e0: type = unbound_element_type %B.bd8, %A [concrete]
 // CHECK:STDOUT:   %struct_type.a.b63: type = struct_type {.a: %A} [concrete]
 // CHECK:STDOUT:   %complete_type.594: <witness> = complete_type_witness %struct_type.a.b63 [concrete]
@@ -435,8 +431,6 @@ fn G() {
 // CHECK:STDOUT:   %.loc12_17.6: <instruction> = convert_to_value_action %.loc12_17.1, type [template]
 // CHECK:STDOUT:   %.loc12_17.7: type = splice_inst %.loc12_17.6 [template = %.loc12_17.7 (constants.%.535)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.loc12_17.7 [template = %require_complete (constants.%require_complete.01e)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %.loc12_17.7 [template = %pattern_type (constants.%pattern_type.281)]
-// CHECK:STDOUT:   %a.patt: @B.%pattern_type (%pattern_type.281) = ref_binding_pattern a [template = %a.patt (constants.%a.patt.438)]
 // CHECK:STDOUT:   %B: type = class_type @B, @B(%T.loc11_10.1) [symbolic = %B (constants.%B.60e)]
 // CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %.loc12_17.7 [template = %B.elem (constants.%B.elem.7af)]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @B.%.loc12_17.7 (%.535)} [template = %struct_type.a (constants.%struct_type.a.be9)]
@@ -494,8 +488,6 @@ fn G() {
 // CHECK:STDOUT:   %.loc12_17.6 => constants.%inst.splice_block.c26
 // CHECK:STDOUT:   %.loc12_17.7 => constants.%A
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.ece
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b78
-// CHECK:STDOUT:   %a.patt => constants.%a.patt.fbf
 // CHECK:STDOUT:   %B => constants.%B.bd8
 // CHECK:STDOUT:   %B.elem => constants.%B.elem.1e0
 // CHECK:STDOUT:   %struct_type.a => constants.%struct_type.a.b63

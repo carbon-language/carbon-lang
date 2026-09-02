@@ -74,7 +74,6 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.f84 [symbolic]
 // CHECK:STDOUT:   %require_complete.d83: <witness> = require_complete_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.2c66b4.2: type = pattern_type %T.as_type [symbolic]
-// CHECK:STDOUT:   %x.patt.f3e: %pattern_type.2c66b4.2 = ref_binding_pattern x [symbolic]
 // CHECK:STDOUT:   %Class.elem.1ee: type = unbound_element_type %Class.575, %T.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.e18: type = pattern_type %Class.575 [symbolic]
 // CHECK:STDOUT:   %self.param_patt.aaa: %pattern_type.e18 = value_param_pattern [symbolic]
@@ -127,7 +126,6 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
-// CHECK:STDOUT:   %x.patt.29f: %pattern_type.6b6 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %Class.elem.d3c: type = unbound_element_type %Class.e86, %i32 [concrete]
 // CHECK:STDOUT:   %Class.Get.type.45c: type = fn_type @Class.Get, @Class(%Copy.facet.1e1) [concrete]
 // CHECK:STDOUT:   %Class.Get.28a: %Class.Get.type.45c = struct_value () [concrete]
@@ -306,8 +304,6 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc5_10.2 => constants.%T.as_type
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.d83
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2c66b4.2
-// CHECK:STDOUT:   %x.patt => constants.%x.patt.f3e
 // CHECK:STDOUT:   %Class => constants.%Class.575
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.1ee
 // CHECK:STDOUT:   %Class.Get.type => constants.%Class.Get.type.0dd
@@ -352,8 +348,6 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc5_10.2 => constants.%i32
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
-// CHECK:STDOUT:   %x.patt => constants.%x.patt.29f
 // CHECK:STDOUT:   %Class => constants.%Class.e86
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.d3c
 // CHECK:STDOUT:   %Class.Get.type => constants.%Class.Get.type.45c

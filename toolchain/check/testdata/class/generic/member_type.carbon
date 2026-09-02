@@ -74,7 +74,6 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.f84 [symbolic]
 // CHECK:STDOUT:   %require_complete.d83: <witness> = require_complete_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.2c66b4.2: type = pattern_type %T.as_type [symbolic]
-// CHECK:STDOUT:   %n.patt.872: %pattern_type.2c66b4.2 = ref_binding_pattern n [symbolic]
 // CHECK:STDOUT:   %Inner.elem.51d: type = unbound_element_type %Inner.06b, %T.as_type [symbolic]
 // CHECK:STDOUT:   %struct_type.n.797: type = struct_type {.n: %T.as_type} [symbolic]
 // CHECK:STDOUT:   %complete_type.22c: <witness> = complete_type_witness %struct_type.n.797 [symbolic]
@@ -117,7 +116,6 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Inner.84a: type = class_type @Inner, @Inner(%Copy.facet.1e1) [concrete]
 // CHECK:STDOUT:   %Outer.F.type.791: type = fn_type @Outer.F, @Outer(%Copy.facet.1e1) [concrete]
 // CHECK:STDOUT:   %Outer.F.728: %Outer.F.type.791 = struct_value () [concrete]
-// CHECK:STDOUT:   %n.patt.e55: %pattern_type.6b6 = ref_binding_pattern n [concrete]
 // CHECK:STDOUT:   %Inner.elem.a49: type = unbound_element_type %Inner.84a, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.n.9ed: type = struct_type {.n: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.cdf: <witness> = complete_type_witness %struct_type.n.9ed [concrete]
@@ -252,8 +250,6 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %T: %Copy.type = symbolic_binding T, 0 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:   %T.as_type.loc6_12.2: type = facet_access_type %T [symbolic = %T.as_type.loc6_12.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc6_12.2 [symbolic = %require_complete (constants.%require_complete.d83)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc6_12.2 [symbolic = %pattern_type (constants.%pattern_type.2c66b4.2)]
-// CHECK:STDOUT:   %n.patt: @Inner.%pattern_type (%pattern_type.2c66b4.2) = ref_binding_pattern n [symbolic = %n.patt (constants.%n.patt.872)]
 // CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(%T) [symbolic = %Inner (constants.%Inner.06b)]
 // CHECK:STDOUT:   %Inner.elem: type = unbound_element_type %Inner, %T.as_type.loc6_12.2 [symbolic = %Inner.elem (constants.%Inner.elem.51d)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Inner.%T.as_type.loc6_12.2 (%T.as_type)} [symbolic = %struct_type.n (constants.%struct_type.n.797)]
@@ -402,8 +398,6 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %T => constants.%T.f84
 // CHECK:STDOUT:   %T.as_type.loc6_12.2 => constants.%T.as_type
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.d83
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2c66b4.2
-// CHECK:STDOUT:   %n.patt => constants.%n.patt.872
 // CHECK:STDOUT:   %Inner => constants.%Inner.06b
 // CHECK:STDOUT:   %Inner.elem => constants.%Inner.elem.51d
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.797
@@ -438,8 +432,6 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %T => constants.%Copy.facet.1e1
 // CHECK:STDOUT:   %T.as_type.loc6_12.2 => constants.%i32
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
-// CHECK:STDOUT:   %n.patt => constants.%n.patt.e55
 // CHECK:STDOUT:   %Inner => constants.%Inner.84a
 // CHECK:STDOUT:   %Inner.elem => constants.%Inner.elem.a49
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.9ed

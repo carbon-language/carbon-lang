@@ -42,9 +42,9 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %struct_type.n.next: type = struct_type {.n: %i32, .next: %ptr.7ee} [concrete]
 // CHECK:STDOUT:   %complete_type.dc3: <witness> = complete_type_witness %struct_type.n.next [concrete]
 // CHECK:STDOUT:   %n.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %n.patt.ae8: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   %next.param_patt: %pattern_type.8c5 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %next.patt.b38: %pattern_type.8c5 = wrapper_binding_pattern next, %next.param_patt [concrete]
+// CHECK:STDOUT:   %next.patt: %pattern_type.8c5 = wrapper_binding_pattern next, %next.param_patt [concrete]
 // CHECK:STDOUT:   %.d76: Core.Form = init_form %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.f15: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %return.param_patt.86e: %pattern_type.f15 = out_param_pattern [concrete]
@@ -102,9 +102,9 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%n.param_patt]
-// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt [concrete = constants.%n.patt.ae8]
+// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt [concrete = constants.%n.patt]
 // CHECK:STDOUT:     %next.param_patt: %pattern_type.8c5 = value_param_pattern [concrete = constants.%next.param_patt]
-// CHECK:STDOUT:     %next.patt: %pattern_type.8c5 = wrapper_binding_pattern next, %next.param_patt [concrete = constants.%next.patt.b38]
+// CHECK:STDOUT:     %next.patt: %pattern_type.8c5 = wrapper_binding_pattern next, %next.param_patt [concrete = constants.%next.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.f15 = out_param_pattern [concrete = constants.%return.param_patt.86e]
 // CHECK:STDOUT:     %return.patt: %pattern_type.f15 = return_slot_pattern %return.param_patt, %Class.ref.loc20_34 [concrete = constants.%return.patt.0b7]
 // CHECK:STDOUT:   } {
@@ -124,9 +124,9 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeReorder.decl: %MakeReorder.type = fn_decl @MakeReorder [concrete = constants.%MakeReorder] {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%n.param_patt]
-// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt [concrete = constants.%n.patt.ae8]
+// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt [concrete = constants.%n.patt]
 // CHECK:STDOUT:     %next.param_patt: %pattern_type.8c5 = value_param_pattern [concrete = constants.%next.param_patt]
-// CHECK:STDOUT:     %next.patt: %pattern_type.8c5 = wrapper_binding_pattern next, %next.param_patt [concrete = constants.%next.patt.b38]
+// CHECK:STDOUT:     %next.patt: %pattern_type.8c5 = wrapper_binding_pattern next, %next.param_patt [concrete = constants.%next.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.f15 = out_param_pattern [concrete = constants.%return.param_patt.86e]
 // CHECK:STDOUT:     %return.patt: %pattern_type.f15 = return_slot_pattern %return.param_patt, %Class.ref.loc24_41 [concrete = constants.%return.patt.0b7]
 // CHECK:STDOUT:   } {

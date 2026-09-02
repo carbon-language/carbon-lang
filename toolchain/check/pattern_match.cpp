@@ -423,9 +423,9 @@ auto MatchContext::DoPostWork(State state,
     // that `binding_pattern` is a constant inst. The bindings for constant
     // insts are not precomputed (see the documentation for bind_name_map), so
     // we have to emit a new one here.
-    context_.inst_block_stack().AddInstId(AddBindingForPattern(
-        context_, SemIR::LocId(entry.pattern_id), SemIR::ExprRegionId::None,
-        binding_pattern, scrutinee_type_id, value_id));
+    context_.inst_block_stack().AddInstId(
+        AddBindingForPattern(context_, SemIR::LocId(entry.pattern_id),
+                             binding_pattern, scrutinee_type_id, value_id));
     return;
   }
 
