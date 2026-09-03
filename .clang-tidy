@@ -95,6 +95,9 @@ Checks:
   - '-readability-enum-initial-value'
   # Warns too frequently.
   - '-readability-function-cognitive-complexity'
+  # Warns on use of CARBON_KIND() and can't use NOLINT effectively inside a
+  # macro.
+  - '-readability-inconsistent-ifelse-braces'
   # Warns in reasonably documented situations.
   - '-readability-magic-numbers'
   # Warns on `= {}` which is also used to indicate which fields do not need to
