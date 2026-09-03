@@ -50,6 +50,7 @@ fn G() {
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T.67d [symbolic]
 // CHECK:STDOUT:   %S.type: type = cpp_type_template_type S [concrete]
 // CHECK:STDOUT:   %S.template: %S.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.a92: type = template_inst %T.67d [symbolic]
 // CHECK:STDOUT:   %.de1: @F.%.loc8_24.5 (@F.%.loc8_24.5) = splice_inst @F.%.loc8_24.4 [template]
 // CHECK:STDOUT:   %.bc2: type = splice_inst @F.%.loc8_24.7 [template]
 // CHECK:STDOUT:   %require_complete.e38: <witness> = require_complete_type %.bc2 [template]
@@ -222,7 +223,8 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc7: <witness> = require_complete_type %T.loc7_7.1 [symbolic = %require_complete.loc7 (constants.%require_complete.944)]
-// CHECK:STDOUT:   %.loc8_24.4: <instruction> = call_action (%S.ref, %.loc8_23), false [template]
+// CHECK:STDOUT:   %.loc8_23.2: type = template_inst %T.loc7_7.1 [symbolic = %.loc8_23.2 (constants.%.a92)]
+// CHECK:STDOUT:   %.loc8_24.4: <instruction> = call_action (%S.ref, %.loc8_23.1), false [template]
 // CHECK:STDOUT:   %.loc8_24.5: type = type_of_inst %.loc8_24.4 [template]
 // CHECK:STDOUT:   %.loc8_24.6: @F.%.loc8_24.5 (@F.%.loc8_24.5) = splice_inst %.loc8_24.4 [template = %.loc8_24.6 (constants.%.de1)]
 // CHECK:STDOUT:   %.loc8_24.7: <instruction> = convert_to_value_action %.loc8_24.2, type [template]
@@ -284,7 +286,7 @@ fn G() {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %S.ref: %S.type = name_ref S, imports.%S.template [concrete = constants.%S.template]
 // CHECK:STDOUT:       %T.ref.loc8: type = name_ref T, %T.loc7_7.2 [symbolic = %T.loc7_7.1 (constants.%T.67d)]
-// CHECK:STDOUT:       %.loc8_23: type = template_inst %T.ref.loc8 [symbolic = %T.loc7_7.1 (constants.%T.67d)]
+// CHECK:STDOUT:       %.loc8_23.1: type = template_inst %T.ref.loc8 [symbolic = %.loc8_23.2 (constants.%.a92)]
 // CHECK:STDOUT:       %.loc8_24.2: @F.%.loc8_24.5 (@F.%.loc8_24.5) = splice_inst %.loc8_24.4 [template = %.loc8_24.6 (constants.%.de1)]
 // CHECK:STDOUT:       %.loc8_24.3: type = splice_inst %.loc8_24.7 [template = %.loc8_24.8 (constants.%.bc2)]
 // CHECK:STDOUT:     }
@@ -317,6 +319,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc7 => constants.%complete_type
+// CHECK:STDOUT:   %.loc8_23.2 => constants.%X
 // CHECK:STDOUT:   %.loc8_24.4 => constants.%inst.splice_block.5af
 // CHECK:STDOUT:   %.loc8_24.5 => type
 // CHECK:STDOUT:   %.loc8_24.6 => constants.%S
