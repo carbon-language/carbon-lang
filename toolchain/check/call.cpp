@@ -4,8 +4,10 @@
 
 #include "toolchain/check/call.h"
 
+#include <algorithm>
 #include <optional>
 
+#include "common/check.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
@@ -59,10 +61,17 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::SpecificId> {
   // Check that the arity matches the explicit arguments.
-  auto param_patterns =
-      context.inst_blocks().GetOrEmpty(entity.param_patterns_id);
-  size_t expected_args_size =
-      param_patterns.size() - (self_id.has_value() ? 1 : 0);
+  size_t expected_args_size;
+  if (entity_kind_for_diagnostic == EntityKind::Function &&
+      !entity.param_patterns_id.has_value()) {
+    const auto& function = static_cast<const SemIR::Function&>(entity);
+    expected_args_size = GetHighestPositionalParamNumber(context, function) + 1;
+  } else {
+    auto param_patterns =
+        context.inst_blocks().GetOrEmpty(entity.param_patterns_id);
+    expected_args_size = param_patterns.size() - (self_id.has_value() ? 1 : 0);
+  }
+
   if (arg_ids.size() != expected_args_size) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument{0:s} passed to "

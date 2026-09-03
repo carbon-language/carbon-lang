@@ -2583,6 +2583,20 @@ struct WrapperBindingPattern {
   InstId subpattern_id;
 };
 
+// A positional parameter.
+struct PositionalParam {
+  static constexpr auto Kind =
+      InstKind::PositionalParam.Define<Parse::PositionalParamExprId>(
+          {.ir_name = "positional_param",
+           .expr_category = ExprCategory::DurableRef,
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  // Always the builtin type TypeType.
+  TypeId type_id;
+  IntId int_id;
+};
+
 // These concepts are an implementation detail of the library, not public API.
 namespace Internal {
 

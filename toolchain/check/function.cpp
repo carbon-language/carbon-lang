@@ -484,9 +484,32 @@ auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
   auto& function = context.functions().Get(function_id);
   function.body_block_ids = context.region_stack().PopRegion();
   function.observe_block_id = observe_block_id;
+  if (!function.param_patterns_id.has_value()) {
+    function.positional_params_id = context.args_type_info_stack().Pop();
+  }
 
   // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);
+}
+
+auto GetHighestPositionalParamNumber(Context& context,
+                                     const SemIR::Function& function)
+    -> size_t {
+  auto positional_params =
+      context.inst_blocks().GetOrEmpty(function.positional_params_id);
+  size_t max = 0;
+  for (auto param_id : positional_params) {
+    auto param = context.insts().Get(param_id);
+    CARBON_CHECK(param.kind() == SemIR::InstKind::PositionalParam);
+    auto int_id = param.As<SemIR::PositionalParam>().int_id;
+    if (int_id.is_embedded_value()) {
+      max = std::max(max, static_cast<size_t>(int_id.AsValue()));
+    } else {
+      auto apint = context.ints().Get(int_id);
+      max = std::max(max, static_cast<size_t>(apint.getZExtValue()));
+    }
+  }
+  return max;
 }
 
 }  // namespace Carbon::Check

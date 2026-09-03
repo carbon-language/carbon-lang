@@ -18,6 +18,7 @@
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/function.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -2380,13 +2381,21 @@ auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
                      SemIR::SpecificId callee_specific_id, bool is_desugared)
     -> SemIR::InstBlockId {
   // The caller should have ensured this callee has the right arity.
-  CARBON_CHECK(
-      (self_id.has_value() ? 1 : 0) + arg_refs.size() ==
-      context.inst_blocks().GetOrEmpty(callee.param_patterns_id).size());
+  auto param_block_id = SemIR::InstBlockId::None;
+  if (callee.param_patterns_id.has_value()) {
+    CARBON_CHECK(
+        (self_id.has_value() ? 1 : 0) + arg_refs.size() ==
+        context.inst_blocks().GetOrEmpty(callee.param_patterns_id).size());
+    param_block_id = callee.param_patterns_id;
+  } else {
+    CARBON_CHECK(arg_refs.size() ==
+                 (GetHighestPositionalParamNumber(context, callee) + 1));
+    param_block_id = callee.positional_params_id;
+  }
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
-                            callee.param_patterns_id, callee.return_pattern_id,
-                            self_id, arg_refs, return_arg_id, is_desugared);
+                            param_block_id, callee.return_pattern_id, self_id,
+                            arg_refs, return_arg_id, is_desugared);
 }
 
 auto TypeExpr::ForUnsugared(Context& context, SemIR::TypeId type_id)
