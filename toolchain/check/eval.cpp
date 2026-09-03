@@ -3511,19 +3511,25 @@ auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
 
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
-                             SemIR::GenericInstIndex::Region region)
-    -> std::pair<SemIR::InstBlockId, bool> {
+                             SemIR::GenericInstIndex::Region region) -> void {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
   auto eval_block_id = context.generics().Get(generic_id).GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
 
-  llvm::SmallVector<SemIR::InstId> result;
-  result.resize(eval_block.size(), SemIR::InstId::None);
+  // Allocate the value block and store it back onto the specific, so that our
+  // in-progress results are visible.
+  auto& specific = context.specifics().Get(specific_id);
+  auto value_block_id = context.inst_blocks().AddUninitialized(eval_block.size());
+  auto value_block = context.inst_blocks().GetMutable(value_block_id);
+  for (auto& inst_id : value_block) {
+    inst_id = SemIR::InstId::None;
+  }
+  specific.SetValueBlock(region, value_block_id);
 
   EvalContext eval_context(&context, loc_id, specific_id,
                            SpecificEvalInfo{
                                .region = region,
-                               .values = result,
+                               .values = value_block,
                            });
 
   Diagnostics::ContextScope diagnostic_context(
@@ -3534,19 +3540,17 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
         builder.Context(loc_id, ResolvingSpecificHere, specific_id);
       });
 
-  bool has_error = false;
-  for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
+  for (auto [i, inst_id, result_id] :
+       llvm::enumerate(eval_block, value_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     CARBON_CHECK(const_id.has_value(), "Failed to evaluate {0} in eval block",
                  context.insts().Get(inst_id));
     if (const_id == SemIR::ErrorInst::ConstantId) {
-      has_error = true;
+      specific.SetHasError(region);
     }
-    result[i] = context.constant_values().GetInstId(const_id);
+    result_id = context.constant_values().GetInstId(const_id);
   }
-
-  return {context.inst_blocks().Add(result), has_error};
 }
 
 // Information about the function call we are currently executing. Unlike
