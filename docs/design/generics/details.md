@@ -1123,7 +1123,8 @@ instead.
 
 ### Constraints that don't depend on `.Self`
 
-> **TODO:** Link to section explaining when identifying a facet type happens when
+> **TODO:** Link to section explaining when identifying a facet type happens
+> when
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md)
 > is applied to these docs.
 
@@ -1139,11 +1140,11 @@ constraint N(T: type) {
 }
 ```
 
-When the above named constraint is identified as part of a facet type as
-`C impls N(.Self)`, the resulting requirement `Z where .Z1 = {}` is only
+When the above named constraint is identified as part of a facet type as `C
+impls N(.Self)`, the resulting requirement `Z where .Z1 = {}` is only
 constraining `C`, and not `.Self` from the top-level top-level facet type. So we
-require that `C impls (Z where .Z1 = {})` is already true in order to successfully
-identify.
+require that `C impls (Z where .Z1 = {})` is already true in order to
+successfully identify.
 
 ```carbon
 interface Z(V: type) {
@@ -1799,9 +1800,10 @@ be detected in function overloading.
 Since interfaces may only be implemented for a type once, and we limit where
 implementations may be added to a type, there is a need to allow the user to
 switch the type of a value to access different interface implementations. Carbon
-therefore provides [adapters](/docs/design/classes.md#adapters) as a way to create new types
-[compatible with](/docs/design/classes.md#compatible-types) existing types with different
-APIs, in particular with different interface implementations:
+therefore provides [adapters](/docs/design/classes.md#adapters) as a way to
+create new types [compatible with](/docs/design/classes.md#compatible-types)
+existing types with different APIs, in particular with different interface
+implementations:
 
 ```carbon
 interface Printable {
@@ -2675,9 +2677,9 @@ member of another. The `where` operator is not associative, so a type expression
 using multiple must use round parens `(`...`)` to specify grouping.
 
 The scope of a facet type formed by a `where` declaration
-[extends](/docs/design/expressions/member_access.md#extend) the scope of its first
-operand, and the resulting facet type is complete if that scope it extends is
-complete.
+[extends](/docs/design/expressions/member_access.md#extend) the scope of its
+first operand, and the resulting facet type is complete if that scope it extends
+is complete.
 
 > **Comparison with other languages:** Both Swift and Rust use `where` clauses
 > on declarations instead of in the expression syntax. These happen after the
@@ -2863,7 +2865,8 @@ constraint ContainerIsSlice {
 
 The `.Self` construct follows these rules:
 
--   A checked binding `X` introduces a checked generic binding `.Self: type`, where
+-   A checked binding `X` introduces a checked generic binding `.Self: type`,
+    where
 
     references to `.Self` are resolved to `X`. This allows you to use `.Self` as
     an interface parameter as in `X: I(.Self)`.
@@ -3967,11 +3970,11 @@ fn DownCast[T: type](p: T*, generic U: type where .Self extends T) -> U*;
 
 Given a type `U`, define the facet type `CompatibleWith(U)` as follows:
 
-> `CompatibleWith(U)` is a facet type whose values are facets `T` such that
-> `T as type` and `U as type` are
-> [compatible types](/docs/design/classes.md#compatible-types). That is values of `T` and
-> `U` as types can be cast back and forth without any change in representation
-> (for example `T` is an [adapter](#adapting-types) for `U`).
+> `CompatibleWith(U)` is a facet type whose values are facets `T` such that `T
+> as type` and `U as type` are
+> [compatible types](/docs/design/classes.md#compatible-types). That is values
+> of `T` and `U` as types can be cast back and forth without any change in
+> representation (for example `T` is an [adapter](#adapting-types) for `U`).
 
 `CompatibleWith` determines an equivalence relationship between types.
 Specifically, given two types `T1` and `T2`, they are equivalent if
@@ -4819,7 +4822,8 @@ difference.
 #### Prioritization rule
 
 > **TODO:** Document the changes to prioritization adopted in
-> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md) and
+> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md)
+> and
 > [#7493: Disallow impl in match_first twice](/proposals/p007493-disallow-impl-in-match-first-twice.md).
 
 Since at most one library can contain `impl` definitions with a given type

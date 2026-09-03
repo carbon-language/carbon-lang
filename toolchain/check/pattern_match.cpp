@@ -203,6 +203,8 @@ class MatchContext {
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::ImportRefLoaded import_ref,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
+  auto DoPreWork(State state, SemIR::DefaultValuePattern default_value_pattern,
+                 SemIR::InstId scrutinee_id, WorkItem entry) -> void;
 
   // Do the post-work for `entry`. `entry.work` must be a `PostWork`, and
   // the pattern argument must be the value of `entry.pattern_id` in `context_`.
@@ -221,6 +223,8 @@ class MatchContext {
   auto DoPostWork(State state, SemIR::SpecificConstant specific_constant,
                   WorkItem entry) -> void;
   auto DoPostWork(State state, SemIR::ImportRefLoaded import_ref,
+                  WorkItem entry) -> void;
+  auto DoPostWork(State state, SemIR::DefaultValuePattern default_value_pattern,
                   WorkItem entry) -> void;
 
   // Performs the core logic of matching a variable pattern whose scrutinee
@@ -922,6 +926,70 @@ auto MatchContext::DoPostWork(State /*state*/,
   specific_id_stack_.pop_back();
 }
 
+auto MatchContext::DoPreWork(State state,
+                             SemIR::DefaultValuePattern default_value_pattern,
+                             SemIR::InstId scrutinee_id, WorkItem entry)
+    -> void {
+  if (!std::holds_alternative<CalleeState*>(state)) {
+    CARBON_FATAL("Unhandled state kind in DefaultValuePattern pre-work");
+  }
+  // We will need to check the type of the parameter to make sure it
+  // matches the provided default, so add ourselves to the post-work list.
+  results_stack_.PushArray();
+  AddAsPostWork(entry);
+
+  // Process the subpattern for the default.
+  AddWork({.pattern_id = default_value_pattern.subpattern_id,
+           .work = PreWork{.scrutinee_id = scrutinee_id},
+           .allow_unmarked_ref = entry.allow_unmarked_ref});
+}
+
+auto MatchContext::DoPostWork(State state,
+                              SemIR::DefaultValuePattern default_value_pattern,
+                              WorkItem entry) -> void {
+  if (!std::holds_alternative<CalleeState*>(state)) {
+    CARBON_FATAL("Unhandled state kind in DefaultValuePattern post-work");
+  }
+  // Extract the type of the parameter from the parameter instruction.
+  auto param_inst_id = results_stack_.PeekArray().back();
+  auto param_type_id = context_.insts().Get(param_inst_id).type_id();
+
+  auto default_value_inst_id =
+      context_.full_pattern_stack()
+          .GetDefaultValues()[default_value_pattern.default_value_id.index];
+  // If a constant was specified, we should be able to convert it into the
+  // type of the parameter.
+  if (default_value_inst_id != SemIR::InstId::None) {
+    // We should be able to convert the supplied constant into the type of
+    // the parameter.
+    auto converted_id = TryConvertToValueOfType(
+        context_, context_.insts().GetCanonicalLocId(default_value_inst_id),
+        default_value_inst_id, param_type_id);
+    if (converted_id == SemIR::ErrorInst::InstId) {
+      CARBON_DIAGNOSTIC(
+          PatternDefaultValueTypeMismatch, Error,
+          "default value expression type {0} doesn't match pattern type {1}",
+          TypeOfInstId, TypeOfInstId);
+
+      // TODO: should be able to provide precise locations for both default
+      // value expression and the type of the pattern, but we can't because
+      // they are both constants.
+      context_.emitter().Emit(
+          LocIdForDiagnostics(
+              context_.insts().GetCanonicalLocId(entry.pattern_id)),
+          PatternDefaultValueTypeMismatch, default_value_inst_id,
+          param_inst_id);
+    }
+  }
+  results_stack_.PopArray();
+
+  // If something at a higher level in the stack needed these results, bubble
+  // up the parameter instruction we popped off our own results array.
+  if (need_subpattern_results()) {
+    results_stack_.AppendToTop(param_inst_id);
+  }
+}
+
 auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
   if (entry.pattern_id == SemIR::ErrorInst::InstId) {
     if (need_subpattern_results()) {
@@ -980,6 +1048,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
           DoPreWork(state, import_ref, work.scrutinee_id, entry);
           break;
         }
+        case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
+          DoPreWork(state, default_value_pattern, work.scrutinee_id, entry);
+          break;
+        }
         default: {
           CARBON_FATAL("Inst kind not handled: {0}", pattern.kind());
         }
@@ -1018,6 +1090,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
         }
         case CARBON_KIND(SemIR::ImportRefLoaded import_ref): {
           DoPostWork(state, import_ref, entry);
+          break;
+        }
+        case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
+          DoPostWork(state, default_value_pattern, entry);
           break;
         }
         default: {

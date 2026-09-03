@@ -108,15 +108,19 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
-// CHECK:STDOUT:   %.loc5: %SomeClass.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   %.loc6: %SomeClass.elem = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   %field_decl.loc5: %SomeClass.elem = field_decl a, element0, %i32.loc5 in [concrete] {
+// CHECK:STDOUT:     %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %field_decl.loc6: %SomeClass.elem = field_decl b, element1, %i32.loc6 in [concrete] {
+// CHECK:STDOUT:     %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.7b9]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
-// CHECK:STDOUT:   .a = %.loc5
-// CHECK:STDOUT:   .b = %.loc6
+// CHECK:STDOUT:   .a = %field_decl.loc5
+// CHECK:STDOUT:   .b = %field_decl.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClassAdapter {

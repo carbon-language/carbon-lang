@@ -43,7 +43,7 @@ struct LeafNode {
 //
 // Each of these types should start with a `static constexpr Kind` member
 // initialized by calling `Define` on the corresponding `NodeKind`, and passing
-// in the `NodeCategory` of that kind.  This will both associate the category
+// in the `NodeCategory` of that kind. This will both associate the category
 // with the node kind and create the necessary kind object for the typed node.
 //
 // This should be followed by field declarations that describe the child nodes,
@@ -371,6 +371,20 @@ struct UnusedPattern {
 
   Lex::UnusedTokenIndex token;
   AnyPatternId inner;
+};
+
+using DefaultValueUnspecified =
+    LeafNode<NodeKind::DefaultValueUnspecified, Lex::UnderscoreTokenIndex,
+             NodeCategory::Expr>;
+
+// A pattern with a default value specified: `pattern = expr`.
+struct DefaultValuePattern {
+  static constexpr auto Kind = NodeKind::DefaultValuePattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 2});
+
+  AnyPatternId pattern;
+  Lex::EqualTokenIndex token;
+  AnyExprId default_value_expr;
 };
 
 // A ref binding name: `ref name`.
@@ -1520,7 +1534,7 @@ struct StructPatternDesignatedField {
 using StructPatternFieldId =
     NodeIdOneOf<StructPatternDesignatedField, LetBindingPattern,
                 VariablePattern, VarBindingPattern, UnusedPattern,
-                UnderscoreName>;
+                UnderscoreName, DefaultValuePattern>;
 
 struct StructPattern {
   static constexpr auto Kind = NodeKind::StructPattern.Define(

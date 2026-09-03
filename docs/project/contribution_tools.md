@@ -151,6 +151,21 @@ bazel test //...:all
 
 <!-- google-doc-style-resume -->
 
+You will need to have [Python](https://docs.python.org/3/using/mac.html)
+installed, and to install root certificates in order to use `prek`
+before submitting a PR. To do so, from a terminal run the
+`Install Certificates.command` found at
+`/Applications/Python 3.x/Install Certificates.command`, where `x` is the
+version of Python being used by `prek`. If you're unsure, just do this for
+all installed versions.
+
+If you don't install certificates, `prek` can fail when attempting to make
+https connections with an error like:
+
+```
+urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate
+```
+
 ### Windows
 
 The easiest way to build Carbon on Windows is using WSL. Use `wsl --install` to
@@ -210,8 +225,8 @@ To use it:
 
 A typical commit workflow looks like:
 
-1.  `git commit` to try committing files. This automatically executes `prek run`,
-    which may fail and leave files modified for cleanup.
+1.  `git commit` to try committing files. This automatically executes `prek
+    run`, which may fail and leave files modified for cleanup.
 2.  `git add .` to add the automatic modifications done by hooks.
 3.  `git commit` again.
 
@@ -235,16 +250,16 @@ considering if they fit your workflow.
     -   **WARNING**: Bugs in `rs-git-fsmonitor` and/or Watchman can result in
         `prek` deleting files. If you see files being deleted, disable
         `rs-git-fsmonitor` with `git config --unset core.fsmonitor`.
--   [rumdl](https://github.com/rvben/rumdl): A Markdown formatter, which we use for
-    formatting Markdown files. If you want to format files directly or use it in
-    your editor, you can install it:
+-   [rumdl](https://github.com/rvben/rumdl): A Markdown formatter, which we use
+    for formatting Markdown files. If you want to format files directly or use
+    it in your editor, you can install it:
     -   With `cargo` (preferred): `cargo install --locked rumdl`
     -   With `brew` (on macOS): `brew install rumdl`
     -   For Vim/Neovim, it is recommended to connect using its built-in Language
-        Server Protocol (LSP) capabilities (by way of `rumdl server`). It is supported
-        by [Mason](https://github.com/williamboman/mason.nvim) (as `rumdl`) and
-        can be configured by way of `nvim-lspconfig` or formatting plugins like
-        `conform.nvim`. For more details, see the
+        Server Protocol (LSP) capabilities (by way of `rumdl server`). It is
+        supported by [Mason](https://github.com/williamboman/mason.nvim) (as
+        `rumdl`) and can be configured by way of `nvim-lspconfig` or formatting
+        plugins like `conform.nvim`. For more details, see the
         [rumdl editor integration documentation](https://github.com/rvben/rumdl#editor-integration).
 -   [vim-prettier](https://github.com/prettier/vim-prettier): A vim integration
     for [Prettier](https://prettier.io/), which we use for formatting.

@@ -215,8 +215,8 @@ interoperable code, adhere strictly to these rules:
     be mentioned if it wouldn't otherwise be clear:
     -   _Situation-only_: `"redeclaration of X"` (implies that redeclaration is
         not permitted).
-    -   _Rule-inclusion_:
-        ``"`self` declared in invalid context; can only be declared in implicit parameter list"``.
+    -   _Rule-inclusion_: ``"`self` declared in invalid context; can only be
+        declared in implicit parameter list"``.
 -   **Wording Choice ("cannot" vs "allowed")**: Explicitly avoid `"allowed"`,
     `"legal"`, `"permitted"`, `"valid"`, and related passive wording. You may
     use `"cannot"` if needed, but try to use phrasing that does not require it:
@@ -228,8 +228,8 @@ interoperable code, adhere strictly to these rules:
 -   **Developer Intent Hints**: It is acceptable for a diagnostic to guess at
     the developer's intent and provide a hint _after_ explaining the situation
     and the rule, but never as a substitute for that:
-    -   _Correct_:
-        ``"cannot implicitly convert `i32` to `String`; add `as String` for explicit conversion"``
+    -   _Correct_: ``"cannot implicitly convert `i32` to `String`; add `as
+        String` for explicit conversion"``
     -   _Incorrect_: ``"add `as String` to convert `i32` to `String`"`` (Lacks
         the core violation message).
 -   **Structure for Tooling API**: Try to structure diagnostics such that

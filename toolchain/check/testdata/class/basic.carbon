@@ -162,7 +162,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %return.param.loc20: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc20: ref %i32 = return_slot %return.param.loc20
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22: %Class.elem = field_decl k, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %Class.elem = field_decl k, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.k [concrete = constants.%complete_type.d82]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -170,7 +172,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %Class.F.decl
 // CHECK:STDOUT:   .G = %Class.G.decl
-// CHECK:STDOUT:   .k = %.loc22
+// CHECK:STDOUT:   .k = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.F(%n.param: %i32) -> out %return.param: %i32 {

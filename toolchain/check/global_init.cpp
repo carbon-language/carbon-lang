@@ -51,6 +51,7 @@ auto GlobalInit::Finalize() -> void {
         .first_owning_decl_id = SemIR::InstId::None},
        {.call_param_patterns_id = SemIR::InstBlockId::Empty,
         .call_params_id = SemIR::InstBlockId::Empty,
+        .call_param_default_values_id = SemIR::InstBlockId::None,
         .call_param_ranges = SemIR::Function::CallParamIndexRanges::Empty,
         .return_type_inst_id = SemIR::TypeInstId::None,
         .return_form_inst_id = SemIR::InstId::None,

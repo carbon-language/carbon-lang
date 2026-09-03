@@ -395,7 +395,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %bar.ref: %ptr.ec1 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc8_47.1: ref %DataMemberBar = deref %bar.ref
-// CHECK:STDOUT:   %foo.ref: %DataMemberBar.elem = name_ref foo, @DataMemberBar.%.1 [concrete = @DataMemberBar.%.1]
+// CHECK:STDOUT:   %foo.ref: %DataMemberBar.elem = name_ref foo, @DataMemberBar.%field_decl [concrete = @DataMemberBar.%field_decl]
 // CHECK:STDOUT:   %.loc8_47.2: ref %ptr.ec1 = class_element_access %.loc8_47.1, element0
 // CHECK:STDOUT:   %.loc8_47.3: %ptr.ec1 = acquire_value %.loc8_47.2
 // CHECK:STDOUT:   %.loc8_40: type = splice_block %ptr.loc8 [concrete = constants.%ptr.ec1] {

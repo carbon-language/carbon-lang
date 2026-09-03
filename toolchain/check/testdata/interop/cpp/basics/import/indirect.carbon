@@ -199,7 +199,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %.loc10_12.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %F.call: init %X to %.loc10_12.1 = call %F.ref()
 // CHECK:STDOUT:   %.loc10_12.2: ref %X = temporary %.loc10_12.1, %F.call
-// CHECK:STDOUT:   %x.ref: %X.elem = name_ref x, @X.%.1 [concrete = @X.%.1]
+// CHECK:STDOUT:   %x.ref: %X.elem = name_ref x, @X.%field_decl [concrete = @X.%field_decl]
 // CHECK:STDOUT:   %.loc10_13.1: ref %i32 = class_element_access %.loc10_12.2, element0
 // CHECK:STDOUT:   %.loc10_13.2: %i32 = acquire_value %.loc10_13.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -319,7 +319,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:     %ax.var_patt: %pattern_type.88a = var_pattern %ax.patt [concrete = constants.%ax.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ax.ref.loc10_11: ref %X = name_ref ax, %ax
-// CHECK:STDOUT:   %x.ref: %X.elem = name_ref x, @X.%.1 [concrete = @X.%.1]
+// CHECK:STDOUT:   %x.ref: %X.elem = name_ref x, @X.%field_decl [concrete = @X.%field_decl]
 // CHECK:STDOUT:   %.loc10_13.1: ref %i32 = class_element_access %ax.ref.loc10_11, element0
 // CHECK:STDOUT:   %ax.ref.loc10_17: ref %X = name_ref ax, %ax
 // CHECK:STDOUT:   %g.ref: %X.g.cpp_overload_set.type = name_ref g, imports.%X.g.cpp_overload_set.value [concrete = constants.%X.g.cpp_overload_set.value]
@@ -411,7 +411,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %.loc9_12.1: ref %Y.90c = temporary_storage
 // CHECK:STDOUT:   %G.call: init %Y.90c to %.loc9_12.1 = call %G.ref()
 // CHECK:STDOUT:   %.loc9_12.2: ref %Y.90c = temporary %.loc9_12.1, %G.call
-// CHECK:STDOUT:   %y.ref: %Y.elem.ab3 = name_ref y, @Y.1.%.1 [concrete = @Y.1.%.1]
+// CHECK:STDOUT:   %y.ref: %Y.elem.ab3 = name_ref y, @Y.1.%field_decl [concrete = @Y.1.%field_decl]
 // CHECK:STDOUT:   %.loc9_13.1: ref %i32 = class_element_access %.loc9_12.2, element0
 // CHECK:STDOUT:   %.loc9_13.2: %i32 = acquire_value %.loc9_13.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -430,7 +430,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   %.loc15_12.1: ref %Y.e8d = temporary_storage
 // CHECK:STDOUT:   %H.call: init %Y.e8d to %.loc15_12.1 = call %H.ref()
 // CHECK:STDOUT:   %.loc15_12.2: ref %Y.e8d = temporary %.loc15_12.1, %H.call
-// CHECK:STDOUT:   %y.ref: %Y.elem.9a6 = name_ref y, @Y.2.%.1 [concrete = @Y.2.%.1]
+// CHECK:STDOUT:   %y.ref: %Y.elem.9a6 = name_ref y, @Y.2.%field_decl [concrete = @Y.2.%field_decl]
 // CHECK:STDOUT:   %.loc15_13.1: ref %Z = class_element_access %.loc15_12.2, element0
 // CHECK:STDOUT:   %.loc15_13.2: %Z = acquire_value %.loc15_13.1
 // CHECK:STDOUT:   <elided>

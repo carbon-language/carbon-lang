@@ -90,6 +90,7 @@ struct FunctionSignatureInsts {
   SemIR::InstBlockId param_patterns_id = SemIR::InstBlockId::None;
   SemIR::InstBlockId call_param_patterns_id = SemIR::InstBlockId::None;
   SemIR::InstBlockId call_params_id = SemIR::InstBlockId::None;
+  SemIR::InstBlockId call_param_default_values_id = SemIR::InstBlockId::None;
   SemIR::Function::CallParamIndexRanges call_param_ranges =
       SemIR::Function::CallParamIndexRanges::Empty;
   SemIR::TypeInstId return_type_inst_id = SemIR::TypeInstId::None;
@@ -150,6 +151,7 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
                          insts.param_patterns_id, insts.return_pattern_id);
   insts.call_param_patterns_id = match_results.call_param_patterns_id;
   insts.call_params_id = match_results.call_params_id;
+  insts.call_param_patterns_id = match_results.call_param_patterns_id;
   insts.call_param_ranges = match_results.param_ranges;
 
   auto [pattern_block_id, decl_block_id] =
@@ -188,6 +190,8 @@ auto MakeGeneratedFunctionDecl(Context& context, SemIR::LocId loc_id,
           {
               .call_param_patterns_id = insts.call_param_patterns_id,
               .call_params_id = insts.call_params_id,
+              .call_param_default_values_id =
+                  insts.call_param_default_values_id,
               .call_param_ranges = insts.call_param_ranges,
               .return_type_inst_id = insts.return_type_inst_id,
               .return_form_inst_id = insts.return_form_inst_id,

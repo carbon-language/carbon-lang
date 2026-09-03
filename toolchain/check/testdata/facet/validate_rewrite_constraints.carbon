@@ -107,13 +107,17 @@ library "[[@TEST_NAME]]";
 interface I { let X: type; }
 interface J { let Y: type; }
 
-// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+8]]:30: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+12]]:30: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
 // CHECK:STDERR: fn F(generic T: I & J where .(I.X) = .(J.Y)) {
 // CHECK:STDERR:                              ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+4]]:30: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+8]]:30: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: fn F(generic T: I & J where .(I.X) = .(J.Y)) {
 // CHECK:STDERR:                              ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+4]]:39: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fn F(generic T: I & J where .(I.X) = .(J.Y)) {
+// CHECK:STDERR:                                       ^
 // CHECK:STDERR:
 fn F(generic T: I & J where .(I.X) = .(J.Y)) {
   // Allowed since `T impls I`, `T impls J`, and has constraint providing
@@ -141,13 +145,17 @@ interface I(T: type) { let X: type; }
 
 final impl forall [J: I(())] J as I({}) where .X = {} {}
 
-// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+8]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+12]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
 // CHECK:STDERR: fn F(generic T: I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
 // CHECK:STDERR:                                      ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+4]]:38: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+8]]:38: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: fn F(generic T: I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
 // CHECK:STDERR:                                      ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+4]]:58: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fn F(generic T: I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
+// CHECK:STDERR:                                                          ^
 // CHECK:STDERR:
 fn F(generic T: I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
 

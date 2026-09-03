@@ -30,7 +30,7 @@ choice Colors {
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
-// CHECK:STDOUT: Content-Length: 352{{\r}}
+// CHECK:STDOUT: Content-Length: 394{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
@@ -39,6 +39,7 @@ choice Colors {
 // CHECK:STDOUT:     "capabilities": {
 // CHECK:STDOUT:       "declarationProvider": true,
 // CHECK:STDOUT:       "definitionProvider": true,
+// CHECK:STDOUT:       "documentFormattingProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
 // CHECK:STDOUT:       "hoverProvider": true,
 // CHECK:STDOUT:       "positionEncoding": "utf-16",
