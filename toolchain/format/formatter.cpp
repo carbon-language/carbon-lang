@@ -33,8 +33,7 @@ auto Formatter::Run() -> bool {
       EmitComment();
     }
 
-    int token_start_line = tokens_->GetLineNumber(token);
-
+    int token_start_line = tokens_->GetLine(token).index;
     switch (token_kind) {
       case Lex::TokenKind::FileStart:
         break;
