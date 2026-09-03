@@ -107,6 +107,7 @@ fn A {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %positional_param_3: ref type = positional_param 3 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -115,6 +116,7 @@ fn A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %positional_param_3: ref type = positional_param 3 [concrete = constants.%positional_param_3]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
