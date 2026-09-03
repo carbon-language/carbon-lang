@@ -22,6 +22,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/observe.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/pending_block.h"
@@ -2213,6 +2214,44 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
        SemIR::InitRepr::ForType(context.sem_ir(), target.type_id).kind ==
            SemIR::InitRepr::None)) {
     target.storage_id = SemIR::InstId::None;
+  }
+
+  // Check visible `observe` declarations for an explicit equivalence between
+  // the source type and the target type.
+  auto expr_type_id = context.insts().GetAttachedType(expr_id);
+  auto expr_type_inst_id = expr_type_id != SemIR::TypeType::TypeId
+                               ? context.types().GetTypeInstId(expr_type_id)
+                               : expr_id;
+  auto target_type_inst_id = sem_ir.types().GetTypeInstId(target.type_id);
+  if (expr_type_inst_id != target_type_inst_id &&
+      context.constant_values()
+          .GetConstantInstId(expr_type_inst_id)
+          .has_value() &&
+      context.constant_values()
+          .GetConstantInstId(target_type_inst_id)
+          .has_value()) {
+    auto expr_canonical_inst_id =
+        GetCanonicalFacetOrTypeValue(context, expr_type_inst_id);
+    auto expr_canonical_type_id =
+        context.insts().GetAttachedType(expr_canonical_inst_id);
+
+    auto target_canonical_type_id = context.insts().GetAttachedType(
+        GetCanonicalFacetOrTypeValue(context, target_type_inst_id));
+    if (target_canonical_type_id == SemIR::TypeType::TypeId) {
+      // Target is already in canonical form.
+      target_canonical_type_id = target.type_id;
+    }
+
+    for (auto observe_id : GetObserveIds(context, expr_canonical_inst_id)) {
+      const auto& observe = context.observes().Get(observe_id);
+      auto [observe_operand_ids, _] = UnpackObserve(context, observe);
+      if (CheckObserveEquivalence(context, observe_operand_ids,
+                                  expr_canonical_type_id,
+                                  target_canonical_type_id)) {
+        return AddInst<SemIR::AsCompatible>(
+            context, loc_id, {.type_id = target.type_id, .source_id = expr_id});
+      }
+    }
   }
 
   // The source type doesn't need to be complete, but its completeness can
