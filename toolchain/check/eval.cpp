@@ -3039,6 +3039,8 @@ static auto ConvertEvalResultToConstantId(Context& context,
   if (result.is_new()) {
     auto is_symbolic_only =
         orig_inst_kind.constant_kind() == SemIR::InstConstantKind::SymbolicOnly;
+    auto is_template_only =
+        orig_inst_kind.constant_kind() == SemIR::InstConstantKind::TemplateOnly;
     auto new_phase = result.same_phase_as_inst()
                          ? orig_phase
                          : ComputeInstPhase(context, result.new_inst());
@@ -3046,6 +3048,13 @@ static auto ConvertEvalResultToConstantId(Context& context,
                      result.new_inst().kind() != orig_inst_kind,
                  "SymbolicOnly instruction `{0}` has a concrete value",
                  orig_inst_kind);
+    CARBON_CHECK(!is_template_only || new_phase > Phase::Concrete ||
+                     result.new_inst().kind() != orig_inst_kind,
+                 "TemplateOnly instruction `{0}` has a concrete value",
+                 orig_inst_kind);
+    if (is_template_only && new_phase < Phase::TemplateSymbolic) {
+      new_phase = Phase::TemplateSymbolic;
+    }
     return MakeConstantResult(context, result.new_inst(), new_phase);
   }
   return result.existing();
