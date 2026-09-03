@@ -28,6 +28,10 @@ let {.s = ref s: str, .i = i: i32} = {.s = "hello ref", .i = 3};
 
 let {ref s: str, i: i32} = {.s = "hello ref shorthand", .i = 4};
 
+// --- let_struct_missing_binding_operator.carbon
+
+let {b};
+
 // CHECK:STDOUT: - filename: let_struct.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
@@ -187,6 +191,21 @@ let {ref s: str, i: i32} = {.s = "hello ref shorthand", .i = 4};
 // CHECK:STDOUT:   │ │ │ ├─IntLiteral '4'
 // CHECK:STDOUT:   │ │ ├─StructLiteralField '='
 // CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDERR: let_struct_missing_binding_operator.carbon:[[@LINE+1]]:7: error: expected `:` or `:?` in binding pattern
+// CHECK:STDERR: let {b};
+// CHECK:STDERR:       ^
+// CHECK:STDOUT: - filename: let_struct_missing_binding_operator.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';'
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ';'
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern '<invalid parse>'
+// CHECK:STDOUT:   │ ├─StructPattern '}'
 // CHECK:STDOUT:   ├─LetDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
