@@ -833,6 +833,9 @@ auto HandleParseNode(Context& context,
       context.emitter().Emit(fn_node_id, InvalidBuiltinSignature,
                              builtin_kind.name().str());
     }
+    if (!function.param_patterns_id.has_value()) {
+      function.positional_params_id = context.args_type_info_stack().Pop();
+    }
   }
   context.decl_name_stack().PopScope();
   return true;
