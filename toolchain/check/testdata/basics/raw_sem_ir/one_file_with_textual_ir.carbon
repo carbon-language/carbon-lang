@@ -130,14 +130,14 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst50000032:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000033:    {kind: TupleLiteral, arg0: inst_block50000010, type: type(inst5000001C)}
 // CHECK:STDOUT:     inst50000034:    {kind: TupleAccess, arg0: inst5000002C, arg1: element0, type: type(inst50000010)}
-// CHECK:STDOUT:     inst50000035:    {kind: TupleInit, arg0: inst_block50000011, arg1: inst50000034, type: type(inst50000010)}
+// CHECK:STDOUT:     inst50000035:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst50000034, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000036:    {kind: Converted, arg0: inst50000031, arg1: inst50000035, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000037:    {kind: InPlaceInit, arg0: inst50000036, arg1: inst50000034, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000038:    {kind: TupleAccess, arg0: inst5000002C, arg1: element1, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000039:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst50000038, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000003A:    {kind: Converted, arg0: inst50000032, arg1: inst50000039, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000003B:    {kind: InPlaceInit, arg0: inst5000003A, arg1: inst50000038, type: type(inst50000010)}
-// CHECK:STDOUT:     inst5000003C:    {kind: TupleInit, arg0: inst_block50000012, arg1: inst5000002C, type: type(inst5000001C)}
+// CHECK:STDOUT:     inst5000003C:    {kind: TupleInit, arg0: inst_block50000011, arg1: inst5000002C, type: type(inst5000001C)}
 // CHECK:STDOUT:     inst5000003D:    {kind: Converted, arg0: inst50000033, arg1: inst5000003C, type: type(inst5000001C)}
 // CHECK:STDOUT:     inst5000003E:    {kind: ReturnExpr, arg0: inst5000003D, arg1: inst5000002C}
 // CHECK:STDOUT:   bundles:         {}
@@ -249,11 +249,10 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst_block50000010:
 // CHECK:STDOUT:       0:               inst50000031
 // CHECK:STDOUT:       1:               inst50000032
-// CHECK:STDOUT:     inst_block50000011: {}
-// CHECK:STDOUT:     inst_block50000012:
+// CHECK:STDOUT:     inst_block50000011:
 // CHECK:STDOUT:       0:               inst50000037
 // CHECK:STDOUT:       1:               inst5000003B
-// CHECK:STDOUT:     inst_block50000013:
+// CHECK:STDOUT:     inst_block50000012:
 // CHECK:STDOUT:       0:               instF
 // CHECK:STDOUT:       1:               inst5000002E
 // CHECK:STDOUT:   value_stores:
