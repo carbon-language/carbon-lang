@@ -13,6 +13,8 @@
 // A comment
 fn F() {}
 
+// Another comment
+
   // Block
   // comment
 
@@ -27,6 +29,8 @@ class C {
   //
   // Comment
 
+// A trailing comment may follow a variable, a function call, or a closing
+// brace, and the formatter keeps it on the line it annotates.
 var count: i32 = 0;          // a) A local variable,
 
 fn Render(frame: Frame) {
@@ -34,7 +38,15 @@ fn Render(frame: Frame) {
   Flush();
 }                            // c) And a closing brace.
 
-var poem: String = '''
+// A trailing comment on a block string literal's introducer line is carried
+// within the literal token and is preserved, with or without a file type
+// indicator. A trailing comment after the literal's closing line stays
+// attached to that line.
+var query: String = '''sql // TODO: switch to a prepared statement
+  SELECT * FROM t
+  ''';
+
+var poem: String = ''' // No file type indicator, just a comment.
   Roses are red.
   '''; // A trailing comment after the closing line.
 
@@ -43,6 +55,7 @@ var poem: String = '''
 // CHECK:STDOUT: // A comment
 // CHECK:STDOUT: fn F() {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: // Another comment
 // CHECK:STDOUT: // Block
 // CHECK:STDOUT: // comment
 // CHECK:STDOUT: class C {
@@ -53,11 +66,21 @@ var poem: String = '''
 // CHECK:STDOUT: // Block
 // CHECK:STDOUT: //
 // CHECK:STDOUT: // Comment
+// CHECK:STDOUT: // A trailing comment may follow a variable, a function call, or a closing
+// CHECK:STDOUT: // brace, and the formatter keeps it on the line it annotates.
 // CHECK:STDOUT: var count: i32 = 0; // a) A local variable,
 // CHECK:STDOUT: fn Render(frame: Frame) {
 // CHECK:STDOUT:   Draw(frame); // b) A function call,
 // CHECK:STDOUT:   Flush();
 // CHECK:STDOUT: } // c) And a closing brace.
-// CHECK:STDOUT: var poem: String = '''
+// CHECK:STDOUT: // A trailing comment on a block string literal's introducer line is carried
+// CHECK:STDOUT: // within the literal token and is preserved, with or without a file type
+// CHECK:STDOUT: // indicator. A trailing comment after the literal's closing line stays
+// CHECK:STDOUT: // attached to that line.
+// CHECK:STDOUT: var query: String = '''sql // TODO: switch to a prepared statement
+// CHECK:STDOUT:   SELECT * FROM t
+// CHECK:STDOUT:   ''';
+// CHECK:STDOUT:
+// CHECK:STDOUT: var poem: String = ''' // No file type indicator, just a comment.
 // CHECK:STDOUT:   Roses are red.
 // CHECK:STDOUT:   '''; // A trailing comment after the closing line.
