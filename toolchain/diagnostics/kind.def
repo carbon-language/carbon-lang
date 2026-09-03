@@ -633,6 +633,9 @@ CARBON_DIAGNOSTIC_KIND(UnusedModifierWithoutDefinition)
 CARBON_DIAGNOSTIC_KIND(UnusedPatternNoBindings)
 CARBON_DIAGNOSTIC_KIND(UnusedBinding)
 
+// Positional parameter checking.
+CARBON_DIAGNOSTIC_KIND(PositionalParamInWrongScope)
+
 // ============================================================================
 // CodeGen diagnostics
 // ============================================================================

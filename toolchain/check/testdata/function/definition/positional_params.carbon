@@ -102,6 +102,17 @@ fn A {
     }
 }
 
+// --- fail_wrong_scope.carbon
+library "[[@TEST_NAME]]";
+
+class A {
+    // CHECK:STDERR: fail_wrong_scope.carbon:[[@LINE+4]]:19: error: positional parameters can only be used in a function [PositionalParamInWrongScope]
+    // CHECK:STDERR:     var a: type = $0;
+    // CHECK:STDERR:                   ^~
+    // CHECK:STDERR:
+    var a: type = $0;
+}
+
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
