@@ -4067,7 +4067,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::PositionalParam inst) -> ResolveResult {
-  CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
+  CARBON_CHECK(inst.type_id == SemIR::AutoType::TypeId);
 
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -4078,7 +4078,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                     : resolver.local_ints().AddUnsigned(
                           resolver.import_ints().Get(inst.int_id));
   return ResolveResult::Deduplicated<SemIR::PositionalParam>(
-      resolver, {.type_id = SemIR::TypeType::TypeId, .int_id = int_id});
+      resolver, {.type_id = SemIR::AutoType::TypeId, .int_id = int_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

@@ -20,7 +20,7 @@ auto HandleParseNode(Context& context, Parse::PositionalParamExprId node_id)
 
   auto positional_param_id = AddInstInNoBlock<SemIR::PositionalParam>(
       context, node_id,
-      {.type_id = SemIR::TypeType::TypeId,
+      {.type_id = SemIR::AutoType::TypeId,
        .int_id = context.tokens().GetDollarIntLiteral(
            context.parse_tree().node_token(node_id))});
   if (!context.args_type_info_stack().empty()) {

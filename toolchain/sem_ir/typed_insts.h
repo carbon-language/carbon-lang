@@ -265,7 +265,11 @@ struct AssociatedEntityType {
 };
 
 // Used for the type of patterns that do not match a fixed type.
-using AutoType = SingletonTypeInst<InstKind::AutoType, "auto">;
+struct AutoType : public SingletonTypeInst<InstKind::AutoType, "auto"> {
+  // `AutoType` is always set complete in file.cpp.
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+};
 
 // A base in a class, of the form `base: base_type;`. A base class is an
 // element of the derived class, and the type of the `BaseDecl` instruction is

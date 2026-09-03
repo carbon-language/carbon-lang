@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -106,7 +106,14 @@ fn A {
 library "[[@TEST_NAME]]";
 
 class A {
-    // CHECK:STDERR: fail_wrong_scope.carbon:[[@LINE+4]]:19: error: positional parameters can only be used in a function [PositionalParamInWrongScope]
+    // CHECK:STDERR: fail_wrong_scope.carbon:[[@LINE+11]]:19: error: positional parameters can only be used in a function [PositionalParamInWrongScope]
+    // CHECK:STDERR:     var a: type = $0;
+    // CHECK:STDERR:                   ^~
+    // CHECK:STDERR:
+    // CHECK:STDERR: fail_wrong_scope.carbon:[[@LINE+7]]:19: error: cannot implicitly convert non-type value of type `auto` to `type` [ConversionFailureNonTypeToFacet]
+    // CHECK:STDERR:     var a: type = $0;
+    // CHECK:STDERR:                   ^~
+    // CHECK:STDERR: fail_wrong_scope.carbon:[[@LINE+4]]:19: note: type `auto` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
     // CHECK:STDERR:     var a: type = $0;
     // CHECK:STDERR:                   ^~
     // CHECK:STDERR:
@@ -118,7 +125,7 @@ class A {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %positional_param_3: ref type = positional_param 3 [concrete]
+// CHECK:STDOUT:   %positional_param_3: ref auto = positional_param 3 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -127,7 +134,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %positional_param_3: ref type = positional_param 3 [concrete = constants.%positional_param_3]
+// CHECK:STDOUT:   %positional_param_3: ref auto = positional_param 3 [concrete = constants.%positional_param_3]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
