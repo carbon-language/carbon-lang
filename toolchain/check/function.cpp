@@ -4,6 +4,7 @@
 
 #include "toolchain/check/function.h"
 
+#include "common/check.h"
 #include "common/find.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
@@ -500,7 +501,15 @@ auto GetHighestPositionalParamNumber(Context& context,
   size_t max = 0;
   for (auto param_id : positional_params) {
     auto param = context.insts().Get(param_id);
-    CARBON_CHECK(param.kind() == SemIR::InstKind::PositionalParam);
+    CARBON_CHECK(param.kind() == SemIR::InstKind::PositionalParam ||
+                 param.kind() == SemIR::InstKind::ImportRefLoaded);
+    if (auto import_ref = param.TryAs<SemIR::ImportRefLoaded>()) {
+      const auto& import_ir_inst =
+          context.import_ir_insts().Get(import_ref->import_ir_inst_id);
+      const auto& import_ir = context.import_irs().Get(import_ir_inst.ir_id());
+      param = import_ir.sem_ir->insts().Get(import_ir_inst.inst_id());
+      CARBON_CHECK(param.kind() == SemIR::InstKind::PositionalParam);
+    }
     auto int_id = param.As<SemIR::PositionalParam>().int_id;
     if (int_id.is_embedded_value()) {
       max = std::max(max, static_cast<size_t>(int_id.AsValue()));
