@@ -15,35 +15,31 @@
 // --- fail_no_body.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_no_body.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR: fail_no_body.carbon:[[@LINE+4]]:1: error: Function declarations must have an explicit parameter list [MissingBodyAndParams]
 // CHECK:STDERR: fn A;
 // CHECK:STDERR: ^~~~~
 // CHECK:STDERR:
 fn A;
 
-// --- fail_todo_brace_body.carbon
+// --- brace_body.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_brace_body.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn A {
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
 fn A {
 }
 
-// --- fail_todo_return_type.carbon
+// --- fail_return_type_only.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_return_type.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR: fail_return_type_only.carbon:[[@LINE+4]]:1: error: Function declarations must have an explicit parameter list [MissingBodyAndParams]
 // CHECK:STDERR: fn A -> ();
 // CHECK:STDERR: ^~~~~~~~~~~
 // CHECK:STDERR:
 fn A -> ();
 
-// --- fail_todo_implicit_only.carbon
+// --- fail_implicit_only.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_implicit_only.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR: fail_implicit_only.carbon:[[@LINE+4]]:1: error: Function declarations must have an explicit parameter list [MissingBodyAndParams]
 // CHECK:STDERR: fn A[] -> ();
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -53,10 +49,6 @@ fn A[] -> ();
 
 // TODO: We don't have parsing support for this yet.
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+8]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn A => 0;
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:6: error: semantics TODO: `HandleTerseBodyArrow` [SemanticsTodo]
 // CHECK:STDERR: fn A => 0;
 // CHECK:STDERR:      ^~
@@ -97,7 +89,7 @@ fn A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_brace_body.carbon
+// CHECK:STDOUT: --- brace_body.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
@@ -116,7 +108,7 @@ fn A {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_return_type.carbon
+// CHECK:STDOUT: --- fail_return_type_only.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -147,7 +139,7 @@ fn A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> out %return.param: %empty_tuple.type;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_implicit_only.carbon
+// CHECK:STDOUT: --- fail_implicit_only.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

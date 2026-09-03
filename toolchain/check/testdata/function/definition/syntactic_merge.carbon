@@ -56,24 +56,19 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
-// CHECK:STDERR: fn Foo[runtime a: C];
-// CHECK:STDERR:        ^~~~~~~~~~~~
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:1: error: Function declarations must have an explicit parameter list [MissingBodyAndParams]
+// CHECK:STDERR: fn Foo[a: C];
+// CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn Foo[runtime a: C];
+fn Foo[a: C];
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+7]]:1: error: redeclaration differs because of missing parameter list [RedeclParamListDiffers]
+// CHECK:STDERR: fn Foo[unused a: C] {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE-4]]:1: note: previously declared with parameter list [RedeclParamListPrevious]
+// CHECK:STDERR: fn Foo[a: C];
+// CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Foo[runtime a: C];
-// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+8]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
-// CHECK:STDERR: fn Foo[runtime a: (C)] {}
-// CHECK:STDERR:        ^~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_only_implicit_params.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
-// CHECK:STDERR: fn Foo[runtime a: (C)] {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn Foo[runtime a: (C)] {}
+fn Foo[unused a: C] {}
 
 // --- fail_raw_identifier.carbon
 
@@ -392,20 +387,42 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Foo.type.11c674.1: type = fn_type @Foo.loc14 [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
+// CHECK:STDOUT:   %a.1bf9e8.1: %C = symbolic_binding a, 0 [symbolic]
+// CHECK:STDOUT:   %Foo.type.11c674.1: type = fn_type @Foo.loc10 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.1: %Foo.type.11c674.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc23 [concrete]
+// CHECK:STDOUT:   %a.1bf9e8.2: %C = symbolic_binding a, 0 [symbolic]
+// CHECK:STDOUT:   %Foo.type.11c674.2: type = fn_type @Foo.loc18 [concrete]
 // CHECK:STDOUT:   %Foo.12ccef.2: %Foo.type.11c674.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .Foo = %Foo.decl.loc14
+// CHECK:STDOUT:     .Foo = %Foo.decl.loc10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %Foo.decl.loc14: %Foo.type.11c674.1 = fn_decl @Foo.loc14 [concrete = constants.%Foo.12ccef.1] {} {}
-// CHECK:STDOUT:   %Foo.decl.loc23: %Foo.type.11c674.2 = fn_decl @Foo.loc23 [concrete = constants.%Foo.12ccef.2] {} {}
+// CHECK:STDOUT:   %Foo.decl.loc10: %Foo.type.11c674.1 = fn_decl @Foo.loc10 [concrete = constants.%Foo.12ccef.1] {
+// CHECK:STDOUT:     %a.patt.loc10_9.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc10_9.2 (constants.%a.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc10: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a.loc10_9.2: %C = symbolic_binding a, 0 [symbolic = %a.loc10_9.1 (constants.%a.1bf9e8.1)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Foo.decl.loc18: %Foo.type.11c674.2 = fn_decl @Foo.loc18 [concrete = constants.%Foo.12ccef.2] {
+// CHECK:STDOUT:     %a.patt.loc18_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc18: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a.loc18_16.3: %C = symbolic_binding a, 0 [symbolic = %a.loc18_16.2 (constants.%a.1bf9e8.2)]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -416,11 +433,35 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.loc14();
+// CHECK:STDOUT: generic fn @Foo.loc10(%a.loc10_9.2: %C) {
+// CHECK:STDOUT:   %a.patt.loc10_9.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc10_9.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.loc10_9.1: %C = symbolic_binding a, 0 [symbolic = %a.loc10_9.1 (constants.%a.1bf9e8.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.loc23() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Foo.loc18(%a.loc18_16.3: %C) {
+// CHECK:STDOUT:   %a.patt.loc18_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.loc18_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc18_16.1 (constants.%a.1bf9e8.1)]
+// CHECK:STDOUT:   %a.loc18_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc18_16.2 (constants.%a.1bf9e8.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo.loc10(constants.%a.1bf9e8.1) {
+// CHECK:STDOUT:   %a.patt.loc10_9.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.loc10_9.1 => constants.%a.1bf9e8.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Foo.loc18(constants.%a.1bf9e8.2) {
+// CHECK:STDOUT:   %a.patt.loc18_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.loc18_16.1 => constants.%a.1bf9e8.2
+// CHECK:STDOUT:   %a.loc18_16.2 => constants.%a.1bf9e8.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_raw_identifier.carbon

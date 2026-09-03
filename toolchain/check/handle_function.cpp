@@ -443,12 +443,20 @@ static auto BuildFunctionDecl(Context& context,
     function_info.definition_id = decl_id;
   }
 
-  if (is_definition && !function_info.param_patterns_id.has_value()) {
-    // TODO: Verify only one of the nested functions introduce positional
-    // params.
-    // Create an instruction block to store positional parameter instructions
-    // created in the function definition.
-    context.args_type_info_stack().Push();
+  if (!function_info.param_patterns_id.has_value()) {
+    if (is_definition) {
+      // TODO: Verify only one of the nested functions introduce positional
+      // params.
+      // Create an instruction block to store positional parameter instructions
+      // created in the function definition.
+      context.args_type_info_stack().Push();
+    } else {
+      CARBON_DIAGNOSTIC(
+          MissingBodyAndParams, Error,
+          "Function declarations must have an explicit parameter list");
+      context.emitter().Emit(node_id, MissingBodyAndParams);
+      function_info.param_patterns_id = SemIR::InstBlockId::Empty;
+    }
   }
 
   TryMergeRedecl(
