@@ -114,7 +114,7 @@ fn DoThing() {
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTVN6Carbon7DerivedE, i32 0, i32 0, i32 2), ptr %.loc31_44.9.vptr, align 8, !dbg !34
 // CHECK:STDOUT:   %.loc32_11.3.base = getelementptr inbounds nuw [16 x i8], ptr %d.var, i32 0, i32 0, !dbg !36
 // CHECK:STDOUT:   call void @_Z3UseR4Base(ptr %.loc32_11.3.base), !dbg !37
-// CHECK:STDOUT:   call void @"_COp.d8aa8f8dee0ff18e:core.Destroy.Core"(ptr %d.var), !dbg !33
+// CHECK:STDOUT:   call void @"_COp.b25525d21a9bd472:core.Destroy.Core"(ptr %d.var), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -131,18 +131,18 @@ fn DoThing() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Derived.Main"(ptr %self) #3 !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.d8aa8f8dee0ff18e:core.Destroy.Core"(ptr %self), !dbg !42
+// CHECK:STDOUT:   call void @"_COp.b25525d21a9bd472:core.Destroy.Core"(ptr %self), !dbg !42
 // CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.a4cea16271ab4a06:core.Destroy.Core"(ptr %self) #2 !dbg !43 {
+// CHECK:STDOUT: define weak_odr void @"_COp.0a0b9df20a60c6f6:core.Destroy.Core"(ptr %self) #2 !dbg !43 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.d8aa8f8dee0ff18e:core.Destroy.Core"(ptr %self) #2 !dbg !47 {
+// CHECK:STDOUT: define weak_odr void @"_COp.b25525d21a9bd472:core.Destroy.Core"(ptr %self) #2 !dbg !47 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }
@@ -212,7 +212,7 @@ fn DoThing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN11FurtherBase17further_base_funcEv, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @"_COp.d8aa8f8dee0ff18e:core.Destroy.Core", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.b25525d21a9bd472:core.Destroy.Core", { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress noinline nounwind optnone uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -270,11 +270,11 @@ fn DoThing() {
 // CHECK:STDOUT: !40 = !{!41}
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !39, type: !18)
 // CHECK:STDOUT: !42 = !DILocation(line: 22, column: 1, scope: !39)
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a4cea16271ab4a06:core.Destroy.Core", scope: null, file: !1, line: 22, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !44)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp.0a0b9df20a60c6f6:core.Destroy.Core", scope: null, file: !1, line: 22, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !44)
 // CHECK:STDOUT: !44 = !{!45}
 // CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !43, type: !18)
 // CHECK:STDOUT: !46 = !DILocation(line: 22, column: 1, scope: !43)
-// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d8aa8f8dee0ff18e:core.Destroy.Core", scope: null, file: !1, line: 22, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !48)
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "Op", linkageName: "_COp.b25525d21a9bd472:core.Destroy.Core", scope: null, file: !1, line: 22, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !48)
 // CHECK:STDOUT: !48 = !{!49}
 // CHECK:STDOUT: !49 = !DILocalVariable(arg: 1, scope: !47, type: !18)
 // CHECK:STDOUT: !50 = !DILocation(line: 22, column: 1, scope: !47)

@@ -15,16 +15,19 @@
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/clang_decl.h"
+#include "toolchain/sem_ir/core_interface.h"
 #include "toolchain/sem_ir/cpp_initializer_list.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -617,8 +620,71 @@ static auto TryBuildBuiltinOperator(
       break;
   }
 
+  // Compute the interface scope from Core.
+  //
+  // FIXME: Cache this on Context.
+  auto interface_name_id = SemIR::NameId::None;
+  switch (info.builtin_kind) {
+    case SemIR::BuiltinFunctionKind::IntAnd:
+      interface_name_id =
+          context.core_identifiers().AddNameId(CoreIdentifier::BitAndWith);
+      break;
+    case SemIR::BuiltinFunctionKind::IntOr:
+      interface_name_id =
+          context.core_identifiers().AddNameId(CoreIdentifier::BitOrWith);
+      break;
+    case SemIR::BuiltinFunctionKind::IntXor:
+      interface_name_id =
+          context.core_identifiers().AddNameId(CoreIdentifier::BitXorWith);
+      break;
+    case SemIR::BuiltinFunctionKind::IntComplement:
+      interface_name_id =
+          context.core_identifiers().AddNameId(CoreIdentifier::BitComplement);
+      break;
+    case SemIR::BuiltinFunctionKind::IntEq:
+    case SemIR::BuiltinFunctionKind::IntNeq:
+    case SemIR::BuiltinFunctionKind::IntLess:
+    case SemIR::BuiltinFunctionKind::IntLessEq:
+    case SemIR::BuiltinFunctionKind::IntGreater:
+    case SemIR::BuiltinFunctionKind::IntGreaterEq:
+      interface_name_id =
+          context.core_identifiers().AddNameId(CoreIdentifier::OrderedWith);
+      break;
+    default:
+      CARBON_FATAL("unhandled BuiltinFunctionKind in table");
+      break;
+  }
+
+  auto interface_name =
+      *context.names().GetAsStringIfIdentifier(interface_name_id);
+  auto interface_scope_id = SemIR::NameScopeId::None;
+  for (auto [import_ir_id, import_ir] : context.import_irs().enumerate()) {
+    if (import_ir.sem_ir == nullptr) {
+      continue;
+    }
+    if (import_ir.sem_ir->package_id() != PackageNameId::Core) {
+      continue;
+    }
+    for (auto [import_interface_id, import_interface] :
+         import_ir.sem_ir->interfaces().enumerate()) {
+      if (import_ir.sem_ir->names().GetAsStringIfIdentifier(
+              import_interface.name_id) == interface_name) {
+        auto interface_id =
+            ImportInterface(context, import_ir_id, import_interface_id);
+        const auto& interface = context.interfaces().Get(interface_id);
+        interface_scope_id = interface.scope_without_self_id;
+        break;
+      }
+    }
+    if (interface_scope_id.has_value()) {
+      break;
+    }
+  }
+  CARBON_CHECK(interface_scope_id.has_value(), "failed to find Core interface");
+
   return MakeBuiltinOperatorFunction(context, arg_type_ids, return_type_id,
-                                     info.op_name, info.builtin_kind);
+                                     info.op_name, info.builtin_kind,
+                                     interface_scope_id);
 }
 
 namespace {

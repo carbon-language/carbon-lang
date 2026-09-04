@@ -48,12 +48,12 @@ fn Call() -> i32 {
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !20
 // CHECK:STDOUT:   call void @_Z1FPi(ptr %n.var), !dbg !21
 // CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !22
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %n.var), !dbg !20
+// CHECK:STDOUT:   call void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %n.var), !dbg !20
 // CHECK:STDOUT:   ret i32 %.loc24, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #1 !dbg !24 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #1 !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
@@ -93,7 +93,7 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !21 = !DILocation(line: 23, column: 3, scope: !16)
 // CHECK:STDOUT: !22 = !DILocation(line: 24, column: 10, scope: !16)
 // CHECK:STDOUT: !23 = !DILocation(line: 24, column: 3, scope: !16)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !1, line: 22, type: !25, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !27)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !1, line: 22, type: !25, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !27)
 // CHECK:STDOUT: !25 = !DISubroutineType(types: !26)
 // CHECK:STDOUT: !26 = !{null, !19}
 // CHECK:STDOUT: !27 = !{!28}

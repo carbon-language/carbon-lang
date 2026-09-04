@@ -136,33 +136,33 @@ fn M() {
 // CHECK:STDOUT:   %.loc52_15 = load ptr, ptr %ptr_bool.var, align 8, !dbg !61
 // CHECK:STDOUT:   %.loc52_25 = load ptr, ptr %ptr_bool.var, align 8, !dbg !62
 // CHECK:STDOUT:   %F.call.loc52 = call i32 @_CF.Main.732da705e71cd359(ptr %.loc52_5, ptr %.loc52_15, ptr %.loc52_25, i32 0), !dbg !63
-// CHECK:STDOUT:   call void @"_COp.a1ae3d31ab69a7f8:core.Destroy.Core"(ptr %val_f64.var), !dbg !10
-// CHECK:STDOUT:   call void @"_COp.5f42013854821c52:core.Destroy.Core"(ptr %val_i64.var), !dbg !9
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %val_i32.var), !dbg !8
-// CHECK:STDOUT:   call void @"_COp.91f16365ca65525e:core.Destroy.Core"(ptr %val_i16.var), !dbg !7
+// CHECK:STDOUT:   call void @"_COp.dc14d4dd21801791:core.Destroy.Core"(ptr %val_f64.var), !dbg !10
+// CHECK:STDOUT:   call void @"_COp.5aacfd7dcc330b17:core.Destroy.Core"(ptr %val_i64.var), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %val_i32.var), !dbg !8
+// CHECK:STDOUT:   call void @"_COp.d57cb32fcf12ec07:core.Destroy.Core"(ptr %val_i16.var), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.a1ae3d31ab69a7f8:core.Destroy.Core"(ptr %self) #0 !dbg !65 {
+// CHECK:STDOUT: define weak_odr void @"_COp.dc14d4dd21801791:core.Destroy.Core"(ptr %self) #0 !dbg !65 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.5f42013854821c52:core.Destroy.Core"(ptr %self) #0 !dbg !72 {
+// CHECK:STDOUT: define weak_odr void @"_COp.5aacfd7dcc330b17:core.Destroy.Core"(ptr %self) #0 !dbg !72 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !78
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !79 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !79 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.91f16365ca65525e:core.Destroy.Core"(ptr %self) #0 !dbg !86 {
+// CHECK:STDOUT: define weak_odr void @"_COp.d57cb32fcf12ec07:core.Destroy.Core"(ptr %self) #0 !dbg !86 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !92
 // CHECK:STDOUT: }
@@ -350,28 +350,28 @@ fn M() {
 // CHECK:STDOUT: !62 = !DILocation(line: 52, column: 25, scope: !4)
 // CHECK:STDOUT: !63 = !DILocation(line: 52, column: 3, scope: !4)
 // CHECK:STDOUT: !64 = !DILocation(line: 22, column: 1, scope: !4)
-// CHECK:STDOUT: !65 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a1ae3d31ab69a7f8:core.Destroy.Core", scope: null, file: !1, line: 26, type: !66, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !69)
+// CHECK:STDOUT: !65 = distinct !DISubprogram(name: "Op", linkageName: "_COp.dc14d4dd21801791:core.Destroy.Core", scope: null, file: !1, line: 26, type: !66, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !69)
 // CHECK:STDOUT: !66 = !DISubroutineType(types: !67)
 // CHECK:STDOUT: !67 = !{null, !68}
 // CHECK:STDOUT: !68 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !69 = !{!70}
 // CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !65, type: !68)
 // CHECK:STDOUT: !71 = !DILocation(line: 26, column: 3, scope: !65)
-// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5f42013854821c52:core.Destroy.Core", scope: null, file: !1, line: 25, type: !73, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !76)
+// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "Op", linkageName: "_COp.5aacfd7dcc330b17:core.Destroy.Core", scope: null, file: !1, line: 25, type: !73, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !76)
 // CHECK:STDOUT: !73 = !DISubroutineType(types: !74)
 // CHECK:STDOUT: !74 = !{null, !75}
 // CHECK:STDOUT: !75 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !76 = !{!77}
 // CHECK:STDOUT: !77 = !DILocalVariable(arg: 1, scope: !72, type: !75)
 // CHECK:STDOUT: !78 = !DILocation(line: 25, column: 3, scope: !72)
-// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !1, line: 24, type: !80, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !83)
+// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !1, line: 24, type: !80, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !83)
 // CHECK:STDOUT: !80 = !DISubroutineType(types: !81)
 // CHECK:STDOUT: !81 = !{null, !82}
 // CHECK:STDOUT: !82 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !83 = !{!84}
 // CHECK:STDOUT: !84 = !DILocalVariable(arg: 1, scope: !79, type: !82)
 // CHECK:STDOUT: !85 = !DILocation(line: 24, column: 3, scope: !79)
-// CHECK:STDOUT: !86 = distinct !DISubprogram(name: "Op", linkageName: "_COp.91f16365ca65525e:core.Destroy.Core", scope: null, file: !1, line: 23, type: !87, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !90)
+// CHECK:STDOUT: !86 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d57cb32fcf12ec07:core.Destroy.Core", scope: null, file: !1, line: 23, type: !87, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !90)
 // CHECK:STDOUT: !87 = !DISubroutineType(types: !88)
 // CHECK:STDOUT: !88 = !{null, !89}
 // CHECK:STDOUT: !89 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_signed)

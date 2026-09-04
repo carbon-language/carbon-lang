@@ -7,6 +7,7 @@
 #include <optional>
 #include <variant>
 
+#include "toolchain/base/canonical_value_store_impl.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_store_impl.h"
 #include "toolchain/sem_ir/file.h"
@@ -153,6 +154,21 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
           .specific_id = specific_id};
 }
 
+auto Function::GetBuiltinFunctionKind(const File& file) const
+    -> BuiltinFunctionKind {
+  switch (special_function_kind) {
+    case SpecialFunctionKind::Builtin:
+      return builtin_function_kind();
+    case SpecialFunctionKind::CoreWitness: {
+      auto canon_id =
+          CanonicalCoreWitnessFunctionId(special_function_kind_data.index);
+      return file.core_witness_functions().Get(canon_id).builtin_function_kind;
+    }
+    default:
+      return BuiltinFunctionKind::None;
+  }
+}
+
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
   if (!return_type_inst_id.has_value()) {
@@ -178,4 +194,8 @@ auto Function::GetDeclaredReturnForm(const File& file,
 namespace Carbon {
 template class ValueStore<SemIR::FunctionId, SemIR::Function,
                           Tag<SemIR::CheckIRId>>;
+template class CanonicalValueStore<SemIR::CanonicalCoreWitnessFunctionId,
+                                   SemIR::CanonicalCoreWitnessFunction::Key,
+                                   Tag<SemIR::CheckIRId>,
+                                   SemIR::CanonicalCoreWitnessFunction>;
 }  // namespace Carbon
