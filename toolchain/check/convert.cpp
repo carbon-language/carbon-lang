@@ -2388,8 +2388,9 @@ auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
         context.inst_blocks().GetOrEmpty(callee.param_patterns_id).size());
     param_block_id = callee.param_patterns_id;
   } else {
-    CARBON_CHECK(arg_refs.size() ==
-                 (GetHighestPositionalParamNumber(context, callee) + 1));
+    CARBON_CHECK(
+        arg_refs.size() ==
+        context.inst_blocks().GetOrEmpty(callee.positional_params_id).size());
     param_block_id = callee.positional_params_id;
   }
 

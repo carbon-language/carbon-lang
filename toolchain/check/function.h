@@ -135,10 +135,6 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
     -> void;
 
-// Returns the highest positional parameter number.
-auto GetHighestPositionalParamNumber(Context& context,
-                                     const SemIR::Function& function) -> size_t;
-
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_FUNCTION_H_

@@ -65,7 +65,8 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   if (entity_kind_for_diagnostic == EntityKind::Function &&
       !entity.param_patterns_id.has_value()) {
     const auto& function = static_cast<const SemIR::Function&>(entity);
-    expected_args_size = GetHighestPositionalParamNumber(context, function) + 1;
+    expected_args_size =
+        context.inst_blocks().GetOrEmpty(function.positional_params_id).size();
   } else {
     auto param_patterns =
         context.inst_blocks().GetOrEmpty(entity.param_patterns_id);

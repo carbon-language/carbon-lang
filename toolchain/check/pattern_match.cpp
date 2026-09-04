@@ -1024,6 +1024,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
           DoPreWork(state, field_decl, work.scrutinee_id, entry);
           break;
         }
+        case SemIR::InstKind::PositionalParam: {
+          // TODO: Handle positional params.
+          break;
+        }
         case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
           DoPreWork(state, return_slot_pattern, work.scrutinee_id, entry);
           break;

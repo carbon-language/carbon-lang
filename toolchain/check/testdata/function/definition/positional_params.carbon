@@ -19,16 +19,25 @@ fn F {
 }
 //@dump-sem-ir-end
 
-// --- fail_insufficient_args.carbon
+// --- call.carbon
 library "[[@TEST_NAME]]";
 
 import library "basic";
 
 fn G() {
-    // CHECK:STDERR: fail_insufficient_args.carbon:[[@LINE+8]]:5: error: 3 arguments passed to function expecting 4 arguments [CallArgCountMismatch]
+    F(0, 1, 2, 3);
+}
+
+// --- fail_call_insufficient_args.carbon
+library "[[@TEST_NAME]]";
+
+import library "basic";
+
+fn G() {
+    // CHECK:STDERR: fail_call_insufficient_args.carbon:[[@LINE+8]]:5: error: 3 arguments passed to function expecting 4 arguments [CallArgCountMismatch]
     // CHECK:STDERR:     F(0, 1, 2);
     // CHECK:STDERR:     ^~~~~~~~~~
-    // CHECK:STDERR: fail_insufficient_args.carbon:[[@LINE-6]]:1: in import [InImport]
+    // CHECK:STDERR: fail_call_insufficient_args.carbon:[[@LINE-6]]:1: in import [InImport]
     // CHECK:STDERR: basic.carbon:4:1: note: calling function declared here [InCallToEntity]
     // CHECK:STDERR: fn F {
     // CHECK:STDERR: ^~~~~~
