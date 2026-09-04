@@ -136,6 +136,11 @@ auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
                              prev_decl.loc_id);
       return;
     }
+    if (!new_decl.is_definition) {
+      DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc_id,
+                        prev_decl.loc_id);
+      return;
+    }
     return;
   }
 
