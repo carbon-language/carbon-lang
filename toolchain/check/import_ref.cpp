@@ -4073,7 +4073,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  auto int_id = !inst.int_id.has_value() || inst.int_id.is_embedded_value()
+  auto int_id = inst.int_id.is_embedded_value()
                     ? inst.int_id
                     : resolver.local_ints().AddUnsigned(
                           resolver.import_ints().Get(inst.int_id));

@@ -1382,11 +1382,9 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(PositionalParam inst): {
-      if (inst.int_id.has_value()) {
-        RawStringOstream out;
-        out << "positional_param_" << sem_ir().ints().Get(inst.int_id);
-        AddInstName(out.TakeStr());
-      }
+      RawStringOstream out;
+      out << "positional_param_" << sem_ir().ints().Get(inst.int_id);
+      AddInstName(out.TakeStr());
       return;
     }
     case RequireCompleteType::Kind: {

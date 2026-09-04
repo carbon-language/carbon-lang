@@ -1675,9 +1675,7 @@ auto Formatter::FormatArg(ImportIRId id) -> void {
 
 auto Formatter::FormatArg(IntId id) -> void {
   // We don't know the signedness to use here. Default to unsigned.
-  if (id.has_value()) {
-    sem_ir_->ints().Get(id).print(out(), /*isSigned=*/false);
-  }
+  sem_ir_->ints().Get(id).print(out(), /*isSigned=*/false);
 }
 
 auto Formatter::FormatArg(NameScopeId id) -> void {

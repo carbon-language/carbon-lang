@@ -485,50 +485,39 @@ auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
   auto& function = context.functions().Get(function_id);
   function.body_block_ids = context.region_stack().PopRegion();
   function.observe_block_id = observe_block_id;
-
   if (!function.param_patterns_id.has_value()) {
-    // Match the number of insts to the highest positional param.
-    auto positional_params =
-        context.args_type_info_stack().PeekCurrentBlockContents();
-    size_t highest_positional_param = 0;
-    for (auto param_id : positional_params) {
-      auto param = context.insts().Get(param_id);
-      CARBON_CHECK(param.kind() == SemIR::InstKind::PositionalParam ||
-                   param.kind() == SemIR::InstKind::ImportRefLoaded);
-      if (auto import_ref = param.TryAs<SemIR::ImportRefLoaded>()) {
-        const auto& import_ir_inst =
-            context.import_ir_insts().Get(import_ref->import_ir_inst_id);
-        const auto& import_ir =
-            context.import_irs().Get(import_ir_inst.ir_id());
-        param = import_ir.sem_ir->insts().Get(import_ir_inst.inst_id());
-        CARBON_CHECK(param.kind() == SemIR::InstKind::PositionalParam);
-      }
-      auto int_id = param.As<SemIR::PositionalParam>().int_id;
-      if (int_id.is_embedded_value()) {
-        highest_positional_param = std::max(
-            highest_positional_param, static_cast<size_t>(int_id.AsValue()));
-      } else {
-        auto apint = context.ints().Get(int_id);
-        highest_positional_param =
-            std::max(highest_positional_param,
-                     static_cast<size_t>(apint.getZExtValue()));
-      }
-    }
-    if (positional_params.size() != (highest_positional_param + 1)) {
-      for (size_t i = positional_params.size(); i <= highest_positional_param;
-           ++i) {
-        context.args_type_info_stack().AddInstId(
-            AddInstInNoBlock<SemIR::PositionalParam>(
-                context, Parse::PositionalParamExprId::None,
-                {.type_id = SemIR::AutoType::TypeId, .int_id = IntId::None}));
-      }
-    }
-
     function.positional_params_id = context.args_type_info_stack().Pop();
   }
 
   // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);
+}
+
+auto GetPositionalParamNumber(Context& context, SemIR::InstId param_id)
+    -> size_t {
+  auto param = context.insts().Get(param_id);
+  auto int_id = IntId::None;
+  CARBON_KIND_SWITCH(param) {
+    case CARBON_KIND(SemIR::PositionalParam positional_param): {
+      int_id = positional_param.int_id;
+      break;
+    }
+    case CARBON_KIND(SemIR::ImportRefLoaded import_ref): {
+      const auto& import_ir_inst =
+          context.import_ir_insts().Get(import_ref.import_ir_inst_id);
+      const auto& import_ir = context.import_irs().Get(import_ir_inst.ir_id());
+      int_id = import_ir.sem_ir->insts()
+                   .GetAs<SemIR::PositionalParam>(import_ir_inst.inst_id())
+                   .int_id;
+      break;
+    }
+    default: {
+      CARBON_FATAL("Unhandled inst kind {0}", param.kind());
+    }
+  }
+  return int_id.is_embedded_value()
+             ? static_cast<size_t>(int_id.AsValue())
+             : static_cast<size_t>(context.ints().Get(int_id).getZExtValue());
 }
 
 }  // namespace Carbon::Check
