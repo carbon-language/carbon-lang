@@ -22,6 +22,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Properties](#properties)
 -   [Proposal](#proposal)
 -   [Details](#details)
+    -   [Non-instance members](#non-instance-members)
     -   [Callables for member functions](#callables-for-member-functions)
     -   [Overloading](#overloading)
     -   [Explicit about instance binding](#explicit-about-instance-binding)
@@ -281,6 +282,11 @@ Simple member access `a.b` depends on what kind of entity `a` is:
     -   `typeof(a)` will always be a facet or other type, so `typeof(a).b` will
         always be resolved using one of the above rules, and won't require
         further rewrites.
+    -   If `b` is an associated entity, `typeof(a).b` will perform `impl` lookup
+        using `typeof(a)`, so no `impl` lookup will happen during the compound
+        member access from the rewrite.
+    -   The compound member access will always perform instance binding, unlike
+        prior to this proposal.
 
 Compound member access `a.(m)` performs two steps:
 
@@ -307,6 +313,52 @@ operand is. In generic code, it might not be known whether a symbolic value
 represents a type or some other kind of value. In that case, though, simple
 member access isn't useful since we don't know enough about `a` to perform name
 lookup into it.
+
+### Non-instance members
+
+Non-instance members of types (including classes and interfaces) no longer
+implement the binding interfaces, and so may not be used with instance binding.
+
+```carbon
+interface I {
+  // Non-instance member function
+  fn F();
+}
+
+class C {
+  // Non-instance member function
+  fn G();
+
+  // Non-instance static data member
+  static var s: i32;
+
+  impl as I;
+}
+
+fn PreviouslyAllowedNowInvalid(x: C) {
+  // Previously allowed, but now invalid:
+  // ❌ x.F();
+  // ❌ x.G();
+  // ❌ x.s = 1;
+}
+
+fn Instead(x: C) {
+  // Instead, these should be written:
+  C.F();  // ✅
+  C.impl(I.F)();  // ✅
+  typeof(x).F();  // ✅
+
+  C.G();  // ✅
+  typeof(x).G();  // ✅
+
+  C.s = 1;  // ✅
+  typeof(x).s = 1;  // ✅
+}
+```
+
+We require that the caller distinguish whether they are performing instance
+binding, which means that changing a method to a non-instance member function
+requires updating callers.
 
 ### Callables for member functions
 
