@@ -28,6 +28,15 @@ fn G() {
     F(0, 1, 2, 3);
 }
 
+// --- call_excess_args.carbon
+library "[[@TEST_NAME]]";
+
+import library "basic";
+
+fn G() {
+    F(0, 1, 2, 3, 4);
+}
+
 // --- fail_call_insufficient_args.carbon
 library "[[@TEST_NAME]]";
 

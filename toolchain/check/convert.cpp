@@ -2388,10 +2388,16 @@ auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
         context.inst_blocks().GetOrEmpty(callee.param_patterns_id).size());
     param_block_id = callee.param_patterns_id;
   } else {
-    CARBON_CHECK(
-        arg_refs.size() ==
-        context.inst_blocks().GetOrEmpty(callee.positional_params_id).size());
+    auto positional_params_size =
+        context.inst_blocks().GetOrEmpty(callee.positional_params_id).size();
+    CARBON_CHECK(arg_refs.size() >= positional_params_size);
     param_block_id = callee.positional_params_id;
+    if (arg_refs.size() > positional_params_size) {
+      // The excess arguments are not used inside the function body, but are
+      // allowed when calling functions with positional parameters, so omit
+      // them.
+      arg_refs = arg_refs.take_front(positional_params_size);
+    }
   }
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,

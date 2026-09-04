@@ -60,20 +60,7 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::SpecificId> {
-  // Check that the arity matches the explicit arguments.
-  size_t expected_args_size;
-  if (entity_kind_for_diagnostic == EntityKind::Function &&
-      !entity.param_patterns_id.has_value()) {
-    const auto& function = static_cast<const SemIR::Function&>(entity);
-    expected_args_size =
-        context.inst_blocks().GetOrEmpty(function.positional_params_id).size();
-  } else {
-    auto param_patterns =
-        context.inst_blocks().GetOrEmpty(entity.param_patterns_id);
-    expected_args_size = param_patterns.size() - (self_id.has_value() ? 1 : 0);
-  }
-
-  if (arg_ids.size() != expected_args_size) {
+  auto diagnose_arg_count_mismatch = [&](size_t expected_args_size) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument{0:s} passed to "
                       "{1:=0:function|=1:generic class|=2:generic "
@@ -92,7 +79,27 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
         .Note(entity.latest_decl_id(), InCallToEntity,
               static_cast<int>(entity_kind_for_diagnostic))
         .Emit();
-    return std::nullopt;
+  };
+
+  // Check that the arity matches the explicit arguments.
+  if (entity_kind_for_diagnostic == EntityKind::Function &&
+      !entity.param_patterns_id.has_value()) {
+    const auto& function = static_cast<const SemIR::Function&>(entity);
+    size_t min_args_size =
+        context.inst_blocks().GetOrEmpty(function.positional_params_id).size();
+    if (arg_ids.size() < min_args_size) {
+      diagnose_arg_count_mismatch(min_args_size);
+      return std::nullopt;
+    }
+  } else {
+    auto param_patterns =
+        context.inst_blocks().GetOrEmpty(entity.param_patterns_id);
+    size_t expected_args_size =
+        param_patterns.size() - (self_id.has_value() ? 1 : 0);
+    if (arg_ids.size() != expected_args_size) {
+      diagnose_arg_count_mismatch(expected_args_size);
+      return std::nullopt;
+    }
   }
 
   // Perform argument deduction.
