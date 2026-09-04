@@ -2596,7 +2596,7 @@ struct PositionalParam {
            .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
-  // Always the builtin type TypeType.
+  // Always the builtin type AutoType.
   TypeId type_id;
   IntId int_id;
 };
