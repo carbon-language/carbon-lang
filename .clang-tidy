@@ -73,6 +73,8 @@ Checks:
   # Extremely slow. TODO: Re-enable once
   # https://github.com/llvm/llvm-project/issues/128797 is fixed.
   - '-misc-confusable-identifiers'
+  # We use multiple inheritence without virtual extensively.
+  - '-misc-multiple-inheritance'
   # Overlaps with `-Wno-missing-prototypes`.
   - '-misc-use-internal-linkage'
   # Suggests `std::array`, which we could migrate to, but conflicts with the
