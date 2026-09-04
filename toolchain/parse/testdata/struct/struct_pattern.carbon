@@ -567,6 +567,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
 // CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
 // CHECK:STDOUT:   │ │ │ ╭─InvalidParse '=' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
 // CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'y'
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
@@ -834,6 +835,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameExpr 'foo'
 // CHECK:STDOUT:   │ │ │   ├─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
 // CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'y'
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '='
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
@@ -959,6 +961,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
 // CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
 // CHECK:STDOUT:   │ │ │ ╭─StringLiteral '"foo"'
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse ',' has_error
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
