@@ -181,10 +181,10 @@ static auto AddDependentActionSpliceImpl(Context& context,
     -> SemIR::InstId {
   auto inst_id = AddDependentActionInst(context, action);
   if (!result_type_inst_id.has_value()) {
-    result_type_inst_id = AddDependentActionTypeInst(
-        context, action.loc_id,
-        SemIR::TypeOfInst{.type_id = SemIR::TypeType::TypeId,
-                          .inst_id = inst_id});
+    result_type_inst_id =
+        AddTypeInst(context, action.loc_id,
+                    SemIR::TypeOfInst{.type_id = SemIR::TypeType::TypeId,
+                                      .inst_id = inst_id});
   }
   return AddInst(
       context, action.loc_id,

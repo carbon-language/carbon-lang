@@ -59,9 +59,11 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
         inst_id = import_ir_inst.inst_id();
         return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, Call>) {
-        // TODO: Get the callee in the specific. Note that the callee may be in
-        // a different file.
-        auto callee = GetCallee(*ir, inst.callee_id);
+        // TODO: Handle the case where the specific is from a different file.
+        // `GetCallee` doesn't support that case currently.
+        auto callee =
+            GetCallee(*ir, inst.callee_id,
+                      ir == specific_ir ? specific_id : SpecificId::None);
         CARBON_KIND_SWITCH(callee) {
           case CARBON_KIND(SemIR::CalleeError _): {
             return ExprCategory::Error;
@@ -98,15 +100,17 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
           }
         }
       } else if constexpr (std::same_as<TypedInstT, SpecificInst>) {
+        // Switch to looking at the inner instruction and its specific, which is
+        // known to be from the current IR.
         inst_id = inst.inst_id;
-        // TODO: Track `inst.specific_id` as our current specific, and use that
-        // when determining the category of the inner instruction.
+        specific_id = inst.specific_id;
+        specific_ir = ir;
         return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, SpliceInst>) {
         auto [inst_value_ir, inst_value_const_id] = GetConstantValueInSpecific(
             *specific_ir, specific_id, *ir, inst.inst_id);
         if (inst_value_const_id.is_concrete()) {
-          // If we can pull a concrete inst out of the specific, then swich to
+          // If we can pull a concrete inst out of the specific, then switch to
           // computing the category of that inst.
           ir = inst_value_ir;
           inst_id = ir->constant_values()
@@ -209,6 +213,7 @@ auto GetExprCategory(const File& file, InstId inst_id,
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
                                   bool allow_transitive) -> InstId {
   const File* ir = &sem_ir;
+  auto specific_id = SemIR::SpecificId::None;
   while (true) {
     Inst init_untyped = ir->insts().Get(init_id);
     CARBON_KIND_SWITCH(init_untyped) {
@@ -252,6 +257,14 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
         init_id = splice.result_id;
         continue;
       }
+      case CARBON_KIND(SpecificInst inst): {
+        if (!allow_transitive) {
+          return InstId::None;
+        }
+        init_id = inst.inst_id;
+        specific_id = inst.specific_id;
+        continue;
+      }
       case CARBON_KIND(ArrayInit init): {
         return init.dest_id;
       }
@@ -271,7 +284,8 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
         return init.dest_id;
       }
       case CARBON_KIND(Call call): {
-        auto callee_function = GetCalleeAsFunction(*ir, call.callee_id);
+        auto callee_function =
+            GetCalleeAsFunction(*ir, call.callee_id, specific_id);
         const auto& function = ir->functions().Get(callee_function.function_id);
         if (!function.return_form_inst_id.has_value()) {
           return InstId::None;

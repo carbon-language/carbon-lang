@@ -35,7 +35,8 @@ interface I(template T: type, N: T.I1) {
 // CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0, template [template]
 // CHECK:STDOUT:   %.eec: type = splice_inst @I.%.loc16_35.1 [template]
-// CHECK:STDOUT:   %.e35: @I.%.loc16_35.4 (@I.%.loc16_35.4) = splice_inst @I.%.loc16_35.3 [template]
+// CHECK:STDOUT:   %.4a7: type = type_of_inst @I.%.loc16_35.3 [template]
+// CHECK:STDOUT:   %.e35: %.4a7 = splice_inst @I.%.loc16_35.3 [template]
 // CHECK:STDOUT:   %.476: type = splice_inst @I.%.loc16_35.6 [template]
 // CHECK:STDOUT:   %pattern_type.8f9: type = pattern_type %.476 [template]
 // CHECK:STDOUT:   %N.patt.9e2: %pattern_type.8f9 = symbolic_binding_pattern N, 1 [template]
@@ -67,12 +68,13 @@ interface I(template T: type, N: T.I1) {
 // CHECK:STDOUT:       %.loc16_25.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc16_23.2: type = symbolic_binding T, 0, template [template = %T.loc16_23.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc16_35.8: type = splice_block %.loc16_35.11 [template = %.loc16_35.7 (constants.%.476)] {
+// CHECK:STDOUT:     %.loc16_35.8: type = splice_block %.loc16_35.12 [template = %.loc16_35.7 (constants.%.476)] {
 // CHECK:STDOUT:       %.Self.frozen.loc16_32: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc16_23.2 [template = %T.loc16_23.1 (constants.%T)]
 // CHECK:STDOUT:       %.loc16_35.9: type = splice_inst %.loc16_35.1 [template = %.loc16_35.2 (constants.%.eec)]
-// CHECK:STDOUT:       %.loc16_35.10: @I.%.loc16_35.4 (@I.%.loc16_35.4) = splice_inst %.loc16_35.3 [template = %.loc16_35.5 (constants.%.e35)]
-// CHECK:STDOUT:       %.loc16_35.11: type = splice_inst %.loc16_35.6 [template = %.loc16_35.7 (constants.%.476)]
+// CHECK:STDOUT:       %.loc16_35.10: type = type_of_inst %.loc16_35.3 [template = %.loc16_35.4 (constants.%.4a7)]
+// CHECK:STDOUT:       %.loc16_35.11: @I.%.loc16_35.4 (%.4a7) = splice_inst %.loc16_35.3 [template = %.loc16_35.5 (constants.%.e35)]
+// CHECK:STDOUT:       %.loc16_35.12: type = splice_inst %.loc16_35.6 [template = %.loc16_35.7 (constants.%.476)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc16_32.2: @I.%.loc16_35.7 (%.476) = symbolic_binding N, 1 [template = %N.loc16_32.1 (constants.%N)]
 // CHECK:STDOUT:   }
@@ -84,9 +86,9 @@ interface I(template T: type, N: T.I1) {
 // CHECK:STDOUT:   %.loc16_35.1: <instruction> = refine_inst_action %T.ref [template]
 // CHECK:STDOUT:   %.loc16_35.2: type = splice_inst %.loc16_35.1 [template = %.loc16_35.2 (constants.%.eec)]
 // CHECK:STDOUT:   %.loc16_35.3: <instruction> = access_member_action %.loc16_35.9, I1 [template]
-// CHECK:STDOUT:   %.loc16_35.4: type = type_of_inst %.loc16_35.3 [template]
-// CHECK:STDOUT:   %.loc16_35.5: @I.%.loc16_35.4 (@I.%.loc16_35.4) = splice_inst %.loc16_35.3 [template = %.loc16_35.5 (constants.%.e35)]
-// CHECK:STDOUT:   %.loc16_35.6: <instruction> = convert_to_value_action %.loc16_35.10, type [template]
+// CHECK:STDOUT:   %.loc16_35.4: type = type_of_inst %.loc16_35.3 [template = %.loc16_35.4 (constants.%.4a7)]
+// CHECK:STDOUT:   %.loc16_35.5: @I.%.loc16_35.4 (%.4a7) = splice_inst %.loc16_35.3 [template = %.loc16_35.5 (constants.%.e35)]
+// CHECK:STDOUT:   %.loc16_35.6: <instruction> = convert_to_value_action %.loc16_35.11, type [template]
 // CHECK:STDOUT:   %.loc16_35.7: type = splice_inst %.loc16_35.6 [template = %.loc16_35.7 (constants.%.476)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.loc16_35.7 [template = %pattern_type (constants.%pattern_type.8f9)]
 // CHECK:STDOUT:   %N.patt.loc16_32.2: @I.%pattern_type (%pattern_type.8f9) = symbolic_binding_pattern N, 1 [template = %N.patt.loc16_32.2 (constants.%N.patt.9e2)]
