@@ -64,14 +64,14 @@
 // CHECK:STDOUT:     "diagnostics": [],
 // CHECK:STDOUT:     "uri": "file:///unformatted.carbon"
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 284{{\r}}
+// CHECK:STDOUT: }Content-Length: 283{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 2,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": [
 // CHECK:STDOUT:     {
-// CHECK:STDOUT:       "newText": "fn F () {\n  return;\n}\n",
+// CHECK:STDOUT:       "newText": "fn F() {\n  return;\n}\n",
 // CHECK:STDOUT:       "range": {
 // CHECK:STDOUT:         "end": {
 // CHECK:STDOUT:           "character": 0,
@@ -93,26 +93,12 @@
 // CHECK:STDOUT:     "diagnostics": [],
 // CHECK:STDOUT:     "uri": "file:///formatted.carbon"
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 284{{\r}}
+// CHECK:STDOUT: }Content-Length: 49{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 3,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
-// CHECK:STDOUT:   "result": [
-// CHECK:STDOUT:     {
-// CHECK:STDOUT:       "newText": "fn F () {\n  return;\n}\n",
-// CHECK:STDOUT:       "range": {
-// CHECK:STDOUT:         "end": {
-// CHECK:STDOUT:           "character": 0,
-// CHECK:STDOUT:           "line": 4
-// CHECK:STDOUT:         },
-// CHECK:STDOUT:         "start": {
-// CHECK:STDOUT:           "character": 0,
-// CHECK:STDOUT:           "line": 0
-// CHECK:STDOUT:         }
-// CHECK:STDOUT:       }
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   "result": []
 // CHECK:STDOUT: }Content-Length: 145{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {

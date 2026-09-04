@@ -209,6 +209,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // content on its line.
   auto IsTrailingComment(CommentIndex comment_index) const -> bool;
 
+  // Returns the line the comment begins on.
+  auto GetLine(CommentIndex comment) const -> LineIndex;
+
   // Returns tokens as YAML. This prints the tracked token information on a
   // single line for each token. We use the single-line format so that output is
   // compact, and so that tools like `grep` are compatible.
