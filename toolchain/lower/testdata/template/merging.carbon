@@ -21,7 +21,9 @@ fn CallF(template T: type) { T.F(); }
 
 fn CallCallF() {
   CallF(A);
-  // These are merged because their splices evaluate to the same constant value.
+  // TODO: It'd be nice to merge these, because they both resolve to calls that
+  // call the same constant callee. But they're splicing different instructions,
+  // so that will take some work.
   CallF(B);
   CallF(C);
 }
@@ -99,7 +101,7 @@ fn CallCallF(a: A, b: B) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CCallF.Main.bd4fb75a414fe858(), !dbg !7
 // CHECK:STDOUT:   call void @_CCallF.Main.a6a60dfee2d7d273(), !dbg !8
-// CHECK:STDOUT:   call void @_CCallF.Main.a6a60dfee2d7d273(), !dbg !9
+// CHECK:STDOUT:   call void @_CCallF.Main.9522ff908e97e267(), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -117,8 +119,12 @@ fn CallCallF(a: A, b: B) {
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_CCallF.Main.a6a60dfee2d7d273, { 1, 0 }
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CCallF.Main.9522ff908e97e267() #0 !dbg !17 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_CF.B.Main(), !dbg !18
+// CHECK:STDOUT:   ret void, !dbg !19
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
@@ -133,8 +139,8 @@ fn CallCallF(a: A, b: B) {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 10, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 15, column: 3, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 9, column: 1, scope: !4)
 // CHECK:STDOUT: !11 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main.bd4fb75a414fe858", scope: null, file: !1, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !12 = !DILocation(line: 7, column: 30, scope: !11)
@@ -142,6 +148,9 @@ fn CallCallF(a: A, b: B) {
 // CHECK:STDOUT: !14 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main.a6a60dfee2d7d273", scope: null, file: !1, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !15 = !DILocation(line: 7, column: 30, scope: !14)
 // CHECK:STDOUT: !16 = !DILocation(line: 7, column: 1, scope: !14)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main.9522ff908e97e267", scope: null, file: !1, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !18 = !DILocation(line: 7, column: 30, scope: !17)
+// CHECK:STDOUT: !19 = !DILocation(line: 7, column: 1, scope: !17)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'no_merge_different_conversions.carbon'
@@ -391,7 +400,7 @@ fn CallCallF(a: A, b: B) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CCallF.Main.2877a42045e01a3b(ptr %a, ptr %a), !dbg !17
 // CHECK:STDOUT:   call void @_CCallF.Main.d01354a0ad5f3687(ptr %a, ptr %b), !dbg !18
-// CHECK:STDOUT:   call void @_CCallF.Main.d01354a0ad5f3687(ptr %b, ptr %a), !dbg !19
+// CHECK:STDOUT:   call void @_CCallF.Main.37b67b83fe9ed3dd(ptr %b, ptr %a), !dbg !19
 // CHECK:STDOUT:   call void @_CCallF.Main.7096323a0fb88cc3(ptr %b, ptr %b), !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
@@ -417,24 +426,33 @@ fn CallCallF(a: A, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CCallF.Main.7096323a0fb88cc3(ptr %x, ptr %y) #0 !dbg !34 {
+// CHECK:STDOUT: define linkonce_odr void @_CCallF.Main.37b67b83fe9ed3dd(ptr %x, ptr %y) #0 !dbg !34 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.9745c1.1.temp = alloca {}, align 1, !dbg !38
-// CHECK:STDOUT:   %.9745c1.2.temp = alloca {}, align 1, !dbg !38
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.9745c1.1.temp), !dbg !38
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.bd4fb75a414fe858.Core"(ptr %.9745c1.1.temp, ptr %x), !dbg !38
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.9745c1.2.temp), !dbg !38
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.bd4fb75a414fe858.Core"(ptr %.9745c1.2.temp, ptr %y), !dbg !38
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.9745c1.1.temp, ptr %.9745c1.2.temp), !dbg !38
+// CHECK:STDOUT:   %.9745c1.3.temp = alloca {}, align 1, !dbg !38
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.9745c1.3.temp), !dbg !38
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.bd4fb75a414fe858.Core"(ptr %.9745c1.3.temp, ptr %x), !dbg !38
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.9745c1.3.temp, ptr %y), !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !39
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CCallF.Main.7096323a0fb88cc3(ptr %x, ptr %y) #0 !dbg !40 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.9745c1.1.temp = alloca {}, align 1, !dbg !44
+// CHECK:STDOUT:   %.9745c1.2.temp = alloca {}, align 1, !dbg !44
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.9745c1.1.temp), !dbg !44
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.bd4fb75a414fe858.Core"(ptr %.9745c1.1.temp, ptr %x), !dbg !44
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.9745c1.2.temp), !dbg !44
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.bd4fb75a414fe858.Core"(ptr %.9745c1.2.temp, ptr %y), !dbg !44
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.9745c1.1.temp, ptr %.9745c1.2.temp), !dbg !44
+// CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_CCallF.Main.d01354a0ad5f3687, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -476,10 +494,16 @@ fn CallCallF(a: A, b: B) {
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 2, scope: !28, type: !7)
 // CHECK:STDOUT: !32 = !DILocation(line: 13, column: 3, scope: !28)
 // CHECK:STDOUT: !33 = !DILocation(line: 12, column: 1, scope: !28)
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main.7096323a0fb88cc3", scope: null, file: !1, line: 12, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !35)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main.37b67b83fe9ed3dd", scope: null, file: !1, line: 12, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !35)
 // CHECK:STDOUT: !35 = !{!36, !37}
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !34, type: !7)
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 2, scope: !34, type: !7)
 // CHECK:STDOUT: !38 = !DILocation(line: 13, column: 3, scope: !34)
 // CHECK:STDOUT: !39 = !DILocation(line: 12, column: 1, scope: !34)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main.7096323a0fb88cc3", scope: null, file: !1, line: 12, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !41)
+// CHECK:STDOUT: !41 = !{!42, !43}
+// CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !40, type: !7)
+// CHECK:STDOUT: !43 = !DILocalVariable(arg: 2, scope: !40, type: !7)
+// CHECK:STDOUT: !44 = !DILocation(line: 13, column: 3, scope: !40)
+// CHECK:STDOUT: !45 = !DILocation(line: 12, column: 1, scope: !40)
 // CHECK:STDOUT:
