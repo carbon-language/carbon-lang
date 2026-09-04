@@ -99,7 +99,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Forward declarations and cyclic references](#forward-declarations-and-cyclic-references)
     -   [Declaring interfaces and named constraints](#declaring-interfaces-and-named-constraints)
     -   [Declaring implementations](#declaring-implementations)
-    -   [Matching and agreeing](#matching-and-agreeing)
+    -   [Matching redeclarations](#matching-redeclarations)
+        -   [`impl` members vs `interface` members](#impl-members-vs-interface-members)
     -   [Declaration examples](#declaration-examples)
     -   [Example of declaring interfaces with cyclic references](#example-of-declaring-interfaces-with-cyclic-references)
     -   [Interfaces with parameters constrained by the same interface](#interfaces-with-parameters-constrained-by-the-same-interface)
@@ -5399,7 +5400,8 @@ interfaces or constraints used in the expression are incomplete.
 An interface or named constraint may be forward declared subject to these rules:
 
 -   The definition must be in the same file as the declaration.
--   Only the first declaration may have an access-control keyword.
+-   Access modifiers (`private` and `protected`) must match between forward
+    declaration and definition.
 -   An incomplete interface or named constraint may be used as constraints in
     declarations of types, functions, interfaces, or named constraints. This
     includes a `require` declaration inside an interface or named constraint,
@@ -5467,12 +5469,43 @@ The declaration of an interface implementation consists of:
     [associated constants](#associated-constants) including
     [associated facets](#associated-facets).
 
-> **TODO:** Document the redeclaration syntax `impl C.(as I)` adopted in
-> [#5366: The name of an `impl` in `class` scope](/proposals/p005366-the-name-of-an-impl-in-class-scope.md).
+As adopted in
+[proposal #5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#proposal),
+an `impl` declaration is associated with the scope it is first declared in, and
+can only be redeclared in that scope, matching all other declarations. To
+redeclare an `impl` after the end of the scope it was declared in, that scope
+may be re-entered as part of the `impl` redeclaration by writing it in the same
+way, except with parentheses around the name of the `impl`, as in:
+
+```carbon
+class X {
+  // Forward declaration that `X impls Y`:
+  impl as Y;
+}
+
+// Definition of the `impl` that `X impls Y`
+// that was forward declared in `X`:
+impl X.(as Y) { ... }
+```
+
+More generally, in a `class` scope
+
+```carbon
+class __X__ {
+  impl __Y__;
+}
+```
+
+is redeclared `impl __X__.(__Y__)` outside of that `class` scope. Here `__X__`
+is whatever sequence of tokens appears in that position in the `class`
+declaration, and `__Y__` is the sequence of tokens in the `impl` declaration.
+These declarations are matched syntactically, and anything in `__Y__` is
+interpreted as if it appeared in the scope of `__X__` like it was first
+declared.
 
 **Note:** The type before the `as` is required except in class scope, where it
 defaults to `Self` as described in the
-[matching and agreeing section](#matching-and-agreeing).
+[matching redeclarations section](#matching-redeclarations).
 
 **Note:** The `extend` keyword, when present, is not part of the `impl`
 declaration. It precedes the `impl` declaration in class scope. When the
@@ -5507,60 +5540,139 @@ these rules:
     declaration. This matches the
     [information accumulation principle](/docs/project/principles/information_accumulation.md).
 
-### Matching and agreeing
+For `impl` members defined out-of-line, parentheses are added around the
+corresponding portion of the scope (as adopted in
+[proposal #3763](/proposals/p003763-matching-redeclarations.md#out-of-line-definitions-of-associated-functions)).
+For example:
 
-> **TODO:** Update this section to reflect the new terminology and rules adopted
-> in
-> [#3763: Matching redeclarations](/proposals/p003763-matching-redeclarations.md),
-> and the new rules adopted in
+```carbon
+impl Type as Interface {
+  fn F();
+}
+// Not `fn Type as Interface.F() {}`.
+fn (Type as Interface).F() {}
+```
+
+Similarly for parameterized `impl`s:
+
+```carbon
+impl forall [T:! type] T as Interface(T) {
+  fn F();
+}
+fn (forall [T:! type] T as Interface(T)).F() {}
+```
+
+And for class-scope `impl` members:
+
+```carbon
+class Class {
+  impl as Interface {
+    fn F();
+    fn G();
+  }
+}
+
+// ✅︎ OK
+fn Class.(Self as Interface).F() {}
+
+// ✅︎ Rewritten to `Self as Interface`.
+fn Class.(as Interface).G() {}
+```
+
+### Matching redeclarations
+
+> **TODO:** Update this section to reflect the new rules adopted in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
 
-Carbon needs to determine if two declarations match in order to say which
-definition a forward declaration corresponds to and to verify that nothing is
-defined twice. Declarations that match must also agree, meaning they are
-consistent with each other.
+Carbon needs to determine if two declarations _declare the same entity_ in order
+to say which definition a forward declaration corresponds to and to verify that
+nothing is defined twice. The program is invalid if it contains two declarations
+of the same entity that _differ_.
 
-Interface and named constraint declarations match if their names are the same
-after name and alias resolution. To agree:
+Named declarations (such as interfaces and named constraints) follow the general
+[matching redeclaration rules](/docs/design/declaring_entities.md#matching-redeclarations-of-an-entity)
+adopted in
+[proposal #3763](/proposals/p003763-matching-redeclarations.md#proposal):
+two declarations declare the same entity if they have the same scope and the
+same name, and two owned declarations differ if the sequence of tokens following
+the introducer keyword and optional scope up to the semicolon or open brace is
+different.
 
--   The introducer keyword or keywords much be the same.
--   The types and order of parameters in the parameter list, if any, must match.
-    The parameter names may be omitted, but if they are included in both
-    declarations, they must match.
--   Types agree if they correspond to the same expression tree, after name and
-    alias resolution and canonicalization of parentheses. Note that no other
-    evaluation of expressions is performed.
+Two `impl` declarations declare the same entity if the portion of the
+declaration from the introducer keyword until the `;` or `{` does not differ,
+except that an omitted type before `as` is normalized by inserting `Self` before
+`as` (inside the parentheses when redeclared outside of its `class` scope)
+before looking for and comparing with a previous declaration (see
+[proposal #3763](/proposals/p003763-matching-redeclarations.md#impl-declarations)
+and
+[proposal #5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#optional-self-before-as)).
+For example:
 
-Interface implementation declarations match if the type and interface
-expressions match along with
-[the `forall` clause](#parameterized-impl-declarations), if any:
+```carbon
+class A {
+  // First impl declaration is equivalent
+  // to `impl Self as As(i32);`
+  impl as As(i32);
 
--   If the type part is omitted, it is rewritten to `Self` in the context of the
-    declaration.
--   `Self` is rewritten to its meaning in the scope it is used. In a class
-    scope, this should match the type name and
-    [optional parameter expression](#parameterized-types) after `class`. So in
-    `class MyClass { ... }`, `Self` is rewritten to `MyClass`. In
-    `class Vector(T: Movable) { ... }`, `Self` is rewritten to
-    `forall [T: Movable] Vector(T)`.
--   Types match if they have the same name after name and alias resolution and
-    the same parameters, or are the same type parameter.
--   Interfaces match if they have the same name after name and alias resolution
-    and the same parameters. Note that a named constraint that is equivalent to
-    an interface, as in `constraint Equivalent { extend MyInterface; }`, is not
-    considered to match.
+  // Second impl declaration.
+  impl Self as As(bool);
+}
 
-> **TODO:** Document the matching rules for the redeclaration syntax
-> `impl C.(as I)` adopted in
-> [#5366: The name of an `impl` in `class` scope](/proposals/p005366-the-name-of-an-impl-in-class-scope.md).
+// Redeclaration of the first impl declaration.
+impl A.(Self as As(i32)) { ... }
 
-For implementations to agree:
+// Since this is equivalent to
+// `impl A.(Self as As(bool)) { ... }`, is a
+// valid redeclaration of the second impl
+// declaration.
+impl A.(as As(bool)) { ... }
+```
 
--   The presence of the modifier keyword `final` before `impl` must match
-    between a forward declaration and definition.
--   If either declaration includes a `where` clause, they must both include one.
-    If neither uses `where _`, they must match in that they produce the
-    associated constants with the same values considered separately.
+#### `impl` members vs `interface` members
+
+As adopted in
+[proposal #3763](/proposals/p003763-matching-redeclarations.md#impl-members-vs-interface-members),
+associated functions in an `impl` are permitted to differ syntactically from the
+corresponding declarations in the `interface`:
+
+```carbon
+interface I {
+  fn F(s: Self);
+}
+impl i32 as I {
+  fn F(s: i32);
+}
+```
+
+In the specific case where an associated function declaration in the `impl` can
+semantically be used directly to satisfy a requirement introduced by a function
+declaration in the `interface`, it is used directly. Specifically, the function
+in the `impl` is used directly when:
+
+-   Each parameter in the `impl` function has the same type as the parameter in
+    the `interface`. This includes the `self` parameter, which must be present
+    in both functions if it is present in either.
+-   Each parameter in the `impl` has the same category (`var`, `ref`, or value)
+    as the parameter in the `interface`.
+-   The return type in the `interface` and `impl` are the same type and
+    category.
+
+Otherwise, a synthetic function called a _thunk_ is generated:
+
+-   The declaration of the thunk is formed by substituting the `Self` type of
+    the `impl` into the declaration in the `interface`. This implicitly also
+    provides values for any associated constants used in the declaration.
+-   The body of the thunk calls the function in the `impl`, passing in the
+    arguments to the thunk, and, if a return type is specified in the interface,
+    returning the value returned by the call.
+-   Implicit conversions are performed as necessary to initialize the parameters
+    of the function in the `impl` from the parameters of the thunk, and to
+    initialize the return value of the function from the result of the call.
+-   If the function in the interface does not have a return type, the program is
+    invalid if the function in the `impl` specifies a return type.
+-   It is an error if a thunk is needed to wrap a function declaration with a
+    `var` parameter, because otherwise a copy would always be performed when
+    initializing the parameter.
 
 ### Declaration examples
 
@@ -5646,12 +5758,12 @@ class MyClass {
 
 // Definitions of previously declared implementations.
 impl MyClass as Interface2 where _ { }
-impl MyClass as Interface5 where _ { }
+impl MyClass.(MyClass as Interface5 where _) { }
 
 // Definition of previously declared extending
 // implementations.
 impl MyClass as Interface4 where _ { }
-impl MyClass as Interface6 where _ { }
+impl MyClass.(as Interface6 where _) { }
 ```
 
 ### Example of declaring interfaces with cyclic references
@@ -6941,3 +7053,5 @@ and
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
 -   [#2964: Expression phase terminology](https://github.com/carbon-language/carbon-lang/pull/2964)
 -   [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
+-   [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
+-   [#5366: The name of an `impl` in `class` scope](https://github.com/carbon-language/carbon-lang/pull/5366)
