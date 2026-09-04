@@ -94,6 +94,11 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
             return ExprCategory::ReprInitializing;
           }
         }
+      } else if constexpr (std::same_as<TypedInstT, SpecificInst>) {
+        inst_id = inst.inst_id;
+        // TODO: Track `inst.specific_id` as our current specific, and use that
+        // when determining the category of the inner instruction.
+        return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, SpliceInst>) {
         auto action = ir->insts().Get(inst.inst_id);
         if (auto* action_category = std::get_if<ActionExprCategory>(
