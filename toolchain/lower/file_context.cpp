@@ -424,7 +424,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   }
 
   // Don't lower builtins.
-  if (function.builtin_function_kind() != SemIR::BuiltinFunctionKind::None) {
+  if (function.GetBuiltinFunctionKind(sem_ir()) !=
+      SemIR::BuiltinFunctionKind::None) {
     return std::nullopt;
   }
 

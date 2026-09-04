@@ -118,7 +118,7 @@ fn CallF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.fed6abc73c8aca6f:core.Destroy.Core"(ptr %self) #0 !dbg !9 {
+// CHECK:STDOUT: define weak_odr void @"_COp.b7a0a8bb33ac84ff:core.Destroy.Core"(ptr %self) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
@@ -129,10 +129,10 @@ fn CallF() {
 // CHECK:STDOUT:   %temp1 = alloca {}, align 1, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !18
 // CHECK:STDOUT:   %1 = call i123 @_CF.C.Main.e43630e9a6c38c3f(), !dbg !20
-// CHECK:STDOUT:   call void @"_COp.fed6abc73c8aca6f:core.Destroy.Core"(ptr @C.val.eeb), !dbg !18
+// CHECK:STDOUT:   call void @"_COp.b7a0a8bb33ac84ff:core.Destroy.Core"(ptr @C.val.eeb), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp1), !dbg !19
 // CHECK:STDOUT:   %2 = call i456 @_CG.C.Main.e43630e9a6c38c3f(), !dbg !21
-// CHECK:STDOUT:   call void @"_COp.fed6abc73c8aca6f:core.Destroy.Core"(ptr @C.val.eeb), !dbg !19
+// CHECK:STDOUT:   call void @"_COp.b7a0a8bb33ac84ff:core.Destroy.Core"(ptr @C.val.eeb), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -167,7 +167,7 @@ fn CallF() {
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Op", linkageName: "_COp.fed6abc73c8aca6f:core.Destroy.Core", scope: null, file: !10, line: 19, type: !11, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !14)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Op", linkageName: "_COp.b7a0a8bb33ac84ff:core.Destroy.Core", scope: null, file: !10, line: 19, type: !11, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !14)
 // CHECK:STDOUT: !10 = !DIFile(filename: "require_completion_in_call.carbon", directory: "")
 // CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
 // CHECK:STDOUT: !12 = !{null, !13}
@@ -244,7 +244,7 @@ fn CallF() {
 // CHECK:STDOUT: source_filename = "require_completion_in_virtual_call.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.8ea19ac2d92d0842:core.Destroy.Core"(ptr %self) #0 !dbg !4 {
+// CHECK:STDOUT: define weak_odr void @"_COp.95528a86e1127e2d:core.Destroy.Core"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
@@ -258,7 +258,7 @@ fn CallF() {
 // CHECK:STDOUT: !1 = !DIFile(filename: "require_completion_in_virtual_call.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8ea19ac2d92d0842:core.Destroy.Core", scope: null, file: !1, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !8)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.95528a86e1127e2d:core.Destroy.Core", scope: null, file: !1, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null, !7}
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -281,24 +281,24 @@ fn CallF() {
 // CHECK:STDOUT:   %.loc9_9.2.temp = alloca {}, align 1, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_9.2.temp), !dbg !7
 // CHECK:STDOUT:   call void @_CF.Main.9522ff908e97e267(ptr @C.val.d1d.loc9_11.3), !dbg !8
-// CHECK:STDOUT:   call void @"_COp.cbd14a388b4a1c25:core.Destroy.Core"(ptr @C.val.d1d), !dbg !7
+// CHECK:STDOUT:   call void @"_COp.08d9e38b928ba575:core.Destroy.Core"(ptr @C.val.d1d), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.cbd14a388b4a1c25:core.Destroy.Core"(ptr %self) #0 !dbg !10 {
+// CHECK:STDOUT: define weak_odr void @"_COp.08d9e38b928ba575:core.Destroy.Core"(ptr %self) #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.8ea19ac2d92d0842:core.Destroy.Core"(ptr %self) #0 !dbg !17 {
+// CHECK:STDOUT: define weak_odr void @"_COp.95528a86e1127e2d:core.Destroy.Core"(ptr %self) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.565c6ab0bb3d654c:core.Destroy.Core"(ptr %self) #0 !dbg !22 {
+// CHECK:STDOUT: define weak_odr void @"_COp.119330419006a03e:core.Destroy.Core"(ptr %self) #0 !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
@@ -318,7 +318,7 @@ fn CallF() {
 // CHECK:STDOUT:   %vtable1 = load ptr, ptr %1, align 8, !dbg !32
 // CHECK:STDOUT:   %4 = call ptr @llvm.load.relative.i32(ptr %vtable1, i32 4), !dbg !32
 // CHECK:STDOUT:   %5 = call i12 %4(ptr %1, ptr %t), !dbg !32
-// CHECK:STDOUT:   call void @"_COp.565c6ab0bb3d654c:core.Destroy.Core"(ptr %1), !dbg !29
+// CHECK:STDOUT:   call void @"_COp.119330419006a03e:core.Destroy.Core"(ptr %1), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -358,19 +358,19 @@ fn CallF() {
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 8, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 9, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 8, column: 1, scope: !4)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbd14a388b4a1c25:core.Destroy.Core", scope: null, file: !1, line: 9, type: !11, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !14)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Op", linkageName: "_COp.08d9e38b928ba575:core.Destroy.Core", scope: null, file: !1, line: 9, type: !11, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !14)
 // CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
 // CHECK:STDOUT: !12 = !{null, !13}
 // CHECK:STDOUT: !13 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !10, type: !13)
 // CHECK:STDOUT: !16 = !DILocation(line: 9, column: 8, scope: !10)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8ea19ac2d92d0842:core.Destroy.Core", scope: null, file: !18, line: 7, type: !11, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !19)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Op", linkageName: "_COp.95528a86e1127e2d:core.Destroy.Core", scope: null, file: !18, line: 7, type: !11, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !19)
 // CHECK:STDOUT: !18 = !DIFile(filename: "require_completion_in_virtual_call.carbon", directory: "")
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !17, type: !13)
 // CHECK:STDOUT: !21 = !DILocation(line: 7, column: 3, scope: !17)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp.565c6ab0bb3d654c:core.Destroy.Core", scope: null, file: !18, line: 7, type: !11, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !23)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp.119330419006a03e:core.Destroy.Core", scope: null, file: !18, line: 7, type: !11, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !23)
 // CHECK:STDOUT: !23 = !{!24}
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !22, type: !13)
 // CHECK:STDOUT: !25 = !DILocation(line: 7, column: 3, scope: !22)

@@ -334,10 +334,10 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT:   %.loc8_14.3.temp = alloca i8, align 1, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_14.3.temp), !dbg !18
 // CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk.__(ptr %n, ptr @int_1.f1e), !dbg !20
-// CHECK:STDOUT:   call void @"_COp.136cbc434fe80552:core.Destroy.Core"(ptr @int_1.f1e), !dbg !18
+// CHECK:STDOUT:   call void @"_COp.4954785a8b134801:core.Destroy.Core"(ptr @int_1.f1e), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_14.3.temp), !dbg !19
 // CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk.__(ptr %n, ptr @int_1.f1e), !dbg !21
-// CHECK:STDOUT:   call void @"_COp.136cbc434fe80552:core.Destroy.Core"(ptr @int_1.f1e), !dbg !19
+// CHECK:STDOUT:   call void @"_COp.4954785a8b134801:core.Destroy.Core"(ptr @int_1.f1e), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -356,7 +356,7 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.136cbc434fe80552:core.Destroy.Core"(ptr %self) #0 !dbg !30 {
+// CHECK:STDOUT: define weak_odr void @"_COp.4954785a8b134801:core.Destroy.Core"(ptr %self) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
@@ -384,7 +384,7 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT: declare void @_ZNH9NeedThunk8ExplicitES_a(i8 noundef signext) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @"_COp.136cbc434fe80552:core.Destroy.Core", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.4954785a8b134801:core.Destroy.Core", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -426,7 +426,7 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT: !27 = !{!"p1 omnipotent char", !25, i64 0}
 // CHECK:STDOUT: !28 = !{}
 // CHECK:STDOUT: !29 = !{!10, !10, i64 0}
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp.136cbc434fe80552:core.Destroy.Core", scope: null, file: !1, line: 7, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !34)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp.4954785a8b134801:core.Destroy.Core", scope: null, file: !1, line: 7, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !34)
 // CHECK:STDOUT: !31 = !DISubroutineType(types: !32)
 // CHECK:STDOUT: !32 = !{null, !33}
 // CHECK:STDOUT: !33 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_signed)

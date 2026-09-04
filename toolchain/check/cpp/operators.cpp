@@ -15,16 +15,19 @@
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/clang_decl.h"
+#include "toolchain/sem_ir/core_interface.h"
 #include "toolchain/sem_ir/cpp_initializer_list.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -491,6 +494,13 @@ namespace {
 struct OverloadedOperatorInfo {
   enum ReturnType { FirstArgType, Bool };
 
+  // The name of the interface containing the operator function. This affects
+  // the mangled name and canonicalization of CoreWitness functions.
+  //
+  // This must always be set, so we pick a default value that does not represent
+  // an interface, so is never correct.
+  CoreIdentifier interface_name = CoreIdentifier::VoidBase;
+
   // The name for the function used to implement this operator. This is usually
   // `Op`. This mostly only affects the mangled name, but might show up in
   // diagnostics.
@@ -517,40 +527,50 @@ static auto GetBuiltinOperatorInfo(clang::OverloadedOperatorKind kind)
     // Bitwise operators. In C++, the return type is computed with the usual
     // arithmetic conversions, but we will just use the type of the arguments.
     table[clang::OO_Amp] = {
+        .interface_name = CoreIdentifier::BitAndWith,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntAnd,
         .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
     table[clang::OO_Pipe] = {
+        .interface_name = CoreIdentifier::BitOrWith,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntOr,
         .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
     table[clang::OO_Caret] = {
+        .interface_name = CoreIdentifier::BitXorWith,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntXor,
         .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
     table[clang::OO_Tilde] = {
+        .interface_name = CoreIdentifier::BitComplement,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntComplement,
         .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
 
     // Comparison operators.
     table[clang::OO_EqualEqual] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::Equal,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntEq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_ExclaimEqual] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::NotEqual,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntNeq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_Less] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::Less,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntLess,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_LessEqual] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::LessOrEquivalent,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntLessEq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_Greater] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::Greater,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntGreater,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_GreaterEqual] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::GreaterOrEquivalent,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntGreaterEq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
@@ -558,6 +578,41 @@ static auto GetBuiltinOperatorInfo(clang::OverloadedOperatorKind kind)
     return table;
   }();
   return OpTable[kind];
+}
+
+// Compute the interface scope from Core.
+//
+// FIXME: Cache this on Context.
+static auto GetCoreInterfaceNameScope(Context& context,
+                                      CoreIdentifier interface_name)
+    -> SemIR::NameScopeId {
+  auto name_id = *context.names().GetAsStringIfIdentifier(
+      context.core_identifiers().AddNameId(interface_name));
+  auto interface_scope_id = SemIR::NameScopeId::None;
+  for (auto [import_ir_id, import_ir] : context.import_irs().enumerate()) {
+    if (import_ir.sem_ir == nullptr) {
+      continue;
+    }
+    if (import_ir.sem_ir->package_id() != PackageNameId::Core) {
+      continue;
+    }
+    for (auto [import_interface_id, import_interface] :
+         import_ir.sem_ir->interfaces().enumerate()) {
+      if (import_ir.sem_ir->names().GetAsStringIfIdentifier(
+              import_interface.name_id) == name_id) {
+        auto interface_id =
+            ImportInterface(context, import_ir_id, import_interface_id);
+        const auto& interface = context.interfaces().Get(interface_id);
+        interface_scope_id = interface.scope_without_self_id;
+        break;
+      }
+    }
+    if (interface_scope_id.has_value()) {
+      break;
+    }
+  }
+  CARBON_CHECK(interface_scope_id.has_value(), "failed to find Core interface");
+  return interface_scope_id;
 }
 
 // Builds a Carbon builtin function declaration corresponding to an overload
@@ -617,8 +672,12 @@ static auto TryBuildBuiltinOperator(
       break;
   }
 
+  auto interface_scope_id =
+      GetCoreInterfaceNameScope(context, info.interface_name);
+
   return MakeBuiltinOperatorFunction(context, arg_type_ids, return_type_id,
-                                     info.op_name, info.builtin_kind);
+                                     info.op_name, info.builtin_kind,
+                                     interface_scope_id);
 }
 
 namespace {

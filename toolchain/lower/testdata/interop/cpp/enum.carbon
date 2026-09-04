@@ -371,14 +371,14 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CRuntime.Main(i32 %a, i32 %b) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Op.call.loc14 = and i32 %a, %b, !dbg !27
-// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %Op.call.loc14), !dbg !28
-// CHECK:STDOUT:   %Op.call.loc15 = or i32 %a, %b, !dbg !29
-// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %Op.call.loc15), !dbg !30
-// CHECK:STDOUT:   %Op.call.loc16 = xor i32 %a, %b, !dbg !31
-// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %Op.call.loc16), !dbg !32
-// CHECK:STDOUT:   %Op.call.loc20 = xor i32 -1, %a, !dbg !33
-// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %Op.call.loc20), !dbg !34
+// CHECK:STDOUT:   %BitAndWith.Op.call = and i32 %a, %b, !dbg !27
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %BitAndWith.Op.call), !dbg !28
+// CHECK:STDOUT:   %BitOrWith.Op.call = or i32 %a, %b, !dbg !29
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %BitOrWith.Op.call), !dbg !30
+// CHECK:STDOUT:   %BitXorWith.Op.call = xor i32 %a, %b, !dbg !31
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %BitXorWith.Op.call), !dbg !32
+// CHECK:STDOUT:   %BitComplement.Op.call = xor i32 -1, %a, !dbg !33
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %BitComplement.Op.call), !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -438,19 +438,19 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i1 @_CCompare.Main(i16 %a, i16 %b) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Equal.call = icmp eq i16 %a, %b, !dbg !20
-// CHECK:STDOUT:   ret i1 %Equal.call, !dbg !21
+// CHECK:STDOUT:   %OrderedWith.Equal.call = icmp eq i16 %a, %b, !dbg !20
+// CHECK:STDOUT:   ret i1 %OrderedWith.Equal.call, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i1 @_CCallCompareGeneric.Main(i16 %a, i16 %b) #0 !dbg !22 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %CompareGeneric.call = call i1 @_CCompareGeneric.Main.80c3fc0239809458(i16 %a, i16 %b), !dbg !26
+// CHECK:STDOUT:   %CompareGeneric.call = call i1 @_CCompareGeneric.Main.0476e0c7c3f3c2a2(i16 %a, i16 %b), !dbg !26
 // CHECK:STDOUT:   ret i1 %CompareGeneric.call, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.80c3fc0239809458(i16 %x, i16 %y) #0 !dbg !28 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.0476e0c7c3f3c2a2(i16 %x, i16 %y) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = icmp eq i16 %x, %y, !dbg !32
 // CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !33
@@ -490,7 +490,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 2, scope: !22, type: !16)
 // CHECK:STDOUT: !26 = !DILocation(line: 15, column: 10, scope: !22)
 // CHECK:STDOUT: !27 = !DILocation(line: 15, column: 3, scope: !22)
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.80c3fc0239809458", scope: null, file: !1, line: 10, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !29)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.0476e0c7c3f3c2a2", scope: null, file: !1, line: 10, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !29)
 // CHECK:STDOUT: !29 = !{!30, !31}
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !28, type: !16)
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 2, scope: !28, type: !16)
@@ -510,8 +510,8 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_15.1.temp), !dbg !20
 // CHECK:STDOUT:   call void @_ZNK13ConvertToEnumcvN1C1EEEv.carbon_thunk._(ptr %b, ptr %.loc18_15.1.temp), !dbg !20
 // CHECK:STDOUT:   %.loc18_15.5 = load i16, ptr %.loc18_15.1.temp, align 2, !dbg !20
-// CHECK:STDOUT:   %Equal.call = icmp eq i16 %a, %.loc18_15.5, !dbg !21
-// CHECK:STDOUT:   ret i1 %Equal.call, !dbg !22
+// CHECK:STDOUT:   %OrderedWith.Equal.call = icmp eq i16 %a, %.loc18_15.5, !dbg !21
+// CHECK:STDOUT:   ret i1 %OrderedWith.Equal.call, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -532,8 +532,8 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: define i1 @_CCompare2.Main(i32 %a, ptr %b) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK13ConvertToEnumcv2E2Ev.carbon_thunk._(ptr %b), !dbg !37
-// CHECK:STDOUT:   %Equal.call = icmp eq i32 %a, %__carbon_thunk.call, !dbg !38
-// CHECK:STDOUT:   ret i1 %Equal.call, !dbg !39
+// CHECK:STDOUT:   %OrderedWith.Equal.call = icmp eq i32 %a, %__carbon_thunk.call, !dbg !38
+// CHECK:STDOUT:   ret i1 %OrderedWith.Equal.call, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -553,8 +553,8 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_15.1.temp), !dbg !44
 // CHECK:STDOUT:   call void @_ZNK14ConvertToEnum2cvN1C1EEEv.carbon_thunk._(ptr %b, ptr %.loc26_15.1.temp), !dbg !44
 // CHECK:STDOUT:   %.loc26_15.5 = load i16, ptr %.loc26_15.1.temp, align 2, !dbg !44
-// CHECK:STDOUT:   %Equal.call = icmp eq i16 %a, %.loc26_15.5, !dbg !45
-// CHECK:STDOUT:   ret i1 %Equal.call, !dbg !46
+// CHECK:STDOUT:   %OrderedWith.Equal.call = icmp eq i16 %a, %.loc26_15.5, !dbg !45
+// CHECK:STDOUT:   ret i1 %OrderedWith.Equal.call, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -574,105 +574,105 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i1 @_CCallCompareGeneric.Main(i16 %a, ptr %b) #0 !dbg !49 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %CompareGeneric.call = call i1 @_CCompareGeneric.Main.215a23369ed4d589(i16 %a, ptr %b), !dbg !53
+// CHECK:STDOUT:   %CompareGeneric.call = call i1 @_CCompareGeneric.Main.f8b275c548b6e015(i16 %a, ptr %b), !dbg !53
 // CHECK:STDOUT:   ret i1 %CompareGeneric.call, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CEqual:thunk:EqWith.83b9626e83cf3dcc.Core:enclosed"(i16 %self, ptr %other) #2 !dbg !55 {
+// CHECK:STDOUT: define weak_odr i1 @"_CEqual:thunk:EqWith.83b9626e83cf3dcc.Core:OrderedWith.Core"(i16 %self, ptr %other) #2 !dbg !55 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.4.temp = alloca i16, align 2, !dbg !59
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.4.temp), !dbg !59
 // CHECK:STDOUT:   call void @_ZNK13ConvertToEnumcvN1C1EEEv.carbon_thunk._(ptr %other, ptr %.4.temp), !dbg !59
 // CHECK:STDOUT:   %.8 = load i16, ptr %.4.temp, align 2, !dbg !59
-// CHECK:STDOUT:   %Equal.call = icmp eq i16 %self, %.8, !dbg !59
-// CHECK:STDOUT:   ret i1 %Equal.call, !dbg !59
+// CHECK:STDOUT:   %OrderedWith.Equal.call = icmp eq i16 %self, %.8, !dbg !59
+// CHECK:STDOUT:   ret i1 %OrderedWith.Equal.call, !dbg !59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CNotEqual:thunk:EqWith.83b9626e83cf3dcc.Core:enclosed"(i16 %self, ptr %other) #2 !dbg !60 {
+// CHECK:STDOUT: define weak_odr i1 @"_CNotEqual:thunk:EqWith.83b9626e83cf3dcc.Core:OrderedWith.Core"(i16 %self, ptr %other) #2 !dbg !60 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.4.temp = alloca i16, align 2, !dbg !64
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.4.temp), !dbg !64
 // CHECK:STDOUT:   call void @_ZNK13ConvertToEnumcvN1C1EEEv.carbon_thunk._(ptr %other, ptr %.4.temp), !dbg !64
 // CHECK:STDOUT:   %.8 = load i16, ptr %.4.temp, align 2, !dbg !64
-// CHECK:STDOUT:   %NotEqual.call = icmp ne i16 %self, %.8, !dbg !64
-// CHECK:STDOUT:   ret i1 %NotEqual.call, !dbg !64
+// CHECK:STDOUT:   %OrderedWith.NotEqual.call = icmp ne i16 %self, %.8, !dbg !64
+// CHECK:STDOUT:   ret i1 %OrderedWith.NotEqual.call, !dbg !64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i1 @_CCallCompareGeneric2.Main(i32 %a, ptr %b) #0 !dbg !65 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %CompareGeneric.call = call i1 @_CCompareGeneric.Main.a5489e454367d917(i32 %a, ptr %b), !dbg !69
+// CHECK:STDOUT:   %CompareGeneric.call = call i1 @_CCompareGeneric.Main.f7b86ff4854a74c3(i32 %a, ptr %b), !dbg !69
 // CHECK:STDOUT:   ret i1 %CompareGeneric.call, !dbg !70
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CEqual:thunk:EqWith.e8fe48de943d9652.Core:enclosed"(i32 %self, ptr %other) #2 !dbg !71 {
+// CHECK:STDOUT: define weak_odr i1 @"_CEqual:thunk:EqWith.e8fe48de943d9652.Core:OrderedWith.Core"(i32 %self, ptr %other) #2 !dbg !71 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK13ConvertToEnumcv2E2Ev.carbon_thunk._(ptr %other), !dbg !75
-// CHECK:STDOUT:   %Equal.call = icmp eq i32 %self, %__carbon_thunk.call, !dbg !75
-// CHECK:STDOUT:   ret i1 %Equal.call, !dbg !75
+// CHECK:STDOUT:   %OrderedWith.Equal.call = icmp eq i32 %self, %__carbon_thunk.call, !dbg !75
+// CHECK:STDOUT:   ret i1 %OrderedWith.Equal.call, !dbg !75
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CNotEqual:thunk:EqWith.e8fe48de943d9652.Core:enclosed"(i32 %self, ptr %other) #2 !dbg !76 {
+// CHECK:STDOUT: define weak_odr i1 @"_CNotEqual:thunk:EqWith.e8fe48de943d9652.Core:OrderedWith.Core"(i32 %self, ptr %other) #2 !dbg !76 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK13ConvertToEnumcv2E2Ev.carbon_thunk._(ptr %other), !dbg !80
-// CHECK:STDOUT:   %NotEqual.call = icmp ne i32 %self, %__carbon_thunk.call, !dbg !80
-// CHECK:STDOUT:   ret i1 %NotEqual.call, !dbg !80
+// CHECK:STDOUT:   %OrderedWith.NotEqual.call = icmp ne i32 %self, %__carbon_thunk.call, !dbg !80
+// CHECK:STDOUT:   ret i1 %OrderedWith.NotEqual.call, !dbg !80
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i1 @_CCallCompareGeneric3.Main(i16 %a, ptr %b) #0 !dbg !81 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %CompareGeneric.call = call i1 @_CCompareGeneric.Main.64b737572447efad(i16 %a, ptr %b), !dbg !85
+// CHECK:STDOUT:   %CompareGeneric.call = call i1 @_CCompareGeneric.Main.322aacabcfb78b1a(i16 %a, ptr %b), !dbg !85
 // CHECK:STDOUT:   ret i1 %CompareGeneric.call, !dbg !86
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CEqual:thunk:EqWith.a294139a6615e163.Core:enclosed"(i16 %self, ptr %other) #2 !dbg !87 {
+// CHECK:STDOUT: define weak_odr i1 @"_CEqual:thunk:EqWith.a294139a6615e163.Core:OrderedWith.Core"(i16 %self, ptr %other) #2 !dbg !87 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.4.temp = alloca i16, align 2, !dbg !91
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.4.temp), !dbg !91
 // CHECK:STDOUT:   call void @_ZNK14ConvertToEnum2cvN1C1EEEv.carbon_thunk._(ptr %other, ptr %.4.temp), !dbg !91
 // CHECK:STDOUT:   %.8 = load i16, ptr %.4.temp, align 2, !dbg !91
-// CHECK:STDOUT:   %Equal.call = icmp eq i16 %self, %.8, !dbg !91
-// CHECK:STDOUT:   ret i1 %Equal.call, !dbg !91
+// CHECK:STDOUT:   %OrderedWith.Equal.call = icmp eq i16 %self, %.8, !dbg !91
+// CHECK:STDOUT:   ret i1 %OrderedWith.Equal.call, !dbg !91
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CNotEqual:thunk:EqWith.a294139a6615e163.Core:enclosed"(i16 %self, ptr %other) #2 !dbg !92 {
+// CHECK:STDOUT: define weak_odr i1 @"_CNotEqual:thunk:EqWith.a294139a6615e163.Core:OrderedWith.Core"(i16 %self, ptr %other) #2 !dbg !92 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.4.temp = alloca i16, align 2, !dbg !96
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.4.temp), !dbg !96
 // CHECK:STDOUT:   call void @_ZNK14ConvertToEnum2cvN1C1EEEv.carbon_thunk._(ptr %other, ptr %.4.temp), !dbg !96
 // CHECK:STDOUT:   %.8 = load i16, ptr %.4.temp, align 2, !dbg !96
-// CHECK:STDOUT:   %NotEqual.call = icmp ne i16 %self, %.8, !dbg !96
-// CHECK:STDOUT:   ret i1 %NotEqual.call, !dbg !96
+// CHECK:STDOUT:   %OrderedWith.NotEqual.call = icmp ne i16 %self, %.8, !dbg !96
+// CHECK:STDOUT:   ret i1 %OrderedWith.NotEqual.call, !dbg !96
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.215a23369ed4d589(i16 %x, ptr %y) #0 !dbg !97 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.f8b275c548b6e015(i16 %x, ptr %y) #0 !dbg !97 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.83b9626e83cf3dcc.Core:enclosed"(i16 %x, ptr %y), !dbg !101
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.83b9626e83cf3dcc.Core:OrderedWith.Core"(i16 %x, ptr %y), !dbg !101
 // CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !102
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.a5489e454367d917(i32 %x, ptr %y) #0 !dbg !103 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.f7b86ff4854a74c3(i32 %x, ptr %y) #0 !dbg !103 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.e8fe48de943d9652.Core:enclosed"(i32 %x, ptr %y), !dbg !107
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.e8fe48de943d9652.Core:OrderedWith.Core"(i32 %x, ptr %y), !dbg !107
 // CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !108
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.64b737572447efad(i16 %x, ptr %y) #0 !dbg !109 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.322aacabcfb78b1a(i16 %x, ptr %y) #0 !dbg !109 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.a294139a6615e163.Core:enclosed"(i16 %x, ptr %y), !dbg !113
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.a294139a6615e163.Core:OrderedWith.Core"(i16 %x, ptr %y), !dbg !113
 // CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !114
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -750,12 +750,12 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !52 = !DILocalVariable(arg: 2, scope: !49, type: !15)
 // CHECK:STDOUT: !53 = !DILocation(line: 36, column: 10, scope: !49)
 // CHECK:STDOUT: !54 = !DILocation(line: 36, column: 3, scope: !49)
-// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "Equal", linkageName: "_CEqual:thunk:EqWith.83b9626e83cf3dcc.Core:enclosed", scope: null, file: !1, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !56)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "Equal", linkageName: "_CEqual:thunk:EqWith.83b9626e83cf3dcc.Core:OrderedWith.Core", scope: null, file: !1, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !56)
 // CHECK:STDOUT: !56 = !{!57, !58}
 // CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !55, type: !16)
 // CHECK:STDOUT: !58 = !DILocalVariable(arg: 2, scope: !55, type: !15)
 // CHECK:STDOUT: !59 = !DILocation(line: 0, scope: !55)
-// CHECK:STDOUT: !60 = distinct !DISubprogram(name: "NotEqual", linkageName: "_CNotEqual:thunk:EqWith.83b9626e83cf3dcc.Core:enclosed", scope: null, file: !1, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !61)
+// CHECK:STDOUT: !60 = distinct !DISubprogram(name: "NotEqual", linkageName: "_CNotEqual:thunk:EqWith.83b9626e83cf3dcc.Core:OrderedWith.Core", scope: null, file: !1, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !61)
 // CHECK:STDOUT: !61 = !{!62, !63}
 // CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !60, type: !16)
 // CHECK:STDOUT: !63 = !DILocalVariable(arg: 2, scope: !60, type: !15)
@@ -766,12 +766,12 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !68 = !DILocalVariable(arg: 2, scope: !65, type: !15)
 // CHECK:STDOUT: !69 = !DILocation(line: 40, column: 10, scope: !65)
 // CHECK:STDOUT: !70 = !DILocation(line: 40, column: 3, scope: !65)
-// CHECK:STDOUT: !71 = distinct !DISubprogram(name: "Equal", linkageName: "_CEqual:thunk:EqWith.e8fe48de943d9652.Core:enclosed", scope: null, file: !1, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !72)
+// CHECK:STDOUT: !71 = distinct !DISubprogram(name: "Equal", linkageName: "_CEqual:thunk:EqWith.e8fe48de943d9652.Core:OrderedWith.Core", scope: null, file: !1, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !72)
 // CHECK:STDOUT: !72 = !{!73, !74}
 // CHECK:STDOUT: !73 = !DILocalVariable(arg: 1, scope: !71, type: !33)
 // CHECK:STDOUT: !74 = !DILocalVariable(arg: 2, scope: !71, type: !15)
 // CHECK:STDOUT: !75 = !DILocation(line: 0, scope: !71)
-// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "NotEqual", linkageName: "_CNotEqual:thunk:EqWith.e8fe48de943d9652.Core:enclosed", scope: null, file: !1, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !77)
+// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "NotEqual", linkageName: "_CNotEqual:thunk:EqWith.e8fe48de943d9652.Core:OrderedWith.Core", scope: null, file: !1, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !77)
 // CHECK:STDOUT: !77 = !{!78, !79}
 // CHECK:STDOUT: !78 = !DILocalVariable(arg: 1, scope: !76, type: !33)
 // CHECK:STDOUT: !79 = !DILocalVariable(arg: 2, scope: !76, type: !15)
@@ -782,29 +782,29 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !84 = !DILocalVariable(arg: 2, scope: !81, type: !15)
 // CHECK:STDOUT: !85 = !DILocation(line: 44, column: 10, scope: !81)
 // CHECK:STDOUT: !86 = !DILocation(line: 44, column: 3, scope: !81)
-// CHECK:STDOUT: !87 = distinct !DISubprogram(name: "Equal", linkageName: "_CEqual:thunk:EqWith.a294139a6615e163.Core:enclosed", scope: null, file: !1, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !88)
+// CHECK:STDOUT: !87 = distinct !DISubprogram(name: "Equal", linkageName: "_CEqual:thunk:EqWith.a294139a6615e163.Core:OrderedWith.Core", scope: null, file: !1, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !88)
 // CHECK:STDOUT: !88 = !{!89, !90}
 // CHECK:STDOUT: !89 = !DILocalVariable(arg: 1, scope: !87, type: !16)
 // CHECK:STDOUT: !90 = !DILocalVariable(arg: 2, scope: !87, type: !15)
 // CHECK:STDOUT: !91 = !DILocation(line: 0, scope: !87)
-// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "NotEqual", linkageName: "_CNotEqual:thunk:EqWith.a294139a6615e163.Core:enclosed", scope: null, file: !1, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !93)
+// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "NotEqual", linkageName: "_CNotEqual:thunk:EqWith.a294139a6615e163.Core:OrderedWith.Core", scope: null, file: !1, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !93)
 // CHECK:STDOUT: !93 = !{!94, !95}
 // CHECK:STDOUT: !94 = !DILocalVariable(arg: 1, scope: !92, type: !16)
 // CHECK:STDOUT: !95 = !DILocalVariable(arg: 2, scope: !92, type: !15)
 // CHECK:STDOUT: !96 = !DILocation(line: 0, scope: !92)
-// CHECK:STDOUT: !97 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.215a23369ed4d589", scope: null, file: !1, line: 29, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !98)
+// CHECK:STDOUT: !97 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.f8b275c548b6e015", scope: null, file: !1, line: 29, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !98)
 // CHECK:STDOUT: !98 = !{!99, !100}
 // CHECK:STDOUT: !99 = !DILocalVariable(arg: 1, scope: !97, type: !16)
 // CHECK:STDOUT: !100 = !DILocalVariable(arg: 2, scope: !97, type: !15)
 // CHECK:STDOUT: !101 = !DILocation(line: 30, column: 10, scope: !97)
 // CHECK:STDOUT: !102 = !DILocation(line: 30, column: 3, scope: !97)
-// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.a5489e454367d917", scope: null, file: !1, line: 29, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !104)
+// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.f7b86ff4854a74c3", scope: null, file: !1, line: 29, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !104)
 // CHECK:STDOUT: !104 = !{!105, !106}
 // CHECK:STDOUT: !105 = !DILocalVariable(arg: 1, scope: !103, type: !33)
 // CHECK:STDOUT: !106 = !DILocalVariable(arg: 2, scope: !103, type: !15)
 // CHECK:STDOUT: !107 = !DILocation(line: 30, column: 10, scope: !103)
 // CHECK:STDOUT: !108 = !DILocation(line: 30, column: 3, scope: !103)
-// CHECK:STDOUT: !109 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.64b737572447efad", scope: null, file: !1, line: 29, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !110)
+// CHECK:STDOUT: !109 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.322aacabcfb78b1a", scope: null, file: !1, line: 29, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !110)
 // CHECK:STDOUT: !110 = !{!111, !112}
 // CHECK:STDOUT: !111 = !DILocalVariable(arg: 1, scope: !109, type: !16)
 // CHECK:STDOUT: !112 = !DILocalVariable(arg: 2, scope: !109, type: !15)
