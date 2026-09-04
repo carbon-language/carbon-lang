@@ -152,7 +152,7 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     if repository_ctx.os.name.lower().startswith("mac os"):
         if not sysroot:
             fail("Must provide a sysroot on macOS!")
-        cmd.append("--sysroot=" + sysroot)
+        cmd += ["-isysroot", sysroot]
 
     # Note that verbose output is on stderr, not stdout!
     output = _run(repository_ctx, cmd).stderr.splitlines()

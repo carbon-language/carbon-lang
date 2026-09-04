@@ -72,13 +72,17 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'NotDesignator'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
-// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │ │   ╭─TypeTypeLiteral 'type'
-// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │   ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │   ╭─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ │   │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │   │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'U'
+// CHECK:STDOUT:   │ │ │ ├─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
@@ -88,16 +92,19 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'DesignatorInParens'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'V'
-// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameExpr 'I'
-// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─ParenExprStart '('
-// CHECK:STDOUT:   │ │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'J'
-// CHECK:STDOUT:   │ │ │ │ │ ├─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ │ ├─ParenExpr ')'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'V'
+// CHECK:STDOUT:   │ │ │   ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │   ╭─IdentifierNameExpr 'I'
+// CHECK:STDOUT:   │ │ │   │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │   │ │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │ │   │ │ │ ╭─IdentifierNameNotBeforeSignature 'J'
+// CHECK:STDOUT:   │ │ │   │ │ ├─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │   │ ├─ParenExpr ')'
+// CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ ├─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
@@ -107,14 +114,17 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'DotSelf'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'W'
-// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameExpr 'K'
-// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─SelfTypeName 'Self'
-// CHECK:STDOUT:   │ │ │ │ ├─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'W'
+// CHECK:STDOUT:   │ │ │   ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │   ╭─IdentifierNameExpr 'K'
+// CHECK:STDOUT:   │ │ │   │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │   │ │ ╭─SelfTypeName 'Self'
+// CHECK:STDOUT:   │ │ │   │ ├─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ ├─FloatTypeLiteral 'f32'
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
@@ -124,14 +134,17 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'DotKeyword'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'W'
-// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameExpr 'K'
-// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'and' has_error
-// CHECK:STDOUT:   │ │ │ │ ├─DesignatorExpr '.' has_error
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'W'
+// CHECK:STDOUT:   │ │ │   ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │   ╭─IdentifierNameExpr 'K'
+// CHECK:STDOUT:   │ │ │   │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │   │ │ ╭─IdentifierNameNotBeforeSignature 'and' has_error
+// CHECK:STDOUT:   │ │ │   │ ├─DesignatorExpr '.' has_error
+// CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ ├─UnsignedIntTypeLiteral 'u8'
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
@@ -141,15 +154,19 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'PostfixAfterDesignator'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'X'
-// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameExpr 'L'
-// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'M'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ │ ├─PostfixOperatorStar '*'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'X'
+// CHECK:STDOUT:   │ │ │   ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │   ╭─IdentifierNameExpr 'L'
+// CHECK:STDOUT:   │ │ │   │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │   │ │   ╭─IdentifierNameNotBeforeSignature 'M'
+// CHECK:STDOUT:   │ │ │   │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │   │ ├─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ │ ╭─UnsignedIntTypeLiteral 'u64'
+// CHECK:STDOUT:   │ │ │ ├─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
@@ -159,17 +176,21 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'BinaryOpAfterDesignator'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'Y'
-// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameExpr 'N'
-// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'O'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'P'
-// CHECK:STDOUT:   │ │ │ │ │ ├─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ │ ├─InfixOperatorPlus '+'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ │ │   ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │   ╭─IdentifierNameExpr 'N'
+// CHECK:STDOUT:   │ │ │   │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │   │ │   ╭─IdentifierNameNotBeforeSignature 'O'
+// CHECK:STDOUT:   │ │ │   │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │   │ │ │ ╭─IdentifierNameNotBeforeSignature 'P'
+// CHECK:STDOUT:   │ │ │   │ │ ├─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │   │ ├─InfixOperatorPlus '+'
+// CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │ │ ├─StructLiteral '}'
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
@@ -179,19 +200,23 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
 // CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'AfterAnd'
 // CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'Z'
-// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameExpr 'Q'
-// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'R'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ │ │ ├─IdentifierNameExpr 'S'
-// CHECK:STDOUT:   │ │ │ │ ├─RequirementImpls 'impls'
-// CHECK:STDOUT:   │ │ │ │ ├─RequirementAnd 'and'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─TupleLiteralStart '('
-// CHECK:STDOUT:   │ │ │ │ ├─TupleLiteral ')'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'Z'
+// CHECK:STDOUT:   │ │ │   ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │   ╭─IdentifierNameExpr 'Q'
+// CHECK:STDOUT:   │ │ │   │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │   │ │   ╭─IdentifierNameNotBeforeSignature 'R'
+// CHECK:STDOUT:   │ │ │   │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │   │ │ ├─IdentifierNameExpr 'S'
+// CHECK:STDOUT:   │ │ │   │ ├─RequirementImpls 'impls'
+// CHECK:STDOUT:   │ │ │   │ ├─RequirementAnd 'and'
+// CHECK:STDOUT:   │ │ │   │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │   │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'A'
+// CHECK:STDOUT:   │ │ │ ├─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''

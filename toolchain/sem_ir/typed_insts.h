@@ -390,19 +390,19 @@ struct Call {
   InstBlockId args_id;
 };
 
-// An action that performs a C++ template call.
-struct CallCppTemplateAction {
-  static constexpr auto Kind =
-      InstKind::CallCppTemplateAction.Define<Parse::NodeId>(
-          {.ir_name = "call_template_action",
-           .expr_category = ActionExprCategory(ExprCategory::Value),
-           .constant_kind = InstConstantKind::InstAction,
-           .is_lowered = false});
+// An action that performs a call.
+struct CallAction {
+  static constexpr auto Kind = InstKind::CallAction.Define<Parse::NodeId>(
+      {.ir_name = "call_action",
+       .expr_category = ActionExprCategory(ExprCategory::Dependent),
+       .constant_kind = InstConstantKind::InstAction,
+       .is_lowered = false});
 
   TypeId type_id;
-  ClangDeclId template_decl_id;
-  // Template arguments.
-  InstBlockId args_id;
+  // The first element in this block is the callee. The rest are the call
+  // arguments.
+  MetaInstBlockId inst_block_id;
+  BoolValue is_desugared;
 };
 
 // An action that performs callee-side pattern matching for a single syntactic
@@ -711,6 +711,21 @@ struct CustomWitness {
   SpecificInterfaceId query_specific_interface_id;
 };
 
+// Describes a constant default value for a pattern, which may be used if that
+// pattern is absent in a scrutinee.
+struct DefaultValuePattern {
+  static constexpr auto Kind =
+      InstKind::DefaultValuePattern.Define<Parse::DefaultValuePatternId>(
+          {.ir_name = "default_value_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+  DefaultValueId default_value_id;
+};
+
 // The `*` dereference operator, as in `*pointer`.
 struct Deref {
   static constexpr auto Kind = InstKind::Deref.Define<Parse::NodeId>(
@@ -834,8 +849,8 @@ struct FieldDecl {
        .constant_kind = InstConstantKind::AlwaysUnique});
 
   TypeId type_id;
-  NameId name_id;
   FieldId field_id;
+  ExprRegionId type_region_id;
 };
 
 // The float literal type.
@@ -2107,6 +2122,19 @@ struct SymbolicBindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
+};
+
+// Wraps an instruction and, if that instruction is symbolic, forces it to be
+// evaluated as a template.
+struct TemplateInst {
+  static constexpr auto Kind = InstKind::TemplateInst.Define<Parse::NodeId>(
+      {.ir_name = "template_inst",
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
+       .constant_kind = InstConstantKind::TemplateOnly,
+       .is_lowered = false});
+
+  TypeId type_id;
+  InstId inst_id;
 };
 
 // Consumes the initializer `init_id`, uses it to initialize a temporary

@@ -40,7 +40,7 @@ reasonable approach for that should we diverge the SemIR model to optimize its
 efficiency, and we should preserve full fidelity in an optional mode.
 
 [semir]:
-    https://docs.google.com/document/d/1RRYMm42osyqhI2LyjrjockYCutQ5dOf8Abu50kTrkX0/edit?resourcekey=0-kHyqOESbOHmzZphUbtLrTw#heading=h.503m6lfcnmui
+https://docs.google.com/document/d/1RRYMm42osyqhI2LyjrjockYCutQ5dOf8Abu50kTrkX0/edit?resourcekey=0-kHyqOESbOHmzZphUbtLrTw#heading=h.503m6lfcnmui
 
 ## Problem
 

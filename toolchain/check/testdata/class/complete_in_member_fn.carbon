@@ -88,7 +88,9 @@ class C {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18: %C.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %C.elem = field_decl a, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a [concrete = constants.%complete_type.388]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -96,13 +98,13 @@ class C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %C.F.decl
-// CHECK:STDOUT:   .a = %.loc18
+// CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.F(%c.param: %C) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %a.ref: %C.elem = name_ref a, @C.%.loc18 [concrete = @C.%.loc18]
+// CHECK:STDOUT:   %a.ref: %C.elem = name_ref a, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc16_31.1: ref %i32 = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc16_31.2: %i32 = acquire_value %.loc16_31.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

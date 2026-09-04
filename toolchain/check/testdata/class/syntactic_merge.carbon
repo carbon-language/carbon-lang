@@ -1235,7 +1235,10 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc5: %Base.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %Base.elem = field_decl a, element0, %.loc5_11.2 in [concrete] {
+// CHECK:STDOUT:     %.loc5_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.F.decl: %Base.F.type.48cdab.1 = fn_decl @Base.F.loc7 [concrete = constants.%Base.F.bd5be1.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.912 = ref_param_pattern [concrete = constants.%self.param_patt]
 // CHECK:STDOUT:     %self.patt: %pattern_type.912 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
@@ -1249,7 +1252,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .a = %.loc5
+// CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT:   .F = %Base.F.decl
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT: }
@@ -1259,7 +1262,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT: fn @Base.F.loc17(%self.param: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: ref %Base = name_ref self, %self
-// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc5 [concrete = @Base.%.loc5]
+// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%field_decl [concrete = @Base.%field_decl]
 // CHECK:STDOUT:   %.loc18_7: ref %empty_tuple.type = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc18_13.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_13.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]

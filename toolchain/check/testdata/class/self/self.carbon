@@ -209,7 +209,9 @@ class Class {
 // CHECK:STDOUT:     %return.param.loc7: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc7: ref %i32 = return_slot %return.param.loc7
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9: %Class.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %Class.elem = field_decl n, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n [concrete = constants.%complete_type.cdf]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -217,13 +219,13 @@ class Class {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %Class.F.decl
 // CHECK:STDOUT:   .G = %Class.G.decl
-// CHECK:STDOUT:   .n = %.loc9
+// CHECK:STDOUT:   .n = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.F(%self.param.loc13: %Class) -> out %return.param.loc13: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc13
-// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc9 [concrete = @Class.%.loc9]
+// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:   %.loc14_14.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc14_14.2: %i32 = acquire_value %.loc14_14.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -237,7 +239,7 @@ class Class {
 // CHECK:STDOUT: fn @Class.G(%self.param.loc17: ref %Class) -> out %return.param.loc17: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: ref %Class = name_ref self, %self.loc17
-// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc9 [concrete = @Class.%.loc9]
+// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:   %.loc18_14.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc18_14.2: %i32 = acquire_value %.loc18_14.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

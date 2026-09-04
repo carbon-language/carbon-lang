@@ -42,7 +42,7 @@ auto NumericLiteral::Lex(llvm::StringRef source_text,
   int n = source_text.size();
   for (; i != n; ++i) {
     char c = source_text[i];
-    if (IsAlnum(c) || c == '_') {
+    if (IsAlnum(c) || c == '_' || c == '$') {
       if (IsLower(c) && seen_radix_point && !seen_plus_minus) {
         result.exponent_ = i;
         seen_potential_exponent = true;

@@ -1156,6 +1156,14 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("facet_value");
       return;
     }
+    case CARBON_KIND(FieldDecl inst): {
+      for (auto block_id :
+           sem_ir().expr_regions().Get(inst.type_region_id).block_ids) {
+        PushBlockId(scope_id_, block_id);
+      }
+      AddInstName("field_decl");
+      return;
+    }
     case CARBON_KIND(FloatType inst): {
       AddIntOrFloatTypeName('f', inst.bit_width_id);
       return;

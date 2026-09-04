@@ -132,6 +132,9 @@ fn Var5() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Contains: type = class_type @Contains [concrete]
+// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.85c = tuple_value (%Abstract1) [concrete]
+// CHECK:STDOUT:   %tuple.type.b06: type = tuple_type (%Abstract1) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -161,14 +164,18 @@ fn Var5() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
-// CHECK:STDOUT:   %.loc13: <error> = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: <error> = field_decl a, element0, %.loc13_21.2 in [concrete] {
+// CHECK:STDOUT:     %Abstract1.ref: type = name_ref Abstract1, file.%Abstract1.decl [concrete = constants.%Abstract1]
+// CHECK:STDOUT:     %.loc13_21.1: %tuple.type.85c = tuple_literal (%Abstract1.ref) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc13_21.2: type = converted %.loc13_21.1, constants.%tuple.type.b06 [concrete = constants.%tuple.type.b06]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Contains
 // CHECK:STDOUT:   .Abstract1 = <poisoned>
-// CHECK:STDOUT:   .a = %.loc13
+// CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_var.carbon

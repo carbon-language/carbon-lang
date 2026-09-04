@@ -1646,7 +1646,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: fn @F(%s.param: %NonFunctionMemberPublic) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %NonFunctionMemberPublic = name_ref s, %s
-// CHECK:STDOUT:   %instance_data.ref: %NonFunctionMemberPublic.elem = name_ref instance_data, @NonFunctionMemberPublic.%.1 [concrete = @NonFunctionMemberPublic.%.1]
+// CHECK:STDOUT:   %instance_data.ref: %NonFunctionMemberPublic.elem = name_ref instance_data, @NonFunctionMemberPublic.%field_decl [concrete = @NonFunctionMemberPublic.%field_decl]
 // CHECK:STDOUT:   %.loc8_36.1: ref %i32 = class_element_access %s.ref, element0
 // CHECK:STDOUT:   %.loc8_36.2: %i32 = acquire_value %.loc8_36.1
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -1691,7 +1691,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: fn @F(%d.param: %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %instance_data.ref: %NonFunctionMemberPublic.elem = name_ref instance_data, @NonFunctionMemberPublic.%.1 [concrete = @NonFunctionMemberPublic.%.1]
+// CHECK:STDOUT:   %instance_data.ref: %NonFunctionMemberPublic.elem = name_ref instance_data, @NonFunctionMemberPublic.%field_decl [concrete = @NonFunctionMemberPublic.%field_decl]
 // CHECK:STDOUT:   %.loc12_36.1: %NonFunctionMemberPublic = as_compatible %d.ref
 // CHECK:STDOUT:   %.loc12_36.2: ref %NonFunctionMemberPublic = class_element_access %.loc12_36.1, element0
 // CHECK:STDOUT:   %.loc12_36.3: ref %NonFunctionMemberPublic = converted %d.ref, %.loc12_36.2
@@ -1759,7 +1759,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: fn @Derived.F(%self.param: %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Derived = name_ref self, %self
-// CHECK:STDOUT:   %instance_data.ref: %NonFunctionMemberProtected.elem = name_ref instance_data, @NonFunctionMemberProtected.%.1 [concrete = @NonFunctionMemberProtected.%.1]
+// CHECK:STDOUT:   %instance_data.ref: %NonFunctionMemberProtected.elem = name_ref instance_data, @NonFunctionMemberProtected.%field_decl [concrete = @NonFunctionMemberProtected.%field_decl]
 // CHECK:STDOUT:   %.loc10_41.1: %NonFunctionMemberProtected = as_compatible %self.ref
 // CHECK:STDOUT:   %.loc10_41.2: ref %NonFunctionMemberProtected = class_element_access %.loc10_41.1, element0
 // CHECK:STDOUT:   %.loc10_41.3: ref %NonFunctionMemberProtected = converted %self.ref, %.loc10_41.2

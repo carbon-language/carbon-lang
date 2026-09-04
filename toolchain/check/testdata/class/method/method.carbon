@@ -358,7 +358,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %Class.F.type = name_ref F, %Class.F.decl [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %A: %Class.F.type = alias_binding A, %F.ref [concrete = constants.%Class.F]
-// CHECK:STDOUT:   %.loc21: %Class.elem = field_decl k, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %Class.elem = field_decl k, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.k.e7c [concrete = constants.%complete_type.d82]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -367,13 +369,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   .F = %Class.F.decl
 // CHECK:STDOUT:   .G = %Class.G.decl
 // CHECK:STDOUT:   .A = %A
-// CHECK:STDOUT:   .k = %.loc21
+// CHECK:STDOUT:   .k = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.F(%self.param.loc24: %Class) -> out %return.param.loc24: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc24
-// CHECK:STDOUT:   %k.ref: %Class.elem = name_ref k, @Class.%.loc21 [concrete = @Class.%.loc21]
+// CHECK:STDOUT:   %k.ref: %Class.elem = name_ref k, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:   %.loc25_14.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc25_14.2: %i32 = acquire_value %.loc25_14.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

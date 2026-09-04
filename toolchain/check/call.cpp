@@ -7,6 +7,7 @@
 #include <optional>
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
@@ -170,7 +171,8 @@ static auto BuildCalleeSpecificFunction(
   auto generic_callee_id = callee_id;
 
   // Strip off a bound_method so that we can form a constant specific callee.
-  auto bound_method = context.insts().TryGetAs<SemIR::BoundMethod>(callee_id);
+  auto bound_method = SemIR::TryGetCalleeAsBoundMethod(
+      context.sem_ir(), callee_id, SemIR::SpecificId::None);
   if (bound_method) {
     generic_callee_id = bound_method->function_decl_id;
   }
@@ -305,6 +307,23 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Determines whether a C++ template call can be performed immediately
+// (i.e. whether it is non-template-dependent).
+static auto IsCppTemplateCallPerformable(Context& context,
+                                         SemIR::InstId callee_id,
+                                         llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> bool {
+  CARBON_CHECK(OperandDependence(context, callee_id) <
+               SemIR::ConstantDependence::Template);
+
+  for (auto arg_id : arg_ids) {
+    if (context.constant_values().Get(arg_id).is_symbolic()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // Performs a call where the callee is a generic type. If it's not a generic
 // type, produces a diagnostic.
 static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
@@ -315,8 +334,35 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
       context.types().GetAsInst(context.insts().Get(callee_id).type_id());
   CARBON_KIND_SWITCH(type_inst) {
     case CARBON_KIND(SemIR::CppTemplateNameType template_name): {
-      return PerformCallToCppTemplateName(context, loc_id,
-                                          template_name.decl_id, arg_ids);
+      if (IsCppTemplateCallPerformable(context, callee_id, arg_ids)) {
+        return PerformCallToCppTemplateName(context, loc_id,
+                                            template_name.decl_id, arg_ids);
+      }
+
+      llvm::SmallVector<SemIR::InstId> inst_ids;
+      inst_ids.push_back(callee_id);
+      // Wrap symbolic template args in a `TemplateInst` so that all symbolic
+      // arguments are treated as templates.
+      for (auto arg_id : arg_ids) {
+        if (context.constant_values().Get(arg_id).is_symbolic()) {
+          auto arg = context.insts().Get(arg_id);
+          inst_ids.push_back(
+              AddInst(context, SemIR::LocId(arg_id),
+                      SemIR::TemplateInst{.type_id = arg.type_id(),
+                                          .inst_id = arg_id}));
+        } else {
+          inst_ids.push_back(arg_id);
+        }
+      }
+
+      auto inst_block_id = context.inst_blocks().Add(inst_ids);
+      return AddDependentActionSplice(
+          context, loc_id,
+          SemIR::CallAction{.type_id = SemIR::InstType::TypeId,
+                            .inst_block_id = inst_block_id,
+                            // Unused for non-function calls.
+                            .is_desugared = SemIR::BoolValue::From(false)},
+          SemIR::TypeInstId::None);
     }
     case CARBON_KIND(SemIR::GenericClassType generic_class): {
       return PerformCallToGenericClass(context, loc_id, generic_class.class_id,
@@ -342,9 +388,28 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
   }
 }
 
-auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
-                 llvm::ArrayRef<SemIR::InstId> arg_ids, bool is_desugared)
-    -> SemIR::InstId {
+// Determines whether a call can be performed immediately (i.e. whether it is
+// non-template-dependent).
+static auto IsCallPerformable(Context& context, SemIR::InstId callee_id,
+                              llvm::ArrayRef<SemIR::InstId> arg_ids) -> bool {
+  if (OperandDependence(context, callee_id) ==
+      SemIR::ConstantDependence::Template) {
+    return false;
+  }
+  for (auto arg_id : arg_ids) {
+    if (OperandDependence(context, arg_id) ==
+        SemIR::ConstantDependence::Template) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Common logic for `PerformCall` and `PerformAction`.
+static auto PerformCallHelper(Context& context, SemIR::LocId loc_id,
+                              SemIR::InstId callee_id,
+                              llvm::ArrayRef<SemIR::InstId> arg_ids,
+                              bool is_desugared) {
   // Try treating the callee as a function first.
   auto callee = GetCallee(context.sem_ir(), callee_id);
   CARBON_KIND_SWITCH(callee) {
@@ -365,6 +430,37 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                                       overload.self_id, arg_ids, is_desugared);
     }
   }
+}
+
+auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
+                 llvm::ArrayRef<SemIR::InstId> arg_ids, bool is_desugared)
+    -> SemIR::InstId {
+  if (IsCallPerformable(context, callee_id, arg_ids)) {
+    return PerformCallHelper(context, loc_id, callee_id, arg_ids, is_desugared);
+  }
+
+  // Pack the callee and args into an inst block. This is an optimization to
+  // avoid needing a Bundle in the `CallAction`.
+  llvm::SmallVector<SemIR::InstId> inst_ids;
+  inst_ids.reserve(1 + arg_ids.size());
+  inst_ids.push_back(callee_id);
+  inst_ids.append(arg_ids.begin(), arg_ids.end());
+  auto inst_block_id = context.inst_blocks().Add(inst_ids);
+
+  return HandleAction<SemIR::CallAction>(
+      context, loc_id, SemIR::TypeInstId::None,
+      {.type_id = SemIR::InstType::TypeId,
+       .inst_block_id = inst_block_id,
+       .is_desugared = SemIR::BoolValue::From(is_desugared)});
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::CallAction action) -> SemIR::InstId {
+  auto inst_ids = context.inst_blocks().Get(action.inst_block_id);
+  auto callee_id = inst_ids[0];
+  auto arg_ids = inst_ids.slice(1);
+  return PerformCallHelper(context, loc_id, callee_id, arg_ids,
+                           action.is_desugared.ToBool());
 }
 
 }  // namespace Carbon::Check

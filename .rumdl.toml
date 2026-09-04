@@ -15,7 +15,6 @@ respect-gitignore = true
 # Disable rules that produce the most noise initially. Some of these might make
 # sense to re-enable.
 disable = [
-  "MD013", # Line length exceeded
   "MD033", # Inline HTML - commonly used in real-world markdown
   "MD036", # Emphasis used instead of heading
   "MD040", # Code blocks should have a language specified
@@ -24,6 +23,21 @@ disable = [
   "MD059", # Link text should be descriptive
   "MD028", # Blank line inside blockquote
 ]
+
+# Line wrapping
+[MD013]
+reflow = true
+# Note that we might want to use the "normalize" reflow mode to have more
+# consistent line wrapping, however this mode is currently deeply incompatible
+# with inline HTML that we use reasonably often. For now, we go with the default
+# mode that doesn't try to normalize wrapping.
+reflow-mode = "default"
+ignore-link-urls = false
+code-blocks = false
+code-spans = false
+atomic-spans = false
+headings = false
+stern = true
 
 # Heading style
 [MD003]

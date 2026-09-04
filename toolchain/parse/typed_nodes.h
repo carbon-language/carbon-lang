@@ -43,7 +43,7 @@ struct LeafNode {
 //
 // Each of these types should start with a `static constexpr Kind` member
 // initialized by calling `Define` on the corresponding `NodeKind`, and passing
-// in the `NodeCategory` of that kind.  This will both associate the category
+// in the `NodeCategory` of that kind. This will both associate the category
 // with the node kind and create the necessary kind object for the typed node.
 //
 // This should be followed by field declarations that describe the child nodes,
@@ -371,6 +371,29 @@ struct UnusedPattern {
 
   Lex::UnusedTokenIndex token;
   AnyPatternId inner;
+};
+
+using DefaultValueUnspecified =
+    LeafNode<NodeKind::DefaultValueUnspecified, Lex::UnderscoreTokenIndex,
+             NodeCategory::Expr>;
+
+struct DefaultValueExprStart {
+  static constexpr auto Kind =
+      NodeKind::DefaultValueExprStart.Define({.child_count = 0});
+  // This is a virtual token. The `=` token is owned by the
+  // DefaultValuePattern node.
+  Lex::EqualTokenIndex token;
+};
+
+// A pattern with a default value specified: `pattern = expr`.
+struct DefaultValuePattern {
+  static constexpr auto Kind = NodeKind::DefaultValuePattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 3});
+
+  AnyPatternId pattern;
+  Lex::EqualTokenIndex token;
+  DefaultValueExprStartId start;
+  AnyExprId default_value_expr;
 };
 
 // A ref binding name: `ref name`.
@@ -1520,7 +1543,7 @@ struct StructPatternDesignatedField {
 using StructPatternFieldId =
     NodeIdOneOf<StructPatternDesignatedField, LetBindingPattern,
                 VariablePattern, VarBindingPattern, UnusedPattern,
-                UnderscoreName>;
+                UnderscoreName, DefaultValuePattern>;
 
 struct StructPattern {
   static constexpr auto Kind = NodeKind::StructPattern.Define(
@@ -1822,6 +1845,11 @@ struct NamedConstraintDefinition {
   llvm::SmallVector<AnyDeclId> members;
   Lex::CloseCurlyBraceTokenIndex token;
 };
+
+// `$0`
+using PositionalParamExpr =
+    LeafNode<NodeKind::PositionalParamExpr, Lex::DollarIntLiteralTokenIndex,
+             NodeCategory::Expr>;
 
 // ---------------------------------------------------------------------------
 

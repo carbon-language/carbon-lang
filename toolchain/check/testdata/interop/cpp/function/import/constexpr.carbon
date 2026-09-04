@@ -251,7 +251,7 @@ let a: array(i32, F()) = (1, 2, 3);
 // CHECK:STDOUT:     %c.patt: %pattern_type.3cc = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %ConstexprC = name_ref c, %c
-// CHECK:STDOUT:   %a.ref: %ConstexprC.elem = name_ref a, @ConstexprC.%.1 [concrete = @ConstexprC.%.1]
+// CHECK:STDOUT:   %a.ref: %ConstexprC.elem = name_ref a, @ConstexprC.%field_decl [concrete = @ConstexprC.%field_decl]
 // CHECK:STDOUT:   %.loc20_11.1: ref %i32 = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc20_11.2: %i32 = acquire_value %.loc20_11.1
 // CHECK:STDOUT:   %impl.elem0.loc20: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

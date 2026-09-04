@@ -189,11 +189,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::FacetAccessType /*inst*/) -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
-}
-
-auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::FacetValue /*inst*/) -> void {
   context.SetLocal(inst_id, context.GetTypeAsValue());
 }

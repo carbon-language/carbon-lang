@@ -82,6 +82,9 @@ struct FunctionFields {
   // because it is relevant only for a function definition.
   InstBlockId call_params_id;
 
+  // Instructions representing the constant default values for parameters.
+  InstBlockId call_param_default_values_id;
+
   // The index ranges within the `Call` parameters that correspond to the
   // implicit parameters, explicit parameters, and return.
   //
@@ -231,6 +234,9 @@ struct Function : public EntityWithParamsBase,
     if (call_params_id.has_value()) {
       out << ", call_params_id: " << call_params_id;
     }
+    if (call_param_default_values_id.has_value()) {
+      out << ", call_param_default_values_id: " << call_param_default_values_id;
+    }
     if (return_type_inst_id.has_value()) {
       out << ", return_type_inst_id: " << return_type_inst_id;
     }
@@ -315,7 +321,8 @@ struct Function : public EntityWithParamsBase,
       -> InstId;
 
   // When merging a declaration and definition, prefer things which would point
-  // at the definition for diagnostics.
+  // at the definition for diagnostics. Note that merging parameter default
+  // values needs more context, so doesn't happen here.
   auto MergeDefinition(const Function& definition) -> void {
     EntityWithParamsBase::MergeBaseDefinition(definition);
     call_param_patterns_id = definition.call_param_patterns_id;
@@ -403,6 +410,12 @@ struct CalleeNonFunction {};
 // A variant combining the callee forms.
 using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
                             CalleeNonFunction>;
+
+// Given a callee expression in a function call, attempt to convert the callee
+// to a `BoundMethod`, minimally unwrapping it while doing so.
+auto TryGetCalleeAsBoundMethod(const File& sem_ir, InstId callee_id,
+                               SpecificId caller_specific_id)
+    -> std::optional<BoundMethod>;
 
 // Returns information for the function corresponding to callee_id in
 // caller_specific_id.

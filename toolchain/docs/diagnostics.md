@@ -283,16 +283,15 @@ Carbon's diagnostic style aims to balance these concerns. Our style is:
     -   `"redeclaration of X"` describes the situation and implies that
         redeclarations are not permitted.
 
-    -   ``"`self` declared in invalid context; can only be declared in implicit parameter list"``
-        describes the language rule.
+    -   ``"`self` declared in invalid context; can only be declared in implicit
+        parameter list"`` describes the language rule.
 
     -   It's OK for a diagnostic to guess at the developer's intent and provide
         a hint after explaining the situation and the rule, but not as a
-        substitute for that. For example,
-        ``"add `as String` to convert `i32` to `String`"`` is not sufficient as
-        an error message, but
-        ``"cannot implicitly convert `i32` to `String`; add `as String` for explicit conversion"``
-        could be acceptable.
+        substitute for that. For example, ``"add `as String` to convert `i32` to
+        `String`"`` is not sufficient as an error message, but ``"cannot
+        implicitly convert `i32` to `String`; add `as String` for explicit
+        conversion"`` could be acceptable.
 
 -   Use "cannot" if needed, but try to use phrasing that doesn't require it.
     Avoid "allowed", "legal", "permitted", "valid", and related wording. For

@@ -304,9 +304,9 @@ message first, then each label in the order of its range. Each label's words
 start two columns right of the words above, so the indentation steps with the
 order.
 
-**Meeting the words.** A connector reaches the bar on the first row of its words,
-where the level word is, so a reader following the heavy line lands where the
-sentence begins. The bar continues down every row the words wrap onto.
+**Meeting the words.** A connector reaches the bar on the first row of its
+words, where the level word is, so a reader following the heavy line lands where
+the sentence begins. The bar continues down every row the words wrap onto.
 
 **Placement.** Every label's words, the message's included, start right of every
 connector's column, so a connector descending to a later label runs beside the
@@ -319,8 +319,8 @@ two don't connect. On a terminal wide enough that nothing wraps this is the
 common shape: a label right of a one-row message descends `┬`, a gap, `╰`,
 with no vertical cell showing. The tee and the corner carry it.
 
-**Out-dented blocks.** Words that cannot hang, because their widest word does not
-fit right of the connector, are out-dented to the source's column (see
+**Out-dented blocks.** Words that cannot hang, because their widest word does
+not fit right of the connector, are out-dented to the source's column (see
 [Fitting the terminal](#fitting-the-terminal)). A block owns its rows outright,
 blank cells included, so a connector descending past it skips those rows and
 resumes below.

@@ -52,15 +52,15 @@ A named function definition or declaration has one of the following syntactic
 forms (where items in square brackets are optional and independent):
 
 -   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] `=>` _expression_ `;`
--   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `{`
-    _statements_ `}`
+-   `fn` _name_ [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_]
+    `{` _statements_ `}`
 -   `fn` _name_ [_implicit-parameters_] _tuple-pattern_ [`->` _return-form_] `;`
 
 A lambda expression has one of the following syntactic forms:
 
 -   `fn` [_implicit-parameters_] [_tuple-pattern_] `=>` _expression_
--   `fn` [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `{` _statements_
-    `}`
+-   `fn` [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `{`
+    _statements_ `}`
 
 Named function definitions are distinguished from lambdas by the presence of a
 name after the `fn` keyword. If a statement or declaration begins with `fn`, a
@@ -758,14 +758,14 @@ parameters. This checking proceeds as follows:
     -   If the parameter is a `template` binding, the argument expression is
         converted to have the same type as the binding and template constant
         expression phase.
-    -   If the parameter is a checked generic binding, the argument expression is
-        converted to have the same type as the binding and symbolic constant
+    -   If the parameter is a checked generic binding, the argument expression
+        is converted to have the same type as the binding and symbolic constant
         expression phase.
     -   Otherwise, the parameter is pattern-matched against the argument.
 
-    If a parameter is a compile-time binding, its corresponding converted argument
-    expression is evaluated, and its value is added to the list of deduced
-    argument values before any later parameters are processed.
+    If a parameter is a compile-time binding, its corresponding converted
+    argument expression is evaluated, and its value is added to the list of
+    deduced argument values before any later parameters are processed.
 
 The result of the call expression depends on the callee:
 

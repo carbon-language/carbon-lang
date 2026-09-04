@@ -186,9 +186,9 @@ let {.x = x: i32 foo, .y = y: i32} = {};
 
 // --- fail_struct_pattern_extra_token_start.carbon
 
-// CHECK:STDERR: fail_struct_pattern_extra_token_start.carbon:[[@LINE+4]]:26: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
+// CHECK:STDERR: fail_struct_pattern_extra_token_start.carbon:[[@LINE+4]]:29: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
 // CHECK:STDERR: let {.x = x: i32, foo .y = y: i32} = {};
-// CHECK:STDERR:                          ^
+// CHECK:STDERR:                             ^
 // CHECK:STDERR:
 let {.x = x: i32, foo .y = y: i32} = {};
 
@@ -248,9 +248,9 @@ let {.x foo x: (), .y = y: ()} = {};
 
 // --- fail_struct_pattern_invalid_field.carbon
 
-// CHECK:STDERR: fail_struct_pattern_invalid_field.carbon:[[@LINE+4]]:12: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
+// CHECK:STDERR: fail_struct_pattern_invalid_field.carbon:[[@LINE+4]]:14: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: let {"foo" = , .x = x:()} = {};
-// CHECK:STDERR:            ^
+// CHECK:STDERR:              ^
 // CHECK:STDERR:
 let {"foo" = , .x = x:()} = {};
 
@@ -566,7 +566,10 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
 // CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
-// CHECK:STDOUT:   │ │ ├─InvalidParse '=' has_error
+// CHECK:STDOUT:   │ │ │ ╭─InvalidParse '=' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -829,9 +832,12 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─StructPatternDesignatedField '='
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'foo'
-// CHECK:STDOUT:   │ │ │ ├─IdentifierNameNotBeforeSignature 'y'
-// CHECK:STDOUT:   │ │ ├─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameExpr 'foo'
+// CHECK:STDOUT:   │ │ │   ├─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '='
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -954,7 +960,10 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
 // CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
-// CHECK:STDOUT:   │ │ ├─StringLiteral '"foo"'
+// CHECK:STDOUT:   │ │ │ ╭─StringLiteral '"foo"'
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse ',' has_error
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'

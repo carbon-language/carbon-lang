@@ -143,9 +143,14 @@ def _carbon_cc_toolchain_config_impl(ctx):
     # Only use a sysroot if a non-trivial one is set in Carbon's config.
     builtin_sysroot = None
     sysroot_include_search = []
+    sdk_settings = []
     if clang_sysroot != "None" and clang_sysroot != "/":
         builtin_sysroot = clang_sysroot
         sysroot_include_search = ["%sysroot%/usr/include"]
+
+        # On MacOS, the compiler depends on this file at the root of the SDK,
+        # and it ends up in the `.d` files.
+        sdk_settings = ["%sysroot%/SDKSettings.json"]
 
     runtimes_path = None
     if ctx.attr.runtimes:
@@ -186,7 +191,7 @@ def _carbon_cc_toolchain_config_impl(ctx):
             "runtimes/libcxxabi/include",
             "{}/include".format(clang_resource_dir),
             "runtimes/clang_resource_dir/include",
-        ] + _compute_clang_system_include_dirs() + sysroot_include_search,
+        ] + _compute_clang_system_include_dirs() + sysroot_include_search + sdk_settings,
         builtin_sysroot = builtin_sysroot,
 
         # This configuration only supports local non-cross builds so derive

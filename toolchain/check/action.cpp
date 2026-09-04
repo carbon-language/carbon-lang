@@ -71,7 +71,8 @@ template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT> &&
            SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::AbsoluteInstId,
                        SemIR::CallParamIndex, SemIR::NameId,
-                       SemIR::ElementIndex, SemIR::ClangDeclId>
+                       SemIR::ElementIndex, SemIR::ClangDeclId,
+                       SemIR::BoolValue>
 static auto OperandDependence(Context& /*context*/, IdT /*id*/)
     -> SemIR::ConstantDependence {
   return SemIR::ConstantDependence::None;
@@ -98,6 +99,12 @@ static auto OperandDependence(Context& context,
   return result;
 }
 
+static auto OperandDependence(Context& context,
+                              SemIR::MetaInstBlockId inst_block_id)
+    -> SemIR::ConstantDependence {
+  return OperandDependence(context, SemIR::InstBlockId{inst_block_id});
+}
+
 static auto OperandDependence(Context& context, SemIR::SpecificId specific_id)
     -> SemIR::ConstantDependence {
   auto specific = context.specifics().Get(specific_id);
@@ -119,18 +126,6 @@ static auto OperandDependence(Context& context, SemIR::IdAndKind arg)
 }
 
 auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool {
-  if (auto action = action_inst.TryAs<SemIR::CallCppTemplateAction>()) {
-    auto args = context.inst_blocks().Get(action->args_id);
-    for (auto arg : args) {
-      auto const_id = context.constant_values().Get(arg);
-      if (const_id.is_symbolic()) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   if (auto refine_action = action_inst.TryAs<SemIR::RefineTypeAction>()) {
     // `RefineTypeAction` can be performed whenever the type is not template-
     // dependent, even if we don't know the instruction yet.
@@ -210,6 +205,14 @@ static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
     return inst_id;
   }
 
+  // If the constant value of the instruction is template-dependent and
+  // unattached, replace it with a corresponding attached constant value.
+  if (auto const_id = context.constant_values().GetAttached(inst_id);
+      const_id.is_symbolic() &&
+      !context.constant_values().IsAttached(const_id)) {
+    return GetOrAddInstWithSpecificConstantValue(context, inst_id);
+  }
+
   // If the type of the action argument is dependent, refine to an instruction
   // with a concrete type.
   if (OperandDependence(context, inst.type_id()) ==
@@ -225,9 +228,6 @@ static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
                                     .inst_type_inst_id = type_inst_id}),
         type_inst_id);
   }
-
-  // TODO: Handle the case where the constant value of the instruction is
-  // template-dependent.
 
   return inst_id;
 }
@@ -248,6 +248,28 @@ static auto RefineTypedOperand(Context& context, SemIR::LocId /*loc_id*/,
   } else {
     return DerivedInstIdT::UnsafeMake(result);
   }
+}
+
+template <typename DerivedInstBlockIdT>
+  requires SemIR::Internal::IsIdKindType<DerivedInstBlockIdT> &&
+           std::derived_from<DerivedInstBlockIdT, SemIR::InstBlockId>
+static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
+                               DerivedInstBlockIdT inst_block_id)
+    -> DerivedInstBlockIdT {
+  auto block = context.inst_blocks().Get(inst_block_id);
+
+  llvm::SmallVector<SemIR::InstId> new_block;
+  new_block.reserve(block.size());
+  bool any_changed = false;
+  for (auto inst_id : block) {
+    new_block.push_back(RefineTypedOperand(
+        context, loc_id, typename DerivedInstBlockIdT::InstIdT(inst_id)));
+    any_changed |= new_block.back() != inst_id;
+  }
+  if (!any_changed) {
+    return inst_block_id;
+  }
+  return DerivedInstBlockIdT(context.inst_blocks().AddCanonical(new_block));
 }
 
 template <typename BundleT>

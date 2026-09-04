@@ -128,7 +128,7 @@ fn Generic(unused T: ()).WrongType() {}
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.f84 [symbolic]
 // CHECK:STDOUT:   %pattern_type.2c66b4.2: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %n.param_patt: %pattern_type.2c66b4.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %n.patt.364: %pattern_type.2c66b4.2 = wrapper_binding_pattern n, %n.param_patt [symbolic]
+// CHECK:STDOUT:   %n.patt: %pattern_type.2c66b4.2 = wrapper_binding_pattern n, %n.param_patt [symbolic]
 // CHECK:STDOUT:   %.1ce700.2: Core.Form = init_form %T.as_type [symbolic]
 // CHECK:STDOUT:   %return.param_patt.bf4475.2: %pattern_type.2c66b4.2 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.f44: %pattern_type.2c66b4.2 = return_slot_pattern %return.param_patt.bf4475.2, %T.as_type [symbolic]
@@ -140,7 +140,6 @@ fn Generic(unused T: ()).WrongType() {}
 // CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G, @Class(%T.f84) [symbolic]
 // CHECK:STDOUT:   %Class.G: %Class.G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.d83: <witness> = require_complete_type %T.as_type [symbolic]
-// CHECK:STDOUT:   %n.patt.4d3: %pattern_type.2c66b4.2 = ref_binding_pattern n [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.as_type [symbolic]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %T.as_type} [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [symbolic]
@@ -174,7 +173,7 @@ fn Generic(unused T: ()).WrongType() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [symbolic = constants.%Class.F] {
 // CHECK:STDOUT:     %n.param_patt.loc11: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = value_param_pattern [symbolic = %n.param_patt.loc6 (constants.%n.param_patt)]
-// CHECK:STDOUT:     %n.patt.loc11: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern n, %n.param_patt.loc11 [symbolic = %n.patt.loc6 (constants.%n.patt.364)]
+// CHECK:STDOUT:     %n.patt.loc11: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern n, %n.param_patt.loc11 [symbolic = %n.patt.loc6 (constants.%n.patt)]
 // CHECK:STDOUT:     %return.param_patt.loc11: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc6 (constants.%return.param_patt.bf4475.2)]
 // CHECK:STDOUT:     %return.patt.loc11: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc11, %.loc11_35.2 [symbolic = %return.patt.loc6 (constants.%return.patt.f44)]
 // CHECK:STDOUT:   } {
@@ -234,19 +233,17 @@ fn Generic(unused T: ()).WrongType() {}
 // CHECK:STDOUT:   %Class.F: @Class.%Class.F.type (%Class.F.type) = struct_value () [symbolic = %Class.F (constants.%Class.F)]
 // CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G, @Class(%T.loc5_14.1) [symbolic = %Class.G.type (constants.%Class.G.type)]
 // CHECK:STDOUT:   %Class.G: @Class.%Class.G.type (%Class.G.type) = struct_value () [symbolic = %Class.G (constants.%Class.G)]
-// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.loc5_14.1 [symbolic = %T.as_type (constants.%T.as_type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type [symbolic = %require_complete (constants.%require_complete.d83)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type [symbolic = %pattern_type (constants.%pattern_type.2c66b4.2)]
-// CHECK:STDOUT:   %n.patt: @Class.%pattern_type (%pattern_type.2c66b4.2) = ref_binding_pattern n [symbolic = %n.patt (constants.%n.patt.4d3)]
+// CHECK:STDOUT:   %T.as_type.loc8_10.2: type = facet_access_type %T.loc5_14.1 [symbolic = %T.as_type.loc8_10.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc8_10.2 [symbolic = %require_complete (constants.%require_complete.d83)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc5_14.1) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.as_type [symbolic = %Class.elem (constants.%Class.elem)]
-// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Class.%T.as_type (%T.as_type)} [symbolic = %struct_type.n (constants.%struct_type.n)]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.as_type.loc8_10.2 [symbolic = %Class.elem (constants.%Class.elem)]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Class.%T.as_type.loc8_10.2 (%T.as_type)} [symbolic = %struct_type.n (constants.%struct_type.n)]
 // CHECK:STDOUT:   %complete_type.loc9_1.2: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc9_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Class.F.decl: @Class.%Class.F.type (%Class.F.type) = fn_decl @Class.F [symbolic = @Class.%Class.F (constants.%Class.F)] {
 // CHECK:STDOUT:       %n.param_patt.loc11: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = value_param_pattern [symbolic = %n.param_patt.loc6 (constants.%n.param_patt)]
-// CHECK:STDOUT:       %n.patt.loc11: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern n, %n.param_patt.loc11 [symbolic = %n.patt.loc6 (constants.%n.patt.364)]
+// CHECK:STDOUT:       %n.patt.loc11: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern n, %n.param_patt.loc11 [symbolic = %n.patt.loc6 (constants.%n.patt)]
 // CHECK:STDOUT:       %return.param_patt.loc11: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc6 (constants.%return.param_patt.bf4475.2)]
 // CHECK:STDOUT:       %return.patt.loc11: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc11, %.loc11_35.2 [symbolic = %return.patt.loc6 (constants.%return.patt.f44)]
 // CHECK:STDOUT:     } {
@@ -283,7 +280,11 @@ fn Generic(unused T: ()).WrongType() {}
 // CHECK:STDOUT:       %return.param.loc7: ref @Class.G.%T.as_type.loc7_17.1 (%T.as_type) = out_param call_param1
 // CHECK:STDOUT:       %return.loc7: ref @Class.G.%T.as_type.loc7_17.1 (%T.as_type) = return_slot %return.param.loc7
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc8: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [concrete]
+// CHECK:STDOUT:     %field_decl: @Class.%Class.elem (%Class.elem) = field_decl n, element0, %.loc8 in [concrete] {
+// CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, %T.loc5_14.2 [symbolic = %T.loc5_14.1 (constants.%T.f84)]
+// CHECK:STDOUT:       %T.as_type.loc8_10.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc8_10.2 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc8: type = converted %T.ref, %T.as_type.loc8_10.1 [symbolic = %T.as_type.loc8_10.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc9_1.1: <witness> = complete_type_witness constants.%struct_type.n [symbolic = %complete_type.loc9_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc9_1.1
 // CHECK:STDOUT:
@@ -292,7 +293,7 @@ fn Generic(unused T: ()).WrongType() {}
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %Class.F.decl
 // CHECK:STDOUT:     .G = %Class.G.decl
-// CHECK:STDOUT:     .n = %.loc8
+// CHECK:STDOUT:     .n = %field_decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -301,7 +302,7 @@ fn Generic(unused T: ()).WrongType() {}
 // CHECK:STDOUT:   %T.as_type.loc6_11.1: type = facet_access_type %T.loc6 [symbolic = %T.as_type.loc6_11.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc6_11.1 [symbolic = %pattern_type (constants.%pattern_type.2c66b4.2)]
 // CHECK:STDOUT:   %n.param_patt.loc6: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = value_param_pattern [symbolic = %n.param_patt.loc6 (constants.%n.param_patt)]
-// CHECK:STDOUT:   %n.patt.loc6: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern n, %n.param_patt.loc6 [symbolic = %n.patt.loc6 (constants.%n.patt.364)]
+// CHECK:STDOUT:   %n.patt.loc6: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern n, %n.param_patt.loc6 [symbolic = %n.patt.loc6 (constants.%n.patt)]
 // CHECK:STDOUT:   %.loc6_17.1: Core.Form = init_form %T.as_type.loc6_11.1 [symbolic = %.loc6_17.1 (constants.%.1ce700.2)]
 // CHECK:STDOUT:   %return.param_patt.loc6: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc6 (constants.%return.param_patt.bf4475.2)]
 // CHECK:STDOUT:   %return.patt.loc6: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc6, %T.as_type.loc6_11.1 [symbolic = %return.patt.loc6 (constants.%return.patt.f44)]
@@ -354,7 +355,7 @@ fn Generic(unused T: ()).WrongType() {}
 // CHECK:STDOUT:   fn(%self.param.loc15: @Class.G.%Class (%Class)) -> out %return.param.loc15: @Class.G.%T.as_type.loc7_17.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @Class.G.%Class (%Class) = name_ref self, %self.loc15
-// CHECK:STDOUT:     %n.ref: @Class.G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc8 [concrete = @Class.%.loc8]
+// CHECK:STDOUT:     %n.ref: @Class.G.%Class.elem (%Class.elem) = name_ref n, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:     %.loc16_14.1: ref @Class.G.%T.as_type.loc7_17.1 (%T.as_type) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc16_14.2: @Class.G.%T.as_type.loc7_17.1 (%T.as_type) = acquire_value %.loc16_14.1
 // CHECK:STDOUT:     %impl.elem0.loc16_14.1: @Class.G.%.loc16_14.5 (%.c29) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c, element0 [symbolic = %impl.elem0.loc16_14.2 (constants.%impl.elem0.bd2)]
@@ -378,10 +379,8 @@ fn Generic(unused T: ()).WrongType() {}
 // CHECK:STDOUT:   %Class.F => constants.%Class.F
 // CHECK:STDOUT:   %Class.G.type => constants.%Class.G.type
 // CHECK:STDOUT:   %Class.G => constants.%Class.G
-// CHECK:STDOUT:   %T.as_type => constants.%T.as_type
+// CHECK:STDOUT:   %T.as_type.loc8_10.2 => constants.%T.as_type
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.d83
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2c66b4.2
-// CHECK:STDOUT:   %n.patt => constants.%n.patt.4d3
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n
@@ -393,7 +392,7 @@ fn Generic(unused T: ()).WrongType() {}
 // CHECK:STDOUT:   %T.as_type.loc6_11.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2c66b4.2
 // CHECK:STDOUT:   %n.param_patt.loc6 => constants.%n.param_patt
-// CHECK:STDOUT:   %n.patt.loc6 => constants.%n.patt.364
+// CHECK:STDOUT:   %n.patt.loc6 => constants.%n.patt
 // CHECK:STDOUT:   %.loc6_17.1 => constants.%.1ce700.2
 // CHECK:STDOUT:   %return.param_patt.loc6 => constants.%return.param_patt.bf4475.2
 // CHECK:STDOUT:   %return.patt.loc6 => constants.%return.patt.f44

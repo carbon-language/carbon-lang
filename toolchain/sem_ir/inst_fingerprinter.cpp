@@ -11,6 +11,7 @@
 
 #include "common/concepts.h"
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
@@ -22,6 +23,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
+#include "toolchain/sem_ir/dump.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -636,8 +638,9 @@ struct Worklist {
   }
 
   template <typename T>
-    requires(SameAsOneOf<T, BoolValue, CharId, CompileTimeBindIndex,
-                         ElementIndex, FloatKind, IntKind, CallParamIndex>)
+    requires(
+        SameAsOneOf<T, BoolValue, CharId, CompileTimeBindIndex, DefaultValueId,
+                    ElementIndex, FloatKind, IntKind, CallParamIndex>)
   auto Add(T arg) -> void {
     // Index-like ID: just include the value directly.
     AddInteger(arg.index);
@@ -672,11 +675,49 @@ struct Worklist {
   // Ensure all the instructions on the todo list have fingerprints. To avoid a
   // re-lookup, returns the fingerprint of the first instruction on the todo
   // list, and requires the todo list to be non-empty.
+  //
+  // To avoid runaway fingerprinting, we use a cycle detector based on Brent's
+  // algorithm.
   auto Run() -> ResultType {
     CARBON_CHECK(!todo.empty());
+
+    // The index of an enclosing item we are visiting. If we see this again at
+    // an index in
+    //   [cycle_detector_index + 1, 2 * cycle_detector_index),
+    // we have found a cycle, and if we go deeper than that, we pick a new index
+    // and watch it for longer.
+    int cycle_detector_index = todo.size() - 1;
+
     while (true) {
-      const size_t init_size = todo.size();
+      const int init_size = todo.size();
       auto [next_sem_ir, next] = todo.back();
+
+      // Check that we're not in a cycle.
+      if (cycle_detector_index < init_size - 1 &&
+          init_size - 1 < cycle_detector_index * 2) {
+        CARBON_CHECK(
+            todo[init_size - 1] != todo[cycle_detector_index],
+            "Fingerprinting got stuck in a cycle"
+#ifndef NDEBUG
+            ":{0}",
+            [&]() -> std::string {
+              RawStringOstream out;
+              for (auto [next_sem_ir, next] : llvm::ArrayRef(todo).slice(
+                       cycle_detector_index,
+                       init_size - cycle_detector_index)) {
+                out << "\n";
+                std::visit([&](auto id) { out << Dump(*next_sem_ir, id); },
+                           next);
+              }
+              return out.TakeStr();
+            }()
+#endif
+        );
+      } else {
+        // We've left the region of the stack in which we're looking for this
+        // item. Switch to looking for the current item.
+        cycle_detector_index = init_size - 1;
+      }
 
       sem_ir = next_sem_ir;
       store->Prepare();
@@ -705,7 +746,7 @@ struct Worklist {
         // the fingerprint for things other than `InstId`, but we really only
         // expect other `next` types to be at the bottom of the `todo` stack
         // since they are not added to `todo` during Run().
-        if (todo.size() == init_size) {
+        if (static_cast<int>(todo.size()) == init_size) {
           auto fingerprint = Finish();
           todo.pop_back();
           CARBON_CHECK(todo.empty(),
@@ -757,7 +798,7 @@ struct Worklist {
       // If we didn't add any work, we have a fingerprint for this instruction;
       // pop it from the todo list. Otherwise, we leave it on the todo list so
       // we can compute its fingerprint once we've finished the work we added.
-      if (todo.size() == init_size) {
+      if (static_cast<int>(todo.size()) == init_size) {
         ResultType fingerprint = Finish();
         SetFingerprint(next_sem_ir, next_inst_id, fingerprint);
         todo.pop_back();
