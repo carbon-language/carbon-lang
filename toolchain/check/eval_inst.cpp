@@ -736,6 +736,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                               .specific_id = specific_id});
 }
 
+auto EvalConstantInst(Context& context, SemIR::SpecificInst inst)
+    -> ConstantEvalResult {
+  // Pull the constant value out of the specific.
+  return ConstantEvalResult::Existing(SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), inst.specific_id, inst.inst_id));
+}
+
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::SpecificFunction inst) -> ConstantEvalResult {
   auto callee_function =

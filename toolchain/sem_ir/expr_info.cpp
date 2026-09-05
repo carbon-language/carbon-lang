@@ -29,7 +29,8 @@ struct ExprCategoryResult {
 
 // Returns the expression category of `inst_id`, and the ID of the innermost
 // inst visited while determining that category.
-static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
+static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
+                                const File* specific_ir, SpecificId specific_id)
     -> ExprCategoryResult {
   // The overall expression category if the current instruction is a value
   // expression.
@@ -58,7 +59,11 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
         inst_id = import_ir_inst.inst_id();
         return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, Call>) {
-        auto callee = GetCallee(*ir, inst.callee_id);
+        // TODO: Handle the case where the specific is from a different file.
+        // `GetCallee` doesn't support that case currently.
+        auto callee =
+            GetCallee(*ir, inst.callee_id,
+                      ir == specific_ir ? specific_id : SpecificId::None);
         CARBON_KIND_SWITCH(callee) {
           case CARBON_KIND(SemIR::CalleeError _): {
             return ExprCategory::Error;
@@ -94,7 +99,28 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
             return ExprCategory::ReprInitializing;
           }
         }
+      } else if constexpr (std::same_as<TypedInstT, SpecificInst>) {
+        // Switch to looking at the inner instruction and its specific, which is
+        // known to be from the current IR.
+        inst_id = inst.inst_id;
+        specific_id = inst.specific_id;
+        specific_ir = ir;
+        return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, SpliceInst>) {
+        auto [inst_value_ir, inst_value_const_id] = GetConstantValueInSpecific(
+            *specific_ir, specific_id, *ir, inst.inst_id);
+        if (inst_value_const_id.is_concrete()) {
+          // If we can pull a concrete inst out of the specific, then switch to
+          // computing the category of that inst.
+          ir = inst_value_ir;
+          inst_id = ir->constant_values()
+                        .GetInstAs<InstValue>(inst_value_const_id)
+                        .inst_id;
+          return std::nullopt;
+        }
+
+        // We don't know which instruction is being spliced. We may still know
+        // the category based on the action that produces the inst.
         auto action = ir->insts().Get(inst.inst_id);
         if (auto* action_category = std::get_if<ActionExprCategory>(
                 &action.kind().expr_category())) {
@@ -176,13 +202,18 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
   }
 }
 
-auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
-  return GetExprCategoryImpl(&file, inst_id).category;
+auto GetExprCategory(const File& file, InstId inst_id,
+                     const File* specific_file, SpecificId specific_id)
+    -> ExprCategory {
+  return GetExprCategoryImpl(&file, inst_id,
+                             specific_file ? specific_file : &file, specific_id)
+      .category;
 }
 
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
                                   bool allow_transitive) -> InstId {
   const File* ir = &sem_ir;
+  auto specific_id = SemIR::SpecificId::None;
   while (true) {
     Inst init_untyped = ir->insts().Get(init_id);
     CARBON_KIND_SWITCH(init_untyped) {
@@ -226,6 +257,14 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
         init_id = splice.result_id;
         continue;
       }
+      case CARBON_KIND(SpecificInst inst): {
+        if (!allow_transitive) {
+          return InstId::None;
+        }
+        init_id = inst.inst_id;
+        specific_id = inst.specific_id;
+        continue;
+      }
       case CARBON_KIND(ArrayInit init): {
         return init.dest_id;
       }
@@ -245,7 +284,8 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
         return init.dest_id;
       }
       case CARBON_KIND(Call call): {
-        auto callee_function = GetCalleeAsFunction(*ir, call.callee_id);
+        auto callee_function =
+            GetCalleeAsFunction(*ir, call.callee_id, specific_id);
         const auto& function = ir->functions().Get(callee_function.function_id);
         if (!function.return_form_inst_id.has_value()) {
           return InstId::None;
@@ -306,7 +346,8 @@ static auto GetDecomposedFormKindForType(const File& sem_ir, TypeId type_id)
 auto GetFormInfo(const File& sem_ir, SemIR::InstId inst_id) -> FormInfo {
   auto inst = sem_ir.insts().Get(inst_id);
 
-  auto [category, inner_inst_id] = GetExprCategoryImpl(&sem_ir, inst_id);
+  auto [category, inner_inst_id] =
+      GetExprCategoryImpl(&sem_ir, inst_id, &sem_ir, SpecificId::None);
   if (inst.type_id() == SemIR::ErrorInst::TypeId) {
     // TODO: Should `GetExprCategory` do this?
     category = ExprCategory::Error;

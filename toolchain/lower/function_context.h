@@ -109,6 +109,12 @@ class FunctionContext {
   auto GetBlockArg(SemIR::InstBlockId block_id, TypeInFile type)
       -> llvm::PHINode*;
 
+  // Returns whether the given instruction is treated as a constant in this
+  // function. For template-dependent instructions this requires looking in the
+  // specific, as we do not discover whether they are actually constant until
+  // instantiation.
+  auto IsConstant(SemIR::InstId) -> bool;
+
   // Returns a value for the given instruction.
   auto GetValue(SemIR::InstId inst_id) -> llvm::Value*;
 
