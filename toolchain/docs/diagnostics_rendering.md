@@ -71,10 +71,10 @@ location an editor would jump a cursor to.
 **Labels** are attached to the message. A label is a range of source with
 optional words saying what that range has to do with the problem, read against
 the code it marks: `declared here` is not a sentence anyone would read alone. A
-label with no words marks its range and says nothing, which is how a diagnostic
-points at the code its message is about without repeating the message. That is
-the only place a wordless mark earns its ink; on any other line it points at
-nothing the reader can act on.
+label with no words says only "look here": on the message's line it is how a
+diagnostic points at the code its message is about without repeating the
+message, and elsewhere it is what a Clang note's ranges say. Carbon's own
+labels on another line carry words.
 
 A label's range is `Primary`, directly part of the problem, or `Info`,
 explaining it, as `rustc` distinguishes primary from secondary spans and Clang a
@@ -83,11 +83,28 @@ its line in the margin; an informational one takes the note color.
 
 Two other things reach the renderer, each with words that stand as a sentence:
 
--   A **context** names the operation the problem happened inside. Its
-    sentence is the one the level word leads, hung off the operation's range
-    with the message's emphasis, and the message then hangs off its own range
-    like a label, still in the level's color. Nested contexts read outermost
-    in.
+-   A **context** names the operation the problem happened inside, in a sentence
+    of its own. The outermost context is the sentence the level word leads, hung
+    off the operation's range with the message's emphasis; each context inside
+    it, and then the message, hangs off its own range like a label, still in the
+    level's color. Here the message is the last label:
+
+    ```
+           ╭─┤ call.carbon:8:3
+         4 │   var unused v: Core.Int(N);
+           ·                 ─────┬─────
+           ·                      ╰──┤ `Core.Int(N)` evaluates to incomplete type `i0`
+           ┆
+    ->   8 │   ErrorIfNIsZero(0);
+           ·   ━━━━━━━┳━━━━━━
+           ·          ┗━━┫ error: unable to monomorphize specific `ErrorIfNIsZero(0)`
+           ┆
+           ├─┤ int.carbon:18:9
+        18 │   adapt MakeInt(N);
+           ·         ─────┬────
+           ·              ╰──┤ integer type width of 0 is not positive
+           ╰────
+    ```
 
 -   **Location information** is one step in the path by which a location was
     reached: an import, an `#include`, a macro expansion. It draws as a single
@@ -146,7 +163,7 @@ Error: 1 argument passed to function expecting 0 arguments
 ───╯
 ```
 
-Both of those are taken.
+All three are taken.
 
 ### Nushell and miette
 
@@ -237,9 +254,10 @@ it, off the exact range that is wrong:
     name a row further down. Unknown parts of the location drop from the
     right. The frame's first anchor opens with `╭`, any other with `├`.
 
--   A **source row** is a line of the file, numbered in the gutter. Every line
-    holding a range that is part of the problem is marked `->` in the
-    **margin**, and its number takes the level's color.
+-   A **source row** is a line of the file, numbered in the gutter. The one
+    line the message hangs off is marked `->` in the **margin**, and its
+    number takes the level's color: that is where to begin reading, wherever
+    it sits in the frame.
 
 -   An **annotation row** holds the **marks**, the underlines under ranges,
     with `·` in place of the frame so it doesn't read as source. The message's
@@ -259,11 +277,29 @@ it, off the exact range that is wrong:
 -   A **path row**, `╭── <text>: <location>`, sits above an anchor and says how
     that file was reached, its line running down into the anchor's bracket.
 
--   A **message row**, `├─ note: <text>`, carries words whose location names at
-    most a file, so no snippet can open. A diagnostic whose own location names
-    only a file opens its frame with `╭─ error: <text>`, and its anchor then
-    opens the snippet for whatever else is in that file. Today a message row
-    means the problem is in code the compiler generated; removing them is
+-   A part with **no source**, because its location names only a file or nothing
+    at all, is the fallback. It still gets an anchor, naming what location it
+    has or `<no location>`, and its words hang from the anchor in place of a
+    mark, from the source's first column. A message's words hang the same way,
+    led by the level word, with the `->` on its anchor, and the file's other
+    ranges follow under that anchor past an elision:
+
+    ```
+    ->     ╭─┤ thunk.carbon
+           · ┗━━┫ error: parameter has incomplete type `B` in function definition
+           ┆
+         7 │ class B;
+           ·       ┬
+           ·       ╰──┤ class was forward declared here
+           ┆
+        11 │     fn F(c: C);
+           ·     ─────┬─────
+           ·          ╰──┤ while building thunk calling this function
+           ╰────
+    ```
+
+    Today every part drawn this way is in code the compiler generated or
+    imported without a location; giving each one a location is
     [future work](#future-work).
 
 ### Finding the message
@@ -279,7 +315,8 @@ there.
 The cost is that the message is not at a fixed row of its frame, since a
 declaration above the problem is drawn first. The fixed positions to scan for
 in a long log are the `╭` that opens every diagnostic and the `->` in column
-zero. A frame opening with a message row has no `->`.
+zero, drawn once per frame on the row to begin reading at. A message with no
+source to mark hangs from its anchor, and the `->` marks the anchor.
 
 One frame per diagnostic, rather than one per message, is what shows a reader
 where one problem ends and the next begins. Each file the diagnostic points into
@@ -381,16 +418,18 @@ Sixty columns is a guess; nothing depends on it being right.
 ### Diagnostics from C++ interop
 
 Clang's diagnostics are drawn here rather than by Clang. Its message, location,
-ranges, and fix-its each become the thing they correspond to. The diagnostic's
-own ranges become wordless marks, since they are part of the problem; a note's
-words hang on its location and its ranges are dropped, since a wordless mark on
-another line says nothing. A fix-it becomes a label saying what to do, which
-survives the compact form where an inline rendering would not; carrying the edit
-as data is [future work](#future-work).
+ranges, and fix-its each become the thing they correspond to. A location names
+a point and is marked as the one column Clang's caret marks; a range holding
+that point stands in for it, the `~~~` of `^~~~`, so the words hang off the
+whole range. Every other range becomes a wordless mark, in the level's color
+for the diagnostic's own and the note color for a note's, as Clang would draw
+it. A fix-it becomes a label saying what to do, which survives the compact form
+where an inline rendering would not; carrying the edit as data is
+[future work](#future-work).
 
-A Clang location names a token, so it is marked across the whole token.
 `SemIR::ConvertClangRangeToLoc` turns a Clang range into the location the
 renderer wants, on both the path with a Carbon `Context` and the one without.
+Several notes on one line share its source row, each hanging off its own mark.
 
 Overload-resolution candidate notes are written as
 `<what was considered>: <why it was not viable>` and mark the source the second
@@ -402,7 +441,7 @@ kind, since any note might contain a colon. Moving the split upstream is
 The `#include` and macro expansion stacks arrive as location information and
 read `included from`, `imported from module at`, and `expanded from macro
 defined at` above the anchor of the message's own location. They are left out
-for a note's, as Clang leaves them out.
+for a note, as Clang leaves them out.
 
 ## Style
 
@@ -414,7 +453,7 @@ Styles are named for what they mark, so changing a color is one edit.
 | :--------------------------- | :-------------------- | :------------------------------------------------------------------------------------------ |
 | `error`                      | bold, bright red      | Clang, GCC, and `rustc` agree.                                                              |
 | `warning`                    | bold, bright yellow   | `rustc`'s choice and the conventional caution color; Clang and GCC use magenta.             |
-| `note`                       | bold, bright cyan     | GCC's choice; distinct from error and warning at any brightness.                            |
+| `note`                       | bold, bright cyan     | GCC's choice; distinct from error and warning at any brightness. Leads only a compact line, since a label's words hang off a mark or an anchor instead. |
 | Message                      | bold, no color        | The longest run of text; color belongs on what it points at. Bold only when hung against code. |
 | Frame                        | bold, bright blue     | `rustc`'s choice. Not dim, which several terminals don't implement.                        |
 | Line numbers                 | bright blue           | Not bold, so the one number colored as the reported line stands out.                        |
@@ -490,9 +529,10 @@ where lines connect, which a diagnostic never draws.
 
 A run of `~` would offer a connector no junction, and Unicode has no one-column
 wavy character. A glyph also has to be one column in practice, not only by the
-width tables: fonts draw dingbats, emoji-presentation shapes, and everything
-East Asian Ambiguous across two columns, which is why the margin's pointer is
-two ASCII characters.
+width tables: a terminal that counts one as two cells shifts the rest of its
+row, and in the margin that lands the source a column off its underline.
+Terminals disagree on dingbats, emoji-presentation shapes, and everything East
+Asian Ambiguous, so the pointer is two ASCII characters rather than an arrow.
 
 Color and character set are independent, and every distinction is carried by
 something other than color, so plain output loses appearance and no information.
@@ -717,10 +757,12 @@ None of this is needed for the rendering to be useful.
 
 -   Fix-it hints as data, one structure for Carbon's and Clang's: a range,
     replacement text, and a confidence, so `carbon fix`, an editor, and the
-    renderer work from the same edit. Render them as GCC does, a unified diff
-    of the line as written and as fixed, which also covers a fix that inserts
-    or removes whole lines; Clang's replacement text under a column reads as
-    another annotation.
+    renderer work from the same edit. The hints on one diagnostic or note are
+    one edit, applied together or not at all, as Clang means them: a `(`
+    inserted in one place and its `)` in another. Render them as GCC does, a
+    unified diff of the line as written and as fixed, which also covers a fix
+    that inserts or removes whole lines; Clang's replacement text under a
+    column reads as another annotation.
 
 -   Splitting Clang's candidate notes upstream, where Clang knows which half is
     which, so nothing here has to take them apart by kind.
@@ -775,6 +817,11 @@ None of this is needed for the rendering to be useful.
 -   A path above every anchor. On anything explanatory it restates the
     filename, and it was reliably the most eye-catching text in the frame
     while being the least worth reading.
+
+-   A message row, `├─ note: <text>`, for a part with no source, as an earlier
+    iteration drew. It was a row shorter than an anchor and its label, but a
+    form of its own, which dropped the part's filename and led with a level
+    word no other label has.
 
 -   Closing the anchor after the location, `╭─┤ file:1:1 │`, as `ariadne`
     draws it: the location then looks like a caption rather than where the
