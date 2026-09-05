@@ -140,7 +140,9 @@ struct MapWrapperImpl<Map<KT, VT, MinSmallSize>> {
 
   template <typename CallbackT>
   auto BenchIterate(CallbackT cb) -> void {
-    m.ForEach(cb);
+    for (auto [k, v] : m.entries()) {
+      cb(k, v);
+    }
   }
 };
 

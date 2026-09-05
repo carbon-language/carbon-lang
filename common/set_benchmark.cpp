@@ -100,7 +100,9 @@ struct SetWrapperImpl<Set<KT, MinSmallSize>> {
 
   template <typename CallbackT>
   auto BenchIterate(CallbackT cb) -> void {
-    s.ForEach(cb);
+    for (const auto& k : s.entries()) {
+      cb(k);
+    }
   }
 };
 
