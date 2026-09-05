@@ -574,9 +574,10 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
                           fn.call_param_ranges.return_begin(),
                           fn.GetDeclaredReturnForm(*sem_ir_));
 
-  if (fn.builtin_function_kind() != BuiltinFunctionKind::None) {
+  if (auto builtin_kind = fn.GetBuiltinFunctionKind(*sem_ir_);
+      builtin_kind != BuiltinFunctionKind::None) {
     out() << " = \""
-          << FormatEscaped(fn.builtin_function_kind().name(),
+          << FormatEscaped(builtin_kind.name(),
                            /*use_hex_escapes=*/true)
           << "\"";
   }

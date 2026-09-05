@@ -2945,7 +2945,7 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   auto evaluation_mode = SemIR::Function::EvaluationMode::None;
   if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
     function = &eval_context.functions().Get(callee_function->function_id);
-    builtin_kind = function->builtin_function_kind();
+    builtin_kind = function->GetBuiltinFunctionKind(eval_context.sem_ir());
     evaluation_mode = function->evaluation_mode;
     // Calls to builtins and to `eval` or `musteval` functions might be
     // constant.

@@ -22,7 +22,7 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
 
 // Builds a witness that the given type is copyable via a primitive copy.
 auto BuildPrimitiveCopyWitness(
-    Context& context, SemIR::LocId loc_id, SemIR::NameScopeId parent_scope_id,
+    Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId;
 
@@ -30,11 +30,14 @@ auto BuildPrimitiveCopyWitness(
 // `param_types` contains the parameter types. The first element of
 // `param_types` is treated as the `self` type, and any subsequent elements
 // are treated as the types of the remaining explicit parameters.
-auto MakeBuiltinOperatorFunction(
-    Context& context, llvm::ArrayRef<SemIR::TypeId> param_types,
-    SemIR::TypeId return_type_id, CoreIdentifier op_name,
-    SemIR::BuiltinFunctionKind builtin_kind,
-    SemIR::NameScopeId parent_scope_id = SemIR::NameScopeId::None)
+// The `parent_scope_id` is the parent of the function, which should be an
+// interface in Core.
+auto MakeBuiltinOperatorFunction(Context& context,
+                                 llvm::ArrayRef<SemIR::TypeId> param_types,
+                                 SemIR::TypeId return_type_id,
+                                 CoreIdentifier op_name,
+                                 SemIR::BuiltinFunctionKind builtin_kind,
+                                 SemIR::NameScopeId parent_scope_id)
     -> SemIR::InstId;
 
 // Builds a witness that the given type is trivially destroyable.

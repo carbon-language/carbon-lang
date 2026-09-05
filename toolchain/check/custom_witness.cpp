@@ -45,6 +45,29 @@ static auto GetFacetAsType(Context& context,
   return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
 }
 
+// Attempts to return the canonical Function for the CoreWitness function.
+// Always returns the key for the CanonicalCoreWitnessFunction, so that it can
+// be used to add a newly generated Function with the same key.
+//
+// On success, returns the Decl and Function IDs of the canonical Function.
+// Otherwise, it returns None for those IDs.
+static auto TryGetCanonicalCoreWitnessFunction(
+    Context& context, SemIR::NameScopeId parent_scope_id, SemIR::NameId name_id,
+    SemIR::TypeId self_type_id)
+    -> std::tuple<SemIR::CanonicalCoreWitnessFunction::Key, SemIR::InstId,
+                  SemIR::FunctionId> {
+  SemIR::CanonicalCoreWitnessFunction::Key key = {
+      .parent_scope_id = parent_scope_id,
+      .name_id = name_id,
+      .self_type_id = self_type_id};
+  if (auto canon_id = context.core_witness_functions().Lookup(key);
+      canon_id.has_value()) {
+    const auto& canon = context.core_witness_functions().Get(canon_id);
+    return {key, canon.decl_id, canon.function_id};
+  }
+  return {key, SemIR::InstId::None, SemIR::FunctionId::None};
+}
+
 // Returns a manufactured operator function.
 auto MakeBuiltinOperatorFunction(Context& context,
                                  llvm::ArrayRef<SemIR::TypeId> param_types,
@@ -57,22 +80,29 @@ auto MakeBuiltinOperatorFunction(Context& context,
   auto self_type_id = param_types.front();
   auto name_id = context.core_identifiers().AddNameId(op_name);
 
-  llvm::SmallVector<ParamPatternKind> param_kinds(param_types.size() - 1,
-                                                  ParamPatternKind::Value);
-  auto [decl_id, function_id] = MakeGeneratedFunctionDecl(
-      context, SemIR::LocId::None,
-      {.parent_scope_id = parent_scope_id,
-       .name_id = name_id,
-       .self_type_id = self_type_id,
-       .self_kind = ParamPatternKind::Value,
-       .param_type_ids = param_types.drop_front(),
-       .param_kinds = param_kinds,
-       .return_form =
-           ReturnExprAsForm(context, SemIR::LocId::None,
-                            context.types().GetTypeInstId(return_type_id))});
-
-  auto& function = context.functions().Get(function_id);
-  function.SetCoreWitness(builtin_kind);
+  auto [canon_key, decl_id, function_id] = TryGetCanonicalCoreWitnessFunction(
+      context, parent_scope_id, name_id, self_type_id);
+  if (!decl_id.has_value()) {
+    llvm::SmallVector<ParamPatternKind> param_kinds(param_types.size() - 1,
+                                                    ParamPatternKind::Value);
+    std::tie(decl_id, function_id) = MakeGeneratedFunctionDecl(
+        context, SemIR::LocId::None,
+        {.parent_scope_id = parent_scope_id,
+         .name_id = name_id,
+         .self_type_id = self_type_id,
+         .self_kind = ParamPatternKind::Value,
+         .param_type_ids = param_types.drop_front(),
+         .param_kinds = param_kinds,
+         .return_form =
+             ReturnExprAsForm(context, SemIR::LocId::None,
+                              context.types().GetTypeInstId(return_type_id))});
+    auto& function = context.functions().Get(function_id);
+    function.SetCoreWitness(context.core_witness_functions().Add(
+        {.key = canon_key,
+         .function_id = function_id,
+         .decl_id = decl_id,
+         .builtin_function_kind = builtin_kind}));
+  }
 
   return decl_id;
 }
@@ -347,23 +377,38 @@ static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
                                   DestroyFormat format) -> SemIR::InstId {
   auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
 
-  auto [decl_id, function_id] =
-      MakeGeneratedFunctionDecl(context, loc_id,
-                                {.parent_scope_id = parent_scope_id,
-                                 .name_id = name_id,
-                                 .self_type_id = self_type_id,
-                                 .self_kind = ParamPatternKind::Ref});
+  auto [canon_key, decl_id, function_id] = TryGetCanonicalCoreWitnessFunction(
+      context, parent_scope_id, name_id, self_type_id);
+  if (!decl_id.has_value()) {
+    std::tie(decl_id, function_id) =
+        MakeGeneratedFunctionDecl(context, loc_id,
+                                  {.parent_scope_id = parent_scope_id,
+                                   .name_id = name_id,
+                                   .self_type_id = self_type_id,
+                                   .self_kind = ParamPatternKind::Ref});
 
-  auto& function = context.functions().Get(function_id);
+    auto& function = context.functions().Get(function_id);
 
-  if (format == DestroyFormat::Trivial) {
-    function.SetCoreWitness(SemIR::BuiltinFunctionKind::NoOp);
-  } else {
-    CARBON_CHECK(format == DestroyFormat::NonTrivial);
-    function.SetCoreWitness(SemIR::BuiltinFunctionKind::None);
-    auto body_id = MakeDestroyOpBody(context, loc_id, self_type_id,
-                                     function.self_param_id);
-    function.body_block_ids.push_back(body_id);
+    auto builtin_kind = SemIR::BuiltinFunctionKind::None;
+    switch (format) {
+      case DestroyFormat::Trivial:
+        builtin_kind = SemIR::BuiltinFunctionKind::NoOp;
+        break;
+      case DestroyFormat::NonTrivial: {
+        auto body_id = MakeDestroyOpBody(context, loc_id, self_type_id,
+                                         function.self_param_id);
+        function.body_block_ids.push_back(body_id);
+        break;
+      }
+      case DestroyFormat::NoDestroy:
+        CARBON_FATAL("unexpected DestroyFormat::NoDestroy");
+    }
+
+    function.SetCoreWitness(context.core_witness_functions().Add(
+        {.key = canon_key,
+         .function_id = function_id,
+         .decl_id = decl_id,
+         .builtin_function_kind = builtin_kind}));
   }
 
   return decl_id;
@@ -583,11 +628,25 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
   return interface.core_interface;
 }
 
+static auto GetInterfaceScopeId(
+    Context& context, const SemIR::SpecificInterface& query_specific_interface)
+    -> SemIR::NameScopeId {
+  const auto& interface =
+      context.interfaces().Get(query_specific_interface.interface_id);
+  return interface.scope_without_self_id;
+}
+
 auto BuildPrimitiveCopyWitness(
-    Context& context, SemIR::LocId loc_id, SemIR::NameScopeId parent_scope_id,
+    Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto self_type_id = GetFacetAsType(context, query_self_const_id);
+
+  // Mark functions with the interface's scope for canonicalization and
+  // mangling.
+  auto parent_scope_id = GetInterfaceScopeId(
+      context, context.specific_interfaces().Get(query_specific_interface_id));
+
   auto op_id = MakeBuiltinOperatorFunction(
       context, {self_type_id}, self_type_id, CoreIdentifier::Op,
       SemIR::BuiltinFunctionKind::PrimitiveCopy, parent_scope_id);
@@ -604,13 +663,10 @@ static auto BuildDestroyWitness(
     DestroyFormat format) -> SemIR::InstId {
   CARBON_CHECK(format != DestroyFormat::NoDestroy);
 
-  // Mark functions with the interface's scope as a hint to mangling. This
-  // does not add them to the scope.
-  auto query_specific_interface =
-      context.specific_interfaces().Get(query_specific_interface_id);
-  auto parent_scope_id = context.interfaces()
-                             .Get(query_specific_interface.interface_id)
-                             .scope_without_self_id;
+  // Mark functions with the interface's scope for canonicalization and
+  // mangling.
+  auto parent_scope_id = GetInterfaceScopeId(
+      context, context.specific_interfaces().Get(query_specific_interface_id));
 
   auto self_type_id = GetFacetAsType(context, query_self_const_id);
   auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_id,

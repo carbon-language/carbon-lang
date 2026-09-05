@@ -25,8 +25,10 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
@@ -2431,12 +2433,53 @@ static auto ImportFunctionDecl(ImportContext& context,
   return {function_decl.function_id, function_const_id};
 }
 
+static auto GetLocalCoreWitnessData(
+    ImportRefResolver& resolver,
+    SemIR::CanonicalCoreWitnessFunctionId import_canon_id)
+    -> std::optional<SemIR::CanonicalCoreWitnessFunction::Key> {
+  if (!import_canon_id.has_value()) {
+    return std::nullopt;
+  }
+
+  const auto& import_canon =
+      resolver.import_ir().core_witness_functions().Get(import_canon_id).key;
+  auto parent_scope_id =
+      GetLocalNameScopeId(resolver, import_canon.parent_scope_id);
+  auto name_id = GetLocalNameId(resolver, import_canon.name_id);
+  auto self_const_id =
+      GetLocalConstantId(resolver, import_canon.self_type_id.AsConstantId());
+  // The constant may be None if there's more to resolve still.
+  auto self_type_id =
+      self_const_id.has_value()
+          ? resolver.local_types().GetTypeIdForTypeConstantId(self_const_id)
+          : SemIR::TypeId::None;
+  return {{.parent_scope_id = parent_scope_id,
+           .name_id = name_id,
+           .self_type_id = self_type_id}};
+}
+
+static auto GetLocalCoreWitnessId(
+    ImportContext& context,
+    const SemIR::CanonicalCoreWitnessFunction::Key& canon_data,
+    SemIR::FunctionId function_id, SemIR::InstId decl_id,
+    SemIR::BuiltinFunctionKind builtin_function_kind)
+    -> SemIR::CanonicalCoreWitnessFunctionId {
+  return context.local_ir().core_witness_functions().Add(
+      {.key = canon_data,
+       .function_id = function_id,
+       .decl_id = decl_id,
+       .builtin_function_kind = builtin_function_kind});
+}
+
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FunctionDecl inst,
                                 SemIR::ConstantId function_const_id)
     -> ResolveResult {
   const auto& import_function =
       resolver.import_functions().Get(inst.function_id);
+
+  auto core_witness_data =
+      GetLocalCoreWitnessData(resolver, import_function.core_witness_id());
 
   SemIR::FunctionId function_id = SemIR::FunctionId::None;
   if (!function_const_id.has_value()) {
@@ -2448,6 +2491,23 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       // This is the end of the first phase. Don't make a new function yet if
       // we already have new work.
       return ResolveResult::Retry();
+    }
+
+    if (core_witness_data) {
+      auto canon_id = resolver.local_ir().core_witness_functions().Lookup(
+          *core_witness_data);
+      if (canon_id.has_value()) {
+        // The canonical Function for this CoreWitness already exists. We dedupe
+        // by using it.
+
+        // CoreWitness functions are not generic.
+        CARBON_CHECK(!import_function.generic_id.has_value());
+        return ResolveResult::Done(
+            resolver.local_constant_values().Get(resolver.local_ir()
+                                                     .core_witness_functions()
+                                                     .Get(canon_id)
+                                                     .decl_id));
+      }
     }
 
     // On the second phase, create a forward declaration of the function.
@@ -2548,7 +2608,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       break;
     }
     case SemIR::Function::SpecialFunctionKind::CoreWitness: {
-      new_function.SetCoreWitness(import_function.builtin_function_kind());
+      const auto& import_canon =
+          resolver.import_ir().core_witness_functions().Get(
+              import_function.core_witness_id());
+      new_function.SetCoreWitness(GetLocalCoreWitnessId(
+          resolver, *core_witness_data, function_id,
+          new_function.first_decl_id(), import_canon.builtin_function_kind));
       break;
     }
     case SemIR::Function::SpecialFunctionKind::Thunk: {

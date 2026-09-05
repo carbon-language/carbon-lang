@@ -971,6 +971,15 @@ struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
   using IdBase::IdBase;
 };
 
+// The ID of a `CanonicalCoreWitnessFunction`.
+struct CanonicalCoreWitnessFunctionId
+    : public IdBase<CanonicalCoreWitnessFunctionId> {
+  static constexpr llvm::StringLiteral Label =
+      "canonical_core_witness_function";
+
+  using IdBase::IdBase;
+};
+
 // An index for element access, for structs, tuples, and classes.
 struct ElementIndex : public IndexBase<ElementIndex> {
   static constexpr llvm::StringLiteral Label = "element";

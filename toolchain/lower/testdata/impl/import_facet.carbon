@@ -101,12 +101,12 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc5_21.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.84588f41d61dafba"(ptr %.loc5_21.1.temp, ptr %d), !dbg !10
 // CHECK:STDOUT:   %C.GetC.call = call ptr @_CGetC.C.Main.8b8580dcf8be64c1(ptr %.loc5_21.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @"_COp.42b1207bb77e2640:core.Destroy.Core"(ptr %.loc5_21.1.temp), !dbg !10
+// CHECK:STDOUT:   call void @"_COp.0db736190740475d:core.Destroy.Core"(ptr %.loc5_21.1.temp), !dbg !10
 // CHECK:STDOUT:   ret ptr %C.GetC.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.42b1207bb77e2640:core.Destroy.Core"(ptr %self) #0 !dbg !12 {
+// CHECK:STDOUT: define weak_odr void @"_COp.0db736190740475d:core.Destroy.Core"(ptr %self) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
@@ -150,7 +150,7 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 5, column: 10, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 5, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.42b1207bb77e2640:core.Destroy.Core", scope: null, file: !1, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp.0db736190740475d:core.Destroy.Core", scope: null, file: !1, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null, !7}
 // CHECK:STDOUT: !15 = !{!16}

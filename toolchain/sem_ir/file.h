@@ -168,6 +168,13 @@ class File : public Printable<File> {
   auto entity_names() const -> const EntityNameStore& { return entity_names_; }
   auto functions() -> FunctionStore& { return functions_; }
   auto functions() const -> const FunctionStore& { return functions_; }
+  auto core_witness_functions() -> CanonicalCoreWitnessFunctionStore& {
+    return core_witness_functions_;
+  }
+  auto core_witness_functions() const
+      -> const CanonicalCoreWitnessFunctionStore& {
+    return core_witness_functions_;
+  }
   auto cpp_overload_sets() -> CppOverloadSetStore& {
     return cpp_overload_sets_;
   }
@@ -361,6 +368,10 @@ class File : public Printable<File> {
 
   // Storage for callable objects.
   FunctionStore functions_;
+
+  // Provides canonical ids for generated CoreWitness functions which map to a
+  // canonical FunctionId.
+  CanonicalCoreWitnessFunctionStore core_witness_functions_;
 
   // Storage for CppOverloadSet.
   CppOverloadSetStore cpp_overload_sets_;
