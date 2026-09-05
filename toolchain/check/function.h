@@ -135,6 +135,10 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
     -> void;
 
+// Extracts the number part from the positional parameter.
+auto GetPositionalParamNumber(Context& context, SemIR::InstId param_id)
+    -> size_t;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_FUNCTION_H_

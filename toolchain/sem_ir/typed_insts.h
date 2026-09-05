@@ -265,7 +265,11 @@ struct AssociatedEntityType {
 };
 
 // Used for the type of patterns that do not match a fixed type.
-using AutoType = SingletonTypeInst<InstKind::AutoType, "auto">;
+struct AutoType : public SingletonTypeInst<InstKind::AutoType, "auto"> {
+  // `AutoType` is always set complete in file.cpp.
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+};
 
 // A base in a class, of the form `base: base_type;`. A base class is an
 // element of the derived class, and the type of the `BaseDecl` instruction is
@@ -2581,6 +2585,20 @@ struct WrapperBindingPattern {
   TypeId type_id;
   EntityNameId entity_name_id;
   InstId subpattern_id;
+};
+
+// A positional parameter.
+struct PositionalParam {
+  static constexpr auto Kind =
+      InstKind::PositionalParam.Define<Parse::PositionalParamExprId>(
+          {.ir_name = "positional_param",
+           .expr_category = ExprCategory::DurableRef,
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  // Always the builtin type AutoType.
+  TypeId type_id;
+  IntId int_id;
 };
 
 // These concepts are an implementation detail of the library, not public API.

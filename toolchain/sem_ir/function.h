@@ -85,6 +85,10 @@ struct FunctionFields {
   // Instructions representing the constant default values for parameters.
   InstBlockId call_param_default_values_id;
 
+  // This block consists of references to the `PositionalParam` insts used
+  // inside the body.
+  InstBlockId positional_params_id = SemIR::InstBlockId::None;
+
   // The index ranges within the `Call` parameters that correspond to the
   // implicit parameters, explicit parameters, and return.
   //
@@ -237,6 +241,9 @@ struct Function : public EntityWithParamsBase,
     if (call_param_default_values_id.has_value()) {
       out << ", call_param_default_values_id: " << call_param_default_values_id;
     }
+    if (positional_params_id.has_value()) {
+      out << ", positional_params_id: " << positional_params_id;
+    }
     if (return_type_inst_id.has_value()) {
       out << ", return_type_inst_id: " << return_type_inst_id;
     }
@@ -327,6 +334,7 @@ struct Function : public EntityWithParamsBase,
     EntityWithParamsBase::MergeBaseDefinition(definition);
     call_param_patterns_id = definition.call_param_patterns_id;
     call_params_id = definition.call_params_id;
+    positional_params_id = definition.positional_params_id;
     return_type_inst_id = definition.return_type_inst_id;
     return_form_inst_id = definition.return_form_inst_id;
     return_pattern_id = definition.return_pattern_id;
