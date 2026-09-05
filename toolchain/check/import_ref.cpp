@@ -2301,6 +2301,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::DefaultValuePattern inst)
+    -> ResolveResult {
+  auto subpattern = GetLocalImportRefInfo(resolver, inst.subpattern_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveResult::Deduplicated<SemIR::DefaultValuePattern>(
+      resolver,
+      {
+          .type_id = resolver.local_types().GetTypeIdForTypeConstantId(
+              subpattern.local_type_const_id),
+          .subpattern_id = AddLoadedImportRef(resolver, subpattern),
+          .default_value_id = inst.default_value_id,
+      });
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ExportDecl inst) -> ResolveResult {
   auto value_id = GetLocalConstantId(resolver, inst.value_id);
   return ResolveResult::RetryOrDone(resolver, value_id);
@@ -2467,6 +2485,17 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   auto call_param_patterns = GetLocalBlockImportRefInfo(
       resolver, import_function.call_param_patterns_id);
+  auto call_param_default_values = GetLocalBlockImportRefInfo(
+      resolver, import_function.call_param_default_values_id);
+  llvm::SmallVector<SemIR::InstId> imported_default_values;
+  if (call_param_default_values.has_value()) {
+    auto import_fn = [&resolver](const auto& import_info) {
+      return GetLocalConstantInstId(resolver, import_info.import_inst_id);
+    };
+    llvm::append_range(imported_default_values,
+                       llvm::map_range(*call_param_default_values, import_fn));
+  }
+
   auto return_type_const_id = SemIR::ConstantId::None;
   if (import_function.return_type_inst_id.has_value()) {
     return_type_const_id =
@@ -2516,6 +2545,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // Add the function declaration.
   new_function.call_param_patterns_id =
       AddLoadedImportRefBlock(resolver, call_param_patterns);
+  if (call_param_default_values.has_value()) {
+    new_function.call_param_default_values_id =
+        resolver.local_inst_blocks().Add(imported_default_values);
+  }
   new_function.parent_scope_id = parent_scope_id;
   new_function.implicit_param_patterns_id =
       AddLoadedImportRefBlock(resolver, implicit_param_patterns);
@@ -4496,6 +4529,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::CustomWitness inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::DefaultValuePattern inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ExportDecl inst): {

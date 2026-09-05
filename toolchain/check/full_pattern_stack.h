@@ -141,8 +141,7 @@ class FullPatternStack {
   // Marks the end of checking and pattern matching for the current
   // full-pattern.
   auto PopFullPattern() -> void {
-    auto kind = kind_stack_.back();
-    kind_stack_.pop_back();
+    auto kind = kind_stack_.pop_back_val();
     bind_name_stack_.PopArray();
     int index = next_var_index_stack_.pop_back_val();
     CARBON_CHECK(index < 0 || static_cast<size_t>(index) ==
@@ -222,7 +221,6 @@ class FullPatternStack {
   // the stack. Note default values are only supported for explicit parameter
   // lists.
   auto GetDefaultValues() -> llvm::ArrayRef<SemIR::InstId> {
-    CARBON_CHECK(!default_values_stack_.empty());
     return default_values_stack_.PeekArray();
   }
 

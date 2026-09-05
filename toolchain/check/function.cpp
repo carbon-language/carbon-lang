@@ -8,6 +8,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
@@ -304,6 +305,100 @@ static auto CheckFunctionEvaluationModeMatches(
   return false;
 }
 
+// Given a parameter patterns block, extracts the locations of all
+// `SemIR::DefaultValuePattern` instructions and returns them in an array.
+static auto ExtractDefaultValueLocations(Context& context,
+                                         SemIR::InstBlockId param_patterns_id)
+    -> llvm::SmallVector<SemIR::LocId> {
+  llvm::SmallVector<SemIR::LocId> locations;
+  for (auto inst_id : context.inst_blocks().GetOrEmpty(param_patterns_id)) {
+    if (context.insts().Is<SemIR::DefaultValuePattern>(inst_id)) {
+      locations.push_back(context.insts().GetCanonicalLocId(inst_id));
+    }
+  }
+  return locations;
+}
+
+// Checks every parameter in `prev_function` and `new_function`, that if they
+// both specify a default value those values are identical, or that at most
+// one has an unspecified default value. If `diagnose` is true, issues
+// diagnostics where either condition is detected. Returns true if every
+// parameter met both criteria.
+static auto CheckDefaultValueConsistency(Context& context,
+                                         const SemIR::Function& new_function,
+                                         const SemIR::Function& prev_function,
+                                         bool diagnose) -> bool {
+  // Both functions must either have defaults or not.
+  CARBON_CHECK(prev_function.call_param_default_values_id.has_value() ==
+               new_function.call_param_default_values_id.has_value());
+
+  if (!prev_function.call_param_default_values_id.has_value()) {
+    return true;
+  }
+
+  auto prev_value_inst_ids =
+      context.inst_blocks().Get(prev_function.call_param_default_values_id);
+  auto new_value_inst_ids =
+      context.inst_blocks().Get(new_function.call_param_default_values_id);
+  CARBON_CHECK(prev_value_inst_ids.size() == new_value_inst_ids.size());
+
+  llvm::SmallVector<size_t> indices_without_values;
+  llvm::SmallVector<size_t> indices_with_different_values;
+  for (size_t i = 0; i < prev_value_inst_ids.size(); ++i) {
+    if (!prev_value_inst_ids[i].has_value() &&
+        !new_value_inst_ids[i].has_value()) {
+      indices_without_values.push_back(i);
+    } else if (prev_value_inst_ids[i].has_value() &&
+               new_value_inst_ids[i].has_value()) {
+      auto prev_constant_id = TryEvalInst(context, prev_value_inst_ids[i]);
+      CARBON_CHECK(prev_constant_id != SemIR::ConstantId::NotConstant);
+      auto new_constant_id = TryEvalInst(context, new_value_inst_ids[i]);
+      CARBON_CHECK(new_constant_id != SemIR::ConstantId::NotConstant);
+      if (prev_constant_id != new_constant_id) {
+        indices_with_different_values.push_back(i);
+      }
+    }
+  }
+
+  bool check_ok =
+      indices_without_values.empty() && indices_with_different_values.empty();
+
+  if (check_ok || !diagnose) {
+    return check_ok;
+  }
+
+  // TODO: for imported functions we don't seem to have the previous parameter
+  // pattern block, so we can't add their locations to the diagnostic.
+  auto prev_param_locations =
+      ExtractDefaultValueLocations(context, prev_function.param_patterns_id);
+  auto new_param_locations =
+      ExtractDefaultValueLocations(context, new_function.param_patterns_id);
+
+  for (auto index : indices_without_values) {
+    CARBON_DIAGNOSTIC(PatternDefaultValueNeverSpecified, Error,
+                      "no value for default number {0} is ever specified.",
+                      size_t);
+    CARBON_DIAGNOSTIC(PatternDefaultValueNeverSpecifiedNote, Note,
+                      "previous declaration here.");
+    auto builder = context.emitter().Build(
+        new_param_locations[index], PatternDefaultValueNeverSpecified, index);
+    if (index < prev_param_locations.size()) {
+      builder.Note(prev_param_locations[index],
+                   PatternDefaultValueNeverSpecifiedNote);
+    }
+    builder.Emit();
+  }
+
+  for (auto index : indices_with_different_values) {
+    CARBON_DIAGNOSTIC(PatternDefaultValueDiffers, Error,
+                      "default value differs from the previous declaration.");
+    context.emitter().Emit(new_param_locations[index],
+                           PatternDefaultValueDiffers);
+  }
+
+  return false;
+}
+
 auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& new_function,
                               const SemIR::Function& prev_function,
@@ -320,6 +415,10 @@ auto CheckFunctionTypeMatches(Context& context,
   }
   if (!CheckFunctionEvaluationModeMatches(context, new_function, prev_function,
                                           diagnose)) {
+    return false;
+  }
+  if (!CheckDefaultValueConsistency(context, new_function, prev_function,
+                                    diagnose)) {
     return false;
   }
   return true;

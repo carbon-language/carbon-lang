@@ -12,7 +12,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/default_values.carbon
 
 // --- fail_value_not_constant.carbon
-
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_value_not_constant.carbon:[[@LINE+4]]:23: error: default value for pattern must be constant [PatternDefaultValueNotConstant]
@@ -22,7 +21,6 @@ library "[[@TEST_NAME]]";
 fn H(x: i32, y: i32 = x);
 
 // --- fail_type_mismatch.carbon
-
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:6: error: default value expression type `str` doesn't match pattern type `i32` [PatternDefaultValueTypeMismatch]
@@ -32,7 +30,6 @@ library "[[@TEST_NAME]]";
 fn K(x: i32 = "bazz");
 
 // --- fail_pattern_defaults_not_in_parameter_list.carbon
-
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_pattern_defaults_not_in_parameter_list.carbon:[[@LINE+4]]:23: error: default values are only supported in parameter lists [PatternDefaultValueNotInParameterList]
@@ -42,7 +39,6 @@ library "[[@TEST_NAME]]";
 let (y: i32, x: i32 = 0) = (1, 2);
 
 // --- fail_required_default_values_missing.carbon
-
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+17]]:39: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
@@ -55,14 +51,33 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+10]]:26: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
 // CHECK:STDERR: fn Z(v: i32, x: i32 = 3, (y: i32 = 2, z: i32), w: i32 = 4, k: i32);
 // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+7]]:14: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
-// CHECK:STDERR: fn Z(v: i32, x: i32 = 3, (y: i32 = 2, z: i32), w: i32 = 4, k: i32);
-// CHECK:STDERR:              ^~~~~~
-// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+4]]:60: note: this pattern is also missing a required default value. [RequiredPatternDefaultValueMissingAdditional]
+// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+7]]:60: note: this pattern is also missing a required default value. [RequiredPatternDefaultValueMissingAdditional]
 // CHECK:STDERR: fn Z(v: i32, x: i32 = 3, (y: i32 = 2, z: i32), w: i32 = 4, k: i32);
 // CHECK:STDERR:                                                            ^~~~~~
+// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+4]]:14: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
+// CHECK:STDERR: fn Z(v: i32, x: i32 = 3, (y: i32 = 2, z: i32), w: i32 = 4, k: i32);
+// CHECK:STDERR:              ^~~~~~
 // CHECK:STDERR:
 fn Z(v: i32, x: i32 = 3, (y: i32 = 2, z: i32), w: i32 = 4, k: i32);
+
+// --- fail_nesting_required_default_values_missing.carbon
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+14]]:40: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
+// CHECK:STDERR: fn F(a: i32, (b: i32 = 0, (c: i32 = 0, (d: i32, e: i32))));
+// CHECK:STDERR:                                        ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+11]]:28: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
+// CHECK:STDERR: fn F(a: i32, (b: i32 = 0, (c: i32 = 0, (d: i32, e: i32))));
+// CHECK:STDERR:                            ^~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+7]]:27: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
+// CHECK:STDERR: fn F(a: i32, (b: i32 = 0, (c: i32 = 0, (d: i32, e: i32))));
+// CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+4]]:15: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
+// CHECK:STDERR: fn F(a: i32, (b: i32 = 0, (c: i32 = 0, (d: i32, e: i32))));
+// CHECK:STDERR:               ^~~~~~
+// CHECK:STDERR:
+fn F(a: i32, (b: i32 = 0, (c: i32 = 0, (d: i32, e: i32))));
 
 // --- nested.carbon
 library "[[@TEST_NAME]]";
@@ -72,7 +87,6 @@ fn F(a: i32, (b: i32, (c: i32, (d: i32, e: i32))) = (1, (2, (3, 4))));
 //@dump-sem-ir-end
 
 // --- basic.carbon
-
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
@@ -165,9 +179,10 @@ fn F(x: i32 = 0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param: %i32, %b.param: %i32, %c.param: %i32, %d.param: %i32, %e.param: %i32) default_values: {
+// CHECK:STDOUT: fn @F(%a.param: %i32, %b.param: %i32, %c.param: %i32, %d.param: %i32, %e.param: %i32) {
+// CHECK:STDOUT: !default_values:
 // CHECK:STDOUT:   constants.%tuple.326: %tuple.type.c4f = tuple_value (constants.%int_1.5b8, constants.%tuple.b26) [concrete]
-// CHECK:STDOUT: };
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
@@ -187,7 +202,7 @@ fn F(x: i32 = 0);
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc5: %pattern_type.6b6 = default_value_pattern %x.patt, index: 0 [concrete = constants.%.e53]
+// CHECK:STDOUT:     %.loc4: %pattern_type.6b6 = default_value_pattern %x.patt, index: 0 [concrete = constants.%.e53]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:     %x.param: %i32 = value_param call_param0
@@ -197,7 +212,8 @@ fn F(x: i32 = 0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %i32) default_values: {
+// CHECK:STDOUT: fn @F(%x.param: %i32) {
+// CHECK:STDOUT: !default_values:
 // CHECK:STDOUT:   constants.%int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
-// CHECK:STDOUT: };
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
