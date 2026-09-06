@@ -19,23 +19,39 @@ fn F {
 }
 //@dump-sem-ir-end
 
-// --- call.carbon
+// --- fail_todo_call.carbon
 library "[[@TEST_NAME]]";
 
 import library "basic";
 
 //@dump-sem-ir-begin
 fn G() {
+    // CHECK:STDERR: fail_todo_call.carbon:[[@LINE+8]]:16: error: semantics TODO: `HandlePatternMatchingPositionalParams` [SemanticsTodo]
+    // CHECK:STDERR:     F(0, 1, 2, 3);
+    // CHECK:STDERR:                ^
+    // CHECK:STDERR: fail_todo_call.carbon:[[@LINE-7]]:1: in import [InImport]
+    // CHECK:STDERR: basic.carbon:5:5: note: initializing function parameter [InCallToFunctionParam]
+    // CHECK:STDERR:     $3;
+    // CHECK:STDERR:     ^~
+    // CHECK:STDERR:
     F(0, 1, 2, 3);
 }
 //@dump-sem-ir-end
 
-// --- call_excess_args.carbon
+// --- fail_todo_call_excess_args.carbon
 library "[[@TEST_NAME]]";
 
 import library "basic";
 
 fn G() {
+    // CHECK:STDERR: fail_todo_call_excess_args.carbon:[[@LINE+8]]:16: error: semantics TODO: `HandlePatternMatchingPositionalParams` [SemanticsTodo]
+    // CHECK:STDERR:     F(0, 1, 2, 3, 4);
+    // CHECK:STDERR:                ^
+    // CHECK:STDERR: fail_todo_call_excess_args.carbon:[[@LINE-6]]:1: in import [InImport]
+    // CHECK:STDERR: basic.carbon:5:5: note: initializing function parameter [InCallToFunctionParam]
+    // CHECK:STDERR:     $3;
+    // CHECK:STDERR:     ^~
+    // CHECK:STDERR:
     F(0, 1, 2, 3, 4);
 }
 
@@ -158,7 +174,7 @@ class A {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call.carbon
+// CHECK:STDOUT: --- fail_todo_call.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]

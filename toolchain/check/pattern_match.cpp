@@ -1025,7 +1025,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
           break;
         }
         case SemIR::InstKind::PositionalParam: {
-          // TODO: Handle positional params.
+          if (work.scrutinee_id.has_value()) {
+            context_.TODO(work.scrutinee_id,
+                          "HandlePatternMatchingPositionalParams");
+          }
           break;
         }
         case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
