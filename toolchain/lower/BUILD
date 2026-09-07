@@ -69,6 +69,7 @@ cc_library(
         "//common:map",
         "//common:pretty_stack_trace_function",
         "//common:raw_string_ostream",
+        "//common:set",
         "//common:vlog",
         "//toolchain/base:fixed_size_value_store",
         "//toolchain/base:kind_switch",

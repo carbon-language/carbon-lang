@@ -222,7 +222,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
   };
 
   llvm::SmallVector<SemIR::InstId> vtable;
-  Set<SemIR::FunctionId> implemented_impls;
+  Set<SemIR::FunctionId, 16> implemented_impls;
   bool carbon_native_vtable = true;
 
   // Add vtable entries from the base class, updating them to point to a derived

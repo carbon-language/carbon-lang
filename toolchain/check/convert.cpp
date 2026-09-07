@@ -649,15 +649,15 @@ static auto ConvertStructToStructOrClass(
     value_id = MaterializeIfInitializer(context, value_id);
   }
 
-  Set<SemIR::NameId> dest_field_names;
-  for (auto field : dest_elem_fields) {
-    dest_field_names.Insert(field.name_id);
-  }
-
   // Prepare to look up fields in the source by index. Also check for
   // source fields that don't match any field in the destination.
   Map<SemIR::NameId, int32_t> src_field_indexes;
   if (src_type.fields_id != dest_type.fields_id) {
+    Set<SemIR::NameId, 16> dest_field_names;
+    for (auto field : dest_elem_fields) {
+      dest_field_names.Insert(field.name_id);
+    }
+
     for (auto [i, field] : llvm::enumerate(src_elem_fields)) {
       if (!dest_field_names.Lookup(field.name_id)) {
         if (target.diagnose) {
