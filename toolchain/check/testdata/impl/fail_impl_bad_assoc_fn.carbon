@@ -43,13 +43,6 @@ fn PossiblyF();
 // TODO: Should this be permitted?
 class FAlias {
   impl as I {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:11: error: associated function F implemented by non-function [ImplFunctionWithNonFunction]
-    // CHECK:STDERR:     alias F = PossiblyF;
-    // CHECK:STDERR:           ^
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-34]]:15: note: associated function F declared here [AssociatedFunctionHere]
-    // CHECK:STDERR: interface I { fn F(); }
-    // CHECK:STDERR:               ^~~~~~~
-    // CHECK:STDERR:
     alias F = PossiblyF;
   }
 }
@@ -62,7 +55,7 @@ class FExtraParam {
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: note: calling function declared here [InCallToEntity]
     // CHECK:STDERR:     fn F(b: bool);
     // CHECK:STDERR:     ^~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-50]]:15: note: while building thunk to match the signature of this function [ThunkSignature]
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-43]]:15: note: while building thunk to match the signature of this function [ThunkSignature]
     // CHECK:STDERR: interface I { fn F(); }
     // CHECK:STDERR:               ^~~~~~~
     // CHECK:STDERR:
@@ -78,7 +71,7 @@ class FExtraImplicitParam {
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: note: calling function declared here [InCallToEntity]
     // CHECK:STDERR:     fn F(self);
     // CHECK:STDERR:     ^~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-66]]:15: note: while building thunk to match the signature of this function [ThunkSignature]
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-59]]:15: note: while building thunk to match the signature of this function [ThunkSignature]
     // CHECK:STDERR: interface I { fn F(); }
     // CHECK:STDERR:               ^~~~~~~
     // CHECK:STDERR:
@@ -92,7 +85,7 @@ class FExtraReturnType {
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error: function redeclaration differs because return type is `bool` [FunctionRedeclReturnTypeDiffers]
     // CHECK:STDERR:     fn F() -> bool;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-80]]:15: note: previously declared with no return type [FunctionRedeclReturnTypePreviousNoReturn]
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-73]]:15: note: previously declared with no return type [FunctionRedeclReturnTypePreviousNoReturn]
     // CHECK:STDERR: interface I { fn F(); }
     // CHECK:STDERR:               ^~~~~~~
     // CHECK:STDERR:
@@ -653,7 +646,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: impl @FAlias.as.I.impl: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %PossiblyF.ref: %PossiblyF.type = name_ref PossiblyF, file.%PossiblyF.decl [concrete = constants.%PossiblyF]
 // CHECK:STDOUT:   %F: %PossiblyF.type = alias_binding F, %PossiblyF.ref [concrete = constants.%PossiblyF]
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @FAlias.as.I.impl [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%F), @FAlias.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.fe5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1444,6 +1437,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.962
 // CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.85d
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet.ef1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.476) {
 // CHECK:STDOUT: !definition:

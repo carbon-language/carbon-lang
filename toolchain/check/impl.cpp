@@ -50,9 +50,8 @@ auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionType interface_function_type,
     SemIR::SpecificId enclosing_specific_id, SemIR::InstId impl_decl_id,
     bool defer_thunk_definition) -> SemIR::InstId {
-  auto impl_function_decl =
-      context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
-  if (!impl_function_decl) {
+  auto impl_function_decl = context.insts().Get(impl_decl_id).type_id();
+  if (!context.types().Is<SemIR::FunctionType>(impl_function_decl)) {
     if (impl_decl_id != SemIR::ErrorInst::InstId) {
       CARBON_DIAGNOSTIC(ImplFunctionWithNonFunction, Error,
                         "associated function {0} implemented by non-function",
