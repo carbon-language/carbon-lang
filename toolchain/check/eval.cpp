@@ -219,6 +219,8 @@ class EvalContext {
 
   auto sem_ir() -> SemIR::File& { return context().sem_ir(); }
 
+  auto specific_id() -> SemIR::SpecificId { return specific_id_; }
+
   auto emitter() -> DiagnosticEmitterBase& { return context().emitter(); }
 
  protected:
@@ -3116,7 +3118,8 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
       return MakeConstantResult(eval_context.context(), inst, phase);
     } else if constexpr (ConstantKind == SemIR::InstConstantKind::InstAction) {
       auto result_inst_id = PerformDelayedAction(
-          eval_context.context(), SemIR::LocId(inst_id), inst.As<InstT>());
+          eval_context.context(), eval_context.specific_id(),
+          SemIR::LocId(inst_id), inst.As<InstT>());
       if (result_inst_id.has_value()) {
         // The result is an instruction.
         return MakeConstantResult(

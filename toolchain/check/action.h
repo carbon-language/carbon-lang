@@ -15,12 +15,28 @@
 namespace Carbon::Check {
 
 namespace Internal {
-// Computes the function type to use for PerformAction for InstT.
+// Computes the `SpecificId` parameters to use for PerformAction for InstT.
 template <typename InstT>
-using FunctionTypeForPerformAction = std::conditional_t<
-    InstT::Kind.constant_kind() == SemIR::InstConstantKind::InstAction,
-    auto(Context& context, SemIR::LocId loc_id, InstT inst)->SemIR::InstId,
-    auto()->void>;
+using SpecificParamsForPerformAction =
+    std::conditional_t<InstT::Kind.action_needs_specific_id(),
+                       auto(SemIR::SpecificId specific_id)->void, auto()->void>;
+
+// Computes the function type to use for PerformAction for InstT.
+template <typename InstT,
+          typename SpecificParams = SpecificParamsForPerformAction<InstT>>
+struct FunctionTypeForPerformActionImpl {
+  // By default, no PerformAction function.
+  using Type = auto() -> void;
+};
+template <typename InstT, typename... SpecificParams>
+  requires(InstT::Kind.constant_kind() == SemIR::InstConstantKind::InstAction)
+struct FunctionTypeForPerformActionImpl<InstT, auto(SpecificParams...)->void> {
+  using Type = auto(Context& context, SpecificParams..., SemIR::LocId loc_id,
+                    InstT inst) -> SemIR::InstId;
+};
+template <typename InstT>
+using FunctionTypeForPerformAction =
+    FunctionTypeForPerformActionImpl<InstT>::Type;
 }  // namespace Internal
 
 // Explicitly delete the overload generated for non-action instructions. These
@@ -34,6 +50,13 @@ auto PerformAction() -> void = delete;
 //   auto PerformAction(Context& context, SemIR::LocId loc_id, InstT inst)
 //       -> SemIR::InstId;
 //
+// or if action_needs_specific_id = true is specified when defining the
+// instruction kind, the signature:
+//
+//   auto PerformAction(Context& context, SemIR::SpecificId specific_id,
+//                      SemIR::LocId loc_id, InstT inst)
+//       -> SemIR::InstId;
+//
 // that returns the value that should be used as the result of evaluating the
 // instructions produced by the action. Any instructions generated during
 // `PerformAction` will be spliced into the code at the point where the action
@@ -44,7 +67,8 @@ auto PerformAction() -> void = delete;
 
 // Determines whether the given action can be performed immediately (i.e.
 // whether it is non-template-dependent).
-auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool;
+auto ActionIsPerformable(Context& context, SemIR::Inst action_inst,
+                         SemIR::SpecificId specific_id) -> bool;
 
 // Returns the constant-dependence of `inst_id` (i.e. the maximum of the
 // constant-dependences of its type and its value).
@@ -84,7 +108,7 @@ auto AddActionSpliceIfDependent(Context& context, LocIdT loc_id,
                                 SemIR::TypeInstId expected_result_type_inst_id,
                                 ActionT action_inst) -> SemIR::InstId {
   CARBON_CHECK(action_inst.type_id == SemIR::InstType::TypeId);
-  if (ActionIsPerformable(context, action_inst)) {
+  if (ActionIsPerformable(context, action_inst, SemIR::SpecificId::None)) {
     return SemIR::InstId::None;
   }
   return AddDependentActionSplice(context,
@@ -136,13 +160,19 @@ auto EndPerformDelayedAction(Context& context, SemIR::InstId result_id)
 
 // Performs an action as a result of evaluation of a template's eval block.
 template <typename ActionT>
-auto PerformDelayedAction(Context& context, SemIR::LocId loc_id,
-                          ActionT action_inst) -> SemIR::InstId {
-  if (!ActionIsPerformable(context, action_inst)) {
+auto PerformDelayedAction(Context& context, SemIR::SpecificId specific_id,
+                          SemIR::LocId loc_id, ActionT action_inst)
+    -> SemIR::InstId {
+  if (!ActionIsPerformable(context, action_inst, specific_id)) {
     return SemIR::InstId::None;
   }
   Internal::BeginPerformDelayedAction(context);
-  auto inst_id = PerformAction(context, loc_id, action_inst);
+  auto inst_id = SemIR::InstId::None;
+  if constexpr (ActionT::Kind.action_needs_specific_id()) {
+    inst_id = PerformAction(context, specific_id, loc_id, action_inst);
+  } else {
+    inst_id = PerformAction(context, loc_id, action_inst);
+  }
   return Internal::EndPerformDelayedAction(context, inst_id);
 }
 
