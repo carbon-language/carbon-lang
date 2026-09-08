@@ -81,7 +81,7 @@
 [
   "abstract"
   ; "adapt"
-  "addr"
+  ; "addr"
   "alias"
   "and"
   "api"
@@ -123,6 +123,7 @@
   ; "partial"
   ; "private"
   ; "protected"
+  "ref"
   "require"
   "return"
   "returned"

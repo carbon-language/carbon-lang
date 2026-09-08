@@ -4,7 +4,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-set -xeuo pipefail
+set -xeu
 
 ROOT="$(git rev-parse --show-toplevel)"
 
@@ -22,4 +22,4 @@ grep 'require "carbon"' ~/.config/nvim/init.lua || echo 'require "carbon"' >> ~/
 # build tree_sitter
 cd utils/tree_sitter
 tree-sitter generate
-clang -o ~/.config/nvim/parser/carbon.so -shared src/parser.c src/scanner.c -I ./src -Os -fPIC
+clang -o ~/.config/nvim/parser/carbon.so -shared src/parser.c src/scanner.c -I "$ROOT" -I ./src -Os -fPIC
