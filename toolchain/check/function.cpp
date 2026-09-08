@@ -313,7 +313,7 @@ static auto ExtractDefaultValueLocations(Context& context,
   llvm::SmallVector<SemIR::LocId> locations;
   for (auto inst_id : context.inst_blocks().GetOrEmpty(param_patterns_id)) {
     if (context.insts().Is<SemIR::DefaultValuePattern>(inst_id)) {
-      locations.push_back(context.insts().GetCanonicalLocId(inst_id));
+      locations.push_back(SemIR::LocId(inst_id));
     }
   }
   return locations;
@@ -322,7 +322,7 @@ static auto ExtractDefaultValueLocations(Context& context,
 // Checks every parameter in `prev_function` and `new_function`, that if they
 // both specify a default value those values are identical, or that at most
 // one has an unspecified default value. If `diagnose` is true, issues
-// diagnostics where either condition is detected. Returns true if every
+// diagnostics where either condition is violated. Returns true if every
 // parameter met both criteria.
 static auto CheckDefaultValueConsistency(Context& context,
                                          const SemIR::Function& new_function,

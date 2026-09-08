@@ -974,10 +974,8 @@ auto MatchContext::DoPostWork(State state,
       // TODO: should be able to provide precise locations for both default
       // value expression and the type of the pattern, but we can't because
       // they are both constants.
-      context_.emitter().Emit(
-          LocIdForDiagnostics(SemIR::LocId(entry.pattern_id)),
-          PatternDefaultValueTypeMismatch, default_value_inst_id,
-          param_inst_id);
+      context_.emitter().Emit(entry.pattern_id, PatternDefaultValueTypeMismatch,
+                              default_value_inst_id, param_inst_id);
     }
   }
   results_stack_.PopArray();

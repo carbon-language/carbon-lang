@@ -611,6 +611,8 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
       // these default values is to be printed, it should also include these
       // defaults, so we temporarily disable this flag to force the printing of
       // the contents of this block.
+      // TODO: drop this code once default values are stored as non-canonical
+      // instructions.
       auto format_mask = use_dump_sem_ir_ranges_;
       use_dump_sem_ir_ranges_ = false;
       FormatCodeBlock(fn.call_param_default_values_id);
