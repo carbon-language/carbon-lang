@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "clang/AST/ASTContext.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "common/raw_string_ostream.h"
