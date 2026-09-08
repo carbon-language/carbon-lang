@@ -4374,8 +4374,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::UnspecifiedValue /*inst*/)
-    -> ResolveResult {
+                                SemIR::UnspecifiedValue inst) -> ResolveResult {
+  CARBON_CHECK(resolver.import_ir().types().Is<SemIR::UnspecifiedValueType>(
+      inst.type_id));
   auto type_id = GetSingletonType(resolver.local_context(),
                                   SemIR::UnspecifiedValueType::TypeInstId);
   return ResolveResult::Deduplicated<SemIR::UnspecifiedValue>(

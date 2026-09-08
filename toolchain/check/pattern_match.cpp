@@ -926,10 +926,13 @@ auto MatchContext::DoPostWork(State /*state*/,
   specific_id_stack_.pop_back();
 }
 
-auto MatchContext::DoPreWork(State /*state*/,
+auto MatchContext::DoPreWork(State state,
                              SemIR::DefaultValuePattern default_value_pattern,
                              SemIR::InstId scrutinee_id, WorkItem entry)
     -> void {
+  if (!std::holds_alternative<CalleeState*>(state)) {
+    CARBON_FATAL("Unhandled state kind in DefaultValuePattern pre-work");
+  }
   // We will need to check the type of the parameter to make sure it
   // matches the provided default, so add ourselves to the post-work list.
   results_stack_.PushArray();

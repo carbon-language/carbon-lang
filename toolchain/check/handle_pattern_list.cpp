@@ -197,7 +197,6 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
     return false;
   }
 
-  // Look up the instruction associated with the evaluated constant.
   auto value_inst_id = context.constant_values().GetInstId(expr_const_id);
   CARBON_CHECK(value_inst_id.has_value());
 
