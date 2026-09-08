@@ -14,9 +14,9 @@ fn Run() {
   while (PeekChar() != CharOrEOF.EOF()) {
     if (PeekChar() == 'm') {
       // TODO: Use `if let` when available.
-      let result: (bool, i32, i32) = ReadMul();
-      if (result.0) {
-        total += result.1 * result.2;
+      let result: Core.Optional((i32, i32)) = ReadMul();
+      if (result.HasValue()) {
+        total += result.Get().0 * result.Get().1;
       }
     } else {
       ReadChar();
