@@ -360,19 +360,6 @@ static auto RequestVtableIfVirtual(
   context.vtable_stack().AddInstId(decl_id);
 }
 
-// Diagnoses when positional params aren't supported. Reassigns the pattern
-// block if needed.
-static auto DiagnosePositionalParams(Context& context,
-                                     SemIR::Function& function_info) -> void {
-  if (function_info.param_patterns_id.has_value()) {
-    return;
-  }
-
-  context.TODO(function_info.latest_decl_id(),
-               "function with positional parameters");
-  function_info.param_patterns_id = SemIR::InstBlockId::Empty;
-}
-
 // Build a FunctionDecl describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
@@ -456,7 +443,21 @@ static auto BuildFunctionDecl(Context& context,
     function_info.definition_id = decl_id;
   }
 
-  DiagnosePositionalParams(context, function_info);
+  if (!function_info.param_patterns_id.has_value()) {
+    if (is_definition) {
+      // TODO: Verify only one of the nested functions introduce positional
+      // params.
+      // Create an instruction block to store positional parameter instructions
+      // created in the function definition.
+      context.args_type_info_stack().Push();
+    } else {
+      CARBON_DIAGNOSTIC(
+          MissingBodyAndParams, Error,
+          "Function declarations must have an explicit parameter list");
+      context.emitter().Emit(node_id, MissingBodyAndParams);
+      function_info.param_patterns_id = SemIR::InstBlockId::Empty;
+    }
+  }
 
   TryMergeRedecl(
       context, name_context, std::nullopt,
@@ -839,6 +840,9 @@ auto HandleParseNode(Context& context,
                         std::string);
       context.emitter().Emit(fn_node_id, InvalidBuiltinSignature,
                              builtin_kind.name().str());
+    }
+    if (!function.param_patterns_id.has_value()) {
+      function.positional_params_id = context.args_type_info_stack().Pop();
     }
   }
   context.decl_name_stack().PopScope();

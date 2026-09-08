@@ -2467,6 +2467,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   auto call_param_patterns = GetLocalBlockImportRefInfo(
       resolver, import_function.call_param_patterns_id);
+  auto positional_params = GetLocalBlockImportRefInfo(
+      resolver, import_function.positional_params_id);
   auto return_type_const_id = SemIR::ConstantId::None;
   if (import_function.return_type_inst_id.has_value()) {
     return_type_const_id =
@@ -2516,6 +2518,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // Add the function declaration.
   new_function.call_param_patterns_id =
       AddLoadedImportRefBlock(resolver, call_param_patterns);
+  new_function.positional_params_id =
+      AddLoadedImportRefBlock(resolver, positional_params);
   new_function.parent_scope_id = parent_scope_id;
   new_function.implicit_param_patterns_id =
       AddLoadedImportRefBlock(resolver, implicit_param_patterns);
@@ -4062,6 +4066,22 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::PositionalParam inst) -> ResolveResult {
+  CARBON_CHECK(inst.type_id == SemIR::AutoType::TypeId);
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto int_id = inst.int_id.is_embedded_value()
+                    ? inst.int_id
+                    : resolver.local_ints().AddUnsigned(
+                          resolver.import_ints().Get(inst.int_id));
+  return ResolveResult::Deduplicated<SemIR::PositionalParam>(
+      resolver, {.type_id = SemIR::AutoType::TypeId, .int_id = int_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::RefForm inst) -> ResolveResult {
   auto type_component_inst_id =
       GetLocalConstantId(resolver, inst.type_component_inst_id);
@@ -4592,6 +4612,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::PointerType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::PositionalParam inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::RefBindingPattern inst): {

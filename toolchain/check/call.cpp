@@ -4,8 +4,10 @@
 
 #include "toolchain/check/call.h"
 
+#include <algorithm>
 #include <optional>
 
+#include "common/check.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
@@ -58,12 +60,7 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::SpecificId> {
-  // Check that the arity matches the explicit arguments.
-  auto param_patterns =
-      context.inst_blocks().GetOrEmpty(entity.param_patterns_id);
-  size_t expected_args_size =
-      param_patterns.size() - (self_id.has_value() ? 1 : 0);
-  if (arg_ids.size() != expected_args_size) {
+  auto diagnose_arg_count_mismatch = [&](size_t expected_args_size) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument{0:s} passed to "
                       "{1:=0:function|=1:generic class|=2:generic "
@@ -82,7 +79,32 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
         .Note(entity.latest_decl_id(), InCallToEntity,
               static_cast<int>(entity_kind_for_diagnostic))
         .Emit();
-    return std::nullopt;
+  };
+
+  // Check that the arity matches the explicit arguments.
+  if (entity_kind_for_diagnostic == EntityKind::Function &&
+      !entity.param_patterns_id.has_value()) {
+    const auto& function = static_cast<const SemIR::Function&>(entity);
+    CARBON_CHECK(function.positional_params_id.has_value());
+    size_t min_args_size = 0;
+    for (auto param_id :
+         context.inst_blocks().GetOrEmpty(function.positional_params_id)) {
+      min_args_size = std::max(min_args_size,
+                               GetPositionalParamNumber(context, param_id) + 1);
+    }
+    if (arg_ids.size() < min_args_size) {
+      diagnose_arg_count_mismatch(min_args_size);
+      return std::nullopt;
+    }
+  } else {
+    auto param_patterns =
+        context.inst_blocks().GetOrEmpty(entity.param_patterns_id);
+    size_t expected_args_size =
+        param_patterns.size() - (self_id.has_value() ? 1 : 0);
+    if (arg_ids.size() != expected_args_size) {
+      diagnose_arg_count_mismatch(expected_args_size);
+      return std::nullopt;
+    }
   }
 
   // Perform argument deduction.
@@ -261,6 +283,20 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
           context, loc_id, {.type_id = arg_type_id});
     }
   }
+
+  // Create a new args list that matches the positional params. Omit the excess
+  // and unused args.
+  llvm::SmallVector<SemIR::InstId> used_positional_arg_ids;
+  if (!callee.param_patterns_id.has_value()) {
+    CARBON_CHECK(callee.positional_params_id.has_value());
+    for (auto param_id :
+         context.inst_blocks().GetOrEmpty(callee.positional_params_id)) {
+      size_t position = GetPositionalParamNumber(context, param_id);
+      used_positional_arg_ids.push_back(arg_ids[position]);
+    }
+    arg_ids = used_positional_arg_ids;
+  }
+
   // Convert the arguments to match the parameters.
   auto converted_args_id =
       ConvertCallArgs(context, callee_function.self_id, arg_ids, return_arg_id,

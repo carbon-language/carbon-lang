@@ -100,6 +100,10 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       InstType::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = InstType::TypeId},
        .object_layout = SemIR::ObjectLayout::Empty()});
+  types_.SetComplete(
+      AutoType::TypeId,
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = InstType::TypeId},
+       .object_layout = SemIR::ObjectLayout::Empty()});
 
   insts_.Reserve(SingletonInstKinds.size());
   for (auto kind : SingletonInstKinds) {

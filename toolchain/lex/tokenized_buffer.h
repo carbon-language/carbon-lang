@@ -159,6 +159,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns the value of a `CharLiteral` token.
   auto GetCharLiteralValue(TokenIndex token) const -> CharLiteralValue;
 
+  // Returns the value of a `DollarIntLiteral` token.
+  auto GetDollarIntLiteral(TokenIndex token) const -> IntId;
+
   // Returns the size specified in a `*TypeLiteral` token.
   auto GetTypeLiteralSize(TokenIndex token) const -> IntId;
 

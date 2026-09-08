@@ -130,6 +130,7 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
       // ==== Concrete types ====
 
     case AssociatedEntityType::Kind:
+    case AutoType::Kind:
     case BoolType::Kind:
     case CharLiteralType::Kind:
     case CppOverloadSetType::Kind:

@@ -159,6 +159,13 @@ auto TokenizedBuffer::GetCharLiteralValue(TokenIndex token) const
   return token_info.char_literal();
 }
 
+auto TokenizedBuffer::GetDollarIntLiteral(TokenIndex token) const -> IntId {
+  const auto& token_info = token_infos_.Get(token);
+  CARBON_CHECK(token_info.kind() == TokenKind::DollarIntLiteral, "{0}",
+               token_info.kind());
+  return token_info.int_id();
+}
+
 auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const -> IntId {
   const auto& token_info = token_infos_.Get(token);
   CARBON_CHECK(token_info.kind().is_sized_type_literal(), "{0}",

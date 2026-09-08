@@ -4,6 +4,7 @@
 
 #include "toolchain/check/function.h"
 
+#include "common/check.h"
 #include "common/find.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
@@ -484,9 +485,39 @@ auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
   auto& function = context.functions().Get(function_id);
   function.body_block_ids = context.region_stack().PopRegion();
   function.observe_block_id = observe_block_id;
+  if (!function.param_patterns_id.has_value()) {
+    function.positional_params_id = context.args_type_info_stack().Pop();
+  }
 
   // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);
+}
+
+auto GetPositionalParamNumber(Context& context, SemIR::InstId param_id)
+    -> size_t {
+  auto param = context.insts().Get(param_id);
+  auto int_id = IntId::None;
+  CARBON_KIND_SWITCH(param) {
+    case CARBON_KIND(SemIR::PositionalParam positional_param): {
+      int_id = positional_param.int_id;
+      break;
+    }
+    case CARBON_KIND(SemIR::ImportRefLoaded import_ref): {
+      const auto& import_ir_inst =
+          context.import_ir_insts().Get(import_ref.import_ir_inst_id);
+      const auto& import_ir = context.import_irs().Get(import_ir_inst.ir_id());
+      int_id = import_ir.sem_ir->insts()
+                   .GetAs<SemIR::PositionalParam>(import_ir_inst.inst_id())
+                   .int_id;
+      break;
+    }
+    default: {
+      CARBON_FATAL("Unhandled inst kind {0}", param.kind());
+    }
+  }
+  return int_id.is_embedded_value()
+             ? static_cast<size_t>(int_id.AsValue())
+             : static_cast<size_t>(context.ints().Get(int_id).getZExtValue());
 }
 
 }  // namespace Carbon::Check
