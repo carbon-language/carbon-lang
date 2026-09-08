@@ -984,8 +984,8 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %impl.elem0: %.df4 = impl_witness_access constants.%Instance1.impl_witness, element0 [concrete = constants.%struct_type.d.as.Instance1.impl.G1]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16_4.1, %impl.elem0
 // CHECK:STDOUT:   %.loc16_4.2: ref %empty_tuple.type = struct_access %.loc16_4.1, element0
-// CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc16_4.3: %empty_tuple.type = converted %.loc16_4.2, %tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_4.3: %empty_tuple.type = converted %.loc16_4.2, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %struct: %struct_type.d = struct_value (%.loc16_4.3) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc16_4.4: %struct_type.d = converted %.loc16_4.1, %struct [concrete = constants.%struct]
 // CHECK:STDOUT:   %struct_type.d.as.Instance1.impl.G1.call: init %empty_tuple.type = call %bound_method(%.loc16_4.4)

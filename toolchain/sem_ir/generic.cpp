@@ -99,9 +99,14 @@ static auto GetConstantInSpecific(const File& specific_ir,
     // specific.
     return {&const_ir, const_ir.constant_values().Get(symbolic.inst_id)};
   }
-  return {&specific_ir,
-          specific_ir.constant_values().Get(specific_ir.inst_blocks().Get(
-              value_block_id)[symbolic.index.index()])};
+  // TODO: Distinguish between parts of the instruction block that we've not
+  // reached yet during eval and values that evaluated successfully to
+  // ConstantId::NotConstant.
+  auto value_id =
+      specific_ir.inst_blocks().Get(value_block_id)[symbolic.index.index()];
+  return {&specific_ir, value_id.has_value()
+                            ? specific_ir.constant_values().Get(value_id)
+                            : SemIR::ConstantId::NotConstant};
 }
 
 auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,

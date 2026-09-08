@@ -377,13 +377,22 @@ using DefaultValueUnspecified =
     LeafNode<NodeKind::DefaultValueUnspecified, Lex::UnderscoreTokenIndex,
              NodeCategory::Expr>;
 
+struct DefaultValueExprStart {
+  static constexpr auto Kind =
+      NodeKind::DefaultValueExprStart.Define({.child_count = 0});
+  // This is a virtual token. The `=` token is owned by the
+  // DefaultValuePattern node.
+  Lex::EqualTokenIndex token;
+};
+
 // A pattern with a default value specified: `pattern = expr`.
 struct DefaultValuePattern {
   static constexpr auto Kind = NodeKind::DefaultValuePattern.Define(
-      {.category = NodeCategory::Pattern, .child_count = 2});
+      {.category = NodeCategory::Pattern, .child_count = 3});
 
   AnyPatternId pattern;
   Lex::EqualTokenIndex token;
+  DefaultValueExprStartId start;
   AnyExprId default_value_expr;
 };
 
@@ -1836,6 +1845,11 @@ struct NamedConstraintDefinition {
   llvm::SmallVector<AnyDeclId> members;
   Lex::CloseCurlyBraceTokenIndex token;
 };
+
+// `$0`
+using PositionalParamExpr =
+    LeafNode<NodeKind::PositionalParamExpr, Lex::DollarIntLiteralTokenIndex,
+             NodeCategory::Expr>;
 
 // ---------------------------------------------------------------------------
 

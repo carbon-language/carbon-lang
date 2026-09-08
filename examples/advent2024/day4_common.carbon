@@ -13,18 +13,13 @@ class Wordsearch {
 
   fn Read() -> Wordsearch {
     returned var s: Wordsearch;
-    // TODO: Use for loops once they're implemented.
-    var y: i32 = 0;
-    while (y < 140) {
-      var x: i32 = 0;
-      while (x < 140) {
+    for (y: i32 in Core.Range(140)) {
+      for (x: i32 in Core.Range(140)) {
         // TODO: Assert on failure.
         s.grid[x][y] = ReadChar() as i32;
-        ++x;
       }
       // TODO: Assert on failure.
       SkipNewline();
-      ++y;
     }
     return var;
   }
@@ -33,25 +28,12 @@ class Wordsearch {
     return if x < 0 or x >= 140 or y < 0 or y >= 140 then -1 else self.grid[x][y];
   }
 
-  // TODO: Make this generic in the length of the search query.
-  fn Check4(self, xmas: array(i32, 4), x: i32, y: i32, dx: i32, dy: i32) -> bool {
-    var i: i32 = 0;
-    while (i < 4) {
+  // TODO: Deduce N.
+  fn Check(self, generic N: i32, xmas: array(i32, N), x: i32, y: i32, dx: i32, dy: i32) -> bool {
+    for (i: i32 in Core.Range(N)) {
       if (self.At(x + i * dx, y + i * dy) != xmas[i]) {
         return false;
       }
-      ++i;
-    }
-    return true;
-  }
-
-  fn Check3(self, mas: array(i32, 3), x: i32, y: i32, dx: i32, dy: i32) -> bool {
-    var i: i32 = 0;
-    while (i < 3) {
-      if (self.At(x + i * dx, y + i * dy) != mas[i]) {
-        return false;
-      }
-      ++i;
     }
     return true;
   }

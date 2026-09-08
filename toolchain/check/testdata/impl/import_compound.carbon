@@ -744,8 +744,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %impl.elem0: %.760 = impl_witness_access constants.%Instance.impl_witness, element0 [concrete = constants.%struct_type.i.as.Instance.impl.G]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc10_4.1, %impl.elem0
 // CHECK:STDOUT:   %.loc10_4.2: ref %empty_tuple.type = struct_access %.loc10_4.1, element0
-// CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_4.3: %empty_tuple.type = converted %.loc10_4.2, %tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc10_4.3: %empty_tuple.type = converted %.loc10_4.2, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %struct: %struct_type.i = struct_value (%.loc10_4.3) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc10_4.4: %struct_type.i = converted %.loc10_4.1, %struct [concrete = constants.%struct]
 // CHECK:STDOUT:   %struct_type.i.as.Instance.impl.G.call: init %empty_tuple.type = call %bound_method(%.loc10_4.4)

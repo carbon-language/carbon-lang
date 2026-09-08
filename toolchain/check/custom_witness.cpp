@@ -77,8 +77,6 @@ auto MakeBuiltinOperatorFunction(Context& context,
   return decl_id;
 }
 
-// Returns the body for `Destroy.Op`. This will return `None` if using the
-// builtin `NoOp` is appropriate.
 // Returns a FacetType that contains only the query interface.
 static auto GetFacetTypeForQuerySpecificInterface(
     Context& context, SemIR::LocId loc_id,

@@ -31,10 +31,9 @@ class PathsToTop {
       for (x: i32 in Core.Range(43)) {
         if (terrain.height[x][y] == level) {
           var paths: i64 = 0;
-          // TODO: for ((adj_x: i32, adj_y: i32) in adj) {
-          for (i: i32 in Core.Range(4)) {
-            let adj_x: i32 = x + adj[i].0;
-            let adj_y: i32 = y + adj[i].1;
+          for ((off_x: i32, off_y: i32) in adj) {
+            let adj_x: i32 = x + off_x;
+            let adj_y: i32 = y + off_y;
             if (adj_x >= 0 and adj_x < 43 and
                 adj_y >= 0 and adj_y < 43 and
                 terrain.height[adj_x][adj_y] == level + 1) {

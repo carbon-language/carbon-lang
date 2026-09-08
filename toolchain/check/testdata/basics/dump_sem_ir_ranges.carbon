@@ -234,13 +234,13 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %C.call: init %empty_tuple.type = call %C.ref()
 // CHECK:STDOUT:   %.loc13_7.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc13_7.2: ref %empty_tuple.type = temporary %.loc13_7.1, %A.call
-// CHECK:STDOUT:   %tuple.loc13: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc13_7.3: %empty_tuple.type = converted %A.call, %tuple.loc13 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc13: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc13_7.3: %empty_tuple.type = converted %A.call, %empty_tuple.loc13 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc17_7.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc17_7.2: ref %empty_tuple.type = temporary %.loc17_7.1, %C.call
-// CHECK:STDOUT:   %tuple.loc17: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc17_7.3: %empty_tuple.type = converted %C.call, %tuple.loc17 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc17: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc17_7.3: %empty_tuple.type = converted %C.call, %empty_tuple.loc17 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Destroy.Op.bound.loc17: <bound method> = bound_method %.loc17_7.2, constants.%Destroy.Op
 // CHECK:STDOUT:   %Destroy.Op.call.loc17: init %empty_tuple.type = call %Destroy.Op.bound.loc17(%.loc17_7.2)

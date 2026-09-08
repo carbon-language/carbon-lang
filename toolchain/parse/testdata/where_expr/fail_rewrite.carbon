@@ -79,6 +79,7 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │   │ ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
 // CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'U'
 // CHECK:STDOUT:   │ │ │ ├─DesignatorExpr '.'
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
@@ -101,6 +102,7 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │   │ ├─ParenExpr ')'
 // CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
 // CHECK:STDOUT:   │ │ │ ├─BoolTypeLiteral 'bool'
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
@@ -120,6 +122,7 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │   │ ├─DesignatorExpr '.'
 // CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
 // CHECK:STDOUT:   │ │ │ ├─FloatTypeLiteral 'f32'
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
@@ -139,6 +142,7 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │   │ ├─DesignatorExpr '.' has_error
 // CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
 // CHECK:STDOUT:   │ │ │ ├─UnsignedIntTypeLiteral 'u8'
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
@@ -159,6 +163,7 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │   │ ├─PostfixOperatorStar '*'
 // CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
 // CHECK:STDOUT:   │ │ │ │ ╭─UnsignedIntTypeLiteral 'u64'
 // CHECK:STDOUT:   │ │ │ ├─PostfixOperatorStar '*'
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
@@ -182,6 +187,7 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │   │ ├─InfixOperatorPlus '+'
 // CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
 // CHECK:STDOUT:   │ │ │ │ ╭─StructLiteralStart '{'
 // CHECK:STDOUT:   │ │ │ ├─StructLiteral '}'
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
@@ -207,6 +213,7 @@ fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 // CHECK:STDOUT:   │ │ │   │ ├─TupleLiteral ')'
 // CHECK:STDOUT:   │ │ │   ├─WhereExpr 'where' has_error
 // CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
 // CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'A'
 // CHECK:STDOUT:   │ │ │ ├─DesignatorExpr '.'
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error

@@ -18,6 +18,12 @@ fn foo(bar: i64, baz: i64) {
   foo(baz, bar + baz);
 }
 
+// --- with_positional_params.carbon
+
+fn foo {
+  foo($0, $42.0 + $86);
+}
+
 // --- with_return_type.carbon
 
 fn foo() -> f64 {
@@ -110,6 +116,25 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
 // CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'bar'
 // CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'baz'
+// CHECK:STDOUT:   │ │   ├─InfixOperatorPlus '+'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: with_positional_params.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'foo'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'foo'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$0'
+// CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   │   ╭─PositionalParamExpr '$42'
+// CHECK:STDOUT:   │ │   │   ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │   │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │   │ ├─PositionalParamExpr '$86'
 // CHECK:STDOUT:   │ │   ├─InfixOperatorPlus '+'
 // CHECK:STDOUT:   │ │ ╭─CallExpr ')'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'

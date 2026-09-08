@@ -113,6 +113,7 @@ constexpr auto ConstantKindHasEvalConstantInst(SemIR::InstConstantKind kind)
     case SemIR::InstConstantKind::Indirect:
     case SemIR::InstConstantKind::SymbolicOnly:
     case SemIR::InstConstantKind::SymbolicOrReference:
+    case SemIR::InstConstantKind::TemplateOnly:
     case SemIR::InstConstantKind::Conditional:
     case SemIR::InstConstantKind::ConditionalUnique:
       return true;
@@ -163,6 +164,7 @@ auto EvalConstantInst() -> void = delete;
 // - InstConstantKind::Indirect
 // - InstConstantKind::SymbolicOnly
 // - InstConstantKind::SymbolicOrReference
+// - InstConstantKind::TemplateOnly
 // - InstConstantKind::Conditional
 // - InstConstantKind::ConditionalUnique
 //

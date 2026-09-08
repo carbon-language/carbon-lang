@@ -555,8 +555,8 @@ fn Call() {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, %v
 // CHECK:STDOUT:   %.loc8_9.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_5: %empty_tuple.type = converted %v.ref, %tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_5: %empty_tuple.type = converted %v.ref, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var_storage @F.%y.param_patt
 // CHECK:STDOUT:   %.loc8_9.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4: init %empty_tuple.type = converted %.loc8_9.1, %.loc8_9.2 [concrete = constants.%empty_tuple]
@@ -911,8 +911,8 @@ fn Call() {
 // CHECK:STDOUT:   %.loc8_70: %tuple.type = tuple_literal (%F.call.loc8_59, %F.call.loc8_64, %F.call.loc8_69)
 // CHECK:STDOUT:   %.loc8_59.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc8_59.2: ref %empty_tuple.type = temporary %.loc8_59.1, %F.call.loc8_59
-// CHECK:STDOUT:   %tuple.loc8_59: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_59.3: %empty_tuple.type = converted %F.call.loc8_59, %tuple.loc8_59 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc8_59: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_59.3: %empty_tuple.type = converted %F.call.loc8_59, %empty_tuple.loc8_59 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_19.1: type = splice_block %.loc8_19.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc8_19.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_19.3: type = converted %.loc8_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -926,8 +926,8 @@ fn Call() {
 // CHECK:STDOUT:   %y: ref %empty_tuple.type = wrapper_binding y, %y.var
 // CHECK:STDOUT:   %.loc8_69.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc8_69.2: ref %empty_tuple.type = temporary %.loc8_69.1, %F.call.loc8_69
-// CHECK:STDOUT:   %tuple.loc8_69: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_69.3: %empty_tuple.type = converted %F.call.loc8_69, %tuple.loc8_69 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc8_69: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_69.3: %empty_tuple.type = converted %F.call.loc8_69, %empty_tuple.loc8_69 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_51.1: type = splice_block %.loc8_51.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc8_51.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_51.3: type = converted %.loc8_51.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

@@ -94,7 +94,8 @@ class TokenInfo {
     CARBON_DCHECK(kind() == TokenKind::IntLiteral ||
                   kind() == TokenKind::IntTypeLiteral ||
                   kind() == TokenKind::UnsignedIntTypeLiteral ||
-                  kind() == TokenKind::FloatTypeLiteral);
+                  kind() == TokenKind::FloatTypeLiteral ||
+                  kind() == TokenKind::DollarIntLiteral);
     return IntId::MakeFromTokenPayload(token_payload_);
   }
 

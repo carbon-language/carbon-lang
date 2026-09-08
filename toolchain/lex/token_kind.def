@@ -92,7 +92,8 @@ CARBON_SYMBOL_TOKEN(Backslash,           "\\")
 CARBON_SYMBOL_TOKEN(Caret,               "^")
 CARBON_TOKEN_WITH_VIRTUAL_NODE(
   CARBON_SYMBOL_TOKEN(Colon,               ":"))
-CARBON_SYMBOL_TOKEN(Equal,               "=")
+CARBON_TOKEN_WITH_VIRTUAL_NODE(
+  CARBON_SYMBOL_TOKEN(Equal,               "="))
 CARBON_SYMBOL_TOKEN(Exclaim,             "!")
 CARBON_SYMBOL_TOKEN(Greater,             ">")
 CARBON_SYMBOL_TOKEN(Less,                "<")
@@ -248,6 +249,7 @@ CARBON_TOKEN(CharLiteral)
 CARBON_TOKEN(IntTypeLiteral)
 CARBON_TOKEN(UnsignedIntTypeLiteral)
 CARBON_TOKEN(FloatTypeLiteral)
+CARBON_TOKEN(DollarIntLiteral)
 CARBON_TOKEN(FileStart)
 CARBON_TOKEN(FileEnd)
 

@@ -405,21 +405,6 @@ struct CallAction {
   BoolValue is_desugared;
 };
 
-// An action that performs a C++ template call.
-struct CallCppTemplateAction {
-  static constexpr auto Kind =
-      InstKind::CallCppTemplateAction.Define<Parse::NodeId>(
-          {.ir_name = "call_template_action",
-           .expr_category = ActionExprCategory(ExprCategory::Value),
-           .constant_kind = InstConstantKind::InstAction,
-           .is_lowered = false});
-
-  TypeId type_id;
-  ClangDeclId template_decl_id;
-  // Template arguments.
-  InstBlockId args_id;
-};
-
 // An action that performs callee-side pattern matching for a single syntactic
 // parameter.
 struct CalleePatternMatchAction {
@@ -2137,6 +2122,19 @@ struct SymbolicBindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
+};
+
+// Wraps an instruction and, if that instruction is symbolic, forces it to be
+// evaluated as a template.
+struct TemplateInst {
+  static constexpr auto Kind = InstKind::TemplateInst.Define<Parse::NodeId>(
+      {.ir_name = "template_inst",
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
+       .constant_kind = InstConstantKind::TemplateOnly,
+       .is_lowered = false});
+
+  TypeId type_id;
+  InstId inst_id;
 };
 
 // Consumes the initializer `init_id`, uses it to initialize a temporary

@@ -180,6 +180,9 @@ enum class InstConstantKind : int8_t {
   // symbolic constant inst when applied to a symbolic constant, and can be a
   // concrete reference constant inst when applied to a reference constant.
   SymbolicOrReference,
+  // This instruction can be a template constant inst, depending on its
+  // operands, but never a concrete constant inst.
+  TemplateOnly,
   // This instruction is a metaprogramming or template instantiation action that
   // generates an instruction. Like `SymbolicOnly`, it may be a symbolic
   // constant inst depending on its operands, but never a concrete constant

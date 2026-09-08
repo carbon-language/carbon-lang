@@ -17,10 +17,49 @@ load(
     "preprocessor_compile_actions",
 )
 
+# Sysroots and MacOS are complicated:
+#
+# On Darwin/MacOS, the `-isysroot` flag is used for includes *and* libraries,
+# and if specified it wins over `--sysroot` which would be used for libraries
+# on other platforms.
+# https://discourse.llvm.org/t/silly-what-is-the-difference-between-sysroot-and-isysroot/55788/2
+#
+# Additionally, on a MacOS build of clang, the sysroot defaults to `/`, which
+# is incorrect and it needs to be pointed to the SDK root. However, as a
+# convenience, homebrew builds of clang automatically add `-isysroot` to the
+# command line, so that the user doesn't have to. But the SDK it chooses does
+# not always match the one returned from `xcrun --show-sdk-path`, which is the
+# SDK that we want to use. So we need to override homebrew's choice and specify
+# `-isysroot`. This will also supersede anything given to `--sysroot` (on
+# Darwin) so we don't need to specify both. For non-homebrew clang builds on
+# MacOS, specifying `-isysroot` will also work to point the compiler to the
+# correct SDK instead of `--sysroot`.
+_sysroot_flag_sets = [
+    flag_set(
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions + ACTION_NAME_GROUPS.all_cc_link_actions,
+        flag_groups = [
+            flag_group(
+                expand_if_available = "sysroot",
+                flags = ["--sysroot=%{sysroot}"],
+            ),
+        ],
+        with_features = [with_feature_set(not_features = ["macos_target"])],
+    ),
+    flag_set(
+        actions = ACTION_NAME_GROUPS.all_cc_compile_actions + ACTION_NAME_GROUPS.all_cc_link_actions,
+        flag_groups = [
+            flag_group(
+                flags = ["-isysroot", "%{sysroot}"],
+            ),
+        ],
+        with_features = [with_feature_set(["macos_target"])],
+    ),
+]
+
 clang_feature = feature(
     name = "clang",
     enabled = True,
-    flag_sets = [
+    flag_sets = _sysroot_flag_sets + [
         flag_set(
             actions = ACTION_NAME_GROUPS.all_cc_compile_actions + ACTION_NAME_GROUPS.all_cc_link_actions,
             flag_groups = [
@@ -28,10 +67,6 @@ clang_feature = feature(
                     "-no-canonical-prefixes",
                     "-fcolor-diagnostics",
                 ]),
-                flag_group(
-                    expand_if_available = "sysroot",
-                    flags = ["--sysroot=%{sysroot}"],
-                ),
             ],
         ),
         flag_set(

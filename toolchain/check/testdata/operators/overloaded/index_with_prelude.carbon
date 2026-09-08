@@ -397,8 +397,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @tuple.type.as.IndexWith.impl.%.loc8_11.2, @IndexWith, @IndexWith(Core.IntLiteral) [concrete = constants.%.291]
-// CHECK:STDOUT:   %tuple.loc14: %tuple.type.748 = tuple_value (@__global_init.%.loc14_21.2, @__global_init.%.loc14_30.2) [concrete = constants.%tuple.adf]
-// CHECK:STDOUT:   %.loc14_34: %tuple.type.748 = converted @__global_init.%.loc14_34, %tuple.loc14 [concrete = constants.%tuple.adf]
+// CHECK:STDOUT:   %tuple: %tuple.type.748 = tuple_value (@__global_init.%.loc14_21.2, @__global_init.%.loc14_30.2) [concrete = constants.%tuple.adf]
+// CHECK:STDOUT:   %.loc14_34: %tuple.type.748 = converted @__global_init.%.loc14_34, %tuple [concrete = constants.%tuple.adf]
 // CHECK:STDOUT:   %.loc14_13.1: type = splice_block %.loc14_13.3 [concrete = constants.%tuple.type.748] {
 // CHECK:STDOUT:     %C.ref.loc14_9: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc14_12: type = name_ref C, %C.decl [concrete = constants.%C]
@@ -412,8 +412,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc15_15.1: init %empty_tuple.type = as_compatible @__global_init.%tuple.type.as.IndexWith.impl.At.call
 // CHECK:STDOUT:   %.loc15_15.2: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc15_15.3: ref %empty_tuple.type = temporary %.loc15_15.2, %.loc15_15.1
-// CHECK:STDOUT:   %tuple.loc15: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple.af4]
-// CHECK:STDOUT:   %.loc15_15.4: %C = as_compatible %tuple.loc15 [concrete = constants.%empty_tuple.4db]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple.af4]
+// CHECK:STDOUT:   %.loc15_15.4: %C = as_compatible %empty_tuple [concrete = constants.%empty_tuple.4db]
 // CHECK:STDOUT:   %.loc15_15.5: %C = converted @__global_init.%tuple.type.as.IndexWith.impl.At.call, %.loc15_15.4 [concrete = constants.%empty_tuple.4db]
 // CHECK:STDOUT:   %C.ref.loc15: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %e: %C = wrapper_binding e, %.loc15_15.5

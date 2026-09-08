@@ -681,12 +681,8 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
   // block to form information about the specific.
   auto& specific = context.specifics().Get(specific_id);
   if (!specific.decl_block_id.has_value()) {
-    // Set a placeholder value as the decl block ID so we won't attempt to
-    // recursively resolve the same specific.
-    specific.decl_block_id = SemIR::InstBlockId::Empty;
-    std::tie(specific.decl_block_id, specific.decl_block_has_error) =
-        TryEvalBlockForSpecific(context, loc_id, specific_id,
-                                SemIR::GenericInstIndex::Region::Declaration);
+    TryEvalBlockForSpecific(context, loc_id, specific_id,
+                            SemIR::GenericInstIndex::Region::Declaration);
   }
 }
 
@@ -750,10 +746,8 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
       // The generic is not defined yet.
       return false;
     }
-    std::tie(specific.definition_block_id,
-             specific.definition_block_has_error) =
-        TryEvalBlockForSpecific(context, loc_id, specific_id,
-                                SemIR::GenericInstIndex::Definition);
+    TryEvalBlockForSpecific(context, loc_id, specific_id,
+                            SemIR::GenericInstIndex::Definition);
   }
   return true;
 }
