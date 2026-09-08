@@ -25,6 +25,32 @@ fn G(x: X) {
   F(X, x);
 }
 
+// --- forward_template_type_to_template.carbon
+library "[[@TEST_NAME]]";
+
+fn F(template T: type, unused x: T) {}
+
+fn ForwardTemplate(template T: type, x: T) {
+  F(T, x);
+}
+
+fn CallForwardTemplate() {
+  ForwardTemplate({}, {});
+}
+
+// --- forward_generic_type_to_template.carbon
+library "[[@TEST_NAME]]";
+
+fn F(template T: type, unused x: T) {}
+
+fn ForwardGeneric(generic T: type, x: T) {
+  F(T, x);
+}
+
+fn CallForwardGeneric() {
+  ForwardGeneric({}, {});
+}
+
 // --- constant_nontype_argument.carbon
 library "[[@TEST_NAME]]";
 
