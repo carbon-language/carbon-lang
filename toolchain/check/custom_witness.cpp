@@ -426,6 +426,14 @@ static auto MakeSelfFacetWithCustomWitness(
        .witnesses_block_id = witnesses_block_id});
 }
 
+static auto LoadAssociatedFunction(
+    Context& context, SemIR::InstId assoc_fn_id,
+    SemIR::SpecificId interface_with_self_specific_id) -> SemIR::InstId {
+  LoadImportRef(context, assoc_fn_id);
+  return context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), interface_with_self_specific_id, assoc_fn_id));
+}
+
 auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
                         SemIR::ConstantId query_self_const_id,
                         SemIR::SpecificInterfaceId query_specific_interface_id,
@@ -605,10 +613,25 @@ auto BuildDestroyWitness(Context& context, SemIR::LocId loc_id,
       context.interfaces().Get(query_specific_interface.interface_id);
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
+  CARBON_CHECK(assoc_entities.size() == 3,
+               "{} only has {} associated functions",
+               context.names().GetAsStringIfIdentifier(interface.name_id),
+               assoc_entities.size());
 
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {op_id});
+  auto self_facet_id = GetConstantFacetValueForType(
+      context, context.types().GetTypeInstId(self_type_id));
+  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+      context, loc_id, interface.generic_id, interface.generic_with_self_id,
+      query_specific_interface.specific_id, self_facet_id);
+  auto subobject_destroy_fn_id = LoadAssociatedFunction(
+      context, assoc_entities[1], interface_with_self_specific_id);
+  auto self_destruct_fn_id = LoadAssociatedFunction(
+      context, assoc_entities[2], interface_with_self_specific_id);
+  return BuildCustomWitness(
+      context, loc_id, query_self_const_id, query_specific_interface_id,
+      {op_id, subobject_destroy_fn_id, self_destruct_fn_id});
 }
+
 // Builds and returns a custom witness that performs the specified kind of
 // destruction for the given type.
 static auto BuildCarbonDestroyWitness(
