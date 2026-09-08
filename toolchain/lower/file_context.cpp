@@ -62,7 +62,9 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
                          llvm::SmallVector<SemIR::SpecificId>()),
       coalescer_(vlog_stream_, sem_ir.specifics()),
       vtables_(decltype(vtables_)::MakeForOverwrite(sem_ir.vtables())),
-      specific_vtables_(sem_ir.specifics(), nullptr) {
+      specific_vtables_(sem_ir.specifics(), nullptr),
+      mangler_(sem_ir, context.total_ir_count(),
+               context.mangle_string_fingerprint()) {
   CARBON_CHECK(!sem_ir.has_errors(),
                "Generating LLVM IR from invalid SemIR::File is unsupported.");
 }
@@ -365,9 +367,7 @@ auto FileContext::GetOrCreateLLVMFunction(
     }
   }
 
-  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
-                   context().mangle_string_fingerprint());
-  std::string mangled_name = m.Mangle(function_id, specific_id);
+  std::string mangled_name = mangler_.Mangle(function_id, specific_id);
   if (auto* existing = llvm_module().getFunction(mangled_name)) {
     // We might have already lowered this function while lowering a different
     // file. That's OK.
@@ -741,9 +741,7 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 
 auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
-  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
-                   context().mangle_string_fingerprint());
-  auto mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);
+  auto mangled_name = mangler_.MangleGlobalVariable(var_storage.pattern_id);
   auto linkage = llvm::GlobalVariable::ExternalLinkage;
 
   // If the variable doesn't have an externally-visible name, demote it to
@@ -784,9 +782,7 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
         cxx_record_decl);
   }
 
-  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
-                   context().mangle_string_fingerprint());
-  std::string mangled_name = m.MangleVTable(class_info, specific_id);
+  std::string mangled_name = mangler_.MangleVTable(class_info, specific_id);
 
   if (sem_ir()
           .insts()
