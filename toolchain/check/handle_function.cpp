@@ -518,6 +518,7 @@ static auto CheckUnusedBindingsInPattern(Context& context,
                                          SemIR::InstId pattern_id) -> void {
   llvm::SmallVector<SemIR::InstId> work_list;
   work_list.push_back(pattern_id);
+
   while (!work_list.empty()) {
     auto current_id = work_list.pop_back_val();
     auto inst = context.insts().Get(current_id);
@@ -611,7 +612,7 @@ static auto DiagnoseOutOfOrderDefaults(Context& context,
 
     // True if the current pattern being processed has a default value
     // specified.
-    bool pattern_has_default = false;
+    bool current_pattern_has_default = false;
 
     // The current pattern we are processing, stored separately since it's been
     // popped from the `pattern_work_list` and already processed, just may need
@@ -622,38 +623,40 @@ static auto DiagnoseOutOfOrderDefaults(Context& context,
     llvm::SmallVector<SemIR::InstId> pattern_work_list;
 
     // A list of subpatterns missing required defaults, to coalesce error
-    // reporting into a single diagnostic and limit diagnostic spam.
+    // reporting into a single diagnostic.
     llvm::SmallVector<SemIR::InstId> patterns_missing_defaults;
   };
 
   llvm::SmallVector<PatternLevelState> level_state_stack;
   level_state_stack.push_back({});
-  for (auto subpattern_id :
-       llvm::reverse(context.inst_blocks().Get(function.param_patterns_id))) {
-    level_state_stack.back().subpattern_ids.push_back(subpattern_id);
-  }
+  llvm::append_range(
+      level_state_stack.back().subpattern_ids,
+      llvm::reverse(context.inst_blocks().Get(function.param_patterns_id)));
 
   while (!level_state_stack.empty()) {
-    auto& state = level_state_stack.back();
-    while (!state.subpattern_ids.empty() || !state.pattern_work_list.empty() ||
-           state.current_id.has_value()) {
-      if (!state.current_id.has_value()) {
-        state.pattern_work_list.push_back(state.subpattern_ids.pop_back_val());
-        state.pattern_has_default = false;
+    PatternLevelState* state = &level_state_stack.back();
+    while (!state->subpattern_ids.empty() ||
+           !state->pattern_work_list.empty() || state->current_id.has_value()) {
+      // If we're not resuming processing a pattern from a nested state, start
+      // processing the next subpattern.
+      if (!state->current_id.has_value()) {
+        state->pattern_work_list.push_back(
+            state->subpattern_ids.pop_back_val());
+        state->current_pattern_has_default = false;
       }
-      while (!state.pattern_work_list.empty()) {
-        state.current_id = state.pattern_work_list.pop_back_val();
-        auto inst = context.insts().Get(state.current_id);
+      while (!state->pattern_work_list.empty()) {
+        state->current_id = state->pattern_work_list.pop_back_val();
+        auto inst = context.insts().Get(state->current_id);
         CARBON_KIND_SWITCH(inst) {
           case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
-            state.pattern_has_default = true;
-            state.pattern_work_list.push_back(
+            state->current_pattern_has_default = true;
+            state->pattern_work_list.push_back(
                 default_value_pattern.subpattern_id);
             break;
           }
           case CARBON_KIND(
               SemIR::WrapperBindingPattern wrapper_binding_pattern): {
-            state.pattern_work_list.push_back(
+            state->pattern_work_list.push_back(
                 wrapper_binding_pattern.subpattern_id);
             break;
           }
@@ -663,30 +666,31 @@ static auto DiagnoseOutOfOrderDefaults(Context& context,
             if (!elements.empty()) {
               // Start a new state for the nested tuple pattern elements.
               level_state_stack.push_back({});
-              state = level_state_stack.back();
-              for (auto element_id : llvm::reverse(elements)) {
-                state.subpattern_ids.push_back(element_id);
-              }
+              state = &level_state_stack.back();
+              llvm::append_range(state->subpattern_ids,
+                                 llvm::reverse(elements));
             }
             break;
           }
           default:
+            // We only process patterns containing subpatterns, so this is an
+            // intentional no-op.
             break;
         }
       }
       // Finished processing this subpattern, detect a missing default if
       // required.
-      if (state.pattern_has_default &&
-          !state.first_pattern_with_default.has_value()) {
-        state.first_pattern_with_default = state.current_id;
-      } else if (!state.pattern_has_default &&
-                 state.first_pattern_with_default.has_value()) {
-        state.patterns_missing_defaults.push_back(state.current_id);
+      if (state->current_pattern_has_default &&
+          !state->first_pattern_with_default.has_value()) {
+        state->first_pattern_with_default = state->current_id;
+      } else if (!state->current_pattern_has_default &&
+                 state->first_pattern_with_default.has_value()) {
+        state->patterns_missing_defaults.push_back(state->current_id);
       }
-      state.current_id = SemIR::InstId::None;
+      state->current_id = SemIR::InstId::None;
     }
     // Finished processing this tuple-pattern, emit diagnostics if any.
-    if (!state.patterns_missing_defaults.empty()) {
+    if (!state->patterns_missing_defaults.empty()) {
       CARBON_DIAGNOSTIC(RequiredPatternDefaultValueMissing, Error,
                         "this pattern is missing a required default value.");
       CARBON_DIAGNOSTIC(RequiredPatternDefaultValueFirstDefault, Note,
@@ -695,16 +699,15 @@ static auto DiagnoseOutOfOrderDefaults(Context& context,
       CARBON_DIAGNOSTIC(
           RequiredPatternDefaultValueMissingAdditional, Note,
           "this pattern is also missing a required default value.");
-      auto inst_ref =
-          llvm::ArrayRef<SemIR::InstId>(state.patterns_missing_defaults);
-      auto diag = context.emitter().Build(inst_ref.consume_front(),
-                                          RequiredPatternDefaultValueMissing);
-      diag.Note(state.first_pattern_with_default,
-                RequiredPatternDefaultValueFirstDefault);
+      auto inst_ref = llvm::ArrayRef(state->patterns_missing_defaults);
+      auto builder = context.emitter().Build(
+          inst_ref.consume_front(), RequiredPatternDefaultValueMissing);
       for (auto inst_id : inst_ref) {
-        diag.Note(inst_id, RequiredPatternDefaultValueMissingAdditional);
+        builder.Note(inst_id, RequiredPatternDefaultValueMissingAdditional);
       }
-      diag.Emit();
+      builder.Note(state->first_pattern_with_default,
+                   RequiredPatternDefaultValueFirstDefault);
+      builder.Emit();
     }
     level_state_stack.pop_back();
   }

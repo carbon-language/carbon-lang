@@ -39,7 +39,7 @@ fn B() {
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst50000010}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst10, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst50000011}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function50000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, body: [inst_block50000006]}
@@ -78,46 +78,46 @@ fn B() {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(inst50000011)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000012)}
+// CHECK:STDOUT:     'type(inst50000012)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(inst50000012)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000012)}
+// CHECK:STDOUT:     'type(inst50000013)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   declared_facet_types: {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst50000010:    {kind: FunctionDecl, arg0: function50000000, arg1: inst_block_empty, type: type(inst50000011)}
-// CHECK:STDOUT:     inst50000011:    {kind: FunctionType, arg0: function50000000, arg1: specific<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000012:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000013:    {kind: StructValue, arg0: inst_block_empty, type: type(inst50000011)}
-// CHECK:STDOUT:     inst50000014:    {kind: Return}
+// CHECK:STDOUT:     inst10:          {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst50000011:    {kind: FunctionDecl, arg0: function50000000, arg1: inst_block_empty, type: type(inst50000012)}
+// CHECK:STDOUT:     inst50000012:    {kind: FunctionType, arg0: function50000000, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000013:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000014:    {kind: StructValue, arg0: inst_block_empty, type: type(inst50000012)}
+// CHECK:STDOUT:     inst50000015:    {kind: Return}
 // CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
-// CHECK:STDOUT:       instF:           concrete_constant(instF)
-// CHECK:STDOUT:       inst50000010:    concrete_constant(inst50000013)
-// CHECK:STDOUT:       inst50000011:    concrete_constant(inst50000011)
+// CHECK:STDOUT:       inst10:          concrete_constant(inst10)
+// CHECK:STDOUT:       inst50000011:    concrete_constant(inst50000014)
 // CHECK:STDOUT:       inst50000012:    concrete_constant(inst50000012)
 // CHECK:STDOUT:       inst50000013:    concrete_constant(inst50000013)
+// CHECK:STDOUT:       inst50000014:    concrete_constant(inst50000014)
 // CHECK:STDOUT:     symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
-// CHECK:STDOUT:       0:               inst50000010
+// CHECK:STDOUT:       0:               inst50000011
 // CHECK:STDOUT:     generated:       {}
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block50000005: {}
 // CHECK:STDOUT:     inst_block50000006:
-// CHECK:STDOUT:       0:               inst50000014
+// CHECK:STDOUT:       0:               inst50000015
 // CHECK:STDOUT:     inst_block50000007:
-// CHECK:STDOUT:       0:               instF
-// CHECK:STDOUT:       1:               inst50000010
+// CHECK:STDOUT:       0:               inst10
+// CHECK:STDOUT:       1:               inst50000011
 // CHECK:STDOUT:   value_stores:
 // CHECK:STDOUT:     shared_values:
 // CHECK:STDOUT:       ints:            {}
@@ -136,15 +136,15 @@ fn B() {
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
-// CHECK:STDOUT:     import_ir70000002: {decl_id: inst70000010, is_export: false}
+// CHECK:STDOUT:     import_ir70000002: {decl_id: inst70000011, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
-// CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir70000002, inst_id: inst50000010}
-// CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir70000002, inst_id: inst50000010}
+// CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir70000002, inst_id: inst50000011}
+// CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir70000002, inst_id: inst50000011}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: inst70000011, name0: inst70000012}}
-// CHECK:STDOUT:     name_scope70000001: {inst: inst70000011, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst70000017}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst10, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: inst70000012, name0: inst70000013}}
+// CHECK:STDOUT:     name_scope70000001: {inst: inst70000012, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst70000018}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name70000000: {name: name1, parent_scope: name_scope70000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
 // CHECK:STDOUT:   functions:
@@ -185,69 +185,69 @@ fn B() {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(inst70000013)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst70000014)}
+// CHECK:STDOUT:     'type(inst70000014)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst70000015)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:     'type(inst70000014)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst70000014)}
+// CHECK:STDOUT:     'type(inst70000015)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst70000015)}
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   declared_facet_types: {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst70000010:    {kind: ImportDecl, arg0: name1}
-// CHECK:STDOUT:     inst70000011:    {kind: Namespace, arg0: name_scope70000001, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst70000012:    {kind: FunctionDecl, arg0: function70000000, arg1: inst_block_empty, type: type(inst70000013)}
-// CHECK:STDOUT:     inst70000013:    {kind: FunctionType, arg0: function70000000, arg1: specific<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst70000014:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
-// CHECK:STDOUT:     inst70000015:    {kind: StructValue, arg0: inst_block_empty, type: type(inst70000013)}
-// CHECK:STDOUT:     inst70000016:    {kind: NameRef, arg0: name1, arg1: inst70000011, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst70000017:    {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name70000000, type: type(inst70000019)}
-// CHECK:STDOUT:     inst70000018:    {kind: FunctionDecl, arg0: function70000001, arg1: inst_block_empty, type: type(inst70000019)}
-// CHECK:STDOUT:     inst70000019:    {kind: FunctionType, arg0: function70000001, arg1: specific<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst7000001A:    {kind: StructValue, arg0: inst_block_empty, type: type(inst70000019)}
-// CHECK:STDOUT:     inst7000001B:    {kind: NameRef, arg0: name1, arg1: inst70000017, type: type(inst70000019)}
-// CHECK:STDOUT:     inst7000001C:    {kind: Call, arg0: inst7000001B, arg1: inst_block_empty, type: type(inst70000014)}
-// CHECK:STDOUT:     inst7000001D:    {kind: Return}
+// CHECK:STDOUT:     inst10:          {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst70000011:    {kind: ImportDecl, arg0: name1}
+// CHECK:STDOUT:     inst70000012:    {kind: Namespace, arg0: name_scope70000001, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst70000013:    {kind: FunctionDecl, arg0: function70000000, arg1: inst_block_empty, type: type(inst70000014)}
+// CHECK:STDOUT:     inst70000014:    {kind: FunctionType, arg0: function70000000, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst70000015:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
+// CHECK:STDOUT:     inst70000016:    {kind: StructValue, arg0: inst_block_empty, type: type(inst70000014)}
+// CHECK:STDOUT:     inst70000017:    {kind: NameRef, arg0: name1, arg1: inst70000012, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst70000018:    {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name70000000, type: type(inst7000001A)}
+// CHECK:STDOUT:     inst70000019:    {kind: FunctionDecl, arg0: function70000001, arg1: inst_block_empty, type: type(inst7000001A)}
+// CHECK:STDOUT:     inst7000001A:    {kind: FunctionType, arg0: function70000001, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst7000001B:    {kind: StructValue, arg0: inst_block_empty, type: type(inst7000001A)}
+// CHECK:STDOUT:     inst7000001C:    {kind: NameRef, arg0: name1, arg1: inst70000018, type: type(inst7000001A)}
+// CHECK:STDOUT:     inst7000001D:    {kind: Call, arg0: inst7000001C, arg1: inst_block_empty, type: type(inst70000015)}
+// CHECK:STDOUT:     inst7000001E:    {kind: Return}
 // CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
-// CHECK:STDOUT:       instF:           concrete_constant(instF)
-// CHECK:STDOUT:       inst70000011:    concrete_constant(inst70000011)
-// CHECK:STDOUT:       inst70000012:    concrete_constant(inst70000015)
-// CHECK:STDOUT:       inst70000013:    concrete_constant(inst70000013)
+// CHECK:STDOUT:       inst10:          concrete_constant(inst10)
+// CHECK:STDOUT:       inst70000012:    concrete_constant(inst70000012)
+// CHECK:STDOUT:       inst70000013:    concrete_constant(inst70000016)
 // CHECK:STDOUT:       inst70000014:    concrete_constant(inst70000014)
 // CHECK:STDOUT:       inst70000015:    concrete_constant(inst70000015)
-// CHECK:STDOUT:       inst70000016:    concrete_constant(inst70000011)
-// CHECK:STDOUT:       inst70000017:    concrete_constant(inst7000001A)
-// CHECK:STDOUT:       inst70000018:    concrete_constant(inst7000001A)
-// CHECK:STDOUT:       inst70000019:    concrete_constant(inst70000019)
+// CHECK:STDOUT:       inst70000016:    concrete_constant(inst70000016)
+// CHECK:STDOUT:       inst70000017:    concrete_constant(inst70000012)
+// CHECK:STDOUT:       inst70000018:    concrete_constant(inst7000001B)
+// CHECK:STDOUT:       inst70000019:    concrete_constant(inst7000001B)
 // CHECK:STDOUT:       inst7000001A:    concrete_constant(inst7000001A)
-// CHECK:STDOUT:       inst7000001B:    concrete_constant(inst7000001A)
+// CHECK:STDOUT:       inst7000001B:    concrete_constant(inst7000001B)
+// CHECK:STDOUT:       inst7000001C:    concrete_constant(inst7000001B)
 // CHECK:STDOUT:     symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
-// CHECK:STDOUT:       0:               inst70000012
+// CHECK:STDOUT:       0:               inst70000013
 // CHECK:STDOUT:     generated:       {}
 // CHECK:STDOUT:     imports:
-// CHECK:STDOUT:       0:               inst70000011
-// CHECK:STDOUT:       1:               inst70000017
-// CHECK:STDOUT:       2:               inst70000018
+// CHECK:STDOUT:       0:               inst70000012
+// CHECK:STDOUT:       1:               inst70000018
+// CHECK:STDOUT:       2:               inst70000019
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block70000005: {}
 // CHECK:STDOUT:     inst_block70000006:
-// CHECK:STDOUT:       0:               inst70000016
-// CHECK:STDOUT:       1:               inst7000001B
-// CHECK:STDOUT:       2:               inst7000001C
-// CHECK:STDOUT:       3:               inst7000001D
+// CHECK:STDOUT:       0:               inst70000017
+// CHECK:STDOUT:       1:               inst7000001C
+// CHECK:STDOUT:       2:               inst7000001D
+// CHECK:STDOUT:       3:               inst7000001E
 // CHECK:STDOUT:     inst_block70000007:
-// CHECK:STDOUT:       0:               instF
-// CHECK:STDOUT:       1:               inst70000010
-// CHECK:STDOUT:       2:               inst70000012
+// CHECK:STDOUT:       0:               inst10
+// CHECK:STDOUT:       1:               inst70000011
+// CHECK:STDOUT:       2:               inst70000013
 // CHECK:STDOUT:   value_stores:
 // CHECK:STDOUT:     shared_values:
 // CHECK:STDOUT:       ints:            {}

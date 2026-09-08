@@ -829,7 +829,8 @@ template <typename InstT>
            SemIR::GenericNamedConstraintType, SemIR::InstType,
            SemIR::IntLiteralType, SemIR::NamespaceType,
            SemIR::RequireSpecificDefinitionType, SemIR::SpecificFunctionType,
-           SemIR::UnboundElementType, SemIR::WhereExpr, SemIR::WitnessType>())
+           SemIR::UnboundElementType, SemIR::UnspecifiedValueType,
+           SemIR::WhereExpr, SemIR::WitnessType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> LoweredTypes {
   // Return an empty struct as a placeholder.

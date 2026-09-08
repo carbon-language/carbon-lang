@@ -148,6 +148,7 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
     case RequireSpecificDefinitionType::Kind:
     case TypeType::Kind:
     case UnboundElementType::Kind:
+    case UnspecifiedValueType::Kind:
     case VtableType::Kind:
     case WitnessType::Kind: {
       return Step::ConcreteType{

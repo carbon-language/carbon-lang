@@ -816,7 +816,7 @@ interface Y(T: type) {
 
 // TODO: We crash if this impl is not generic, as the call to `.YF()` produces a
 // symbolic-dependent instruction, but there's no generic eval block for it.
-// CHECK:STDERR: fail_todo_period_self_in_generic_argument.carbon:[[@LINE+4]]:60: error: cannot convert type `<cannot stringify inst5D0000AF: {kind: Call, arg0: inst5D0000AD, arg1: inst_block_empty, type: type(inst5D000088)}>` that implements `Z where .(Z.Z1) = ()` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: fail_todo_period_self_in_generic_argument.carbon:[[@LINE+4]]:60: error: cannot convert type `<cannot stringify inst5D0000B0: {kind: Call, arg0: inst5D0000AE, arg1: inst_block_empty, type: type(inst5D000089)}>` that implements `Z where .(Z.Z1) = ()` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: impl forall [T: type] T as Y(Z where .Z1 = ()) where .Y1 = .YF() {}
 // CHECK:STDERR:                                                            ^~~~~
 // CHECK:STDERR:
