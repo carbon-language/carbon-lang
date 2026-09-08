@@ -22,23 +22,48 @@ fn G() -> I;
 
 fn H() -> I { return G(); }
 
+class C {
+  impl as I {
+    fn Assoc() {}
+  }
+}
+
+fn CallF() {
+  F(C);
+}
+
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
+// CHECK:STDOUT: %type.10 = type {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main({} %_) #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main(%type.10 %_) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare {} @_CG.Main()
+// CHECK:STDOUT: declare %type.10 @_CG.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define {} @_CH.Main() #0 !dbg !11 {
+// CHECK:STDOUT: define %type.10 @_CH.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %G.call = call {} @_CG.Main(), !dbg !14
-// CHECK:STDOUT:   ret {} %G.call, !dbg !15
+// CHECK:STDOUT:   %G.call = call %type.10 @_CG.Main(), !dbg !14
+// CHECK:STDOUT:   ret %type.10 %G.call, !dbg !15
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @"_CAssoc.C.Main:I.Main"() #0 !dbg !16 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !19
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !20 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_CF.Main(%type.10 zeroinitializer), !dbg !21
+// CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -62,4 +87,11 @@ fn H() -> I { return G(); }
 // CHECK:STDOUT: !13 = !{!7}
 // CHECK:STDOUT: !14 = !DILocation(line: 23, column: 22, scope: !11)
 // CHECK:STDOUT: !15 = !DILocation(line: 23, column: 15, scope: !11)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Assoc", linkageName: "_CAssoc.C.Main:I.Main", scope: null, file: !1, line: 27, type: !17, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
+// CHECK:STDOUT: !18 = !{null}
+// CHECK:STDOUT: !19 = !DILocation(line: 27, column: 5, scope: !16)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main", scope: null, file: !1, line: 31, type: !17, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !21 = !DILocation(line: 32, column: 3, scope: !20)
+// CHECK:STDOUT: !22 = !DILocation(line: 31, column: 1, scope: !20)
 // CHECK:STDOUT:
