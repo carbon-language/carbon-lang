@@ -712,6 +712,7 @@ static auto MergeFunctionParamDefaultValues(Context& context,
   for (size_t i = 0; i < prev_value_inst_ids.size(); ++i) {
     bool had_value =
         !context.insts().Is<SemIR::UnspecifiedValue>(prev_value_inst_ids[i]);
+    // FIXME: how to merge these properly?
     auto merged_id = had_value ? prev_value_inst_ids[i] : new_value_inst_ids[i];
     merge_has_new_info |=
         !had_value && !context.insts().Is<SemIR::UnspecifiedValue>(merged_id);

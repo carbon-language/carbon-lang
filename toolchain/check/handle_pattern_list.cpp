@@ -173,7 +173,7 @@ auto HandleParseNode(Context& context,
 auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
     -> bool {
   // On entry, the top of the node stack should have an expression for the
-  // default value. We evaluate it to get a constant.
+  // default value. We evaluate it to ensure it is a constant.
   auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
 
   // Ensure we are in an explicit parameter list, otherwise issue a diagnostic.
@@ -186,7 +186,6 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
     return false;
   }
 
-  // Evaluate the default value constant.
   auto expr_const_id = TryEvalInst(context, expr_inst_id);
   if (expr_const_id == SemIR::ConstantId::NotConstant) {
     CARBON_DIAGNOSTIC(PatternDefaultValueNotConstant, Error,
@@ -197,13 +196,10 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
     return false;
   }
 
-  auto value_inst_id = context.constant_values().GetInstId(expr_const_id);
-  CARBON_CHECK(value_inst_id.has_value());
-
   // Add the value to the default values array in the full pattern stack, for
   // recovery later in the NameComponent.
   auto default_value_id =
-      context.full_pattern_stack().AddDefaultValue(value_inst_id);
+      context.full_pattern_stack().AddDefaultValue(expr_inst_id);
 
   // Next on the node stack should be the pattern for which this default was
   // specified. We pop that so we can issue the DefaultValuePattern in its

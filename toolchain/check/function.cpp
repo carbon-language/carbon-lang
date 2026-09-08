@@ -305,20 +305,6 @@ static auto CheckFunctionEvaluationModeMatches(
   return false;
 }
 
-// Given a parameter patterns block, extracts the locations of all
-// `SemIR::DefaultValuePattern` instructions and returns them in an array.
-static auto ExtractDefaultValueLocations(Context& context,
-                                         SemIR::InstBlockId param_patterns_id)
-    -> llvm::SmallVector<SemIR::LocId> {
-  llvm::SmallVector<SemIR::LocId> locations;
-  for (auto inst_id : context.inst_blocks().GetOrEmpty(param_patterns_id)) {
-    if (context.insts().Is<SemIR::DefaultValuePattern>(inst_id)) {
-      locations.push_back(SemIR::LocId(inst_id));
-    }
-  }
-  return locations;
-}
-
 // Checks every parameter in `prev_function` and `new_function`, that if they
 // both specify a default value those values are identical, or that at most
 // one has an unspecified default value. If `diagnose` is true, issues
@@ -336,29 +322,39 @@ static auto CheckDefaultValueConsistency(Context& context,
     return true;
   }
 
-  auto prev_value_inst_ids =
+  // Extract the `ConstantId`s for both default value blocks, for comparison.
+  auto get_fn = [&context](auto inst_id) {
+    return context.constant_values().Get(inst_id);
+  };
+
+  llvm::SmallVector<SemIR::ConstantId> prev_value_constant_ids;
+  auto prev_default_value_ids =
       context.inst_blocks().Get(prev_function.call_param_default_values_id);
-  auto new_value_inst_ids =
+  llvm::append_range(prev_value_constant_ids,
+                     llvm::map_range(prev_default_value_ids, get_fn));
+
+  llvm::SmallVector<SemIR::ConstantId> new_value_constant_ids;
+  auto new_default_value_ids =
       context.inst_blocks().Get(new_function.call_param_default_values_id);
-  CARBON_CHECK(prev_value_inst_ids.size() == new_value_inst_ids.size());
+  llvm::append_range(new_value_constant_ids,
+                     llvm::map_range(new_default_value_ids, get_fn));
+
+  CARBON_CHECK(prev_value_constant_ids.size() == new_value_constant_ids.size());
 
   llvm::SmallVector<size_t> indices_without_values;
   llvm::SmallVector<size_t> indices_with_different_values;
-  for (size_t i = 0; i < prev_value_inst_ids.size(); ++i) {
+  for (size_t i = 0; i < prev_value_constant_ids.size(); ++i) {
     bool prev_value_specified =
-        !context.insts().Is<SemIR::UnspecifiedValue>(prev_value_inst_ids[i]);
+        !context.constant_values().InstIs<SemIR::UnspecifiedValue>(
+            prev_value_constant_ids[i]);
     bool new_value_specified =
-        !context.insts().Is<SemIR::UnspecifiedValue>(new_value_inst_ids[i]);
+        !context.constant_values().InstIs<SemIR::UnspecifiedValue>(
+            new_value_constant_ids[i]);
     if (!prev_value_specified && !new_value_specified) {
       indices_without_values.push_back(i);
-    } else if (prev_value_specified && new_value_specified) {
-      auto prev_constant_id = TryEvalInst(context, prev_value_inst_ids[i]);
-      CARBON_CHECK(prev_constant_id != SemIR::ConstantId::NotConstant);
-      auto new_constant_id = TryEvalInst(context, new_value_inst_ids[i]);
-      CARBON_CHECK(new_constant_id != SemIR::ConstantId::NotConstant);
-      if (prev_constant_id != new_constant_id) {
-        indices_with_different_values.push_back(i);
-      }
+    } else if (prev_value_specified && new_value_specified &&
+               prev_value_constant_ids[i] != new_value_constant_ids[i]) {
+      indices_with_different_values.push_back(i);
     }
   }
 
@@ -369,33 +365,31 @@ static auto CheckDefaultValueConsistency(Context& context,
     return check_ok;
   }
 
-  // TODO: for imported functions we don't seem to have the previous parameter
-  // pattern block, so we can't add their locations to the diagnostic.
-  auto prev_param_locations =
-      ExtractDefaultValueLocations(context, prev_function.param_patterns_id);
-  auto new_param_locations =
-      ExtractDefaultValueLocations(context, new_function.param_patterns_id);
-
   for (auto index : indices_without_values) {
     CARBON_DIAGNOSTIC(PatternDefaultValueNeverSpecified, Error,
-                      "no value for default number {0} is ever specified.",
-                      size_t);
+                      "this default value is never specified.");
     CARBON_DIAGNOSTIC(PatternDefaultValueNeverSpecifiedNote, Note,
-                      "previous declaration here.");
-    auto builder = context.emitter().Build(
-        new_param_locations[index], PatternDefaultValueNeverSpecified, index);
-    if (index < prev_param_locations.size()) {
-      builder.Note(prev_param_locations[index],
-                   PatternDefaultValueNeverSpecifiedNote);
-    }
-    builder.Emit();
+                      "previous unspecified declaration here.");
+    context.emitter()
+        .Build(new_default_value_ids[index], PatternDefaultValueNeverSpecified)
+        .Note(prev_default_value_ids[index],
+              PatternDefaultValueNeverSpecifiedNote)
+        .Emit();
   }
 
   for (auto index : indices_with_different_values) {
-    CARBON_DIAGNOSTIC(PatternDefaultValueDiffers, Error,
-                      "default value differs from the previous declaration.");
-    context.emitter().Emit(new_param_locations[index],
-                           PatternDefaultValueDiffers);
+    CARBON_DIAGNOSTIC(
+        PatternDefaultValueDiffers, Error,
+        "default value of {0} differs from the previously declared default "
+        "value of {1}.",
+        InstIdAsConstant, InstIdAsConstant);
+    CARBON_DIAGNOSTIC(PatternDefaultValueDiffersNote, Note,
+                      "different previous declaration here.");
+    context.emitter()
+        .Build(new_default_value_ids[index], PatternDefaultValueDiffers,
+               new_default_value_ids[index], prev_default_value_ids[index])
+        .Note(prev_default_value_ids[index], PatternDefaultValueDiffersNote)
+        .Emit();
   }
 
   return false;
