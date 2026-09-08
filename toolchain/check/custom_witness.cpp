@@ -29,8 +29,7 @@ namespace Carbon::Check {
 
 // Given a value whose type `IsFacetTypeOrError`, returns the corresponding
 // type.
-static auto GetFacetAsType(Context& context,
-                           SemIR::ConstantId facet_or_type_const_id)
+auto GetFacetAsType(Context& context, SemIR::ConstantId facet_or_type_const_id)
     -> SemIR::TypeId {
   auto facet_or_type_id =
       context.constant_values().GetInstId(facet_or_type_const_id);
@@ -595,9 +594,24 @@ auto BuildPrimitiveCopyWitness(
                             query_specific_interface_id, {op_id});
 }
 
+auto BuildDestroyWitness(Context& context, SemIR::LocId loc_id,
+                         SemIR::TypeId self_type_id,
+                         SemIR::ConstantId query_self_const_id,
+                         SemIR::SpecificInterfaceId query_specific_interface_id,
+                         SemIR::InstId op_id) -> SemIR::InstId {
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
+  auto interface =
+      context.interfaces().Get(query_specific_interface.interface_id);
+  auto assoc_entities =
+      context.inst_blocks().Get(interface.associated_entities_id);
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface_id, {op_id});
+}
 // Builds and returns a custom witness that performs the specified kind of
 // destruction for the given type.
-static auto BuildDestroyWitness(
+static auto BuildCarbonDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id,
@@ -615,8 +629,8 @@ static auto BuildDestroyWitness(
   auto self_type_id = GetFacetAsType(context, query_self_const_id);
   auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_id,
                                      parent_scope_id, format);
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {op_id});
+  return BuildDestroyWitness(context, loc_id, self_type_id, query_self_const_id,
+                             query_specific_interface_id, op_id);
 }
 
 // Returns the custom witness to use for destruction of the given type. See
@@ -637,17 +651,17 @@ static auto LookupDestroyWitness(
     return SemIR::InstId::None;
   }
 
-  return BuildDestroyWitness(context, loc_id, query_self_const_id,
-                             query_specific_interface_id, format);
+  return BuildCarbonDestroyWitness(context, loc_id, query_self_const_id,
+                                   query_specific_interface_id, format);
 }
 
 auto BuildTrivialDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
-  return BuildDestroyWitness(context, loc_id, query_self_const_id,
-                             query_specific_interface_id,
-                             DestroyFormat::Trivial);
+  return BuildCarbonDestroyWitness(context, loc_id, query_self_const_id,
+                                   query_specific_interface_id,
+                                   DestroyFormat::Trivial);
 }
 
 static auto MakeIntFitsInWitness(
