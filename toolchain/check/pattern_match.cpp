@@ -926,13 +926,10 @@ auto MatchContext::DoPostWork(State /*state*/,
   specific_id_stack_.pop_back();
 }
 
-auto MatchContext::DoPreWork(State state,
+auto MatchContext::DoPreWork(State /*state*/,
                              SemIR::DefaultValuePattern default_value_pattern,
                              SemIR::InstId scrutinee_id, WorkItem entry)
     -> void {
-  if (!std::holds_alternative<CalleeState*>(state)) {
-    CARBON_FATAL("Unhandled state kind in DefaultValuePattern pre-work");
-  }
   // We will need to check the type of the parameter to make sure it
   // matches the provided default, so add ourselves to the post-work list.
   results_stack_.PushArray();
@@ -959,7 +956,7 @@ auto MatchContext::DoPostWork(State state,
           .GetDefaultValues()[default_value_pattern.default_value_id.index];
   // If a constant was specified, we should be able to convert it into the
   // type of the parameter.
-  if (default_value_inst_id.has_value()) {
+  if (!context_.insts().Is<SemIR::UnspecifiedValue>(default_value_inst_id)) {
     // We should be able to convert the supplied constant into the type of
     // the parameter.
     auto converted_id =

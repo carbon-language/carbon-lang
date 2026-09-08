@@ -186,23 +186,20 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
     return false;
   }
 
-  // Evaluate the default value constant, if specified.
-  SemIR::InstId value_inst_id = SemIR::InstId::None;
-  if (!context.insts().Is<SemIR::UnspecifiedValue>(expr_inst_id)) {
-    auto expr_const_id = TryEvalInst(context, expr_inst_id);
-    if (expr_const_id == SemIR::ConstantId::NotConstant) {
-      CARBON_DIAGNOSTIC(PatternDefaultValueNotConstant, Error,
-                        "default value for pattern must be constant");
-      context.emitter().Emit(
-          LocIdForDiagnostics(context.insts().GetCanonicalLocId(expr_inst_id)),
-          PatternDefaultValueNotConstant);
-      return false;
-    }
-
-    // Look up the instruction associated with the evaluated constant.
-    value_inst_id = context.constant_values().GetInstId(expr_const_id);
-    CARBON_CHECK(value_inst_id.has_value());
+  // Evaluate the default value constant.
+  auto expr_const_id = TryEvalInst(context, expr_inst_id);
+  if (expr_const_id == SemIR::ConstantId::NotConstant) {
+    CARBON_DIAGNOSTIC(PatternDefaultValueNotConstant, Error,
+                      "default value for pattern must be constant");
+    context.emitter().Emit(
+        LocIdForDiagnostics(context.insts().GetCanonicalLocId(expr_inst_id)),
+        PatternDefaultValueNotConstant);
+    return false;
   }
+
+  // Look up the instruction associated with the evaluated constant.
+  auto value_inst_id = context.constant_values().GetInstId(expr_const_id);
+  CARBON_CHECK(value_inst_id.has_value());
 
   // Add the value to the default values array in the full pattern stack, for
   // recovery later in the NameComponent.

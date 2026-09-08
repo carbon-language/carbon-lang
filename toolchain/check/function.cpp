@@ -345,11 +345,13 @@ static auto CheckDefaultValueConsistency(Context& context,
   llvm::SmallVector<size_t> indices_without_values;
   llvm::SmallVector<size_t> indices_with_different_values;
   for (size_t i = 0; i < prev_value_inst_ids.size(); ++i) {
-    if (!prev_value_inst_ids[i].has_value() &&
-        !new_value_inst_ids[i].has_value()) {
+    bool prev_value_specified =
+        !context.insts().Is<SemIR::UnspecifiedValue>(prev_value_inst_ids[i]);
+    bool new_value_specified =
+        !context.insts().Is<SemIR::UnspecifiedValue>(new_value_inst_ids[i]);
+    if (!prev_value_specified && !new_value_specified) {
       indices_without_values.push_back(i);
-    } else if (prev_value_inst_ids[i].has_value() &&
-               new_value_inst_ids[i].has_value()) {
+    } else if (prev_value_specified && new_value_specified) {
       auto prev_constant_id = TryEvalInst(context, prev_value_inst_ids[i]);
       CARBON_CHECK(prev_constant_id != SemIR::ConstantId::NotConstant);
       auto new_constant_id = TryEvalInst(context, new_value_inst_ids[i]);
