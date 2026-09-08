@@ -946,7 +946,7 @@ auto MatchContext::DoPreWork(State state,
 
 auto MatchContext::DoPostWork(State state,
                               SemIR::DefaultValuePattern default_value_pattern,
-                              WorkItem entry) -> void {
+                              WorkItem /*entry*/) -> void {
   if (!std::holds_alternative<CalleeState*>(state)) {
     CARBON_FATAL("Unhandled state kind in DefaultValuePattern post-work");
   }
@@ -968,14 +968,16 @@ auto MatchContext::DoPostWork(State state,
     if (converted_id == SemIR::ErrorInst::InstId) {
       CARBON_DIAGNOSTIC(
           PatternDefaultValueTypeMismatch, Error,
-          "default value expression type {0} doesn't match pattern type {1}",
+          "pattern type {0} doesn't match default value expression type {1}",
           TypeOfInstId, TypeOfInstId);
-
-      // TODO: should be able to provide precise locations for both default
-      // value expression and the type of the pattern, but we can't because
-      // they are both constants.
-      context_.emitter().Emit(entry.pattern_id, PatternDefaultValueTypeMismatch,
-                              default_value_inst_id, param_inst_id);
+      CARBON_DIAGNOSTIC(PatternDefaultValueTypeMismatchNote, Note,
+                        "default value expression here");
+      context_.emitter()
+          .Build(default_value_pattern.subpattern_id,
+                 PatternDefaultValueTypeMismatch, param_inst_id,
+                 default_value_inst_id)
+          .Note(default_value_inst_id, PatternDefaultValueTypeMismatchNote)
+          .Emit();
     }
   }
   results_stack_.PopArray();
