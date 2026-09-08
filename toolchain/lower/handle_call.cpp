@@ -692,8 +692,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // list.
   FunctionContext::InstInFile callee = {.file = &context.sem_ir(),
                                         .inst_id = inst.callee_id};
-  if (auto bound_method = context.sem_ir().insts().TryGetAs<SemIR::BoundMethod>(
-          callee.inst_id)) {
+  if (auto bound_method = SemIR::TryGetCalleeAsBoundMethod(
+          context.sem_ir(), callee.inst_id, SemIR::SpecificId::None)) {
     callee.inst_id = bound_method->function_decl_id;
   }
 
@@ -710,7 +710,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
         callee.inst_id);
     callee.file = const_file;
     callee.inst_id = const_file->constant_values().GetInstIdIfValid(const_id);
-    CARBON_CHECK(callee.inst_id.has_value());
+    CARBON_CHECK(callee.inst_id.has_value(),
+                 "Missing callee lowering call to {0}",
+                 context.sem_ir().insts().Get(inst.callee_id));
   }
 
   auto callee_function =
