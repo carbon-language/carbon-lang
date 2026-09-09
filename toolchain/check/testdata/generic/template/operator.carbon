@@ -28,6 +28,52 @@ fn G() {
   F(ref c);
 }
 
+// --- todo_fail_assign_const.carbon
+library "[[@TEST_NAME]]";
+
+class C {
+  var x: i32;
+}
+
+fn F[template T: type](ref t: T) {
+  t.x = 456;
+}
+
+fn G() {
+  var c: const C = {.x = 123};
+  F(ref c);
+}
+
+// --- assign_static_var.carbon
+library "[[@TEST_NAME]]";
+
+fn F(template T: type) {
+  T.x = 0;
+}
+
+class A {
+  static var x: i32 = 0;
+}
+
+fn G() {
+  F(A);
+}
+
+// --- todo_fail_assign_let.carbon
+library "[[@TEST_NAME]]";
+
+fn F(template T: type) {
+  T.x = 0;
+}
+
+class B {
+  let x: i32 = 0;
+}
+
+fn G() {
+  F(B);
+}
+
 // CHECK:STDOUT: --- assign.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
