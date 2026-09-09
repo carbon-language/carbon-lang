@@ -21,6 +21,7 @@
 #include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -342,9 +343,29 @@ static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
 // to `self_type_id`.
 static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
                                   SemIR::TypeId self_type_id,
-                                  SemIR::NameScopeId parent_scope_id,
-                                  DestroyFormat format) -> SemIR::InstId {
+                                  SemIR::NameScopeId parent_scope_id)
+    -> SemIR::InstId {
   auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
+
+  auto [decl_id, function_id] =
+      MakeGeneratedFunctionDecl(context, loc_id,
+                                {.parent_scope_id = parent_scope_id,
+                                 .name_id = name_id,
+                                 .self_type_id = self_type_id,
+                                 .self_kind = ParamPatternKind::Ref});
+
+  auto& function = context.functions().Get(function_id);
+  function.SetCoreWitness(SemIR::BuiltinFunctionKind::NoOp);
+  return decl_id;
+}
+
+static auto MakeSubobjectDestroyOpFunction(
+    Context& context, SemIR::LocId loc_id, SemIR::TypeId self_type_id,
+    SemIR::NameScopeId parent_scope_id, DestroyFormat format) -> SemIR::InstId {
+  // TODO: replace with `CoreIdentifier::Op` when `require impls` adds a witness
+  // table entry.
+  auto name_id =
+      context.core_identifiers().AddNameId(CoreIdentifier::SubobjectDestroy);
 
   auto [decl_id, function_id] =
       MakeGeneratedFunctionDecl(context, loc_id,
@@ -604,9 +625,11 @@ auto BuildPrimitiveCopyWitness(
 
 auto BuildDestroyWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::TypeId self_type_id,
+                         SemIR::NameScopeId parent_scope_id,
                          SemIR::ConstantId query_self_const_id,
                          SemIR::SpecificInterfaceId query_specific_interface_id,
-                         SemIR::InstId op_id) -> SemIR::InstId {
+                         SemIR::InstId subobject_destroy_fn_id)
+    -> SemIR::InstId {
   auto query_specific_interface =
       context.specific_interfaces().Get(query_specific_interface_id);
   auto interface =
@@ -623,8 +646,10 @@ auto BuildDestroyWitness(Context& context, SemIR::LocId loc_id,
   auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
       context, loc_id, interface.generic_id, interface.generic_with_self_id,
       query_specific_interface.specific_id, self_facet_id);
-  auto subobject_destroy_fn_id = LoadAssociatedFunction(
-      context, assoc_entities[1], interface_with_self_specific_id);
+
+  auto op_id =
+      MakeDestroyOpFunction(context, loc_id, self_type_id, parent_scope_id);
+
   auto self_destruct_fn_id = LoadAssociatedFunction(
       context, assoc_entities[2], interface_with_self_specific_id);
   return BuildCustomWitness(
@@ -650,10 +675,11 @@ static auto BuildCarbonDestroyWitness(
                              .scope_without_self_id;
 
   auto self_type_id = GetFacetAsType(context, query_self_const_id);
-  auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_id,
-                                     parent_scope_id, format);
-  return BuildDestroyWitness(context, loc_id, self_type_id, query_self_const_id,
-                             query_specific_interface_id, op_id);
+  auto subobject_destroy_fn_id = MakeSubobjectDestroyOpFunction(
+      context, loc_id, self_type_id, parent_scope_id, format);
+  return BuildDestroyWitness(context, loc_id, self_type_id, parent_scope_id,
+                             query_self_const_id, query_specific_interface_id,
+                             subobject_destroy_fn_id);
 }
 
 // Returns the custom witness to use for destruction of the given type. See

@@ -75,9 +75,11 @@ auto GetFacetAsType(Context& context, SemIR::ConstantId facet_or_type_const_id)
 // based on whether the specific is a Carbon type or a C++ type.
 auto BuildDestroyWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::TypeId self_type_id,
+                         SemIR::NameScopeId parent_scope_id,
                          SemIR::ConstantId query_self_const_id,
                          SemIR::SpecificInterfaceId query_specific_interface_id,
-                         SemIR::InstId op_id) -> SemIR::InstId;
+                         SemIR::InstId subobject_destroy_fn_id)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

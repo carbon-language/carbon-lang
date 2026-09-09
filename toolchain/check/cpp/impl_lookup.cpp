@@ -265,9 +265,17 @@ static auto BuildCppDestroyWitness(
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
   }
+
+  // Mark functions with the interface's scope as a hint to mangling. This
+  // does not add them to the scope.
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
+  auto parent_scope_id = context.interfaces()
+                             .Get(query_specific_interface.interface_id)
+                             .scope_without_self_id;
   return BuildDestroyWitness(
       context, loc_id, GetFacetAsType(context, query_self_const_id),
-      query_self_const_id, query_specific_interface_id, fn_id);
+      parent_scope_id, query_self_const_id, query_specific_interface_id, fn_id);
 }
 
 // Attempts to build a witness table entry for a C++ unary operator.
