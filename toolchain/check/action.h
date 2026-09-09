@@ -9,57 +9,66 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
-// Performs a member access action. Defined in member_access.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::AccessMemberAction action) -> SemIR::InstId;
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::AccessOptionalMemberAction action) -> SemIR::InstId;
+namespace Internal {
+// Computes the `SpecificId` parameters to use for PerformAction for InstT.
+template <typename InstT>
+using SpecificParamsForPerformAction =
+    std::conditional_t<InstT::Kind.action_needs_specific_id(),
+                       auto(SemIR::SpecificId specific_id)->void, auto()->void>;
 
-// Performs a C++ template call action. Defined in cpp/call.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::CallCppTemplateAction action) -> SemIR::InstId;
+// Computes the function type to use for PerformAction for InstT.
+template <typename InstT,
+          typename SpecificParams = SpecificParamsForPerformAction<InstT>>
+struct FunctionTypeForPerformActionImpl {
+  // By default, no PerformAction function.
+  using Type = auto() -> void;
+};
+template <typename InstT, typename... SpecificParams>
+  requires(InstT::Kind.constant_kind() == SemIR::InstConstantKind::InstAction)
+struct FunctionTypeForPerformActionImpl<InstT, auto(SpecificParams...)->void> {
+  using Type = auto(Context& context, SpecificParams..., SemIR::LocId loc_id,
+                    InstT inst) -> SemIR::InstId;
+};
+template <typename InstT>
+using FunctionTypeForPerformAction =
+    FunctionTypeForPerformActionImpl<InstT>::Type;
+}  // namespace Internal
 
-// Performs a conversion action. Defined in convert.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::ConvertAction action) -> SemIR::InstId;
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::ConvertToCategoryAction action) -> SemIR::InstId;
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::ConvertToValueAction action) -> SemIR::InstId;
+// Explicitly delete the overload generated for non-action instructions. These
+// all produce the same signature, so we only need to delete it once.
+auto PerformAction() -> void = delete;
 
-// Performs a form parameter pattern action. Defined in pattern.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::FormParamPatternAction action) -> SemIR::InstId;
-
-// Performs an output form parameter pattern action. Defined in pattern.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::OutFormParamPatternAction action) -> SemIR::InstId;
-
-// Performs a caller pattern match action. Defined in pattern_match.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::CallerPatternMatchAction action) -> SemIR::InstId;
-
-// Performs a callee pattern match action. Defined in pattern_match.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::CalleePatternMatchAction action) -> SemIR::InstId;
-
-// Performs a compound member access action. Defined in member_access.cpp.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::CompoundMemberAccessAction action) -> SemIR::InstId;
-
-// Performs a type refinement action, by creating a conversion from an
-// instruction with a template-dependent symbolic type to the corresponding
-// instantiated type.
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::RefineTypeAction action) -> SemIR::InstId;
+// Performs an action. Each PerformAction implementation lives with the code
+// that creates and defines the action. For an instruction whose constant kind
+// is InstAction, an overload should be provided with the signature:
+//
+//   auto PerformAction(Context& context, SemIR::LocId loc_id, InstT inst)
+//       -> SemIR::InstId;
+//
+// or if action_needs_specific_id = true is specified when defining the
+// instruction kind, the signature:
+//
+//   auto PerformAction(Context& context, SemIR::SpecificId specific_id,
+//                      SemIR::LocId loc_id, InstT inst)
+//       -> SemIR::InstId;
+//
+// that returns the value that should be used as the result of evaluating the
+// instructions produced by the action. Any instructions generated during
+// `PerformAction` will be spliced into the code at the point where the action
+// was created.
+#define CARBON_SEM_IR_INST_KIND(Name) \
+  Internal::FunctionTypeForPerformAction<SemIR::Name> PerformAction;
+#include "toolchain/sem_ir/inst_kind.def"
 
 // Determines whether the given action can be performed immediately (i.e.
 // whether it is non-template-dependent).
-auto ActionIsPerformable(Context& context, SemIR::Inst action_inst) -> bool;
+auto ActionIsPerformable(Context& context, SemIR::Inst action_inst,
+                         SemIR::SpecificId specific_id) -> bool;
 
 // Returns the constant-dependence of `inst_id` (i.e. the maximum of the
 // constant-dependences of its type and its value).
@@ -99,7 +108,7 @@ auto AddActionSpliceIfDependent(Context& context, LocIdT loc_id,
                                 SemIR::TypeInstId expected_result_type_inst_id,
                                 ActionT action_inst) -> SemIR::InstId {
   CARBON_CHECK(action_inst.type_id == SemIR::InstType::TypeId);
-  if (ActionIsPerformable(context, action_inst)) {
+  if (ActionIsPerformable(context, action_inst, SemIR::SpecificId::None)) {
     return SemIR::InstId::None;
   }
   return AddDependentActionSplice(context,
@@ -151,13 +160,19 @@ auto EndPerformDelayedAction(Context& context, SemIR::InstId result_id)
 
 // Performs an action as a result of evaluation of a template's eval block.
 template <typename ActionT>
-auto PerformDelayedAction(Context& context, SemIR::LocId loc_id,
-                          ActionT action_inst) -> SemIR::InstId {
-  if (!ActionIsPerformable(context, action_inst)) {
+auto PerformDelayedAction(Context& context, SemIR::SpecificId specific_id,
+                          SemIR::LocId loc_id, ActionT action_inst)
+    -> SemIR::InstId {
+  if (!ActionIsPerformable(context, action_inst, specific_id)) {
     return SemIR::InstId::None;
   }
   Internal::BeginPerformDelayedAction(context);
-  auto inst_id = PerformAction(context, loc_id, action_inst);
+  auto inst_id = SemIR::InstId::None;
+  if constexpr (ActionT::Kind.action_needs_specific_id()) {
+    inst_id = PerformAction(context, specific_id, loc_id, action_inst);
+  } else {
+    inst_id = PerformAction(context, loc_id, action_inst);
+  }
   return Internal::EndPerformDelayedAction(context, inst_id);
 }
 

@@ -139,7 +139,10 @@ fn Class.F(self) -> i32 {
 // CHECK:STDOUT:     %return.param: ref %Class = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22: %Class.elem = field_decl p, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %Class.elem = field_decl p, element0, %ptr in [concrete] {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr.7ee]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.p [concrete = constants.%complete_type.126]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -147,13 +150,13 @@ fn Class.F(self) -> i32 {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %Class.F.decl
 // CHECK:STDOUT:   .Make = %Class.Make.decl
-// CHECK:STDOUT:   .p = %.loc22
+// CHECK:STDOUT:   .p = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.F(%self.param.loc25: %Class) -> out %return.param.loc25: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc25
-// CHECK:STDOUT:   %p.ref: %Class.elem = name_ref p, @Class.%.loc22 [concrete = @Class.%.loc22]
+// CHECK:STDOUT:   %p.ref: %Class.elem = name_ref p, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:   %.loc26_16.1: ref %ptr.7ee = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc26_16.2: %ptr.7ee = acquire_value %.loc26_16.1
 // CHECK:STDOUT:   %.loc26_11.1: ref %Class = deref %.loc26_16.2

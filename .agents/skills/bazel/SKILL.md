@@ -62,7 +62,8 @@ project uses Bazelisk.
 
 You can run the Carbon driver or command line directly via Bazel:
 
--   `bazelisk run //toolchain -- compile --phase=parse toolchain/parse/testdata/basics/empty.carbon`
+-   `bazelisk run //toolchain -- compile --phase=parse
+    toolchain/parse/testdata/basics/empty.carbon`
 
 ## Advanced configurations
 

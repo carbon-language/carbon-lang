@@ -15,17 +15,6 @@ contributing to the Carbon Language project.
     markdown.
 -   **Verification**: Always run relevant tests.
 
-## Project structure
-
--   **[`common/`](common/)**: Common C++ utilities used across the project.
--   **[`core/`](core/)**: The Carbon standard library (Core).
--   **[`docs/`](docs/)**: Project documentation, design, and style guides.
--   **[`examples/`](examples/)**: Example Carbon programs and code snippets.
--   **[`proposals/`](proposals/)**: Evolution proposals.
--   **[`testing/`](testing/)**: Testing utilities and infrastructure.
--   **[`toolchain/`](toolchain/)**: The C++ implementation of the compiler
-    (Toolchain).
-
 ## Bazel usage
 
 > [!IMPORTANT] Always use `bazelisk` instead of `bazel` for all commands in the

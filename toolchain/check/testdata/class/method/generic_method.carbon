@@ -33,7 +33,6 @@ fn Class(T: type).F(unused self, unused n: T) {}
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
-// CHECK:STDOUT:   %a.patt: %pattern_type.51d = ref_binding_pattern a [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.36e: type = pattern_type %Class [symbolic]
 // CHECK:STDOUT:   %self.param_patt: %pattern_type.36e = value_param_pattern [symbolic]
@@ -98,8 +97,6 @@ fn Class(T: type).F(unused self, unused n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc15_14.1 [symbolic = %require_complete (constants.%require_complete.944)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc15_14.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %a.patt: @Class.%pattern_type (%pattern_type.51d) = ref_binding_pattern a [symbolic = %a.patt (constants.%a.patt)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc15_14.1) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc15_14.1 [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F, @Class(%T.loc15_14.1) [symbolic = %Class.F.type (constants.%Class.F.type)]
@@ -108,7 +105,9 @@ fn Class(T: type).F(unused self, unused n: T) {}
 // CHECK:STDOUT:   %complete_type.loc18_1.2: <witness> = complete_type_witness %struct_type.a [symbolic = %complete_type.loc18_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc16: @Class.%Class.elem (%Class.elem) = field_decl a, element0 [concrete]
+// CHECK:STDOUT:     %field_decl: @Class.%Class.elem (%Class.elem) = field_decl a, element0, %T.ref in [concrete] {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc15_14.2 [symbolic = %T.loc15_14.1 (constants.%T)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.F.decl: @Class.%Class.F.type (%Class.F.type) = fn_decl @Class.F [symbolic = @Class.%Class.F (constants.%Class.F)] {
 // CHECK:STDOUT:       %self.param_patt.loc20: @Class.F.%pattern_type.loc17_8 (%pattern_type.36e) = value_param_pattern [symbolic = %self.param_patt.loc17 (constants.%self.param_patt)]
 // CHECK:STDOUT:       %self.patt.loc20: @Class.F.%pattern_type.loc17_8 (%pattern_type.36e) = wrapper_binding_pattern self, %self.param_patt.loc20 [symbolic = %self.patt.loc17 (constants.%self.patt)]
@@ -131,7 +130,7 @@ fn Class(T: type).F(unused self, unused n: T) {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .a = %.loc16
+// CHECK:STDOUT:     .a = %field_decl
 // CHECK:STDOUT:     .F = %Class.F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -162,8 +161,6 @@ fn Class(T: type).F(unused self, unused n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.944
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
-// CHECK:STDOUT:   %a.patt => constants.%a.patt
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
 // CHECK:STDOUT:   %Class.F.type => constants.%Class.F.type

@@ -85,7 +85,10 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: %C.elem = field_decl field, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %C.elem = field_decl field, element0, %ptr in [concrete] {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.6b6]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.field [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -93,7 +96,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .Member = %C.Member.decl
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   .field = %.loc17
+// CHECK:STDOUT:   .field = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.Member(%self.param: %C);
@@ -114,19 +117,19 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %C.Member.call.loc22: init %empty_tuple.type = call %C.Member.bound.loc22(%.loc22_6.2)
 // CHECK:STDOUT:   %ptr.ref.loc24: %ptr.6b6 = name_ref ptr, %ptr.loc20_11
 // CHECK:STDOUT:   %.loc24_4: ref %C = deref %ptr.ref.loc24
-// CHECK:STDOUT:   %field.ref.loc24: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %field.ref.loc24: %C.elem = name_ref field, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc24_9: ref %ptr.6b6 = class_element_access %.loc24_4, element0
 // CHECK:STDOUT:   %ptr.ref.loc25: %ptr.6b6 = name_ref ptr, %ptr.loc20_11
 // CHECK:STDOUT:   %.loc25_6.1: ref %C = deref %ptr.ref.loc25
-// CHECK:STDOUT:   %field.ref.loc25: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %field.ref.loc25: %C.elem = name_ref field, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc25_6.2: ref %ptr.6b6 = class_element_access %.loc25_6.1, element0
 // CHECK:STDOUT:   %ptr.ref.loc27: %ptr.6b6 = name_ref ptr, %ptr.loc20_11
 // CHECK:STDOUT:   %.loc27_6.1: ref %C = deref %ptr.ref.loc27
-// CHECK:STDOUT:   %field.ref.loc27_6: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %field.ref.loc27_6: %C.elem = name_ref field, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc27_6.2: ref %ptr.6b6 = class_element_access %.loc27_6.1, element0
 // CHECK:STDOUT:   %.loc27_6.3: %ptr.6b6 = acquire_value %.loc27_6.2
 // CHECK:STDOUT:   %.loc27_13.1: ref %C = deref %.loc27_6.3
-// CHECK:STDOUT:   %field.ref.loc27_13: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %field.ref.loc27_13: %C.elem = name_ref field, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc27_13.2: ref %ptr.6b6 = class_element_access %.loc27_13.1, element0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

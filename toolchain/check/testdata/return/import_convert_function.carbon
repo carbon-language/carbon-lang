@@ -592,15 +592,19 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %.loc5_16: %D.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   %.loc5_28: %D.elem = field_decl m, element1 [concrete]
+// CHECK:STDOUT:   %field_decl.loc5_16: %D.elem = field_decl n, element0, %i32.loc5_18 in [concrete] {
+// CHECK:STDOUT:     %i32.loc5_18: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %field_decl.loc5_28: %D.elem = field_decl m, element1, %i32.loc5_30 in [concrete] {
+// CHECK:STDOUT:     %i32.loc5_30: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n.m.fa1 [concrete = constants.%complete_type.237]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT:   .n = %.loc5_16
-// CHECK:STDOUT:   .m = %.loc5_28
+// CHECK:STDOUT:   .n = %field_decl.loc5_16
+// CHECK:STDOUT:   .m = %field_decl.loc5_28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> out %return.param: %D {
@@ -955,8 +959,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %P.D: type = import_ref P//library, D, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %P.import_ref.6bc: <witness> = import_ref P//library, loc5_35, loaded [concrete = constants.%complete_type.237]
 // CHECK:STDOUT:   %P.import_ref.737 = import_ref P//library, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %P.import_ref.9f8 = import_ref P//library, loc5_16, unloaded
-// CHECK:STDOUT:   %P.import_ref.0cb = import_ref P//library, loc5_28, unloaded
+// CHECK:STDOUT:   %P.import_ref.e54 = import_ref P//library, loc5_16, unloaded
+// CHECK:STDOUT:   %P.import_ref.6c3 = import_ref P//library, loc5_28, unloaded
 // CHECK:STDOUT:   %P.C: %C.type = import_ref P//library, C, loaded [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %P.import_ref.8f2: <witness> = import_ref P//library, loc4_18, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %P.import_ref.70e = import_ref P//library, inst{{[0-9A-F]+}} [no loc], unloaded
@@ -1078,8 +1082,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%P.import_ref.737
-// CHECK:STDOUT:   .n = imports.%P.import_ref.9f8
-// CHECK:STDOUT:   .m = imports.%P.import_ref.0cb
+// CHECK:STDOUT:   .n = imports.%P.import_ref.e54
+// CHECK:STDOUT:   .m = imports.%P.import_ref.6c3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(imports.%P.import_ref.d2a: %i32) [from "library.carbon"] {

@@ -21,6 +21,7 @@ cc_library(
     hdrs = ["format.h"],
     deps = [
         "//common:ostream",
+        "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
     ],
 )

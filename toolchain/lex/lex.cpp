@@ -191,6 +191,11 @@ class [[clang::internal_linkage]] Lexer {
   auto LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
       -> LexResult;
 
+  // Given a lexed word, determine whether it is a dollar int literal and if so
+  // form the corresponding token,
+  auto LexWordAsDollarIntLiteralToken(llvm::StringRef word, int32_t byte_offset)
+      -> LexResult;
+
   auto LexKeywordOrIdentifier(llvm::StringRef source_text, ssize_t& position)
       -> LexResult;
 
@@ -286,6 +291,7 @@ static constexpr std::array<bool, 256> IsIdStartByteTable = [] {
     table[c] = true;
   }
   table['_'] = true;
+  table['$'] = true;
   return table;
 }();
 
@@ -297,6 +303,8 @@ static constexpr std::array<bool, 256> IsIdByteTable = [] {
   for (char c = '0'; c <= '9'; ++c) {
     table[c] = true;
   }
+  // Identifiers can only have `$` in start.
+  table['$'] = false;
   return table;
 }();
 
@@ -307,6 +315,12 @@ static constexpr std::array<bool, 256> IsIdByteTable = [] {
 static auto ScanForIdentifierPrefixScalar(llvm::StringRef text, ssize_t i)
     -> llvm::StringRef {
   const ssize_t size = text.size();
+  if (i == 0 && !text.empty()) {
+    if (!IsIdStartByteTable[static_cast<unsigned char>(text[i])]) {
+      return {};
+    }
+    ++i;
+  }
   while (i < size && IsIdByteTable[static_cast<unsigned char>(text[i])]) {
     ++i;
   }
@@ -410,6 +424,13 @@ static auto ScanForIdentifierPrefixX86(llvm::StringRef text)
 
   // Use `ssize_t` for performance here as we index memory in a tight loop.
   ssize_t i = 0;
+  if (!text.empty()) {
+    if (!IsIdStartByteTable[static_cast<unsigned char>(text[i])]) {
+      return {};
+    }
+    ++i;
+  }
+
   const ssize_t size = text.size();
   while ((i + 16) <= size) {
     __m128i input =
@@ -644,6 +665,7 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   table['/'] = &DispatchLexCommentOrSlash;
 
   table['_'] = &DispatchLexKeywordOrIdentifier;
+  table['$'] = &DispatchLexKeywordOrIdentifier;
   // Note that we don't use `llvm::seq` because this needs to be `constexpr`
   // evaluated.
   for (unsigned char c = 'a'; c <= 'z'; ++c) {
@@ -1453,6 +1475,89 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
   return LexTokenWithPayload(kind, bit_width_payload, byte_offset);
 }
 
+auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
+                                           int32_t byte_offset) -> LexResult {
+  if (!word.starts_with('$')) {
+    return LexResult::NoMatch();
+  }
+
+  if (!has_leading_space_) {
+    auto prev_token = buffer_.tokens().end()[-1];
+    auto kind = buffer_.GetKind(prev_token);
+    if (kind.is_word()) {
+      CARBON_DIAGNOSTIC(
+          CharacterOnlyAllowedAtStart, Error,
+          "`$` is only allowed at the start of a positional parameter");
+      emitter_.Emit(word.begin(), CharacterOnlyAllowedAtStart);
+
+      auto& prev_token_info = buffer_.token_infos_.Get(prev_token);
+      auto prev_token_text_size = buffer_.GetTokenText(prev_token).size();
+      prev_token_info = TokenInfo(TokenKind::Error, has_leading_space_,
+                                  prev_token_text_size + word.size(),
+                                  prev_token_info.byte_offset());
+      return LexResult(TokenIndex(buffer_.token_infos_.size() - 1));
+    }
+  }
+
+  auto diagnose_invalid_char = [&]() {
+    CARBON_DIAGNOSTIC(
+        InvalidCharacterInDollarIntLiteral, Error,
+        "Positional parameters can only contain digits after `$`");
+    emitter_.Emit(word.begin() + 1, InvalidCharacterInDollarIntLiteral);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  };
+
+  if (word.size() < 2) {
+    CARBON_DIAGNOSTIC(DollarIntLiteralMissingNumber, Error,
+                      "Expected digits after `$`");
+    emitter_.Emit(word.begin() + 1, DollarIntLiteralMissingNumber);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  }
+  if (word[1] == '0' && word.size() > 2) {
+    CARBON_DIAGNOSTIC(
+        DollarIntLiteralLeadingZero, Error,
+        "Leading zeroes are not allowed in positional parameters");
+    emitter_.Emit(word.begin() + 1, DollarIntLiteralLeadingZero);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  }
+  if ((word[1] < '0' || word[1] > '9')) {
+    return diagnose_invalid_char();
+  }
+
+  auto suffix = word.substr(1);
+  int64_t suffix_value;
+  constexpr ssize_t DigitLimit =
+      std::numeric_limits<decltype(suffix_value)>::digits10;
+  if (suffix.size() > DigitLimit) {
+    // See if this is not actually a dollar int literal.
+    if (!llvm::all_of(suffix, IsDecimalDigit)) {
+      return diagnose_invalid_char();
+    }
+
+    // Otherwise, diagnose and produce an error token.
+    CARBON_DIAGNOSTIC(TooManyDollarIntDigits, Error,
+                      "found a positional parameter using {0} digits, "
+                      "which is greater than the limit of {1}",
+                      size_t, size_t);
+    emitter_.Emit(word.begin() + 1, TooManyDollarIntDigits, suffix.size(),
+                  DigitLimit);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  }
+
+  suffix_value = suffix[0] - '0';
+  for (char c : suffix.drop_front()) {
+    if (!IsDecimalDigit(c)) {
+      return diagnose_invalid_char();
+    }
+    suffix_value = suffix_value * 10 + (c - '0');
+  }
+  CARBON_CHECK(suffix_value >= 0);
+  return LexTokenWithPayload(
+      TokenKind::DollarIntLiteral,
+      buffer_.value_stores_->ints().Add(suffix_value).AsTokenPayload(),
+      byte_offset);
+}
+
 auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
                                    ssize_t& position) -> LexResult {
   if (static_cast<unsigned char>(source_text[position]) > 0x7F) {
@@ -1474,6 +1579,10 @@ auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
   // Check if the text is a type literal, and if so form such a literal.
   if (LexResult result =
           LexWordAsTypeLiteralToken(identifier_text, byte_offset)) {
+    return result;
+  }
+  if (LexResult result =
+          LexWordAsDollarIntLiteralToken(identifier_text, byte_offset)) {
     return result;
   }
 

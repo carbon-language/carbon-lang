@@ -13,10 +13,12 @@ namespace Carbon::SemIR {
 // A class field.
 struct Field : public Printable<Field> {
   ElementIndex index;
+  NameId name_id;
   SemIR::InstId initializer_id;
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{index: " << index << ", initializer_id: " << initializer_id << "}";
+    out << "{index: " << index << ", name_id: " << name_id
+        << ", initializer_id: " << initializer_id << "}";
   }
 };
 

@@ -281,10 +281,10 @@ on advantages and disadvantages for each option.
 
     Disadvantages:
 
-    -   Prevents placing `export name` next to the import that is expected to add
-        the name.
-    -   Means `export import` and `export name` will be in different sections: no
-        single place to look for re-exports.
+    -   Prevents placing `export name` next to the import that is expected to
+        add the name.
+    -   Means `export import` and `export name` will be in different sections:
+        no single place to look for re-exports.
 
 3.  No ordering for `export name`
 

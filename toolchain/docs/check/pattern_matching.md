@@ -264,12 +264,12 @@ if %equal then br !if.then else br !if.else
 ## Parser-driven pattern block pushing
 
 In order to produce correct pattern blocks, we need to ensure that a new pattern
-block is pushed onto the stack at the start of every full-pattern, and popped
-at the end. We attempt to do this precisely rather than speculatively, by leveraging
-the parser to precisely mark the nodes immediately before full-patterns, and
-pushing the pattern block stack when we handle those nodes. We then rely on
-signals from both the parser and the node stack to determine when to pop from
-the pattern block stack.
+block is pushed onto the stack at the start of every full-pattern, and popped at
+the end. We attempt to do this precisely rather than speculatively, by
+leveraging the parser to precisely mark the nodes immediately before
+full-patterns, and pushing the pattern block stack when we handle those nodes.
+We then rely on signals from both the parser and the node stack to determine
+when to pop from the pattern block stack.
 
 In the case of `let` and `var` decls, this is fairly straightforward: the
 beginning is marked by the `LetIntroducer` or `VarIntroducer` node, and the end

@@ -378,7 +378,7 @@ class Context {
   // Pushes a new state for handling a pattern. `in_var_pattern` and
   // `in_unused_pattern`  and `in_field_shorthand_pattern` indicate whether that
   // pattern is nested inside a `var`, `unused` or a struct shorthand field
-  // pattern.. `binding_context` is the binding context that determines the
+  // pattern. `binding_context` is the binding context that determines the
   // default phase of bindings in this pattern.
   auto PushStateForPattern(StateKind kind, bool in_var_pattern,
                            bool in_unused_pattern,

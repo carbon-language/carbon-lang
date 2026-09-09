@@ -170,13 +170,15 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc16: %Base.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %Base.elem = field_decl a, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a [concrete = constants.%complete_type.388]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .a = %.loc16
+// CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -220,7 +222,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: fn @Derived.SelfBase(%self.param.loc26: %Base) -> out %return.param.loc26: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Base = name_ref self, %self.loc26
-// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc16 [concrete = @Base.%.loc16]
+// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%field_decl [concrete = @Base.%field_decl]
 // CHECK:STDOUT:   %.loc27_14.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc27_14.2: %i32 = acquire_value %.loc27_14.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -234,7 +236,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: fn @Derived.RefSelfBase(%self.param.loc30: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: ref %Base = name_ref self, %self.loc30
-// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc16 [concrete = @Base.%.loc16]
+// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%field_decl [concrete = @Base.%field_decl]
 // CHECK:STDOUT:   %.loc31_7: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]

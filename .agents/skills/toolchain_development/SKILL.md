@@ -49,8 +49,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   **Test everything**: `bazelisk test //...`
 -   **Test specific target**: `bazelisk test //toolchain/testing:file_test`
--   **Test specific file**:
-    `bazelisk test //toolchain/testing:file_test --test_arg=--file_tests=<path_to_carbon_file>`
+-   **Test specific file**: `bazelisk test //toolchain/testing:file_test
+    --test_arg=--file_tests=<path_to_carbon_file>`
 -   **Build toolchain**: `bazelisk build //toolchain/...`
 
 ### Updating test data

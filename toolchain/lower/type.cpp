@@ -802,7 +802,9 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
   return BuildStructType(context, subtypes, layouts);
 }
 
-static auto BuildTypeForInst(FileContext& context, SemIR::TypeType /*inst*/)
+template <typename InstT>
+  requires(InstT::Kind.template IsAnyOf<SemIR::FacetType, SemIR::TypeType>())
+static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> LoweredTypes {
   return {context.GetTypeType(), nullptr};
 }
@@ -821,13 +823,14 @@ template <typename InstT>
   requires(InstT::Kind.template IsAnyOf<
            SemIR::AssociatedEntityType, SemIR::AutoType, SemIR::BoundMethodType,
            SemIR::CharLiteralType, SemIR::CppOverloadSetType,
-           SemIR::CppTemplateNameType, SemIR::FacetType,
-           SemIR::FloatLiteralType, SemIR::FunctionType,
-           SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
-           SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
-           SemIR::InstType, SemIR::IntLiteralType, SemIR::NamespaceType,
+           SemIR::CppTemplateNameType, SemIR::FloatLiteralType,
+           SemIR::FunctionType, SemIR::FunctionTypeWithSelfType,
+           SemIR::GenericClassType, SemIR::GenericInterfaceType,
+           SemIR::GenericNamedConstraintType, SemIR::InstType,
+           SemIR::IntLiteralType, SemIR::NamespaceType,
            SemIR::RequireSpecificDefinitionType, SemIR::SpecificFunctionType,
-           SemIR::UnboundElementType, SemIR::WhereExpr, SemIR::WitnessType>())
+           SemIR::UnboundElementType, SemIR::UnspecifiedValueType,
+           SemIR::WhereExpr, SemIR::WitnessType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> LoweredTypes {
   // Return an empty struct as a placeholder.

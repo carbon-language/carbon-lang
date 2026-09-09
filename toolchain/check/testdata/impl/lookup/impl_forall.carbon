@@ -242,7 +242,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   fn(%self.param: ref @A.as.I.impl.F.%A (%A.47a1de.2)) -> out %return.param: @A.as.I.impl.F.%ptr.loc13_22.1 (%ptr.e8f8f9.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: ref @A.as.I.impl.F.%A (%A.47a1de.2) = name_ref self, %self
-// CHECK:STDOUT:     %n.ref: @A.as.I.impl.F.%A.elem (%A.elem.d41ac1.2) = name_ref n, @A.%.loc4 [concrete = @A.%.loc4]
+// CHECK:STDOUT:     %n.ref: @A.as.I.impl.F.%A.elem (%A.elem.d41ac1.2) = name_ref n, @A.%field_decl [concrete = @A.%field_decl]
 // CHECK:STDOUT:     %.loc14_17: ref @A.as.I.impl.F.%V (%V.67d) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %addr: @A.as.I.impl.F.%ptr.loc13_22.1 (%ptr.e8f8f9.2) = addr_of %.loc14_17
 // CHECK:STDOUT:     %impl.elem0.loc14_12.1: @A.as.I.impl.F.%.loc14_12.4 (%.be5) = impl_witness_access constants.%Copy.lookup_impl_witness.1da, element0 [symbolic = %impl.elem0.loc14_12.2 (constants.%impl.elem0.484)]

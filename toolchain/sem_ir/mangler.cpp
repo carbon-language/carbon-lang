@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "clang/AST/ASTContext.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "common/raw_string_ostream.h"
@@ -123,6 +124,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           case SemIR::RequireSpecificDefinitionType::Kind:
           case SemIR::SpecificFunctionType::Kind:
           case SemIR::TypeType::Kind:
+          case SemIR::UnspecifiedValueType::Kind:
           case SemIR::VtableType::Kind:
           case SemIR::WitnessType::Kind: {
             os << self_inst.kind().ir_name();

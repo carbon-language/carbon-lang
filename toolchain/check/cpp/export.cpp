@@ -502,9 +502,10 @@ static auto CreateCppFieldDecl(Context& context,
   }
 
   // Get the field's C++ identifier.
-  auto* identifier_info = GetClangIdentifierInfo(context, field_decl.name_id);
+  const auto& field = context.fields().Get(field_decl.field_id);
+  auto* identifier_info = GetClangIdentifierInfo(context, field.name_id);
   CARBON_CHECK(identifier_info, "field with non-identifier name {0}",
-               field_decl.name_id);
+               field.name_id);
 
   // Create the `clang::FieldDecl`.
   auto* cpp_field_decl = clang::FieldDecl::Create(
@@ -514,7 +515,7 @@ static auto CreateCppFieldDecl(Context& context,
       /*Mutable=*/true, clang::ICIS_NoInit);
   cpp_field_decl->setInvalidDecl(invalid);
 
-  SetCppClassMemberAccess(class_scope, field_decl.name_id, cpp_field_decl);
+  SetCppClassMemberAccess(class_scope, field.name_id, cpp_field_decl);
 
   record_decl->addHiddenDecl(cpp_field_decl);
 

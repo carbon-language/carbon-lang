@@ -149,14 +149,16 @@ class A {
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc23: %B.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %B.elem = field_decl n, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n.9ed [concrete = constants.%complete_type.cdf]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .Make = %B.Make.decl
-// CHECK:STDOUT:   .n = %.loc23
+// CHECK:STDOUT:   .n = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.F() -> out %return.param: %i32 {
@@ -167,7 +169,7 @@ class A {
 // CHECK:STDOUT:   %.loc26_19.1: ref %B = temporary_storage
 // CHECK:STDOUT:   %B.Make.call: init %B to %.loc26_19.1 = call %Make.ref()
 // CHECK:STDOUT:   %.loc26_19.2: ref %B = temporary %.loc26_19.1, %B.Make.call
-// CHECK:STDOUT:   %n.ref: %B.elem = name_ref n, @B.%.loc23 [concrete = @B.%.loc23]
+// CHECK:STDOUT:   %n.ref: %B.elem = name_ref n, @B.%field_decl [concrete = @B.%field_decl]
 // CHECK:STDOUT:   %.loc26_20.1: ref %i32 = class_element_access %.loc26_19.2, element0
 // CHECK:STDOUT:   %.loc26_20.2: %i32 = acquire_value %.loc26_20.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

@@ -327,13 +327,13 @@ The comment notes that three options were proposed:
 2.  `char` models a UTF-8 code unit, although it may not necessarily be valid,
     and may appear in a sequence that is not a valid UTF-8 encoding.
 
-    As with the first option, `char` can represent an integer in [0, 255], although
-    it is not an integer type. Higher-level abstractions would likely (eventually)
-    be provided to represent different views of the code unit sequence as (for example)
-    a sequence of code points or a sequence of graphemes, but the fundamental model
-    exposes the encoding. Functions taking `char` or `char` sequences would assume
-    UTF-8 encoding, and would need to consider how to handle invalid `char`s and
-    invalid `char` sequences.
+    As with the first option, `char` can represent an integer in [0, 255],
+    although it is not an integer type. Higher-level abstractions would likely
+    (eventually) be provided to represent different views of the code unit
+    sequence as (for example) a sequence of code points or a sequence of
+    graphemes, but the fundamental model exposes the encoding. Functions taking
+    `char` or `char` sequences would assume UTF-8 encoding, and would need to
+    consider how to handle invalid `char`s and invalid `char` sequences.
 
 3.  Use a foundation that enforces Unicode string validity, for some definition
     of "Unicode string validity".

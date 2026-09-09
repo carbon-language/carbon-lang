@@ -246,6 +246,7 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
           {
               .call_param_patterns_id = match_results.call_param_patterns_id,
               .call_params_id = match_results.call_params_id,
+              .call_param_default_values_id = SemIR::InstBlockId::None,
               .call_param_ranges = match_results.param_ranges,
               .return_type_inst_id = return_type_inst_id,
               .return_form_inst_id = return_form_inst_id,

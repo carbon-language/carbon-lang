@@ -18,7 +18,7 @@ fn Run() {
     for (x: i32 in Core.Range(140)) {
       for (dy: i32 in Core.InclusiveRange(-1, 1)) {
         for (dx: i32 in Core.InclusiveRange(-1, 1)) {
-          if (search.Check4(xmas, x, y, dx, dy)) {
+          if (search.Check(4, xmas, x, y, dx, dy)) {
             ++found;
           }
         }

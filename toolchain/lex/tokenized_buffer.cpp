@@ -32,6 +32,10 @@ auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
   return GetLine(token).index + 1;
 }
 
+auto TokenizedBuffer::GetLine(CommentIndex comment) const -> LineIndex {
+  return FindLineIndex(comments_.Get(comment).start);
+}
+
 auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
   const auto& token_info = token_infos_.Get(token);
   const auto& line_info =
@@ -93,7 +97,8 @@ auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
 
   // Refer back to the source text to avoid needing to reconstruct the
   // spelling from the size.
-  if (token_info.kind().is_sized_type_literal()) {
+  if (token_info.kind().is_sized_type_literal() ||
+      token_info.kind().is_dollar_int_literal()) {
     llvm::StringRef suffix = source_->text()
                                  .substr(token_info.byte_offset() + 1)
                                  .take_while(IsDecimalDigit);

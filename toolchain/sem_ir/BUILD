@@ -227,6 +227,7 @@ cc_library(
         "inst_namer.h",
     ],
     deps = [
+        ":dump",
         ":file",
         ":typed_insts",
         "//common:concepts",

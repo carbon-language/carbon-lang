@@ -142,8 +142,8 @@ fn SortVector(generic T: Comparable, a: Vector(T)*) { ... }
 ```
 
 The syntax above uses the `generic` keyword to indicate that the parameter named
-`T` is a _checked generic_ parameter. The `template` keyword may be added instead to
-make it a _template generic_.
+`T` is a _checked generic_ parameter. The `template` keyword may be added
+instead to make it a _template generic_.
 
 Given an `i32` vector `iv`, `SortVector(i32, &iv)` is equivalent to
 `SortInt32Vector(&iv)`. Similarly for a `String` vector `sv`,
@@ -527,9 +527,10 @@ cast from `T` to `CDCover`.
 ### Adapting types
 
 Carbon has a mechanism called [adapting types](/docs/design/classes.md#adapters)
-to create new types that are [compatible](/docs/design/classes.md#compatible-types) with
-existing types but with different interface implementations. This could be used
-to add or replace implementations, or define implementations for reuse.
+to create new types that are
+[compatible](/docs/design/classes.md#compatible-types) with existing types but
+with different interface implementations. This could be used to add or replace
+implementations, or define implementations for reuse.
 
 In this example, we have multiple ways of sorting a collection of `Song` values.
 

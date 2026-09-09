@@ -73,12 +73,14 @@ in order to maintain the same behaviour.
 ## Alternatives considered
 
 This rule was originally stated that any two files could be concatenated in some
-order without changing the meaning of the code. However this creates (at least) two problems:
+order without changing the meaning of the code. However this creates (at least)
+two problems:
 
 -   Under separate compilation, `impl` declarations in an impl file are not
-    visible to other Carbon files. Concatenating them into another file would make
-    them visible, and could change the meaning of code that can now find them.
+    visible to other Carbon files. Concatenating them into another file would
+    make them visible, and could change the meaning of code that can now find
+    them.
 -   Packages introduce a named scope, so the symbols within the package are
-    qualified by the package name. Concatenating the contents of one package into
-    another would change the name by which any moved entities would be found. This
-    would necessitate changes to the code to resolve name lookups.
+    qualified by the package name. Concatenating the contents of one package
+    into another would change the name by which any moved entities would be
+    found. This would necessitate changes to the code to resolve name lookups.

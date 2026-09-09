@@ -32,6 +32,7 @@ auto HandleInitialize(
 
   llvm::json::Object capabilities{{"declarationProvider", true},
                                   {"definitionProvider", true},
+                                  {"documentFormattingProvider", true},
                                   {"documentSymbolProvider", true},
                                   {"hoverProvider", true},
                                   {"positionEncoding", encoding},

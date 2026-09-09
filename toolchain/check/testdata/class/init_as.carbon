@@ -114,7 +114,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc20_26.9: init %Class to %.loc20_26.3 = class_init (%.loc20_26.5, %.loc20_26.8) [concrete = constants.%Class.val]
 // CHECK:STDOUT:   %.loc20_28.1: init %Class = converted %.loc20_26.1, %.loc20_26.9 [concrete = constants.%Class.val]
 // CHECK:STDOUT:   %.loc20_28.2: ref %Class = temporary %.loc20_26.3, %.loc20_28.1 [concrete = constants.%.0e3]
-// CHECK:STDOUT:   %a.ref: %Class.elem = name_ref a, @Class.%.loc14 [concrete = @Class.%.loc14]
+// CHECK:STDOUT:   %a.ref: %Class.elem = name_ref a, @Class.%field_decl.loc14 [concrete = @Class.%field_decl.loc14]
 // CHECK:STDOUT:   %.loc20_37.1: ref %i32 = class_element_access %.loc20_28.2, element0 [concrete = constants.%.d44]
 // CHECK:STDOUT:   %.loc20_37.2: %i32 = acquire_value %.loc20_37.1
 // CHECK:STDOUT:   %impl.elem0.loc20_37: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

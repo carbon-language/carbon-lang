@@ -110,7 +110,8 @@ gh pr diff 1234 | python3 .agents/skills/summarize_testdata_changes/scripts/pars
         `// CHECK`), along with diagnostic output changes where relevant
     -   Diagnostic Changes: Changes to diagnostic output (lines prefixed with
         `// CHECK:STDERR`) with no corresponding changes to test inputs
-    -   [Output Type] Changes: Changes to STDOUT (lines prefixed with `// CHECK:STDOUT`)
+    -   [Output Type] Changes: Changes to STDOUT (lines prefixed with `//
+        CHECK:STDOUT`)
         -   Create one section for each relevant kind of test. For example,
             parser tests should typically be in a "Parse Tree Changes" section,
             check tests should typically be in a "SemIR Changes" section, and

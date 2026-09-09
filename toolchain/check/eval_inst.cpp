@@ -736,6 +736,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                               .specific_id = specific_id});
 }
 
+auto EvalConstantInst(Context& context, SemIR::SpecificInst inst)
+    -> ConstantEvalResult {
+  // Pull the constant value out of the specific.
+  return ConstantEvalResult::Existing(SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), inst.specific_id, inst.inst_id));
+}
+
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::SpecificFunction inst) -> ConstantEvalResult {
   auto callee_function =
@@ -791,6 +798,16 @@ auto EvalConstantInst(Context& /*context*/, SemIR::StructLiteral inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
       .type_id = inst.type_id, .elements_id = inst.elements_id});
+}
+
+auto EvalConstantInst(Context& context, SemIR::TemplateInst inst)
+    -> ConstantEvalResult {
+  auto const_id = context.constant_values().Get(inst.inst_id);
+  if (const_id.is_concrete()) {
+    return ConstantEvalResult::Existing(const_id);
+  }
+
+  return ConstantEvalResult::NewAnyPhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIR::TupleAccess inst)

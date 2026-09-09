@@ -180,6 +180,9 @@ enum class InstConstantKind : int8_t {
   // symbolic constant inst when applied to a symbolic constant, and can be a
   // concrete reference constant inst when applied to a reference constant.
   SymbolicOrReference,
+  // This instruction can be a template constant inst, depending on its
+  // operands, but never a concrete constant inst.
+  TemplateOnly,
   // This instruction is a metaprogramming or template instantiation action that
   // generates an instruction. Like `SymbolicOnly`, it may be a symbolic
   // constant inst depending on its operands, but never a concrete constant
@@ -274,6 +277,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
         constant_kind == InstConstantKind::AlwaysUnique
             ? InstConstantNeedsInstIdKind::Permanent
             : InstConstantNeedsInstIdKind::No;
+    bool action_needs_specific_id = false;
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
     bool is_lowered = true;
     bool deduce_through = false;
@@ -337,6 +341,12 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // its operands.
   auto constant_needs_inst_id() const -> InstConstantNeedsInstIdKind {
     return definition_info(*this).constant_needs_inst_id;
+  }
+
+  // Returns whether this is an action whose `PerformAction` function needs the
+  // `SpecificId` for the specific that is being generated.
+  auto action_needs_specific_id() const -> bool {
+    return definition_info(*this).action_needs_specific_id;
   }
 
   // Returns whether this instruction kind is a code block terminator, such as
@@ -436,6 +446,11 @@ class InstKind::Definition : public InstKind {
   // Returns whether constant evaluation of this instruction needs an InstId.
   constexpr auto constant_needs_inst_id() const -> InstConstantNeedsInstIdKind {
     return info_.constant_needs_inst_id;
+  }
+
+  // Returns whether this is an action whose `PerformAction` needs a SpecificId.
+  constexpr auto action_needs_specific_id() const -> bool {
+    return info_.action_needs_specific_id;
   }
 
   // Returns whether this instruction kind is a code block terminator. See

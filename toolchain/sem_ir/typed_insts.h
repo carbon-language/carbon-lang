@@ -390,19 +390,19 @@ struct Call {
   InstBlockId args_id;
 };
 
-// An action that performs a C++ template call.
-struct CallCppTemplateAction {
-  static constexpr auto Kind =
-      InstKind::CallCppTemplateAction.Define<Parse::NodeId>(
-          {.ir_name = "call_template_action",
-           .expr_category = ActionExprCategory(ExprCategory::Value),
-           .constant_kind = InstConstantKind::InstAction,
-           .is_lowered = false});
+// An action that performs a call.
+struct CallAction {
+  static constexpr auto Kind = InstKind::CallAction.Define<Parse::NodeId>(
+      {.ir_name = "call_action",
+       .expr_category = ActionExprCategory(ExprCategory::Dependent),
+       .constant_kind = InstConstantKind::InstAction,
+       .is_lowered = false});
 
   TypeId type_id;
-  ClangDeclId template_decl_id;
-  // Template arguments.
-  InstBlockId args_id;
+  // The first element in this block is the callee. The rest are the call
+  // arguments.
+  MetaInstBlockId inst_block_id;
+  BoolValue is_desugared;
 };
 
 // An action that performs callee-side pattern matching for a single syntactic
@@ -711,6 +711,21 @@ struct CustomWitness {
   SpecificInterfaceId query_specific_interface_id;
 };
 
+// Describes a constant default value for a pattern, which may be used if that
+// pattern is absent in a scrutinee.
+struct DefaultValuePattern {
+  static constexpr auto Kind =
+      InstKind::DefaultValuePattern.Define<Parse::DefaultValuePatternId>(
+          {.ir_name = "default_value_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+  DefaultValueId default_value_id;
+};
+
 // The `*` dereference operator, as in `*pointer`.
 struct Deref {
   static constexpr auto Kind = InstKind::Deref.Define<Parse::NodeId>(
@@ -834,8 +849,8 @@ struct FieldDecl {
        .constant_kind = InstConstantKind::AlwaysUnique});
 
   TypeId type_id;
-  NameId name_id;
   FieldId field_id;
+  ExprRegionId type_region_id;
 };
 
 // The float literal type.
@@ -1559,18 +1574,19 @@ struct PointerType {
   TypeInstId pointee_id;
 };
 
-// An action that performs type refinement for an instruction, by creating an
-// instruction that converts from a template symbolic type to a concrete type.
-struct RefineTypeAction {
-  static constexpr auto Kind = InstKind::RefineTypeAction.Define<Parse::NodeId>(
-      {.ir_name = "refine_type_action",
+// An action that performs refinement for an instruction, by creating an
+// instruction that has the same semantics but the specific type and constant
+// value.
+struct RefineInstAction {
+  static constexpr auto Kind = InstKind::RefineInstAction.Define<Parse::NodeId>(
+      {.ir_name = "refine_inst_action",
        .expr_category = ActionExprCategory(ExprCategory::Dependent),
        .constant_kind = InstConstantKind::InstAction,
+       .action_needs_specific_id = true,
        .is_lowered = false});
 
   TypeId type_id;
   MetaInstId inst_id;
-  TypeInstId inst_type_inst_id;
 };
 
 // Represents a reference binding pattern that is not a parameter. See
@@ -1979,6 +1995,29 @@ struct SpecificImplFunction {
   SpecificId specific_id;
 };
 
+// Given an instruction within a generic, represents a corresponding instruction
+// within a specific. Like `SpecificConstant`, this will have the type and
+// constant value of the instruction from the specific, but unlike
+// `SpecificConstant`, there is no implication that the instruction is constant.
+//
+// This does not permit references to instructions from other scopes if they
+// would not otherwise be permitted. Typically, this means that it can only be
+// used to refer to constants and to instructions from the same scope (and hence
+// the same specific) that this instruction occupies.
+//
+// This is used as a convenience during action evaluation to allow an action to
+// refer to its `MetaInstId` operands from the generic with their specific types
+// and constant values.
+struct SpecificInst {
+  static constexpr auto Kind = InstKind::SpecificInst.Define<Parse::NodeId>(
+      {.ir_name = "specific_inst",
+       .expr_category = ComputedExprCategory::DependsOnOperands});
+
+  TypeId type_id;
+  AbsoluteInstId inst_id;
+  SpecificId specific_id;
+};
+
 // Splices a block into the location where this appears. This may be an
 // expression, producing a result with a given type. For example, when
 // constructing from aggregates we may figure out which conversions are required
@@ -2107,6 +2146,19 @@ struct SymbolicBindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
+};
+
+// Wraps an instruction and, if that instruction is symbolic, forces it to be
+// evaluated as a template.
+struct TemplateInst {
+  static constexpr auto Kind = InstKind::TemplateInst.Define<Parse::NodeId>(
+      {.ir_name = "template_inst",
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
+       .constant_kind = InstConstantKind::TemplateOnly,
+       .is_lowered = false});
+
+  TypeId type_id;
+  InstId inst_id;
 };
 
 // Consumes the initializer `init_id`, uses it to initialize a temporary
@@ -2299,6 +2351,21 @@ struct UninitializedValue {
           {.ir_name = "uninitialized_value",
            .constant_kind = InstConstantKind::Always});
 
+  TypeId type_id;
+};
+
+using UnspecifiedValueType =
+    SingletonTypeInst<InstKind::UnspecifiedValueType, "<unspecified_value>">;
+
+// A placeholder value for default values in function definitions.
+struct UnspecifiedValue {
+  static constexpr auto Kind =
+      InstKind::UnspecifiedValue.Define<Parse::DefaultValueUnspecifiedId>(
+          {.ir_name = "unspecified_value",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+  // Always the type of the builtin `UnspecifiedValueType` singleton
+  // instruction.
   TypeId type_id;
 };
 

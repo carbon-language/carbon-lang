@@ -184,7 +184,7 @@ fn F() {
   ({} as Wraps(C)) as (Wraps(C) as ComparableTo(Wraps(D)));
 }
 
-// --- fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon
+// --- impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon
 library "[[@TEST_NAME]]";
 
 // Implement this for a type in one direction.
@@ -200,21 +200,16 @@ class D {}
 // - D is ComparableWith(C).
 impl C as ComparableTo(D) {}
 
-// TODO: These three `impl`s need to be placed in a match_first as they
-// overlap.
+match_first {
 
 // T is always ComparableWith(T).
 impl forall [T: type] T as ComparableWith(T) {}
 // If U is ComparableTo(T), U is ComparableWith(T).
-// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE+3]]:1-66: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE-3]]:1-46: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
-// CHECK:STDERR:
 impl forall [T: type, U: ComparableTo(T)] U as ComparableWith(T) {}
 // If U is ComparableTo(T), T is ComparableWith(U).
-// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE+3]]:1-66: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE-8]]:1-46: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
-// CHECK:STDERR:
 impl forall [T: type, U: ComparableTo(T)] T as ComparableWith(U) {}
+
+}
 
 fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
 

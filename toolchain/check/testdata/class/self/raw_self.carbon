@@ -163,7 +163,9 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %return.param.loc17: ref %tuple.type.e55 = out_param call_param2
 // CHECK:STDOUT:     %return.loc17: ref %tuple.type.e55 = return_slot %return.param.loc17
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18: %Class.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %Class.elem = field_decl n, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n [concrete = constants.%complete_type.cdf]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -171,13 +173,13 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %Class.F.decl
 // CHECK:STDOUT:   .G = %Class.G.decl
-// CHECK:STDOUT:   .n = %.loc18
+// CHECK:STDOUT:   .n = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.F(%self.param.loc21_16: ref %Class, %self.param.loc21_28: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc22_3: ref %Class = name_ref self, %self.loc21_16
-// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc18 [concrete = @Class.%.loc18]
+// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:   %.loc22: ref %i32 = class_element_access %self.ref.loc22_3, element0
 // CHECK:STDOUT:   %self.ref.loc22_12: %i32 = name_ref r#self, %self.loc21_28
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -192,7 +194,7 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: fn @Class.G(%self.param.loc25_12: %Class, %self.param.loc25_24: %i32) -> out %return.param.loc25: %tuple.type.e55 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc26_11: %Class = name_ref self, %self.loc25_12
-// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc18 [concrete = @Class.%.loc18]
+// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:   %.loc26_15.1: ref %i32 = class_element_access %self.ref.loc26_11, element0
 // CHECK:STDOUT:   %.loc26_15.2: %i32 = acquire_value %.loc26_15.1
 // CHECK:STDOUT:   %self.ref.loc26_19: %i32 = name_ref r#self, %self.loc25_24

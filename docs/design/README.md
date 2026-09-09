@@ -354,9 +354,9 @@ var résultat: String = "Succès";
 ```
 
 Comments start with two slashes `//` and go to the end of the line. A comment
-may be the only content on its line, or it may follow other content as a trailing
-comment. Full-line comments are preferred for documentation, while trailing
-comments mark or annotate a specific line.
+may be the only content on its line, or it may follow other content as a
+trailing comment. Full-line comments are preferred for documentation, while
+trailing comments mark or annotate a specific line.
 
 ```carbon
 // Compute an approximation of π.
@@ -1204,8 +1204,8 @@ they are used.
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 > -   Proposal
 >     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
-> -   Proposal
->     [#339: Add `var <type> <identifier> [ = <value> ];` syntax for variables](https://github.com/carbon-language/carbon-lang/pull/339)
+> -   Proposal [#339: Add `var <type> <identifier> [ = <value> ];` syntax for
+>     variables](https://github.com/carbon-language/carbon-lang/pull/339)
 > -   Proposal
 >     [#618: var ordering](https://github.com/carbon-language/carbon-lang/pull/618)
 > -   Proposal

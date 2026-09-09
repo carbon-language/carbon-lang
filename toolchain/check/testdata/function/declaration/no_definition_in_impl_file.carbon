@@ -16,12 +16,9 @@ library "[[@TEST_NAME]]";
 
 fn A();
 
-// --- todo_fail_decl_in_api_definition_in_impl.impl.carbon
+// --- decl_in_api_definition_in_impl.impl.carbon
 
 impl library "[[@TEST_NAME]]";
-
-// TODO: This should be diagnosed per #3762: A declaration should always add new information.
-fn A();
 
 fn A() {}
 
@@ -55,9 +52,31 @@ fn C();
 
 impl library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+6]]:1-7: error: redeclaration of `fn C` is redundant [RedeclRedundant]
+// CHECK:STDERR: imported from: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: decl_in_api_decl_in_impl.carbon:4:1-7: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:
 // CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+2]]:1-7: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR:
 fn C();
+
+// --- decl_in_api_decl_and_definition_in_impl.carbon
+
+library "[[@TEST_NAME]]";
+
+fn D();
+
+// --- fail_decl_in_api_decl_and_definition_in_impl.impl.carbon
+
+impl library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE+4]]:1-7: error: redeclaration of `fn D` is redundant [RedeclRedundant]
+// CHECK:STDERR: imported from: fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: decl_in_api_decl_and_definition_in_impl.carbon:4:1-7: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:
+fn D();
+
+fn D() {}
 
 // --- decl_only_in_impl.carbon
 
@@ -69,4 +88,4 @@ impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+2]]:1-7: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR:
-fn D();
+fn E();

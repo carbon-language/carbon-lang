@@ -259,13 +259,15 @@ class X(U: type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Param {
-// CHECK:STDOUT:   %.loc9: %Param.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %Param.elem = field_decl x, element0, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x.a15 [concrete = constants.%complete_type.0c6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Param
-// CHECK:STDOUT:   .x = %.loc9
+// CHECK:STDOUT:   .x = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -323,7 +325,7 @@ class X(U: type) {
 // CHECK:STDOUT:   %.loc21_27.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc21: init %Param to %.loc21_27.1 = call %impl.elem0.loc21()
 // CHECK:STDOUT:   %.loc21_27.2: ref %Param = temporary %.loc21_27.1, %C.as.HasF.impl.F.call.loc21
-// CHECK:STDOUT:   %x.ref.loc21: %Param.elem = name_ref x, @Param.%.loc9 [concrete = @Param.%.loc9]
+// CHECK:STDOUT:   %x.ref.loc21: %Param.elem = name_ref x, @Param.%field_decl [concrete = @Param.%field_decl]
 // CHECK:STDOUT:   %.loc21_28.1: ref %i32 = class_element_access %.loc21_27.2, element0
 // CHECK:STDOUT:   %.loc21_28.2: %i32 = acquire_value %.loc21_28.1
 // CHECK:STDOUT:   %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -339,7 +341,7 @@ class X(U: type) {
 // CHECK:STDOUT:   %.loc22_27.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc22: init %Param to %.loc22_27.1 = call %impl.elem0.loc22_24()
 // CHECK:STDOUT:   %.loc22_27.2: ref %Param = temporary %.loc22_27.1, %C.as.HasF.impl.F.call.loc22
-// CHECK:STDOUT:   %x.ref.loc22: %Param.elem = name_ref x, @Param.%.loc9 [concrete = @Param.%.loc9]
+// CHECK:STDOUT:   %x.ref.loc22: %Param.elem = name_ref x, @Param.%field_decl [concrete = @Param.%field_decl]
 // CHECK:STDOUT:   %.loc22_28.1: ref %i32 = class_element_access %.loc22_27.2, element0
 // CHECK:STDOUT:   %.loc22_28.2: %i32 = acquire_value %.loc22_28.1
 // CHECK:STDOUT:   %impl.elem0.loc22_28: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

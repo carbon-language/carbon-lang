@@ -180,6 +180,9 @@ class ImportContext {
   auto import_entity_names() -> const SemIR::EntityNameStore& {
     return import_ir().entity_names();
   }
+  auto import_expr_regions() -> const SemIR::ExprRegionStore& {
+    return import_ir().expr_regions();
+  }
   auto import_facet_types() -> const SemIR::DeclaredFacetTypeStore& {
     return import_ir().declared_facet_types();
   }
@@ -264,6 +267,9 @@ class ImportContext {
   }
   auto local_entity_names() -> SemIR::EntityNameStore& {
     return local_ir().entity_names();
+  }
+  auto local_expr_regions() -> SemIR::ExprRegionStore& {
+    return local_ir().expr_regions();
   }
   auto local_facet_types() -> SemIR::DeclaredFacetTypeStore& {
     return local_ir().declared_facet_types();
@@ -2295,6 +2301,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::DefaultValuePattern inst)
+    -> ResolveResult {
+  auto subpattern = GetLocalImportRefInfo(resolver, inst.subpattern_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveResult::Deduplicated<SemIR::DefaultValuePattern>(
+      resolver,
+      {
+          .type_id = resolver.local_types().GetTypeIdForTypeConstantId(
+              subpattern.local_type_const_id),
+          .subpattern_id = AddLoadedImportRef(resolver, subpattern),
+          .default_value_id = inst.default_value_id,
+      });
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ExportDecl inst) -> ResolveResult {
   auto value_id = GetLocalConstantId(resolver, inst.value_id);
   return ResolveResult::RetryOrDone(resolver, value_id);
@@ -2303,6 +2327,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FieldDecl inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
+  auto import_expr_region =
+      resolver.import_expr_regions().Get(inst.type_region_id);
+  SemIR::ExprRegion expr_region{
+      .result_id = AddImportRef(resolver, import_expr_region.result_id)};
+
   auto const_id = GetLocalConstantId(resolver, inst.type_id);
   const auto& import_field = resolver.import_ir().fields().Get(inst.field_id);
   auto initializer_id =
@@ -2311,13 +2340,20 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
+  auto type_region_id = resolver.local_expr_regions().Add(expr_region);
+
   auto field_id = resolver.local_ir().fields().Add(
-      {.index = import_field.index, .initializer_id = initializer_id});
+      {.index = import_field.index,
+       .name_id = GetLocalNameId(resolver, import_field.name_id),
+       .initializer_id = initializer_id});
   return ResolveResult::Unique<SemIR::FieldDecl>(
       resolver, import_inst_id,
-      {.type_id = resolver.local_types().GetTypeIdForTypeConstantId(const_id),
-       .name_id = GetLocalNameId(resolver, inst.name_id),
-       .field_id = field_id});
+      {
+          .type_id =
+              resolver.local_types().GetTypeIdForTypeConstantId(const_id),
+          .field_id = field_id,
+          .type_region_id = type_region_id,
+      });
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2386,6 +2422,7 @@ static auto ImportFunctionDecl(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_param_patterns_id = SemIR::InstBlockId::None,
         .call_params_id = SemIR::InstBlockId::None,
+        .call_param_default_values_id = SemIR::InstBlockId::None,
         .call_param_ranges = import_function.call_param_ranges,
         .return_type_inst_id = SemIR::TypeInstId::None,
         .return_form_inst_id = SemIR::InstId::None,
@@ -2448,6 +2485,17 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   auto call_param_patterns = GetLocalBlockImportRefInfo(
       resolver, import_function.call_param_patterns_id);
+  auto call_param_default_values = GetLocalBlockImportRefInfo(
+      resolver, import_function.call_param_default_values_id);
+  llvm::SmallVector<SemIR::InstId> imported_default_values;
+  if (call_param_default_values.has_value()) {
+    auto import_fn = [&resolver](const auto& import_info) {
+      return GetLocalConstantInstId(resolver, import_info.import_inst_id);
+    };
+    llvm::append_range(imported_default_values,
+                       llvm::map_range(*call_param_default_values, import_fn));
+  }
+
   auto return_type_const_id = SemIR::ConstantId::None;
   if (import_function.return_type_inst_id.has_value()) {
     return_type_const_id =
@@ -2497,6 +2545,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // Add the function declaration.
   new_function.call_param_patterns_id =
       AddLoadedImportRefBlock(resolver, call_param_patterns);
+  if (call_param_default_values.has_value()) {
+    new_function.call_param_default_values_id =
+        resolver.local_inst_blocks().Add(imported_default_values);
+  }
   new_function.parent_scope_id = parent_scope_id;
   new_function.implicit_param_patterns_id =
       AddLoadedImportRefBlock(resolver, implicit_param_patterns);
@@ -4321,6 +4373,16 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                  .element_type_inst_id = elem_const_inst_id});
 }
 
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::UnspecifiedValue inst) -> ResolveResult {
+  CARBON_CHECK(resolver.import_ir().types().Is<SemIR::UnspecifiedValueType>(
+      inst.type_id));
+  auto type_id = GetSingletonType(resolver.local_context(),
+                                  SemIR::UnspecifiedValueType::TypeInstId);
+  return ResolveResult::Deduplicated<SemIR::UnspecifiedValue>(
+      resolver, {.type_id = type_id});
+}
+
 template <typename VarPatternT>
   requires SemIR::Internal::HasInstCategory<SemIR::AnyVarPattern, VarPatternT>
 static auto TryResolveTypedInst(ImportRefResolver& resolver, VarPatternT inst)
@@ -4479,6 +4541,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::CustomWitness inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::DefaultValuePattern inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::ExportDecl inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -4630,6 +4695,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::UnboundElementType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::UnspecifiedValue inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ValueBindingPattern inst): {

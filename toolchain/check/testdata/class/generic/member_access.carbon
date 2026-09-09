@@ -74,7 +74,6 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.f84 [symbolic]
 // CHECK:STDOUT:   %require_complete.d83: <witness> = require_complete_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.2c66b4.2: type = pattern_type %T.as_type [symbolic]
-// CHECK:STDOUT:   %x.patt.f3e: %pattern_type.2c66b4.2 = ref_binding_pattern x [symbolic]
 // CHECK:STDOUT:   %Class.elem.1ee: type = unbound_element_type %Class.575, %T.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.e18: type = pattern_type %Class.575 [symbolic]
 // CHECK:STDOUT:   %self.param_patt.aaa: %pattern_type.e18 = value_param_pattern [symbolic]
@@ -127,7 +126,6 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
-// CHECK:STDOUT:   %x.patt.29f: %pattern_type.6b6 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %Class.elem.d3c: type = unbound_element_type %Class.e86, %i32 [concrete]
 // CHECK:STDOUT:   %Class.Get.type.45c: type = fn_type @Class.Get, @Class(%Copy.facet.1e1) [concrete]
 // CHECK:STDOUT:   %Class.Get.28a: %Class.Get.type.45c = struct_value () [concrete]
@@ -181,7 +179,7 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.575
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .x = %.loc5
+// CHECK:STDOUT:     .x = %field_decl
 // CHECK:STDOUT:     .Get = %Class.Get.decl
 // CHECK:STDOUT:     .GetAddr = %Class.GetAddr.decl
 // CHECK:STDOUT:   }
@@ -203,7 +201,7 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:   fn(%self.param: @Class.Get.%Class (%Class.575)) -> out %return.param: @Class.Get.%T.as_type.loc7_19.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @Class.Get.%Class (%Class.575) = name_ref self, %self
-// CHECK:STDOUT:     %x.ref: @Class.Get.%Class.elem (%Class.elem.1ee) = name_ref x, @Class.%.loc5 [concrete = @Class.%.loc5]
+// CHECK:STDOUT:     %x.ref: @Class.Get.%Class.elem (%Class.elem.1ee) = name_ref x, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:     %.loc9_16.1: ref @Class.Get.%T.as_type.loc7_19.1 (%T.as_type) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc9_16.2: @Class.Get.%T.as_type.loc7_19.1 (%T.as_type) = acquire_value %.loc9_16.1
 // CHECK:STDOUT:     %impl.elem0.loc9_16.1: @Class.Get.%.loc9_16.5 (%.c29) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c, element0 [symbolic = %impl.elem0.loc9_16.2 (constants.%impl.elem0.bd2)]
@@ -235,7 +233,7 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:   fn(%self.param: ref @Class.GetAddr.%Class (%Class.575)) -> out %return.param: @Class.GetAddr.%ptr.loc13_28.1 (%ptr.215) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: ref @Class.GetAddr.%Class (%Class.575) = name_ref self, %self
-// CHECK:STDOUT:     %x.ref: @Class.GetAddr.%Class.elem (%Class.elem.1ee) = name_ref x, @Class.%.loc5 [concrete = @Class.%.loc5]
+// CHECK:STDOUT:     %x.ref: @Class.GetAddr.%Class.elem (%Class.elem.1ee) = name_ref x, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:     %.loc15_17: ref @Class.GetAddr.%T.as_type.loc13_28.1 (%T.as_type) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %addr: @Class.GetAddr.%ptr.loc13_28.1 (%ptr.215) = addr_of %.loc15_17
 // CHECK:STDOUT:     %impl.elem0.loc15_12.1: @Class.GetAddr.%.loc15_12.4 (%.45d) = impl_witness_access constants.%Copy.lookup_impl_witness.cf6, element0 [symbolic = %impl.elem0.loc15_12.2 (constants.%impl.elem0.c5d)]
@@ -254,7 +252,7 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT: fn @DirectFieldAccess(%x.param: %Class.e86) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc22_10: %Class.e86 = name_ref x, %x
-// CHECK:STDOUT:   %x.ref.loc22_11: %Class.elem.d3c = name_ref x, @Class.%.loc5 [concrete = @Class.%.loc5]
+// CHECK:STDOUT:   %x.ref.loc22_11: %Class.elem.d3c = name_ref x, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:   %.loc22_11.1: ref %i32 = class_element_access %x.ref.loc22_10, element0
 // CHECK:STDOUT:   %.loc22_11.2: %i32 = acquire_value %.loc22_11.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -304,10 +302,8 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:   %T.loc4_14.1 => constants.%T.f84
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type => constants.%T.as_type
+// CHECK:STDOUT:   %T.as_type.loc5_10.2 => constants.%T.as_type
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.d83
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2c66b4.2
-// CHECK:STDOUT:   %x.patt => constants.%x.patt.f3e
 // CHECK:STDOUT:   %Class => constants.%Class.575
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.1ee
 // CHECK:STDOUT:   %Class.Get.type => constants.%Class.Get.type.0dd
@@ -350,10 +346,8 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT:   %T.loc4_14.1 => constants.%Copy.facet.1e1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type => constants.%i32
+// CHECK:STDOUT:   %T.as_type.loc5_10.2 => constants.%i32
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
-// CHECK:STDOUT:   %x.patt => constants.%x.patt.29f
 // CHECK:STDOUT:   %Class => constants.%Class.e86
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.d3c
 // CHECK:STDOUT:   %Class.Get.type => constants.%Class.Get.type.45c

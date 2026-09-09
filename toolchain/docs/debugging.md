@@ -176,7 +176,8 @@ support for debugging the toolchain tests. To set that up:
 
 A typical debug session looks like:
 
-1.  `bazel build -c dbg --features=-lldb_flags --features=gdb_flags //toolchain/testing:file_test`
+1.  `bazel build -c dbg --features=-lldb_flags --features=gdb_flags
+    //toolchain/testing:file_test`
 2.  Open a `.carbon` testdata file to debug. This must be the active file in VS
     Code.
 3.  Go to the "Run and debug" panel in VS Code.

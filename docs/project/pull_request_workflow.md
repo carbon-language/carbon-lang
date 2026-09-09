@@ -93,9 +93,9 @@ split up pull requests:
     right": not too big, not too small. You don't want to separate a pattern of
     tightly related changes into separate requests when they're easier to review
     as a set or batch, and you don't want to bundle unrelated changes together.
-    Typically you should try to keep the pull request as small as you can without
-    breaking apart tightly coupled changes. However, listen to your code reviewer
-    if they ask to split things up or combine them.
+    Typically you should try to keep the pull request as small as you can
+    without breaking apart tightly coupled changes. However, listen to your code
+    reviewer if they ask to split things up or combine them.
 
 While the default is to squash pull requests into a single commit, _during_ the
 review you typically want to leave the development history undisturbed until the

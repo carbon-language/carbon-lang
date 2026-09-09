@@ -229,6 +229,19 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ConstantId const_id)
   return out.TakeStr();
 }
 
+LLVM_DUMP_METHOD auto Dump(const File& file, CppOverloadSetId overload_set_id)
+    -> std::string {
+  RawStringOstream out;
+  out << overload_set_id;
+  if (overload_set_id.has_value()) {
+    const auto& overload_set = file.cpp_overload_sets().Get(overload_set_id);
+    out << ": " << overload_set;
+    // TODO: Consider also including a dump of the functions in the overload
+    // set. Printing the set just includes the name and parent scope.
+  }
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
     -> std::string {
   RawStringOstream out;

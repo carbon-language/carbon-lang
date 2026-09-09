@@ -16,12 +16,9 @@ library "[[@TEST_NAME]]";
 
 class A;
 
-// --- todo_fail_decl_in_api_definition_in_impl.impl.carbon
+// --- decl_in_api_definition_in_impl.impl.carbon
 
 impl library "[[@TEST_NAME]]";
-
-// TODO: This should be diagnosed per #3762: A declaration should always add new information.
-class A;
 
 class A {}
 
@@ -55,9 +52,31 @@ class C;
 
 impl library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+6]]:1-8: error: redeclaration of `class C` is redundant [RedeclRedundant]
+// CHECK:STDERR: imported from: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: decl_in_api_decl_in_impl.carbon:4:1-8: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:
 // CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+2]]:1-8: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR:
 class C;
+
+// --- decl_in_api_decl_and_definition_in_impl.carbon
+
+library "[[@TEST_NAME]]";
+
+class D;
+
+// --- fail_decl_in_api_decl_and_definition_in_impl.impl.carbon
+
+impl library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE+4]]:1-8: error: redeclaration of `class D` is redundant [RedeclRedundant]
+// CHECK:STDERR: imported from: fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: decl_in_api_decl_and_definition_in_impl.carbon:4:1-8: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:
+class D;
+
+class D {}
 
 // --- decl_only_in_impl.carbon
 
@@ -69,4 +88,4 @@ impl library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+2]]:1-8: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR:
-class D;
+class E;

@@ -678,7 +678,8 @@ class InstBlockStore
   // Adds an uninitialized block of the given size. The caller is expected to
   // modify values.
   auto AddUninitialized(size_t size) -> InstBlockId {
-    return values().Add(AllocateUninitialized(size));
+    return size ? values().Add(AllocateUninitialized(size))
+                : InstBlockId::Empty;
   }
 
   // Reserves and returns a block ID. The contents of the block should be

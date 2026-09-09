@@ -176,9 +176,18 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.F.decl: %Outer.F.type = fn_decl @Outer.F [concrete = constants.%Outer.F] {} {}
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [concrete = constants.%Inner] {} {}
 // CHECK:STDOUT:   %Outer.H.decl: %Outer.H.type = fn_decl @Outer.H [concrete = constants.%Outer.H] {} {}
-// CHECK:STDOUT:   %.loc40: %Outer.elem.3ef = field_decl po, element0 [concrete]
-// CHECK:STDOUT:   %.loc41: %Outer.elem.3ef = field_decl qo, element1 [concrete]
-// CHECK:STDOUT:   %.loc42: %Outer.elem.fe3 = field_decl pi, element2 [concrete]
+// CHECK:STDOUT:   %field_decl.loc40: %Outer.elem.3ef = field_decl po, element0, %ptr.loc40 in [concrete] {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Outer [concrete = constants.%Outer]
+// CHECK:STDOUT:     %ptr.loc40: type = ptr_type %Self.ref [concrete = constants.%ptr.286]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %field_decl.loc41: %Outer.elem.3ef = field_decl qo, element1, %ptr.loc41 in [concrete] {
+// CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
+// CHECK:STDOUT:     %ptr.loc41: type = ptr_type %Outer.ref [concrete = constants.%ptr.286]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %field_decl.loc42: %Outer.elem.fe3 = field_decl pi, element2, %ptr.loc42 in [concrete] {
+// CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, %Inner.decl [concrete = constants.%Inner]
+// CHECK:STDOUT:     %ptr.loc42: type = ptr_type %Inner.ref [concrete = constants.%ptr.001]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.po.qo.pi [concrete = constants.%complete_type.a2f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -188,26 +197,35 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   .Inner = %Inner.decl
 // CHECK:STDOUT:   .Outer = <poisoned>
 // CHECK:STDOUT:   .H = %Outer.H.decl
-// CHECK:STDOUT:   .po = %.loc40
-// CHECK:STDOUT:   .qo = %.loc41
-// CHECK:STDOUT:   .pi = %.loc42
+// CHECK:STDOUT:   .po = %field_decl.loc40
+// CHECK:STDOUT:   .qo = %field_decl.loc41
+// CHECK:STDOUT:   .pi = %field_decl.loc42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %.loc23: %Inner.elem.df9 = field_decl pi, element0 [concrete]
-// CHECK:STDOUT:   %.loc24: %Inner.elem.2a2 = field_decl po, element1 [concrete]
-// CHECK:STDOUT:   %.loc25: %Inner.elem.df9 = field_decl qi, element2 [concrete]
+// CHECK:STDOUT:   %field_decl.loc23: %Inner.elem.df9 = field_decl pi, element0, %ptr.loc23 in [concrete] {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Inner [concrete = constants.%Inner]
+// CHECK:STDOUT:     %ptr.loc23: type = ptr_type %Self.ref [concrete = constants.%ptr.001]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %field_decl.loc24: %Inner.elem.2a2 = field_decl po, element1, %ptr.loc24 in [concrete] {
+// CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
+// CHECK:STDOUT:     %ptr.loc24: type = ptr_type %Outer.ref [concrete = constants.%ptr.286]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %field_decl.loc25: %Inner.elem.df9 = field_decl qi, element2, %ptr.loc25 in [concrete] {
+// CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
+// CHECK:STDOUT:     %ptr.loc25: type = ptr_type %Inner.ref [concrete = constants.%ptr.001]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Inner.G.decl: %Inner.G.type = fn_decl @Inner.G [concrete = constants.%Inner.G] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.pi.po.qi [concrete = constants.%complete_type.cab]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .pi = %.loc23
+// CHECK:STDOUT:   .pi = %field_decl.loc23
 // CHECK:STDOUT:   .Outer = <poisoned>
-// CHECK:STDOUT:   .po = %.loc24
+// CHECK:STDOUT:   .po = %field_decl.loc24
 // CHECK:STDOUT:   .Inner = <poisoned>
-// CHECK:STDOUT:   .qi = %.loc25
+// CHECK:STDOUT:   .qi = %field_decl.loc25
 // CHECK:STDOUT:   .G = %Inner.G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -356,7 +374,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref.loc46: %ptr.286 = name_ref a, %a
 // CHECK:STDOUT:   %.loc46_26: ref %Outer = deref %a.ref.loc46
-// CHECK:STDOUT:   %pi.ref.loc46: %Outer.elem.fe3 = name_ref pi, @Outer.%.loc42 [concrete = @Outer.%.loc42]
+// CHECK:STDOUT:   %pi.ref.loc46: %Outer.elem.fe3 = name_ref pi, @Outer.%field_decl.loc42 [concrete = @Outer.%field_decl.loc42]
 // CHECK:STDOUT:   %.loc46_29.1: ref %ptr.001 = class_element_access %.loc46_26, element2
 // CHECK:STDOUT:   %.loc46_29.2: %ptr.001 = acquire_value %.loc46_29.1
 // CHECK:STDOUT:   %.loc46_21: type = splice_block %ptr.loc46 [concrete = constants.%ptr.001] {
@@ -370,7 +388,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref.loc48_3: %ptr.286 = name_ref a, %a
 // CHECK:STDOUT:   %.loc48_4.1: ref %Outer = deref %a.ref.loc48_3
-// CHECK:STDOUT:   %po.ref.loc48: %Outer.elem.3ef = name_ref po, @Outer.%.loc40 [concrete = @Outer.%.loc40]
+// CHECK:STDOUT:   %po.ref.loc48: %Outer.elem.3ef = name_ref po, @Outer.%field_decl.loc40 [concrete = @Outer.%field_decl.loc40]
 // CHECK:STDOUT:   %.loc48_4.2: ref %ptr.286 = class_element_access %.loc48_4.1, element0
 // CHECK:STDOUT:   %a.ref.loc48_11: %ptr.286 = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem0.loc48: %.c11 = impl_witness_access constants.%Copy.impl_witness.d13, element0 [concrete = constants.%ptr.as.Copy.impl.Op.629]
@@ -381,7 +399,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   assign %.loc48_4.2, %ptr.as.Copy.impl.Op.call.loc48
 // CHECK:STDOUT:   %a.ref.loc49_3: %ptr.286 = name_ref a, %a
 // CHECK:STDOUT:   %.loc49_4.1: ref %Outer = deref %a.ref.loc49_3
-// CHECK:STDOUT:   %qo.ref: %Outer.elem.3ef = name_ref qo, @Outer.%.loc41 [concrete = @Outer.%.loc41]
+// CHECK:STDOUT:   %qo.ref: %Outer.elem.3ef = name_ref qo, @Outer.%field_decl.loc41 [concrete = @Outer.%field_decl.loc41]
 // CHECK:STDOUT:   %.loc49_4.2: ref %ptr.286 = class_element_access %.loc49_4.1, element1
 // CHECK:STDOUT:   %a.ref.loc49_11: %ptr.286 = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem0.loc49: %.c11 = impl_witness_access constants.%Copy.impl_witness.d13, element0 [concrete = constants.%ptr.as.Copy.impl.Op.629]
@@ -392,11 +410,11 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   assign %.loc49_4.2, %ptr.as.Copy.impl.Op.call.loc49
 // CHECK:STDOUT:   %a.ref.loc50_3: %ptr.286 = name_ref a, %a
 // CHECK:STDOUT:   %.loc50_4.1: ref %Outer = deref %a.ref.loc50_3
-// CHECK:STDOUT:   %pi.ref.loc50_4: %Outer.elem.fe3 = name_ref pi, @Outer.%.loc42 [concrete = @Outer.%.loc42]
+// CHECK:STDOUT:   %pi.ref.loc50_4: %Outer.elem.fe3 = name_ref pi, @Outer.%field_decl.loc42 [concrete = @Outer.%field_decl.loc42]
 // CHECK:STDOUT:   %.loc50_4.2: ref %ptr.001 = class_element_access %.loc50_4.1, element2
 // CHECK:STDOUT:   %a.ref.loc50_11: %ptr.286 = name_ref a, %a
 // CHECK:STDOUT:   %.loc50_12.1: ref %Outer = deref %a.ref.loc50_11
-// CHECK:STDOUT:   %pi.ref.loc50_12: %Outer.elem.fe3 = name_ref pi, @Outer.%.loc42 [concrete = @Outer.%.loc42]
+// CHECK:STDOUT:   %pi.ref.loc50_12: %Outer.elem.fe3 = name_ref pi, @Outer.%field_decl.loc42 [concrete = @Outer.%field_decl.loc42]
 // CHECK:STDOUT:   %.loc50_12.2: ref %ptr.001 = class_element_access %.loc50_12.1, element2
 // CHECK:STDOUT:   %.loc50_12.3: %ptr.001 = acquire_value %.loc50_12.2
 // CHECK:STDOUT:   %impl.elem0.loc50: %.6b7 = impl_witness_access constants.%Copy.impl_witness.f7d, element0 [concrete = constants.%ptr.as.Copy.impl.Op.b47]
@@ -407,7 +425,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   assign %.loc50_4.2, %ptr.as.Copy.impl.Op.call.loc50
 // CHECK:STDOUT:   %b.ref.loc51: %ptr.001 = name_ref b, %b
 // CHECK:STDOUT:   %.loc51_4.1: ref %Inner = deref %b.ref.loc51
-// CHECK:STDOUT:   %po.ref.loc51: %Inner.elem.2a2 = name_ref po, @Inner.%.loc24 [concrete = @Inner.%.loc24]
+// CHECK:STDOUT:   %po.ref.loc51: %Inner.elem.2a2 = name_ref po, @Inner.%field_decl.loc24 [concrete = @Inner.%field_decl.loc24]
 // CHECK:STDOUT:   %.loc51_4.2: ref %ptr.286 = class_element_access %.loc51_4.1, element1
 // CHECK:STDOUT:   %a.ref.loc51: %ptr.286 = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem0.loc51: %.c11 = impl_witness_access constants.%Copy.impl_witness.d13, element0 [concrete = constants.%ptr.as.Copy.impl.Op.629]
@@ -418,11 +436,11 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   assign %.loc51_4.2, %ptr.as.Copy.impl.Op.call.loc51
 // CHECK:STDOUT:   %b.ref.loc52: %ptr.001 = name_ref b, %b
 // CHECK:STDOUT:   %.loc52_4.1: ref %Inner = deref %b.ref.loc52
-// CHECK:STDOUT:   %pi.ref.loc52_4: %Inner.elem.df9 = name_ref pi, @Inner.%.loc23 [concrete = @Inner.%.loc23]
+// CHECK:STDOUT:   %pi.ref.loc52_4: %Inner.elem.df9 = name_ref pi, @Inner.%field_decl.loc23 [concrete = @Inner.%field_decl.loc23]
 // CHECK:STDOUT:   %.loc52_4.2: ref %ptr.001 = class_element_access %.loc52_4.1, element0
 // CHECK:STDOUT:   %a.ref.loc52: %ptr.286 = name_ref a, %a
 // CHECK:STDOUT:   %.loc52_12.1: ref %Outer = deref %a.ref.loc52
-// CHECK:STDOUT:   %pi.ref.loc52_12: %Outer.elem.fe3 = name_ref pi, @Outer.%.loc42 [concrete = @Outer.%.loc42]
+// CHECK:STDOUT:   %pi.ref.loc52_12: %Outer.elem.fe3 = name_ref pi, @Outer.%field_decl.loc42 [concrete = @Outer.%field_decl.loc42]
 // CHECK:STDOUT:   %.loc52_12.2: ref %ptr.001 = class_element_access %.loc52_12.1, element2
 // CHECK:STDOUT:   %.loc52_12.3: %ptr.001 = acquire_value %.loc52_12.2
 // CHECK:STDOUT:   %impl.elem0.loc52: %.6b7 = impl_witness_access constants.%Copy.impl_witness.f7d, element0 [concrete = constants.%ptr.as.Copy.impl.Op.b47]
@@ -433,11 +451,11 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   assign %.loc52_4.2, %ptr.as.Copy.impl.Op.call.loc52
 // CHECK:STDOUT:   %b.ref.loc53: %ptr.001 = name_ref b, %b
 // CHECK:STDOUT:   %.loc53_4.1: ref %Inner = deref %b.ref.loc53
-// CHECK:STDOUT:   %qi.ref: %Inner.elem.df9 = name_ref qi, @Inner.%.loc25 [concrete = @Inner.%.loc25]
+// CHECK:STDOUT:   %qi.ref: %Inner.elem.df9 = name_ref qi, @Inner.%field_decl.loc25 [concrete = @Inner.%field_decl.loc25]
 // CHECK:STDOUT:   %.loc53_4.2: ref %ptr.001 = class_element_access %.loc53_4.1, element2
 // CHECK:STDOUT:   %a.ref.loc53: %ptr.286 = name_ref a, %a
 // CHECK:STDOUT:   %.loc53_12.1: ref %Outer = deref %a.ref.loc53
-// CHECK:STDOUT:   %pi.ref.loc53: %Outer.elem.fe3 = name_ref pi, @Outer.%.loc42 [concrete = @Outer.%.loc42]
+// CHECK:STDOUT:   %pi.ref.loc53: %Outer.elem.fe3 = name_ref pi, @Outer.%field_decl.loc42 [concrete = @Outer.%field_decl.loc42]
 // CHECK:STDOUT:   %.loc53_12.2: ref %ptr.001 = class_element_access %.loc53_12.1, element2
 // CHECK:STDOUT:   %.loc53_12.3: %ptr.001 = acquire_value %.loc53_12.2
 // CHECK:STDOUT:   %impl.elem0.loc53: %.6b7 = impl_witness_access constants.%Copy.impl_witness.f7d, element0 [concrete = constants.%ptr.as.Copy.impl.Op.b47]
