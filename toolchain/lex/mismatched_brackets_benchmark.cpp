@@ -11,9 +11,9 @@
 
 #include "absl/random/random.h"
 #include "common/check.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
@@ -66,6 +66,13 @@ class SourceBuilder {
     return *this;
   }
 
+  // Opens a top-level declaration: `fn Name(...) {` at column 0, which is
+  // where `FindRegionBoundaries` cuts one region from the next.
+  auto AddDeclHeader() -> SourceBuilder& {
+    return AddAll({Kind::StatementIntroducer, Kind::Leaf, Kind::OpenParen,
+                   Kind::CloseParen, Kind::OpenCurlyBrace});
+  }
+
   // Ends the current line, and indents the next one by `indent` columns.
   auto EndLine(int32_t indent) -> SourceBuilder& {
     if (!tokens_.empty()) {
@@ -100,19 +107,12 @@ class SourceBuilder {
 constexpr Kind OpenKinds[] = {Kind::OpenParen, Kind::OpenSquareBracket,
                               Kind::OpenCurlyBrace};
 
-// Opens a top-level declaration: `fn Name(...) {` at column 0, which is where
-// `FindRegionBoundaries` cuts one region from the next.
-static auto AddDeclHeader(SourceBuilder& builder) -> void {
-  builder.AddAll({Kind::StatementIntroducer, Kind::Leaf, Kind::OpenParen,
-                  Kind::CloseParen, Kind::OpenCurlyBrace});
-}
-
 // `n` unmatched opening parens, one per line, each indenting further, as an
 // unfinished call chain would.
 static auto UnclosedOpeners(int n)
     -> llvm::SmallVector<MismatchedBracketToken> {
   SourceBuilder builder;
-  AddDeclHeader(builder);
+  builder.AddDeclHeader();
   for (int i = 0; i < n; ++i) {
     builder.EndLine(IndentWidth * (i + 1))
         .AddAll({Kind::Leaf, Kind::OpenParen});
@@ -124,7 +124,7 @@ static auto UnclosedOpeners(int n)
 static auto UnmatchedClosers(int n)
     -> llvm::SmallVector<MismatchedBracketToken> {
   SourceBuilder builder;
-  AddDeclHeader(builder);
+  builder.AddDeclHeader();
   builder.EndLine(IndentWidth);
   for (int i = 0; i < n; ++i) {
     builder.AddAll({Kind::Leaf, Kind::CloseParen});
@@ -138,7 +138,7 @@ static auto UnmatchedClosers(int n)
 static auto BalancedRunWithGap(int n)
     -> llvm::SmallVector<MismatchedBracketToken> {
   SourceBuilder builder;
-  AddDeclHeader(builder);
+  builder.AddDeclHeader();
   auto add_call = [&](bool closed) {
     builder.EndLine(IndentWidth)
         .AddAll(
@@ -167,7 +167,7 @@ enum class NestDamage : uint8_t { None, Innermost, Alternating };
 static auto DeepNest(int n, NestDamage damage)
     -> llvm::SmallVector<MismatchedBracketToken> {
   SourceBuilder builder;
-  AddDeclHeader(builder);
+  builder.AddDeclHeader();
 
   llvm::SmallVector<Kind> open_kinds;
   for (int i = 0; i < n; ++i) {
@@ -199,7 +199,7 @@ static auto DeepNest(int n, NestDamage damage)
 static auto ManyTiedRepairs(int n)
     -> llvm::SmallVector<MismatchedBracketToken> {
   SourceBuilder builder;
-  AddDeclHeader(builder);
+  builder.AddDeclHeader();
   builder.EndLine(IndentWidth);
   for (int i = 0; i < n; ++i) {
     builder.AddAll({Kind::OpenParen, Kind::Leaf});
@@ -213,7 +213,7 @@ static auto ManyDamagedRegions(int n)
     -> llvm::SmallVector<MismatchedBracketToken> {
   SourceBuilder builder;
   for (int i = 0; i < n; ++i) {
-    AddDeclHeader(builder);
+    builder.AddDeclHeader();
     builder.EndLine(IndentWidth)
         .AddAll({Kind::Leaf, Kind::OpenParen, Kind::Leaf, Kind::Semi});
     builder.EndLine(0).Add(Kind::CloseCurlyBrace);
@@ -329,117 +329,77 @@ BENCHMARK(BM_RegionSizeCliff)->RangeMultiplier(2)->Range(128, 2048);
 // to the generated source, including no damage at all: the difference between
 // a damaged variant and the undamaged control is what recovery costs.
 //
-// Note that `SourceGen` seeds itself from entropy, so while the size and shape
-// of the generated files are stable from run to run, their exact contents are
-// not, and neither is where the damage below lands. Treat a single run of these
-// as approximate; the benchmarks above are the reproducible ones.
+// To keep the signal-to-noise ratio of these benchmarks high, the damage
+// follows the same discipline `SourceGen` applies to the code itself: every
+// total is a deterministic function of the input size, and only placement is
+// randomly shuffled. A fixed number of the generated classes are damaged, each
+// in the same structural way, so the number of damaged tokens, their bracket
+// kinds, and their nesting depths never vary; and since every generated class
+// has the same structure, moving the damage between classes doesn't change how
+// much work it creates. (`SourceGen` seeds itself from entropy, so the exact
+// bytes still differ from file to file and run to run, but the shape and
+// amount of both the code and the damage do not.)
 
-// The byte offsets of every bracket in `text`. Brackets inside comments are
-// included, which is fine: the generated comments contain none.
-static auto BracketOffsets(llvm::StringRef text) -> llvm::SmallVector<size_t> {
-  llvm::SmallVector<size_t> offsets;
-  for (auto [offset, c] : llvm::enumerate(text)) {
-    if (llvm::StringRef("()[]{}").contains(c)) {
-      offsets.push_back(offset);
+// The structural landmarks of one generated class definition that damage is
+// applied relative to.
+struct GeneratedClass {
+  // The `class Thing {` line.
+  size_t open_line;
+  // The closing `}` line.
+  size_t close_line;
+  // The last line of each function and method declaration, which is the line
+  // holding the declaration's closing paren.
+  llvm::SmallVector<size_t> decl_end_lines;
+};
+
+// Finds every class definition in the lines of a generated source file. The
+// generator writes each `class Thing {` and its matching `}` in column zero,
+// and ends every function and method declaration with `) -> Type;`, so those
+// are the landmarks this looks for.
+static auto FindClasses(llvm::ArrayRef<llvm::StringRef> lines)
+    -> llvm::SmallVector<GeneratedClass> {
+  llvm::SmallVector<GeneratedClass> classes;
+  bool in_class = false;
+  for (auto [index, line] : llvm::enumerate(lines)) {
+    if (line.starts_with("class ")) {
+      CARBON_CHECK(!in_class);
+      classes.push_back({.open_line = index, .close_line = index});
+      in_class = true;
+    } else if (line == "}") {
+      CARBON_CHECK(in_class);
+      classes.back().close_line = index;
+      in_class = false;
+    } else if (in_class && line.contains(") -> ")) {
+      classes.back().decl_end_lines.push_back(index);
     }
   }
-  return offsets;
+  CARBON_CHECK(!in_class && !classes.empty(),
+               "Generated source has no classes to damage.");
+
+  // The damage plan below relies on the classes being interchangeable.
+  for (const auto& gen_class : classes) {
+    CARBON_CHECK(
+        !gen_class.decl_end_lines.empty() &&
+            gen_class.decl_end_lines.size() ==
+                classes.front().decl_end_lines.size(),
+        "Generated classes are expected to be structurally identical.");
+  }
+  return classes;
 }
 
-// Deletes the brackets at `offsets`, which must be sorted, closing up the text
-// so that nothing marks where they were.
-static auto DeleteOffsets(llvm::StringRef text, llvm::ArrayRef<size_t> offsets)
-    -> std::string {
-  std::string result;
-  result.reserve(text.size());
-  size_t prev = 0;
-  for (size_t offset : offsets) {
-    result.append(text.substr(prev, offset - prev));
-    prev = offset + 1;
-  }
-  result.append(text.substr(prev));
-  return result;
-}
+// How many of the generated classes each damage strategy harms: one in this
+// many, rounded down, but always at least one.
+constexpr int DamagedClassOneIn = 8;
 
-// Deletes one in every `one_in` brackets, chosen at random. With `one_in` equal
-// to the bracket count this deletes a single bracket.
-static auto DeleteBrackets(llvm::StringRef text, int one_in) -> std::string {
-  auto offsets = BracketOffsets(text);
-  CARBON_CHECK(!offsets.empty(), "Generated source has no brackets.");
-  absl::BitGen rng;
-
-  llvm::SmallVector<size_t> deleted;
-  int count = std::max<int>(1, offsets.size() / one_in);
-  llvm::SmallVector<size_t> remaining = offsets;
-  for (int i = 0; i < count && !remaining.empty(); ++i) {
-    int pick = absl::Uniform<int>(rng, 0, remaining.size());
-    deleted.push_back(remaining[pick]);
-    remaining.erase(remaining.begin() + pick);
-  }
-  llvm::sort(deleted);
-  return DeleteOffsets(text, deleted);
-}
-
-// Splits `text` into the blank-line separated hunks a generated file falls into
-// naturally, returning each hunk's lines.
-static auto SplitIntoHunks(llvm::StringRef text)
-    -> llvm::SmallVector<llvm::SmallVector<llvm::StringRef>> {
-  llvm::SmallVector<llvm::StringRef> lines;
-  text.split(lines, '\n');
-
-  llvm::SmallVector<llvm::SmallVector<llvm::StringRef>> hunks;
-  hunks.emplace_back();
-  for (llvm::StringRef line : lines) {
-    if (line.trim().empty()) {
-      hunks.emplace_back();
-    } else {
-      hunks.back().push_back(line);
-    }
-  }
-  return hunks;
-}
-
-// Truncates one in every `one_in` hunks partway through, by dropping everything
-// from a random line that closes a bracket to the end of that hunk. This is
-// what a declaration still being typed looks like: the body is there, the
-// closers that would end it are not.
-static auto TruncateHunks(llvm::StringRef text, int one_in) -> std::string {
-  auto hunks = SplitIntoHunks(text);
-  absl::BitGen rng;
-
-  // The hunks with a line that could be truncated at.
-  llvm::SmallVector<size_t> candidates;
-  for (auto [index, hunk] : llvm::enumerate(hunks)) {
-    if (llvm::any_of(hunk, [](llvm::StringRef line) {
-          return line.contains(')') || line.contains('}') || line.contains(']');
-        })) {
-      candidates.push_back(index);
-    }
-  }
-  CARBON_CHECK(!candidates.empty(), "Generated source has no closing bracket.");
-
-  int count = std::max<int>(1, candidates.size() / one_in);
-  for (int i = 0; i < count && !candidates.empty(); ++i) {
-    int pick = absl::Uniform<int>(rng, 0, candidates.size());
-    auto& hunk = hunks[candidates[pick]];
-    candidates.erase(candidates.begin() + pick);
-
-    llvm::SmallVector<size_t> closing_lines;
-    for (auto [index, line] : llvm::enumerate(hunk)) {
-      if (line.contains(')') || line.contains('}') || line.contains(']')) {
-        closing_lines.push_back(index);
-      }
-    }
-    hunk.resize(
-        closing_lines[absl::Uniform<int>(rng, 0, closing_lines.size())]);
-  }
-
-  llvm::SmallVector<llvm::StringRef> lines;
-  for (const auto& hunk : hunks) {
-    lines.append(hunk.begin(), hunk.end());
-    lines.push_back("");
-  }
-  return llvm::join(lines, "\n");
+// Selects which classes to damage: a deterministic count of trues, randomly
+// placed by a shuffle.
+static auto PickDamagedClasses(size_t num_classes, absl::BitGen& rng)
+    -> llvm::SmallVector<bool> {
+  size_t num_damaged = std::max<size_t>(1, num_classes / DamagedClassOneIn);
+  llvm::SmallVector<bool> damaged(num_classes, false);
+  std::fill_n(damaged.begin(), num_damaged, true);
+  std::shuffle(damaged.begin(), damaged.end(), rng);
+  return damaged;
 }
 
 // Lexes a fixed source text, which is what recovery runs inside of.
@@ -467,29 +427,96 @@ class LexBenchHelper {
 };
 
 // The damage strategies the whole-file benchmarks sweep. `None` is the
-// control: recovery never runs, so it measures the lexer alone.
+// control: recovery never runs, so it measures the lexer alone. Each of the
+// others damages one in `DamagedClassOneIn` of the generated classes, all in
+// the same structural way:
+//
+// - `DeclParenDeleted` deletes the closing paren of one declaration in each
+//   damaged class: a single-character typo whose damage stays inside the
+//   class.
+// - `ClassBraceDeleted` deletes each damaged class's closing brace, leaving
+//   its opening brace with nothing to match.
+// - `ClassTruncated` cuts each damaged class off halfway through its members,
+//   which is what a declaration still being typed looks like: the body is
+//   there, the closers that would end it are not.
 enum class Damage : uint8_t {
   None,
-  OneBracketDeleted,
-  EighthOfBracketsDeleted,
-  OneHunkTruncated,
-  EighthOfHunksTruncated,
+  DeclParenDeleted,
+  ClassBraceDeleted,
+  ClassTruncated,
 };
 
 // Applies `damage` to `text`.
 static auto ApplyDamage(std::string text, Damage damage) -> std::string {
-  switch (damage) {
-    case Damage::None:
-      return text;
-    case Damage::OneBracketDeleted:
-      return DeleteBrackets(text, BracketOffsets(text).size());
-    case Damage::EighthOfBracketsDeleted:
-      return DeleteBrackets(text, 8);
-    case Damage::OneHunkTruncated:
-      return TruncateHunks(text, SplitIntoHunks(text).size());
-    case Damage::EighthOfHunksTruncated:
-      return TruncateHunks(text, 8);
+  if (damage == Damage::None) {
+    return text;
   }
+
+  llvm::SmallVector<llvm::StringRef> lines;
+  llvm::StringRef(text).split(lines, '\n');
+  // The text ends with a newline, so drop the empty line after the last one
+  // rather than treating it as a line of its own.
+  CARBON_CHECK(!lines.empty() && lines.back().empty());
+  lines.pop_back();
+
+  auto classes = FindClasses(lines);
+  absl::BitGen rng;
+  llvm::SmallVector<bool> damaged = PickDamagedClasses(classes.size(), rng);
+
+  // The planned damage: lines to drop entirely, and single columns to delete.
+  llvm::SmallVector<bool> drop_line(lines.size(), false);
+  llvm::SmallVector<int32_t> delete_column(lines.size(), -1);
+
+  for (auto [class_index, gen_class] : llvm::enumerate(classes)) {
+    if (!damaged[class_index]) {
+      continue;
+    }
+    switch (damage) {
+      case Damage::None:
+        CARBON_FATAL("Handled above.");
+      case Damage::DeclParenDeleted: {
+        // Every declaration has exactly one closing paren, at the same depth,
+        // so which one loses it is a structurally neutral choice.
+        size_t line = gen_class.decl_end_lines[absl::Uniform<size_t>(
+            rng, 0, gen_class.decl_end_lines.size())];
+        size_t column = lines[line].find(") -> ");
+        CARBON_CHECK(column != llvm::StringRef::npos);
+        delete_column[line] = static_cast<int32_t>(column);
+        break;
+      }
+      case Damage::ClassBraceDeleted: {
+        drop_line[gen_class.close_line] = true;
+        break;
+      }
+      case Damage::ClassTruncated: {
+        // Drop everything after the class's midpoint declaration, including
+        // the closing brace. Every class is cut at the same structural point.
+        size_t cut =
+            gen_class.decl_end_lines[gen_class.decl_end_lines.size() / 2];
+        for (size_t line = cut + 1; line <= gen_class.close_line; ++line) {
+          drop_line[line] = true;
+        }
+        break;
+      }
+    }
+  }
+
+  // Reassemble the file with the damage applied.
+  std::string result;
+  result.reserve(text.size());
+  for (auto [index, line] : llvm::enumerate(lines)) {
+    if (drop_line[index]) {
+      continue;
+    }
+    if (delete_column[index] >= 0) {
+      result.append(line.substr(0, delete_column[index]));
+      result.append(line.substr(delete_column[index] + 1));
+    } else {
+      result.append(line);
+    }
+    result.push_back('\n');
+  }
+  return result;
 }
 
 // Benchmark on multiple files of the same size but with different source code
@@ -571,13 +598,11 @@ static auto ConfigureLexBenchmark(benchmark::Benchmark* b) -> void {
 }
 
 BENCHMARK(BM_LexApiFileDenseDecls<Damage::None>)->Apply(ConfigureLexBenchmark);
-BENCHMARK(BM_LexApiFileDenseDecls<Damage::OneBracketDeleted>)
+BENCHMARK(BM_LexApiFileDenseDecls<Damage::DeclParenDeleted>)
     ->Apply(ConfigureLexBenchmark);
-BENCHMARK(BM_LexApiFileDenseDecls<Damage::EighthOfBracketsDeleted>)
+BENCHMARK(BM_LexApiFileDenseDecls<Damage::ClassBraceDeleted>)
     ->Apply(ConfigureLexBenchmark);
-BENCHMARK(BM_LexApiFileDenseDecls<Damage::OneHunkTruncated>)
-    ->Apply(ConfigureLexBenchmark);
-BENCHMARK(BM_LexApiFileDenseDecls<Damage::EighthOfHunksTruncated>)
+BENCHMARK(BM_LexApiFileDenseDecls<Damage::ClassTruncated>)
     ->Apply(ConfigureLexBenchmark);
 
 }  // namespace
