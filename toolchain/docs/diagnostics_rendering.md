@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [The rendered form](#the-rendered-form)
     -   [The parts of a frame](#the-parts-of-a-frame)
     -   [Finding the message](#finding-the-message)
-    -   [Hanging the words](#hanging-the-words)
+    -   [Hanging the text](#hanging-the-text)
     -   [Several files in one diagnostic](#several-files-in-one-diagnostic)
     -   [The compact form](#the-compact-form)
     -   [Diagnostics from C++ interop](#diagnostics-from-c-interop)
@@ -32,6 +32,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Examples](#examples)
     -   [Several labels on one line](#several-labels-on-one-line)
     -   [Several files, reached by an import](#several-files-reached-by-an-import)
+    -   [Labels from the operations underway](#labels-from-the-operations-underway)
     -   [Without color or Unicode](#without-color-or-unicode)
 -   [Implementation](#implementation)
     -   [Command line flags](#command-line-flags)
@@ -63,53 +64,35 @@ drawing minus what moving a line would re-render from
 
 ## What a diagnostic is made of
 
-A diagnostic reports one problem. Its **message** is the sentence saying what
-is wrong. It is read hung off the range it marks in the rendered form and alone
-in the compact form or an editor, so it is worded for both, and it carries the
-location an editor would jump a cursor to.
+A diagnostic reports one problem. It has a **kind**, its identity in the
+registry and what a test matches on, and a **level**, `error` or `warning`.
 
-**Labels** are attached to the message. A label is a range of source with
-optional words saying what that range has to do with the problem, read against
-the code it marks: `declared here` is not a sentence anyone would read alone. A
-label with no words says only "look here": on the message's line it is how a
-diagnostic points at the code its message is about without repeating the
-message, and elsewhere it is what a Clang note's ranges say. Carbon's own
-labels on another line carry words.
+Its **message** is the one sentence saying what is wrong, led by the level
+word. It carries the **location** an editor would jump a cursor to and one or
+more **ranges** the problem covers: the location's own, plus any the emitter
+added, such as the operand of an `&` that has no address to take. A range
+holding the location stands in for it, and the message's text hangs off that
+range; every other range is marked on its own. The text is read hung off its
+range in the rendered form and alone in the compact form or an editor, so it
+is worded for both.
 
-A label's range is `Primary`, directly part of the problem, or `Info`,
-explaining it, as `rustc` distinguishes primary from secondary spans and Clang a
-diagnostic from its notes. A primary range takes the level's color and marks
-its line in the margin; an informational one takes the note color.
+**Labels** are attached to the message to explain it. A label is a range of
+source with optional **text** saying what that range has to do with the
+problem, read against the code it marks: `declared here` is not a sentence
+anyone would read alone. A label with no text says only "look here", which is
+all a Clang note's ranges have to say.
 
-Two other things reach the renderer, each with words that stand as a sentence:
+The **path** is how the message's location was reached: an import, an
+`#include`, a macro expansion. Each **step** draws as a single
+`<text>: <location>` row above the anchor of the file it leads to, with no
+snippet. The emitter calls a step location information.
 
--   A **context** names the operation the problem happened inside, in a sentence
-    of its own. The outermost context is the sentence the level word leads, hung
-    off the operation's range with the message's emphasis; each context inside
-    it, and then the message, hangs off its own range like a label, still in the
-    level's color. Here the message is the last label:
-
-    ```
-           ╭─┤ call.carbon:8:3
-         4 │   var unused v: Core.Int(N);
-           ·                 ─────┬─────
-           ·                      ╰──┤ `Core.Int(N)` evaluates to incomplete type `i0`
-           ┆
-    ->   8 │   ErrorIfNIsZero(0);
-           ·   ━━━━━━━┳━━━━━━
-           ·          ┗━━┫ error: unable to monomorphize specific `ErrorIfNIsZero(0)`
-           ┆
-           ├─┤ int.carbon:18:9
-        18 │   adapt MakeInt(N);
-           ·         ─────┬────
-           ·              ╰──┤ integer type width of 0 is not positive
-           ╰────
-    ```
-
--   **Location information** is one step in the path by which a location was
-    reached: an import, an `#include`, a macro expansion. It draws as a single
-    `<text>: <location>` row above the anchor of the file it leads to, with no
-    snippet. This document calls those rows the **path**.
+Which code emits the message and which attaches a label is the emitter's
+concern: a callee that can't state the problem as well as its caller builds
+the message through a diagnoser the caller passes down, and a caller that only
+knows what it was in the middle of attaches a label to everything emitted
+inside a context scope. [Diagnostics](/toolchain/docs/diagnostics.md) covers
+both. Either way, one message leads and everything else explains it.
 
 ## Prior art
 
@@ -233,12 +216,12 @@ it, off the exact range that is wrong:
        ╷ ╭── imported from: c.carbon:2:1        path row
        ├─┤ b.carbon:3:1                         anchor
 ->   3 │ fn Shape() {}                          source row, marked in the margin
-       · ━━━━━━┳━━━━━                           annotation row: the mark
-       ·       ┗━━┫ error: duplicate name ...   label row: connector, bar, words
+       · ━━━━━━┳━━━━━                           mark row: the mark
+       ·       ┗━━┫ error: duplicate name ...   label row: connector, bar, text
        ┆                                        elision
        ├─┤ a.carbon:3:7                         anchor for a second file
      3 │ class Shape {}                         source row
-       ·       ──┬──                            annotation row
+       ·       ──┬──                            mark row
        ·         ╰──┤ previously declared here  label row
        ╰────                                    close
 ```
@@ -259,16 +242,16 @@ it, off the exact range that is wrong:
     number takes the level's color: that is where to begin reading, wherever
     it sits in the frame.
 
--   An **annotation row** holds the **marks**, the underlines under ranges,
-    with `·` in place of the frame so it doesn't read as source. The message's
-    mark is heavy; every other mark is light, in the level's colors for a
-    range that is part of the problem and the note color for one that only
-    explains it. Everything marking one line goes on one row.
+-   A **mark row** holds the **marks**, the underlines under ranges, with `·`
+    in place of the frame so it doesn't read as source. The mark the message
+    hangs off is heavy; every other mark is light, in the level's colors for
+    another of the message's ranges and the label color for a label's.
+    Everything marking one line goes on one row.
 
--   A **label row** carries the words hanging off a mark: a **connector**
-    leaves the mark through a tee and reaches the **bar** framing the words,
+-   A **label row** carries the text hanging off a mark: a **connector**
+    leaves the mark through a tee and reaches the **bar** framing the text,
     `╰──┤`. The message's row is a label row led by the **level word**,
-    `error:`, with bold words and a heavy connector and bar.
+    `error:`, with bold text and a heavy connector and bar.
 
 -   An **elision row**, `┆`, dots the frame across whatever isn't contiguous:
     skipped lines, or the step to the next anchor. A single skipped line is
@@ -279,8 +262,8 @@ it, off the exact range that is wrong:
 
 -   A part with **no source**, because its location names only a file or nothing
     at all, is the fallback. It still gets an anchor, naming what location it
-    has or `<no location>`, and its words hang from the anchor in place of a
-    mark, from the source's first column. A message's words hang the same way,
+    has or `<no location>`, and its text hangs from the anchor in place of a
+    mark, from the source's first column. A message's text hangs the same way,
     led by the level word, with the `->` on its anchor, and the file's other
     ranges follow under that anchor past an elision:
 
@@ -323,31 +306,31 @@ where one problem ends and the next begins. Each file the diagnostic points into
 gets an anchor inside that frame, and the frame dots through `┆` rather than
 breaking.
 
-The message hangs off its own range unless a primary range contains its
-location, in which case that range stands in for it entirely: the message's
+The message hangs off its location's range unless another of its ranges holds
+that location, in which case that range stands in for it entirely: the
 location is a point chosen for a cursor, and the range says what the problem
 covers. Overlapping ranges are drawn widest first, so the narrowest mark on a
 column shows, except that the heavy mark is drawn last so nothing repaints it. A
 range inside it shows only as the tee its connector leaves the heavy stroke by,
-or not at all if it has no words.
+or not at all if it has no text.
 
-### Hanging the words
+### Hanging the text
 
-The rows under an annotation row hold the words hanging off its marks, laid out
-by these rules in this order.
+The rows under a mark row hold the text hanging off its marks, laid out by
+these rules in this order.
 
 **Order.** The rows read top to bottom the way the code reads left to right: the
-message first, then each label in the order of its range. Each label's words
-start two columns right of the words above, so the indentation steps with the
+message first, then each label in the order of its range. Each label's text
+starts two columns right of the text above, so the indentation steps with the
 order.
 
-**Meeting the words.** A connector reaches the bar on the first row of its
-words, where the level word is, so a reader following the heavy line lands where
-the sentence begins. The bar continues down every row the words wrap onto.
+**Meeting the text.** A connector reaches the bar on the first row of its text,
+where the level word is, so a reader following the heavy line lands where the
+sentence begins. The bar continues down every row the text wraps onto.
 
-**Placement.** Every label's words, the message's included, start right of every
+**Placement.** Every label's text, the message's included, starts right of every
 connector's column, so a connector descending to a later label runs beside the
-words above it, never behind them.
+text above it, never behind it.
 
 **Crossings.** Reading order makes a later connector descend through rows
 already hung. Earlier rows keep their ink: the descending line breaks around
@@ -356,8 +339,8 @@ two don't connect. On a terminal wide enough that nothing wraps this is the
 common shape: a label right of a one-row message descends `┬`, a gap, `╰`,
 with no vertical cell showing. The tee and the corner carry it.
 
-**Out-dented blocks.** Words that cannot hang, because their widest word does
-not fit right of the connector, are out-dented to the source's column (see
+**Out-dented blocks.** Text that cannot hang, because its widest word does not
+fit right of the connector, is out-dented to the source's column (see
 [Fitting the terminal](#fitting-the-terminal)). A block owns its rows outright,
 blank cells included, so a connector descending past it skips those rows and
 resumes below.
@@ -366,10 +349,10 @@ resumes below.
 type or snippet moves to the next row whole or overhangs like a path.
 
 A mark and the connector and bar of its label take the color of the message they
-belong to, following `rustc`; the label's words do not, since color belongs on
-what they point at. Only the message's marks are heavy and bold: the heavy
+belong to, following `rustc`; the label's text does not, since color belongs on
+what it points at. Only the message's marks are heavy and bold: the heavy
 strokes carry the emphasis where a terminal ignores bold on line art, and bold
-matches the marks to the words where it doesn't.
+matches the marks to the text where it doesn't.
 
 Ranges that touch would run together, so an end that meets another range stops
 at the center of its cell, leaving a gap, but only where the range can still
@@ -383,8 +366,8 @@ ASCII has no half cell and gives the gap up.
 Each file a diagnostic points into gets an anchor, in the order the parts reach
 it, and the frame runs down through all of them.
 
-Only the path to the problem itself is drawn: the message's own location and a
-context's, never a label's. How the file holding a declaration was reached is
+Only the path to the problem itself is drawn: the message's own location, never
+a label's. How the file holding a declaration was reached is
 rarely worth a reader's time, since there is one `import` to find and the
 filename already names the file; Clang and GCC suppress note include stacks for
 the same reason. Where the problem itself is in a reached file, as when two
@@ -398,7 +381,7 @@ why they say `included from` rather than `in file included here`.
 
 Where there is no source to frame, the terminal is under 60 columns wide, or
 `--no-diagnostic-snippets` asked for it, a diagnostic renders as one line per
-part with words, each led by its location and the extent of its range (none for
+part with text, each led by its location and the extent of its range (none for
 a single column):
 
 ```
@@ -418,13 +401,13 @@ Sixty columns is a guess; nothing depends on it being right.
 ### Diagnostics from C++ interop
 
 Clang's diagnostics are drawn here rather than by Clang. Its message, location,
-ranges, and fix-its each become the thing they correspond to. A location names
-a point and is marked as the one column Clang's caret marks; a range holding
-that point stands in for it, the `~~~` of `^~~~`, so the words hang off the
-whole range. Every other range becomes a wordless mark, in the level's color
-for the diagnostic's own and the note color for a note's, as Clang would draw
-it. A fix-it becomes a label saying what to do, which survives the compact form
-where an inline rendering would not; carrying the edit as data is
+ranges, and fix-its each become the thing they correspond to. A location names a
+point and is marked as the one column Clang's caret marks; a range holding that
+point stands in for it, the `~~~` of `^~~~`, so the text hangs off the whole
+range. The diagnostic's other ranges are the message's, in the level's color; a
+note's are labels with no text, in the label color, as Clang would draw them. A
+fix-it becomes a label saying what to do, which survives the compact form where
+an inline rendering would not; carrying the edit as data is
 [future work](#future-work).
 
 `SemIR::ConvertClangRangeToLoc` turns a Clang range into the location the
@@ -453,14 +436,14 @@ Styles are named for what they mark, so changing a color is one edit.
 | :--------------------------- | :-------------------- | :------------------------------------------------------------------------------------------ |
 | `error`                      | bold, bright red      | Clang, GCC, and `rustc` agree.                                                              |
 | `warning`                    | bold, bright yellow   | `rustc`'s choice and the conventional caution color; Clang and GCC use magenta.             |
-| `note`                       | bold, bright cyan     | GCC's choice; distinct from error and warning at any brightness. Leads only a compact line, since a label's words hang off a mark or an anchor instead. |
+| `note`                       | bold, bright cyan     | GCC's choice; distinct from error and warning at any brightness. Leads a label's line in the compact form; in the frame a label's text hangs off its mark or anchor with no level word. |
 | Message                      | bold, no color        | The longest run of text; color belongs on what it points at. Bold only when hung against code. |
 | Frame                        | bold, bright blue     | `rustc`'s choice. Not dim, which several terminals don't implement.                        |
 | Line numbers                 | bright blue           | Not bold, so the one number colored as the reported line stands out.                        |
 | Location in an anchor        | plain                 | The bracket already delimits it.                                                            |
 | Location in the compact form | bold                  | Leads the line with nothing around it.                                                      |
 | The message's marks          | the level color, bold | One assembly from range to sentence.                                                        |
-| Other marks and connectors   | the theme's ramp      | Ties a mark to its words. Not bold or heavy: that emphasis is the message's alone.          |
+| A label's marks and connectors | the label ramp      | Ties a mark to its text. Not bold or heavy: that emphasis is the message's alone.           |
 | Path                         | dim                   | How the reader got here, not what is wrong.                                                 |
 | Kind                         | dim                   | Only present under a flag.                                                                  |
 
@@ -473,12 +456,12 @@ colors are given as RGB, and each theme gets a ramp of three:
 | :------ | :---------------------------- | :---------------------------- |
 | Error   | `#b55600` `#ff7261` `#ffbcc8` | `#803500` `#d00000` `#ff286a` |
 | Warning | `#518600` `#acac00` `#ffc921` | `#3d5900` `#737300` `#ad8c00` |
-| Note    | `#00829a` `#00bcbc` `#00f3c6` | `#005967` `#007f7f` `#00a78e` |
+| Label   | `#00829a` `#00bcbc` `#00f3c6` | `#005967` `#007f7f` `#00a78e` |
 
 A ramp is handed out darker, center, lighter, so several ranges on one line read
 as a progression; a range with no others of its theme beside it takes the
-center. The message's mark always takes the center, and the other problem
-ranges on its line walk the ramp with the center left out.
+center. The mark the message hangs off always takes the center, and its other
+ranges on that line walk the ramp with the center left out.
 
 The three centers sit at one lightness: bright yellow is over four times the
 luminance of bright red, which would put a warning above an error on an axis
@@ -498,7 +481,7 @@ full strength would make the frame as loud as the code.
 | :-------------------------- | :---------------- | :----------------------- |
 | Frame and connectors        | `│ ╭ ├ ╰ ─ ┤ ╯`   | `\| . \| ' - \| '`       |
 | Frame stub above a path row | `╷`               | `\|`                     |
-| Annotation separator        | `·`               | `:`                      |
+| Mark and label rows' frame  | `·`               | `:`                      |
 | Elision                     | `┆`               | `:`                      |
 | Light marks                 | `─ ┬ ╷ ╴ ╶`       | `- . \| - -`             |
 | The message's marks         | `━ ┳ ┗ ┫ ┃ ╻ ╸ ╺` | `^ ^ ' \| \| ^ ^ ^`      |
@@ -554,10 +537,10 @@ the gutter, so a formatted line is shown whole.
     another diagnostic. Wrapping breaks only at spaces outside backticks, so a
     path, a URL, or a quoted type overhangs rather than splitting.
 
--   Connectors slide left before any words wrap. Since words start right of
-    every connector, room for one label's words is every connector's to make:
-    each connector right of where the words need to start slides within its
-    own range, only as far as the widest words ask, whoever's words they are.
+-   Connectors slide left before any text wraps. Since text starts right of
+    every connector, room for one label's text is every connector's to make:
+    each connector right of where the text needs to start slides within its
+    own range, only as far as the widest word asks, whoever's it is.
 
 -   A label whose widest word cannot hang even then is out-dented to the
     source's column, keeping its place in the reading order, with the top of
@@ -577,8 +560,9 @@ the buffer that draws it, so the two agree.
 
 ## Examples
 
-These are the renderer's output on a terminal with 24-bit color and Unicode,
-and last on one with neither, transcribed by hand; the tour CI checks is
+These are the renderer's output transcribed by hand: two on a terminal with
+24-bit color and Unicode, one without color, and the last with neither. The
+tour CI checks is
 `toolchain/diagnostics/testdata/fail_diagnostics_demo.carbon`. Generating them
 is the HTML target under [Future work](#future-work).
 
@@ -587,11 +571,10 @@ is the HTML target under [Future work](#future-work).
 The message hangs off the operator, which ties the syntax to the interface it
 reports missing, a rule the reader has no other way to learn. The operands are
 labeled with the types they contributed, since a type is nothing the source can
-show. The marks walk the error ramp around the message's center, the labels
-read in operand order stepping right, and the right operand's connector runs
-beside the message, crossing its run in single cells. That connector stands at
-its range's start rather than its middle: the message's words wanted the
-columns.
+show. Their marks walk the label ramp, the labels read in operand order
+stepping right, and the right operand's connector runs beside the message,
+crossing its run in single cells. That connector stands at its range's start
+rather than its middle: the message's text wanted the columns.
 
 <!-- The colored examples are the renderer's terminal output with its ANSI
 styling transcribed into inline-styled HTML, so that the rendered markdown
@@ -603,11 +586,11 @@ rendered rather than raw. -->
 <pre>
        <span style="color:#69f;font-weight:bold">╭─┤</span> example.carbon:4:16
 <span style="color:#ff7261;font-weight:bold">-&gt;</span>   <span style="color:#ff7261;font-weight:bold">4</span> <span style="color:#69f;font-weight:bold">│</span>   return count * flag;
-       <span style="color:#ff7261">·</span>          <span style="color:#b55600">──┬──</span> <span style="color:#ff7261;font-weight:bold">┳</span> <span style="color:#ffbcc8">┬───
-</span>       <span style="color:#ff7261">·</span>            <span style="color:#b55600">│</span>   <span style="color:#ff7261;font-weight:bold">┗━━━━┫</span> <span style="color:#ff7261;font-weight:bold">error: </span><span style="font-weight:bold">type `i32` does not implement interface
-</span>       <span style="color:#ff7261">·</span>            <span style="color:#b55600">│</span>     <span style="color:#ffbcc8">│</span>  <span style="color:#ff7261;font-weight:bold">┃</span>        <span style="font-weight:bold">`Core.MulWith(bool)`
-</span>       <span style="color:#ff7261">·</span>            <span style="color:#b55600">╰──────────┤</span> left operand has type `i32`
-       <span style="color:#ff7261">·</span>                  <span style="color:#ffbcc8">╰──────┤</span> right operand has type `bool`
+       <span style="color:#ff7261">·</span>          <span style="color:#00829a">──┬──</span> <span style="color:#ff7261;font-weight:bold">┳</span> <span style="color:#00bcbc">┬───
+</span>       <span style="color:#ff7261">·</span>            <span style="color:#00829a">│</span>   <span style="color:#ff7261;font-weight:bold">┗━━━━┫</span> <span style="color:#ff7261;font-weight:bold">error: </span><span style="font-weight:bold">type `i32` does not implement interface
+</span>       <span style="color:#ff7261">·</span>            <span style="color:#00829a">│</span>     <span style="color:#00bcbc">│</span>  <span style="color:#ff7261;font-weight:bold">┃</span>        <span style="font-weight:bold">`Core.MulWith(bool)`
+</span>       <span style="color:#ff7261">·</span>            <span style="color:#00829a">╰──────────┤</span> left operand has type `i32`
+       <span style="color:#ff7261">·</span>                  <span style="color:#00bcbc">╰──────┤</span> right operand has type `bool`
        <span style="color:#69f;font-weight:bold">╰────</span>
 </pre>
 
@@ -617,7 +600,7 @@ rendered rather than raw. -->
 
 The problem is in an imported file, so the path by which the reader's own build
 reached it draws above its anchor, dim. The declaration it collides with gets a
-bare anchor, since a label's path is never drawn, and the note marks the name.
+bare anchor, since a label's path is never drawn, and the label marks the name.
 
 <!-- rumdl-disable -->
 
@@ -636,6 +619,31 @@ bare anchor, since a label's path is never drawn, and the note marks the name.
 </pre>
 
 <!-- rumdl-enable -->
+
+### Labels from the operations underway
+
+The error is in the prelude, where `MakeInt` rejects a width of zero, so that
+is where the message hangs. The reader's own code carries the labels: each
+operation the checker was in the middle of, monomorphizing a specific and
+completing a type, attached one to whatever was diagnosed inside it.
+
+```
+       ╭─┤ int.carbon:18:9
+->  18 │   adapt MakeInt(N);
+       ·         ━━━━━┳━━━━
+       ·              ┗━━┫ error: integer type width of 0 is not positive
+       ┆
+       ├─┤ call.carbon:4:17
+     4 │   var unused v: Core.Int(N);
+       ·                 ─────┬─────
+       ·                      ╰──┤ in monomorphization of `i0` here
+       ·                      ╰────┤ in completion of type `i0` here
+       ┆
+     8 │   ErrorIfNIsZero(0);
+       ·   ───────┬──────
+       ·          ╰──┤ in monomorphization of `ErrorIfNIsZero(0)` here
+       ╰────
+```
 
 ### Without color or Unicode
 
@@ -730,7 +738,7 @@ opts out of the default numbering, which the diagnostics tour relies on.
 
 None of this is needed for the rendering to be useful.
 
--   Removing location-less notes: everything that reaches the renderer with
+-   Removing location-less parts: everything that reaches the renderer with
     only a filename, such as conversions in compiler-generated thunks and C++
     imports without a mapped location, restructured to carry one, and a
     diagnostic about a file as a whole anchored at its start or end.
@@ -835,7 +843,7 @@ None of this is needed for the rendering to be useful.
     frame.
 
 -   Reverse video on the source row instead of an underline, which halves a
-    snippet's rows. It says nothing without color, and the annotation row is
+    snippet's rows. It says nothing without color, and the mark row is
     where every connector tees in.
 
 -   Emoji for the severity. They are one column in some terminals and two in
