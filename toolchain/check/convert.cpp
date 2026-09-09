@@ -1886,7 +1886,7 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
 
       if (target_.kind == ConversionTarget::Discarded) {
         DiscardInitializer(context_, expr_id);
-        return Done{SemIR::InstId::None};
+        return Done{expr_id};
       } else if (IsValidExprCategoryForConversionTarget(category,
                                                         target_.kind)) {
         return Done{expr_id};

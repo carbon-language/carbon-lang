@@ -375,6 +375,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       inst_ir->constant_values().GetInstAs<SemIR::InstValue>(inst_value_id);
   if (inst_ir == &context.sem_ir()) {
     // Easy case: same file. Just emit the spliced instruction.
+    context.AddInstToCurrentFingerprint(inst_value.inst_id);
     context.LowerInst(inst_value.inst_id);
     context.SetLocal(inst_id, context.GetValue(inst_value.inst_id));
   } else {
