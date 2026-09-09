@@ -3462,8 +3462,17 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region) -> void {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
-  auto eval_block_id = context.generics().Get(generic_id).GetEvalBlock(region);
+  const auto& generic = context.generics().Get(generic_id);
+  auto eval_block_id = generic.GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
+  auto self_param_id = SemIR::InstId::None;
+
+  if (auto function_decl =
+          context.insts().TryGetAs<SemIR::FunctionDecl>(generic.decl_id);
+      function_decl && function_decl->function_id.has_value()) {
+    self_param_id =
+        context.functions().Get(function_decl->function_id).self_param_id;
+  }
 
   // Allocate the value block and store it back onto the specific, so that our
   // in-progress results are visible.
@@ -3488,6 +3497,14 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
 
   for (auto [i, inst_id, result_id] :
        llvm::enumerate(eval_block, value_block)) {
+    auto orig_self_in_specific = context.self_in_specific();
+    // For methods, store the `Self` type for later use.
+    if (self_param_id.has_value()) {
+      auto self_type_id =
+          GetScrutineeTypeInSpecific(context, self_param_id, specific_id);
+      context.self_in_specific() = context.types().GetTypeInstId(self_type_id);
+    }
+
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     CARBON_CHECK(const_id.has_value(), "Failed to evaluate {0} in eval block",
@@ -3496,6 +3513,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
       specific.SetHasError(region);
     }
     result_id = context.constant_values().GetInstId(const_id);
+    context.self_in_specific() = orig_self_in_specific;
   }
 }
 
