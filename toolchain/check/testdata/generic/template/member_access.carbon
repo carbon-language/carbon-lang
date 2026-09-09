@@ -107,6 +107,37 @@ fn G(d: D) -> i32 {
     return F(d);
 }
 
+// --- protected_member_access.carbon
+
+library "[[@TEST_NAME]]";
+
+base class A {
+  protected var n: i32 = 1;
+}
+
+class B(template T: type) {
+  extend base: A;
+
+  fn F(self) -> i32 {
+    return self.n;
+  }
+}
+
+fn G() {
+  let b: B(i32) = {.base = {}};
+  // CHECK:STDERR: protected_member_access.carbon:[[@LINE+10]]:3: error: unable to monomorphize specific `F(i32)` [ResolvingSpecificHere]
+  // CHECK:STDERR:   b.F();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: protected_member_access.carbon:[[@LINE-9]]:12: note: cannot access protected member `n` of type `B(i32)` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:     return self.n;
+  // CHECK:STDERR:            ^~~~~~
+  // CHECK:STDERR: protected_member_access.carbon:[[@LINE-19]]:17: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   protected var n: i32 = 1;
+  // CHECK:STDERR:                 ^~~~~~
+  // CHECK:STDERR:
+  b.F();
+}
+
 // CHECK:STDOUT: --- simple_member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
