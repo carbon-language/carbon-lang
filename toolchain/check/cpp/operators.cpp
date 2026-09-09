@@ -580,9 +580,6 @@ static auto GetBuiltinOperatorInfo(clang::OverloadedOperatorKind kind)
   return OpTable[kind];
 }
 
-// Compute the interface scope from Core.
-//
-// FIXME: Cache this on Context.
 static auto GetCoreInterfaceNameScope(Context& context,
                                       CoreIdentifier interface_name)
     -> SemIR::NameScopeId {
@@ -603,6 +600,8 @@ static auto GetCoreInterfaceNameScope(Context& context,
         auto interface_id =
             ImportInterface(context, import_ir_id, import_interface_id);
         const auto& interface = context.interfaces().Get(interface_id);
+        // TODO: We should use the scope_with_self_id here, but we are matching
+        // what is done in custom_witness.cpp. Fix both.
         interface_scope_id = interface.scope_without_self_id;
         break;
       }
@@ -672,8 +671,10 @@ static auto TryBuildBuiltinOperator(
       break;
   }
 
-  auto interface_scope_id =
-      GetCoreInterfaceNameScope(context, info.interface_name);
+  auto interface_scope_result = context.core_interface_scope_cache().Insert(
+      info.interface_name,
+      [&] { return GetCoreInterfaceNameScope(context, info.interface_name); });
+  auto interface_scope_id = interface_scope_result.value();
 
   return MakeBuiltinOperatorFunction(context, arg_type_ids, return_type_id,
                                      info.op_name, info.builtin_kind,

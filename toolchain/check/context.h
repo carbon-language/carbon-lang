@@ -351,6 +351,10 @@ class Context {
   }
 
   auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
+  auto core_interface_scope_cache()
+      -> Map<CoreIdentifier, SemIR::NameScopeId>& {
+    return core_interface_scope_cache_;
+  }
 
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
@@ -624,6 +628,10 @@ class Context {
 
   // See `CoreIdentifierCache` for details.
   CoreIdentifierCache core_identifiers_;
+
+  // A cache of the name scope of the interface (with self) from a Core
+  // interface.
+  Map<CoreIdentifier, SemIR::NameScopeId> core_interface_scope_cache_;
 
   bool mangle_string_fingerprint_;
 };
