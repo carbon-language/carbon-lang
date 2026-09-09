@@ -472,6 +472,21 @@ auto FunctionContext::AddTypeToCurrentFingerprint(llvm::Type* type) -> void {
   current_fingerprint_.common_fingerprint.update(os.TakeStr());
 }
 
+auto FunctionContext::AddInstToCurrentFingerprint(SemIR::InstId inst_id)
+    -> void {
+  if (!function_fingerprint_) {
+    return;
+  }
+
+  // TODO: Add some support for fingerprinting spliced instructions so that at
+  // least in easy cases we can deduplicate templates.
+
+  // TODO: Replace indexes with info that is translation unit independent.
+  RawStringOstream os;
+  os << "inst_id" << inst_id.index << "\n";
+  current_fingerprint_.common_fingerprint.update(os.TakeStr());
+}
+
 auto FunctionContext::AddGlobalToCurrentFingerprint(llvm::Value* global)
     -> void {
   if (!function_fingerprint_ || !global) {
