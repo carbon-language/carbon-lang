@@ -124,6 +124,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           case SemIR::RequireSpecificDefinitionType::Kind:
           case SemIR::SpecificFunctionType::Kind:
           case SemIR::TypeType::Kind:
+          case SemIR::UnspecifiedValueType::Kind:
           case SemIR::VtableType::Kind:
           case SemIR::WitnessType::Kind: {
             os << self_inst.kind().ir_name();

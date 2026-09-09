@@ -14,7 +14,14 @@
 namespace Carbon::SemIR {
 
 // Returns the expression category for an instruction.
-auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
+//
+// If specified, `specific_file` and `specific_id` identify the specific in
+// which the instruction is being queried. `specific_file` can be `file` if the
+// specific is from the same file as the instruction, and can be `nullptr` if
+// `SpecificId::None` is specified.
+auto GetExprCategory(const File& file, InstId inst_id,
+                     const File* specific_file = nullptr,
+                     SpecificId specific_id = SpecificId::None) -> ExprCategory;
 
 // Returns whether the given expression category is for a reference expression.
 inline auto IsRefCategory(ExprCategory cat) -> bool {
