@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
@@ -108,9 +109,11 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorEqualId node_id)
   auto lhs_quals =
       context.types().GetUnqualifiedTypeAndQualifiers(lhs_type_id).second;
   if (auto lhs_cat = SemIR::GetExprCategory(context.sem_ir(), lhs_id);
-      (lhs_cat != SemIR::ExprCategory::DurableRef &&
-       lhs_cat != SemIR::ExprCategory::Error) ||
-      lhs_quals.HasAnyOf(SemIR::TypeQualifiers::Const)) {
+      ((lhs_cat != SemIR::ExprCategory::DurableRef &&
+        lhs_cat != SemIR::ExprCategory::Error) ||
+       lhs_quals.HasAnyOf(SemIR::TypeQualifiers::Const)) &&
+      OperandDependence(context, lhs_id) !=
+          SemIR::ConstantDependence::Template) {
     CARBON_DIAGNOSTIC(AssignmentToNonAssignable, Error,
                       "expression is not assignable");
     context.emitter().Emit(lhs_node, AssignmentToNonAssignable);
