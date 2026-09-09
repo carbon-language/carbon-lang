@@ -74,9 +74,8 @@ fn Run() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: imported from: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:1 [InImport]
+// CHECK:STDERR: imported from: fail_todo_main_use_other_extern.carbon:[[@LINE+3]]:1 [InImport]
 // CHECK:STDERR: other_fn_extern.carbon:4:1-14: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: imported from: fail_todo_main_use_other_extern.carbon:[[@LINE+2]]:1 [InImport]
 // CHECK:STDERR: other_fn.carbon:4:1-8: note: name is previously declared here [NameDeclPrevious]
 import Other library "other_fn";
 import Other library "other_fn_extern";
@@ -98,9 +97,8 @@ import Other library "other_fn_conflict";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: imported from: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:1 [InImport]
+// CHECK:STDERR: imported from: fail_main_use_other_ambiguous.carbon:[[@LINE+3]]:1 [InImport]
 // CHECK:STDERR: other_fn_conflict.carbon:4:1-20: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: imported from: fail_main_use_other_ambiguous.carbon:[[@LINE+2]]:1 [InImport]
 // CHECK:STDERR: other_fn.carbon:4:1-8: note: name is previously declared here [NameDeclPrevious]
 import Other library "other_fn";
 import Other library "other_fn_conflict";
@@ -116,14 +114,12 @@ fn Run() {
 library "[[@TEST_NAME]]";
 
 import library "main_other_ns";
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+4]]:1-32: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: imported from: fail_main_namespace_conflict.carbon:[[@LINE-2]]:1 [InImport]
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+3]]:1-32: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: main_other_ns.carbon:4:1-16: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
 import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+4]]:1-14: error: redeclaration of `fn F` is redundant [RedeclRedundant]
-// CHECK:STDERR: imported from: fail_main_namespace_conflict.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+3]]:1-14: error: redeclaration of `fn F` is redundant [RedeclRedundant]
 // CHECK:STDERR: other_fn.carbon:4:1-8: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn Other.F() {}
@@ -460,7 +456,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type.2a8c71.1: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.1be9f8.1: %F.type.2a8c71.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type.2a8c71.2: type = fn_type @F.loc15 [concrete]
+// CHECK:STDOUT:   %F.type.2a8c71.2: type = fn_type @F.loc13 [concrete]
 // CHECK:STDOUT:   %F.1be9f8.2: %F.type.2a8c71.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -479,12 +475,12 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %F.decl: %F.type.2a8c71.2 = fn_decl @F.loc15 [concrete = constants.%F.1be9f8.2] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.2a8c71.2 = fn_decl @F.loc13 [concrete = constants.%F.1be9f8.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1 [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.loc15() {
+// CHECK:STDOUT: fn @F.loc13() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

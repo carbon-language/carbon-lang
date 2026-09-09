@@ -56,8 +56,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "enum.h";
 
 fn F() {
-  // CHECK:STDERR: fail_non_enum_member.carbon:[[@LINE+4]]:29-38: error: member name `d` not found in `Cpp.Enum` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR: included from: fail_non_enum_member.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_non_enum_member.carbon:[[@LINE+3]]:29-38: error: member name `d` not found in `Cpp.Enum` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR: ./enum.h:2:6: note: `Cpp.Enum` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   let unused c: Cpp.Other = Cpp.Enum.d;

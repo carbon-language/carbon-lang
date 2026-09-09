@@ -45,8 +45,7 @@ fn F[T: Transitive](t: T) {
   var b: T.B = a;
   b.InQ();
 
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+4]]:3-15: error: cannot convert type `T.(Transitive.A)` that implements `Core.Destroy & P` into type implementing `R` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: imported from: fail_todo_equivalent.carbon:[[@LINE-13]]:1 [InImport]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+3]]:3-15: error: cannot convert type `T.(Transitive.A)` that implements `Core.Destroy & P` into type implementing `R` [ConversionFailureFacetToFacet]
   // CHECK:STDERR: transitive.carbon:5:15-27: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   a.(T.C.InR)();
@@ -122,8 +121,7 @@ fn G[T: Transitive](t: T) {
   observe T.A == T.B == T.C;
 
   var a: T.A = t.GetA();
-  // CHECK:STDERR: fail_todo_same_observe_in_both_scopes.carbon:[[@LINE+4]]:3-15: error: cannot convert type `T.(Transitive.A)` that implements `Core.Destroy & P` into type implementing `R` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: imported from: fail_todo_same_observe_in_both_scopes.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: fail_todo_same_observe_in_both_scopes.carbon:[[@LINE+3]]:3-15: error: cannot convert type `T.(Transitive.A)` that implements `Core.Destroy & P` into type implementing `R` [ConversionFailureFacetToFacet]
   // CHECK:STDERR: transitive.carbon:5:15-27: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   a.(T.C.InR)();
@@ -321,8 +319,7 @@ impl C as A {}
 fn F[T: I(C)](t: T) {
   var u: T.U = t.GetU();
 
-  // CHECK:STDERR: fail_todo_generic_import.carbon:[[@LINE+4]]:3-13: error: cannot convert type `T.(I(C as A & Core.Destroy).U)` that implements `Core.Destroy & B where...` into type implementing `A & Core.Destroy` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: imported from: fail_todo_generic_import.carbon:[[@LINE-9]]:1 [InImport]
+  // CHECK:STDERR: fail_todo_generic_import.carbon:[[@LINE+3]]:3-13: error: cannot convert type `T.(I(C as A & Core.Destroy).U)` that implements `Core.Destroy & B where...` into type implementing `A & Core.Destroy` [ConversionFailureFacetToFacet]
   // CHECK:STDERR: generic_observe.carbon:10:3-24: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   t.TakesT(u);

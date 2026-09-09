@@ -380,8 +380,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "final.h";
 
 class B {
-  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+4]]:16-25: error: deriving from final type `FinalA`; base type must be an `abstract` or `base` class [BaseIsFinal]
-  // CHECK:STDERR: included from: fail_derive_from_final.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+3]]:16-25: error: deriving from final type `FinalA`; base type must be an `abstract` or `base` class [BaseIsFinal]
   // CHECK:STDERR: ./final.h:2:8: note: declared without `abstract` or `base` here [BaseClassNotInheritable]
   // CHECK:STDERR:
   extend base: Cpp.FinalA;
@@ -398,8 +397,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "union.h";
 
 class V {
-  // CHECK:STDERR: fail_derive_from_union.carbon:[[@LINE+4]]:16-20: error: deriving from final type `U`; base type must be an `abstract` or `base` class [BaseIsFinal]
-  // CHECK:STDERR: included from: fail_derive_from_union.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_derive_from_union.carbon:[[@LINE+3]]:16-20: error: deriving from final type `U`; base type must be an `abstract` or `base` class [BaseIsFinal]
   // CHECK:STDERR: ./union.h:2:7: note: declared without `abstract` or `base` here [BaseClassNotInheritable]
   // CHECK:STDERR:
   extend base: Cpp.U;

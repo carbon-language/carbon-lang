@@ -129,10 +129,9 @@ fn MyF() {
   // file split.
   // TODO: Pass a location into Clang when performing C++ name lookup so that
   // its error has a location attached.
-  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+6]]:3-7: error: name `error` not found [NameNotFound]
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+5]]:3-7: error: name `error` not found [NameNotFound]
   // CHECK:STDERR:
   // CHECK:STDERR: error: reference to 'N' is ambiguous [CppInteropParseError]
-  // CHECK:STDERR: included from: fail_import_inline_ambiguity.carbon:[[@LINE-11]]:10 [InCppInclude]
   // CHECK:STDERR: ./inline_ambiguity.h:2:11: note: candidate found by name lookup is 'N' [CppInteropParseNote]
   // CHECK:STDERR: ./inline_ambiguity.h:3:30: note: candidate found by name lookup is '(anonymous namespace)::N' [CppInteropParseNote]
   error;
@@ -254,14 +253,12 @@ import library "namespace_alias";
 fn F() {
   // Imports are not implicitly re-exported, so lookup is expected to fail,
   // regardless of whether a lookup was performed in the imported file.
-  // CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+4]]:3-22: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR: imported from: fail_indirect_namespace_no_import.carbon:[[@LINE-6]]:1 [InImport]
+  // CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+3]]:3-22: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR: namespace_alias.carbon: note: `Cpp.my_namespace` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   MyNamespaceAlias.foo();
 
-  // CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+4]]:3-22: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR: imported from: fail_indirect_namespace_no_import.carbon:[[@LINE-12]]:1 [InImport]
+  // CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+3]]:3-22: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR: namespace_alias.carbon: note: `Cpp.my_namespace` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   MyNamespaceAlias.bar();
@@ -280,14 +277,12 @@ import Cpp;
 fn F() {
   // Imports are not implicitly re-exported, so name lookup is expected to
   // fail, regardless of whether a lookup was performed in the imported file.
-  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+4]]:3-22: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR: imported from: fail_indirect_namespace_no_local_decl.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+3]]:3-22: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR: namespace_alias.carbon: note: `Cpp.my_namespace` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   MyNamespaceAlias.foo();
 
-  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+4]]:3-22: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR: imported from: fail_indirect_namespace_no_local_decl.carbon:[[@LINE-13]]:1 [InImport]
+  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+3]]:3-22: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR: namespace_alias.carbon: note: `Cpp.my_namespace` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   MyNamespaceAlias.bar();
@@ -322,8 +317,7 @@ namespace my_namespace {
 fn F() {
   // Cpp imports are not implicitly re-exported, so name lookup is expected to
   // fail.
-  // CHECK:STDERR: fail_indirect_namespace_different_contents_invalid.carbon:[[@LINE+4]]:3-22: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR: imported from: fail_indirect_namespace_different_contents_invalid.carbon:[[@LINE-13]]:1 [InImport]
+  // CHECK:STDERR: fail_indirect_namespace_different_contents_invalid.carbon:[[@LINE+3]]:3-22: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR: namespace_alias.carbon: note: `Cpp.my_namespace` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   MyNamespaceAlias.foo();

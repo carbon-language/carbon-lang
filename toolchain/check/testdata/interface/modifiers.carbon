@@ -186,8 +186,7 @@ library "[[@TEST_NAME]]";
 import library "final_interfaces";
 
 class C {
-  // CHECK:STDERR: fail_impl_final.carbon:[[@LINE+4]]:3-23: error: attempted to implement `M`, which is final in interface `FinalMethod` [ImplFinalFunction]
-  // CHECK:STDERR: imported from: fail_impl_final.carbon:[[@LINE-4]]:1 [InImport]
+  // CHECK:STDERR: fail_impl_final.carbon:[[@LINE+3]]:3-23: error: attempted to implement `M`, which is final in interface `FinalMethod` [ImplFinalFunction]
   // CHECK:STDERR: final_interfaces.carbon:10:3-27: note: associated function M declared here [AssociatedFunctionHere]
   // CHECK:STDERR:
   impl as FinalMethod {

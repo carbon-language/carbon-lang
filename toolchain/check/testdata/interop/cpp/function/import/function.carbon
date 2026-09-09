@@ -83,8 +83,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE+5]]:3-12: error: no matching function for call to 'base' [CppInteropParseError]
-  // CHECK:STDERR: included from: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE+4]]:3-12: error: no matching function for call to 'base' [CppInteropParseError]
   // CHECK:STDERR: ./special_name.h:2:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./special_name.h:2:10-11: note: requires 0 arguments, but 1 was provided [CppInteropParseNoteReason]
   // CHECK:STDERR:

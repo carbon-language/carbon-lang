@@ -191,8 +191,7 @@ class D {
   // But that means it overlaps fully with the impl from the api file, which is
   // a separate error.
 
-  // CHECK:STDERR: fail_decl_of_imported_impl_in_new_scope.impl.carbon:[[@LINE+4]]:3-15: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-  // CHECK:STDERR: imported from: fail_decl_of_imported_impl_in_new_scope.impl.carbon:[[@LINE-8]]:1 [InImport]
+  // CHECK:STDERR: fail_decl_of_imported_impl_in_new_scope.impl.carbon:[[@LINE+3]]:3-15: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
   // CHECK:STDERR: decl_of_imported_impl_in_new_scope.carbon:5:1-13: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
   // CHECK:STDERR:
   impl C as Z {}

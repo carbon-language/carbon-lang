@@ -91,8 +91,7 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+4]]:1-10: error: only imported entities are valid for `export` [ExportNotImportedEntity]
-// CHECK:STDERR: imported from: fail_export_ns.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+3]]:1-10: error: only imported entities are valid for `export` [ExportNotImportedEntity]
 // CHECK:STDERR: base.carbon:8:1-13: note: name is declared here [ExportNotImportedEntitySource]
 // CHECK:STDERR:
 export NS;
@@ -114,8 +113,7 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE+4]]:8: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
-// CHECK:STDERR: imported from: fail_export_member.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_export_member.carbon:[[@LINE+3]]:8: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
 // CHECK:STDERR: base.carbon:4:1-9: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR:
 export C.x;

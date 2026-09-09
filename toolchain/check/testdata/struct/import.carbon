@@ -34,8 +34,7 @@ var c: C({.a = 1, .b = 2}) = F();
 // --- fail_bad_type.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+4]]:20: error: struct `{.a: i32, .b: i32}` has no field named `c` [StructInitUnexpectedFieldInLiteral]
-// CHECK:STDERR: imported from: fail_bad_type.impl.carbon:[[@LINE-2]]:1 [InImport]
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+3]]:20: error: struct `{.a: i32, .b: i32}` has no field named `c` [StructInitUnexpectedFieldInLiteral]
 // CHECK:STDERR: implicit.carbon:8:9-29: note: initializing generic parameter `S` declared here [InitializingGenericParam]
 // CHECK:STDERR:
 var c_bad: C({.c = 1, .d = 2}) = F();
