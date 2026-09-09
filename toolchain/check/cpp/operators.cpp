@@ -600,9 +600,7 @@ static auto GetCoreInterfaceNameScope(Context& context,
         auto interface_id =
             ImportInterface(context, import_ir_id, import_interface_id);
         const auto& interface = context.interfaces().Get(interface_id);
-        // TODO: We should use the scope_with_self_id here, but we are matching
-        // what is done in custom_witness.cpp. Fix both.
-        interface_scope_id = interface.scope_without_self_id;
+        interface_scope_id = interface.scope_with_self_id;
         break;
       }
     }

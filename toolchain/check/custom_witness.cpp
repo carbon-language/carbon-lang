@@ -633,8 +633,7 @@ static auto GetInterfaceScopeId(
     -> SemIR::NameScopeId {
   const auto& interface =
       context.interfaces().Get(query_specific_interface.interface_id);
-  // TODO: The containing scope of a function should be `scope_with_self_id`.
-  return interface.scope_without_self_id;
+  return interface.scope_with_self_id;
 }
 
 auto BuildPrimitiveCopyWitness(
