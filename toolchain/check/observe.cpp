@@ -50,7 +50,8 @@ auto UnpackObserve(Context& context, const SemIR::Observe& observe)
   auto impls_constraint_id = SemIR::InstId::None;
   for (auto operation_id :
        context.inst_blocks().GetOrEmpty(observe.operations_id)) {
-    CARBON_KIND_SWITCH(context.insts().Get(operation_id)) {
+    auto inst = context.insts().Get(operation_id);
+    CARBON_KIND_SWITCH(inst) {
       case CARBON_KIND(SemIR::ObserveEquivalent observe_equivalent): {
         if (operand_ids.empty()) {
           operand_ids.push_back(observe_equivalent.lhs_id);
@@ -66,7 +67,7 @@ auto UnpackObserve(Context& context, const SemIR::Observe& observe)
         break;
       }
       default: {
-        CARBON_FATAL("Unexpected inst kind: {0}", operation_id);
+        CARBON_FATAL("Unexpected inst kind: {0}", inst);
         break;
       }
     }

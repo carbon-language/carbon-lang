@@ -150,12 +150,12 @@ interface I {
   let T: Transitive;
 }
 
-fn F[T: I](t: T.T) {
-  var a: T.T.A = t.GetA();
+fn F[U: I](t: U.T) {
+  var a: U.T.A = t.GetA();
 
   t.TakesC(a);
 
-  (a as T.T.C).InR();
+  (a as U.T.C).InR();
 }
 
 // --- observe_values_of_assoc_constant.carbon

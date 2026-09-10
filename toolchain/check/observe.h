@@ -14,7 +14,7 @@
 
 namespace Carbon::Check {
 // Gets all `ObserveId`s visible in the current lexical scopes and the defining
-// interface, if the expression is access to an interface's associated constant.
+// interface, if the expression is an access to an interface's associated constant.
 auto GetObserveIds(Context& context, SemIR::InstId expr_id)
     -> llvm::SmallVector<SemIR::ObserveId>;
 
