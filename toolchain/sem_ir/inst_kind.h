@@ -483,6 +483,7 @@ namespace Internal {
 
 // Storage for `internal_allowed_node_kinds` where there's a list of kinds.
 template <Parse::NodeKind::RawEnumType... T>
+// NOLINTNEXTLINE(google-readability-casting): Initializer list is not a cast.
 constexpr std::array<Parse::NodeKind::RawEnumType, sizeof...(T)> Kinds = {T...};
 
 // `NoneNodeId` uses should never have a node associated; it's mainly for
