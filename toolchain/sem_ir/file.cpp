@@ -12,14 +12,14 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/Mangle.h"
 #include "common/check.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallVector.h"
+#include "common/error.h"
 #include "toolchain/base/block_value_store_impl.h"
-#include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_store_impl.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/dominance.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -143,8 +143,8 @@ auto File::Verify() const -> ErrorOr<Success> {
     }
   }
 
-  // TODO: Check that an instruction only references other instructions that are
-  // either global or that dominate it.
+  CARBON_RETURN_IF_ERROR(VerifyDominance(*this));
+
   return Success();
 }
 
