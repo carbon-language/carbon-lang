@@ -41,6 +41,8 @@ Checks:
   # Warns when we have multiple empty cases in switches, which we do for comment
   # reasons.
   - '-bugprone-branch-clone'
+  # We shadow methods with CRTP, instead of using virtual, such as for Print().
+  - '-bugprone-derived-method-shadowing-base-method'
   # Frequently warns on multiple parameters of the same type.
   - '-bugprone-easily-swappable-parameters'
   # Finds issues like out-of-memory in main(). We don't use exceptions, so it's
