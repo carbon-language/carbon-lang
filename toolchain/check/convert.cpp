@@ -2218,30 +2218,30 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
   // Check visible `observe` declarations for an explicit equivalence between
   // the source type and the target type.
-  auto expr_type_id = context.insts().GetAttachedType(expr_id);
+  auto expr_type_id = context.insts().Get(expr_id).type_id();
   auto expr_type_inst_id = expr_type_id != SemIR::TypeType::TypeId
                                ? context.types().GetTypeInstId(expr_type_id)
                                : expr_id;
   auto target_type_inst_id = sem_ir.types().GetTypeInstId(target.type_id);
   if (expr_type_inst_id != target_type_inst_id &&
-      context.constant_values()
-          .GetConstantInstId(expr_type_inst_id)
-          .has_value() &&
-      context.constant_values()
-          .GetConstantInstId(target_type_inst_id)
-          .has_value()) {
+      context.constant_values().Get(expr_type_inst_id).is_constant() &&
+      context.constant_values().Get(target_type_inst_id).is_constant()) {
     auto expr_canonical_inst_id =
         GetCanonicalFacetOrTypeValue(context, expr_type_inst_id);
     auto expr_canonical_type_id =
-        context.insts().GetAttachedType(expr_canonical_inst_id);
+        context.insts().Get(expr_canonical_inst_id).type_id();
 
-    auto target_canonical_type_id = context.insts().GetAttachedType(
-        GetCanonicalFacetOrTypeValue(context, target_type_inst_id));
+    auto target_canonical_type_id =
+        context.insts()
+            .Get(GetCanonicalFacetOrTypeValue(context, target_type_inst_id))
+            .type_id();
     if (target_canonical_type_id == SemIR::TypeType::TypeId) {
       // Target is already in canonical form.
       target_canonical_type_id = target.type_id;
     }
 
+    // TODO: Move this loop and unpack logic into `CheckObserveEquivalence` to
+    // avoid creating vectors.
     for (auto observe_id : GetObserveIds(context, expr_canonical_inst_id)) {
       const auto& observe = context.observes().Get(observe_id);
       auto [observe_operand_ids, _] = UnpackObserve(context, observe);

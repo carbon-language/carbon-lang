@@ -19,22 +19,40 @@ auto GetObserveIds(Context& context, SemIR::InstId expr_id)
   // `T impls C` before we can observe `T impls B` when resolving from `D` to
   // `A`.
 
+  auto append_specific_interface_observes =
+      [&](SemIR::SpecificInterfaceId specific_interface_id) {
+        const auto& specific_interface =
+            context.specific_interfaces().Get(specific_interface_id);
+        const auto& interface =
+            context.interfaces().Get(specific_interface.interface_id);
+        if (interface.observe_block_id.has_value()) {
+          llvm::append_range(
+              ids, context.observe_blocks().Get(interface.observe_block_id));
+        }
+      };
   while (auto access =
              context.insts().Get(expr_id).TryAs<SemIR::ImplWitnessAccess>()) {
-    auto witness = context.insts()
-                       .Get(access->witness_id)
-                       .TryAs<SemIR::LookupImplWitness>();
-    if (!witness) {
-      break;
+    auto inst = context.insts().Get(access->witness_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::ImplSelfWitness witness): {
+        append_specific_interface_observes(witness.specific_interface_id);
+        expr_id = witness.period_self;
+        break;
+      }
+      case CARBON_KIND(SemIR::ImplWitnessAccess access): {
+        expr_id = access.witness_id;
+        break;
+      }
+      case CARBON_KIND(SemIR::LookupImplWitness witness): {
+        append_specific_interface_observes(witness.query_specific_interface_id);
+        expr_id = witness.query_self_inst_id;
+        break;
+      }
+      default: {
+        CARBON_FATAL("Unexpected inst kind: {0}", inst);
+        break;
+      }
     }
-    auto specific_interface =
-        context.specific_interfaces().Get(witness->query_specific_interface_id);
-    auto interface = context.interfaces().Get(specific_interface.interface_id);
-    if (interface.observe_block_id.has_value()) {
-      llvm::append_range(
-          ids, context.observe_blocks().Get(interface.observe_block_id));
-    }
-    expr_id = witness->query_self_inst_id;
   }
 
   if (context.scope_stack().IsInFunctionScope()) {
@@ -48,8 +66,7 @@ auto UnpackObserve(Context& context, const SemIR::Observe& observe)
     -> std::pair<llvm::SmallVector<SemIR::InstId>, SemIR::InstId> {
   llvm::SmallVector<SemIR::InstId> operand_ids;
   auto impls_constraint_id = SemIR::InstId::None;
-  for (auto operation_id :
-       context.inst_blocks().GetOrEmpty(observe.operations_id)) {
+  for (auto operation_id : context.inst_blocks().Get(observe.operations_id)) {
     auto inst = context.insts().Get(operation_id);
     CARBON_KIND_SWITCH(inst) {
       case CARBON_KIND(SemIR::ObserveEquivalent observe_equivalent): {
@@ -82,7 +99,7 @@ auto CheckObserveEquivalence(Context& context,
   auto lhs_found = false;
   auto rhs_found = false;
   for (auto operand_id : observe_operand_ids) {
-    auto operand_type_id = context.insts().GetAttachedType(operand_id);
+    auto operand_type_id = context.insts().Get(operand_id).type_id();
     lhs_found |= lhs_type_id == operand_type_id;
     rhs_found |= rhs_type_id == operand_type_id;
     if (lhs_found && rhs_found) {
