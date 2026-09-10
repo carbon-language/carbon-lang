@@ -4,7 +4,7 @@
 
 // More single line comments
 
-package Carbon api;
+package Carbon;
 
 interface HasValueParam(T: type, V: T) {
   fn Go(self) -> T;
@@ -38,9 +38,9 @@ fn Main() -> i32 {
   let bin = 0b0000111001010010;
   let dec = 123456789012345678;
 
-  let big: Carbon.Int(1024) = 1234;
+  let big: Core.Int(1024) = 1234;
   let aaa: auto = "Carbon";
-  let view: StringView = "Carbon";
+  let view: str = "Carbon";
 
   return Procedure();
 }

@@ -33,3 +33,22 @@ If you are using Atom, you can convert the bundle to an Atom-compatible one. See
 
 For other editors that support TextMate bundles you can consult your editors
 documentation to see how to use the bundle.
+
+## Samples
+
+`Samples/` holds Carbon sources that exercise the grammar, each with an SVG
+rendering of how this bundle highlights it. Some deliberately contain invalid
+code, to show that highlighting stays sensible while something is being typed.
+
+The renderings are generated, not screenshotted, so they always reflect the
+grammar in this repository. Regenerate them in the same commit as any change to
+the grammar, so a reviewer can see what the change does to real code:
+
+```shell
+./utils/vscode/render_sample.py utils/textmate/Samples/*.carbon
+```
+
+That needs only Python: whatever displays the SVG draws the text. The colors
+are VS Code's Dark+, and the font is whichever monospace font the viewer has,
+since GitHub serves SVG under `default-src 'none'` and could not fetch one.
+Each line carries a `textLength`, so the layout holds either way.

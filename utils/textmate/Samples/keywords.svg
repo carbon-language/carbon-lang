@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="721" height="974" viewBox="0 0 721 974">
+<rect width="100%" height="100%" fill="#1f1f1f"/>
+<g xml:space="preserve" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text style="white-space:pre" x="12" y="26"><tspan fill="#6e7681"> 1 </tspan><tspan fill="#6a9955">// Part of the Carbon Language project, under the Apache License v2.0 with LLVM</tspan></text>
+<text style="white-space:pre" x="12" y="45"><tspan fill="#6e7681"> 2 </tspan><tspan fill="#6a9955">// Exceptions. See /LICENSE for license information.</tspan></text>
+<text style="white-space:pre" x="12" y="64"><tspan fill="#6e7681"> 3 </tspan><tspan fill="#6a9955">// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception</tspan></text>
+<text style="white-space:pre" x="12" y="83"><tspan fill="#6e7681"> 4 </tspan></text>
+<text style="white-space:pre" x="12" y="102"><tspan fill="#6e7681"> 5 </tspan><tspan fill="#6a9955">// --- operators</tspan></text>
+<text style="white-space:pre" x="12" y="121"><tspan fill="#6e7681"> 6 </tspan></text>
+<text style="white-space:pre" x="12" y="140"><tspan fill="#6e7681"> 7 </tspan><tspan fill="#d4d4d4">&gt;&gt;= &lt;=&gt; &lt;&lt;= -&gt;? &amp;= ^= := :? == =&gt; != &gt;= &gt;&gt; &lt;= &lt;&gt; &lt;&lt; &lt;- -= -&gt; -- %= |= += ++ /=</tspan></text>
+<text style="white-space:pre" x="12" y="159"><tspan fill="#6e7681"> 8 </tspan><tspan fill="#d4d4d4">*= ~= &amp; @ ^ : = ! &gt; &lt; - % . | + ? / * ~ \</tspan></text>
+<text style="white-space:pre" x="12" y="178"><tspan fill="#6e7681"> 9 </tspan><tspan fill="#c586c0">and</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">as</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">impls</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">in</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">like</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">not</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">or</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">where</tspan></text>
+<text style="white-space:pre" x="12" y="197"><tspan fill="#6e7681">10 </tspan></text>
+<text style="white-space:pre" x="12" y="216"><tspan fill="#6e7681">11 </tspan><tspan fill="#6a9955">// --- special-keywords</tspan></text>
+<text style="white-space:pre" x="12" y="235"><tspan fill="#6e7681">12 </tspan></text>
+<text style="white-space:pre" x="12" y="254"><tspan fill="#6e7681">13 </tspan><tspan fill="#c586c0">break</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">case</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">continue</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">else</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">if</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">for</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">match</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">return</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">returned</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">then</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">while</tspan></text>
+<text style="white-space:pre" x="12" y="273"><tspan fill="#6e7681">14 </tspan><tspan fill="#c586c0">default</tspan><tspan fill="#d4d4d4"> =&gt;</tspan></text>
+<text style="white-space:pre" x="12" y="292"><tspan fill="#6e7681">15 </tspan></text>
+<text style="white-space:pre" x="12" y="311"><tspan fill="#6e7681">16 </tspan><tspan fill="#6a9955">// --- introducer-keywords</tspan></text>
+<text style="white-space:pre" x="12" y="330"><tspan fill="#6e7681">17 </tspan></text>
+<text style="white-space:pre" x="12" y="349"><tspan fill="#6e7681">18 </tspan><tspan fill="#569cd6">adapt</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">alias</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">choice</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">class</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">constraint</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">fn</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">import</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">inline</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">interface</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">let</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">library</tspan></text>
+<text style="white-space:pre" x="12" y="368"><tspan fill="#6e7681">19 </tspan><tspan fill="#4ec9b0">match_first</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">namespace</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">observe</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">require</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">var</tspan></text>
+<text style="white-space:pre" x="12" y="387"><tspan fill="#6e7681">20 </tspan><tspan fill="#569cd6">base</tspan></text>
+<text style="white-space:pre" x="12" y="406"><tspan fill="#6e7681">21 </tspan><tspan fill="#569cd6">export</tspan></text>
+<text style="white-space:pre" x="12" y="425"><tspan fill="#6e7681">22 </tspan><tspan fill="#569cd6">impl</tspan></text>
+<text style="white-space:pre" x="12" y="444"><tspan fill="#6e7681">23 </tspan><tspan fill="#569cd6">package</tspan></text>
+<text style="white-space:pre" x="12" y="463"><tspan fill="#6e7681">24 </tspan></text>
+<text style="white-space:pre" x="12" y="482"><tspan fill="#6e7681">25 </tspan><tspan fill="#6a9955">// --- modifier-keywords</tspan></text>
+<text style="white-space:pre" x="12" y="501"><tspan fill="#6e7681">26 </tspan></text>
+<text style="white-space:pre" x="12" y="520"><tspan fill="#6e7681">27 </tspan><tspan fill="#569cd6">abstract</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">const</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#4ec9b0">eval</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">extend</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">extern</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">final</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">generic</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#4ec9b0">musteval</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">override</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">partial</tspan></text>
+<text style="white-space:pre" x="12" y="539"><tspan fill="#6e7681">28 </tspan><tspan fill="#569cd6">private</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">protected</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">ref</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">runtime</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">static</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">template</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#4ec9b0">unsafe</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#c586c0">unused</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#4ec9b0">val</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">virtual</tspan></text>
+<text style="white-space:pre" x="12" y="558"><tspan fill="#6e7681">29 </tspan><tspan fill="#569cd6">base</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">class</tspan></text>
+<text style="white-space:pre" x="12" y="577"><tspan fill="#6e7681">30 </tspan><tspan fill="#569cd6">default</tspan></text>
+<text style="white-space:pre" x="12" y="596"><tspan fill="#6e7681">31 </tspan><tspan fill="#569cd6">export</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">import</tspan></text>
+<text style="white-space:pre" x="12" y="615"><tspan fill="#6e7681">32 </tspan><tspan fill="#569cd6">impl</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">fn</tspan></text>
+<text style="white-space:pre" x="12" y="634"><tspan fill="#6e7681">33 </tspan><tspan fill="#569cd6">impl</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">library</tspan></text>
+<text style="white-space:pre" x="12" y="653"><tspan fill="#6e7681">34 </tspan><tspan fill="#569cd6">impl</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">package</tspan></text>
+<text style="white-space:pre" x="12" y="672"><tspan fill="#6e7681">35 </tspan></text>
+<text style="white-space:pre" x="12" y="691"><tspan fill="#6e7681">36 </tspan><tspan fill="#6a9955">// --- misc-keywords</tspan></text>
+<text style="white-space:pre" x="12" y="710"><tspan fill="#6e7681">37 </tspan></text>
+<text style="white-space:pre" x="12" y="729"><tspan fill="#6e7681">38 </tspan><tspan fill="#569cd6">forall</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#4ec9b0">form</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">friend</tspan></text>
+<text style="white-space:pre" x="12" y="748"><tspan fill="#6e7681">39 </tspan><tspan fill="#d4d4d4">.</tspan><tspan fill="#569cd6">base</tspan></text>
+<text style="white-space:pre" x="12" y="767"><tspan fill="#6e7681">40 </tspan></text>
+<text style="white-space:pre" x="12" y="786"><tspan fill="#6e7681">41 </tspan><tspan fill="#6a9955">// --- self-keywords</tspan></text>
+<text style="white-space:pre" x="12" y="805"><tspan fill="#6e7681">42 </tspan></text>
+<text style="white-space:pre" x="12" y="824"><tspan fill="#6e7681">43 </tspan><tspan fill="#569cd6">self</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">Self</tspan></text>
+<text style="white-space:pre" x="12" y="843"><tspan fill="#6e7681">44 </tspan><tspan fill="#4ec9b0">Core</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#4ec9b0">Cpp</tspan></text>
+<text style="white-space:pre" x="12" y="862"><tspan fill="#6e7681">45 </tspan></text>
+<text style="white-space:pre" x="12" y="881"><tspan fill="#6e7681">46 </tspan><tspan fill="#6a9955">// --- underscore</tspan></text>
+<text style="white-space:pre" x="12" y="900"><tspan fill="#6e7681">47 </tspan></text>
+<text style="white-space:pre" x="12" y="919"><tspan fill="#6e7681">48 </tspan><tspan fill="#d4d4d4">;</tspan></text>
+<text style="white-space:pre" x="12" y="938"><tspan fill="#6e7681">49 </tspan><tspan fill="#569cd6">_</tspan></text>
+<text style="white-space:pre" x="12" y="957"><tspan fill="#6e7681">50 </tspan><tspan fill="#9cdcfe">_some_var</tspan></text>
+</g></svg>
