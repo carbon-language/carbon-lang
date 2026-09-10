@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Accessing names with instance and non-instance overloads](#accessing-names-with-instance-and-non-instance-overloads)
     -   [Facets with members associated with different interfaces](#facets-with-members-associated-with-different-interfaces)
     -   [C++ pointer-to-member values](#c-pointer-to-member-values)
+    -   [Calling an associated function](#calling-an-associated-function)
     -   [Properties](#properties)
 -   [Proposal](#proposal)
 -   [Details](#details)
@@ -28,9 +29,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Explicit about instance binding](#explicit-about-instance-binding)
     -   [C++ pointer-to-member values](#c-pointer-to-member-values-1)
     -   [`typeof`](#typeof)
+    -   [Associated function example](#associated-function-example)
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
     -   [Different way to distinguish whether instance binding occurs](#different-way-to-distinguish-whether-instance-binding-occurs)
+    -   [Non-instance members could implement the binding interfaces](#non-instance-members-could-implement-the-binding-interfaces)
     -   [Other member access operators](#other-member-access-operators)
     -   [Bind interfaces only used for compound member access](#bind-interfaces-only-used-for-compound-member-access)
 
@@ -57,6 +60,9 @@ As a result, member access doesn't use whether the right operand is an instance
 member anymore. Instead, instance binding is performed whenever it would be
 plausible, and a new syntax is used to opt out.
 
+Associated functions of interfaces are also made callable when the `Self` type
+can be deduced from the arguments. This also performs `impl` lookup.
+
 ## Background
 
 -   The
@@ -74,6 +80,8 @@ plausible, and a new syntax is used to opt out.
     [member access design doc](/docs/design/expressions/member_access.md) to
     reflect the changes in
     [Proposal #3720](https://github.com/carbon-language/carbon-lang/pull/3720).
+-   [Leads issue #7606: Should associated function names be callable?](https://github.com/carbon-language/carbon-lang/issues/7606)
+    added another construct that performs `impl` lookup.
 -   There were several discussions to figure out how to resolve the ambiguous
     points and resolve the problems we discovered:
     -   [#generics-and-templates discussion on 2026-08-20 on Discord](https://discord.com/channels/655572317891461132/941071822756143115/1540063686201311342)
@@ -81,6 +89,7 @@ plausible, and a new syntax is used to opt out.
     -   [#typesystem discussion starting 2026-08-27 on Discord](https://discord.com/channels/655572317891461132/708431657849585705/1542650207525929070)
     -   [discussion on 2026-08-28](https://docs.google.com/document/d/1mjllGO3ZCL4qGt9uJHUtcxKoHAGEY7Y999ie4EtBWB8/edit?pli=1&tab=t.3ot8c9eu3e1h#heading=h.s780u75i71d1)
     -   [discussion on 2026-08-31](https://docs.google.com/document/d/1mjllGO3ZCL4qGt9uJHUtcxKoHAGEY7Y999ie4EtBWB8/edit?pli=1&tab=t.3ot8c9eu3e1h#heading=h.4ij84uxqftu5)
+    -   [discussion on 2026-09-10](https://docs.google.com/document/d/1mjllGO3ZCL4qGt9uJHUtcxKoHAGEY7Y999ie4EtBWB8/edit?tab=t.8973cke7ijhm#heading=h.gxlscluaucu0)
 
 ## Problem
 
@@ -105,7 +114,7 @@ occur. In this example,
 ```
 class C {
   extend base: (i32, i32);
-  static let n: i32 = 0;
+  static let template n: i32 = 0;
 }
 
 var x: C = {.base = (1, 2)};
@@ -251,6 +260,37 @@ fn G(ref a: Cpp.A) -> i32 {
 }
 ```
 
+### Calling an associated function
+
+Following
+[Leads issue #7606: Should associated function names be callable?](https://github.com/carbon-language/carbon-lang/issues/7606),
+associated method of an interface should be allowed, with the `self` parameter
+and `Self` type determined by the first argument, similar to how
+[proposal #7016](p007016-updating-self-syntax-and-adding-static-member-variables.md#calling-without-method-syntax)
+added support for calling methods as ordinary functions with the `self` passed
+as the first explicit argument in the explicit parameter list `(`...`)`:
+
+```carbon
+interface Interface {
+  fn Method(self);
+}
+
+class Class {
+  extend impl as Interface { fn Method(unused self) {} }
+}
+
+fn Fn(value: Class) {
+  // Allowed as of proposal #7016:
+  (Class as Interface).Method(value);
+  // Leads decided should be allowed in #7606:
+  Interface.Method(value);
+}
+```
+
+The specifics of the decision in #7606 allow non-method associated functions of
+an interface, as long as the `Self` parameter may be deduced from its arguments.
+This is desirable since otherwise this case would not have an ergonomic syntax.
+
 ### Properties
 
 See the
@@ -266,28 +306,6 @@ to be able to talk about the property before instance binding.
 We provisionally define `typeof(x)` to give the static type of the expression
 `x` without any runtime evaluation of `x`.
 
-Simple member access `a.b` depends on what kind of entity `a` is:
-
--   If `a` is a namespace or package, only name lookup for `b` is performed.
--   If `a` names a facet, then `b` is looked up in the type of `a` (which by
-    definition is a facet type such as an interface). If the lookup finds an
-    associated entity, then `impl` lookup is performed. This lookup prefers and
-    first looks in the facet `a`. This `impl` lookup is needed to address the
-    ["facets with members associated with different interfaces" problem](#facets-with-members-associated-with-different-interfaces).
--   If `a` names a facet type, then `a.b` performs name lookup for `b` in `a`.
--   If `a` names another type (including any class), then `a.b` performs name
-    lookup for `b` in `a`. If the result of lookup is an associated entity, then
-    `impl` lookup is performed.
--   Otherwise, `a.b` is rewritten to the compound member `a.(typeof(a).b)`.
-    -   `typeof(a)` will always be a facet type or other type, so `typeof(a).b`
-        will always be resolved using one of the above rules, and won't require
-        further rewrites.
-    -   If `b` is an associated entity, `typeof(a).b` will perform `impl` lookup
-        using `typeof(a)`, so no `impl` lookup will happen during the compound
-        member access from the rewrite.
-    -   The compound member access will always perform instance binding, unlike
-        prior to this proposal.
-
 Compound member access `a.(m)` performs two steps:
 
 -   If `m` is an associated entity, perform `impl` lookup with the `Self` type
@@ -300,11 +318,50 @@ Compound member access `a.(m)` performs two steps:
     the compiler provides `final` builtin implementations to provide the
     previous instance binding behavior.
 
+Simple member access `a.b` depends on what kind of entity `a` is:
+
+-   If `a` is a namespace or package, only name lookup for `b` is performed.
+-   If `a` names a non-type facet, then `b` is looked up in the type of `a`
+    (which by definition is a facet type such as an interface). If the lookup
+    finds an associated entity, then `impl` lookup is performed. This lookup
+    prefers and first looks in the facet `a`. This `impl` lookup is needed to
+    address the
+    ["facets with members associated with different interfaces" problem](#facets-with-members-associated-with-different-interfaces).
+-   If `a` names a facet type, then `a.b` performs name lookup for `b` in `a`.
+-   If `a` names another type (including any class), then `a.b` performs name
+    lookup for `b` in `a`. If the result of lookup is an associated entity, then
+    `impl` lookup is performed.
+-   Otherwise, `a.b` is performed in two steps:
+    -   `m` is set to the result of evaluating `typeof(a).b`;
+    -   Instance binding is performed to bind `a` to `m`. This is done
+        unconditionally, unlike prior to this proposal.
+
+In this last case:
+
+-   `typeof(a)` will always be a facet type or other type, so `typeof(a).b`
+    will always be resolved using one of the above rules, and won't require
+    further rewrites.
+-   If `b` is an associated entity, `typeof(a).b` will perform `impl` lookup
+    using `typeof(a)`.
+    -   As long as the result `m` is not itself an associated entity, `a.b`
+        will be equivalent to `a.(m)`. We don't say that `a.b` is rewritten to
+        `a.(typeof(a).b)` because we want a member access to perform at most
+        one `impl` lookup.
+
 Instead of writing `C.(I.F)` to perform `impl` lookup, we introduce new syntax
 `C.impl(I.F)`. This always performs `impl` lookup with the the `Self` type equal
 to `C` and nothing else. It is invalid unless `C` is known to implement `I`
 (this check is delayed until the expression is no longer template dependent).
 As a result, the left argument must always be a type or facet.
+
+In addition, `impl` lookup occurs when
+[calling an associated function of an interface](#calling-an-associated-function).
+An associated function of an interface `I` is callable, and in a call to it, the
+`Self` parameter is treated as a generic parameter that can be deduced. After
+`Self` is deduced, `impl` lookup is performed for `Self as I`, and the
+corresponding function from the impl is called. Note that this is allowed for
+any associated function for which `Self` can be deduced, not just for associated
+methods.
 
 ## Details
 
@@ -332,7 +389,7 @@ class C {
   // Non-instance static data member
   static var s: i32;
 
-  impl as I;
+  extend impl as I;
 }
 
 fn PreviouslyAllowedNowInvalid(x: C) {
@@ -390,6 +447,9 @@ fn G(c: C) {
   // impl lookup of `I.M` for `C` where the `self` parameter is bound to `c`:
   // `c.(I.M)`
   c.(I.M)();
+
+  // Equivalent to `c.(I.M)()`:
+  I.M(c);
 }
 ```
 
@@ -460,6 +520,31 @@ fn Call() {
 }
 ```
 
+### Associated function example
+
+Here is an example from
+[leads issue #7606](https://github.com/carbon-language/carbon-lang/issues/7606)
+where we expect `Self` to be deduced and used for `impl` lookup when calling a
+non-method associated function:
+
+```carbon
+interface Printable {
+  // Print one `Self` object.
+  fn Print(self);
+  // Print a sequence of `Self` objects.
+  fn PrintSlice(s: slice(Self));
+}
+impl Widget as Printable { ... }
+fn PrintWidgets(s: slice(Widget)) {
+  // OK, deduces `Self` is `Widget`. Equivalent to
+  // `(Widget as Printable).PrintSlice(s)`.
+  Printable.PrintSlice(s);
+}
+```
+
+Note that `Self` is in deducible position, but not directly the type of any
+argument.
+
 ## Rationale
 
 This proposal makes the behavior of member access more explicit, reducing
@@ -484,6 +569,31 @@ Instead of using `a.impl(b)` to skip instance binding, other syntax ideas were
 -   `a.static(b)` was considered instead of `a.impl(b)`. `impl` was preferred
     since it better conveyed that `impl` lookup is the only thing that happens
     in that operation.
+
+### Non-instance members could implement the binding interfaces
+
+In
+[discussion on 2026-09-10](https://docs.google.com/document/d/1mjllGO3ZCL4qGt9uJHUtcxKoHAGEY7Y999ie4EtBWB8/edit?tab=t.8973cke7ijhm#heading=h.gxlscluaucu0),
+we considered letting [non-instance members](#non-instance-members) implement
+the binding interfaces. There were a few variations:
+
+-   Instance binding to a non-instance member could do nothing. This would allow
+    repeated bindings, which was undesirable on its own, since none of them
+    would be doing anything, obscuring the meaning of the code. This was also
+    inconsistent with instance members where repeated binding is forbidden.
+-   Instance binding could do nothing except change the type to something that
+    wasn't bindable again, but otherwise operated similarly. This would have to
+    be restricted to non-instance member functions, so that we could forward
+    just the call operator, not an unbounded set of operations. This is
+    something we would consider in the future to match C++ and allow evolution
+    of methods into non-instance functions, but creates additional complexity
+    and inconsistency with other non-instance members like static data members.
+
+Since the main point of customization for types is whether they implement the
+binding interfaces, we have less context than C++ about what syntax was used to
+arrive at an instance binding. It wasn't clear how to make a rule that allowed
+non-instance accesses like C++ without allowing code we wanted to forbid like
+`i32.(bool.(5))`.
 
 ### Other member access operators
 
