@@ -97,6 +97,9 @@ Checks:
   - '-readability-enum-initial-value'
   # Warns too frequently.
   - '-readability-function-cognitive-complexity'
+  # Allows naming styles we don't use, and has errors on our use of `_1`, `_2`
+  # to have multiple unnamed vars in a destructuring declaration.
+  - '-readability-identifier-naming'
   # Warns on use of CARBON_KIND() and can't use NOLINT effectively inside a
   # macro.
   - '-readability-inconsistent-ifelse-braces'
