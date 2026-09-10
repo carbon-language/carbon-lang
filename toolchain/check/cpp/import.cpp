@@ -1535,48 +1535,37 @@ static auto MapParameterType(
           .kind = GetParamPatternKindForPassingMode(passing_mode)};
 }
 
-// Returns a block containing the `self` parameter pattern for the given
-// function declaration, or `Empty` if it is not a method.
-// Returns `None` on error.
-static auto MakeSelfParamPatternBlockId(
+// Creates a Carbon parameter pattern for a C++ parameter with the given type,
+// passing mode, and parameter name. Returns the IDs of the pattern inst and
+// the inst representing the parameter type.
+static auto MakeParamPattern(
     Context& context, SemIR::LocId loc_id,
-    SemIR::ImportIRInstId import_ir_inst_id,
-    const clang::FunctionDecl& clang_decl,
-    SemIR::ClangDeclSignatureId signature_id) -> SemIR::InstBlockId {
-  if (!IsObjectMemberFunction(clang_decl)) {
-    return SemIR::InstBlockId::Empty;
-  }
-  const auto* method_decl = cast<clang::CXXMethodDecl>(&clang_decl);
-
-  // Build a `self` parameter from the object parameter.
+    SemIR::ImportIRInstId import_ir_inst_id, clang::QualType type,
+    SemIR::ClangDeclSignature::PassingMode passing_mode, SemIR::NameId name_id)
+    -> std::pair<SemIR::InstId, SemIR::TypeInstId> {
+  // Mark the start of a region of insts, needed for the type expression
+  // created later with the call of `ConsumeExprRegionForPattern()`.
   BeginExprRegionForPattern(context);
 
-  clang::QualType param_type =
-      method_decl->getFunctionObjectParameterReferenceType();
-  const auto& signature = context.clang_decl_signatures().Get(signature_id);
-  SemIR::ClangDeclSignature::PassingMode passing_mode =
-      signature.self_passing_mode;
-  auto param_info = MapParameterType(context, loc_id, param_type, passing_mode);
+  auto param_info = MapParameterType(context, loc_id, type, passing_mode);
   auto [type_inst_id, type_id] = param_info.type;
+  // Type expression of the binding pattern - a single-entry/single-exit
+  // region that allows control flow in the type expression e.g. fn F(x: if C
+  // then i32 else i64).
   SemIR::ExprRegionId type_expr_region_id =
       ConsumeExprRegionForPattern(context, type_inst_id);
 
   EndEmptyExprRegionForPattern(context);
 
   if (!type_id.has_value()) {
-    context.TODO(loc_id,
-                 llvm::formatv("Unsupported: object parameter type: {0}",
-                               param_type.getAsString()));
-    return SemIR::InstBlockId::None;
+    context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
+                                       type.getAsString()));
+    return {SemIR::ErrorInst::InstId, SemIR::ErrorInst::TypeInstId};
   }
 
-  // TODO: Use a location associated with the object parameter instead of the
-  // location of the function as a whole.
-  auto pattern_id =
-      AddParamPattern(context, import_ir_inst_id, SemIR::NameId::SelfValue,
-                      type_expr_region_id, type_id, param_info.kind);
-
-  return context.inst_blocks().Add({pattern_id});
+  return {AddParamPattern(context, import_ir_inst_id, name_id,
+                          type_expr_region_id, type_id, param_info.kind),
+          type_inst_id};
 }
 
 // Returns a block id for the explicit parameters of the given function
@@ -1591,11 +1580,33 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
                                      const clang::FunctionDecl& clang_decl,
                                      SemIR::ClangDeclSignatureId signature_id)
     -> SemIR::InstBlockId {
+  // The `self` parameter of a method (proposal #7016) is the
+  // first entry in the explicit parameter list. Build it (if any) first, then
+  // the remaining explicit parameters.
+  bool has_self_param = IsObjectMemberFunction(clang_decl);
   const auto& signature = context.clang_decl_signatures().Get(signature_id);
   llvm::SmallVector<SemIR::InstId> param_ids;
   llvm::SmallVector<SemIR::InstId> param_type_ids;
-  param_ids.reserve(signature.num_params);
+  param_ids.reserve(signature.num_params + has_self_param);
   param_type_ids.reserve(signature.num_params);
+  if (has_self_param) {
+    const auto* method_decl = cast<clang::CXXMethodDecl>(&clang_decl);
+    clang::QualType param_type =
+        method_decl->getFunctionObjectParameterReferenceType();
+    const auto& signature = context.clang_decl_signatures().Get(signature_id);
+
+    // TODO: Use a location associated with the object parameter instead of the
+    // location of the function as a whole.
+    auto [self_param_pattern_id, _] =
+        MakeParamPattern(context, loc_id, import_ir_inst_id, param_type,
+                         signature.self_passing_mode, SemIR::NameId::SelfValue);
+    if (self_param_pattern_id == SemIR::ErrorInst::InstId) {
+      return SemIR::InstBlockId::None;
+    }
+    param_ids.push_back(self_param_pattern_id);
+    // We don't push to param_type_ids because the self parameter can't be part
+    // of a parameter tuple, which is the only case where we use param_type_ids.
+  }
   CARBON_CHECK(static_cast<int>(clang_decl.getNumNonObjectParams()) >=
                    signature.num_params,
                "Function has fewer parameters than requested: {0} < {1}",
@@ -1613,25 +1624,6 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     clang::QualType param_type =
         ClangGetUnqualifiedTypePreserveNonNull(context, orig_param_type);
 
-    // Mark the start of a region of insts, needed for the type expression
-    // created later with the call of `ConsumeExprRegionForPattern()`.
-    BeginExprRegionForPattern(context);
-    auto param_info = MapParameterType(context, loc_id, param_type,
-                                       signature.GetPassingMode(i));
-    auto [type_inst_id, type_id] = param_info.type;
-    // Type expression of the binding pattern - a single-entry/single-exit
-    // region that allows control flow in the type expression e.g. fn F(x: if C
-    // then i32 else i64).
-    SemIR::ExprRegionId type_expr_region_id =
-        ConsumeExprRegionForPattern(context, type_inst_id);
-    EndEmptyExprRegionForPattern(context);
-
-    if (!type_id.has_value()) {
-      context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
-                                         orig_param_type.getAsString()));
-      return SemIR::InstBlockId::None;
-    }
-
     llvm::StringRef param_name = param->getName();
     SemIR::NameId name_id =
         param_name.empty()
@@ -1640,13 +1632,16 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
             ? SemIR::NameId::Underscore
             : AddIdentifierName(context, param_name);
 
-    SemIR::LocId param_loc_id =
+    SemIR::ImportIRInstId param_loc_id =
         AddImportIRInst(context.sem_ir(), param->getLocation());
 
     // TODO: Add template support.
-    SemIR::InstId pattern_id =
-        AddParamPattern(context, param_loc_id, name_id, type_expr_region_id,
-                        type_id, param_info.kind);
+    auto [pattern_id, type_inst_id] =
+        MakeParamPattern(context, loc_id, param_loc_id, param_type,
+                         signature.GetPassingMode(i), name_id);
+    if (pattern_id == SemIR::ErrorInst::InstId) {
+      return SemIR::InstBlockId::None;
+    }
     param_ids.push_back(pattern_id);
     param_type_ids.push_back(type_inst_id);
   }
@@ -1660,6 +1655,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     case SemIR::ClangDeclSignature::TuplePattern: {
       // Replace the parameters with a single tuple pattern containing the
       // converted parameter list.
+      CARBON_CHECK(!has_self_param);
       auto param_block_id = context.inst_blocks().Add(param_ids);
       auto tuple_pattern_type_id =
           GetPatternType(context, GetTupleType(context, param_type_ids));
@@ -1823,32 +1819,13 @@ static auto CreateFunctionSignatureInsts(
     SemIR::ImportIRInstId import_ir_inst_id, clang::FunctionDecl* clang_decl,
     SemIR::ClangDeclSignatureId signature_id)
     -> std::optional<FunctionSignatureInsts> {
-  // The `self` parameter of a method (proposal #7016) is the
-  // first entry in the explicit parameter list. Build it (if any) first, then
-  // the remaining explicit parameters, and concatenate them into a single
-  // explicit parameter list.
   context.full_pattern_stack().StartExplicitParamList();
-  auto self_param_patterns_id = MakeSelfParamPatternBlockId(
+  auto param_patterns_id = MakeParamPatternsBlockId(
       context, loc_id, import_ir_inst_id, *clang_decl, signature_id);
-  if (!self_param_patterns_id.has_value()) {
-    return std::nullopt;
-  }
-  auto explicit_param_patterns_id = MakeParamPatternsBlockId(
-      context, loc_id, import_ir_inst_id, *clang_decl, signature_id);
-  if (!explicit_param_patterns_id.has_value()) {
+  if (!param_patterns_id.has_value()) {
     return std::nullopt;
   }
   context.full_pattern_stack().EndExplicitParamList();
-
-  auto self_param_patterns =
-      context.inst_blocks().GetOrEmpty(self_param_patterns_id);
-  auto param_patterns_id = explicit_param_patterns_id;
-  if (!self_param_patterns.empty()) {
-    llvm::SmallVector<SemIR::InstId> combined(self_param_patterns);
-    llvm::append_range(
-        combined, context.inst_blocks().GetOrEmpty(explicit_param_patterns_id));
-    param_patterns_id = context.inst_blocks().Add(combined);
-  }
 
   auto [return_type_inst_id, return_form_inst_id, return_pattern_id] =
       GetReturnInfo(context, loc_id, clang_decl);
