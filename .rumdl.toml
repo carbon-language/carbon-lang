@@ -4,6 +4,7 @@
 
 [global]
 exclude = [
+  ".clang-tidy",
   ".git",
   ".jj",
   "CHANGELOG.md",
