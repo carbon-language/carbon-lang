@@ -124,6 +124,8 @@ auto AddActionSpliceIfDependent(Context& context, LocIdT loc_id,
 // known, it can be set to `None`, and a `TypeOfInst` instruction will be added
 // to act as the type of the splice.
 template <typename ActionT, typename LocIdT>
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto HandleAction(Context& context, LocIdT loc_id,
                   SemIR::TypeInstId expected_result_type_inst_id,
                   ActionT action_inst) -> SemIR::InstId {
