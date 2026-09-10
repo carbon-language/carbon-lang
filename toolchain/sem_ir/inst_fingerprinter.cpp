@@ -150,12 +150,12 @@ class StringFingerprintStore {
     bool first = true;
     for (const auto& item : contents_) {
       if (!first) {
-        result += ",";
+        result.push_back(',');
       }
       first = false;
       result += item;
     }
-    result += "}";
+    result.push_back('}');
     return SaveString(std::move(result));
   }
 
