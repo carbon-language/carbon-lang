@@ -9,7 +9,7 @@
 #include "toolchain/check/type.h"
 
 namespace Carbon::Check {
-auto GetObserveIds(Context& context, SemIR::InstId expr_id)
+auto GetObserveIds(Context& context, SemIR::InstId canonical_expr_id)
     -> llvm::SmallVector<SemIR::ObserveId> {
   llvm::SmallVector<SemIR::ObserveId> ids;
 
@@ -30,6 +30,7 @@ auto GetObserveIds(Context& context, SemIR::InstId expr_id)
               ids, context.observe_blocks().Get(interface.observe_block_id));
         }
       };
+  auto expr_id = canonical_expr_id;
   while (auto access =
              context.insts().Get(expr_id).TryAs<SemIR::ImplWitnessAccess>()) {
     auto inst = context.insts().Get(access->witness_id);
