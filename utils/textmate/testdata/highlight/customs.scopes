@@ -1,0 +1,42 @@
+# Golden scopes for the TextMate grammar. Regenerate with:
+#   ./utils/textmate/golden_test.py --update
+#
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+   1 | // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-79 ' Part of the Carbon L...' comment.line.double-slash.carbon
+   2 | // Exceptions. See /LICENSE for license information.
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-52 ' Exceptions. See /LIC...' comment.line.double-slash.carbon
+   3 | // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-58 ' SPDX-License-Identif...' comment.line.double-slash.carbon
+   5 | package SomePackage;
+     |       0-7 'package'                  storage.type.carbon
+     |      8-19 'SomePackage'              entity.name.namespace.carbon
+     |     19-20 ';'                        punctuation.terminator.carbon
+   6 | Core SomeCore;
+     |       0-4 'Core'                     support.class.carbon
+     |      5-13 'SomeCore'                 entity.name.type.carbon
+     |     13-14 ';'                        punctuation.terminator.carbon
+   8 | import SomePackage;
+     |       0-6 'import'                   storage.type.carbon
+     |      7-18 'SomePackage'              entity.name.namespace.carbon
+     |     18-19 ';'                        punctuation.terminator.carbon
+  10 | CallFunction(a, b, c.d);
+     |      0-12 'CallFunction'             entity.name.function.carbon
+     |     12-13 '('                        -
+     |     13-14 'a'                        variable.other.carbon
+     |     14-15 ','                        punctuation.separator.carbon
+     |     16-17 'b'                        variable.other.carbon
+     |     17-18 ','                        punctuation.separator.carbon
+     |     19-20 'c'                        variable.other.carbon
+     |     20-21 '.'                        keyword.operator.carbon
+     |     21-22 'd'                        variable.other.carbon
+     |     22-23 ')'                        -
+     |     23-24 ';'                        punctuation.terminator.carbon
+  11 | unidentified;
+     |      0-12 'unidentified'             variable.other.carbon
+     |     12-13 ';'                        punctuation.terminator.carbon

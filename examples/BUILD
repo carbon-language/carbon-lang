@@ -84,3 +84,15 @@ test_suite(
         bazel_binaries.versions.all,
     ),
 )
+
+# Every Carbon source under examples/. A glob cannot cross a package boundary,
+# so the sub-packages are listed explicitly.
+filegroup(
+    name = "carbon_files",
+    srcs = glob(["**/*.carbon"]) + [
+        "//examples/advent2024:carbon_files",
+        "//examples/interop/cpp:carbon_files",
+        "//examples/re2_playground:carbon_files",
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,138 @@
+# Golden scopes for the TextMate grammar. Regenerate with:
+#   ./utils/textmate/golden_test.py --update
+#
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+   1 | // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-79 ' Part of the Carbon L...' comment.line.double-slash.carbon
+   2 | // Exceptions. See /LICENSE for license information.
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-52 ' Exceptions. See /LIC...' comment.line.double-slash.carbon
+   3 | // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-58 ' SPDX-License-Identif...' comment.line.double-slash.carbon
+   4 | //
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+   5 | // Inline C++ is scoped `meta.embedded.block.cpp`, so an editor that has a C++
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-78 ' Inline C++ is scoped...' comment.line.double-slash.carbon
+   6 | // grammar highlights them as C++; these renderings come from the Carbon grammar
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-80 ' grammar highlights t...' comment.line.double-slash.carbon
+   7 | // alone, so that content shows plain.
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-38 ' alone, so that conte...' comment.line.double-slash.carbon
+   9 | package Sample library "interop";
+     |       0-7 'package'                  storage.type.carbon
+     |      8-14 'Sample'                   entity.name.namespace.carbon
+     |     15-22 'library'                  storage.type.carbon
+     |     23-24 '"'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |     24-31 'interop'                  string.quoted.double.carbon
+     |     31-32 '"'                        string.quoted.double.carbon punctuation.definition.string.end.carbon
+     |     32-33 ';'                        punctuation.terminator.carbon
+  11 | import Cpp library "<cstdio>";
+     |       0-6 'import'                   storage.type.carbon
+     |      7-10 'Cpp'                      entity.name.namespace.carbon
+     |     11-18 'library'                  storage.type.carbon
+     |     19-20 '"'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |     20-28 '<cstdio>'                 string.quoted.double.carbon
+     |     28-29 '"'                        string.quoted.double.carbon punctuation.definition.string.end.carbon
+     |     29-30 ';'                        punctuation.terminator.carbon
+  12 | import Cpp library "<string_view>";
+     |       0-6 'import'                   storage.type.carbon
+     |      7-10 'Cpp'                      entity.name.namespace.carbon
+     |     11-18 'library'                  storage.type.carbon
+     |     19-20 '"'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |     20-33 '<string_view>'            string.quoted.double.carbon
+     |     33-34 '"'                        string.quoted.double.carbon punctuation.definition.string.end.carbon
+     |     34-35 ';'                        punctuation.terminator.carbon
+  14 | import Cpp inline '''c++
+     |       0-6 'import'                   storage.type.carbon
+     |      7-10 'Cpp'                      support.class.carbon
+     |     11-17 'inline'                   storage.type.carbon
+     |     18-21 "'''"                      punctuation.definition.string.begin.carbon
+     |     21-24 'c++'                      entity.name.tag.language.carbon
+     |     24-25 ''                         meta.embedded.block.cpp
+  15 | int FromImport() { return 1; }
+     |      0-31 'int FromImport() { re...' meta.embedded.block.cpp
+  16 | ''';
+     |       0-3 "'''"                      punctuation.definition.string.end.carbon
+     |       3-4 ';'                        punctuation.terminator.carbon
+  18 | import Cpp inline "int OneLiner() { return 2; }";
+     |       0-6 'import'                   storage.type.carbon
+     |      7-10 'Cpp'                      support.class.carbon
+     |     11-17 'inline'                   storage.type.carbon
+     |     18-19 '"'                        punctuation.definition.string.begin.carbon
+     |     19-47 'int OneLiner() { retu...' meta.embedded.inline.cpp
+     |     47-48 '"'                        punctuation.definition.string.end.carbon
+     |     48-49 ';'                        punctuation.terminator.carbon
+  20 | inline Cpp '''
+     |       0-6 'inline'                   storage.type.carbon
+     |      7-10 'Cpp'                      support.class.carbon
+     |     11-14 "'''"                      punctuation.definition.string.begin.carbon
+     |     14-15 ''                         meta.embedded.block.cpp
+  21 | int FromBlock() { return 3; }
+     |      0-30 'int FromBlock() { ret...' meta.embedded.block.cpp
+  22 | ''';
+     |       0-3 "'''"                      punctuation.definition.string.end.carbon
+     |       3-4 ';'                        punctuation.terminator.carbon
+  24 | fn Uses() {
+     |       0-2 'fn'                       storage.type.carbon
+     |       3-7 'Uses'                     entity.name.function.carbon
+     |      7-12 '() {'                     -
+  25 |   var value: Cpp.int = 1 as Cpp.int;
+     |       2-5 'var'                      storage.type.carbon
+     |      6-11 'value'                    variable.other.carbon
+     |     11-12 ':'                        keyword.operator.carbon
+     |     13-16 'Cpp'                      support.class.carbon
+     |     16-17 '.'                        keyword.operator.carbon
+     |     17-20 'int'                      variable.other.carbon
+     |     21-22 '='                        keyword.operator.carbon
+     |     23-24 '1'                        constant.numeric.decimal.carbon
+     |     25-27 'as'                       keyword.control.carbon
+     |     28-31 'Cpp'                      support.class.carbon
+     |     31-32 '.'                        keyword.operator.carbon
+     |     32-35 'int'                      variable.other.carbon
+     |     35-36 ';'                        punctuation.terminator.carbon
+  26 |   var widened: Cpp.size_t = value as Cpp.size_t;
+     |       2-5 'var'                      storage.type.carbon
+     |      6-13 'widened'                  variable.other.carbon
+     |     13-14 ':'                        keyword.operator.carbon
+     |     15-18 'Cpp'                      support.class.carbon
+     |     18-19 '.'                        keyword.operator.carbon
+     |     19-25 'size_t'                   variable.other.carbon
+     |     26-27 '='                        keyword.operator.carbon
+     |     28-33 'value'                    variable.other.carbon
+     |     34-36 'as'                       keyword.control.carbon
+     |     37-40 'Cpp'                      support.class.carbon
+     |     40-41 '.'                        keyword.operator.carbon
+     |     41-47 'size_t'                   variable.other.carbon
+     |     47-48 ';'                        punctuation.terminator.carbon
+  27 |   var back: i32 = value unsafe as i32;
+     |       2-5 'var'                      storage.type.carbon
+     |      6-10 'back'                     variable.other.carbon
+     |     10-11 ':'                        keyword.operator.carbon
+     |     12-15 'i32'                      support.type.builtin.carbon
+     |     16-17 '='                        keyword.operator.carbon
+     |     18-23 'value'                    variable.other.carbon
+     |     24-30 'unsafe'                   storage.modifier.carbon
+     |     31-33 'as'                       keyword.control.carbon
+     |     34-37 'i32'                      support.type.builtin.carbon
+     |     37-38 ';'                        punctuation.terminator.carbon
+  28 |   Cpp.printf("%d\n", value);
+     |       2-5 'Cpp'                      support.class.carbon
+     |       5-6 '.'                        keyword.operator.carbon
+     |      6-12 'printf'                   entity.name.function.carbon
+     |     12-13 '('                        -
+     |     13-14 '"'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |     14-16 '%d'                       string.quoted.double.carbon
+     |     16-18 '\\n'                      string.quoted.double.carbon constant.character.escape.carbon
+     |     18-19 '"'                        string.quoted.double.carbon punctuation.definition.string.end.carbon
+     |     19-20 ','                        punctuation.separator.carbon
+     |     21-26 'value'                    variable.other.carbon
+     |     26-27 ')'                        -
+     |     27-28 ';'                        punctuation.terminator.carbon
+  29 | }
+     |       0-2 '}'                        -

@@ -1,0 +1,346 @@
+# Golden scopes for the TextMate grammar. Regenerate with:
+#   ./utils/textmate/golden_test.py --update
+#
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+   1 | // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-79 ' Part of the Carbon L...' comment.line.double-slash.carbon
+   2 | // Exceptions. See /LICENSE for license information.
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-52 ' Exceptions. See /LIC...' comment.line.double-slash.carbon
+   3 | // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-58 ' SPDX-License-Identif...' comment.line.double-slash.carbon
+   5 | fn F;
+     |       0-2 'fn'                       storage.type.carbon
+     |       3-4 'F'                        entity.name.function.carbon
+     |       4-5 ';'                        punctuation.terminator.carbon
+   6 | fn F1();
+     |       0-2 'fn'                       storage.type.carbon
+     |       3-5 'F1'                       entity.name.function.carbon
+     |       5-7 '()'                       -
+     |       7-8 ';'                        punctuation.terminator.carbon
+   7 | fn Func(a: i32, b: A);
+     |       0-2 'fn'                       storage.type.carbon
+     |       3-7 'Func'                     entity.name.function.carbon
+     |       7-8 '('                        -
+     |       8-9 'a'                        variable.other.carbon
+     |      9-10 ':'                        keyword.operator.carbon
+     |     11-14 'i32'                      support.type.builtin.carbon
+     |     14-15 ','                        punctuation.separator.carbon
+     |     16-17 'b'                        variable.other.carbon
+     |     17-18 ':'                        keyword.operator.carbon
+     |     19-20 'A'                        entity.name.type.carbon
+     |     20-21 ')'                        -
+     |     21-22 ';'                        punctuation.terminator.carbon
+   8 | fn Generic[T: type, U: I](a: T, b: U) -> U;
+     |       0-2 'fn'                       storage.type.carbon
+     |      3-10 'Generic'                  entity.name.function.carbon
+     |     10-11 '['                        -
+     |     11-12 'T'                        entity.name.type.carbon
+     |     12-13 ':'                        keyword.operator.carbon
+     |     14-18 'type'                     support.type.builtin.carbon
+     |     18-19 ','                        punctuation.separator.carbon
+     |     20-21 'U'                        entity.name.type.carbon
+     |     21-22 ':'                        keyword.operator.carbon
+     |     23-24 'I'                        entity.name.type.carbon
+     |     24-26 ']('                       -
+     |     26-27 'a'                        variable.other.carbon
+     |     27-28 ':'                        keyword.operator.carbon
+     |     29-30 'T'                        entity.name.type.carbon
+     |     30-31 ','                        punctuation.separator.carbon
+     |     32-33 'b'                        variable.other.carbon
+     |     33-34 ':'                        keyword.operator.carbon
+     |     35-36 'U'                        entity.name.type.carbon
+     |     36-38 ') '                       -
+     |     38-40 '->'                       keyword.operator.carbon
+     |     41-42 'U'                        entity.name.type.carbon
+     |     42-43 ';'                        punctuation.terminator.carbon
+   9 | fn Lambda(a: i32) -> i32 => return a + 5;
+     |       0-2 'fn'                       storage.type.carbon
+     |       3-9 'Lambda'                   entity.name.function.carbon
+     |      9-10 '('                        -
+     |     10-11 'a'                        variable.other.carbon
+     |     11-12 ':'                        keyword.operator.carbon
+     |     13-16 'i32'                      support.type.builtin.carbon
+     |     16-18 ') '                       -
+     |     18-20 '->'                       keyword.operator.carbon
+     |     21-24 'i32'                      support.type.builtin.carbon
+     |     25-27 '=>'                       keyword.operator.carbon
+     |     28-34 'return'                   keyword.control.carbon
+     |     35-36 'a'                        variable.other.carbon
+     |     37-38 '+'                        keyword.operator.carbon
+     |     39-40 '5'                        constant.numeric.decimal.carbon
+     |     40-41 ';'                        punctuation.terminator.carbon
+  10 | fn
+     |       0-2 'fn'                       storage.type.carbon
+  12 |     MultiLine[
+     |      4-13 'MultiLine'                entity.name.type.carbon
+     |     13-15 '['                        -
+  13 |         A: type,
+     |       8-9 'A'                        entity.name.type.carbon
+     |      9-10 ':'                        keyword.operator.carbon
+     |     11-15 'type'                     support.type.builtin.carbon
+     |     15-16 ','                        punctuation.separator.carbon
+  14 |         B: C1,
+     |       8-9 'B'                        entity.name.type.carbon
+     |      9-10 ':'                        keyword.operator.carbon
+     |     11-13 'C1'                       entity.name.type.carbon
+     |     13-14 ','                        punctuation.separator.carbon
+  15 |         C: C2
+     |       8-9 'C'                        entity.name.type.carbon
+     |      9-10 ':'                        keyword.operator.carbon
+     |     11-13 'C2'                       entity.name.type.carbon
+  16 |     ](a: A(B, C),
+     |       0-6 '    ]('                   -
+     |       6-7 'a'                        variable.other.carbon
+     |       7-8 ':'                        keyword.operator.carbon
+     |      9-10 'A'                        entity.name.function.carbon
+     |     10-11 '('                        -
+     |     11-12 'B'                        entity.name.type.carbon
+     |     12-13 ','                        punctuation.separator.carbon
+     |     14-15 'C'                        entity.name.type.carbon
+     |     15-16 ')'                        -
+     |     16-17 ','                        punctuation.separator.carbon
+  17 |       b: B,
+     |       6-7 'b'                        variable.other.carbon
+     |       7-8 ':'                        keyword.operator.carbon
+     |      9-10 'B'                        entity.name.type.carbon
+     |     10-11 ','                        punctuation.separator.carbon
+  18 |       c: i32);
+     |       6-7 'c'                        variable.other.carbon
+     |       7-8 ':'                        keyword.operator.carbon
+     |      9-12 'i32'                      support.type.builtin.carbon
+     |     12-13 ')'                        -
+     |     13-14 ';'                        punctuation.terminator.carbon
+  19 | fn Invalid#+?Name();
+     |       0-2 'fn'                       storage.type.carbon
+     |      3-10 'Invalid'                  entity.name.function.carbon
+     |     10-11 '#'                        -
+     |     11-12 '+'                        keyword.operator.carbon
+     |     12-13 '?'                        keyword.operator.carbon
+     |     13-17 'Name'                     entity.name.function.carbon
+     |     17-19 '()'                       -
+     |     19-20 ';'                        punctuation.terminator.carbon
+  20 | x.(I.F)();
+     |       0-1 'x'                        variable.other.carbon
+     |       1-2 '.'                        keyword.operator.carbon
+     |       2-3 '('                        -
+     |       3-4 'I'                        entity.name.type.carbon
+     |       4-5 '.'                        keyword.operator.carbon
+     |       5-6 'F'                        entity.name.type.carbon
+     |       6-9 ')()'                      -
+     |      9-10 ';'                        punctuation.terminator.carbon
+  22 | a: A;
+     |       0-1 'a'                        variable.other.carbon
+     |       1-2 ':'                        keyword.operator.carbon
+     |       3-4 'A'                        entity.name.type.carbon
+     |       4-5 ';'                        punctuation.terminator.carbon
+  23 | a: A = (b as A);
+     |       0-1 'a'                        variable.other.carbon
+     |       1-2 ':'                        keyword.operator.carbon
+     |       3-4 'A'                        entity.name.type.carbon
+     |       5-6 '='                        keyword.operator.carbon
+     |       6-8 ' ('                       -
+     |       8-9 'b'                        variable.other.carbon
+     |     10-12 'as'                       keyword.control.carbon
+     |     13-14 'A'                        entity.name.type.carbon
+     |     14-15 ')'                        -
+     |     15-16 ';'                        punctuation.terminator.carbon
+  24 | a: i32;
+     |       0-1 'a'                        variable.other.carbon
+     |       1-2 ':'                        keyword.operator.carbon
+     |       3-6 'i32'                      support.type.builtin.carbon
+     |       6-7 ';'                        punctuation.terminator.carbon
+  25 | a: array(A, 5);
+     |       0-1 'a'                        variable.other.carbon
+     |       1-2 ':'                        keyword.operator.carbon
+     |       3-8 'array'                    support.type.builtin.carbon
+     |       8-9 '('                        -
+     |      9-10 'A'                        entity.name.type.carbon
+     |     10-11 ','                        punctuation.separator.carbon
+     |     12-13 '5'                        constant.numeric.decimal.carbon
+     |     13-14 ')'                        -
+     |     14-15 ';'                        punctuation.terminator.carbon
+  26 | generic a: type;
+     |       0-7 'generic'                  storage.modifier.carbon
+     |       8-9 'a'                        variable.other.carbon
+     |      9-10 ':'                        keyword.operator.carbon
+     |     11-15 'type'                     support.type.builtin.carbon
+     |     15-16 ';'                        punctuation.terminator.carbon
+  27 | generic a: T = b;
+     |       0-7 'generic'                  storage.modifier.carbon
+     |       8-9 'a'                        variable.other.carbon
+     |      9-10 ':'                        keyword.operator.carbon
+     |     11-12 'T'                        entity.name.type.carbon
+     |     13-14 '='                        keyword.operator.carbon
+     |     15-16 'b'                        variable.other.carbon
+     |     16-17 ';'                        punctuation.terminator.carbon
+  28 | a: A in some_list;
+     |       0-1 'a'                        variable.other.carbon
+     |       1-2 ':'                        keyword.operator.carbon
+     |       3-4 'A'                        entity.name.type.carbon
+     |       5-7 'in'                       keyword.control.carbon
+     |      8-17 'some_list'                variable.other.carbon
+     |     17-18 ';'                        punctuation.terminator.carbon
+  29 | var a: T;
+     |       0-3 'var'                      storage.type.carbon
+     |       4-5 'a'                        variable.other.carbon
+     |       5-6 ':'                        keyword.operator.carbon
+     |       7-8 'T'                        entity.name.type.carbon
+     |       8-9 ';'                        punctuation.terminator.carbon
+  30 | let b: T;
+     |       0-3 'let'                      storage.type.carbon
+     |       4-5 'b'                        variable.other.carbon
+     |       5-6 ':'                        keyword.operator.carbon
+     |       7-8 'T'                        entity.name.type.carbon
+     |       8-9 ';'                        punctuation.terminator.carbon
+  31 | binding: T;
+     |       0-7 'binding'                  variable.other.carbon
+     |       7-8 ':'                        keyword.operator.carbon
+     |      9-10 'T'                        entity.name.type.carbon
+     |     10-11 ';'                        punctuation.terminator.carbon
+  32 | generic binding: T;
+     |       0-7 'generic'                  storage.modifier.carbon
+     |      8-15 'binding'                  variable.other.carbon
+     |     15-16 ':'                        keyword.operator.carbon
+     |     17-18 'T'                        entity.name.type.carbon
+     |     18-19 ';'                        punctuation.terminator.carbon
+  33 | var
+     |       0-3 'var'                      storage.type.carbon
+  34 |     multiline: T;
+     |      4-13 'multiline'                variable.other.carbon
+     |     13-14 ':'                        keyword.operator.carbon
+     |     15-16 'T'                        entity.name.type.carbon
+     |     16-17 ';'                        punctuation.terminator.carbon
+  36 | fn F(ref a: A, const ref b: B);
+     |       0-2 'fn'                       storage.type.carbon
+     |       3-4 'F'                        entity.name.function.carbon
+     |       4-5 '('                        -
+     |       5-8 'ref'                      storage.modifier.carbon
+     |      9-10 'a'                        variable.other.carbon
+     |     10-11 ':'                        keyword.operator.carbon
+     |     12-13 'A'                        entity.name.type.carbon
+     |     13-14 ','                        punctuation.separator.carbon
+     |     15-20 'const'                    storage.modifier.carbon
+     |     21-24 'ref'                      storage.modifier.carbon
+     |     25-26 'b'                        variable.other.carbon
+     |     26-27 ':'                        keyword.operator.carbon
+     |     28-29 'B'                        entity.name.type.carbon
+     |     29-30 ')'                        -
+     |     30-31 ';'                        punctuation.terminator.carbon
+  37 | fn F() -> T;
+     |       0-2 'fn'                       storage.type.carbon
+     |       3-4 'F'                        entity.name.function.carbon
+     |       4-7 '() '                      -
+     |       7-9 '->'                       keyword.operator.carbon
+     |     10-11 'T'                        entity.name.type.carbon
+     |     11-12 ';'                        punctuation.terminator.carbon
+  38 | fn F() -> T.U { return val; }
+     |       0-2 'fn'                       storage.type.carbon
+     |       3-4 'F'                        entity.name.function.carbon
+     |       4-7 '() '                      -
+     |       7-9 '->'                       keyword.operator.carbon
+     |     10-11 'T'                        entity.name.type.carbon
+     |     11-12 '.'                        keyword.operator.carbon
+     |     12-13 'U'                        entity.name.type.carbon
+     |     13-16 ' { '                      -
+     |     16-22 'return'                   keyword.control.carbon
+     |     23-26 'val'                      storage.modifier.carbon
+     |     26-27 ';'                        punctuation.terminator.carbon
+     |     27-30 ' }'                       -
+  39 | fn F() -> i32 => return val;
+     |       0-2 'fn'                       storage.type.carbon
+     |       3-4 'F'                        entity.name.function.carbon
+     |       4-7 '() '                      -
+     |       7-9 '->'                       keyword.operator.carbon
+     |     10-13 'i32'                      support.type.builtin.carbon
+     |     14-16 '=>'                       keyword.operator.carbon
+     |     17-23 'return'                   keyword.control.carbon
+     |     24-27 'val'                      storage.modifier.carbon
+     |     27-28 ';'                        punctuation.terminator.carbon
+  41 | // --- lambdas and positional parameters
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-40 ' --- lambdas and posi...' comment.line.double-slash.carbon
+  43 | var explicit: auto = fn (x: i32) -> i32 { return x + 1; };
+     |       0-3 'var'                      storage.type.carbon
+     |      4-12 'explicit'                 variable.other.carbon
+     |     12-13 ':'                        keyword.operator.carbon
+     |     14-18 'auto'                     support.type.builtin.carbon
+     |     19-20 '='                        keyword.operator.carbon
+     |     21-23 'fn'                       storage.type.carbon
+     |     23-25 ' ('                       -
+     |     25-26 'x'                        variable.other.carbon
+     |     26-27 ':'                        keyword.operator.carbon
+     |     28-31 'i32'                      support.type.builtin.carbon
+     |     31-33 ') '                       -
+     |     33-35 '->'                       keyword.operator.carbon
+     |     36-39 'i32'                      support.type.builtin.carbon
+     |     39-42 ' { '                      -
+     |     42-48 'return'                   keyword.control.carbon
+     |     49-50 'x'                        variable.other.carbon
+     |     51-52 '+'                        keyword.operator.carbon
+     |     53-54 '1'                        constant.numeric.decimal.carbon
+     |     54-55 ';'                        punctuation.terminator.carbon
+     |     55-57 ' }'                       -
+     |     57-58 ';'                        punctuation.terminator.carbon
+  44 | var expression: auto = fn (x: i32) => x + 1;
+     |       0-3 'var'                      storage.type.carbon
+     |      4-14 'expression'               variable.other.carbon
+     |     14-15 ':'                        keyword.operator.carbon
+     |     16-20 'auto'                     support.type.builtin.carbon
+     |     21-22 '='                        keyword.operator.carbon
+     |     23-25 'fn'                       storage.type.carbon
+     |     25-27 ' ('                       -
+     |     27-28 'x'                        variable.other.carbon
+     |     28-29 ':'                        keyword.operator.carbon
+     |     30-33 'i32'                      support.type.builtin.carbon
+     |     33-35 ') '                       -
+     |     35-37 '=>'                       keyword.operator.carbon
+     |     38-39 'x'                        variable.other.carbon
+     |     40-41 '+'                        keyword.operator.carbon
+     |     42-43 '1'                        constant.numeric.decimal.carbon
+     |     43-44 ';'                        punctuation.terminator.carbon
+  45 | var positional: auto = fn { Print($0, $1, $42); };
+     |       0-3 'var'                      storage.type.carbon
+     |      4-14 'positional'               variable.other.carbon
+     |     14-15 ':'                        keyword.operator.carbon
+     |     16-20 'auto'                     support.type.builtin.carbon
+     |     21-22 '='                        keyword.operator.carbon
+     |     23-25 'fn'                       storage.type.carbon
+     |     25-28 ' { '                      -
+     |     28-33 'Print'                    entity.name.function.carbon
+     |     33-34 '('                        -
+     |     34-36 '$0'                       variable.parameter.carbon
+     |     36-37 ','                        punctuation.separator.carbon
+     |     38-40 '$1'                       variable.parameter.carbon
+     |     40-41 ','                        punctuation.separator.carbon
+     |     42-45 '$42'                      variable.parameter.carbon
+     |     45-46 ')'                        -
+     |     46-47 ';'                        punctuation.terminator.carbon
+     |     47-49 ' }'                       -
+     |     49-50 ';'                        punctuation.terminator.carbon
+  47 | // --- raw identifiers
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-22 ' --- raw identifiers'     comment.line.double-slash.carbon
+  49 | r#class
+     |       0-2 'r#'                       punctuation.definition.raw-identifier.carbon
+     |       2-7 'class'                    variable.other.carbon
+  50 | r#if
+     |       0-2 'r#'                       punctuation.definition.raw-identifier.carbon
+     |       2-4 'if'                       variable.other.carbon
+  51 | r#i32
+     |       0-2 'r#'                       punctuation.definition.raw-identifier.carbon
+     |       2-5 'i32'                      variable.other.carbon
+  52 | var r#var: i32 = r#class;
+     |       0-3 'var'                      storage.type.carbon
+     |       4-6 'r#'                       punctuation.definition.raw-identifier.carbon
+     |       6-9 'var'                      variable.other.carbon
+     |      9-10 ':'                        keyword.operator.carbon
+     |     11-14 'i32'                      support.type.builtin.carbon
+     |     15-16 '='                        keyword.operator.carbon
+     |     17-19 'r#'                       punctuation.definition.raw-identifier.carbon
+     |     19-24 'class'                    variable.other.carbon
+     |     24-25 ';'                        punctuation.terminator.carbon

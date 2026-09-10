@@ -7,6 +7,9 @@ load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 
+# The authoritative token spellings, read by //utils/textmate:grammar_test.
+exports_files(["token_kind.def"])
+
 filegroup(
     name = "testdata",
     srcs = glob(["testdata/**/*.carbon"]),

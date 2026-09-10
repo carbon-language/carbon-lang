@@ -24,9 +24,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
+import html
+import itertools
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Iterator, Optional
 
 import tmlanguage
 
@@ -93,28 +95,19 @@ def _color_for(scopes: list[str]) -> str:
     string's quotes the string color.
     """
     for scope in reversed(scopes):
-        parts = scope.split(".")
-        for end in range(len(parts), 0, -1):
-            color = _THEME.get(".".join(parts[:end]))
-            if color:
-                return color
+        while scope:
+            if scope in _THEME:
+                return _THEME[scope]
+            scope = scope.rpartition(".")[0]
     return _FOREGROUND
 
 
-def _escape(text: str) -> str:
-    """Escapes source text for an SVG text node, as one would for HTML."""
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
-
-def _runs(colors: list[str]) -> list[tuple[int, int, str]]:
+def _runs(colors: list[str]) -> Iterator[tuple[int, int, str]]:
     """Merges a per-character color list into `(start, end, color)` runs."""
-    runs: list[tuple[int, int, str]] = []
-    for index, color in enumerate(colors):
-        if runs and runs[-1][2] == color:
-            runs[-1] = (runs[-1][0], index + 1, color)
-        else:
-            runs.append((index, index + 1, color))
-    return runs
+    end = 0
+    for color, run in itertools.groupby(colors):
+        start, end = end, end + len(list(run))
+        yield start, end, color
 
 
 def render(grammar: tmlanguage.Grammar, source: str) -> str:
@@ -155,7 +148,8 @@ def render(grammar: tmlanguage.Grammar, source: str) -> str:
         spans = [
             f'<tspan fill="{_GUTTER}">{str(linenum + 1).rjust(digits)} </tspan>'
         ] + [
-            f'<tspan fill="{color}">{_escape(linetext[start:end])}</tspan>'
+            f'<tspan fill="{color}">'
+            f"{html.escape(linetext[start:end], quote=False)}</tspan>"
             for start, end, color in _runs(colored[linenum])
         ]
         out.append(

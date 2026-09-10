@@ -14,3 +14,9 @@ carbon_binary(
         "@re2",
     ],
 )
+
+filegroup(
+    name = "carbon_files",
+    srcs = glob(["**/*.carbon"]),
+    visibility = ["//examples:__pkg__"],
+)
