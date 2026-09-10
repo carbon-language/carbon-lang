@@ -279,8 +279,8 @@ Simple member access `a.b` depends on what kind of entity `a` is:
     lookup for `b` in `a`. If the result of lookup is an associated entity, then
     `impl` lookup is performed.
 -   Otherwise, `a.b` is rewritten to the compound member `a.(typeof(a).b)`.
-    -   `typeof(a)` will always be a facet type or other type, so `typeof(a).b` will
-        always be resolved using one of the above rules, and won't require
+    -   `typeof(a)` will always be a facet type or other type, so `typeof(a).b`
+        will always be resolved using one of the above rules, and won't require
         further rewrites.
     -   If `b` is an associated entity, `typeof(a).b` will perform `impl` lookup
         using `typeof(a)`, so no `impl` lookup will happen during the compound
@@ -423,7 +423,8 @@ code to be generic won't change behavior.
 
 For [properties](#properties), this means that the normal ways of accessing
 members will perform the instance binding that triggers the evaluation of the
-property, but there is an opt-out syntax (`typeof(a).m`) when that is not desired.
+property, but there is an opt-out syntax (`typeof(a).m`) when that is not
+desired.
 
 ### C++ pointer-to-member values
 
