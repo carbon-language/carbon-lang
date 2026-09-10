@@ -51,6 +51,9 @@ Checks:
   # Finds issues like out-of-memory in main(). We don't use exceptions, so it's
   # unlikely to find real issues.
   - '-bugprone-exception-escape'
+  # We have File class types in different namespaces and we forward declare it,
+  # but don't find this to be problematic.
+  - '-bugprone-forward-declaration-namespace'
   # Doesn't respect `[[clang::enum_extensibility(open)]]`.
   - '-bugprone-invalid-enum-default-initialization'
   # Has false positives in places such as using an argument to declare a name,
