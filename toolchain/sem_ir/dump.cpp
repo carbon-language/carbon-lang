@@ -201,12 +201,12 @@ LLVM_DUMP_METHOD auto Dump(const File& file, RawBundleId bundle_id)
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file,
-                           CanonicalCoreWitnessFunctionId canon_id)
+                           CanonicalCoreWitnessFunctionId core_witness_id)
     -> std::string {
   RawStringOstream out;
-  out << canon_id;
-  if (canon_id.has_value()) {
-    const auto& canon = file.core_witness_functions().Get(canon_id);
+  out << core_witness_id;
+  if (core_witness_id.has_value()) {
+    const auto& canon = file.core_witness_functions().Get(core_witness_id);
     out << ": " << canon;
     out << "\n  - decl: " << DumpInstSummary(file, canon.decl_id);
   }
