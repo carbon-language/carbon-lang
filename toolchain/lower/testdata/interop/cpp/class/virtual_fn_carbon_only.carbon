@@ -20,6 +20,11 @@ class Z {
   override fn f(unused self) {}
 }
 
+class GenericZ(T: type) {
+  extend base: Cpp.X;
+  override fn f(unused self) {}
+}
+
 fn Run() {
   var _: Z = {.base = Cpp.X.X()};
 }

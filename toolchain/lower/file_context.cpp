@@ -774,9 +774,6 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
   if (!vtable.carbon_native_vtable) {
     const auto* clang_decl =
         sem_ir().clang_decls().Lookup(class_info.first_decl_id());
-    if (!clang_decl) {
-      clang_decl = sem_ir().clang_decls().Lookup(class_info.latest_decl_id());
-    }
     CARBON_CHECK(clang_decl, "Missing Clang declaration for class {0}",
                  class_info.name_id);
     auto* cxx_record_decl = cast<clang::CXXRecordDecl>(clang_decl->key.decl);
