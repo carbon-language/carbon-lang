@@ -59,6 +59,8 @@ constexpr auto CanListInitialize(decltype(T{Fields()...})* /*unused*/) -> bool {
   return true;
 }
 template <typename T, typename... Fields>
+// Intentionally using a C-style variadic function as a catch-all.
+// NOLINTNEXTLINE(modernize-avoid-variadic-functions)
 constexpr auto CanListInitialize(...) -> bool {
   return false;
 }
