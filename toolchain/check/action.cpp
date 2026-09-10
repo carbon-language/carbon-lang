@@ -29,7 +29,8 @@ auto PerformAction(Context& context, SemIR::SpecificId specific_id,
        .specific_id = specific_id});
 }
 
-static auto OperandDependence(Context& context, SemIR::ConstantId const_id)
+static auto OperandDependence(Context& context, SemIR::ConstantId const_id,
+                              SemIR::SpecificId /*specific_id*/)
     -> SemIR::ConstantDependence {
   // A type operand makes the instruction dependent if it is a
   // template-dependent constant.
@@ -39,35 +40,70 @@ static auto OperandDependence(Context& context, SemIR::ConstantId const_id)
   return context.constant_values().GetSymbolicConstant(const_id).dependence;
 }
 
-auto OperandDependence(Context& context, SemIR::TypeId type_id)
+static auto OperandDependence(Context& context, SemIR::TypeId type_id,
+                              SemIR::SpecificId specific_id)
     -> SemIR::ConstantDependence {
   // A type operand makes the instruction dependent if it is a
   // template-dependent type.
-  return OperandDependence(context, context.types().GetConstantId(type_id));
+  return OperandDependence(context, context.types().GetConstantId(type_id),
+                           specific_id);
 }
 
-auto OperandDependence(Context& context, SemIR::InstId inst_id)
+auto OperandDependence(Context& context, SemIR::TypeId type_id)
+    -> SemIR::ConstantDependence {
+  return OperandDependence(context, type_id, SemIR::SpecificId::None);
+}
+
+static auto OperandDependence(Context& context, SemIR::InstId inst_id,
+                              SemIR::SpecificId specific_id)
     -> SemIR::ConstantDependence {
   // An instruction operand makes the instruction dependent if its type or
   // constant value is dependent.
   return std::max(
-      OperandDependence(context, context.insts().Get(inst_id).type_id()),
-      OperandDependence(context, context.constant_values().Get(inst_id)));
+      OperandDependence(context, context.insts().Get(inst_id).type_id(),
+                        specific_id),
+      OperandDependence(context, context.constant_values().Get(inst_id),
+                        specific_id));
 }
 
-static auto OperandDependence(Context& context, SemIR::MetaInstId inst_id)
+auto OperandDependence(Context& context, SemIR::InstId inst_id)
+    -> SemIR::ConstantDependence {
+  return OperandDependence(context, inst_id, SemIR::SpecificId::None);
+}
+
+static auto OperandDependence(Context& context, SemIR::MetaInstId inst_id,
+                              SemIR::SpecificId specific_id)
     -> SemIR::ConstantDependence {
   // A meta-instruction operand makes the instruction dependent if its type or
-  // constant value is dependent.
-  return OperandDependence(context, SemIR::InstId{inst_id});
+  // constant value is dependent in this specific.
+  return std::max(OperandDependence(context,
+                                    GetTypeOfInstInSpecific(
+                                        context.sem_ir(), specific_id, inst_id),
+                                    specific_id),
+                  OperandDependence(context,
+                                    SemIR::GetConstantValueInSpecific(
+                                        context.sem_ir(), specific_id, inst_id),
+                                    specific_id));
 }
 
-auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
+auto OperandDependence(Context& context, SemIR::MetaInstId inst_id)
+    -> SemIR::ConstantDependence {
+  return OperandDependence(context, inst_id, SemIR::SpecificId::None);
+}
+
+static auto OperandDependence(Context& context, SemIR::TypeInstId inst_id,
+                              SemIR::SpecificId specific_id)
     -> SemIR::ConstantDependence {
   // An instruction operand makes the instruction dependent if its type or
   // constant value is dependent. TypeInstId has type `TypeType` which is
   // concrete, so we only need to look at the constant value.
-  return OperandDependence(context, context.constant_values().Get(inst_id));
+  return OperandDependence(context, context.constant_values().Get(inst_id),
+                           specific_id);
+}
+
+auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
+    -> SemIR::ConstantDependence {
+  return OperandDependence(context, inst_id, SemIR::SpecificId::None);
 }
 
 template <typename IdT>
@@ -76,75 +112,77 @@ template <typename IdT>
                        SemIR::CallParamIndex, SemIR::NameId,
                        SemIR::ElementIndex, SemIR::ClangDeclId,
                        SemIR::BoolValue>
-static auto OperandDependence(Context& /*context*/, IdT /*id*/)
+static auto OperandDependence(Context& /*context*/, IdT /*id*/,
+                              SemIR::SpecificId /*specific_id*/)
     -> SemIR::ConstantDependence {
   return SemIR::ConstantDependence::None;
 }
 
 template <typename BundleT>
 static auto OperandDependence(Context& context,
-                              SemIR::BundleId<BundleT> bundle_id)
+                              SemIR::BundleId<BundleT> bundle_id,
+                              SemIR::SpecificId specific_id)
     -> SemIR::ConstantDependence {
   return std::apply(
       [&](auto... ids) {
-        return std::max({OperandDependence(context, ids)...});
+        return std::max({OperandDependence(context, ids, specific_id)...});
       },
       context.bundles().GetAsTuple(bundle_id));
 }
 
 static auto OperandDependence(Context& context,
-                              SemIR::InstBlockId inst_block_id)
+                              SemIR::InstBlockId inst_block_id,
+                              SemIR::SpecificId specific_id)
     -> SemIR::ConstantDependence {
   auto result = SemIR::ConstantDependence::None;
   for (auto arg_id : context.inst_blocks().Get(inst_block_id)) {
-    result = std::max(result, OperandDependence(context, arg_id));
+    result = std::max(result, OperandDependence(context, arg_id, specific_id));
   }
   return result;
 }
 
 static auto OperandDependence(Context& context,
-                              SemIR::MetaInstBlockId inst_block_id)
+                              SemIR::MetaInstBlockId inst_block_id,
+                              SemIR::SpecificId specific_id)
     -> SemIR::ConstantDependence {
-  return OperandDependence(context, SemIR::InstBlockId{inst_block_id});
+  auto result = SemIR::ConstantDependence::None;
+  for (auto arg_id : context.inst_blocks().Get(inst_block_id)) {
+    result = std::max(
+        result,
+        OperandDependence(context, SemIR::MetaInstId(arg_id), specific_id));
+  }
+  return result;
 }
 
-static auto OperandDependence(Context& context, SemIR::SpecificId specific_id)
+static auto OperandDependence(Context& context,
+                              SemIR::SpecificId inner_specific_id,
+                              SemIR::SpecificId specific_id)
     -> SemIR::ConstantDependence {
-  auto specific = context.specifics().Get(specific_id);
-  return OperandDependence(context, specific.args_id);
+  auto specific = context.specifics().Get(inner_specific_id);
+  return OperandDependence(context, specific.args_id, specific_id);
 }
 
 template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT>
-static auto OperandDependence(Context& /*context*/, IdT /*id*/)
+static auto OperandDependence(Context& /*context*/, IdT /*id*/,
+                              SemIR::SpecificId /*specific_id*/)
     -> SemIR::ConstantDependence {
   // TODO: Properly handle different argument kinds.
   CARBON_FATAL("Unexpected argument kind for action: {}", IdT::Label);
 }
 
-static auto OperandDependence(Context& context, SemIR::IdAndKind arg)
+static auto OperandDependence(Context& context, SemIR::IdAndKind arg,
+                              SemIR::SpecificId specific_id)
     -> SemIR::ConstantDependence {
   return arg.Dispatch<SemIR::ConstantDependence>(
-      [&](auto id) { return OperandDependence(context, id); });
+      [&](auto id) { return OperandDependence(context, id, specific_id); });
 }
 
 auto ActionIsPerformable(Context& context, SemIR::Inst action_inst,
                          SemIR::SpecificId specific_id) -> bool {
-  if (auto refine_action = action_inst.TryAs<SemIR::RefineInstAction>()) {
-    // `RefineInstAction` is performable once the instruction's type and
-    // constant value are not template-dependent.
-    return OperandDependence(
-               context, GetTypeOfInstInSpecific(context.sem_ir(), specific_id,
-                                                refine_action->inst_id)) <
-               SemIR::ConstantDependence::Template &&
-           OperandDependence(context, SemIR::GetConstantValueInSpecific(
-                                          context.sem_ir(), specific_id,
-                                          refine_action->inst_id)) <
-               SemIR::ConstantDependence::Template;
-  }
-
   // A form-parameterized action is performable if we can see at least the top
   // level of its form's structure (i.e. it is not an action or a splice).
+  // TODO: Can we represent this as a different operand type instead?
   if (auto form_parameterized_action =
           action_inst.TryAs<SemIR::AnyFormParamAction>()) {
     auto form_const_id =
@@ -167,11 +205,11 @@ auto ActionIsPerformable(Context& context, SemIR::Inst action_inst,
     }
   }
 
-  return OperandDependence(context, action_inst.type_id()) <
+  return OperandDependence(context, action_inst.type_id(), specific_id) <
              SemIR::ConstantDependence::Template &&
-         OperandDependence(context, action_inst.arg0_and_kind()) <
+         OperandDependence(context, action_inst.arg0_and_kind(), specific_id) <
              SemIR::ConstantDependence::Template &&
-         OperandDependence(context, action_inst.arg1_and_kind()) <
+         OperandDependence(context, action_inst.arg1_and_kind(), specific_id) <
              SemIR::ConstantDependence::Template;
 }
 
@@ -225,9 +263,9 @@ static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
 
   // If the type or constant value of the action argument is dependent, refine
   // to an instruction with the type and value from the specific.
-  if (OperandDependence(context, inst.type_id()) ==
+  if (OperandDependence(context, inst.type_id(), SemIR::SpecificId::None) ==
           SemIR::ConstantDependence::Template ||
-      OperandDependence(context, const_id) ==
+      OperandDependence(context, const_id, SemIR::SpecificId::None) ==
           SemIR::ConstantDependence::Template) {
     auto type_inst_id = context.types().GetTypeInstId(inst.type_id());
     inst_id = AddDependentActionSpliceImpl(
