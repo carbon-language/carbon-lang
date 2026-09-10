@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
 // EXTRA-ARGS: --clang-arg=-fno-exceptions
 //
 // AUTOUPDATE
@@ -10,6 +10,9 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/interop/cpp/class/virtual_fn_carbon_only.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/interop/cpp/class/virtual_fn_carbon_only.carbon
+
+// --- non_generic.carbon
+library "[[@TEST_NAME]]";
 
 import Cpp inline '''
 struct X { virtual void f() {} };
@@ -20,11 +23,22 @@ class Z {
   override fn f(unused self) {}
 }
 
+fn F() {
+  var _: Z = {.base = Cpp.X.X()};
+}
+
+// --- generic.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+struct X { virtual void f() {} };
+''';
+
 class GenericZ(T: type) {
   extend base: Cpp.X;
   override fn f(unused self) {}
 }
 
-fn Run() {
-  var _: Z = {.base = Cpp.X.X()};
+fn F() {
+  var _: GenericZ(type) = {.base = Cpp.X.X()};
 }

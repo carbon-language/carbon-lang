@@ -180,7 +180,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
                         SemIR::ClassId class_id,
                         std::optional<SemIR::ClassType> base_class_type,
                         llvm::ArrayRef<SemIR::InstId> vtable_contents)
-    -> SemIR::VtableId {
+    -> std::pair<SemIR::VtableId, bool> {
   auto base_vtable_id = SemIR::VtableId::None;
   auto base_class_specific_id = SemIR::SpecificId::None;
 
@@ -358,10 +358,11 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     }
   }
 
-  return context.vtables().Add(
+  auto vtable_id = context.vtables().Add(
       {{.class_id = class_id,
         .virtual_functions_id = context.inst_blocks().Add(vtable),
         .carbon_native_vtable = carbon_native_vtable}});
+  return {vtable_id, carbon_native_vtable};
 }
 
 // Checks that the specified finished class definition is valid and builds and
@@ -412,12 +413,12 @@ static auto CheckCompleteClassType(
   }
 
   if (class_info.is_dynamic) {
-    auto vtable_id = BuildVtable(context, node_id, class_id, base_class_type,
-                                 vtable_contents);
+    auto [vtable_id, carbon_native_vtable] = BuildVtable(
+        context, node_id, class_id, base_class_type, vtable_contents);
     auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
     class_info.vtable_decl_id = AddInst<SemIR::VtableDecl>(
         context, node_id, {.type_id = vptr_type_id, .vtable_id = vtable_id});
-    if (!context.vtables().Get(vtable_id).carbon_native_vtable) {
+    if (!carbon_native_vtable) {
       ExportClassToCpp(context, context.types().GetAs<SemIR::ClassType>(
                                     class_info.self_type_id));
     }

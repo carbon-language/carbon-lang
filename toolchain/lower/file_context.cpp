@@ -776,7 +776,11 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
         sem_ir().clang_decls().Lookup(class_info.first_decl_id());
     CARBON_CHECK(clang_decl, "Missing Clang declaration for class {0}",
                  class_info.name_id);
-    auto* cxx_record_decl = cast<clang::CXXRecordDecl>(clang_decl->key.decl);
+    auto* decl = clang_decl->key.decl;
+    auto* cxx_record_decl =
+        isa<clang::ClassTemplateDecl>(decl)
+            ? cast<clang::ClassTemplateDecl>(decl)->getTemplatedDecl()
+            : cast<clang::CXXRecordDecl>(decl);
     // TODO: This code generator can be for the wrong AST if we're not using
     // --share-cpp-ast.
     return context().cpp_code_generator()->GetAddrOfVTable(
