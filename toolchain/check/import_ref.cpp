@@ -2621,6 +2621,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto thunk_specific_data = GetLocalSpecificData(
       resolver, import_thunk_info ? import_thunk_info->specific_id
                                   : SemIR::SpecificId::None);
+  auto thunk_override_self_type_const_id = SemIR::ConstantId::None;
+  if (import_thunk_info) {
+    thunk_override_self_type_const_id =
+        GetLocalConstantId(resolver, import_thunk_info->override_self_type_id);
+  }
 
   auto& new_function = resolver.local_functions().Get(function_id);
   if (resolver.HasNewWork()) {
@@ -2688,6 +2693,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       if (import_thunk_info->specific_id.has_value()) {
         local_thunk_info.specific_id = GetOrAddLocalSpecific(
             resolver, import_thunk_info->specific_id, thunk_specific_data);
+      }
+      if (thunk_override_self_type_const_id.has_value()) {
+        local_thunk_info.override_self_type_id =
+            resolver.local_types().GetTypeIdForTypeConstantId(
+                thunk_override_self_type_const_id);
       }
       new_function.SetThunk(resolver.local_ir().thunks().Add(local_thunk_info));
       break;
