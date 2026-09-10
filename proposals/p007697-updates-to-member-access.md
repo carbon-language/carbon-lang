@@ -117,11 +117,11 @@ generic context, that could be unknown at checking time, as in this example:
 
 ```carbon
 class D(T: Core.Default) {
-  let x: T = T.Op();
+  static let template x: T = T.Op();
 }
 
 fn F[T: type](d: D(T)) {
-  // Is the result here have value `T`, or is it the
+  // Does the result here have value `T`, or is it the
   // result of binding `T.Op()` to `d`?
   d.x
 }
@@ -279,7 +279,7 @@ Simple member access `a.b` depends on what kind of entity `a` is:
     lookup for `b` in `a`. If the result of lookup is an associated entity, then
     `impl` lookup is performed.
 -   Otherwise, `a.b` is rewritten to the compound member `a.(typeof(a).b)`.
-    -   `typeof(a)` will always be a facet or other type, so `typeof(a).b` will
+    -   `typeof(a)` will always be a facet type or other type, so `typeof(a).b` will
         always be resolved using one of the above rules, and won't require
         further rewrites.
     -   If `b` is an associated entity, `typeof(a).b` will perform `impl` lookup
@@ -378,12 +378,14 @@ impl C as I { ... }
 fn G(c: C) {
   // impl lookup of `I.F` for `C`: `C.impl(I.F)`
   C.impl(I.F)();
+  // or:
+  typeof(c).impl(I.F)();
 
   // impl lookup of `I.M` for `C` taking a `C` parameter for `self`: `C.impl(I.M)`.
   // This may be called with `c` passed in for `self` using:
   C.impl(I.M)(c);
   // or:
-  c.(C.impl(I.M))(c)
+  c.(C.impl(I.M))();
 
   // impl lookup of `I.M` for `C` where the `self` parameter is bound to `c`:
   // `c.(I.M)`
@@ -414,14 +416,14 @@ proposed rules is whether it names an associated entity.
 With this proposal, `a.(m)` always performs instance binding, and `a.b` performs
 instance binding unless `a` is a kind of entity where we never perform instance
 binding such as packages and namespaces. Cases where you want to avoid instance
-binding now have a separate syntax (`a.impl(m)`).
+binding now have a separate syntax (`typeof(a).impl(m)`).
 
 This means that generic code has a clear meaning, and transforming non-generic
 code to be generic won't change behavior.
 
 For [properties](#properties), this means that the normal ways of accessing
 members will perform the instance binding that triggers the evaluation of the
-property, but there is an opt-out syntax (`a.impl(m)`) when that is not desired.
+property, but there is an opt-out syntax (`typeof(a).m`) when that is not desired.
 
 ### C++ pointer-to-member values
 
