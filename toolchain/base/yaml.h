@@ -68,7 +68,7 @@ class OutputMapping {
     // letting mapRequired take `&value`.
     template <typename T>
     auto Add(llvm::StringRef key, T value) -> void {
-      io_->mapRequired(key.data(), value);
+      io_->mapRequired(key, value);
     }
 
    private:
