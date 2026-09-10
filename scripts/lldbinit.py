@@ -22,10 +22,15 @@ result = lldb.SBCommandReturnObject()
 
 
 def RunCommand(cmd: str, print_command: bool = True) -> Any:
-    """Runs a command and prints it to the console to show that it ran."""
+    """Runs a command and prints it to the console to show that it ran.
+
+    Any errors are printed to the console."""
     if print_command:
         print(f"(lldb) {cmd}")
     ci.HandleCommand(cmd, result)
+    err = result.GetError()
+    if err:
+        print(result.GetError())
     return result.GetOutput()
 
 
@@ -108,10 +113,6 @@ Example usage:
             # Use the `dump_re` match to print just the interesting part of the
             # dump output.
             print(m[1])
-        else:
-            # Unexpected output, show the command that was run.
-            print(f"(lldb) {cmd}")
-            print(out)
 
     # Try to find a type + id from the input args. If not, the id will be passed
     # through directly to C++, as it can be a variable name.
