@@ -127,7 +127,7 @@ auto ImportCpp(Context& context,
     if (domain && GenerateAst(context, imports, *domain)) {
       auto [name_scope_id, namespace_inst_id] = AddImportNamespace(
           context, GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
-          SemIR::NameId::None, SemIR::NameScopeId::None,
+          SemIR::NameId::Cpp, SemIR::NameScopeId::None,
           /*import_id=*/SemIR::InstId::None);
       SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
       name_scope.set_is_closed_import(true);
