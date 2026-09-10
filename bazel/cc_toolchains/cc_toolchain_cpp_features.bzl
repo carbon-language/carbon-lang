@@ -249,9 +249,6 @@ clang_warnings_feature = feature(
             # TODO: Regression that warns on anonymous unions; remove depending
             # on fix.
             "-Wno-missing-designated-field-initializers",
-
-            # False positives in eval.cpp.
-            "-Wno-unused-template",
         ])],
     )],
 )
