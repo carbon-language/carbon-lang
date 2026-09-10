@@ -417,6 +417,13 @@ static auto CheckCompleteClassType(
     auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
     class_info.vtable_decl_id = AddInst<SemIR::VtableDecl>(
         context, node_id, {.type_id = vptr_type_id, .vtable_id = vtable_id});
+    if (!context.vtables().Get(vtable_id).carbon_native_vtable &&
+        class_info.self_type_id.has_value() &&
+        class_info.self_type_id != SemIR::ErrorInst::TypeId) {
+      auto class_type =
+          context.types().GetAs<SemIR::ClassType>(class_info.self_type_id);
+      ExportClassToCpp(context, class_type);
+    }
   }
 
   auto struct_type_id = GetStructType(

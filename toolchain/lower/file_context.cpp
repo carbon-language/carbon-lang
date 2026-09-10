@@ -772,8 +772,14 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
     -> llvm::Constant* {
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
   if (!vtable.carbon_native_vtable) {
-    auto* cxx_record_decl = cast<clang::CXXRecordDecl>(
-        sem_ir().clang_decls().Lookup(class_info.latest_decl_id())->key.decl);
+    const auto* clang_decl =
+        sem_ir().clang_decls().Lookup(class_info.first_decl_id());
+    if (!clang_decl) {
+      clang_decl = sem_ir().clang_decls().Lookup(class_info.latest_decl_id());
+    }
+    CARBON_CHECK(clang_decl, "Missing Clang declaration for class {0}",
+                 class_info.name_id);
+    auto* cxx_record_decl = cast<clang::CXXRecordDecl>(clang_decl->key.decl);
     // TODO: This code generator can be for the wrong AST if we're not using
     // --share-cpp-ast.
     return context().cpp_code_generator()->GetAddrOfVTable(
