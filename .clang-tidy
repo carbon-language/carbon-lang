@@ -115,6 +115,9 @@ Checks:
   - '-readability-redundant-parentheses'
   # Warns when callers use similar names as different parameters.
   - '-readability-suspicious-call-argument'
+  # Low value check, and it's a stylistic choice to use `#if defined(...)` when
+  # paired with `#elif defined(...)`.
+  - '-readability-use-concise-preprocessor-directives'
 
 CheckOptions:
   # Don't warn on structs; done by ignoring when there are only public members.
