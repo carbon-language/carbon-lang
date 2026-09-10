@@ -41,6 +41,9 @@ Checks:
   # Warns when we have multiple empty cases in switches, which we do for comment
   # reasons.
   - '-bugprone-branch-clone'
+  # We use CRTP inheritence widely and across distant areas of the codebase,
+  # which makes maintaining friend lists for the constructors frustrating.
+  - '-bugprone-crtp-constructor-accessibility'
   # We shadow methods with CRTP, instead of using virtual, such as for Print().
   - '-bugprone-derived-method-shadowing-base-method'
   # Frequently warns on multiple parameters of the same type.
