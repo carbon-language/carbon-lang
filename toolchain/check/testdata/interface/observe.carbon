@@ -904,10 +904,13 @@ fn F[W: A, X: I(W)](x: X) {
 // CHECK:STDOUT:     %TakesA.ref: %TakesA.type = name_ref TakesA, file.%TakesA.decl [concrete = constants.%TakesA]
 // CHECK:STDOUT:     %x.ref: @InnerF.%V.as_type.loc12_16.1 (%V.as_type.38f) = name_ref x, %x
 // CHECK:STDOUT:     %.loc13_13.1: %A.type = as_compatible constants.%V.as_type.38f [symbolic = %V.as_type.loc13 (constants.%V.as_type.c9a)]
-// CHECK:STDOUT:     %.loc13_13.2: %A.type = as_compatible constants.%V.as_type.38f [symbolic = %V.as_type.loc13 (constants.%V.as_type.c9a)]
+// CHECK:STDOUT:     %.loc13_13.2: %A.type = converted constants.%V.as_type.38f, %.loc13_13.1 [symbolic = %V.as_type.loc13 (constants.%V.as_type.c9a)]
+// CHECK:STDOUT:     %.loc13_13.3: %A.type = as_compatible constants.%V.as_type.38f [symbolic = %V.as_type.loc13 (constants.%V.as_type.c9a)]
+// CHECK:STDOUT:     %.loc13_13.4: %A.type = converted constants.%V.as_type.38f, %.loc13_13.3 [symbolic = %V.as_type.loc13 (constants.%V.as_type.c9a)]
 // CHECK:STDOUT:     %TakesA.specific_fn.loc13_5.1: <specific function> = specific_function %TakesA.ref, @TakesA(constants.%V.as_type.c9a) [symbolic = %TakesA.specific_fn.loc13_5.2 (constants.%TakesA.specific_fn)]
-// CHECK:STDOUT:     %.loc13_12: @InnerF.%as_type (%as_type) = as_compatible %x.ref
-// CHECK:STDOUT:     %TakesA.call: init %empty_tuple.type = call %TakesA.specific_fn.loc13_5.1(%.loc13_12)
+// CHECK:STDOUT:     %.loc13_12.1: @InnerF.%as_type (%as_type) = as_compatible %x.ref
+// CHECK:STDOUT:     %.loc13_12.2: @InnerF.%as_type (%as_type) = converted %x.ref, %.loc13_12.1
+// CHECK:STDOUT:     %TakesA.call: init %empty_tuple.type = call %TakesA.specific_fn.loc13_5.1(%.loc13_12.2)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
