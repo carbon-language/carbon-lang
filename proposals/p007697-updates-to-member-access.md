@@ -324,7 +324,7 @@ Simple member access `a.b` depends on what kind of entity `a` is:
 -   If `a` names a non-type facet, then `b` is looked up in the type of `a`
     (which by definition is a facet type such as an interface). If the lookup
     finds an associated entity, then `impl` lookup is performed. This lookup
-    prefers and first looks in the facet `a`. This `impl` lookup is needed to
+    commonly can be satisfied by the facet `a`. This `impl` lookup is needed to
     address the
     ["facets with members associated with different interfaces" problem](#facets-with-members-associated-with-different-interfaces).
 -   If `a` names a facet type, then `a.b` performs name lookup for `b` in `a`.
