@@ -226,6 +226,8 @@ class Formatter {
 
   // Standard formatting for a declaration instruction's arguments.
   template <typename IdT>
+  // TODO: Recursive cycle when we format any decls inside the RHS.
+  // NOLINTNEXTLINE(misc-no-recursion)
   auto FormatDeclRhs(IdT decl_id, InstBlockId pattern_block_id,
                      InstBlockId decl_block_id) {
     FormatArgs(decl_id);
