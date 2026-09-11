@@ -39,8 +39,8 @@ fn Main() {
 // CHECK:STDOUT:   %x.patt.06838d.2: %pattern_type.cb1 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %x.var_patt.28d573.2: %pattern_type.cb1 = var_pattern %x.patt.06838d.2 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc11 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -91,12 +91,12 @@ fn Main() {
 // CHECK:STDOUT:     %x.patt.loc11: %pattern_type.cb1 = ref_binding_pattern x [concrete = constants.%x.patt.06838d.2]
 // CHECK:STDOUT:     %x.var_patt.loc11: %pattern_type.cb1 = var_pattern %x.patt.loc11 [concrete = constants.%x.var_patt.28d573.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound.loc11: <bound method> = bound_method %x.var.loc11, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc11: init %empty_tuple.type = call %Destroy.Op.bound.loc11(%x.var.loc11)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc3: <bound method> = bound_method %x.var.loc3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc3: init %empty_tuple.type = call %Destroy.Op.bound.loc3(%x.var.loc3)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc11: <bound method> = bound_method %x.var.loc11, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc11: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc11(%x.var.loc11)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc3: <bound method> = bound_method %x.var.loc3, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc3: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc3(%x.var.loc3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc11(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:

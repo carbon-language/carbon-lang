@@ -892,9 +892,9 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%int_0.3c0) [concrete]
 // CHECK:STDOUT:   %.0e2: ref %WithNontype.888 = temporary invalid, %WithNontype.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc9_15.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.0e2, %Destroy.Op.1a2547.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc9_15.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %.0e2, %Destroy.WithSelf.Op.403171.2 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound.678: <bound method> = bound_method %int_0.3c0, %Int.as.Copy.impl.Op.4f6 [concrete]
 // CHECK:STDOUT:   %bound_method.28e: <bound method> = bound_method %int_0.3c0, %Int.as.Copy.impl.Op.specific_fn [concrete]
 // CHECK:STDOUT: }
@@ -1031,13 +1031,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_15.2: ref %WithNontype.888 = temporary %.loc9_13.2, %.loc9_15.1 [concrete = constants.%.0e2]
 // CHECK:STDOUT:   %.loc9_15.3: %WithNontype.888 = acquire_value %.loc9_15.2 [concrete = constants.%WithNontype.val]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%.loc9_15.3)
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.0e2)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call constants.%Destroy.WithSelf.Op.bound(constants.%.0e2)
 // CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc9_15.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc9_15.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc9_15.2(%self.param: ref %WithNontype.888) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc9_15.2(%self.param: ref %WithNontype.888) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -62,8 +62,8 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:   %.8ed: type = fn_type_with_self_type %Copy.WithSelf.Op.type.707, %Copy.facet [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.8fa, @ptr.as.Copy.impl.Op(%Class) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc18 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
 // CHECK:STDOUT:   %MemberNamedSelf: type = class_type @MemberNamedSelf [concrete]
 // CHECK:STDOUT:   %Self.7fc: type = class_type @Self [concrete]
 // CHECK:STDOUT:   %pattern_type.bb1: type = pattern_type %MemberNamedSelf [concrete]
@@ -196,14 +196,14 @@ fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 // CHECK:STDOUT:     %p.patt: %pattern_type.8c5 = ref_binding_pattern p [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.8c5 = var_pattern %p.patt [concrete = constants.%p.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound.loc18: <bound method> = bound_method %p.var, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc18: init %empty_tuple.type = call %Destroy.Op.bound.loc18(%p.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc17: <bound method> = bound_method %Self.var, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc17: init %empty_tuple.type = call %Destroy.Op.bound.loc17(%Self.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc18: <bound method> = bound_method %p.var, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc18: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc18(%p.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc17: <bound method> = bound_method %Self.var, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc17: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc17(%Self.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %ptr.7ee) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18(%self.param: ref %ptr.7ee) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MemberNamedSelf.F(%x.param.loc28: %MemberNamedSelf, %y.param.loc28: %Self.7fc) {
 // CHECK:STDOUT: !entry:

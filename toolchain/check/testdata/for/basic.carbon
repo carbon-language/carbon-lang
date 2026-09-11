@@ -99,13 +99,13 @@ fn Run() {
 // CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.Next.bound: <bound method> = bound_method %.50e, %TrivialRange.as.Iterate.impl.Next [concrete]
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %Optional.HasValue.3ad, @Optional.HasValue(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.20b, @Optional.Get(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.1: type = fn_type @Destroy.Op.loc18_35.1 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.1: %Destroy.Op.type.1d8f74.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc18_35.4 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.6: type = fn_type @Destroy.Op.loc18_20.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.6: %Destroy.Op.type.1d8f74.6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.50e, %Destroy.Op.1a2547.6 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc18_35.1 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.4: type = fn_type @Destroy.WithSelf.Op.loc18_35.4 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.4: %Destroy.WithSelf.Op.type.ef016f.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.6: type = fn_type @Destroy.WithSelf.Op.loc18_20.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.6: %Destroy.WithSelf.Op.type.ef016f.6 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %.50e, %Destroy.WithSelf.Op.403171.6 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.Copy.impl.Op.type: type = fn_type @empty_tuple.type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.Copy.impl.Op: %empty_tuple.type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -176,40 +176,40 @@ fn Run() {
 // CHECK:STDOUT:   %_: %empty_tuple.type = wrapper_binding _, %.loc18_35.11
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref()
-// CHECK:STDOUT:   %Destroy.Op.bound.loc18_35.1: <bound method> = bound_method %.loc18_35.10, constants.%Destroy.Op.1a2547.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc18_35.1: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.1(%.loc18_35.10)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc18_35.2: <bound method> = bound_method %.loc18_35.2, constants.%Destroy.Op.1a2547.4
-// CHECK:STDOUT:   %Destroy.Op.call.loc18_35.2: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.2(%.loc18_35.2)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc18_35.1: <bound method> = bound_method %.loc18_35.10, constants.%Destroy.WithSelf.Op.403171.1
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc18_35.1: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc18_35.1(%.loc18_35.10)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc18_35.2: <bound method> = bound_method %.loc18_35.2, constants.%Destroy.WithSelf.Op.403171.4
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc18_35.2: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc18_35.2(%.loc18_35.2)
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   %Destroy.Op.bound.loc18_35.3: <bound method> = bound_method %.loc18_35.2, constants.%Destroy.Op.1a2547.4
-// CHECK:STDOUT:   %Destroy.Op.call.loc18_35.3: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.3(%.loc18_35.2)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc18_35.4: <bound method> = bound_method %var, constants.%Destroy.Op.1a2547.1
-// CHECK:STDOUT:   %Destroy.Op.call.loc18_35.4: init %empty_tuple.type = call %Destroy.Op.bound.loc18_35.4(%var)
-// CHECK:STDOUT:   %Destroy.Op.call.loc18_20: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.50e)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc18_35.3: <bound method> = bound_method %.loc18_35.2, constants.%Destroy.WithSelf.Op.403171.4
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc18_35.3: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc18_35.3(%.loc18_35.2)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc18_35.4: <bound method> = bound_method %var, constants.%Destroy.WithSelf.Op.403171.1
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc18_35.4: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc18_35.4(%var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc18_20: init %empty_tuple.type = call constants.%Destroy.WithSelf.Op.bound(constants.%.50e)
 // CHECK:STDOUT:   %AfterLoop.ref: %AfterLoop.type = name_ref AfterLoop, file.%AfterLoop.decl [concrete = constants.%AfterLoop]
 // CHECK:STDOUT:   %AfterLoop.call: init %empty_tuple.type = call %AfterLoop.ref()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc18_35.1(%self.param: ref %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_35.1(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc18_35.2(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_35.2(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc18_35.3(%self.param: ref %struct_type.has_value.value.da2) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_35.3(%self.param: ref %struct_type.has_value.value.da2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc18_35.4(%self.param: ref %Optional.0cb) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_35.4(%self.param: ref %Optional.0cb) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc18_20.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_20.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc18_20.2(%self.param: ref %TrivialRange) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_20.2(%self.param: ref %TrivialRange) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

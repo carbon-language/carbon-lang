@@ -52,16 +52,16 @@ fn M() -> i32 {
 // CHECK:STDOUT:   %.loc34 = load i32, ptr %n.var, align 4, !dbg !10
 // CHECK:STDOUT:   call void @_CF.Main.84588f41d61dafba(i32 %.loc34), !dbg !11
 // CHECK:STDOUT:   %.loc35_9 = load i32, ptr %n.var, align 4, !dbg !12
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.553a1f59d1dd8381(i32 %.loc35_9), !dbg !13
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.89a3e87df6fdafe1(i32 %.loc35_9), !dbg !13
 // CHECK:STDOUT:   store i32 %G.call, ptr %m.var, align 4, !dbg !14
 // CHECK:STDOUT:   %.loc36 = load i32, ptr %m.var, align 4, !dbg !15
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %m.var), !dbg !9
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %n.var), !dbg !8
+// CHECK:STDOUT:   call void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %m.var), !dbg !9
+// CHECK:STDOUT:   call void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %n.var), !dbg !8
 // CHECK:STDOUT:   ret i32 %.loc36, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !17 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
@@ -76,13 +76,13 @@ fn M() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.553a1f59d1dd8381(i32 %x) #0 !dbg !27 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.89a3e87df6fdafe1(i32 %x) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc25_6.3.temp = alloca i32, align 4, !dbg !32
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_6.3.temp), !dbg !32
 // CHECK:STDOUT:   %H.call = call i32 @_CH.Main.4d6ceefeb7f772f4(i32 %x), !dbg !32
 // CHECK:STDOUT:   store i32 %H.call, ptr %.loc25_6.3.temp, align 4, !dbg !32
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %.loc25_6.3.temp), !dbg !32
+// CHECK:STDOUT:   call void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %.loc25_6.3.temp), !dbg !32
 // CHECK:STDOUT:   call void @_CF.Main.84588f41d61dafba(i32 %x), !dbg !33
 // CHECK:STDOUT:   ret i32 %x, !dbg !34
 // CHECK:STDOUT: }
@@ -95,7 +95,7 @@ fn M() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @"_COp.70db2d92ffddbef7:core.Destroy.Core", { 0, 2, 1 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.f58524831c37807e:core.Destroy.Core", { 0, 2, 1 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 2, 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -121,7 +121,7 @@ fn M() -> i32 {
 // CHECK:STDOUT: !14 = !DILocation(line: 35, column: 3, scope: !4)
 // CHECK:STDOUT: !15 = !DILocation(line: 36, column: 10, scope: !4)
 // CHECK:STDOUT: !16 = !DILocation(line: 36, column: 3, scope: !4)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !1, line: 35, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !20)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !1, line: 35, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !20)
 // CHECK:STDOUT: !18 = !DISubroutineType(types: !19)
 // CHECK:STDOUT: !19 = !{null, !7}
 // CHECK:STDOUT: !20 = !{!21}
@@ -131,7 +131,7 @@ fn M() -> i32 {
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !23, type: !7)
 // CHECK:STDOUT: !26 = !DILocation(line: 16, column: 1, scope: !23)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.553a1f59d1dd8381", scope: null, file: !1, line: 24, type: !28, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !30)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.89a3e87df6fdafe1", scope: null, file: !1, line: 24, type: !28, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !30)
 // CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
 // CHECK:STDOUT: !29 = !{!7, !7}
 // CHECK:STDOUT: !30 = !{!31}

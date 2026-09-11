@@ -86,8 +86,8 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %bound_method.953: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.0c6: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc25_14.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc25_14.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %DifferentScopes.type: type = fn_type @DifferentScopes [concrete]
 // CHECK:STDOUT:   %DifferentScopes: %DifferentScopes.type = struct_value () [concrete]
 // CHECK:STDOUT:   %w.patt.859340.2: %pattern_type.6b6 = ref_binding_pattern w [concrete]
@@ -172,10 +172,10 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:     %w.patt: %pattern_type.6b6 = ref_binding_pattern w [concrete = constants.%w.patt.859340.1]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.6b6 = var_pattern %w.patt [concrete = constants.%w.var_patt.82cc74.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound.loc25: <bound method> = bound_method %w.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc25: init %empty_tuple.type = call %Destroy.Op.bound.loc25(%w.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc17: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc17: init %empty_tuple.type = call %Destroy.Op.bound.loc17(%v.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc25: <bound method> = bound_method %w.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc25: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc25(%w.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc17: <bound method> = bound_method %v.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc17: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc17(%v.var)
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
@@ -189,9 +189,9 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   return %.loc27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc25_14.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc25_14.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc25_14.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc25_14.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -236,13 +236,13 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:     %w.patt: %pattern_type.6b6 = ref_binding_pattern w [concrete = constants.%w.patt.859340.2]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.6b6 = var_pattern %w.patt [concrete = constants.%w.var_patt.82cc74.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound.loc41: <bound method> = bound_method %w.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc41: init %empty_tuple.type = call %Destroy.Op.bound.loc41(%w.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc41: <bound method> = bound_method %w.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc41: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc41(%w.var)
 // CHECK:STDOUT:   br !if.else.loc33
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc33:
-// CHECK:STDOUT:   %Destroy.Op.bound.loc32: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc32: init %empty_tuple.type = call %Destroy.Op.bound.loc32(%v.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc32: <bound method> = bound_method %v.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc32: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc32(%v.var)
 // CHECK:STDOUT:   br !if.else.loc31
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc31:

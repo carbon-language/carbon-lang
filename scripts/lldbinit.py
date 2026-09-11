@@ -82,6 +82,8 @@ Example usage:
 
     # The set of "Make" functions in dump.cpp.
     id_types = {
+        "canonical_core_witness_function":  # `ruff format` removes the newline.
+        "SemIR:MakeCanonicalCoreWitnessFunctionId",
         "class": "SemIR::MakeClassId",
         "constant": "SemIR::MakeConstantId",
         "constraint": "SemIR::MakeNamedConstraintId",

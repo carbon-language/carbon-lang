@@ -609,9 +609,9 @@ fn F() {
 // CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
 // CHECK:STDOUT:   %.367: ref %A = temporary invalid, %A.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc11_37.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.367, %Destroy.Op.1a2547.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc11_37.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %.367, %Destroy.WithSelf.Op.403171.2 [concrete]
 // CHECK:STDOUT:   %complete_type.a75: <witness> = complete_type_witness %ptr.d43 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -714,13 +714,13 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_37.5: ref %A = temporary %.loc11_37.2, %.loc11_37.4 [concrete = constants.%.367]
 // CHECK:STDOUT:   %.loc11_37.6: %A = acquire_value %.loc11_37.5 [concrete = constants.%A.val]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.call: init %ptr.d43 = call %ExplicitAndAlsoDeduced.specific_fn(%.loc11_37.6)
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.367)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call constants.%Destroy.WithSelf.Op.bound(constants.%.367)
 // CHECK:STDOUT:   return %ExplicitAndAlsoDeduced.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc11_37.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc11_37.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc11_37.2(%self.param: ref %A) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc11_37.2(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -248,7 +248,13 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   bool check_type = true;
   do {
     auto patterns = pattern_stack.pop_back_val();
-    auto new_param_pattern = context.insts().Get(patterns.new_id);
+    // Typically the new decl (redecl) is a local instruction and we can just
+    // use the id directly. But for canonicalized CoreWitness functions, we may
+    // use an imported function in place of a local decl so the `kind()` would
+    // be an `ImportRefLoaded`. What we want is the canonical instruction for
+    // the new pattern regardless.
+    auto new_param_pattern = context.insts().Get(
+        context.constant_values().GetConstantInstId(patterns.new_id));
     auto prev_param_const_id = SemIR::GetConstantValueInSpecific(
         context.sem_ir(), prev_specific_id, patterns.prev_id);
     auto prev_param_pattern =
