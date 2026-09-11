@@ -124,7 +124,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.e649d414b9e7644a:core.Destroy.Core"(ptr %self) #4 !dbg !26 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.e649d414b9e7644a:core.Destroy.Core"(ptr %self) #4 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
@@ -138,14 +138,8 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.1cabb3cc2a1d5b15(ptr %self) #4 !dbg !34 {
-// CHECK:STDOUT:   call void @"_COp.e649d414b9e7644a:core.Destroy.Core"(ptr %self), !dbg !38
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.1cabb3cc2a1d5b15(ptr %self), !dbg !39
-// CHECK:STDOUT:   ret void, !dbg !40
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.1cabb3cc2a1d5b15(ptr %self) #4 !dbg !41 {
-// CHECK:STDOUT:   ret void, !dbg !44
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.e649d414b9e7644a:core.Destroy.Core"(ptr %self), !dbg !38
+// CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -185,7 +179,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: !23 = !{!24}
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !22, type: !18)
 // CHECK:STDOUT: !25 = !DILocation(line: 5, column: 1, scope: !22)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.e649d414b9e7644a:core.Destroy.Core", scope: null, file: !1, line: 5, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !27)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.e649d414b9e7644a:core.Destroy.Core", scope: null, file: !1, line: 5, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !27)
 // CHECK:STDOUT: !27 = !{!28}
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !26, type: !18)
 // CHECK:STDOUT: !29 = !DILocation(line: 5, column: 1, scope: !26)
@@ -197,13 +191,8 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: !35 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !36 = !{!37}
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !34, type: !18)
-// CHECK:STDOUT: !38 = !DILocation(line: 25, column: 5, scope: !34)
-// CHECK:STDOUT: !39 = !DILocation(line: 26, column: 5, scope: !34)
-// CHECK:STDOUT: !40 = !DILocation(line: 24, column: 3, scope: !34)
-// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.1cabb3cc2a1d5b15", scope: null, file: !35, line: 17, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !42)
-// CHECK:STDOUT: !42 = !{!43}
-// CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !41, type: !18)
-// CHECK:STDOUT: !44 = !DILocation(line: 17, column: 3, scope: !41)
+// CHECK:STDOUT: !38 = !DILocation(line: 26, column: 5, scope: !34)
+// CHECK:STDOUT: !39 = !DILocation(line: 24, column: 3, scope: !34)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'method_with_args_and_return.carbon'
@@ -270,7 +259,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.433c867dbc0ac54b:core.Destroy.Core"(ptr %self) #4 !dbg !31 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.433c867dbc0ac54b:core.Destroy.Core"(ptr %self) #4 !dbg !31 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
@@ -293,14 +282,8 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.93ac61ebaf93c951(ptr %self) #4 !dbg !48 {
-// CHECK:STDOUT:   call void @"_COp.433c867dbc0ac54b:core.Destroy.Core"(ptr %self), !dbg !52
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.93ac61ebaf93c951(ptr %self), !dbg !53
-// CHECK:STDOUT:   ret void, !dbg !54
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.93ac61ebaf93c951(ptr %self) #4 !dbg !55 {
-// CHECK:STDOUT:   ret void, !dbg !58
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.433c867dbc0ac54b:core.Destroy.Core"(ptr %self), !dbg !52
+// CHECK:STDOUT:   ret void, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -345,7 +328,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: !28 = !{!29}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !25, type: !20)
 // CHECK:STDOUT: !30 = !DILocation(line: 5, column: 1, scope: !25)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Op", linkageName: "_COp.433c867dbc0ac54b:core.Destroy.Core", scope: null, file: !1, line: 5, type: !26, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !32)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.433c867dbc0ac54b:core.Destroy.Core", scope: null, file: !1, line: 5, type: !26, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !32)
 // CHECK:STDOUT: !32 = !{!33}
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !31, type: !20)
 // CHECK:STDOUT: !34 = !DILocation(line: 5, column: 1, scope: !31)
@@ -366,13 +349,8 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: !49 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !50 = !{!51}
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !48, type: !20)
-// CHECK:STDOUT: !52 = !DILocation(line: 25, column: 5, scope: !48)
-// CHECK:STDOUT: !53 = !DILocation(line: 26, column: 5, scope: !48)
-// CHECK:STDOUT: !54 = !DILocation(line: 24, column: 3, scope: !48)
-// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.93ac61ebaf93c951", scope: null, file: !49, line: 17, type: !26, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !56)
-// CHECK:STDOUT: !56 = !{!57}
-// CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !55, type: !20)
-// CHECK:STDOUT: !58 = !DILocation(line: 17, column: 3, scope: !55)
+// CHECK:STDOUT: !52 = !DILocation(line: 26, column: 5, scope: !48)
+// CHECK:STDOUT: !53 = !DILocation(line: 24, column: 3, scope: !48)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'static.carbon'
@@ -408,7 +386,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.f6473606999de44c:core.Destroy.Core"(ptr %self) #2 !dbg !23 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.f6473606999de44c:core.Destroy.Core"(ptr %self) #2 !dbg !23 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
@@ -429,14 +407,8 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.57ed446d50680f19(ptr %self) #2 !dbg !32 {
-// CHECK:STDOUT:   call void @"_COp.f6473606999de44c:core.Destroy.Core"(ptr %self), !dbg !36
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.57ed446d50680f19(ptr %self), !dbg !37
-// CHECK:STDOUT:   ret void, !dbg !38
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.57ed446d50680f19(ptr %self) #2 !dbg !39 {
-// CHECK:STDOUT:   ret void, !dbg !42
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.f6473606999de44c:core.Destroy.Core"(ptr %self), !dbg !36
+// CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -471,7 +443,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !16, type: !19)
 // CHECK:STDOUT: !22 = !DILocation(line: 5, column: 1, scope: !16)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f6473606999de44c:core.Destroy.Core", scope: null, file: !1, line: 5, type: !17, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !24)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.f6473606999de44c:core.Destroy.Core", scope: null, file: !1, line: 5, type: !17, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !24)
 // CHECK:STDOUT: !24 = !{!25}
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !23, type: !19)
 // CHECK:STDOUT: !26 = !DILocation(line: 5, column: 1, scope: !23)
@@ -484,11 +456,6 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: !33 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !34 = !{!35}
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !32, type: !19)
-// CHECK:STDOUT: !36 = !DILocation(line: 25, column: 5, scope: !32)
-// CHECK:STDOUT: !37 = !DILocation(line: 26, column: 5, scope: !32)
-// CHECK:STDOUT: !38 = !DILocation(line: 24, column: 3, scope: !32)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.57ed446d50680f19", scope: null, file: !33, line: 17, type: !17, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !40)
-// CHECK:STDOUT: !40 = !{!41}
-// CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !39, type: !19)
-// CHECK:STDOUT: !42 = !DILocation(line: 17, column: 3, scope: !39)
+// CHECK:STDOUT: !36 = !DILocation(line: 26, column: 5, scope: !32)
+// CHECK:STDOUT: !37 = !DILocation(line: 24, column: 3, scope: !32)
 // CHECK:STDOUT:

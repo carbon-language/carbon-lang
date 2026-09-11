@@ -553,12 +553,12 @@ fn F() {
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor: %unsigned_int.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %unsigned_int.type.facet: %type = facet_value %unsigned_int, () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.4e9: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%unsigned_int.type.facet) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.e0c: %Destroy.WithSelf.SubobjectDestroy.type.4e9 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.931: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%unsigned_int.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.4a5: %Destroy.WithSelf.SelfDestruct.type.931 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.5eb: <witness> = custom_witness (%unsigned_int.cpp_destructor, %Destroy.WithSelf.SubobjectDestroy.e0c, %Destroy.WithSelf.SelfDestruct.4a5), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.2d6: %Destroy.type = facet_value %unsigned_int, (%custom_witness.5eb) [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.410: <witness> = custom_witness (%Destroy.Op, %unsigned_int.cpp_destructor, %Destroy.WithSelf.SelfDestruct.4a5), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.94b: %Destroy.type = facet_value %unsigned_int, (%custom_witness.410) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -609,13 +609,15 @@ fn F() {
 // CHECK:STDOUT:     %x.patt: %pattern_type.668 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %unsigned_int.var, constants.%Destroy.WithSelf.SelfDestruct.4a5
-// CHECK:STDOUT:   %Destroy.facet.loc12_3.1: %Destroy.type = facet_value constants.%unsigned_int, (constants.%custom_witness.5eb) [concrete = constants.%Destroy.facet.2d6]
-// CHECK:STDOUT:   %.loc12_3.2: %Destroy.type = converted constants.%unsigned_int, %Destroy.facet.loc12_3.1 [concrete = constants.%Destroy.facet.2d6]
-// CHECK:STDOUT:   %Destroy.facet.loc12_3.2: %Destroy.type = facet_value constants.%unsigned_int, (constants.%custom_witness.5eb) [concrete = constants.%Destroy.facet.2d6]
-// CHECK:STDOUT:   %.loc12_3.3: %Destroy.type = converted constants.%unsigned_int, %Destroy.facet.loc12_3.2 [concrete = constants.%Destroy.facet.2d6]
+// CHECK:STDOUT:   %Destroy.facet.loc12_3.1: %Destroy.type = facet_value constants.%unsigned_int, (constants.%custom_witness.410) [concrete = constants.%Destroy.facet.94b]
+// CHECK:STDOUT:   %.loc12_3.2: %Destroy.type = converted constants.%unsigned_int, %Destroy.facet.loc12_3.1 [concrete = constants.%Destroy.facet.94b]
+// CHECK:STDOUT:   %Destroy.facet.loc12_3.2: %Destroy.type = facet_value constants.%unsigned_int, (constants.%custom_witness.410) [concrete = constants.%Destroy.facet.94b]
+// CHECK:STDOUT:   %.loc12_3.3: %Destroy.type = converted constants.%unsigned_int, %Destroy.facet.loc12_3.2 [concrete = constants.%Destroy.facet.94b]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %unsigned_int.var, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method.loc12(%unsigned_int.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %unsigned_int) = "no_op";
 // CHECK:STDOUT:

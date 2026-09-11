@@ -50,16 +50,16 @@ fn F() {
 // CHECK:STDOUT:   %int_1: %Enum = int_value 1 [concrete]
 // CHECK:STDOUT:   %Enum.Op.bound.d4f: <bound method> = bound_method %int_1, %Enum.Op [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.SubobjectDestroy.type: type = fn_type @Destroy.SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %Destroy.SubobjectDestroy: %Destroy.SubobjectDestroy.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Enum.type.facet: %type = facet_value %Enum, () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.344: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%Enum.type.facet) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.a41: %Destroy.WithSelf.SubobjectDestroy.type.344 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.3d2: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%Enum.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.396: %Destroy.WithSelf.SelfDestruct.type.3d2 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.60d: <witness> = custom_witness (%Destroy.Op, %Destroy.WithSelf.SubobjectDestroy.a41, %Destroy.WithSelf.SelfDestruct.396), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.bdd: %Destroy.type = facet_value %Enum, (%custom_witness.60d) [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.ce5: <witness> = custom_witness (%Destroy.Op, %Destroy.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.396), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.672: %Destroy.type = facet_value %Enum, (%custom_witness.ce5) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -105,15 +105,17 @@ fn F() {
 // CHECK:STDOUT:   %Enum.Op.call.loc10: init %Enum = call %bound_method.loc10(%b.ref) [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %a.ref.loc10, %Enum.Op.call.loc10
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.SelfDestruct.396
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.1: %Destroy.type = facet_value constants.%Enum, (constants.%custom_witness.60d) [concrete = constants.%Destroy.facet.bdd]
-// CHECK:STDOUT:   %.loc8_3.1: %Destroy.type = converted constants.%Enum, %Destroy.facet.loc8_3.1 [concrete = constants.%Destroy.facet.bdd]
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.2: %Destroy.type = facet_value constants.%Enum, (constants.%custom_witness.60d) [concrete = constants.%Destroy.facet.bdd]
-// CHECK:STDOUT:   %.loc8_3.2: %Destroy.type = converted constants.%Enum, %Destroy.facet.loc8_3.2 [concrete = constants.%Destroy.facet.bdd]
+// CHECK:STDOUT:   %Destroy.facet.loc8_3.1: %Destroy.type = facet_value constants.%Enum, (constants.%custom_witness.ce5) [concrete = constants.%Destroy.facet.672]
+// CHECK:STDOUT:   %.loc8_3.1: %Destroy.type = converted constants.%Enum, %Destroy.facet.loc8_3.1 [concrete = constants.%Destroy.facet.672]
+// CHECK:STDOUT:   %Destroy.facet.loc8_3.2: %Destroy.type = facet_value constants.%Enum, (constants.%custom_witness.ce5) [concrete = constants.%Destroy.facet.672]
+// CHECK:STDOUT:   %.loc8_3.2: %Destroy.type = converted constants.%Enum, %Destroy.facet.loc8_3.2 [concrete = constants.%Destroy.facet.672]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_3: <bound method> = bound_method %a.var, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method.loc8_3(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.SubobjectDestroy(%self.param: ref %Enum) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %Enum) = "no_op";
 // CHECK:STDOUT:

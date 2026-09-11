@@ -75,13 +75,7 @@ fn J() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.c7a99711ca3557ac(ptr %self) #0 !dbg !16 {
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.c7a99711ca3557ac(ptr %self), !dbg !23
-// CHECK:STDOUT:   ret void, !dbg !24
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.c7a99711ca3557ac(ptr %self) #0 !dbg !25 {
-// CHECK:STDOUT:   ret void, !dbg !28
+// CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -117,10 +111,5 @@ fn J() {
 // CHECK:STDOUT: !20 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !21 = !{!22}
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !16, type: !20)
-// CHECK:STDOUT: !23 = !DILocation(line: 26, column: 5, scope: !16)
-// CHECK:STDOUT: !24 = !DILocation(line: 24, column: 3, scope: !16)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.c7a99711ca3557ac", scope: null, file: !17, line: 17, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !26)
-// CHECK:STDOUT: !26 = !{!27}
-// CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !20)
-// CHECK:STDOUT: !28 = !DILocation(line: 17, column: 3, scope: !25)
+// CHECK:STDOUT: !23 = !DILocation(line: 24, column: 3, scope: !16)
 // CHECK:STDOUT:

@@ -216,13 +216,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %self) #0 !dbg !34 {
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a(ptr %self), !dbg !41
-// CHECK:STDOUT:   ret void, !dbg !42
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a(ptr %self) #0 !dbg !43 {
-// CHECK:STDOUT:   ret void, !dbg !46
+// CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN1C1FENS_1EE(i16 noundef signext) #3
@@ -282,12 +276,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !38 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !39 = !{!40}
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !34, type: !38)
-// CHECK:STDOUT: !41 = !DILocation(line: 28, column: 5, scope: !34)
-// CHECK:STDOUT: !42 = !DILocation(line: 26, column: 3, scope: !34)
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a", scope: null, file: !35, line: 19, type: !36, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !44)
-// CHECK:STDOUT: !44 = !{!45}
-// CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !43, type: !38)
-// CHECK:STDOUT: !46 = !DILocation(line: 19, column: 3, scope: !43)
+// CHECK:STDOUT: !41 = !DILocation(line: 26, column: 3, scope: !34)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'convert.carbon'
@@ -338,13 +327,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %self) #0 !dbg !35 {
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a(ptr %self), !dbg !39
-// CHECK:STDOUT:   ret void, !dbg !40
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a(ptr %self) #0 !dbg !41 {
-// CHECK:STDOUT:   ret void, !dbg !44
+// CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN1C1FENS_1EE(i16 noundef signext) #3
@@ -397,12 +380,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !36 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
 // CHECK:STDOUT: !37 = !{!38}
 // CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !35, type: !20)
-// CHECK:STDOUT: !39 = !DILocation(line: 28, column: 5, scope: !35)
-// CHECK:STDOUT: !40 = !DILocation(line: 26, column: 3, scope: !35)
-// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a", scope: null, file: !36, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !42)
-// CHECK:STDOUT: !42 = !{!43}
-// CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !41, type: !20)
-// CHECK:STDOUT: !44 = !DILocation(line: 19, column: 3, scope: !41)
+// CHECK:STDOUT: !39 = !DILocation(line: 26, column: 3, scope: !35)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_bitmask.carbon'
@@ -717,34 +695,28 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %self) #0 !dbg !97 {
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a(ptr %self), !dbg !103
-// CHECK:STDOUT:   ret void, !dbg !104
+// CHECK:STDOUT:   ret void, !dbg !103
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.215a23369ed4d589(i16 %x, ptr %y) #0 !dbg !105 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.215a23369ed4d589(i16 %x, ptr %y) #0 !dbg !104 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.83b9626e83cf3dcc.Core:enclosed"(i16 %x, ptr %y), !dbg !109
-// CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !110
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.83b9626e83cf3dcc.Core:enclosed"(i16 %x, ptr %y), !dbg !108
+// CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !109
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.a5489e454367d917(i32 %x, ptr %y) #0 !dbg !111 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.a5489e454367d917(i32 %x, ptr %y) #0 !dbg !110 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.e8fe48de943d9652.Core:enclosed"(i32 %x, ptr %y), !dbg !115
-// CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !116
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.e8fe48de943d9652.Core:enclosed"(i32 %x, ptr %y), !dbg !114
+// CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !115
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.64b737572447efad(i16 %x, ptr %y) #0 !dbg !117 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.64b737572447efad(i16 %x, ptr %y) #0 !dbg !116 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.a294139a6615e163.Core:enclosed"(i16 %x, ptr %y), !dbg !121
-// CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !122
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a(ptr %self) #0 !dbg !123 {
-// CHECK:STDOUT:   ret void, !dbg !126
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.a294139a6615e163.Core:enclosed"(i16 %x, ptr %y), !dbg !120
+// CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !121
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare noundef signext i16 @_ZNK13ConvertToEnumcvN1C1EEEv(ptr noundef nonnull align 1 dereferenceable(1)) #4
@@ -870,28 +842,23 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !100 = !{null, !16}
 // CHECK:STDOUT: !101 = !{!102}
 // CHECK:STDOUT: !102 = !DILocalVariable(arg: 1, scope: !97, type: !16)
-// CHECK:STDOUT: !103 = !DILocation(line: 28, column: 5, scope: !97)
-// CHECK:STDOUT: !104 = !DILocation(line: 26, column: 3, scope: !97)
-// CHECK:STDOUT: !105 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.215a23369ed4d589", scope: null, file: !1, line: 29, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !106)
-// CHECK:STDOUT: !106 = !{!107, !108}
-// CHECK:STDOUT: !107 = !DILocalVariable(arg: 1, scope: !105, type: !16)
-// CHECK:STDOUT: !108 = !DILocalVariable(arg: 2, scope: !105, type: !15)
-// CHECK:STDOUT: !109 = !DILocation(line: 30, column: 10, scope: !105)
-// CHECK:STDOUT: !110 = !DILocation(line: 30, column: 3, scope: !105)
-// CHECK:STDOUT: !111 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.a5489e454367d917", scope: null, file: !1, line: 29, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !112)
-// CHECK:STDOUT: !112 = !{!113, !114}
-// CHECK:STDOUT: !113 = !DILocalVariable(arg: 1, scope: !111, type: !33)
-// CHECK:STDOUT: !114 = !DILocalVariable(arg: 2, scope: !111, type: !15)
-// CHECK:STDOUT: !115 = !DILocation(line: 30, column: 10, scope: !111)
-// CHECK:STDOUT: !116 = !DILocation(line: 30, column: 3, scope: !111)
-// CHECK:STDOUT: !117 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.64b737572447efad", scope: null, file: !1, line: 29, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !118)
-// CHECK:STDOUT: !118 = !{!119, !120}
-// CHECK:STDOUT: !119 = !DILocalVariable(arg: 1, scope: !117, type: !16)
-// CHECK:STDOUT: !120 = !DILocalVariable(arg: 2, scope: !117, type: !15)
-// CHECK:STDOUT: !121 = !DILocation(line: 30, column: 10, scope: !117)
-// CHECK:STDOUT: !122 = !DILocation(line: 30, column: 3, scope: !117)
-// CHECK:STDOUT: !123 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a", scope: null, file: !98, line: 19, type: !99, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !124)
-// CHECK:STDOUT: !124 = !{!125}
-// CHECK:STDOUT: !125 = !DILocalVariable(arg: 1, scope: !123, type: !16)
-// CHECK:STDOUT: !126 = !DILocation(line: 19, column: 3, scope: !123)
+// CHECK:STDOUT: !103 = !DILocation(line: 26, column: 3, scope: !97)
+// CHECK:STDOUT: !104 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.215a23369ed4d589", scope: null, file: !1, line: 29, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !105)
+// CHECK:STDOUT: !105 = !{!106, !107}
+// CHECK:STDOUT: !106 = !DILocalVariable(arg: 1, scope: !104, type: !16)
+// CHECK:STDOUT: !107 = !DILocalVariable(arg: 2, scope: !104, type: !15)
+// CHECK:STDOUT: !108 = !DILocation(line: 30, column: 10, scope: !104)
+// CHECK:STDOUT: !109 = !DILocation(line: 30, column: 3, scope: !104)
+// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.a5489e454367d917", scope: null, file: !1, line: 29, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !111)
+// CHECK:STDOUT: !111 = !{!112, !113}
+// CHECK:STDOUT: !112 = !DILocalVariable(arg: 1, scope: !110, type: !33)
+// CHECK:STDOUT: !113 = !DILocalVariable(arg: 2, scope: !110, type: !15)
+// CHECK:STDOUT: !114 = !DILocation(line: 30, column: 10, scope: !110)
+// CHECK:STDOUT: !115 = !DILocation(line: 30, column: 3, scope: !110)
+// CHECK:STDOUT: !116 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.64b737572447efad", scope: null, file: !1, line: 29, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !117)
+// CHECK:STDOUT: !117 = !{!118, !119}
+// CHECK:STDOUT: !118 = !DILocalVariable(arg: 1, scope: !116, type: !16)
+// CHECK:STDOUT: !119 = !DILocalVariable(arg: 2, scope: !116, type: !15)
+// CHECK:STDOUT: !120 = !DILocation(line: 30, column: 10, scope: !116)
+// CHECK:STDOUT: !121 = !DILocation(line: 30, column: 3, scope: !116)
 // CHECK:STDOUT:

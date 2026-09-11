@@ -351,13 +351,7 @@ fn Call3() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.155369379014d6e1(ptr %self) #0 !dbg !30 {
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.155369379014d6e1(ptr %self), !dbg !37
-// CHECK:STDOUT:   ret void, !dbg !38
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.155369379014d6e1(ptr %self) #0 !dbg !39 {
-// CHECK:STDOUT:   ret void, !dbg !42
+// CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z3fooIJEEv1XDpT_() #3
@@ -416,10 +410,5 @@ fn Call3() {
 // CHECK:STDOUT: !34 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !35 = !{!36}
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !30, type: !34)
-// CHECK:STDOUT: !37 = !DILocation(line: 26, column: 5, scope: !30)
-// CHECK:STDOUT: !38 = !DILocation(line: 24, column: 3, scope: !30)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.155369379014d6e1", scope: null, file: !31, line: 17, type: !32, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !40)
-// CHECK:STDOUT: !40 = !{!41}
-// CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !39, type: !34)
-// CHECK:STDOUT: !42 = !DILocation(line: 17, column: 3, scope: !39)
+// CHECK:STDOUT: !37 = !DILocation(line: 24, column: 3, scope: !30)
 // CHECK:STDOUT:

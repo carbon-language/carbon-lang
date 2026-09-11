@@ -356,7 +356,7 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.136cbc434fe80552:core.Destroy.Core"(ptr %self) #0 !dbg !30 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.136cbc434fe80552:core.Destroy.Core"(ptr %self) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
@@ -381,14 +381,8 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.2e4de4ddc495f63e(ptr %self) #0 !dbg !37 {
-// CHECK:STDOUT:   call void @"_COp.136cbc434fe80552:core.Destroy.Core"(ptr %self), !dbg !41
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.2e4de4ddc495f63e(ptr %self), !dbg !42
-// CHECK:STDOUT:   ret void, !dbg !43
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.2e4de4ddc495f63e(ptr %self) #0 !dbg !44 {
-// CHECK:STDOUT:   ret void, !dbg !47
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.136cbc434fe80552:core.Destroy.Core"(ptr %self), !dbg !41
+// CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZNK9NeedThunk8ImplicitEa(ptr noundef nonnull align 1 dereferenceable(1), i8 noundef signext) #3
@@ -438,7 +432,7 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT: !27 = !{!"p1 omnipotent char", !25, i64 0}
 // CHECK:STDOUT: !28 = !{}
 // CHECK:STDOUT: !29 = !{!10, !10, i64 0}
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Op", linkageName: "_COp.136cbc434fe80552:core.Destroy.Core", scope: null, file: !1, line: 7, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !34)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.136cbc434fe80552:core.Destroy.Core", scope: null, file: !1, line: 7, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !34)
 // CHECK:STDOUT: !31 = !DISubroutineType(types: !32)
 // CHECK:STDOUT: !32 = !{null, !33}
 // CHECK:STDOUT: !33 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_signed)
@@ -449,13 +443,8 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT: !38 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !39 = !{!40}
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !37, type: !33)
-// CHECK:STDOUT: !41 = !DILocation(line: 25, column: 5, scope: !37)
-// CHECK:STDOUT: !42 = !DILocation(line: 26, column: 5, scope: !37)
-// CHECK:STDOUT: !43 = !DILocation(line: 24, column: 3, scope: !37)
-// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.2e4de4ddc495f63e", scope: null, file: !38, line: 17, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !45)
-// CHECK:STDOUT: !45 = !{!46}
-// CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !44, type: !33)
-// CHECK:STDOUT: !47 = !DILocation(line: 17, column: 3, scope: !44)
+// CHECK:STDOUT: !41 = !DILocation(line: 26, column: 5, scope: !37)
+// CHECK:STDOUT: !42 = !DILocation(line: 24, column: 3, scope: !37)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_with_ref_self.carbon'

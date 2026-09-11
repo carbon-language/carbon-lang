@@ -37,13 +37,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.17de40ae0fb4b1fd(ptr %self) #0 !dbg !11 {
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.17de40ae0fb4b1fd(ptr %self), !dbg !18
-// CHECK:STDOUT:   ret void, !dbg !19
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.17de40ae0fb4b1fd(ptr %self) #0 !dbg !20 {
-// CHECK:STDOUT:   ret void, !dbg !23
+// CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -74,10 +68,5 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !15 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !16 = !{!17}
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !11, type: !15)
-// CHECK:STDOUT: !18 = !DILocation(line: 26, column: 5, scope: !11)
-// CHECK:STDOUT: !19 = !DILocation(line: 24, column: 3, scope: !11)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.17de40ae0fb4b1fd", scope: null, file: !12, line: 17, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !21)
-// CHECK:STDOUT: !21 = !{!22}
-// CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !20, type: !15)
-// CHECK:STDOUT: !23 = !DILocation(line: 17, column: 3, scope: !20)
+// CHECK:STDOUT: !18 = !DILocation(line: 24, column: 3, scope: !11)
 // CHECK:STDOUT:

@@ -136,13 +136,13 @@ fn DoThing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.a4cea16271ab4a06:core.Destroy.Core"(ptr %self) #2 !dbg !43 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.a4cea16271ab4a06:core.Destroy.Core"(ptr %self) #2 !dbg !43 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.d8aa8f8dee0ff18e:core.Destroy.Core"(ptr %self) #2 !dbg !47 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.d8aa8f8dee0ff18e:core.Destroy.Core"(ptr %self) #2 !dbg !47 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }
@@ -168,24 +168,18 @@ fn DoThing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.acf75410c7781b1f(ptr %self) #2 !dbg !59 {
-// CHECK:STDOUT:   call void @"_COp.d8aa8f8dee0ff18e:core.Destroy.Core"(ptr %self), !dbg !63
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.acf75410c7781b1f(ptr %self), !dbg !64
-// CHECK:STDOUT:   ret void, !dbg !65
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.d8aa8f8dee0ff18e:core.Destroy.Core"(ptr %self), !dbg !63
+// CHECK:STDOUT:   ret void, !dbg !64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: read)
 // CHECK:STDOUT: declare ptr @llvm.load.relative.i32(ptr, i32) #6
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.acf75410c7781b1f(ptr %self) #2 !dbg !66 {
-// CHECK:STDOUT:   ret void, !dbg !69
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
 // CHECK:STDOUT: define internal void @_ZNR6Carbon7Derived4funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #4 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !70
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !65
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_Cfunc__carbon_thunk.Derived.Main(ptr noundef nonnull align 8 dereferenceable(12) %this1)
 // CHECK:STDOUT:   ret void
@@ -195,7 +189,7 @@ fn DoThing() {
 // CHECK:STDOUT: define internal void @_ZNK6Carbon7Derived10other_funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #4 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !70
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !65
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_Cother_func__carbon_thunk.Derived.Main(ptr noundef nonnull align 8 dereferenceable(12) %this1)
 // CHECK:STDOUT:   ret void
@@ -208,7 +202,7 @@ fn DoThing() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !12
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN11FurtherBaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this1) #2
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 16) ({ [4 x ptr] }, ptr @_ZTV4Base, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !72
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 16) ({ [4 x ptr] }, ptr @_ZTV4Base, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !67
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -216,9 +210,9 @@ fn DoThing() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN11FurtherBaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #7 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !74
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !69
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) ({ [3 x ptr] }, ptr @_ZTV11FurtherBase, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !72
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) ({ [3 x ptr] }, ptr @_ZTV11FurtherBase, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !67
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -282,11 +276,11 @@ fn DoThing() {
 // CHECK:STDOUT: !40 = !{!41}
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !39, type: !18)
 // CHECK:STDOUT: !42 = !DILocation(line: 22, column: 1, scope: !39)
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a4cea16271ab4a06:core.Destroy.Core", scope: null, file: !1, line: 22, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !44)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.a4cea16271ab4a06:core.Destroy.Core", scope: null, file: !1, line: 22, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !44)
 // CHECK:STDOUT: !44 = !{!45}
 // CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !43, type: !18)
 // CHECK:STDOUT: !46 = !DILocation(line: 22, column: 1, scope: !43)
-// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d8aa8f8dee0ff18e:core.Destroy.Core", scope: null, file: !1, line: 22, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !48)
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.d8aa8f8dee0ff18e:core.Destroy.Core", scope: null, file: !1, line: 22, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !48)
 // CHECK:STDOUT: !48 = !{!49}
 // CHECK:STDOUT: !49 = !DILocalVariable(arg: 1, scope: !47, type: !18)
 // CHECK:STDOUT: !50 = !DILocation(line: 22, column: 1, scope: !47)
@@ -302,17 +296,12 @@ fn DoThing() {
 // CHECK:STDOUT: !60 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !61 = !{!62}
 // CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !59, type: !18)
-// CHECK:STDOUT: !63 = !DILocation(line: 25, column: 5, scope: !59)
-// CHECK:STDOUT: !64 = !DILocation(line: 26, column: 5, scope: !59)
-// CHECK:STDOUT: !65 = !DILocation(line: 24, column: 3, scope: !59)
-// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.acf75410c7781b1f", scope: null, file: !60, line: 17, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !67)
-// CHECK:STDOUT: !67 = !{!68}
-// CHECK:STDOUT: !68 = !DILocalVariable(arg: 1, scope: !66, type: !18)
-// CHECK:STDOUT: !69 = !DILocation(line: 17, column: 3, scope: !66)
-// CHECK:STDOUT: !70 = !{!71, !71, i64 0}
-// CHECK:STDOUT: !71 = !{!"p1 _ZTSN6Carbon7DerivedE", !14, i64 0}
-// CHECK:STDOUT: !72 = !{!73, !73, i64 0}
-// CHECK:STDOUT: !73 = !{!"vtable pointer", !11, i64 0}
-// CHECK:STDOUT: !74 = !{!75, !75, i64 0}
-// CHECK:STDOUT: !75 = !{!"p1 _ZTS11FurtherBase", !14, i64 0}
+// CHECK:STDOUT: !63 = !DILocation(line: 26, column: 5, scope: !59)
+// CHECK:STDOUT: !64 = !DILocation(line: 24, column: 3, scope: !59)
+// CHECK:STDOUT: !65 = !{!66, !66, i64 0}
+// CHECK:STDOUT: !66 = !{!"p1 _ZTSN6Carbon7DerivedE", !14, i64 0}
+// CHECK:STDOUT: !67 = !{!68, !68, i64 0}
+// CHECK:STDOUT: !68 = !{!"vtable pointer", !11, i64 0}
+// CHECK:STDOUT: !69 = !{!70, !70, i64 0}
+// CHECK:STDOUT: !70 = !{!"p1 _ZTS11FurtherBase", !14, i64 0}
 // CHECK:STDOUT:

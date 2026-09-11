@@ -101,13 +101,7 @@ fn TestB() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.ad394d08bf7f4546(ptr %self) #0 !dbg !23 {
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.ad394d08bf7f4546(ptr %self), !dbg !30
-// CHECK:STDOUT:   ret void, !dbg !31
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.ad394d08bf7f4546(ptr %self) #0 !dbg !32 {
-// CHECK:STDOUT:   ret void, !dbg !35
+// CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
@@ -115,9 +109,9 @@ fn TestB() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca %struct.A, align 4
 // CHECK:STDOUT:   %a = getelementptr inbounds nuw %struct.A, ptr %retval, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !36
+// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !31
 // CHECK:STDOUT:   %b = getelementptr inbounds nuw %struct.A, ptr %retval, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !38
+// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !33
 // CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
 // CHECK:STDOUT:   ret i64 %0
 // CHECK:STDOUT: }
@@ -161,15 +155,10 @@ fn TestB() -> i32 {
 // CHECK:STDOUT: !27 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !28 = !{!29}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !23, type: !27)
-// CHECK:STDOUT: !30 = !DILocation(line: 26, column: 5, scope: !23)
-// CHECK:STDOUT: !31 = !DILocation(line: 24, column: 3, scope: !23)
-// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.ad394d08bf7f4546", scope: null, file: !24, line: 17, type: !25, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !33)
-// CHECK:STDOUT: !33 = !{!34}
-// CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !32, type: !27)
-// CHECK:STDOUT: !35 = !DILocation(line: 17, column: 3, scope: !32)
-// CHECK:STDOUT: !36 = !{!37, !9, i64 0}
-// CHECK:STDOUT: !37 = !{!"_ZTS1A", !9, i64 0, !9, i64 4}
-// CHECK:STDOUT: !38 = !{!37, !9, i64 4}
+// CHECK:STDOUT: !30 = !DILocation(line: 24, column: 3, scope: !23)
+// CHECK:STDOUT: !31 = !{!32, !9, i64 0}
+// CHECK:STDOUT: !32 = !{!"_ZTS1A", !9, i64 0, !9, i64 4}
+// CHECK:STDOUT: !33 = !{!32, !9, i64 4}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_b.carbon'
@@ -209,13 +198,7 @@ fn TestB() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.0705a7ee2577eb1e(ptr %self) #0 !dbg !23 {
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.0705a7ee2577eb1e(ptr %self), !dbg !30
-// CHECK:STDOUT:   ret void, !dbg !31
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.0705a7ee2577eb1e(ptr %self) #0 !dbg !32 {
-// CHECK:STDOUT:   ret void, !dbg !35
+// CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
@@ -223,9 +206,9 @@ fn TestB() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca %struct.B, align 4
 // CHECK:STDOUT:   %x = getelementptr inbounds nuw %struct.B, ptr %retval, i32 0, i32 0
-// CHECK:STDOUT:   store i32 3, ptr %x, align 4, !tbaa !36
+// CHECK:STDOUT:   store i32 3, ptr %x, align 4, !tbaa !31
 // CHECK:STDOUT:   %y = getelementptr inbounds nuw %struct.B, ptr %retval, i32 0, i32 1
-// CHECK:STDOUT:   store i32 4, ptr %y, align 4, !tbaa !38
+// CHECK:STDOUT:   store i32 4, ptr %y, align 4, !tbaa !33
 // CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
 // CHECK:STDOUT:   ret i64 %0
 // CHECK:STDOUT: }
@@ -269,15 +252,10 @@ fn TestB() -> i32 {
 // CHECK:STDOUT: !27 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !28 = !{!29}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !23, type: !27)
-// CHECK:STDOUT: !30 = !DILocation(line: 26, column: 5, scope: !23)
-// CHECK:STDOUT: !31 = !DILocation(line: 24, column: 3, scope: !23)
-// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.0705a7ee2577eb1e", scope: null, file: !24, line: 17, type: !25, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !33)
-// CHECK:STDOUT: !33 = !{!34}
-// CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !32, type: !27)
-// CHECK:STDOUT: !35 = !DILocation(line: 17, column: 3, scope: !32)
-// CHECK:STDOUT: !36 = !{!37, !9, i64 0}
-// CHECK:STDOUT: !37 = !{!"_ZTS1B", !9, i64 0, !9, i64 4}
-// CHECK:STDOUT: !38 = !{!37, !9, i64 4}
+// CHECK:STDOUT: !30 = !DILocation(line: 24, column: 3, scope: !23)
+// CHECK:STDOUT: !31 = !{!32, !9, i64 0}
+// CHECK:STDOUT: !32 = !{!"_ZTS1B", !9, i64 0, !9, i64 4}
+// CHECK:STDOUT: !33 = !{!32, !9, i64 4}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_both.carbon'
@@ -343,19 +321,12 @@ fn TestB() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.ad394d08bf7f4546(ptr %self) #0 !dbg !30 {
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.ad394d08bf7f4546(ptr %self), !dbg !37
-// CHECK:STDOUT:   ret void, !dbg !38
+// CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.0705a7ee2577eb1e(ptr %self) #0 !dbg !39 {
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.ad394d08bf7f4546(ptr %self), !dbg !42
-// CHECK:STDOUT:   ret void, !dbg !43
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.ad394d08bf7f4546(ptr %self) #0 !dbg !44 {
-// CHECK:STDOUT:   ret void, !dbg !47
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.0705a7ee2577eb1e(ptr %self) #0 !dbg !38 {
+// CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
@@ -363,9 +334,9 @@ fn TestB() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca %struct.A.32, align 4
 // CHECK:STDOUT:   %a = getelementptr inbounds nuw %struct.A.32, ptr %retval, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !48
+// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !42
 // CHECK:STDOUT:   %b = getelementptr inbounds nuw %struct.A.32, ptr %retval, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !50
+// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !44
 // CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
 // CHECK:STDOUT:   ret i64 %0
 // CHECK:STDOUT: }
@@ -375,16 +346,15 @@ fn TestB() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca %struct.B.33, align 4
 // CHECK:STDOUT:   %x = getelementptr inbounds nuw %struct.B.33, ptr %retval, i32 0, i32 0
-// CHECK:STDOUT:   store i32 3, ptr %x, align 4, !tbaa !51
+// CHECK:STDOUT:   store i32 3, ptr %x, align 4, !tbaa !45
 // CHECK:STDOUT:   %y = getelementptr inbounds nuw %struct.B.33, ptr %retval, i32 0, i32 1
-// CHECK:STDOUT:   store i32 4, ptr %y, align 4, !tbaa !53
+// CHECK:STDOUT:   store i32 4, ptr %y, align 4, !tbaa !47
 // CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
 // CHECK:STDOUT:   ret i64 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSubobjectDestroy.Destroy.Core.ad394d08bf7f4546, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -432,21 +402,15 @@ fn TestB() -> i32 {
 // CHECK:STDOUT: !34 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !35 = !{!36}
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !30, type: !34)
-// CHECK:STDOUT: !37 = !DILocation(line: 26, column: 5, scope: !30)
-// CHECK:STDOUT: !38 = !DILocation(line: 24, column: 3, scope: !30)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.0705a7ee2577eb1e", scope: null, file: !31, line: 24, type: !32, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !40)
-// CHECK:STDOUT: !40 = !{!41}
-// CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !39, type: !34)
-// CHECK:STDOUT: !42 = !DILocation(line: 26, column: 5, scope: !39)
-// CHECK:STDOUT: !43 = !DILocation(line: 24, column: 3, scope: !39)
-// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.ad394d08bf7f4546", scope: null, file: !31, line: 17, type: !32, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !45)
-// CHECK:STDOUT: !45 = !{!46}
-// CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !44, type: !34)
-// CHECK:STDOUT: !47 = !DILocation(line: 17, column: 3, scope: !44)
-// CHECK:STDOUT: !48 = !{!49, !9, i64 0}
-// CHECK:STDOUT: !49 = !{!"_ZTS1A", !9, i64 0, !9, i64 4}
-// CHECK:STDOUT: !50 = !{!49, !9, i64 4}
-// CHECK:STDOUT: !51 = !{!52, !9, i64 0}
-// CHECK:STDOUT: !52 = !{!"_ZTS1B", !9, i64 0, !9, i64 4}
-// CHECK:STDOUT: !53 = !{!52, !9, i64 4}
+// CHECK:STDOUT: !37 = !DILocation(line: 24, column: 3, scope: !30)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.0705a7ee2577eb1e", scope: null, file: !31, line: 24, type: !32, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !39)
+// CHECK:STDOUT: !39 = !{!40}
+// CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !38, type: !34)
+// CHECK:STDOUT: !41 = !DILocation(line: 24, column: 3, scope: !38)
+// CHECK:STDOUT: !42 = !{!43, !9, i64 0}
+// CHECK:STDOUT: !43 = !{!"_ZTS1A", !9, i64 0, !9, i64 4}
+// CHECK:STDOUT: !44 = !{!43, !9, i64 4}
+// CHECK:STDOUT: !45 = !{!46, !9, i64 0}
+// CHECK:STDOUT: !46 = !{!"_ZTS1B", !9, i64 0, !9, i64 4}
+// CHECK:STDOUT: !47 = !{!46, !9, i64 4}
 // CHECK:STDOUT:

@@ -109,7 +109,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.cbd14a388b4a1c25:core.Destroy.Core"(ptr %self) #2 !dbg !20 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.cbd14a388b4a1c25:core.Destroy.Core"(ptr %self) #2 !dbg !20 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
@@ -123,21 +123,15 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.2eb69dd0c58be63c(ptr %self) #2 !dbg !30 {
-// CHECK:STDOUT:   call void @"_COp.cbd14a388b4a1c25:core.Destroy.Core"(ptr %self), !dbg !34
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.2eb69dd0c58be63c(ptr %self), !dbg !35
-// CHECK:STDOUT:   ret void, !dbg !36
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.cbd14a388b4a1c25:core.Destroy.Core"(ptr %self), !dbg !34
+// CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define internal void @_C__global_init.Main() #2 !dbg !37 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #2 !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i32 123, ptr @_Cx.C.Main, align 4, !dbg !40
-// CHECK:STDOUT:   ret void, !dbg !41
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.2eb69dd0c58be63c(ptr %self) #2 !dbg !42 {
-// CHECK:STDOUT:   ret void, !dbg !45
+// CHECK:STDOUT:   store i32 123, ptr @_Cx.C.Main, align 4, !dbg !39
+// CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -168,7 +162,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !17 = !{!18}
 // CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !13, type: !16)
 // CHECK:STDOUT: !19 = !DILocation(line: 4, column: 1, scope: !13)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Op", linkageName: "_COp.cbd14a388b4a1c25:core.Destroy.Core", scope: null, file: !1, line: 4, type: !14, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !21)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.cbd14a388b4a1c25:core.Destroy.Core", scope: null, file: !1, line: 4, type: !14, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !21)
 // CHECK:STDOUT: !21 = !{!22}
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !20, type: !16)
 // CHECK:STDOUT: !23 = !DILocation(line: 4, column: 1, scope: !20)
@@ -182,16 +176,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !31 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !32 = !{!33}
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !30, type: !16)
-// CHECK:STDOUT: !34 = !DILocation(line: 25, column: 5, scope: !30)
-// CHECK:STDOUT: !35 = !DILocation(line: 26, column: 5, scope: !30)
-// CHECK:STDOUT: !36 = !DILocation(line: 24, column: 3, scope: !30)
-// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !1, type: !38, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !38 = !DISubroutineType(types: !39)
-// CHECK:STDOUT: !39 = !{null}
-// CHECK:STDOUT: !40 = !DILocation(line: 5, column: 10, scope: !37)
-// CHECK:STDOUT: !41 = !DILocation(line: 0, scope: !37)
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.2eb69dd0c58be63c", scope: null, file: !31, line: 17, type: !14, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !43)
-// CHECK:STDOUT: !43 = !{!44}
-// CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !42, type: !16)
-// CHECK:STDOUT: !45 = !DILocation(line: 17, column: 3, scope: !42)
+// CHECK:STDOUT: !34 = !DILocation(line: 26, column: 5, scope: !30)
+// CHECK:STDOUT: !35 = !DILocation(line: 24, column: 3, scope: !30)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !1, type: !37, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !37 = !DISubroutineType(types: !38)
+// CHECK:STDOUT: !38 = !{null}
+// CHECK:STDOUT: !39 = !DILocation(line: 5, column: 10, scope: !36)
+// CHECK:STDOUT: !40 = !DILocation(line: 0, scope: !36)
 // CHECK:STDOUT:

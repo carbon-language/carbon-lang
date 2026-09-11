@@ -154,13 +154,7 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.2db1fd3713f61ab2(ptr %self) #0 !dbg !30 {
-// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.2db1fd3713f61ab2(ptr %self), !dbg !36
-// CHECK:STDOUT:   ret void, !dbg !37
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.2db1fd3713f61ab2(ptr %self) #0 !dbg !38 {
-// CHECK:STDOUT:   ret void, !dbg !41
+// CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress uwtable
@@ -174,9 +168,9 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT:   call void @_ZN1BC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %this1, ptr noundef getelementptr inbounds nuw (i8, ptr @_ZTT1D, i64 8))
 // CHECK:STDOUT:   %1 = getelementptr inbounds i8, ptr %this1, i64 16
 // CHECK:STDOUT:   call void @_ZN1CC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %1, ptr noundef getelementptr inbounds nuw (i8, ptr @_ZTT1D, i64 16))
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 0, i32 3), ptr %this1, align 8, !tbaa !42
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 0, i32 3), ptr %this1, align 8, !tbaa !37
 // CHECK:STDOUT:   %add.ptr = getelementptr inbounds i8, ptr %this1, i64 16
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 1, i32 3), ptr %add.ptr, align 8, !tbaa !42
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 1, i32 3), ptr %add.ptr, align 8, !tbaa !37
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -239,12 +233,7 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: !33 = !{null, !25}
 // CHECK:STDOUT: !34 = !{!35}
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !30, type: !25)
-// CHECK:STDOUT: !36 = !DILocation(line: 26, column: 5, scope: !30)
-// CHECK:STDOUT: !37 = !DILocation(line: 24, column: 3, scope: !30)
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.2db1fd3713f61ab2", scope: null, file: !31, line: 17, type: !32, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !39)
-// CHECK:STDOUT: !39 = !{!40}
-// CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !38, type: !25)
-// CHECK:STDOUT: !41 = !DILocation(line: 17, column: 3, scope: !38)
-// CHECK:STDOUT: !42 = !{!43, !43, i64 0}
-// CHECK:STDOUT: !43 = !{!"vtable pointer", !11, i64 0}
+// CHECK:STDOUT: !36 = !DILocation(line: 24, column: 3, scope: !30)
+// CHECK:STDOUT: !37 = !{!38, !38, i64 0}
+// CHECK:STDOUT: !38 = !{!"vtable pointer", !11, i64 0}
 // CHECK:STDOUT:

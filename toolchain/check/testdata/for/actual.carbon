@@ -1027,15 +1027,15 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %y, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method(%y) [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc5_3.4 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.SubobjectDestroy.type.a1d3ab.4: type = fn_type @Destroy.SubobjectDestroy.loc5_3.4 [concrete]
+// CHECK:STDOUT:   %Destroy.SubobjectDestroy.ab82fa.4: %Destroy.SubobjectDestroy.type.a1d3ab.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %IntRange.type.facet: %type = facet_value %IntRange.bbd, () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.a10: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%IntRange.type.facet) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.cdd: %Destroy.WithSelf.SubobjectDestroy.type.a10 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.c5a: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%IntRange.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.0fa: %Destroy.WithSelf.SelfDestruct.type.c5a = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.2e0: <witness> = custom_witness (%Destroy.Op.1a2547.4, %Destroy.WithSelf.SubobjectDestroy.cdd, %Destroy.WithSelf.SelfDestruct.0fa), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.b4b: %Destroy.type = facet_value %IntRange.bbd, (%custom_witness.2e0) [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc5_3.4 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.a2d: <witness> = custom_witness (%Destroy.Op.1a2547.4, %Destroy.SubobjectDestroy.ab82fa.4, %Destroy.WithSelf.SelfDestruct.0fa), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.874: %Destroy.type = facet_value %IntRange.bbd, (%custom_witness.a2d) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function %Destroy.WithSelf.SelfDestruct.0fa, @Destroy.WithSelf.SelfDestruct(%IntRange.type.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1144,10 +1144,10 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:       %x.var_patt: %pattern_type.0f3 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %x.var, constants.%Destroy.WithSelf.SelfDestruct.0fa
-// CHECK:STDOUT:     %Destroy.facet.loc5_3.1: %Destroy.type = facet_value constants.%IntRange.bbd, (constants.%custom_witness.2e0) [concrete = constants.%Destroy.facet.b4b]
-// CHECK:STDOUT:     %.loc5_3.2: %Destroy.type = converted constants.%IntRange.bbd, %Destroy.facet.loc5_3.1 [concrete = constants.%Destroy.facet.b4b]
-// CHECK:STDOUT:     %Destroy.facet.loc5_3.2: %Destroy.type = facet_value constants.%IntRange.bbd, (constants.%custom_witness.2e0) [concrete = constants.%Destroy.facet.b4b]
-// CHECK:STDOUT:     %.loc5_3.3: %Destroy.type = converted constants.%IntRange.bbd, %Destroy.facet.loc5_3.2 [concrete = constants.%Destroy.facet.b4b]
+// CHECK:STDOUT:     %Destroy.facet.loc5_3.1: %Destroy.type = facet_value constants.%IntRange.bbd, (constants.%custom_witness.a2d) [concrete = constants.%Destroy.facet.874]
+// CHECK:STDOUT:     %.loc5_3.2: %Destroy.type = converted constants.%IntRange.bbd, %Destroy.facet.loc5_3.1 [concrete = constants.%Destroy.facet.874]
+// CHECK:STDOUT:     %Destroy.facet.loc5_3.2: %Destroy.type = facet_value constants.%IntRange.bbd, (constants.%custom_witness.a2d) [concrete = constants.%Destroy.facet.874]
+// CHECK:STDOUT:     %.loc5_3.3: %Destroy.type = converted constants.%IntRange.bbd, %Destroy.facet.loc5_3.2 [concrete = constants.%Destroy.facet.874]
 // CHECK:STDOUT:     %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function constants.%Destroy.WithSelf.SelfDestruct.0fa, @Destroy.WithSelf.SelfDestruct(constants.%IntRange.type.facet) [concrete = constants.%Destroy.WithSelf.SelfDestruct.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc5_3: <bound method> = bound_method %x.var, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:     %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method.loc5_3(%x.var)
@@ -1186,22 +1186,30 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Range [from "lib.carbon"];
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.SubobjectDestroy.loc5_3.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc5_3.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc5_3.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.SubobjectDestroy.loc5_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc5_3.3(%self.param: ref %struct_type.start.end.e93) {
+// CHECK:STDOUT: fn @Destroy.Op.loc5_3.2(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.SubobjectDestroy.loc5_3.3(%self.param: ref %struct_type.start.end.e93) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc5_3.4(%self.param: ref %IntRange.bbd) {
+// CHECK:STDOUT: fn @Destroy.Op.loc5_3.3(%self.param: ref %struct_type.start.end.e93) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.SubobjectDestroy.loc5_3.4(%self.param: ref %IntRange.bbd) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc5_3.4(%self.param: ref %IntRange.bbd) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Read(constants.%y) {
 // CHECK:STDOUT:   %y.patt.loc4_18.2 => constants.%y.patt

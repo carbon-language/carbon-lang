@@ -138,26 +138,26 @@ fn F() {
 // CHECK:STDOUT:   %.4ea: ref %Goat = temporary invalid, %Goat.val [concrete]
 // CHECK:STDOUT:   %.202: ref %Grass = temporary invalid, %Grass.val [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc35_31.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.SubobjectDestroy.type.a1d3ab.2: type = fn_type @Destroy.SubobjectDestroy.loc35_31.2 [concrete]
+// CHECK:STDOUT:   %Destroy.SubobjectDestroy.ab82fa.2: %Destroy.SubobjectDestroy.type.a1d3ab.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Grass.type.facet: %type = facet_value %Grass, () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.0e2: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%Grass.type.facet) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.08e: %Destroy.WithSelf.SubobjectDestroy.type.0e2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.6d5: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%Grass.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.24b: %Destroy.WithSelf.SelfDestruct.type.6d5 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.e8c: <witness> = custom_witness (%Destroy.Op.1a2547.2, %Destroy.WithSelf.SubobjectDestroy.08e, %Destroy.WithSelf.SelfDestruct.24b), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.1d5: %Destroy.type = facet_value %Grass, (%custom_witness.e8c) [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc35_31.2 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.ec8: <witness> = custom_witness (%Destroy.Op.1a2547.2, %Destroy.SubobjectDestroy.ab82fa.2, %Destroy.WithSelf.SelfDestruct.24b), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.373: %Destroy.type = facet_value %Grass, (%custom_witness.ec8) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn.910: <specific function> = specific_function %Destroy.WithSelf.SelfDestruct.24b, @Destroy.WithSelf.SelfDestruct(%Grass.type.facet) [concrete]
 // CHECK:STDOUT:   %bound_method.238: <bound method> = bound_method %.202, %Destroy.WithSelf.SelfDestruct.specific_fn.910 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc35_19 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.SubobjectDestroy.type.a1d3ab.3: type = fn_type @Destroy.SubobjectDestroy.loc35_19 [concrete]
+// CHECK:STDOUT:   %Destroy.SubobjectDestroy.ab82fa.3: %Destroy.SubobjectDestroy.type.a1d3ab.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %Goat.type.facet: %type = facet_value %Goat, () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.a71: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%Goat.type.facet) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.2a8: %Destroy.WithSelf.SubobjectDestroy.type.a71 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.b6d: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%Goat.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.47e: %Destroy.WithSelf.SelfDestruct.type.b6d = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.8e7: <witness> = custom_witness (%Destroy.Op.1a2547.3, %Destroy.WithSelf.SubobjectDestroy.2a8, %Destroy.WithSelf.SelfDestruct.47e), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.b0c: %Destroy.type = facet_value %Goat, (%custom_witness.8e7) [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc35_19 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.12d: <witness> = custom_witness (%Destroy.Op.1a2547.3, %Destroy.SubobjectDestroy.ab82fa.3, %Destroy.WithSelf.SelfDestruct.47e), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.379: %Destroy.type = facet_value %Goat, (%custom_witness.12d) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn.7f2: <specific function> = specific_function %Destroy.WithSelf.SelfDestruct.47e, @Destroy.WithSelf.SelfDestruct(%Goat.type.facet) [concrete]
 // CHECK:STDOUT:   %bound_method.1da: <bound method> = bound_method %.4ea, %Destroy.WithSelf.SelfDestruct.specific_fn.7f2 [concrete]
 // CHECK:STDOUT:   %Eats.type.682: type = facet_type <@Eats, @Eats(%Grass)> [concrete]
@@ -508,32 +508,38 @@ fn F() {
 // CHECK:STDOUT:   %.loc35_31.2: ref %Grass = temporary %.loc35_29.2, %.loc35_31.1 [concrete = constants.%.202]
 // CHECK:STDOUT:   %.loc35_31.3: %Grass = acquire_value %.loc35_31.2 [concrete = constants.%Grass.val]
 // CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn(%.loc35_19.3, %.loc35_31.3)
-// CHECK:STDOUT:   %Destroy.facet.loc35_31.1: %Destroy.type = facet_value constants.%Grass, (constants.%custom_witness.e8c) [concrete = constants.%Destroy.facet.1d5]
-// CHECK:STDOUT:   %.loc35_31.4: %Destroy.type = converted constants.%Grass, %Destroy.facet.loc35_31.1 [concrete = constants.%Destroy.facet.1d5]
-// CHECK:STDOUT:   %Destroy.facet.loc35_31.2: %Destroy.type = facet_value constants.%Grass, (constants.%custom_witness.e8c) [concrete = constants.%Destroy.facet.1d5]
-// CHECK:STDOUT:   %.loc35_31.5: %Destroy.type = converted constants.%Grass, %Destroy.facet.loc35_31.2 [concrete = constants.%Destroy.facet.1d5]
+// CHECK:STDOUT:   %Destroy.facet.loc35_31.1: %Destroy.type = facet_value constants.%Grass, (constants.%custom_witness.ec8) [concrete = constants.%Destroy.facet.373]
+// CHECK:STDOUT:   %.loc35_31.4: %Destroy.type = converted constants.%Grass, %Destroy.facet.loc35_31.1 [concrete = constants.%Destroy.facet.373]
+// CHECK:STDOUT:   %Destroy.facet.loc35_31.2: %Destroy.type = facet_value constants.%Grass, (constants.%custom_witness.ec8) [concrete = constants.%Destroy.facet.373]
+// CHECK:STDOUT:   %.loc35_31.5: %Destroy.type = converted constants.%Grass, %Destroy.facet.loc35_31.2 [concrete = constants.%Destroy.facet.373]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn.1: <specific function> = specific_function constants.%Destroy.WithSelf.SelfDestruct.24b, @Destroy.WithSelf.SelfDestruct(constants.%Grass.type.facet) [concrete = constants.%Destroy.WithSelf.SelfDestruct.specific_fn.910]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc35_31: init %empty_tuple.type = call constants.%bound_method.238(constants.%.202)
-// CHECK:STDOUT:   %Destroy.facet.loc35_19.1: %Destroy.type = facet_value constants.%Goat, (constants.%custom_witness.8e7) [concrete = constants.%Destroy.facet.b0c]
-// CHECK:STDOUT:   %.loc35_19.4: %Destroy.type = converted constants.%Goat, %Destroy.facet.loc35_19.1 [concrete = constants.%Destroy.facet.b0c]
-// CHECK:STDOUT:   %Destroy.facet.loc35_19.2: %Destroy.type = facet_value constants.%Goat, (constants.%custom_witness.8e7) [concrete = constants.%Destroy.facet.b0c]
-// CHECK:STDOUT:   %.loc35_19.5: %Destroy.type = converted constants.%Goat, %Destroy.facet.loc35_19.2 [concrete = constants.%Destroy.facet.b0c]
+// CHECK:STDOUT:   %Destroy.facet.loc35_19.1: %Destroy.type = facet_value constants.%Goat, (constants.%custom_witness.12d) [concrete = constants.%Destroy.facet.379]
+// CHECK:STDOUT:   %.loc35_19.4: %Destroy.type = converted constants.%Goat, %Destroy.facet.loc35_19.1 [concrete = constants.%Destroy.facet.379]
+// CHECK:STDOUT:   %Destroy.facet.loc35_19.2: %Destroy.type = facet_value constants.%Goat, (constants.%custom_witness.12d) [concrete = constants.%Destroy.facet.379]
+// CHECK:STDOUT:   %.loc35_19.5: %Destroy.type = converted constants.%Goat, %Destroy.facet.loc35_19.2 [concrete = constants.%Destroy.facet.379]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn.2: <specific function> = specific_function constants.%Destroy.WithSelf.SelfDestruct.47e, @Destroy.WithSelf.SelfDestruct(constants.%Goat.type.facet) [concrete = constants.%Destroy.WithSelf.SelfDestruct.specific_fn.7f2]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc35_19: init %empty_tuple.type = call constants.%bound_method.1da(constants.%.4ea)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.SubobjectDestroy.loc35_31.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.Op.loc35_31.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc35_31.2(%self.param: ref %Grass) {
+// CHECK:STDOUT: fn @Destroy.SubobjectDestroy.loc35_31.2(%self.param: ref %Grass) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc35_19(%self.param: ref %Goat) {
+// CHECK:STDOUT: fn @Destroy.Op.loc35_31.2(%self.param: ref %Grass) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.SubobjectDestroy.loc35_19(%self.param: ref %Goat) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.Op.loc35_19(%self.param: ref %Goat) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Edible.WithSelf(constants.%Self.59b) {
 // CHECK:STDOUT: !definition:
