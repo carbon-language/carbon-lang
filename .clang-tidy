@@ -118,6 +118,12 @@ Checks:
   # Warns on `= {}` which is also used to indicate which fields do not need to
   # be explicitly initialized in aggregate initialization.
   - '-readability-redundant-member-init'
+  # We generally do want to collapse if statements, and ask for it in review.
+  # But this check ignores when ifs are nested to place comments above/below
+  # the nested if block. And when the outer if block is also initializing a
+  # variable. There are more than a handful of cases where we want to do this,
+  # especially working with LLVM apis like dyn_cast.
+  - '-readability-redundant-nested-if'
   # Broken, wants to remove parens from `*(p + 1)` and `("Foo" + s).str()`.
   # TODO: Re-enable once https://github.com/llvm/llvm-project/issues/192435 and
   # related bugs are fixed.
