@@ -201,12 +201,12 @@ LLVM_DUMP_METHOD auto Dump(const File& file, RawBundleId bundle_id)
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file,
-                           CanonicalCoreWitnessFunctionId core_witness_id)
+                           GeneratedFunctionId generated_function_id)
     -> std::string {
   RawStringOstream out;
-  out << core_witness_id;
-  if (core_witness_id.has_value()) {
-    const auto& canon = file.core_witness_functions().Get(core_witness_id);
+  out << generated_function_id;
+  if (generated_function_id.has_value()) {
+    const auto& canon = file.generated_functions().Get(generated_function_id);
     out << ": " << canon;
     out << "\n  - decl: " << DumpInstSummary(file, canon.decl_id);
   }
@@ -642,9 +642,9 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
 LLVM_DUMP_METHOD static auto MakeBundleId(int id) -> RawBundleId {
   return RawBundleId(id);
 }
-LLVM_DUMP_METHOD static auto MakeCanonicalCoreWitnessFunctionId(int id)
-    -> CanonicalCoreWitnessFunctionId {
-  return CanonicalCoreWitnessFunctionId(id);
+LLVM_DUMP_METHOD static auto MakeGeneratedFunctionId(int id)
+    -> GeneratedFunctionId {
+  return GeneratedFunctionId(id);
 }
 LLVM_DUMP_METHOD static auto MakeClassId(int id) -> ClassId {
   return ClassId(id);

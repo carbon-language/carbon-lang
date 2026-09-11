@@ -2451,18 +2451,18 @@ static auto ImportFunctionDecl(ImportContext& context,
   return {function_decl.function_id, function_const_id};
 }
 
-static auto GetLocalCoreWitnessData(
+static auto GetLocalGeneratedFunctionData(
     ImportRefResolver& resolver,
-    SemIR::CanonicalCoreWitnessFunctionId import_core_witness_id)
-    -> std::optional<SemIR::CanonicalCoreWitnessFunction::Key> {
-  if (!import_core_witness_id.has_value()) {
+    SemIR::GeneratedFunctionId import_generated_function_id)
+    -> std::optional<SemIR::GeneratedFunction::CanonicalKey> {
+  if (!import_generated_function_id.has_value()) {
     return std::nullopt;
   }
 
   const auto& import_key = resolver.import_ir()
-                               .core_witness_functions()
-                               .Get(import_core_witness_id)
-                               .key;
+                               .generated_functions()
+                               .Get(import_generated_function_id)
+                               .canonical_key;
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_key.parent_scope_id);
   auto name_id = GetLocalNameId(resolver, import_key.name_id);
@@ -2478,14 +2478,14 @@ static auto GetLocalCoreWitnessData(
            .self_type_id = self_type_id}};
 }
 
-static auto GetLocalCoreWitnessId(
+static auto GetLocalGeneratedFunctionId(
     ImportContext& context,
-    const SemIR::CanonicalCoreWitnessFunction::Key& canon_data,
+    const SemIR::GeneratedFunction::CanonicalKey& canonical_key,
     SemIR::FunctionId function_id, SemIR::InstId decl_id,
     SemIR::BuiltinFunctionKind builtin_function_kind)
-    -> SemIR::CanonicalCoreWitnessFunctionId {
-  return context.local_ir().core_witness_functions().Add(
-      {.key = canon_data,
+    -> SemIR::GeneratedFunctionId {
+  return context.local_ir().generated_functions().Add(
+      {.canonical_key = canonical_key,
        .function_id = function_id,
        .decl_id = decl_id,
        .builtin_function_kind = builtin_function_kind});
@@ -2498,8 +2498,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   const auto& import_function =
       resolver.import_functions().Get(inst.function_id);
 
-  auto core_witness_data =
-      GetLocalCoreWitnessData(resolver, import_function.core_witness_id());
+  auto generated_function_data = GetLocalGeneratedFunctionData(
+      resolver, import_function.generated_function_id());
 
   SemIR::FunctionId function_id = SemIR::FunctionId::None;
   if (!function_const_id.has_value()) {
@@ -2513,20 +2513,19 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       return ResolveResult::Retry();
     }
 
-    if (core_witness_data) {
-      auto core_witness_id =
-          resolver.local_ir().core_witness_functions().Lookup(
-              *core_witness_data);
-      if (core_witness_id.has_value()) {
-        // The canonical Function for this CoreWitness already exists. We dedupe
-        // by using it.
+    // If the canonical Function for this generated function already exists,
+    // we dedupe by using it.
+    if (generated_function_data) {
+      // Generated functions are not generic.
+      CARBON_CHECK(!import_function.generic_id.has_value());
 
-        // CoreWitness functions are not generic.
-        CARBON_CHECK(!import_function.generic_id.has_value());
-        const auto& core_witness =
-            resolver.local_ir().core_witness_functions().Get(core_witness_id);
+      auto generated_id = resolver.local_ir().generated_functions().Lookup(
+          *generated_function_data);
+      if (generated_id.has_value()) {
+        const auto& generated =
+            resolver.local_ir().generated_functions().Get(generated_id);
         return ResolveResult::Done(
-            resolver.local_constant_values().Get(core_witness.decl_id));
+            resolver.local_constant_values().Get(generated.decl_id));
       }
     }
 
@@ -2642,13 +2641,14 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       new_function.SetBuiltinFunction(import_function.builtin_function_kind());
       break;
     }
-    case SemIR::Function::SpecialFunctionKind::CoreWitness: {
-      const auto& import_canon =
-          resolver.import_ir().core_witness_functions().Get(
-              import_function.core_witness_id());
-      new_function.SetCoreWitness(GetLocalCoreWitnessId(
-          resolver, *core_witness_data, function_id,
-          new_function.first_decl_id(), import_canon.builtin_function_kind));
+    case SemIR::Function::SpecialFunctionKind::Generated: {
+      const auto& import_generated =
+          resolver.import_ir().generated_functions().Get(
+              import_function.generated_function_id());
+      new_function.SetGenerated(
+          GetLocalGeneratedFunctionId(resolver, *generated_function_data,
+                                      function_id, new_function.first_decl_id(),
+                                      import_generated.builtin_function_kind));
       break;
     }
     case SemIR::Function::SpecialFunctionKind::Thunk: {

@@ -217,17 +217,20 @@ auto Mangler::MangleImpl(SemIR::FunctionId function_id,
     case SemIR::Function::SpecialFunctionKind::CppThunk:
       break;
 
-    case SemIR::Function::SpecialFunctionKind::CoreWitness: {
+    case SemIR::Function::SpecialFunctionKind::Generated: {
       os << ".";
-      const auto& canon =
-          sem_ir().core_witness_functions().Get(function.core_witness_id());
+      const auto& canonical_key = sem_ir()
+                                      .generated_functions()
+                                      .Get(function.generated_function_id())
+                                      .canonical_key;
       // TODO: Use the self's type instead of a fingerprint so the mangled name
       // is human-readable.
       //
       // TODO: We want to include parameters here when they are part of the
-      // CanonicalCoreWitnessFunction.
-      MangleFingerprint(os, &sem_ir(),
-                        sem_ir().types().GetTypeInstId(canon.key.self_type_id));
+      // GeneratedFunction::CanonicalKey.
+      MangleFingerprint(
+          os, &sem_ir(),
+          sem_ir().types().GetTypeInstId(canonical_key.self_type_id));
       os << ":core";
       break;
     }

@@ -495,7 +495,7 @@ struct OverloadedOperatorInfo {
   enum ReturnType { FirstArgType, Bool };
 
   // The name of the interface containing the operator function. This affects
-  // the mangled name and canonicalization of CoreWitness functions.
+  // the mangled name and canonicalization of Generated functions.
   //
   // This must always be set, so we pick a default value that does not represent
   // an interface, so is never correct.

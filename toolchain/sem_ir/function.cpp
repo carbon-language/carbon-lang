@@ -159,12 +159,9 @@ auto Function::GetBuiltinFunctionKind(const File& file) const
   switch (special_function_kind) {
     case SpecialFunctionKind::Builtin:
       return builtin_function_kind();
-    case SpecialFunctionKind::CoreWitness: {
-      auto core_witness_id =
-          CanonicalCoreWitnessFunctionId(special_function_kind_data.index);
-      const auto& core_witness =
-          file.core_witness_functions().Get(core_witness_id);
-      return core_witness.builtin_function_kind;
+    case SpecialFunctionKind::Generated: {
+      auto generated_id = GeneratedFunctionId(special_function_kind_data.index);
+      return file.generated_functions().Get(generated_id).builtin_function_kind;
     }
     default:
       return BuiltinFunctionKind::None;
@@ -196,8 +193,7 @@ auto Function::GetDeclaredReturnForm(const File& file,
 namespace Carbon {
 template class ValueStore<SemIR::FunctionId, SemIR::Function,
                           Tag<SemIR::CheckIRId>>;
-template class CanonicalValueStore<SemIR::CanonicalCoreWitnessFunctionId,
-                                   SemIR::CanonicalCoreWitnessFunction::Key,
-                                   Tag<SemIR::CheckIRId>,
-                                   SemIR::CanonicalCoreWitnessFunction>;
+template class CanonicalValueStore<
+    SemIR::GeneratedFunctionId, SemIR::GeneratedFunction::CanonicalKey,
+    Tag<SemIR::CheckIRId>, SemIR::GeneratedFunction>;
 }  // namespace Carbon

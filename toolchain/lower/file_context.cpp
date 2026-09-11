@@ -563,11 +563,11 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     // Specific functions are emitted in each file they are referenced in.
     linkage = llvm::Function::LinkOnceODRLinkage;
   } else if (declaration_function.special_function_kind ==
-                 SemIR::Function::SpecialFunctionKind::CoreWitness ||
+                 SemIR::Function::SpecialFunctionKind::Generated ||
              declaration_function.special_function_kind ==
                  SemIR::Function::SpecialFunctionKind::Thunk) {
-    // TODO: Emit CoreWitness functions and thunks in files where they're called
-    // instead of in files where they're defined. That should allow
+    // TODO: Emit custom witness functions and thunks in files where they're
+    // called instead of in files where they're defined. That should allow
     // LinkOnceODRLinkage.
     linkage = llvm::Function::WeakODRLinkage;
   }

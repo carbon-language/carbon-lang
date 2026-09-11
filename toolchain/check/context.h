@@ -376,8 +376,8 @@ class Context {
     return sem_ir().cpp_overload_sets();
   }
   auto functions() -> SemIR::FunctionStore& { return sem_ir().functions(); }
-  auto core_witness_functions() -> SemIR::CanonicalCoreWitnessFunctionStore& {
-    return sem_ir().core_witness_functions();
+  auto generated_functions() -> SemIR::GeneratedFunctionStore& {
+    return sem_ir().generated_functions();
   }
   auto thunks() -> SemIR::ThunkStore& { return sem_ir().thunks(); }
   auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }

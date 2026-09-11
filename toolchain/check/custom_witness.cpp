@@ -45,25 +45,26 @@ static auto GetFacetAsType(Context& context,
   return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
 }
 
-// Attempts to return the canonical Function for the CoreWitness function.
-// Always returns the key for the CanonicalCoreWitnessFunction, so that it can
-// be used to add a newly generated Function with the same key.
+// Attempts to return the canonical Function for a generated function.
+// Always returns the canonical key for the GeneratedFunction, so that it can
+// be used to store a newly generated Function with the same canonical key.
 //
 // On success, returns the Decl and Function IDs of the canonical Function.
 // Otherwise, it returns None for those IDs.
-static auto TryGetCanonicalCoreWitnessFunction(
-    Context& context, SemIR::NameScopeId parent_scope_id, SemIR::NameId name_id,
-    SemIR::TypeId self_type_id)
-    -> std::tuple<SemIR::CanonicalCoreWitnessFunction::Key, SemIR::InstId,
+static auto TryGetGeneratedFunction(Context& context,
+                                    SemIR::NameScopeId parent_scope_id,
+                                    SemIR::NameId name_id,
+                                    SemIR::TypeId self_type_id)
+    -> std::tuple<SemIR::GeneratedFunction::CanonicalKey, SemIR::InstId,
                   SemIR::FunctionId> {
-  SemIR::CanonicalCoreWitnessFunction::Key key = {
+  SemIR::GeneratedFunction::CanonicalKey key = {
       .parent_scope_id = parent_scope_id,
       .name_id = name_id,
       .self_type_id = self_type_id};
-  if (auto core_witness_id = context.core_witness_functions().Lookup(key);
-      core_witness_id.has_value()) {
-    const auto& canon = context.core_witness_functions().Get(core_witness_id);
-    return {key, canon.decl_id, canon.function_id};
+  if (auto generated_id = context.generated_functions().Lookup(key);
+      generated_id.has_value()) {
+    const auto& generated = context.generated_functions().Get(generated_id);
+    return {key, generated.decl_id, generated.function_id};
   }
   return {key, SemIR::InstId::None, SemIR::FunctionId::None};
 }
@@ -80,8 +81,8 @@ auto MakeBuiltinOperatorFunction(Context& context,
   auto self_type_id = param_types.front();
   auto name_id = context.core_identifiers().AddNameId(op_name);
 
-  auto [canon_key, decl_id, function_id] = TryGetCanonicalCoreWitnessFunction(
-      context, parent_scope_id, name_id, self_type_id);
+  auto [canonical_key, decl_id, function_id] =
+      TryGetGeneratedFunction(context, parent_scope_id, name_id, self_type_id);
   if (!decl_id.has_value()) {
     llvm::SmallVector<ParamPatternKind> param_kinds(param_types.size() - 1,
                                                     ParamPatternKind::Value);
@@ -97,8 +98,8 @@ auto MakeBuiltinOperatorFunction(Context& context,
              ReturnExprAsForm(context, SemIR::LocId::None,
                               context.types().GetTypeInstId(return_type_id))});
     auto& function = context.functions().Get(function_id);
-    function.SetCoreWitness(context.core_witness_functions().Add(
-        {.key = canon_key,
+    function.SetGenerated(context.generated_functions().Add(
+        {.canonical_key = canonical_key,
          .function_id = function_id,
          .decl_id = decl_id,
          .builtin_function_kind = builtin_kind}));
@@ -377,8 +378,8 @@ static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
                                   DestroyFormat format) -> SemIR::InstId {
   auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
 
-  auto [canon_key, decl_id, function_id] = TryGetCanonicalCoreWitnessFunction(
-      context, parent_scope_id, name_id, self_type_id);
+  auto [canonical_key, decl_id, function_id] =
+      TryGetGeneratedFunction(context, parent_scope_id, name_id, self_type_id);
   if (!decl_id.has_value()) {
     std::tie(decl_id, function_id) =
         MakeGeneratedFunctionDecl(context, loc_id,
@@ -404,8 +405,8 @@ static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
         CARBON_FATAL("unexpected DestroyFormat::NoDestroy");
     }
 
-    function.SetCoreWitness(context.core_witness_functions().Add(
-        {.key = canon_key,
+    function.SetGenerated(context.generated_functions().Add(
+        {.canonical_key = canonical_key,
          .function_id = function_id,
          .decl_id = decl_id,
          .builtin_function_kind = builtin_kind}));

@@ -49,9 +49,9 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 }
 
 LLVM_DUMP_METHOD static auto Dump(
-    const Context& context,
-    SemIR::CanonicalCoreWitnessFunctionId core_witness_id) -> std::string {
-  return SemIR::Dump(context.sem_ir(), core_witness_id);
+    const Context& context, SemIR::GeneratedFunctionId generated_function_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), generated_function_id);
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,

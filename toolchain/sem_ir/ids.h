@@ -971,9 +971,9 @@ struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
   using IdBase::IdBase;
 };
 
-// The ID of a `CanonicalCoreWitnessFunction`.
-struct CanonicalCoreWitnessFunctionId
-    : public IdBase<CanonicalCoreWitnessFunctionId> {
+// The ID of a `GeneratedFunction`.
+struct GeneratedFunctionId
+    : public IdBase<GeneratedFunctionId> {
   static constexpr llvm::StringLiteral Label =
       "canonical_core_witness_function";
 
