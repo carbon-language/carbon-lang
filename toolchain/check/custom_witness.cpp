@@ -369,6 +369,18 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Calls `self.<field>.(Destroy.SelfDestruct)` for each field in a `StructType`.
+static auto DestroyStructFields(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId callee_self_param_id,
+    llvm::ArrayRef<SemIR::StructTypeField> struct_fields) -> void {
+  for (auto struct_field : struct_fields) {
+    auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
+                                         struct_field.name_id);
+    auto self_destruct_call = BuildSelfDestructCall(context, loc_id, member_id);
+    DiscardExpr(context, self_destruct_call);
+  }
+}
+
 // Returns the body for `SubobjectDestroy.Op`.
 //
 // TODO: This is a placeholder still not actually destroying things, intended to
@@ -409,8 +421,9 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         return;
       }
       case CARBON_KIND(SemIR::StructType struct_type): {
-        // TODO: implement destruction for struct types.
-        (void)struct_type;
+        DestroyStructFields(
+            context, loc_id, callee_self_param_id,
+            context.struct_type_fields().Get(struct_type.fields_id));
         return;
       }
       case CARBON_KIND(SemIR::TupleType tuple_type): {
