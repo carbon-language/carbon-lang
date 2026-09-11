@@ -54,12 +54,13 @@ Rendering is built on [`common/terminal`](/common/terminal), which detects
 capabilities, models color and style, measures text, and holds a grid of styled
 cells. Layout decides what to show and measures it against the grid.
 
-The audience for a rendered diagnostic is a person glancing at an error. Editors get diagnostics from the
-[language server](/toolchain/language_server) as structure, so editor
-integration is out of scope, and so is what a complete build should give an
-agent, which is a separate question. A build log gets one line per fact from
-[`--no-diagnostic-snippets`](#the-compact-form), and a golden test file gets the
-drawing without the parts that a moved line would re-render, from
+The audience for a rendered diagnostic is a person glancing at an error. Editors
+get diagnostics from the [language server](/toolchain/language_server) as
+structure, so editor integration is out of scope, and so is what a complete
+build should give an agent, which is a separate question. A build log gets one
+line per fact from [`--no-diagnostic-snippets`](#the-compact-form), and a golden
+test file gets the drawing without the parts that a moved line would re-render,
+from
 [`--no-diagnostic-line-numbers`](#testing).
 
 ## What a diagnostic is made of
