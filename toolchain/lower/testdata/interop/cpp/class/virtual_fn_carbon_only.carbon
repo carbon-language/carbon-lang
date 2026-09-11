@@ -11,9 +11,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/interop/cpp/class/virtual_fn_carbon_only.carbon
 
-// --- non_generic.carbon
-library "[[@TEST_NAME]]";
-
 import Cpp inline '''
 struct X { virtual void f() {} };
 ''';
@@ -25,20 +22,4 @@ class Z {
 
 fn F() {
   var _: Z = {.base = Cpp.X.X()};
-}
-
-// --- generic.carbon
-library "[[@TEST_NAME]]";
-
-import Cpp inline '''
-struct X { virtual void f() {} };
-''';
-
-class GenericZ(T: type) {
-  extend base: Cpp.X;
-  override fn f(unused self) {}
-}
-
-fn F() {
-  var _: GenericZ(type) = {.base = Cpp.X.X()};
 }

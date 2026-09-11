@@ -412,26 +412,38 @@ static auto CheckCompleteClassType(
         {.name_id = SemIR::NameId::Base, .type_inst_id = base_type_inst_id});
   }
 
+  bool foreign_vtable = false;
   if (class_info.is_dynamic) {
     auto [vtable_id, carbon_native_vtable] = BuildVtable(
         context, node_id, class_id, base_class_type, vtable_contents);
+    foreign_vtable = !carbon_native_vtable;
     auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
     class_info.vtable_decl_id = AddInst<SemIR::VtableDecl>(
         context, node_id, {.type_id = vptr_type_id, .vtable_id = vtable_id});
-    if (!carbon_native_vtable) {
-      ExportClassToCpp(context, context.types().GetAs<SemIR::ClassType>(
-                                    class_info.self_type_id));
-    }
   }
 
   auto struct_type_id = GetStructType(
       context, AddStructTypeFields(context, struct_type_fields, field_decls));
 
-  return AddInst<SemIR::CompleteTypeWitness>(
+  auto complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
        .object_repr_type_inst_id =
            context.types().GetTypeInstId(struct_type_id)});
+  class_info.complete_type_witness_id = complete_type_witness_id;
+
+  if (foreign_vtable) {
+    if (class_info.generic_id.has_value()) {
+      context.TODO(class_info.first_decl_id(),
+                   "generic class deriving from C++ virtual class");
+    } else {
+      ExportAndCompleteClassToCpp(
+          context,
+          context.types().GetAs<SemIR::ClassType>(class_info.self_type_id));
+    }
+  }
+
+  return complete_type_witness_id;
 }
 
 auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
