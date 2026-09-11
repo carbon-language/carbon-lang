@@ -64,6 +64,23 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::SpecificInterfaceId query_specific_interface_id,
                          bool build_witness) -> std::optional<SemIR::InstId>;
 
+// Given a value whose type `IsFacetTypeOrError`, returns the corresponding
+// type.
+auto GetFacetAsType(Context& context, SemIR::ConstantId facet_or_type_const_id)
+    -> SemIR::TypeId;
+
+// Builds a witness for the `Destroy` interface.
+//
+// `op_id` refers to the synthesised `Destroy.Op` and is generated differently
+// based on whether the specific is a Carbon type or a C++ type.
+auto BuildDestroyWitness(Context& context, SemIR::LocId loc_id,
+                         SemIR::TypeId self_type_id,
+                         SemIR::NameScopeId parent_scope_id,
+                         SemIR::ConstantId query_self_const_id,
+                         SemIR::SpecificInterfaceId query_specific_interface_id,
+                         SemIR::InstId subobject_destroy_fn_id)
+    -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CUSTOM_WITNESS_H_

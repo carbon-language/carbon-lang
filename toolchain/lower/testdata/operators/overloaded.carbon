@@ -99,24 +99,30 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_10.1.temp), !dbg !33
 // CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc30_10.1.temp, ptr %a), !dbg !33
 // CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.124acaad20680602.Core"(ptr %return, ptr %.loc30_10.1.temp, ptr %b), !dbg !33
-// CHECK:STDOUT:   call void @"_COp.e9b64e5ce9c1b06d:core.Destroy.Core"(ptr %.loc30_10.1.temp), !dbg !33
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.9a1cc51ba11b6d04(ptr %.loc30_10.1.temp), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.c93d65ba26581f30:core.Destroy.Core"(ptr %self) #0 !dbg !35 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.c93d65ba26581f30:core.Destroy.Core"(ptr %self) #0 !dbg !35 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.e9b64e5ce9c1b06d:core.Destroy.Core"(ptr %self) #0 !dbg !41 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.e9b64e5ce9c1b06d:core.Destroy.Core"(ptr %self) #0 !dbg !41 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.9a1cc51ba11b6d04(ptr %self) #0 !dbg !45 {
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.e9b64e5ce9c1b06d:core.Destroy.Core"(ptr %self), !dbg !49
+// CHECK:STDOUT:   ret void, !dbg !50
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -159,14 +165,20 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 2, scope: !29, type: !7)
 // CHECK:STDOUT: !33 = !DILocation(line: 30, column: 10, scope: !29)
 // CHECK:STDOUT: !34 = !DILocation(line: 30, column: 3, scope: !29)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "Op", linkageName: "_COp.c93d65ba26581f30:core.Destroy.Core", scope: null, file: !1, line: 30, type: !36, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !38)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.c93d65ba26581f30:core.Destroy.Core", scope: null, file: !1, line: 30, type: !36, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !38)
 // CHECK:STDOUT: !36 = !DISubroutineType(types: !37)
 // CHECK:STDOUT: !37 = !{null, !7}
 // CHECK:STDOUT: !38 = !{!39}
 // CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !35, type: !7)
 // CHECK:STDOUT: !40 = !DILocation(line: 30, column: 10, scope: !35)
-// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "Op", linkageName: "_COp.e9b64e5ce9c1b06d:core.Destroy.Core", scope: null, file: !1, line: 30, type: !36, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !42)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.e9b64e5ce9c1b06d:core.Destroy.Core", scope: null, file: !1, line: 30, type: !36, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !42)
 // CHECK:STDOUT: !42 = !{!43}
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !41, type: !7)
 // CHECK:STDOUT: !44 = !DILocation(line: 30, column: 10, scope: !41)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.9a1cc51ba11b6d04", scope: null, file: !46, line: 26, type: !36, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !47)
+// CHECK:STDOUT: !46 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
+// CHECK:STDOUT: !47 = !{!48}
+// CHECK:STDOUT: !48 = !DILocalVariable(arg: 1, scope: !45, type: !7)
+// CHECK:STDOUT: !49 = !DILocation(line: 28, column: 5, scope: !45)
+// CHECK:STDOUT: !50 = !DILocation(line: 26, column: 3, scope: !45)
 // CHECK:STDOUT:

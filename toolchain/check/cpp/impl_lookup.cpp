@@ -242,7 +242,7 @@ static auto BuildDefaultWitness(
                             query_specific_interface_id, {fn_id});
 }
 
-static auto BuildDestroyWitness(
+static auto BuildCppDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
@@ -265,8 +265,17 @@ static auto BuildDestroyWitness(
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
   }
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {fn_id});
+
+  // Mark functions with the interface's scope as a hint to mangling. This
+  // does not add them to the scope.
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
+  auto parent_scope_id = context.interfaces()
+                             .Get(query_specific_interface.interface_id)
+                             .scope_without_self_id;
+  return BuildDestroyWitness(
+      context, loc_id, GetFacetAsType(context, query_self_const_id),
+      parent_scope_id, query_self_const_id, query_specific_interface_id, fn_id);
 }
 
 // Attempts to build a witness table entry for a C++ unary operator.
@@ -619,8 +628,8 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
       return BuildDefaultWitness(context, loc_id, query_self_const_id,
                                  query_specific_interface_id);
     case SemIR::CoreInterface::Destroy:
-      return BuildDestroyWitness(context, loc_id, query_self_const_id,
-                                 query_specific_interface_id);
+      return BuildCppDestroyWitness(context, loc_id, query_self_const_id,
+                                    query_specific_interface_id);
 
     case SemIR::CoreInterface::CppRangeForIterate:
       return BuildCppRangeForIterateWitness(

@@ -280,6 +280,7 @@ fn Call3() {
 // CHECK:STDOUT:   %.loc12_12.2.temp = alloca {}, align 1, !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_12.2.temp), !dbg !15
 // CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk._(ptr @X.val.loc12_14.3), !dbg !16
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.155369379014d6e1(ptr @X.val), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -300,6 +301,7 @@ fn Call3() {
 // CHECK:STDOUT:   %.loc18_12.2.temp = alloca {}, align 1, !dbg !22
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.2.temp), !dbg !22
 // CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk.__(ptr @X.val.loc12_14.3, i32 2), !dbg !23
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.155369379014d6e1(ptr @X.val), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -323,6 +325,7 @@ fn Call3() {
 // CHECK:STDOUT:   %.loc24_12.2.temp = alloca {}, align 1, !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_12.2.temp), !dbg !27
 // CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk.___(ptr @X.val.loc12_14.3, i32 2, i32 3), !dbg !28
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.155369379014d6e1(ptr @X.val), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -346,6 +349,11 @@ fn Call3() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.155369379014d6e1(ptr %self) #0 !dbg !30 {
+// CHECK:STDOUT:   ret void, !dbg !37
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z3fooIJEEv1XDpT_() #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z3fooIJiEEv1XDpT_(i32 noundef) #3
@@ -354,6 +362,7 @@ fn Call3() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Destroy.Core.155369379014d6e1, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -394,4 +403,12 @@ fn Call3() {
 // CHECK:STDOUT: !27 = !DILocation(line: 24, column: 11, scope: !26)
 // CHECK:STDOUT: !28 = !DILocation(line: 24, column: 3, scope: !26)
 // CHECK:STDOUT: !29 = !DILocation(line: 22, column: 1, scope: !26)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.155369379014d6e1", scope: null, file: !31, line: 24, type: !32, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !35)
+// CHECK:STDOUT: !31 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !32 = !DISubroutineType(types: !33)
+// CHECK:STDOUT: !33 = !{null, !34}
+// CHECK:STDOUT: !34 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !35 = !{!36}
+// CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !30, type: !34)
+// CHECK:STDOUT: !37 = !DILocation(line: 24, column: 3, scope: !30)
 // CHECK:STDOUT:

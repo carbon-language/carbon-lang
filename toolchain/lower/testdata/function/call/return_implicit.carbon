@@ -34,11 +34,17 @@ fn Main() {
 // CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !9
 // CHECK:STDOUT:   call void @_CMakeImplicitEmptyTuple.Main(), !dbg !10
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.c7a99711ca3557ac(ptr %_.var), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.c7a99711ca3557ac(ptr %self) #0 !dbg !12 {
+// CHECK:STDOUT:   ret void, !dbg !19
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -58,4 +64,12 @@ fn Main() {
 // CHECK:STDOUT: !9 = !DILocation(line: 18, column: 3, scope: !8)
 // CHECK:STDOUT: !10 = !DILocation(line: 18, column: 15, scope: !8)
 // CHECK:STDOUT: !11 = !DILocation(line: 17, column: 1, scope: !8)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.c7a99711ca3557ac", scope: null, file: !13, line: 24, type: !14, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !17)
+// CHECK:STDOUT: !13 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
+// CHECK:STDOUT: !15 = !{null, !16}
+// CHECK:STDOUT: !16 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !17 = !{!18}
+// CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !12, type: !16)
+// CHECK:STDOUT: !19 = !DILocation(line: 24, column: 3, scope: !12)
 // CHECK:STDOUT:

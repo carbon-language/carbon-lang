@@ -48,8 +48,8 @@ fn TestOp() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %impl.elem0: %.6db = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%C.as.Inc.impl.Op]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
-// CHECK:STDOUT:   %C.as.Inc.impl.Op.call: init %empty_tuple.type = call %bound_method(%c.ref)
+// CHECK:STDOUT:   %bound_method.loc28: <bound method> = bound_method %c.ref, %impl.elem0
+// CHECK:STDOUT:   %C.as.Inc.impl.Op.call: init %empty_tuple.type = call %bound_method.loc28(%c.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

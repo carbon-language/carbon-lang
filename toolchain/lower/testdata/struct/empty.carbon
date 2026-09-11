@@ -27,14 +27,22 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !9
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.17de40ae0fb4b1fd(ptr %_.var), !dbg !9
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.17de40ae0fb4b1fd(ptr %x.var), !dbg !8
 // CHECK:STDOUT:   ret i32 0, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.17de40ae0fb4b1fd(ptr %self) #0 !dbg !11 {
+// CHECK:STDOUT:   ret void, !dbg !18
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Destroy.Core.17de40ae0fb4b1fd, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -53,4 +61,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 15, column: 3, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 16, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.17de40ae0fb4b1fd", scope: null, file: !12, line: 24, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !16)
+// CHECK:STDOUT: !12 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{null, !15}
+// CHECK:STDOUT: !15 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !16 = !{!17}
+// CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !11, type: !15)
+// CHECK:STDOUT: !18 = !DILocation(line: 24, column: 3, scope: !11)
 // CHECK:STDOUT:

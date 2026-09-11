@@ -37,21 +37,21 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !9
-// CHECK:STDOUT:   %.loc16 = load i32, ptr %a.var, align 4, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc16, ptr %b.var, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc16_18 = load i32, ptr %a.var, align 4, !dbg !11
+// CHECK:STDOUT:   store i32 %.loc16_18, ptr %b.var, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc17 = load i32, ptr %b.var, align 4, !dbg !12
 // CHECK:STDOUT:   store i32 %.loc17, ptr %a.var, align 4, !dbg !13
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %b.var), !dbg !9
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.6580e8d2c4d79a48(ptr %b.var), !dbg !9
 // CHECK:STDOUT:   br label %while.cond, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %while.cond
 // CHECK:STDOUT:   %.loc19 = load i32, ptr %a.var, align 4, !dbg !15
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %a.var), !dbg !8
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.6580e8d2c4d79a48(ptr %a.var), !dbg !8
 // CHECK:STDOUT:   ret i32 %.loc19, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !17 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
@@ -59,9 +59,15 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.6580e8d2c4d79a48(ptr %self) #0 !dbg !23 {
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.70db2d92ffddbef7:core.Destroy.Core"(ptr %self), !dbg !27
+// CHECK:STDOUT:   ret void, !dbg !28
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @"_COp.70db2d92ffddbef7:core.Destroy.Core", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Destroy.Core.6580e8d2c4d79a48, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -86,10 +92,16 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !14 = !DILocation(line: 15, column: 3, scope: !4)
 // CHECK:STDOUT: !15 = !DILocation(line: 19, column: 10, scope: !4)
 // CHECK:STDOUT: !16 = !DILocation(line: 19, column: 3, scope: !4)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !1, line: 16, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !20)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !1, line: 16, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !20)
 // CHECK:STDOUT: !18 = !DISubroutineType(types: !19)
 // CHECK:STDOUT: !19 = !{null, !7}
 // CHECK:STDOUT: !20 = !{!21}
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !17, type: !7)
 // CHECK:STDOUT: !22 = !DILocation(line: 16, column: 5, scope: !17)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.6580e8d2c4d79a48", scope: null, file: !24, line: 24, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !25)
+// CHECK:STDOUT: !24 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !25 = !{!26}
+// CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !23, type: !7)
+// CHECK:STDOUT: !27 = !DILocation(line: 26, column: 5, scope: !23)
+// CHECK:STDOUT: !28 = !DILocation(line: 24, column: 3, scope: !23)
 // CHECK:STDOUT:

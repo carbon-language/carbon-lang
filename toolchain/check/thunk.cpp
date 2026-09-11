@@ -552,9 +552,11 @@ auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
   auto self_inst_id = params[0];
 
   // Build the function body. This calls the `Destroy` operator on `self`.
-  auto destroy_inst_id = BuildUnaryOperator(
-      context, loc_id, {.interface_name = CoreIdentifier::Destroy},
-      self_inst_id);
+  auto destroy_inst_id =
+      BuildUnaryOperator(context, loc_id,
+                         {.interface_name = CoreIdentifier::Destroy,
+                          .op_name = CoreIdentifier::SelfDestruct},
+                         self_inst_id);
   DiscardExpr(context, destroy_inst_id);
   BuildReturnWithNoExpr(context, loc_id);
 

@@ -21,6 +21,7 @@
 #include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -29,8 +30,7 @@ namespace Carbon::Check {
 
 // Given a value whose type `IsFacetTypeOrError`, returns the corresponding
 // type.
-static auto GetFacetAsType(Context& context,
-                           SemIR::ConstantId facet_or_type_const_id)
+auto GetFacetAsType(Context& context, SemIR::ConstantId facet_or_type_const_id)
     -> SemIR::TypeId {
   auto facet_or_type_id =
       context.constant_values().GetInstId(facet_or_type_const_id);
@@ -308,14 +308,14 @@ static auto CanDestroyType(
   }
 }
 
-// Returns the body for `Destroy.Op`.
+// Returns the body for `SubobjectDestroy.Op`.
 //
 // TODO: This is a placeholder still not actually destroying things, intended to
 // maintain mostly-consistent behavior with current logic while working. That
 // also means using `self`.
-static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
-                              SemIR::TypeId self_type_id,
-                              SemIR::InstId self_param_id)
+static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
+                                       SemIR::TypeId self_type_id,
+                                       SemIR::InstId self_param_id)
     -> SemIR::InstBlockId {
   context.inst_block_stack().Push();
   auto inst = context.types().GetAsInst(self_type_id);
@@ -343,9 +343,29 @@ static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
 // to `self_type_id`.
 static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
                                   SemIR::TypeId self_type_id,
-                                  SemIR::NameScopeId parent_scope_id,
-                                  DestroyFormat format) -> SemIR::InstId {
+                                  SemIR::NameScopeId parent_scope_id)
+    -> SemIR::InstId {
   auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
+
+  auto [decl_id, function_id] =
+      MakeGeneratedFunctionDecl(context, loc_id,
+                                {.parent_scope_id = parent_scope_id,
+                                 .name_id = name_id,
+                                 .self_type_id = self_type_id,
+                                 .self_kind = ParamPatternKind::Ref});
+
+  auto& function = context.functions().Get(function_id);
+  function.SetCoreWitness(SemIR::BuiltinFunctionKind::NoOp);
+  return decl_id;
+}
+
+static auto MakeSubobjectDestroyOpFunction(
+    Context& context, SemIR::LocId loc_id, SemIR::TypeId self_type_id,
+    SemIR::NameScopeId parent_scope_id, DestroyFormat format) -> SemIR::InstId {
+  // TODO: replace with `CoreIdentifier::Op` when `require impls` adds a witness
+  // table entry.
+  auto name_id =
+      context.core_identifiers().AddNameId(CoreIdentifier::SubobjectDestroy);
 
   auto [decl_id, function_id] =
       MakeGeneratedFunctionDecl(context, loc_id,
@@ -361,8 +381,8 @@ static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
   } else {
     CARBON_CHECK(format == DestroyFormat::NonTrivial);
     function.SetCoreWitness(SemIR::BuiltinFunctionKind::None);
-    auto body_id = MakeDestroyOpBody(context, loc_id, self_type_id,
-                                     function.self_param_id);
+    auto body_id = MakeSubobjectDestroyOpBody(context, loc_id, self_type_id,
+                                              function.self_param_id);
     function.body_block_ids.push_back(body_id);
   }
 
@@ -425,6 +445,14 @@ static auto MakeSelfFacetWithCustomWitness(
        .type_inst_id =
            context.types().GetTypeInstId(query_types.query_self_as_type_id),
        .witnesses_block_id = witnesses_block_id});
+}
+
+static auto LoadAssociatedFunction(
+    Context& context, SemIR::InstId assoc_fn_id,
+    SemIR::SpecificId interface_with_self_specific_id) -> SemIR::InstId {
+  LoadImportRef(context, assoc_fn_id);
+  return context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), interface_with_self_specific_id, assoc_fn_id));
 }
 
 auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
@@ -595,9 +623,43 @@ auto BuildPrimitiveCopyWitness(
                             query_specific_interface_id, {op_id});
 }
 
+auto BuildDestroyWitness(Context& context, SemIR::LocId loc_id,
+                         SemIR::TypeId self_type_id,
+                         SemIR::NameScopeId parent_scope_id,
+                         SemIR::ConstantId query_self_const_id,
+                         SemIR::SpecificInterfaceId query_specific_interface_id,
+                         SemIR::InstId subobject_destroy_fn_id)
+    -> SemIR::InstId {
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
+  auto interface =
+      context.interfaces().Get(query_specific_interface.interface_id);
+  auto assoc_entities =
+      context.inst_blocks().Get(interface.associated_entities_id);
+  CARBON_CHECK(assoc_entities.size() == 3,
+               "{} only has {} associated functions",
+               context.names().GetAsStringIfIdentifier(interface.name_id),
+               assoc_entities.size());
+
+  auto self_facet_id = GetConstantFacetValueForType(
+      context, context.types().GetTypeInstId(self_type_id));
+  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+      context, loc_id, interface.generic_id, interface.generic_with_self_id,
+      query_specific_interface.specific_id, self_facet_id);
+
+  auto op_id =
+      MakeDestroyOpFunction(context, loc_id, self_type_id, parent_scope_id);
+
+  auto self_destruct_fn_id = LoadAssociatedFunction(
+      context, assoc_entities[2], interface_with_self_specific_id);
+  return BuildCustomWitness(
+      context, loc_id, query_self_const_id, query_specific_interface_id,
+      {op_id, subobject_destroy_fn_id, self_destruct_fn_id});
+}
+
 // Builds and returns a custom witness that performs the specified kind of
 // destruction for the given type.
-static auto BuildDestroyWitness(
+static auto BuildCarbonDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id,
@@ -613,10 +675,11 @@ static auto BuildDestroyWitness(
                              .scope_without_self_id;
 
   auto self_type_id = GetFacetAsType(context, query_self_const_id);
-  auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_id,
-                                     parent_scope_id, format);
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {op_id});
+  auto subobject_destroy_fn_id = MakeSubobjectDestroyOpFunction(
+      context, loc_id, self_type_id, parent_scope_id, format);
+  return BuildDestroyWitness(context, loc_id, self_type_id, parent_scope_id,
+                             query_self_const_id, query_specific_interface_id,
+                             subobject_destroy_fn_id);
 }
 
 // Returns the custom witness to use for destruction of the given type. See
@@ -637,17 +700,17 @@ static auto LookupDestroyWitness(
     return SemIR::InstId::None;
   }
 
-  return BuildDestroyWitness(context, loc_id, query_self_const_id,
-                             query_specific_interface_id, format);
+  return BuildCarbonDestroyWitness(context, loc_id, query_self_const_id,
+                                   query_specific_interface_id, format);
 }
 
 auto BuildTrivialDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
-  return BuildDestroyWitness(context, loc_id, query_self_const_id,
-                             query_specific_interface_id,
-                             DestroyFormat::Trivial);
+  return BuildCarbonDestroyWitness(context, loc_id, query_self_const_id,
+                                   query_specific_interface_id,
+                                   DestroyFormat::Trivial);
 }
 
 static auto MakeIntFitsInWitness(
