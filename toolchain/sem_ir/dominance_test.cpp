@@ -199,6 +199,71 @@ TEST_F(DominanceTest, ConstantIsExempt) {
   EXPECT_THAT(Verify(), IsEmpty());
 }
 
+// The following three tests pin the allowlists for pre-existing dominance
+// violations. Each of them fails if the corresponding allowlist is removed, so
+// they should be removed, and the violations diagnosed, together with it.
+// See `CollectDeclInsts` and `DominanceVerifier::VerifyOperand`.
+
+TEST_F(DominanceTest, FileScopeInstIsAllowlisted) {
+  // A file-scope instruction is evaluated in `__global_init`, if at all, so it
+  // doesn't dominate uses in any other function.
+  auto global_id = AddValue();
+  file_.set_top_inst_block_id(file_.inst_blocks().Add({global_id}));
+
+  auto use_id = AddUse(global_id);
+  AddFunction({file_.inst_blocks().Add({use_id, AddReturn()})});
+
+  EXPECT_THAT(Verify(), IsEmpty());
+}
+
+TEST_F(DominanceTest, ClassBodyInstIsAllowlisted) {
+  // A `let` in a class body produces a `wrapper_binding` that isn't evaluated
+  // in any function, but `A.x` can name it from one. This mirrors the
+  // `public_global_access` case in
+  // `check/testdata/class/access/access_modifiers.carbon`:
+  //
+  //     class A { let x: i32 = 5; }
+  //     let x: i32 = A.x;
+  auto binding_id =
+      AddNonConstInst(WrapperBinding{.type_id = TypeType::TypeId,
+                                     .entity_name_id = EntityNameId::None,
+                                     .value_id = AddConstant()});
+  auto name_id = file_.identifiers().Add("A");
+  file_.classes().Add(
+      {{.name_id = NameId::ForIdentifier(name_id),
+        .parent_scope_id = NameScopeId::Package,
+        .generic_id = GenericId::None,
+        .first_param_node_id = Parse::NodeId::None,
+        .last_param_node_id = Parse::NodeId::None,
+        .pattern_block_id = InstBlockId::Empty,
+        .implicit_param_patterns_id = InstBlockId::None,
+        .param_patterns_id = InstBlockId::Empty,
+        .is_extern = false,
+        .extern_library_id = LibraryNameId::None,
+        .non_owning_decl_id = InstId::None,
+        .first_owning_decl_id = InstId::None},
+       {.self_type_id = TypeType::TypeId,
+        .inheritance_kind = Class::Final,
+        .body_block_id = file_.inst_blocks().Add({binding_id})}});
+
+  auto use_id = AddUse(binding_id);
+  AddFunction({file_.inst_blocks().Add({use_id, AddReturn()})});
+
+  EXPECT_THAT(Verify(), IsEmpty());
+}
+
+TEST_F(DominanceTest, ImportRefIsAllowlisted) {
+  // A non-constant import isn't evaluated in the importing file at all.
+  auto import_id =
+      AddNonConstInst(ImportRefLoaded{.type_id = TypeType::TypeId,
+                                      .import_ir_inst_id = ImportIRInstId::None,
+                                      .entity_name_id = EntityNameId::None});
+  auto use_id = AddUse(import_id);
+  AddFunction({file_.inst_blocks().Add({use_id, AddReturn()})});
+
+  EXPECT_THAT(Verify(), IsEmpty());
+}
+
 TEST_F(DominanceTest, MetaInstIdOperandIsExempt) {
   // A `MetaInstId` names the identity of an instruction rather than its value,
   // so it needn't be dominated even though it's evaluated later.

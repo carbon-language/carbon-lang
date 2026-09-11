@@ -15,7 +15,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/index_base.h"
-#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
@@ -80,16 +79,27 @@ auto GetBranchTargetId(Inst inst) -> InstBlockId {
   return InstBlockId::None;
 }
 
-// Collects the instructions that form declarations, either at file scope or
-// within an entity, into `decl_insts`.
+// Collects the instructions that are referenced from function bodies despite
+// being evaluated at file scope, or not evaluated at all, into `decl_insts`.
 //
-// TODO: These instructions are referenced from within function bodies even
-// though they are not evaluated there: file-scope variables, class / interface
-// / impl members, and imports all leak into function bodies as direct
-// instruction references. They are allowlisted so that the dominance check
-// doesn't reject the existing test corpus. Once global initialization semantics
-// and the variable reference model are settled, remove this allowlist and
-// diagnose such uses instead.
+// TODO: These are pre-existing dominance violations, not genuine exemptions:
+//
+// -   File-scope instructions are evaluated in `__global_init`, if at all, so
+//     they don't dominate uses in another function.
+// -   A `let` in a class body produces a `wrapper_binding` that isn't evaluated
+//     in any function, but a qualified name reference to it can appear in one.
+//     For example, from the `public_global_access` case in
+//     `check/testdata/class/access/access_modifiers.carbon`:
+//
+//         class A { let x: i32 = 5; }
+//         let x: i32 = A.x;
+//
+//     Here the `name_ref` for `A.x` is in `__global_init`, and the
+//     `wrapper_binding` for `x` is only in `A`'s body block.
+//
+// Lowering only works today because such uses either happen to be constant or
+// are never lowered. Remove this allowlist and diagnose the uses instead once
+// global initialization semantics and the member reference model are settled.
 auto CollectDeclInsts(const File& file, Set<InstId>& decl_insts) -> void {
   auto add_block = [&](InstBlockId block_id) {
     if (block_id.has_value()) {
@@ -98,46 +108,10 @@ auto CollectDeclInsts(const File& file, Set<InstId>& decl_insts) -> void {
       }
     }
   };
-  auto add_decl = [&](InstId decl_id) {
-    if (!decl_id.has_value()) {
-      return;
-    }
-    Inst inst = file.insts().Get(decl_id);
-    if (auto decl = inst.TryAs<ClassDecl>()) {
-      add_block(decl->decl_block_id);
-    } else if (auto decl = inst.TryAs<FunctionDecl>()) {
-      add_block(decl->decl_block_id);
-    } else if (auto decl = inst.TryAs<InterfaceDecl>()) {
-      add_block(decl->decl_block_id);
-    } else if (auto decl = inst.TryAs<ImplDecl>()) {
-      add_block(decl->decl_block_id);
-    }
-  };
-  auto add_entity = [&](const EntityWithParamsBase& entity) {
-    add_decl(entity.definition_id);
-    add_decl(entity.first_owning_decl_id);
-    add_decl(entity.non_owning_decl_id);
-    add_block(entity.pattern_block_id);
-  };
 
   add_block(file.top_inst_block_id());
-  for (const auto& function : file.functions().values()) {
-    add_entity(function);
-  }
   for (const auto& class_info : file.classes().values()) {
-    add_entity(class_info);
     add_block(class_info.body_block_id);
-  }
-  for (const auto& interface : file.interfaces().values()) {
-    add_entity(interface);
-    add_block(interface.body_block_without_self_id);
-    add_block(interface.body_block_with_self_id);
-    add_block(interface.associated_entities_id);
-  }
-  for (const auto& impl : file.impls().values()) {
-    add_entity(impl);
-    add_block(impl.body_block_id);
-    add_block(impl.witness_block_id);
   }
 }
 
