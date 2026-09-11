@@ -308,14 +308,14 @@ static auto CanDestroyType(
   }
 }
 
-// Returns the body for `Destroy.Op`.
+// Returns the body for `SubobjectDestroy.Op`.
 //
 // TODO: This is a placeholder still not actually destroying things, intended to
 // maintain mostly-consistent behavior with current logic while working. That
 // also means using `self`.
-static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
-                              SemIR::TypeId self_type_id,
-                              SemIR::InstId self_param_id)
+static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
+                                       SemIR::TypeId self_type_id,
+                                       SemIR::InstId self_param_id)
     -> SemIR::InstBlockId {
   context.inst_block_stack().Push();
   auto inst = context.types().GetAsInst(self_type_id);
@@ -381,8 +381,8 @@ static auto MakeSubobjectDestroyOpFunction(
   } else {
     CARBON_CHECK(format == DestroyFormat::NonTrivial);
     function.SetCoreWitness(SemIR::BuiltinFunctionKind::None);
-    auto body_id = MakeDestroyOpBody(context, loc_id, self_type_id,
-                                     function.self_param_id);
+    auto body_id = MakeSubobjectDestroyOpBody(context, loc_id, self_type_id,
+                                              function.self_param_id);
     function.body_block_ids.push_back(body_id);
   }
 
