@@ -18,17 +18,6 @@
 
 namespace Carbon::Check {
 
-auto PerformAction(Context& context, SemIR::SpecificId specific_id,
-                   SemIR::LocId loc_id, SemIR::RefineInstAction action)
-    -> SemIR::InstId {
-  return AddInst<SemIR::SpecificInst>(
-      context, loc_id,
-      {.type_id = GetTypeOfInstInSpecific(context.sem_ir(), specific_id,
-                                          action.inst_id),
-       .inst_id = action.inst_id,
-       .specific_id = specific_id});
-}
-
 static auto OperandDependence(Context& context, SemIR::ConstantId const_id,
                               SemIR::SpecificId /*specific_id*/)
     -> SemIR::ConstantDependence {
@@ -213,24 +202,6 @@ auto ActionIsPerformable(Context& context, SemIR::Inst action_inst,
              SemIR::ConstantDependence::Template;
 }
 
-static auto AddDependentActionSpliceImpl(Context& context,
-                                         SemIR::LocIdAndInst action,
-                                         SemIR::TypeInstId result_type_inst_id)
-    -> SemIR::InstId {
-  auto inst_id = AddDependentActionInst(context, action);
-  if (!result_type_inst_id.has_value()) {
-    result_type_inst_id =
-        AddTypeInst(context, action.loc_id,
-                    SemIR::TypeOfInst{.type_id = SemIR::TypeType::TypeId,
-                                      .inst_id = inst_id});
-  }
-  return AddInst(
-      context, action.loc_id,
-      SemIR::SpliceInst{.type_id = context.types().GetTypeIdForTypeInstId(
-                            result_type_inst_id),
-                        .inst_id = inst_id});
-}
-
 // Refine one operand of an action. Given an argument from a template, this
 // produces an argument that has the template-dependent parts replaced with
 // their concrete values, so that the action doesn't need to know which specific
@@ -244,10 +215,10 @@ static auto RefineTypedOperand(Context& /*context*/, SemIR::LocId /*loc_id*/,
   return id;
 }
 
-static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
+static auto RefineTypedOperand(Context& context, SemIR::LocId /*loc_id*/,
                                SemIR::MetaInstId inst_id) -> SemIR::MetaInstId {
-  auto inst = context.insts().Get(inst_id);
-  if (inst.Is<SemIR::SpliceInst>()) {
+  // TODO: Can we delete this check?
+  if (context.insts().Is<SemIR::SpliceInst>(inst_id)) {
     // The argument will evaluate to the spliced instruction, which is already
     // refined.
     return inst_id;
@@ -261,23 +232,9 @@ static auto RefineTypedOperand(Context& context, SemIR::LocId loc_id,
     return GetOrAddInstWithSpecificConstantValue(context, inst_id);
   }
 
-  // If the type or constant value of the action argument is dependent, refine
-  // to an instruction with the type and value from the specific.
-  if (OperandDependence(context, inst.type_id(), SemIR::SpecificId::None) ==
-          SemIR::ConstantDependence::Template ||
-      OperandDependence(context, const_id, SemIR::SpecificId::None) ==
-          SemIR::ConstantDependence::Template) {
-    auto type_inst_id = context.types().GetTypeInstId(inst.type_id());
-    inst_id = AddDependentActionSpliceImpl(
-        context,
-        SemIR::LocIdAndInst(
-            loc_id,
-            SemIR::RefineInstAction{.type_id = GetSingletonType(
-                                        context, SemIR::InstType::TypeInstId),
-                                    .inst_id = inst_id}),
-        type_inst_id);
-  }
-
+  // If the type or constant value of the operand is template-dependent, it will
+  // be refined when the action is performed, once we know which specific we're
+  // performing it in.
   return inst_id;
 }
 
@@ -358,7 +315,121 @@ auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
                               SemIR::TypeInstId result_type_inst_id)
     -> SemIR::InstId {
   action.inst = RefineOperands(context, action.loc_id, action.inst);
-  return AddDependentActionSpliceImpl(context, action, result_type_inst_id);
+
+  auto inst_id = AddDependentActionInst(context, action);
+  if (!result_type_inst_id.has_value()) {
+    result_type_inst_id =
+        AddTypeInst(context, action.loc_id,
+                    SemIR::TypeOfInst{.type_id = SemIR::TypeType::TypeId,
+                                      .inst_id = inst_id});
+  }
+  return AddInst(
+      context, action.loc_id,
+      SemIR::SpliceInst{.type_id = context.types().GetTypeIdForTypeInstId(
+                            result_type_inst_id),
+                        .inst_id = inst_id});
+}
+
+// Refine one operand of an action that is being performed within a specific.
+// Given an operand of an action from a generic, this produces an operand that
+// refers to the corresponding instruction within the specific, so that the
+// action doesn't need to know which specific it is operating on.
+//
+// This is the default case, for ID kinds that never need to be refined.
+template <typename IdT>
+  requires SemIR::Internal::IsIdKindType<IdT>
+static auto RefineTypedOperandInSpecific(Context& /*context*/,
+                                         SemIR::SpecificId /*specific_id*/,
+                                         SemIR::LocId /*loc_id*/, IdT id)
+    -> IdT {
+  return id;
+}
+
+static auto RefineTypedOperandInSpecific(Context& context,
+                                         SemIR::SpecificId specific_id,
+                                         SemIR::LocId loc_id,
+                                         SemIR::MetaInstId inst_id)
+    -> SemIR::MetaInstId {
+  // If the operand isn't template-dependent within the generic, then either it
+  // doesn't depend on the specific at all, or evaluation has already replaced
+  // it with the corresponding instruction from the specific.
+  if (OperandDependence(context, inst_id) !=
+      SemIR::ConstantDependence::Template) {
+    return inst_id;
+  }
+
+  // Produce an instruction with the same meaning as `inst_id`, but with the
+  // type and constant value that it has within the specific. This is added to
+  // the block of instructions produced by the action, so that it's evaluated
+  // before the instructions that use it.
+  return AddInst<SemIR::SpecificInst>(
+      context, loc_id,
+      {.type_id =
+           GetTypeOfInstInSpecific(context.sem_ir(), specific_id, inst_id),
+       .inst_id = inst_id,
+       .specific_id = specific_id});
+}
+
+static auto RefineTypedOperandInSpecific(Context& context,
+                                         SemIR::SpecificId specific_id,
+                                         SemIR::LocId loc_id,
+                                         SemIR::MetaInstBlockId inst_block_id)
+    -> SemIR::MetaInstBlockId {
+  auto block = context.inst_blocks().Get(inst_block_id);
+
+  llvm::SmallVector<SemIR::InstId> new_block;
+  new_block.reserve(block.size());
+  bool any_changed = false;
+  for (auto inst_id : block) {
+    new_block.push_back(RefineTypedOperandInSpecific(
+        context, specific_id, loc_id, SemIR::MetaInstId(inst_id)));
+    any_changed |= new_block.back() != inst_id;
+  }
+  if (!any_changed) {
+    return inst_block_id;
+  }
+  return SemIR::MetaInstBlockId(context.inst_blocks().AddCanonical(new_block));
+}
+
+template <typename BundleT>
+static auto RefineTypedOperandInSpecific(Context& context,
+                                         SemIR::SpecificId specific_id,
+                                         SemIR::LocId loc_id,
+                                         SemIR::BundleId<BundleT> bundle_id)
+    -> SemIR::BundleId<BundleT> {
+  auto bundle_tuple = context.bundles().GetAsTuple(bundle_id);
+  BundleT refined_bundle = std::apply(
+      [&](auto... bundle_fields) {
+        // This can't actually recurse, because bundles can't contain bundle
+        // IDs.
+        return BundleT{RefineTypedOperandInSpecific(context, specific_id,
+                                                    loc_id, bundle_fields)...};
+      },
+      bundle_tuple);
+  return context.bundles().AddCanonical(refined_bundle);
+}
+
+// Dynamically dispatched wrapper for RefineTypedOperandInSpecific.
+static auto RefineOperandInSpecific(Context& context,
+                                    SemIR::SpecificId specific_id,
+                                    SemIR::LocId loc_id, SemIR::IdAndKind arg)
+    -> int32_t {
+  return arg.Dispatch<int32_t>([&](auto id) {
+    return SemIR::ToRaw(
+        RefineTypedOperandInSpecific(context, specific_id, loc_id, id));
+  });
+}
+
+auto Internal::RefineOperandsInSpecific(Context& context,
+                                        SemIR::SpecificId specific_id,
+                                        SemIR::LocId loc_id, SemIR::Inst action)
+    -> SemIR::Inst {
+  auto arg0 = RefineOperandInSpecific(context, specific_id, loc_id,
+                                      action.arg0_and_kind());
+  auto arg1 = RefineOperandInSpecific(context, specific_id, loc_id,
+                                      action.arg1_and_kind());
+  action.SetArgs(arg0, arg1);
+  return action;
 }
 
 auto Internal::BeginPerformDelayedAction(Context& context) -> void {

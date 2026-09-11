@@ -1574,21 +1574,6 @@ struct PointerType {
   TypeInstId pointee_id;
 };
 
-// An action that performs refinement for an instruction, by creating an
-// instruction that has the same semantics but the specific type and constant
-// value.
-struct RefineInstAction {
-  static constexpr auto Kind = InstKind::RefineInstAction.Define<Parse::NodeId>(
-      {.ir_name = "refine_inst_action",
-       .expr_category = ActionExprCategory(ExprCategory::Dependent),
-       .constant_kind = InstConstantKind::InstAction,
-       .action_needs_specific_id = true,
-       .is_lowered = false});
-
-  TypeId type_id;
-  MetaInstId inst_id;
-};
-
 // Represents a reference binding pattern that is not a parameter. See
 // `AnyBindingPattern` for member documentation.
 struct RefBindingPattern {
