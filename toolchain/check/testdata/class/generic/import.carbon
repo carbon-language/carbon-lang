@@ -520,8 +520,17 @@ class Class(U: type) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.specific_fn: <specific function> = specific_function %CompleteClass.F.623, @CompleteClass.F(%i32) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc6_3.4 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %CompleteClass.type.facet: %type = facet_value %CompleteClass.d55, () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.97c: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%CompleteClass.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.bfc: %Destroy.WithSelf.SubobjectDestroy.type.97c = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.e25: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%CompleteClass.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.d29: %Destroy.WithSelf.SelfDestruct.type.e25 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.ad8: <witness> = custom_witness (%Destroy.Op.1a2547.4, %Destroy.WithSelf.SubobjectDestroy.bfc, %Destroy.WithSelf.SelfDestruct.d29), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.bc9: %Destroy.type = facet_value %CompleteClass.d55, (%custom_witness.ad8) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function %Destroy.WithSelf.SelfDestruct.d29, @Destroy.WithSelf.SelfDestruct(%CompleteClass.type.facet) [concrete]
 // CHECK:STDOUT:   %UseField.type: type = fn_type @UseField [concrete]
 // CHECK:STDOUT:   %UseField: %UseField.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -617,8 +626,8 @@ class Class(U: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.d55 = var_storage %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc6: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc6_3: ref %CompleteClass.d55 = splice_block %v.var {}
-// CHECK:STDOUT:   %F.call: init %CompleteClass.d55 to %.loc6_3 = call %F.ref.loc6()
+// CHECK:STDOUT:   %.loc6_3.1: ref %CompleteClass.d55 = splice_block %v.var {}
+// CHECK:STDOUT:   %F.call: init %CompleteClass.d55 to %.loc6_3.1 = call %F.ref.loc6()
 // CHECK:STDOUT:   assign %v.var, %F.call
 // CHECK:STDOUT:   %.loc6_27: type = splice_block %CompleteClass [concrete = constants.%CompleteClass.d55] {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%Main.CompleteClass [concrete = constants.%CompleteClass.generic]
@@ -635,8 +644,14 @@ class Class(U: type) {
 // CHECK:STDOUT:   %F.ref.loc7: %CompleteClass.F.type.dac = name_ref F, %.loc7 [concrete = constants.%CompleteClass.F.623]
 // CHECK:STDOUT:   %CompleteClass.F.specific_fn: <specific function> = specific_function %F.ref.loc7, @CompleteClass.F(constants.%i32) [concrete = constants.%CompleteClass.F.specific_fn]
 // CHECK:STDOUT:   %CompleteClass.F.call: init %i32 = call %CompleteClass.F.specific_fn()
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.4
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %v.var, constants.%Destroy.WithSelf.SelfDestruct.d29
+// CHECK:STDOUT:   %Destroy.facet.loc6_3.1: %Destroy.type = facet_value constants.%CompleteClass.d55, (constants.%custom_witness.ad8) [concrete = constants.%Destroy.facet.bc9]
+// CHECK:STDOUT:   %.loc6_3.2: %Destroy.type = converted constants.%CompleteClass.d55, %Destroy.facet.loc6_3.1 [concrete = constants.%Destroy.facet.bc9]
+// CHECK:STDOUT:   %Destroy.facet.loc6_3.2: %Destroy.type = facet_value constants.%CompleteClass.d55, (constants.%custom_witness.ad8) [concrete = constants.%Destroy.facet.bc9]
+// CHECK:STDOUT:   %.loc6_3.3: %Destroy.type = converted constants.%CompleteClass.d55, %Destroy.facet.loc6_3.2 [concrete = constants.%Destroy.facet.bc9]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function constants.%Destroy.WithSelf.SelfDestruct.d29, @Destroy.WithSelf.SelfDestruct(constants.%CompleteClass.type.facet) [concrete = constants.%Destroy.WithSelf.SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %Destroy.WithSelf.SelfDestruct.specific_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%v.var)
 // CHECK:STDOUT:   return %CompleteClass.F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -669,8 +684,8 @@ class Class(U: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.d55 = var_storage %v.var_patt
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc11_3: ref %CompleteClass.d55 = splice_block %v.var {}
-// CHECK:STDOUT:   %F.call: init %CompleteClass.d55 to %.loc11_3 = call %F.ref()
+// CHECK:STDOUT:   %.loc11_3.1: ref %CompleteClass.d55 = splice_block %v.var {}
+// CHECK:STDOUT:   %F.call: init %CompleteClass.d55 to %.loc11_3.1 = call %F.ref()
 // CHECK:STDOUT:   assign %v.var, %F.call
 // CHECK:STDOUT:   %.loc11_27: type = splice_block %CompleteClass [concrete = constants.%CompleteClass.d55] {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%Main.CompleteClass [concrete = constants.%CompleteClass.generic]
@@ -691,8 +706,14 @@ class Class(U: type) {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc12_11.2: <bound method> = bound_method %.loc12_11.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc12_11.2(%.loc12_11.2)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.4
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %v.var, constants.%Destroy.WithSelf.SelfDestruct.d29
+// CHECK:STDOUT:   %Destroy.facet.loc11_3.1: %Destroy.type = facet_value constants.%CompleteClass.d55, (constants.%custom_witness.ad8) [concrete = constants.%Destroy.facet.bc9]
+// CHECK:STDOUT:   %.loc11_3.2: %Destroy.type = converted constants.%CompleteClass.d55, %Destroy.facet.loc11_3.1 [concrete = constants.%Destroy.facet.bc9]
+// CHECK:STDOUT:   %Destroy.facet.loc11_3.2: %Destroy.type = facet_value constants.%CompleteClass.d55, (constants.%custom_witness.ad8) [concrete = constants.%Destroy.facet.bc9]
+// CHECK:STDOUT:   %.loc11_3.3: %Destroy.type = converted constants.%CompleteClass.d55, %Destroy.facet.loc11_3.2 [concrete = constants.%Destroy.facet.bc9]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function constants.%Destroy.WithSelf.SelfDestruct.d29, @Destroy.WithSelf.SelfDestruct(constants.%CompleteClass.type.facet) [concrete = constants.%Destroy.WithSelf.SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %v.var, %Destroy.WithSelf.SelfDestruct.specific_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method.loc11(%v.var)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -763,8 +784,17 @@ class Class(U: type) {
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.4: type = fn_type @Destroy.Op.loc13_3.4 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.4: %Destroy.Op.type.1d8f74.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %CompleteClass.type.facet: %type = facet_value %CompleteClass.22b, () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.ad1: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%CompleteClass.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.456: %Destroy.WithSelf.SubobjectDestroy.type.ad1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.0c6: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%CompleteClass.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.ebf: %Destroy.WithSelf.SelfDestruct.type.0c6 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.38b: <witness> = custom_witness (%Destroy.Op.1a2547.4, %Destroy.WithSelf.SubobjectDestroy.456, %Destroy.WithSelf.SelfDestruct.ebf), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.9c0: %Destroy.type = facet_value %CompleteClass.22b, (%custom_witness.38b) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function %Destroy.WithSelf.SelfDestruct.ebf, @Destroy.WithSelf.SelfDestruct(%CompleteClass.type.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -828,7 +858,7 @@ class Class(U: type) {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc13_41: ref %CompleteClass.d55 = temporary_storage
 // CHECK:STDOUT:   %F.call: init %CompleteClass.d55 to %.loc13_41 = call %F.ref()
-// CHECK:STDOUT:   %.loc13_3: %CompleteClass.22b = converted %F.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_3.1: %CompleteClass.22b = converted %F.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %.loc13_35: type = splice_block %CompleteClass [concrete = constants.%CompleteClass.22b] {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%Main.CompleteClass [concrete = constants.%CompleteClass.generic]
@@ -841,8 +871,14 @@ class Class(U: type) {
 // CHECK:STDOUT:     %v.patt: %pattern_type.ff3 = ref_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.ff3 = var_pattern %v.patt [concrete = constants.%v.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %v.var, constants.%Destroy.Op.1a2547.4
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%v.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %v.var, constants.%Destroy.WithSelf.SelfDestruct.ebf
+// CHECK:STDOUT:   %Destroy.facet.loc13_3.1: %Destroy.type = facet_value constants.%CompleteClass.22b, (constants.%custom_witness.38b) [concrete = constants.%Destroy.facet.9c0]
+// CHECK:STDOUT:   %.loc13_3.2: %Destroy.type = converted constants.%CompleteClass.22b, %Destroy.facet.loc13_3.1 [concrete = constants.%Destroy.facet.9c0]
+// CHECK:STDOUT:   %Destroy.facet.loc13_3.2: %Destroy.type = facet_value constants.%CompleteClass.22b, (constants.%custom_witness.38b) [concrete = constants.%Destroy.facet.9c0]
+// CHECK:STDOUT:   %.loc13_3.3: %Destroy.type = converted constants.%CompleteClass.22b, %Destroy.facet.loc13_3.2 [concrete = constants.%Destroy.facet.9c0]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function constants.%Destroy.WithSelf.SelfDestruct.ebf, @Destroy.WithSelf.SelfDestruct(constants.%CompleteClass.type.facet) [concrete = constants.%Destroy.WithSelf.SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %Destroy.WithSelf.SelfDestruct.specific_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%v.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

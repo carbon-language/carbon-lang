@@ -49,8 +49,17 @@ fn F() {
 // CHECK:STDOUT:   %Enum.Op.bound.ff6: <bound method> = bound_method %int_0, %Enum.Op [concrete]
 // CHECK:STDOUT:   %int_1: %Enum = int_value 1 [concrete]
 // CHECK:STDOUT:   %Enum.Op.bound.d4f: <bound method> = bound_method %int_1, %Enum.Op [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Enum.type.facet: %type = facet_value %Enum, () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.344: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%Enum.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.a41: %Destroy.WithSelf.SubobjectDestroy.type.344 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.3d2: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%Enum.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.396: %Destroy.WithSelf.SelfDestruct.type.3d2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.60d: <witness> = custom_witness (%Destroy.Op, %Destroy.WithSelf.SubobjectDestroy.a41, %Destroy.WithSelf.SelfDestruct.396), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.bdd: %Destroy.type = facet_value %Enum, (%custom_witness.60d) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -75,10 +84,10 @@ fn F() {
 // CHECK:STDOUT:   %a.ref.loc8: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %impl.elem0.loc8: %.1e6 = impl_witness_access constants.%custom_witness.d0d, element0 [concrete = constants.%Enum.Op]
-// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %a.ref.loc8, %impl.elem0.loc8 [concrete = constants.%Enum.Op.bound.ff6]
-// CHECK:STDOUT:   %Enum.Op.call.loc8: init %Enum = call %bound_method.loc8(%a.ref.loc8) [concrete = constants.%int_0]
+// CHECK:STDOUT:   %bound_method.loc8_29: <bound method> = bound_method %a.ref.loc8, %impl.elem0.loc8 [concrete = constants.%Enum.Op.bound.ff6]
+// CHECK:STDOUT:   %Enum.Op.call.loc8: init %Enum = call %bound_method.loc8_29(%a.ref.loc8) [concrete = constants.%int_0]
 // CHECK:STDOUT:   assign %a.var, %Enum.Op.call.loc8
-// CHECK:STDOUT:   %.loc8: type = splice_block %Enum.ref.loc8_13 [concrete = constants.%Enum] {
+// CHECK:STDOUT:   %.loc8_13: type = splice_block %Enum.ref.loc8_13 [concrete = constants.%Enum] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Enum.ref.loc8_13: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
@@ -95,8 +104,14 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %b.ref, %impl.elem0.loc10 [concrete = constants.%Enum.Op.bound.d4f]
 // CHECK:STDOUT:   %Enum.Op.call.loc10: init %Enum = call %bound_method.loc10(%b.ref) [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %a.ref.loc10, %Enum.Op.call.loc10
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.SelfDestruct.396
+// CHECK:STDOUT:   %Destroy.facet.loc8_3.1: %Destroy.type = facet_value constants.%Enum, (constants.%custom_witness.60d) [concrete = constants.%Destroy.facet.bdd]
+// CHECK:STDOUT:   %.loc8_3.1: %Destroy.type = converted constants.%Enum, %Destroy.facet.loc8_3.1 [concrete = constants.%Destroy.facet.bdd]
+// CHECK:STDOUT:   %Destroy.facet.loc8_3.2: %Destroy.type = facet_value constants.%Enum, (constants.%custom_witness.60d) [concrete = constants.%Destroy.facet.bdd]
+// CHECK:STDOUT:   %.loc8_3.2: %Destroy.type = converted constants.%Enum, %Destroy.facet.loc8_3.2 [concrete = constants.%Destroy.facet.bdd]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc8_3: <bound method> = bound_method %a.var, %Destroy.WithSelf.SelfDestruct.specific_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method.loc8_3(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

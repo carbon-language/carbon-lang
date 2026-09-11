@@ -35,7 +35,7 @@ fn Call() {
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @X.val = internal constant {} zeroinitializer
-// CHECK:STDOUT: @X.val.loc16 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @X.val.loc16_13.1 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_COneVar_i32.Main(ptr %_) #0 !dbg !4 {
@@ -80,28 +80,28 @@ fn Call() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc15), !dbg !38
 // CHECK:STDOUT:   store i32 1, ptr %_.var.loc15, align 4, !dbg !38
 // CHECK:STDOUT:   call void @_COneVar_i32.Main(ptr %_.var.loc15), !dbg !45
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %_.var.loc15), !dbg !38
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.6580e8d2c4d79a48(ptr %_.var.loc15), !dbg !38
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc16), !dbg !39
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.loc16, ptr align 1 @X.val.loc16, i64 0, i1 false), !dbg !39
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.loc16, ptr align 1 @X.val.loc16_13.1, i64 0, i1 false), !dbg !39
 // CHECK:STDOUT:   call void @_COneVar_X.Main(ptr %_.var.loc16), !dbg !46
-// CHECK:STDOUT:   call void @"_COp.617e09fd62745f5d:core.Destroy.Core"(ptr %_.var.loc16), !dbg !39
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.cb213850f25ad1ad(ptr %_.var.loc16), !dbg !39
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc18_12), !dbg !40
 // CHECK:STDOUT:   store i32 1, ptr %_.var.loc18_12, align 4, !dbg !40
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc18_24), !dbg !41
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.loc18_24, ptr align 1 @X.val.loc16, i64 0, i1 false), !dbg !41
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.loc18_24, ptr align 1 @X.val.loc16_13.1, i64 0, i1 false), !dbg !41
 // CHECK:STDOUT:   call void @_CTwoVars.Main(ptr %_.var.loc18_12, ptr %_.var.loc18_24), !dbg !47
-// CHECK:STDOUT:   call void @"_COp.617e09fd62745f5d:core.Destroy.Core"(ptr %_.var.loc18_24), !dbg !41
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %_.var.loc18_12), !dbg !40
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.cb213850f25ad1ad(ptr %_.var.loc18_24), !dbg !41
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.6580e8d2c4d79a48(ptr %_.var.loc18_12), !dbg !40
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc20), !dbg !42
 // CHECK:STDOUT:   store i32 1, ptr %_.var.loc20, align 4, !dbg !42
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_18.2.temp), !dbg !43
-// CHECK:STDOUT:   call void @_CVarThenLet.Main(ptr %_.var.loc20, ptr @X.val.loc16), !dbg !48
-// CHECK:STDOUT:   call void @"_COp.617e09fd62745f5d:core.Destroy.Core"(ptr @X.val), !dbg !43
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %_.var.loc20), !dbg !42
+// CHECK:STDOUT:   call void @_CVarThenLet.Main(ptr %_.var.loc20, ptr @X.val.loc16_13.1), !dbg !48
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.cb213850f25ad1ad(ptr @X.val), !dbg !43
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.6580e8d2c4d79a48(ptr %_.var.loc20), !dbg !42
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc21), !dbg !44
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.loc21, ptr align 1 @X.val.loc16, i64 0, i1 false), !dbg !44
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.loc21, ptr align 1 @X.val.loc16_13.1, i64 0, i1 false), !dbg !44
 // CHECK:STDOUT:   call void @_CLetThenVar.Main(i32 1, ptr %_.var.loc21), !dbg !49
-// CHECK:STDOUT:   call void @"_COp.617e09fd62745f5d:core.Destroy.Core"(ptr %_.var.loc21), !dbg !44
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.cb213850f25ad1ad(ptr %_.var.loc21), !dbg !44
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -120,14 +120,34 @@ fn Call() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.6580e8d2c4d79a48(ptr %self) #0 !dbg !59 {
+// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self), !dbg !63
+// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.6580e8d2c4d79a48(ptr %self), !dbg !64
+// CHECK:STDOUT:   ret void, !dbg !65
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.cb213850f25ad1ad(ptr %self) #0 !dbg !66 {
+// CHECK:STDOUT:   call void @"_COp.617e09fd62745f5d:core.Destroy.Core"(ptr %self), !dbg !69
+// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.6580e8d2c4d79a48(ptr %self), !dbg !70
+// CHECK:STDOUT:   ret void, !dbg !71
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.6580e8d2c4d79a48(ptr %self) #0 !dbg !72 {
+// CHECK:STDOUT:   ret void, !dbg !75
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @"_COp.70db2d92ffddbef7:core.Destroy.Core", { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @"_COp.617e09fd62745f5d:core.Destroy.Core", { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 6, 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Destroy.Core.6580e8d2c4d79a48, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Destroy.Core.cb213850f25ad1ad, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSubobjectDestroy.Destroy.Core.6580e8d2c4d79a48, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -194,4 +214,21 @@ fn Call() {
 // CHECK:STDOUT: !56 = !{!57}
 // CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !55, type: !14)
 // CHECK:STDOUT: !58 = !DILocation(line: 16, column: 13, scope: !55)
+// CHECK:STDOUT: !59 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.6580e8d2c4d79a48", scope: null, file: !60, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !61)
+// CHECK:STDOUT: !60 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !61 = !{!62}
+// CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !59, type: !7)
+// CHECK:STDOUT: !63 = !DILocation(line: 25, column: 5, scope: !59)
+// CHECK:STDOUT: !64 = !DILocation(line: 26, column: 5, scope: !59)
+// CHECK:STDOUT: !65 = !DILocation(line: 24, column: 3, scope: !59)
+// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.cb213850f25ad1ad", scope: null, file: !60, line: 24, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !67)
+// CHECK:STDOUT: !67 = !{!68}
+// CHECK:STDOUT: !68 = !DILocalVariable(arg: 1, scope: !66, type: !14)
+// CHECK:STDOUT: !69 = !DILocation(line: 25, column: 5, scope: !66)
+// CHECK:STDOUT: !70 = !DILocation(line: 26, column: 5, scope: !66)
+// CHECK:STDOUT: !71 = !DILocation(line: 24, column: 3, scope: !66)
+// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.6580e8d2c4d79a48", scope: null, file: !60, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !73)
+// CHECK:STDOUT: !73 = !{!74}
+// CHECK:STDOUT: !74 = !DILocalVariable(arg: 1, scope: !72, type: !7)
+// CHECK:STDOUT: !75 = !DILocation(line: 17, column: 3, scope: !72)
 // CHECK:STDOUT:

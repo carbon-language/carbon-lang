@@ -111,6 +111,7 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n2.var), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_34.1.temp), !dbg !19
 // CHECK:STDOUT:   call void @_ZN9NeedThunkC1ERKS_.carbon_thunk._(ptr %n, ptr %n2.var), !dbg !19
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.0f0801deab98555e(ptr %n2.var), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -142,6 +143,18 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.0f0801deab98555e(ptr %self) #0 !dbg !35 {
+// CHECK:STDOUT:   call void @"_COp:thunk:Destroy.092ad14c7174f642.Core:NeedThunk.Cpp"(ptr %self), !dbg !39
+// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.0f0801deab98555e(ptr %self), !dbg !40
+// CHECK:STDOUT:   ret void, !dbg !41
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.0f0801deab98555e(ptr %self) #0 !dbg !42 {
+// CHECK:STDOUT:   ret void, !dbg !45
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN9NeedThunkC1ERKS_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #4
 // CHECK:STDOUT:
@@ -193,6 +206,17 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: !32 = !{!33}
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !31, type: !15)
 // CHECK:STDOUT: !34 = !DILocation(line: 5, column: 3, scope: !31)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.0f0801deab98555e", scope: null, file: !36, line: 24, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !37)
+// CHECK:STDOUT: !36 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !37 = !{!38}
+// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !35, type: !15)
+// CHECK:STDOUT: !39 = !DILocation(line: 25, column: 5, scope: !35)
+// CHECK:STDOUT: !40 = !DILocation(line: 26, column: 5, scope: !35)
+// CHECK:STDOUT: !41 = !DILocation(line: 24, column: 3, scope: !35)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.0f0801deab98555e", scope: null, file: !36, line: 17, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !43)
+// CHECK:STDOUT: !43 = !{!44}
+// CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !42, type: !15)
+// CHECK:STDOUT: !45 = !DILocation(line: 17, column: 3, scope: !42)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'thunks_for_distinct_specializations.carbon'
@@ -213,8 +237,8 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b2.var), !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_35.1.temp), !dbg !22
 // CHECK:STDOUT:   call void @_ZN3BoxI1BEC1ERKS1_.carbon_thunk._(ptr %b, ptr %b2.var), !dbg !22
-// CHECK:STDOUT:   call void @_ZN3BoxI1BED1Ev(ptr %b2.var), !dbg !21
-// CHECK:STDOUT:   call void @_ZN3BoxI1AED1Ev(ptr %a2.var), !dbg !19
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.9785c839355474a9(ptr %b2.var), !dbg !21
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.81eeecf785fc9a5b(ptr %a2.var), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -267,12 +291,32 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.9785c839355474a9(ptr %self) #0 !dbg !40 {
+// CHECK:STDOUT:   call void @_ZN3BoxI1BED1Ev(ptr %self), !dbg !46
+// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.9785c839355474a9(ptr %self), !dbg !47
+// CHECK:STDOUT:   ret void, !dbg !48
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.81eeecf785fc9a5b(ptr %self) #0 !dbg !49 {
+// CHECK:STDOUT:   call void @_ZN3BoxI1AED1Ev(ptr %self), !dbg !52
+// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.9785c839355474a9(ptr %self), !dbg !53
+// CHECK:STDOUT:   ret void, !dbg !54
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.9785c839355474a9(ptr %self) #0 !dbg !55 {
+// CHECK:STDOUT:   ret void, !dbg !58
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN3BoxI1AEC1ERKS1_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #5
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN3BoxI1BEC1ERKS1_(ptr noundef nonnull align 1 dereferenceable(1), ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #5
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSubobjectDestroy.Destroy.Core.9785c839355474a9, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -325,6 +369,25 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: !37 = !{!38}
 // CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !36, type: !15)
 // CHECK:STDOUT: !39 = !DILocation(line: 8, column: 3, scope: !36)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.9785c839355474a9", scope: null, file: !41, line: 24, type: !42, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !44)
+// CHECK:STDOUT: !41 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !42 = !DISubroutineType(types: !43)
+// CHECK:STDOUT: !43 = !{null, !15}
+// CHECK:STDOUT: !44 = !{!45}
+// CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !40, type: !15)
+// CHECK:STDOUT: !46 = !DILocation(line: 25, column: 5, scope: !40)
+// CHECK:STDOUT: !47 = !DILocation(line: 26, column: 5, scope: !40)
+// CHECK:STDOUT: !48 = !DILocation(line: 24, column: 3, scope: !40)
+// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.81eeecf785fc9a5b", scope: null, file: !41, line: 24, type: !42, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !50)
+// CHECK:STDOUT: !50 = !{!51}
+// CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !49, type: !15)
+// CHECK:STDOUT: !52 = !DILocation(line: 25, column: 5, scope: !49)
+// CHECK:STDOUT: !53 = !DILocation(line: 26, column: 5, scope: !49)
+// CHECK:STDOUT: !54 = !DILocation(line: 24, column: 3, scope: !49)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.9785c839355474a9", scope: null, file: !41, line: 17, type: !42, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !56)
+// CHECK:STDOUT: !56 = !{!57}
+// CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !55, type: !15)
+// CHECK:STDOUT: !58 = !DILocation(line: 17, column: 3, scope: !55)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'thunks_for_anonymous_namespace_collision.carbon'
@@ -349,8 +412,8 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b2.var), !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_36.1.temp), !dbg !22
 // CHECK:STDOUT:   call void @_ZN12_GLOBAL__N_17CollideC1ERKS0_.carbon_thunk._(ptr %b, ptr %b2.var), !dbg !22
-// CHECK:STDOUT:   call void @_ZN12_GLOBAL__N_17CollideD2Ev(ptr %b2.var), !dbg !21
-// CHECK:STDOUT:   call void @_ZN7CollideD2Ev(ptr %a2.var), !dbg !19
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.195b7b5116a47bde(ptr %b2.var), !dbg !21
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.d458bc775710478b(ptr %a2.var), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -415,6 +478,25 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.195b7b5116a47bde(ptr %self) #0 !dbg !40 {
+// CHECK:STDOUT:   call void @_ZN12_GLOBAL__N_17CollideD2Ev(ptr %self), !dbg !46
+// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.195b7b5116a47bde(ptr %self), !dbg !47
+// CHECK:STDOUT:   ret void, !dbg !48
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.d458bc775710478b(ptr %self) #0 !dbg !49 {
+// CHECK:STDOUT:   call void @_ZN7CollideD2Ev(ptr %self), !dbg !52
+// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.195b7b5116a47bde(ptr %self), !dbg !53
+// CHECK:STDOUT:   ret void, !dbg !54
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.195b7b5116a47bde(ptr %self) #0 !dbg !55 {
+// CHECK:STDOUT:   ret void, !dbg !58
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN7CollideC2ERKS_(ptr noundef nonnull align 1 dereferenceable(1) %this, ptr noundef nonnull align 1 dereferenceable(1) %0) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
@@ -439,6 +521,7 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSubobjectDestroy.Destroy.Core.195b7b5116a47bde, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -490,4 +573,23 @@ fn Call(a: Cpp.Collide, b: Cpp.AnonCollide) {
 // CHECK:STDOUT: !37 = !{!38}
 // CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !36, type: !15)
 // CHECK:STDOUT: !39 = !DILocation(line: 8, column: 3, scope: !36)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.195b7b5116a47bde", scope: null, file: !41, line: 24, type: !42, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !44)
+// CHECK:STDOUT: !41 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !42 = !DISubroutineType(types: !43)
+// CHECK:STDOUT: !43 = !{null, !15}
+// CHECK:STDOUT: !44 = !{!45}
+// CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !40, type: !15)
+// CHECK:STDOUT: !46 = !DILocation(line: 25, column: 5, scope: !40)
+// CHECK:STDOUT: !47 = !DILocation(line: 26, column: 5, scope: !40)
+// CHECK:STDOUT: !48 = !DILocation(line: 24, column: 3, scope: !40)
+// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.d458bc775710478b", scope: null, file: !41, line: 24, type: !42, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !50)
+// CHECK:STDOUT: !50 = !{!51}
+// CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !49, type: !15)
+// CHECK:STDOUT: !52 = !DILocation(line: 25, column: 5, scope: !49)
+// CHECK:STDOUT: !53 = !DILocation(line: 26, column: 5, scope: !49)
+// CHECK:STDOUT: !54 = !DILocation(line: 24, column: 3, scope: !49)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.195b7b5116a47bde", scope: null, file: !41, line: 17, type: !42, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !56)
+// CHECK:STDOUT: !56 = !{!57}
+// CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !55, type: !15)
+// CHECK:STDOUT: !58 = !DILocation(line: 17, column: 3, scope: !55)
 // CHECK:STDOUT:

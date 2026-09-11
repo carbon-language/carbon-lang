@@ -42,7 +42,7 @@ fn F() {
 // CHECK:STDOUT:   %FeedAnimal.type: type = fn_type @FeedAnimal [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %FeedAnimal: %FeedAnimal.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %require_complete.db4: <witness> = require_complete_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %a.patt.febc60.2: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt.84e [symbolic]
 // CHECK:STDOUT:   %HandleAnimal.type: type = fn_type @HandleAnimal [concrete]
 // CHECK:STDOUT:   %HandleAnimal: %HandleAnimal.type = struct_value () [concrete]
@@ -65,7 +65,15 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc25_19.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.4ea, %Destroy.Op.1a2547.2 [concrete]
+// CHECK:STDOUT:   %Goat.type.facet: %type = facet_value %Goat, () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.a71: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%Goat.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.2a8: %Destroy.WithSelf.SubobjectDestroy.type.a71 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.b6d: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%Goat.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.47e: %Destroy.WithSelf.SelfDestruct.type.b6d = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.8e7: <witness> = custom_witness (%Destroy.Op.1a2547.2, %Destroy.WithSelf.SubobjectDestroy.2a8, %Destroy.WithSelf.SelfDestruct.47e), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.b0c: %Destroy.type = facet_value %Goat, (%custom_witness.8e7) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function %Destroy.WithSelf.SelfDestruct.47e, @Destroy.WithSelf.SelfDestruct(%Goat.type.facet) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.4ea, %Destroy.WithSelf.SelfDestruct.specific_fn [concrete]
 // CHECK:STDOUT:   %a.patt.fd6628.2: %pattern_type.283 = wrapper_binding_pattern a, %a.param_patt.8f5 [concrete]
 // CHECK:STDOUT:   %FeedAnimal.specific_fn.99a: <specific function> = specific_function %FeedAnimal, @FeedAnimal(%Animal.facet) [concrete]
 // CHECK:STDOUT: }
@@ -172,7 +180,7 @@ fn F() {
 // CHECK:STDOUT:   %a.patt.loc17_34.2: @FeedAnimal.%pattern_type (%pattern_type.e90) = wrapper_binding_pattern a, %a.param_patt.loc17_34.2 [symbolic = %a.patt.loc17_34.2 (constants.%a.patt.febc60.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc17_36.1 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc17_36.1 [symbolic = %require_complete (constants.%require_complete.db4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @FeedAnimal.%T.as_type.loc17_36.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
@@ -189,7 +197,7 @@ fn F() {
 // CHECK:STDOUT:   %a.patt.loc19_29.2: @HandleAnimal.%pattern_type (%pattern_type.e90) = wrapper_binding_pattern a, %a.param_patt.loc19_29.2 [symbolic = %a.patt.loc19_29.2 (constants.%a.patt.febc60.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc19_31.1 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc19_31.1 [symbolic = %require_complete (constants.%require_complete.db4)]
 // CHECK:STDOUT:   %FeedAnimal.specific_fn.loc19_36.2: <specific function> = specific_function constants.%FeedAnimal, @FeedAnimal(%T.loc19_18.1) [symbolic = %FeedAnimal.specific_fn.loc19_36.2 (constants.%FeedAnimal.specific_fn.5bd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @HandleAnimal.%T.as_type.loc19_31.1 (%T.as_type)) {
@@ -220,7 +228,12 @@ fn F() {
 // CHECK:STDOUT:   %.loc25_19.2: ref %Goat = temporary %.loc25_17.2, %.loc25_19.1 [concrete = constants.%.4ea]
 // CHECK:STDOUT:   %.loc25_19.3: %Goat = acquire_value %.loc25_19.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn(%.loc25_19.3)
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.4ea)
+// CHECK:STDOUT:   %Destroy.facet.loc25_19.1: %Destroy.type = facet_value constants.%Goat, (constants.%custom_witness.8e7) [concrete = constants.%Destroy.facet.b0c]
+// CHECK:STDOUT:   %.loc25_19.4: %Destroy.type = converted constants.%Goat, %Destroy.facet.loc25_19.1 [concrete = constants.%Destroy.facet.b0c]
+// CHECK:STDOUT:   %Destroy.facet.loc25_19.2: %Destroy.type = facet_value constants.%Goat, (constants.%custom_witness.8e7) [concrete = constants.%Destroy.facet.b0c]
+// CHECK:STDOUT:   %.loc25_19.5: %Destroy.type = converted constants.%Goat, %Destroy.facet.loc25_19.2 [concrete = constants.%Destroy.facet.b0c]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function constants.%Destroy.WithSelf.SelfDestruct.47e, @Destroy.WithSelf.SelfDestruct(constants.%Goat.type.facet) [concrete = constants.%Destroy.WithSelf.SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call constants.%bound_method(constants.%.4ea)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -244,7 +257,7 @@ fn F() {
 // CHECK:STDOUT:   %a.patt.loc17_34.2 => constants.%a.patt.febc60.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%require_complete
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.db4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%T) {

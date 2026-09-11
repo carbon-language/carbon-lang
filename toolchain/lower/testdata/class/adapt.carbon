@@ -94,7 +94,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %pa.var), !dbg !24
 // CHECK:STDOUT:   call void @_CMake.PairAdapter.Main(ptr %pa.var), !dbg !25
 // CHECK:STDOUT:   %PairAdapter.GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !26
-// CHECK:STDOUT:   call void @"_COp.2c73101a15c7940c:core.Destroy.Core"(ptr %pa.var), !dbg !24
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.4724d28c4e5f807d(ptr %pa.var), !dbg !24
 // CHECK:STDOUT:   ret i32 %PairAdapter.GetB.call, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,6 +127,18 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.4724d28c4e5f807d(ptr %self) #0 !dbg !48 {
+// CHECK:STDOUT:   call void @"_COp.2c73101a15c7940c:core.Destroy.Core"(ptr %self), !dbg !52
+// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.4724d28c4e5f807d(ptr %self), !dbg !53
+// CHECK:STDOUT:   ret void, !dbg !54
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.4724d28c4e5f807d(ptr %self) #0 !dbg !55 {
+// CHECK:STDOUT:   ret void, !dbg !58
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -182,6 +194,17 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !45 = !{!46}
 // CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !44, type: !7)
 // CHECK:STDOUT: !47 = !DILocation(line: 27, column: 3, scope: !44)
+// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.4724d28c4e5f807d", scope: null, file: !49, line: 24, type: !35, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !50)
+// CHECK:STDOUT: !49 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !50 = !{!51}
+// CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !48, type: !7)
+// CHECK:STDOUT: !52 = !DILocation(line: 25, column: 5, scope: !48)
+// CHECK:STDOUT: !53 = !DILocation(line: 26, column: 5, scope: !48)
+// CHECK:STDOUT: !54 = !DILocation(line: 24, column: 3, scope: !48)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.4724d28c4e5f807d", scope: null, file: !49, line: 17, type: !35, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !56)
+// CHECK:STDOUT: !56 = !{!57}
+// CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !55, type: !7)
+// CHECK:STDOUT: !58 = !DILocation(line: 17, column: 3, scope: !55)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'adapt_int.carbon'

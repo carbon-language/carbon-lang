@@ -67,7 +67,7 @@ struct A {
 // CHECK:STDERR: class B {
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE-14]]:1: in import [InImport]
-// CHECK:STDERR: destroy.carbon:8:1: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
+// CHECK:STDERR: destroy.carbon:35:1: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
 // CHECK:STDERR: impl forall [T: type] T as Destroy {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

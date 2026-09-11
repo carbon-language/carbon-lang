@@ -504,8 +504,17 @@ fn F() {
 // CHECK:STDOUT:   %ptr.614: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %X.type.facet: %type = facet_value %X, () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.90b: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%X.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.0bf: %Destroy.WithSelf.SubobjectDestroy.type.90b = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.971: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%X.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.299: %Destroy.WithSelf.SelfDestruct.type.971 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.e8f: <witness> = custom_witness (%X.cpp_destructor, %Destroy.WithSelf.SubobjectDestroy.0bf, %Destroy.WithSelf.SelfDestruct.299), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.b71: %Destroy.type = facet_value %X, (%custom_witness.e8f) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -530,8 +539,14 @@ fn F() {
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc8_11.2: init %X to %.loc8_11.1 = mark_in_place_init %foo__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_11.3: ref %X = temporary %.loc8_11.1, %.loc8_11.2
-// CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %.loc8_11.3, constants.%X.cpp_destructor
-// CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%.loc8_11.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc8_11.3, constants.%Destroy.WithSelf.SelfDestruct.299
+// CHECK:STDOUT:   %Destroy.facet.loc8_11.1: %Destroy.type = facet_value constants.%X, (constants.%custom_witness.e8f) [concrete = constants.%Destroy.facet.b71]
+// CHECK:STDOUT:   %.loc8_11.4: %Destroy.type = converted constants.%X, %Destroy.facet.loc8_11.1 [concrete = constants.%Destroy.facet.b71]
+// CHECK:STDOUT:   %Destroy.facet.loc8_11.2: %Destroy.type = facet_value constants.%X, (constants.%custom_witness.e8f) [concrete = constants.%Destroy.facet.b71]
+// CHECK:STDOUT:   %.loc8_11.5: %Destroy.type = converted constants.%X, %Destroy.facet.loc8_11.2 [concrete = constants.%Destroy.facet.b71]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_11.3, %Destroy.WithSelf.SelfDestruct.specific_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc8_11.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

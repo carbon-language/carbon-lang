@@ -46,9 +46,19 @@ fn F() {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %.367: ref %A = temporary invalid, %A.val [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.9ef = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc11_37.2 [concrete]
 // CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.367, %Destroy.Op.1a2547.2 [concrete]
+// CHECK:STDOUT:   %A.type.facet: %type = facet_value %A, () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.a41: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%A.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.ed6: %Destroy.WithSelf.SubobjectDestroy.type.a41 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.f4f: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%A.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.b8b: %Destroy.WithSelf.SelfDestruct.type.f4f = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.779: <witness> = custom_witness (%Destroy.Op.1a2547.2, %Destroy.WithSelf.SubobjectDestroy.ed6, %Destroy.WithSelf.SelfDestruct.b8b), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.2e6: %Destroy.type = facet_value %A, (%custom_witness.779) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function %Destroy.WithSelf.SelfDestruct.b8b, @Destroy.WithSelf.SelfDestruct(%A.type.facet) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.367, %Destroy.WithSelf.SelfDestruct.specific_fn [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -95,11 +105,32 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref()
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc11_37.2, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc11_37: init %empty_tuple.type = call %Destroy.Op.bound(%.loc11_37.2)
-// CHECK:STDOUT:   %Destroy.Op.call.loc11_25: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.367)
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_34: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.367)
-// CHECK:STDOUT:   %Destroy.Op.call.loc10_25: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.367)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc11_37.2, constants.%Destroy.WithSelf.SelfDestruct.b8b
+// CHECK:STDOUT:   %Destroy.facet.loc11_37.1: %Destroy.type = facet_value constants.%A, (constants.%custom_witness.779) [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   %.loc11_37.4: %Destroy.type = converted constants.%A, %Destroy.facet.loc11_37.1 [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   %Destroy.facet.loc11_37.2: %Destroy.type = facet_value constants.%A, (constants.%custom_witness.779) [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   %.loc11_37.5: %Destroy.type = converted constants.%A, %Destroy.facet.loc11_37.2 [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc11_37.2, %Destroy.WithSelf.SelfDestruct.specific_fn.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc11_37: init %empty_tuple.type = call %bound_method(%.loc11_37.2)
+// CHECK:STDOUT:   %Destroy.facet.loc11_25.1: %Destroy.type = facet_value constants.%A, (constants.%custom_witness.779) [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   %.loc11_25.3: %Destroy.type = converted constants.%A, %Destroy.facet.loc11_25.1 [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   %Destroy.facet.loc11_25.2: %Destroy.type = facet_value constants.%A, (constants.%custom_witness.779) [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   %.loc11_25.4: %Destroy.type = converted constants.%A, %Destroy.facet.loc11_25.2 [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc11_25: init %empty_tuple.type = call constants.%bound_method(constants.%.367)
+// CHECK:STDOUT:   %Destroy.facet.loc10_34.1: %Destroy.type = facet_value constants.%A, (constants.%custom_witness.779) [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   %.loc10_34.4: %Destroy.type = converted constants.%A, %Destroy.facet.loc10_34.1 [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   %Destroy.facet.loc10_34.2: %Destroy.type = facet_value constants.%A, (constants.%custom_witness.779) [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   %.loc10_34.5: %Destroy.type = converted constants.%A, %Destroy.facet.loc10_34.2 [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc10_34: init %empty_tuple.type = call constants.%bound_method(constants.%.367)
+// CHECK:STDOUT:   %Destroy.facet.loc10_25.1: %Destroy.type = facet_value constants.%A, (constants.%custom_witness.779) [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   %.loc10_25.4: %Destroy.type = converted constants.%A, %Destroy.facet.loc10_25.1 [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   %Destroy.facet.loc10_25.2: %Destroy.type = facet_value constants.%A, (constants.%custom_witness.779) [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   %.loc10_25.5: %Destroy.type = converted constants.%A, %Destroy.facet.loc10_25.2 [concrete = constants.%Destroy.facet.2e6]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc10_25: init %empty_tuple.type = call constants.%bound_method(constants.%.367)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

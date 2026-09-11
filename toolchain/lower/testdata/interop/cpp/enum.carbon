@@ -178,18 +178,25 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:   %.loc13_18.1.temp = alloca i16, align 2, !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_16.1.temp), !dbg !15
 // CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk._(ptr @int_0), !dbg !22
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr @int_0), !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_16.1.temp), !dbg !16
 // CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk._(ptr @int_0), !dbg !23
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr @int_0), !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_16.1.temp), !dbg !17
 // CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk._(ptr @int_7), !dbg !24
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr @int_7), !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc10_16.1.temp), !dbg !18
 // CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk._(ptr @int_8), !dbg !25
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr @int_8), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_18.1.temp), !dbg !19
 // CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk._(ptr @int_0), !dbg !26
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr @int_0), !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_18.1.temp), !dbg !20
 // CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk._(ptr @int_7), !dbg !27
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr @int_7), !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_18.1.temp), !dbg !21
 // CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk._(ptr @int_8), !dbg !28
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr @int_8), !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -207,11 +214,23 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %self) #0 !dbg !34 {
+// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a(ptr %self), !dbg !41
+// CHECK:STDOUT:   ret void, !dbg !42
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a(ptr %self) #0 !dbg !43 {
+// CHECK:STDOUT:   ret void, !dbg !46
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN1C1FENS_1EE(i16 noundef signext) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN1C1FENS_1EE.carbon_thunk._, { 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 6, 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Destroy.Core.63b9759f1df1768a, { 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -256,6 +275,19 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !31 = !{!"any pointer", !10, i64 0}
 // CHECK:STDOUT: !32 = !{!33, !33, i64 0}
 // CHECK:STDOUT: !33 = !{!"_ZTSN1C1EE", !10, i64 0}
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.63b9759f1df1768a", scope: null, file: !35, line: 26, type: !36, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !39)
+// CHECK:STDOUT: !35 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
+// CHECK:STDOUT: !36 = !DISubroutineType(types: !37)
+// CHECK:STDOUT: !37 = !{null, !38}
+// CHECK:STDOUT: !38 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !39 = !{!40}
+// CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !34, type: !38)
+// CHECK:STDOUT: !41 = !DILocation(line: 28, column: 5, scope: !34)
+// CHECK:STDOUT: !42 = !DILocation(line: 26, column: 3, scope: !34)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a", scope: null, file: !35, line: 19, type: !36, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !44)
+// CHECK:STDOUT: !44 = !{!45}
+// CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !43, type: !38)
+// CHECK:STDOUT: !46 = !DILocation(line: 19, column: 3, scope: !43)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'convert.carbon'
@@ -286,6 +318,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_13.3.temp), !dbg !28
 // CHECK:STDOUT:   store i16 %n, ptr %.loc17_13.3.temp, align 2, !dbg !28
 // CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk._(ptr %.loc17_13.3.temp), !dbg !29
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %.loc17_13.3.temp), !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -302,6 +335,17 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %self) #0 !dbg !35 {
+// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a(ptr %self), !dbg !39
+// CHECK:STDOUT:   ret void, !dbg !40
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a(ptr %self) #0 !dbg !41 {
+// CHECK:STDOUT:   ret void, !dbg !44
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN1C1FENS_1EE(i16 noundef signext) #3
 // CHECK:STDOUT:
@@ -349,6 +393,16 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !32 = !{!"any pointer", !10, i64 0}
 // CHECK:STDOUT: !33 = !{!34, !34, i64 0}
 // CHECK:STDOUT: !34 = !{!"_ZTSN1C1EE", !10, i64 0}
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.63b9759f1df1768a", scope: null, file: !36, line: 26, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !37)
+// CHECK:STDOUT: !36 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
+// CHECK:STDOUT: !37 = !{!38}
+// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !35, type: !20)
+// CHECK:STDOUT: !39 = !DILocation(line: 28, column: 5, scope: !35)
+// CHECK:STDOUT: !40 = !DILocation(line: 26, column: 3, scope: !35)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a", scope: null, file: !36, line: 19, type: !18, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !42)
+// CHECK:STDOUT: !42 = !{!43}
+// CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !41, type: !20)
+// CHECK:STDOUT: !44 = !DILocation(line: 19, column: 3, scope: !41)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_bitmask.carbon'
@@ -511,6 +565,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:   call void @_ZNK13ConvertToEnumcvN1C1EEEv.carbon_thunk._(ptr %b, ptr %.loc18_15.1.temp), !dbg !20
 // CHECK:STDOUT:   %.loc18_15.5 = load i16, ptr %.loc18_15.1.temp, align 2, !dbg !20
 // CHECK:STDOUT:   %Equal.call = icmp eq i16 %a, %.loc18_15.5, !dbg !21
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %.loc18_15.1.temp), !dbg !20
 // CHECK:STDOUT:   ret i1 %Equal.call, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -554,6 +609,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:   call void @_ZNK14ConvertToEnum2cvN1C1EEEv.carbon_thunk._(ptr %b, ptr %.loc26_15.1.temp), !dbg !44
 // CHECK:STDOUT:   %.loc26_15.5 = load i16, ptr %.loc26_15.1.temp, align 2, !dbg !44
 // CHECK:STDOUT:   %Equal.call = icmp eq i16 %a, %.loc26_15.5, !dbg !45
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %.loc26_15.1.temp), !dbg !44
 // CHECK:STDOUT:   ret i1 %Equal.call, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -586,6 +642,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:   call void @_ZNK13ConvertToEnumcvN1C1EEEv.carbon_thunk._(ptr %other, ptr %.4.temp), !dbg !59
 // CHECK:STDOUT:   %.8 = load i16, ptr %.4.temp, align 2, !dbg !59
 // CHECK:STDOUT:   %Equal.call = icmp eq i16 %self, %.8, !dbg !59
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %.4.temp), !dbg !59
 // CHECK:STDOUT:   ret i1 %Equal.call, !dbg !59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -597,6 +654,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:   call void @_ZNK13ConvertToEnumcvN1C1EEEv.carbon_thunk._(ptr %other, ptr %.4.temp), !dbg !64
 // CHECK:STDOUT:   %.8 = load i16, ptr %.4.temp, align 2, !dbg !64
 // CHECK:STDOUT:   %NotEqual.call = icmp ne i16 %self, %.8, !dbg !64
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %.4.temp), !dbg !64
 // CHECK:STDOUT:   ret i1 %NotEqual.call, !dbg !64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -638,6 +696,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:   call void @_ZNK14ConvertToEnum2cvN1C1EEEv.carbon_thunk._(ptr %other, ptr %.4.temp), !dbg !91
 // CHECK:STDOUT:   %.8 = load i16, ptr %.4.temp, align 2, !dbg !91
 // CHECK:STDOUT:   %Equal.call = icmp eq i16 %self, %.8, !dbg !91
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %.4.temp), !dbg !91
 // CHECK:STDOUT:   ret i1 %Equal.call, !dbg !91
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -649,6 +708,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:   call void @_ZNK14ConvertToEnum2cvN1C1EEEv.carbon_thunk._(ptr %other, ptr %.4.temp), !dbg !96
 // CHECK:STDOUT:   %.8 = load i16, ptr %.4.temp, align 2, !dbg !96
 // CHECK:STDOUT:   %NotEqual.call = icmp ne i16 %self, %.8, !dbg !96
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %.4.temp), !dbg !96
 // CHECK:STDOUT:   ret i1 %NotEqual.call, !dbg !96
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -656,24 +716,35 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.215a23369ed4d589(i16 %x, ptr %y) #0 !dbg !97 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.83b9626e83cf3dcc.Core:enclosed"(i16 %x, ptr %y), !dbg !101
-// CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !102
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.63b9759f1df1768a(ptr %self) #0 !dbg !97 {
+// CHECK:STDOUT:   call void @_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a(ptr %self), !dbg !103
+// CHECK:STDOUT:   ret void, !dbg !104
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.a5489e454367d917(i32 %x, ptr %y) #0 !dbg !103 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.215a23369ed4d589(i16 %x, ptr %y) #0 !dbg !105 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.e8fe48de943d9652.Core:enclosed"(i32 %x, ptr %y), !dbg !107
-// CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !108
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.83b9626e83cf3dcc.Core:enclosed"(i16 %x, ptr %y), !dbg !109
+// CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !110
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.64b737572447efad(i16 %x, ptr %y) #0 !dbg !109 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.a5489e454367d917(i32 %x, ptr %y) #0 !dbg !111 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.a294139a6615e163.Core:enclosed"(i16 %x, ptr %y), !dbg !113
-// CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !114
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.e8fe48de943d9652.Core:enclosed"(i32 %x, ptr %y), !dbg !115
+// CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !116
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i1 @_CCompareGeneric.Main.64b737572447efad(i16 %x, ptr %y) #0 !dbg !117 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.a294139a6615e163.Core:enclosed"(i16 %x, ptr %y), !dbg !121
+// CHECK:STDOUT:   ret i1 %EqWith.WithSelf.Equal.call, !dbg !122
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a(ptr %self) #0 !dbg !123 {
+// CHECK:STDOUT:   ret void, !dbg !126
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare noundef signext i16 @_ZNK13ConvertToEnumcvN1C1EEEv(ptr noundef nonnull align 1 dereferenceable(1)) #4
@@ -684,6 +755,7 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Destroy.Core.63b9759f1df1768a, { 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -792,22 +864,34 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !94 = !DILocalVariable(arg: 1, scope: !92, type: !16)
 // CHECK:STDOUT: !95 = !DILocalVariable(arg: 2, scope: !92, type: !15)
 // CHECK:STDOUT: !96 = !DILocation(line: 0, scope: !92)
-// CHECK:STDOUT: !97 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.215a23369ed4d589", scope: null, file: !1, line: 29, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !98)
-// CHECK:STDOUT: !98 = !{!99, !100}
-// CHECK:STDOUT: !99 = !DILocalVariable(arg: 1, scope: !97, type: !16)
-// CHECK:STDOUT: !100 = !DILocalVariable(arg: 2, scope: !97, type: !15)
-// CHECK:STDOUT: !101 = !DILocation(line: 30, column: 10, scope: !97)
-// CHECK:STDOUT: !102 = !DILocation(line: 30, column: 3, scope: !97)
-// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.a5489e454367d917", scope: null, file: !1, line: 29, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !104)
-// CHECK:STDOUT: !104 = !{!105, !106}
-// CHECK:STDOUT: !105 = !DILocalVariable(arg: 1, scope: !103, type: !33)
-// CHECK:STDOUT: !106 = !DILocalVariable(arg: 2, scope: !103, type: !15)
-// CHECK:STDOUT: !107 = !DILocation(line: 30, column: 10, scope: !103)
-// CHECK:STDOUT: !108 = !DILocation(line: 30, column: 3, scope: !103)
-// CHECK:STDOUT: !109 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.64b737572447efad", scope: null, file: !1, line: 29, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !110)
-// CHECK:STDOUT: !110 = !{!111, !112}
-// CHECK:STDOUT: !111 = !DILocalVariable(arg: 1, scope: !109, type: !16)
-// CHECK:STDOUT: !112 = !DILocalVariable(arg: 2, scope: !109, type: !15)
-// CHECK:STDOUT: !113 = !DILocation(line: 30, column: 10, scope: !109)
-// CHECK:STDOUT: !114 = !DILocation(line: 30, column: 3, scope: !109)
+// CHECK:STDOUT: !97 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.63b9759f1df1768a", scope: null, file: !98, line: 26, type: !99, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !101)
+// CHECK:STDOUT: !98 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
+// CHECK:STDOUT: !99 = !DISubroutineType(types: !100)
+// CHECK:STDOUT: !100 = !{null, !16}
+// CHECK:STDOUT: !101 = !{!102}
+// CHECK:STDOUT: !102 = !DILocalVariable(arg: 1, scope: !97, type: !16)
+// CHECK:STDOUT: !103 = !DILocation(line: 28, column: 5, scope: !97)
+// CHECK:STDOUT: !104 = !DILocation(line: 26, column: 3, scope: !97)
+// CHECK:STDOUT: !105 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.215a23369ed4d589", scope: null, file: !1, line: 29, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !106)
+// CHECK:STDOUT: !106 = !{!107, !108}
+// CHECK:STDOUT: !107 = !DILocalVariable(arg: 1, scope: !105, type: !16)
+// CHECK:STDOUT: !108 = !DILocalVariable(arg: 2, scope: !105, type: !15)
+// CHECK:STDOUT: !109 = !DILocation(line: 30, column: 10, scope: !105)
+// CHECK:STDOUT: !110 = !DILocation(line: 30, column: 3, scope: !105)
+// CHECK:STDOUT: !111 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.a5489e454367d917", scope: null, file: !1, line: 29, type: !31, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !112)
+// CHECK:STDOUT: !112 = !{!113, !114}
+// CHECK:STDOUT: !113 = !DILocalVariable(arg: 1, scope: !111, type: !33)
+// CHECK:STDOUT: !114 = !DILocalVariable(arg: 2, scope: !111, type: !15)
+// CHECK:STDOUT: !115 = !DILocation(line: 30, column: 10, scope: !111)
+// CHECK:STDOUT: !116 = !DILocation(line: 30, column: 3, scope: !111)
+// CHECK:STDOUT: !117 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.64b737572447efad", scope: null, file: !1, line: 29, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !118)
+// CHECK:STDOUT: !118 = !{!119, !120}
+// CHECK:STDOUT: !119 = !DILocalVariable(arg: 1, scope: !117, type: !16)
+// CHECK:STDOUT: !120 = !DILocalVariable(arg: 2, scope: !117, type: !15)
+// CHECK:STDOUT: !121 = !DILocation(line: 30, column: 10, scope: !117)
+// CHECK:STDOUT: !122 = !DILocation(line: 30, column: 3, scope: !117)
+// CHECK:STDOUT: !123 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.Destroy.Core.63b9759f1df1768a", scope: null, file: !98, line: 19, type: !99, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !124)
+// CHECK:STDOUT: !124 = !{!125}
+// CHECK:STDOUT: !125 = !DILocalVariable(arg: 1, scope: !123, type: !16)
+// CHECK:STDOUT: !126 = !DILocation(line: 19, column: 3, scope: !123)
 // CHECK:STDOUT:

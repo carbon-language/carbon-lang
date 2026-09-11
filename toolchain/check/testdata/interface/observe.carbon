@@ -400,17 +400,17 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:   %Transitive.assoc_type: type = assoc_entity_type @Transitive [concrete]
 // CHECK:STDOUT:   %assoc0.1be: %Transitive.assoc_type = assoc_entity element0, @Transitive.WithSelf.%A [concrete]
 // CHECK:STDOUT:   %Transitive.lookup_impl_witness: <witness> = lookup_impl_witness %Self.77c, @Transitive [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %facet_type.b1b = impl_witness_access %Transitive.lookup_impl_witness, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0.b02: %facet_type.b1b = impl_witness_access %Transitive.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %facet_type.130: type = facet_type <@Q & @Destroy where TODO> [concrete]
 // CHECK:STDOUT:   %assoc1: %Transitive.assoc_type = assoc_entity element1, @Transitive.WithSelf.%B [concrete]
-// CHECK:STDOUT:   %impl.elem1: %facet_type.130 = impl_witness_access %Transitive.lookup_impl_witness, element1 [symbolic]
+// CHECK:STDOUT:   %impl.elem1.1d6: %facet_type.130 = impl_witness_access %Transitive.lookup_impl_witness, element1 [symbolic]
 // CHECK:STDOUT:   %facet_type.4c8: type = facet_type <@R & @Destroy where TODO> [concrete]
 // CHECK:STDOUT:   %assoc2: %Transitive.assoc_type = assoc_entity element2, @Transitive.WithSelf.%C [concrete]
 // CHECK:STDOUT:   %Self.as_type.7f2: type = facet_access_type %Self.77c [symbolic]
 // CHECK:STDOUT:   %pattern_type.b5c: type = pattern_type %Self.as_type.7f2 [symbolic]
 // CHECK:STDOUT:   %self.param_patt.ae9: %pattern_type.b5c = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.03f: %pattern_type.b5c = wrapper_binding_pattern self, %self.param_patt.ae9 [symbolic]
-// CHECK:STDOUT:   %as_type.d30: type = facet_access_type %impl.elem0 [symbolic]
+// CHECK:STDOUT:   %as_type.d30: type = facet_access_type %impl.elem0.b02 [symbolic]
 // CHECK:STDOUT:   %.117: Core.Form = init_form %as_type.d30 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51a: type = pattern_type %as_type.d30 [symbolic]
 // CHECK:STDOUT:   %return.param_patt.931: %pattern_type.51a = out_param_pattern [symbolic]
@@ -426,7 +426,7 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:   %Transitive.WithSelf.TakesC.type: type = fn_type @Transitive.WithSelf.TakesC, @Transitive.WithSelf(%Self.77c) [symbolic]
 // CHECK:STDOUT:   %Transitive.WithSelf.TakesC: %Transitive.WithSelf.TakesC.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc4: %Transitive.assoc_type = assoc_entity element4, @Transitive.WithSelf.%Transitive.WithSelf.TakesC.decl [concrete]
-// CHECK:STDOUT:   %as_type.aed: type = facet_access_type %impl.elem1 [symbolic]
+// CHECK:STDOUT:   %as_type.aed: type = facet_access_type %impl.elem1.1d6 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -453,8 +453,8 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:     %return.param_patt.loc13_20.1: @Transitive.WithSelf.GetA.%pattern_type.loc13_20 (%pattern_type.51a) = out_param_pattern [symbolic = %return.param_patt.loc13_20.2 (constants.%return.param_patt.931)]
 // CHECK:STDOUT:     %return.patt.loc13_17.1: @Transitive.WithSelf.GetA.%pattern_type.loc13_20 (%pattern_type.51a) = return_slot_pattern %return.param_patt.loc13_20.1, %.loc13_20.2 [symbolic = %return.patt.loc13_17.2 (constants.%return.patt.680)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %impl.elem0.loc13_20.2: %facet_type.b1b = impl_witness_access constants.%Transitive.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_20.1 (constants.%impl.elem0)]
-// CHECK:STDOUT:     %A.ref: %facet_type.b1b = name_ref A, %impl.elem0.loc13_20.2 [symbolic = %impl.elem0.loc13_20.1 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc13_20.2: %facet_type.b1b = impl_witness_access constants.%Transitive.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_20.1 (constants.%impl.elem0.b02)]
+// CHECK:STDOUT:     %A.ref: %facet_type.b1b = name_ref A, %impl.elem0.loc13_20.2 [symbolic = %impl.elem0.loc13_20.1 (constants.%impl.elem0.b02)]
 // CHECK:STDOUT:     %A.as_type: type = facet_access_type %A.ref [symbolic = %as_type (constants.%as_type.d30)]
 // CHECK:STDOUT:     %.loc13_20.2: type = converted %A.ref, %A.as_type [symbolic = %as_type (constants.%as_type.d30)]
 // CHECK:STDOUT:     %.loc13_20.3: Core.Form = init_form %.loc13_20.2 [symbolic = %.loc13_20.1 (constants.%.117)]
@@ -492,10 +492,10 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:     %c: @Transitive.WithSelf.TakesC.%as_type (%as_type.472) = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc4: %Transitive.assoc_type = assoc_entity element4, %Transitive.WithSelf.TakesC.decl [concrete = constants.%assoc4]
-// CHECK:STDOUT:   %impl.elem0.loc16: %facet_type.b1b = impl_witness_access constants.%Transitive.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %A.ref: %facet_type.b1b = name_ref A, %impl.elem0.loc16 [symbolic = %impl.elem0.loc10 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %impl.elem1.loc16: %facet_type.130 = impl_witness_access constants.%Transitive.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc11 (constants.%impl.elem1)]
-// CHECK:STDOUT:   %B.ref: %facet_type.130 = name_ref B, %impl.elem1.loc16 [symbolic = %impl.elem1.loc11 (constants.%impl.elem1)]
+// CHECK:STDOUT:   %impl.elem0.loc16: %facet_type.b1b = impl_witness_access constants.%Transitive.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10 (constants.%impl.elem0.b02)]
+// CHECK:STDOUT:   %A.ref: %facet_type.b1b = name_ref A, %impl.elem0.loc16 [symbolic = %impl.elem0.loc10 (constants.%impl.elem0.b02)]
+// CHECK:STDOUT:   %impl.elem1.loc16: %facet_type.130 = impl_witness_access constants.%Transitive.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc11 (constants.%impl.elem1.1d6)]
+// CHECK:STDOUT:   %B.ref: %facet_type.130 = name_ref B, %impl.elem1.loc16 [symbolic = %impl.elem1.loc11 (constants.%impl.elem1.1d6)]
 // CHECK:STDOUT:   %B.as_type.loc16_16.1: type = facet_access_type %B.ref [symbolic = %as_type.loc16_16 (constants.%as_type.aed)]
 // CHECK:STDOUT:   %.loc16_16.1: type = converted %B.ref, %B.as_type.loc16_16.1 [symbolic = %as_type.loc16_16 (constants.%as_type.aed)]
 // CHECK:STDOUT:   %A.as_type: type = facet_access_type %A.ref [symbolic = %as_type.loc16_11 (constants.%as_type.d30)]
@@ -527,7 +527,7 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !observes:
 // CHECK:STDOUT:   @Transitive.observe {
-// CHECK:STDOUT:     observe constants.%impl.elem0 == constants.%impl.elem1 == constants.%impl.elem2
+// CHECK:STDOUT:     observe constants.%impl.elem0.b02 == constants.%impl.elem1.1d6 == constants.%impl.elem2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -538,7 +538,7 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:   %self.param_patt.loc13_11.2: @Transitive.WithSelf.GetA.%pattern_type.loc13_11 (%pattern_type.b5c) = value_param_pattern [symbolic = %self.param_patt.loc13_11.2 (constants.%self.param_patt.ae9)]
 // CHECK:STDOUT:   %self.patt.loc13_11.2: @Transitive.WithSelf.GetA.%pattern_type.loc13_11 (%pattern_type.b5c) = wrapper_binding_pattern self, %self.param_patt.loc13_11.2 [symbolic = %self.patt.loc13_11.2 (constants.%self.patt.03f)]
 // CHECK:STDOUT:   %Transitive.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @Transitive [symbolic = %Transitive.lookup_impl_witness (constants.%Transitive.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc13_20.1: %facet_type.b1b = impl_witness_access %Transitive.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_20.1 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %impl.elem0.loc13_20.1: %facet_type.b1b = impl_witness_access %Transitive.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_20.1 (constants.%impl.elem0.b02)]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %impl.elem0.loc13_20.1 [symbolic = %as_type (constants.%as_type.d30)]
 // CHECK:STDOUT:   %.loc13_20.1: Core.Form = init_form %as_type [symbolic = %.loc13_20.1 (constants.%.117)]
 // CHECK:STDOUT:   %pattern_type.loc13_20: type = pattern_type %as_type [symbolic = %pattern_type.loc13_20 (constants.%pattern_type.51a)]
@@ -573,7 +573,7 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:   %self.param_patt.loc13_11.2 => constants.%self.param_patt.ae9
 // CHECK:STDOUT:   %self.patt.loc13_11.2 => constants.%self.patt.03f
 // CHECK:STDOUT:   %Transitive.lookup_impl_witness => constants.%Transitive.lookup_impl_witness
-// CHECK:STDOUT:   %impl.elem0.loc13_20.1 => constants.%impl.elem0
+// CHECK:STDOUT:   %impl.elem0.loc13_20.1 => constants.%impl.elem0.b02
 // CHECK:STDOUT:   %as_type => constants.%as_type.d30
 // CHECK:STDOUT:   %.loc13_20.1 => constants.%.117
 // CHECK:STDOUT:   %pattern_type.loc13_20 => constants.%pattern_type.51a
@@ -945,8 +945,8 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:   %self.param_patt.ee4: %pattern_type.f76 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.59e: %pattern_type.f76 = wrapper_binding_pattern self, %self.param_patt.ee4 [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %Self.dca, @I, @I(%T) [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %facet_type.208 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %impl.elem0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0.1fd: %facet_type.208 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %impl.elem0.1fd [symbolic]
 // CHECK:STDOUT:   %.344: Core.Form = init_form %as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.079: type = pattern_type %as_type [symbolic]
 // CHECK:STDOUT:   %return.param_patt.82c: %pattern_type.079 = out_param_pattern [symbolic]
@@ -1017,8 +1017,8 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:       %return.param_patt.loc9_20.1: @I.WithSelf.GetU.%pattern_type.loc9_20 (%pattern_type.079) = out_param_pattern [symbolic = %return.param_patt.loc9_20.2 (constants.%return.param_patt.82c)]
 // CHECK:STDOUT:       %return.patt.loc9_17.1: @I.WithSelf.GetU.%pattern_type.loc9_20 (%pattern_type.079) = return_slot_pattern %return.param_patt.loc9_20.1, %.loc9_20.2 [symbolic = %return.patt.loc9_17.2 (constants.%return.patt.4f7)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %impl.elem0.loc9_20.2: %facet_type.208 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_20.1 (constants.%impl.elem0)]
-// CHECK:STDOUT:       %U.ref: %facet_type.208 = name_ref U, %impl.elem0.loc9_20.2 [symbolic = %impl.elem0.loc9_20.1 (constants.%impl.elem0)]
+// CHECK:STDOUT:       %impl.elem0.loc9_20.2: %facet_type.208 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_20.1 (constants.%impl.elem0.1fd)]
+// CHECK:STDOUT:       %U.ref: %facet_type.208 = name_ref U, %impl.elem0.loc9_20.2 [symbolic = %impl.elem0.loc9_20.1 (constants.%impl.elem0.1fd)]
 // CHECK:STDOUT:       %U.as_type: type = facet_access_type %U.ref [symbolic = %as_type (constants.%as_type)]
 // CHECK:STDOUT:       %.loc9_20.2: type = converted %U.ref, %U.as_type [symbolic = %as_type (constants.%as_type)]
 // CHECK:STDOUT:       %.loc9_20.3: Core.Form = init_form %.loc9_20.2 [symbolic = %.loc9_20.1 (constants.%.344)]
@@ -1058,8 +1058,8 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc2.loc10_24.1: @I.WithSelf.%I.assoc_type (%I.assoc_type) = assoc_entity element2, %I.WithSelf.TakesT.decl [symbolic = %assoc2.loc10_24.2 (constants.%assoc2)]
 // CHECK:STDOUT:     %T.ref: %facet_type.8cb = name_ref T, @I.%T.loc6_14.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:     %impl.elem0.loc12_16.1: %facet_type.208 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc12_16.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:     %U.ref: %facet_type.208 = name_ref U, %impl.elem0.loc12_16.1 [symbolic = %impl.elem0.loc12_16.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc12_16.1: %facet_type.208 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc12_16.2 (constants.%impl.elem0.1fd)]
+// CHECK:STDOUT:     %U.ref: %facet_type.208 = name_ref U, %impl.elem0.loc12_16.1 [symbolic = %impl.elem0.loc12_16.2 (constants.%impl.elem0.1fd)]
 // CHECK:STDOUT:     %U.as_type: type = facet_access_type %U.ref [symbolic = %as_type (constants.%as_type)]
 // CHECK:STDOUT:     %.loc12_16: type = converted %U.ref, %U.as_type [symbolic = %as_type (constants.%as_type)]
 // CHECK:STDOUT:     %T.as_type.loc12_11.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc12_11.2 (constants.%T.as_type)]
@@ -1081,7 +1081,7 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !observes:
 // CHECK:STDOUT:     @I.observe {
-// CHECK:STDOUT:       observe constants.%T == constants.%impl.elem0
+// CHECK:STDOUT:       observe constants.%T == constants.%impl.elem0.1fd
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1095,7 +1095,7 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:   %self.param_patt.loc9_11.2: @I.WithSelf.GetU.%pattern_type.loc9_11 (%pattern_type.f76) = value_param_pattern [symbolic = %self.param_patt.loc9_11.2 (constants.%self.param_patt.ee4)]
 // CHECK:STDOUT:   %self.patt.loc9_11.2: @I.WithSelf.GetU.%pattern_type.loc9_11 (%pattern_type.f76) = wrapper_binding_pattern self, %self.param_patt.loc9_11.2 [symbolic = %self.patt.loc9_11.2 (constants.%self.patt.59e)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I, @I(%T) [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc9_20.1: %facet_type.208 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_20.1 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %impl.elem0.loc9_20.1: %facet_type.208 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_20.1 (constants.%impl.elem0.1fd)]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %impl.elem0.loc9_20.1 [symbolic = %as_type (constants.%as_type)]
 // CHECK:STDOUT:   %.loc9_20.1: Core.Form = init_form %as_type [symbolic = %.loc9_20.1 (constants.%.344)]
 // CHECK:STDOUT:   %pattern_type.loc9_20: type = pattern_type %as_type [symbolic = %pattern_type.loc9_20 (constants.%pattern_type.079)]
@@ -1137,7 +1137,7 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:   %self.param_patt.loc9_11.2 => constants.%self.param_patt.ee4
 // CHECK:STDOUT:   %self.patt.loc9_11.2 => constants.%self.patt.59e
 // CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.lookup_impl_witness
-// CHECK:STDOUT:   %impl.elem0.loc9_20.1 => constants.%impl.elem0
+// CHECK:STDOUT:   %impl.elem0.loc9_20.1 => constants.%impl.elem0.1fd
 // CHECK:STDOUT:   %as_type => constants.%as_type
 // CHECK:STDOUT:   %.loc9_20.1 => constants.%.344
 // CHECK:STDOUT:   %pattern_type.loc9_20 => constants.%pattern_type.079
