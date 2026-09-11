@@ -9,9 +9,15 @@
 
 set -eu
 
-# Find the .git directory, and map `@` to a git commit.
+# Map `@` to a git commit. This deliberately doesn't pass
+# `--ignore-working-copy`, so that jj first snapshots the files on disk into `@`;
+# otherwise the index built below can describe stale file contents, and hooks
+# both check the wrong thing and fail to write back their fixes.
+HEAD="$(jj show --no-patch -r @ --template 'commit_id')"
+
+# Find the .git directory. The working copy was snapshotted above, so this
+# doesn't need to do so again.
 export GIT_DIR="$(jj git root --ignore-working-copy)"
-HEAD="$(jj show --no-patch --ignore-working-copy -r @ --template 'commit_id')"
 
 # Create a git index file describing `@`.
 export GIT_INDEX_FILE="$(mktemp)"
