@@ -8,6 +8,7 @@
 
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/call.h"
 #include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/generic.h"
@@ -100,6 +101,26 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // Form `bound_op()`.
   return PerformCall(context, loc_id, bound_op_id, {},
                      /*is_desugared=*/true);
+}
+
+auto BuildSelfDestructCall(Context& context, SemIR::LocId loc_id,
+                           SemIR::InstId object_id) -> SemIR::InstId {
+  if (auto class_info = context.insts().TryGetAs<SemIR::ClassType>(object_id)) {
+    if (auto adapted_type_id =
+            context.classes()
+                .Get(class_info->class_id)
+                .GetAdaptedType(context.sem_ir(), class_info->specific_id);
+        adapted_type_id.has_value()) {
+      object_id = Convert(
+          context, loc_id, object_id,
+          {.kind = ConversionTarget::ExplicitAs, .type_id = adapted_type_id});
+    }
+  }
+
+  return BuildUnaryOperator(context, loc_id,
+                            {.interface_name = CoreIdentifier::Destroy,
+                             .op_name = CoreIdentifier::SelfDestruct},
+                            object_id);
 }
 
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
