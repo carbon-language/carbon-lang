@@ -334,9 +334,6 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   // declaration in this case instead of attempting to attach the new
   // declaration to a generic region that we're no longer within.
   if (context.generic_region_stack().Empty()) {
-    // This should only happen for `*Decl` instructions, never for template
-    // actions.
-    CARBON_CHECK(!dep_kind.HasAnyOf(DependentInstKind::Template));
     return;
   }
 
