@@ -47,7 +47,7 @@ enum class Level : int8_t {
 //                     std::string, std::string);
 //
 // Arguments are passed to llvm::formatv; see:
-// https://llvm.org/doxygen/FormatVariadic_8h_source.html
+//
 //
 // See `Diagnostics::Emitter::Emit` for comments about argument lifetimes.
 #define CARBON_DIAGNOSTIC(DiagnosticName, LevelValue, Format, ...)         \
