@@ -38,6 +38,16 @@ Checks:
   - '-readability-trailing-comma'
   - '-readability-use-anyofallof'
 
+  # These are copies of older google- prefixed rules that have been moved
+  # out of that prefix, but the google- prefix names still exist as aliases to
+  # these. We enable the google- prefix rules and use those in our NOLINT
+  # expressions, so we disable the newer aliased rules.
+  #
+  # Alias for google-explicit-constructor.
+  - '-misc-explicit-constructor'
+  # Alias for google-readability-casting.
+  - '-modernize-avoid-c-style-cast'
+
   # Warns when we have multiple empty cases in switches, which we do for comment
   # reasons.
   - '-bugprone-branch-clone'
