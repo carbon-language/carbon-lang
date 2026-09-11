@@ -42,8 +42,8 @@ using ::testing::UnorderedElementsAreArray;
 template <typename MapT, typename MatcherRangeT>
 auto ExpectMapElementsAre(MapT&& m, MatcherRangeT element_matchers) -> void {
   // Now collect the elements into a container.
-  using KeyT = typename std::remove_reference<MapT>::type::KeyT;
-  using ValueT = typename std::remove_reference<MapT>::type::ValueT;
+  using KeyT = std::remove_reference<MapT>::type::KeyT;
+  using ValueT = std::remove_reference<MapT>::type::ValueT;
   std::vector<
       std::pair<std::reference_wrapper<KeyT>, std::reference_wrapper<ValueT>>>
       map_entries;
@@ -68,7 +68,7 @@ auto ExpectMapElementsAre(MapT&& m,
 template <typename ValueCB, typename RangeT, typename... RangeTs>
 auto MakeKeyValues(ValueCB value_cb, RangeT&& range, RangeTs&&... ranges)
     -> auto {
-  using KeyT = typename RangeT::value_type;
+  using KeyT = RangeT::value_type;
   using ValueT = decltype(value_cb(std::declval<KeyT>()));
   std::vector<std::pair<KeyT, ValueT>> elements;
   auto add_range = [&](RangeT&& r) {

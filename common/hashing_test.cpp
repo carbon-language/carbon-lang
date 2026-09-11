@@ -736,8 +736,8 @@ struct SparseHashTestParamRanges {
 
 template <typename ParamRanges>
 struct SparseHashTest : ::testing::Test {
-  using ByteCount = typename ParamRanges::ByteCount;
-  using SetBitCount = typename ParamRanges::SetBitCount;
+  using ByteCount = ParamRanges::ByteCount;
+  using SetBitCount = ParamRanges::SetBitCount;
 
   static auto GetHashedByteStrings() {
     llvm::SmallVector<HashedString> hashes;

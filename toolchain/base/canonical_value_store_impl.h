@@ -16,7 +16,7 @@ CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::CanonicalValueStore()
 
 template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
 CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::CanonicalValueStore(
-    typename IdTagType::TagIdType id, int32_t initial_reserved_ids)
+    IdTagType::TagIdType id, int32_t initial_reserved_ids)
   requires(!IdTagIsUntagged<IdTag<IdT, TagIdT>>)
     : values_(id, initial_reserved_ids) {}
 

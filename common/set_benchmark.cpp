@@ -37,7 +37,7 @@ static constexpr bool IsCarbonSet = IsCarbonSetImpl<SetT>::value;
 // supported through specializations.
 template <typename SetT>
 struct SetWrapperImpl {
-  using KeyT = typename SetT::key_type;
+  using KeyT = SetT::key_type;
 
   SetT s;
 
@@ -158,7 +158,7 @@ using SetWrapper =
 template <typename SetT>
 static void BM_SetContainsHitPtr(benchmark::State& state) {
   using SetWrapperT = SetWrapper<SetT>;
-  using KT = typename SetWrapperT::KeyT;
+  using KT = SetWrapperT::KeyT;
   SetWrapperT s;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), state.range(1));
@@ -190,7 +190,7 @@ MAP_BENCHMARK_ONE_OP(BM_SetContainsHitPtr, HitArgs);
 template <typename SetT>
 static void BM_SetContainsMissPtr(benchmark::State& state) {
   using SetWrapperT = SetWrapper<SetT>;
-  using KT = typename SetWrapperT::KeyT;
+  using KT = SetWrapperT::KeyT;
   SetWrapperT s;
   auto [keys, lookup_keys] = GetKeysAndMissKeys<KT>(state.range(0));
   for (auto k : keys) {
@@ -225,7 +225,7 @@ MAP_BENCHMARK_ONE_OP(BM_SetContainsMissPtr, SizeArgs);
 template <typename SetT>
 static void BM_SetLookupHitPtr(benchmark::State& state) {
   using SetWrapperT = SetWrapper<SetT>;
-  using KT = typename SetWrapperT::KeyT;
+  using KT = SetWrapperT::KeyT;
   SetWrapperT s;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), state.range(1));
@@ -265,7 +265,7 @@ MAP_BENCHMARK_ONE_OP(BM_SetLookupHitPtr, HitArgs);
 template <typename SetT>
 static void BM_SetEraseInsertHitPtr(benchmark::State& state) {
   using SetWrapperT = SetWrapper<SetT>;
-  using KT = typename SetWrapperT::KeyT;
+  using KT = SetWrapperT::KeyT;
   SetWrapperT s;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), state.range(1));
@@ -324,7 +324,7 @@ MAP_BENCHMARK_ONE_OP(BM_SetEraseInsertHitPtr, HitArgs);
 template <typename SetT>
 static void BM_SetInsertSeq(benchmark::State& state) {
   using SetWrapperT = SetWrapper<SetT>;
-  using KT = typename SetWrapperT::KeyT;
+  using KT = SetWrapperT::KeyT;
   constexpr ssize_t LookupKeysSize = 1 << 8;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), LookupKeysSize);
