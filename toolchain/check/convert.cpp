@@ -1221,28 +1221,35 @@ static auto DiagnoseConversionFailureToConstraintValue(
 // the expression's type and the target type.
 static auto HasObservedConversion(Context& context, SemIR::InstId expr_id,
                                   SemIR::TypeId target_type_id) -> bool {
-  auto expr_type_id = context.insts().Get(expr_id).type_id();
-  auto expr_type_inst_id = expr_type_id != SemIR::TypeType::TypeId
-                               ? context.types().GetTypeInstId(expr_type_id)
-                               : expr_id;
-  auto target_type_inst_id = context.types().GetTypeInstId(target_type_id);
-  if (!context.constant_values().Get(expr_type_inst_id).is_constant() ||
-      !context.constant_values().Get(target_type_inst_id).is_constant()) {
+  if (auto expr_type_id = context.insts().Get(expr_id).type_id();
+      expr_type_id != SemIR::TypeType::TypeId) {
+    // `expr_id` is a value expression. The type expression is required to look
+    // up relevant `observe` declarations and to resolve the underlying type for
+    // equivalence checking.
+    expr_id = context.types().GetTypeInstId(expr_type_id);
+  }
+  if (!context.constant_values().Get(expr_id).is_constant()) {
     return false;
   }
 
-  auto expr_canonical_inst_id =
-      GetCanonicalFacetOrTypeValue(context, expr_type_inst_id);
+  auto expr_canonical_inst_id = GetCanonicalFacetOrTypeValue(context, expr_id);
   auto expr_canonical_type_id =
       context.insts().Get(expr_canonical_inst_id).type_id();
 
-  auto target_canonical_type_id =
-      context.insts()
-          .Get(GetCanonicalFacetOrTypeValue(context, target_type_inst_id))
-          .type_id();
-  if (target_canonical_type_id == SemIR::TypeType::TypeId) {
+  auto target_type_inst_id = context.types().GetTypeInstId(target_type_id);
+  if (!context.constant_values().Get(target_type_inst_id).is_constant()) {
+    return false;
+  }
+  auto target_canonical_inst_id =
+      GetCanonicalFacetOrTypeValue(context, target_type_inst_id);
+  auto target_canonical_type_id = SemIR::TypeId::None;
+  if (target_canonical_inst_id ==
+      context.constant_values().GetConstantInstId(target_type_inst_id)) {
     // Target is already in canonical form.
     target_canonical_type_id = target_type_id;
+  } else {
+    target_canonical_type_id =
+        context.insts().Get(target_canonical_inst_id).type_id();
   }
 
   // TODO: Move this loop and unpack logic into `CheckObserveEquivalence` to
