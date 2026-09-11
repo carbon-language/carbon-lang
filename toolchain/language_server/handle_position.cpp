@@ -20,18 +20,16 @@ namespace Carbon::LanguageServer {
 // if it has no type. Instructions that aren't values, such as declarations of
 // namespaces, have no type to show.
 //
-// TODO: `StringifyConstantInst` renders some types as placeholders such as
+// TODO: `StringifyTypeOfInst` renders some types as placeholders such as
 // `<type of F>` for a function and `<pattern for i32>` for a binding pattern,
 // which is unhelpful as hover text. Show the signature for a function, and the
 // bound type rather than the pattern type for a binding.
-static auto StringifyTypeOfInst(const SemIR::File& sem_ir,
-                                SemIR::InstId inst_id) -> std::string {
-  auto type_id = sem_ir.insts().Get(inst_id).type_id();
-  if (!type_id.has_value()) {
+static auto StringifyTypeForHover(const SemIR::File& sem_ir,
+                                  SemIR::InstId inst_id) -> std::string {
+  if (!sem_ir.insts().Get(inst_id).type_id().has_value()) {
     return "";
   }
-  return SemIR::StringifyConstantInst(sem_ir,
-                                      sem_ir.types().GetTypeInstId(type_id));
+  return SemIR::StringifyTypeOfInst(sem_ir, inst_id);
 }
 
 // Given a position-based query, returns the corresponding position information.
@@ -78,7 +76,7 @@ auto HandleHover(
   const auto& sem_ir = *info.file->sem_ir();
   RawStringOstream text;
   text << "```carbon\n" << info.file->tokens().GetTokenText(info.token);
-  if (auto type = StringifyTypeOfInst(sem_ir, info.inst_id); !type.empty()) {
+  if (auto type = StringifyTypeForHover(sem_ir, info.inst_id); !type.empty()) {
     text << ": " << type;
   }
   text << "\n```";
