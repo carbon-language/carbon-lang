@@ -6,10 +6,10 @@
 <text style="white-space:pre" x="12" y="64"><tspan fill="#6e7681"> 3 </tspan><tspan fill="#6a9955">// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception</tspan></text>
 <text style="white-space:pre" x="12" y="83"><tspan fill="#6e7681"> 4 </tspan></text>
 <text style="white-space:pre" x="12" y="102"><tspan fill="#6e7681"> 5 </tspan><tspan fill="#569cd6">package</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#4ec9b0">SomePackage</tspan><tspan fill="#d4d4d4">;</tspan></text>
-<text style="white-space:pre" x="12" y="121"><tspan fill="#6e7681"> 6 </tspan><tspan fill="#9cdcfe">Core</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#4ec9b0">SomeCore</tspan><tspan fill="#d4d4d4">;</tspan></text>
+<text style="white-space:pre" x="12" y="121"><tspan fill="#6e7681"> 6 </tspan><tspan fill="#4ec9b0">Core</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#4ec9b0">SomeCore</tspan><tspan fill="#d4d4d4">;</tspan></text>
 <text style="white-space:pre" x="12" y="140"><tspan fill="#6e7681"> 7 </tspan></text>
-<text style="white-space:pre" x="12" y="159"><tspan fill="#6e7681"> 8 </tspan><tspan fill="#569cd6">import</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#9cdcfe">SomePackage</tspan><tspan fill="#d4d4d4">;</tspan></text>
+<text style="white-space:pre" x="12" y="159"><tspan fill="#6e7681"> 8 </tspan><tspan fill="#569cd6">import</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#4ec9b0">SomePackage</tspan><tspan fill="#d4d4d4">;</tspan></text>
 <text style="white-space:pre" x="12" y="178"><tspan fill="#6e7681"> 9 </tspan></text>
-<text style="white-space:pre" x="12" y="197"><tspan fill="#6e7681">10 </tspan><tspan fill="#dcdcaa">CallFunction(</tspan><tspan fill="#9cdcfe">a</tspan><tspan fill="#d4d4d4">, </tspan><tspan fill="#9cdcfe">b</tspan><tspan fill="#d4d4d4">, </tspan><tspan fill="#9cdcfe">c</tspan><tspan fill="#d4d4d4">.</tspan><tspan fill="#9cdcfe">d</tspan><tspan fill="#d4d4d4">);</tspan></text>
+<text style="white-space:pre" x="12" y="197"><tspan fill="#6e7681">10 </tspan><tspan fill="#dcdcaa">CallFunction</tspan><tspan fill="#d4d4d4">(</tspan><tspan fill="#9cdcfe">a</tspan><tspan fill="#d4d4d4">, </tspan><tspan fill="#9cdcfe">b</tspan><tspan fill="#d4d4d4">, </tspan><tspan fill="#9cdcfe">c</tspan><tspan fill="#d4d4d4">.</tspan><tspan fill="#9cdcfe">d</tspan><tspan fill="#d4d4d4">);</tspan></text>
 <text style="white-space:pre" x="12" y="216"><tspan fill="#6e7681">11 </tspan><tspan fill="#9cdcfe">unidentified</tspan><tspan fill="#d4d4d4">;</tspan></text>
 </g></svg>
