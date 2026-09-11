@@ -51,7 +51,7 @@ class C;
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn G(p: const (const C)**) -> C** {
-  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `const const C**` to `C**` [ConversionFailure]
+  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `const C**` to `C**` [ConversionFailure]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+4]]:3: note: type `const C**` does not implement interface `Core.ImplicitAs(C**)` [MissingImplInMemberAccessInContext]
