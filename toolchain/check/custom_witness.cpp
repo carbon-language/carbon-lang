@@ -5,8 +5,10 @@
 #include "toolchain/check/custom_witness.h"
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
+#include "toolchain/check/class.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
@@ -369,6 +371,17 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Calls `self.<field>.(Destroy.SelfDestruct)` for each field in a `StructType`.
+static auto DestroyStructField(Context& context, SemIR::LocId loc_id,
+                               SemIR::InstId callee_self_param_id,
+                               SemIR::StructTypeField struct_field) -> void {
+  auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
+                                       struct_field.name_id);
+  auto self_destruct_call = BuildSelfDestructCall(
+      context, context.insts().GetLocIdForDesugaring(loc_id), member_id);
+  DiscardExpr(context, self_destruct_call);
+}
+
 // Returns the body for `SubobjectDestroy.Op`.
 //
 // TODO: This is a placeholder still not actually destroying things, intended to
@@ -376,10 +389,8 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
 // also means using `self`.
 static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
                                        SemIR::InstId callee_self_param_id,
-                                       SemIR::TypeId self_type_id) -> void {
-  (void)loc_id;
-  (void)callee_self_param_id;
-
+                                       SemIR::TypeId self_type_id,
+                                       SemIR::InstId decl_id) -> void {
   while (self_type_id.has_value()) {
     auto inst = context.types().GetAsInst(self_type_id);
     CARBON_KIND_SWITCH(inst) {
@@ -389,8 +400,33 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         return;
       }
       case CARBON_KIND(SemIR::ClassType class_type): {
-        // TODO: implement destruction for class types.
-        (void)class_type;
+        auto class_info = context.classes().Get(class_type.class_id);
+        auto access_context = llvm::SaveAndRestore(context.access_context());
+        context.access_context() =
+            context.functions()
+                .Get(context.insts()
+                         .GetAs<SemIR::FunctionDecl>(decl_id)
+                         .function_id)
+                .parent_scope_id;
+
+        auto struct_fields = class_info.GetStructTypeFields(
+            context.sem_ir(), class_type.specific_id);
+        for (auto field : struct_fields) {
+          auto field_defined_in_self_type =
+              SemIR::LookupClassFieldByStructField(
+                  context.sem_ir(),
+                  context.name_scopes().Get(class_info.scope_id), field)
+                  .has_value();
+          if (field_defined_in_self_type) {
+            DestroyStructField(context, loc_id, callee_self_param_id, field);
+          }
+        }
+        // TODO: Call `base.(Destroy.SelfDestruct)()`.
+        //
+        // This will be added in a separate change (to trunk) so that it's
+        // visibly clear the base component is being destroyed correctly. The
+        // TODO doesn't generate a diagnostic because it will be too disruptive
+        // over a short period of time.
         return;
       }
       case CARBON_KIND(SemIR::ConstType const_type): {
@@ -409,7 +445,6 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         return;
       }
       case CARBON_KIND(SemIR::StructType struct_type): {
-        // TODO: implement destruction for struct types.
         (void)struct_type;
         return;
       }
@@ -497,7 +532,7 @@ static auto MakeSubobjectDestroyOpFunction(
         context.inst_block_stack().Push();
         StartFunctionDefinition(context, decl_id, function_id);
         MakeSubobjectDestroyOpBody(context, loc_id, call_params[0],
-                                   self_type_id);
+                                   self_type_id, decl_id);
         BuildReturnWithNoExpr(context, loc_id);
         FinishFunctionDefinition(context, function_id);
         context.inst_block_stack().Pop();
