@@ -172,9 +172,6 @@ class DominanceVerifier {
   // evaluated at the point currently being verified.
   auto RecordEvaluatedBlock(InstBlockId block_id) -> void;
 
-  // Returns the constant value of `inst_id` in the specific being verified.
-  auto GetConstantValue(InstId inst_id) const -> ConstantId;
-
   // Returns the instruction that `splice` splices in, or `InstId::None` if that
   // can't be determined.
   auto GetSplicedInstId(SpliceInst splice) const -> InstId;
@@ -482,7 +479,14 @@ auto DominanceVerifier::VerifyOperand(InstId user_id, InstId operand_id,
     return Success();
   }
   // A constant isn't evaluated in the function body, so can be used anywhere.
-  if (GetConstantValue(operand_id).is_constant()) {
+  //
+  // TODO: Use `GetConstantValueInSpecific` here, so that an instruction that is
+  // only constant in this specific is also exempt. That currently crashes,
+  // because a function body can name an instruction whose constant value is
+  // attached to an enclosing generic rather than to this function's generic,
+  // which `GetConstantInSpecific` rejects. Lowering should hit the same crash;
+  // see `FunctionContext::LowerInst`.
+  if (file_.constant_values().Get(operand_id).is_constant()) {
     return Success();
   }
   if (evaluated_.Contains(operand_id)) {
@@ -532,29 +536,9 @@ auto DominanceVerifier::RecordEvaluatedBlock(InstBlockId block_id) -> void {
   }
 }
 
-auto DominanceVerifier::GetConstantValue(InstId inst_id) const -> ConstantId {
-  ConstantId const_id = file_.constant_values().Get(inst_id);
-  if (!const_id.has_value()) {
-    return ConstantId::None;
-  }
-  if (!const_id.is_symbolic()) {
-    return const_id;
-  }
-  // In a specific, a symbolic constant of the corresponding generic has a more
-  // specific value that we should use instead.
-  if (specific_id_.has_value()) {
-    const auto& symbolic =
-        file_.constant_values().GetSymbolicConstant(const_id);
-    if (symbolic.generic_id.has_value() &&
-        symbolic.generic_id == file_.specifics().Get(specific_id_).generic_id) {
-      return GetConstantValueInSpecific(file_, specific_id_, inst_id);
-    }
-  }
-  return const_id;
-}
-
 auto DominanceVerifier::GetSplicedInstId(SpliceInst splice) const -> InstId {
-  ConstantId const_id = GetConstantValue(splice.inst_id);
+  ConstantId const_id =
+      GetConstantValueInSpecific(file_, specific_id_, splice.inst_id);
   if (!const_id.is_constant()) {
     return InstId::None;
   }
