@@ -7,6 +7,7 @@
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/import.h"
@@ -17,6 +18,7 @@
 #include "toolchain/check/function.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -574,42 +576,34 @@ static auto GetBuiltinOperatorInfo(clang::OverloadedOperatorKind kind)
         .op_name = CoreIdentifier::GreaterOrEquivalent,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntGreaterEq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
-
     return table;
   }();
   return OpTable[kind];
 }
 
-static auto GetCoreInterfaceNameScope(Context& context,
+static auto GetCoreInterfaceNameScope(Context& context, SemIR::LocId loc_id,
                                       CoreIdentifier interface_name)
     -> SemIR::NameScopeId {
-  auto name_id = *context.names().GetAsStringIfIdentifier(
-      context.core_identifiers().AddNameId(interface_name));
-  auto interface_scope_id = SemIR::NameScopeId::None;
-  for (auto [import_ir_id, import_ir] : context.import_irs().enumerate()) {
-    if (import_ir.sem_ir == nullptr) {
-      continue;
-    }
-    if (import_ir.sem_ir->package_id() != PackageNameId::Core) {
-      continue;
-    }
-    for (auto [import_interface_id, import_interface] :
-         import_ir.sem_ir->interfaces().enumerate()) {
-      if (import_ir.sem_ir->names().GetAsStringIfIdentifier(
-              import_interface.name_id) == name_id) {
-        auto interface_id =
-            ImportInterface(context, import_ir_id, import_interface_id);
-        const auto& interface = context.interfaces().Get(interface_id);
-        interface_scope_id = interface.scope_with_self_id;
-        break;
+  auto inst_id = LookupNameInCore(context, loc_id, interface_name);
+
+  // Non-generic interfaces.
+  if (auto facet_type = context.insts().TryGetAs<SemIR::FacetType>(inst_id)) {
+    const auto& declared =
+        context.declared_facet_types().Get(facet_type->declared_facet_type_id);
+    auto single = declared.TryAsSingleExtend();
+    CARBON_KIND_SWITCH(*single) {
+      case CARBON_KIND(SemIR::SpecificInterface si): {
+        return context.interfaces().Get(si.interface_id).scope_with_self_id;
+      }
+      case CARBON_KIND(SemIR::SpecificNamedConstraint _): {
+        CARBON_FATAL("Operators in named constraints are not yet needed");
       }
     }
-    if (interface_scope_id.has_value()) {
-      break;
-    }
   }
-  CARBON_CHECK(interface_scope_id.has_value(), "failed to find Core interface");
-  return interface_scope_id;
+
+  auto type_id = context.insts().Get(inst_id).type_id();
+  auto generic = context.types().GetAs<SemIR::GenericInterfaceType>(type_id);
+  return context.interfaces().Get(generic.interface_id).scope_with_self_id;
 }
 
 // Builds a Carbon builtin function declaration corresponding to an overload
@@ -623,6 +617,9 @@ static auto TryBuildBuiltinOperator(
   if (info.builtin_kind == SemIR::BuiltinFunctionKind::None) {
     return SemIR::InstId::None;
   }
+
+  CARBON_CHECK(info.interface_name != CoreIdentifier::VoidBase,
+               "builtin operator interface was not specified");
 
   // Import the argument types. For now, we only accept enum types.
   // TODO: Consider expanding this to other types.
@@ -669,14 +666,9 @@ static auto TryBuildBuiltinOperator(
       break;
   }
 
-  auto interface_scope_result = context.core_interface_scope_cache().Insert(
-      info.interface_name,
-      [&] { return GetCoreInterfaceNameScope(context, info.interface_name); });
-  auto interface_scope_id = interface_scope_result.value();
-
-  return MakeBuiltinOperatorFunction(context, arg_type_ids, return_type_id,
-                                     info.op_name, info.builtin_kind,
-                                     interface_scope_id);
+  return MakeBuiltinOperatorFunction(
+      context, arg_type_ids, return_type_id, info.op_name, info.builtin_kind,
+      GetCoreInterfaceNameScope(context, loc_id, info.interface_name));
 }
 
 namespace {
