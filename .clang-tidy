@@ -41,6 +41,9 @@ Checks:
   # Warns when we have multiple empty cases in switches, which we do for comment
   # reasons.
   - '-bugprone-branch-clone'
+  # We use CRTP inheritence widely and across distant areas of the codebase,
+  # which makes maintaining friend lists for the constructors frustrating.
+  - '-bugprone-crtp-constructor-accessibility'
   # We shadow methods with CRTP, instead of using virtual, such as for Print().
   - '-bugprone-derived-method-shadowing-base-method'
   # Frequently warns on multiple parameters of the same type.
@@ -48,6 +51,9 @@ Checks:
   # Finds issues like out-of-memory in main(). We don't use exceptions, so it's
   # unlikely to find real issues.
   - '-bugprone-exception-escape'
+  # We have File class types in different namespaces and we forward declare it,
+  # but don't find this to be problematic.
+  - '-bugprone-forward-declaration-namespace'
   # Doesn't respect `[[clang::enum_extensibility(open)]]`.
   - '-bugprone-invalid-enum-default-initialization'
   # Has false positives in places such as using an argument to declare a name,
@@ -56,6 +62,8 @@ Checks:
   - '-bugprone-macro-parentheses'
   # Conflicts with integer type C++ style.
   - '-bugprone-narrowing-conversions'
+  # We return const references from value stores.
+  - '-bugprone-return-const-ref-from-parameter'
   # Complains about reasonable code like `1 << 20` and would push us away from
   # our integer type C++ style rules.
   - '-bugprone-signed-bitwise'
@@ -99,6 +107,9 @@ Checks:
   - '-readability-enum-initial-value'
   # Warns too frequently.
   - '-readability-function-cognitive-complexity'
+  # Allows naming styles we don't use, and has errors on our use of `_1`, `_2`
+  # to have multiple unnamed vars in a destructuring declaration.
+  - '-readability-identifier-naming'
   # Warns on use of CARBON_KIND() and can't use NOLINT effectively inside a
   # macro.
   - '-readability-inconsistent-ifelse-braces'
@@ -113,6 +124,9 @@ Checks:
   - '-readability-redundant-parentheses'
   # Warns when callers use similar names as different parameters.
   - '-readability-suspicious-call-argument'
+  # Low value check, and it's a stylistic choice to use `#if defined(...)` when
+  # paired with `#elif defined(...)`.
+  - '-readability-use-concise-preprocessor-directives'
 
 CheckOptions:
   # Don't warn on structs; done by ignoring when there are only public members.

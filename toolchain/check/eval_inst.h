@@ -140,11 +140,10 @@ struct FunctionTypeForEvalConstantInstImpl<InstT, true, true> {
       -> ConstantEvalResult;
 };
 template <typename InstT>
-using FunctionTypeForEvalConstantInst =
-    typename FunctionTypeForEvalConstantInstImpl<
-        InstT, ConstantKindHasEvalConstantInst(InstT::Kind.constant_kind()),
-        InstT::Kind.constant_needs_inst_id() !=
-            SemIR::InstConstantNeedsInstIdKind::No>::Type;
+using FunctionTypeForEvalConstantInst = FunctionTypeForEvalConstantInstImpl<
+    InstT, ConstantKindHasEvalConstantInst(InstT::Kind.constant_kind()),
+    InstT::Kind.constant_needs_inst_id() !=
+        SemIR::InstConstantNeedsInstIdKind::No>::Type;
 
 }  // namespace Internal
 

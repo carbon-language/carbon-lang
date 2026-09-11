@@ -56,9 +56,9 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
   using ImplT = RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT>;
 
  public:
-  using KeyT = typename ImplT::KeyT;
-  using KeyContextT = typename ImplT::KeyContextT;
-  using MetricsT = typename ImplT::MetricsT;
+  using KeyT = ImplT::KeyT;
+  using KeyContextT = ImplT::KeyContextT;
+  using MetricsT = ImplT::MetricsT;
 
   // This type represents the result of lookup operations. It encodes whether
   // the lookup was a success as well as accessors for the key.
@@ -110,7 +110,7 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
   friend class SetBase<KeyT, KeyContextT>;
   friend class SetView<const KeyT, KeyContextT>;
 
-  using EntryT = typename ImplT::EntryT;
+  using EntryT = ImplT::EntryT;
 
   SetView() = default;
   explicit(false) SetView(ImplT base) : ImplT(base) {}
@@ -138,11 +138,11 @@ class SetBase
   using ImplT = RawHashtable::BaseImpl<InputKeyT, void, InputKeyContextT>;
 
  public:
-  using KeyT = typename ImplT::KeyT;
-  using KeyContextT = typename ImplT::KeyContextT;
+  using KeyT = ImplT::KeyT;
+  using KeyContextT = ImplT::KeyContextT;
   using ViewT = SetView<KeyT, KeyContextT>;
-  using LookupResult = typename ViewT::LookupResult;
-  using MetricsT = typename ImplT::MetricsT;
+  using LookupResult = ViewT::LookupResult;
+  using MetricsT = ImplT::MetricsT;
 
   // The result type for insertion operations both indicates whether an insert
   // was needed (as opposed to the key already being in the set), and provides
@@ -299,7 +299,7 @@ class Set : public RawHashtable::TableImpl<SetBase<InputKeyT, InputKeyContextT>,
   using ImplT = RawHashtable::TableImpl<BaseT, SmallSize>;
 
  public:
-  using KeyT = typename BaseT::KeyT;
+  using KeyT = BaseT::KeyT;
 
   Set() = default;
   Set(const Set& arg) = default;

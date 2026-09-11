@@ -49,6 +49,7 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
                            const_cast<clang::DiagnosticOptions&>(diag_opts)),
         imports_(imports) {}
 
+ protected:
   void emitDiagnosticMessage(clang::FullSourceLoc loc, clang::PresumedLoc ploc,
                              clang::DiagnosticsEngine::Level /*level*/,
                              llvm::StringRef message,
