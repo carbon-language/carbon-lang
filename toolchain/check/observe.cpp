@@ -95,14 +95,15 @@ auto UnpackObserve(Context& context, const SemIR::Observe& observe)
 
 auto CheckObserveEquivalence(Context& context,
                              llvm::ArrayRef<SemIR::InstId> observe_operand_ids,
-                             SemIR::TypeId lhs_type_id,
-                             SemIR::TypeId rhs_type_id) -> bool {
+                             SemIR::TypeId lhs_canonical_type_id,
+                             SemIR::TypeId rhs_canonical_type_id) -> bool {
   auto lhs_found = false;
   auto rhs_found = false;
   for (auto operand_id : observe_operand_ids) {
+    // Operands are already in canonical form.
     auto operand_type_id = context.insts().Get(operand_id).type_id();
-    lhs_found |= lhs_type_id == operand_type_id;
-    rhs_found |= rhs_type_id == operand_type_id;
+    lhs_found |= lhs_canonical_type_id == operand_type_id;
+    rhs_found |= rhs_canonical_type_id == operand_type_id;
     if (lhs_found && rhs_found) {
       return true;
     }

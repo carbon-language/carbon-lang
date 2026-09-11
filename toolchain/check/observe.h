@@ -27,8 +27,8 @@ auto UnpackObserve(Context& context, const SemIR::Observe& observe)
 // given types.
 auto CheckObserveEquivalence(Context& context,
                              llvm::ArrayRef<SemIR::InstId> observe_operand_ids,
-                             SemIR::TypeId lhs_type_id,
-                             SemIR::TypeId rhs_type_id) -> bool;
+                             SemIR::TypeId lhs_canonical_type_id,
+                             SemIR::TypeId rhs_canonical_type_id) -> bool;
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_OBSERVE_H_
