@@ -270,6 +270,8 @@ class MatchContext {
 
 }  // namespace
 
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto MatchContext::Match(State state, WorkItem entry) -> void {
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context_.emitter(), [&](auto& builder) {
@@ -286,6 +288,8 @@ auto MatchContext::Match(State state, WorkItem entry) -> void {
   }
 }
 
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto MatchContext::MatchWithResult(State state, WorkItem entry)
     -> SemIR::InstId {
   results_stack_.PushArray();
@@ -806,6 +810,8 @@ auto MatchContext::DoPostWork(State /*state*/,
   results_stack_.AppendToTop(tuple_value_id);
 }
 
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto MatchContext::DoPreWork(State state, SemIR::SpliceInst /*splice*/,
                              SemIR::InstId scrutinee_id, WorkItem entry)
     -> void {
@@ -987,6 +993,8 @@ auto MatchContext::DoPostWork(State state,
   }
 }
 
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
   if (entry.pattern_id == SemIR::ErrorInst::InstId) {
     if (need_subpattern_results()) {
@@ -1177,6 +1185,8 @@ auto ThunkPatternMatch(Context& context,
           .ignored_call_args = state.outer_call_args};
 }
 
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
                    SemIR::CallerPatternMatchAction action) -> SemIR::InstId {
   auto args = context.bundles().Get(action.args_id);
@@ -1193,6 +1203,8 @@ auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
   return state.call_args[0];
 }
 
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
                    SemIR::CalleePatternMatchAction action) -> SemIR::InstId {
   auto args = context.bundles().Get(action.args_id);

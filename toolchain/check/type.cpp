@@ -304,10 +304,15 @@ auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::ConstantId const_id)
 
 auto TryGetCanonicalFacetValue(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
-  if (context.insts().Get(inst_id).type_id() == SemIR::TypeType::TypeId) {
-    return GetCanonicalFacetOrTypeValue(context, inst_id);
+  if (context.insts().Get(inst_id).type_id() != SemIR::TypeType::TypeId) {
+    return SemIR::InstId::None;
   }
-  return SemIR::InstId::None;
+  auto const_id = context.constant_values().Get(inst_id);
+  if (!const_id.is_constant()) {
+    return SemIR::InstId::None;
+  }
+  return context.constant_values().GetInstId(
+      GetCanonicalFacetOrTypeValue(context, const_id));
 }
 
 }  // namespace Carbon::Check

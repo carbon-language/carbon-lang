@@ -878,12 +878,8 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
 
 // Function template that can be called with an argument of type `T`. Used below
 // to detect which overloads of `GetConstantValue` exist.
-//
-// Marked as maybe unused at it seems the use in a requires isn't tracked by the
-// latest version of Clang's `-Wunused-template`.
-// https://github.com/llvm/llvm-project/issues/218429
 template <typename T>
-[[maybe_unused]] static auto Accept(T /*arg*/) -> void {}
+static auto Accept(T /*arg*/) -> void {}
 
 // Determines whether a `GetConstantValue` overload exists for a given ID type.
 // Note that we do not check whether `GetConstantValue` is *callable* with a

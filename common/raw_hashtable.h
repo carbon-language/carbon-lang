@@ -474,8 +474,8 @@ class BaseImpl {
   using ValueT = InputValueT;
   using KeyContextT = InputKeyContextT;
   using ViewImplT = ViewImpl<KeyT, ValueT, KeyContextT>;
-  using EntryT = typename ViewImplT::EntryT;
-  using MetricsT = typename ViewImplT::MetricsT;
+  using EntryT = ViewImplT::EntryT;
+  using MetricsT = ViewImplT::MetricsT;
 
   BaseImpl(int small_alloc_size, Storage* small_storage)
       : small_alloc_size_(small_alloc_size) {

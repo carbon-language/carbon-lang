@@ -108,7 +108,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
              SemIR::NameId::ForPackageName(cpp_package_id),
              SemIR::NameScopeId::Package,
              /*diagnose_duplicate_namespace=*/false,
-             [&]() {
+             [&] {
                return AddInst<SemIR::ImportCppDecl>(
                    context,
                    context.parse_tree().As<Parse::ImportDeclId>(

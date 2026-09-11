@@ -11,7 +11,8 @@ Diagnostics:
   #   compiler.
   # `unused-includes`: has false positives, reporting includes unused when
   #   they are used. Probably the same root cause as unused-function.
-  Suppress: [unused-function, unused-includes]
+  # `unused-template`: has false positives, which we see in eval.cpp.
+  Suppress: [unused-function, unused-includes, unused-template]
 
 ---
 

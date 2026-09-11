@@ -21,7 +21,7 @@ ValueStore<IdT, ValueT, TagIdT>::ValueStore(IdTagType tag)
 
 template <typename IdT, typename ValueT, typename TagIdT>
 ValueStore<IdT, ValueT, TagIdT>::ValueStore(
-    typename ValueStore<IdT, ValueT, TagIdT>::IdTagType::TagIdType id,
+    ValueStore<IdT, ValueT, TagIdT>::IdTagType::TagIdType id,
     int32_t initial_reserved_ids)
   requires(!IdTagIsUntagged<IdTagType>)
     : tag_(id, initial_reserved_ids) {}
@@ -73,8 +73,7 @@ auto ValueStore<IdT, ValueT, TagIdT>::Resize(int32_t size,
 template <typename IdT, typename ValueT, typename TagIdT>
 auto ValueStore<IdT, ValueT, TagIdT>::Chunk::UninitializedFill(
     int32_t fill_count,
-    typename ValueStore<IdT, ValueT, TagIdT>::ConstRefType default_value)
-    -> void
+    ValueStore<IdT, ValueT, TagIdT>::ConstRefType default_value) -> void
   requires(std::is_copy_constructible_v<ValueT>)
 {
   CARBON_DCHECK(num_ + fill_count <= Capacity());
