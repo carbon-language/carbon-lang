@@ -1995,13 +1995,13 @@ names resolvable by the compiler, and don't act like forward declarations.
 #### Destructors
 
 A destructor for a class is custom code executed when the lifetime of a value of
-that type ends. They are defined with `fn destroy` followed by either `self` or
-`ref self` in the parameter list (as is done with [methods](#methods)) and the
-block of code in the class definition, as in:
+that type ends. They are defined by implementing `Core.Destroy`:
 
 ```carbon
 class MyClass {
-  fn destroy(self) { ... }
+  impl Core.Destroy {
+    fn Op(self) { ... }
+  }
 }
 ```
 
@@ -2010,7 +2010,9 @@ or:
 ```carbon
 class MyClass {
   // Can modify `self` in the body.
-  fn destroy(ref self) { ... }
+  impl Core.Destroy {
+    fn Op(ref self) { ... }
+  }
 }
 ```
 
@@ -2018,19 +2020,20 @@ The destructor for a class is run before the destructors of its data members.
 The data members are destroyed in reverse order of declaration. Derived classes
 are destroyed before their base classes.
 
-A destructor in an abstract or base class may be declared `virtual` like with
+**TODO(cjdb): revise this paragraph.**
+~~A destructor in an abstract or base class may be declared `virtual` like with
 [methods](#inheritance). Destructors in classes derived from one with a virtual
 destructor must be declared with the `impl` keyword prefix. It is illegal to
 delete an instance of a derived class through a pointer to a base class unless
 the base class is declared `virtual` or `impl`. To delete a pointer to a
 non-abstract base class when it is known not to point to a value with a derived
-type, use `UnsafeDelete`.
+type, use `UnsafeDelete`.~~
 
 > References:
 >
-> -   [Classes: Destructors](classes.md#destructors)
+> -   [Classes: Destructors](values.md#object-destruction)
 > -   Proposal
->     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+>     [#7362: Regularise Carbon destructors](https://github.com/carbon-language/carbon-lang/pull/7362)
 
 #### `const`
 
