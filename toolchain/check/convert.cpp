@@ -22,6 +22,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/observe.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/pending_block.h"
@@ -1219,6 +1220,56 @@ static auto DiagnoseConversionFailureToConstraintValue(
   }
 }
 
+// Checks the visible `observe` declarations for an explicit equivalence between
+// the expression's type and the target type.
+static auto HasObservedConversion(Context& context, SemIR::InstId expr_id,
+                                  SemIR::TypeId target_type_id) -> bool {
+  if (auto expr_type_id = context.insts().Get(expr_id).type_id();
+      expr_type_id != SemIR::TypeType::TypeId) {
+    // `expr_id` is a value expression. The type expression is required to look
+    // up relevant `observe` declarations and to resolve the underlying type for
+    // equivalence checking.
+    expr_id = context.types().GetTypeInstId(expr_type_id);
+  }
+  if (!context.constant_values().Get(expr_id).is_constant()) {
+    return false;
+  }
+
+  auto expr_canonical_inst_id = GetCanonicalFacetOrTypeValue(context, expr_id);
+  auto expr_canonical_type_id =
+      context.insts().Get(expr_canonical_inst_id).type_id();
+
+  auto target_type_inst_id = context.types().GetTypeInstId(target_type_id);
+  if (!context.constant_values().Get(target_type_inst_id).is_constant()) {
+    return false;
+  }
+  auto target_canonical_inst_id =
+      GetCanonicalFacetOrTypeValue(context, target_type_inst_id);
+  auto target_canonical_type_id = SemIR::TypeId::None;
+  if (target_canonical_inst_id ==
+      context.constant_values().GetConstantInstId(target_type_inst_id)) {
+    // Target is already in canonical form.
+    target_canonical_type_id = target_type_id;
+  } else {
+    target_canonical_type_id =
+        context.insts().Get(target_canonical_inst_id).type_id();
+  }
+
+  // TODO: Move this loop and unpack logic into `CheckObserveEquivalence` to
+  // avoid creating vectors.
+  for (auto observe_id : GetObserveIds(context, expr_canonical_inst_id)) {
+    const auto& observe = context.observes().Get(observe_id);
+    auto [observe_operand_ids, _] = UnpackObserve(context, observe);
+    if (CheckObserveEquivalence(context, observe_operand_ids,
+                                expr_canonical_type_id,
+                                target_canonical_type_id)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
                                      SemIR::InstId value_id,
                                      ConversionTarget target) -> SemIR::InstId {
@@ -1460,6 +1511,11 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
   // same.
   if (value_type_id == target.type_id) {
     return value_id;
+  }
+
+  if (HasObservedConversion(context, value_id, target.type_id)) {
+    return AddInst<SemIR::AsCompatible>(
+        context, loc_id, {.type_id = target.type_id, .source_id = value_id});
   }
 
   // A tuple (T1, T2, ..., Tn) converts to array(T, n) if each Ti converts to T.
