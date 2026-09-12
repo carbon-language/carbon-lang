@@ -122,8 +122,23 @@ auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                SemIR::CppDomain* domain) -> void {
   if (imports.empty()) {
-    // TODO: Consider always having a (non-null) AST even if there are no Cpp
-    // imports.
+    // If a shared C++ domain covers this unit, set up the C++ AST and context
+    // even though there are no direct C++ imports.
+    if (domain && GenerateAst(context, imports, *domain)) {
+      auto [name_scope_id, namespace_inst_id] = AddImportNamespace(
+          context, GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
+          SemIR::NameId::None, SemIR::NameScopeId::None,
+          /*import_id=*/SemIR::InstId::None);
+      SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
+      name_scope.set_is_closed_import(true);
+      name_scope.set_clang_decl_context_id(
+          context.clang_decls().Add(
+              {.key = SemIR::ClangDeclKey(
+                   context.ast_context().getTranslationUnitDecl()),
+               .inst_id = namespace_inst_id,
+               .is_imported = true}),
+          /*is_cpp_scope=*/true);
+    }
     return;
   }
 

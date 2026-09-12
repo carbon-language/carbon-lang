@@ -62,6 +62,23 @@ fn TestB() -> i32 {
   return b.x;
 }
 
+// --- generic_lib.carbon
+library "[[@TEST_NAME]]";
+import Cpp library "a.h";
+
+fn MakeA[T: type](unused x: T) -> i32 {
+  var a: Cpp.A = Cpp.make_a();
+  return a.b;
+}
+
+// --- no_cpp_imports.carbon
+library "[[@TEST_NAME]]";
+import library "generic_lib";
+
+fn CallGeneric() -> i32 {
+  return MakeA(0);
+}
+
 
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_a.carbon'
@@ -361,4 +378,161 @@ fn TestB() -> i32 {
 // CHECK:STDOUT: !33 = !{!34, !9, i64 0}
 // CHECK:STDOUT: !34 = !{!"_ZTS1B", !9, i64 0, !9, i64 4}
 // CHECK:STDOUT: !35 = !{!34, !9, i64 4}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
+// CHECK:STDOUT: ; ModuleID = 'generic_lib.carbon'
+// CHECK:STDOUT: source_filename = "generic_lib.carbon"
+// CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+// CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
+// CHECK:STDOUT:
+// CHECK:STDOUT: %struct.A.36 = type { i32, i32 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_Z6make_av = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define internal void @_Z6make_av.carbon_thunk.(ptr noundef %return) #0 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !12
+// CHECK:STDOUT:   %call = call i64 @_Z6make_av()
+// CHECK:STDOUT:   store i64 %call, ptr %0, align 4
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local i64 @_Z6make_av() #1 comdat {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %retval = alloca %struct.A.36, align 4
+// CHECK:STDOUT:   %a = getelementptr inbounds nuw %struct.A.36, ptr %retval, i32 0, i32 0
+// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !15
+// CHECK:STDOUT:   %b = getelementptr inbounds nuw %struct.A.36, ptr %retval, i32 0, i32 1
+// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !17
+// CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
+// CHECK:STDOUT:   ret i64 %0
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #1 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "generic_lib.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
+// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = !{!13, !13, i64 0}
+// CHECK:STDOUT: !13 = !{!"p1 _ZTS1A", !14, i64 0}
+// CHECK:STDOUT: !14 = !{!"any pointer", !10, i64 0}
+// CHECK:STDOUT: !15 = !{!16, !9, i64 0}
+// CHECK:STDOUT: !16 = !{!"_ZTS1A", !9, i64 0, !9, i64 4}
+// CHECK:STDOUT: !17 = !{!16, !9, i64 4}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
+// CHECK:STDOUT: ; ModuleID = 'no_cpp_imports.carbon'
+// CHECK:STDOUT: source_filename = "no_cpp_imports.carbon"
+// CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+// CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
+// CHECK:STDOUT:
+// CHECK:STDOUT: %struct.A.39 = type { i32, i32 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_Z6make_av = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CCallGeneric.Main() #0 !dbg !12 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %MakeA.call = call i32 @_CMakeA.Main.084a2801e0f5d754({} zeroinitializer), !dbg !16
+// CHECK:STDOUT:   ret i32 %MakeA.call, !dbg !17
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CMakeA.Main.084a2801e0f5d754({} %x) #0 !dbg !18 {
+// CHECK:STDOUT:   %1 = alloca [8 x i8], align 4, !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !25
+// CHECK:STDOUT:   call void @_Z6make_av.carbon_thunk.(ptr %1), !dbg !26
+// CHECK:STDOUT:   %b = getelementptr inbounds nuw [8 x i8], ptr %1, i32 0, i32 4, !dbg !27
+// CHECK:STDOUT:   %2 = load i32, ptr %b, align 4, !dbg !27
+// CHECK:STDOUT:   ret i32 %2, !dbg !28
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define internal void @_Z6make_av.carbon_thunk.(ptr noundef %return) #1 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !29
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !29
+// CHECK:STDOUT:   %call = call i64 @_Z6make_av()
+// CHECK:STDOUT:   store i64 %call, ptr %0, align 4
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local i64 @_Z6make_av() #3 comdat {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %retval = alloca %struct.A.39, align 4
+// CHECK:STDOUT:   %a = getelementptr inbounds nuw %struct.A.39, ptr %retval, i32 0, i32 0
+// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !32
+// CHECK:STDOUT:   %b = getelementptr inbounds nuw %struct.A.39, ptr %retval, i32 0, i32 1
+// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !34
+// CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
+// CHECK:STDOUT:   ret i64 %0
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "no_cpp_imports.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
+// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.Main", scope: null, file: !1, line: 4, type: !13, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{!15}
+// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !16 = !DILocation(line: 5, column: 10, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 5, column: 3, scope: !12)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "MakeA", linkageName: "_CMakeA.Main.084a2801e0f5d754", scope: null, file: !19, line: 4, type: !20, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !23)
+// CHECK:STDOUT: !19 = !DIFile(filename: "generic_lib.carbon", directory: "")
+// CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
+// CHECK:STDOUT: !21 = !{!15, !22}
+// CHECK:STDOUT: !22 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !23 = !{!24}
+// CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !18, type: !22)
+// CHECK:STDOUT: !25 = !DILocation(line: 5, column: 3, scope: !18)
+// CHECK:STDOUT: !26 = !DILocation(line: 5, column: 18, scope: !18)
+// CHECK:STDOUT: !27 = !DILocation(line: 6, column: 10, scope: !18)
+// CHECK:STDOUT: !28 = !DILocation(line: 6, column: 3, scope: !18)
+// CHECK:STDOUT: !29 = !{!30, !30, i64 0}
+// CHECK:STDOUT: !30 = !{!"p1 _ZTS1A", !31, i64 0}
+// CHECK:STDOUT: !31 = !{!"any pointer", !10, i64 0}
+// CHECK:STDOUT: !32 = !{!33, !9, i64 0}
+// CHECK:STDOUT: !33 = !{!"_ZTS1A", !9, i64 0, !9, i64 4}
+// CHECK:STDOUT: !34 = !{!33, !9, i64 4}
 // CHECK:STDOUT:
