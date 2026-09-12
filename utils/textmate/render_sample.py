@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.12"
+# ///
 
 """Renders Carbon sources as highlighted SVG.
 
@@ -6,12 +10,13 @@ This regenerates the renderings next to the TextMate samples, so they show what
 the grammar in this repository actually produces rather than whatever an editor
 looked like when someone last took a screenshot by hand.
 
-Output is SVG, drawn by whatever displays it, so this needs nothing outside the
+The SVG holds the source as text rather than as outlines, so whatever displays
+it lays the text out and draws the glyphs; this needs nothing outside the
 standard library. Colors are VS Code's Dark+; a scope the theme does not style
 resolves outward through the scope stack, which is what makes a string's quotes
 take the string color and a comment's `//` take the comment color.
 
-    ./utils/vscode/render_sample.py utils/textmate/Samples/*.carbon
+    ./utils/textmate/render_sample.py utils/textmate/Samples/*.carbon
 """
 
 __copyright__ = """
@@ -26,6 +31,13 @@ from pathlib import Path
 from typing import Optional
 
 import tmlanguage
+
+# The grammar stays in the extension because `package.json` declares it with a
+# path resolved against the extension root, so it has to sit inside that
+# directory. Everything that reads it lives here.
+GRAMMAR_PATH = (
+    Path(__file__).resolve().parents[1] / "vscode" / "carbon.tmLanguage.json"
+)
 
 # VS Code's Dark+, keyed by the selectors the theme itself uses. Matching is by
 # longest dotted prefix, as a real theme does, so this stays correct for any
@@ -69,6 +81,9 @@ _FONT_SIZE = 14
 # font a little wider than this just runs closer to the right edge.
 _CHAR_WIDTH = 8.5
 _LINE_HEIGHT = 19
+# How far above the bottom of its line the baseline sits, leaving room for the
+# descenders of `g` and `y` at this line height.
+_DESCENT = 5
 _PAD = 12
 
 
@@ -84,12 +99,13 @@ def _color_for(scopes: list[str]) -> str:
         parts = scope.split(".")
         for end in range(len(parts), 0, -1):
             color = _THEME.get(".".join(parts[:end]))
-            if color is not None:
+            if color:
                 return color
     return _FOREGROUND
 
 
 def _escape(text: str) -> str:
+    """Escapes source text for an SVG text node, as one would for HTML."""
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
@@ -106,12 +122,15 @@ def _runs(colors: list[str]) -> list[tuple[int, int, str]]:
 
 def render(grammar: tmlanguage.Grammar, source: str) -> str:
     """Renders a Carbon source as a standalone SVG document."""
-    lines = source.split("\n")
+    lines = tmlanguage.split_lines(source)
     while lines and not lines[-1].strip():
         lines.pop()
 
     colored = [[_FOREGROUND] * len(line) for line in lines]
     for token in tmlanguage.tokenize(grammar, source):
+        # Every line is tokenized with a newline appended, so even a blank
+        # one carries a token covering that newline. The trailing blank lines
+        # were dropped just above, leaving those tokens no row to color.
         if token.line >= len(colored):
             continue
         color = _color_for(token.scopes)
@@ -135,14 +154,13 @@ def render(grammar: tmlanguage.Grammar, source: str) -> str:
         f'<g xml:space="preserve" font-family="{_FONT}"'
         f' font-size="{_FONT_SIZE}">',
     ]
-    for number, line in enumerate(lines):
-        baseline = _PAD + (number + 1) * _LINE_HEIGHT - 5
+    for linenum, linetext in enumerate(lines):
+        baseline = _PAD + (linenum + 1) * _LINE_HEIGHT - _DESCENT
         spans = [
-            f'<tspan fill="{_GUTTER}">{str(number + 1).rjust(digits)} </tspan>'
-        ]
-        spans += [
-            f'<tspan fill="{color}">{_escape(line[start:end])}</tspan>'
-            for start, end, color in _runs(colored[number])
+            f'<tspan fill="{_GUTTER}">{str(linenum + 1).rjust(digits)} </tspan>'
+        ] + [
+            f'<tspan fill="{color}">{_escape(linetext[start:end])}</tspan>'
+            for start, end, color in _runs(colored[linenum])
         ]
         out.append(
             f'<text style="white-space:pre" x="{_PAD}" y="{baseline}">'
@@ -155,11 +173,7 @@ def render(grammar: tmlanguage.Grammar, source: str) -> str:
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("sources", nargs="+", type=Path)
-    parser.add_argument(
-        "--grammar",
-        type=Path,
-        default=Path(__file__).resolve().parent / "carbon.tmLanguage.json",
-    )
+    parser.add_argument("--grammar", type=Path, default=GRAMMAR_PATH)
     args = parser.parse_args(argv)
 
     grammar = tmlanguage.Grammar.load(args.grammar)

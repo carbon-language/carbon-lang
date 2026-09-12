@@ -41,6 +41,9 @@ forall form friend
 // --- self-keywords
 
 self Self
+
+// --- package-roots
+
 Core Cpp
 
 // --- underscore

@@ -25,7 +25,7 @@ class Point {
 
 fn Procedure() -> i32 {
   returned var zoop: i32 = 0;
-  while (DoSomeJob() {
+  while (DoSomeJob()) {
     zoop += 1;
   }
 

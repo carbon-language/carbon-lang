@@ -36,7 +36,7 @@ true false
 
 // --- type-literals
 
-array auto bool char str type ;
+array auto bool char str type
 i8 i16 i32 i64 i128 i10
 u8 u16 u32 u64 u128 u11
 f8 f16 f32 f64 f128 f12

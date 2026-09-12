@@ -45,10 +45,12 @@ grammar in this repository. Regenerate them in the same commit as any change to
 the grammar, so a reviewer can see what the change does to real code:
 
 ```shell
-./utils/vscode/render_sample.py utils/textmate/Samples/*.carbon
+./utils/textmate/render_sample.py utils/textmate/Samples/*.carbon
 ```
 
-That needs only Python: whatever displays the SVG draws the text. The colors
-are VS Code's Dark+, and the font is whichever monospace font the viewer has,
-since GitHub serves SVG under `default-src 'none'` and could not fetch one.
-Each line carries a `textLength`, so the layout holds either way.
+That needs only Python. The SVG holds the source as text rather than as
+outlines of its glyphs, so whatever displays it picks the font and lays the
+text out. The font is whichever monospace family the viewer already has:
+GitHub serves SVG under a `default-src 'none'` content security policy, so the
+image cannot fetch a web font and naming one would not help. The colors are VS
+Code's Dark+.

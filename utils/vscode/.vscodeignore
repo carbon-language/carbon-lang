@@ -10,6 +10,3 @@ development.md
 esbuild.js
 eslint.config.mjs
 tsconfig.json
-*.py
-conformance.js
-testdata/
