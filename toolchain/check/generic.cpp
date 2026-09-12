@@ -911,8 +911,13 @@ auto GetScrutineeTypeInSpecific(const Context& context,
                                 SemIR::SpecificId specific_id)
     -> SemIR::TypeId {
   const auto& sem_ir = context.sem_ir();
-  return ExtractScrutineeType(
-      sem_ir, SemIR::GetTypeOfInstInSpecific(sem_ir, specific_id, pattern_id));
+  auto type_id =
+      SemIR::GetTypeOfInstInSpecific(sem_ir, specific_id, pattern_id);
+  if (!sem_ir.types().GetConstantId(type_id).is_constant()) {
+    return SemIR::TypeId::None;
+  }
+
+  return ExtractScrutineeType(sem_ir, type_id);
 }
 
 }  // namespace Carbon::Check
