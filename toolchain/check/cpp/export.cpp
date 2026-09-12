@@ -292,6 +292,16 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
   return record_decl;
 }
 
+auto ExportAndCompleteClassToCpp(Context& context, SemIR::ClassType class_type)
+    -> clang::TagDecl* {
+  auto* tag_decl = ExportClassToCpp(context, class_type);
+  if (tag_decl && context.cpp_context() &&
+      context.ast_context().getExternalSource()) {
+    context.ast_context().getExternalSource()->CompleteType(tag_decl);
+  }
+  return tag_decl;
+}
+
 // Export the bindings in a generic as a `clang::TemplateParameterList`.
 static auto ExportGenericBindings(Context& context, SemIR::LocId loc_id,
                                   SemIR::GenericId generic_id,
