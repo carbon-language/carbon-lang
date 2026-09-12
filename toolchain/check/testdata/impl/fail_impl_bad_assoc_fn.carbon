@@ -163,7 +163,8 @@ class FDifferentImplicitParamType {
 
 class FDifferentReturnType {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+12]]:5: error: cannot implicitly convert expression of type `FDifferentReturnType` to `bool` [ConversionFailure]
+    // TODO: Include an "aka" in this diagnostic to explain that the type `Self` is `FDifferentReturnType`.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+12]]:5: error: cannot implicitly convert expression of type `Self` to `bool` [ConversionFailure]
     // CHECK:STDERR:     fn F(self: bool, b: bool) -> Self;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+9]]:5: note: type `FDifferentReturnType` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
