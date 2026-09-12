@@ -2274,14 +2274,6 @@ auto InitializeExisting(Context& context, SemIR::LocId loc_id,
     storage_id = SemIR::InstId::None;
   }
 
-  // TODO: This is only an approximation of a dominance check. Add a general
-  // end-of-phase dominance check and remove the check here and the one in
-  // `MergeReplacing`.
-  CARBON_CHECK(!storage_id.has_value() ||
-                   value_id == SemIR::ErrorInst::InstId ||
-                   context.insts().GetRawIndex(storage_id) <=
-                       context.insts().GetRawIndex(value_id),
-               "Storage might not dominate initializer");
   PendingBlock target_block(&context);
   return Convert(context, loc_id, value_id,
                  {.kind = ConversionTarget::Initializing,
