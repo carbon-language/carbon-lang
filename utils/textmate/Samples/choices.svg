@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="712" height="195" viewBox="0 0 712 195">
+<rect width="100%" height="100%" fill="#1f1f1f"/>
+<g xml:space="preserve" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text style="white-space:pre" x="12" y="26"><tspan fill="#6e7681">1 </tspan><tspan fill="#6a9955">// Part of the Carbon Language project, under the Apache License v2.0 with LLVM</tspan></text>
+<text style="white-space:pre" x="12" y="45"><tspan fill="#6e7681">2 </tspan><tspan fill="#6a9955">// Exceptions. See /LICENSE for license information.</tspan></text>
+<text style="white-space:pre" x="12" y="64"><tspan fill="#6e7681">3 </tspan><tspan fill="#6a9955">// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception</tspan></text>
+<text style="white-space:pre" x="12" y="83"><tspan fill="#6e7681">4 </tspan></text>
+<text style="white-space:pre" x="12" y="102"><tspan fill="#6e7681">5 </tspan><tspan fill="#569cd6">choice</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#4ec9b0">SomeChoice</tspan><tspan fill="#d4d4d4">(</tspan><tspan fill="#9cdcfe">T</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#569cd6">type</tspan><tspan fill="#d4d4d4">) {</tspan></text>
+<text style="white-space:pre" x="12" y="121"><tspan fill="#6e7681">6 </tspan><tspan fill="#d4d4d4">    </tspan><tspan fill="#4fc1ff">Val1</tspan><tspan fill="#d4d4d4">,</tspan></text>
+<text style="white-space:pre" x="12" y="140"><tspan fill="#6e7681">7 </tspan><tspan fill="#d4d4d4">    </tspan><tspan fill="#4fc1ff">Val2</tspan><tspan fill="#d4d4d4">(</tspan><tspan fill="#4fc1ff">a</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#569cd6">i32</tspan><tspan fill="#d4d4d4">, </tspan><tspan fill="#4fc1ff">b</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#569cd6">array</tspan><tspan fill="#d4d4d4">(</tspan><tspan fill="#4fc1ff">T</tspan><tspan fill="#d4d4d4">, </tspan><tspan fill="#b5cea8">5</tspan><tspan fill="#d4d4d4">), </tspan><tspan fill="#4fc1ff">t</tspan><tspan fill="#d4d4d4">: </tspan><tspan fill="#4fc1ff">T</tspan><tspan fill="#d4d4d4">),</tspan></text>
+<text style="white-space:pre" x="12" y="159"><tspan fill="#6e7681">8 </tspan><tspan fill="#d4d4d4">    </tspan><tspan fill="#4fc1ff">Val3</tspan></text>
+<text style="white-space:pre" x="12" y="178"><tspan fill="#6e7681">9 </tspan><tspan fill="#d4d4d4">}</tspan></text>
+</g></svg>

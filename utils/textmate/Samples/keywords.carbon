@@ -4,8 +4,9 @@
 
 // --- operators
 
->>= <=> <<= &= == != >= >> <= << -= -> -- %= \ = += ++ /= *= & ^ = > < - % . | + / *
-and as impls in like not or partial ref template where
+>>= <=> <<= ->? &= ^= := :? == => != >= >> <= <> << <- -= -> -- %= |= += ++ /=
+*= ~= & @ ^ : = ! > < - % . | + ? / * ~ \
+and as impls in like not or where
 
 // --- special-keywords
 
@@ -14,7 +15,8 @@ default =>
 
 // --- introducer-keywords
 
-adapt alias choice class constraint fn import interface let library namespace var
+adapt alias choice class constraint fn import inline interface let library
+match_first namespace observe require var
 base
 export
 impl
@@ -22,7 +24,8 @@ package
 
 // --- modifier-keywords
 
-abstract const extend extern final private protected virtual
+abstract const eval extend extern final generic musteval override partial
+private protected ref runtime static template unsafe unused val virtual
 base class
 default
 export import
@@ -32,12 +35,13 @@ impl package
 
 // --- misc-keywords
 
-auto destructor forall friend observe override require
+forall form friend
 .base
 
 // --- self-keywords
 
 self Self
+Core Cpp
 
 // --- underscore
 

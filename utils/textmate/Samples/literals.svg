@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="721" height="1316" viewBox="0 0 721 1316">
+<rect width="100%" height="100%" fill="#1f1f1f"/>
+<g xml:space="preserve" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<text style="white-space:pre" x="12" y="26"><tspan fill="#6e7681"> 1 </tspan><tspan fill="#6a9955">// Part of the Carbon Language project, under the Apache License v2.0 with LLVM</tspan></text>
+<text style="white-space:pre" x="12" y="45"><tspan fill="#6e7681"> 2 </tspan><tspan fill="#6a9955">// Exceptions. See /LICENSE for license information.</tspan></text>
+<text style="white-space:pre" x="12" y="64"><tspan fill="#6e7681"> 3 </tspan><tspan fill="#6a9955">// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception</tspan></text>
+<text style="white-space:pre" x="12" y="83"><tspan fill="#6e7681"> 4 </tspan></text>
+<text style="white-space:pre" x="12" y="102"><tspan fill="#6e7681"> 5 </tspan><tspan fill="#6a9955">// --- string</tspan></text>
+<text style="white-space:pre" x="12" y="121"><tspan fill="#6e7681"> 6 </tspan></text>
+<text style="white-space:pre" x="12" y="140"><tspan fill="#6e7681"> 7 </tspan><tspan fill="#d4d4d4">'</tspan><tspan fill="#9cdcfe">C</tspan><tspan fill="#d4d4d4">'</tspan></text>
+<text style="white-space:pre" x="12" y="159"><tspan fill="#6e7681"> 8 </tspan><tspan fill="#ce9178">"Hello</tspan><tspan fill="#d7ba7d">\n</tspan><tspan fill="#ce9178">World</tspan><tspan fill="#d7ba7d">\n</tspan><tspan fill="#ce9178">"</tspan></text>
+<text style="white-space:pre" x="12" y="178"><tspan fill="#6e7681"> 9 </tspan><tspan fill="#ce9178">"</tspan><tspan fill="#d7ba7d">\"\'\t\r\n</tspan><tspan fill="#ce9178">"</tspan></text>
+<text style="white-space:pre" x="12" y="197"><tspan fill="#6e7681">10 </tspan><tspan fill="#ce9178">'''Single line string'''</tspan></text>
+<text style="white-space:pre" x="12" y="216"><tspan fill="#6e7681">11 </tspan><tspan fill="#ce9178">''' Multi line</tspan></text>
+<text style="white-space:pre" x="12" y="235"><tspan fill="#6e7681">12 </tspan><tspan fill="#ce9178">    string</tspan></text>
+<text style="white-space:pre" x="12" y="254"><tspan fill="#6e7681">13 </tspan><tspan fill="#ce9178">'''</tspan></text>
+<text style="white-space:pre" x="12" y="273"><tspan fill="#6e7681">14 </tspan><tspan fill="#ce9178">'''</tspan><tspan fill="#d7ba7d">py</tspan></text>
+<text style="white-space:pre" x="12" y="292"><tspan fill="#6e7681">15 </tspan><tspan fill="#ce9178">    Block literal with a file type indicator.</tspan></text>
+<text style="white-space:pre" x="12" y="311"><tspan fill="#6e7681">16 </tspan><tspan fill="#ce9178">'''</tspan></text>
+<text style="white-space:pre" x="12" y="330"><tspan fill="#6e7681">17 </tspan></text>
+<text style="white-space:pre" x="12" y="349"><tspan fill="#6e7681">18 </tspan><tspan fill="#d4d4d4">#</tspan><tspan fill="#ce9178">"a raw </tspan><tspan fill="#d7ba7d">\n</tspan><tspan fill="#ce9178"> literal, where \#n is the escape"</tspan><tspan fill="#d4d4d4">#</tspan></text>
+<text style="white-space:pre" x="12" y="368"><tspan fill="#6e7681">19 </tspan><tspan fill="#d4d4d4">##</tspan><tspan fill="#ce9178">"nested "</tspan><tspan fill="#d4d4d4"># </tspan><tspan fill="#9cdcfe">stays</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#9cdcfe">inside</tspan><tspan fill="#d4d4d4">, </tspan><tspan fill="#c586c0">and</tspan><tspan fill="#d4d4d4"> \##</tspan><tspan fill="#9cdcfe">n</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#9cdcfe">is</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#9cdcfe">the</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#9cdcfe">escape</tspan><tspan fill="#ce9178">"##</tspan></text>
+<text style="white-space:pre" x="12" y="387"><tspan fill="#6e7681">20 </tspan><tspan fill="#ce9178">#'''</tspan></text>
+<text style="white-space:pre" x="12" y="406"><tspan fill="#6e7681">21 </tspan><tspan fill="#ce9178">    A raw block literal.</tspan></text>
+<text style="white-space:pre" x="12" y="425"><tspan fill="#6e7681">22 </tspan><tspan fill="#ce9178">'''#</tspan></text>
+<text style="white-space:pre" x="12" y="444"><tspan fill="#6e7681">23 </tspan></text>
+<text style="white-space:pre" x="12" y="463"><tspan fill="#6e7681">24 </tspan><tspan fill="#ce9178">"</tspan><tspan fill="#9cdcfe">unterminated</tspan></text>
+<text style="white-space:pre" x="12" y="482"><tspan fill="#6e7681">25 </tspan></text>
+<text style="white-space:pre" x="12" y="501"><tspan fill="#6e7681">26 </tspan><tspan fill="#6a9955">// --- characters</tspan></text>
+<text style="white-space:pre" x="12" y="520"><tspan fill="#6e7681">27 </tspan></text>
+<text style="white-space:pre" x="12" y="539"><tspan fill="#6e7681">28 </tspan><tspan fill="#d4d4d4">'</tspan><tspan fill="#9cdcfe">a</tspan><tspan fill="#d4d4d4">' '\</tspan><tspan fill="#9cdcfe">n</tspan><tspan fill="#d4d4d4">' '\</tspan><tspan fill="#b5cea8">0</tspan><tspan fill="#d4d4d4">' '\</tspan><tspan fill="#9cdcfe">u</tspan><tspan fill="#d4d4d4">{</tspan><tspan fill="#b5cea8">1</tspan><tspan fill="#d4d4d4">F</tspan><tspan fill="#b5cea8">600</tspan><tspan fill="#d4d4d4">}'</tspan></text>
+<text style="white-space:pre" x="12" y="558"><tspan fill="#6e7681">29 </tspan><tspan fill="#d4d4d4">'\</tspan><tspan fill="#9cdcfe">x70</tspan><tspan fill="#d4d4d4">'</tspan></text>
+<text style="white-space:pre" x="12" y="577"><tspan fill="#6e7681">30 </tspan><tspan fill="#d4d4d4">''</tspan></text>
+<text style="white-space:pre" x="12" y="596"><tspan fill="#6e7681">31 </tspan><tspan fill="#d4d4d4">'</tspan><tspan fill="#9cdcfe">abcde</tspan><tspan fill="#d4d4d4">'</tspan></text>
+<text style="white-space:pre" x="12" y="615"><tspan fill="#6e7681">32 </tspan></text>
+<text style="white-space:pre" x="12" y="634"><tspan fill="#6e7681">33 </tspan><tspan fill="#6a9955">// --- true-false</tspan></text>
+<text style="white-space:pre" x="12" y="653"><tspan fill="#6e7681">34 </tspan></text>
+<text style="white-space:pre" x="12" y="672"><tspan fill="#6e7681">35 </tspan><tspan fill="#569cd6">true</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">false</tspan></text>
+<text style="white-space:pre" x="12" y="691"><tspan fill="#6e7681">36 </tspan></text>
+<text style="white-space:pre" x="12" y="710"><tspan fill="#6e7681">37 </tspan><tspan fill="#6a9955">// --- type-literals</tspan></text>
+<text style="white-space:pre" x="12" y="729"><tspan fill="#6e7681">38 </tspan></text>
+<text style="white-space:pre" x="12" y="748"><tspan fill="#6e7681">39 </tspan><tspan fill="#569cd6">array</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">auto</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">bool</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">char</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">str</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">type</tspan><tspan fill="#d4d4d4"> ;</tspan></text>
+<text style="white-space:pre" x="12" y="767"><tspan fill="#6e7681">40 </tspan><tspan fill="#569cd6">i8</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">i16</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">i32</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">i64</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">i128</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#9cdcfe">i10</tspan></text>
+<text style="white-space:pre" x="12" y="786"><tspan fill="#6e7681">41 </tspan><tspan fill="#569cd6">u8</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">u16</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">u32</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">u64</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">u128</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#9cdcfe">u11</tspan></text>
+<text style="white-space:pre" x="12" y="805"><tspan fill="#6e7681">42 </tspan><tspan fill="#569cd6">f8</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">f16</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">f32</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">f64</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#569cd6">f128</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#9cdcfe">f12</tspan></text>
+<text style="white-space:pre" x="12" y="824"><tspan fill="#6e7681">43 </tspan></text>
+<text style="white-space:pre" x="12" y="843"><tspan fill="#6e7681">44 </tspan><tspan fill="#6a9955">// --- numbers</tspan></text>
+<text style="white-space:pre" x="12" y="862"><tspan fill="#6e7681">45 </tspan></text>
+<text style="white-space:pre" x="12" y="881"><tspan fill="#6e7681">46 </tspan><tspan fill="#b5cea8">12345</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#b5cea8">6789</tspan><tspan fill="#d4d4d4"> </tspan><tspan fill="#b5cea8">00012345</tspan></text>
+<text style="white-space:pre" x="12" y="900"><tspan fill="#6e7681">47 </tspan></text>
+<text style="white-space:pre" x="12" y="919"><tspan fill="#6e7681">48 </tspan><tspan fill="#b5cea8">1234.56789</tspan></text>
+<text style="white-space:pre" x="12" y="938"><tspan fill="#6e7681">49 </tspan><tspan fill="#b5cea8">0.875</tspan></text>
+<text style="white-space:pre" x="12" y="957"><tspan fill="#6e7681">50 </tspan><tspan fill="#b5cea8">0.3e5</tspan></text>
+<text style="white-space:pre" x="12" y="976"><tspan fill="#6e7681">51 </tspan><tspan fill="#b5cea8">1</tspan><tspan fill="#d4d4d4">e</tspan><tspan fill="#b5cea8">5</tspan></text>
+<text style="white-space:pre" x="12" y="995"><tspan fill="#6e7681">52 </tspan><tspan fill="#d4d4d4">.</tspan><tspan fill="#b5cea8">123</tspan></text>
+<text style="white-space:pre" x="12" y="1014"><tspan fill="#6e7681">53 </tspan><tspan fill="#d4d4d4">.</tspan><tspan fill="#b5cea8">1</tspan><tspan fill="#d4d4d4">e</tspan><tspan fill="#b5cea8">3</tspan></text>
+<text style="white-space:pre" x="12" y="1033"><tspan fill="#6e7681">54 </tspan></text>
+<text style="white-space:pre" x="12" y="1052"><tspan fill="#6e7681">55 </tspan><tspan fill="#b5cea8">0</tspan><tspan fill="#d4d4d4">o</tspan><tspan fill="#b5cea8">755</tspan></text>
+<text style="white-space:pre" x="12" y="1071"><tspan fill="#6e7681">56 </tspan><tspan fill="#b5cea8">0</tspan><tspan fill="#d4d4d4">o_</tspan><tspan fill="#b5cea8">17</tspan></text>
+<text style="white-space:pre" x="12" y="1090"><tspan fill="#6e7681">57 </tspan><tspan fill="#b5cea8">0</tspan><tspan fill="#d4d4d4">o</tspan><tspan fill="#b5cea8">8</tspan></text>
+<text style="white-space:pre" x="12" y="1109"><tspan fill="#6e7681">58 </tspan></text>
+<text style="white-space:pre" x="12" y="1128"><tspan fill="#6e7681">59 </tspan><tspan fill="#b5cea8">0b1011_0010</tspan></text>
+<text style="white-space:pre" x="12" y="1147"><tspan fill="#6e7681">60 </tspan><tspan fill="#b5cea8">0b_010</tspan></text>
+<text style="white-space:pre" x="12" y="1166"><tspan fill="#6e7681">61 </tspan><tspan fill="#b5cea8">0b2345</tspan></text>
+<text style="white-space:pre" x="12" y="1185"><tspan fill="#6e7681">62 </tspan><tspan fill="#b5cea8">0</tspan><tspan fill="#d4d4d4">B</tspan><tspan fill="#b5cea8">011</tspan></text>
+<text style="white-space:pre" x="12" y="1204"><tspan fill="#6e7681">63 </tspan></text>
+<text style="white-space:pre" x="12" y="1223"><tspan fill="#6e7681">64 </tspan><tspan fill="#b5cea8">0x2AE5</tspan></text>
+<text style="white-space:pre" x="12" y="1242"><tspan fill="#6e7681">65 </tspan><tspan fill="#b5cea8">0x_F109</tspan></text>
+<text style="white-space:pre" x="12" y="1261"><tspan fill="#6e7681">66 </tspan><tspan fill="#b5cea8">0xD8_E2.5F_7Bp8</tspan></text>
+<text style="white-space:pre" x="12" y="1280"><tspan fill="#6e7681">67 </tspan><tspan fill="#b5cea8">0xabcdef.abcdef</tspan></text>
+<text style="white-space:pre" x="12" y="1299"><tspan fill="#6e7681">68 </tspan><tspan fill="#b5cea8">0</tspan><tspan fill="#d4d4d4">XA</tspan><tspan fill="#b5cea8">85</tspan><tspan fill="#d4d4d4">CE</tspan></text>
+</g></svg>

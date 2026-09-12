@@ -11,6 +11,24 @@
 ''' Multi line
     string
 '''
+'''py
+    Block literal with a file type indicator.
+'''
+
+#"a raw \n literal, where \#n is the escape"#
+##"nested "# stays inside, and \##n is the escape"##
+#'''
+    A raw block literal.
+'''#
+
+"unterminated
+
+// --- characters
+
+'a' '\n' '\0' '\u{1F600}'
+'\x70'
+''
+'abcde'
 
 // --- true-false
 
@@ -18,7 +36,7 @@ true false
 
 // --- type-literals
 
-array bool char str type ;
+array auto bool char str type ;
 i8 i16 i32 i64 i128 i10
 u8 u16 u32 u64 u128 u11
 f8 f16 f32 f64 f128 f12
@@ -33,6 +51,10 @@ f8 f16 f32 f64 f128 f12
 1e5
 .123
 .1e3
+
+0o755
+0o_17
+0o8
 
 0b1011_0010
 0b_010
