@@ -15,15 +15,15 @@ fn Run() {
   while (PeekChar() != CharOrEOF.EOF()) {
     if (PeekChar() == 'm') {
       // TODO: Use `if let` when available.
-      let result: (bool, i32, i32) = ReadMul();
-      if (result.0 and enabled) {
-        total += result.1 * result.2;
+      let result: Core.Optional((i32, i32)) = ReadMul();
+      if (result.HasValue() and enabled) {
+        total += result.Get().0 * result.Get().1;
       }
     } else if (PeekChar() == 'd') {
       // TODO: Use `if let` when available.
-      let result: (bool, bool) = ReadDoOrDont();
-      if (result.0) {
-        enabled = result.1;
+      let result: Core.Optional(bool) = ReadDoOrDont();
+      if (result.HasValue()) {
+        enabled = result.Get();
       }
     } else {
       ReadChar();
