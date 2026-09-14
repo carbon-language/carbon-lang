@@ -223,15 +223,14 @@ auto Mangler::MangleImpl(SemIR::FunctionId function_id,
                                       .generated_functions()
                                       .Get(function.generated_function_id())
                                       .canonical_key;
-      // TODO: Use the self's type instead of a fingerprint so the mangled name
-      // is human-readable.
-      //
-      // TODO: We want to include parameters here when they are part of the
-      // GeneratedFunction::CanonicalKey.
+      const auto& specific =
+          sem_ir().specifics().Get(canonical_key.interface_specific_id);
+      // TODO: Should we use the fully qualified name of each argument (and any
+      // parameters each type has...) when possible?
+      MangleFingerprint(os, &sem_ir(), specific.args_id);
+      // TODO: We want to include the function's parameters here when they are
+      // part of the GeneratedFunction::CanonicalKey to disambiguate overloads.
       // Or perhaps using the index of the function in the witness table?
-      MangleFingerprint(
-          os, &sem_ir(),
-          sem_ir().types().GetTypeInstId(canonical_key.self_type_id));
       os << ":core";
       break;
     }

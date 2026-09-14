@@ -30,14 +30,14 @@ auto BuildPrimitiveCopyWitness(
 // `param_types` contains the parameter types. The first element of
 // `param_types` is treated as the `self` type, and any subsequent elements
 // are treated as the types of the remaining explicit parameters.
-// The `parent_scope_id` is the parent of the function, which should be an
-// interface in Core.
-auto MakeBuiltinOperatorFunction(Context& context,
+// The `interface_id` is the interface containing the `op_name` function, which
+// should be an interface in Core.
+auto MakeBuiltinOperatorFunction(Context& context, SemIR::LocId loc_id,
                                  llvm::ArrayRef<SemIR::TypeId> param_types,
                                  SemIR::TypeId return_type_id,
                                  CoreIdentifier op_name,
                                  SemIR::BuiltinFunctionKind builtin_kind,
-                                 SemIR::NameScopeId parent_scope_id)
+                                 SemIR::InterfaceId interface_id)
     -> SemIR::InstId;
 
 // Builds a witness that the given type is trivially destroyable.

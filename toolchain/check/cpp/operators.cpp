@@ -581,9 +581,9 @@ static auto GetBuiltinOperatorInfo(clang::OverloadedOperatorKind kind)
   return OpTable[kind];
 }
 
-static auto GetCoreInterfaceNameScope(Context& context, SemIR::LocId loc_id,
-                                      CoreIdentifier interface_name)
-    -> SemIR::NameScopeId {
+static auto GetCoreInterfaceId(Context& context, SemIR::LocId loc_id,
+                               CoreIdentifier interface_name)
+    -> SemIR::InterfaceId {
   auto inst_id = LookupNameInCore(context, loc_id, interface_name);
 
   // Non-generic interfaces.
@@ -593,7 +593,7 @@ static auto GetCoreInterfaceNameScope(Context& context, SemIR::LocId loc_id,
     auto single = declared.TryAsSingleExtend();
     CARBON_KIND_SWITCH(*single) {
       case CARBON_KIND(SemIR::SpecificInterface si): {
-        return context.interfaces().Get(si.interface_id).scope_with_self_id;
+        return si.interface_id;
       }
       case CARBON_KIND(SemIR::SpecificNamedConstraint _): {
         CARBON_FATAL("Operators in named constraints are not yet needed");
@@ -603,7 +603,7 @@ static auto GetCoreInterfaceNameScope(Context& context, SemIR::LocId loc_id,
 
   auto type_id = context.insts().Get(inst_id).type_id();
   auto generic = context.types().GetAs<SemIR::GenericInterfaceType>(type_id);
-  return context.interfaces().Get(generic.interface_id).scope_with_self_id;
+  return generic.interface_id;
 }
 
 // Builds a Carbon builtin function declaration corresponding to an overload
@@ -667,8 +667,9 @@ static auto TryBuildBuiltinOperator(
   }
 
   return MakeBuiltinOperatorFunction(
-      context, arg_type_ids, return_type_id, info.op_name, info.builtin_kind,
-      GetCoreInterfaceNameScope(context, loc_id, info.interface_name));
+      context, loc_id, arg_type_ids, return_type_id, info.op_name,
+      info.builtin_kind,
+      GetCoreInterfaceId(context, loc_id, info.interface_name));
 }
 
 namespace {
