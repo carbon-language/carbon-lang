@@ -10,6 +10,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/class/convert.carbon
 
+// --- class_to_int.carbon
+library "[[@TEST_NAME]]";
+
 class IntWrapper {
   var n: i32;
 }
@@ -25,18 +28,28 @@ fn DoIt() {
   Consume(w);
 }
 
+// --- partial_class_to_partial_base.carbon
+library "[[@TEST_NAME]]";
+
+base class B {}
+base class D { extend base: B; }
+
+fn F(ref d: partial D) -> ref partial B {
+    return d;
+}
+
 // CHECK:STDOUT: ; ---
-// CHECK:STDOUT: ; ModuleID = 'convert.carbon'
-// CHECK:STDOUT: source_filename = "convert.carbon"
+// CHECK:STDOUT: ; ModuleID = 'class_to_int.carbon'
+// CHECK:STDOUT: source_filename = "class_to_int.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @IntWrapper.val.loc24_3 = internal constant { i32 } { i32 42 }
+// CHECK:STDOUT: @IntWrapper.val.loc14_3 = internal constant { i32 } { i32 42 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.IntWrapper.Main:ImplicitAs.84588f41d61dafba.Core"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_40.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc18_40.2 = load i32, ptr %.loc18_40.1.n, align 4, !dbg !11
-// CHECK:STDOUT:   ret i32 %.loc18_40.2, !dbg !12
+// CHECK:STDOUT:   %.loc8_40.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc8_40.2 = load i32, ptr %.loc8_40.1.n, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc8_40.2, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -50,8 +63,8 @@ fn DoIt() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %w.var = alloca { i32 }, align 4, !dbg !22
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !22
-// CHECK:STDOUT:   %.loc24_31.3.n = getelementptr inbounds nuw { i32 }, ptr %w.var, i32 0, i32 0, !dbg !23
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc24_3, i64 4, i1 false), !dbg !22
+// CHECK:STDOUT:   %.loc14_31.3.n = getelementptr inbounds nuw { i32 }, ptr %w.var, i32 0, i32 0, !dbg !23
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc14_3, i64 4, i1 false), !dbg !22
 // CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.84588f41d61dafba.Core"(ptr %w.var), !dbg !24
 // CHECK:STDOUT:   call void @_CConsume.Main(i32 %IntWrapper.as.ImplicitAs.impl.Convert.call), !dbg !25
 // CHECK:STDOUT:   call void @"_COp.44651c3f1152aab5:core.Destroy.Core"(ptr %w.var), !dbg !22
@@ -89,44 +102,72 @@ fn DoIt() {
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "convert.carbon", directory: "")
+// CHECK:STDOUT: !1 = !DIFile(filename: "class_to_int.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.IntWrapper.Main:ImplicitAs.84588f41d61dafba.Core", scope: null, file: !1, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !9)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.IntWrapper.Main:ImplicitAs.84588f41d61dafba.Core", scope: null, file: !1, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !9)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7, !8}
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !9 = !{!10}
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 18, column: 36, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 18, column: 29, scope: !4)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Consume", linkageName: "_CConsume.Main", scope: null, file: !1, line: 21, type: !14, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !16)
+// CHECK:STDOUT: !11 = !DILocation(line: 8, column: 36, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 8, column: 29, scope: !4)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Consume", linkageName: "_CConsume.Main", scope: null, file: !1, line: 11, type: !14, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !16)
 // CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
 // CHECK:STDOUT: !15 = !{null, !7}
 // CHECK:STDOUT: !16 = !{!17}
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !13, type: !7)
-// CHECK:STDOUT: !18 = !DILocation(line: 21, column: 1, scope: !13)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "DoIt", linkageName: "_CDoIt.Main", scope: null, file: !1, line: 23, type: !20, spFlags: DISPFlagDefinition, unit: !0)
+// CHECK:STDOUT: !18 = !DILocation(line: 11, column: 1, scope: !13)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "DoIt", linkageName: "_CDoIt.Main", scope: null, file: !1, line: 13, type: !20, spFlags: DISPFlagDefinition, unit: !0)
 // CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
 // CHECK:STDOUT: !21 = !{null}
-// CHECK:STDOUT: !22 = !DILocation(line: 24, column: 3, scope: !19)
-// CHECK:STDOUT: !23 = !DILocation(line: 24, column: 23, scope: !19)
-// CHECK:STDOUT: !24 = !DILocation(line: 25, column: 11, scope: !19)
-// CHECK:STDOUT: !25 = !DILocation(line: 25, column: 3, scope: !19)
-// CHECK:STDOUT: !26 = !DILocation(line: 23, column: 1, scope: !19)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !1, line: 24, type: !14, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !28)
+// CHECK:STDOUT: !22 = !DILocation(line: 14, column: 3, scope: !19)
+// CHECK:STDOUT: !23 = !DILocation(line: 14, column: 23, scope: !19)
+// CHECK:STDOUT: !24 = !DILocation(line: 15, column: 11, scope: !19)
+// CHECK:STDOUT: !25 = !DILocation(line: 15, column: 3, scope: !19)
+// CHECK:STDOUT: !26 = !DILocation(line: 13, column: 1, scope: !19)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !1, line: 14, type: !14, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !28)
 // CHECK:STDOUT: !28 = !{!29}
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !7)
-// CHECK:STDOUT: !30 = !DILocation(line: 24, column: 3, scope: !27)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Op", linkageName: "_COp.b1b85bf5fbbbeec6:core.Destroy.Core", scope: null, file: !1, line: 24, type: !32, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !34)
+// CHECK:STDOUT: !30 = !DILocation(line: 14, column: 3, scope: !27)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Op", linkageName: "_COp.b1b85bf5fbbbeec6:core.Destroy.Core", scope: null, file: !1, line: 14, type: !32, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !34)
 // CHECK:STDOUT: !32 = !DISubroutineType(types: !33)
 // CHECK:STDOUT: !33 = !{null, !8}
 // CHECK:STDOUT: !34 = !{!35}
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !31, type: !8)
-// CHECK:STDOUT: !36 = !DILocation(line: 24, column: 3, scope: !31)
-// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "Op", linkageName: "_COp.44651c3f1152aab5:core.Destroy.Core", scope: null, file: !1, line: 24, type: !32, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !38)
+// CHECK:STDOUT: !36 = !DILocation(line: 14, column: 3, scope: !31)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "Op", linkageName: "_COp.44651c3f1152aab5:core.Destroy.Core", scope: null, file: !1, line: 14, type: !32, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !38)
 // CHECK:STDOUT: !38 = !{!39}
 // CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !37, type: !8)
-// CHECK:STDOUT: !40 = !DILocation(line: 24, column: 3, scope: !37)
+// CHECK:STDOUT: !40 = !DILocation(line: 14, column: 3, scope: !37)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
+// CHECK:STDOUT: ; ModuleID = 'partial_class_to_partial_base.carbon'
+// CHECK:STDOUT: source_filename = "partial_class_to_partial_base.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define ptr @_CF.Main(ptr %d) #0 !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc7_13.1.base = getelementptr inbounds nuw { {} }, ptr %d, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   ret ptr %.loc7_13.1.base, !dbg !10
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !1 = !DIFile(filename: "partial_class_to_partial_base.carbon", directory: "")
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !1, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !8)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{!7, !7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !8 = !{!9}
+// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 5, scope: !4)
 // CHECK:STDOUT:
