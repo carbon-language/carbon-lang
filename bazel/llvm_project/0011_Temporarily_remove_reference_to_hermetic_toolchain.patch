@@ -6,15 +6,15 @@ point we can remove this patch.
 ---
 --- a/utils/bazel/llvm-project-overlay/llvm/config.bzl
 +++ b/utils/bazel/llvm-project-overlay/llvm/config.bzl
-@@ -48,7 +48,6 @@
- 
+@@ -72,7 +72,6 @@
  backtrace_defines = select({
+     "@platforms//os:emscripten": [],
      "@platforms//os:windows": [],
 -    "@llvm//platforms/config:musl": [],
      "//conditions:default": [
          "HAVE_BACKTRACE=1",
          "BACKTRACE_HEADER=<execinfo.h>",
-@@ -56,7 +55,6 @@
+@@ -80,7 +79,6 @@
  })
  
  mallinfo_defines = select({
