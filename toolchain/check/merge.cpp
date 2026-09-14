@@ -687,44 +687,6 @@ static auto FillPrevEntityInfo(Context& context,
   }
 }
 
-// Updates the default values in `prev_function` to include any of those not
-// previously specified and that are now specified in `new_function`.
-static auto MergeFunctionParamDefaultValues(Context& context,
-                                            SemIR::Function& prev_function,
-                                            const SemIR::Function& new_function)
-    -> void {
-  CARBON_CHECK(prev_function.call_param_default_values_id.has_value() ==
-               new_function.call_param_default_values_id.has_value());
-  if (!prev_function.call_param_default_values_id.has_value()) {
-    return;
-  }
-
-  auto prev_value_inst_ids =
-      context.inst_blocks().Get(prev_function.call_param_default_values_id);
-  auto new_value_inst_ids =
-      context.inst_blocks().Get(new_function.call_param_default_values_id);
-  CARBON_CHECK(prev_value_inst_ids.size() == new_value_inst_ids.size());
-
-  llvm::SmallVector<SemIR::InstId> merged_value_inst_ids;
-  bool merge_has_new_info = false;
-  merged_value_inst_ids.reserve(prev_value_inst_ids.size());
-
-  for (size_t i = 0; i < prev_value_inst_ids.size(); ++i) {
-    bool had_value =
-        !context.insts().Is<SemIR::UnspecifiedValue>(prev_value_inst_ids[i]);
-    // FIXME: how to merge these properly?
-    auto merged_id = had_value ? prev_value_inst_ids[i] : new_value_inst_ids[i];
-    merge_has_new_info |=
-        !had_value && !context.insts().Is<SemIR::UnspecifiedValue>(merged_id);
-    merged_value_inst_ids.push_back(merged_id);
-  }
-
-  if (merge_has_new_info) {
-    auto merged_block_id = context.inst_blocks().Add(merged_value_inst_ids);
-    prev_function.call_param_default_values_id = merged_block_id;
-  }
-}
-
 template <typename EntityT>
 auto TryMergeRedecl(Context& context,
                     const DeclNameStack::NameContext& name_context,
@@ -899,10 +861,6 @@ auto TryMergeRedecl(Context& context,
 
   if (is_definition) {
     prev_entity.MergeDefinition(entity_info.new_entity);
-    if constexpr (IsFunction) {
-      MergeFunctionParamDefaultValues(context, prev_entity,
-                                      entity_info.new_entity);
-    }
   }
 
   auto replace_prev_inst = prev_import_ir_id.has_value();

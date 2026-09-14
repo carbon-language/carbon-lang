@@ -306,10 +306,9 @@ static auto CheckFunctionEvaluationModeMatches(
 }
 
 // Checks every parameter in `prev_function` and `new_function`, that if they
-// both specify a default value those values are identical, or that at most
-// one has an unspecified default value. If `diagnose` is true, issues
-// diagnostics where either condition is violated. Returns true if every
-// parameter met both criteria.
+// both specify a default value those values are identical. If `diagnose` is
+// true, issues diagnostics when that condition is violated. Returns true if
+// ever parameter met the condition.
 static auto CheckDefaultValueConsistency(Context& context,
                                          const SemIR::Function& new_function,
                                          const SemIR::Function& prev_function,
@@ -341,40 +340,24 @@ static auto CheckDefaultValueConsistency(Context& context,
 
   CARBON_CHECK(prev_value_constant_ids.size() == new_value_constant_ids.size());
 
-  llvm::SmallVector<size_t> indices_without_values;
   llvm::SmallVector<size_t> indices_with_different_values;
   for (size_t i = 0; i < prev_value_constant_ids.size(); ++i) {
-    bool prev_value_specified =
-        !context.constant_values().InstIs<SemIR::UnspecifiedValue>(
-            prev_value_constant_ids[i]);
+    // We require the first declaration to always declare default values.
+    CARBON_CHECK(!context.constant_values().InstIs<SemIR::UnspecifiedValue>(
+        prev_value_constant_ids[i]));
     bool new_value_specified =
         !context.constant_values().InstIs<SemIR::UnspecifiedValue>(
             new_value_constant_ids[i]);
-    if (!prev_value_specified && !new_value_specified) {
-      indices_without_values.push_back(i);
-    } else if (prev_value_specified && new_value_specified &&
-               prev_value_constant_ids[i] != new_value_constant_ids[i]) {
+    if (new_value_specified &&
+        prev_value_constant_ids[i] != new_value_constant_ids[i]) {
       indices_with_different_values.push_back(i);
     }
   }
 
-  bool check_ok =
-      indices_without_values.empty() && indices_with_different_values.empty();
+  bool check_ok = indices_with_different_values.empty();
 
   if (check_ok || !diagnose) {
     return check_ok;
-  }
-
-  for (auto index : indices_without_values) {
-    CARBON_DIAGNOSTIC(PatternDefaultValueNeverSpecified, Error,
-                      "this default value is never specified.");
-    CARBON_DIAGNOSTIC(PatternDefaultValueNeverSpecifiedNote, Note,
-                      "previous unspecified declaration here.");
-    context.emitter()
-        .Build(new_default_value_ids[index], PatternDefaultValueNeverSpecified)
-        .Note(prev_default_value_ids[index],
-              PatternDefaultValueNeverSpecifiedNote)
-        .Emit();
   }
 
   for (auto index : indices_with_different_values) {

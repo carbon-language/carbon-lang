@@ -41,6 +41,15 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 let (y: i32, x: i32 = 0) = (1, 2);
 
+// --- fail_default_values_unspecified.carbon
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_default_values_unspecified.carbon:[[@LINE+4]]:27: error: the first owned function declaration must specify values for all default parameter values. [PatternDefaultValueNotSpecified]
+// CHECK:STDERR: fn Z(x: i32 = 0, y: i32 = _);
+// CHECK:STDERR:                           ^
+// CHECK:STDERR:
+fn Z(x: i32 = 0, y: i32 = _);
+
 // --- fail_required_default_values_missing.carbon
 library "[[@TEST_NAME]]";
 

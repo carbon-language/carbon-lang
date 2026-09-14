@@ -373,6 +373,43 @@ static auto DiagnosePositionalParams(Context& context,
   function_info.param_patterns_id = SemIR::InstBlockId::Empty;
 }
 
+// Diagnoses that the default values for function parameters have been
+// completely specified, which is a requirement on the first owning declaration
+// of a function.
+static auto DiagnoseDefaultValuesCompletelySpecified(
+    Context& context, SemIR::Function& function_info) -> void {
+  auto filter_unspecified_values = [&context](SemIR::InstId inst_id) -> bool {
+    auto constant_id = context.constant_values().Get(inst_id);
+    return context.constant_values().InstIs<SemIR::UnspecifiedValue>(
+        constant_id);
+  };
+
+  llvm::SmallVector<SemIR::InstId> unspecified_value_ids;
+  llvm::append_range(
+      unspecified_value_ids,
+      llvm::make_filter_range(context.inst_blocks().GetOrEmpty(
+                                  function_info.call_param_default_values_id),
+                              filter_unspecified_values));
+
+  if (unspecified_value_ids.empty()) {
+    return;
+  }
+
+  auto* inst_iter = unspecified_value_ids.begin();
+  CARBON_DIAGNOSTIC(PatternDefaultValueNotSpecified, Error,
+                    "the first owned function declaration must specify values "
+                    "for all default parameter values.");
+  auto builder =
+      context.emitter().Build(*inst_iter, PatternDefaultValueNotSpecified);
+  for (++inst_iter; inst_iter != unspecified_value_ids.end(); ++inst_iter) {
+    CARBON_DIAGNOSTIC(PatternDefaultValueNotSpecifiedNote, Note,
+                      "additional unspecified default value here.");
+    builder.Note(*inst_iter, PatternDefaultValueNotSpecifiedNote);
+  }
+
+  builder.Emit();
+}
+
 // Build a FunctionDecl describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
@@ -474,6 +511,7 @@ static auto BuildFunctionDecl(Context& context,
     function_decl.type_id =
         GetFunctionType(context, function_decl.function_id,
                         context.scope_stack().PeekSpecificId());
+    DiagnoseDefaultValuesCompletelySpecified(context, function_info);
   } else {
     auto prev_decl_generic_id =
         context.functions().Get(function_decl.function_id).generic_id;
