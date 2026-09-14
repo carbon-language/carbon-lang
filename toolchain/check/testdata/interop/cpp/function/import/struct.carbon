@@ -418,9 +418,9 @@ fn F() {
   // CHECK:STDERR: struct DeclValueReturnStruct;
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_return_type.h:4:1: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: ./decl_value_return_type.h:4:33: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: auto foo_decl_value_return() -> DeclValueReturnStruct;
-  // CHECK:STDERR: ^
+  // CHECK:STDERR:                                 ^
   // CHECK:STDERR:
   Cpp.foo_decl_value_return();
 }

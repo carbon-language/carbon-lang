@@ -55,53 +55,53 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'lib1.carbon'
 // CHECK:STDOUT: source_filename = "lib1.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "lib1.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !18 = !DIFile(filename: "lib1.carbon", directory: "")
+// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'lib2.carbon'
 // CHECK:STDOUT: source_filename = "lib2.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!21}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "lib2.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !20 = !DIFile(filename: "lib2.carbon", directory: "")
+// CHECK:STDOUT: !21 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !20, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'todo_use.carbon'
 // CHECK:STDOUT: source_filename = "todo_use.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
+// CHECK:STDOUT: define i32 @main() #0 !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Lib1CallF.call = call i32 @_CLib1CallF.Main.4d6ceefeb7f772f4(i32 1, i32 2), !dbg !8
-// CHECK:STDOUT:   %Lib2CallF.call = call i32 @_CLib2CallF.Main.4d6ceefeb7f772f4(i32 1, i32 2), !dbg !9
-// CHECK:STDOUT:   ret i32 0, !dbg !10
+// CHECK:STDOUT:   %Lib1CallF.call = call i32 @_CLib1CallF.Main.4d6ceefeb7f772f4(i32 1, i32 2), !dbg !28
+// CHECK:STDOUT:   %Lib2CallF.call = call i32 @_CLib2CallF.Main.4d6ceefeb7f772f4(i32 1, i32 2), !dbg !33
+// CHECK:STDOUT:   ret i32 0, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CLib1CallF.Main.4d6ceefeb7f772f4(i32 %a, i32 %b) #0 !dbg !11 {
-// CHECK:STDOUT:   %1 = call i32 @_CF.Main.4d6ceefeb7f772f4(i32 %a, i32 %b), !dbg !18
-// CHECK:STDOUT:   ret i32 %1, !dbg !19
+// CHECK:STDOUT: define linkonce_odr i32 @_CLib1CallF.Main.4d6ceefeb7f772f4(i32 %a, i32 %b) #0 !dbg !37 {
+// CHECK:STDOUT:   %1 = call i32 @_CF.Main.4d6ceefeb7f772f4(i32 %a, i32 %b), !dbg !46
+// CHECK:STDOUT:   ret i32 %1, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CLib2CallF.Main.4d6ceefeb7f772f4(i32 %a, i32 %b) #0 !dbg !20 {
-// CHECK:STDOUT:   %1 = call i32 @_CF.Main.4d6ceefeb7f772f4(i32 %a, i32 %b), !dbg !25
-// CHECK:STDOUT:   ret i32 %1, !dbg !26
+// CHECK:STDOUT: define linkonce_odr i32 @_CLib2CallF.Main.4d6ceefeb7f772f4(i32 %a, i32 %b) #0 !dbg !49 {
+// CHECK:STDOUT:   %1 = call i32 @_CF.Main.4d6ceefeb7f772f4(i32 %a, i32 %b), !dbg !58
+// CHECK:STDOUT:   ret i32 %1, !dbg !59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.4d6ceefeb7f772f4(i32 %a, i32 %_) #0 !dbg !27 {
-// CHECK:STDOUT:   ret i32 %a, !dbg !31
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.4d6ceefeb7f772f4(i32 %a, i32 %_) #0 !dbg !61 {
+// CHECK:STDOUT:   ret i32 %a, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -109,39 +109,39 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!23}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "todo_use.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !1, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{!7}
-// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !8 = !DILocation(line: 10, column: 16, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 11, column: 16, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 9, column: 1, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Lib1CallF", linkageName: "_CLib1CallF.Main.4d6ceefeb7f772f4", scope: null, file: !12, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !15)
-// CHECK:STDOUT: !12 = !DIFile(filename: "lib1.carbon", directory: "")
-// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !14 = !{!7, !7, !7}
-// CHECK:STDOUT: !15 = !{!16, !17}
-// CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !7)
-// CHECK:STDOUT: !17 = !DILocalVariable(arg: 2, scope: !11, type: !7)
-// CHECK:STDOUT: !18 = !DILocation(line: 9, column: 10, scope: !11)
-// CHECK:STDOUT: !19 = !DILocation(line: 9, column: 3, scope: !11)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Lib2CallF", linkageName: "_CLib2CallF.Main.4d6ceefeb7f772f4", scope: null, file: !21, line: 11, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !22)
-// CHECK:STDOUT: !21 = !DIFile(filename: "lib2.carbon", directory: "")
-// CHECK:STDOUT: !22 = !{!23, !24}
-// CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !20, type: !7)
-// CHECK:STDOUT: !24 = !DILocalVariable(arg: 2, scope: !20, type: !7)
-// CHECK:STDOUT: !25 = !DILocation(line: 12, column: 10, scope: !20)
-// CHECK:STDOUT: !26 = !DILocation(line: 12, column: 3, scope: !20)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.4d6ceefeb7f772f4", scope: null, file: !12, line: 4, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !28)
-// CHECK:STDOUT: !28 = !{!29, !30}
-// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !27, type: !7)
-// CHECK:STDOUT: !30 = !DILocalVariable(arg: 2, scope: !27, type: !7)
-// CHECK:STDOUT: !31 = !DILocation(line: 5, column: 3, scope: !27)
+// CHECK:STDOUT: !18 = !DIFile(filename: "lib1.carbon", directory: "")
+// CHECK:STDOUT: !20 = !DIFile(filename: "lib2.carbon", directory: "")
+// CHECK:STDOUT: !22 = !DIFile(filename: "todo_use.carbon", directory: "")
+// CHECK:STDOUT: !23 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !22, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !24 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !25 = !{!24}
+// CHECK:STDOUT: !26 = !DISubroutineType(types: !25)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !22, line: 9, type: !26, spFlags: DISPFlagDefinition, unit: !23)
+// CHECK:STDOUT: !28 = !DILocation(line: 10, column: 16, scope: !27)
+// CHECK:STDOUT: !29 = !{!24, !24, !24}
+// CHECK:STDOUT: !30 = !DISubroutineType(types: !29)
+// CHECK:STDOUT: !33 = !DILocation(line: 11, column: 16, scope: !27)
+// CHECK:STDOUT: !36 = !DILocation(line: 9, column: 1, scope: !27)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "Lib1CallF", linkageName: "_CLib1CallF.Main.4d6ceefeb7f772f4", scope: null, file: !18, line: 8, type: !30, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !48)
+// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !37, type: !24)
+// CHECK:STDOUT: !39 = !DILocalVariable(arg: 2, scope: !37, type: !24)
+// CHECK:STDOUT: !46 = !DILocation(line: 9, column: 10, scope: !37)
+// CHECK:STDOUT: !47 = !DILocation(line: 9, column: 3, scope: !37)
+// CHECK:STDOUT: !48 = !{!38, !39}
+// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "Lib2CallF", linkageName: "_CLib2CallF.Main.4d6ceefeb7f772f4", scope: null, file: !20, line: 11, type: !30, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !60)
+// CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !49, type: !24)
+// CHECK:STDOUT: !51 = !DILocalVariable(arg: 2, scope: !49, type: !24)
+// CHECK:STDOUT: !58 = !DILocation(line: 12, column: 10, scope: !49)
+// CHECK:STDOUT: !59 = !DILocation(line: 12, column: 3, scope: !49)
+// CHECK:STDOUT: !60 = !{!50, !51}
+// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.4d6ceefeb7f772f4", scope: null, file: !18, line: 4, type: !30, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !70)
+// CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !61, type: !24)
+// CHECK:STDOUT: !63 = !DILocalVariable(arg: 2, scope: !61, type: !24)
+// CHECK:STDOUT: !69 = !DILocation(line: 5, column: 3, scope: !61)
+// CHECK:STDOUT: !70 = !{!62, !63}
 // CHECK:STDOUT:

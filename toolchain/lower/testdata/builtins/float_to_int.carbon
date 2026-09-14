@@ -36,97 +36,97 @@ fn TestConvertF128ToU64(a: f128) -> u64 { return ConvertF128ToU64(a); }
 // CHECK:STDOUT: source_filename = "float_to_int.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CTestConvertF32ToI32.Main(float %a) #0 !dbg !4 {
+// CHECK:STDOUT: define i32 @_CTestConvertF32ToI32.Main(float %a) #0 !dbg !46 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ConvertF32ToI32.call = fptosi float %a to i32, !dbg !11
-// CHECK:STDOUT:   ret i32 %ConvertF32ToI32.call, !dbg !12
+// CHECK:STDOUT:   %ConvertF32ToI32.call = fptosi float %a to i32, !dbg !52
+// CHECK:STDOUT:   ret i32 %ConvertF32ToI32.call, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CTestConvertF32ToU32.Main(float %a) #0 !dbg !13 {
+// CHECK:STDOUT: define i32 @_CTestConvertF32ToU32.Main(float %a) #0 !dbg !55 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ConvertF32ToU32.call = fptoui float %a to i32, !dbg !19
-// CHECK:STDOUT:   ret i32 %ConvertF32ToU32.call, !dbg !20
+// CHECK:STDOUT:   %ConvertF32ToU32.call = fptoui float %a to i32, !dbg !61
+// CHECK:STDOUT:   ret i32 %ConvertF32ToU32.call, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CTestConvertF64ToI32.Main(double %a) #0 !dbg !21 {
+// CHECK:STDOUT: define i32 @_CTestConvertF64ToI32.Main(double %a) #0 !dbg !64 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ConvertF64ToI32.call = fptosi double %a to i32, !dbg !24
-// CHECK:STDOUT:   ret i32 %ConvertF64ToI32.call, !dbg !25
+// CHECK:STDOUT:   %ConvertF64ToI32.call = fptosi double %a to i32, !dbg !70
+// CHECK:STDOUT:   ret i32 %ConvertF64ToI32.call, !dbg !71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CTestConvertF64ToU32.Main(double %a) #0 !dbg !26 {
+// CHECK:STDOUT: define i32 @_CTestConvertF64ToU32.Main(double %a) #0 !dbg !73 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ConvertF64ToU32.call = fptoui double %a to i32, !dbg !29
-// CHECK:STDOUT:   ret i32 %ConvertF64ToU32.call, !dbg !30
+// CHECK:STDOUT:   %ConvertF64ToU32.call = fptoui double %a to i32, !dbg !79
+// CHECK:STDOUT:   ret i32 %ConvertF64ToU32.call, !dbg !80
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i64 @_CTestConvertF128ToI64.Main(fp128 %a) #0 !dbg !31 {
+// CHECK:STDOUT: define i64 @_CTestConvertF128ToI64.Main(fp128 %a) #0 !dbg !82 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ConvertF128ToI64.call = fptosi fp128 %a to i64, !dbg !37
-// CHECK:STDOUT:   ret i64 %ConvertF128ToI64.call, !dbg !38
+// CHECK:STDOUT:   %ConvertF128ToI64.call = fptosi fp128 %a to i64, !dbg !88
+// CHECK:STDOUT:   ret i64 %ConvertF128ToI64.call, !dbg !89
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i64 @_CTestConvertF128ToU64.Main(fp128 %a) #0 !dbg !39 {
+// CHECK:STDOUT: define i64 @_CTestConvertF128ToU64.Main(fp128 %a) #0 !dbg !91 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ConvertF128ToU64.call = fptoui fp128 %a to i64, !dbg !45
-// CHECK:STDOUT:   ret i64 %ConvertF128ToU64.call, !dbg !46
+// CHECK:STDOUT:   %ConvertF128ToU64.call = fptoui fp128 %a to i64, !dbg !97
+// CHECK:STDOUT:   ret i64 %ConvertF128ToU64.call, !dbg !98
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!33}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "float_to_int.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestConvertF32ToI32", linkageName: "_CTestConvertF32ToI32.Main", scope: null, file: !1, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !9)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{!7, !8}
-// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !9 = !{!10}
-// CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 4, column: 48, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 4, column: 41, scope: !4)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "TestConvertF32ToU32", linkageName: "_CTestConvertF32ToU32.Main", scope: null, file: !1, line: 7, type: !14, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !17)
-// CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
-// CHECK:STDOUT: !15 = !{!16, !8}
-// CHECK:STDOUT: !16 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_unsigned)
-// CHECK:STDOUT: !17 = !{!18}
-// CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !13, type: !8)
-// CHECK:STDOUT: !19 = !DILocation(line: 7, column: 48, scope: !13)
-// CHECK:STDOUT: !20 = !DILocation(line: 7, column: 41, scope: !13)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestConvertF64ToI32", linkageName: "_CTestConvertF64ToI32.Main", scope: null, file: !1, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !22)
-// CHECK:STDOUT: !22 = !{!23}
-// CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !21, type: !8)
-// CHECK:STDOUT: !24 = !DILocation(line: 10, column: 48, scope: !21)
-// CHECK:STDOUT: !25 = !DILocation(line: 10, column: 41, scope: !21)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "TestConvertF64ToU32", linkageName: "_CTestConvertF64ToU32.Main", scope: null, file: !1, line: 13, type: !14, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !27)
-// CHECK:STDOUT: !27 = !{!28}
-// CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !26, type: !8)
-// CHECK:STDOUT: !29 = !DILocation(line: 13, column: 48, scope: !26)
-// CHECK:STDOUT: !30 = !DILocation(line: 13, column: 41, scope: !26)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "TestConvertF128ToI64", linkageName: "_CTestConvertF128ToI64.Main", scope: null, file: !1, line: 16, type: !32, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !35)
-// CHECK:STDOUT: !32 = !DISubroutineType(types: !33)
-// CHECK:STDOUT: !33 = !{!34, !8}
-// CHECK:STDOUT: !34 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !35 = !{!36}
-// CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !31, type: !8)
-// CHECK:STDOUT: !37 = !DILocation(line: 16, column: 50, scope: !31)
-// CHECK:STDOUT: !38 = !DILocation(line: 16, column: 43, scope: !31)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "TestConvertF128ToU64", linkageName: "_CTestConvertF128ToU64.Main", scope: null, file: !1, line: 19, type: !40, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !43)
-// CHECK:STDOUT: !40 = !DISubroutineType(types: !41)
-// CHECK:STDOUT: !41 = !{!42, !8}
-// CHECK:STDOUT: !42 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_unsigned)
-// CHECK:STDOUT: !43 = !{!44}
-// CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !39, type: !8)
-// CHECK:STDOUT: !45 = !DILocation(line: 19, column: 50, scope: !39)
-// CHECK:STDOUT: !46 = !DILocation(line: 19, column: 43, scope: !39)
+// CHECK:STDOUT: !17 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_unsigned)
+// CHECK:STDOUT: !32 = !DIFile(filename: "float_to_int.carbon", directory: "")
+// CHECK:STDOUT: !33 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !32, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !34 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !35 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_unsigned)
+// CHECK:STDOUT: !36 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !37 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !38 = !{!34, !37}
+// CHECK:STDOUT: !39 = !DISubroutineType(types: !38)
+// CHECK:STDOUT: !40 = !{!35, !37}
+// CHECK:STDOUT: !41 = !DISubroutineType(types: !40)
+// CHECK:STDOUT: !42 = !{!36, !37}
+// CHECK:STDOUT: !43 = !DISubroutineType(types: !42)
+// CHECK:STDOUT: !44 = !{!17, !37}
+// CHECK:STDOUT: !45 = !DISubroutineType(types: !44)
+// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "TestConvertF32ToI32", linkageName: "_CTestConvertF32ToI32.Main", scope: null, file: !32, line: 4, type: !39, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !54)
+// CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !46, type: !37)
+// CHECK:STDOUT: !52 = !DILocation(line: 4, column: 48, scope: !46)
+// CHECK:STDOUT: !53 = !DILocation(line: 4, column: 41, scope: !46)
+// CHECK:STDOUT: !54 = !{!47}
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "TestConvertF32ToU32", linkageName: "_CTestConvertF32ToU32.Main", scope: null, file: !32, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !63)
+// CHECK:STDOUT: !56 = !DILocalVariable(arg: 1, scope: !55, type: !37)
+// CHECK:STDOUT: !61 = !DILocation(line: 7, column: 48, scope: !55)
+// CHECK:STDOUT: !62 = !DILocation(line: 7, column: 41, scope: !55)
+// CHECK:STDOUT: !63 = !{!56}
+// CHECK:STDOUT: !64 = distinct !DISubprogram(name: "TestConvertF64ToI32", linkageName: "_CTestConvertF64ToI32.Main", scope: null, file: !32, line: 10, type: !39, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !72)
+// CHECK:STDOUT: !65 = !DILocalVariable(arg: 1, scope: !64, type: !37)
+// CHECK:STDOUT: !70 = !DILocation(line: 10, column: 48, scope: !64)
+// CHECK:STDOUT: !71 = !DILocation(line: 10, column: 41, scope: !64)
+// CHECK:STDOUT: !72 = !{!65}
+// CHECK:STDOUT: !73 = distinct !DISubprogram(name: "TestConvertF64ToU32", linkageName: "_CTestConvertF64ToU32.Main", scope: null, file: !32, line: 13, type: !41, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !81)
+// CHECK:STDOUT: !74 = !DILocalVariable(arg: 1, scope: !73, type: !37)
+// CHECK:STDOUT: !79 = !DILocation(line: 13, column: 48, scope: !73)
+// CHECK:STDOUT: !80 = !DILocation(line: 13, column: 41, scope: !73)
+// CHECK:STDOUT: !81 = !{!74}
+// CHECK:STDOUT: !82 = distinct !DISubprogram(name: "TestConvertF128ToI64", linkageName: "_CTestConvertF128ToI64.Main", scope: null, file: !32, line: 16, type: !43, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !90)
+// CHECK:STDOUT: !83 = !DILocalVariable(arg: 1, scope: !82, type: !37)
+// CHECK:STDOUT: !88 = !DILocation(line: 16, column: 50, scope: !82)
+// CHECK:STDOUT: !89 = !DILocation(line: 16, column: 43, scope: !82)
+// CHECK:STDOUT: !90 = !{!83}
+// CHECK:STDOUT: !91 = distinct !DISubprogram(name: "TestConvertF128ToU64", linkageName: "_CTestConvertF128ToU64.Main", scope: null, file: !32, line: 19, type: !45, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !99)
+// CHECK:STDOUT: !92 = !DILocalVariable(arg: 1, scope: !91, type: !37)
+// CHECK:STDOUT: !97 = !DILocation(line: 19, column: 50, scope: !91)
+// CHECK:STDOUT: !98 = !DILocation(line: 19, column: 43, scope: !91)
+// CHECK:STDOUT: !99 = !{!92}
 // CHECK:STDOUT:
