@@ -860,22 +860,9 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
     args.push_back(SemIR::ErrorInst::InstId);
   } else {
     auto self_facet_inst_id = context.constant_values().GetInstId(self_facet);
-    auto self_facet_type_id = context.insts().Get(self_facet_inst_id).type_id();
-    CARBON_CHECK(context.types().IsFacetType(self_facet_type_id));
-
-    // The self may have type TypeType. But the `Self` in a generic require decl
-    // has type FacetType, so we need something similar to replace it in the
-    // specific.
-    //
-    // TODO: TypeType will become an empty FacetType, then this distinction goes
-    // away.
-    if (context.types().Is<SemIR::FacetType>(self_facet_type_id)) {
-      args.push_back(self_facet_inst_id);
-    } else {
-      auto facet_const_id = GetConstantFacetValueForType(
-          context, context.types().GetAsTypeInstId(self_facet_inst_id));
-      args.push_back(context.constant_values().GetInstId(facet_const_id));
-    }
+    CARBON_CHECK(context.types().Is<SemIR::FacetType>(
+        context.insts().Get(self_facet_inst_id).type_id()));
+    args.push_back(self_facet_inst_id);
   }
 
   auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args);

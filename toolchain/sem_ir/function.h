@@ -469,9 +469,14 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
 // that will be the same for all files.
 struct GeneratedFunction : public Printable<GeneratedFunction> {
   struct CanonicalKey {
-    // A specific for the Interface-with-Self from Core, with the Self type
-    // replaced by the specific Self the operation is being generated for.
-    SemIR::SpecificId interface_specific_id;
+    // The Interface from Core.
+    SemIR::SpecificInterfaceId specific_interface_id;
+    // The self type for the operation.
+    //
+    // TODO: If the above becomes an Interface-with-Self specific, then this
+    // separate ID can be removed.
+    SemIR::TypeId self_type_id;
+    // The name of the function in the Core interface specified by the specific.
     SemIR::NameId name_id;
     // TODO: Also include parameters to support overloaded functions. Then use
     // them in mangling.
@@ -495,7 +500,7 @@ struct GeneratedFunction : public Printable<GeneratedFunction> {
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
-    out << "interface_specific_id: " << canonical_key.interface_specific_id
+    out << "specific_interface_id: " << canonical_key.specific_interface_id
         << ", name_id: " << canonical_key.name_id
         << ", function_id: " << function_id << ", decl_id: " << decl_id
         << ", builtin_function_kind: " << builtin_function_kind;

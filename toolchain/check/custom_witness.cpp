@@ -50,29 +50,24 @@ static auto GetFacetAsType(Context& context,
 // `core_interface`. The param_types contains the specific self parameter type
 // followed by any interface argument types. Core interfaces with non-type
 // parameters are not currently needed or supported.
-static auto MakeGeneratedFunctionKey(Context& context, SemIR::LocId loc_id,
-                                     const SemIR::Interface& core_interface,
-                                     SemIR::NameId op_name_id,
-                                     llvm::ArrayRef<SemIR::TypeId> param_types)
+static auto MakeGeneratedFunctionKey(
+    Context& context, SemIR::SpecificInterface core_specific_interface,
+    SemIR::TypeId self_type_id, SemIR::NameId op_name_id)
     -> SemIR::GeneratedFunction::CanonicalKey {
-  auto self_type_id = param_types.consume_front();
-  llvm::SmallVector<SemIR::InstId> params_without_self(
-      llvm::map_range(param_types, [&](SemIR::TypeId type_id) {
-        return context.types().GetTypeInstId(type_id);
-      }));
-  CARBON_CHECK(!params_without_self.empty() ==
-               core_interface.generic_id.has_value());
-  auto interface_specific_id = SemIR::SpecificId::None;
-  if (!params_without_self.empty()) {
-    interface_specific_id = MakeSpecific(
-        context, loc_id, core_interface.generic_id, params_without_self);
-  }
-  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-      context, loc_id, core_interface.generic_id,
-      core_interface.generic_with_self_id, interface_specific_id,
-      self_type_id.AsConstantId());
-  return SemIR::GeneratedFunction::CanonicalKey{interface_with_self_specific_id,
-                                                op_name_id};
+  // TODO: We'd like to build an Interface-with-Self specific here for the key,
+  // via MakeSpecificWithInnerSelf. But we are unable to make a facet value for
+  // Self with GetConstantFacetValueForTypeAndInterface() as we have no witness
+  // for the interface, because we don't have a CustomWitness instruction yet.
+  // To do so, we need to move the witness table out of the CustomWitness
+  // instruction, so that we can reorder things. Then we can make the
+  // CustomWitness inst first, and mutate the table as we build up the entries
+  // for it. For now, we use the InterfaceId and Interface-without-Self
+  // specific, and store the self TypeId separately instead.
+  auto specific_interface_id =
+      context.specific_interfaces().Add(core_specific_interface);
+
+  return SemIR::GeneratedFunction::CanonicalKey{specific_interface_id,
+                                                self_type_id, op_name_id};
 }
 // Attempts to return the canonical Function for a generated function.
 //
@@ -89,6 +84,25 @@ static auto TryGetGeneratedFunction(Context& context,
   return {SemIR::InstId::None, SemIR::FunctionId::None};
 }
 
+static auto MakeCoreSpecificInterface(
+    Context& context, SemIR::LocId loc_id, SemIR::InterfaceId interface_id,
+    SemIR::GenericId interface_generic_id,
+    llvm::ArrayRef<SemIR::TypeId> param_types_without_self)
+    -> SemIR::SpecificInterface {
+  llvm::SmallVector<SemIR::InstId> params_without_self(
+      llvm::map_range(param_types_without_self, [&](SemIR::TypeId type_id) {
+        return context.types().GetTypeInstId(type_id);
+      }));
+  CARBON_CHECK(!params_without_self.empty() ==
+               interface_generic_id.has_value());
+  auto specific_id = SemIR::SpecificId::None;
+  if (!params_without_self.empty()) {
+    specific_id = MakeSpecific(context, loc_id, interface_generic_id,
+                               params_without_self);
+  }
+  return {interface_id, specific_id};
+}
+
 // Returns a manufactured operator function.
 auto MakeBuiltinOperatorFunction(Context& context, SemIR::LocId loc_id,
                                  llvm::ArrayRef<SemIR::TypeId> param_types,
@@ -98,14 +112,16 @@ auto MakeBuiltinOperatorFunction(Context& context, SemIR::LocId loc_id,
                                  SemIR::InterfaceId interface_id)
     -> SemIR::InstId {
   CARBON_CHECK(!param_types.empty());
-  auto self_type_id = param_types.front();
+  auto self_type_id = param_types.consume_front();
   auto name_id = context.core_identifiers().AddNameId(op_name);
   const auto& interface = context.interfaces().Get(interface_id);
-  auto canonical_key = MakeGeneratedFunctionKey(context, loc_id, interface,
-                                                name_id, param_types);
+  auto specific_interface = MakeCoreSpecificInterface(
+      context, loc_id, interface_id, interface.generic_id, param_types);
+  auto canonical_key = MakeGeneratedFunctionKey(context, specific_interface,
+                                                self_type_id, name_id);
   auto [decl_id, function_id] = TryGetGeneratedFunction(context, canonical_key);
   if (!decl_id.has_value()) {
-    llvm::SmallVector<ParamPatternKind> param_kinds(param_types.size() - 1,
+    llvm::SmallVector<ParamPatternKind> param_kinds(param_types.size(),
                                                     ParamPatternKind::Value);
     std::tie(decl_id, function_id) = MakeGeneratedFunctionDecl(
         context, SemIR::LocId::None,
@@ -113,7 +129,7 @@ auto MakeBuiltinOperatorFunction(Context& context, SemIR::LocId loc_id,
          .name_id = name_id,
          .self_type_id = self_type_id,
          .self_kind = ParamPatternKind::Value,
-         .param_type_ids = param_types.drop_front(),
+         .param_type_ids = param_types,
          .param_kinds = param_kinds,
          .return_form =
              ReturnExprAsForm(context, SemIR::LocId::None,
@@ -399,8 +415,10 @@ static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
                                   DestroyFormat format) -> SemIR::InstId {
   auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
   const auto& interface = context.interfaces().Get(interface_id);
-  auto canonical_key = MakeGeneratedFunctionKey(context, loc_id, interface,
-                                                name_id, self_type_id);
+  auto specific_interface = MakeCoreSpecificInterface(
+      context, loc_id, interface_id, interface.generic_id, {});
+  auto canonical_key = MakeGeneratedFunctionKey(context, specific_interface,
+                                                self_type_id, name_id);
   auto [decl_id, function_id] = TryGetGeneratedFunction(context, canonical_key);
   if (!decl_id.has_value()) {
     std::tie(decl_id, function_id) = MakeGeneratedFunctionDecl(

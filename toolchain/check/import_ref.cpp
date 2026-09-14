@@ -2450,7 +2450,7 @@ static auto ImportFunctionDecl(
   auto function_const_id =
       ReplacePlaceholderImportedInst(context, function_decl_id, function_decl);
 
-  if (generated_function_key.interface_specific_id.has_value()) {
+  if (generated_function_key.specific_interface_id.has_value()) {
     const auto& import_generated =
         context.import_ir().generated_functions().Get(
             import_function.generated_function_id());
@@ -2468,7 +2468,9 @@ static auto ImportFunctionDecl(
 }
 
 struct GeneratedFunctionData {
-  SpecificData specific_data;
+  SemIR::SpecificInterface import_specific_interface;
+  SpecificInterfaceData specific_data;
+  SemIR::ConstantId self_type_const_id;
   SemIR::NameId name_id;
 };
 
@@ -2485,10 +2487,15 @@ static auto GetLocalGeneratedFunctionKeyData(
                                .Get(import_generated_function_id)
                                .canonical_key;
 
+  auto import_specific_interface = resolver.import_specific_interfaces().Get(
+      import_key.specific_interface_id);
   auto specific_data =
-      GetLocalSpecificData(resolver, import_key.interface_specific_id);
+      GetLocalSpecificInterfaceData(resolver, import_specific_interface);
+  auto self_type_const_id =
+      GetLocalConstantId(resolver, import_key.self_type_id);
   auto name_id = GetLocalNameId(resolver, import_key.name_id);
-  return {{specific_data, name_id}};
+  return {
+      {import_specific_interface, specific_data, self_type_const_id, name_id}};
 }
 
 static auto GetLocalGeneratedFunctionKey(ImportRefResolver& resolver,
@@ -2496,12 +2503,12 @@ static auto GetLocalGeneratedFunctionKey(ImportRefResolver& resolver,
                                          const GeneratedFunctionData& data)
     -> SemIR::GeneratedFunction::CanonicalKey {
   CARBON_CHECK(import_function.generated_function_id().has_value());
-  const auto& import_generated = resolver.import_ir().generated_functions().Get(
-      import_function.generated_function_id());
-  auto interface_specific_id = GetOrAddLocalSpecific(
-      resolver, import_generated.canonical_key.interface_specific_id,
-      data.specific_data);
-  return {interface_specific_id, data.name_id};
+  auto specific_interface = GetLocalSpecificInterface(
+      resolver, data.import_specific_interface, data.specific_data);
+  auto self_type_id = resolver.local_types().GetTypeIdForTypeConstantId(
+      data.self_type_const_id);
+  return {resolver.local_specific_interfaces().Add(specific_interface),
+          self_type_id, data.name_id};
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2529,7 +2536,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     // we dedupe by using it. Otherwise, we record the imported canonicalization
     // key with the function.
     auto generated_function_key = SemIR::GeneratedFunction::CanonicalKey{
-        SemIR::SpecificId::None, SemIR::NameId::None};
+        SemIR::SpecificInterfaceId::None, SemIR::TypeId::None,
+        SemIR::NameId::None};
     if (generated_function_data) {
       // Generated functions are not generic.
       CARBON_CHECK(!import_function.generic_id.has_value());
