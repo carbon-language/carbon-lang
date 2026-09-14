@@ -228,6 +228,7 @@ auto Mangler::MangleImpl(SemIR::FunctionId function_id,
       //
       // TODO: We want to include parameters here when they are part of the
       // GeneratedFunction::CanonicalKey.
+      // Or perhaps using the index of the function in the witness table?
       MangleFingerprint(
           os, &sem_ir(),
           sem_ir().types().GetTypeInstId(canonical_key.self_type_id));
