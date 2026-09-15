@@ -491,6 +491,9 @@ static auto ApplyDamage(std::string text, Damage damage) -> std::string {
       case Damage::ClassTruncated: {
         // Drop everything after the class's midpoint declaration, including
         // the closing brace. Every class is cut at the same structural point.
+        // TODO: While this cuts a stable number of *declarations*, the number
+        // of *lines* removed can still vary from run to run, potentially
+        // introducing measurement noise. We should attempt to control for this.
         size_t cut =
             gen_class.decl_end_lines[gen_class.decl_end_lines.size() / 2];
         for (size_t line = cut + 1; line <= gen_class.close_line; ++line) {
