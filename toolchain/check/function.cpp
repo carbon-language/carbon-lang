@@ -308,7 +308,7 @@ static auto CheckFunctionEvaluationModeMatches(
 // Checks every parameter in `prev_function` and `new_function`, that if they
 // both specify a default value those values are identical. If `diagnose` is
 // true, issues diagnostics when that condition is violated. Returns true if
-// ever parameter met the condition.
+// every parameter met the condition.
 static auto CheckDefaultValueConsistency(Context& context,
                                          const SemIR::Function& new_function,
                                          const SemIR::Function& prev_function,
