@@ -67,14 +67,8 @@ struct WalkStep {
 // Returns the block that `inst` transfers control to, or `InstBlockId::None` if
 // `inst` is not a branch.
 auto GetBranchTargetId(Inst inst) -> InstBlockId {
-  if (auto branch = inst.TryAs<Branch>()) {
+  if (auto branch = inst.TryAs<AnyBranch>()) {
     return branch->target_id;
-  }
-  if (auto branch_if = inst.TryAs<BranchIf>()) {
-    return branch_if->target_id;
-  }
-  if (auto branch_with_arg = inst.TryAs<BranchWithArg>()) {
-    return branch_with_arg->target_id;
   }
   return InstBlockId::None;
 }
