@@ -344,12 +344,11 @@ fn G(d: D) -> i32 {
 // CHECK:STDOUT:   %inst.specific_inst: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.24c: %D = specific_inst @F.%x.ref, @F(%D)
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.splice_block.edc: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.859: ref %i32 = splice_block %.b2f {
-// CHECK:STDOUT:       %.179: %C = as_compatible %.24c
-// CHECK:STDOUT:       %.8a5: ref %C = class_element_access %.179, element0
-// CHECK:STDOUT:       %.313: ref %C = converted %.24c, %.8a5
-// CHECK:STDOUT:       %.b2f: ref %i32 = class_element_access %.313, element0
+// CHECK:STDOUT:   %inst.splice_block.040: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.05c: ref %i32 = splice_block %.287 {
+// CHECK:STDOUT:       %.ff4: ref %C = class_element_access %.24c, element0
+// CHECK:STDOUT:       %.07e: ref %C = converted %.24c, %.ff4
+// CHECK:STDOUT:       %.287: ref %i32 = class_element_access %.07e, element0
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.splice_block.edd: <instruction> = inst_value [concrete] {
@@ -447,7 +446,7 @@ fn G(d: D) -> i32 {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.756
 // CHECK:STDOUT:   %.loc10_11.4 => constants.%inst.specific_inst
 // CHECK:STDOUT:   %.loc10_11.5 => invalid
-// CHECK:STDOUT:   %.loc10_11.6 => constants.%inst.splice_block.edc
+// CHECK:STDOUT:   %.loc10_11.6 => constants.%inst.splice_block.040
 // CHECK:STDOUT:   %.loc10_11.7 => constants.%i32
 // CHECK:STDOUT:   %.loc10_11.8 => invalid
 // CHECK:STDOUT:   %.loc10_17.8 => constants.%inst.splice_block.edd
