@@ -66,8 +66,8 @@ static constexpr bool IsCarbonMap =
 template <typename InMapT>
 struct MapWrapperImpl {
   using MapT = InMapT;
-  using KeyT = typename MapT::key_type;
-  using ValueT = typename MapT::mapped_type;
+  using KeyT = MapT::key_type;
+  using ValueT = MapT::mapped_type;
 
   MapT m;
 
@@ -218,8 +218,8 @@ auto ReportMetrics(const MapWrapper<MapT>& m_wrapper, benchmark::State& state)
 template <typename MapT>
 static void BM_MapContainsHit(benchmark::State& state) {
   using MapWrapperT = MapWrapper<MapT>;
-  using KT = typename MapWrapperT::KeyT;
-  using VT = typename MapWrapperT::ValueT;
+  using KT = MapWrapperT::KeyT;
+  using VT = MapWrapperT::ValueT;
   MapWrapperT m;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), state.range(1));
@@ -254,8 +254,8 @@ MAP_BENCHMARK_ONE_OP(BM_MapContainsHit, HitArgs);
 template <typename MapT>
 static void BM_MapContainsMiss(benchmark::State& state) {
   using MapWrapperT = MapWrapper<MapT>;
-  using KT = typename MapWrapperT::KeyT;
-  using VT = typename MapWrapperT::ValueT;
+  using KT = MapWrapperT::KeyT;
+  using VT = MapWrapperT::ValueT;
   MapWrapperT m;
   auto [keys, lookup_keys] = GetKeysAndMissKeys<KT>(state.range(0));
   for (auto k : keys) {
@@ -307,8 +307,8 @@ MAP_BENCHMARK_ONE_OP(BM_MapContainsMiss, SizeArgs);
 template <typename MapT>
 static void BM_MapLookupHit(benchmark::State& state) {
   using MapWrapperT = MapWrapper<MapT>;
-  using KT = typename MapWrapperT::KeyT;
-  using VT = typename MapWrapperT::ValueT;
+  using KT = MapWrapperT::KeyT;
+  using VT = MapWrapperT::ValueT;
   MapWrapperT m;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), state.range(1));
@@ -363,8 +363,8 @@ MAP_BENCHMARK_ONE_OP_SIZE(BM_MapLookupHit, HitArgs, LowZeroBitInt<32>, int);
 template <typename MapT>
 static void BM_MapUpdateHit(benchmark::State& state) {
   using MapWrapperT = MapWrapper<MapT>;
-  using KT = typename MapWrapperT::KeyT;
-  using VT = typename MapWrapperT::ValueT;
+  using KT = MapWrapperT::KeyT;
+  using VT = MapWrapperT::ValueT;
   MapWrapperT m;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), state.range(1));
@@ -405,8 +405,8 @@ MAP_BENCHMARK_ONE_OP(BM_MapUpdateHit, HitArgs);
 template <typename MapT>
 static void BM_MapEraseUpdateHit(benchmark::State& state) {
   using MapWrapperT = MapWrapper<MapT>;
-  using KT = typename MapWrapperT::KeyT;
-  using VT = typename MapWrapperT::ValueT;
+  using KT = MapWrapperT::KeyT;
+  using VT = MapWrapperT::ValueT;
   MapWrapperT m;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), state.range(1));
@@ -463,8 +463,8 @@ MAP_BENCHMARK_ONE_OP(BM_MapEraseUpdateHit, HitArgs);
 template <typename MapT>
 static void BM_MapInsertSeq(benchmark::State& state) {
   using MapWrapperT = MapWrapper<MapT>;
-  using KT = typename MapWrapperT::KeyT;
-  using VT = typename MapWrapperT::ValueT;
+  using KT = MapWrapperT::KeyT;
+  using VT = MapWrapperT::ValueT;
   constexpr ssize_t LookupKeysSize = 1 << 8;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), LookupKeysSize);

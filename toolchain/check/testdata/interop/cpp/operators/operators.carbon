@@ -1277,8 +1277,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.bf3: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
 // CHECK:STDOUT:   %bound_method.098: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_42.ac4: %i32 = int_value 42 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc45 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
 // CHECK:STDOUT:   %BinaryC.cpp_destructor.type: type = fn_type @BinaryC.cpp_destructor [concrete]
 // CHECK:STDOUT:   %BinaryC.cpp_destructor: %BinaryC.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BinaryC.Op.type: type = fn_type @BinaryC.Op [concrete]
@@ -1906,18 +1906,18 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %index.patt: %pattern_type.6b6 = value_binding_pattern index [concrete = constants.%index.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound.loc45: <bound method> = bound_method %.loc45_44.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc45: init %empty_tuple.type = call %Destroy.Op.bound.loc45(%.loc45_44.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc44: <bound method> = bound_method %.loc44_47.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc44: init %empty_tuple.type = call %Destroy.Op.bound.loc44(%.loc44_47.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc43: <bound method> = bound_method %.loc43_35.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc43: init %empty_tuple.type = call %Destroy.Op.bound.loc43(%.loc43_35.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc42: <bound method> = bound_method %.loc42_38.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc42: init %empty_tuple.type = call %Destroy.Op.bound.loc42(%.loc42_38.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc41: <bound method> = bound_method %.loc41_35.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc41: init %empty_tuple.type = call %Destroy.Op.bound.loc41(%.loc41_35.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc40: <bound method> = bound_method %.loc40_31.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc40: init %empty_tuple.type = call %Destroy.Op.bound.loc40(%.loc40_31.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc45: <bound method> = bound_method %.loc45_44.3, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc45: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc45(%.loc45_44.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc44: <bound method> = bound_method %.loc44_47.3, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc44: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc44(%.loc44_47.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc43: <bound method> = bound_method %.loc43_35.3, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc43: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc43(%.loc43_35.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc42: <bound method> = bound_method %.loc42_38.3, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc42: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc42(%.loc42_38.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc41: <bound method> = bound_method %.loc41_35.3, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc41: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc41(%.loc41_35.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc40: <bound method> = bound_method %.loc40_31.3, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc40: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc40(%.loc40_31.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %BinaryC.Op.bound.loc23: <bound method> = bound_method %.loc23_44.3, constants.%BinaryC.Op
 // CHECK:STDOUT:   %Op.ref.loc23: %BinaryC.cpp_destructor.type = name_ref Op, imports.%BinaryC.cpp_destructor.decl [concrete = constants.%BinaryC.cpp_destructor]
@@ -1970,7 +1970,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc45(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- multiple_calls.carbon
 // CHECK:STDOUT:
@@ -2165,8 +2165,8 @@ fn F() {
 // CHECK:STDOUT:   %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete]
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.type: type = fn_type @operator_LessEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk: %operator_LessEqual__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc36 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.Op.type: type = fn_type @C.Op [concrete]
@@ -2292,10 +2292,10 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete = constants.%less_than_or_equal.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound.loc36: <bound method> = bound_method %.loc36_44.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc36: init %empty_tuple.type = call %Destroy.Op.bound.loc36(%.loc36_44.3)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc19: <bound method> = bound_method %.loc19_38.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc19: init %empty_tuple.type = call %Destroy.Op.bound.loc19(%.loc19_38.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc36: <bound method> = bound_method %.loc36_44.3, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc36: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc36(%.loc36_44.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc19: <bound method> = bound_method %.loc19_38.3, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc19: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc19(%.loc19_38.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.Op.bound.loc16: <bound method> = bound_method %c2.var, constants.%C.Op
 // CHECK:STDOUT:   %Op.ref.loc16: %C.cpp_destructor.type = name_ref Op, imports.%C.cpp_destructor.decl [concrete = constants.%C.cpp_destructor]
@@ -2308,7 +2308,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc36(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_rewrite_equal.carbon
 // CHECK:STDOUT:
@@ -2331,8 +2331,8 @@ fn F() {
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.type: type = fn_type @operator_EqualEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk: %operator_EqualEqual__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc16 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
 // CHECK:STDOUT:   %EqualC.cpp_destructor.type: type = fn_type @EqualC.cpp_destructor [concrete]
 // CHECK:STDOUT:   %EqualC.cpp_destructor: %EqualC.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %EqualC.Op.type: type = fn_type @EqualC.Op [concrete]
@@ -2427,8 +2427,8 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete = constants.%not_equal.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc16_31.3, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc16_31.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %.loc16_31.3, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound(%.loc16_31.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %EqualC.Op.bound.loc13: <bound method> = bound_method %c2.var, constants.%EqualC.Op
 // CHECK:STDOUT:   %Op.ref.loc13: %EqualC.cpp_destructor.type = name_ref Op, imports.%EqualC.cpp_destructor.decl [concrete = constants.%EqualC.cpp_destructor]
@@ -2441,7 +2441,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc16(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_single_namespace.carbon
 // CHECK:STDOUT:

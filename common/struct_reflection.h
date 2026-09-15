@@ -55,13 +55,7 @@ struct AnyField {
 
 // Detector for whether we can list-initialize T from the given list of fields.
 template <typename T, typename... Fields>
-constexpr auto CanListInitialize(decltype(T{Fields()...})* /*unused*/) -> bool {
-  return true;
-}
-template <typename T, typename... Fields>
-constexpr auto CanListInitialize(...) -> bool {
-  return false;
-}
+concept CanListInitialize = requires { T{Fields()...}; };
 
 #pragma clang diagnostic pop
 
@@ -72,7 +66,7 @@ constexpr auto CanListInitialize(...) -> bool {
 // 2) Add more AnyField<T>s until we can't initialize any more.
 template <typename T, bool AnyWorkedSoFar = false, typename... Fields>
 constexpr auto CountFields() -> int {
-  if constexpr (CanListInitialize<T, Fields...>(nullptr)) {
+  if constexpr (CanListInitialize<T, Fields...>) {
     return CountFields<T, true, Fields..., AnyField<T>>();
   } else if constexpr (AnyWorkedSoFar) {
     constexpr int NumFields = sizeof...(Fields) - 1;

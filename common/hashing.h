@@ -822,6 +822,9 @@ inline auto Hasher::Hash(const Ts&... values) -> void {
       return static_cast<uint64_t>(HashValue(value));
     } else if constexpr (CanHashAsRawDataType<T>) {
       auto raw_value = MapToRawDataType(value);
+      // If we are hashing a pointer, then `raw_value` is a pointer, but that
+      // is what we want the size of.
+      // NOLINTNEXTLINE(bugprone-sizeof-expression)
       if constexpr (sizeof(raw_value) <= 8) {
         return ReadSmall(raw_value);
       } else {

@@ -116,8 +116,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %d.patt: %pattern_type.a96 = ref_binding_pattern d [concrete]
 // CHECK:STDOUT:   %.a7b: %pattern_type.de4 = tuple_pattern (%c.patt, %d.patt) [concrete]
 // CHECK:STDOUT:   %.var_patt.288: %pattern_type.de4 = var_pattern %.a7b [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc8_3.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc8_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%v.param: %tuple.type.b6b) {
@@ -210,16 +210,16 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.loc8_34: %pattern_type.de4 = tuple_pattern (%c.patt, %d.patt) [concrete = constants.%.a7b]
 // CHECK:STDOUT:     %.var_patt.loc8: %pattern_type.de4 = var_pattern %.loc8_34 [concrete = constants.%.var_patt.288]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound.loc8: <bound method> = bound_method %.var.loc8, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc8: init %empty_tuple.type = call %Destroy.Op.bound.loc8(%.var.loc8)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %.var.loc7, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%.var.loc7)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc8: <bound method> = bound_method %.var.loc8, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc8: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc8(%.var.loc8)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc7: <bound method> = bound_method %.var.loc7, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc7: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc7(%.var.loc7)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8_3.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc8_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8_3.2(%self.param: ref %tuple.type.b6b) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc8_3.2(%self.param: ref %tuple.type.b6b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -240,8 +240,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %y.patt.a7119c.1: %pattern_type.a96 = ref_binding_pattern y [concrete]
 // CHECK:STDOUT:   %.4ca32d.1: %pattern_type.de4 = tuple_pattern (%x.patt.691773.1, %y.patt.a7119c.1) [concrete]
 // CHECK:STDOUT:   %.var_patt.c3725e.1: %pattern_type.de4 = var_pattern %.4ca32d.1 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc7_3.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc7_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.patt.29f: %pattern_type.de4 = value_binding_pattern tuple [concrete]
 // CHECK:STDOUT:   %x.patt.691773.2: %pattern_type.a96 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %y.patt.a7119c.2: %pattern_type.a96 = ref_binding_pattern y [concrete]
@@ -318,16 +318,16 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.loc7_34: %pattern_type.de4 = tuple_pattern (%x.patt, %y.patt) [concrete = constants.%.4ca32d.1]
 // CHECK:STDOUT:     %.var_patt: %pattern_type.de4 = var_pattern %.loc7_34 [concrete = constants.%.var_patt.c3725e.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc6: <bound method> = bound_method %tuple.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc6: init %empty_tuple.type = call %Destroy.Op.bound.loc6(%tuple.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc7: <bound method> = bound_method %.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc7: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc7(%.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc6: <bound method> = bound_method %tuple.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc6: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc6(%tuple.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_3.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc7_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_3.2(%self.param: ref %tuple.type.b6b) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc7_3.2(%self.param: ref %tuple.type.b6b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -388,8 +388,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.loc14_34: %pattern_type.de4 = tuple_pattern (%x.patt, %y.patt) [concrete = constants.%.4ca32d.2]
 // CHECK:STDOUT:     %.var_patt: %pattern_type.de4 = var_pattern %.loc14_34 [concrete = constants.%.var_patt.c3725e.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound(%.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -418,8 +418,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.loc22_34: %pattern_type.de4 = tuple_pattern (%x.patt, %y.patt) [concrete = constants.%.4ca32d.3]
 // CHECK:STDOUT:     %.var_patt: %pattern_type.de4 = var_pattern %.loc22_34 [concrete = constants.%.var_patt.c3725e.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound(%.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
