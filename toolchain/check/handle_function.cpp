@@ -391,23 +391,13 @@ static auto DiagnoseDefaultValuesCompletelySpecified(
                                   function_info.call_param_default_values_id),
                               filter_unspecified_values));
 
-  if (unspecified_value_ids.empty()) {
-    return;
+  for (auto inst_id : unspecified_value_ids) {
+    CARBON_DIAGNOSTIC(
+        PatternDefaultValueNotSpecified, Error,
+        "the first owned function declaration must specify values "
+        "for all default parameter values.");
+    context.emitter().Emit(inst_id, PatternDefaultValueNotSpecified);
   }
-
-  auto* inst_iter = unspecified_value_ids.begin();
-  CARBON_DIAGNOSTIC(PatternDefaultValueNotSpecified, Error,
-                    "the first owned function declaration must specify values "
-                    "for all default parameter values.");
-  auto builder =
-      context.emitter().Build(*inst_iter, PatternDefaultValueNotSpecified);
-  for (++inst_iter; inst_iter != unspecified_value_ids.end(); ++inst_iter) {
-    CARBON_DIAGNOSTIC(PatternDefaultValueNotSpecifiedNote, Note,
-                      "additional unspecified default value here.");
-    builder.Note(*inst_iter, PatternDefaultValueNotSpecifiedNote);
-  }
-
-  builder.Emit();
 }
 
 // Build a FunctionDecl describing the signature of a function. This
@@ -494,6 +484,10 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   DiagnosePositionalParams(context, function_info);
+  if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
+      !name_context.prev_inst_id().has_value()) {
+    DiagnoseDefaultValuesCompletelySpecified(context, function_info);
+  }
 
   TryMergeRedecl(
       context, name_context, std::nullopt,
@@ -511,7 +505,6 @@ static auto BuildFunctionDecl(Context& context,
     function_decl.type_id =
         GetFunctionType(context, function_decl.function_id,
                         context.scope_stack().PeekSpecificId());
-    DiagnoseDefaultValuesCompletelySpecified(context, function_info);
   } else {
     auto prev_decl_generic_id =
         context.functions().Get(function_decl.function_id).generic_id;

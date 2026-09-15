@@ -968,23 +968,8 @@ auto MatchContext::DoPostWork(State state,
   if (!context_.insts().Is<SemIR::UnspecifiedValue>(default_value_inst_id)) {
     // We should be able to convert the supplied constant into the type of
     // the parameter.
-    auto converted_id =
-        TryConvertToValueOfType(context_, SemIR::LocId(default_value_inst_id),
-                                default_value_inst_id, param_type_id);
-    if (converted_id == SemIR::ErrorInst::InstId) {
-      CARBON_DIAGNOSTIC(
-          PatternDefaultValueTypeMismatch, Error,
-          "pattern type {0} doesn't match default value expression type {1}",
-          TypeOfInstId, TypeOfInstId);
-      CARBON_DIAGNOSTIC(PatternDefaultValueTypeMismatchNote, Note,
-                        "default value expression here");
-      context_.emitter()
-          .Build(default_value_pattern.subpattern_id,
-                 PatternDefaultValueTypeMismatch, param_inst_id,
-                 default_value_inst_id)
-          .Note(default_value_inst_id, PatternDefaultValueTypeMismatchNote)
-          .Emit();
-    }
+    ConvertToValueOfType(context_, SemIR::LocId(default_value_inst_id),
+                         default_value_inst_id, param_type_id);
   }
   results_stack_.PopArray();
 

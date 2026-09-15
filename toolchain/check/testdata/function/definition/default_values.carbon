@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
-// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -11,26 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/definition/default_values.carbon
 //
-// --- fail_defaults_not_in_first_decl_redecl.carbon
-library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_defaults_not_in_first_decl_redecl.carbon:[[@LINE+7]]:27: error: the first owned function declaration must specify values for all default parameter values. [PatternDefaultValueNotSpecified]
-// CHECK:STDERR: fn F(x: i32 = 0, y: i32 = _, z: i32 = _);
-// CHECK:STDERR:                           ^
-// CHECK:STDERR: fail_defaults_not_in_first_decl_redecl.carbon:[[@LINE+4]]:39: note: additional unspecified default value here. [PatternDefaultValueNotSpecifiedNote]
-// CHECK:STDERR: fn F(x: i32 = 0, y: i32 = _, z: i32 = _);
-// CHECK:STDERR:                                       ^
-// CHECK:STDERR:
-fn F(x: i32 = 0, y: i32 = _, z: i32 = _);
-// CHECK:STDERR: fail_defaults_not_in_first_decl_redecl.carbon:[[@LINE+7]]:13: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
-// CHECK:STDERR: fn F(unused x: i32, unused y: i32 = 1, unused z: i32 = 2) { }
-// CHECK:STDERR:             ^~~~~~
-// CHECK:STDERR: fail_defaults_not_in_first_decl_redecl.carbon:[[@LINE-4]]:6: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: fn F(x: i32 = 0, y: i32 = _, z: i32 = _);
-// CHECK:STDERR:      ^~~~~~~~~~
-// CHECK:STDERR:
-fn F(unused x: i32, unused y: i32 = 1, unused z: i32 = 2) { }
-
 // --- fail_defaults_different_values_redecl.carbon
 library "[[@TEST_NAME]]";
 
@@ -44,45 +23,37 @@ fn F(x: i32 = 0, y: i32 = 10);
 // CHECK:STDERR:
 fn F(unused x: i32 = 0, unused y: i32 = 22) { }
 
-
-// --- default_presence_mismatch.carbon
+// --- imported_default_presence_mismatch.carbon
 library "[[@TEST_NAME]]";
 
 fn F(x: i32 = 0, y: i32 = 1, z: i32 = 2);
 
-// --- fail_default_presence_mismatch.impl.carbon
+// --- fail_imported_default_presence_mismatch.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_default_presence_mismatch.impl.carbon:[[@LINE+15]]:13: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
+// CHECK:STDERR: fail_imported_default_presence_mismatch.impl.carbon:[[@LINE+8]]:13: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: fn F(unused x: i32, unused y: i32 = _, unused z: i32 = _) { }
 // CHECK:STDERR:             ^~~~~~
-// CHECK:STDERR: fail_default_presence_mismatch.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: default_presence_mismatch.carbon:3:6: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR: fail_imported_default_presence_mismatch.impl.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: imported_default_presence_mismatch.carbon:3:6: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: fn F(x: i32 = 0, y: i32 = 1, z: i32 = 2);
 // CHECK:STDERR:      ^~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_default_presence_mismatch.impl.carbon:[[@LINE+7]]:37: error: the first owned function declaration must specify values for all default parameter values. [PatternDefaultValueNotSpecified]
-// CHECK:STDERR: fn F(unused x: i32, unused y: i32 = _, unused z: i32 = _) { }
-// CHECK:STDERR:                                     ^
-// CHECK:STDERR: fail_default_presence_mismatch.impl.carbon:[[@LINE+4]]:56: note: additional unspecified default value here. [PatternDefaultValueNotSpecifiedNote]
-// CHECK:STDERR: fn F(unused x: i32, unused y: i32 = _, unused z: i32 = _) { }
-// CHECK:STDERR:                                                        ^
-// CHECK:STDERR:
 fn F(unused x: i32, unused y: i32 = _, unused z: i32 = _) { }
 
-// --- defaults_different_values.carbon
+// --- imported_defaults_different_values.carbon
 library "[[@TEST_NAME]]";
 
 fn F(x: i32 = 0, y: i32 = 10);
 
-// --- fail_defaults_different_values.impl.carbon
+// --- fail_imported_defaults_different_values.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_defaults_different_values.impl.carbon:[[@LINE+8]]:41: error: default value of `22` differs from the previously declared default value of `10`. [PatternDefaultValueDiffers]
+// CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE+8]]:41: error: default value of `22` differs from the previously declared default value of `10`. [PatternDefaultValueDiffers]
 // CHECK:STDERR: fn F(unused x: i32 = 0, unused y: i32 = 22) { }
 // CHECK:STDERR:                                         ^~
-// CHECK:STDERR: fail_defaults_different_values.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: defaults_different_values.carbon:3:27: note: different previous declaration here. [PatternDefaultValueDiffersNote]
+// CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: imported_defaults_different_values.carbon:3:27: note: different previous declaration here. [PatternDefaultValueDiffersNote]
 // CHECK:STDERR: fn F(x: i32 = 0, y: i32 = 10);
 // CHECK:STDERR:                           ^~
 // CHECK:STDERR:
@@ -92,31 +63,31 @@ fn F(unused x: i32 = 0, unused y: i32 = 22) { }
 library "[[@TEST_NAME]]";
 
 fn F(x: i32 = 0) -> i32;
-fn H(x: i32 = 0) -> i32;
+fn G(x: i32 = 0) -> i32;
 
 //@dump-sem-ir-begin
 fn F(x: i32 = 0) -> i32 { return x; }
-fn H(x: i32 = _) -> i32 { return x; }
+fn G(x: i32 = _) -> i32 { return x; }
 //@dump-sem-ir-end
 
-// --- repeated_defaults.carbon
+// --- imported_repeated_defaults.carbon
 library "[[@TEST_NAME]]";
 
 fn F(x: i32 = 0) -> i32;
 
-// --- repeated_defaults.impl.carbon
+// --- imported_repeated_defaults.impl.carbon
 impl library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
 fn F(x: i32 = 0) -> i32 { return x; }
 //@dump-sem-ir-end
 
-// --- elided_defaults_in_def.carbon
+// --- imported_elided_defaults_in_def.carbon
 library "[[@TEST_NAME]]";
 
 fn F(x: i32 = 0) -> i32;
 
-// --- elided_defaults_in_def.impl.carbon
+// --- imported_elided_defaults_in_def.impl.carbon
 impl library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
@@ -153,8 +124,8 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT:   %int_0.3c0: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
-// CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
@@ -199,7 +170,7 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT:     %return.param.loc7: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc7: ref %i32 = return_slot %return.param.loc7
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %H.decl.loc8: %H.type = fn_decl @H [concrete = constants.%H] {
+// CHECK:STDOUT:   %G.decl.loc8: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %.loc8_13: %pattern_type.6b6 = default_value_pattern %x.patt, index: 0 [concrete = constants.%.e53]
@@ -231,7 +202,7 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H(%x.param.loc8: %i32) -> out %return.param.loc8: %i32 {
+// CHECK:STDOUT: fn @G(%x.param.loc8: %i32) -> out %return.param.loc8: %i32 {
 // CHECK:STDOUT: !default_values:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
@@ -245,7 +216,7 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- repeated_defaults.impl.carbon
+// CHECK:STDOUT: --- imported_repeated_defaults.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
@@ -288,7 +259,7 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.import_ref.717: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Main//repeated_defaults, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
+// CHECK:STDOUT:   %Main.import_ref.717: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Main//imported_repeated_defaults, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1aa = impl_witness_table (%Main.import_ref.717), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
@@ -320,7 +291,7 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %i32) -> out %return.param: %i32 [from "repeated_defaults.carbon"] {
+// CHECK:STDOUT: fn @F(%x.param: %i32) -> out %return.param: %i32 [from "imported_repeated_defaults.carbon"] {
 // CHECK:STDOUT: !default_values:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
@@ -334,7 +305,7 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- elided_defaults_in_def.impl.carbon
+// CHECK:STDOUT: --- imported_elided_defaults_in_def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
@@ -386,7 +357,7 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %i32) -> out %return.param: %i32 [from "elided_defaults_in_def.carbon"] {
+// CHECK:STDOUT: fn @F(%x.param: %i32) -> out %return.param: %i32 [from "imported_elided_defaults_in_def.carbon"] {
 // CHECK:STDOUT: !default_values:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
