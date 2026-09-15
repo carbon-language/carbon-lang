@@ -158,7 +158,7 @@ auto Function::GetBuiltinFunctionKind(const File& file) const
     -> BuiltinFunctionKind {
   switch (special_function_kind) {
     case SpecialFunctionKind::Builtin:
-      return builtin_function_kind();
+      return non_generated_builtin_function_kind();
     case SpecialFunctionKind::Generated: {
       auto generated_id = GeneratedFunctionId(special_function_kind_data.index);
       return file.generated_functions().Get(generated_id).builtin_function_kind;

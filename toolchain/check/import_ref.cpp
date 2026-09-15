@@ -2663,7 +2663,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       break;
     }
     case SemIR::Function::SpecialFunctionKind::Builtin: {
-      new_function.SetBuiltinFunction(import_function.builtin_function_kind());
+      new_function.SetBuiltinFunction(
+          import_function.non_generated_builtin_function_kind());
       break;
     }
     case SemIR::Function::SpecialFunctionKind::Generated: {

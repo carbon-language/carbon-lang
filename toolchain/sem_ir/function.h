@@ -247,7 +247,7 @@ struct Function : public EntityWithParamsBase,
     if (return_pattern_id.has_value()) {
       out << ", return_pattern_id: " << return_pattern_id;
     }
-    if (auto builtin_kind = builtin_function_kind();
+    if (auto builtin_kind = non_generated_builtin_function_kind();
         builtin_kind != BuiltinFunctionKind::None) {
       out << ", builtin: " << builtin_kind;
     }
@@ -281,7 +281,7 @@ struct Function : public EntityWithParamsBase,
   // have a BuiltinFunctionKind, but this returns None for Generated
   // functions. Use GetBuiltinFunctionKind to get the builtin function kind for
   // all special functions.
-  auto builtin_function_kind() const -> BuiltinFunctionKind {
+  auto non_generated_builtin_function_kind() const -> BuiltinFunctionKind {
     return special_function_kind == SpecialFunctionKind::Builtin
                ? BuiltinFunctionKind::FromInt(special_function_kind_data.index)
                : BuiltinFunctionKind::None;

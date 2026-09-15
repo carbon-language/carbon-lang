@@ -262,7 +262,7 @@ auto Mangler::MangleImpl(SemIR::FunctionId function_id,
 
     case SemIR::Function::SpecialFunctionKind::Builtin:
       CARBON_FATAL("Attempting to mangle declaration of builtin function {0}",
-                   function.builtin_function_kind());
+                   function.non_generated_builtin_function_kind());
     case SemIR::Function::SpecialFunctionKind::HasCppThunk:
       CARBON_FATAL("C++ functions should have been handled earlier");
   }
