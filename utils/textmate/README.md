@@ -45,7 +45,7 @@ grammar in this repository. Regenerate them in the same commit as any change to
 the grammar, so a reviewer can see what the change does to real code:
 
 ```shell
-./utils/textmate/render_sample.py utils/textmate/Samples/*.carbon
+utils/textmate/render_sample.py utils/textmate/Samples/*.carbon
 ```
 
 That needs only Python. The SVG holds the source as text rather than as

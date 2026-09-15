@@ -232,7 +232,7 @@ def _append_capture_tokens(
 
     `captures` maps a group number, written as a string, to the scope the
     group's text takes on top of `scopes`; group `0` is the whole match. The
-    tokens tile the match with no gaps: text that no listed group covers is
+    tokens tile the match with no gaps: text not covered by a listed group is
     still appended, under `scopes` alone.
     """
     if not captures:
