@@ -299,7 +299,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !100
 // CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK4IntBcviEv.carbon_thunk._(ptr %b), !dbg !100
 // CHECK:STDOUT:   store i32 %__carbon_thunk.call, ptr %a.var, align 4, !dbg !100
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %a.var), !dbg !100
+// CHECK:STDOUT:   call void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %a.var), !dbg !100
 // CHECK:STDOUT:   ret void, !dbg !103
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -314,7 +314,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !105 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !105 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !107
 // CHECK:STDOUT: }
@@ -365,7 +365,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: !100 = !DILocation(line: 12, column: 3, scope: !97)
 // CHECK:STDOUT: !103 = !DILocation(line: 11, column: 1, scope: !97)
 // CHECK:STDOUT: !104 = !{!98}
-// CHECK:STDOUT: !105 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !91, line: 12, type: !96, spFlags: DISPFlagDefinition, unit: !92, retainedNodes: !108)
+// CHECK:STDOUT: !105 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !91, line: 12, type: !96, spFlags: DISPFlagDefinition, unit: !92, retainedNodes: !108)
 // CHECK:STDOUT: !106 = !DILocalVariable(arg: 1, scope: !105, type: !20)
 // CHECK:STDOUT: !107 = !DILocation(line: 12, column: 3, scope: !105)
 // CHECK:STDOUT: !108 = !{!106}

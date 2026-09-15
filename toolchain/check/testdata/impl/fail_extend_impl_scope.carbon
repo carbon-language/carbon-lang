@@ -216,9 +216,9 @@ fn F() {
 // CHECK:STDOUT:   %Z.WithSelf.Zero.237: %Z.WithSelf.Zero.type.356 = struct_value () [concrete]
 // CHECK:STDOUT:   %.dfa: type = fn_type_with_self_type %Z.WithSelf.Zero.type.896, %Z.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc25_7.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.e6b, %Destroy.Op.1a2547.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc25_7.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %.e6b, %Destroy.WithSelf.Op.403171.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -337,13 +337,13 @@ fn F() {
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.WithSelf.%assoc0 [concrete = constants.%assoc0.627]
 // CHECK:STDOUT:   %impl.elem0: %.dfa = impl_witness_access constants.%Z.impl_witness, element0 [concrete = constants.%Point.as.Z.impl.Zero]
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero.call: init %empty_tuple.type = call %impl.elem0()
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call constants.%Destroy.Op.bound(constants.%.e6b)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call constants.%Destroy.WithSelf.Op.bound(constants.%.e6b)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc25_7.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc25_7.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc25_7.2(%self.param: ref %Point) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc25_7.2(%self.param: ref %Point) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

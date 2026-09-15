@@ -183,7 +183,7 @@ fn CallGeneric() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc5_18.1.temp), !dbg !50
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.84588f41d61dafba.Core"(ptr %.loc5_18.1.temp, ptr %v2, i32 2), !dbg !50
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %.loc5_18.1.temp), !dbg !49
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %.loc5_18.1.temp), !dbg !50
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %.loc5_18.1.temp), !dbg !50
 // CHECK:STDOUT:   ret void, !dbg !51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -192,19 +192,19 @@ fn CallGeneric() {
 // CHECK:STDOUT: declare void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr sret({ i32 }), ptr, ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !53 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !53 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !55
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7ec4ffd904220f7b:core.Destroy.Core"(ptr %self) #0 !dbg !57 {
+// CHECK:STDOUT: define weak_odr void @"_COp.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !57 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %self) #0 !dbg !61 {
+// CHECK:STDOUT: define weak_odr void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %self) #0 !dbg !61 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !63
 // CHECK:STDOUT: }
@@ -237,15 +237,15 @@ fn CallGeneric() {
 // CHECK:STDOUT: !50 = !DILocation(line: 5, column: 15, scope: !42)
 // CHECK:STDOUT: !51 = !DILocation(line: 5, column: 3, scope: !42)
 // CHECK:STDOUT: !52 = !{!43, !44}
-// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !36, line: 5, type: !39, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !56)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !36, line: 5, type: !39, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !56)
 // CHECK:STDOUT: !54 = !DILocalVariable(arg: 1, scope: !53, type: !6)
 // CHECK:STDOUT: !55 = !DILocation(line: 5, column: 15, scope: !53)
 // CHECK:STDOUT: !56 = !{!54}
-// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7ec4ffd904220f7b:core.Destroy.Core", scope: null, file: !36, line: 5, type: !41, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !60)
+// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a15077f50f3020c3:core.Destroy.Core", scope: null, file: !36, line: 5, type: !41, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !60)
 // CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !57, type: !7)
 // CHECK:STDOUT: !59 = !DILocation(line: 5, column: 15, scope: !57)
 // CHECK:STDOUT: !60 = !{!58}
-// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "Op", linkageName: "_COp.3e88a108c7e00533:core.Destroy.Core", scope: null, file: !36, line: 5, type: !41, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !64)
+// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d9636b4f2fbd64a7:core.Destroy.Core", scope: null, file: !36, line: 5, type: !41, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !64)
 // CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !61, type: !7)
 // CHECK:STDOUT: !63 = !DILocation(line: 5, column: 15, scope: !61)
 // CHECK:STDOUT: !64 = !{!62}
@@ -261,7 +261,7 @@ fn CallGeneric() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_18.1.temp), !dbg !75
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.84588f41d61dafba.Core"(ptr %.loc7_18.1.temp, ptr %v2, i32 2), !dbg !75
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %.loc7_18.1.temp), !dbg !74
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %.loc7_18.1.temp), !dbg !75
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %.loc7_18.1.temp), !dbg !75
 // CHECK:STDOUT:   ret void, !dbg !76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -270,19 +270,19 @@ fn CallGeneric() {
 // CHECK:STDOUT: declare void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr sret({ i32 }), ptr, ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !78 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !78 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !80
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7ec4ffd904220f7b:core.Destroy.Core"(ptr %self) #0 !dbg !82 {
+// CHECK:STDOUT: define weak_odr void @"_COp.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !82 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !84
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %self) #0 !dbg !86 {
+// CHECK:STDOUT: define weak_odr void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %self) #0 !dbg !86 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !88
 // CHECK:STDOUT: }
@@ -315,15 +315,15 @@ fn CallGeneric() {
 // CHECK:STDOUT: !75 = !DILocation(line: 7, column: 15, scope: !67)
 // CHECK:STDOUT: !76 = !DILocation(line: 7, column: 3, scope: !67)
 // CHECK:STDOUT: !77 = !{!68, !69}
-// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !65, line: 7, type: !39, spFlags: DISPFlagDefinition, unit: !66, retainedNodes: !81)
+// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !65, line: 7, type: !39, spFlags: DISPFlagDefinition, unit: !66, retainedNodes: !81)
 // CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !78, type: !6)
 // CHECK:STDOUT: !80 = !DILocation(line: 7, column: 15, scope: !78)
 // CHECK:STDOUT: !81 = !{!79}
-// CHECK:STDOUT: !82 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7ec4ffd904220f7b:core.Destroy.Core", scope: null, file: !65, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !66, retainedNodes: !85)
+// CHECK:STDOUT: !82 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a15077f50f3020c3:core.Destroy.Core", scope: null, file: !65, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !66, retainedNodes: !85)
 // CHECK:STDOUT: !83 = !DILocalVariable(arg: 1, scope: !82, type: !7)
 // CHECK:STDOUT: !84 = !DILocation(line: 7, column: 15, scope: !82)
 // CHECK:STDOUT: !85 = !{!83}
-// CHECK:STDOUT: !86 = distinct !DISubprogram(name: "Op", linkageName: "_COp.3e88a108c7e00533:core.Destroy.Core", scope: null, file: !65, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !66, retainedNodes: !89)
+// CHECK:STDOUT: !86 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d9636b4f2fbd64a7:core.Destroy.Core", scope: null, file: !65, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !66, retainedNodes: !89)
 // CHECK:STDOUT: !87 = !DILocalVariable(arg: 1, scope: !86, type: !7)
 // CHECK:STDOUT: !88 = !DILocation(line: 7, column: 15, scope: !86)
 // CHECK:STDOUT: !89 = !{!87}
@@ -337,19 +337,19 @@ fn CallGeneric() {
 // CHECK:STDOUT: declare void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr sret({ i32 }), ptr, ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !94 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !94 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !96
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7ec4ffd904220f7b:core.Destroy.Core"(ptr %self) #0 !dbg !98 {
+// CHECK:STDOUT: define weak_odr void @"_COp.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !98 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !100
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %self) #0 !dbg !102 {
+// CHECK:STDOUT: define weak_odr void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %self) #0 !dbg !102 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !104
 // CHECK:STDOUT: }
@@ -371,15 +371,15 @@ fn CallGeneric() {
 // CHECK:STDOUT: !41 = !DISubroutineType(types: !40)
 // CHECK:STDOUT: !90 = !DIFile(filename: "generic_same_package.carbon", directory: "")
 // CHECK:STDOUT: !91 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !90, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !94 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !90, line: 6, type: !39, spFlags: DISPFlagDefinition, unit: !91, retainedNodes: !97)
+// CHECK:STDOUT: !94 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !90, line: 6, type: !39, spFlags: DISPFlagDefinition, unit: !91, retainedNodes: !97)
 // CHECK:STDOUT: !95 = !DILocalVariable(arg: 1, scope: !94, type: !6)
 // CHECK:STDOUT: !96 = !DILocation(line: 6, column: 15, scope: !94)
 // CHECK:STDOUT: !97 = !{!95}
-// CHECK:STDOUT: !98 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7ec4ffd904220f7b:core.Destroy.Core", scope: null, file: !90, line: 6, type: !41, spFlags: DISPFlagDefinition, unit: !91, retainedNodes: !101)
+// CHECK:STDOUT: !98 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a15077f50f3020c3:core.Destroy.Core", scope: null, file: !90, line: 6, type: !41, spFlags: DISPFlagDefinition, unit: !91, retainedNodes: !101)
 // CHECK:STDOUT: !99 = !DILocalVariable(arg: 1, scope: !98, type: !7)
 // CHECK:STDOUT: !100 = !DILocation(line: 6, column: 15, scope: !98)
 // CHECK:STDOUT: !101 = !{!99}
-// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "Op", linkageName: "_COp.3e88a108c7e00533:core.Destroy.Core", scope: null, file: !90, line: 6, type: !41, spFlags: DISPFlagDefinition, unit: !91, retainedNodes: !105)
+// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d9636b4f2fbd64a7:core.Destroy.Core", scope: null, file: !90, line: 6, type: !41, spFlags: DISPFlagDefinition, unit: !91, retainedNodes: !105)
 // CHECK:STDOUT: !103 = !DILocalVariable(arg: 1, scope: !102, type: !7)
 // CHECK:STDOUT: !104 = !DILocation(line: 6, column: 15, scope: !102)
 // CHECK:STDOUT: !105 = !{!103}
@@ -400,28 +400,28 @@ fn CallGeneric() {
 // CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_28.1.temp), !dbg !112
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_29.2.temp), !dbg !113
 // CHECK:STDOUT:   call void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr %.loc7_29.2.temp, ptr %.loc7_20.1.temp, ptr %.loc7_28.1.temp), !dbg !113
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %.loc7_29.2.temp), !dbg !113
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %.loc7_28.1.temp), !dbg !112
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %.loc7_20.1.temp), !dbg !111
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %.loc7_29.2.temp), !dbg !113
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %.loc7_28.1.temp), !dbg !112
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %.loc7_20.1.temp), !dbg !111
 // CHECK:STDOUT:   ret void, !dbg !114
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMake.OwningPackage(ptr sret({ i32 }))
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !115 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !115 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !117
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7ec4ffd904220f7b:core.Destroy.Core"(ptr %self) #0 !dbg !119 {
+// CHECK:STDOUT: define weak_odr void @"_COp.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !119 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !121
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %self) #0 !dbg !123 {
+// CHECK:STDOUT: define weak_odr void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %self) #0 !dbg !123 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !125
 // CHECK:STDOUT: }
@@ -435,7 +435,7 @@ fn CallGeneric() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !135
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.84588f41d61dafba.Core"(ptr %temp, ptr %v2, i32 2), !dbg !135
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %temp), !dbg !134
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %temp), !dbg !135
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %temp), !dbg !135
 // CHECK:STDOUT:   ret void, !dbg !136
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -445,7 +445,7 @@ fn CallGeneric() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_CMake.OwningPackage, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @"_COp.3e88a108c7e00533:core.Destroy.Core", { 0, 3, 2, 1 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.d9636b4f2fbd64a7:core.Destroy.Core", { 0, 3, 2, 1 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 3, 2, 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -474,15 +474,15 @@ fn CallGeneric() {
 // CHECK:STDOUT: !112 = !DILocation(line: 7, column: 23, scope: !110)
 // CHECK:STDOUT: !113 = !DILocation(line: 7, column: 3, scope: !110)
 // CHECK:STDOUT: !114 = !DILocation(line: 5, column: 1, scope: !110)
-// CHECK:STDOUT: !115 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !106, line: 7, type: !39, spFlags: DISPFlagDefinition, unit: !107, retainedNodes: !118)
+// CHECK:STDOUT: !115 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !106, line: 7, type: !39, spFlags: DISPFlagDefinition, unit: !107, retainedNodes: !118)
 // CHECK:STDOUT: !116 = !DILocalVariable(arg: 1, scope: !115, type: !6)
 // CHECK:STDOUT: !117 = !DILocation(line: 7, column: 3, scope: !115)
 // CHECK:STDOUT: !118 = !{!116}
-// CHECK:STDOUT: !119 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7ec4ffd904220f7b:core.Destroy.Core", scope: null, file: !106, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !107, retainedNodes: !122)
+// CHECK:STDOUT: !119 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a15077f50f3020c3:core.Destroy.Core", scope: null, file: !106, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !107, retainedNodes: !122)
 // CHECK:STDOUT: !120 = !DILocalVariable(arg: 1, scope: !119, type: !7)
 // CHECK:STDOUT: !121 = !DILocation(line: 7, column: 3, scope: !119)
 // CHECK:STDOUT: !122 = !{!120}
-// CHECK:STDOUT: !123 = distinct !DISubprogram(name: "Op", linkageName: "_COp.3e88a108c7e00533:core.Destroy.Core", scope: null, file: !106, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !107, retainedNodes: !126)
+// CHECK:STDOUT: !123 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d9636b4f2fbd64a7:core.Destroy.Core", scope: null, file: !106, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !107, retainedNodes: !126)
 // CHECK:STDOUT: !124 = !DILocalVariable(arg: 1, scope: !123, type: !7)
 // CHECK:STDOUT: !125 = !DILocation(line: 7, column: 3, scope: !123)
 // CHECK:STDOUT: !126 = !{!124}
@@ -505,7 +505,7 @@ fn CallGeneric() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_18.1.temp), !dbg !148
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.84588f41d61dafba.Core"(ptr %.loc7_18.1.temp, ptr %v2, i32 2), !dbg !148
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %.loc7_18.1.temp), !dbg !147
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %.loc7_18.1.temp), !dbg !148
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %.loc7_18.1.temp), !dbg !148
 // CHECK:STDOUT:   ret void, !dbg !149
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -514,19 +514,19 @@ fn CallGeneric() {
 // CHECK:STDOUT: declare void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr sret({ i32 }), ptr, ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !151 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !151 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !153
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7ec4ffd904220f7b:core.Destroy.Core"(ptr %self) #0 !dbg !155 {
+// CHECK:STDOUT: define weak_odr void @"_COp.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !155 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !157
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %self) #0 !dbg !159 {
+// CHECK:STDOUT: define weak_odr void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %self) #0 !dbg !159 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !161
 // CHECK:STDOUT: }
@@ -559,15 +559,15 @@ fn CallGeneric() {
 // CHECK:STDOUT: !148 = !DILocation(line: 7, column: 15, scope: !140)
 // CHECK:STDOUT: !149 = !DILocation(line: 7, column: 3, scope: !140)
 // CHECK:STDOUT: !150 = !{!141, !142}
-// CHECK:STDOUT: !151 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !138, line: 7, type: !39, spFlags: DISPFlagDefinition, unit: !139, retainedNodes: !154)
+// CHECK:STDOUT: !151 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !138, line: 7, type: !39, spFlags: DISPFlagDefinition, unit: !139, retainedNodes: !154)
 // CHECK:STDOUT: !152 = !DILocalVariable(arg: 1, scope: !151, type: !6)
 // CHECK:STDOUT: !153 = !DILocation(line: 7, column: 15, scope: !151)
 // CHECK:STDOUT: !154 = !{!152}
-// CHECK:STDOUT: !155 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7ec4ffd904220f7b:core.Destroy.Core", scope: null, file: !138, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !139, retainedNodes: !158)
+// CHECK:STDOUT: !155 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a15077f50f3020c3:core.Destroy.Core", scope: null, file: !138, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !139, retainedNodes: !158)
 // CHECK:STDOUT: !156 = !DILocalVariable(arg: 1, scope: !155, type: !7)
 // CHECK:STDOUT: !157 = !DILocation(line: 7, column: 15, scope: !155)
 // CHECK:STDOUT: !158 = !{!156}
-// CHECK:STDOUT: !159 = distinct !DISubprogram(name: "Op", linkageName: "_COp.3e88a108c7e00533:core.Destroy.Core", scope: null, file: !138, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !139, retainedNodes: !162)
+// CHECK:STDOUT: !159 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d9636b4f2fbd64a7:core.Destroy.Core", scope: null, file: !138, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !139, retainedNodes: !162)
 // CHECK:STDOUT: !160 = !DILocalVariable(arg: 1, scope: !159, type: !7)
 // CHECK:STDOUT: !161 = !DILocation(line: 7, column: 15, scope: !159)
 // CHECK:STDOUT: !162 = !{!160}
@@ -588,28 +588,28 @@ fn CallGeneric() {
 // CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_70.1.temp), !dbg !167
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_71.2.temp), !dbg !168
 // CHECK:STDOUT:   call void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr %.loc7_71.2.temp, ptr %.loc7_48.1.temp, ptr %.loc7_70.1.temp), !dbg !168
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %.loc7_71.2.temp), !dbg !168
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %.loc7_70.1.temp), !dbg !167
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %.loc7_48.1.temp), !dbg !166
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %.loc7_71.2.temp), !dbg !168
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %.loc7_70.1.temp), !dbg !167
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %.loc7_48.1.temp), !dbg !166
 // CHECK:STDOUT:   ret void, !dbg !169
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMake.OwningPackage(ptr sret({ i32 }))
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !170 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !170 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !172
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7ec4ffd904220f7b:core.Destroy.Core"(ptr %self) #0 !dbg !174 {
+// CHECK:STDOUT: define weak_odr void @"_COp.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !174 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !176
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %self) #0 !dbg !178 {
+// CHECK:STDOUT: define weak_odr void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %self) #0 !dbg !178 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !180
 // CHECK:STDOUT: }
@@ -623,7 +623,7 @@ fn CallGeneric() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !190
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.84588f41d61dafba.Core"(ptr %temp, ptr %v2, i32 2), !dbg !190
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %temp), !dbg !189
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %temp), !dbg !190
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %temp), !dbg !190
 // CHECK:STDOUT:   ret void, !dbg !191
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -633,7 +633,7 @@ fn CallGeneric() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_CMake.OwningPackage, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @"_COp.3e88a108c7e00533:core.Destroy.Core", { 0, 3, 2, 1 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.d9636b4f2fbd64a7:core.Destroy.Core", { 0, 3, 2, 1 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 3, 2, 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -662,15 +662,15 @@ fn CallGeneric() {
 // CHECK:STDOUT: !167 = !DILocation(line: 7, column: 51, scope: !165)
 // CHECK:STDOUT: !168 = !DILocation(line: 7, column: 3, scope: !165)
 // CHECK:STDOUT: !169 = !DILocation(line: 5, column: 1, scope: !165)
-// CHECK:STDOUT: !170 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !163, line: 7, type: !39, spFlags: DISPFlagDefinition, unit: !164, retainedNodes: !173)
+// CHECK:STDOUT: !170 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !163, line: 7, type: !39, spFlags: DISPFlagDefinition, unit: !164, retainedNodes: !173)
 // CHECK:STDOUT: !171 = !DILocalVariable(arg: 1, scope: !170, type: !6)
 // CHECK:STDOUT: !172 = !DILocation(line: 7, column: 3, scope: !170)
 // CHECK:STDOUT: !173 = !{!171}
-// CHECK:STDOUT: !174 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7ec4ffd904220f7b:core.Destroy.Core", scope: null, file: !163, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !164, retainedNodes: !177)
+// CHECK:STDOUT: !174 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a15077f50f3020c3:core.Destroy.Core", scope: null, file: !163, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !164, retainedNodes: !177)
 // CHECK:STDOUT: !175 = !DILocalVariable(arg: 1, scope: !174, type: !7)
 // CHECK:STDOUT: !176 = !DILocation(line: 7, column: 3, scope: !174)
 // CHECK:STDOUT: !177 = !{!175}
-// CHECK:STDOUT: !178 = distinct !DISubprogram(name: "Op", linkageName: "_COp.3e88a108c7e00533:core.Destroy.Core", scope: null, file: !163, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !164, retainedNodes: !181)
+// CHECK:STDOUT: !178 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d9636b4f2fbd64a7:core.Destroy.Core", scope: null, file: !163, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !164, retainedNodes: !181)
 // CHECK:STDOUT: !179 = !DILocalVariable(arg: 1, scope: !178, type: !7)
 // CHECK:STDOUT: !180 = !DILocation(line: 7, column: 3, scope: !178)
 // CHECK:STDOUT: !181 = !{!179}
@@ -691,19 +691,19 @@ fn CallGeneric() {
 // CHECK:STDOUT: declare void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr sret({ i32 }), ptr, ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !195 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !195 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !197
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7ec4ffd904220f7b:core.Destroy.Core"(ptr %self) #0 !dbg !199 {
+// CHECK:STDOUT: define weak_odr void @"_COp.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !199 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !201
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %self) #0 !dbg !203 {
+// CHECK:STDOUT: define weak_odr void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %self) #0 !dbg !203 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !205
 // CHECK:STDOUT: }
@@ -725,15 +725,15 @@ fn CallGeneric() {
 // CHECK:STDOUT: !41 = !DISubroutineType(types: !40)
 // CHECK:STDOUT: !193 = !DIFile(filename: "generic_different_package.carbon", directory: "")
 // CHECK:STDOUT: !194 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !193, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !195 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !193, line: 6, type: !39, spFlags: DISPFlagDefinition, unit: !194, retainedNodes: !198)
+// CHECK:STDOUT: !195 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !193, line: 6, type: !39, spFlags: DISPFlagDefinition, unit: !194, retainedNodes: !198)
 // CHECK:STDOUT: !196 = !DILocalVariable(arg: 1, scope: !195, type: !6)
 // CHECK:STDOUT: !197 = !DILocation(line: 6, column: 15, scope: !195)
 // CHECK:STDOUT: !198 = !{!196}
-// CHECK:STDOUT: !199 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7ec4ffd904220f7b:core.Destroy.Core", scope: null, file: !193, line: 6, type: !41, spFlags: DISPFlagDefinition, unit: !194, retainedNodes: !202)
+// CHECK:STDOUT: !199 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a15077f50f3020c3:core.Destroy.Core", scope: null, file: !193, line: 6, type: !41, spFlags: DISPFlagDefinition, unit: !194, retainedNodes: !202)
 // CHECK:STDOUT: !200 = !DILocalVariable(arg: 1, scope: !199, type: !7)
 // CHECK:STDOUT: !201 = !DILocation(line: 6, column: 15, scope: !199)
 // CHECK:STDOUT: !202 = !{!200}
-// CHECK:STDOUT: !203 = distinct !DISubprogram(name: "Op", linkageName: "_COp.3e88a108c7e00533:core.Destroy.Core", scope: null, file: !193, line: 6, type: !41, spFlags: DISPFlagDefinition, unit: !194, retainedNodes: !206)
+// CHECK:STDOUT: !203 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d9636b4f2fbd64a7:core.Destroy.Core", scope: null, file: !193, line: 6, type: !41, spFlags: DISPFlagDefinition, unit: !194, retainedNodes: !206)
 // CHECK:STDOUT: !204 = !DILocalVariable(arg: 1, scope: !203, type: !7)
 // CHECK:STDOUT: !205 = !DILocation(line: 6, column: 15, scope: !203)
 // CHECK:STDOUT: !206 = !{!204}
@@ -754,28 +754,28 @@ fn CallGeneric() {
 // CHECK:STDOUT:   call void @_CMake.OtherPackage(ptr %.loc7_28.1.temp), !dbg !211
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_29.2.temp), !dbg !212
 // CHECK:STDOUT:   call void @_CGeneric.OtherPackage.e43630e9a6c38c3f(ptr %.loc7_29.2.temp, ptr %.loc7_20.1.temp, ptr %.loc7_28.1.temp), !dbg !212
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %.loc7_29.2.temp), !dbg !212
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %.loc7_28.1.temp), !dbg !211
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %.loc7_20.1.temp), !dbg !210
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %.loc7_29.2.temp), !dbg !212
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %.loc7_28.1.temp), !dbg !211
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %.loc7_20.1.temp), !dbg !210
 // CHECK:STDOUT:   ret void, !dbg !213
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMake.OtherPackage(ptr sret({ i32 }))
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !214 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !214 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !216
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7ec4ffd904220f7b:core.Destroy.Core"(ptr %self) #0 !dbg !218 {
+// CHECK:STDOUT: define weak_odr void @"_COp.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !218 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !220
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %self) #0 !dbg !222 {
+// CHECK:STDOUT: define weak_odr void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %self) #0 !dbg !222 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !224
 // CHECK:STDOUT: }
@@ -789,7 +789,7 @@ fn CallGeneric() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !234
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.84588f41d61dafba.Core"(ptr %temp, ptr %v2, i32 2), !dbg !234
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %temp), !dbg !233
-// CHECK:STDOUT:   call void @"_COp.3e88a108c7e00533:core.Destroy.Core"(ptr %temp), !dbg !234
+// CHECK:STDOUT:   call void @"_COp.d9636b4f2fbd64a7:core.Destroy.Core"(ptr %temp), !dbg !234
 // CHECK:STDOUT:   ret void, !dbg !235
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -799,7 +799,7 @@ fn CallGeneric() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_CMake.OtherPackage, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @"_COp.3e88a108c7e00533:core.Destroy.Core", { 0, 3, 2, 1 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.d9636b4f2fbd64a7:core.Destroy.Core", { 0, 3, 2, 1 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 3, 2, 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -828,15 +828,15 @@ fn CallGeneric() {
 // CHECK:STDOUT: !211 = !DILocation(line: 7, column: 23, scope: !209)
 // CHECK:STDOUT: !212 = !DILocation(line: 7, column: 3, scope: !209)
 // CHECK:STDOUT: !213 = !DILocation(line: 5, column: 1, scope: !209)
-// CHECK:STDOUT: !214 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !207, line: 7, type: !39, spFlags: DISPFlagDefinition, unit: !208, retainedNodes: !217)
+// CHECK:STDOUT: !214 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !207, line: 7, type: !39, spFlags: DISPFlagDefinition, unit: !208, retainedNodes: !217)
 // CHECK:STDOUT: !215 = !DILocalVariable(arg: 1, scope: !214, type: !6)
 // CHECK:STDOUT: !216 = !DILocation(line: 7, column: 3, scope: !214)
 // CHECK:STDOUT: !217 = !{!215}
-// CHECK:STDOUT: !218 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7ec4ffd904220f7b:core.Destroy.Core", scope: null, file: !207, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !208, retainedNodes: !221)
+// CHECK:STDOUT: !218 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a15077f50f3020c3:core.Destroy.Core", scope: null, file: !207, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !208, retainedNodes: !221)
 // CHECK:STDOUT: !219 = !DILocalVariable(arg: 1, scope: !218, type: !7)
 // CHECK:STDOUT: !220 = !DILocation(line: 7, column: 3, scope: !218)
 // CHECK:STDOUT: !221 = !{!219}
-// CHECK:STDOUT: !222 = distinct !DISubprogram(name: "Op", linkageName: "_COp.3e88a108c7e00533:core.Destroy.Core", scope: null, file: !207, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !208, retainedNodes: !225)
+// CHECK:STDOUT: !222 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d9636b4f2fbd64a7:core.Destroy.Core", scope: null, file: !207, line: 7, type: !41, spFlags: DISPFlagDefinition, unit: !208, retainedNodes: !225)
 // CHECK:STDOUT: !223 = !DILocalVariable(arg: 1, scope: !222, type: !7)
 // CHECK:STDOUT: !224 = !DILocation(line: 7, column: 3, scope: !222)
 // CHECK:STDOUT: !225 = !{!223}

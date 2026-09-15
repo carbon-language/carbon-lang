@@ -42,8 +42,8 @@ fn F() {
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc14_15.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc14_15.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -59,8 +59,8 @@ fn F() {
 // CHECK:STDOUT:   %A.F.call: init bool = call %F.ref()
 // CHECK:STDOUT:   %.loc14_20.1: bool = value_of_initializer %A.F.call
 // CHECK:STDOUT:   %.loc14_20.2: bool = converted %A.F.call, %.loc14_20.1
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %.loc14_15.2, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%.loc14_15.2)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %.loc14_15.2, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound(%.loc14_15.2)
 // CHECK:STDOUT:   if %.loc14_20.2 br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:
@@ -72,9 +72,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14_15.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc14_15.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14_15.2(%self.param: ref %A) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc14_15.2(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -70,7 +70,7 @@ fn Test() {
 // CHECK:STDOUT:   %MakePointerPointer.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %.loc25_53.1.temp, i32 0, i32 8, !dbg !16
 // CHECK:STDOUT:   store ptr getelementptr inbounds ([4 x i32], ptr @array.loc25_52.18, i32 1), ptr %MakePointerPointer.call.init_list.end, align 8, !dbg !16
 // CHECK:STDOUT:   call void @_CTakePointerPointer.Main(ptr %.loc25_53.1.temp), !dbg !18
-// CHECK:STDOUT:   call void @"_COp.eefa3f320d583a8d:core.Destroy.Core"(ptr @array), !dbg !17
+// CHECK:STDOUT:   call void @"_COp.88cc3346b7991af5:core.Destroy.Core"(ptr @array), !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_47.1.temp), !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_46.3.temp), !dbg !20
 // CHECK:STDOUT:   %.loc26_46.4.array.index = getelementptr inbounds [4 x i32], ptr %.loc26_46.3.temp, i32 0, i64 0, !dbg !20
@@ -82,18 +82,18 @@ fn Test() {
 // CHECK:STDOUT:   %MakePointerSize.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %.loc26_47.1.temp, i32 0, i32 8, !dbg !19
 // CHECK:STDOUT:   store i64 4, ptr %MakePointerSize.call.init_list.size, align 8, !dbg !19
 // CHECK:STDOUT:   call void @_CTakePointerSize.Main(ptr %.loc26_47.1.temp), !dbg !21
-// CHECK:STDOUT:   call void @"_COp.eefa3f320d583a8d:core.Destroy.Core"(ptr @array), !dbg !20
+// CHECK:STDOUT:   call void @"_COp.88cc3346b7991af5:core.Destroy.Core"(ptr @array), !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !23 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !23 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.eefa3f320d583a8d:core.Destroy.Core"(ptr %self) #0 !dbg !27 {
+// CHECK:STDOUT: define weak_odr void @"_COp.88cc3346b7991af5:core.Destroy.Core"(ptr %self) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
@@ -102,7 +102,7 @@ fn Test() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @"_COp.eefa3f320d583a8d:core.Destroy.Core", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.88cc3346b7991af5:core.Destroy.Core", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -132,11 +132,11 @@ fn Test() {
 // CHECK:STDOUT: !20 = !DILocation(line: 26, column: 35, scope: !15)
 // CHECK:STDOUT: !21 = !DILocation(line: 26, column: 3, scope: !15)
 // CHECK:STDOUT: !22 = !DILocation(line: 24, column: 1, scope: !15)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !4, line: 25, type: !14, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !26)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !4, line: 25, type: !14, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !26)
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !23, type: !6)
 // CHECK:STDOUT: !25 = !DILocation(line: 25, column: 41, scope: !23)
 // CHECK:STDOUT: !26 = !{!24}
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Op", linkageName: "_COp.eefa3f320d583a8d:core.Destroy.Core", scope: null, file: !4, line: 25, type: !10, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Op", linkageName: "_COp.88cc3346b7991af5:core.Destroy.Core", scope: null, file: !4, line: 25, type: !10, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !30)
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !27, type: !8)
 // CHECK:STDOUT: !29 = !DILocation(line: 25, column: 41, scope: !27)
 // CHECK:STDOUT: !30 = !{!28}

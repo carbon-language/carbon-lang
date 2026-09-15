@@ -90,12 +90,12 @@ fn PassAdapterBool() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc28_21.1.temp), !dbg !61
 // CHECK:STDOUT:   call void @_CMakeBool.Main(ptr %.loc28_21.1.temp), !dbg !61
 // CHECK:STDOUT:   call void @_CTakeBool.Main(ptr %.loc28_21.1.temp), !dbg !62
-// CHECK:STDOUT:   call void @"_COp.c4089b4f1697e4a6:core.Destroy.Core"(ptr %.loc28_21.1.temp), !dbg !61
+// CHECK:STDOUT:   call void @"_COp.2ec8e1132c6ccd4f:core.Destroy.Core"(ptr %.loc28_21.1.temp), !dbg !61
 // CHECK:STDOUT:   ret void, !dbg !63
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.c4089b4f1697e4a6:core.Destroy.Core"(ptr %self) #0 !dbg !64 {
+// CHECK:STDOUT: define weak_odr void @"_COp.2ec8e1132c6ccd4f:core.Destroy.Core"(ptr %self) #0 !dbg !64 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !66
 // CHECK:STDOUT: }
@@ -124,24 +124,24 @@ fn PassAdapterBool() {
 // CHECK:STDOUT:   store i32 %MakeAdapterI32.call, ptr %.loc48_33.1.temp, align 4, !dbg !82
 // CHECK:STDOUT:   %.loc48_33.3 = load i32, ptr %.loc48_33.1.temp, align 4, !dbg !82
 // CHECK:STDOUT:   call void @_CTakeAdapterI32.Main(i32 %.loc48_33.3), !dbg !83
-// CHECK:STDOUT:   call void @"_COp.9d67511b0143461b:core.Destroy.Core"(ptr %.loc48_33.1.temp), !dbg !82
+// CHECK:STDOUT:   call void @"_COp.4615e23332cd8b4c:core.Destroy.Core"(ptr %.loc48_33.1.temp), !dbg !82
 // CHECK:STDOUT:   ret void, !dbg !84
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !85 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !85 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !87
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.18fc07ffd08329ec:core.Destroy.Core"(ptr %self) #0 !dbg !89 {
+// CHECK:STDOUT: define weak_odr void @"_COp.1d6a7672bf2f14c6:core.Destroy.Core"(ptr %self) #0 !dbg !89 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !91
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.9d67511b0143461b:core.Destroy.Core"(ptr %self) #0 !dbg !93 {
+// CHECK:STDOUT: define weak_odr void @"_COp.4615e23332cd8b4c:core.Destroy.Core"(ptr %self) #0 !dbg !93 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !95
 // CHECK:STDOUT: }
@@ -161,12 +161,12 @@ fn PassAdapterBool() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc55_35.1.temp), !dbg !103
 // CHECK:STDOUT:   call void @_CMakeAdapterBool.Main(ptr %.loc55_35.1.temp), !dbg !103
 // CHECK:STDOUT:   call void @_CTakeAdapterBool.Main(ptr %.loc55_35.1.temp), !dbg !104
-// CHECK:STDOUT:   call void @"_COp.7fe843c0b66498d6:core.Destroy.Core"(ptr %.loc55_35.1.temp), !dbg !103
+// CHECK:STDOUT:   call void @"_COp.c9abcd82dd2173d7:core.Destroy.Core"(ptr %.loc55_35.1.temp), !dbg !103
 // CHECK:STDOUT:   ret void, !dbg !105
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.7fe843c0b66498d6:core.Destroy.Core"(ptr %self) #0 !dbg !106 {
+// CHECK:STDOUT: define weak_odr void @"_COp.c9abcd82dd2173d7:core.Destroy.Core"(ptr %self) #0 !dbg !106 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !108
 // CHECK:STDOUT: }
@@ -211,7 +211,7 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: !61 = !DILocation(line: 28, column: 12, scope: !60)
 // CHECK:STDOUT: !62 = !DILocation(line: 28, column: 3, scope: !60)
 // CHECK:STDOUT: !63 = !DILocation(line: 26, column: 1, scope: !60)
-// CHECK:STDOUT: !64 = distinct !DISubprogram(name: "Op", linkageName: "_COp.c4089b4f1697e4a6:core.Destroy.Core", scope: null, file: !32, line: 28, type: !41, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !67)
+// CHECK:STDOUT: !64 = distinct !DISubprogram(name: "Op", linkageName: "_COp.2ec8e1132c6ccd4f:core.Destroy.Core", scope: null, file: !32, line: 28, type: !41, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !67)
 // CHECK:STDOUT: !65 = !DILocalVariable(arg: 1, scope: !64, type: !37)
 // CHECK:STDOUT: !66 = !DILocation(line: 28, column: 12, scope: !64)
 // CHECK:STDOUT: !67 = !{!65}
@@ -228,15 +228,15 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: !82 = !DILocation(line: 48, column: 18, scope: !81)
 // CHECK:STDOUT: !83 = !DILocation(line: 48, column: 3, scope: !81)
 // CHECK:STDOUT: !84 = !DILocation(line: 45, column: 1, scope: !81)
-// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !32, line: 48, type: !36, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !88)
+// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !32, line: 48, type: !36, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !88)
 // CHECK:STDOUT: !86 = !DILocalVariable(arg: 1, scope: !85, type: !34)
 // CHECK:STDOUT: !87 = !DILocation(line: 48, column: 18, scope: !85)
 // CHECK:STDOUT: !88 = !{!86}
-// CHECK:STDOUT: !89 = distinct !DISubprogram(name: "Op", linkageName: "_COp.18fc07ffd08329ec:core.Destroy.Core", scope: null, file: !32, line: 48, type: !41, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !92)
+// CHECK:STDOUT: !89 = distinct !DISubprogram(name: "Op", linkageName: "_COp.1d6a7672bf2f14c6:core.Destroy.Core", scope: null, file: !32, line: 48, type: !41, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !92)
 // CHECK:STDOUT: !90 = !DILocalVariable(arg: 1, scope: !89, type: !37)
 // CHECK:STDOUT: !91 = !DILocation(line: 48, column: 18, scope: !89)
 // CHECK:STDOUT: !92 = !{!90}
-// CHECK:STDOUT: !93 = distinct !DISubprogram(name: "Op", linkageName: "_COp.9d67511b0143461b:core.Destroy.Core", scope: null, file: !32, line: 48, type: !36, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !96)
+// CHECK:STDOUT: !93 = distinct !DISubprogram(name: "Op", linkageName: "_COp.4615e23332cd8b4c:core.Destroy.Core", scope: null, file: !32, line: 48, type: !36, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !96)
 // CHECK:STDOUT: !94 = !DILocalVariable(arg: 1, scope: !93, type: !34)
 // CHECK:STDOUT: !95 = !DILocation(line: 48, column: 18, scope: !93)
 // CHECK:STDOUT: !96 = !{!94}
@@ -248,7 +248,7 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: !103 = !DILocation(line: 55, column: 19, scope: !102)
 // CHECK:STDOUT: !104 = !DILocation(line: 55, column: 3, scope: !102)
 // CHECK:STDOUT: !105 = !DILocation(line: 54, column: 1, scope: !102)
-// CHECK:STDOUT: !106 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7fe843c0b66498d6:core.Destroy.Core", scope: null, file: !32, line: 55, type: !41, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !109)
+// CHECK:STDOUT: !106 = distinct !DISubprogram(name: "Op", linkageName: "_COp.c9abcd82dd2173d7:core.Destroy.Core", scope: null, file: !32, line: 55, type: !41, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !109)
 // CHECK:STDOUT: !107 = !DILocalVariable(arg: 1, scope: !106, type: !37)
 // CHECK:STDOUT: !108 = !DILocation(line: 55, column: 19, scope: !106)
 // CHECK:STDOUT: !109 = !{!107}

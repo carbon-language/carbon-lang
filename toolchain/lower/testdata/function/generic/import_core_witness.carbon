@@ -33,7 +33,7 @@ fn Run() {
 // CHECK:STDOUT: source_filename = "lib.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !9 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
@@ -50,7 +50,7 @@ fn Run() {
 // CHECK:STDOUT: !6 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !7 = !{null, !6}
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !7)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !4, line: 7, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !12)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !4, line: 7, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !12)
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !9, type: !6)
 // CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !9)
 // CHECK:STDOUT: !12 = !{!10}
@@ -71,11 +71,11 @@ fn Run() {
 // CHECK:STDOUT:   %1 = alloca i32, align 4, !dbg !23
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !23
 // CHECK:STDOUT:   store i32 0, ptr %1, align 4, !dbg !23
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %1), !dbg !23
+// CHECK:STDOUT:   call void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %1), !dbg !23
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr)
+// CHECK:STDOUT: declare void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1

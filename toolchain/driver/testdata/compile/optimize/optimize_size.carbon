@@ -76,12 +76,12 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   br label %while.cond, !dbg !34
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %while.cond
-// CHECK:STDOUT:   call void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %n.var), !dbg !24
+// CHECK:STDOUT:   call void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %n.var), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: minsize nounwind optsize
-// CHECK:STDOUT: define weak_odr void @"_COp.70db2d92ffddbef7:core.Destroy.Core"(ptr %self) #0 !dbg !37 {
+// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !37 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
@@ -150,7 +150,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !34 = !DILocation(line: 15, column: 3, scope: !21)
 // CHECK:STDOUT: !35 = !DILocation(line: 12, column: 1, scope: !21)
 // CHECK:STDOUT: !36 = !{!22}
-// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "Op", linkageName: "_COp.70db2d92ffddbef7:core.Destroy.Core", scope: null, file: !0, line: 14, type: !9, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !40)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !0, line: 14, type: !9, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !40)
 // CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !37, type: !2)
 // CHECK:STDOUT: !39 = !DILocation(line: 14, column: 3, scope: !37)
 // CHECK:STDOUT: !40 = !{!38}

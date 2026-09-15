@@ -30,18 +30,18 @@ fn Example() -> char {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !14
 // CHECK:STDOUT:   store i8 97, ptr %c.var, align 1, !dbg !14
 // CHECK:STDOUT:   %.loc6 = load i8, ptr %c.var, align 1, !dbg !16
-// CHECK:STDOUT:   call void @"_COp.da789d153bec1921:core.Destroy.Core"(ptr %c.var), !dbg !14
+// CHECK:STDOUT:   call void @"_COp.8839c9ace2be9137:core.Destroy.Core"(ptr %c.var), !dbg !14
 // CHECK:STDOUT:   ret i8 %.loc6, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.becc1452ae1d9d7b:core.Destroy.Core"(ptr %self) #0 !dbg !18 {
+// CHECK:STDOUT: define weak_odr void @"_COp.be60742f00557eec:core.Destroy.Core"(ptr %self) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.da789d153bec1921:core.Destroy.Core"(ptr %self) #0 !dbg !22 {
+// CHECK:STDOUT: define weak_odr void @"_COp.8839c9ace2be9137:core.Destroy.Core"(ptr %self) #0 !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
@@ -68,11 +68,11 @@ fn Example() -> char {
 // CHECK:STDOUT: !14 = !DILocation(line: 5, column: 3, scope: !11)
 // CHECK:STDOUT: !16 = !DILocation(line: 6, column: 10, scope: !11)
 // CHECK:STDOUT: !17 = !DILocation(line: 6, column: 3, scope: !11)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.becc1452ae1d9d7b:core.Destroy.Core", scope: null, file: !4, line: 5, type: !10, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !21)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.be60742f00557eec:core.Destroy.Core", scope: null, file: !4, line: 5, type: !10, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !21)
 // CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !18, type: !6)
 // CHECK:STDOUT: !20 = !DILocation(line: 5, column: 3, scope: !18)
 // CHECK:STDOUT: !21 = !{!19}
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp.da789d153bec1921:core.Destroy.Core", scope: null, file: !4, line: 5, type: !10, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !25)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8839c9ace2be9137:core.Destroy.Core", scope: null, file: !4, line: 5, type: !10, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !25)
 // CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !22, type: !6)
 // CHECK:STDOUT: !24 = !DILocation(line: 5, column: 3, scope: !22)
 // CHECK:STDOUT: !25 = !{!23}

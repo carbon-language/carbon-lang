@@ -191,8 +191,8 @@ fn Run() {
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F [concrete]
 // CHECK:STDOUT:   %Base.F: %Base.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.6: type = fn_type @Destroy.Op.loc7_3.6 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.6: %Destroy.Op.type.1d8f74.6 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.6: type = fn_type @Destroy.WithSelf.Op.loc7_3.6 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.6: %Destroy.WithSelf.Op.type.ef016f.6 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -314,36 +314,36 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9_3.3: ref %Base = converted %a.ref.loc9, %.loc9_3.2
 // CHECK:STDOUT:   %.loc9_3.4: %Base = acquire_value %.loc9_3.3
 // CHECK:STDOUT:   %Base.F.call: init %empty_tuple.type = call %Base.F.bound(%.loc9_3.4)
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.6
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%a.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.Op.403171.6
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Base.F [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_3.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc7_3.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_3.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc7_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_3.3(%self.param: ref %struct_type.x.unused_y.258) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc7_3.3(%self.param: ref %struct_type.x.unused_y.258) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_3.4(%self.param: ref %Base) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc7_3.4(%self.param: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_3.5(%self.param: ref %struct_type.base.cae) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc7_3.5(%self.param: ref %struct_type.base.cae) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc7_3.6(%self.param: ref %Child) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc7_3.6(%self.param: ref %Child) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

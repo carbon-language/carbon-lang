@@ -114,7 +114,7 @@ fn DoThing() {
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTVN6Carbon7DerivedE, i32 0, i32 0, i32 2), ptr %.loc31_44.9.vptr, align 8, !dbg !62
 // CHECK:STDOUT:   %.loc32_11.3.base = getelementptr inbounds nuw [16 x i8], ptr %d.var, i32 0, i32 0, !dbg !66
 // CHECK:STDOUT:   call void @_Z3UseR4Base(ptr %.loc32_11.3.base), !dbg !67
-// CHECK:STDOUT:   call void @"_COp.d8aa8f8dee0ff18e:core.Destroy.Core"(ptr %d.var), !dbg !61
+// CHECK:STDOUT:   call void @"_COp.b25525d21a9bd472:core.Destroy.Core"(ptr %d.var), !dbg !61
 // CHECK:STDOUT:   ret void, !dbg !68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -131,18 +131,18 @@ fn DoThing() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Derived.Main"(ptr %self) #3 !dbg !69 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.d8aa8f8dee0ff18e:core.Destroy.Core"(ptr %self), !dbg !71
+// CHECK:STDOUT:   call void @"_COp.b25525d21a9bd472:core.Destroy.Core"(ptr %self), !dbg !71
 // CHECK:STDOUT:   ret void, !dbg !71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.a4cea16271ab4a06:core.Destroy.Core"(ptr %self) #2 !dbg !73 {
+// CHECK:STDOUT: define weak_odr void @"_COp.0a0b9df20a60c6f6:core.Destroy.Core"(ptr %self) #2 !dbg !73 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !75
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.d8aa8f8dee0ff18e:core.Destroy.Core"(ptr %self) #2 !dbg !77 {
+// CHECK:STDOUT: define weak_odr void @"_COp.b25525d21a9bd472:core.Destroy.Core"(ptr %self) #2 !dbg !77 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !79
 // CHECK:STDOUT: }
@@ -212,7 +212,7 @@ fn DoThing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN11FurtherBase17further_base_funcEv, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @"_COp.d8aa8f8dee0ff18e:core.Destroy.Core", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.b25525d21a9bd472:core.Destroy.Core", { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress noinline nounwind optnone uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -264,11 +264,11 @@ fn DoThing() {
 // CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !69, type: !40)
 // CHECK:STDOUT: !71 = !DILocation(line: 22, column: 1, scope: !69)
 // CHECK:STDOUT: !72 = !{!70}
-// CHECK:STDOUT: !73 = distinct !DISubprogram(name: "Op", linkageName: "_COp.a4cea16271ab4a06:core.Destroy.Core", scope: null, file: !37, line: 22, type: !42, spFlags: DISPFlagDefinition, unit: !38, retainedNodes: !76)
+// CHECK:STDOUT: !73 = distinct !DISubprogram(name: "Op", linkageName: "_COp.0a0b9df20a60c6f6:core.Destroy.Core", scope: null, file: !37, line: 22, type: !42, spFlags: DISPFlagDefinition, unit: !38, retainedNodes: !76)
 // CHECK:STDOUT: !74 = !DILocalVariable(arg: 1, scope: !73, type: !40)
 // CHECK:STDOUT: !75 = !DILocation(line: 22, column: 1, scope: !73)
 // CHECK:STDOUT: !76 = !{!74}
-// CHECK:STDOUT: !77 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d8aa8f8dee0ff18e:core.Destroy.Core", scope: null, file: !37, line: 22, type: !42, spFlags: DISPFlagDefinition, unit: !38, retainedNodes: !80)
+// CHECK:STDOUT: !77 = distinct !DISubprogram(name: "Op", linkageName: "_COp.b25525d21a9bd472:core.Destroy.Core", scope: null, file: !37, line: 22, type: !42, spFlags: DISPFlagDefinition, unit: !38, retainedNodes: !80)
 // CHECK:STDOUT: !78 = !DILocalVariable(arg: 1, scope: !77, type: !40)
 // CHECK:STDOUT: !79 = !DILocation(line: 22, column: 1, scope: !77)
 // CHECK:STDOUT: !80 = !{!78}

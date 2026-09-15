@@ -334,10 +334,10 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT:   %.loc8_14.3.temp = alloca i8, align 1, !dbg !82
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_14.3.temp), !dbg !80
 // CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk.__(ptr %n, ptr @int_1.f1e), !dbg !79
-// CHECK:STDOUT:   call void @"_COp.136cbc434fe80552:core.Destroy.Core"(ptr @int_1.f1e), !dbg !80
+// CHECK:STDOUT:   call void @"_COp.4954785a8b134801:core.Destroy.Core"(ptr @int_1.f1e), !dbg !80
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_14.3.temp), !dbg !82
 // CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk.__(ptr %n, ptr @int_1.f1e), !dbg !81
-// CHECK:STDOUT:   call void @"_COp.136cbc434fe80552:core.Destroy.Core"(ptr @int_1.f1e), !dbg !82
+// CHECK:STDOUT:   call void @"_COp.4954785a8b134801:core.Destroy.Core"(ptr @int_1.f1e), !dbg !82
 // CHECK:STDOUT:   ret void, !dbg !83
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -356,7 +356,7 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.136cbc434fe80552:core.Destroy.Core"(ptr %self) #0 !dbg !85 {
+// CHECK:STDOUT: define weak_odr void @"_COp.4954785a8b134801:core.Destroy.Core"(ptr %self) #0 !dbg !85 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !87
 // CHECK:STDOUT: }
@@ -384,7 +384,7 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT: declare void @_ZNH9NeedThunk8ExplicitES_a(i8 noundef signext) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @"_COp.136cbc434fe80552:core.Destroy.Core", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_COp.4954785a8b134801:core.Destroy.Core", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -424,7 +424,7 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT: !82 = !DILocation(line: 8, column: 14, scope: !76)
 // CHECK:STDOUT: !83 = !DILocation(line: 6, column: 1, scope: !76)
 // CHECK:STDOUT: !84 = !{!77}
-// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "Op", linkageName: "_COp.136cbc434fe80552:core.Destroy.Core", scope: null, file: !69, line: 7, type: !75, spFlags: DISPFlagDefinition, unit: !70, retainedNodes: !88)
+// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "Op", linkageName: "_COp.4954785a8b134801:core.Destroy.Core", scope: null, file: !69, line: 7, type: !75, spFlags: DISPFlagDefinition, unit: !70, retainedNodes: !88)
 // CHECK:STDOUT: !86 = !DILocalVariable(arg: 1, scope: !85, type: !71)
 // CHECK:STDOUT: !87 = !DILocation(line: 7, column: 14, scope: !85)
 // CHECK:STDOUT: !88 = !{!86}

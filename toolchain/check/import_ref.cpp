@@ -25,8 +25,10 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
@@ -2406,9 +2408,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 // Make a declaration of a function. This is done as a separate step from
 // importing the function declaration in order to resolve cycles.
-static auto ImportFunctionDecl(ImportContext& context,
-                               const SemIR::Function& import_function,
-                               SemIR::SpecificId specific_id)
+static auto ImportFunctionDecl(
+    ImportContext& context, const SemIR::Function& import_function,
+    SemIR::SpecificId specific_id,
+    SemIR::GeneratedFunction::CanonicalKey generated_function_key)
     -> std::pair<SemIR::FunctionId, SemIR::ConstantId> {
   SemIR::FunctionDecl function_decl = {
       .type_id = SemIR::TypeId::None,
@@ -2446,7 +2449,66 @@ static auto ImportFunctionDecl(ImportContext& context,
   // Write the function ID and type into the FunctionDecl.
   auto function_const_id =
       ReplacePlaceholderImportedInst(context, function_decl_id, function_decl);
+
+  if (generated_function_key.specific_interface_id.has_value()) {
+    const auto& import_generated =
+        context.import_ir().generated_functions().Get(
+            import_function.generated_function_id());
+    context.local_functions()
+        .Get(function_decl.function_id)
+        .SetGenerated(context.local_ir().generated_functions().Add({
+            .canonical_key = generated_function_key,
+            .function_id = function_decl.function_id,
+            .decl_id = function_decl_id,
+            .builtin_function_kind = import_generated.builtin_function_kind,
+        }));
+  }
+
   return {function_decl.function_id, function_const_id};
+}
+
+struct GeneratedFunctionData {
+  SemIR::SpecificInterface import_specific_interface;
+  SpecificInterfaceData specific_data;
+  SemIR::ConstantId self_type_const_id;
+  SemIR::NameId name_id;
+};
+
+static auto GetLocalGeneratedFunctionKeyData(
+    ImportRefResolver& resolver,
+    SemIR::GeneratedFunctionId import_generated_function_id)
+    -> std::optional<GeneratedFunctionData> {
+  if (!import_generated_function_id.has_value()) {
+    return std::nullopt;
+  }
+
+  const auto& import_key = resolver.import_ir()
+                               .generated_functions()
+                               .Get(import_generated_function_id)
+                               .canonical_key;
+
+  auto import_specific_interface = resolver.import_specific_interfaces().Get(
+      import_key.specific_interface_id);
+  auto specific_data =
+      GetLocalSpecificInterfaceData(resolver, import_specific_interface);
+  auto self_type_const_id =
+      GetLocalConstantId(resolver, import_key.self_type_id);
+  auto name_id = GetLocalNameId(resolver, import_key.name_id);
+  return {
+      {import_specific_interface, specific_data, self_type_const_id, name_id}};
+}
+
+static auto GetLocalGeneratedFunctionKey(ImportRefResolver& resolver,
+                                         const SemIR::Function& import_function,
+                                         const GeneratedFunctionData& data)
+    -> SemIR::GeneratedFunction::CanonicalKey {
+  CARBON_CHECK(import_function.generated_function_id().has_value());
+  auto specific_interface = GetLocalSpecificInterface(
+      resolver, data.import_specific_interface, data.specific_data);
+  auto self_type_id = resolver.local_types().GetTypeIdForTypeConstantId(
+      data.self_type_const_id);
+  return {resolver.local_specific_interfaces().Add(specific_interface),
+          self_type_id, data.name_id};
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2462,17 +2524,41 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                   .GetAs<SemIR::FunctionType>(inst.type_id)
                                   .specific_id;
     auto specific_data = GetLocalSpecificData(resolver, import_specific_id);
+    auto generated_function_data = GetLocalGeneratedFunctionKeyData(
+        resolver, import_function.generated_function_id());
     if (resolver.HasNewWork()) {
       // This is the end of the first phase. Don't make a new function yet if
       // we already have new work.
       return ResolveResult::Retry();
     }
 
+    // If the canonical Function for this generated function already exists,
+    // we dedupe by using it. Otherwise, we record the imported canonicalization
+    // key with the function.
+    auto generated_function_key = SemIR::GeneratedFunction::CanonicalKey{
+        SemIR::SpecificInterfaceId::None, SemIR::TypeId::None,
+        SemIR::NameId::None};
+    if (generated_function_data) {
+      // Generated functions are not generic.
+      CARBON_CHECK(!import_function.generic_id.has_value());
+
+      generated_function_key = GetLocalGeneratedFunctionKey(
+          resolver, import_function, *generated_function_data);
+      auto generated_id = resolver.local_ir().generated_functions().Lookup(
+          generated_function_key);
+      if (generated_id.has_value()) {
+        const auto& generated =
+            resolver.local_ir().generated_functions().Get(generated_id);
+        return ResolveResult::Done(
+            resolver.local_constant_values().Get(generated.decl_id));
+      }
+    }
+
     // On the second phase, create a forward declaration of the function.
     auto specific_id =
         GetOrAddLocalSpecific(resolver, import_specific_id, specific_data);
-    std::tie(function_id, function_const_id) =
-        ImportFunctionDecl(resolver, import_function, specific_id);
+    std::tie(function_id, function_const_id) = ImportFunctionDecl(
+        resolver, import_function, specific_id, generated_function_key);
   } else {
     // On the third phase, compute the function ID from the constant value of
     // the declaration.
@@ -2577,11 +2663,13 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       break;
     }
     case SemIR::Function::SpecialFunctionKind::Builtin: {
-      new_function.SetBuiltinFunction(import_function.builtin_function_kind());
+      new_function.SetBuiltinFunction(
+          import_function.non_generated_builtin_function_kind());
       break;
     }
-    case SemIR::Function::SpecialFunctionKind::CoreWitness: {
-      new_function.SetCoreWitness(import_function.builtin_function_kind());
+    case SemIR::Function::SpecialFunctionKind::Generated: {
+      // Generated function data is set during phase one when constructing the
+      // FunctionDecl.
       break;
     }
     case SemIR::Function::SpecialFunctionKind::Thunk: {

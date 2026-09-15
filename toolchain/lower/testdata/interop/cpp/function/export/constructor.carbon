@@ -79,12 +79,12 @@ void f() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.OneArg.Main"(ptr %self) #4 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.50eaa49c486ec4e2:core.Destroy.Core"(ptr %self), !dbg !17
+// CHECK:STDOUT:   call void @"_COp.7040ef4e2429d520:core.Destroy.Core"(ptr %self), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.50eaa49c486ec4e2:core.Destroy.Core"(ptr %self) #5 !dbg !19 {
+// CHECK:STDOUT: define weak_odr void @"_COp.7040ef4e2429d520:core.Destroy.Core"(ptr %self) #5 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
@@ -122,7 +122,7 @@ void f() {
 // CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !15, type: !8)
 // CHECK:STDOUT: !17 = !DILocation(line: 5, column: 1, scope: !15)
 // CHECK:STDOUT: !18 = !{!16}
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp.50eaa49c486ec4e2:core.Destroy.Core", scope: null, file: !5, line: 5, type: !12, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !22)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp.7040ef4e2429d520:core.Destroy.Core", scope: null, file: !5, line: 5, type: !12, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !22)
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !19, type: !8)
 // CHECK:STDOUT: !21 = !DILocation(line: 5, column: 1, scope: !19)
 // CHECK:STDOUT: !22 = !{!20}
