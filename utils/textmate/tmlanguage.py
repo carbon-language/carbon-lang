@@ -372,7 +372,7 @@ def tokenize_line(
             # The bound is arbitrary; it only has to exceed the transitions a
             # real line could ask for. Reaching it means a rule opens and
             # closes forever, which is a grammar bug: say so rather than
-            # silently truncate the line.
+            # silently truncating the line.
             if stalls > len(text) + 64:
                 raise RuntimeError(
                     f"line {linenum} stopped making progress at offset {pos}: "
