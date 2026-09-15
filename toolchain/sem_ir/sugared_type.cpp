@@ -32,7 +32,7 @@ class SugaredTypeFinder {
  private:
   // A transformation that is applied to a type that we find in order to produce
   // the type of the instruction that the search started from.
-  enum class Step {
+  enum class TypeTransformStep {
     // Replace a pointer type `T*` with its pointee type `T`.
     Pointee,
   };
@@ -47,7 +47,7 @@ class SugaredTypeFinder {
 
   // Applies `step` to `type_inst_id`, desugaring it if necessary. Returns
   // `None` if the step can't be applied.
-  auto ApplyStep(Step step, TypeInstId type_inst_id) -> TypeInstId;
+  auto ApplyStep(TypeTransformStep step, TypeInstId type_inst_id) -> TypeInstId;
 
   // Returns `operand_id` if it has type `type_id`, and `None` otherwise. This
   // is used when looking through an instruction that is expected to have the
@@ -58,7 +58,7 @@ class SugaredTypeFinder {
   const File* sem_ir_;
 
   // The steps to apply to the type that we find, in reverse order.
-  llvm::SmallVector<Step> steps_;
+  llvm::SmallVector<TypeTransformStep> steps_;
 };
 
 auto SugaredTypeFinder::LookThrough(TypeId type_id, InstId operand_id)
@@ -91,10 +91,10 @@ auto SugaredTypeFinder::FindCallReturnType(Call call) -> TypeInstId {
       .return_type_inst_id;
 }
 
-auto SugaredTypeFinder::ApplyStep(Step step, TypeInstId type_inst_id)
-    -> TypeInstId {
+auto SugaredTypeFinder::ApplyStep(TypeTransformStep step,
+                                  TypeInstId type_inst_id) -> TypeInstId {
   switch (step) {
-    case Step::Pointee: {
+    case TypeTransformStep::Pointee: {
       auto pointer_type = sem_ir_->insts().TryGetAs<PointerType>(type_inst_id);
       if (!pointer_type) {
         // The spelling we found isn't syntactically a pointer type, for example
@@ -124,7 +124,7 @@ auto SugaredTypeFinder::FindSpelledType(InstId inst_id) -> TypeInstId {
 
       // The type of a dereference is the pointee type of the pointer.
       case CARBON_KIND(Deref deref): {
-        steps_.push_back(Step::Pointee);
+        steps_.push_back(TypeTransformStep::Pointee);
         inst_id = deref.pointer_id;
         continue;
       }
