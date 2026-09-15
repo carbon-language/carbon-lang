@@ -103,7 +103,7 @@ auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
                              SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
   // Get the type of `Self`.
-  SemIR::InstId self_id = context.self_in_specific();
+  SemIR::InstId self_id = context.access_context();
   if (!self_id.has_value()) {
     SemIR::ScopeLookupResult lookup_result =
         LookupUnqualifiedName(context, loc_id, SemIR::NameId::SelfType,

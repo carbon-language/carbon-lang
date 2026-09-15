@@ -352,7 +352,7 @@ class Context {
 
   auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
 
-  auto self_in_specific() -> SemIR::TypeInstId& { return self_in_specific_; }
+  auto access_context() -> SemIR::TypeInstId& { return access_context_; }
 
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
@@ -627,7 +627,7 @@ class Context {
   bool mangle_string_fingerprint_;
 
   // When resolving a specific for a method, this is set to the `Self` type.
-  SemIR::TypeInstId self_in_specific_ = SemIR::TypeInstId::None;
+  SemIR::TypeInstId access_context_ = SemIR::TypeInstId::None;
 };
 
 inline constexpr Context::FormExpr Context::FormExpr::Error = {
