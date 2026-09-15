@@ -40,8 +40,9 @@ _FOREIGN_SYNTAX = {
 }
 
 
-# Every key a TextMate grammar can put a regex under. The first three are the
-# ones this tokenizer runs.
+# Every key a TextMate grammar can put a regex under. `match`, `begin`, and
+# `end` are the three this tokenizer runs; an editor also runs the folding
+# markers, so they are checked for dialect even though nothing here reads them.
 _REGEX_KEYS = (
     "match",
     "begin",
@@ -82,9 +83,10 @@ class Rule(NamedTuple):
 class _RuleMatch(NamedTuple):
     """A rule that matched, and where it matched.
 
-    `kind` names the grammar key the matching regex came from: `end` for the
-    open region's own `end`, in which case `pattern` is empty, or `match` or
-    `begin` for one of the rules in the region's `patterns`.
+    `kind` names the grammar key the matching regex came from: `"end"` for
+    the open region's own `end`, in which case `pattern` is empty, or
+    `"match"` or `"begin"` for one of the rules in the region's `patterns`.
+    `match` is always a real match; it is what `kind` describes.
     """
 
     kind: str
@@ -154,12 +156,10 @@ class Grammar:
     def all_regexes(self) -> Iterator[tuple[str, str]]:
         """Yields every `(key, regex)` the grammar holds, for validation.
 
-        A grammar keeps regexes under a fixed set of keys, so finding them all
-        means walking every dictionary in it and picking those keys out.
-        `match`, `begin`, and `end` are the three this tokenizer runs;
-        an editor also runs the folding markers, so they are checked for
-        dialect as well even though nothing here reads them. `key` says which
-        one it was, which is all a message needs to point at the right place.
+        A grammar keeps regexes only under the keys in `_REGEX_KEYS`, so
+        finding them all means walking every dictionary in it and picking
+        those keys out. `key` says which one it was, which is all a message
+        needs to point at the right place.
         """
 
         def walk(node: Any) -> Iterator[tuple[str, str]]:
@@ -198,12 +198,12 @@ def check_regex_dialect(grammar: Grammar) -> list[str]:
     return problems
 
 
-def _substitute_backrefs(regex: str, match: re.Match[str]) -> str:
+def _substitute_backrefs(regex: str, begin_match: re.Match[str]) -> str:
     """Replaces `\\N` in an `end` with the text `begin` captured, as VS Code
     does before compiling the `end` regex."""
 
     def replace(ref: re.Match[str]) -> str:
-        return re.escape(match.group(int(ref.group(1))) or "")
+        return re.escape(begin_match.group(int(ref.group(1))) or "")
 
     return re.sub(r"\\(\d)", replace, regex)
 
@@ -231,7 +231,7 @@ def _append_capture_tokens(
     """Appends the tokens for one match, splitting it at its capture groups.
 
     `captures` maps a group number, written as a string, to the scope the
-    group's text takes on top of `scopes`; group `0` is the whole match. The
+    group's text takes on top of `scopes`; group `"0"` is the whole match. The
     tokens tile the match with no gaps: text not covered by a listed group is
     still appended, under `scopes` alone.
     """
@@ -293,9 +293,9 @@ def _find_earliest(
         else:
             continue
         match = grammar.compile(regex).search(text, pos)
-        if match is None or (
-            best is not None and match.start() >= best.match.start()
-        ):
+        if match is None:
+            continue
+        if best is not None and match.start() >= best.match.start():
             continue
         best = _RuleMatch(kind, pattern, match)
     return best
@@ -316,9 +316,7 @@ def tokenize_line(
     """
     tokens: list[Token] = []
     pos = 0
-    # A region that opens or closes without consuming anything makes no
-    # progress. The bound on `stalls` below is arbitrary: it only has to
-    # exceed the number of region transitions a real line could ask for.
+    # Counts region transitions that consumed nothing, which make no progress.
     stalls = 0
     while pos <= len(text):
         rule = stack[-1]
@@ -371,8 +369,15 @@ def tokenize_line(
             # `end` such as `(?=[\[\(])` depends on that.
             pos = found.match.start()
             stalls += 1
+            # The bound is arbitrary; it only has to exceed the transitions a
+            # real line could ask for. Reaching it means a rule opens and
+            # closes forever, which is a grammar bug: say so rather than
+            # silently truncate the line.
             if stalls > len(text) + 64:
-                break
+                raise RuntimeError(
+                    f"line {linenum} stopped making progress at offset {pos}: "
+                    f"rule {found.pattern!r} neither consumes nor terminates"
+                )
     # Whatever is left over, including the newline, belongs to the region the
     # line ends inside of.
     _append_token(tokens, linenum, pos, len(text), stack[-1].content_scopes)
@@ -382,9 +387,12 @@ def tokenize_line(
 def split_lines(text: str) -> list[str]:
     """Splits a file into lines the way an editor numbers them.
 
+    Terminators are not kept on the lines, and a file ending in a newline
+    yields an empty final line, which is the blank line an editor shows there.
+
     Not `str.splitlines`: that also breaks on `\\f`, `\\v`, and a handful of
     Unicode separators, which a TextMate grammar sees as ordinary characters
-    within a line, and it drops the empty last line a trailing newline leaves.
+    within a line, and it drops that final empty line.
     """
     return text.split("\n")
 

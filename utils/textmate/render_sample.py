@@ -11,12 +11,10 @@ the grammar in this repository actually produces rather than whatever an editor
 looked like when someone last took a screenshot by hand.
 
 The SVG holds the source as text rather than as outlines, so whatever displays
-it lays the text out and draws the glyphs; this needs nothing outside the
-standard library. Colors are VS Code's Dark+; a scope the theme does not style
-resolves outward through the scope stack, which is what makes a string's quotes
-take the string color and a comment's `//` take the comment color.
-
-    ./utils/textmate/render_sample.py utils/textmate/Samples/*.carbon
+it lays the text out and draws the glyphs; nothing here rasterizes. Colors are
+VS Code's Dark+. A scope the theme does not style resolves outward through the
+scope stack, which is what makes a string's quotes take the string color and a
+comment's `//` take the comment color.
 """
 
 __copyright__ = """
@@ -32,10 +30,9 @@ from typing import Optional
 
 import tmlanguage
 
-# The grammar stays in the extension because `package.json` declares it with a
-# path resolved against the extension root, so it has to sit inside that
-# directory. Everything that reads it lives here.
-GRAMMAR_PATH = (
+# The grammar is part of the VS Code extension, which must all be contained
+# under the extension's root directory.
+_GRAMMAR_PATH = (
     Path(__file__).resolve().parents[1] / "vscode" / "carbon.tmLanguage.json"
 )
 
@@ -123,20 +120,19 @@ def _runs(colors: list[str]) -> list[tuple[int, int, str]]:
 def render(grammar: tmlanguage.Grammar, source: str) -> str:
     """Renders a Carbon source as a standalone SVG document."""
     lines = tmlanguage.split_lines(source)
-    while lines and not lines[-1].strip():
-        lines.pop()
-
     colored = [[_FOREGROUND] * len(line) for line in lines]
     for token in tmlanguage.tokenize(grammar, source):
-        # Every line is tokenized with a newline appended, so even a blank
-        # one carries a token covering that newline. The trailing blank lines
-        # were dropped just above, leaving those tokens no row to color.
-        if token.line >= len(colored):
-            continue
         color = _color_for(token.scopes)
         row = colored[token.line]
+        # A token runs one past the line, over the newline it was tokenized
+        # with, and there is no column there to color.
         for column in range(token.start, min(token.end, len(row))):
             row[column] = color
+
+    # Trailing blank lines would only pad the bottom of the image.
+    while lines and not lines[-1].strip():
+        lines.pop()
+        colored.pop()
 
     digits = len(str(len(lines))) if lines else 1
     longest = max((len(line) for line in lines), default=0)
@@ -173,7 +169,7 @@ def render(grammar: tmlanguage.Grammar, source: str) -> str:
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("sources", nargs="+", type=Path)
-    parser.add_argument("--grammar", type=Path, default=GRAMMAR_PATH)
+    parser.add_argument("--grammar", type=Path, default=_GRAMMAR_PATH)
     args = parser.parse_args(argv)
 
     grammar = tmlanguage.Grammar.load(args.grammar)

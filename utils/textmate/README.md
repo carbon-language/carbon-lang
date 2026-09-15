@@ -47,10 +47,3 @@ the grammar, so a reviewer can see what the change does to real code:
 ```shell
 utils/textmate/render_sample.py utils/textmate/Samples/*.carbon
 ```
-
-That needs only Python. The SVG holds the source as text rather than as
-outlines of its glyphs, so whatever displays it picks the font and lays the
-text out. The font is whichever monospace family the viewer already has:
-GitHub serves SVG under a `default-src 'none'` content security policy, so the
-image cannot fetch a web font and naming one would not help. The colors are VS
-Code's Dark+.
