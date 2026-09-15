@@ -352,7 +352,7 @@ class Context {
 
   auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
 
-  auto access_context() -> SemIR::TypeInstId& { return access_context_; }
+  auto access_context() -> SemIR::InstId& { return access_context_; }
 
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
@@ -629,8 +629,12 @@ class Context {
 
   bool mangle_string_fingerprint_;
 
-  // When resolving a specific for a method, this is set to the `Self` type.
-  SemIR::TypeInstId access_context_ = SemIR::TypeInstId::None;
+  // Type used when querying member access. For example, when checking a class
+  // method, this would be set to the type of that method's class.
+  //
+  // This is updated by `DeclNameStack`. During monomorphization, it is updated
+  // by `TryEvalBlockForSpecific`.
+  SemIR::InstId access_context_ = SemIR::TypeInstId::None;
 };
 
 inline constexpr Context::FormExpr Context::FormExpr::Error = {

@@ -99,26 +99,19 @@ static auto IsInstanceType(Context& context, SemIR::TypeId type_id) -> bool {
   return false;
 }
 
-auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
+auto GetHighestAllowedAccess(Context& context,
+                             // TODO: remove
+                             SemIR::LocId,
                              SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
-  // Get the type of `Self`.
-  SemIR::InstId self_id = context.access_context();
-  if (!self_id.has_value()) {
-    SemIR::ScopeLookupResult lookup_result =
-        LookupUnqualifiedName(context, loc_id, SemIR::NameId::SelfType,
-                              /*required=*/false)
-            .scope_result;
-    CARBON_CHECK(!lookup_result.is_poisoned());
-    if (!lookup_result.is_found()) {
-      return SemIR::AccessKind::Public;
-    }
-
-    self_id = lookup_result.target_inst_id();
+  SemIR::InstId access_context_id = context.access_context();
+  if (!access_context_id.has_value()) {
+    return SemIR::AccessKind::Public;
   }
 
   // TODO: Support other types for `Self`.
-  auto self_class_type = context.insts().TryGetAs<SemIR::ClassType>(self_id);
+  auto self_class_type =
+      context.insts().TryGetAs<SemIR::ClassType>(access_context_id);
   if (!self_class_type) {
     return SemIR::AccessKind::Public;
   }

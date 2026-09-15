@@ -13,6 +13,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/check/unused.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -65,6 +66,8 @@ auto DeclNameStack::PushScopeAndStartName() -> void {
 
   // Create a scope for any parameters introduced in this name.
   context_->scope_stack().PushForDeclName();
+
+  UpdateAccessContext();
 }
 
 auto DeclNameStack::FinishName(const NameComponent& name) -> NameContext {
@@ -93,6 +96,8 @@ auto DeclNameStack::PopScope(bool check_unused) -> void {
   context_->scope_stack().PopTo(decl_name_stack_.back().initial_scope_index,
                                 check_unused);
   decl_name_stack_.pop_back();
+
+  UpdateAccessContext();
 }
 
 auto DeclNameStack::Suspend() -> SuspendedName {
@@ -108,6 +113,9 @@ auto DeclNameStack::Suspend() -> SuspendedName {
   CARBON_CHECK(scope_stack.PeekIndex() == scope_index,
                "Scope index {0} does not enclose the current scope {1}",
                scope_index, scope_stack.PeekIndex());
+
+  UpdateAccessContext();
+
   return result;
 }
 
@@ -131,6 +139,8 @@ auto DeclNameStack::Restore(SuspendedName&& sus) -> void {
 
     context_->scope_stack().Restore(std::move(suspended_scope));
   }
+
+  UpdateAccessContext();
 }
 
 auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
@@ -521,6 +531,48 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
       return InvalidResult;
     }
   }
+}
+
+auto DeclNameStack::UpdateAccessContext() const -> void {
+  context_->access_context() = SemIR::InstId::None;
+
+  if (decl_name_stack_.empty() ||
+      !decl_name_stack_.back().parent_scope_id.has_value()) {
+    return;
+  }
+
+  const auto& parent_scope =
+      context_->name_scopes().Get(decl_name_stack_.back().parent_scope_id);
+  auto inst_id =
+      context_->constant_values().GetConstantInstId(parent_scope.inst_id());
+
+  // For impls, use the `self_id`.
+  if (auto impl_decl = context_->insts().TryGetAs<SemIR::ImplDecl>(inst_id)) {
+    const auto& impl = context_->impls().Get(impl_decl->impl_id);
+    context_->access_context() =
+        context_->constant_values().GetConstantInstId(impl.self_id);
+    return;
+  }
+
+  // For generic classes, use the generic's `self_specific_id` to create a
+  // `ClassType`.
+  auto type_id = context_->insts().Get(inst_id).type_id();
+  auto type_inst_id = context_->types().GetTypeInstId(type_id);
+  if (type_inst_id.has_value()) {
+    if (auto generic_class_type =
+            context_->insts().TryGetAs<SemIR::GenericClassType>(type_inst_id)) {
+      const auto& class_info =
+          context_->classes().Get(generic_class_type->class_id);
+      const auto& generic = context_->generics().Get(class_info.generic_id);
+      auto specific_id = generic.self_specific_id;
+      type_id =
+          GetClassType(*context_, generic_class_type->class_id, specific_id);
+      context_->access_context() = context_->types().GetTypeInstId(type_id);
+      return;
+    }
+  }
+
+  context_->access_context() = inst_id;
 }
 
 }  // namespace Carbon::Check
