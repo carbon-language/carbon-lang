@@ -24,26 +24,26 @@ fn Example() -> char {
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i8 @_CExample.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define i8 @_CExample.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca i8, align 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !8
-// CHECK:STDOUT:   store i8 97, ptr %c.var, align 1, !dbg !8
-// CHECK:STDOUT:   %.loc6 = load i8, ptr %c.var, align 1, !dbg !9
-// CHECK:STDOUT:   call void @"_COp.da789d153bec1921:core.Destroy.Core"(ptr %c.var), !dbg !8
-// CHECK:STDOUT:   ret i8 %.loc6, !dbg !10
+// CHECK:STDOUT:   %c.var = alloca i8, align 1, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !14
+// CHECK:STDOUT:   store i8 97, ptr %c.var, align 1, !dbg !14
+// CHECK:STDOUT:   %.loc6 = load i8, ptr %c.var, align 1, !dbg !16
+// CHECK:STDOUT:   call void @"_COp.8839c9ace2be9137:core.Destroy.Core"(ptr %c.var), !dbg !14
+// CHECK:STDOUT:   ret i8 %.loc6, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.becc1452ae1d9d7b:core.Destroy.Core"(ptr %self) #0 !dbg !11 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !16
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.da789d153bec1921:core.Destroy.Core"(ptr %self) #0 !dbg !17 {
+// CHECK:STDOUT: define weak_odr void @"_COp.be60742f00557eec:core.Destroy.Core"(ptr %self) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !20
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_COp.8839c9ace2be9137:core.Destroy.Core"(ptr %self) #0 !dbg !22 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -52,28 +52,28 @@ fn Example() -> char {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "basic.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Example", linkageName: "_CExample.Main", scope: null, file: !1, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{!7}
-// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_unsigned)
-// CHECK:STDOUT: !8 = !DILocation(line: 5, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 6, column: 10, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 6, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.becc1452ae1d9d7b:core.Destroy.Core", scope: null, file: !1, line: 5, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !14)
-// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
-// CHECK:STDOUT: !13 = !{null, !7}
-// CHECK:STDOUT: !14 = !{!15}
-// CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !11, type: !7)
-// CHECK:STDOUT: !16 = !DILocation(line: 5, column: 3, scope: !11)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Op", linkageName: "_COp.da789d153bec1921:core.Destroy.Core", scope: null, file: !1, line: 5, type: !12, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !18)
-// CHECK:STDOUT: !18 = !{!19}
-// CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !17, type: !7)
-// CHECK:STDOUT: !20 = !DILocation(line: 5, column: 3, scope: !17)
+// CHECK:STDOUT: !4 = !DIFile(filename: "basic.carbon", directory: "")
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !4, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !6 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_unsigned)
+// CHECK:STDOUT: !7 = !{!6}
+// CHECK:STDOUT: !8 = !DISubroutineType(types: !7)
+// CHECK:STDOUT: !9 = !{null, !6}
+// CHECK:STDOUT: !10 = !DISubroutineType(types: !9)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Example", linkageName: "_CExample.Main", scope: null, file: !4, line: 4, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !14 = !DILocation(line: 5, column: 3, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 6, column: 10, scope: !11)
+// CHECK:STDOUT: !17 = !DILocation(line: 6, column: 3, scope: !11)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp.be60742f00557eec:core.Destroy.Core", scope: null, file: !4, line: 5, type: !10, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !21)
+// CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !18, type: !6)
+// CHECK:STDOUT: !20 = !DILocation(line: 5, column: 3, scope: !18)
+// CHECK:STDOUT: !21 = !{!19}
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8839c9ace2be9137:core.Destroy.Core", scope: null, file: !4, line: 5, type: !10, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !25)
+// CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !22, type: !6)
+// CHECK:STDOUT: !24 = !DILocation(line: 5, column: 3, scope: !22)
+// CHECK:STDOUT: !25 = !{!23}
 // CHECK:STDOUT:

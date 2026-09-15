@@ -164,9 +164,8 @@ static auto BuildCopyWitness(
   }
   // Otherwise it's an enum (or eventually a C struct type). Perform a primitive
   // copy.
-  return BuildPrimitiveCopyWitness(
-      context, loc_id, GetClassScope(context, query_self_const_id),
-      query_self_const_id, query_specific_interface_id);
+  return BuildPrimitiveCopyWitness(context, loc_id, query_self_const_id,
+                                   query_specific_interface_id);
 }
 
 static auto BuildCppUnsafeDerefWitness(
