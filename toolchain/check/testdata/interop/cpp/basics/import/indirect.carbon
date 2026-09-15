@@ -100,22 +100,13 @@ fn TryToUseNotLeaked() {
   var unused x: Cpp.A.X = 0;
 }
 
-// --- fail_todo_no_cpp_import.carbon
+// --- no_cpp_import.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_no_cpp_import.carbon:[[@LINE+6]]:1: in import [InImport]
-// CHECK:STDERR: direct_import.carbon:4:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./shared.h:3:10: error: semantics TODO: `indirect import of C++ declaration with no direct Cpp import` [SemanticsTodo]
-// CHECK:STDERR:   struct X {
-// CHECK:STDERR:          ^
-// CHECK:STDERR:
 import library "direct_import";
 
 fn Field() -> i32 {
-  // TODO: This should eventually work, by importing the C++ AST from
-  // `direct_import`, even though we don't otherwise have any C++ imports in
-  // this compilation.
   return F().x;
 }
 

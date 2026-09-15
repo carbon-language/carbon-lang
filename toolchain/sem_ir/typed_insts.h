@@ -706,6 +706,11 @@ struct CustomWitness {
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
   // The witness table of instructions.
+  //
+  // TODO: Change this to a ImplWitnessTable (or similar) instruction to move
+  // the InstBlock out of line, so that we can use the witness InstId while we
+  // build up the table entries for the CustomWitness, and mutate the table as
+  // we go.
   InstBlockId elements_id;
   // The `SpecificInterface` of the lookup query.
   SpecificInterfaceId query_specific_interface_id;

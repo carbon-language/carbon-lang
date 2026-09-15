@@ -147,7 +147,7 @@ static auto ScopesMatch(Context& context, const SemIR::Impl& new_impl,
 
   // The redecl is is an invalid scope.
   CARBON_DIAGNOSTIC(ImplDeclInInvalidScope, Error,
-                    "impl redeclation not in a declarative scope; "
+                    "impl redeclaration not in a declarative scope; "
                     "redeclaration is allowed only in a class or namespace");
   context.emitter().Emit(new_impl.latest_decl_id(), ImplDeclInInvalidScope);
   return ImplRedeclType::DiagnosedInvalidRedecl;
