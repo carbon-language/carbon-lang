@@ -186,8 +186,8 @@ struct FunctionFields {
   InstId self_param_id = InstId::None;
 
   // Data that is specific to the special function kind. Use
-  // `builtin_function_kind()`, `generated_function_id()`, `thunk_decl_id()` or
-  // `cpp_thunk_decl_id()` to access this.
+  // `non_generated_builtin_function_kind()`, `generated_function_id()`,
+  // `thunk_decl_id()` or `cpp_thunk_decl_id()` to access this.
   AnyRawId special_function_kind_data = AnyRawId(AnyRawId::NoneIndex);
 
   // The following members are accumulated throughout the function definition.
@@ -463,10 +463,12 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
                               SpecificId base_class_specific_id)
     -> DecomposedVirtualFunction;
 
-// The values used to canonicalize generated functions for custom witnesses
-// globally across files. This can be used for deduping generating functions in
-// order to keep only a single canonical copy, and for generating a mangled name
-// that will be the same for all files.
+// The key holds values used to canonicalize generated functions for custom
+// witnesses globally across files. The payload holds a link to the Generated
+// function, as well as any extra fields for a Generated function. This can be
+// used for deduping generating functions in order to keep only a single
+// canonical copy, and for generating a mangled name that will be the same for
+// all files.
 struct GeneratedFunction : public Printable<GeneratedFunction> {
   struct CanonicalKey {
     // The Interface from Core.
@@ -485,8 +487,8 @@ struct GeneratedFunction : public Printable<GeneratedFunction> {
   };
   CanonicalKey canonical_key;
 
-  // The canonical Function for this Generated special function. There will only
-  // be one Function for a given Key value. This will contain the canonical
+  // The canonical FunctionId for this Generated special function. There will
+  // only be one Function for a given Key value. This will contain the canonical
   // values shared (with local ID mappings) across all files.
   SemIR::FunctionId function_id;
   // The owning declaration of the canonical generated Function. This will be

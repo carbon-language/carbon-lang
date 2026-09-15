@@ -47,9 +47,7 @@ static auto GetFacetAsType(Context& context,
 }
 
 // Make the CanonicalKey for a generated function `op_name_id` in the interface
-// `core_interface`. The param_types contains the specific self parameter type
-// followed by any interface argument types. Core interfaces with non-type
-// parameters are not currently needed or supported.
+// `core_specific_interface`.
 static auto MakeGeneratedFunctionKey(
     Context& context, SemIR::SpecificInterface core_specific_interface,
     SemIR::TypeId self_type_id, SemIR::NameId op_name_id)
