@@ -17,14 +17,14 @@ namespace Carbon::Check {
 // values aren't suitable for the interface.
 auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
                         SemIR::ConstantId query_self_const_id,
-                        SemIR::SpecificInterfaceId query_specific_interface_id,
+                        SemIR::SpecificInterface query_specific_interface,
                         llvm::ArrayRef<SemIR::InstId> values) -> SemIR::InstId;
 
 // Builds a witness that the given type is copyable via a primitive copy.
 auto BuildPrimitiveCopyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId;
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId;
 
 // Returns a manufactured operator function.
 // `param_types` contains the parameter types. The first element of
@@ -44,7 +44,7 @@ auto MakeBuiltinOperatorFunction(Context& context, SemIR::LocId loc_id,
 auto BuildTrivialDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId;
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId;
 
 // Given an interface, returns the corresponding enum if it's covered by
 // `CoreInterface`, or `Unknown` if it's some other interface.
@@ -64,7 +64,7 @@ auto AsCoreIdentifier(SemIR::CoreInterface core_interface) -> CoreIdentifier;
 auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::CoreInterface core_interface,
                          SemIR::ConstantId query_self_const_id,
-                         SemIR::SpecificInterfaceId query_specific_interface_id,
+                         SemIR::SpecificInterface query_specific_interface,
                          bool build_witness) -> std::optional<SemIR::InstId>;
 
 }  // namespace Carbon::Check
