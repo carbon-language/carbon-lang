@@ -417,6 +417,24 @@ class Hasher {
       0xc0ac'29b7'c97c'50dd, 0x3f84'd5b5'b547'0917,
   };
 
+  // The seed to use when there is no better one available. This is what the
+  // unseeded `HashValue` overload uses, and what Carbon's hashtables use as
+  // they have no per-table seed.
+  //
+  // This must be the *last* chunk of the pool. The size-specific hashing paths
+  // XOR other chunks into the buffer alongside the seed: `StaticRandomData[0]`
+  // for several ranges of byte counts, and `SampleRandomData(size)` for 17 to
+  // 32 byte keys, which is exactly `StaticRandomData[3]` at size 24 and
+  // `StaticRandomData[4]` at size 32. Seeding with a chunk that a path also
+  // XOR-s in cancels the buffer to zero on that path. Because `Mix` folds a
+  // 128-bit product in half, `Mix(x, 0)` is `0`, and so every key whose
+  // remaining input to that `Mix` is also zero hashes to zero. That collapses
+  // an entire class of keys onto one hash, making insertion of `n` of them
+  // quadratic -- measured at roughly 5700x slower for 65536 keys. Only the
+  // last chunk is out of reach: `SampleRandomData` reads at byte offsets in
+  // `[0, 56)`, and the last chunk is at offset 56.
+  static constexpr uint64_t DefaultSeed = StaticRandomData[7];
+
   // We need a multiplicative hashing constant for both 64-bit multiplicative
   // hashing fast paths and some other 128-bit folded multiplies. We use an
   // empirically better constant compared to Knuth's, Rust's FxHash, and others
@@ -633,11 +651,7 @@ inline auto HashValue(const T& value, uint64_t seed) -> HashCode {
 
 template <typename T>
 inline auto HashValue(const T& value) -> HashCode {
-  // When a seed isn't provided, use the last 64-bit chunk of random data. Other
-  // chunks (especially the first) are more often XOR-ed with the seed and risk
-  // cancelling each other out and feeding a zero to a `Mix` call in a way that
-  // sharply increasing collisions.
-  return HashValue(value, Hasher::StaticRandomData[7]);
+  return HashValue(value, Hasher::DefaultSeed);
 }
 
 constexpr auto HashCode::ExtractIndex() -> ssize_t { return value_; }

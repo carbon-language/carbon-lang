@@ -8,9 +8,12 @@
 
 namespace Carbon::RawHashtable {
 
+#ifndef NDEBUG
+// A global variable whose address seeds the iteration entropy pool. This allows
+// ASLR to introduce some variation in debug iteration order when enabled via
+// the code model for globals.
 volatile std::byte global_addr_seed{1};
 
-#ifndef NDEBUG
 std::atomic<HashCode> entropy_hash =
     Carbon::HashValue(reinterpret_cast<uint64_t>(&global_addr_seed));
 #endif

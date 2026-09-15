@@ -78,6 +78,18 @@
 // - The storage for an entry is an internal type that should not be exposed to
 //   users, and instead only the underlying keys and values.
 //
+// - Every key of every table is hashed with `Hasher::DefaultSeed`; there is no
+//   per-table seed. A constant is both the cheapest and the strongest seed
+//   available here. It is an immediate, so hashing needs neither a relocation
+//   nor a load on its critical path, where the address of a global can instead
+//   be folded into the hash's first mix. An address is also weak seed material:
+//   its load bias is page-aligned, so the low bits are fixed by the link and
+//   the high bits are zero. A constant further keeps the layout of a table, and
+//   so any collisions within it, reproducible and measurable from run to run.
+//   Varying the iteration order is instead the job of the range returned by
+//   `entries()`, which varies it directly and only where it matters, in debug
+//   builds.
+//
 // - The hash addressing and probing occurs over *groups* of slots rather than
 //   individual entries. When inserting a new entry, it can be added to the
 //   group it hashes to as long it is not full, and can even replace a slot with
@@ -868,19 +880,6 @@ class TableImpl : public InputBaseT {
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-// Computes a seed that provides a small amount of entropy from ASLR where
-// available with minimal cost. The priority is speed, and this computes the
-// entropy in a way that doesn't require loading from memory, merely accessing
-// entropy already available without accessing memory.
-inline auto ComputeSeed() -> uint64_t {
-  // A global variable whose address is used as a seed. This allows ASLR to
-  // introduce some variation in hashtable ordering when enabled via the code
-  // model for globals.
-  extern volatile std::byte global_addr_seed;
-
-  return reinterpret_cast<uint64_t>(&global_addr_seed);
-}
-
 #ifndef NDEBUG
 // A pool of entropy used to vary the iteration order of hashtables in debug
 // builds. It is seeded from ASLR where available.
@@ -980,7 +979,7 @@ auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::LookupEntry(
   CARBON_DCHECK(local_size > 0);
 
   uint8_t* local_metadata = metadata();
-  HashCode hash = key_context.HashKey(lookup_key, ComputeSeed());
+  HashCode hash = key_context.HashKey(lookup_key, Hasher::DefaultSeed);
   auto [hash_index, tag] = hash.ExtractIndexAndTag<7>();
 
   EntryT* local_entries = entries_data();
@@ -1058,7 +1057,7 @@ auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::ComputeMetricsImpl(
       ++metrics.key_count;
       ssize_t index = group_index + byte_index;
       HashCode hash =
-          key_context.HashKey(local_entries[index].key(), ComputeSeed());
+          key_context.HashKey(local_entries[index].key(), Hasher::DefaultSeed);
       auto [hash_index, tag] = hash.ExtractIndexAndTag<7>();
       ProbeSequence s(hash_index, local_size);
       metrics.probed_key_count +=
@@ -1257,7 +1256,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertImpl(
 
   uint8_t* local_metadata = metadata();
 
-  HashCode hash = key_context.HashKey(lookup_key, ComputeSeed());
+  HashCode hash = key_context.HashKey(lookup_key, Hasher::DefaultSeed);
   auto [hash_index, tag] = hash.ExtractIndexAndTag<7>();
 
   // We re-purpose the empty control byte to signal no insert is needed to the
@@ -1384,7 +1383,7 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToAllocSizeImpl(
       ++count;
       ssize_t index = group_index + byte_index;
       HashCode hash =
-          key_context.HashKey(old_entries[index].key(), ComputeSeed());
+          key_context.HashKey(old_entries[index].key(), Hasher::DefaultSeed);
       EntryT* new_entry = InsertIntoEmpty(hash);
       new_entry->MoveFrom(std::move(old_entries[index]));
     }
@@ -1799,8 +1798,8 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToNextAllocSize(
         CARBON_DCHECK(new_metadata[old_index | old_size] ==
                       old_metadata[old_index]);
       }
-      HashCode hash =
-          key_context.HashKey(old_entries[old_index].key(), ComputeSeed());
+      HashCode hash = key_context.HashKey(old_entries[old_index].key(),
+                                          Hasher::DefaultSeed);
       ssize_t old_hash_index = hash.ExtractIndexAndTag<7>().first &
                                ComputeProbeMaskFromSize(old_size);
       if (LLVM_UNLIKELY(old_hash_index != group_index)) {
