@@ -3458,6 +3458,47 @@ auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
+// Update `context.access_context` to the type of the innermost enclosing type
+// scope of the generic.
+static auto SetAccessContext(Context& context, SemIR::LocId loc_id,
+                             const SemIR::Generic& generic,
+                             const SemIR::Specific& specific) {
+  auto function_decl =
+      context.insts().TryGetAs<SemIR::FunctionDecl>(generic.decl_id);
+  if (!function_decl || !function_decl->function_id.has_value()) {
+    return;
+  }
+  const auto& function = context.functions().Get(function_decl->function_id);
+  if (!function.parent_scope_id.has_value()) {
+    return;
+  }
+
+  const auto& parent_scope =
+      context.name_scopes().Get(function.parent_scope_id);
+  auto class_decl =
+      context.insts().TryGetAs<SemIR::ClassDecl>(parent_scope.inst_id());
+  if (!class_decl) {
+    return;
+  }
+
+  const auto& class_info = context.classes().Get(class_decl->class_id);
+  auto class_specific_id = SemIR::SpecificId::None;
+  if (class_info.generic_id.has_value()) {
+    const auto& class_generic = context.generics().Get(class_info.generic_id);
+    auto specific_args = context.inst_blocks().Get(specific.args_id);
+    auto class_generic_bindings =
+        context.inst_blocks().Get(class_generic.bindings_id);
+    auto class_specific_args =
+        specific_args.slice(0, class_generic_bindings.size());
+    class_specific_id = MakeSpecific(context, loc_id, class_info.generic_id,
+                                     class_specific_args);
+  }
+
+  auto class_type =
+      GetClassType(context, class_decl->class_id, class_specific_id);
+  context.access_context() = context.types().GetTypeInstId(class_type);
+}
+
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region) -> void {
@@ -3465,14 +3506,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   const auto& generic = context.generics().Get(generic_id);
   auto eval_block_id = generic.GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
-  auto self_param_id = SemIR::InstId::None;
-
-  if (auto function_decl =
-          context.insts().TryGetAs<SemIR::FunctionDecl>(generic.decl_id);
-      function_decl && function_decl->function_id.has_value()) {
-    self_param_id =
-        context.functions().Get(function_decl->function_id).self_param_id;
-  }
+  auto orig_access_context = context.access_context();
 
   // Allocate the value block and store it back onto the specific, so that our
   // in-progress results are visible.
@@ -3484,6 +3518,8 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
     inst_id = SemIR::InstId::None;
   }
   specific.SetValueBlock(region, value_block_id);
+
+  SetAccessContext(context, loc_id, generic, specific);
 
   EvalContext eval_context(&context, loc_id, specific_id);
 
@@ -3497,14 +3533,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
 
   for (auto [i, inst_id, result_id] :
        llvm::enumerate(eval_block, value_block)) {
-    auto orig_access_context = context.access_context();
-    // For methods, store the `Self` type for later use.
-    if (self_param_id.has_value()) {
-      auto self_type_id =
-          GetScrutineeTypeInSpecific(context, self_param_id, specific_id);
-      context.access_context() = context.types().GetTypeInstId(self_type_id);
-    }
-
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     CARBON_CHECK(const_id.has_value(), "Failed to evaluate {0} in eval block",
@@ -3513,8 +3541,9 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
       specific.SetHasError(region);
     }
     result_id = context.constant_values().GetInstId(const_id);
-    context.access_context() = orig_access_context;
   }
+
+  context.access_context() = orig_access_context;
 }
 
 // Information about the function call we are currently executing. Unlike
