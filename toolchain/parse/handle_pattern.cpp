@@ -47,16 +47,9 @@ auto HandlePattern(Context& context) -> void {
           state.binding_context, state.ambient_precedence);
       break;
     default:
-      if (context.PositionKind().is_word() &&
-          context.PositionKind(Lookahead::NextToken)
-              .is_binding_pattern_operator()) {
-        context.PushStateForPattern(
-            StateKind::BindingPattern, state.in_var_pattern,
-            state.in_unused_pattern, state.in_field_shorthand_pattern,
-            state.binding_context, state.ambient_precedence);
-        break;
-      }
-      if (context.PositionKind().is_word() &&
+      if ((context.PositionKind().is_word() &&
+           context.PositionKind(Lookahead::NextToken)
+               .is_binding_pattern_operator()) ||
           state.in_field_shorthand_pattern) {
         context.PushStateForPattern(
             StateKind::BindingPattern, state.in_var_pattern,
