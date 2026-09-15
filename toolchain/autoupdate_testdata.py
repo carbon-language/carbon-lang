@@ -34,6 +34,8 @@ def main() -> None:
     parser.add_argument("files", nargs="*")
     args = parser.parse_args()
 
+    printv = print if args.verbose else lambda _: None
+
     bazel = str(Path(__file__).parents[1] / "scripts" / "run_bazel.py")
     configs = []
     # Use the most recently used build mode, or `fastbuild` if missing
@@ -54,11 +56,11 @@ def main() -> None:
         m = re.search(r"-(\w+)/bin$", link)
         if m:
             build_mode = m[1]
-            print(f"Detected --compilation_mode: {build_mode}")
+            printv(f"Detected --compilation_mode: {build_mode}")
         else:
             exit(f"Build mode not found in `bazel-bin` symlink: {link}")
-    elif args.verbose:
-        print(
+    else:
+        printv(
             "Detected --compilation_mode: none (no `./bazel-bin`), "
             + f"falling back to {build_mode}"
         )
@@ -104,8 +106,7 @@ def main() -> None:
                 f"{args.files[0]}"
             )
         argv.append("--file_tests=" + ",".join(file_tests))
-    if args.verbose:
-        print(shlex.join(argv))
+    printv(shlex.join(argv))
     # Provide an empty stdin so that the driver tests that read from stdin
     # don't block waiting for input. This matches the behavior of `bazel test`.
     result = subprocess.run(argv)

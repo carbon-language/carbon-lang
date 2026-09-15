@@ -97,7 +97,7 @@ class Mangler {
       -> void {
     std::visit(
         [&](auto& f) -> void {
-          using ResultT = typename std::decay_t<decltype(f)>::ResultType;
+          using ResultT = std::decay_t<decltype(f)>::ResultType;
           if constexpr (std::is_same_v<ResultT, llvm::StringRef>) {
             os << f.GetOrCompute(file, id);
           } else {

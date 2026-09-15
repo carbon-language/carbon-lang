@@ -878,12 +878,8 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
 
 // Function template that can be called with an argument of type `T`. Used below
 // to detect which overloads of `GetConstantValue` exist.
-//
-// Marked as maybe unused at it seems the use in a requires isn't tracked by the
-// latest version of Clang's `-Wunused-template`.
-// https://github.com/llvm/llvm-project/issues/218429
 template <typename T>
-[[maybe_unused]] static auto Accept(T /*arg*/) -> void {}
+static auto Accept(T /*arg*/) -> void {}
 
 // Determines whether a `GetConstantValue` overload exists for a given ID type.
 // Note that we do not check whether `GetConstantValue` is *callable* with a
@@ -2947,7 +2943,7 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   auto evaluation_mode = SemIR::Function::EvaluationMode::None;
   if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
     function = &eval_context.functions().Get(callee_function->function_id);
-    builtin_kind = function->builtin_function_kind();
+    builtin_kind = function->GetBuiltinFunctionKind(eval_context.sem_ir());
     evaluation_mode = function->evaluation_mode;
     // Calls to builtins and to `eval` or `musteval` functions might be
     // constant.

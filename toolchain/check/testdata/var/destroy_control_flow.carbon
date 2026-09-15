@@ -138,8 +138,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.397 = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:   %b.var_patt: %pattern_type.397 = var_pattern %b.patt [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc10_5.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc10_5.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -183,8 +183,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %b.ref: ref %Destructible = name_ref b, %b
 // CHECK:STDOUT:   %.loc11: %Destructible = ref_tag %b.ref
 // CHECK:STDOUT:   %Use.call.loc11: init %empty_tuple.type = call %Use.ref.loc11(%b.ref)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call %Destroy.Op.bound.loc10(%b.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc10: <bound method> = bound_method %b.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc10: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc10(%b.var)
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
@@ -192,14 +192,14 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %a.ref.loc13: ref %Destructible = name_ref a, %a
 // CHECK:STDOUT:   %.loc13: %Destructible = ref_tag %a.ref.loc13
 // CHECK:STDOUT:   %Use.call.loc13: init %empty_tuple.type = call %Use.ref.loc13(%a.ref.loc13)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%a.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc7: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc7(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_5.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_5.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_5.2(%self.param: ref %Destructible) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_5.2(%self.param: ref %Destructible) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -219,8 +219,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.397 = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:   %b.var_patt: %pattern_type.397 = var_pattern %b.patt [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc10_5.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc10_5.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %c.patt: %pattern_type.397 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:   %c.var_patt: %pattern_type.397 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT: }
@@ -266,8 +266,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %b.ref: ref %Destructible = name_ref b, %b
 // CHECK:STDOUT:   %.loc11: %Destructible = ref_tag %b.ref
 // CHECK:STDOUT:   %Use.call.loc11: init %empty_tuple.type = call %Use.ref.loc11(%b.ref)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call %Destroy.Op.bound.loc10(%b.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc10: <bound method> = bound_method %b.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc10: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc10(%b.var)
 // CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
@@ -286,8 +286,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %c.ref: ref %Destructible = name_ref c, %c
 // CHECK:STDOUT:   %.loc14: %Destructible = ref_tag %c.ref
 // CHECK:STDOUT:   %Use.call.loc14: init %empty_tuple.type = call %Use.ref.loc14(%c.ref)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc13: <bound method> = bound_method %c.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc13: init %empty_tuple.type = call %Destroy.Op.bound.loc13(%c.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc13: <bound method> = bound_method %c.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc13: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc13(%c.var)
 // CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
@@ -295,14 +295,14 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %a.ref.loc16: ref %Destructible = name_ref a, %a
 // CHECK:STDOUT:   %.loc16: %Destructible = ref_tag %a.ref.loc16
 // CHECK:STDOUT:   %Use.call.loc16: init %empty_tuple.type = call %Use.ref.loc16(%a.ref.loc16)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%a.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc7: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc7(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_5.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_5.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_5.2(%self.param: ref %Destructible) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_5.2(%self.param: ref %Destructible) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -322,8 +322,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.397 = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:   %b.var_patt: %pattern_type.397 = var_pattern %b.patt [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc10_5.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc10_5.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -367,21 +367,21 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %b.ref: ref %Destructible = name_ref b, %b
 // CHECK:STDOUT:   %.loc11: %Destructible = ref_tag %b.ref
 // CHECK:STDOUT:   %Use.call.loc11: init %empty_tuple.type = call %Use.ref.loc11(%b.ref)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc10: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc10: init %empty_tuple.type = call %Destroy.Op.bound.loc10(%b.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc7_3.1: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_3.1: init %empty_tuple.type = call %Destroy.Op.bound.loc7_3.1(%a.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc10: <bound method> = bound_method %b.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc10: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc10(%b.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc7_3.1: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc7_3.1: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc7_3.1(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %Destroy.Op.bound.loc7_3.2: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc7_3.2: init %empty_tuple.type = call %Destroy.Op.bound.loc7_3.2(%a.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc7_3.2: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc7_3.2: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc7_3.2(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_5.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_5.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc10_5.2(%self.param: ref %Destructible) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_5.2(%self.param: ref %Destructible) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -403,8 +403,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %b.var_patt: %pattern_type.397 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %c.patt: %pattern_type.397 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:   %c.var_patt: %pattern_type.397 = var_pattern %c.patt [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc14_7.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc14_7.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -474,15 +474,15 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %c.ref: ref %Destructible = name_ref c, %c
 // CHECK:STDOUT:   %.loc15: %Destructible = ref_tag %c.ref
 // CHECK:STDOUT:   %Use.call.loc15: init %empty_tuple.type = call %Use.ref.loc15(%c.ref)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc14: <bound method> = bound_method %c.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc14: init %empty_tuple.type = call %Destroy.Op.bound.loc14(%c.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc11_5.1: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc11_5.1: init %empty_tuple.type = call %Destroy.Op.bound.loc11_5.1(%b.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc14: <bound method> = bound_method %c.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc14: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc14(%c.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc11_5.1: <bound method> = bound_method %b.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc11_5.1: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc11_5.1(%b.var)
 // CHECK:STDOUT:   br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %Destroy.Op.bound.loc11_5.2: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc11_5.2: init %empty_tuple.type = call %Destroy.Op.bound.loc11_5.2(%b.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc11_5.2: <bound method> = bound_method %b.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc11_5.2: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc11_5.2(%b.var)
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.done:
@@ -490,14 +490,14 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %a.ref.loc19: ref %Destructible = name_ref a, %a
 // CHECK:STDOUT:   %.loc19: %Destructible = ref_tag %a.ref.loc19
 // CHECK:STDOUT:   %Use.call.loc19: init %empty_tuple.type = call %Use.ref.loc19(%a.ref.loc19)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%a.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc7: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc7(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14_7.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc14_7.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14_7.2(%self.param: ref %Destructible) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc14_7.2(%self.param: ref %Destructible) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -519,8 +519,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %b.var_patt: %pattern_type.397 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %c.patt: %pattern_type.397 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:   %c.var_patt: %pattern_type.397 = var_pattern %c.patt [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc14_7.2 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc14_7.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -590,15 +590,15 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %c.ref: ref %Destructible = name_ref c, %c
 // CHECK:STDOUT:   %.loc15: %Destructible = ref_tag %c.ref
 // CHECK:STDOUT:   %Use.call.loc15: init %empty_tuple.type = call %Use.ref.loc15(%c.ref)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc14: <bound method> = bound_method %c.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc14: init %empty_tuple.type = call %Destroy.Op.bound.loc14(%c.var)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc11_5.1: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc11_5.1: init %empty_tuple.type = call %Destroy.Op.bound.loc11_5.1(%b.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc14: <bound method> = bound_method %c.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc14: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc14(%c.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc11_5.1: <bound method> = bound_method %b.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc11_5.1: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc11_5.1(%b.var)
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %Destroy.Op.bound.loc11_5.2: <bound method> = bound_method %b.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc11_5.2: init %empty_tuple.type = call %Destroy.Op.bound.loc11_5.2(%b.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc11_5.2: <bound method> = bound_method %b.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc11_5.2: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc11_5.2(%b.var)
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.done:
@@ -606,14 +606,14 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   %a.ref.loc19: ref %Destructible = name_ref a, %a
 // CHECK:STDOUT:   %.loc19: %Destructible = ref_tag %a.ref.loc19
 // CHECK:STDOUT:   %Use.call.loc19: init %empty_tuple.type = call %Use.ref.loc19(%a.ref.loc19)
-// CHECK:STDOUT:   %Destroy.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%Destroy.Op.1a2547.2
-// CHECK:STDOUT:   %Destroy.Op.call.loc7: init %empty_tuple.type = call %Destroy.Op.bound.loc7(%a.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.Op.403171.2
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc7: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc7(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14_7.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc14_7.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14_7.2(%self.param: ref %Destructible) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc14_7.2(%self.param: ref %Destructible) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

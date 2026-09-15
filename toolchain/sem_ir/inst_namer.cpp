@@ -409,7 +409,7 @@ auto InstNamer::Namespace::AllocateName(
   }
 
   // Append numbers until we find an available name.
-  name += ".";
+  name.push_back('.');
   auto name_size_without_counter = name.size();
   for (int counter = 1;; ++counter) {
     name.resize(name_size_without_counter);

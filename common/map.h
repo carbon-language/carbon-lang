@@ -61,13 +61,13 @@ class MapView
     : RawHashtable::ViewImpl<InputKeyT, InputValueT, InputKeyContextT> {
   using ImplT =
       RawHashtable::ViewImpl<InputKeyT, InputValueT, InputKeyContextT>;
-  using EntryT = typename ImplT::EntryT;
+  using EntryT = ImplT::EntryT;
 
  public:
-  using KeyT = typename ImplT::KeyT;
-  using ValueT = typename ImplT::ValueT;
-  using KeyContextT = typename ImplT::KeyContextT;
-  using MetricsT = typename ImplT::MetricsT;
+  using KeyT = ImplT::KeyT;
+  using ValueT = ImplT::ValueT;
+  using KeyContextT = ImplT::KeyContextT;
+  using MetricsT = ImplT::MetricsT;
 
   // This type represents the result of lookup operations. It encodes whether
   // the lookup was a success as well as accessors for the key and value.
@@ -160,15 +160,15 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
  protected:
   using ImplT =
       RawHashtable::BaseImpl<InputKeyT, InputValueT, InputKeyContextT>;
-  using EntryT = typename ImplT::EntryT;
+  using EntryT = ImplT::EntryT;
 
  public:
-  using KeyT = typename ImplT::KeyT;
-  using ValueT = typename ImplT::ValueT;
-  using KeyContextT = typename ImplT::KeyContextT;
+  using KeyT = ImplT::KeyT;
+  using ValueT = ImplT::ValueT;
+  using KeyContextT = ImplT::KeyContextT;
   using ViewT = MapView<KeyT, ValueT, KeyContextT>;
-  using LookupKVResult = typename ViewT::LookupKVResult;
-  using MetricsT = typename ImplT::MetricsT;
+  using LookupKVResult = ViewT::LookupKVResult;
+  using MetricsT = ImplT::MetricsT;
 
   // The result type for insertion operations both indicates whether an insert
   // was needed (as opposed to finding an existing element), and provides access
@@ -385,8 +385,8 @@ class Map : public RawHashtable::TableImpl<
   using ImplT = RawHashtable::TableImpl<BaseT, SmallSize>;
 
  public:
-  using KeyT = typename BaseT::KeyT;
-  using ValueT = typename BaseT::ValueT;
+  using KeyT = BaseT::KeyT;
+  using ValueT = BaseT::ValueT;
 
   Map() = default;
   Map(const Map& arg) = default;

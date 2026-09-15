@@ -22,10 +22,15 @@ result = lldb.SBCommandReturnObject()
 
 
 def RunCommand(cmd: str, print_command: bool = True) -> Any:
-    """Runs a command and prints it to the console to show that it ran."""
+    """Runs a command and prints it to the console to show that it ran.
+
+    Any errors are printed to the console."""
     if print_command:
         print(f"(lldb) {cmd}")
     ci.HandleCommand(cmd, result)
+    err = result.GetError()
+    if err:
+        print(result.GetError())
     return result.GetOutput()
 
 
@@ -80,24 +85,25 @@ Example usage:
         "class": "SemIR::MakeClassId",
         "constant": "SemIR::MakeConstantId",
         "constraint": "SemIR::MakeNamedConstraintId",
-        "symbolic_constant": "SemIR::MakeSymbolicConstantId",
-        "entity_name": "SemIR::MakeEntityNameId",
         "declared_facet_type": "SemIR::MakeDeclaredFacetTypeId",
+        "entity_name": "SemIR::MakeEntityNameId",
         "function": "SemIR::MakeFunctionId",
+        "generated_function": "SemIR::MakeGeneratedFunctionId",
         "generic": "SemIR::MakeGenericId",
+        "identified_facet_type": "SemIR::MakeIdentifiedFacetTypeId",
         "impl": "SemIR::MakeImplId",
-        "inst_block": "SemIR::MakeInstBlockId",
         "inst": "SemIR::MakeInstId",
+        "inst_block": "SemIR::MakeInstBlockId",
         "interface": "SemIR::MakeInterfaceId",
         "import_ir_inst": "SemIR::MakeImportIRInstId",
         "name": "SemIR::MakeNameId",
         "name_scope": "SemIR::MakeNameScopeId",
-        "identified_facet_type": "SemIR::MakeIdentifiedFacetTypeId",
-        "require_block": "SemIR::MakeRequireImplsBlockId",
         "require": "SemIR::MakeRequireImplsId",
+        "require_block": "SemIR::MakeRequireImplsBlockId",
         "specific": "SemIR::MakeSpecificId",
         "specific_interface": "SemIR::MakeSpecificInterfaceId",
         "struct_type_fields": "SemIR::MakeStructTypeFieldsId",
+        "symbolic_constant": "SemIR::MakeSymbolicConstantId",
         "type": "SemIR::MakeTypeId",
     }
 
@@ -108,10 +114,6 @@ Example usage:
             # Use the `dump_re` match to print just the interesting part of the
             # dump output.
             print(m[1])
-        else:
-            # Unexpected output, show the command that was run.
-            print(f"(lldb) {cmd}")
-            print(out)
 
     # Try to find a type + id from the input args. If not, the id will be passed
     # through directly to C++, as it can be a variable name.
