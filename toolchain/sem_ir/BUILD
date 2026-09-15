@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
+load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -378,6 +378,23 @@ cc_test(
         "//toolchain/base:shared_value_stores",
         "//toolchain/parse:node_kind",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "dominance_benchmark",
+    testonly = 1,
+    srcs = ["dominance_benchmark.cpp"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//common:check",
+        "//common:error",
+        "//testing/base:benchmark_main",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/parse:node_kind",
+        "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
 )
