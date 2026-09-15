@@ -38,11 +38,6 @@ struct BlockIndex : public IndexBase<BlockIndex> {
 // Execution of a function body starts in its first block.
 constexpr BlockIndex EntryBlockIndex(0);
 
-// The maximum depth to which we look through spliced instructions. This is a
-// safeguard against malformed IR in which spliced instructions form a cycle;
-// well-formed IR nests far more shallowly than this.
-constexpr int MaxSpliceDepth = 50;
-
 // A step in the walk over a function's dominator tree.
 struct WalkStep {
   // Returns a step that verifies the instructions in `block_index` and queues
@@ -387,23 +382,15 @@ auto DominanceVerifier::VerifyAndRecordInst(InstId root_inst_id,
                                             BlockIndex block_index)
     -> ErrorOr<Success> {
   struct Step {
-    static auto Verify(InstId inst_id, int depth) -> Step {
-      return {.inst_id = inst_id, .depth = depth};
-    }
-    static auto FinishSpliceBlock(InstId inst_id) -> Step {
-      return {.inst_id = inst_id, .depth = -1};
-    }
-
     InstId inst_id;
-    // The splice nesting depth, or -1 to finish a `SpliceBlock` after its block
-    // has been evaluated.
-    int depth;
+    // Whether to finish a `SpliceBlock` after its block has been evaluated.
+    bool finish_splice_block = false;
   };
 
-  llvm::SmallVector<Step> worklist = {Step::Verify(root_inst_id, 0)};
+  llvm::SmallVector<Step> worklist = {{.inst_id = root_inst_id}};
   while (!worklist.empty()) {
-    auto [inst_id, depth] = worklist.pop_back_val();
-    if (depth == -1) {
+    auto [inst_id, finish_splice_block] = worklist.pop_back_val();
+    if (finish_splice_block) {
       auto splice_block = file_.insts().GetAs<SpliceBlock>(inst_id);
       CARBON_RETURN_IF_ERROR(
           VerifyOperand(inst_id, splice_block.result_id, block_index));
@@ -411,22 +398,16 @@ auto DominanceVerifier::VerifyAndRecordInst(InstId root_inst_id,
       continue;
     }
 
-    if (depth > MaxSpliceDepth) {
-      return ErrorBuilder() << "Spliced instructions are nested more than "
-                            << MaxSpliceDepth << " deep at instruction "
-                            << inst_id << " in function " << function_.name_id;
-    }
-
     Inst inst = file_.insts().Get(inst_id);
 
     // A `SpliceBlock` evaluates the instructions in its block, and then
     // produces the value of one of them.
     if (auto splice_block = inst.TryAs<SpliceBlock>()) {
-      worklist.push_back(Step::FinishSpliceBlock(inst_id));
+      worklist.push_back({.inst_id = inst_id, .finish_splice_block = true});
       if (splice_block->block_id.has_value()) {
         for (InstId spliced_id :
              llvm::reverse(file_.inst_blocks().Get(splice_block->block_id))) {
-          worklist.push_back(Step::Verify(spliced_id, depth + 1));
+          worklist.push_back({.inst_id = spliced_id});
         }
       }
       continue;
@@ -439,7 +420,7 @@ auto DominanceVerifier::VerifyAndRecordInst(InstId root_inst_id,
       RecordEvaluated(inst_id);
       if (InstId spliced_id = GetSplicedInstId(*splice);
           spliced_id.has_value()) {
-        worklist.push_back(Step::Verify(spliced_id, depth + 1));
+        worklist.push_back({.inst_id = spliced_id});
       }
       continue;
     }
