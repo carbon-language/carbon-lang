@@ -21,6 +21,7 @@
 #include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -45,34 +46,99 @@ static auto GetFacetAsType(Context& context,
   return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
 }
 
+// Make the CanonicalKey for a generated function `op_name_id` in the interface
+// `core_specific_interface`.
+static auto MakeGeneratedFunctionKey(
+    Context& context, SemIR::SpecificInterface core_specific_interface,
+    SemIR::TypeId self_type_id, SemIR::NameId op_name_id)
+    -> SemIR::GeneratedFunction::CanonicalKey {
+  // TODO: We'd like to build an Interface-with-Self specific here for the key,
+  // via MakeSpecificWithInnerSelf. But we are unable to make a facet value for
+  // Self with GetConstantFacetValueForTypeAndInterface() as we have no witness
+  // for the interface, because we don't have a CustomWitness instruction yet.
+  // To do so, we need to move the witness table out of the CustomWitness
+  // instruction, so that we can reorder things. Then we can make the
+  // CustomWitness inst first, and mutate the table as we build up the entries
+  // for it. For now, we use the InterfaceId and Interface-without-Self
+  // specific, and store the self TypeId separately instead.
+  auto specific_interface_id =
+      context.specific_interfaces().Add(core_specific_interface);
+
+  return SemIR::GeneratedFunction::CanonicalKey{specific_interface_id,
+                                                self_type_id, op_name_id};
+}
+// Attempts to return the canonical Function for a generated function.
+//
+// On success, returns the Decl and Function IDs of the canonical Function.
+// Otherwise, it returns None for those IDs.
+static auto TryGetGeneratedFunction(Context& context,
+                                    SemIR::GeneratedFunction::CanonicalKey key)
+    -> std::pair<SemIR::InstId, SemIR::FunctionId> {
+  if (auto generated_id = context.generated_functions().Lookup(key);
+      generated_id.has_value()) {
+    const auto& generated = context.generated_functions().Get(generated_id);
+    return {generated.decl_id, generated.function_id};
+  }
+  return {SemIR::InstId::None, SemIR::FunctionId::None};
+}
+
+static auto MakeCoreSpecificInterface(
+    Context& context, SemIR::LocId loc_id, SemIR::InterfaceId interface_id,
+    SemIR::GenericId interface_generic_id,
+    llvm::ArrayRef<SemIR::TypeId> param_types_without_self)
+    -> SemIR::SpecificInterface {
+  llvm::SmallVector<SemIR::InstId> params_without_self(
+      llvm::map_range(param_types_without_self, [&](SemIR::TypeId type_id) {
+        return context.types().GetTypeInstId(type_id);
+      }));
+  CARBON_CHECK(!params_without_self.empty() ==
+               interface_generic_id.has_value());
+  auto specific_id = SemIR::SpecificId::None;
+  if (!params_without_self.empty()) {
+    specific_id = MakeSpecific(context, loc_id, interface_generic_id,
+                               params_without_self);
+  }
+  return {interface_id, specific_id};
+}
+
 // Returns a manufactured operator function.
-auto MakeBuiltinOperatorFunction(Context& context,
+auto MakeBuiltinOperatorFunction(Context& context, SemIR::LocId loc_id,
                                  llvm::ArrayRef<SemIR::TypeId> param_types,
                                  SemIR::TypeId return_type_id,
                                  CoreIdentifier op_name,
                                  SemIR::BuiltinFunctionKind builtin_kind,
-                                 SemIR::NameScopeId parent_scope_id)
+                                 SemIR::InterfaceId interface_id)
     -> SemIR::InstId {
   CARBON_CHECK(!param_types.empty());
-  auto self_type_id = param_types.front();
+  auto self_type_id = param_types.consume_front();
   auto name_id = context.core_identifiers().AddNameId(op_name);
-
-  llvm::SmallVector<ParamPatternKind> param_kinds(param_types.size() - 1,
-                                                  ParamPatternKind::Value);
-  auto [decl_id, function_id] = MakeGeneratedFunctionDecl(
-      context, SemIR::LocId::None,
-      {.parent_scope_id = parent_scope_id,
-       .name_id = name_id,
-       .self_type_id = self_type_id,
-       .self_kind = ParamPatternKind::Value,
-       .param_type_ids = param_types.drop_front(),
-       .param_kinds = param_kinds,
-       .return_form =
-           ReturnExprAsForm(context, SemIR::LocId::None,
-                            context.types().GetTypeInstId(return_type_id))});
-
-  auto& function = context.functions().Get(function_id);
-  function.SetCoreWitness(builtin_kind);
+  const auto& interface = context.interfaces().Get(interface_id);
+  auto specific_interface = MakeCoreSpecificInterface(
+      context, loc_id, interface_id, interface.generic_id, param_types);
+  auto canonical_key = MakeGeneratedFunctionKey(context, specific_interface,
+                                                self_type_id, name_id);
+  auto [decl_id, function_id] = TryGetGeneratedFunction(context, canonical_key);
+  if (!decl_id.has_value()) {
+    llvm::SmallVector<ParamPatternKind> param_kinds(param_types.size(),
+                                                    ParamPatternKind::Value);
+    std::tie(decl_id, function_id) = MakeGeneratedFunctionDecl(
+        context, SemIR::LocId::None,
+        {.parent_scope_id = interface.scope_with_self_id,
+         .name_id = name_id,
+         .self_type_id = self_type_id,
+         .self_kind = ParamPatternKind::Value,
+         .param_type_ids = param_types,
+         .param_kinds = param_kinds,
+         .return_form =
+             ReturnExprAsForm(context, SemIR::LocId::None,
+                              context.types().GetTypeInstId(return_type_id))});
+    auto& function = context.functions().Get(function_id);
+    function.SetGenerated(context.generated_functions().Add(
+        {.canonical_key = canonical_key,
+         .function_id = function_id,
+         .decl_id = decl_id,
+         .builtin_function_kind = builtin_kind}));
+  }
 
   return decl_id;
 }
@@ -343,27 +409,45 @@ static auto MakeDestroyOpBody(Context& context, SemIR::LocId loc_id,
 // to `self_type_id`.
 static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
                                   SemIR::TypeId self_type_id,
-                                  SemIR::NameScopeId parent_scope_id,
+                                  SemIR::InterfaceId interface_id,
                                   DestroyFormat format) -> SemIR::InstId {
   auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
+  const auto& interface = context.interfaces().Get(interface_id);
+  auto specific_interface = MakeCoreSpecificInterface(
+      context, loc_id, interface_id, interface.generic_id, {});
+  auto canonical_key = MakeGeneratedFunctionKey(context, specific_interface,
+                                                self_type_id, name_id);
+  auto [decl_id, function_id] = TryGetGeneratedFunction(context, canonical_key);
+  if (!decl_id.has_value()) {
+    std::tie(decl_id, function_id) = MakeGeneratedFunctionDecl(
+        context, loc_id,
+        {.parent_scope_id = interface.scope_with_self_id,
+         .name_id = name_id,
+         .self_type_id = self_type_id,
+         .self_kind = ParamPatternKind::Ref});
 
-  auto [decl_id, function_id] =
-      MakeGeneratedFunctionDecl(context, loc_id,
-                                {.parent_scope_id = parent_scope_id,
-                                 .name_id = name_id,
-                                 .self_type_id = self_type_id,
-                                 .self_kind = ParamPatternKind::Ref});
+    auto& function = context.functions().Get(function_id);
 
-  auto& function = context.functions().Get(function_id);
+    auto builtin_kind = SemIR::BuiltinFunctionKind::None;
+    switch (format) {
+      case DestroyFormat::Trivial:
+        builtin_kind = SemIR::BuiltinFunctionKind::NoOp;
+        break;
+      case DestroyFormat::NonTrivial: {
+        auto body_id = MakeDestroyOpBody(context, loc_id, self_type_id,
+                                         function.self_param_id);
+        function.body_block_ids.push_back(body_id);
+        break;
+      }
+      case DestroyFormat::NoDestroy:
+        CARBON_FATAL("unexpected DestroyFormat::NoDestroy");
+    }
 
-  if (format == DestroyFormat::Trivial) {
-    function.SetCoreWitness(SemIR::BuiltinFunctionKind::NoOp);
-  } else {
-    CARBON_CHECK(format == DestroyFormat::NonTrivial);
-    function.SetCoreWitness(SemIR::BuiltinFunctionKind::None);
-    auto body_id = MakeDestroyOpBody(context, loc_id, self_type_id,
-                                     function.self_param_id);
-    function.body_block_ids.push_back(body_id);
+    function.SetGenerated(context.generated_functions().Add(
+        {.canonical_key = canonical_key,
+         .function_id = function_id,
+         .decl_id = decl_id,
+         .builtin_function_kind = builtin_kind}));
   }
 
   return decl_id;
@@ -584,13 +668,17 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
 }
 
 auto BuildPrimitiveCopyWitness(
-    Context& context, SemIR::LocId loc_id, SemIR::NameScopeId parent_scope_id,
+    Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   auto self_type_id = GetFacetAsType(context, query_self_const_id);
+
   auto op_id = MakeBuiltinOperatorFunction(
-      context, {self_type_id}, self_type_id, CoreIdentifier::Op,
-      SemIR::BuiltinFunctionKind::PrimitiveCopy, parent_scope_id);
+      context, loc_id, {self_type_id}, self_type_id, CoreIdentifier::Op,
+      SemIR::BuiltinFunctionKind::PrimitiveCopy,
+      context.specific_interfaces()
+          .Get(query_specific_interface_id)
+          .interface_id);
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {op_id});
 }
@@ -604,17 +692,12 @@ static auto BuildDestroyWitness(
     DestroyFormat format) -> SemIR::InstId {
   CARBON_CHECK(format != DestroyFormat::NoDestroy);
 
-  // Mark functions with the interface's scope as a hint to mangling. This
-  // does not add them to the scope.
-  auto query_specific_interface =
-      context.specific_interfaces().Get(query_specific_interface_id);
-  auto parent_scope_id = context.interfaces()
-                             .Get(query_specific_interface.interface_id)
-                             .scope_without_self_id;
-
   auto self_type_id = GetFacetAsType(context, query_self_const_id);
   auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_id,
-                                     parent_scope_id, format);
+                                     context.specific_interfaces()
+                                         .Get(query_specific_interface_id)
+                                         .interface_id,
+                                     format);
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {op_id});
 }

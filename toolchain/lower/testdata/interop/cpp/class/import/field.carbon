@@ -115,53 +115,53 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CAccessN.Main(ptr %a) #0 !dbg !12 {
+// CHECK:STDOUT: define i32 @_CAccessN.Main(ptr %a) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_11.1.n = getelementptr inbounds nuw [32 x i8], ptr %a, i32 0, i32 0, !dbg !19
-// CHECK:STDOUT:   %.loc9_11.2 = load i32, ptr %.loc9_11.1.n, align 4, !dbg !19
-// CHECK:STDOUT:   ret i32 %.loc9_11.2, !dbg !20
+// CHECK:STDOUT:   %.loc9_11.1.n = getelementptr inbounds nuw [32 x i8], ptr %a, i32 0, i32 0, !dbg !29
+// CHECK:STDOUT:   %.loc9_11.2 = load i32, ptr %.loc9_11.1.n, align 4, !dbg !29
+// CHECK:STDOUT:   ret i32 %.loc9_11.2, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CAccessM.Main(ptr %a) #0 !dbg !21 {
+// CHECK:STDOUT: define i32 @_CAccessM.Main(ptr %a) #0 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_11.1.m = getelementptr inbounds nuw [32 x i8], ptr %a, i32 0, i32 16, !dbg !24
-// CHECK:STDOUT:   %.loc13_11.2 = load i32, ptr %.loc13_11.1.m, align 4, !dbg !24
-// CHECK:STDOUT:   ret i32 %.loc13_11.2, !dbg !25
+// CHECK:STDOUT:   %.loc13_11.1.m = getelementptr inbounds nuw [32 x i8], ptr %a, i32 0, i32 16, !dbg !37
+// CHECK:STDOUT:   %.loc13_11.2 = load i32, ptr %.loc13_11.1.m, align 4, !dbg !37
+// CHECK:STDOUT:   ret i32 %.loc13_11.2, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
+// CHECK:STDOUT: !llvm.module.flags = !{!40, !41, !42, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!47}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "access_struct.carbon", directory: "")
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
-// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "AccessN", linkageName: "_CAccessN.Main", scope: null, file: !1, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !17)
-// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !14 = !{!15, !16}
-// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !16 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !17 = !{!18}
-// CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !12, type: !16)
-// CHECK:STDOUT: !19 = !DILocation(line: 9, column: 10, scope: !12)
-// CHECK:STDOUT: !20 = !DILocation(line: 9, column: 3, scope: !12)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "AccessM", linkageName: "_CAccessM.Main", scope: null, file: !1, line: 12, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !22)
-// CHECK:STDOUT: !22 = !{!23}
-// CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !21, type: !16)
-// CHECK:STDOUT: !24 = !DILocation(line: 13, column: 10, scope: !21)
-// CHECK:STDOUT: !25 = !DILocation(line: 13, column: 3, scope: !21)
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !18 = !DIFile(filename: "access_struct.carbon", directory: "")
+// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !22 = !{!20, !21}
+// CHECK:STDOUT: !23 = !DISubroutineType(types: !22)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "AccessN", linkageName: "_CAccessN.Main", scope: null, file: !18, line: 8, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !31)
+// CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !24, type: !21)
+// CHECK:STDOUT: !29 = !DILocation(line: 9, column: 10, scope: !24)
+// CHECK:STDOUT: !30 = !DILocation(line: 9, column: 3, scope: !24)
+// CHECK:STDOUT: !31 = !{!25}
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "AccessM", linkageName: "_CAccessM.Main", scope: null, file: !18, line: 12, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !39)
+// CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !32, type: !21)
+// CHECK:STDOUT: !37 = !DILocation(line: 13, column: 10, scope: !32)
+// CHECK:STDOUT: !38 = !DILocation(line: 13, column: 3, scope: !32)
+// CHECK:STDOUT: !39 = !{!33}
+// CHECK:STDOUT: !40 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !41 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !42 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !43 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !44 = !{!"omnipotent char", !43, i64 0}
+// CHECK:STDOUT: !45 = !{!"int", !44, i64 0}
+// CHECK:STDOUT: !46 = !{!"__libc_errno", !45, i64 0}
+// CHECK:STDOUT: !47 = !{!46, !45, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'assign_struct.carbon'
@@ -170,52 +170,52 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CAssignN.Main(ptr %p) #0 !dbg !12 {
+// CHECK:STDOUT: define void @_CAssignN.Main(ptr %p) #0 !dbg !52 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_4.2.n = getelementptr inbounds nuw [32 x i8], ptr %p, i32 0, i32 0, !dbg !18
-// CHECK:STDOUT:   store i32 1, ptr %.loc9_4.2.n, align 4, !dbg !18
-// CHECK:STDOUT:   ret void, !dbg !19
+// CHECK:STDOUT:   %.loc9_4.2.n = getelementptr inbounds nuw [32 x i8], ptr %p, i32 0, i32 0, !dbg !55
+// CHECK:STDOUT:   store i32 1, ptr %.loc9_4.2.n, align 4, !dbg !55
+// CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CAssignM.Main(ptr %p) #0 !dbg !20 {
+// CHECK:STDOUT: define void @_CAssignM.Main(ptr %p) #0 !dbg !58 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_4.2.m = getelementptr inbounds nuw [32 x i8], ptr %p, i32 0, i32 16, !dbg !23
-// CHECK:STDOUT:   store i32 1, ptr %.loc13_4.2.m, align 4, !dbg !23
-// CHECK:STDOUT:   ret void, !dbg !24
+// CHECK:STDOUT:   %.loc13_4.2.m = getelementptr inbounds nuw [32 x i8], ptr %p, i32 0, i32 16, !dbg !61
+// CHECK:STDOUT:   store i32 1, ptr %.loc13_4.2.m, align 4, !dbg !61
+// CHECK:STDOUT:   ret void, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!49}
+// CHECK:STDOUT: !llvm.module.flags = !{!40, !41, !42, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!47}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "assign_struct.carbon", directory: "")
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
-// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "AssignN", linkageName: "_CAssignN.Main", scope: null, file: !1, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !16)
-// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !14 = !{null, !15}
-// CHECK:STDOUT: !15 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !16 = !{!17}
-// CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !12, type: !15)
-// CHECK:STDOUT: !18 = !DILocation(line: 9, column: 3, scope: !12)
-// CHECK:STDOUT: !19 = !DILocation(line: 8, column: 1, scope: !12)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "AssignM", linkageName: "_CAssignM.Main", scope: null, file: !1, line: 12, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !21)
-// CHECK:STDOUT: !21 = !{!22}
-// CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !20, type: !15)
-// CHECK:STDOUT: !23 = !DILocation(line: 13, column: 3, scope: !20)
-// CHECK:STDOUT: !24 = !DILocation(line: 12, column: 1, scope: !20)
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !40 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !41 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !42 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !43 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !44 = !{!"omnipotent char", !43, i64 0}
+// CHECK:STDOUT: !45 = !{!"int", !44, i64 0}
+// CHECK:STDOUT: !46 = !{!"__libc_errno", !45, i64 0}
+// CHECK:STDOUT: !47 = !{!46, !45, i64 0}
+// CHECK:STDOUT: !48 = !DIFile(filename: "assign_struct.carbon", directory: "")
+// CHECK:STDOUT: !49 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !48, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !50 = !{null, !21}
+// CHECK:STDOUT: !51 = !DISubroutineType(types: !50)
+// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "AssignN", linkageName: "_CAssignN.Main", scope: null, file: !48, line: 8, type: !51, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !57)
+// CHECK:STDOUT: !53 = !DILocalVariable(arg: 1, scope: !52, type: !21)
+// CHECK:STDOUT: !55 = !DILocation(line: 9, column: 3, scope: !52)
+// CHECK:STDOUT: !56 = !DILocation(line: 8, column: 1, scope: !52)
+// CHECK:STDOUT: !57 = !{!53}
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "AssignM", linkageName: "_CAssignM.Main", scope: null, file: !48, line: 12, type: !51, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !63)
+// CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !58, type: !21)
+// CHECK:STDOUT: !61 = !DILocation(line: 13, column: 3, scope: !58)
+// CHECK:STDOUT: !62 = !DILocation(line: 12, column: 1, scope: !58)
+// CHECK:STDOUT: !63 = !{!59}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'access_union.carbon'
@@ -224,53 +224,53 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CAccessN.Main(ptr %a) #0 !dbg !12 {
+// CHECK:STDOUT: define i32 @_CAccessN.Main(ptr %a) #0 !dbg !66 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_11.1.n = getelementptr inbounds nuw [4 x i8], ptr %a, i32 0, i32 0, !dbg !19
-// CHECK:STDOUT:   %.loc7_11.2 = load i32, ptr %.loc7_11.1.n, align 4, !dbg !19
-// CHECK:STDOUT:   ret i32 %.loc7_11.2, !dbg !20
+// CHECK:STDOUT:   %.loc7_11.1.n = getelementptr inbounds nuw [4 x i8], ptr %a, i32 0, i32 0, !dbg !71
+// CHECK:STDOUT:   %.loc7_11.2 = load i32, ptr %.loc7_11.1.n, align 4, !dbg !71
+// CHECK:STDOUT:   ret i32 %.loc7_11.2, !dbg !72
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CAccessM.Main(ptr %a) #0 !dbg !21 {
+// CHECK:STDOUT: define i32 @_CAccessM.Main(ptr %a) #0 !dbg !74 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_11.1.m = getelementptr inbounds nuw [4 x i8], ptr %a, i32 0, i32 0, !dbg !24
-// CHECK:STDOUT:   %.loc11_11.2 = load i32, ptr %.loc11_11.1.m, align 4, !dbg !24
-// CHECK:STDOUT:   ret i32 %.loc11_11.2, !dbg !25
+// CHECK:STDOUT:   %.loc11_11.1.m = getelementptr inbounds nuw [4 x i8], ptr %a, i32 0, i32 0, !dbg !79
+// CHECK:STDOUT:   %.loc11_11.2 = load i32, ptr %.loc11_11.1.m, align 4, !dbg !79
+// CHECK:STDOUT:   ret i32 %.loc11_11.2, !dbg !80
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!65}
+// CHECK:STDOUT: !llvm.module.flags = !{!40, !41, !42, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!47}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "access_union.carbon", directory: "")
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
-// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "AccessN", linkageName: "_CAccessN.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !17)
-// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !14 = !{!15, !16}
-// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !16 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !17 = !{!18}
-// CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !12, type: !16)
-// CHECK:STDOUT: !19 = !DILocation(line: 7, column: 10, scope: !12)
-// CHECK:STDOUT: !20 = !DILocation(line: 7, column: 3, scope: !12)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "AccessM", linkageName: "_CAccessM.Main", scope: null, file: !1, line: 10, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !22)
-// CHECK:STDOUT: !22 = !{!23}
-// CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !21, type: !16)
-// CHECK:STDOUT: !24 = !DILocation(line: 11, column: 10, scope: !21)
-// CHECK:STDOUT: !25 = !DILocation(line: 11, column: 3, scope: !21)
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !22 = !{!20, !21}
+// CHECK:STDOUT: !23 = !DISubroutineType(types: !22)
+// CHECK:STDOUT: !40 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !41 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !42 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !43 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !44 = !{!"omnipotent char", !43, i64 0}
+// CHECK:STDOUT: !45 = !{!"int", !44, i64 0}
+// CHECK:STDOUT: !46 = !{!"__libc_errno", !45, i64 0}
+// CHECK:STDOUT: !47 = !{!46, !45, i64 0}
+// CHECK:STDOUT: !64 = !DIFile(filename: "access_union.carbon", directory: "")
+// CHECK:STDOUT: !65 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !64, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "AccessN", linkageName: "_CAccessN.Main", scope: null, file: !64, line: 6, type: !23, spFlags: DISPFlagDefinition, unit: !65, retainedNodes: !73)
+// CHECK:STDOUT: !67 = !DILocalVariable(arg: 1, scope: !66, type: !21)
+// CHECK:STDOUT: !71 = !DILocation(line: 7, column: 10, scope: !66)
+// CHECK:STDOUT: !72 = !DILocation(line: 7, column: 3, scope: !66)
+// CHECK:STDOUT: !73 = !{!67}
+// CHECK:STDOUT: !74 = distinct !DISubprogram(name: "AccessM", linkageName: "_CAccessM.Main", scope: null, file: !64, line: 10, type: !23, spFlags: DISPFlagDefinition, unit: !65, retainedNodes: !81)
+// CHECK:STDOUT: !75 = !DILocalVariable(arg: 1, scope: !74, type: !21)
+// CHECK:STDOUT: !79 = !DILocation(line: 11, column: 10, scope: !74)
+// CHECK:STDOUT: !80 = !DILocation(line: 11, column: 3, scope: !74)
+// CHECK:STDOUT: !81 = !{!75}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'assign_union.carbon'
@@ -279,52 +279,52 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CAssignN.Main(ptr %p) #0 !dbg !12 {
+// CHECK:STDOUT: define void @_CAssignN.Main(ptr %p) #0 !dbg !84 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_4.2.n = getelementptr inbounds nuw [4 x i8], ptr %p, i32 0, i32 0, !dbg !18
-// CHECK:STDOUT:   store i32 1, ptr %.loc7_4.2.n, align 4, !dbg !18
-// CHECK:STDOUT:   ret void, !dbg !19
+// CHECK:STDOUT:   %.loc7_4.2.n = getelementptr inbounds nuw [4 x i8], ptr %p, i32 0, i32 0, !dbg !87
+// CHECK:STDOUT:   store i32 1, ptr %.loc7_4.2.n, align 4, !dbg !87
+// CHECK:STDOUT:   ret void, !dbg !88
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CAssignM.Main(ptr %p) #0 !dbg !20 {
+// CHECK:STDOUT: define void @_CAssignM.Main(ptr %p) #0 !dbg !90 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_4.2.m = getelementptr inbounds nuw [4 x i8], ptr %p, i32 0, i32 0, !dbg !23
-// CHECK:STDOUT:   store i32 1, ptr %.loc11_4.2.m, align 4, !dbg !23
-// CHECK:STDOUT:   ret void, !dbg !24
+// CHECK:STDOUT:   %.loc11_4.2.m = getelementptr inbounds nuw [4 x i8], ptr %p, i32 0, i32 0, !dbg !93
+// CHECK:STDOUT:   store i32 1, ptr %.loc11_4.2.m, align 4, !dbg !93
+// CHECK:STDOUT:   ret void, !dbg !94
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!83}
+// CHECK:STDOUT: !llvm.module.flags = !{!40, !41, !42, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!47}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "assign_union.carbon", directory: "")
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
-// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "AssignN", linkageName: "_CAssignN.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !16)
-// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !14 = !{null, !15}
-// CHECK:STDOUT: !15 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !16 = !{!17}
-// CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !12, type: !15)
-// CHECK:STDOUT: !18 = !DILocation(line: 7, column: 3, scope: !12)
-// CHECK:STDOUT: !19 = !DILocation(line: 6, column: 1, scope: !12)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "AssignM", linkageName: "_CAssignM.Main", scope: null, file: !1, line: 10, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !21)
-// CHECK:STDOUT: !21 = !{!22}
-// CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !20, type: !15)
-// CHECK:STDOUT: !23 = !DILocation(line: 11, column: 3, scope: !20)
-// CHECK:STDOUT: !24 = !DILocation(line: 10, column: 1, scope: !20)
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !40 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !41 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !42 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !43 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !44 = !{!"omnipotent char", !43, i64 0}
+// CHECK:STDOUT: !45 = !{!"int", !44, i64 0}
+// CHECK:STDOUT: !46 = !{!"__libc_errno", !45, i64 0}
+// CHECK:STDOUT: !47 = !{!46, !45, i64 0}
+// CHECK:STDOUT: !50 = !{null, !21}
+// CHECK:STDOUT: !51 = !DISubroutineType(types: !50)
+// CHECK:STDOUT: !82 = !DIFile(filename: "assign_union.carbon", directory: "")
+// CHECK:STDOUT: !83 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !82, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "AssignN", linkageName: "_CAssignN.Main", scope: null, file: !82, line: 6, type: !51, spFlags: DISPFlagDefinition, unit: !83, retainedNodes: !89)
+// CHECK:STDOUT: !85 = !DILocalVariable(arg: 1, scope: !84, type: !21)
+// CHECK:STDOUT: !87 = !DILocation(line: 7, column: 3, scope: !84)
+// CHECK:STDOUT: !88 = !DILocation(line: 6, column: 1, scope: !84)
+// CHECK:STDOUT: !89 = !{!85}
+// CHECK:STDOUT: !90 = distinct !DISubprogram(name: "AssignM", linkageName: "_CAssignM.Main", scope: null, file: !82, line: 10, type: !51, spFlags: DISPFlagDefinition, unit: !83, retainedNodes: !95)
+// CHECK:STDOUT: !91 = !DILocalVariable(arg: 1, scope: !90, type: !21)
+// CHECK:STDOUT: !93 = !DILocation(line: 11, column: 3, scope: !90)
+// CHECK:STDOUT: !94 = !DILocation(line: 10, column: 1, scope: !90)
+// CHECK:STDOUT: !95 = !{!91}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'access_anon_union.carbon'
@@ -333,53 +333,53 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CAccessN.Main(ptr %a) #0 !dbg !12 {
+// CHECK:STDOUT: define i32 @_CAccessN.Main(ptr %a) #0 !dbg !98 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_11.1.n = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 8, !dbg !19
-// CHECK:STDOUT:   %.loc7_11.2 = load i32, ptr %.loc7_11.1.n, align 4, !dbg !19
-// CHECK:STDOUT:   ret i32 %.loc7_11.2, !dbg !20
+// CHECK:STDOUT:   %.loc7_11.1.n = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 8, !dbg !103
+// CHECK:STDOUT:   %.loc7_11.2 = load i32, ptr %.loc7_11.1.n, align 4, !dbg !103
+// CHECK:STDOUT:   ret i32 %.loc7_11.2, !dbg !104
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CAccessP.Main(ptr %a) #0 !dbg !21 {
+// CHECK:STDOUT: define i32 @_CAccessP.Main(ptr %a) #0 !dbg !106 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_12.1.p = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 8, !dbg !24
-// CHECK:STDOUT:   %.loc11_12.2 = load ptr, ptr %.loc11_12.1.p, align 8, !dbg !24
-// CHECK:STDOUT:   %.loc11_10.2 = load i32, ptr %.loc11_12.2, align 4, !dbg !25
-// CHECK:STDOUT:   ret i32 %.loc11_10.2, !dbg !26
+// CHECK:STDOUT:   %.loc11_12.1.p = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 8, !dbg !111
+// CHECK:STDOUT:   %.loc11_12.2 = load ptr, ptr %.loc11_12.1.p, align 8, !dbg !111
+// CHECK:STDOUT:   %.loc11_10.2 = load i32, ptr %.loc11_12.2, align 4, !dbg !112
+// CHECK:STDOUT:   ret i32 %.loc11_10.2, !dbg !113
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!97}
+// CHECK:STDOUT: !llvm.module.flags = !{!40, !41, !42, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!47}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "access_anon_union.carbon", directory: "")
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
-// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "AccessN", linkageName: "_CAccessN.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !17)
-// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !14 = !{!15, !16}
-// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !16 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !17 = !{!18}
-// CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !12, type: !16)
-// CHECK:STDOUT: !19 = !DILocation(line: 7, column: 10, scope: !12)
-// CHECK:STDOUT: !20 = !DILocation(line: 7, column: 3, scope: !12)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "AccessP", linkageName: "_CAccessP.Main", scope: null, file: !1, line: 10, type: !13, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !22)
-// CHECK:STDOUT: !22 = !{!23}
-// CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !21, type: !16)
-// CHECK:STDOUT: !24 = !DILocation(line: 11, column: 11, scope: !21)
-// CHECK:STDOUT: !25 = !DILocation(line: 11, column: 10, scope: !21)
-// CHECK:STDOUT: !26 = !DILocation(line: 11, column: 3, scope: !21)
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !22 = !{!20, !21}
+// CHECK:STDOUT: !23 = !DISubroutineType(types: !22)
+// CHECK:STDOUT: !40 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !41 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !42 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !43 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !44 = !{!"omnipotent char", !43, i64 0}
+// CHECK:STDOUT: !45 = !{!"int", !44, i64 0}
+// CHECK:STDOUT: !46 = !{!"__libc_errno", !45, i64 0}
+// CHECK:STDOUT: !47 = !{!46, !45, i64 0}
+// CHECK:STDOUT: !96 = !DIFile(filename: "access_anon_union.carbon", directory: "")
+// CHECK:STDOUT: !97 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !96, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !98 = distinct !DISubprogram(name: "AccessN", linkageName: "_CAccessN.Main", scope: null, file: !96, line: 6, type: !23, spFlags: DISPFlagDefinition, unit: !97, retainedNodes: !105)
+// CHECK:STDOUT: !99 = !DILocalVariable(arg: 1, scope: !98, type: !21)
+// CHECK:STDOUT: !103 = !DILocation(line: 7, column: 10, scope: !98)
+// CHECK:STDOUT: !104 = !DILocation(line: 7, column: 3, scope: !98)
+// CHECK:STDOUT: !105 = !{!99}
+// CHECK:STDOUT: !106 = distinct !DISubprogram(name: "AccessP", linkageName: "_CAccessP.Main", scope: null, file: !96, line: 10, type: !23, spFlags: DISPFlagDefinition, unit: !97, retainedNodes: !114)
+// CHECK:STDOUT: !107 = !DILocalVariable(arg: 1, scope: !106, type: !21)
+// CHECK:STDOUT: !111 = !DILocation(line: 11, column: 11, scope: !106)
+// CHECK:STDOUT: !112 = !DILocation(line: 11, column: 10, scope: !106)
+// CHECK:STDOUT: !113 = !DILocation(line: 11, column: 3, scope: !106)
+// CHECK:STDOUT: !114 = !{!107}
 // CHECK:STDOUT:

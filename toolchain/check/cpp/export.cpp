@@ -192,8 +192,9 @@ static auto CreateClassTemplateSpecializationDecl(
           template_args,
           /*StrictPackMatch=*/false,
           /*PrevDecl=*/nullptr);
-  class_template_decl->AddSpecialization(class_template_specialization_decl,
-                                         /*InsertPos=*/nullptr);
+  class_template_decl->AddSpecialization(
+      class_template_specialization_decl,
+      /*InsertPos=*/llvm::FoldingSetInsertToken());
   class_template_specialization_decl->setHasExternalLexicalStorage();
   class_template_specialization_decl->setHasExternalVisibleStorage();
 
@@ -1461,7 +1462,8 @@ auto ExportFunctionSpecializationToCpp(
       context.ast_context(), template_args);
   function_decl->setFunctionTemplateSpecialization(
       function_template_decl, template_arg_list,
-      /*InsertPos=*/nullptr, clang::TSK_ExplicitSpecialization,
+      /*InsertPos=*/llvm::FoldingSetInsertToken(),
+      clang::TSK_ExplicitSpecialization,
       /*TemplateArgsAsWritten=*/nullptr,
       /*PointOfInstantiation=*/clang::SourceLocation());
 

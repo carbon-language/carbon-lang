@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 
+#include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/clang_decl.h"
@@ -25,12 +26,11 @@ struct FunctionFields {
     // A builtin function. `special_function_kind_data` is the corresponding
     // `BuiltinFunctionKind`.
     Builtin,
-    // A synthesized function generated for a `Core` witness.
-    // `special_function_kind_data` is the corresponding `BuiltinFunctionKind`,
-    // or may be `BuiltinFunctionKind::None` if a function body is synthesized
-    // too. During name mangling, extra information is included for this
-    // function to avoid collisions.
-    CoreWitness,
+    // A synthesized function generated for a custom witness.
+    // `special_function_kind_data` is the corresponding
+    // `GeneratedFunctionId`, which holds data for canonicalization,
+    // mangling, and the `BuiltinFunctionKind` for the function body, if any.
+    Generated,
     // A thunk that adapts a function with one signature to have another
     // signature, by forwarding the arguments and return value, with implicit
     // conversions applied as necessary. `special_function_kind_data` is the
@@ -186,8 +186,8 @@ struct FunctionFields {
   InstId self_param_id = InstId::None;
 
   // Data that is specific to the special function kind. Use
-  // `builtin_function_kind()`, `thunk_decl_id()` or `cpp_thunk_decl_id()` to
-  // access this.
+  // `non_generated_builtin_function_kind()`, `generated_function_id()`,
+  // `thunk_decl_id()` or `cpp_thunk_decl_id()` to access this.
   AnyRawId special_function_kind_data = AnyRawId(AnyRawId::NoneIndex);
 
   // The following members are accumulated throughout the function definition.
@@ -247,9 +247,12 @@ struct Function : public EntityWithParamsBase,
     if (return_pattern_id.has_value()) {
       out << ", return_pattern_id: " << return_pattern_id;
     }
-    if (auto builtin_kind = builtin_function_kind();
+    if (auto builtin_kind = non_generated_builtin_function_kind();
         builtin_kind != BuiltinFunctionKind::None) {
       out << ", builtin: " << builtin_kind;
+    }
+    if (auto generated_id = generated_function_id(); generated_id.has_value()) {
+      out << ", generated_function_id: " << generated_id;
     }
     if (auto thunk_id_val = thunk_id(); thunk_id_val.has_value()) {
       out << ", thunk: " << thunk_id_val;
@@ -273,13 +276,24 @@ struct Function : public EntityWithParamsBase,
     out << "}";
   }
 
-  // Returns the builtin function kind for this function, or None if this is not
-  // a builtin function.
-  auto builtin_function_kind() const -> BuiltinFunctionKind {
-    return (special_function_kind == SpecialFunctionKind::Builtin ||
-            special_function_kind == SpecialFunctionKind::CoreWitness)
+  // Returns the builtin function kind for this Builtin function, or None if
+  // this is not a builtin function. Note that Generated functions may also
+  // have a BuiltinFunctionKind, but this returns None for Generated
+  // functions. Use GetBuiltinFunctionKind to get the builtin function kind for
+  // all special functions.
+  auto non_generated_builtin_function_kind() const -> BuiltinFunctionKind {
+    return special_function_kind == SpecialFunctionKind::Builtin
                ? BuiltinFunctionKind::FromInt(special_function_kind_data.index)
                : BuiltinFunctionKind::None;
+  }
+
+  // Returns the ID of the GeneratedFunction. It holds a key used to
+  // canonicalize Generated functions so that we use the same function across
+  // all files.
+  auto generated_function_id() const -> GeneratedFunctionId {
+    return special_function_kind == SpecialFunctionKind::Generated
+               ? GeneratedFunctionId(special_function_kind_data.index)
+               : GeneratedFunctionId::None;
   }
 
   // Returns the ThunkId for this thunk function, or None if it's not a thunk.
@@ -304,6 +318,10 @@ struct Function : public EntityWithParamsBase,
                ? InstId(special_function_kind_data.index)
                : InstId::None;
   }
+
+  // Gets the BuiltinFunctionKind for the function, if it has one. This applies
+  // to both Builtin and Generated special functions.
+  auto GetBuiltinFunctionKind(const File& file) const -> BuiltinFunctionKind;
 
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
@@ -341,14 +359,13 @@ struct Function : public EntityWithParamsBase,
     special_function_kind_data = AnyRawId(kind.AsInt());
   }
 
-  // Sets that this function is generated for a `Core` witness. These will
-  // typically have a custom implementation for a `None` kind, but may use
-  // builtin functions, most often `NoOp`. We still track them differently in
-  // order to support mangling.
-  auto SetCoreWitness(BuiltinFunctionKind kind) -> void {
+  // Sets that this function is generated function for a custom witness. The
+  // generated function data may include a BuiltinFunctionKind if the body is a
+  // builtin.
+  auto SetGenerated(GeneratedFunctionId generated_function_id) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
-    special_function_kind = SpecialFunctionKind::CoreWitness;
-    special_function_kind_data = AnyRawId(kind.AsInt());
+    special_function_kind = SpecialFunctionKind::Generated;
+    special_function_kind_data = AnyRawId(generated_function_id.index);
   }
 
   // Sets that this function is a thunk.
@@ -446,11 +463,65 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
                               SpecificId base_class_specific_id)
     -> DecomposedVirtualFunction;
 
+// The key holds values used to canonicalize generated functions for custom
+// witnesses globally across files. The payload holds a link to the Generated
+// function, as well as any extra fields for a Generated function. This can be
+// used for deduping generating functions in order to keep only a single
+// canonical copy, and for generating a mangled name that will be the same for
+// all files.
+struct GeneratedFunction : public Printable<GeneratedFunction> {
+  struct CanonicalKey {
+    // The Interface from Core.
+    SemIR::SpecificInterfaceId specific_interface_id;
+    // The self type for the operation.
+    //
+    // TODO: If the above becomes an Interface-with-Self specific, then this
+    // separate ID can be removed.
+    SemIR::TypeId self_type_id;
+    // The name of the function in the Core interface specified by the specific.
+    SemIR::NameId name_id;
+    // TODO: Also include parameters to support overloaded functions. Then use
+    // them in mangling.
+
+    auto operator==(const CanonicalKey& rhs) const -> bool = default;
+  };
+  CanonicalKey canonical_key;
+
+  // The canonical FunctionId for this Generated special function. There will
+  // only be one Function for a given Key value. This will contain the canonical
+  // values shared (with local ID mappings) across all files.
+  SemIR::FunctionId function_id;
+  // The owning declaration of the canonical generated Function. This will be
+  // local to, and thus different, in each file.
+  SemIR::InstId decl_id;
+  // The builtin function to execute when called. This will be None if the
+  // Function has a generated body.
+  SemIR::BuiltinFunctionKind builtin_function_kind;
+
+  auto GetAsKey() const -> const CanonicalKey& { return canonical_key; }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{";
+    out << "specific_interface_id: " << canonical_key.specific_interface_id
+        << ", name_id: " << canonical_key.name_id
+        << ", function_id: " << function_id << ", decl_id: " << decl_id
+        << ", builtin_function_kind: " << builtin_function_kind;
+    out << "}";
+  }
+};
+
+using GeneratedFunctionStore =
+    CanonicalValueStore<GeneratedFunctionId, GeneratedFunction::CanonicalKey,
+                        Tag<CheckIRId>, GeneratedFunction>;
+
 }  // namespace Carbon::SemIR
 
 namespace Carbon {
 extern template class ValueStore<SemIR::FunctionId, SemIR::Function,
                                  Tag<SemIR::CheckIRId>>;
+extern template class CanonicalValueStore<
+    SemIR::GeneratedFunctionId, SemIR::GeneratedFunction::CanonicalKey,
+    Tag<SemIR::CheckIRId>, SemIR::GeneratedFunction>;
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
