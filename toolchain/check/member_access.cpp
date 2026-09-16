@@ -100,8 +100,6 @@ static auto IsInstanceType(Context& context, SemIR::TypeId type_id) -> bool {
 }
 
 auto GetHighestAllowedAccess(Context& context,
-                             // TODO: remove
-                             SemIR::LocId,
                              SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
   SemIR::InstId access_context_id = context.access_context();
@@ -316,7 +314,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   AccessInfo access_info = {
       .constant_id = name_scope_const_id,
       .highest_allowed_access =
-          GetHighestAllowedAccess(context, loc_id, name_scope_const_id),
+          GetHighestAllowedAccess(context, name_scope_const_id),
   };
   LookupResult result = LookupQualifiedName(
       context, loc_id, name_id, lookup_scopes, required, access_info);
