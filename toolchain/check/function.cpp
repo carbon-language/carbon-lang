@@ -309,33 +309,30 @@ static auto CheckFunctionEvaluationModeMatches(
 // specified by `prev_id`. If `diagnose` is true this will issue a diagnostic
 // if it detects a difference. Returns true if the values are the same or
 // `new_id` is unspecified.
-static auto DiagnoseDefaultValueDiffers(Context& context, SemIR::InstId new_id,
-                                        SemIR::InstId prev_id,
-                                        bool diagnose = true) -> bool {
-  auto new_constant_id = context.constant_values().Get(new_id);
-  auto prev_constant_id = context.constant_values().Get(prev_id);
-
+static auto CheckDefaultValueIsSame(Context& context, SemIR::InstId new_id,
+                                    SemIR::InstId prev_id, bool diagnose)
+    -> bool {
   // We require the first declaration to always declare default values.
-  CARBON_CHECK(!context.constant_values().InstIs<SemIR::UnspecifiedValue>(
-      prev_constant_id));
-  if (!context.constant_values().InstIs<SemIR::UnspecifiedValue>(
-          new_constant_id) &&
-      new_constant_id != prev_constant_id) {
-    if (!diagnose) {
+  CARBON_CHECK(!context.insts().Is<SemIR::UnspecifiedValue>(prev_id));
+  if (!context.insts().Is<SemIR::UnspecifiedValue>(new_id)) {
+    auto new_constant_id = context.constant_values().Get(new_id);
+    auto prev_constant_id = context.constant_values().Get(prev_id);
+    if (new_constant_id != prev_constant_id) {
+      if (diagnose) {
+        CARBON_DIAGNOSTIC(
+            PatternDefaultValueDiffers, Error,
+            "default value of {0} differs from the previously declared default "
+            "value of {1}.",
+            InstIdAsConstant, InstIdAsConstant);
+        CARBON_DIAGNOSTIC(PatternDefaultValueDiffersNote, Note,
+                          "different previous declaration here.");
+        context.emitter()
+            .Build(new_id, PatternDefaultValueDiffers, new_id, prev_id)
+            .Note(prev_id, PatternDefaultValueDiffersNote)
+            .Emit();
+      }
       return false;
     }
-    CARBON_DIAGNOSTIC(
-        PatternDefaultValueDiffers, Error,
-        "default value of {0} differs from the previously declared default "
-        "value of {1}.",
-        InstIdAsConstant, InstIdAsConstant);
-    CARBON_DIAGNOSTIC(PatternDefaultValueDiffersNote, Note,
-                      "different previous declaration here.");
-    context.emitter()
-        .Build(new_id, PatternDefaultValueDiffers, new_id, prev_id)
-        .Note(prev_id, PatternDefaultValueDiffersNote)
-        .Emit();
-    return false;
   }
 
   return true;
@@ -348,7 +345,7 @@ static auto DiagnoseDefaultValueDiffers(Context& context, SemIR::InstId new_id,
 static auto CheckDefaultValueConsistency(Context& context,
                                          const SemIR::Function& new_function,
                                          const SemIR::Function& prev_function,
-                                         bool diagnose = true) -> bool {
+                                         bool diagnose) -> bool {
   auto new_default_value_ids = context.inst_blocks().GetOrEmpty(
       new_function.call_param_default_values_id);
   auto prev_default_value_ids = context.inst_blocks().GetOrEmpty(
@@ -356,9 +353,9 @@ static auto CheckDefaultValueConsistency(Context& context,
 
   return llvm::all_of(
       llvm::zip_equal(new_default_value_ids, prev_default_value_ids),
-      [&context, diagnose](auto pair) -> bool {
-        auto [new_id, prev_id] = pair;
-        return DiagnoseDefaultValueDiffers(context, new_id, prev_id, diagnose);
+      [&context, diagnose](auto id_pair) -> bool {
+        auto [new_id, prev_id] = id_pair;
+        return CheckDefaultValueIsSame(context, new_id, prev_id, diagnose);
       });
 }
 

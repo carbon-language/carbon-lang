@@ -109,14 +109,7 @@ library "[[@TEST_NAME]]";
 class C {}
 class D {}
 impl C as Core.As(D) {
-  // CHECK:STDERR: fail_explicit_conversion_not_supported.carbon:[[@LINE+7]]:30: error: cannot implicitly convert expression of type `C` to `D` [ConversionFailure]
-  // CHECK:STDERR:   fn Convert(self: C) -> D { return self; }
-  // CHECK:STDERR:                              ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_explicit_conversion_not_supported.carbon:[[@LINE+4]]:30: note: type `C` does not implement interface `Core.ImplicitAs(D)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   fn Convert(self: C) -> D { return self; }
-  // CHECK:STDERR:                              ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  fn Convert(self: C) -> D { return self; }
+  fn Convert(unused self: C) -> D { return {} as D; }
 }
 
 // CHECK:STDERR: fail_explicit_conversion_not_supported.carbon:[[@LINE+7]]:13: error: cannot implicitly convert expression of type `C` to `D` [ConversionFailure]
