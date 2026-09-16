@@ -172,8 +172,6 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
     -> bool {
-  // On entry, the top of the node stack should have an expression for the
-  // default value. We evaluate it to ensure it is a constant.
   auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
 
   // Ensure we are in an explicit parameter list, otherwise issue a diagnostic.
@@ -189,7 +187,7 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
   auto expr_const_id = TryEvalInst(context, expr_inst_id);
   if (expr_const_id == SemIR::ConstantId::NotConstant) {
     CARBON_DIAGNOSTIC(PatternDefaultValueNotConstant, Error,
-                      "default value for pattern must be constant");
+                      "default value is not a constant");
     context.emitter().Emit(
         LocIdForDiagnostics(context.insts().GetCanonicalLocId(expr_inst_id)),
         PatternDefaultValueNotConstant);

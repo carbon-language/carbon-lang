@@ -376,7 +376,7 @@ static auto DiagnosePositionalParams(Context& context,
 // Diagnoses that the default values for function parameters have been
 // completely specified, which is a requirement on the first owning declaration
 // of a function.
-static auto DiagnoseDefaultValuesCompletelySpecified(
+static auto CheckDefaultValuesCompletelySpecified(
     Context& context, SemIR::Function& function_info) -> void {
   auto filter_unspecified_values = [&context](SemIR::InstId inst_id) -> bool {
     auto constant_id = context.constant_values().Get(inst_id);
@@ -384,14 +384,10 @@ static auto DiagnoseDefaultValuesCompletelySpecified(
         constant_id);
   };
 
-  llvm::SmallVector<SemIR::InstId> unspecified_value_ids;
-  llvm::append_range(
-      unspecified_value_ids,
-      llvm::make_filter_range(context.inst_blocks().GetOrEmpty(
-                                  function_info.call_param_default_values_id),
-                              filter_unspecified_values));
-
-  for (auto inst_id : unspecified_value_ids) {
+  for (auto inst_id :
+       llvm::make_filter_range(context.inst_blocks().GetOrEmpty(
+                                   function_info.call_param_default_values_id),
+                               filter_unspecified_values)) {
     CARBON_DIAGNOSTIC(
         PatternDefaultValueNotSpecified, Error,
         "the first owned function declaration must specify values "
@@ -486,7 +482,7 @@ static auto BuildFunctionDecl(Context& context,
   DiagnosePositionalParams(context, function_info);
   if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
       !name_context.prev_inst_id().has_value()) {
-    DiagnoseDefaultValuesCompletelySpecified(context, function_info);
+    CheckDefaultValuesCompletelySpecified(context, function_info);
   }
 
   TryMergeRedecl(

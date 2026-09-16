@@ -305,62 +305,25 @@ static auto CheckFunctionEvaluationModeMatches(
   return false;
 }
 
-// Checks every parameter in `prev_function` and `new_function`, that if they
-// both specify a default value those values are identical. If `diagnose` is
-// true, issues diagnostics when that condition is violated. Returns true if
-// every parameter met the condition.
-static auto CheckDefaultValueConsistency(Context& context,
-                                         const SemIR::Function& new_function,
-                                         const SemIR::Function& prev_function,
-                                         bool diagnose) -> bool {
-  // Both functions must either have defaults or not.
-  CARBON_CHECK(prev_function.call_param_default_values_id.has_value() ==
-               new_function.call_param_default_values_id.has_value());
+// Checks that if `new_id` has a specified value, it has the same value as
+// specified by `prev_id`. If `diagnose` is true this will issue a diagnostic
+// if it detects a difference. Returns true if the values are the same or
+// `new_id` is unspecified.
+static auto DiagnoseDefaultValueDiffers(Context& context, SemIR::InstId new_id,
+                                        SemIR::InstId prev_id,
+                                        bool diagnose = true) -> bool {
+  auto new_constant_id = context.constant_values().Get(new_id);
+  auto prev_constant_id = context.constant_values().Get(prev_id);
 
-  if (!prev_function.call_param_default_values_id.has_value()) {
-    return true;
-  }
-
-  // Extract the `ConstantId`s for both default value blocks, for comparison.
-  auto get_fn = [&context](auto inst_id) {
-    return context.constant_values().Get(inst_id);
-  };
-
-  llvm::SmallVector<SemIR::ConstantId> prev_value_constant_ids;
-  auto prev_default_value_ids =
-      context.inst_blocks().Get(prev_function.call_param_default_values_id);
-  llvm::append_range(prev_value_constant_ids,
-                     llvm::map_range(prev_default_value_ids, get_fn));
-
-  llvm::SmallVector<SemIR::ConstantId> new_value_constant_ids;
-  auto new_default_value_ids =
-      context.inst_blocks().Get(new_function.call_param_default_values_id);
-  llvm::append_range(new_value_constant_ids,
-                     llvm::map_range(new_default_value_ids, get_fn));
-
-  CARBON_CHECK(prev_value_constant_ids.size() == new_value_constant_ids.size());
-
-  llvm::SmallVector<size_t> indices_with_different_values;
-  for (size_t i = 0; i < prev_value_constant_ids.size(); ++i) {
-    // We require the first declaration to always declare default values.
-    CARBON_CHECK(!context.constant_values().InstIs<SemIR::UnspecifiedValue>(
-        prev_value_constant_ids[i]));
-    bool new_value_specified =
-        !context.constant_values().InstIs<SemIR::UnspecifiedValue>(
-            new_value_constant_ids[i]);
-    if (new_value_specified &&
-        prev_value_constant_ids[i] != new_value_constant_ids[i]) {
-      indices_with_different_values.push_back(i);
+  // We require the first declaration to always declare default values.
+  CARBON_CHECK(!context.constant_values().InstIs<SemIR::UnspecifiedValue>(
+      prev_constant_id));
+  if (!context.constant_values().InstIs<SemIR::UnspecifiedValue>(
+          new_constant_id) &&
+      new_constant_id != prev_constant_id) {
+    if (!diagnose) {
+      return false;
     }
-  }
-
-  bool check_ok = indices_with_different_values.empty();
-
-  if (check_ok || !diagnose) {
-    return check_ok;
-  }
-
-  for (auto index : indices_with_different_values) {
     CARBON_DIAGNOSTIC(
         PatternDefaultValueDiffers, Error,
         "default value of {0} differs from the previously declared default "
@@ -369,13 +332,34 @@ static auto CheckDefaultValueConsistency(Context& context,
     CARBON_DIAGNOSTIC(PatternDefaultValueDiffersNote, Note,
                       "different previous declaration here.");
     context.emitter()
-        .Build(new_default_value_ids[index], PatternDefaultValueDiffers,
-               new_default_value_ids[index], prev_default_value_ids[index])
-        .Note(prev_default_value_ids[index], PatternDefaultValueDiffersNote)
+        .Build(new_id, PatternDefaultValueDiffers, new_id, prev_id)
+        .Note(prev_id, PatternDefaultValueDiffersNote)
         .Emit();
+    return false;
   }
 
-  return false;
+  return true;
+}
+
+// Checks every parameter in `prev_function` and `new_function`, that if they
+// both specify a default value those values are identical. If `diagnose` is
+// true, issues diagnostics when that condition is violated. Returns true if
+// every parameter met the condition.
+static auto CheckDefaultValueConsistency(Context& context,
+                                         const SemIR::Function& new_function,
+                                         const SemIR::Function& prev_function,
+                                         bool diagnose = true) -> bool {
+  auto new_default_value_ids = context.inst_blocks().GetOrEmpty(
+      new_function.call_param_default_values_id);
+  auto prev_default_value_ids = context.inst_blocks().GetOrEmpty(
+      prev_function.call_param_default_values_id);
+
+  return llvm::all_of(
+      llvm::zip_equal(new_default_value_ids, prev_default_value_ids),
+      [&context, diagnose](auto pair) -> bool {
+        auto [new_id, prev_id] = pair;
+        return DiagnoseDefaultValueDiffers(context, new_id, prev_id, diagnose);
+      });
 }
 
 auto CheckFunctionTypeMatches(Context& context,

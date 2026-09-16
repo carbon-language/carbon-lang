@@ -13,9 +13,9 @@
 // --- fail_value_not_constant.carbon
 library "[[@TEST_NAME]]";
 
-class C {};
+class C {}
 
-// CHECK:STDERR: fail_value_not_constant.carbon:[[@LINE+4]]:19: error: default value for pattern must be constant [PatternDefaultValueNotConstant]
+// CHECK:STDERR: fail_value_not_constant.carbon:[[@LINE+4]]:19: error: default value is not a constant [PatternDefaultValueNotConstant]
 // CHECK:STDERR: fn H(x: C, y: C = x);
 // CHECK:STDERR:                   ^
 // CHECK:STDERR:
@@ -24,8 +24,8 @@ fn H(x: C, y: C = x);
 // --- fail_type_mismatch.carbon
 library "[[@TEST_NAME]]";
 
-class C {};
-class D {};
+class C {}
+class D {}
 
 // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:13: error: cannot implicitly convert expression of type `D` to `C` [ConversionFailure]
 // CHECK:STDERR: fn K(x: C = {} as D);
@@ -39,7 +39,7 @@ fn K(x: C = {} as D);
 // --- fail_pattern_defaults_not_in_parameter_list.carbon
 library "[[@TEST_NAME]]";
 
-class C {};
+class C {}
 
 // CHECK:STDERR: fail_pattern_defaults_not_in_parameter_list.carbon:[[@LINE+4]]:19: error: default values are only supported in parameter lists [PatternDefaultValueNotInParameterList]
 // CHECK:STDERR: let (y: C, x: C = {}) = ({}, {});
@@ -50,7 +50,7 @@ let (y: C, x: C = {}) = ({}, {});
 // --- fail_default_values_unspecified.carbon
 library "[[@TEST_NAME]]";
 
-class C {};
+class C {}
 
 // CHECK:STDERR: fail_default_values_unspecified.carbon:[[@LINE+4]]:24: error: the first owned function declaration must specify values for all default parameter values. [PatternDefaultValueNotSpecified]
 // CHECK:STDERR: fn Z(x: C = {}, y: C = _);
@@ -61,7 +61,7 @@ fn Z(x: C = {}, y: C = _);
 // --- fail_required_default_values_missing.carbon
 library "[[@TEST_NAME]]";
 
-class C {};
+class C {}
 
 // CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+17]]:35: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
 // CHECK:STDERR: fn Z(v: C, x: C = {}, (y: C = {}, z: C), w: C = {}, k: C);
@@ -85,7 +85,7 @@ fn Z(v: C, x: C = {}, (y: C = {}, z: C), w: C = {}, k: C);
 // --- fail_nesting_required_default_values_missing.carbon
 library "[[@TEST_NAME]]";
 
-class C {};
+class C {}
 
 // CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+14]]:36: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
 // CHECK:STDERR: fn F(a: C, (b: C = {}, (c: C = {}, (d: C, e: C))));
@@ -103,11 +103,36 @@ class C {};
 // CHECK:STDERR:
 fn F(a: C, (b: C = {}, (c: C = {}, (d: C, e: C))));
 
+// --- fail_explicit_conversion_not_supported.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+class D {}
+impl C as Core.As(D) {
+  // CHECK:STDERR: fail_explicit_conversion_not_supported.carbon:[[@LINE+7]]:30: error: cannot implicitly convert expression of type `C` to `D` [ConversionFailure]
+  // CHECK:STDERR:   fn Convert(self: C) -> D { return self; }
+  // CHECK:STDERR:                              ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_explicit_conversion_not_supported.carbon:[[@LINE+4]]:30: note: type `C` does not implement interface `Core.ImplicitAs(D)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   fn Convert(self: C) -> D { return self; }
+  // CHECK:STDERR:                              ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  fn Convert(self: C) -> D { return self; }
+}
+
+// CHECK:STDERR: fail_explicit_conversion_not_supported.carbon:[[@LINE+7]]:13: error: cannot implicitly convert expression of type `C` to `D` [ConversionFailure]
+// CHECK:STDERR: fn F(a: D = {} as C);
+// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR: fail_explicit_conversion_not_supported.carbon:[[@LINE+4]]:13: note: type `C` does not implement interface `Core.ImplicitAs(D)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fn F(a: D = {} as C);
+// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR:
+fn F(a: D = {} as C);
+
 // --- implicit.carbon
 library "[[@TEST_NAME]]";
 
-class C {};
-class D {};
+class C {}
+class D {}
 impl C as Core.ImplicitAs(D) {
   fn Convert(self: C) -> D { return self; }
 }
@@ -119,7 +144,7 @@ fn F(a: D = {} as C);
 // --- nested.carbon
 library "[[@TEST_NAME]]";
 
-class C {};
+class C {}
 
 //@dump-sem-ir-begin
 fn F(a: C, (b: C, (c: C, (d: C, e: C))) = ({}, ({}, ({}, {}))));
@@ -128,7 +153,7 @@ fn F(a: C, (b: C, (c: C, (d: C, e: C))) = ({}, ({}, ({}, {}))));
 // --- basic.carbon
 library "[[@TEST_NAME]]";
 
-class C {};
+class C {}
 
 //@dump-sem-ir-begin
 fn F(x: C = {});
