@@ -31,6 +31,7 @@ class C {
 // CHECK:STDOUT: --- default_fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self.4e9: %I.type = symbolic_binding Self, 0 [symbolic]

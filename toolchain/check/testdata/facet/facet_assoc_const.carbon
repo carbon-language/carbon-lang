@@ -642,13 +642,13 @@ fn F(unused generic T: I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT: --- fail_cycle.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %M.type: type = facet_type <@M> [concrete]
 // CHECK:STDOUT:   %M.assoc_type: type = assoc_entity_type @M [concrete]
 // CHECK:STDOUT:   %assoc0: %M.assoc_type = assoc_entity element0, @M.WithSelf.%X [concrete]
 // CHECK:STDOUT:   %assoc1: %M.assoc_type = assoc_entity element1, @M.WithSelf.%Y [concrete]
 // CHECK:STDOUT:   %assoc2: %M.assoc_type = assoc_entity element2, @M.WithSelf.%Z [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen.197: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen.e58: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.1cb: %M.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen.1cb [symbolic_self]
 // CHECK:STDOUT:   %M.lookup_impl_witness.beb: <witness> = lookup_impl_witness %.Self.frozen.1cb, @M [symbolic_self]
@@ -671,7 +671,7 @@ fn F(unused generic T: I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:     %T.patt: <error> = symbolic_binding_pattern T, 0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_26.1: type = splice_block %.loc13_26.2 [concrete = <error>] {
-// CHECK:STDOUT:       %.Self.frozen.loc13_22: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc13_22: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %M.ref: type = name_ref M, file.%M.decl [concrete = constants.%M.type]
 // CHECK:STDOUT:       %.Self.frozen.loc13_26: %M.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.1cb]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %M.ref [concrete]

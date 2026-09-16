@@ -32,6 +32,7 @@ class Derived {
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %.edf: type = partial_type %Base [concrete]
 // CHECK:STDOUT:   %Base.Make.type: type = fn_type @Base.Make [concrete]

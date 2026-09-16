@@ -323,7 +323,6 @@ struct CheckIRId : public IdBase<CheckIRId> {
   static constexpr llvm::StringLiteral Label = "check_ir";
 
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a `Class`.
@@ -373,8 +372,16 @@ struct DeclaredFacetTypeId : public IdBase<DeclaredFacetTypeId> {
   static constexpr llvm::StringLiteral Label = "declared_facet_type";
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
+  // The canonical empty DeclaredFacetType, which is found in the `TypeType`
+  // instruction. Always the 0 index.
+  static const DeclaredFacetTypeId Empty;
+
   using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
+
+inline constexpr DeclaredFacetTypeId DeclaredFacetTypeId::Empty =
+    DeclaredFacetTypeId(0);
 
 // The ID of an resolved facet type value.
 struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {

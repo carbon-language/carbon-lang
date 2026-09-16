@@ -175,8 +175,10 @@ auto FunctionContext::IsConstant(SemIR::InstId inst_id) -> bool {
 }
 
 auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
-  // All builtins are types, with the same empty lowered value.
-  if (SemIR::IsSingletonInstId(inst_id)) {
+  // Singletons are types, as is the builtin TypeType, with the same empty
+  // lowered value.
+  if (SemIR::IsSingletonInstId(inst_id) ||
+      inst_id == SemIR::TypeType::TypeInstId) {
     return GetTypeAsValue();
   }
 

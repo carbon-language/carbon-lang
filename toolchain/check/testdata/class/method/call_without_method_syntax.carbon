@@ -43,6 +43,7 @@ fn CallViaAlias(p: Point) -> i32 {
 // CHECK:STDOUT: --- call_without_method_syntax.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Point: type = class_type @Point [concrete]
 // CHECK:STDOUT:   %pattern_type.9d8: type = pattern_type %Point [concrete]
 // CHECK:STDOUT:   %self.param_patt.b38: %pattern_type.9d8 = value_param_pattern [concrete]

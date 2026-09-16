@@ -75,6 +75,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT: --- pass_and_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -164,6 +165,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT: --- call_base_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %str: type = class_type @String [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type.adf: type = pattern_type %str [concrete]

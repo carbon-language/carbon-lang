@@ -802,9 +802,7 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
   return BuildStructType(context, subtypes, layouts);
 }
 
-template <typename InstT>
-  requires(InstT::Kind.template IsAnyOf<SemIR::FacetType, SemIR::TypeType>())
-static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
+static auto BuildTypeForInst(FileContext& context, SemIR::FacetType /*inst*/)
     -> LoweredTypes {
   return {context.GetTypeType(), nullptr};
 }

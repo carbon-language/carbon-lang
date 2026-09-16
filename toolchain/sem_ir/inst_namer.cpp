@@ -264,7 +264,9 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
   if (IsSingletonInstId(inst_id)) {
     return sem_ir_->insts().Get(inst_id).kind().ir_name().str();
   }
-
+  if (inst_id == TypeType::TypeInstId) {
+    return "type";
+  }
   if (inst_id == SemIR::Namespace::PackageInstId) {
     return "package";
   }
@@ -1130,27 +1132,6 @@ auto InstNamer::NamingContext::NameInst() -> void {
             }
           }
           return;
-        }
-        if (declared_facet_type.HasNoConstraints()) {
-          if (auto class_ty =
-                  sem_ir().insts().TryGetAs<ClassType>(inst.type_inst_id)) {
-            AddEntityNameAndMaybePush(class_ty->class_id, ".type.facet");
-            return;
-          }
-          if (auto tuple_ty = sem_ir().insts().TryGetAs<SemIR::TupleType>(
-                  inst.type_inst_id)) {
-            if (tuple_ty->type_elements_id == InstBlockId::Empty) {
-              AddInstName("empty_tuple.type.facet");
-            } else {
-              AddInstName("tuple.type.facet");
-            }
-            return;
-          }
-          if (auto struct_ty = sem_ir().insts().TryGetAs<SemIR::StructType>(
-                  inst.type_inst_id)) {
-            AddStructTypeInstName(*struct_ty, "", ".type.facet");
-            return;
-          }
         }
       }
       AddInstName("facet_value");

@@ -1022,6 +1022,7 @@ fn F() {
 // CHECK:STDOUT: --- import_unary_operators.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.bbc: type = pattern_type %C [concrete]
@@ -1166,6 +1167,7 @@ fn F() {
 // CHECK:STDOUT: --- import_binary_operators.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %BinaryC: type = class_type @BinaryC [concrete]
 // CHECK:STDOUT:   %pattern_type.b2b: type = pattern_type %BinaryC [concrete]
@@ -1975,6 +1977,7 @@ fn F() {
 // CHECK:STDOUT: --- multiple_calls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %BinaryC: type = class_type @BinaryC [concrete]
 // CHECK:STDOUT:   %pattern_type.b2b: type = pattern_type %BinaryC [concrete]
@@ -2143,6 +2146,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_todo_rewrite_spaceship.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.bbc: type = pattern_type %C [concrete]
@@ -2313,6 +2317,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_todo_rewrite_equal.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %EqualC: type = class_type @EqualC [concrete]
 // CHECK:STDOUT:   %pattern_type.4e7: type = pattern_type %EqualC [concrete]
@@ -2446,6 +2451,7 @@ fn F() {
 // CHECK:STDOUT: --- import_single_namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.7cb: type = pattern_type %C [concrete]
@@ -2573,6 +2579,7 @@ fn F() {
 // CHECK:STDOUT: --- import_multiple_namespaces.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C1: type = class_type @C1 [concrete]
 // CHECK:STDOUT:   %pattern_type.da8: type = pattern_type %C1 [concrete]
@@ -2762,6 +2769,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_todo_import_operands_in_namespace_operator_in_global.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.73b: type = pattern_type %C [concrete]
@@ -2868,6 +2876,7 @@ fn F() {
 // CHECK:STDOUT: --- import_inner_class.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %O: type = class_type @O [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -2993,6 +3002,7 @@ fn F() {
 // CHECK:STDOUT: --- import_inner_class_in_namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %O: type = class_type @O [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -3127,6 +3137,7 @@ fn F() {
 // CHECK:STDOUT: --- import_member_add_with.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MemberClass: type = class_type @MemberClass [concrete]
 // CHECK:STDOUT:   %pattern_type.809: type = pattern_type %MemberClass [concrete]
@@ -3255,6 +3266,7 @@ fn F() {
 // CHECK:STDOUT: --- indirect_template_instantiation.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %TemplateB: type = class_type @TemplateB [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -3286,6 +3298,7 @@ fn F() {
 // CHECK:STDOUT: --- import_overloading.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.bbc: type = pattern_type %C [concrete]
