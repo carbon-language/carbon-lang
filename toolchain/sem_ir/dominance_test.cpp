@@ -97,9 +97,12 @@ class DominanceTest : public ::testing::Test {
         BranchIf{.target_id = LabelId(target_id), .cond_id = cond_id});
   }
 
-  // Adds a generic, along with a resolved specific for it, that a function can
-  // be attached to.
-  auto AddGeneric() -> GenericId {
+  // Adds a generic, along with a specific for it that a function can be
+  // attached to. The specific is resolved, with `value_block_id` as the value
+  // block for its declaration, so that the function body is also verified as it
+  // will be evaluated in that specific.
+  auto AddGeneric(InstBlockId value_block_id = InstBlockId::Empty)
+      -> GenericId {
     auto decl_id =
         AddInst(FunctionDecl{.type_id = TypeType::TypeId,
                              .function_id = FunctionId(0),
@@ -108,7 +111,10 @@ class DominanceTest : public ::testing::Test {
         file_.generics().Add(Generic{.decl_id = decl_id,
                                      .bindings_id = InstBlockId::Empty,
                                      .self_specific_id = SpecificId::None});
-    file_.specifics().GetOrAdd(generic_id, InstBlockId::Empty);
+    auto specific_id =
+        file_.specifics().GetOrAdd(generic_id, InstBlockId::Empty);
+    auto& specific = file_.specifics().Get(specific_id);
+    specific.SetValueBlock(GenericInstIndex::Declaration, value_block_id);
     return generic_id;
   }
 
@@ -548,6 +554,77 @@ TEST_F(DominanceTest, SpliceBlockUsingLaterValue) {
   AddFunction(
       {file_.inst_blocks().Add({action_id, splice_id, value_id, AddReturn()})},
       "GenericFn", generic_id);
+
+  EXPECT_THAT(Verify(), HasSubstr("not dominated by any evaluation"));
+}
+
+// A generic function whose body contains a `splice_inst` whose operand is a
+// symbolic constant, so that the splice resolves to a different instruction
+// when the body is checked as a generic than when it's checked in the generic's
+// specific.
+class DominanceSpecificSpliceTest : public DominanceTest {
+ protected:
+  // Builds the function. Its body evaluates `early_id`, then splices in an
+  // instruction, then evaluates `late_id`. The splice produces
+  // `generic_spliced_id` when the body is checked as a generic, and
+  // `specific_spliced_id` when it's checked in the specific.
+  auto BuildFunction(InstId early_id, InstId late_id, InstId generic_spliced_id,
+                     InstId specific_spliced_id) -> void {
+    // In the specific, the splice's operand takes its value from the entry of
+    // the specific's value block that its symbolic constant indexes.
+    auto generic_id = AddGeneric(
+        file_.inst_blocks().Add({AddInstValue(specific_spliced_id)}));
+
+    // In the generic, it takes the value of the unattached form of that
+    // symbolic constant, which is the constant value of the instruction that
+    // defines the constant.
+    auto unattached_id =
+        AddInst(InstValue{.type_id = TypeType::TypeId,
+                          .inst_id = MetaInstId(generic_spliced_id)});
+    file_.constant_values().Set(
+        unattached_id, file_.constant_values().AddSymbolicConstant(
+                           {.inst_id = unattached_id,
+                            .generic_id = GenericId::None,
+                            .index = GenericInstIndex::None,
+                            .dependence = ConstantDependence::Checked}));
+
+    auto action_id =
+        AddInst(InstValue{.type_id = TypeType::TypeId,
+                          .inst_id = MetaInstId(generic_spliced_id)});
+    file_.constant_values().Set(
+        action_id,
+        file_.constant_values().AddSymbolicConstant(
+            {.inst_id = unattached_id,
+             .generic_id = generic_id,
+             .index = GenericInstIndex(GenericInstIndex::Declaration, 0),
+             .dependence = ConstantDependence::Checked}));
+
+    auto splice_id =
+        AddInst(SpliceInst{.type_id = TypeType::TypeId, .inst_id = action_id});
+    AddFunction({file_.inst_blocks().Add(
+                    {early_id, action_id, splice_id, late_id, AddReturn()})},
+                "GenericFn", generic_id);
+  }
+};
+
+TEST_F(DominanceSpecificSpliceTest, SplicedUseInSpecificIsDominated) {
+  auto early_id = AddValue();
+  auto late_id = AddValue();
+  BuildFunction(early_id, late_id, /*generic_spliced_id=*/AddUse(early_id),
+                /*specific_spliced_id=*/AddUse(early_id));
+
+  EXPECT_THAT(Verify(), IsEmpty());
+}
+
+TEST_F(DominanceSpecificSpliceTest, SplicedUseInSpecificIsNotDominated) {
+  // The instruction that the specific splices in uses a value that isn't
+  // evaluated until after the splice. That's only visible when the body is
+  // checked in the specific, because the generic splices in a use of a value
+  // that is evaluated before it.
+  auto early_id = AddValue();
+  auto late_id = AddValue();
+  BuildFunction(early_id, late_id, /*generic_spliced_id=*/AddUse(early_id),
+                /*specific_spliced_id=*/AddUse(late_id));
 
   EXPECT_THAT(Verify(), HasSubstr("not dominated by any evaluation"));
 }
