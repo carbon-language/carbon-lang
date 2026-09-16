@@ -14,6 +14,8 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/grouped_value_store.h"
+#include "toolchain/base/id_tag.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/file.h"
@@ -105,26 +107,70 @@ auto CollectDeclInsts(const File& file, Set<InstId>& decl_insts) -> void {
   }
 }
 
-// Collects the specifics in `file` into `specifics`, grouped by the generic
-// they're a specific of. A specific that has never been resolved, or whose
-// resolution failed, doesn't have instructions to check, so is omitted.
+// The specifics of each generic in a file.
+using SpecificsByGeneric =
+    GroupedValueStore<GenericId, SpecificId, Tag<CheckIRId>>;
+
+// Collects the specifics in `file`, grouped by the generic they're a specific
+// of. A specific that has never been resolved, or whose resolution failed,
+// doesn't have instructions to check, so is omitted.
 //
 // This grouping is built once for the file so that each generic function can
 // find its own specifics without scanning all of them.
-auto CollectSpecifics(const File& file,
-                      Map<GenericId, llvm::SmallVector<SpecificId>>& specifics)
-    -> void {
-  for (const auto& [specific_id, specific] : file.specifics().enumerate()) {
-    if (specific.IsUnresolved() || specific.HasError()) {
-      continue;
+auto CollectSpecifics(const File& file) -> SpecificsByGeneric {
+  return SpecificsByGeneric(file.generics(), [&](auto add) {
+    for (const auto& [specific_id, specific] : file.specifics().enumerate()) {
+      if (specific.IsUnresolved() || specific.HasError()) {
+        continue;
+      }
+      add(specific.generic_id, specific_id);
     }
-    specifics
-        .Insert(specific.generic_id,
-                [] { return llvm::SmallVector<SpecificId>(); })
-        .value()
-        .push_back(specific_id);
-  }
+  });
 }
+
+// The dominator tree of a function body: the blocks that each block
+// immediately dominates, indexed by `BlockIndex`.
+using DominatorTree = llvm::SmallVector<llvm::SmallVector<BlockIndex, 2>>;
+
+// Builds the control flow graph of a function body and its dominator tree.
+//
+// These depend only on the branches between the function's body blocks, which
+// are the same in every specific of a generic function: a block spliced into
+// the body never contains control flow. So the tree is built once per function
+// and shared by the verification of each of its specifics.
+class DominatorTreeBuilder {
+ public:
+  explicit DominatorTreeBuilder(const File& file, const Function& function)
+      : file_(file),
+        function_(function),
+        body_blocks_(function.body_block_ids) {}
+
+  // Returns the dominator tree of the function body, diagnosing a branch that
+  // leaves the body and blocks that are unreachable from the entry block.
+  auto Build() -> ErrorOr<DominatorTree>;
+
+ private:
+  // Builds `successors_` and `predecessors_` from the branches in each block.
+  auto BuildControlFlowGraph() -> ErrorOr<Success>;
+
+  // Appends the blocks reachable from the entry block to `post_order`, in
+  // post-order, and marks each of them `visited`.
+  auto BuildPostOrder(llvm::SmallVectorImpl<bool>& visited,
+                      llvm::SmallVectorImpl<BlockIndex>& post_order) -> void;
+
+  auto num_blocks() const -> int { return body_blocks_.size(); }
+
+  const File& file_;
+  const Function& function_;
+  llvm::ArrayRef<InstBlockId> body_blocks_;
+
+  // The index of each block in `body_blocks_`.
+  Map<InstBlockId, BlockIndex> block_indexes_;
+
+  // The control flow graph, indexed by `BlockIndex`.
+  llvm::SmallVector<llvm::SmallVector<BlockIndex, 2>> successors_;
+  llvm::SmallVector<llvm::SmallVector<BlockIndex, 2>> predecessors_;
+};
 
 // Verifies that every operand of every instruction in one function body is
 // dominated by an evaluation of that operand.
@@ -144,28 +190,19 @@ auto CollectSpecifics(const File& file,
 class DominanceVerifier {
  public:
   explicit DominanceVerifier(const File& file, const Set<InstId>& decl_insts,
-                             const Function& function, SpecificId specific_id)
+                             const Function& function,
+                             const DominatorTree& dom_tree,
+                             SpecificId specific_id)
       : file_(file),
         decl_insts_(decl_insts),
         function_(function),
+        dom_tree_(dom_tree),
         specific_id_(specific_id),
         body_blocks_(function.body_block_ids) {}
 
   auto Verify() -> ErrorOr<Success>;
 
  private:
-  // Builds `successors_` and `predecessors_` from the branches in each block.
-  auto BuildControlFlowGraph() -> ErrorOr<Success>;
-
-  // Builds `dom_children_`, and diagnoses blocks that are unreachable from the
-  // entry block.
-  auto BuildDominatorTree() -> ErrorOr<Success>;
-
-  // Appends the blocks reachable from the entry block to `post_order`, in
-  // post-order, and marks each of them `visited`.
-  auto BuildPostOrder(llvm::SmallVectorImpl<bool>& visited,
-                      llvm::SmallVectorImpl<BlockIndex>& post_order) -> void;
-
   // Verifies every block, walking the dominator tree from the entry block.
   auto VerifyBlocks() -> ErrorOr<Success>;
 
@@ -194,21 +231,12 @@ class DominanceVerifier {
   // can't be determined.
   auto GetSplicedInstId(SpliceInst splice) const -> InstId;
 
-  auto num_blocks() const -> int { return body_blocks_.size(); }
-
   const File& file_;
   const Set<InstId>& decl_insts_;
   const Function& function_;
+  const DominatorTree& dom_tree_;
   SpecificId specific_id_;
   llvm::ArrayRef<InstBlockId> body_blocks_;
-
-  // The index of each block in `body_blocks_`.
-  Map<InstBlockId, BlockIndex> block_indexes_;
-
-  // The control flow graph and dominator tree, indexed by `BlockIndex`.
-  llvm::SmallVector<llvm::SmallVector<BlockIndex, 2>> successors_;
-  llvm::SmallVector<llvm::SmallVector<BlockIndex, 2>> predecessors_;
-  llvm::SmallVector<llvm::SmallVector<BlockIndex, 2>> dom_children_;
 
   // The instructions whose evaluations dominate the point currently being
   // verified, and the order in which they were added, so that they can be
@@ -219,9 +247,6 @@ class DominanceVerifier {
 
 auto DominanceVerifier::Verify() -> ErrorOr<Success> {
   CARBON_CHECK(!body_blocks_.empty());
-
-  CARBON_RETURN_IF_ERROR(BuildControlFlowGraph());
-  CARBON_RETURN_IF_ERROR(BuildDominatorTree());
 
   // Parameters and other instructions from the function declaration are
   // evaluated before the body begins, so they dominate the whole body.
@@ -246,7 +271,7 @@ auto DominanceVerifier::Verify() -> ErrorOr<Success> {
   return VerifyBlocks();
 }
 
-auto DominanceVerifier::BuildControlFlowGraph() -> ErrorOr<Success> {
+auto DominatorTreeBuilder::BuildControlFlowGraph() -> ErrorOr<Success> {
   for (int i = 0; i != num_blocks(); ++i) {
     block_indexes_.Insert(body_blocks_[i], BlockIndex(i));
   }
@@ -278,7 +303,7 @@ auto DominanceVerifier::BuildControlFlowGraph() -> ErrorOr<Success> {
   return Success();
 }
 
-auto DominanceVerifier::BuildPostOrder(
+auto DominatorTreeBuilder::BuildPostOrder(
     llvm::SmallVectorImpl<bool>& visited,
     llvm::SmallVectorImpl<BlockIndex>& post_order) -> void {
   // The blocks whose successors are still being visited, each paired with the
@@ -306,7 +331,10 @@ auto DominanceVerifier::BuildPostOrder(
   }
 }
 
-auto DominanceVerifier::BuildDominatorTree() -> ErrorOr<Success> {
+auto DominatorTreeBuilder::Build() -> ErrorOr<DominatorTree> {
+  CARBON_CHECK(!body_blocks_.empty());
+  CARBON_RETURN_IF_ERROR(BuildControlFlowGraph());
+
   // Order the blocks so that, apart from loop back edges, every block precedes
   // its successors.
   llvm::SmallVector<bool> visited(num_blocks(), false);
@@ -368,15 +396,15 @@ auto DominanceVerifier::BuildDominatorTree() -> ErrorOr<Success> {
     }
   }
 
-  dom_children_.resize(num_blocks());
+  DominatorTree dom_children(num_blocks());
   for (BlockIndex block_index : llvm::drop_begin(reverse_post_order)) {
     // Every block other than the entry block is reachable, and so is dominated
     // by the predecessor it's reached through.
     CARBON_CHECK(idom[block_index.index].has_value(), "No dominator for {0}",
                  body_blocks_[block_index.index]);
-    dom_children_[idom[block_index.index].index].push_back(block_index);
+    dom_children[idom[block_index.index].index].push_back(block_index);
   }
-  return Success();
+  return dom_children;
 }
 
 auto DominanceVerifier::VerifyBlocks() -> ErrorOr<Success> {
@@ -403,7 +431,7 @@ auto DominanceVerifier::VerifyBlocks() -> ErrorOr<Success> {
          file_.inst_blocks().Get(body_blocks_[block_index.index])) {
       CARBON_RETURN_IF_ERROR(VerifyAndRecordInst(inst_id, block_index));
     }
-    for (BlockIndex child : dom_children_[block_index.index]) {
+    for (BlockIndex child : dom_tree_[block_index.index]) {
       worklist.push_back(WalkStep::EnterBlock(child));
     }
   }
@@ -598,31 +626,27 @@ auto VerifyDominance(const File& file) -> ErrorOr<Success> {
   Set<InstId> decl_insts;
   CollectDeclInsts(file, decl_insts);
 
-  Map<GenericId, llvm::SmallVector<SpecificId>> specifics;
-  CollectSpecifics(file, specifics);
+  SpecificsByGeneric specifics = CollectSpecifics(file);
 
   for (const Function& function : file.functions().values()) {
     if (function.body_block_ids.empty()) {
       continue;
     }
 
+    CARBON_ASSIGN_OR_RETURN(DominatorTree dom_tree,
+                            DominatorTreeBuilder(file, function).Build());
+
     // Verify the body in the general, unspecialized context.
-    CARBON_RETURN_IF_ERROR(
-        DominanceVerifier(file, decl_insts, function, SpecificId::None)
-            .Verify());
+    CARBON_RETURN_IF_ERROR(DominanceVerifier(file, decl_insts, function,
+                                             dom_tree, SpecificId::None)
+                               .Verify());
 
     // For a generic function, also verify the body as it will be evaluated in
     // each of its specifics, in which spliced instructions can be resolved.
-    if (!function.generic_id.has_value()) {
-      continue;
-    }
-    auto* generic_specifics = specifics[function.generic_id];
-    if (!generic_specifics) {
-      continue;
-    }
-    for (SpecificId specific_id : *generic_specifics) {
+    for (SpecificId specific_id : specifics.Get(function.generic_id)) {
       CARBON_RETURN_IF_ERROR(
-          DominanceVerifier(file, decl_insts, function, specific_id).Verify());
+          DominanceVerifier(file, decl_insts, function, dom_tree, specific_id)
+              .Verify());
     }
   }
 

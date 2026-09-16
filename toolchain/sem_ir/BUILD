@@ -182,6 +182,7 @@ cc_library(
         "//common:struct_reflection",
         "//toolchain/base:block_value_store",
         "//toolchain/base:canonical_value_store",
+        "//toolchain/base:grouped_value_store",
         "//toolchain/base:id_tag",
         "//toolchain/base:index_base",
         "//toolchain/base:int",
