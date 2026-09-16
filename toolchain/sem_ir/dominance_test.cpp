@@ -29,7 +29,7 @@ using ::testing::HasSubstr;
 using ::testing::IsEmpty;
 
 class DominanceTest : public ::testing::Test {
- protected:
+ public:
   DominanceTest()
       : file_(/*parse_tree=*/nullptr, CheckIRId(0),
               /*packaging_decl=*/std::nullopt, value_stores_,
@@ -303,7 +303,7 @@ TEST_F(DominanceTest, FileVerifyChecksDominance) {
 //     \   /
 //      exit
 class DominanceDiamondTest : public DominanceTest {
- protected:
+ public:
   DominanceDiamondTest()
       : entry_id_(file_.inst_blocks().AddPlaceholder()),
         then_id_(file_.inst_blocks().AddPlaceholder()),
@@ -460,7 +460,7 @@ TEST_F(DominanceTest, LongChainOfBlocks) {
 //   entry -> header -> body -> header
 //                   -> exit
 class DominanceLoopTest : public DominanceTest {
- protected:
+ public:
   // Fills in the loop, prefixing the header and body blocks with the given
   // instructions.
   auto BuildLoop(llvm::ArrayRef<InstId> header_insts,

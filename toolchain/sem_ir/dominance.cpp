@@ -474,7 +474,7 @@ auto DominanceVerifier::VerifyArg(InstId user_id, IdAndKind arg,
     return VerifyOperand(user_id, arg.As<TypeInstId>(), block_index);
   }
   if (arg.kind() == IdKind::For<InstBlockId>) {
-    InstBlockId block_id = arg.As<InstBlockId>();
+    auto block_id = arg.As<InstBlockId>();
     if (block_id.has_value()) {
       for (InstId operand_id : file_.inst_blocks().Get(block_id)) {
         CARBON_RETURN_IF_ERROR(VerifyOperand(user_id, operand_id, block_index));
