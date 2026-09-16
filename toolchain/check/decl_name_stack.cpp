@@ -564,9 +564,8 @@ auto DeclNameStack::UpdateAccessContext() const -> void {
       const auto& class_info =
           context_->classes().Get(generic_class_type->class_id);
       const auto& generic = context_->generics().Get(class_info.generic_id);
-      auto specific_id = generic.self_specific_id;
-      type_id =
-          GetClassType(*context_, generic_class_type->class_id, specific_id);
+      type_id = GetClassType(*context_, generic_class_type->class_id,
+                             generic.self_specific_id);
       context_->access_context() = context_->types().GetTypeInstId(type_id);
       return;
     }
