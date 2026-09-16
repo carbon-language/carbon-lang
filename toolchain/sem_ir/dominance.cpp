@@ -10,9 +10,10 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "common/map.h"
-#include "common/set.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/grouped_value_store.h"
 #include "toolchain/base/id_tag.h"
@@ -71,6 +72,38 @@ auto GetBranchTargetId(Inst inst) -> InstBlockId {
   return InstBlockId::None;
 }
 
+// A set of the instructions in a file, holding one bit per instruction.
+//
+// Creating one of these costs a bit per instruction in the file, so they are
+// created once for the file rather than once per function.
+class InstSet {
+ public:
+  explicit InstSet(const File& file)
+      : tag_(file.insts().GetIdTag()), bits_(file.insts().size()) {}
+
+  // Adds `inst_id`, returning whether it wasn't already present.
+  auto Insert(InstId inst_id) -> bool {
+    int32_t index = tag_.Remove(inst_id);
+    if (bits_.test(index)) {
+      return false;
+    }
+    bits_.set(index);
+    return true;
+  }
+
+  auto Erase(InstId inst_id) -> void { bits_.reset(tag_.Remove(inst_id)); }
+
+  auto Contains(InstId inst_id) const -> bool {
+    return bits_.test(tag_.Remove(inst_id));
+  }
+
+ private:
+  // Instruction IDs are tagged, so the tag is removed to recover the index of
+  // the instruction, which is the index of its bit.
+  InstStore::IdTagType tag_;
+  llvm::BitVector bits_;
+};
+
 // Collects the instructions that are referenced from function bodies despite
 // being evaluated at file scope, or not evaluated at all, into `decl_insts`.
 //
@@ -92,11 +125,13 @@ auto GetBranchTargetId(Inst inst) -> InstBlockId {
 // Lowering only works today because such uses either happen to be constant or
 // are never lowered. Remove this allowlist and diagnose the uses instead once
 // global initialization semantics and the member reference model are settled.
-auto CollectDeclInsts(const File& file, Set<InstId>& decl_insts) -> void {
+auto CollectDeclInsts(const File& file, InstSet& decl_insts) -> void {
   auto add_block = [&](InstBlockId block_id) {
     if (block_id.has_value()) {
       for (InstId inst_id : file.inst_blocks().Get(block_id)) {
-        decl_insts.Insert(inst_id);
+        if (inst_id.has_value()) {
+          decl_insts.Insert(inst_id);
+        }
       }
     }
   };
@@ -155,7 +190,7 @@ class DominatorTreeBuilder {
 
   // Appends the blocks reachable from the entry block to `post_order`, in
   // post-order, and marks each of them `visited`.
-  auto BuildPostOrder(llvm::SmallVectorImpl<bool>& visited,
+  auto BuildPostOrder(llvm::SmallBitVector& visited,
                       llvm::SmallVectorImpl<BlockIndex>& post_order) -> void;
 
   auto num_blocks() const -> int { return body_blocks_.size(); }
@@ -189,16 +224,17 @@ class DominatorTreeBuilder {
 // tree construction directly on our SemIR representation.
 class DominanceVerifier {
  public:
-  explicit DominanceVerifier(const File& file, const Set<InstId>& decl_insts,
+  explicit DominanceVerifier(const File& file, const InstSet& decl_insts,
                              const Function& function,
-                             const DominatorTree& dom_tree,
+                             const DominatorTree& dom_tree, InstSet& evaluated,
                              SpecificId specific_id)
       : file_(file),
         decl_insts_(decl_insts),
         function_(function),
         dom_tree_(dom_tree),
         specific_id_(specific_id),
-        body_blocks_(function.body_block_ids) {}
+        body_blocks_(function.body_block_ids),
+        evaluated_(evaluated) {}
 
   auto Verify() -> ErrorOr<Success>;
 
@@ -232,7 +268,7 @@ class DominanceVerifier {
   auto GetSplicedInstId(SpliceInst splice) const -> InstId;
 
   const File& file_;
-  const Set<InstId>& decl_insts_;
+  const InstSet& decl_insts_;
   const Function& function_;
   const DominatorTree& dom_tree_;
   SpecificId specific_id_;
@@ -241,7 +277,11 @@ class DominanceVerifier {
   // The instructions whose evaluations dominate the point currently being
   // verified, and the order in which they were added, so that they can be
   // removed again when leaving a block.
-  Set<InstId> evaluated_;
+  //
+  // `evaluated_` is owned by the caller and shared between functions, because
+  // creating one costs a bit per instruction in the whole file. `Verify` leaves
+  // it empty.
+  InstSet& evaluated_;
   llvm::SmallVector<InstId> evaluated_order_;
 };
 
@@ -268,7 +308,17 @@ auto DominanceVerifier::Verify() -> ErrorOr<Success> {
     }
   }
 
-  return VerifyBlocks();
+  auto result = VerifyBlocks();
+
+  // `evaluated_` is shared with the verification of other functions, so put it
+  // back the way it was found. Every instruction this added to it is in
+  // `evaluated_order_`, including if `VerifyBlocks` stopped at an error.
+  for (InstId inst_id : evaluated_order_) {
+    evaluated_.Erase(inst_id);
+  }
+  evaluated_order_.clear();
+
+  return result;
 }
 
 auto DominatorTreeBuilder::BuildControlFlowGraph() -> ErrorOr<Success> {
@@ -304,13 +354,13 @@ auto DominatorTreeBuilder::BuildControlFlowGraph() -> ErrorOr<Success> {
 }
 
 auto DominatorTreeBuilder::BuildPostOrder(
-    llvm::SmallVectorImpl<bool>& visited,
+    llvm::SmallBitVector& visited,
     llvm::SmallVectorImpl<BlockIndex>& post_order) -> void {
   // The blocks whose successors are still being visited, each paired with the
   // number of its successors that have been visited so far. A block is appended
   // to `post_order` once all of its successors have been visited.
   llvm::SmallVector<std::pair<BlockIndex, int>> stack;
-  visited[EntryBlockIndex.index] = true;
+  visited.set(EntryBlockIndex.index);
   stack.push_back({EntryBlockIndex, 0});
 
   while (!stack.empty()) {
@@ -324,8 +374,8 @@ auto DominatorTreeBuilder::BuildPostOrder(
 
     stack.back().second = num_visited + 1;
     BlockIndex successor = successors[num_visited];
-    if (!visited[successor.index]) {
-      visited[successor.index] = true;
+    if (!visited.test(successor.index)) {
+      visited.set(successor.index);
       stack.push_back({successor, 0});
     }
   }
@@ -337,14 +387,14 @@ auto DominatorTreeBuilder::Build() -> ErrorOr<DominatorTree> {
 
   // Order the blocks so that, apart from loop back edges, every block precedes
   // its successors.
-  llvm::SmallVector<bool> visited(num_blocks(), false);
+  llvm::SmallBitVector visited(num_blocks());
   llvm::SmallVector<BlockIndex> reverse_post_order;
   reverse_post_order.reserve(num_blocks());
   BuildPostOrder(visited, reverse_post_order);
   std::reverse(reverse_post_order.begin(), reverse_post_order.end());
 
   for (int i = 0; i != num_blocks(); ++i) {
-    if (!visited[i]) {
+    if (!visited.test(i)) {
       return ErrorBuilder()
              << "Block " << body_blocks_[i] << " in function "
              << function_.name_id << " is unreachable from entry block";
@@ -585,7 +635,7 @@ auto DominanceVerifier::RecordEvaluated(InstId inst_id) -> void {
   // An instruction can be evaluated more than once, for example in two blocks
   // that don't dominate each other. Only the first evaluation in scope needs to
   // be undone.
-  if (evaluated_.Insert(inst_id).is_inserted()) {
+  if (evaluated_.Insert(inst_id)) {
     evaluated_order_.push_back(inst_id);
   }
 }
@@ -623,10 +673,15 @@ auto VerifyDominance(const File& file) -> ErrorOr<Success> {
     return Success();
   }
 
-  Set<InstId> decl_insts;
+  InstSet decl_insts(file);
   CollectDeclInsts(file, decl_insts);
 
   SpecificsByGeneric specifics = CollectSpecifics(file);
+
+  // Shared by the verification of every function and specific, because creating
+  // one costs a bit per instruction in the file. Each `Verify` call leaves it
+  // empty for the next one.
+  InstSet evaluated(file);
 
   for (const Function& function : file.functions().values()) {
     if (function.body_block_ids.empty()) {
@@ -638,15 +693,16 @@ auto VerifyDominance(const File& file) -> ErrorOr<Success> {
 
     // Verify the body in the general, unspecialized context.
     CARBON_RETURN_IF_ERROR(DominanceVerifier(file, decl_insts, function,
-                                             dom_tree, SpecificId::None)
+                                             dom_tree, evaluated,
+                                             SpecificId::None)
                                .Verify());
 
     // For a generic function, also verify the body as it will be evaluated in
     // each of its specifics, in which spliced instructions can be resolved.
     for (SpecificId specific_id : specifics.Get(function.generic_id)) {
-      CARBON_RETURN_IF_ERROR(
-          DominanceVerifier(file, decl_insts, function, dom_tree, specific_id)
-              .Verify());
+      CARBON_RETURN_IF_ERROR(DominanceVerifier(file, decl_insts, function,
+                                               dom_tree, evaluated, specific_id)
+                                 .Verify());
     }
   }
 
