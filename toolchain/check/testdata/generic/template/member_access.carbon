@@ -329,13 +329,12 @@ fn G(d: D) -> i32 {
 // CHECK:STDOUT:   %pattern_type.d8d: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %x.param_patt.23b: %pattern_type.d8d = value_param_pattern [concrete]
 // CHECK:STDOUT:   %x.patt.c51: %pattern_type.d8d = wrapper_binding_pattern x, %x.param_patt.23b [concrete]
-// CHECK:STDOUT:   %inst.splice_block.583: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.c76: ref %i32 = splice_block %.b2f {
+// CHECK:STDOUT:   %inst.splice_block.c9b: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.99f: ref %i32 = splice_block %.287 {
 // CHECK:STDOUT:       %.24c: %D = specific_inst @F.%x.ref, @F(%D)
-// CHECK:STDOUT:       %.179: %C = as_compatible %.24c
-// CHECK:STDOUT:       %.8a5: ref %C = class_element_access %.179, element0
-// CHECK:STDOUT:       %.313: ref %C = converted %.24c, %.8a5
-// CHECK:STDOUT:       %.b2f: ref %i32 = class_element_access %.313, element0
+// CHECK:STDOUT:       %.ff4: ref %C = class_element_access %.24c, element0
+// CHECK:STDOUT:       %.07e: ref %C = converted %.24c, %.ff4
+// CHECK:STDOUT:       %.287: ref %i32 = class_element_access %.07e, element0
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.splice_block.edd: <instruction> = inst_value [concrete] {
@@ -425,7 +424,7 @@ fn G(d: D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.756
-// CHECK:STDOUT:   %.loc10_11.3 => constants.%inst.splice_block.583
+// CHECK:STDOUT:   %.loc10_11.3 => constants.%inst.splice_block.c9b
 // CHECK:STDOUT:   %.loc10_11.4 => constants.%i32
 // CHECK:STDOUT:   %.loc10_11.5 => invalid
 // CHECK:STDOUT:   %.loc10_17.7 => constants.%inst.splice_block.edd

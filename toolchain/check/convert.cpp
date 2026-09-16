@@ -1409,20 +1409,26 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
           }
         }
 
-        value_id = AddInst<SemIR::AsCompatible>(
-            context, loc_id,
-            {.type_id = target.type_id, .source_id = value_id});
+        // An expression of type T converts to U if T is a class derived from U.
+        // First navigate to the base subobject. This preserves qualifiers.
+        if (inheritance_path) {
+          value_id = ConvertDerivedToBase(context, loc_id, value_id,
+                                          *inheritance_path);
+        }
 
+        // Next, switch out the qualifiers for those of the target.
+        if (context.insts().Get(value_id).type_id() != target.type_id) {
+          value_id = AddInst<SemIR::AsCompatible>(
+              context, loc_id,
+              {.type_id = target.type_id, .source_id = value_id});
+        }
+
+        // Finally, add a value acquisition to get back to a value expression if
+        // we temporarily converted to a reference earlier.
         if (need_value_binding) {
           value_id = AddInst<SemIR::AcquireValue>(
               context, loc_id,
               {.type_id = target.type_id, .value_id = value_id});
-        }
-
-        // An expression of type T converts to U if T is a class derived from U.
-        if (inheritance_path) {
-          value_id = ConvertDerivedToBase(context, loc_id, value_id,
-                                          *inheritance_path);
         }
 
         return value_id;

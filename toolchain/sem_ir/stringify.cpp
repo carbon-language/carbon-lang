@@ -19,6 +19,7 @@
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
+#include "toolchain/sem_ir/sugared_type.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -874,6 +875,10 @@ auto StringifyConstantInst(const File& sem_ir, InstId outer_inst_id)
   StepStack step_stack(&sem_ir);
   step_stack.PushInstId(outer_inst_id);
   return Stringify(sem_ir, step_stack);
+}
+
+auto StringifyTypeOfInst(const File& sem_ir, InstId inst_id) -> std::string {
+  return StringifyConstantInst(sem_ir, GetSugaredTypeOfInst(sem_ir, inst_id));
 }
 
 auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
