@@ -205,7 +205,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %D) {
 // CHECK:STDOUT: !default_values:
-// CHECK:STDOUT:   %.loc10_16.1: init %C = converted %.loc10_14.1, %.loc10_14.3 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc10_16.7: %D = acquire_value %.loc10_16.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested.carbon
@@ -323,7 +323,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %C, %b.param: %C, %c.param: %C, %d.param: %C, %e.param: %C) {
 // CHECK:STDOUT: !default_values:
-// CHECK:STDOUT:   %.loc6_62.1: %tuple.type.bcdf = tuple_literal (%.loc6_45.1, %.loc6_61.1) [concrete = constants.%tuple.4f4]
+// CHECK:STDOUT:   %.loc6_62.6: %tuple.type.a40 = converted %.loc6_62.1, %tuple.loc6_62 [concrete = constants.%tuple.800]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic.carbon
@@ -362,6 +362,6 @@ fn F(x: C = {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param: %C) {
 // CHECK:STDOUT: !default_values:
-// CHECK:STDOUT:   %.loc6_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc6_14.6: %C = acquire_value %.loc6_14.5 [concrete = constants.%C.val]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
