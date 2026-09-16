@@ -197,10 +197,10 @@ using MyCallbackType = void(*)(int);
 fn MyCallback(arg: i32) -> i32;
 
 fn F() {
-  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE+7]]:43: error: can't convert exported function type to `void (int)` [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE+7]]:43: error: can't convert exported function pointer to `void (*)(int)` [ExportedFunctionPtrTypeMismatch]
   // CHECK:STDERR:   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
   // CHECK:STDERR:                                           ^~~~~~~~~~
-  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE-6]]:1: note: function exported with type `int (int)` [ExportedFromFunction]
+  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE-6]]:1: note: function exported with pointer type `int (*)(int)` [ExportedFromFunction]
   // CHECK:STDERR: fn MyCallback(arg: i32) -> i32;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
