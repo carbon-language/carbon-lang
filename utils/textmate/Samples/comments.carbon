@@ -8,6 +8,8 @@
 //@dump-sem-ir-begin
 //@dump-sem-ir-end
 //@include-in-dumps
+    //@include-in-dumps
+//@dump-sem-ir-begin with trailing text is an ordinary comment
 //@dump-sem-ir-
 //no whitespace after double slash
 /* invalid comment pattern. */
