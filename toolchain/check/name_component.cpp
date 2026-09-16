@@ -24,9 +24,12 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
         context.node_stack()
             .PopForSoloNodeId<Parse::NodeKind::ExplicitParamListStart>();
     last_param_node_id = params_node_id;
-    if (!context.full_pattern_stack().GetDefaultValues().empty()) {
+    if (!context.full_pattern_stack().GetConvertedDefaultValues().empty()) {
+      CARBON_CHECK(
+          context.full_pattern_stack().GetRawDefaultValues().size() ==
+          context.full_pattern_stack().GetConvertedDefaultValues().size());
       call_param_default_values_id = context.inst_blocks().Add(
-          context.full_pattern_stack().GetDefaultValues());
+          context.full_pattern_stack().GetConvertedDefaultValues());
     }
   } else {
     param_patterns_id = SemIR::InstBlockId::None;

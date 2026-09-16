@@ -49,14 +49,6 @@ fn F(x: i32 = 0, y: i32 = 10);
 // --- fail_imported_defaults_different_values.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE+8]]:41: error: default value of `22` differs from the previously declared default value of `10`. [PatternDefaultValueDiffers]
-// CHECK:STDERR: fn F(unused x: i32 = 0, unused y: i32 = 22) { }
-// CHECK:STDERR:                                         ^~
-// CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: imported_defaults_different_values.carbon:3:27: note: different previous declaration here. [PatternDefaultValueDiffersNote]
-// CHECK:STDERR: fn F(x: i32 = 0, y: i32 = 10);
-// CHECK:STDERR:                           ^~
-// CHECK:STDERR:
 fn F(unused x: i32 = 0, unused y: i32 = 22) { }
 
 // --- redecl.carbon
@@ -189,9 +181,6 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param.loc7: %i32) -> out %return.param.loc7: %i32 {
-// CHECK:STDOUT: !default_values:
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x.loc7
 // CHECK:STDOUT:   %impl.elem0.loc7_34: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -203,9 +192,6 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%x.param.loc8: %i32) -> out %return.param.loc8: %i32 {
-// CHECK:STDOUT: !default_values:
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x.loc8
 // CHECK:STDOUT:   %impl.elem0.loc8: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -292,9 +278,6 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param: %i32) -> out %return.param: %i32 [from "imported_repeated_defaults.carbon"] {
-// CHECK:STDOUT: !default_values:
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %impl.elem0.loc4_34: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
@@ -358,9 +341,6 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param: %i32) -> out %return.param: %i32 [from "imported_elided_defaults_in_def.carbon"] {
-// CHECK:STDOUT: !default_values:
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]

@@ -197,7 +197,7 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
   // Add the value to the default values array in the full pattern stack, for
   // recovery later in the NameComponent.
   auto default_value_id =
-      context.full_pattern_stack().AddDefaultValue(expr_inst_id);
+      context.full_pattern_stack().AddRawDefaultValue(expr_inst_id);
 
   // Next on the node stack should be the pattern for which this default was
   // specified. We pop that so we can issue the DefaultValuePattern in its
