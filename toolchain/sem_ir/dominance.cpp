@@ -134,6 +134,13 @@ auto CollectSpecifics(const File& file,
 // checked. An instruction joins that set when its evaluation is reached, and
 // leaves it again when the walk leaves the blocks that the evaluation
 // dominates.
+//
+// TODO: Improve LLVM's GenericDomTree implementation so that it's compatible
+// with our graph representation, then rewrite this to use that rather than
+// implementing our own dominator tree construction. Currently, GenericDomTree
+// requires a pointer-based data structure, and building such a data structure
+// introduces a substantial performance overhead compared to running dominator
+// tree construction directly on our SemIR representation.
 class DominanceVerifier {
  public:
   explicit DominanceVerifier(const File& file, const Set<InstId>& decl_insts,
