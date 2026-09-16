@@ -249,12 +249,11 @@ fn H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %x.ref: %Base.elem.3f2 = name_ref x, @Base.%field_decl [concrete = @Base.%field_decl]
-// CHECK:STDOUT:   %.loc17_11.1: %Base.947 = as_compatible %d.ref
-// CHECK:STDOUT:   %.loc17_11.2: ref %Base.947 = class_element_access %.loc17_11.1, element0
-// CHECK:STDOUT:   %.loc17_11.3: ref %Base.947 = converted %d.ref, %.loc17_11.2
-// CHECK:STDOUT:   %.loc17_11.4: ref %Param = class_element_access %.loc17_11.3, element0
+// CHECK:STDOUT:   %.loc17_11.1: ref %Base.947 = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc17_11.2: ref %Base.947 = converted %d.ref, %.loc17_11.1
+// CHECK:STDOUT:   %.loc17_11.3: ref %Param = class_element_access %.loc17_11.2, element0
 // CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, @Param.%field_decl [concrete = @Param.%field_decl]
-// CHECK:STDOUT:   %.loc17_13.1: ref %i32 = class_element_access %.loc17_11.4, element0
+// CHECK:STDOUT:   %.loc17_13.1: ref %i32 = class_element_access %.loc17_11.3, element0
 // CHECK:STDOUT:   %.loc17_13.2: %i32 = acquire_value %.loc17_13.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc17_13.1: <bound method> = bound_method %.loc17_13.2, %impl.elem0
@@ -430,12 +429,11 @@ fn H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %x.ref: %Base.elem.3f2 = name_ref x, imports.%Main.import_ref.be5 [concrete = imports.%field_decl.2df]
-// CHECK:STDOUT:   %.loc7_11.1: %Base.947 = as_compatible %d.ref
-// CHECK:STDOUT:   %.loc7_11.2: ref %Base.947 = class_element_access %.loc7_11.1, element0
-// CHECK:STDOUT:   %.loc7_11.3: ref %Base.947 = converted %d.ref, %.loc7_11.2
-// CHECK:STDOUT:   %.loc7_11.4: ref %Param = class_element_access %.loc7_11.3, element0
+// CHECK:STDOUT:   %.loc7_11.1: ref %Base.947 = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc7_11.2: ref %Base.947 = converted %d.ref, %.loc7_11.1
+// CHECK:STDOUT:   %.loc7_11.3: ref %Param = class_element_access %.loc7_11.2, element0
 // CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, imports.%Main.import_ref.a22 [concrete = imports.%field_decl.864]
-// CHECK:STDOUT:   %.loc7_13.1: ref %i32 = class_element_access %.loc7_11.4, element0
+// CHECK:STDOUT:   %.loc7_13.1: ref %i32 = class_element_access %.loc7_11.3, element0
 // CHECK:STDOUT:   %.loc7_13.2: %i32 = acquire_value %.loc7_13.1
 // CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
 // CHECK:STDOUT:   %bound_method.loc7_13.1: <bound method> = bound_method %.loc7_13.2, %impl.elem0
