@@ -104,6 +104,27 @@ auto CollectDeclInsts(const File& file, Set<InstId>& decl_insts) -> void {
   }
 }
 
+// Collects the specifics in `file` into `specifics`, grouped by the generic
+// they're a specific of. A specific that has never been resolved, or whose
+// resolution failed, doesn't have instructions to check, so is omitted.
+//
+// This grouping is built once for the file so that each generic function can
+// find its own specifics without scanning all of them.
+auto CollectSpecifics(const File& file,
+                      Map<GenericId, llvm::SmallVector<SpecificId>>& specifics)
+    -> void {
+  for (const auto& [specific_id, specific] : file.specifics().enumerate()) {
+    if (specific.IsUnresolved() || specific.HasError()) {
+      continue;
+    }
+    specifics
+        .Insert(specific.generic_id,
+                [] { return llvm::SmallVector<SpecificId>(); })
+        .value()
+        .push_back(specific_id);
+  }
+}
+
 // Verifies that every operand of every instruction in one function body is
 // dominated by an evaluation of that operand.
 //
@@ -237,10 +258,13 @@ auto DominanceVerifier::BuildControlFlowGraph() -> ErrorOr<Success> {
                << "Branch in block " << body_blocks_[i] << " targets block "
                << target_id << " which is not in function body";
       }
-      if (!llvm::is_contained(successors_[from.index], *to)) {
-        successors_[from.index].push_back(*to);
-        predecessors_[to->index].push_back(from);
-      }
+      // A block that branches to the same target more than once produces a
+      // duplicate edge. That's harmless: the post-order walk skips blocks it
+      // has already visited, and intersecting the dominators of the same
+      // predecessor twice gives the same result. Removing duplicates here
+      // would instead be quadratic in a block's number of successors.
+      successors_[from.index].push_back(*to);
+      predecessors_[to->index].push_back(from);
     }
   }
   return Success();
@@ -562,6 +586,9 @@ auto VerifyDominance(const File& file) -> ErrorOr<Success> {
   Set<InstId> decl_insts;
   CollectDeclInsts(file, decl_insts);
 
+  Map<GenericId, llvm::SmallVector<SpecificId>> specifics;
+  CollectSpecifics(file, specifics);
+
   for (const Function& function : file.functions().values()) {
     if (function.body_block_ids.empty()) {
       continue;
@@ -577,13 +604,13 @@ auto VerifyDominance(const File& file) -> ErrorOr<Success> {
     if (!function.generic_id.has_value()) {
       continue;
     }
-    for (const auto& [specific_id, specific] : file.specifics().enumerate()) {
-      if (specific.generic_id == function.generic_id &&
-          !specific.IsUnresolved() && !specific.HasError()) {
-        CARBON_RETURN_IF_ERROR(
-            DominanceVerifier(file, decl_insts, function, specific_id)
-                .Verify());
-      }
+    auto* generic_specifics = specifics[function.generic_id];
+    if (!generic_specifics) {
+      continue;
+    }
+    for (SpecificId specific_id : *generic_specifics) {
+      CARBON_RETURN_IF_ERROR(
+          DominanceVerifier(file, decl_insts, function, specific_id).Verify());
     }
   }
 

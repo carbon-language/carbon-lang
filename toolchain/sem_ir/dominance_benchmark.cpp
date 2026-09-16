@@ -361,12 +361,12 @@ BENCHMARK(BM_VerifyDominance<BuildDiamonds>)
 BENCHMARK(BM_VerifyDominance<BuildNestedLoops>)
     ->Name("BM_VerifyDominance/NestedLoops")
     ->Apply(BodySizes);
-// Building the control flow graph is quadratic in a block's number of
-// successors, so this shape is capped at a smaller size than the others.
+// This shape has a block with a successor for each arm and a block with a
+// predecessor for each arm, so it's the shape to watch for work that's
+// quadratic in a block's number of edges.
 BENCHMARK(BM_VerifyDominance<BuildFanOutFanIn>)
     ->Name("BM_VerifyDominance/FanOutFanIn")
-    ->RangeMultiplier(8)
-    ->Range(8, 4096);
+    ->Apply(BodySizes);
 
 // Verifies many small functions, which is the shape of a real file: this
 // measures the verifier's per-function costs rather than its scaling within a
@@ -383,9 +383,9 @@ BENCHMARK(BM_VerifyDominanceManyFunctions)
     ->Apply(BodySizes);
 
 // Verifies many small generic functions, each with one resolved specific.
-// `VerifyDominance` scans every specific in the file for each generic
-// function, so this is quadratic in the number of generic functions, and is
-// capped at a smaller size for that reason.
+// Every generic function's body is verified once per specific of its generic,
+// so this watches for work that's quadratic in the number of generics in the
+// file rather than linear in the number of specifics.
 auto BM_VerifyDominanceManyGenericFunctions(benchmark::State& state) -> void {
   FileBuilder file;
   for (int i = 0, n = state.range(0); i != n; ++i) {
@@ -395,8 +395,7 @@ auto BM_VerifyDominanceManyGenericFunctions(benchmark::State& state) -> void {
 }
 BENCHMARK(BM_VerifyDominanceManyGenericFunctions)
     ->Name("BM_VerifyDominance/ManyGenericFunctions")
-    ->RangeMultiplier(8)
-    ->Range(8, 4096);
+    ->Apply(BodySizes);
 
 }  // namespace
 }  // namespace Carbon::SemIR

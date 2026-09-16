@@ -407,6 +407,25 @@ TEST_F(DominanceTest, BranchOutsideFunctionBody) {
   EXPECT_THAT(Verify(), HasSubstr("which is not in function body"));
 }
 
+TEST_F(DominanceTest, RepeatedBranchToSameBlock) {
+  // A block can branch to the same block more than once, for example when both
+  // arms of an `if` are empty. That produces a duplicate control flow edge,
+  // which shouldn't disturb the dominance computation: the exit block is still
+  // dominated by the entry block.
+  auto entry_id = file_.inst_blocks().AddPlaceholder();
+  auto exit_id = file_.inst_blocks().AddPlaceholder();
+
+  auto value_id = AddValue();
+  file_.inst_blocks().ReplacePlaceholder(
+      entry_id,
+      {value_id, AddBranchIf(exit_id, AddConstant()), AddBranch(exit_id)});
+  file_.inst_blocks().ReplacePlaceholder(exit_id,
+                                         {AddUse(value_id), AddReturn()});
+  AddFunction({entry_id, exit_id});
+
+  EXPECT_THAT(Verify(), IsEmpty());
+}
+
 TEST_F(DominanceTest, LongChainOfBlocks) {
   // A function body long enough that walking it recursively would overflow the
   // stack. Each block uses a value evaluated in the block before it, so the
