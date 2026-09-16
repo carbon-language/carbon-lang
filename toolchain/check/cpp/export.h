@@ -37,8 +37,7 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
     -> clang::TagDecl*;
 
 // Exports a dynamic Carbon class with a foreign (C++) vtable into C++ as a
-// class, and marks its vtable as used so that it is completed and prepared for
-// lowering.
+// class, and completes its definition.
 auto ExportAndCompleteClassToCpp(Context& context, SemIR::ClassType class_type)
     -> clang::TagDecl*;
 

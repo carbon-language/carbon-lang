@@ -296,12 +296,9 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
 auto ExportAndCompleteClassToCpp(Context& context, SemIR::ClassType class_type)
     -> clang::TagDecl* {
   auto* tag_decl = ExportClassToCpp(context, class_type);
-  if (tag_decl && context.cpp_context()) {
-    if (auto* cxx_record_decl =
-            llvm::dyn_cast<clang::CXXRecordDecl>(tag_decl)) {
-      context.clang_sema().MarkVTableUsed(cxx_record_decl->getLocation(),
-                                          cxx_record_decl);
-    }
+  if (tag_decl && context.cpp_context() &&
+      context.ast_context().getExternalSource()) {
+    context.ast_context().getExternalSource()->CompleteType(tag_decl);
   }
   return tag_decl;
 }

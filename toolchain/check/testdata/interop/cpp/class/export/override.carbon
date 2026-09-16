@@ -32,6 +32,8 @@ Carbon::B b;
 ''';
 
 // --- fail_todo_generic.carbon
+// TODO: Test in `toolchain/lower/testdata/` once generic classes deriving from
+// C++ virtual classes pass check.
 library "[[@TEST_NAME]]";
 import Cpp;
 
