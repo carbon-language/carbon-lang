@@ -15,6 +15,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
@@ -460,39 +461,43 @@ auto DominanceVerifier::VerifyAndRecordInst(InstId root_inst_id,
 
 auto DominanceVerifier::VerifyArg(InstId user_id, IdAndKind arg,
                                   BlockIndex block_index) -> ErrorOr<Success> {
-  // These operand kinds name the value produced by another instruction, so that
-  // instruction's evaluation must dominate this use.
-  if (arg.kind() == IdKind::For<InstId>) {
-    return VerifyOperand(user_id, arg.As<InstId>(), block_index);
-  }
-  if (arg.kind() == IdKind::For<DestInstId>) {
-    return VerifyOperand(user_id, arg.As<DestInstId>(), block_index);
-  }
-  // A `TypeInstId` always names a constant of type `type`, so this check should
-  // always pass, but checking it means we notice if that stops being true.
-  if (arg.kind() == IdKind::For<TypeInstId>) {
-    return VerifyOperand(user_id, arg.As<TypeInstId>(), block_index);
-  }
-  if (arg.kind() == IdKind::For<InstBlockId>) {
-    auto block_id = arg.As<InstBlockId>();
-    if (block_id.has_value()) {
-      for (InstId operand_id : file_.inst_blocks().Get(block_id)) {
-        CARBON_RETURN_IF_ERROR(VerifyOperand(user_id, operand_id, block_index));
-      }
+  CARBON_KIND_SWITCH(arg) {
+    // These operand kinds name the value produced by another instruction, so
+    // that instruction's evaluation must dominate this use.
+    case CARBON_KIND(InstId inst_id): {
+      return VerifyOperand(user_id, inst_id, block_index);
     }
-    return Success();
+    case CARBON_KIND(DestInstId inst_id): {
+      return VerifyOperand(user_id, inst_id, block_index);
+    }
+    // A `TypeInstId` always names a constant of type `type`, so this check
+    // should always pass, but checking it means we notice if that stops being
+    // true.
+    case CARBON_KIND(TypeInstId inst_id): {
+      return VerifyOperand(user_id, inst_id, block_index);
+    }
+    case CARBON_KIND(InstBlockId block_id): {
+      if (block_id.has_value()) {
+        for (InstId operand_id : file_.inst_blocks().Get(block_id)) {
+          CARBON_RETURN_IF_ERROR(
+              VerifyOperand(user_id, operand_id, block_index));
+        }
+      }
+      return Success();
+    }
+    default: {
+      // Every other operand kind either doesn't name an instruction at all, or
+      // names one in a way that doesn't require dominance:
+      //
+      // -   `MetaInstId` and `MetaInstBlockId` name the identity of an
+      //     instruction rather than its value.
+      // -   `AbsoluteInstId` and `AbsoluteInstBlockId` name instructions that
+      //     are typically in a different entity.
+      // -   `LabelId` names another block in this function's control flow.
+      // -   `DeclInstBlockId` names a declaration rather than a computation.
+      return Success();
+    }
   }
-
-  // Every other operand kind either doesn't name an instruction at all, or
-  // names one in a way that doesn't require dominance:
-  //
-  // -   `MetaInstId` and `MetaInstBlockId` name the identity of an instruction
-  //     rather than its value.
-  // -   `AbsoluteInstId` and `AbsoluteInstBlockId` name instructions that are
-  //     typically in a different entity.
-  // -   `LabelId` names another block in this function's control flow.
-  // -   `DeclInstBlockId` names a declaration rather than a computation.
-  return Success();
 }
 
 auto DominanceVerifier::VerifyOperand(InstId user_id, InstId operand_id,
@@ -525,7 +530,7 @@ auto DominanceVerifier::VerifyOperand(InstId user_id, InstId operand_id,
   // so this is a real violation: `__global_init` can contain a `name_ref` to an
   // `import_ref` for a non-constant imported variable. Remove this exemption
   // and diagnose such uses once imported variables have a value model.
-  if (operand.Is<ImportRefLoaded>() || operand.Is<ImportRefUnloaded>()) {
+  if (operand.Is<AnyImportRef>()) {
     return Success();
   }
 
