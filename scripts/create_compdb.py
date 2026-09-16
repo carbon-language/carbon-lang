@@ -196,10 +196,7 @@ def main() -> None:
         bazel, args.alsologtostderr, args.dump_files, args.extra_bazel_flag
     )
 
-    print(
-        "Generating compile_commands.json (may take a few minutes)...",
-        flush=True,
-    )
+    print("Generating compile_commands.json...", flush=True)
     subprocess.run(
         [
             bazel,
