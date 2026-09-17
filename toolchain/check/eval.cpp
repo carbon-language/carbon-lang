@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
 #include <optional>
 #include <utility>
 
@@ -2328,6 +2329,92 @@ static auto TryAddRealLiterals(const Real& lhs, const Real& rhs)
                                    common_exponent);
 }
 
+// Converts a binary (dyadic) Real to its exact decimal equivalent:
+// m * 2^e becomes (m * 2^e) * 10^0 for e >= 0, or (m * 5^-e) * 10^e for
+// e < 0. Returns nullopt if the conversion would exceed MaxIntWidth.
+static auto TryConvertBinaryToDecimal(const Real& val) -> std::optional<Real> {
+  CARBON_CHECK(!val.is_decimal, "expected binary real");
+  auto factored = TryGetFactoredExponent(val);
+  if (!factored) {
+    return std::nullopt;
+  }
+  if (factored->twos >= 0) {
+    unsigned needed = val.mantissa.getSignificantBits() +
+                      static_cast<unsigned>(factored->twos);
+    if (needed > static_cast<unsigned>(IntStore::MaxIntWidth)) {
+      return std::nullopt;
+    }
+    unsigned width =
+        std::max(needed, static_cast<unsigned>(IntStore::MinAPWidth));
+    auto mantissa = val.mantissa.sextOrTrunc(width);
+    mantissa <<= static_cast<unsigned>(factored->twos);
+    return Real{.mantissa = mantissa,
+                .exponent = llvm::APInt(32, 0, /*isSigned=*/true),
+                .is_decimal = true};
+  }
+  unsigned k = static_cast<unsigned>(-factored->twos);
+  unsigned needed = val.mantissa.getSignificantBits() +
+                    static_cast<unsigned>(std::ceil(std::log2f(5) * k));
+  if (needed > static_cast<unsigned>(IntStore::MaxIntWidth)) {
+    return std::nullopt;
+  }
+  unsigned width =
+      std::max(needed, static_cast<unsigned>(IntStore::MinAPWidth));
+  auto mantissa = val.mantissa.sextOrTrunc(width);
+  mantissa *= llvm::APIntOps::pow(llvm::APInt(width, 5), k);
+  return Real{.mantissa = mantissa,
+              .exponent = llvm::APInt(32, factored->twos, /*isSigned=*/true),
+              .is_decimal = true};
+}
+
+// Multiplies two Real literals exactly, retaining precision by promoting a
+// mixed decimal/binary pair to decimal (binary values are exactly
+// representable in decimal, the converse is not true).
+// Returns std::nullopt if the result would exceed MaxIntWidth.
+static auto TryMulRealLiterals(const Real& lhs, const Real& rhs)
+    -> std::optional<Real> {
+  Real l = lhs;
+  Real r = rhs;
+  if (l.is_decimal != r.is_decimal) {
+    if (!l.is_decimal) {
+      auto converted = TryConvertBinaryToDecimal(l);
+      if (!converted) {
+        return std::nullopt;
+      }
+      l = *converted;
+    } else {
+      auto converted = TryConvertBinaryToDecimal(r);
+      if (!converted) {
+        return std::nullopt;
+      }
+      r = *converted;
+    }
+  }
+  int64_t sum = l.exponent.getSExtValue() + r.exponent.getSExtValue();
+  if (sum > INT32_MAX || sum < INT32_MIN) {
+    return std::nullopt;
+  }
+  unsigned needed =
+      l.mantissa.getSignificantBits() + r.mantissa.getSignificantBits() + 1;
+  if (needed < static_cast<unsigned>(IntStore::MinAPWidth)) {
+    needed = static_cast<unsigned>(IntStore::MinAPWidth);
+  }
+  if (needed > static_cast<unsigned>(IntStore::MaxIntWidth)) {
+    return std::nullopt;
+  }
+  auto lhs_mantissa = l.mantissa.sextOrTrunc(needed);
+  auto rhs_mantissa = r.mantissa.sextOrTrunc(needed);
+  bool overflow = false;
+  auto product = lhs_mantissa.smul_ov(rhs_mantissa, overflow);
+  if (overflow) {
+    return std::nullopt;
+  }
+  return Real{.mantissa = product,
+              .exponent = llvm::APInt(32, static_cast<int32_t>(sum),
+                                      /*isSigned=*/true),
+              .is_decimal = l.is_decimal};
+}
+
 // Performs a builtin binary real -> real operation.
 static auto PerformBuiltinBinaryFloatLiteralOp(
     Context& context, SemIR::LocId loc_id,
@@ -2346,6 +2433,10 @@ static auto PerformBuiltinBinaryFloatLiteralOp(
     case SemIR::BuiltinFunctionKind::FloatSub:
       result = TryAddRealLiterals(lhs_val, NegateRealLiteral(rhs_val));
       op_token = Lex::TokenKind::Minus;
+      break;
+    case SemIR::BuiltinFunctionKind::FloatMul:
+      result = TryMulRealLiterals(lhs_val, rhs_val);
+      op_token = Lex::TokenKind::Star;
       break;
     default:
       CARBON_FATAL("Unexpected operation kind.");

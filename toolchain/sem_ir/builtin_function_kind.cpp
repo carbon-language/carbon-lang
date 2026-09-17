@@ -737,8 +737,7 @@ constexpr BuiltinInfo FloatSub = {
 
 // "float.mul": float multiplication.
 constexpr BuiltinInfo FloatMul = {
-    "float.mul",
-    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
+    "float.mul", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
 
 // "float.div": float division.
 constexpr BuiltinInfo FloatDiv = {

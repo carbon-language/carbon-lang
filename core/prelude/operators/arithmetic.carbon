@@ -144,6 +144,10 @@ impl FloatLiteral as AddWith(Self) where .Result = Self {
   fn Op(self, other: Self) -> Self = "float.add";
 }
 
+impl FloatLiteral as MulWith(Self) where .Result = Self {
+  fn Op(self, other: Self) -> Self = "float.mul";
+}
+
 impl FloatLiteral as Negate where .Result = Self {
   fn Op(self) -> Self = "float.negate";
 }

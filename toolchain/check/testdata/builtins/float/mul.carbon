@@ -66,17 +66,6 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
   return BadReturnType(a, b);
 }
 
-// --- fail_literal.carbon
-
-library "[[@TEST_NAME]]";
-
-fn Literal() -> type = "float_literal.make_type";
-// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.mul" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MulLiteral(a: Literal(), b: Literal()) -> Literal() = "float.mul";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn MulLiteral(a: Literal(), b: Literal()) -> Literal() = "float.mul";
-
 // CHECK:STDOUT: --- mul_sub.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
