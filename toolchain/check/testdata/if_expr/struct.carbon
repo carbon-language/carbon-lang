@@ -66,8 +66,17 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %int_2.295: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct.631: %struct_type.a.b.b4c = struct_value (%int_1.0c6, %int_2.295) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc18_3.3 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %struct.a.b.type.facet: %type = facet_value %struct_type.a.b.b4c, () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.46c: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%struct.a.b.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.87f: %Destroy.WithSelf.SelfDestruct.type.46c = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc18_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.884: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.3, %Destroy.WithSelf.SubobjectDestroy.d01daf.3, %Destroy.WithSelf.SelfDestruct.87f), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.73d: %Destroy.type = facet_value %struct_type.a.b.b4c, (%custom_witness.884) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function %Destroy.WithSelf.SelfDestruct.87f, @Destroy.WithSelf.SelfDestruct(%struct.a.b.type.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -141,8 +150,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc18_46.6: ref %i32 = struct_access %a.var, element1
 // CHECK:STDOUT:   %.loc18_46.7: init %i32 to %.loc18_46.6 = in_place_init %.loc18_46.5 [concrete = constants.%int_2.295]
 // CHECK:STDOUT:   %.loc18_46.8: init %struct_type.a.b.b4c to %a.var = struct_init (%.loc18_46.4, %.loc18_46.7) [concrete = constants.%struct.631]
-// CHECK:STDOUT:   %.loc18_3: init %struct_type.a.b.b4c = converted %.loc18_46.1, %.loc18_46.8 [concrete = constants.%struct.631]
-// CHECK:STDOUT:   assign %a.var, %.loc18_3
+// CHECK:STDOUT:   %.loc18_3.1: init %struct_type.a.b.b4c = converted %.loc18_46.1, %.loc18_46.8 [concrete = constants.%struct.631]
+// CHECK:STDOUT:   assign %a.var, %.loc18_3.1
 // CHECK:STDOUT:   %.loc18_27: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.b4c] {
 // CHECK:STDOUT:     %i32.loc18_15: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc18_24: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -180,20 +189,32 @@ fn F(cond: bool) {
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc19_5: %struct_type.a.b.b4c = block_arg !if.expr.result
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref(%.loc19_5)
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.Op.403171.3
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound(%a.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.SelfDestruct.87f
+// CHECK:STDOUT:   %Destroy.facet.loc18_3.1: %Destroy.type = facet_value constants.%struct_type.a.b.b4c, (constants.%custom_witness.884) [concrete = constants.%Destroy.facet.73d]
+// CHECK:STDOUT:   %.loc18_3.2: %Destroy.type = converted constants.%struct_type.a.b.b4c, %Destroy.facet.loc18_3.1 [concrete = constants.%Destroy.facet.73d]
+// CHECK:STDOUT:   %Destroy.facet.loc18_3.2: %Destroy.type = facet_value constants.%struct_type.a.b.b4c, (constants.%custom_witness.884) [concrete = constants.%Destroy.facet.73d]
+// CHECK:STDOUT:   %.loc18_3.3: %Destroy.type = converted constants.%struct_type.a.b.b4c, %Destroy.facet.loc18_3.2 [concrete = constants.%Destroy.facet.73d]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function constants.%Destroy.WithSelf.SelfDestruct.87f, @Destroy.WithSelf.SelfDestruct(constants.%struct.a.b.type.facet) [concrete = constants.%Destroy.WithSelf.SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc18_3: <bound method> = bound_method %a.var, %Destroy.WithSelf.SelfDestruct.specific_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method.loc18_3(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc18_3.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_3.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_3.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc18_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_3.3(%self.param: ref %struct_type.a.b.b4c) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_3.2(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc18_3.3(%self.param: ref %struct_type.a.b.b4c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_3.3(%self.param: ref %struct_type.a.b.b4c) = "no_op";
 // CHECK:STDOUT:

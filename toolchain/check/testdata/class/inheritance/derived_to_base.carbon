@@ -227,9 +227,19 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.084: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %.107: ref %B = class_element_access %.084, element0 [concrete]
 // CHECK:STDOUT:   %.5ce: ref %A = class_element_access %.107, element0 [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.8: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc32_66.8 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.8: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.8 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.type.facet: %type = facet_value %C, () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.e17: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%C.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.668: %Destroy.WithSelf.SelfDestruct.type.e17 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.8: type = fn_type @Destroy.WithSelf.Op.loc32_66.8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.8: %Destroy.WithSelf.Op.type.ef016f.8 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %.084, %Destroy.WithSelf.Op.403171.8 [concrete]
+// CHECK:STDOUT:   %custom_witness.81d: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.8, %Destroy.WithSelf.SubobjectDestroy.d01daf.8, %Destroy.WithSelf.SelfDestruct.668), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.7ff: %Destroy.type = facet_value %C, (%custom_witness.81d) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.specific_fn: <specific function> = specific_function %Destroy.WithSelf.SelfDestruct.668, @Destroy.WithSelf.SelfDestruct(%C.type.facet) [concrete]
+// CHECK:STDOUT:   %bound_method.cd0: <bound method> = bound_method %.084, %Destroy.WithSelf.SelfDestruct.specific_fn [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -455,46 +465,67 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.9ef = value_binding_pattern a [concrete = constants.%a.patt.bb7b23.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call constants.%Destroy.WithSelf.Op.bound(constants.%.084)
+// CHECK:STDOUT:   %Destroy.facet.loc32_66.1: %Destroy.type = facet_value constants.%C, (constants.%custom_witness.81d) [concrete = constants.%Destroy.facet.7ff]
+// CHECK:STDOUT:   %.loc32_66.7: %Destroy.type = converted constants.%C, %Destroy.facet.loc32_66.1 [concrete = constants.%Destroy.facet.7ff]
+// CHECK:STDOUT:   %Destroy.facet.loc32_66.2: %Destroy.type = facet_value constants.%C, (constants.%custom_witness.81d) [concrete = constants.%Destroy.facet.7ff]
+// CHECK:STDOUT:   %.loc32_66.8: %Destroy.type = converted constants.%C, %Destroy.facet.loc32_66.2 [concrete = constants.%Destroy.facet.7ff]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call constants.%bound_method.cd0(constants.%.084)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.3(%self.param: ref %struct_type.a.a92) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.2(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.3(%self.param: ref %struct_type.a.a92) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.4(%self.param: ref %A) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.3(%self.param: ref %struct_type.a.a92) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.4(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.5(%self.param: ref %struct_type.base.b.6c4) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.4(%self.param: ref %A) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.5(%self.param: ref %struct_type.base.b.6c4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.6(%self.param: ref %B) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.5(%self.param: ref %struct_type.base.b.6c4) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.6(%self.param: ref %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.7(%self.param: ref %struct_type.base.c.faf) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.6(%self.param: ref %B) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.7(%self.param: ref %struct_type.base.c.faf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.8(%self.param: ref %C) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.7(%self.param: ref %struct_type.base.c.faf) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.8(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32_66.8(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- qualified.carbon
 // CHECK:STDOUT:

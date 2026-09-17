@@ -280,6 +280,7 @@ fn Call3() {
 // CHECK:STDOUT:   %.loc12_12.2.temp = alloca {}, align 1, !dbg !96
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_12.2.temp), !dbg !96
 // CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk._(ptr @X.val.loc12_14.3), !dbg !97
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.155369379014d6e1(ptr @X.val), !dbg !96
 // CHECK:STDOUT:   ret void, !dbg !98
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -288,8 +289,8 @@ fn Call3() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.X, align 1
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !108
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !108
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !115
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !115
 // CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -300,6 +301,7 @@ fn Call3() {
 // CHECK:STDOUT:   %.loc18_12.2.temp = alloca {}, align 1, !dbg !100
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.2.temp), !dbg !100
 // CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk.__(ptr @X.val.loc12_14.3, i32 2), !dbg !101
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.155369379014d6e1(ptr @X.val), !dbg !100
 // CHECK:STDOUT:   ret void, !dbg !102
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -309,9 +311,9 @@ fn Call3() {
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
 // CHECK:STDOUT:   %agg.tmp = alloca %class.X, align 1
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !108
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !115
 // CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !58
-// CHECK:STDOUT:   %2 = load ptr, ptr %.addr, align 8, !tbaa !108
+// CHECK:STDOUT:   %2 = load ptr, ptr %.addr, align 8, !tbaa !115
 // CHECK:STDOUT:   %3 = load i32, ptr %.addr1, align 4, !tbaa !58
 // CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_(i32 noundef %3)
 // CHECK:STDOUT:   ret void
@@ -323,6 +325,7 @@ fn Call3() {
 // CHECK:STDOUT:   %.loc24_12.2.temp = alloca {}, align 1, !dbg !104
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_12.2.temp), !dbg !104
 // CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk.___(ptr @X.val.loc12_14.3, i32 2, i32 3), !dbg !105
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.155369379014d6e1(ptr @X.val), !dbg !104
 // CHECK:STDOUT:   ret void, !dbg !106
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -333,10 +336,10 @@ fn Call3() {
 // CHECK:STDOUT:   %.addr1 = alloca i32, align 4
 // CHECK:STDOUT:   %.addr2 = alloca i32, align 4
 // CHECK:STDOUT:   %agg.tmp = alloca %class.X, align 1
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !108
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !115
 // CHECK:STDOUT:   store i32 %1, ptr %.addr1, align 4, !tbaa !58
 // CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !58
-// CHECK:STDOUT:   %3 = load ptr, ptr %.addr, align 8, !tbaa !108
+// CHECK:STDOUT:   %3 = load ptr, ptr %.addr, align 8, !tbaa !115
 // CHECK:STDOUT:   %4 = load i32, ptr %.addr1, align 4, !tbaa !58
 // CHECK:STDOUT:   %5 = load i32, ptr %.addr2, align 4, !tbaa !58
 // CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_(i32 noundef %4, i32 noundef %5)
@@ -346,6 +349,11 @@ fn Call3() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.155369379014d6e1(ptr %self) #0 !dbg !107 {
+// CHECK:STDOUT:   ret void, !dbg !112
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z3fooIJEEv1XDpT_() #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z3fooIJiEEv1XDpT_(i32 noundef) #3
@@ -354,6 +362,7 @@ fn Call3() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Destroy.Core.155369379014d6e1, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -366,6 +375,8 @@ fn Call3() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !14 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !55 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !56 = !{!"omnipotent char", !55, i64 0}
 // CHECK:STDOUT: !57 = !{!"int", !56, i64 0}
@@ -380,6 +391,8 @@ fn Call3() {
 // CHECK:STDOUT: !71 = !DISubroutineType(types: !70)
 // CHECK:STDOUT: !87 = !DIFile(filename: "variadic_thunk.carbon", directory: "")
 // CHECK:STDOUT: !88 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !87, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !89 = !{null, !23}
+// CHECK:STDOUT: !90 = !DISubroutineType(types: !89)
 // CHECK:STDOUT: !95 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !87, line: 10, type: !71, spFlags: DISPFlagDefinition, unit: !88)
 // CHECK:STDOUT: !96 = !DILocation(line: 12, column: 11, scope: !95)
 // CHECK:STDOUT: !97 = !DILocation(line: 12, column: 3, scope: !95)
@@ -392,6 +405,10 @@ fn Call3() {
 // CHECK:STDOUT: !104 = !DILocation(line: 24, column: 11, scope: !103)
 // CHECK:STDOUT: !105 = !DILocation(line: 24, column: 3, scope: !103)
 // CHECK:STDOUT: !106 = !DILocation(line: 22, column: 1, scope: !103)
-// CHECK:STDOUT: !107 = !{!"p1 _ZTS1X", !59, i64 0}
-// CHECK:STDOUT: !108 = !{!107, !107, i64 0}
+// CHECK:STDOUT: !107 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.155369379014d6e1", scope: null, file: !14, line: 24, type: !90, spFlags: DISPFlagDefinition, unit: !88, retainedNodes: !113)
+// CHECK:STDOUT: !108 = !DILocalVariable(arg: 1, scope: !107, type: !23)
+// CHECK:STDOUT: !112 = !DILocation(line: 24, column: 3, scope: !107)
+// CHECK:STDOUT: !113 = !{!108}
+// CHECK:STDOUT: !114 = !{!"p1 _ZTS1X", !59, i64 0}
+// CHECK:STDOUT: !115 = !{!114, !114, i64 0}
 // CHECK:STDOUT:

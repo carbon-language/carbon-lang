@@ -186,8 +186,8 @@ void delete_new_Base() {
 // CHECK:STDOUT: define internal void @_ZNK1A1FEv.carbon_thunk._(ptr noundef nonnull align 8 dereferenceable(8) %this) #5 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !71
-// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !tbaa !71, !nonnull !74, !align !75
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !85
+// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !tbaa !85, !nonnull !88, !align !89
 // CHECK:STDOUT:   %vtable = load ptr, ptr %0, align 8, !tbaa !8
 // CHECK:STDOUT:   %vfn = getelementptr inbounds ptr, ptr %vtable, i64 2
 // CHECK:STDOUT:   %1 = load ptr, ptr %vfn, align 8
@@ -216,7 +216,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Final.Main"(ptr %self) #6 !dbg !42 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.28387b086eba9957:core.Destroy.Core"(ptr %self), !dbg !44
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.6e4565ee7993000d(ptr %self), !dbg !44
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -224,13 +224,13 @@ void delete_new_Base() {
 // CHECK:STDOUT: declare void @_ZN1AD1Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8)) unnamed_addr #7
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.e9cc9e95545cc62f:core.Destroy.Core"(ptr %self) #8 !dbg !46 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.e9cc9e95545cc62f:core.Destroy.Core"(ptr %self) #8 !dbg !46 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.28387b086eba9957:core.Destroy.Core"(ptr %self) #8 !dbg !50 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.28387b086eba9957:core.Destroy.Core"(ptr %self) #8 !dbg !50 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !52
 // CHECK:STDOUT: }
@@ -245,12 +245,12 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Base.Main"(ptr %self) #6 !dbg !58 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.294df737cd074d60:core.Destroy.Core"(ptr %self), !dbg !60
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.5792b5f4c05dc7db(ptr %self), !dbg !60
 // CHECK:STDOUT:   ret void, !dbg !60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.294df737cd074d60:core.Destroy.Core"(ptr %self) #8 !dbg !62 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.294df737cd074d60:core.Destroy.Core"(ptr %self) #8 !dbg !62 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !64
 // CHECK:STDOUT: }
@@ -260,6 +260,18 @@ void delete_new_Base() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Base.Main(ptr %self), !dbg !68
 // CHECK:STDOUT:   ret void, !dbg !68
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.6e4565ee7993000d(ptr %self) #8 !dbg !70 {
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.28387b086eba9957:core.Destroy.Core"(ptr %self), !dbg !74
+// CHECK:STDOUT:   ret void, !dbg !75
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.5792b5f4c05dc7db(ptr %self) #8 !dbg !77 {
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.294df737cd074d60:core.Destroy.Core"(ptr %self), !dbg !81
+// CHECK:STDOUT:   ret void, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @__cxa_pure_virtual() unnamed_addr
@@ -324,7 +336,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1AC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !71
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !85
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTV1A, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !8
 // CHECK:STDOUT:   ret void
@@ -354,8 +366,8 @@ void delete_new_Base() {
 // CHECK:STDOUT: attributes #11 = { builtin nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!28}
-// CHECK:STDOUT: !llvm.module.flags = !{!77, !78, !79, !11, !12}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!82}
+// CHECK:STDOUT: !llvm.module.flags = !{!91, !92, !93, !11, !12}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!96}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -368,6 +380,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: !8 = !{!7, !7, i64 0}
 // CHECK:STDOUT: !11 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !12 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !23 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !27 = !DIFile(filename: "override_virtual_dtor.carbon", directory: "")
 // CHECK:STDOUT: !28 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !27, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !29 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -385,11 +398,11 @@ void delete_new_Base() {
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !42, type: !29)
 // CHECK:STDOUT: !44 = !DILocation(line: 12, column: 1, scope: !42)
 // CHECK:STDOUT: !45 = !{!43}
-// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "Op", linkageName: "_COp.e9cc9e95545cc62f:core.Destroy.Core", scope: null, file: !27, line: 12, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !49)
+// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.e9cc9e95545cc62f:core.Destroy.Core", scope: null, file: !27, line: 12, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !49)
 // CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !46, type: !29)
 // CHECK:STDOUT: !48 = !DILocation(line: 12, column: 1, scope: !46)
 // CHECK:STDOUT: !49 = !{!47}
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Op", linkageName: "_COp.28387b086eba9957:core.Destroy.Core", scope: null, file: !27, line: 12, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !53)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.28387b086eba9957:core.Destroy.Core", scope: null, file: !27, line: 12, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !53)
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !29)
 // CHECK:STDOUT: !52 = !DILocation(line: 12, column: 1, scope: !50)
 // CHECK:STDOUT: !53 = !{!51}
@@ -401,7 +414,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !58, type: !29)
 // CHECK:STDOUT: !60 = !DILocation(line: 17, column: 1, scope: !58)
 // CHECK:STDOUT: !61 = !{!59}
-// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "Op", linkageName: "_COp.294df737cd074d60:core.Destroy.Core", scope: null, file: !27, line: 17, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !65)
+// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.294df737cd074d60:core.Destroy.Core", scope: null, file: !27, line: 17, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !65)
 // CHECK:STDOUT: !63 = !DILocalVariable(arg: 1, scope: !62, type: !29)
 // CHECK:STDOUT: !64 = !DILocation(line: 17, column: 1, scope: !62)
 // CHECK:STDOUT: !65 = !{!63}
@@ -409,14 +422,24 @@ void delete_new_Base() {
 // CHECK:STDOUT: !67 = !DILocalVariable(arg: 1, scope: !66, type: !29)
 // CHECK:STDOUT: !68 = !DILocation(line: 19, column: 3, scope: !66)
 // CHECK:STDOUT: !69 = !{!67}
-// CHECK:STDOUT: !70 = !{!"p1 _ZTS1A", !2, i64 0}
-// CHECK:STDOUT: !71 = !{!70, !70, i64 0}
-// CHECK:STDOUT: !74 = !{}
-// CHECK:STDOUT: !75 = !{i64 8}
-// CHECK:STDOUT: !77 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !78 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !79 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !80 = !{!"int", !1, i64 0}
-// CHECK:STDOUT: !81 = !{!"__libc_errno", !80, i64 0}
-// CHECK:STDOUT: !82 = !{!81, !80, i64 0}
+// CHECK:STDOUT: !70 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.6e4565ee7993000d", scope: null, file: !23, line: 24, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !76)
+// CHECK:STDOUT: !71 = !DILocalVariable(arg: 1, scope: !70, type: !29)
+// CHECK:STDOUT: !74 = !DILocation(line: 26, column: 5, scope: !70)
+// CHECK:STDOUT: !75 = !DILocation(line: 24, column: 3, scope: !70)
+// CHECK:STDOUT: !76 = !{!71}
+// CHECK:STDOUT: !77 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.5792b5f4c05dc7db", scope: null, file: !23, line: 24, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !83)
+// CHECK:STDOUT: !78 = !DILocalVariable(arg: 1, scope: !77, type: !29)
+// CHECK:STDOUT: !81 = !DILocation(line: 26, column: 5, scope: !77)
+// CHECK:STDOUT: !82 = !DILocation(line: 24, column: 3, scope: !77)
+// CHECK:STDOUT: !83 = !{!78}
+// CHECK:STDOUT: !84 = !{!"p1 _ZTS1A", !2, i64 0}
+// CHECK:STDOUT: !85 = !{!84, !84, i64 0}
+// CHECK:STDOUT: !88 = !{}
+// CHECK:STDOUT: !89 = !{i64 8}
+// CHECK:STDOUT: !91 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !92 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !93 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !94 = !{!"int", !1, i64 0}
+// CHECK:STDOUT: !95 = !{!"__libc_errno", !94, i64 0}
+// CHECK:STDOUT: !96 = !{!95, !94, i64 0}
 // CHECK:STDOUT:

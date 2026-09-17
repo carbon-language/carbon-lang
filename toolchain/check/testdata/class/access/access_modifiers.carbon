@@ -193,8 +193,17 @@ class A {
 // CHECK:STDOUT:   %Circle.val: %Circle = struct_value (%int_5.eef) [concrete]
 // CHECK:STDOUT:   %circle.patt: %pattern_type.f70 = value_binding_pattern circle [concrete]
 // CHECK:STDOUT:   %radius.patt: %pattern_type.6b6 = value_binding_pattern radius [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.4: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc20_36.4 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.4: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %Circle.type.facet: %type = facet_value %Circle, () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fa3: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%Circle.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.d4e: %Destroy.WithSelf.SelfDestruct.type.fa3 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.4: type = fn_type @Destroy.WithSelf.Op.loc20_36.4 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.4: %Destroy.WithSelf.Op.type.ef016f.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.bf3: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.4, %Destroy.WithSelf.SubobjectDestroy.d01daf.4, %Destroy.WithSelf.SelfDestruct.d4e), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.904: %Destroy.type = facet_value %Circle, (%custom_witness.bf3) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -259,27 +268,41 @@ class A {
 // CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT.ref: <error> = name_ref SOME_INTERNAL_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   %circle.ref.loc53: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %SomeInternalFunction.ref: <error> = name_ref SomeInternalFunction, <error> [concrete = <error>]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %.loc20_36.2, constants.%Destroy.WithSelf.Op.403171.4
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound(%.loc20_36.2)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc20_36.2, constants.%Destroy.WithSelf.SelfDestruct.d4e
+// CHECK:STDOUT:   %Destroy.facet.loc20_36.1: %Destroy.type = facet_value constants.%Circle, (constants.%custom_witness.bf3) [concrete = constants.%Destroy.facet.904]
+// CHECK:STDOUT:   %.loc20_36.4: %Destroy.type = converted constants.%Circle, %Destroy.facet.loc20_36.1 [concrete = constants.%Destroy.facet.904]
+// CHECK:STDOUT:   %Destroy.facet.loc20_36.2: %Destroy.type = facet_value constants.%Circle, (constants.%custom_witness.bf3) [concrete = constants.%Destroy.facet.904]
+// CHECK:STDOUT:   %.loc20_36.5: %Destroy.type = converted constants.%Circle, %Destroy.facet.loc20_36.2 [concrete = constants.%Destroy.facet.904]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc20_36.2, %Destroy.WithSelf.SelfDestruct.specific_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc20_36.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc20_36.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc20_36.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc20_36.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc20_36.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc20_36.3(%self.param: ref %struct_type.radius.c2c) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc20_36.2(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc20_36.3(%self.param: ref %struct_type.radius.c2c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc20_36.4(%self.param: ref %Circle) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc20_36.3(%self.param: ref %struct_type.radius.c2c) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc20_36.4(%self.param: ref %Circle) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc20_36.4(%self.param: ref %Circle) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_protected_field_access.carbon
 // CHECK:STDOUT:

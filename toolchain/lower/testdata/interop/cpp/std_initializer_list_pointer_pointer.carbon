@@ -100,18 +100,19 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !17
 // CHECK:STDOUT:   store ptr getelementptr inbounds ([3 x i32], ptr @array.loc13_50.15, i32 1), ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !17
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !20
-// CHECK:STDOUT:   call void @"_COp.dc7dedd104b837b2:core.Destroy.Core"(ptr @array), !dbg !18
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.f699181ca81df557(ptr @array), !dbg !18
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.38b139424e9e705f(ptr %_.var), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !22 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.dc7dedd104b837b2:core.Destroy.Core"(ptr %self) #0 !dbg !26 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.dc7dedd104b837b2:core.Destroy.Core"(ptr %self) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
@@ -134,8 +135,9 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   store ptr getelementptr inbounds ([3 x i32], ptr @array.loc13_50.15, i32 1), ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !32
 // CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk._(ptr %.loc18_36.3.temp, ptr %_.var), !dbg !31
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !34
-// CHECK:STDOUT:   call void @"_COp.dc7dedd104b837b2:core.Destroy.Core"(ptr @array), !dbg !32
-// CHECK:STDOUT:   call void @_ZN11vector_likeD2Ev(ptr %_.var), !dbg !31
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.38b139424e9e705f(ptr %.loc18_36.3.temp), !dbg !32
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.f699181ca81df557(ptr @array), !dbg !32
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.ea51de33ab6382d8(ptr %_.var), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -145,11 +147,11 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   %list.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %"class.std::initializer_list", align 8
-// CHECK:STDOUT:   store ptr %list, ptr %list.addr, align 8, !tbaa !50
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !52
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !52
-// CHECK:STDOUT:   %1 = load ptr, ptr %list.addr, align 8, !tbaa !50
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %agg.tmp, ptr align 8 %1, i64 16, i1 false), !tbaa.struct !57
+// CHECK:STDOUT:   store ptr %list, ptr %list.addr, align 8, !tbaa !86
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !88
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !88
+// CHECK:STDOUT:   %1 = load ptr, ptr %list.addr, align 8, !tbaa !86
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %agg.tmp, ptr align 8 %1, i64 16, i1 false), !tbaa.struct !93
 // CHECK:STDOUT:   %2 = getelementptr inbounds nuw { ptr, ptr }, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load ptr, ptr %2, align 8
 // CHECK:STDOUT:   %4 = getelementptr inbounds nuw { ptr, ptr }, ptr %agg.tmp, i32 0, i32 1
@@ -162,7 +164,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN11vector_likeD2Ev(ptr noundef nonnull align 1 dereferenceable(1) %this) unnamed_addr #2 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !52
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !88
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -171,22 +173,23 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define void @_CInitNontrivialDtor.Main() #0 !dbg !36 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [16 x i8], align 8, !dbg !37
-// CHECK:STDOUT:   %.loc23_69.17.temp = alloca [3 x [1 x i8]], align 1, !dbg !38
+// CHECK:STDOUT:   %.loc23_69.19.temp = alloca [3 x [1 x i8]], align 1, !dbg !38
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !37
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_69.17.temp), !dbg !38
-// CHECK:STDOUT:   %.loc23_69.18.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.17.temp, i32 0, i64 0, !dbg !38
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_69.19.temp), !dbg !38
+// CHECK:STDOUT:   %.loc23_69.20.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.19.temp, i32 0, i64 0, !dbg !38
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.20.array.index), !dbg !38
+// CHECK:STDOUT:   %.loc23_69.18.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.19.temp, i32 0, i64 1, !dbg !38
 // CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.18.array.index), !dbg !38
-// CHECK:STDOUT:   %.loc23_69.16.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.17.temp, i32 0, i64 1, !dbg !38
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.16.array.index), !dbg !38
-// CHECK:STDOUT:   %.loc23_69.15.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.17.temp, i32 0, i64 2, !dbg !38
-// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.15.array.index), !dbg !38
+// CHECK:STDOUT:   %.loc23_69.17.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.19.temp, i32 0, i64 2, !dbg !38
+// CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.17.array.index), !dbg !38
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 0, !dbg !37
-// CHECK:STDOUT:   store ptr %.loc23_69.17.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !37
+// CHECK:STDOUT:   store ptr %.loc23_69.19.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !37
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !37
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.array.end = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.17.temp, i32 1, !dbg !37
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.array.end = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.19.temp, i32 1, !dbg !37
 // CHECK:STDOUT:   store ptr %initializer_list.initializer_list.call.array.end, ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !37
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !40
-// CHECK:STDOUT:   call void @"_COp.71d86972d5684aff:core.Destroy.Core"(ptr %.loc23_69.17.temp), !dbg !38
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.4440947f5319481f(ptr %.loc23_69.19.temp), !dbg !38
+// CHECK:STDOUT:   call void @_CSelfDestruct.Destroy.Core.33bf5c55a0b6e3f1(ptr %_.var), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -194,8 +197,8 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define internal void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !59
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !59
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !95
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !95
 // CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC2Ev(ptr noundef nonnull align 1 dereferenceable(1) %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -204,19 +207,47 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN15nontrivial_dtorD2Ev(ptr noundef nonnull align 1 dereferenceable(1) %this) unnamed_addr #2 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !59
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !95
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.71d86972d5684aff:core.Destroy.Core"(ptr %self) #0 !dbg !42 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.71d86972d5684aff:core.Destroy.Core"(ptr %self) #0 !dbg !42 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.f699181ca81df557(ptr %self) #0 !dbg !47 {
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.dc7dedd104b837b2:core.Destroy.Core"(ptr %self), !dbg !51
+// CHECK:STDOUT:   ret void, !dbg !52
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.38b139424e9e705f(ptr %self) #0 !dbg !54 {
+// CHECK:STDOUT:   ret void, !dbg !59
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.ea51de33ab6382d8(ptr %self) #0 !dbg !61 {
+// CHECK:STDOUT:   call void @_ZN11vector_likeD2Ev(ptr %self), !dbg !65
+// CHECK:STDOUT:   ret void, !dbg !66
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.4440947f5319481f(ptr %self) #0 !dbg !68 {
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.71d86972d5684aff:core.Destroy.Core"(ptr %self), !dbg !72
+// CHECK:STDOUT:   ret void, !dbg !73
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Destroy.Core.33bf5c55a0b6e3f1(ptr %self) #0 !dbg !75 {
+// CHECK:STDOUT:   ret void, !dbg !80
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #3
@@ -230,7 +261,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   store ptr %list.coerce0, ptr %0, align 8
 // CHECK:STDOUT:   %1 = getelementptr inbounds nuw { ptr, ptr }, ptr %list, i32 0, i32 1
 // CHECK:STDOUT:   store ptr %list.coerce1, ptr %1, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !52
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !88
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -239,7 +270,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN15nontrivial_dtorC2Ev(ptr noundef nonnull align 1 dereferenceable(1) %this) unnamed_addr #2 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !59
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !95
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -247,6 +278,8 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple., { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 6, 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Destroy.Core.f699181ca81df557, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Destroy.Core.38b139424e9e705f, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -254,8 +287,8 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.module.flags = !{!60, !61, !62, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!64}
+// CHECK:STDOUT: !llvm.module.flags = !{!96, !97, !98, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!100}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -274,11 +307,11 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: !18 = !DILocation(line: 13, column: 42, scope: !16)
 // CHECK:STDOUT: !20 = !DILocation(line: 14, column: 3, scope: !16)
 // CHECK:STDOUT: !21 = !DILocation(line: 12, column: 1, scope: !16)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !4, line: 13, type: !10, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !25)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.f58524831c37807e:core.Destroy.Core", scope: null, file: !4, line: 13, type: !10, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !25)
 // CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !22, type: !6)
 // CHECK:STDOUT: !24 = !DILocation(line: 13, column: 42, scope: !22)
 // CHECK:STDOUT: !25 = !{!23}
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp.dc7dedd104b837b2:core.Destroy.Core", scope: null, file: !4, line: 13, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !29)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.dc7dedd104b837b2:core.Destroy.Core", scope: null, file: !4, line: 13, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !29)
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !26, type: !11)
 // CHECK:STDOUT: !28 = !DILocation(line: 13, column: 42, scope: !26)
 // CHECK:STDOUT: !29 = !{!27}
@@ -292,26 +325,50 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: !38 = !DILocation(line: 23, column: 58, scope: !36)
 // CHECK:STDOUT: !40 = !DILocation(line: 24, column: 3, scope: !36)
 // CHECK:STDOUT: !41 = !DILocation(line: 22, column: 1, scope: !36)
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "Op", linkageName: "_COp.71d86972d5684aff:core.Destroy.Core", scope: null, file: !4, line: 23, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !45)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.71d86972d5684aff:core.Destroy.Core", scope: null, file: !4, line: 23, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !45)
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !42, type: !11)
 // CHECK:STDOUT: !44 = !DILocation(line: 23, column: 58, scope: !42)
 // CHECK:STDOUT: !45 = !{!43}
-// CHECK:STDOUT: !46 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !47 = !{!"omnipotent char", !46, i64 0}
-// CHECK:STDOUT: !48 = !{!"any pointer", !47, i64 0}
-// CHECK:STDOUT: !49 = !{!"p1 _ZTSSt16initializer_listIiE", !48, i64 0}
-// CHECK:STDOUT: !50 = !{!49, !49, i64 0}
-// CHECK:STDOUT: !51 = !{!"p1 _ZTS11vector_like", !48, i64 0}
-// CHECK:STDOUT: !52 = !{!51, !51, i64 0}
-// CHECK:STDOUT: !53 = !{!"int", !47, i64 0}
-// CHECK:STDOUT: !54 = !{!"p1 int", !48, i64 0}
-// CHECK:STDOUT: !56 = !{!54, !54, i64 0}
-// CHECK:STDOUT: !57 = !{i64 0, i64 8, !56, i64 8, i64 8, !56}
-// CHECK:STDOUT: !58 = !{!"p1 _ZTS15nontrivial_dtor", !48, i64 0}
-// CHECK:STDOUT: !59 = !{!58, !58, i64 0}
-// CHECK:STDOUT: !60 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !61 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !62 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !63 = !{!"__libc_errno", !53, i64 0}
-// CHECK:STDOUT: !64 = !{!63, !53, i64 0}
+// CHECK:STDOUT: !46 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.f699181ca81df557", scope: null, file: !46, line: 26, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !53)
+// CHECK:STDOUT: !48 = !DILocalVariable(arg: 1, scope: !47, type: !11)
+// CHECK:STDOUT: !51 = !DILocation(line: 28, column: 5, scope: !47)
+// CHECK:STDOUT: !52 = !DILocation(line: 26, column: 3, scope: !47)
+// CHECK:STDOUT: !53 = !{!48}
+// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.38b139424e9e705f", scope: null, file: !46, line: 26, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !60)
+// CHECK:STDOUT: !55 = !DILocalVariable(arg: 1, scope: !54, type: !11)
+// CHECK:STDOUT: !59 = !DILocation(line: 26, column: 3, scope: !54)
+// CHECK:STDOUT: !60 = !{!55}
+// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.ea51de33ab6382d8", scope: null, file: !46, line: 26, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !67)
+// CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !61, type: !11)
+// CHECK:STDOUT: !65 = !DILocation(line: 28, column: 5, scope: !61)
+// CHECK:STDOUT: !66 = !DILocation(line: 26, column: 3, scope: !61)
+// CHECK:STDOUT: !67 = !{!62}
+// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.4440947f5319481f", scope: null, file: !46, line: 26, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !74)
+// CHECK:STDOUT: !69 = !DILocalVariable(arg: 1, scope: !68, type: !11)
+// CHECK:STDOUT: !72 = !DILocation(line: 28, column: 5, scope: !68)
+// CHECK:STDOUT: !73 = !DILocation(line: 26, column: 3, scope: !68)
+// CHECK:STDOUT: !74 = !{!69}
+// CHECK:STDOUT: !75 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Destroy.Core.33bf5c55a0b6e3f1", scope: null, file: !46, line: 26, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !81)
+// CHECK:STDOUT: !76 = !DILocalVariable(arg: 1, scope: !75, type: !11)
+// CHECK:STDOUT: !80 = !DILocation(line: 26, column: 3, scope: !75)
+// CHECK:STDOUT: !81 = !{!76}
+// CHECK:STDOUT: !82 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !83 = !{!"omnipotent char", !82, i64 0}
+// CHECK:STDOUT: !84 = !{!"any pointer", !83, i64 0}
+// CHECK:STDOUT: !85 = !{!"p1 _ZTSSt16initializer_listIiE", !84, i64 0}
+// CHECK:STDOUT: !86 = !{!85, !85, i64 0}
+// CHECK:STDOUT: !87 = !{!"p1 _ZTS11vector_like", !84, i64 0}
+// CHECK:STDOUT: !88 = !{!87, !87, i64 0}
+// CHECK:STDOUT: !89 = !{!"int", !83, i64 0}
+// CHECK:STDOUT: !90 = !{!"p1 int", !84, i64 0}
+// CHECK:STDOUT: !92 = !{!90, !90, i64 0}
+// CHECK:STDOUT: !93 = !{i64 0, i64 8, !92, i64 8, i64 8, !92}
+// CHECK:STDOUT: !94 = !{!"p1 _ZTS15nontrivial_dtor", !84, i64 0}
+// CHECK:STDOUT: !95 = !{!94, !94, i64 0}
+// CHECK:STDOUT: !96 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !97 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !98 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !99 = !{!"__libc_errno", !89, i64 0}
+// CHECK:STDOUT: !100 = !{!99, !89, i64 0}
 // CHECK:STDOUT:

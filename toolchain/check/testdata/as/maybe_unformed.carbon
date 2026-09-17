@@ -228,8 +228,16 @@ fn Use() {
 // CHECK:STDOUT:   %As.generic: %As.type.116 = struct_value () [concrete]
 // CHECK:STDOUT:   %v.patt: %pattern_type.009 = value_binding_pattern v [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.4: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc19_3.4 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.4: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %MaybeUnformed.type.facet: %type = facet_value %MaybeUnformed.198, () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.902: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%MaybeUnformed.type.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.339: %Destroy.WithSelf.SelfDestruct.type.902 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.4: type = fn_type @Destroy.WithSelf.Op.loc19_3.4 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.4: %Destroy.WithSelf.Op.type.ef016f.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.80b: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.4, %Destroy.WithSelf.SubobjectDestroy.d01daf.4, %Destroy.WithSelf.SelfDestruct.339), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.0be: %Destroy.type = facet_value %MaybeUnformed.198, (%custom_witness.80b) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -284,27 +292,41 @@ fn Use() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.009 = value_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %i.var, constants.%Destroy.WithSelf.Op.403171.4
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound(%i.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %i.var, constants.%Destroy.WithSelf.SelfDestruct.339
+// CHECK:STDOUT:   %Destroy.facet.loc19_3.1: %Destroy.type = facet_value constants.%MaybeUnformed.198, (constants.%custom_witness.80b) [concrete = constants.%Destroy.facet.0be]
+// CHECK:STDOUT:   %.loc19_3.1: %Destroy.type = converted constants.%MaybeUnformed.198, %Destroy.facet.loc19_3.1 [concrete = constants.%Destroy.facet.0be]
+// CHECK:STDOUT:   %Destroy.facet.loc19_3.2: %Destroy.type = facet_value constants.%MaybeUnformed.198, (constants.%custom_witness.80b) [concrete = constants.%Destroy.facet.0be]
+// CHECK:STDOUT:   %.loc19_3.2: %Destroy.type = converted constants.%MaybeUnformed.198, %Destroy.facet.loc19_3.2 [concrete = constants.%Destroy.facet.0be]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %Destroy.WithSelf.SelfDestruct.specific_fn
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%i.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc19_3.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc19_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc19_3.2(%self.param: ref %X) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc19_3.2(%self.param: ref %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc19_3.3(%self.param: ref %.f01) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc19_3.2(%self.param: ref %X) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc19_3.3(%self.param: ref %.f01) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc19_3.4(%self.param: ref %MaybeUnformed.198) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc19_3.3(%self.param: ref %.f01) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc19_3.4(%self.param: ref %MaybeUnformed.198) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc19_3.4(%self.param: ref %MaybeUnformed.198) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
