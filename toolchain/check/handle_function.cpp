@@ -378,12 +378,13 @@ static auto DiagnosePositionalParams(Context& context,
 // of a function.
 static auto CheckDefaultValuesCompletelySpecified(
     Context& context, SemIR::Function& function_info) -> void {
-  for (auto inst_id : llvm::make_filter_range(
-           context.inst_blocks().GetOrEmpty(
-               function_info.call_param_default_values_id),
-           [&context](auto inst_id) {
-             return context.insts().Is<SemIR::UnspecifiedValue>(inst_id);
-           })) {
+  auto unspecified_value_ids = llvm::make_filter_range(
+      context.inst_blocks().GetOrEmpty(
+          function_info.call_param_default_values_id),
+      [&context](auto inst_id) {
+        return context.insts().Is<SemIR::UnspecifiedValue>(inst_id);
+      });
+  for (auto inst_id : unspecified_value_ids) {
     CARBON_DIAGNOSTIC(PatternDefaultValueNotSpecified, Error,
                       "found unspecified default parameter value in the "
                       "function's first owning declaration");

@@ -49,7 +49,7 @@ fn F(x: i32 = 0, y: i32 = 10);
 // --- fail_imported_defaults_different_values.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE+8]]:41: error: default value of `22` differs from the previously declared default value of `10`. [PatternDefaultValueDiffers]
+// CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE+8]]:41: error: default value of `22` differs from the previously declared default value of `10` [PatternDefaultValueDiffers]
 // CHECK:STDERR: fn F(unused x: i32 = 0, unused y: i32 = 22) { }
 // CHECK:STDERR:                                         ^~
 // CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE-5]]:1: in import [InImport]

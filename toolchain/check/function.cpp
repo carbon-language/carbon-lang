@@ -324,7 +324,7 @@ static auto CheckDefaultValueIsSame(Context& context, SemIR::InstId new_id,
         CARBON_DIAGNOSTIC(
             PatternDefaultValueDiffers, Error,
             "default value of {0} differs from the previously declared default "
-            "value of {1}.",
+            "value of {1}",
             InstIdAsConstant, InstIdAsConstant);
         CARBON_DIAGNOSTIC(PatternDefaultValueDiffersNote, Note,
                           "different previous declaration here");
