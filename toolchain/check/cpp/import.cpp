@@ -99,13 +99,28 @@ auto AddIdentifierName(Context& context, llvm::StringRef name)
 }
 
 // Adds a namespace for the `Cpp` import and returns its `NameScopeId`.
-static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
+static auto AddNamespace(Context& context,
                          llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
     -> SemIR::NameScopeId {
+  if (imports.empty()) {
+    return AddImportNamespace(
+               context,
+               GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
+               SemIR::NameId::Cpp, SemIR::NameScopeId::Package,
+               /*import_id=*/SemIR::InstId::None)
+        .name_scope_id;
+  }
+
+  PackageNameId package_id = imports.front().package_id;
+  CARBON_CHECK(
+      llvm::all_of(imports, [&](const Parse::Tree::PackagingNames& import) {
+        return import.package_id == package_id;
+      }));
+
   return AddImportNamespaceToScope(
              context,
              GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
-             SemIR::NameId::ForPackageName(cpp_package_id),
+             SemIR::NameId::ForPackageName(package_id),
              SemIR::NameScopeId::Package,
              /*diagnose_duplicate_namespace=*/false,
              [&] {
@@ -121,19 +136,13 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                SemIR::CppDomain* domain) -> void {
-  if (imports.empty()) {
-    // TODO: Consider always having a (non-null) AST even if there are no Cpp
-    // imports.
+  // If there are no direct C++ imports and no shared domain covers this unit,
+  // there is nothing to import.
+  if (imports.empty() && !domain) {
     return;
   }
 
-  PackageNameId package_id = imports.front().package_id;
-  CARBON_CHECK(
-      llvm::all_of(imports, [&](const Parse::Tree::PackagingNames& import) {
-        return import.package_id == package_id;
-      }));
-
-  auto name_scope_id = AddNamespace(context, package_id, imports);
+  auto name_scope_id = AddNamespace(context, imports);
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
 

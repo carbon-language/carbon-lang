@@ -7,6 +7,7 @@
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/import.h"
@@ -16,6 +17,7 @@
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -493,6 +495,13 @@ namespace {
 struct OverloadedOperatorInfo {
   enum ReturnType { FirstArgType, Bool };
 
+  // The name of the interface containing the operator function. This affects
+  // the mangled name and canonicalization of Generated functions.
+  //
+  // This must always be set, so we pick a default value that does not represent
+  // an interface, so is never correct.
+  CoreIdentifier interface_name = CoreIdentifier::VoidBase;
+
   // The name for the function used to implement this operator. This is usually
   // `Op`. This mostly only affects the mangled name, but might show up in
   // diagnostics.
@@ -519,47 +528,81 @@ static auto GetBuiltinOperatorInfo(clang::OverloadedOperatorKind kind)
     // Bitwise operators. In C++, the return type is computed with the usual
     // arithmetic conversions, but we will just use the type of the arguments.
     table[clang::OO_Amp] = {
+        .interface_name = CoreIdentifier::BitAndWith,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntAnd,
         .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
     table[clang::OO_Pipe] = {
+        .interface_name = CoreIdentifier::BitOrWith,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntOr,
         .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
     table[clang::OO_Caret] = {
+        .interface_name = CoreIdentifier::BitXorWith,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntXor,
         .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
     table[clang::OO_Tilde] = {
+        .interface_name = CoreIdentifier::BitComplement,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntComplement,
         .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
 
     // Comparison operators.
     table[clang::OO_EqualEqual] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::Equal,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntEq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_ExclaimEqual] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::NotEqual,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntNeq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_Less] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::Less,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntLess,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_LessEqual] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::LessOrEquivalent,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntLessEq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_Greater] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::Greater,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntGreater,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_GreaterEqual] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::GreaterOrEquivalent,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntGreaterEq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
-
     return table;
   }();
   return OpTable[kind];
+}
+
+static auto GetCoreInterfaceId(Context& context, SemIR::LocId loc_id,
+                               CoreIdentifier interface_name)
+    -> SemIR::InterfaceId {
+  auto inst_id = LookupNameInCore(context, loc_id, interface_name);
+
+  // Non-generic interfaces.
+  if (auto facet_type = context.insts().TryGetAs<SemIR::FacetType>(inst_id)) {
+    const auto& declared =
+        context.declared_facet_types().Get(facet_type->declared_facet_type_id);
+    auto single = declared.TryAsSingleExtend();
+    CARBON_KIND_SWITCH(*single) {
+      case CARBON_KIND(SemIR::SpecificInterface si): {
+        return si.interface_id;
+      }
+      case CARBON_KIND(SemIR::SpecificNamedConstraint _): {
+        CARBON_FATAL("Operators in named constraints are not yet needed");
+      }
+    }
+  }
+
+  auto type_id = context.insts().Get(inst_id).type_id();
+  auto generic = context.types().GetAs<SemIR::GenericInterfaceType>(type_id);
+  return generic.interface_id;
 }
 
 // Builds a Carbon builtin function declaration corresponding to an overload
@@ -573,6 +616,9 @@ static auto TryBuildBuiltinOperator(
   if (info.builtin_kind == SemIR::BuiltinFunctionKind::None) {
     return SemIR::InstId::None;
   }
+
+  CARBON_CHECK(info.interface_name != CoreIdentifier::VoidBase,
+               "builtin operator interface was not specified");
 
   // Import the argument types. For now, we only accept enum types.
   // TODO: Consider expanding this to other types.
@@ -619,8 +665,10 @@ static auto TryBuildBuiltinOperator(
       break;
   }
 
-  return MakeBuiltinOperatorFunction(context, arg_type_ids, return_type_id,
-                                     info.op_name, info.builtin_kind);
+  return MakeBuiltinOperatorFunction(
+      context, loc_id, arg_type_ids, return_type_id, info.op_name,
+      info.builtin_kind,
+      GetCoreInterfaceId(context, loc_id, info.interface_name));
 }
 
 namespace {

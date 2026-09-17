@@ -1692,13 +1692,12 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %instance_data.ref: %NonFunctionMemberPublic.elem = name_ref instance_data, @NonFunctionMemberPublic.%field_decl [concrete = @NonFunctionMemberPublic.%field_decl]
-// CHECK:STDOUT:   %.loc12_36.1: %NonFunctionMemberPublic = as_compatible %d.ref
-// CHECK:STDOUT:   %.loc12_36.2: ref %NonFunctionMemberPublic = class_element_access %.loc12_36.1, element0
-// CHECK:STDOUT:   %.loc12_36.3: ref %NonFunctionMemberPublic = converted %d.ref, %.loc12_36.2
-// CHECK:STDOUT:   %.loc12_36.4: ref %i32 = class_element_access %.loc12_36.3, element0
-// CHECK:STDOUT:   %.loc12_36.5: %i32 = acquire_value %.loc12_36.4
+// CHECK:STDOUT:   %.loc12_36.1: ref %NonFunctionMemberPublic = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc12_36.2: ref %NonFunctionMemberPublic = converted %d.ref, %.loc12_36.1
+// CHECK:STDOUT:   %.loc12_36.3: ref %i32 = class_element_access %.loc12_36.2, element0
+// CHECK:STDOUT:   %.loc12_36.4: %i32 = acquire_value %.loc12_36.3
 // CHECK:STDOUT:   %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %instance_data: %i32 = wrapper_binding instance_data, %.loc12_36.5
+// CHECK:STDOUT:   %instance_data: %i32 = wrapper_binding instance_data, %.loc12_36.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %instance_data.patt: %pattern_type.6b6 = value_binding_pattern instance_data [concrete = constants.%instance_data.patt]
 // CHECK:STDOUT:   }
@@ -1760,13 +1759,12 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Derived = name_ref self, %self
 // CHECK:STDOUT:   %instance_data.ref: %NonFunctionMemberProtected.elem = name_ref instance_data, @NonFunctionMemberProtected.%field_decl [concrete = @NonFunctionMemberProtected.%field_decl]
-// CHECK:STDOUT:   %.loc10_41.1: %NonFunctionMemberProtected = as_compatible %self.ref
-// CHECK:STDOUT:   %.loc10_41.2: ref %NonFunctionMemberProtected = class_element_access %.loc10_41.1, element0
-// CHECK:STDOUT:   %.loc10_41.3: ref %NonFunctionMemberProtected = converted %self.ref, %.loc10_41.2
-// CHECK:STDOUT:   %.loc10_41.4: ref %i32 = class_element_access %.loc10_41.3, element0
-// CHECK:STDOUT:   %.loc10_41.5: %i32 = acquire_value %.loc10_41.4
+// CHECK:STDOUT:   %.loc10_41.1: ref %NonFunctionMemberProtected = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc10_41.2: ref %NonFunctionMemberProtected = converted %self.ref, %.loc10_41.1
+// CHECK:STDOUT:   %.loc10_41.3: ref %i32 = class_element_access %.loc10_41.2, element0
+// CHECK:STDOUT:   %.loc10_41.4: %i32 = acquire_value %.loc10_41.3
 // CHECK:STDOUT:   %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %instance_data: %i32 = wrapper_binding instance_data, %.loc10_41.5
+// CHECK:STDOUT:   %instance_data: %i32 = wrapper_binding instance_data, %.loc10_41.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %instance_data.patt: %pattern_type.6b6 = value_binding_pattern instance_data [concrete = constants.%instance_data.patt]
 // CHECK:STDOUT:   }
@@ -1948,19 +1946,19 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %OverloadSet.type.facet: %type = facet_value %OverloadSet, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.a88: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%OverloadSet.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.4e6: %Destroy.WithSelf.SelfDestruct.type.a88 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.1: type = fn_type @Destroy.Op.loc8_58 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.1: %Destroy.Op.type.1d8f74.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.7ac: <witness> = custom_witness (%Destroy.Op.1a2547.1, %OverloadSet.cpp_destructor, %Destroy.WithSelf.SelfDestruct.4e6), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.795: %Destroy.type = facet_value %OverloadSet, (%custom_witness.7ac) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc8_58 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.a75: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.1, %OverloadSet.cpp_destructor, %Destroy.WithSelf.SelfDestruct.4e6), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.ef7: %Destroy.type = facet_value %OverloadSet, (%custom_witness.a75) [concrete]
 // CHECK:STDOUT:   %PublicCall.cpp_destructor.type: type = fn_type @PublicCall.cpp_destructor [concrete]
 // CHECK:STDOUT:   %PublicCall.cpp_destructor: %PublicCall.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT:   %PublicCall.type.facet: %type = facet_value %PublicCall, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.482: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%PublicCall.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.b4c: %Destroy.WithSelf.SelfDestruct.type.482 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc8_57 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.ba6: <witness> = custom_witness (%Destroy.Op.1a2547.2, %PublicCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.b4c), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.75b: %Destroy.type = facet_value %PublicCall, (%custom_witness.ba6) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc8_57 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.a37: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2, %PublicCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.b4c), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.68f: %Destroy.type = facet_value %PublicCall, (%custom_witness.a37) [concrete]
 // CHECK:STDOUT:   %OverloadSet.Overload.cpp_overload_set.type: type = cpp_overload_set_type @OverloadSet.Overload.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %OverloadSet.Overload.cpp_overload_set.value: %OverloadSet.Overload.cpp_overload_set.type = cpp_overload_set_value @OverloadSet.Overload.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Overload__carbon_thunk.type: type = fn_type @Overload__carbon_thunk [concrete]
@@ -2017,18 +2015,18 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %.loc8_58.2: init %OverloadSet to %.loc8_58.1 = mark_in_place_init %OverloadSet__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_58.3: ref %OverloadSet = temporary %.loc8_58.1, %.loc8_58.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc8_58: <bound method> = bound_method %.loc8_58.3, constants.%Destroy.WithSelf.SelfDestruct.4e6
-// CHECK:STDOUT:   %Destroy.facet.loc8_58.1: %Destroy.type = facet_value constants.%OverloadSet, (constants.%custom_witness.7ac) [concrete = constants.%Destroy.facet.795]
-// CHECK:STDOUT:   %.loc8_58.4: %Destroy.type = converted constants.%OverloadSet, %Destroy.facet.loc8_58.1 [concrete = constants.%Destroy.facet.795]
-// CHECK:STDOUT:   %Destroy.facet.loc8_58.2: %Destroy.type = facet_value constants.%OverloadSet, (constants.%custom_witness.7ac) [concrete = constants.%Destroy.facet.795]
-// CHECK:STDOUT:   %.loc8_58.5: %Destroy.type = converted constants.%OverloadSet, %Destroy.facet.loc8_58.2 [concrete = constants.%Destroy.facet.795]
+// CHECK:STDOUT:   %Destroy.facet.loc8_58.1: %Destroy.type = facet_value constants.%OverloadSet, (constants.%custom_witness.a75) [concrete = constants.%Destroy.facet.ef7]
+// CHECK:STDOUT:   %.loc8_58.4: %Destroy.type = converted constants.%OverloadSet, %Destroy.facet.loc8_58.1 [concrete = constants.%Destroy.facet.ef7]
+// CHECK:STDOUT:   %Destroy.facet.loc8_58.2: %Destroy.type = facet_value constants.%OverloadSet, (constants.%custom_witness.a75) [concrete = constants.%Destroy.facet.ef7]
+// CHECK:STDOUT:   %.loc8_58.5: %Destroy.type = converted constants.%OverloadSet, %Destroy.facet.loc8_58.2 [concrete = constants.%Destroy.facet.ef7]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_58: <bound method> = bound_method %.loc8_58.3, %Destroy.WithSelf.SelfDestruct.specific_fn.1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc8_58: init %empty_tuple.type = call %bound_method.loc8_58(%.loc8_58.3)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc8_57: <bound method> = bound_method %.loc8_57.3, constants.%Destroy.WithSelf.SelfDestruct.b4c
-// CHECK:STDOUT:   %Destroy.facet.loc8_57.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc8_57.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc8_57.1 [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %Destroy.facet.loc8_57.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc8_57.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc8_57.2 [concrete = constants.%Destroy.facet.75b]
+// CHECK:STDOUT:   %Destroy.facet.loc8_57.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc8_57.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc8_57.1 [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %Destroy.facet.loc8_57.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc8_57.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc8_57.2 [concrete = constants.%Destroy.facet.68f]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_57: <bound method> = bound_method %.loc8_57.3, %Destroy.WithSelf.SelfDestruct.specific_fn.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc8_57: init %empty_tuple.type = call %bound_method.loc8_57(%.loc8_57.3)
@@ -2048,19 +2046,19 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %addr.loc9_55: %ptr.d0a = addr_of %.loc9_54.5
 // CHECK:STDOUT:   %Overload__carbon_thunk.call: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl(%addr.loc9_55)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc9: <bound method> = bound_method %.loc9_54.3, constants.%Destroy.WithSelf.SelfDestruct.b4c
-// CHECK:STDOUT:   %Destroy.facet.loc9_54.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc9_54.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc9_54.1 [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %Destroy.facet.loc9_54.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc9_54.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc9_54.2 [concrete = constants.%Destroy.facet.75b]
+// CHECK:STDOUT:   %Destroy.facet.loc9_54.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc9_54.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc9_54.1 [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %Destroy.facet.loc9_54.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc9_54.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc9_54.2 [concrete = constants.%Destroy.facet.68f]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %.loc9_54.3, %Destroy.WithSelf.SelfDestruct.specific_fn.3
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc9: init %empty_tuple.type = call %bound_method.loc9(%.loc9_54.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8_58(%self.param: ref %OverloadSet) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc8_58(%self.param: ref %OverloadSet) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8_57(%self.param: ref %PublicCall) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc8_57(%self.param: ref %PublicCall) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overload_set_protected_base.carbon
 // CHECK:STDOUT:
@@ -2088,10 +2086,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.type.facet: %type = facet_value %PublicCall, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.482: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%PublicCall.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.b4c: %Destroy.WithSelf.SelfDestruct.type.482 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.1: type = fn_type @Destroy.Op.loc11 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.1: %Destroy.Op.type.1d8f74.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.ba6: <witness> = custom_witness (%Destroy.Op.1a2547.1, %PublicCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.b4c), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.75b: %Destroy.type = facet_value %PublicCall, (%custom_witness.ba6) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc11 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.a37: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.1, %PublicCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.b4c), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.68f: %Destroy.type = facet_value %PublicCall, (%custom_witness.a37) [concrete]
 // CHECK:STDOUT:   %ProtectedCall: type = class_type @ProtectedCall [concrete]
 // CHECK:STDOUT:   %ProtectedCall.ProtectedCall.cpp_overload_set.type: type = cpp_overload_set_type @ProtectedCall.ProtectedCall.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ProtectedCall.ProtectedCall.cpp_overload_set.value: %ProtectedCall.ProtectedCall.cpp_overload_set.type = cpp_overload_set_value @ProtectedCall.ProtectedCall.cpp_overload_set [concrete]
@@ -2105,10 +2103,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %ProtectedCall.type.facet: %type = facet_value %ProtectedCall, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.3e1: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%ProtectedCall.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.572: %Destroy.WithSelf.SelfDestruct.type.3e1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc17 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.dd2: <witness> = custom_witness (%Destroy.Op.1a2547.2, %ProtectedCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.572), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.173: %Destroy.type = facet_value %ProtectedCall, (%custom_witness.dd2) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc17 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.3de: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2, %ProtectedCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.572), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.b1a: %Destroy.type = facet_value %ProtectedCall, (%custom_witness.3de) [concrete]
 // CHECK:STDOUT:   %OverloadSet.Overload.cpp_overload_set.type: type = cpp_overload_set_type @OverloadSet.Overload.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %OverloadSet.Overload.cpp_overload_set.value: %OverloadSet.Overload.cpp_overload_set.type = cpp_overload_set_value @OverloadSet.Overload.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Overload__carbon_thunk.type.3dd392.1: type = fn_type @Overload__carbon_thunk.1 [concrete]
@@ -2205,10 +2203,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %.loc11_61.6: init %D to %return.param = class_init (%.loc11_61.5)
 // CHECK:STDOUT:   %.loc11_62: init %D = converted %.loc11_61.2, %.loc11_61.6
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc11_59.3, constants.%Destroy.WithSelf.SelfDestruct.b4c
-// CHECK:STDOUT:   %Destroy.facet.loc11_59.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc11_59.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc11_59.1 [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %Destroy.facet.loc11_59.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc11_59.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc11_59.2 [concrete = constants.%Destroy.facet.75b]
+// CHECK:STDOUT:   %Destroy.facet.loc11_59.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc11_59.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc11_59.1 [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %Destroy.facet.loc11_59.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc11_59.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc11_59.2 [concrete = constants.%Destroy.facet.68f]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc11_59.3, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc11_59.3)
@@ -2240,10 +2238,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %.loc17_67.6: init %D to %return.param = class_init (%.loc17_67.5)
 // CHECK:STDOUT:   %.loc17_68: init %D = converted %.loc17_67.2, %.loc17_67.6
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc17_65.3, constants.%Destroy.WithSelf.SelfDestruct.572
-// CHECK:STDOUT:   %Destroy.facet.loc17_65.1: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.dd2) [concrete = constants.%Destroy.facet.173]
-// CHECK:STDOUT:   %.loc17_65.6: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc17_65.1 [concrete = constants.%Destroy.facet.173]
-// CHECK:STDOUT:   %Destroy.facet.loc17_65.2: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.dd2) [concrete = constants.%Destroy.facet.173]
-// CHECK:STDOUT:   %.loc17_65.7: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc17_65.2 [concrete = constants.%Destroy.facet.173]
+// CHECK:STDOUT:   %Destroy.facet.loc17_65.1: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.3de) [concrete = constants.%Destroy.facet.b1a]
+// CHECK:STDOUT:   %.loc17_65.6: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc17_65.1 [concrete = constants.%Destroy.facet.b1a]
+// CHECK:STDOUT:   %Destroy.facet.loc17_65.2: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.3de) [concrete = constants.%Destroy.facet.b1a]
+// CHECK:STDOUT:   %.loc17_65.7: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc17_65.2 [concrete = constants.%Destroy.facet.b1a]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc17_65.3, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc17_65.3)
@@ -2266,10 +2264,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %addr.loc23_41: %ptr.d0a = addr_of %.loc23_40.5
 // CHECK:STDOUT:   %Overload__carbon_thunk.call: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.c2f84f.1(%addr.loc23_41)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc23_40.3, constants.%Destroy.WithSelf.SelfDestruct.b4c
-// CHECK:STDOUT:   %Destroy.facet.loc23_40.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc23_40.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc23_40.1 [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %Destroy.facet.loc23_40.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc23_40.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc23_40.2 [concrete = constants.%Destroy.facet.75b]
+// CHECK:STDOUT:   %Destroy.facet.loc23_40.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc23_40.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc23_40.1 [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %Destroy.facet.loc23_40.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc23_40.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc23_40.2 [concrete = constants.%Destroy.facet.68f]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc23_40.3, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc23_40.3)
@@ -2292,19 +2290,19 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %addr.loc29_47: %ptr.bc1 = addr_of %.loc29_46.5
 // CHECK:STDOUT:   %Overload__carbon_thunk.call: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.c2f84f.2(%addr.loc29_47)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc29_46.3, constants.%Destroy.WithSelf.SelfDestruct.572
-// CHECK:STDOUT:   %Destroy.facet.loc29_46.1: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.dd2) [concrete = constants.%Destroy.facet.173]
-// CHECK:STDOUT:   %.loc29_46.6: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc29_46.1 [concrete = constants.%Destroy.facet.173]
-// CHECK:STDOUT:   %Destroy.facet.loc29_46.2: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.dd2) [concrete = constants.%Destroy.facet.173]
-// CHECK:STDOUT:   %.loc29_46.7: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc29_46.2 [concrete = constants.%Destroy.facet.173]
+// CHECK:STDOUT:   %Destroy.facet.loc29_46.1: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.3de) [concrete = constants.%Destroy.facet.b1a]
+// CHECK:STDOUT:   %.loc29_46.6: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc29_46.1 [concrete = constants.%Destroy.facet.b1a]
+// CHECK:STDOUT:   %Destroy.facet.loc29_46.2: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.3de) [concrete = constants.%Destroy.facet.b1a]
+// CHECK:STDOUT:   %.loc29_46.7: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc29_46.2 [concrete = constants.%Destroy.facet.b1a]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc29_46.3, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc29_46.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc11(%self.param: ref %PublicCall) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc11(%self.param: ref %PublicCall) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc17(%self.param: ref %ProtectedCall) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc17(%self.param: ref %ProtectedCall) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overload_set_public_base_class_call_public.carbon
 // CHECK:STDOUT:
@@ -2328,10 +2326,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.type.facet: %type = facet_value %PublicCall, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.482: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%PublicCall.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.b4c: %Destroy.WithSelf.SelfDestruct.type.482 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.ba6: <witness> = custom_witness (%Destroy.Op, %PublicCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.b4c), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.75b: %Destroy.type = facet_value %PublicCall, (%custom_witness.ba6) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc8 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.a37: <witness> = custom_witness (%Destroy.WithSelf.Op.403, %PublicCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.b4c), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.68f: %Destroy.type = facet_value %PublicCall, (%custom_witness.a37) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2374,17 +2372,17 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %addr.loc8_58: %ptr.d0a = addr_of %.loc8_57.5
 // CHECK:STDOUT:   %Overload__carbon_thunk.call: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl(%addr.loc8_58)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc8_57.3, constants.%Destroy.WithSelf.SelfDestruct.b4c
-// CHECK:STDOUT:   %Destroy.facet.loc8_57.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc8_57.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc8_57.1 [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %Destroy.facet.loc8_57.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc8_57.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc8_57.2 [concrete = constants.%Destroy.facet.75b]
+// CHECK:STDOUT:   %Destroy.facet.loc8_57.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc8_57.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc8_57.1 [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %Destroy.facet.loc8_57.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc8_57.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc8_57.2 [concrete = constants.%Destroy.facet.68f]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_57.3, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc8_57.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %PublicCall) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc8(%self.param: ref %PublicCall) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overload_set_public_base_class_derived_call_non_private.carbon
 // CHECK:STDOUT:
@@ -2409,10 +2407,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.type.facet: %type = facet_value %PublicCall, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.482: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%PublicCall.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.b4c: %Destroy.WithSelf.SelfDestruct.type.482 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.1: type = fn_type @Destroy.Op.loc11 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.1: %Destroy.Op.type.1d8f74.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.ba6: <witness> = custom_witness (%Destroy.Op.1a2547.1, %PublicCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.b4c), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.75b: %Destroy.type = facet_value %PublicCall, (%custom_witness.ba6) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc11 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.a37: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.1, %PublicCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.b4c), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.68f: %Destroy.type = facet_value %PublicCall, (%custom_witness.a37) [concrete]
 // CHECK:STDOUT:   %ProtectedCall: type = class_type @ProtectedCall [concrete]
 // CHECK:STDOUT:   %ProtectedCall.ProtectedCall.cpp_overload_set.type: type = cpp_overload_set_type @ProtectedCall.ProtectedCall.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ProtectedCall.ProtectedCall.cpp_overload_set.value: %ProtectedCall.ProtectedCall.cpp_overload_set.type = cpp_overload_set_value @ProtectedCall.ProtectedCall.cpp_overload_set [concrete]
@@ -2426,10 +2424,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %ProtectedCall.type.facet: %type = facet_value %ProtectedCall, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.3e1: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%ProtectedCall.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.572: %Destroy.WithSelf.SelfDestruct.type.3e1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc12 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.dd2: <witness> = custom_witness (%Destroy.Op.1a2547.2, %ProtectedCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.572), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.173: %Destroy.type = facet_value %ProtectedCall, (%custom_witness.dd2) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.3de: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2, %ProtectedCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.572), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.b1a: %Destroy.type = facet_value %ProtectedCall, (%custom_witness.3de) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2495,10 +2493,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %addr.loc11_41: %ptr.d0a = addr_of %.loc11_40.5
 // CHECK:STDOUT:   %Overload__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.c2f84f.1(%addr.loc11_41)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc11: <bound method> = bound_method %.loc11_40.3, constants.%Destroy.WithSelf.SelfDestruct.b4c
-// CHECK:STDOUT:   %Destroy.facet.loc11_40.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc11_40.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc11_40.1 [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %Destroy.facet.loc11_40.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc11_40.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc11_40.2 [concrete = constants.%Destroy.facet.75b]
+// CHECK:STDOUT:   %Destroy.facet.loc11_40.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc11_40.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc11_40.1 [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %Destroy.facet.loc11_40.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc11_40.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc11_40.2 [concrete = constants.%Destroy.facet.68f]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %.loc11_40.3, %Destroy.WithSelf.SelfDestruct.specific_fn.1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc11: init %empty_tuple.type = call %bound_method.loc11(%.loc11_40.3)
@@ -2516,19 +2514,19 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %addr.loc12_47: %ptr.bc1 = addr_of %.loc12_46.5
 // CHECK:STDOUT:   %Overload__carbon_thunk.call.loc12: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.c2f84f.2(%addr.loc12_47)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc12: <bound method> = bound_method %.loc12_46.3, constants.%Destroy.WithSelf.SelfDestruct.572
-// CHECK:STDOUT:   %Destroy.facet.loc12_46.1: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.dd2) [concrete = constants.%Destroy.facet.173]
-// CHECK:STDOUT:   %.loc12_46.6: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc12_46.1 [concrete = constants.%Destroy.facet.173]
-// CHECK:STDOUT:   %Destroy.facet.loc12_46.2: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.dd2) [concrete = constants.%Destroy.facet.173]
-// CHECK:STDOUT:   %.loc12_46.7: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc12_46.2 [concrete = constants.%Destroy.facet.173]
+// CHECK:STDOUT:   %Destroy.facet.loc12_46.1: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.3de) [concrete = constants.%Destroy.facet.b1a]
+// CHECK:STDOUT:   %.loc12_46.6: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc12_46.1 [concrete = constants.%Destroy.facet.b1a]
+// CHECK:STDOUT:   %Destroy.facet.loc12_46.2: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.3de) [concrete = constants.%Destroy.facet.b1a]
+// CHECK:STDOUT:   %.loc12_46.7: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc12_46.2 [concrete = constants.%Destroy.facet.b1a]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12_46.3, %Destroy.WithSelf.SelfDestruct.specific_fn.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc12: init %empty_tuple.type = call %bound_method.loc12(%.loc12_46.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc11(%self.param: ref %PublicCall) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc11(%self.param: ref %PublicCall) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc12(%self.param: ref %ProtectedCall) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc12(%self.param: ref %ProtectedCall) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overload_set_protected_base_class_derived_call_non_private.carbon
 // CHECK:STDOUT:
@@ -2553,10 +2551,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.type.facet: %type = facet_value %PublicCall, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.482: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%PublicCall.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.b4c: %Destroy.WithSelf.SelfDestruct.type.482 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.1: type = fn_type @Destroy.Op.loc11 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.1: %Destroy.Op.type.1d8f74.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.ba6: <witness> = custom_witness (%Destroy.Op.1a2547.1, %PublicCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.b4c), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.75b: %Destroy.type = facet_value %PublicCall, (%custom_witness.ba6) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc11 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.a37: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.1, %PublicCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.b4c), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.68f: %Destroy.type = facet_value %PublicCall, (%custom_witness.a37) [concrete]
 // CHECK:STDOUT:   %ProtectedCall: type = class_type @ProtectedCall [concrete]
 // CHECK:STDOUT:   %ProtectedCall.ProtectedCall.cpp_overload_set.type: type = cpp_overload_set_type @ProtectedCall.ProtectedCall.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ProtectedCall.ProtectedCall.cpp_overload_set.value: %ProtectedCall.ProtectedCall.cpp_overload_set.type = cpp_overload_set_value @ProtectedCall.ProtectedCall.cpp_overload_set [concrete]
@@ -2570,10 +2568,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %ProtectedCall.type.facet: %type = facet_value %ProtectedCall, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.3e1: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%ProtectedCall.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.572: %Destroy.WithSelf.SelfDestruct.type.3e1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc12 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.dd2: <witness> = custom_witness (%Destroy.Op.1a2547.2, %ProtectedCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.572), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.173: %Destroy.type = facet_value %ProtectedCall, (%custom_witness.dd2) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.3de: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2, %ProtectedCall.cpp_destructor, %Destroy.WithSelf.SelfDestruct.572), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.b1a: %Destroy.type = facet_value %ProtectedCall, (%custom_witness.3de) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2639,10 +2637,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %addr.loc11_41: %ptr.d0a = addr_of %.loc11_40.5
 // CHECK:STDOUT:   %Overload__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.c2f84f.1(%addr.loc11_41)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc11: <bound method> = bound_method %.loc11_40.3, constants.%Destroy.WithSelf.SelfDestruct.b4c
-// CHECK:STDOUT:   %Destroy.facet.loc11_40.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc11_40.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc11_40.1 [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %Destroy.facet.loc11_40.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.ba6) [concrete = constants.%Destroy.facet.75b]
-// CHECK:STDOUT:   %.loc11_40.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc11_40.2 [concrete = constants.%Destroy.facet.75b]
+// CHECK:STDOUT:   %Destroy.facet.loc11_40.1: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc11_40.6: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc11_40.1 [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %Destroy.facet.loc11_40.2: %Destroy.type = facet_value constants.%PublicCall, (constants.%custom_witness.a37) [concrete = constants.%Destroy.facet.68f]
+// CHECK:STDOUT:   %.loc11_40.7: %Destroy.type = converted constants.%PublicCall, %Destroy.facet.loc11_40.2 [concrete = constants.%Destroy.facet.68f]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %.loc11_40.3, %Destroy.WithSelf.SelfDestruct.specific_fn.1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc11: init %empty_tuple.type = call %bound_method.loc11(%.loc11_40.3)
@@ -2660,19 +2658,19 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %addr.loc12_47: %ptr.bc1 = addr_of %.loc12_46.5
 // CHECK:STDOUT:   %Overload__carbon_thunk.call.loc12: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.c2f84f.2(%addr.loc12_47)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc12: <bound method> = bound_method %.loc12_46.3, constants.%Destroy.WithSelf.SelfDestruct.572
-// CHECK:STDOUT:   %Destroy.facet.loc12_46.1: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.dd2) [concrete = constants.%Destroy.facet.173]
-// CHECK:STDOUT:   %.loc12_46.6: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc12_46.1 [concrete = constants.%Destroy.facet.173]
-// CHECK:STDOUT:   %Destroy.facet.loc12_46.2: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.dd2) [concrete = constants.%Destroy.facet.173]
-// CHECK:STDOUT:   %.loc12_46.7: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc12_46.2 [concrete = constants.%Destroy.facet.173]
+// CHECK:STDOUT:   %Destroy.facet.loc12_46.1: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.3de) [concrete = constants.%Destroy.facet.b1a]
+// CHECK:STDOUT:   %.loc12_46.6: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc12_46.1 [concrete = constants.%Destroy.facet.b1a]
+// CHECK:STDOUT:   %Destroy.facet.loc12_46.2: %Destroy.type = facet_value constants.%ProtectedCall, (constants.%custom_witness.3de) [concrete = constants.%Destroy.facet.b1a]
+// CHECK:STDOUT:   %.loc12_46.7: %Destroy.type = converted constants.%ProtectedCall, %Destroy.facet.loc12_46.2 [concrete = constants.%Destroy.facet.b1a]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12_46.3, %Destroy.WithSelf.SelfDestruct.specific_fn.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc12: init %empty_tuple.type = call %bound_method.loc12(%.loc12_46.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc11(%self.param: ref %PublicCall) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc11(%self.param: ref %PublicCall) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc12(%self.param: ref %ProtectedCall) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc12(%self.param: ref %ProtectedCall) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- base_class_public_access_allowed.carbon
 // CHECK:STDOUT:
@@ -2761,17 +2759,15 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %instance.ref.loc24: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref: %Public.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Public.PublicInstance.cpp_overload_set.value [concrete = constants.%Public.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %instance.ref.loc24, %PublicInstance.ref
-// CHECK:STDOUT:   %.loc24_5.1: ref %Base = as_compatible %instance.ref.loc24
-// CHECK:STDOUT:   %.loc24_5.2: ref %Base = class_element_access %.loc24_5.1, element0
-// CHECK:STDOUT:   %.loc24_5.3: ref %Base = converted %instance.ref.loc24, %.loc24_5.2
-// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.3)
+// CHECK:STDOUT:   %.loc24_5.1: ref %Base = class_element_access %instance.ref.loc24, element0
+// CHECK:STDOUT:   %.loc24_5.2: ref %Base = converted %instance.ref.loc24, %.loc24_5.1
+// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.2)
 // CHECK:STDOUT:   %instance.ref.loc26: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %ProtectedInstance.ref: %Public.ProtectedInstance.cpp_overload_set.type = name_ref ProtectedInstance, imports.%Public.ProtectedInstance.cpp_overload_set.value [concrete = constants.%Public.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %instance.ref.loc26, %ProtectedInstance.ref
-// CHECK:STDOUT:   %.loc26_5.1: ref %Base = as_compatible %instance.ref.loc26
-// CHECK:STDOUT:   %.loc26_5.2: ref %Base = class_element_access %.loc26_5.1, element0
-// CHECK:STDOUT:   %.loc26_5.3: ref %Base = converted %instance.ref.loc26, %.loc26_5.2
-// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.3)
+// CHECK:STDOUT:   %.loc26_5.1: ref %Base = class_element_access %instance.ref.loc26, element0
+// CHECK:STDOUT:   %.loc26_5.2: ref %Base = converted %instance.ref.loc26, %.loc26_5.1
+// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2787,17 +2783,15 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %instance.ref.loc36: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref.loc36: %Public.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Public.PublicInstance.cpp_overload_set.value [concrete = constants.%Public.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc36: <bound method> = bound_method %instance.ref.loc36, %PublicInstance.ref.loc36
-// CHECK:STDOUT:   %.loc36_3.1: ref %Base = as_compatible %instance.ref.loc36
-// CHECK:STDOUT:   %.loc36_3.2: ref %Base = class_element_access %.loc36_3.1, element0
-// CHECK:STDOUT:   %.loc36_3.3: ref %Base = converted %instance.ref.loc36, %.loc36_3.2
-// CHECK:STDOUT:   %Base.PublicInstance.call.loc36: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc36_3.3)
+// CHECK:STDOUT:   %.loc36_3.1: ref %Base = class_element_access %instance.ref.loc36, element0
+// CHECK:STDOUT:   %.loc36_3.2: ref %Base = converted %instance.ref.loc36, %.loc36_3.1
+// CHECK:STDOUT:   %Base.PublicInstance.call.loc36: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc36_3.2)
 // CHECK:STDOUT:   %instance.ref.loc37: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref.loc37: %Public.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Public.PublicInstance.cpp_overload_set.value [concrete = constants.%Public.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc37: <bound method> = bound_method %instance.ref.loc37, %PublicInstance.ref.loc37
-// CHECK:STDOUT:   %.loc37_3.1: ref %Base = as_compatible %instance.ref.loc37
-// CHECK:STDOUT:   %.loc37_3.2: ref %Base = class_element_access %.loc37_3.1, element0
-// CHECK:STDOUT:   %.loc37_3.3: ref %Base = converted %instance.ref.loc37, %.loc37_3.2
-// CHECK:STDOUT:   %Base.PublicInstance.call.loc37: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc37_3.3)
+// CHECK:STDOUT:   %.loc37_3.1: ref %Base = class_element_access %instance.ref.loc37, element0
+// CHECK:STDOUT:   %.loc37_3.2: ref %Base = converted %instance.ref.loc37, %.loc37_3.1
+// CHECK:STDOUT:   %Base.PublicInstance.call.loc37: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc37_3.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2916,17 +2910,15 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %instance.ref.loc24: ref %Protected = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref: %Protected.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Protected.PublicInstance.cpp_overload_set.value [concrete = constants.%Protected.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %instance.ref.loc24, %PublicInstance.ref
-// CHECK:STDOUT:   %.loc24_5.1: ref %Base = as_compatible %instance.ref.loc24
-// CHECK:STDOUT:   %.loc24_5.2: ref %Base = class_element_access %.loc24_5.1, element0
-// CHECK:STDOUT:   %.loc24_5.3: ref %Base = converted %instance.ref.loc24, %.loc24_5.2
-// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.3)
+// CHECK:STDOUT:   %.loc24_5.1: ref %Base = class_element_access %instance.ref.loc24, element0
+// CHECK:STDOUT:   %.loc24_5.2: ref %Base = converted %instance.ref.loc24, %.loc24_5.1
+// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.2)
 // CHECK:STDOUT:   %instance.ref.loc26: ref %Protected = name_ref instance, %instance
 // CHECK:STDOUT:   %ProtectedInstance.ref: %Protected.ProtectedInstance.cpp_overload_set.type = name_ref ProtectedInstance, imports.%Protected.ProtectedInstance.cpp_overload_set.value [concrete = constants.%Protected.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %instance.ref.loc26, %ProtectedInstance.ref
-// CHECK:STDOUT:   %.loc26_5.1: ref %Base = as_compatible %instance.ref.loc26
-// CHECK:STDOUT:   %.loc26_5.2: ref %Base = class_element_access %.loc26_5.1, element0
-// CHECK:STDOUT:   %.loc26_5.3: ref %Base = converted %instance.ref.loc26, %.loc26_5.2
-// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.3)
+// CHECK:STDOUT:   %.loc26_5.1: ref %Base = class_element_access %instance.ref.loc26, element0
+// CHECK:STDOUT:   %.loc26_5.2: ref %Base = converted %instance.ref.loc26, %.loc26_5.1
+// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3018,19 +3010,17 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %instance.ref.loc24: ref %PublicProtected = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref: %PublicProtected.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%PublicProtected.PublicInstance.cpp_overload_set.value [concrete = constants.%PublicProtected.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %instance.ref.loc24, %PublicInstance.ref
-// CHECK:STDOUT:   %.loc24_5.1: ref %Base = as_compatible %instance.ref.loc24
-// CHECK:STDOUT:   %.loc24_5.2: ref %Protected = class_element_access %.loc24_5.1, element0
-// CHECK:STDOUT:   %.loc24_5.3: ref %Base = class_element_access %.loc24_5.2, element0
-// CHECK:STDOUT:   %.loc24_5.4: ref %Base = converted %instance.ref.loc24, %.loc24_5.3
-// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.4)
+// CHECK:STDOUT:   %.loc24_5.1: ref %Protected = class_element_access %instance.ref.loc24, element0
+// CHECK:STDOUT:   %.loc24_5.2: ref %Base = class_element_access %.loc24_5.1, element0
+// CHECK:STDOUT:   %.loc24_5.3: ref %Base = converted %instance.ref.loc24, %.loc24_5.2
+// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.3)
 // CHECK:STDOUT:   %instance.ref.loc26: ref %PublicProtected = name_ref instance, %instance
 // CHECK:STDOUT:   %ProtectedInstance.ref: %PublicProtected.ProtectedInstance.cpp_overload_set.type = name_ref ProtectedInstance, imports.%PublicProtected.ProtectedInstance.cpp_overload_set.value [concrete = constants.%PublicProtected.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %instance.ref.loc26, %ProtectedInstance.ref
-// CHECK:STDOUT:   %.loc26_5.1: ref %Base = as_compatible %instance.ref.loc26
-// CHECK:STDOUT:   %.loc26_5.2: ref %Protected = class_element_access %.loc26_5.1, element0
-// CHECK:STDOUT:   %.loc26_5.3: ref %Base = class_element_access %.loc26_5.2, element0
-// CHECK:STDOUT:   %.loc26_5.4: ref %Base = converted %instance.ref.loc26, %.loc26_5.3
-// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.4)
+// CHECK:STDOUT:   %.loc26_5.1: ref %Protected = class_element_access %instance.ref.loc26, element0
+// CHECK:STDOUT:   %.loc26_5.2: ref %Base = class_element_access %.loc26_5.1, element0
+// CHECK:STDOUT:   %.loc26_5.3: ref %Base = converted %instance.ref.loc26, %.loc26_5.2
+// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

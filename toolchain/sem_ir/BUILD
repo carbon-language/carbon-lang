@@ -202,11 +202,25 @@ cc_library(
 )
 
 cc_library(
+    name = "sugared_type",
+    srcs = ["sugared_type.cpp"],
+    hdrs = ["sugared_type.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//common:check",
+        "//toolchain/base:kind_switch",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "stringify",
     srcs = ["stringify.cpp"],
     hdrs = ["stringify.h"],
     deps = [
         ":file",
+        ":sugared_type",
         ":typed_insts",
         "//common:check",
         "//common:concepts",

@@ -143,12 +143,12 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.type.facet: %type = facet_value %Dest, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.68d: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%Dest.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.62d: %Destroy.WithSelf.SelfDestruct.type.68d = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.1: type = fn_type @Destroy.Op.loc8 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.1: %Destroy.Op.type.1d8f74.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc8 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest.SubobjectDestroy.type: type = fn_type @Dest.SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %Dest.SubobjectDestroy: %Dest.SubobjectDestroy.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.8f6: <witness> = custom_witness (%Destroy.Op.1a2547.1, %Dest.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.62d), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.134: %Destroy.type = facet_value %Dest, (%custom_witness.8f6) [concrete]
+// CHECK:STDOUT:   %custom_witness.62a: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.1, %Dest.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.62d), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.827: %Destroy.type = facet_value %Dest, (%custom_witness.62a) [concrete]
 // CHECK:STDOUT:   %Source2: type = class_type @Source2 [concrete]
 // CHECK:STDOUT:   %Dest2: type = class_type @Dest2 [concrete]
 // CHECK:STDOUT:   %ptr.0db: type = ptr_type %Source2 [concrete]
@@ -158,12 +158,12 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest2.type.facet: %type = facet_value %Dest2, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.9fe: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%Dest2.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db1: %Destroy.WithSelf.SelfDestruct.type.9fe = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc14 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc14 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest2.SubobjectDestroy.type: type = fn_type @Dest2.SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %Dest2.SubobjectDestroy: %Dest2.SubobjectDestroy.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.409: <witness> = custom_witness (%Destroy.Op.1a2547.2, %Dest2.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.db1), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.a0f: %Destroy.type = facet_value %Dest2, (%custom_witness.409) [concrete]
+// CHECK:STDOUT:   %custom_witness.7ab: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2, %Dest2.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.db1), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.b81: %Destroy.type = facet_value %Dest2, (%custom_witness.7ab) [concrete]
 // CHECK:STDOUT:   %ExplicitConstructor: type = class_type @ExplicitConstructor [concrete]
 // CHECK:STDOUT:   %ptr.5f6: type = ptr_type %Source [concrete]
 // CHECK:STDOUT:   %ptr.44f: type = ptr_type %ExplicitConstructor [concrete]
@@ -172,12 +172,12 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ExplicitConstructor.type.facet: %type = facet_value %ExplicitConstructor, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.654: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%ExplicitConstructor.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.8dd: %Destroy.WithSelf.SelfDestruct.type.654 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc20 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc20 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %ExplicitConstructor.SubobjectDestroy.type: type = fn_type @ExplicitConstructor.SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %ExplicitConstructor.SubobjectDestroy: %ExplicitConstructor.SubobjectDestroy.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.e3e: <witness> = custom_witness (%Destroy.Op.1a2547.3, %ExplicitConstructor.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.8dd), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.f8f: %Destroy.type = facet_value %ExplicitConstructor, (%custom_witness.e3e) [concrete]
+// CHECK:STDOUT:   %custom_witness.246: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.3, %ExplicitConstructor.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.8dd), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.54f: %Destroy.type = facet_value %ExplicitConstructor, (%custom_witness.246) [concrete]
 // CHECK:STDOUT:   %ExplicitConversion: type = class_type @ExplicitConversion [concrete]
 // CHECK:STDOUT:   %Dest__carbon_thunk.type.eb4c5e.2: type = fn_type @Dest__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %Dest__carbon_thunk.c8e433.2: %Dest__carbon_thunk.type.eb4c5e.2 = struct_value () [concrete]
@@ -234,17 +234,17 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc8_5.4: ref %Dest = temporary %.loc8_5.1, %.loc8_5.3
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc8_5.4, constants.%Destroy.WithSelf.SelfDestruct.62d
-// CHECK:STDOUT:   %Destroy.facet.loc8_5.1: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.8f6) [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %.loc8_5.5: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc8_5.1 [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %Destroy.facet.loc8_5.2: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.8f6) [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %.loc8_5.6: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc8_5.2 [concrete = constants.%Destroy.facet.134]
+// CHECK:STDOUT:   %Destroy.facet.loc8_5.1: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.62a) [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %.loc8_5.5: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc8_5.1 [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %Destroy.facet.loc8_5.2: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.62a) [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %.loc8_5.6: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc8_5.2 [concrete = constants.%Destroy.facet.827]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_5.4, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc8_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc8(%self.param: ref %Dest) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc8(%self.param: ref %Dest) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorConversion(%s.param: %Source2) {
 // CHECK:STDOUT: !entry:
@@ -261,17 +261,17 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc14_5.4: ref %Dest2 = temporary %.loc14_5.1, %.loc14_5.3
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc14_5.4, constants.%Destroy.WithSelf.SelfDestruct.db1
-// CHECK:STDOUT:   %Destroy.facet.loc14_5.1: %Destroy.type = facet_value constants.%Dest2, (constants.%custom_witness.409) [concrete = constants.%Destroy.facet.a0f]
-// CHECK:STDOUT:   %.loc14_5.5: %Destroy.type = converted constants.%Dest2, %Destroy.facet.loc14_5.1 [concrete = constants.%Destroy.facet.a0f]
-// CHECK:STDOUT:   %Destroy.facet.loc14_5.2: %Destroy.type = facet_value constants.%Dest2, (constants.%custom_witness.409) [concrete = constants.%Destroy.facet.a0f]
-// CHECK:STDOUT:   %.loc14_5.6: %Destroy.type = converted constants.%Dest2, %Destroy.facet.loc14_5.2 [concrete = constants.%Destroy.facet.a0f]
+// CHECK:STDOUT:   %Destroy.facet.loc14_5.1: %Destroy.type = facet_value constants.%Dest2, (constants.%custom_witness.7ab) [concrete = constants.%Destroy.facet.b81]
+// CHECK:STDOUT:   %.loc14_5.5: %Destroy.type = converted constants.%Dest2, %Destroy.facet.loc14_5.1 [concrete = constants.%Destroy.facet.b81]
+// CHECK:STDOUT:   %Destroy.facet.loc14_5.2: %Destroy.type = facet_value constants.%Dest2, (constants.%custom_witness.7ab) [concrete = constants.%Destroy.facet.b81]
+// CHECK:STDOUT:   %.loc14_5.6: %Destroy.type = converted constants.%Dest2, %Destroy.facet.loc14_5.2 [concrete = constants.%Destroy.facet.b81]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc14_5.4, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc14_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc14(%self.param: ref %Dest2) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc14(%self.param: ref %Dest2) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ExplicitConstructorTest(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
@@ -288,17 +288,17 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc20_5.4: ref %ExplicitConstructor = temporary %.loc20_5.1, %.loc20_5.3
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc20_5.4, constants.%Destroy.WithSelf.SelfDestruct.8dd
-// CHECK:STDOUT:   %Destroy.facet.loc20_5.1: %Destroy.type = facet_value constants.%ExplicitConstructor, (constants.%custom_witness.e3e) [concrete = constants.%Destroy.facet.f8f]
-// CHECK:STDOUT:   %.loc20_5.5: %Destroy.type = converted constants.%ExplicitConstructor, %Destroy.facet.loc20_5.1 [concrete = constants.%Destroy.facet.f8f]
-// CHECK:STDOUT:   %Destroy.facet.loc20_5.2: %Destroy.type = facet_value constants.%ExplicitConstructor, (constants.%custom_witness.e3e) [concrete = constants.%Destroy.facet.f8f]
-// CHECK:STDOUT:   %.loc20_5.6: %Destroy.type = converted constants.%ExplicitConstructor, %Destroy.facet.loc20_5.2 [concrete = constants.%Destroy.facet.f8f]
+// CHECK:STDOUT:   %Destroy.facet.loc20_5.1: %Destroy.type = facet_value constants.%ExplicitConstructor, (constants.%custom_witness.246) [concrete = constants.%Destroy.facet.54f]
+// CHECK:STDOUT:   %.loc20_5.5: %Destroy.type = converted constants.%ExplicitConstructor, %Destroy.facet.loc20_5.1 [concrete = constants.%Destroy.facet.54f]
+// CHECK:STDOUT:   %Destroy.facet.loc20_5.2: %Destroy.type = facet_value constants.%ExplicitConstructor, (constants.%custom_witness.246) [concrete = constants.%Destroy.facet.54f]
+// CHECK:STDOUT:   %.loc20_5.6: %Destroy.type = converted constants.%ExplicitConstructor, %Destroy.facet.loc20_5.2 [concrete = constants.%Destroy.facet.54f]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc20_5.4, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc20_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc20(%self.param: ref %ExplicitConstructor) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc20(%self.param: ref %ExplicitConstructor) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ExplicitConversionTest(%s.param: %ExplicitConversion) {
 // CHECK:STDOUT: !entry:
@@ -312,10 +312,10 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc26_5.3: init %Dest = converted %s.ref, %.loc26_5.2
 // CHECK:STDOUT:   %.loc26_5.4: ref %Dest = temporary %.loc26_5.1, %.loc26_5.3
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc26_5.4, constants.%Destroy.WithSelf.SelfDestruct.62d
-// CHECK:STDOUT:   %Destroy.facet.loc26_5.1: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.8f6) [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %.loc26_5.5: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc26_5.1 [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %Destroy.facet.loc26_5.2: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.8f6) [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %.loc26_5.6: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc26_5.2 [concrete = constants.%Destroy.facet.134]
+// CHECK:STDOUT:   %Destroy.facet.loc26_5.1: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.62a) [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %.loc26_5.5: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc26_5.1 [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %Destroy.facet.loc26_5.2: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.62a) [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %.loc26_5.6: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc26_5.2 [concrete = constants.%Destroy.facet.827]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc26_5.4, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc26_5.4)
@@ -339,12 +339,12 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ConditionallyExplicit.type.facet.991: %type = facet_value %ConditionallyExplicit.3cd, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.73b: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%ConditionallyExplicit.type.facet.991) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.e51: %Destroy.WithSelf.SelfDestruct.type.73b = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.1: type = fn_type @Destroy.Op.loc9 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.1: %Destroy.Op.type.1d8f74.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc9 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.SubobjectDestroy.type.ed8385.1: type = fn_type @ConditionallyExplicit.SubobjectDestroy.1 [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.SubobjectDestroy.589ffb.1: %ConditionallyExplicit.SubobjectDestroy.type.ed8385.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.197: <witness> = custom_witness (%Destroy.Op.1a2547.1, %ConditionallyExplicit.SubobjectDestroy.589ffb.1, %Destroy.WithSelf.SelfDestruct.e51), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.d15: %Destroy.type = facet_value %ConditionallyExplicit.3cd, (%custom_witness.197) [concrete]
+// CHECK:STDOUT:   %custom_witness.a13: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.1, %ConditionallyExplicit.SubobjectDestroy.589ffb.1, %Destroy.WithSelf.SelfDestruct.e51), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.d8b: %Destroy.type = facet_value %ConditionallyExplicit.3cd, (%custom_witness.a13) [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.9d4: type = class_type @ConditionallyExplicit.2 [concrete]
 // CHECK:STDOUT:   %ptr.4c0: type = ptr_type %ConditionallyExplicit.9d4 [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.type.c9ab94.2: type = fn_type @ConditionallyExplicit__carbon_thunk.2 [concrete]
@@ -352,12 +352,12 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ConditionallyExplicit.type.facet.096: %type = facet_value %ConditionallyExplicit.9d4, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.78c: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%ConditionallyExplicit.type.facet.096) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.d46: %Destroy.WithSelf.SelfDestruct.type.78c = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.2: type = fn_type @Destroy.Op.loc15 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.2: %Destroy.Op.type.1d8f74.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc15 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.SubobjectDestroy.type.ed8385.2: type = fn_type @ConditionallyExplicit.SubobjectDestroy.2 [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.SubobjectDestroy.589ffb.2: %ConditionallyExplicit.SubobjectDestroy.type.ed8385.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.eee: <witness> = custom_witness (%Destroy.Op.1a2547.2, %ConditionallyExplicit.SubobjectDestroy.589ffb.2, %Destroy.WithSelf.SelfDestruct.d46), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.cfc: %Destroy.type = facet_value %ConditionallyExplicit.9d4, (%custom_witness.eee) [concrete]
+// CHECK:STDOUT:   %custom_witness.989: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2, %ConditionallyExplicit.SubobjectDestroy.589ffb.2, %Destroy.WithSelf.SelfDestruct.d46), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.fce: %Destroy.type = facet_value %ConditionallyExplicit.9d4, (%custom_witness.989) [concrete]
 // CHECK:STDOUT:   %Dest: type = class_type @Dest [concrete]
 // CHECK:STDOUT:   %pattern_type.b72: type = pattern_type %Dest [concrete]
 // CHECK:STDOUT:   %_.patt.664: %pattern_type.b72 = value_binding_pattern _ [concrete]
@@ -367,12 +367,12 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.type.facet: %type = facet_value %Dest, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.68d: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%Dest.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.62d: %Destroy.WithSelf.SelfDestruct.type.68d = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type.1d8f74.3: type = fn_type @Destroy.Op.loc22 [concrete]
-// CHECK:STDOUT:   %Destroy.Op.1a2547.3: %Destroy.Op.type.1d8f74.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc22 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest.SubobjectDestroy.type: type = fn_type @Dest.SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %Dest.SubobjectDestroy: %Dest.SubobjectDestroy.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.8f6: <witness> = custom_witness (%Destroy.Op.1a2547.3, %Dest.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.62d), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.134: %Destroy.type = facet_value %Dest, (%custom_witness.8f6) [concrete]
+// CHECK:STDOUT:   %custom_witness.62a: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.3, %Dest.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.62d), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.827: %Destroy.type = facet_value %Dest, (%custom_witness.62a) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -437,25 +437,25 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc9_5.4: ref %ConditionallyExplicit.3cd = temporary %.loc9_5.1, %.loc9_5.3
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc9: <bound method> = bound_method %.loc9_5.4, constants.%Destroy.WithSelf.SelfDestruct.e51
-// CHECK:STDOUT:   %Destroy.facet.loc9_5.1: %Destroy.type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%custom_witness.197) [concrete = constants.%Destroy.facet.d15]
-// CHECK:STDOUT:   %.loc9_5.5: %Destroy.type = converted constants.%ConditionallyExplicit.3cd, %Destroy.facet.loc9_5.1 [concrete = constants.%Destroy.facet.d15]
-// CHECK:STDOUT:   %Destroy.facet.loc9_5.2: %Destroy.type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%custom_witness.197) [concrete = constants.%Destroy.facet.d15]
-// CHECK:STDOUT:   %.loc9_5.6: %Destroy.type = converted constants.%ConditionallyExplicit.3cd, %Destroy.facet.loc9_5.2 [concrete = constants.%Destroy.facet.d15]
+// CHECK:STDOUT:   %Destroy.facet.loc9_5.1: %Destroy.type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%custom_witness.a13) [concrete = constants.%Destroy.facet.d8b]
+// CHECK:STDOUT:   %.loc9_5.5: %Destroy.type = converted constants.%ConditionallyExplicit.3cd, %Destroy.facet.loc9_5.1 [concrete = constants.%Destroy.facet.d8b]
+// CHECK:STDOUT:   %Destroy.facet.loc9_5.2: %Destroy.type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%custom_witness.a13) [concrete = constants.%Destroy.facet.d8b]
+// CHECK:STDOUT:   %.loc9_5.6: %Destroy.type = converted constants.%ConditionallyExplicit.3cd, %Destroy.facet.loc9_5.2 [concrete = constants.%Destroy.facet.d8b]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %.loc9_5.4, %Destroy.WithSelf.SelfDestruct.specific_fn.1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc9: init %empty_tuple.type = call %bound_method.loc9(%.loc9_5.4)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc8: <bound method> = bound_method %.loc8_43.5, constants.%Destroy.WithSelf.SelfDestruct.e51
-// CHECK:STDOUT:   %Destroy.facet.loc8_43.1: %Destroy.type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%custom_witness.197) [concrete = constants.%Destroy.facet.d15]
-// CHECK:STDOUT:   %.loc8_43.7: %Destroy.type = converted constants.%ConditionallyExplicit.3cd, %Destroy.facet.loc8_43.1 [concrete = constants.%Destroy.facet.d15]
-// CHECK:STDOUT:   %Destroy.facet.loc8_43.2: %Destroy.type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%custom_witness.197) [concrete = constants.%Destroy.facet.d15]
-// CHECK:STDOUT:   %.loc8_43.8: %Destroy.type = converted constants.%ConditionallyExplicit.3cd, %Destroy.facet.loc8_43.2 [concrete = constants.%Destroy.facet.d15]
+// CHECK:STDOUT:   %Destroy.facet.loc8_43.1: %Destroy.type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%custom_witness.a13) [concrete = constants.%Destroy.facet.d8b]
+// CHECK:STDOUT:   %.loc8_43.7: %Destroy.type = converted constants.%ConditionallyExplicit.3cd, %Destroy.facet.loc8_43.1 [concrete = constants.%Destroy.facet.d8b]
+// CHECK:STDOUT:   %Destroy.facet.loc8_43.2: %Destroy.type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%custom_witness.a13) [concrete = constants.%Destroy.facet.d8b]
+// CHECK:STDOUT:   %.loc8_43.8: %Destroy.type = converted constants.%ConditionallyExplicit.3cd, %Destroy.facet.loc8_43.2 [concrete = constants.%Destroy.facet.d8b]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %.loc8_43.5, %Destroy.WithSelf.SelfDestruct.specific_fn.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc8: init %empty_tuple.type = call %bound_method.loc8(%.loc8_43.5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc9(%self.param: ref %ConditionallyExplicit.3cd) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc9(%self.param: ref %ConditionallyExplicit.3cd) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorExplicit(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
@@ -472,17 +472,17 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc15_5.4: ref %ConditionallyExplicit.9d4 = temporary %.loc15_5.1, %.loc15_5.3
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc15_5.4, constants.%Destroy.WithSelf.SelfDestruct.d46
-// CHECK:STDOUT:   %Destroy.facet.loc15_5.1: %Destroy.type = facet_value constants.%ConditionallyExplicit.9d4, (constants.%custom_witness.eee) [concrete = constants.%Destroy.facet.cfc]
-// CHECK:STDOUT:   %.loc15_5.5: %Destroy.type = converted constants.%ConditionallyExplicit.9d4, %Destroy.facet.loc15_5.1 [concrete = constants.%Destroy.facet.cfc]
-// CHECK:STDOUT:   %Destroy.facet.loc15_5.2: %Destroy.type = facet_value constants.%ConditionallyExplicit.9d4, (constants.%custom_witness.eee) [concrete = constants.%Destroy.facet.cfc]
-// CHECK:STDOUT:   %.loc15_5.6: %Destroy.type = converted constants.%ConditionallyExplicit.9d4, %Destroy.facet.loc15_5.2 [concrete = constants.%Destroy.facet.cfc]
+// CHECK:STDOUT:   %Destroy.facet.loc15_5.1: %Destroy.type = facet_value constants.%ConditionallyExplicit.9d4, (constants.%custom_witness.989) [concrete = constants.%Destroy.facet.fce]
+// CHECK:STDOUT:   %.loc15_5.5: %Destroy.type = converted constants.%ConditionallyExplicit.9d4, %Destroy.facet.loc15_5.1 [concrete = constants.%Destroy.facet.fce]
+// CHECK:STDOUT:   %Destroy.facet.loc15_5.2: %Destroy.type = facet_value constants.%ConditionallyExplicit.9d4, (constants.%custom_witness.989) [concrete = constants.%Destroy.facet.fce]
+// CHECK:STDOUT:   %.loc15_5.6: %Destroy.type = converted constants.%ConditionallyExplicit.9d4, %Destroy.facet.loc15_5.2 [concrete = constants.%Destroy.facet.fce]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15_5.4, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc15_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc15(%self.param: ref %ConditionallyExplicit.9d4) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc15(%self.param: ref %ConditionallyExplicit.9d4) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConversionNotExplicit(%s.param: %ConditionallyExplicit.3cd) {
 // CHECK:STDOUT: !entry:
@@ -513,25 +513,25 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc22_5.4: ref %Dest = temporary %.loc22_5.1, %.loc22_5.3
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc22: <bound method> = bound_method %.loc22_5.4, constants.%Destroy.WithSelf.SelfDestruct.62d
-// CHECK:STDOUT:   %Destroy.facet.loc22_5.1: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.8f6) [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %.loc22_5.5: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc22_5.1 [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %Destroy.facet.loc22_5.2: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.8f6) [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %.loc22_5.6: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc22_5.2 [concrete = constants.%Destroy.facet.134]
+// CHECK:STDOUT:   %Destroy.facet.loc22_5.1: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.62a) [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %.loc22_5.5: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc22_5.1 [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %Destroy.facet.loc22_5.2: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.62a) [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %.loc22_5.6: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc22_5.2 [concrete = constants.%Destroy.facet.827]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc22: <bound method> = bound_method %.loc22_5.4, %Destroy.WithSelf.SelfDestruct.specific_fn.1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc22: init %empty_tuple.type = call %bound_method.loc22(%.loc22_5.4)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc21: <bound method> = bound_method %.loc21_21.4, constants.%Destroy.WithSelf.SelfDestruct.62d
-// CHECK:STDOUT:   %Destroy.facet.loc21_21.1: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.8f6) [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %.loc21_21.6: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc21_21.1 [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %Destroy.facet.loc21_21.2: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.8f6) [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %.loc21_21.7: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc21_21.2 [concrete = constants.%Destroy.facet.134]
+// CHECK:STDOUT:   %Destroy.facet.loc21_21.1: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.62a) [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %.loc21_21.6: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc21_21.1 [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %Destroy.facet.loc21_21.2: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.62a) [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %.loc21_21.7: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc21_21.2 [concrete = constants.%Destroy.facet.827]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc21: <bound method> = bound_method %.loc21_21.4, %Destroy.WithSelf.SelfDestruct.specific_fn.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc21: init %empty_tuple.type = call %bound_method.loc21(%.loc21_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op.loc22(%self.param: ref %Dest) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc22(%self.param: ref %Dest) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConversionExplicit(%s.param: %ConditionallyExplicit.3cd) {
 // CHECK:STDOUT: !entry:
@@ -545,10 +545,10 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc28_5.3: init %Dest = converted %s.ref, %.loc28_5.2
 // CHECK:STDOUT:   %.loc28_5.4: ref %Dest = temporary %.loc28_5.1, %.loc28_5.3
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc28_5.4, constants.%Destroy.WithSelf.SelfDestruct.62d
-// CHECK:STDOUT:   %Destroy.facet.loc28_5.1: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.8f6) [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %.loc28_5.5: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc28_5.1 [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %Destroy.facet.loc28_5.2: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.8f6) [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %.loc28_5.6: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc28_5.2 [concrete = constants.%Destroy.facet.134]
+// CHECK:STDOUT:   %Destroy.facet.loc28_5.1: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.62a) [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %.loc28_5.5: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc28_5.1 [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %Destroy.facet.loc28_5.2: %Destroy.type = facet_value constants.%Dest, (constants.%custom_witness.62a) [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %.loc28_5.6: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc28_5.2 [concrete = constants.%Destroy.facet.827]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc28_5.4, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc28_5.4)
@@ -575,12 +575,12 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.type.facet: %type = facet_value %Dest.980, () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.68d: type = fn_type @Destroy.WithSelf.SelfDestruct, @Destroy.WithSelf(%Dest.type.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.62d: %Destroy.WithSelf.SelfDestruct.type.68d = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc21 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest.SubobjectDestroy.type: type = fn_type @Dest.SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %Dest.SubobjectDestroy: %Dest.SubobjectDestroy.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.8f6: <witness> = custom_witness (%Destroy.Op, %Dest.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.62d), @Destroy [concrete]
-// CHECK:STDOUT:   %Destroy.facet.134: %Destroy.type = facet_value %Dest.980, (%custom_witness.8f6) [concrete]
+// CHECK:STDOUT:   %custom_witness.62a: <witness> = custom_witness (%Destroy.WithSelf.Op.403, %Dest.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.62d), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.facet.827: %Destroy.type = facet_value %Dest.980, (%custom_witness.62a) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -637,15 +637,15 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc21_21.4, constants.%Destroy.WithSelf.SelfDestruct.62d
-// CHECK:STDOUT:   %Destroy.facet.loc21_21.1: %Destroy.type = facet_value constants.%Dest.980, (constants.%custom_witness.8f6) [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %.loc21_21.6: %Destroy.type = converted constants.%Dest.980, %Destroy.facet.loc21_21.1 [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %Destroy.facet.loc21_21.2: %Destroy.type = facet_value constants.%Dest.980, (constants.%custom_witness.8f6) [concrete = constants.%Destroy.facet.134]
-// CHECK:STDOUT:   %.loc21_21.7: %Destroy.type = converted constants.%Dest.980, %Destroy.facet.loc21_21.2 [concrete = constants.%Destroy.facet.134]
+// CHECK:STDOUT:   %Destroy.facet.loc21_21.1: %Destroy.type = facet_value constants.%Dest.980, (constants.%custom_witness.62a) [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %.loc21_21.6: %Destroy.type = converted constants.%Dest.980, %Destroy.facet.loc21_21.1 [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %Destroy.facet.loc21_21.2: %Destroy.type = facet_value constants.%Dest.980, (constants.%custom_witness.62a) [concrete = constants.%Destroy.facet.827]
+// CHECK:STDOUT:   %.loc21_21.7: %Destroy.type = converted constants.%Dest.980, %Destroy.facet.loc21_21.2 [concrete = constants.%Destroy.facet.827]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc21_21.4, %Destroy.WithSelf.SelfDestruct.specific_fn
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc21_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %Dest.980) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc21(%self.param: ref %Dest.980) = "no_op";
 // CHECK:STDOUT:

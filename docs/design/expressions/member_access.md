@@ -34,12 +34,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-> **TODO:** >
+> **TODO:**
 > [#3720: Member binding operators](/proposals/p003720-member-binding-operators.md)
-> introduces an additional "member binding" step, redefines simple member access
-> in terms of compound member access, and defines compound member access in
-> terms of calls to user-implementable interface methods. This document must be
-> updated to reflect those changes.
+> and
+> [#7697: Updates to member access](/proposals/p007697-updates-to-member-access.md)
+> redefine simple member access in terms of compound member access, define
+> instance binding in terms of calls to user-implementable interface methods,
+> and add another member access form `x.impl(M)`. This document must be updated
+> to reflect those changes.
 
 A _qualified name_ is a [word](../lexical_conventions/words.md) that is preceded
 by a period or a rightward arrow. The name is found within a contextually
