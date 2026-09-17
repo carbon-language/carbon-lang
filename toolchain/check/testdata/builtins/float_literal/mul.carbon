@@ -29,6 +29,10 @@ fn F() {
     Test(Mul(1.5, 1.5)) as Expect(2.25);
     Test(Mul(0.1, 0.1)) as Expect(0.01);
     Test(Mul(1.0e20, 1.0e-20)) as Expect(1.0);
+    Test(Mul(1e2000000000, 1e-2000000000)) as Expect(1.0);
+    Test(Mul(1e39999999999999999993, 1e-39999999999999999993)) as Expect(1.0);
+    Test(Mul(0x1.0p4, 0x1.0p-4)) as Expect(1.0);
+    Test(Mul(0.0, -3.0)) as Expect(0.0);
     Test(Mul(1.0, 1.000000000000000000000000000000)) as Expect(1.0);
 }
 

@@ -2352,14 +2352,14 @@ static auto TryConvertBinaryToDecimal(const Real& val) -> std::optional<Real> {
                 .exponent = llvm::APInt(32, 0, /*isSigned=*/true),
                 .is_decimal = true};
   }
-  unsigned k = static_cast<unsigned>(-factored->twos);
-  unsigned needed = val.mantissa.getSignificantBits() +
-                    static_cast<unsigned>(std::ceil(std::log2f(5) * k));
-  if (needed > static_cast<unsigned>(IntStore::MaxIntWidth)) {
+  auto k = static_cast<unsigned>(-static_cast<int64_t>(factored->twos));
+  auto needed =
+      val.mantissa.getSignificantBits() + std::ceil(std::log2(5.0) * k);
+  if (needed > IntStore::MaxIntWidth) {
     return std::nullopt;
   }
-  unsigned width =
-      std::max(needed, static_cast<unsigned>(IntStore::MinAPWidth));
+  unsigned width = std::max(static_cast<unsigned>(needed),
+                            static_cast<unsigned>(IntStore::MinAPWidth));
   auto mantissa = val.mantissa.sextOrTrunc(width);
   mantissa *= llvm::APIntOps::pow(llvm::APInt(width, 5), k);
   return Real{.mantissa = mantissa,
@@ -2390,8 +2390,11 @@ static auto TryMulRealLiterals(const Real& lhs, const Real& rhs)
       r = *converted;
     }
   }
-  int64_t sum = l.exponent.getSExtValue() + r.exponent.getSExtValue();
-  if (sum > INT32_MAX || sum < INT32_MIN) {
+  auto exponent_width =
+      std::max(l.exponent.getBitWidth(), r.exponent.getBitWidth());
+  auto exponent = OverflowAdd(l.exponent.sextOrTrunc(exponent_width),
+                              r.exponent.sextOrTrunc(exponent_width));
+  if (!exponent.isSignedIntN(32)) {
     return std::nullopt;
   }
   unsigned needed =
@@ -2410,8 +2413,7 @@ static auto TryMulRealLiterals(const Real& lhs, const Real& rhs)
     return std::nullopt;
   }
   return Real{.mantissa = product,
-              .exponent = llvm::APInt(32, static_cast<int32_t>(sum),
-                                      /*isSigned=*/true),
+              .exponent = exponent.sextOrTrunc(32),
               .is_decimal = l.is_decimal};
 }
 
