@@ -598,11 +598,11 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
   }
 
   if (!fn.body_block_ids.empty() ||
-      fn.call_param_default_values_id.has_value()) {
+      fn.call_param_default_values_id != SemIR::InstBlockId::Empty) {
     out() << ' ';
     OpenBrace();
 
-    if (fn.call_param_default_values_id.has_value()) {
+    if (fn.call_param_default_values_id != SemIR::InstBlockId::Empty) {
       IndentLabel();
       out() << "!default_values:\n";
       FormatCodeBlock(fn.call_param_default_values_id);

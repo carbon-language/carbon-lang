@@ -53,7 +53,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn F(unused x: i32 = 0, unused y: i32 = 22) { }
 // CHECK:STDERR:                                         ^~
 // CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: imported_defaults_different_values.carbon:3:27: note: different previous declaration here. [PatternDefaultValueDiffersNote]
+// CHECK:STDERR: imported_defaults_different_values.carbon:3:27: note: different previous declaration here [PatternDefaultValueDiffersNote]
 // CHECK:STDERR: fn F(x: i32 = 0, y: i32 = 10);
 // CHECK:STDERR:                           ^~
 // CHECK:STDERR:

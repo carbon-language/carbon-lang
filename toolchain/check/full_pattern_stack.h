@@ -228,20 +228,26 @@ class FullPatternStack {
   // of the stack. Note default values are only supported for explicit parameter
   // lists.
   auto GetRawDefaultValues() -> llvm::ArrayRef<SemIR::InstId> {
-    return raw_default_values_stack_.PeekArray();
+    return raw_default_values_stack_.empty()
+               ? llvm::ArrayRef<SemIR::InstId>()
+               : raw_default_values_stack_.PeekArray();
   }
 
   // Returns a reference to the array of type-converted default value inst ids
   // at the top of the stack.
   auto GetConvertedDefaultValues() -> llvm::ArrayRef<SemIR::InstId> {
-    return converted_default_values_stack_.PeekArray();
+    return converted_default_values_stack_.empty()
+               ? llvm::ArrayRef<SemIR::InstId>()
+               : converted_default_values_stack_.PeekArray();
   }
 
  private:
+  // TODO: move default value InstIds to a value store and remove them from the
+  // pattern stack.
   auto AddDefaultValue(SemIR::InstId inst_id, ArrayStack<SemIR::InstId>& stack)
       -> SemIR::DefaultValueId {
-    auto index = SemIR::FromRaw<SemIR::DefaultValueId>(
-        static_cast<int32_t>(stack.PeekArray().size()));
+    auto index =
+        SemIR::DefaultValueId(static_cast<int32_t>(stack.PeekArray().size()));
     stack.AppendToTop(inst_id);
     return index;
   }
@@ -279,11 +285,13 @@ class FullPatternStack {
 
   // The stack of instructions specifying default values for subpatterns
   // within this full-pattern. These instructions are as they are written by
-  // the developer, with no type conversions applied.
+  // the developer, with no type conversions applied. They are indexed by
+  // `DefaultValueId` values.
   ArrayStack<SemIR::InstId> raw_default_values_stack_;
 
   // The stack of instructions for default values after the conversions to the
-  // type of the pattern have been applied.
+  // type of the pattern have been applied. They are indexed by `DefaultValueId`
+  // values.
   ArrayStack<SemIR::InstId> converted_default_values_stack_;
 };
 

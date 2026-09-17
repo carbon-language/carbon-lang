@@ -234,7 +234,7 @@ struct Function : public EntityWithParamsBase,
     if (call_params_id.has_value()) {
       out << ", call_params_id: " << call_params_id;
     }
-    if (call_param_default_values_id.has_value()) {
+    if (call_param_default_values_id != SemIR::InstBlockId::Empty) {
       out << ", call_param_default_values_id: " << call_param_default_values_id;
     }
     if (return_type_inst_id.has_value()) {

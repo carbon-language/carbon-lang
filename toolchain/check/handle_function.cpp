@@ -384,10 +384,9 @@ static auto CheckDefaultValuesCompletelySpecified(
            [&context](auto inst_id) {
              return context.insts().Is<SemIR::UnspecifiedValue>(inst_id);
            })) {
-    CARBON_DIAGNOSTIC(
-        PatternDefaultValueNotSpecified, Error,
-        "the first owned function declaration must specify values "
-        "for all default parameter values.");
+    CARBON_DIAGNOSTIC(PatternDefaultValueNotSpecified, Error,
+                      "found unspecified default parameter value in the "
+                      "function's first owning declaration");
     context.emitter().Emit(inst_id, PatternDefaultValueNotSpecified);
   }
 }

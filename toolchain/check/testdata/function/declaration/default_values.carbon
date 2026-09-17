@@ -52,7 +52,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_default_values_unspecified.carbon:[[@LINE+4]]:24: error: the first owned function declaration must specify values for all default parameter values. [PatternDefaultValueNotSpecified]
+// CHECK:STDERR: fail_default_values_unspecified.carbon:[[@LINE+4]]:24: error: found unspecified default parameter value in the function's first owning declaration [PatternDefaultValueNotSpecified]
 // CHECK:STDERR: fn Z(x: C = {}, y: C = _);
 // CHECK:STDERR:                        ^
 // CHECK:STDERR:

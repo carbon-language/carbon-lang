@@ -91,7 +91,7 @@ struct FunctionSignatureInsts {
   SemIR::InstBlockId param_patterns_id = SemIR::InstBlockId::None;
   SemIR::InstBlockId call_param_patterns_id = SemIR::InstBlockId::None;
   SemIR::InstBlockId call_params_id = SemIR::InstBlockId::None;
-  SemIR::InstBlockId call_param_default_values_id = SemIR::InstBlockId::None;
+  SemIR::InstBlockId call_param_default_values_id = SemIR::InstBlockId::Empty;
   SemIR::Function::CallParamIndexRanges call_param_ranges =
       SemIR::Function::CallParamIndexRanges::Empty;
   SemIR::TypeInstId return_type_inst_id = SemIR::TypeInstId::None;
@@ -309,10 +309,12 @@ static auto CheckFunctionEvaluationModeMatches(
 // specified by `prev_id`. If `diagnose` is true this will issue a diagnostic
 // if it detects a difference. Returns true if the values are the same or
 // `new_id` is unspecified.
+//
+// Note: this function is only called on the function's first owning
+// declaration, as that is the declaration with this requirement.
 static auto CheckDefaultValueIsSame(Context& context, SemIR::InstId new_id,
                                     SemIR::InstId prev_id, bool diagnose)
     -> bool {
-  // We require the first declaration to always declare default values.
   CARBON_CHECK(!context.insts().Is<SemIR::UnspecifiedValue>(prev_id));
   if (!context.insts().Is<SemIR::UnspecifiedValue>(new_id)) {
     auto new_constant_id = context.constant_values().Get(new_id);
@@ -325,7 +327,7 @@ static auto CheckDefaultValueIsSame(Context& context, SemIR::InstId new_id,
             "value of {1}.",
             InstIdAsConstant, InstIdAsConstant);
         CARBON_DIAGNOSTIC(PatternDefaultValueDiffersNote, Note,
-                          "different previous declaration here.");
+                          "different previous declaration here");
         context.emitter()
             .Build(new_id, PatternDefaultValueDiffers, new_id, prev_id)
             .Note(prev_id, PatternDefaultValueDiffersNote)
