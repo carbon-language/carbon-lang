@@ -82,8 +82,7 @@ struct FunctionFields {
   // because it is relevant only for a function definition.
   InstBlockId call_params_id;
 
-  // Instructions representing the canonical default values for parameters.
-  // TODO: Change this to non-canonical values.
+  // Instructions representing the default values for parameters.
   InstBlockId call_param_default_values_id;
 
   // The index ranges within the `Call` parameters that correspond to the
@@ -235,7 +234,7 @@ struct Function : public EntityWithParamsBase,
     if (call_params_id.has_value()) {
       out << ", call_params_id: " << call_params_id;
     }
-    if (call_param_default_values_id.has_value()) {
+    if (call_param_default_values_id != SemIR::InstBlockId::Empty) {
       out << ", call_param_default_values_id: " << call_param_default_values_id;
     }
     if (return_type_inst_id.has_value()) {
