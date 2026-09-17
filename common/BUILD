@@ -501,7 +501,7 @@ sh_test(
     args = [
         "--benchmark_dry_run",
         # The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
+        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,2}(/[0-9]+)?$$",
     ],
 )
 
@@ -688,7 +688,7 @@ sh_test(
     args = [
         "--benchmark_dry_run",
         # The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
+        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,2}(/[0-9]+)?$$",
     ],
 )
 
