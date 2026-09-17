@@ -59,7 +59,7 @@ auto SpecificCoalescer::CoalesceEquivalentSpecifics(
           continue;
         }
 
-        Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>
+        Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>, 16>
             visited_equivalent_specifics;
         InsertPair(specifics[i], specifics[j], visited_equivalent_specifics);
         // Function type information matches; check usages inside the function
@@ -205,7 +205,7 @@ auto SpecificCoalescer::AreFunctionTypesEquivalent(
 
 auto SpecificCoalescer::AreFunctionBodiesEquivalent(
     SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
-    Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
+    SetBase<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
         visited_equivalent_specifics) -> bool {
   llvm::SmallVector<std::pair<SemIR::SpecificId, SemIR::SpecificId>> worklist;
   worklist.push_back({specific_id1, specific_id2});
@@ -251,7 +251,7 @@ auto SpecificCoalescer::AreFunctionBodiesEquivalent(
 
 auto SpecificCoalescer::InsertPair(
     SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
-    Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>& set_of_pairs)
+    SetBase<std::pair<SemIR::SpecificId, SemIR::SpecificId>>& set_of_pairs)
     -> bool {
   if (specific_id1.index > specific_id2.index) {
     std::swap(specific_id1.index, specific_id2.index);
@@ -263,7 +263,7 @@ auto SpecificCoalescer::InsertPair(
 
 auto SpecificCoalescer::ContainsPair(
     SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
-    const Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>& set_of_pairs)
+    SetView<std::pair<SemIR::SpecificId, SemIR::SpecificId>> set_of_pairs)
     -> bool {
   if (specific_id1.index > specific_id2.index) {
     std::swap(specific_id1.index, specific_id2.index);
