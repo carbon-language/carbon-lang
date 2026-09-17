@@ -12,6 +12,7 @@
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
 #include "clang/Sema/Sema.h"
 #include "llvm/Support/Casting.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
@@ -626,13 +627,18 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
 }
 
 namespace {
+
 struct FunctionInfo {
   struct Param {
-    Param(Context& context, SemIR::InstId param_inst_id)
+    Param(Context& context, SemIR::InstId param_inst_id,
+          SemIR::InstId default_value_inst_id = SemIR::InstId::None,
+          const SemIR::File* default_value_sem_ir = nullptr)
         : pattern_inst_id(param_inst_id),
           type_id(ExtractScrutineeType(
               context.sem_ir(), context.insts().Get(param_inst_id).type_id())),
-          kind(GetParamPatternKind(context, param_inst_id)) {}
+          kind(GetParamPatternKind(context, param_inst_id)),
+          default_value_inst_id(default_value_inst_id),
+          default_value_sem_ir(default_value_sem_ir) {}
 
     // The parameter's pattern type.
     SemIR::InstId pattern_inst_id;
@@ -642,6 +648,13 @@ struct FunctionInfo {
 
     // Kind of the parameter pattern.
     ParamPatternKind kind;
+
+    // The default value instructions, or None if no default was specified.
+    SemIR::InstId default_value_inst_id;
+
+    // The file container in which the default value instruction is stored,
+    // or nullptr if no default was specified.
+    const SemIR::File* default_value_sem_ir;
   };
 
   explicit FunctionInfo(Context& context, SemIR::FunctionId function_id,
@@ -668,9 +681,23 @@ struct FunctionInfo {
       ++explicit_begin;
     }
 
+    auto function_patterns =
+        context.inst_blocks().Get(function.param_patterns_id);
     // The remaining explicit parameters are the caller-provided arguments.
     for (auto i = explicit_begin; i != ranges.explicit_end().index; ++i) {
-      explicit_params.push_back(Param(context, function_params[i]));
+      // Look up overall pattern to see if it has a default value.
+      auto [pattern_file, pattern_inst_id] = SemIR::GetCanonicalFileAndInstId(
+          &context.sem_ir(), function_patterns[i]);
+      if (auto default_value_inst =
+              pattern_file->insts().TryGetAs<SemIR::DefaultValuePattern>(
+                  pattern_inst_id)) {
+        const auto& default_value = pattern_file->default_values().Get(
+            default_value_inst->default_value_id);
+        explicit_params.push_back(Param(context, function_params[i],
+                                        default_value.value_id, pattern_file));
+      } else {
+        explicit_params.push_back(Param(context, function_params[i]));
+      }
     }
   }
 
@@ -804,13 +831,12 @@ static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
 //
 // The function's name will match the one referenced by `function_name_id`,
 // and the function will be added to the given `decl_context`.
-static auto BuildCppFunctionDecl(Context& context,
-                                 clang::DeclContext* decl_context,
-                                 SemIR::LocId loc_id,
-                                 clang::DeclarationName declaration_name,
-                                 clang::ArrayRef<clang::QualType> param_types,
-                                 clang::QualType return_type,
-                                 bool export_as_constructor) {
+static auto BuildCppFunctionDecl(
+    Context& context, clang::DeclContext* decl_context, SemIR::LocId loc_id,
+    clang::DeclarationName declaration_name,
+    clang::ArrayRef<clang::QualType> param_types,
+    std::optional<clang::ArrayRef<clang::Expr*>> default_values,
+    clang::QualType return_type, bool export_as_constructor) {
   auto clang_loc = GetCppLocation(context, loc_id);
 
   auto cpp_function_type = context.ast_context().getFunctionType(
@@ -845,7 +871,7 @@ static auto BuildCppFunctionDecl(Context& context,
     clang::ParmVarDecl* param = clang::ParmVarDecl::Create(
         context.ast_context(), function_decl, /*StartLoc=*/clang_loc,
         /*IdLoc=*/clang_loc, /*Id=*/nullptr, type, param_tinfo, clang::SC_None,
-        /*DefArg=*/nullptr);
+        default_values ? (*default_values)[i] : nullptr);
     param_var_decls.push_back(param);
   }
   function_decl->setParams(param_var_decls);
@@ -867,6 +893,7 @@ static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
 
   // Get parameters types.
   llvm::SmallVector<clang::QualType> cpp_param_types;
+  llvm::SmallVector<clang::Expr*> default_arguments;
   if (target.self_param) {
     auto cpp_type = MapToCppThunkParamType(context, target.self_param->type_id);
     if (cpp_type.isNull()) {
@@ -874,6 +901,7 @@ static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
       return nullptr;
     }
     cpp_param_types.push_back(cpp_type);
+    default_arguments.push_back(nullptr);
   }
   // For constructors, the first Carbon parameter is the object being
   // constructed, which is not explicitly declared in C++.
@@ -888,8 +916,15 @@ static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
       return nullptr;
     }
     cpp_param_types.push_back(cpp_type);
+
+    auto* default_argument =
+        param.default_value_inst_id.has_value()
+            ? InventClangArg(context, param.default_value_inst_id)
+            : nullptr;
+    default_arguments.push_back(default_argument);
   }
 
+  CARBON_CHECK(default_arguments.size() == cpp_param_types.size());
   CARBON_CHECK(target.function.return_type_inst_id == SemIR::TypeInstId::None);
   auto cpp_return_type = context.ast_context().VoidTy;
 
@@ -898,7 +933,8 @@ static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
                            : context.ast_context().getTranslationUnitDecl();
   auto* function_decl = BuildCppFunctionDecl(
       context, decl_context, loc_id, target.GetCppName(context),
-      cpp_param_types, cpp_return_type, target.export_as_constructor);
+      cpp_param_types, default_arguments, cpp_return_type,
+      target.export_as_constructor);
 
   // Mangle the function name and attach it to the `FunctionDecl`.
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
@@ -962,7 +998,8 @@ static auto BuildCppFunctionDeclForGenericCarbonFn(Context& context,
                            : context.ast_context().getTranslationUnitDecl();
   return BuildCppFunctionDecl(context, decl_context, loc_id,
                               callee.GetCppName(context), cpp_param_types,
-                              cpp_return_type, callee.export_as_constructor);
+                              std::nullopt, cpp_return_type,
+                              callee.export_as_constructor);
 }
 
 // Returns whether the given Carbon parameter should be passed as a C++ const
@@ -1128,10 +1165,15 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
 
   llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
   for (auto [i, type] : llvm::enumerate(thunk_function_type->param_types())) {
+    const auto& param = target.explicit_params[i];
+    clang::Expr* default_argument = nullptr;
+    if (param.default_value_inst_id.has_value()) {
+      default_argument = InventClangArg(context, param.default_value_inst_id);
+    }
     clang::ParmVarDecl* thunk_param = clang::ParmVarDecl::Create(
         ast_context, thunk_function_decl, /*StartLoc=*/clang_loc,
         /*IdLoc=*/clang_loc, /*Id=*/nullptr, type,
-        /*TInfo=*/nullptr, clang::SC_None, /*DefArg=*/nullptr);
+        /*TInfo=*/nullptr, clang::SC_None, default_argument);
     param_var_decls.push_back(thunk_param);
   }
   thunk_function_decl->setParams(param_var_decls);
