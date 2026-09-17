@@ -648,6 +648,15 @@ class Derived {
   fn F() {
     //@dump-sem-ir-begin
     Overload(Cpp.PublicCall.PublicCall());
+    // CHECK:STDERR: import_overload_set_public_base_class_derived_call_non_private.carbon:[[@LINE+9]]:5: error: cannot access protected member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     Overload(Cpp.ProtectedCall.ProtectedCall());
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: import_overload_set_public_base_class_derived_call_non_private.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+    // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
+    // CHECK:STDERR: ./overload_set.h:12:15: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:   static auto Overload(ProtectedCall x) -> void;
+    // CHECK:STDERR:               ^
+    // CHECK:STDERR:
     Overload(Cpp.ProtectedCall.ProtectedCall());
     //@dump-sem-ir-end
   }
@@ -721,6 +730,15 @@ class Derived {
   fn F() {
     //@dump-sem-ir-begin
     Overload(Cpp.PublicCall.PublicCall());
+    // CHECK:STDERR: import_overload_set_protected_base_class_derived_call_non_private.carbon:[[@LINE+9]]:5: error: cannot access protected member `Overload` of type `Cpp.OverloadProtected` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     Overload(Cpp.ProtectedCall.ProtectedCall());
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: import_overload_set_protected_base_class_derived_call_non_private.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+    // CHECK:STDERR: ./overload_set_base_class.h:2:10: in file included here [InCppInclude]
+    // CHECK:STDERR: ./overload_set.h:12:15: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:   static auto Overload(ProtectedCall x) -> void;
+    // CHECK:STDERR:               ^
+    // CHECK:STDERR:
     Overload(Cpp.ProtectedCall.ProtectedCall());
     //@dump-sem-ir-end
   }
@@ -2379,21 +2397,21 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Overload__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.c2f84f.1(%addr.loc11_41)
 // CHECK:STDOUT:   %PublicCall.cpp_destructor.bound: <bound method> = bound_method %.loc11_40.3, constants.%PublicCall.cpp_destructor
 // CHECK:STDOUT:   %PublicCall.cpp_destructor.call: init %empty_tuple.type = call %PublicCall.cpp_destructor.bound(%.loc11_40.3)
-// CHECK:STDOUT:   %Overload.ref.loc12: %OverloadPublic.Overload.cpp_overload_set.type = name_ref Overload, imports.%OverloadPublic.Overload.cpp_overload_set.value [concrete = constants.%OverloadPublic.Overload.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ProtectedCall.ref.loc12_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
-// CHECK:STDOUT:   %ProtectedCall.ref.loc12_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc12_46.1: ref %ProtectedCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc12_46: %ptr.bc1 = addr_of %.loc12_46.1
-// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc12_46)
-// CHECK:STDOUT:   %.loc12_46.2: init %ProtectedCall to %.loc12_46.1 = mark_in_place_init %ProtectedCall__carbon_thunk.call
-// CHECK:STDOUT:   %.loc12_46.3: ref %ProtectedCall = temporary %.loc12_46.1, %.loc12_46.2
-// CHECK:STDOUT:   %.loc12_46.4: %ProtectedCall = acquire_value %.loc12_46.3
-// CHECK:STDOUT:   %.loc12_46.5: ref %ProtectedCall = value_as_ref %.loc12_46.4
-// CHECK:STDOUT:   %addr.loc12_47: %ptr.bc1 = addr_of %.loc12_46.5
-// CHECK:STDOUT:   %Overload__carbon_thunk.call.loc12: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.c2f84f.2(%addr.loc12_47)
-// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.bound: <bound method> = bound_method %.loc12_46.3, constants.%ProtectedCall.cpp_destructor
-// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.call: init %empty_tuple.type = call %ProtectedCall.cpp_destructor.bound(%.loc12_46.3)
+// CHECK:STDOUT:   %Overload.ref.loc21: %OverloadPublic.Overload.cpp_overload_set.type = name_ref Overload, imports.%OverloadPublic.Overload.cpp_overload_set.value [concrete = constants.%OverloadPublic.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %ProtectedCall.ref.loc21_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
+// CHECK:STDOUT:   %ProtectedCall.ref.loc21_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc21_46.1: ref %ProtectedCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc21_46: %ptr.bc1 = addr_of %.loc21_46.1
+// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc21_46)
+// CHECK:STDOUT:   %.loc21_46.2: init %ProtectedCall to %.loc21_46.1 = mark_in_place_init %ProtectedCall__carbon_thunk.call
+// CHECK:STDOUT:   %.loc21_46.3: ref %ProtectedCall = temporary %.loc21_46.1, %.loc21_46.2
+// CHECK:STDOUT:   %.loc21_46.4: %ProtectedCall = acquire_value %.loc21_46.3
+// CHECK:STDOUT:   %.loc21_46.5: ref %ProtectedCall = value_as_ref %.loc21_46.4
+// CHECK:STDOUT:   %addr.loc21_47: %ptr.bc1 = addr_of %.loc21_46.5
+// CHECK:STDOUT:   %Overload__carbon_thunk.call.loc21: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.c2f84f.2(%addr.loc21_47)
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.bound: <bound method> = bound_method %.loc21_46.3, constants.%ProtectedCall.cpp_destructor
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.call: init %empty_tuple.type = call %ProtectedCall.cpp_destructor.bound(%.loc21_46.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2491,21 +2509,21 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Overload__carbon_thunk.call.loc11: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.c2f84f.1(%addr.loc11_41)
 // CHECK:STDOUT:   %PublicCall.cpp_destructor.bound: <bound method> = bound_method %.loc11_40.3, constants.%PublicCall.cpp_destructor
 // CHECK:STDOUT:   %PublicCall.cpp_destructor.call: init %empty_tuple.type = call %PublicCall.cpp_destructor.bound(%.loc11_40.3)
-// CHECK:STDOUT:   %Overload.ref.loc12: %OverloadProtected.Overload.cpp_overload_set.type = name_ref Overload, imports.%OverloadProtected.Overload.cpp_overload_set.value [concrete = constants.%OverloadProtected.Overload.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ProtectedCall.ref.loc12_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
-// CHECK:STDOUT:   %ProtectedCall.ref.loc12_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc12_46.1: ref %ProtectedCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc12_46: %ptr.bc1 = addr_of %.loc12_46.1
-// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc12_46)
-// CHECK:STDOUT:   %.loc12_46.2: init %ProtectedCall to %.loc12_46.1 = mark_in_place_init %ProtectedCall__carbon_thunk.call
-// CHECK:STDOUT:   %.loc12_46.3: ref %ProtectedCall = temporary %.loc12_46.1, %.loc12_46.2
-// CHECK:STDOUT:   %.loc12_46.4: %ProtectedCall = acquire_value %.loc12_46.3
-// CHECK:STDOUT:   %.loc12_46.5: ref %ProtectedCall = value_as_ref %.loc12_46.4
-// CHECK:STDOUT:   %addr.loc12_47: %ptr.bc1 = addr_of %.loc12_46.5
-// CHECK:STDOUT:   %Overload__carbon_thunk.call.loc12: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.c2f84f.2(%addr.loc12_47)
-// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.bound: <bound method> = bound_method %.loc12_46.3, constants.%ProtectedCall.cpp_destructor
-// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.call: init %empty_tuple.type = call %ProtectedCall.cpp_destructor.bound(%.loc12_46.3)
+// CHECK:STDOUT:   %Overload.ref.loc21: %OverloadProtected.Overload.cpp_overload_set.type = name_ref Overload, imports.%OverloadProtected.Overload.cpp_overload_set.value [concrete = constants.%OverloadProtected.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %ProtectedCall.ref.loc21_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
+// CHECK:STDOUT:   %ProtectedCall.ref.loc21_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc21_46.1: ref %ProtectedCall = temporary_storage
+// CHECK:STDOUT:   %addr.loc21_46: %ptr.bc1 = addr_of %.loc21_46.1
+// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc21_46)
+// CHECK:STDOUT:   %.loc21_46.2: init %ProtectedCall to %.loc21_46.1 = mark_in_place_init %ProtectedCall__carbon_thunk.call
+// CHECK:STDOUT:   %.loc21_46.3: ref %ProtectedCall = temporary %.loc21_46.1, %.loc21_46.2
+// CHECK:STDOUT:   %.loc21_46.4: %ProtectedCall = acquire_value %.loc21_46.3
+// CHECK:STDOUT:   %.loc21_46.5: ref %ProtectedCall = value_as_ref %.loc21_46.4
+// CHECK:STDOUT:   %addr.loc21_47: %ptr.bc1 = addr_of %.loc21_46.5
+// CHECK:STDOUT:   %Overload__carbon_thunk.call.loc21: init %empty_tuple.type = call imports.%Overload__carbon_thunk.decl.c2f84f.2(%addr.loc21_47)
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.bound: <bound method> = bound_method %.loc21_46.3, constants.%ProtectedCall.cpp_destructor
+// CHECK:STDOUT:   %ProtectedCall.cpp_destructor.call: init %empty_tuple.type = call %ProtectedCall.cpp_destructor.bound(%.loc21_46.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

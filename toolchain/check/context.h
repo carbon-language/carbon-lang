@@ -352,7 +352,7 @@ class Context {
 
   auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
 
-  auto access_context() -> SemIR::InstId& { return access_context_; }
+  auto access_context() -> SemIR::NameScopeId& { return access_context_; }
 
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
@@ -629,12 +629,12 @@ class Context {
 
   bool mangle_string_fingerprint_;
 
-  // Type used when querying member access. For example, when checking a class
-  // method, this would be set to the type of that method's class.
+  // Scope for querying member access. For example, when checking a class
+  // method, this would be set to the scope of that method's class.
   //
   // This is updated by `DeclNameStack`. During monomorphization, it is updated
   // by `TryEvalBlockForSpecific`.
-  SemIR::InstId access_context_ = SemIR::TypeInstId::None;
+  SemIR::NameScopeId access_context_ = SemIR::NameScopeId::None;
 };
 
 inline constexpr Context::FormExpr Context::FormExpr::Error = {

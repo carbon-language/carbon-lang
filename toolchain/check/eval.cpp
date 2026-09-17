@@ -3460,9 +3460,7 @@ auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
 
 // Update `context.access_context` to the type of the innermost enclosing type
 // scope of the generic.
-static auto SetAccessContext(Context& context, SemIR::LocId loc_id,
-                             const SemIR::Generic& generic,
-                             const SemIR::Specific& specific) {
+static auto SetAccessContext(Context& context, const SemIR::Generic& generic) {
   auto function_decl =
       context.insts().TryGetAs<SemIR::FunctionDecl>(generic.decl_id);
   if (!function_decl || !function_decl->function_id.has_value()) {
@@ -3473,30 +3471,7 @@ static auto SetAccessContext(Context& context, SemIR::LocId loc_id,
     return;
   }
 
-  const auto& parent_scope =
-      context.name_scopes().Get(function.parent_scope_id);
-  auto class_decl =
-      context.insts().TryGetAs<SemIR::ClassDecl>(parent_scope.inst_id());
-  if (!class_decl) {
-    return;
-  }
-
-  const auto& class_info = context.classes().Get(class_decl->class_id);
-  auto class_specific_id = SemIR::SpecificId::None;
-  if (class_info.generic_id.has_value()) {
-    const auto& class_generic = context.generics().Get(class_info.generic_id);
-    auto specific_args = context.inst_blocks().Get(specific.args_id);
-    auto class_generic_bindings =
-        context.inst_blocks().Get(class_generic.bindings_id);
-    auto class_specific_args =
-        specific_args.slice(0, class_generic_bindings.size());
-    class_specific_id = MakeSpecific(context, loc_id, class_info.generic_id,
-                                     class_specific_args);
-  }
-
-  auto class_type =
-      GetClassType(context, class_decl->class_id, class_specific_id);
-  context.access_context() = context.types().GetTypeInstId(class_type);
+  context.access_context() = function.parent_scope_id;
 }
 
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
@@ -3518,7 +3493,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   }
   specific.SetValueBlock(region, value_block_id);
 
-  SetAccessContext(context, loc_id, generic, specific);
+  SetAccessContext(context, generic);
 
   EvalContext eval_context(&context, loc_id, specific_id);
 
