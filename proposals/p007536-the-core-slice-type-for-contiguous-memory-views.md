@@ -22,6 +22,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   [Conversions](#conversions)
     -   [Usage Example](#usage-example)
+-   [Future work](#future-work)
+    -   [Safety](#safety)
+    -   [Static bound](#static-bound)
+    -   [Syntax](#syntax)
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
     -   [Raw pointer and size](#raw-pointer-and-size)
@@ -171,6 +175,36 @@ fn Main() -> i32 {
   return 0;
 }
 ```
+
+## Future work
+
+### Safety
+
+This type should eventually support
+[spatial](/docs/design/safety/terminology.md#spatial-safety) and [temporal](/docs/design/safety/terminology.md#temporal-safety) [safety](/docs/design/safety/README.md#memory-safety-model)
+in some form, similarly applicable to (but not yet specified for)
+[`str`](/proposals/p006177-c-interop-mapping-std-string-view-to-core-str.md) -
+but the specifics of that safety,
+per Carbon's [safety strategy](/docs/project/principles/safety_strategy.md) as
+updated in [p005914](/proposals/p005914-updating-carbon-s-safety-strategy.md))
+are left out of scope for this proposal, though it's part of the motivation for
+the specific direction of this proposal (without safety in mind, perhaps the
+pointer+length tuple would be less problematic).
+
+### Static bound
+
+A type similar to `Slice`, but [supporting a compile-time bound](https://docs.google.com/document/d/1hdYyCLmzEOj9gDulm7Eo1SVNc0pY7zbMvFmEzenMhYE/edit?usp=sharing)
+should be provided, but may be a [distinct/unrelated type](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#absence-of-syntax-should-make-clear-defaults)
+from this one (unlike C++'s
+[`std::span`](https://en.cppreference.com/cpp/container/span) that uses a template parameter to
+represent either the specific static bound, or the absence of a static bound -
+which seems like it might complicate the interface more than providing some
+generality over the two scenarios; see also the [`[T; N]` discussion in p004682](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#t-n-builtin-syntax)).
+
+### Syntax
+
+[p004682](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#proposal) and
+['Pointers Arrays, and Slices'](https://docs.google.com/document/d/1hdYyCLmzEOj9gDulm7Eo1SVNc0pY7zbMvFmEzenMhYE/edit?tab=t.0#heading=h.fahgww8db6f0) refer to some possible builtin syntax (such as `[T]` or `[T]*`) for referring to specific Spans/Slices, but that isn't covered here and is left for future proposals.
 
 ## Rationale
 
