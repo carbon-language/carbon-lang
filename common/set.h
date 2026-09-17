@@ -131,7 +131,7 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
 // A pointer or reference to this type is the preferred way to pass a mutable
 // handle to a `Set` type across API boundaries as it avoids encoding specific
 // SSO sizing information while providing a near-complete mutable API.
-template <typename InputKeyT, typename InputKeyContextT>
+template <typename InputKeyT, typename InputKeyContextT = DefaultKeyContext>
 class SetBase
     : protected RawHashtable::BaseImpl<InputKeyT, void, InputKeyContextT> {
  protected:

@@ -158,3 +158,8 @@ operations, inspect target LLVM ADT class APIs:
 8.  **Redundant bounds calculations**: Avoid repeating calculations of complex
     boundary estimations (such as lower and upper bound estimations). Refactor
     the logic to calculate unified values once, preserving compactness.
+9.  **Trusting stale `clangd` diagnostics**: In-editor diagnostics are only as
+    good as `compile_commands.json`. If it predates a newly added file, `clangd`
+    falls back to a default command and reports nonsense, such as missing
+    standard headers or "no member named `None`". Regenerate it with
+    `./scripts/create_compdb.py`, which only takes a few seconds.

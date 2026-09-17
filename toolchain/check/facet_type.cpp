@@ -550,7 +550,7 @@ auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
 
    private:
     bool* found_;
-    Set<SemIR::InstId> searched_;
+    Set<SemIR::InstId, 16> searched_;
   };
 
   if (!const_id.is_constant()) {

@@ -1692,13 +1692,12 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %instance_data.ref: %NonFunctionMemberPublic.elem = name_ref instance_data, @NonFunctionMemberPublic.%field_decl [concrete = @NonFunctionMemberPublic.%field_decl]
-// CHECK:STDOUT:   %.loc12_36.1: %NonFunctionMemberPublic = as_compatible %d.ref
-// CHECK:STDOUT:   %.loc12_36.2: ref %NonFunctionMemberPublic = class_element_access %.loc12_36.1, element0
-// CHECK:STDOUT:   %.loc12_36.3: ref %NonFunctionMemberPublic = converted %d.ref, %.loc12_36.2
-// CHECK:STDOUT:   %.loc12_36.4: ref %i32 = class_element_access %.loc12_36.3, element0
-// CHECK:STDOUT:   %.loc12_36.5: %i32 = acquire_value %.loc12_36.4
+// CHECK:STDOUT:   %.loc12_36.1: ref %NonFunctionMemberPublic = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc12_36.2: ref %NonFunctionMemberPublic = converted %d.ref, %.loc12_36.1
+// CHECK:STDOUT:   %.loc12_36.3: ref %i32 = class_element_access %.loc12_36.2, element0
+// CHECK:STDOUT:   %.loc12_36.4: %i32 = acquire_value %.loc12_36.3
 // CHECK:STDOUT:   %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %instance_data: %i32 = wrapper_binding instance_data, %.loc12_36.5
+// CHECK:STDOUT:   %instance_data: %i32 = wrapper_binding instance_data, %.loc12_36.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %instance_data.patt: %pattern_type.6b6 = value_binding_pattern instance_data [concrete = constants.%instance_data.patt]
 // CHECK:STDOUT:   }
@@ -1760,13 +1759,12 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Derived = name_ref self, %self
 // CHECK:STDOUT:   %instance_data.ref: %NonFunctionMemberProtected.elem = name_ref instance_data, @NonFunctionMemberProtected.%field_decl [concrete = @NonFunctionMemberProtected.%field_decl]
-// CHECK:STDOUT:   %.loc10_41.1: %NonFunctionMemberProtected = as_compatible %self.ref
-// CHECK:STDOUT:   %.loc10_41.2: ref %NonFunctionMemberProtected = class_element_access %.loc10_41.1, element0
-// CHECK:STDOUT:   %.loc10_41.3: ref %NonFunctionMemberProtected = converted %self.ref, %.loc10_41.2
-// CHECK:STDOUT:   %.loc10_41.4: ref %i32 = class_element_access %.loc10_41.3, element0
-// CHECK:STDOUT:   %.loc10_41.5: %i32 = acquire_value %.loc10_41.4
+// CHECK:STDOUT:   %.loc10_41.1: ref %NonFunctionMemberProtected = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc10_41.2: ref %NonFunctionMemberProtected = converted %self.ref, %.loc10_41.1
+// CHECK:STDOUT:   %.loc10_41.3: ref %i32 = class_element_access %.loc10_41.2, element0
+// CHECK:STDOUT:   %.loc10_41.4: %i32 = acquire_value %.loc10_41.3
 // CHECK:STDOUT:   %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %instance_data: %i32 = wrapper_binding instance_data, %.loc10_41.5
+// CHECK:STDOUT:   %instance_data: %i32 = wrapper_binding instance_data, %.loc10_41.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %instance_data.patt: %pattern_type.6b6 = value_binding_pattern instance_data [concrete = constants.%instance_data.patt]
 // CHECK:STDOUT:   }
@@ -2598,17 +2596,15 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %instance.ref.loc24: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref: %Public.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Public.PublicInstance.cpp_overload_set.value [concrete = constants.%Public.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %instance.ref.loc24, %PublicInstance.ref
-// CHECK:STDOUT:   %.loc24_5.1: ref %Base = as_compatible %instance.ref.loc24
-// CHECK:STDOUT:   %.loc24_5.2: ref %Base = class_element_access %.loc24_5.1, element0
-// CHECK:STDOUT:   %.loc24_5.3: ref %Base = converted %instance.ref.loc24, %.loc24_5.2
-// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.3)
+// CHECK:STDOUT:   %.loc24_5.1: ref %Base = class_element_access %instance.ref.loc24, element0
+// CHECK:STDOUT:   %.loc24_5.2: ref %Base = converted %instance.ref.loc24, %.loc24_5.1
+// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.2)
 // CHECK:STDOUT:   %instance.ref.loc26: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %ProtectedInstance.ref: %Public.ProtectedInstance.cpp_overload_set.type = name_ref ProtectedInstance, imports.%Public.ProtectedInstance.cpp_overload_set.value [concrete = constants.%Public.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %instance.ref.loc26, %ProtectedInstance.ref
-// CHECK:STDOUT:   %.loc26_5.1: ref %Base = as_compatible %instance.ref.loc26
-// CHECK:STDOUT:   %.loc26_5.2: ref %Base = class_element_access %.loc26_5.1, element0
-// CHECK:STDOUT:   %.loc26_5.3: ref %Base = converted %instance.ref.loc26, %.loc26_5.2
-// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.3)
+// CHECK:STDOUT:   %.loc26_5.1: ref %Base = class_element_access %instance.ref.loc26, element0
+// CHECK:STDOUT:   %.loc26_5.2: ref %Base = converted %instance.ref.loc26, %.loc26_5.1
+// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2624,17 +2620,15 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %instance.ref.loc36: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref.loc36: %Public.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Public.PublicInstance.cpp_overload_set.value [concrete = constants.%Public.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc36: <bound method> = bound_method %instance.ref.loc36, %PublicInstance.ref.loc36
-// CHECK:STDOUT:   %.loc36_3.1: ref %Base = as_compatible %instance.ref.loc36
-// CHECK:STDOUT:   %.loc36_3.2: ref %Base = class_element_access %.loc36_3.1, element0
-// CHECK:STDOUT:   %.loc36_3.3: ref %Base = converted %instance.ref.loc36, %.loc36_3.2
-// CHECK:STDOUT:   %Base.PublicInstance.call.loc36: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc36_3.3)
+// CHECK:STDOUT:   %.loc36_3.1: ref %Base = class_element_access %instance.ref.loc36, element0
+// CHECK:STDOUT:   %.loc36_3.2: ref %Base = converted %instance.ref.loc36, %.loc36_3.1
+// CHECK:STDOUT:   %Base.PublicInstance.call.loc36: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc36_3.2)
 // CHECK:STDOUT:   %instance.ref.loc37: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref.loc37: %Public.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Public.PublicInstance.cpp_overload_set.value [concrete = constants.%Public.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc37: <bound method> = bound_method %instance.ref.loc37, %PublicInstance.ref.loc37
-// CHECK:STDOUT:   %.loc37_3.1: ref %Base = as_compatible %instance.ref.loc37
-// CHECK:STDOUT:   %.loc37_3.2: ref %Base = class_element_access %.loc37_3.1, element0
-// CHECK:STDOUT:   %.loc37_3.3: ref %Base = converted %instance.ref.loc37, %.loc37_3.2
-// CHECK:STDOUT:   %Base.PublicInstance.call.loc37: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc37_3.3)
+// CHECK:STDOUT:   %.loc37_3.1: ref %Base = class_element_access %instance.ref.loc37, element0
+// CHECK:STDOUT:   %.loc37_3.2: ref %Base = converted %instance.ref.loc37, %.loc37_3.1
+// CHECK:STDOUT:   %Base.PublicInstance.call.loc37: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc37_3.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2753,17 +2747,15 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %instance.ref.loc24: ref %Protected = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref: %Protected.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Protected.PublicInstance.cpp_overload_set.value [concrete = constants.%Protected.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %instance.ref.loc24, %PublicInstance.ref
-// CHECK:STDOUT:   %.loc24_5.1: ref %Base = as_compatible %instance.ref.loc24
-// CHECK:STDOUT:   %.loc24_5.2: ref %Base = class_element_access %.loc24_5.1, element0
-// CHECK:STDOUT:   %.loc24_5.3: ref %Base = converted %instance.ref.loc24, %.loc24_5.2
-// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.3)
+// CHECK:STDOUT:   %.loc24_5.1: ref %Base = class_element_access %instance.ref.loc24, element0
+// CHECK:STDOUT:   %.loc24_5.2: ref %Base = converted %instance.ref.loc24, %.loc24_5.1
+// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.2)
 // CHECK:STDOUT:   %instance.ref.loc26: ref %Protected = name_ref instance, %instance
 // CHECK:STDOUT:   %ProtectedInstance.ref: %Protected.ProtectedInstance.cpp_overload_set.type = name_ref ProtectedInstance, imports.%Protected.ProtectedInstance.cpp_overload_set.value [concrete = constants.%Protected.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %instance.ref.loc26, %ProtectedInstance.ref
-// CHECK:STDOUT:   %.loc26_5.1: ref %Base = as_compatible %instance.ref.loc26
-// CHECK:STDOUT:   %.loc26_5.2: ref %Base = class_element_access %.loc26_5.1, element0
-// CHECK:STDOUT:   %.loc26_5.3: ref %Base = converted %instance.ref.loc26, %.loc26_5.2
-// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.3)
+// CHECK:STDOUT:   %.loc26_5.1: ref %Base = class_element_access %instance.ref.loc26, element0
+// CHECK:STDOUT:   %.loc26_5.2: ref %Base = converted %instance.ref.loc26, %.loc26_5.1
+// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2855,19 +2847,17 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %instance.ref.loc24: ref %PublicProtected = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref: %PublicProtected.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%PublicProtected.PublicInstance.cpp_overload_set.value [concrete = constants.%PublicProtected.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %instance.ref.loc24, %PublicInstance.ref
-// CHECK:STDOUT:   %.loc24_5.1: ref %Base = as_compatible %instance.ref.loc24
-// CHECK:STDOUT:   %.loc24_5.2: ref %Protected = class_element_access %.loc24_5.1, element0
-// CHECK:STDOUT:   %.loc24_5.3: ref %Base = class_element_access %.loc24_5.2, element0
-// CHECK:STDOUT:   %.loc24_5.4: ref %Base = converted %instance.ref.loc24, %.loc24_5.3
-// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.4)
+// CHECK:STDOUT:   %.loc24_5.1: ref %Protected = class_element_access %instance.ref.loc24, element0
+// CHECK:STDOUT:   %.loc24_5.2: ref %Base = class_element_access %.loc24_5.1, element0
+// CHECK:STDOUT:   %.loc24_5.3: ref %Base = converted %instance.ref.loc24, %.loc24_5.2
+// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.3)
 // CHECK:STDOUT:   %instance.ref.loc26: ref %PublicProtected = name_ref instance, %instance
 // CHECK:STDOUT:   %ProtectedInstance.ref: %PublicProtected.ProtectedInstance.cpp_overload_set.type = name_ref ProtectedInstance, imports.%PublicProtected.ProtectedInstance.cpp_overload_set.value [concrete = constants.%PublicProtected.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %instance.ref.loc26, %ProtectedInstance.ref
-// CHECK:STDOUT:   %.loc26_5.1: ref %Base = as_compatible %instance.ref.loc26
-// CHECK:STDOUT:   %.loc26_5.2: ref %Protected = class_element_access %.loc26_5.1, element0
-// CHECK:STDOUT:   %.loc26_5.3: ref %Base = class_element_access %.loc26_5.2, element0
-// CHECK:STDOUT:   %.loc26_5.4: ref %Base = converted %instance.ref.loc26, %.loc26_5.3
-// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.4)
+// CHECK:STDOUT:   %.loc26_5.1: ref %Protected = class_element_access %instance.ref.loc26, element0
+// CHECK:STDOUT:   %.loc26_5.2: ref %Base = class_element_access %.loc26_5.1, element0
+// CHECK:STDOUT:   %.loc26_5.3: ref %Base = converted %instance.ref.loc26, %.loc26_5.2
+// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

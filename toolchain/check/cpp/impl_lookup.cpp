@@ -127,10 +127,10 @@ static auto MakeSignature(
       modes, SemIR::ClangDeclSignature::Normal, self_passing_mode));
 }
 
-static auto BuildCopyWitness(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+static auto BuildCopyWitness(Context& context, SemIR::LocId loc_id,
+                             SemIR::ConstantId query_self_const_id,
+                             SemIR::SpecificInterface query_specific_interface)
+    -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   auto* tag_decl = TypeAsTagDecl(context, query_self_const_id);
@@ -160,18 +160,18 @@ static auto BuildCopyWitness(
       return fn_id;
     }
     return BuildCustomWitness(context, loc_id, query_self_const_id,
-                              query_specific_interface_id, {fn_id});
+                              query_specific_interface, {fn_id});
   }
   // Otherwise it's an enum (or eventually a C struct type). Perform a primitive
   // copy.
   return BuildPrimitiveCopyWitness(context, loc_id, query_self_const_id,
-                                   query_specific_interface_id);
+                                   query_specific_interface);
 }
 
 static auto BuildCppUnsafeDerefWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
@@ -206,7 +206,7 @@ static auto BuildCppUnsafeDerefWitness(
           .Get(context.insts().GetAs<SemIR::FunctionDecl>(fn_id).function_id)
           .return_type_inst_id;
   return BuildCustomWitness(
-      context, loc_id, query_self_const_id, query_specific_interface_id,
+      context, loc_id, query_self_const_id, query_specific_interface,
       {context.types().GetTypeInstId(context.types().GetUnqualifiedType(
            context.types().GetTypeIdForTypeInstId(result_type_inst_id))),
        fn_id});
@@ -215,7 +215,7 @@ static auto BuildCppUnsafeDerefWitness(
 static auto BuildDefaultWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
@@ -238,13 +238,13 @@ static auto BuildDefaultWitness(
     return fn_id;
   }
   return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {fn_id});
+                            query_specific_interface, {fn_id});
 }
 
 static auto BuildDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
   auto* tag_decl = TypeAsTagDecl(context, query_self_const_id);
@@ -254,7 +254,7 @@ static auto BuildDestroyWitness(
   auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
   if (!class_decl) {
     return BuildTrivialDestroyWitness(context, loc_id, query_self_const_id,
-                                      query_specific_interface_id);
+                                      query_specific_interface);
   }
   SemIR::ClangDeclSignatureId signature_id = MakeSignature(context, {});
 
@@ -265,14 +265,14 @@ static auto BuildDestroyWitness(
     return fn_id;
   }
   return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {fn_id});
+                            query_specific_interface, {fn_id});
 }
 
 // Attempts to build a witness table entry for a C++ unary operator.
 static auto BuildCppUnaryOperatorWitness(
     Context& context, SemIR::LocId loc_id, SemIR::CoreInterface core_interface,
     bool has_associated_result_type, SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
   auto self_type_id =
       context.types().GetTypeIdForTypeConstantId(query_self_const_id);
   auto fn_id = LookupCppOperator(
@@ -292,26 +292,22 @@ static auto BuildCppUnaryOperatorWitness(
     }
 
     return BuildCustomWitness(context, loc_id, query_self_const_id,
-                              query_specific_interface_id,
+                              query_specific_interface,
                               {result_type_id, fn_id});
   }
   return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {fn_id});
+                            query_specific_interface, {fn_id});
 }
 
 // Attempts to build a witness table entry for a C++ binary operator.
 static auto BuildCppBinaryOperatorWitness(
     Context& context, SemIR::LocId loc_id, SemIR::CoreInterface core_interface,
     bool has_associated_result_type, SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
   auto self_type_id =
       context.types().GetTypeIdForTypeConstantId(query_self_const_id);
-  auto args =
-      context.inst_blocks().Get(context.specifics()
-                                    .Get(context.specific_interfaces()
-                                             .Get(query_specific_interface_id)
-                                             .specific_id)
-                                    .args_id);
+  auto args = context.inst_blocks().Get(
+      context.specifics().Get(query_specific_interface.specific_id).args_id);
   CARBON_CHECK(args.size() == 1, "Binary operator missing an argument");
   auto arg_type_id = context.types().GetTypeIdForTypeInstId(args.front());
   auto fn_id = LookupCppOperator(
@@ -329,26 +325,22 @@ static auto BuildCppBinaryOperatorWitness(
       return SemIR::ErrorInst::InstId;
     }
     return BuildCustomWitness(context, loc_id, query_self_const_id,
-                              query_specific_interface_id,
+                              query_specific_interface,
                               {result_type_id, fn_id});
   }
   return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, {fn_id});
+                            query_specific_interface, {fn_id});
 }
 
 static auto BuildCppComparisonWitness(
     Context& context, SemIR::LocId loc_id, CoreIdentifier interface,
     llvm::ArrayRef<CoreIdentifier> operator_names,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
   auto self_type_id =
       context.types().GetTypeIdForTypeConstantId(query_self_const_id);
-  auto args =
-      context.inst_blocks().Get(context.specifics()
-                                    .Get(context.specific_interfaces()
-                                             .Get(query_specific_interface_id)
-                                             .specific_id)
-                                    .args_id);
+  auto args = context.inst_blocks().Get(
+      context.specifics().Get(query_specific_interface.specific_id).args_id);
   CARBON_CHECK(args.size() == 1, "Binary operator missing an argument");
 
   auto arg_type_id = context.types().GetTypeIdForTypeInstId(args[0]);
@@ -384,7 +376,7 @@ static auto BuildCppComparisonWitness(
   }
 
   return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id, operators);
+                            query_specific_interface, operators);
 }
 
 static auto LookupCppMethod(Context& context, clang::Sema& clang_sema,
@@ -496,7 +488,7 @@ static auto BuildCppRangeForIterateWitnessImpl(
     Context& context, SemIR::LocId loc_id,
     LookupBeginEndCallees range_for_lookup, clang::CXXRecordDecl* class_decl,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
   auto begin_name_info = clang::DeclarationNameInfo(
       &clang_sema.PP.getIdentifierTable().get("begin"),
@@ -536,31 +528,31 @@ static auto BuildCppRangeForIterateWitnessImpl(
                end_result_type_id != SemIR::InstId::None);
 
   return BuildCustomWitness(
-      context, loc_id, query_self_const_id, query_specific_interface_id,
+      context, loc_id, query_self_const_id, query_specific_interface,
       {begin_result_type_id, end_result_type_id, begin_fn_id, end_fn_id});
 }
 
 static auto BuildCppRangeForIterateWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
   auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
   if (auto with_members = BuildCppRangeForIterateWitnessImpl(
           context, loc_id, LookupCppMethod, class_decl, query_self_const_id,
-          query_specific_interface_id);
+          query_specific_interface);
       with_members != SemIR::InstId::None) {
     return with_members;
   }
 
   return BuildCppRangeForIterateWitnessImpl(
       context, loc_id, LookupCppUnqualified, class_decl, query_self_const_id,
-      query_specific_interface_id);
+      query_specific_interface);
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    SemIR::CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
-                   SemIR::SpecificInterfaceId query_specific_interface_id,
+                   SemIR::SpecificInterface query_specific_interface,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
   // TODO: Infer a C++ type structure and check whether it's less strict than
@@ -574,11 +566,11 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
       return BuildCppUnaryOperatorWitness(context, loc_id, core_interface,
                                           /*has_associated_result_type=*/false,
                                           query_self_const_id,
-                                          query_specific_interface_id);
+                                          query_specific_interface);
     case SemIR::CoreInterface::Negate:
       return BuildCppUnaryOperatorWitness(
           context, loc_id, core_interface, /*has_associated_result_type=*/true,
-          query_self_const_id, query_specific_interface_id);
+          query_self_const_id, query_specific_interface);
     case SemIR::CoreInterface::AddWith:
     case SemIR::CoreInterface::SubWith:
     case SemIR::CoreInterface::MulWith:
@@ -587,7 +579,7 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
       return BuildCppBinaryOperatorWitness(context, loc_id, core_interface,
                                            /*has_associated_result_type=*/true,
                                            query_self_const_id,
-                                           query_specific_interface_id);
+                                           query_specific_interface);
     case SemIR::CoreInterface::AddAssignWith:
     case SemIR::CoreInterface::SubAssignWith:
     case SemIR::CoreInterface::MulAssignWith:
@@ -596,34 +588,34 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
       return BuildCppBinaryOperatorWitness(context, loc_id, core_interface,
                                            /*has_associated_result_type=*/false,
                                            query_self_const_id,
-                                           query_specific_interface_id);
+                                           query_specific_interface);
     case SemIR::CoreInterface::EqWith:
       return BuildCppComparisonWitness(
           context, loc_id, CoreIdentifier::EqWith,
           {CoreIdentifier::Equal, CoreIdentifier::NotEqual},
-          query_self_const_id, query_specific_interface_id);
+          query_self_const_id, query_specific_interface);
     case SemIR::CoreInterface::OrderedWith:
       return BuildCppComparisonWitness(
           context, loc_id, CoreIdentifier::OrderedWith,
           {CoreIdentifier::Less, CoreIdentifier::LessOrEquivalent,
            CoreIdentifier::Greater, CoreIdentifier::GreaterOrEquivalent},
-          query_self_const_id, query_specific_interface_id);
+          query_self_const_id, query_specific_interface);
     case SemIR::CoreInterface::Copy:
       return BuildCopyWitness(context, loc_id, query_self_const_id,
-                              query_specific_interface_id);
+                              query_specific_interface);
     case SemIR::CoreInterface::CppUnsafeDeref:
       return BuildCppUnsafeDerefWitness(context, loc_id, query_self_const_id,
-                                        query_specific_interface_id);
+                                        query_specific_interface);
     case SemIR::CoreInterface::Default:
       return BuildDefaultWitness(context, loc_id, query_self_const_id,
-                                 query_specific_interface_id);
+                                 query_specific_interface);
     case SemIR::CoreInterface::Destroy:
       return BuildDestroyWitness(context, loc_id, query_self_const_id,
-                                 query_specific_interface_id);
+                                 query_specific_interface);
 
     case SemIR::CoreInterface::CppRangeForIterate:
       return BuildCppRangeForIterateWitness(
-          context, loc_id, query_self_const_id, query_specific_interface_id);
+          context, loc_id, query_self_const_id, query_specific_interface);
 
     // *FitsIn are implemented only by Carbon primitive types.
     case SemIR::CoreInterface::IntFitsIn:
