@@ -21,8 +21,10 @@ auto HandleDidOpenTextDocument(
     return;
   }
 
-  auto insert_result = context.files().Insert(
-      filename, [&] { return Context::File(params.textDocument.uri); });
+  auto insert_result = context.files().Insert(filename, [&] {
+    return Context::File(params.textDocument.uri,
+                         params.textDocument.languageId);
+  });
   insert_result.value().SetText(context, params.textDocument.version,
                                 params.textDocument.text);
   if (!insert_result.is_inserted()) {

@@ -73,11 +73,12 @@ auto IncomingMessages::AddNotificationHandler(
 IncomingMessages::IncomingMessages(clang::clangd::Transport* transport,
                                    Context* context)
     : transport_(transport), context_(context) {
-  AddCallHandler("textDocument/declaration", &HandleDefinition);
+  AddCallHandler("textDocument/declaration", &HandleDeclaration);
   AddCallHandler("textDocument/definition", &HandleDefinition);
   AddCallHandler("textDocument/documentSymbol", &HandleDocumentSymbol);
   AddCallHandler("textDocument/formatting", &HandleFormatting);
   AddCallHandler("textDocument/hover", &HandleHover);
+  AddCallHandler("textDocument/implementation", &HandleImplementation);
   AddCallHandler("textDocument/references", &HandleReferences);
   AddCallHandler("textDocument/typeDefinition", &HandleTypeDefinition);
   AddCallHandler("initialize", &HandleInitialize);
