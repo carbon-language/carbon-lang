@@ -343,56 +343,22 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
 }
 
 // Performs a conversion from a function to a C++ function pointer type.
-static auto ConvertFunctionToCppPointer(Context& context,
+static auto ConvertFunctionToCppPointer(Context& context, SemIR::LocId loc_id,
                                         SemIR::FunctionType src_type,
                                         SemIR::CppFunctionPointerType dest_type,
                                         SemIR::InstId value_id,
                                         ConversionTarget target)
     -> SemIR::InstId {
-  if (src_type.specific_id.has_value()) {
-    context.TODO(value_id, "support pointers to generic function specifics");
-    return SemIR::ErrorInst::InstId;
-  }
-  SemIR::ClangDeclId clang_decl_id = GetOrExportFunctionToCpp(
-      context, SemIR::LocId(value_id), src_type.function_id);
-  if (!clang_decl_id.has_value()) {
-    return SemIR::ErrorInst::InstId;
-  }
-  auto clang_decl_info = context.clang_decls().Get(clang_decl_id);
-
-  CARBON_CHECK(!clang_decl_info.decl()->isTemplateDecl(),
-               "can't form a pointer to a template");
-
-  const auto* exported_fn_type =
-      clang_decl_info.decl()
-          ->getFunctionType()
-          ->getAsCanonical<clang::FunctionProtoType>();
-  auto function_ptr_type_info =
-      context.clang_function_pointer_types().Get(dest_type.clang_type_id);
-  const auto* target_fn_type =
-      function_ptr_type_info.clang_type->getPointeeType()
-          ->getAsCanonical<clang::FunctionProtoType>();
-
-  if (exported_fn_type != target_fn_type) {
-    if (target.diagnose) {
-      auto function = context.functions().Get(src_type.function_id);
-      CARBON_DIAGNOSTIC(ExportedFunctionPtrTypeMismatch, Error,
-                        "can't convert exported function type to `{0}`",
-                        ClangType);
-      CARBON_DIAGNOSTIC(ExportedFromFunction, Note,
-                        "function exported with type `{0}`", ClangType);
-      context.emitter()
-          .Build(value_id, ExportedFunctionPtrTypeMismatch, target_fn_type)
-          .Note(function.first_decl_id(), ExportedFromFunction,
-                exported_fn_type)
-          .Emit();
-    }
+  if (!ExportFunctionToCppPointerConversion(context, value_id, src_type,
+                                            dest_type, target.diagnose)) {
     return SemIR::ErrorInst::InstId;
   }
 
   return AddInst<SemIR::CppAddrOfFunction>(
-      context, SemIR::LocId(value_id),
-      {.type_id = target.type_id, .function_id = src_type.function_id});
+      context, loc_id,
+      {.type_id = target.type_id,
+       .function_ref_id = value_id,
+       .function_id = src_type.function_id});
 }
 
 // Performs a conversion from a tuple to a tuple type. This function only
@@ -1537,8 +1503,8 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
               target.type_id)) {
     if (auto src_fn_type =
             context.types().TryGetAs<SemIR::FunctionType>(value_type_id)) {
-      return ConvertFunctionToCppPointer(context, *src_fn_type, *fn_ptr_type,
-                                         value_id, target);
+      return ConvertFunctionToCppPointer(context, loc_id, *src_fn_type,
+                                         *fn_ptr_type, value_id, target);
     }
   }
 

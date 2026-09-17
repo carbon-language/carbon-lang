@@ -353,13 +353,11 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
       return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
     }
 
-    case SemIR::FunctionType::Kind:
-      return DestroyFormat::NoDestroy;
-
     case SemIR::BoolType::Kind:
     case SemIR::FacetType::Kind:
     case SemIR::FloatType::Kind:
     case SemIR::FormType::Kind:
+    case SemIR::FunctionType::Kind:
     case SemIR::CppFunctionPointerType::Kind:
     case SemIR::IntLiteralType::Kind:
     case SemIR::IntType::Kind:

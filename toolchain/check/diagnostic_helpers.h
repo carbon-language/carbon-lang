@@ -148,11 +148,12 @@ struct SpecificInterfaceIdAsRawType {
   SemIR::SpecificInterfaceId specific_interface_id;
 };
 
-struct ClangType {
+// A C++ type, for rendering in a diagnostic.
+struct CppType {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
-  explicit(false) ClangType(clang::QualType type) : type(type) {}
-  explicit(false) ClangType(const clang::Type* type) : type(type, 0) {}
+  explicit(false) CppType(clang::QualType type) : type(type) {}
+  explicit(false) CppType(const clang::Type* type) : type(type, 0) {}
 
   clang::QualType type;
 };

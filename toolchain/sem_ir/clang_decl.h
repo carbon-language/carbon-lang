@@ -214,7 +214,7 @@ class ClangDeclStore {
   // Looks up a `ClangDeclId` by `ClangDeclKey`.
   auto LookupId(ClangDeclKey key) const -> ClangDeclId;
 
-  // Looks up a `ClangDeclId by `InstId` and optional `SpecificId`.
+  // Looks up a `ClangDeclId` by `InstId` and optional `SpecificId`.
   auto LookupId(InstId inst_id, SpecificId specific_id = SpecificId::None) const
       -> ClangDeclId;
 

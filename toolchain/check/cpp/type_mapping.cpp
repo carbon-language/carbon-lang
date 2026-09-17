@@ -287,14 +287,12 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
     case CARBON_KIND(SemIR::FunctionType function_type): {
       auto decl_id =
           context.functions().Get(function_type.function_id).first_decl_id();
-      auto clang_decl_id = GetOrExportFunctionToCpp(
+      const auto* clang_decl = GetOrExportFunctionToCpp(
           context, SemIR::LocId(decl_id), function_type.function_id);
-      if (!clang_decl_id.has_value()) {
+      if (clang_decl == nullptr) {
         return clang::QualType();
       }
-      clang::QualType clang_fn_type(
-          context.clang_decls().Get(clang_decl_id).decl()->getFunctionType(),
-          0);
+      clang::QualType clang_fn_type(clang_decl->getFunctionType(), /*Quals=*/0);
       clang::QualType clang_ptr_type =
           context.ast_context().getPointerType(clang_fn_type);
       return context.ast_context().getAttributedType(

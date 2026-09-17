@@ -648,6 +648,11 @@ struct CppAddrOfFunction {
            .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
+
+  // The inst that refers to the Carbon function.
+  InstId function_ref_id;
+
+  // The Carbon function.
   FunctionId function_id;
 };
 

@@ -230,14 +230,8 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
           context_->types().GetTypeInstId(target_inst.type_id());
       auto callee = GetCallee(context_->sem_ir(), target_inst_id);
       if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
-        auto clang_decl_id =
-            GetOrExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
-                                     callee_function->function_id);
-        if (!clang_decl_id.has_value()) {
-          return nullptr;
-        }
-        return llvm::cast<clang::NamedDecl>(
-            context_->clang_decls().Get(clang_decl_id).decl());
+        return GetOrExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
+                                        callee_function->function_id);
       } else if (auto generic_class =
                      context_->insts().TryGetAs<SemIR::GenericClassType>(
                          type_inst_id)) {

@@ -144,7 +144,7 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
         specific_interface_raw->specific_interface_id);
     return StringifySpecificInterface(*sem_ir_, specific_interface);
   }
-  if (auto* clang_type = llvm::any_cast<ClangType>(&arg)) {
+  if (auto* clang_type = llvm::any_cast<CppType>(&arg)) {
     return clang_type->type.getAsString();
   }
   return DiagnosticEmitterBase::ConvertArg(arg);
