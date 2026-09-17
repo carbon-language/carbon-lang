@@ -1549,9 +1549,6 @@ static auto MakeParamPattern(
 
   auto param_info = MapParameterType(context, loc_id, type, passing_mode);
   auto [type_inst_id, type_id] = param_info.type;
-  // Type expression of the binding pattern - a single-entry/single-exit
-  // region that allows control flow in the type expression e.g. fn F(x: if C
-  // then i32 else i64).
   SemIR::ExprRegionId type_expr_region_id =
       ConsumeExprRegionForPattern(context, type_inst_id);
 
@@ -1580,9 +1577,9 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
                                      const clang::FunctionDecl& clang_decl,
                                      SemIR::ClangDeclSignatureId signature_id)
     -> SemIR::InstBlockId {
-  // The `self` parameter of a method (proposal #7016) is the
-  // first entry in the explicit parameter list. Build it (if any) first, then
-  // the remaining explicit parameters.
+  // The `self` parameter of a method is the first entry in the explicit
+  // parameter list. Build it (if any) first, then the remaining explicit
+  // parameters.
   bool has_self_param = IsObjectMemberFunction(clang_decl);
   const auto& signature = context.clang_decl_signatures().Get(signature_id);
   llvm::SmallVector<SemIR::InstId> param_ids;
