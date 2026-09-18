@@ -61,8 +61,12 @@ def main() -> None:
         "--verbose", "-v", action="store_true", help="Produce verbose output"
     )
     parser.add_argument(
-        "--build-mode",
-        help="Build mode to use. The default is to detect the last used mode",
+        "--compilation-mode",
+        "-c",
+        help=(
+            "Compilation mode to use. The default is to detect the mode used "
+            "by the last bazel invocation"
+        ),
         choices=["dbg", "fastbuild", "opt"],
     )
     parser.add_argument("files", nargs="*")
@@ -73,9 +77,9 @@ def main() -> None:
     bazel = str(Path(__file__).parents[1] / "scripts" / "run_bazel.py")
     configs = []
 
-    # Unless the user chose one explicitly, use the most recently used build
+    # Unless the user chose one explicitly, use the most recently-used build
     # mode, or `fastbuild` if missing `bazel-bin`.
-    build_mode = args.build_mode or _detect_build_mode(bazel, printv)
+    build_mode = args.compilation_mode or _detect_build_mode(bazel, printv)
 
     if args.non_fatal_checks:
         if build_mode == "optimize":
