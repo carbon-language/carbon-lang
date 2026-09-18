@@ -12,8 +12,8 @@
 
 // --- params.h
 
-void TakesArray(int arr [_Nullable 42]);
-void TakesFunction(int (* _Nonnull f) (int));
+void TakesArray(int arr[42]);
+void TakesFunction(int f(int));
 
 int Function(int);
 
@@ -61,9 +61,9 @@ fn F() {
   // CHECK:STDERR:    31 |   Cpp.TakesFunction(&n[0]);
   // CHECK:STDERR:       |                          ^
   // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE-22]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./params.h:3:6: note: candidate function not viable: no known conversion from 'int * _Nonnull' to 'int (* _Nonnull)(int)' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     3 | void TakesFunction(int (* _Nonnull f) (int));
-  // CHECK:STDERR:       |      ^             ~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: ./params.h:3:6: note: candidate function not viable: no known conversion from 'int * _Nonnull' to 'int (*)(int)' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     3 | void TakesFunction(int f(int));
+  // CHECK:STDERR:       |      ^             ~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.TakesFunction(&n[0]);
 
@@ -74,9 +74,9 @@ fn F() {
   // CHECK:STDERR:   Cpp.TakesFunction(Cpp.nullptr);
   // CHECK:STDERR:                     ^~~~~~~~~~~
   // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE-35]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./params.h:3:36: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: void TakesFunction(int (* _Nonnull f) (int));
-  // CHECK:STDERR:                                    ^
+  // CHECK:STDERR: ./params.h:3:24: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: void TakesFunction(int f(int));
+  // CHECK:STDERR:                        ^
   // CHECK:STDERR:
   Cpp.TakesFunction(Cpp.nullptr);
   //@dump-sem-ir-end
@@ -364,7 +364,7 @@ fn F() {
 // CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t: type = class_type @NullptrT [concrete]
 // CHECK:STDOUT:   %uninit: %Cpp.nullptr_t = uninitialized_value [concrete]
-// CHECK:STDOUT:   %.659: type = cpp_fn_ptr_type clang_function_pointer_type_id41000000 [concrete]
+// CHECK:STDOUT:   %.659: type = cpp_fn_ptr_type clang_function_pointer_type41000000 [concrete]
 // CHECK:STDOUT:   %TakesFunction.type: type = fn_type @TakesFunction [concrete]
 // CHECK:STDOUT:   %TakesFunction: %TakesFunction.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.4: type = fn_type @Destroy.WithSelf.Op.loc22_3.3 [concrete]
@@ -390,7 +390,7 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %.loc44: type = cpp_fn_ptr_type clang_function_pointer_type_id41000000 [concrete = constants.%.659]
+// CHECK:STDOUT:     %.loc44: type = cpp_fn_ptr_type clang_function_pointer_type41000000 [concrete = constants.%.659]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -441,7 +441,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc44_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %nullptr.ref: %Cpp.nullptr_t = name_ref nullptr, %uninit [concrete = constants.%uninit]
-// CHECK:STDOUT:   %.loc44_32: type = cpp_fn_ptr_type clang_function_pointer_type_id41000000 [concrete = constants.%.659]
+// CHECK:STDOUT:   %.loc44_32: type = cpp_fn_ptr_type clang_function_pointer_type41000000 [concrete = constants.%.659]
 // CHECK:STDOUT:   %.loc44_24: %.659 = converted %nullptr.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %TakesFunction.call: init %empty_tuple.type = call imports.%TakesFunction.decl(<error>)
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %n.var, constants.%Destroy.WithSelf.Op.403171.4

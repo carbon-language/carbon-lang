@@ -440,8 +440,8 @@ struct CalleeCppFunctionPointer {
 struct CalleeNonFunction {};
 
 // A variant combining the callee forms.
-using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
-                            CalleeCppFunctionPointer, CalleeNonFunction>;
+using Callee = std::variant<CalleeCppFunctionPointer, CalleeCppOverloadSet,
+                            CalleeError, CalleeFunction, CalleeNonFunction>;
 
 // Given a callee expression in a function call, attempt to convert the callee
 // to a `BoundMethod`, minimally unwrapping it while doing so.

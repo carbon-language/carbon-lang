@@ -393,8 +393,7 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
 static auto PerformCallToCppFunctionPointer(
     Context& context, SemIR::LocId loc_id, SemIR::InstId function_ptr_id,
     SemIR::CalleeCppFunctionPointer fn_ptr,
-    llvm::ArrayRef<SemIR::InstId> arg_ids, bool /*is_desugared*/)
-    -> SemIR::InstId {
+    llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   auto pointer_info =
       ImportFunctionPointerInvoke(context, loc_id, fn_ptr.function_type_id);
   SemIR::CalleeFunction callee_function = {
@@ -442,7 +441,7 @@ static auto PerformCallHelper(Context& context, SemIR::LocId loc_id,
     }
     case CARBON_KIND(SemIR::CalleeCppFunctionPointer fn_ptr): {
       return PerformCallToCppFunctionPointer(context, loc_id, callee_id, fn_ptr,
-                                             arg_ids, is_desugared);
+                                             arg_ids);
     }
     case CARBON_KIND(SemIR::CalleeNonFunction _): {
       return PerformCallToNonFunction(context, loc_id, callee_id, arg_ids);

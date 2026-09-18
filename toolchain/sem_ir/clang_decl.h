@@ -236,9 +236,9 @@ class ClangDeclStore {
   Set<ClangDeclId, 0, KeyContext> reverse_lookup_;
 };
 
-// Information about a Clang function pointer type. This plays the same role
-// for function pointer callees that `ClangDecl` plays for ordinary function
-// callees.
+// Information about a Clang function pointer type. We can't use `ClangDecl`
+// to represent function pointer callees, because function pointer types
+// don't have declarations in C++, so this type is used in its place.
 struct ClangFunctionPointerTypeInfo {
   auto GetAsKey() const -> const clang::Type* { return clang_type; }
 
@@ -255,7 +255,8 @@ struct ClangFunctionPointerTypeInfo {
   SemIR::InstId decl_id;
 
   // The corresponding function ID, or `None` if it has not yet been
-  // imported.
+  // imported. This should always be the same as `decl_id`'s `function_id`
+  // field, but we cache it here for convenience and efficiency.
   SemIR::FunctionId function_id;
 };
 

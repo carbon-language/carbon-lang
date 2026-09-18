@@ -512,7 +512,7 @@ struct ClangDeclSignatureId : public IdBase<ClangDeclSignatureId> {
 
 // The ID of a `ClangFunctionPointerTypeInfo`.
 struct ClangFunctionPointerTypeId : public IdBase<ClangFunctionPointerTypeId> {
-  static constexpr llvm::StringLiteral Label = "clang_function_pointer_type_id";
+  static constexpr llvm::StringLiteral Label = "clang_function_pointer_type";
 
   using IdBase::IdBase;
 };

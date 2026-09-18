@@ -2123,14 +2123,16 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
 // Imports a C++ function pointer type, and prepares to import its `__invoke`
 // function. The function itself must be imported separately with
-// `ImportFunctionPointerInvoke`.
+// `ImportFunctionPointerInvoke` when it's called, because that requires the
+// types in the signature to be complete.
 static auto ImportFunctionPointer(Context& context, SemIR::LocId loc_id,
                                   const clang::Type* pointer_type)
     -> SemIR::InstId {
   CARBON_CHECK(pointer_type->isFunctionPointerType());
   // Allocate an ID for the function pointer type and return it.
-  pointer_type =
-      clang::QualType(pointer_type, /*Quals=*/0).getCanonicalType().getTypePtr();
+  pointer_type = clang::QualType(pointer_type, /*Quals=*/0)
+                     .getCanonicalType()
+                     .getTypePtr();
   auto clang_type_id =
       context.clang_function_pointer_types().Lookup(pointer_type);
   if (!clang_type_id.has_value()) {
