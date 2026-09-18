@@ -71,14 +71,12 @@ auto ThunkPatternMatch(Context& context,
 // be passed to the `Call` inst. `is_desugared` indicates that this call
 // was produced by desugaring, not written as a function call in user code, so
 // arguments to `ref` parameters aren't required to have `ref` tags.
-auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
-                        SemIR::InstId self_pattern_id,
-                        SemIR::InstBlockId param_patterns_id,
-                        SemIR::InstId return_pattern_id,
-                        SemIR::InstId self_arg_id,
-                        llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        SemIR::InstId return_arg_id, bool is_desugared)
-    -> SemIR::InstBlockId;
+auto CallerPatternMatch(
+    Context& context, SemIR::SpecificId specific_id,
+    SemIR::InstId self_pattern_id, SemIR::InstBlockId param_patterns_id,
+    SemIR::InstBlockId param_default_values_id, SemIR::InstId return_pattern_id,
+    SemIR::InstId self_arg_id, llvm::ArrayRef<SemIR::InstId> arg_refs,
+    SemIR::InstId return_arg_id, bool is_desugared) -> SemIR::InstBlockId;
 
 // Emits the pattern-match IR for a local pattern matching operation with the
 // given pattern and scrutinee.

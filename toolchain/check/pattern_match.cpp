@@ -34,6 +34,9 @@ namespace {
 struct CallerState {
   // The in-progress contents of the `Call` arguments block.
   llvm::SmallVector<SemIR::InstId> call_args;
+
+  // An optional block for default values for parameters.
+  llvm::ArrayRef<SemIR::InstId> param_default_values;
 };
 
 // Manages the allocation of call parameter indices.
@@ -119,7 +122,9 @@ using State =
 class MatchContext {
  public:
   struct PreWork : Printable<PreWork> {
-    // `None` when processing the callee side.
+    // `None` when processing the callee side, or when processing the caller
+    // side and no value was supplied, in expectation of using a default value
+    // from the corresponding callee pattern.
     SemIR::InstId scrutinee_id;
 
     auto Print(llvm::raw_ostream& out) const -> void {
@@ -936,13 +941,25 @@ auto MatchContext::DoPreWork(State state,
                              SemIR::DefaultValuePattern default_value_pattern,
                              SemIR::InstId scrutinee_id, WorkItem entry)
     -> void {
-  if (!std::holds_alternative<CalleeState*>(state)) {
-    CARBON_FATAL("Unhandled state kind in DefaultValuePattern pre-work");
+  CARBON_KIND_SWITCH(state) {
+    case CARBON_KIND(CallerState* caller_state): {
+      // If there's no scrutinee supplied, supply the default value instead.
+      if (!scrutinee_id.has_value()) {
+        scrutinee_id = caller_state->param_default_values[static_cast<size_t>(
+            default_value_pattern.default_value_id.index)];
+        caller_state->call_args.push_back(scrutinee_id);
+      }
+      break;
+    }
+    default: {
+      CARBON_CHECK(std::holds_alternative<CalleeState*>(state),
+                   "Unhandled state kind in DefaultValuePattern pre-work");
+      // We will need to check the type of the parameter to make sure it
+      // matches the provided default, so add ourselves to the post-work list.
+      results_stack_.PushArray();
+      AddAsPostWork(entry);
+    }
   }
-  // We will need to check the type of the parameter to make sure it
-  // matches the provided default, so add ourselves to the post-work list.
-  results_stack_.PushArray();
-  AddAsPostWork(entry);
 
   // Process the subpattern for the default.
   AddWork({.pattern_id = default_value_pattern.subpattern_id,
@@ -1215,15 +1232,14 @@ auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
   return result_id;
 }
 
-auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
-                        SemIR::InstId self_pattern_id,
-                        SemIR::InstBlockId param_patterns_id,
-                        SemIR::InstId return_pattern_id,
-                        SemIR::InstId self_arg_id,
-                        llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        SemIR::InstId return_arg_id, bool is_desugared)
-    -> SemIR::InstBlockId {
-  CallerState state;
+auto CallerPatternMatch(
+    Context& context, SemIR::SpecificId specific_id,
+    SemIR::InstId self_pattern_id, SemIR::InstBlockId param_patterns_id,
+    SemIR::InstBlockId param_default_values_id, SemIR::InstId return_pattern_id,
+    SemIR::InstId self_arg_id, llvm::ArrayRef<SemIR::InstId> arg_refs,
+    SemIR::InstId return_arg_id, bool is_desugared) -> SemIR::InstBlockId {
+  CallerState state{.param_default_values = context.inst_blocks().GetOrEmpty(
+                        param_default_values_id)};
   MatchContext match(context, specific_id);
 
   // When we have a separate `self_arg_id`, we concatenate that onto the front
@@ -1234,9 +1250,19 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
     CARBON_CHECK(self_pattern_id.has_value());
   }
 
-  for (const auto& [arg_id, param_pattern_id] : llvm::zip_equal(
+  // `arg_refs` may have a smaller arity than `param_patterns_id` due to the
+  // possible presence of default values for some parameters. We use
+  // `zip_longest` here to allow for that size disparity. But we presume we
+  // always have a parameter pattern, so test that presumption here.
+  CARBON_CHECK(self_arg_refs.size() + arg_refs.size() <=
+               context.inst_blocks().GetOrEmpty(param_patterns_id).size());
+  for (const auto& [maybe_arg_id, maybe_param_pattern_id] : llvm::zip_longest(
            llvm::concat<const SemIR::InstId>(self_arg_refs, arg_refs),
            context.inst_blocks().GetOrEmpty(param_patterns_id))) {
+    CARBON_CHECK(maybe_param_pattern_id.has_value());
+    const auto& param_pattern_id = *maybe_param_pattern_id;
+    const auto& arg_id =
+        maybe_arg_id.has_value() ? *maybe_arg_id : SemIR::InstId::None;
     match.Match(&state,
                 {.pattern_id = param_pattern_id,
                  .work = MatchContext::PreWork{.scrutinee_id = arg_id},
