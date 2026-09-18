@@ -604,11 +604,11 @@ TEST(SetTest, TraversalOrderIsAVaryingPermutation) {
   // Debug builds randomize both the starting group and the stride, so across
   // this many ranges we should see more than the two orders (pure forward and
   // pure reverse) that a simple direction flip would produce.
-  EXPECT_GT(distinct_orders.size(), 2u)
+  EXPECT_GT(distinct_orders.size(), 2)
       << "Debug traversal order does not appear to be randomized.";
 #else
   // Release builds always scan the groups in order.
-  EXPECT_EQ(distinct_orders.size(), 1u);
+  EXPECT_EQ(distinct_orders.size(), 1);
 #endif
 }
 
