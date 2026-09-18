@@ -62,6 +62,28 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
   //@dump-sem-ir-end
 }
 
+// --- access_private_method_after_specific_eval.carbon
+
+library "[[@TEST_NAME]]";
+
+interface I(T: type) {
+  fn F(self, t: T);
+}
+
+class A {}
+class B {}
+
+impl A as I(B) {
+  fn F(unused self, unused b: B) {}
+}
+
+class C {
+  private fn G(ref self) {
+    let a: A = {};
+    a.(I(B).F)({});
+    self.G();
+  }
+}
 
 // CHECK:STDOUT: --- member_access.carbon
 // CHECK:STDOUT:
