@@ -991,7 +991,8 @@ static auto BuildClassDefinition(Context& context,
     auto vtable_id = context.vtables().Add(
         {{.class_id = class_id,
           .virtual_functions_id = context.inst_blocks().Add(vtable),
-          .carbon_native_vtable = false}});
+          .carbon_native_vtable = false,
+          .has_multiple_vtables = (vtable_layout.getNumVTables() > 1)}});
     auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
     class_info.vtable_decl_id =
         AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
