@@ -57,3 +57,24 @@ void Test() {
   Carbon::Derived d;
 }
 ''';
+
+// --- fail_todo_generic.carbon
+// TODO: Test in `toolchain/lower/testdata/` once generic classes deriving from
+// C++ virtual classes pass check.
+library "[[@TEST_NAME]]";
+import Cpp;
+
+inline Cpp '''
+struct VBase {
+  virtual void f() {}
+};
+''';
+
+// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+4]]:1: error: semantics TODO: `generic class deriving from C++ virtual class` [SemanticsTodo]
+// CHECK:STDERR: class GenericZ(T: type) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+class GenericZ(T: type) {
+  extend base: Cpp.VBase;
+  override fn f(unused self) {}
+}
