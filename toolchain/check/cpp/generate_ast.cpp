@@ -759,6 +759,16 @@ static auto ImportHeader(Context& context, clang::Module* mod,
     if (name.starts_with('<') && name.ends_with('>')) {
       code_stream << "#include <"
                   << FormatEscaped(name.drop_front().drop_back()) << ">\n";
+    } else if (name.contains('"')) {
+      // Header-name tokens don't process escapes. Expand a string literal macro
+      // instead so that embedded quotes remain part of the filename.
+      code_stream << "#define __carbon_include_filename \""
+                  << FormatEscaped(name) << "\"\n";
+      GenerateLineMarker(context, code_stream,
+                         context.tokens().GetLineNumber(
+                             context.parse_tree().node_token(import.node_id)));
+      code_stream << "#include __carbon_include_filename\n"
+                     "#undef __carbon_include_filename\n";
     } else {
       code_stream << "#include \"" << FormatEscaped(name) << "\"\n";
     }
