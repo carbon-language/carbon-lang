@@ -1,0 +1,279 @@
+---
+name: Review testdata changes
+description:
+    Instructions for judging whether changes to file test output
+    (`// CHECK:STDOUT:` and `// CHECK:STDERR:` lines) are correct, which
+    changes are acceptable churn, and which are regressions in disguise.
+---
+
+# Review testdata changes
+
+<!--
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-->
+
+## Introduction
+
+Most toolchain work moves file test output. `./toolchain/autoupdate_testdata.py`
+rewrites the `// CHECK:STDOUT:` and `// CHECK:STDERR:` lines in
+`toolchain/*/testdata/` to match current behavior, so after running it the tests
+pass again whether or not the new behavior is right. Deciding that the new
+output is the output you wanted is a separate, manual step, and it is the step
+this skill covers.
+
+Three skills divide the work:
+
+-   [Toolchain tests](../toolchain_tests/SKILL.md): how to _author_ tests and
+    generate their output.
+-   This skill: how to _judge_ an output diff.
+-   [Summarize testdata changes](../summarize_testdata_changes/SKILL.md): how to
+    _report_ an output diff once you believe it is correct.
+
+> [!IMPORTANT] Never hand-edit `// CHECK:STDOUT:` or `// CHECK:STDERR:` lines.
+> Everything below is about changing the _code_ until the generated output is
+> right, never about editing the output to match the code.
+
+## The rule that generates all the others
+
+**Every line of testdata churn must have a cause you can name.** Not "it is
+similar to the other changes", not "the tests pass now" — an actual sentence
+saying which code change produced it and why that is the intended result.
+
+A diff you cannot narrate is a diff you have not reviewed. Changes you cannot
+explain are where regressions hide, because a regression and an intended change
+look exactly alike once the autoupdater has written them down.
+
+> [!CAUTION] Autoupdating is destructive to your evidence. Once the autoupdater
+> has run, the previous expectations are gone from the working copy. Read the
+> diff after _every_ autoupdate run, and if something changed for a reason you
+> cannot name, fix the code before autoupdating again. Recovering the old
+> expectations later means reverting and re-running.
+
+## STDERR and STDOUT are different kinds of evidence
+
+Treat them separately; they have different standards of proof.
+
+**STDERR is user-visible behavior.** These are the diagnostics a Carbon
+programmer sees. A change here is a change to the language implementation as
+users experience it, so each one needs an individual justification. For a
+refactoring, the expected STDERR diff is empty.
+
+**STDOUT is internal representation.** SemIR dumps, parse trees, LLVM IR. Users
+never see it. Churn here is normal and often unavoidable, so the standard is not
+"no change" but "no change I cannot account for".
+
+For a change that is supposed to preserve behavior, write down the list of
+accepted STDERR changes _before_ you start, and keep it current. An explicit
+list is what lets an unexpected change stand out; without one, every diagnostic
+change looks equally plausible.
+
+## Judging STDOUT churn
+
+Sort each STDOUT change into mechanical or structural.
+
+### Mechanical churn
+
+Expected, and cheap to accept in bulk once you have confirmed the pattern:
+
+-   **Renaming.** An instruction, type, or scope prints under a new name.
+-   **Positional name renumbering.** Names like `%x.loc18_46.3` embed a line,
+    column, and disambiguating index. Adding or removing an instruction at a
+    location renumbers the rest, so a _single_ removed instruction can show up
+    as many changed lines in the same block. Confirm the cascade is a cascade
+    before accepting it as one.
+-   **Fingerprint-derived names.** Mangled names and some scope names are
+    derived from a hash of their inputs. If you changed a hashed input, these
+    move. Confirm that each such difference is _only_ the fingerprint, and not a
+    fingerprint difference concealing a structural one.
+
+> [!TIP] Mechanical churn is usually wide and shallow: the same substitution,
+> repeated across many files. If a "mechanical" pattern needs a different
+> explanation in each file, it is not mechanical.
+
+### Structural churn
+
+Each of these needs its own explanation:
+
+-   Instructions appearing or disappearing.
+-   Changed `[concrete = ...]`, `[symbolic = ...]`, or other constant-value
+    annotations.
+-   Changed types on existing instructions.
+-   Changed control flow: new or removed blocks, changed branch targets.
+-   Raw instruction ids renumbering in `--dump-raw-sem-ir` output when you did
+    not intend to change the id layout.
+
+## Fewer instructions is not automatically better
+
+A diff that removes instructions looks like an optimization, but it is not
+always correct. Whether it is correct depends entirely on **what the
+function that changed was trying to do**. For example, if a function is
+working with constant values, but was creating extraneous instructions in
+the process, it would be correct to remove those instructions and just
+work with constants. But if a function is working with **non-canonical
+instructions** then it may make the tests shorter to change the code to
+work with constants instead, as it no longer has to create insts of its
+own. But this would be **wrong** and would lose location information associated
+with non-canonical instructions, and break symbolic constant substitution.
+
+Decide which kind of behaviour is required first. The instruction count follows
+from that; it is not the thing being optimized.
+
+The same reasoning runs in reverse: a diff that _adds_ instructions is not
+automatically a regression.
+
+## Judging STDERR churn
+
+### A diagnostic's authority depends on the file's prefix
+
+The `fail_` and `todo_` prefixes (see
+[Toolchain tests](../toolchain_tests/SKILL.md)) say how much the recorded
+diagnostics are worth:
+
+-   **`fail_...`** — the test should and does produce errors. The recorded
+    diagnostic **is the specification**. Changing it is a user-visible behavior
+    change and needs justification on its own merits.
+-   **`fail_todo_...`** — the test produces errors (or crashes) but shouldn't,
+    or produces the wrong errors. The recorded diagnostic is explicitly **not**
+    the specification; the file exists to record that today's behavior is wrong.
+    Changing it replaces one wrong answer with another. That is acceptable when
+    you can say why the new message follows from your change and why it is no
+    further from the intended eventual behavior — which, for many such files, is
+    no diagnostic at all.
+-   **`todo_fail_...`** — the test should produce errors but does not. Gaining a
+    diagnostic here may be _progress_, not a regression. If it now produces the
+    right error, rename the file to `fail_...`.
+-   **`todo_...`** — behavior is wrong but produces no errors, and shouldn't.
+    Gaining a diagnostic here is a regression unless you can argue otherwise.
+
+> [!IMPORTANT] This is a reason to look at the _filename_ before judging a
+> diagnostic change, not a license to ignore `todo_` files. "It was already
+> broken" does not excuse making it differently broken for no reason.
+
+### Reclassifying tests
+
+If your change fixes a test, the prefix must move with it. The correspondence
+between the `fail_` prefix and whether compilation actually failed is enforced
+by the test framework, not by the autoupdater, so it surfaces when you run
+`bazelisk test` and not when you autoupdate. **Autoupdating is not a substitute
+for running the tests.**
+
+When a fix drops a file's prefix, also check that the file still belongs where
+it is and that its comments do not still describe the old broken behavior.
+
+### Vaguer diagnostics are a signal, not a verdict
+
+When a diagnostic becomes less specific — a general "unsupported" message
+replacing one that named the problem — that usually means a code path stopped
+finding information it previously had. Sometimes that is correct: the
+information was misleading, and the old message was confidently wrong.
+
+Do not accept it silently and do not reject it reflexively. Say which direction
+it moved and whether the new message is closer to or further from the eventual
+intended behavior.
+
+## Signals in the shape of the diff
+
+### Zero churn is a result
+
+If you removed something you believed was doing work and _no_ testdata moved,
+that is not a missing test run — it is the proof that the thing was a no-op.
+Say so explicitly; it is one of the strongest pieces of evidence a refactoring
+can produce.
+
+The converse is also informative. If you expected a path to churn and it didn't,
+either your model of the code is wrong or that path is untested. Find out which,
+and consider adding a test before continuing.
+
+### Churn should be proportional to the change
+
+-   **Wide churn from a narrow change** means your model of the code is wrong.
+    Do not autoupdate over it. Find the structural mistake first.
+-   **Narrow churn from a sweeping change** means the affected paths are
+    probably untested.
+
+Set a rough expectation for the size of the diff before you run the autoupdater,
+and treat a large mismatch in either direction as a finding.
+
+### Never make the diff smaller by weakening the test
+
+Editing test _input_ (the Carbon source, not the CHECK lines) to make a diff
+look better is a behavior change in disguise. Deleting a test that now produces
+awkward output is worse. If a test's input has to change, that is a separate,
+explicitly-justified change, not diff cleanup.
+
+## What the autoupdater will not fix for you
+
+-   **`NOAUTOUPDATE` files.** Their expectations are maintained by hand. They
+    fail under `bazelisk test` rather than being silently rewritten.
+-   **Hand-written C++ expectations**, for example golden output asserted in a
+    `_test.cpp`. When several assertions in one of these break together, often
+    only the first failure is reported, so fixing it can reveal another. Re-run
+    until clean rather than assuming one fix was the whole repair.
+-   **Golden files outside `testdata/`**, and documentation that quotes compiler
+    output.
+
+## Review loop
+
+Iterate narrow, then widen. Only widen once the narrow scope is clean:
+
+```bash
+# One subdirectory that is currently misbehaving.
+./toolchain/autoupdate_testdata.py toolchain/check/testdata/SUBDIR/**/*
+
+# Then the whole phase.
+./toolchain/autoupdate_testdata.py toolchain/check/**/*
+
+# Finally every file test in the toolchain.
+./toolchain/autoupdate_testdata.py toolchain/**/*
+```
+
+The globs are expanded by the shell; the script filters its arguments to
+`.carbon` files under a `testdata/` directory.
+
+> [!TIP] If intermediate states crash on `CARBON_CHECK` failures, pass
+> `--non-fatal-checks` so you can see the full set of downstream damage in one
+> run instead of one crash at a time.
+
+Inspect the diagnostics first, since that is the acceptance criterion:
+
+```bash
+# STDERR-only view.
+jj --no-pager diff --git 'glob:toolchain/*/testdata/**' \
+  | grep -E '^[-+].*CHECK:STDERR'
+```
+
+For a structured view separating test input, STDERR, and STDOUT changes, use the
+helper from the
+[Summarize testdata changes](../summarize_testdata_changes/SKILL.md) skill:
+
+```bash
+jj --no-pager diff --git 'glob:toolchain/*/testdata/**' \
+  | python3 .agents/skills/summarize_testdata_changes/scripts/parse_diff.py
+```
+
+Then run the tests, which is what catches prefix mismatches and non-autoupdated
+expectations:
+
+```bash
+bazelisk test //toolchain/...
+```
+
+See the [Bazel usage](../bazel/SKILL.md) skill.
+
+## Checklist
+
+Before presenting a testdata diff as finished:
+
+-   [ ] Every STDERR change is on a written list of accepted behavior changes,
+        each with a reason.
+-   [ ] Every STDOUT change is either an instance of a named mechanical pattern
+        or has its own explanation.
+-   [ ] Instructions that appeared or disappeared are justified by what the
+        changed function owes its caller, not by the instruction count.
+-   [ ] Files whose prefix no longer matches their behavior have been renamed.
+-   [ ] No test input was changed, and no test was deleted, to make the diff
+        smaller.
+-   [ ] The size of the diff is proportional to the size of the change.
+-   [ ] `bazelisk test //toolchain/...` passes.
