@@ -473,8 +473,7 @@ static auto BuildFunctionDecl(Context& context,
   if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
       !name_context.prev_inst_id().has_value()) {
     DiagnoseDefaultValuesNotSpecified(
-        context,
-        context.inst_blocks().Get(name.unspecified_values_block_id));
+        context, context.inst_blocks().Get(name.unspecified_values_block_id));
   }
 
   TryMergeRedecl(

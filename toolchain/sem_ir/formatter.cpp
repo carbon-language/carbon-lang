@@ -1643,10 +1643,8 @@ auto Formatter::FormatArg(DefaultValueId id) -> void {
   if (default_value.is_unspecified) {
     out() << "<unspecified>";
   } else {
-    out() << "{";
-    auto default_inst = sem_ir_->insts().Get(default_value.value_id);
-    FormatInstRhs(default_inst);
-    out() << " }";
+    FormatNameAndForm(default_value.value_id,
+                      sem_ir_->insts().Get(default_value.value_id));
   }
 }
 
