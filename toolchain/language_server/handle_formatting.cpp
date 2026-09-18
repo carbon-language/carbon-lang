@@ -32,6 +32,12 @@ auto HandleFormatting(
   if (!file) {
     return;
   }
+  if (file->is_test_file()) {
+    // A test file isn't Carbon source, so it has no parse tree to format from,
+    // and reformatting one as if it were would destroy it.
+    on_done(std::vector<clang::clangd::TextEdit>());
+    return;
+  }
 
   RawStringOstream out;
   if (!Format::Format(file->tokens(), out)) {
