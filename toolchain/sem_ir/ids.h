@@ -522,7 +522,7 @@ struct BoolValue : public IdBase<BoolValue> {
   static constexpr auto From(bool b) -> BoolValue { return b ? True : False; }
 
   // Returns the `bool` corresponding to this `BoolValue`.
-  constexpr auto ToBool() -> bool {
+  constexpr auto ToBool() const -> bool {
     CARBON_CHECK(*this == False || *this == True, "Invalid bool value {0}",
                  index);
     return *this != False;

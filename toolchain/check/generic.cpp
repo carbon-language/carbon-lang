@@ -264,7 +264,9 @@ static auto AddGenericConstantToEvalBlock(Context& context,
 auto GetOrAddInstWithSpecificConstantValue(Context& context,
                                            SemIR::InstId inst_id)
     -> SemIR::InstId {
-  if (!context.constant_values().Get(inst_id).is_symbolic()) {
+  auto const_id = context.constant_values().GetAttached(inst_id);
+  if (!const_id.is_symbolic() ||
+      context.constant_values().IsAttached(const_id)) {
     return inst_id;
   }
   return AddGenericConstantInstToEvalBlock(context, inst_id);

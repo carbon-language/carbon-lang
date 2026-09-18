@@ -3129,6 +3129,34 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
       // Couldn't perform the action because it's still dependent.
       return MakeConstantResult(eval_context.context(), inst,
                                 Phase::TemplateSymbolic);
+    } else if constexpr (ConstantKind ==
+                         SemIR::InstConstantKind::MultiInstAction) {
+      auto result_inst_ids = PerformDelayedAction(
+          eval_context.context(), eval_context.specific_id(),
+          SemIR::LocId(inst_id), inst.As<InstT>());
+      if (!result_inst_ids.empty()) {
+        // The result is a tuple of instruction values.
+        for (auto& result_inst_id : result_inst_ids) {
+          result_inst_id =
+              eval_context.constant_values().GetInstId(MakeConstantResult(
+                  eval_context.context(),
+                  SemIR::InstValue{
+                      .type_id = GetSingletonType(eval_context.context(),
+                                                  SemIR::InstType::TypeInstId),
+                      .inst_id = result_inst_id},
+                  Phase::Concrete));
+        }
+        return MakeConstantResult(
+            eval_context.context(),
+            SemIR::TupleValue{
+                .type_id = inst.type_id(),
+                .elements_id =
+                    eval_context.inst_blocks().AddCanonical(result_inst_ids)},
+            Phase::Concrete);
+      }
+      // Couldn't perform the action because it's still dependent.
+      return MakeConstantResult(eval_context.context(), inst,
+                                Phase::TemplateSymbolic);
     } else if constexpr (InstT::Kind.constant_needs_inst_id() !=
                          SemIR::InstConstantNeedsInstIdKind::No) {
       CARBON_CHECK(inst_id.has_value());

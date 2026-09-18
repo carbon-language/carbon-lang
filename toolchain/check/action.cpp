@@ -102,9 +102,8 @@ auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
 template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT> &&
            SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::AbsoluteInstId,
-                       SemIR::CallParamIndex, SemIR::NameId,
-                       SemIR::ElementIndex, SemIR::ClangDeclId,
-                       SemIR::BoolValue>
+                       SemIR::BoolValue, SemIR::CallParamIndex,
+                       SemIR::ClangDeclId, SemIR::ElementIndex, SemIR::NameId>
 static auto OperandDependenceInSpecific(Context& /*context*/,
                                         SemIR::SpecificId /*specific_id*/,
                                         IdT /*id*/)
@@ -213,6 +212,21 @@ auto ActionIsPerformable(Context& context, SemIR::Inst action_inst,
          OperandDependenceInSpecific(context, specific_id,
                                      action_inst.arg1_and_kind()) <
              SemIR::ConstantDependence::Template;
+}
+
+auto AddSpliceInst(Context& context, SemIR::InstId inst_value_id,
+                   SemIR::TypeInstId result_type_inst_id) -> SemIR::InstId {
+  if (!result_type_inst_id.has_value()) {
+    result_type_inst_id =
+        AddTypeInst(context, SemIR::LocId(inst_value_id),
+                    SemIR::TypeOfInst{.type_id = SemIR::TypeType::TypeId,
+                                      .inst_id = inst_value_id});
+  }
+  return AddInst(
+      context, SemIR::LocId(inst_value_id),
+      SemIR::SpliceInst{.type_id = context.types().GetTypeIdForTypeInstId(
+                            result_type_inst_id),
+                        .inst_id = inst_value_id});
 }
 
 // Refine one operand of an action. Given an argument from a template, this
@@ -324,23 +338,19 @@ static auto RefineOperands(Context& context, SemIR::LocId loc_id,
   return action;
 }
 
+auto AddDependentActionInst(Context& context, SemIR::LocIdAndInst action)
+    -> SemIR::InstId {
+  action.inst = RefineOperands(context, action.loc_id, action.inst);
+  return AddInstToEvalBlock(context, action);
+}
+
 auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
                               SemIR::TypeInstId result_type_inst_id)
     -> SemIR::InstId {
   action.inst = RefineOperands(context, action.loc_id, action.inst);
 
   auto inst_id = AddDependentActionInst(context, action);
-  if (!result_type_inst_id.has_value()) {
-    result_type_inst_id =
-        AddTypeInst(context, action.loc_id,
-                    SemIR::TypeOfInst{.type_id = SemIR::TypeType::TypeId,
-                                      .inst_id = inst_id});
-  }
-  return AddInst(
-      context, action.loc_id,
-      SemIR::SpliceInst{.type_id = context.types().GetTypeIdForTypeInstId(
-                            result_type_inst_id),
-                        .inst_id = inst_id});
+  return AddSpliceInst(context, inst_id, result_type_inst_id);
 }
 
 // Refine one operand of an action that is being performed within a specific.
@@ -358,29 +368,58 @@ static auto RefineTypedOperandInSpecific(Context& /*context*/,
   return id;
 }
 
+// Returns whether `inst_id`, which is an instruction within a generic, needs a
+// `SpecificInst` in order to be referred to from within a specific. If the
+// instruction isn't template-dependent within the generic, then either it
+// doesn't depend on the specific at all, or evaluation has already replaced it
+// with the corresponding instruction from the specific.
+static auto NeedsSpecificInst(Context& context, SemIR::InstId inst_id) -> bool {
+  return OperandDependence(context, SemIR::MetaInstId(inst_id)) ==
+         SemIR::ConstantDependence::Template;
+}
+
+// Builds an instruction with the same meaning as `inst_id`, but with the type
+// and constant value that it has within `specific_id`.
+static auto MakeSpecificInst(Context& context, SemIR::SpecificId specific_id,
+                             SemIR::InstId inst_id) -> SemIR::SpecificInst {
+  return {.type_id =
+              GetTypeOfInstInSpecific(context.sem_ir(), specific_id, inst_id),
+          .inst_id = inst_id,
+          .specific_id = specific_id};
+}
+
+auto AddSpecificInst(Context& context, SemIR::SpecificId specific_id,
+                     SemIR::LocId loc_id, SemIR::InstId inst_id)
+    -> SemIR::InstId {
+  if (!NeedsSpecificInst(context, inst_id)) {
+    return inst_id;
+  }
+
+  // The instruction is added to the current block, so that it's evaluated
+  // before the instructions that use it.
+  return AddInst<SemIR::SpecificInst>(
+      context, loc_id, MakeSpecificInst(context, specific_id, inst_id));
+}
+
+auto AddSpecificInst(Context& context, PendingBlock& block,
+                     SemIR::SpecificId specific_id, SemIR::LocId loc_id,
+                     SemIR::InstId inst_id) -> SemIR::InstId {
+  if (!NeedsSpecificInst(context, inst_id)) {
+    return inst_id;
+  }
+
+  return block.AddInst<SemIR::SpecificInst>(
+      loc_id, MakeSpecificInst(context, specific_id, inst_id));
+}
+
 static auto RefineTypedOperandInSpecific(Context& context,
                                          SemIR::SpecificId specific_id,
                                          SemIR::LocId loc_id,
                                          SemIR::MetaInstId inst_id)
     -> SemIR::MetaInstId {
-  // If the operand isn't template-dependent within the generic, then either it
-  // doesn't depend on the specific at all, or evaluation has already replaced
-  // it with the corresponding instruction from the specific.
-  if (OperandDependence(context, inst_id) !=
-      SemIR::ConstantDependence::Template) {
-    return inst_id;
-  }
-
-  // Produce an instruction with the same meaning as `inst_id`, but with the
-  // type and constant value that it has within the specific. This is added to
-  // the block of instructions produced by the action, so that it's evaluated
-  // before the instructions that use it.
-  return AddInst<SemIR::SpecificInst>(
-      context, loc_id,
-      {.type_id =
-           GetTypeOfInstInSpecific(context.sem_ir(), specific_id, inst_id),
-       .inst_id = inst_id,
-       .specific_id = specific_id});
+  // The refined operand is added to the block of instructions produced by the
+  // action, so that it's evaluated before the instructions that use it.
+  return AddSpecificInst(context, specific_id, loc_id, inst_id);
 }
 
 static auto RefineTypedOperandInSpecific(Context& context,

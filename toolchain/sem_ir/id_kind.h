@@ -35,6 +35,7 @@ using IdKind = TypeEnum<
     BundleId<CalleePatternMatchAction::Args>,
     BundleId<CallerPatternMatchAction::Args>,
     BundleId<ConvertAction::Target>,
+    BundleId<InitializeAction::Target>,
     CallParamIndex,
     CharId,
     ClangDeclId,
