@@ -226,9 +226,7 @@ class File : public Printable<File> {
   auto default_values() const -> const DefaultValueStore& {
     return default_values_;
   }
-  auto default_values() -> DefaultValueStore& {
-    return default_values_;
-  }
+  auto default_values() -> DefaultValueStore& { return default_values_; }
 
   // If `class_id` is an imported C++ class, appends the Clang mangled name of
   // its type to `out` and returns true. Otherwise returns false and leaves

@@ -962,11 +962,12 @@ auto MatchContext::DoPostWork(State state,
 
   // If a constant was specified, we should be able to convert it into the
   // type of the parameter.
-  auto& default_value = context_.default_values().Get(default_value_pattern.default_value_id);
+  auto& default_value =
+      context_.default_values().Get(default_value_pattern.default_value_id);
   if (!default_value.is_unspecified) {
-    default_value.value_id = ConvertToValueOfType(context_,
-                                 SemIR::LocId(default_value.raw_id),
-                                 default_value.raw_id, param_type_id);
+    default_value.value_id =
+        ConvertToValueOfType(context_, SemIR::LocId(default_value.raw_id),
+                             default_value.raw_id, param_type_id);
   }
 
   results_stack_.PopArray();
