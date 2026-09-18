@@ -2312,12 +2312,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::DefaultValuePattern inst)
     -> ResolveResult {
   auto subpattern = GetLocalImportRefInfo(resolver, inst.subpattern_id);
-  // Import the default value expression.
-  const auto& default_value =
+  const auto& import_default_value =
       resolver.import_default_values().Get(inst.default_value_id);
-  // Exported defaults must always be completely specified.
-  CARBON_CHECK(!default_value.is_unspecified);
-  auto value_inst_id = GetLocalImportRefInfo(resolver, default_value.value_id);
+  // We import the first owning declaration of a function, which must always
+  // have default values completely specified.
+  CARBON_CHECK(!import_default_value.is_unspecified);
+  auto value = GetLocalImportRefInfo(resolver, import_default_value.value_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -2330,7 +2330,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           .subpattern_id = AddLoadedImportRef(resolver, subpattern),
           .default_value_id = resolver.local_default_values().Add(
               {.raw_id = SemIR::InstId::None,
-               .value_id = AddLoadedImportRef(resolver, value_inst_id),
+               .value_id = AddLoadedImportRef(resolver, value),
                .is_unspecified = false}),
       });
 }

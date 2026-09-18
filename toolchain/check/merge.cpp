@@ -341,7 +341,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
 
         // If the new pattern specified a default value, it must match the
         // previously declared default value.
-        auto& new_default_value = context.default_values().Get(
+        const auto& new_default_value = context.default_values().Get(
             new_default_value_pattern.default_value_id);
 
         if (!new_default_value.is_unspecified) {

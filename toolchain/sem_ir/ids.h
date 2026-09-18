@@ -119,7 +119,7 @@ class AbsoluteInstId : public InstId {
 // The ID of a default value.
 class DefaultValueId : public IdBase<DefaultValueId> {
  public:
-  static constexpr llvm::StringLiteral Label = "default_value_id";
+  static constexpr llvm::StringLiteral Label = "default_value";
 
   using IdBase::IdBase;
 };

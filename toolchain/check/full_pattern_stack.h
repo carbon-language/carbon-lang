@@ -248,9 +248,8 @@ class FullPatternStack {
   // of that frame are not ready for consumption.
   llvm::SmallVector<int> next_var_index_stack_;
 
-  // For each full pattern we maintain a list of the inst_ids of any
-  // unspecified default values, for possible use in diagnostics checks later
-  // on.
+  // For each full pattern we maintain a list of the InstIds of any
+  // unspecified default values, for use in diagnostics.
   ArrayStack<SemIR::InstId> unspecified_default_values_stack_;
 };
 

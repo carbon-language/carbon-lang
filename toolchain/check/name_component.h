@@ -45,7 +45,7 @@ struct NameComponent {
   // The pattern block.
   SemIR::InstBlockId pattern_block_id;
 
-  // A list of unspecified default value instruction ids.
+  // The `UnspecifiedValue` insts from the parameter default values, if any.
   SemIR::InstBlockId unspecified_values_block_id;
 };
 

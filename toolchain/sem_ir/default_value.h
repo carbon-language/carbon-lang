@@ -14,7 +14,8 @@ namespace Carbon::SemIR {
 // function parameters.
 struct DefaultValue : public Printable<DefaultValue> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{raw_id: " << raw_id << ", value_id: " << value_id << "}";
+    out << "{raw_id: " << raw_id << ", value_id: " << value_id
+        << ", is_unspecified: " << is_unspecified << "}";
   }
 
   // The instruction specifying the default value as specified by the developer,
@@ -25,17 +26,14 @@ struct DefaultValue : public Printable<DefaultValue> {
   // scrutinee type.
   InstId value_id;
 
-  // True if the user left this default value unspecified. We still store these
+  // Whether the user left this default value unspecified. We store these
   // so the location of the unspecified default value can be used in
   // diagnostics.
   bool is_unspecified;
 };
 
-class DefaultValueStore
-    : public ValueStore<DefaultValueId, DefaultValue, Tag<SemIR::CheckIRId>> {
- public:
-  using ValueStore::ValueStore;
-};
+using DefaultValueStore =
+    ValueStore<DefaultValueId, DefaultValue, Tag<SemIR::CheckIRId>>;
 
 }  // namespace Carbon::SemIR
 

@@ -373,10 +373,10 @@ static auto DiagnosePositionalParams(Context& context,
   function_info.param_patterns_id = SemIR::InstBlockId::Empty;
 }
 
-// Diagnoses that the default values for function parameters have been
+// Diagnoses any default values for function parameters that have not been
 // completely specified, which is a requirement on the first owning declaration
 // of a function.
-static auto DiagnoseDefaultValuesCompletelySpecified(
+static auto DiagnoseDefaultValuesNotSpecified(
     Context& context, llvm::ArrayRef<SemIR::InstId> unspecified_inst_ids)
     -> void {
   for (auto inst_id : unspecified_inst_ids) {
@@ -472,9 +472,9 @@ static auto BuildFunctionDecl(Context& context,
   DiagnosePositionalParams(context, function_info);
   if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
       !name_context.prev_inst_id().has_value()) {
-    DiagnoseDefaultValuesCompletelySpecified(
+    DiagnoseDefaultValuesNotSpecified(
         context,
-        context.inst_blocks().GetOrEmpty(name.unspecified_values_block_id));
+        context.inst_blocks().Get(name.unspecified_values_block_id));
   }
 
   TryMergeRedecl(
