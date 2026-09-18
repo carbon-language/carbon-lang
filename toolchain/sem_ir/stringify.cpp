@@ -335,6 +335,166 @@ class Stringifier {
     step_stack_->PushEntityNameId(inst.entity_name_id);
   }
 
+  // Pushes the argument list of a call, including the enclosing parentheses.
+  //
+  // The arguments of a `Call` are the arguments of the SemIR calling
+  // convention: compile-time arguments are absent, because they're instead
+  // found in the callee's specific, and the remaining arguments are flattened
+  // by pattern matching. In order to print the call as it was written, we walk
+  // the parameter patterns of the callee and pick out the argument
+  // corresponding to each leaf pattern.
+  auto PushCallArgs(llvm::ArrayRef<InstId> param_patterns,
+                    llvm::ArrayRef<InstId> args,
+                    llvm::ArrayRef<InstId> specific_args) -> void {
+    // The pieces of the argument list that we've not printed yet, in print
+    // order. We process these from the back, so that we walk the patterns from
+    // right to left, which is the order in which the step stack wants to be
+    // given them, and which lets us consume `args` from the back.
+    llvm::SmallVector<std::variant<InstId, llvm::StringRef>> pending;
+    pending.push_back(llvm::StringRef("("));
+    llvm::ListSeparator sep;
+    for (auto param_id : param_patterns) {
+      pending.push_back(llvm::StringRef(sep));
+      pending.push_back(param_id);
+    }
+    pending.push_back(llvm::StringRef(")"));
+
+    while (!pending.empty()) {
+      auto next = pending.pop_back_val();
+      if (auto* string = std::get_if<llvm::StringRef>(&next)) {
+        step_stack_->PushString(*string);
+        continue;
+      }
+
+      auto pattern_id = std::get<InstId>(next);
+      auto pattern = sem_ir_->insts().Get(pattern_id);
+      if (auto tuple = pattern.TryAs<TuplePattern>()) {
+        auto elements = sem_ir_->inst_blocks().Get(tuple->elements_id);
+        pending.push_back(llvm::StringRef("("));
+        llvm::ListSeparator element_sep;
+        for (auto element_id : elements) {
+          pending.push_back(llvm::StringRef(element_sep));
+          pending.push_back(element_id);
+        }
+        // A tuple of one element has a comma to disambiguate from a
+        // parenthesized pattern.
+        pending.push_back(llvm::StringRef(elements.size() == 1 ? ",)" : ")"));
+      } else if (auto var_pattern = pattern.TryAs<AnyVarPattern>()) {
+        pending.push_back(var_pattern->subpattern_id);
+      } else if (auto default_value = pattern.TryAs<DefaultValuePattern>()) {
+        pending.push_back(default_value->subpattern_id);
+      } else if (auto binding = pattern.TryAs<AnyBindingPattern>()) {
+        if (binding->subpattern_id.has_value()) {
+          pending.push_back(binding->subpattern_id);
+          continue;
+        }
+        // A compile-time binding's argument is an argument of the specific.
+        auto bind_index =
+            sem_ir_->entity_names().Get(binding->entity_name_id).bind_index();
+        if (bind_index.has_value() &&
+            static_cast<size_t>(bind_index.index) < specific_args.size()) {
+          step_stack_->PushInstId(specific_args[bind_index.index]);
+        } else {
+          // We don't know the argument, so name the parameter instead.
+          step_stack_->PushEntityNameId(binding->entity_name_id);
+        }
+      } else if (pattern.Is<AnyLeafParamPattern>()) {
+        // A runtime parameter's argument is the next argument of the call,
+        // taken from the back because we're walking right to left.
+        if (args.empty()) {
+          step_stack_->PushString("<missing argument>");
+        } else {
+          step_stack_->PushInstId(args.back());
+          args = args.drop_back();
+        }
+      } else {
+        // We don't know how to find the argument for this pattern, so print
+        // the pattern instead.
+        step_stack_->PushInstId(pattern_id);
+      }
+    }
+  }
+
+  auto StringifyInst(InstId inst_id, Call inst) -> void {
+    // If the call has a different constant value, for example because it was
+    // evaluated at compile time, print that instead.
+    auto const_inst_id = sem_ir_->constant_values().GetConstantInstId(inst_id);
+    if (const_inst_id.has_value() && const_inst_id != inst_id) {
+      step_stack_->PushInstId(const_inst_id);
+      return;
+    }
+
+    auto args = sem_ir_->inst_blocks().Get(inst.args_id);
+    auto callee = GetCallee(*sem_ir_, inst.callee_id);
+    auto* callee_fn = std::get_if<CalleeFunction>(&callee);
+    if (!callee_fn) {
+      // We don't know the signature of the callee, so print the arguments of
+      // the `Call` directly.
+      step_stack_->PushString(")");
+      llvm::ListSeparator sep;
+      for (auto arg : llvm::reverse(args)) {
+        step_stack_->Push(arg, &sep);
+      }
+      step_stack_->Push("(", inst.callee_id);
+      return;
+    }
+
+    const auto& function = sem_ir_->functions().Get(callee_fn->function_id);
+    auto specific_id = callee_fn->resolved_specific_id.has_value()
+                           ? callee_fn->resolved_specific_id
+                           : callee_fn->enclosing_specific_id;
+
+    llvm::ArrayRef<InstId> param_patterns;
+    if (function.param_patterns_id.has_value()) {
+      param_patterns = sem_ir_->inst_blocks().Get(function.param_patterns_id);
+    }
+
+    llvm::ArrayRef<InstId> specific_args;
+    if (specific_id.has_value()) {
+      specific_args = sem_ir_->inst_blocks().Get(
+          sem_ir_->specifics().Get(specific_id).args_id);
+    }
+
+    // Only the explicit parameters are written as arguments in the call.
+    const auto& param_ranges = function.call_param_ranges;
+    auto args_begin =
+        std::min<size_t>(param_ranges.explicit_begin().index, args.size());
+    auto args_end =
+        std::min<size_t>(param_ranges.explicit_end().index, args.size());
+    args = args.slice(args_begin, args_end - args_begin);
+
+    // In a method call, `self` is the first explicit parameter, but is written
+    // before the name of the function rather than in the argument list.
+    auto self_id = InstId::None;
+    if (callee_fn->self_id.has_value() && function.self_param_id.has_value() &&
+        !param_patterns.empty() && !args.empty()) {
+      self_id = args.front();
+      args = args.drop_front();
+      param_patterns = param_patterns.drop_front();
+    }
+
+    PushCallArgs(param_patterns, args, specific_args);
+
+    // Print the name of the callee. Note that we avoid stringifying the callee
+    // instruction itself when it names a function, because that would print
+    // the function's parameter list, and we're printing the call's arguments
+    // instead.
+    if (auto specific_impl_fn =
+            sem_ir_->insts().TryGetAs<SpecificImplFunction>(inst.callee_id)) {
+      // The callee of a `specific_impl_function` is an `impl_witness_access`,
+      // which names both the interface function and the `Self` type.
+      step_stack_->PushInstId(specific_impl_fn->callee_id);
+    } else {
+      step_stack_->PushQualifiedName(function.parent_scope_id,
+                                     function.name_id);
+    }
+
+    if (self_id.has_value()) {
+      // TODO: Omit the parentheses when they're not needed.
+      step_stack_->Push("(", self_id, ").");
+    }
+  }
+
   auto StringifyInst(InstId /*inst_id*/, ClassType inst) -> void {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
     if (auto type_info = RecognizedTypeInfo::ForType(*sem_ir_, inst);

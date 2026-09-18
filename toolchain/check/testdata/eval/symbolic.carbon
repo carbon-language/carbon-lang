@@ -68,6 +68,83 @@ fn F() {
   E({});
 }
 
+// --- fail_print_call_in_diagnostic.carbon
+library "[[@TEST_NAME]]";
+
+eval fn F(generic B: bool) -> type {
+  if (B) { return (); }
+  return bool;
+}
+
+eval fn G(generic B: bool, (a: bool, b: bool)) -> type {
+  if (B and a and b) { return (); }
+  return bool;
+}
+
+// A redeclaration with a mismatched parameter type prints the symbolic call as
+// the type of the parameter. The argument for the generic parameter is found
+// in the specific for the callee, not in the arguments of the SemIR `call`.
+fn UseF(generic B: bool, x: F(B));
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+7]]:26: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for F(B)>` [RedeclParamDiffersType]
+// CHECK:STDERR: fn UseF(generic B: bool, x: bool);
+// CHECK:STDERR:                          ^~~~~~~
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-4]]:26: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR: fn UseF(generic B: bool, x: F(B));
+// CHECK:STDERR:                          ^~~~~~~
+// CHECK:STDERR:
+fn UseF(generic B: bool, x: bool);
+
+// The arguments of the SemIR `call` are flattened by the nested tuple pattern
+// in the signature of `G`, and are regrouped here to match the source.
+fn UseG(generic B: bool, x: G(B, (true, false)));
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+7]]:26: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for G(B, (true, false))>` [RedeclParamDiffersType]
+// CHECK:STDERR: fn UseG(generic B: bool, x: bool);
+// CHECK:STDERR:                          ^~~~~~~
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-4]]:26: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR: fn UseG(generic B: bool, x: G(B, (true, false)));
+// CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn UseG(generic B: bool, x: bool);
+
+// A one-element tuple pattern needs a trailing comma.
+eval fn H(generic B: bool, (a: bool,)) -> type {
+  if (B and a) { return (); }
+  return bool;
+}
+
+fn UseH(generic B: bool, x: H(B, (true,)));
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+7]]:26: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for H(B, (true,))>` [RedeclParamDiffersType]
+// CHECK:STDERR: fn UseH(generic B: bool, x: bool);
+// CHECK:STDERR:                          ^~~~~~~
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-4]]:26: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR: fn UseH(generic B: bool, x: H(B, (true,)));
+// CHECK:STDERR:                          ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn UseH(generic B: bool, x: bool);
+
+// The `self` argument is the first argument of the SemIR `call`, but is printed
+// before the name of the method, as it was written.
+class C {
+  // CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+4]]:13: warning: binding `self` unused [UnusedBinding]
+  // CHECK:STDERR:   eval fn M(self: Self, b: bool) -> type {
+  // CHECK:STDERR:             ^~~~~~~~~~
+  // CHECK:STDERR:
+  eval fn M(self: Self, b: bool) -> type {
+    if (b) { return (); }
+    return bool;
+  }
+}
+
+fn UseM(generic c: C, x: c.M(true));
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+7]]:23: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for (c).M(true)>` [RedeclParamDiffersType]
+// CHECK:STDERR: fn UseM(generic c: C, x: bool);
+// CHECK:STDERR:                       ^~~~~~~
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-4]]:23: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR: fn UseM(generic c: C, x: c.M(true));
+// CHECK:STDERR:                       ^~~~~~~~~~~~
+// CHECK:STDERR:
+fn UseM(generic c: C, x: bool);
+
 // CHECK:STDOUT: --- dependent_symbolic_instruction.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
