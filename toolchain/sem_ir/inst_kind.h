@@ -184,20 +184,18 @@ enum class InstConstantKind : int8_t {
   // operands, but never a concrete constant inst.
   TemplateOnly,
   // This instruction is a metaprogramming or template instantiation action that
-  // generates an instruction. Like `SymbolicOnly`, it may be a symbolic
-  // constant inst depending on its operands, but never a concrete constant
-  // inst. The instruction may or may not have a concrete constant value that is
-  // a generated instruction. Constant evaluation support for types with this
-  // constant kind is provided automatically, by calling `PerformDelayedAction`.
-  InstAction,
-  // This instruction is a metaprogramming or template instantiation action that
-  // generates one or more instructions. Like `SymbolicOnly`, it may be a
-  // symbolic constant inst depending on its operands, but never a concrete
-  // constant inst. The instruction may or may not have a concrete constant
-  // value that is a tuple of generated instructions. Constant evaluation
-  // support for types with this constant kind is provided automatically, by
-  // calling `PerformDelayedAction`.
+  // generates and returns a tuple containing one or more instruction values.
+  // Like `SymbolicOnly`, it may be a symbolic constant inst depending on its
+  // operands, but never a concrete constant inst. The instruction may or may
+  // not have a concrete constant value that is a tuple of generated
+  // instructions. Constant evaluation support for types with this constant kind
+  // is provided automatically, by calling `PerformDelayedAction`.
   MultiInstAction,
+  // This instruction is a metaprogramming or template instantiation action that
+  // generates and returns an instruction value. Like `MultiInstAction`, but
+  // optimized for the common case where the result is only a single
+  // instruction, in order to avoid creating an unnecessary 1-tuple.
+  InstAction,
   // This instruction's operands determine whether it has a constant value,
   // whether it is a constant inst, and/or whether it results in a compile-time
   // error, in ways not expressed by the other InstConstantKinds. For example,

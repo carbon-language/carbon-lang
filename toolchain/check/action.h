@@ -121,8 +121,8 @@ auto AddSpecificInst(Context& context, PendingBlock& block,
 
 // Adds an action instruction to the eval block to perform a dependent action.
 // The result is not spliced into the current block. This should be used when
-// the action instruction does not produce a single instruction value, so cannot
-// be spliced directly.
+// the action instruction produces multiple instruction value, so its result
+// cannot be spliced directly.
 auto AddDependentActionInst(Context& context, SemIR::LocIdAndInst action)
     -> SemIR::InstId;
 
