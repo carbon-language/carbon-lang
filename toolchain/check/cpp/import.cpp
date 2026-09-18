@@ -2130,7 +2130,7 @@ static auto ImportFunctionPointer(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(pointer_type->isFunctionPointerType());
   // Allocate an ID for the function pointer type and return it.
   pointer_type =
-      clang::QualType(pointer_type, 0).getCanonicalType().getTypePtr();
+      clang::QualType(pointer_type, /*Quals=*/0).getCanonicalType().getTypePtr();
   auto clang_type_id =
       context.clang_function_pointer_types().Lookup(pointer_type);
   if (!clang_type_id.has_value()) {
