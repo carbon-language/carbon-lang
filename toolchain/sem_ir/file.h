@@ -25,6 +25,7 @@
 #include "toolchain/sem_ir/cpp_file.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
+#include "toolchain/sem_ir/default_value.h"
 #include "toolchain/sem_ir/entity_name.h"
 #include "toolchain/sem_ir/field.h"
 #include "toolchain/sem_ir/function.h"
@@ -222,6 +223,12 @@ class File : public Printable<File> {
   auto declared_facet_types() const -> const DeclaredFacetTypeStore& {
     return declared_facet_types_;
   }
+  auto default_values() const -> const DefaultValueStore& {
+    return default_values_;
+  }
+  auto default_values() -> DefaultValueStore& {
+    return default_values_;
+  }
 
   // If `class_id` is an imported C++ class, appends the Clang mangled name of
   // its type to `out` and returns true. Otherwise returns false and leaves
@@ -364,6 +371,9 @@ class File : public Printable<File> {
 
   // Storage for EntityNames.
   EntityNameStore entity_names_;
+
+  // Storage for DefaultValues.
+  DefaultValueStore default_values_;
 
   // Storage for callable objects.
   FunctionStore functions_;

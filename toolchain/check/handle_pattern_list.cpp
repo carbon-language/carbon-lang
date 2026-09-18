@@ -154,11 +154,15 @@ auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
 
 auto HandleParseNode(Context& context, Parse::DefaultValueUnspecifiedId node_id)
     -> bool {
-  context.node_stack().Push(
-      node_id, AddInst<SemIR::UnspecifiedValue>(
-                   context, node_id,
-                   {.type_id = GetSingletonType(
-                        context, SemIR::UnspecifiedValueType::TypeInstId)}));
+  auto inst_id = AddInst<SemIR::UnspecifiedValue>(
+      context, node_id,
+      {.type_id =
+           GetSingletonType(context, SemIR::UnspecifiedValueType::TypeInstId)});
+
+  // Add the unspecified default value for later diagnostics checks.
+  context.full_pattern_stack().AddUnspecifiedDefaultValue(inst_id);
+
+  context.node_stack().Push(node_id, inst_id);
   return true;
 }
 
@@ -197,8 +201,11 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
   // Add the value to the default values array in the full pattern stack, for
   // recovery later in the NameComponent. We store the raw value here for
   // conversion during pattern matching once the type of the pattern is known.
-  auto default_value_id =
-      context.full_pattern_stack().AddRawDefaultValue(expr_inst_id);
+  auto default_value_id = context.default_values().Add(
+      {.raw_id = expr_inst_id,
+       .value_id = SemIR::InstId::None,
+       .is_unspecified =
+           context.insts().Is<SemIR::UnspecifiedValue>(expr_inst_id)});
 
   // Next on the node stack should be the pattern for which this default was
   // specified. We pop that so we can issue the DefaultValuePattern in its

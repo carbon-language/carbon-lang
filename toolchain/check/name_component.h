@@ -40,12 +40,13 @@ struct NameComponent {
   // SemIR::EntityWithParamsBase).
   SemIR::InstBlockId call_param_patterns_id;
   SemIR::InstBlockId call_params_id;
-  // The pattern default values as extracted from the parameter list.
-  SemIR::InstBlockId call_param_default_values_id;
   SemIR::Function::CallParamIndexRanges param_ranges;
 
   // The pattern block.
   SemIR::InstBlockId pattern_block_id;
+
+  // A list of unspecified default value instruction ids.
+  SemIR::InstBlockId unspecified_values_block_id;
 };
 
 // Pops a name component from the node stack (and pattern block stack, if it has

@@ -116,11 +116,11 @@ class AbsoluteInstId : public InstId {
   using InstId::InstId;
 };
 
-// An id representing the index of the default value constant instruction in
-// a default values instruction block.
+// The ID of a default value.
 class DefaultValueId : public IdBase<DefaultValueId> {
  public:
   static constexpr llvm::StringLiteral Label = "default_value_id";
+
   using IdBase::IdBase;
 };
 

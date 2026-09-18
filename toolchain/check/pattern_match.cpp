@@ -962,21 +962,12 @@ auto MatchContext::DoPostWork(State state,
 
   // If a constant was specified, we should be able to convert it into the
   // type of the parameter.
-  auto raw_default_value_inst_id =
-      context_.full_pattern_stack()
-          .GetRawDefaultValues()[default_value_pattern.default_value_id.index];
-  auto converted_inst_id =
-      context_.insts().Is<SemIR::UnspecifiedValue>(raw_default_value_inst_id)
-          ? raw_default_value_inst_id
-          : ConvertToValueOfType(context_,
-                                 SemIR::LocId(raw_default_value_inst_id),
-                                 raw_default_value_inst_id, param_type_id);
-
-  // The index of the converted value should be the same as the raw value.
-  auto converted_default_id =
-      context_.full_pattern_stack().AddConvertedDefaultValue(converted_inst_id);
-  CARBON_CHECK(converted_default_id.index ==
-               default_value_pattern.default_value_id.index);
+  auto& default_value = context_.default_values().Get(default_value_pattern.default_value_id);
+  if (!default_value.is_unspecified) {
+    default_value.value_id = ConvertToValueOfType(context_,
+                                 SemIR::LocId(default_value.raw_id),
+                                 default_value.raw_id, param_type_id);
+  }
 
   results_stack_.PopArray();
 

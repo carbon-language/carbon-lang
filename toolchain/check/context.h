@@ -399,6 +399,9 @@ class Context {
   auto declared_facet_types() -> SemIR::DeclaredFacetTypeStore& {
     return sem_ir().declared_facet_types();
   }
+  auto default_values() -> SemIR::DefaultValueStore& {
+    return sem_ir().default_values();
+  }
   auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();
   }

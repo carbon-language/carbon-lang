@@ -598,16 +598,9 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
     out() << "]";
   }
 
-  if (!fn.body_block_ids.empty() ||
-      fn.call_param_default_values_id != SemIR::InstBlockId::Empty) {
+  if (!fn.body_block_ids.empty()) {
     out() << ' ';
     OpenBrace();
-
-    if (fn.call_param_default_values_id != SemIR::InstBlockId::Empty) {
-      IndentLabel();
-      out() << "!default_values:\n";
-      FormatCodeBlock(fn.call_param_default_values_id);
-    }
 
     for (auto block_id : fn.body_block_ids) {
       IndentLabel();
@@ -1646,7 +1639,14 @@ auto Formatter::FormatArg(DeclaredFacetTypeId id) -> void {
 }
 
 auto Formatter::FormatArg(DefaultValueId id) -> void {
-  out() << "index: " << id.index;
+  out() << "value:";
+  const auto& default_value = sem_ir_->default_values().Get(id);
+  if (default_value.is_unspecified) {
+    out() << " <unspecified>";
+  } else {
+    auto default_inst = sem_ir_->insts().Get(default_value.value_id);
+    FormatInstRhs(default_inst);
+  }
 }
 
 auto Formatter::FormatArg(FieldId id) -> void {
