@@ -339,6 +339,7 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_inst129: {ir_id: import_ir78000004, inst_id: inst700002D4}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
+// CHECK:STDOUT:   default_values:  {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst10, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Core): inst78000012, name0: inst78000049}}
 // CHECK:STDOUT:     name_scope78000001: {inst: inst78000012, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name3: inst78000059}}

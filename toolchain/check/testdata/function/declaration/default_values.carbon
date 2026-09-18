@@ -170,7 +170,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:   %a.patt: %pattern_type.d8d = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %.68d: %pattern_type.d8d = default_value_pattern %a.patt, index: 0 [concrete]
+// CHECK:STDOUT:   %.e44: %pattern_type.d8d = default_value_pattern %a.patt, @F.%.loc10_16.7: %D [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %C.val, %C.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %.115: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -181,7 +181,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.d8d = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type.d8d = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %.loc10_11: %pattern_type.d8d = default_value_pattern %a.patt, index: 0 [concrete = constants.%.68d]
+// CHECK:STDOUT:     %.loc10_11: %pattern_type.d8d = default_value_pattern %a.patt, %.loc10_16.7: %D [concrete = constants.%.e44]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -203,10 +203,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param: %D) {
-// CHECK:STDOUT: !default_values:
-// CHECK:STDOUT:   %.loc10_16.7: %D = acquire_value %.loc10_16.6
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @F(%a.param: %D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
@@ -240,7 +237,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:   %tuple.56c: %tuple.type.6ca = tuple_value (%empty_struct, %tuple.9a3) [concrete]
 // CHECK:STDOUT:   %tuple.type.bcdf: type = tuple_type (%empty_struct_type, %tuple.type.6ca) [concrete]
 // CHECK:STDOUT:   %tuple.4f4: %tuple.type.bcdf = tuple_value (%empty_struct, %tuple.56c) [concrete]
-// CHECK:STDOUT:   %.b6d: %pattern_type.f5f = default_value_pattern %.341, index: 0 [concrete]
+// CHECK:STDOUT:   %.391: %pattern_type.f5f = default_value_pattern %.341, @F.%.loc6_62.6: %tuple.type.a40 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %.115: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %tuple.d3e: %tuple.type.748 = tuple_value (%C.val, %C.val) [concrete]
@@ -265,7 +262,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:     %.loc6_37: %pattern_type.8b4 = tuple_pattern (%d.patt, %e.patt) [concrete = constants.%.fe8]
 // CHECK:STDOUT:     %.loc6_38: %pattern_type.4fa = tuple_pattern (%c.patt, %.loc6_37) [concrete = constants.%.972]
 // CHECK:STDOUT:     %.loc6_39: %pattern_type.f5f = tuple_pattern (%b.patt, %.loc6_38) [concrete = constants.%.341]
-// CHECK:STDOUT:     %.loc6_41: %pattern_type.f5f = default_value_pattern %.loc6_39, index: 0 [concrete = constants.%.b6d]
+// CHECK:STDOUT:     %.loc6_41: %pattern_type.f5f = default_value_pattern %.loc6_39, %.loc6_62.6: %tuple.type.a40 [concrete = constants.%.391]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_45.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc6_50.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -321,10 +318,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param: %C, %b.param: %C, %c.param: %C, %d.param: %C, %e.param: %C) {
-// CHECK:STDOUT: !default_values:
-// CHECK:STDOUT:   %.loc6_62.6: %tuple.type.a40 = converted %.loc6_62.1, %tuple.loc6_62 [concrete = constants.%tuple.800]
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @F(%a.param: %C, %b.param: %C, %c.param: %C, %d.param: %C, %e.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
@@ -335,7 +329,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:   %x.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:   %x.patt: %pattern_type = wrapper_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %.015: %pattern_type = default_value_pattern %x.patt, index: 0 [concrete]
+// CHECK:STDOUT:   %.ff4: %pattern_type = default_value_pattern %x.patt, @F.%.loc6_14.6: %C [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %.115: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -346,7 +340,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc6_11: %pattern_type = default_value_pattern %x.patt, index: 0 [concrete = constants.%.015]
+// CHECK:STDOUT:     %.loc6_11: %pattern_type = default_value_pattern %x.patt, %.loc6_14.6: %C [concrete = constants.%.ff4]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %x.param: %C = value_param call_param0
@@ -360,8 +354,5 @@ fn F(x: C = {});
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %C) {
-// CHECK:STDOUT: !default_values:
-// CHECK:STDOUT:   %.loc6_14.6: %C = acquire_value %.loc6_14.5 [concrete = constants.%C.val]
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @F(%x.param: %C);
 // CHECK:STDOUT:

@@ -82,9 +82,6 @@ struct FunctionFields {
   // because it is relevant only for a function definition.
   InstBlockId call_params_id;
 
-  // Instructions representing the default values for parameters.
-  InstBlockId call_param_default_values_id;
-
   // The index ranges within the `Call` parameters that correspond to the
   // implicit parameters, explicit parameters, and return.
   //
@@ -233,9 +230,6 @@ struct Function : public EntityWithParamsBase,
     }
     if (call_params_id.has_value()) {
       out << ", call_params_id: " << call_params_id;
-    }
-    if (call_param_default_values_id != SemIR::InstBlockId::Empty) {
-      out << ", call_param_default_values_id: " << call_param_default_values_id;
     }
     if (return_type_inst_id.has_value()) {
       out << ", return_type_inst_id: " << return_type_inst_id;

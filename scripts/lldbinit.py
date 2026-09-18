@@ -86,6 +86,7 @@ Example usage:
         "constant": "SemIR::MakeConstantId",
         "constraint": "SemIR::MakeNamedConstraintId",
         "declared_facet_type": "SemIR::MakeDeclaredFacetTypeId",
+        "default_value": "SemIR::MakeDefaultValueId",
         "entity_name": "SemIR::MakeEntityNameId",
         "function": "SemIR::MakeFunctionId",
         "generated_function": "SemIR::MakeGeneratedFunctionId",
