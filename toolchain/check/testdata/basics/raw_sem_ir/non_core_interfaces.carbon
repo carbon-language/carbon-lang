@@ -47,6 +47,7 @@ fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
+// CHECK:STDOUT:   default_values:  {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst10, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: inst60000011}}
 // CHECK:STDOUT:     name_scope60000001: {inst: inst60000011, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name(SelfType): inst60000013}}
@@ -211,6 +212,7 @@ fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     import_ir_instC: {ir_id: import_ir50000002, inst_id: inst6000001D}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
+// CHECK:STDOUT:   default_values:  {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst10, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst50000012, name1: inst50000013, name4: inst5000006B, name7: inst500000AA}}
 // CHECK:STDOUT:     name_scope50000001: {inst: inst50000012, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name6: inst50000026}}
