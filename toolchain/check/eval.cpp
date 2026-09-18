@@ -12,6 +12,7 @@
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
@@ -3481,7 +3482,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   const auto& generic = context.generics().Get(generic_id);
   auto eval_block_id = generic.GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
-  auto orig_access_context = context.access_context();
+  llvm::SaveAndRestore access_context(context.access_context());
 
   // Allocate the value block and store it back onto the specific, so that our
   // in-progress results are visible.
@@ -3517,8 +3518,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
     }
     result_id = context.constant_values().GetInstId(const_id);
   }
-
-  context.access_context() = orig_access_context;
 }
 
 // Information about the function call we are currently executing. Unlike
