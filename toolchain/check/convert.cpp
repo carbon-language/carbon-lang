@@ -2164,8 +2164,9 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
     // Compute the return type of the action: this is a tuple of N+1 InstTypes,
     // where N is the number of storage arguments in the initializer.
     int32_t num_storage_args = 0;
-    VisitAllTemporaryStorageArgs(context, target, expr_id,
-                                 [&](SemIR::InstId _) { ++num_storage_args; });
+    VisitAllTemporaryStorageArgs(
+        context, target, expr_id,
+        [&](SemIR::InstId /*inst_id*/) { ++num_storage_args; });
     llvm::SmallVector<SemIR::InstId> action_type_elements_id(
         num_storage_args + 1, SemIR::InstType::TypeInstId);
     auto action_type_id = GetTupleType(context, action_type_elements_id);
