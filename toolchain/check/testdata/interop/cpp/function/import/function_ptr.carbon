@@ -154,9 +154,6 @@ library "[[@TEST_NAME]]";
 import Cpp library "forward_decl.h";
 
 fn F() {
-  // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+16]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.ReturnCallback()();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+13]]:3: note: in thunk for C++ function pointer type used here [InCppFunctionPointerThunk]
   // CHECK:STDERR:   Cpp.ReturnCallback()();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
@@ -164,7 +161,7 @@ fn F() {
   // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+9]]:3: error: function returns incomplete type `Cpp.C` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   Cpp.ReturnCallback()();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE-13]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./forward_decl.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR:       ^
