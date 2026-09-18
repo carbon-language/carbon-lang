@@ -131,6 +131,9 @@ auto GetHighestAllowedAccess(Context& context,
       if (const_id == name_scope_const_id) {
         return SemIR::AccessKind::Protected;
       }
+
+      // TODO: also check indirectly-extended scopes, as well as extended
+      // scopes of parent scopes of the access context.
     }
   }
 
