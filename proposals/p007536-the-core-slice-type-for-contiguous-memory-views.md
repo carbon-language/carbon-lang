@@ -71,7 +71,9 @@ known at runtime). We are primarily concerned with dynamic extent here.
 
 Rust uses slice references `&[T]` as a fundamental type. The slice `[T]` itself
 is a dynamically sized type (DST), and `&[T]` is a "fat pointer" containing
-both the pointer to the data and the length.
+both the pointer to the data and the length. For compile-time-sized views,
+Rust uses references to fixed-size arrays, `&[T; N]`, which are thin pointers
+and distinct from `&[T]`.
 
 ### Go
 
@@ -184,8 +186,8 @@ This type should eventually support
 [spatial](/docs/design/safety/terminology.md#spatial-safety) and [temporal](/docs/design/safety/terminology.md#temporal-safety) [safety](/docs/design/safety/README.md#memory-safety-model)
 in some form, similarly applicable to (but not yet specified for)
 [`str`](/proposals/p006177-c-interop-mapping-std-string-view-to-core-str.md) -
-but the specifics of that safety,
-per Carbon's [safety strategy](/docs/project/principles/safety_strategy.md) as
+but the specifics of that safety
+(per Carbon's [safety strategy](/docs/project/principles/safety_strategy.md) as
 updated in [p005914](/proposals/p005914-updating-carbon-s-safety-strategy.md))
 are left out of scope for this proposal, though it's part of the motivation for
 the specific direction of this proposal (without safety in mind, perhaps the
@@ -195,7 +197,7 @@ pointer+length tuple would be less problematic).
 
 A type similar to `Slice`, but [supporting a compile-time bound](https://docs.google.com/document/d/1hdYyCLmzEOj9gDulm7Eo1SVNc0pY7zbMvFmEzenMhYE/edit?usp=sharing)
 should be provided, but may be a [distinct/unrelated type](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#absence-of-syntax-should-make-clear-defaults)
-from this one (unlike C++'s
+from this one (more like Rust's `&[T; N]` versus `&[T]`, and unlike C++'s
 [`std::span`](https://en.cppreference.com/cpp/container/span) that uses a template parameter to
 represent either the specific static bound, or the absence of a static bound -
 which seems like it might complicate the interface more than providing some
