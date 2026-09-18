@@ -174,8 +174,10 @@ static auto CompareVirtualWithOverrider(const SemIR::Function& base_fn,
   return OverrideMatchResult::Match;
 }
 
-// Builds and returns a vtable for the current class. Assumes that the virtual
-// functions for the class are listed as the top element of the `vtable_stack`.
+// Builds and returns a vtable for the current class, along with a bool
+// indicating whether it is a Carbon-native vtable (false for a foreign vtable
+// inherited from a C++ base class). Assumes that the virtual functions for the
+// class are listed as the top element of the `vtable_stack`.
 static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
                         SemIR::ClassId class_id,
                         std::optional<SemIR::ClassType> base_class_type,
