@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+// EXTRA-ARGS: --share-cpp-ast
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -31,6 +32,32 @@ inline Cpp '''
 Carbon::B b;
 ''';
 
+// --- base.h
+struct Base {
+  virtual ~Base();
+  virtual void F() = 0;
+};
+
+// --- derived.carbon
+library "derived";
+import Cpp library "base.h";
+
+class Derived {
+  extend base: Cpp.Base;
+  override fn F(unused self) {}
+}
+
+// --- imported.carbon
+library "imported";
+import Cpp library "base.h";
+import library "derived";
+
+inline Cpp '''
+void Test() {
+  Carbon::Derived d;
+}
+''';
+
 // --- fail_todo_generic.carbon
 // TODO: Test in `toolchain/lower/testdata/` once generic classes deriving from
 // C++ virtual classes pass check.
@@ -38,7 +65,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 inline Cpp '''
-struct X {
+struct VBase {
   virtual void f() {}
 };
 ''';
@@ -48,6 +75,6 @@ struct X {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 class GenericZ(T: type) {
-  extend base: Cpp.X;
+  extend base: Cpp.VBase;
   override fn f(unused self) {}
 }
