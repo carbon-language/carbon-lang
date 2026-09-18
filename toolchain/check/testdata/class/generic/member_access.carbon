@@ -81,14 +81,6 @@ class C {
   private fn G(ref self) {
     let a: A = {};
     a.(I(B).F)({});
-    
-    // CHECK:STDERR: wip.carbon:[[@LINE+7]]:5: error: cannot access private member `G` of type `C` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     self.G();
-    // CHECK:STDERR:     ^~~~~~
-    // CHECK:STDERR: wip.carbon:[[@LINE-8]]:3: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   private fn G(ref self) {
-    // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     self.G();
   }
 }
