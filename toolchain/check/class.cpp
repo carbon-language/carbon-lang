@@ -232,6 +232,12 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
   if (base_vtable_id.has_value()) {
     const auto& base_vtable = context.vtables().Get(base_vtable_id);
     carbon_native_vtable = base_vtable.carbon_native_vtable;
+    if (base_vtable.has_multiple_vtables) {
+      context.TODO(
+          class_info.first_decl_id(),
+          "class deriving from C++ class with multiple virtual tables");
+      return {SemIR::VtableId::None, carbon_native_vtable};
+    }
     auto base_vtable_inst_block =
         context.inst_blocks().Get(base_vtable.virtual_functions_id);
     // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
@@ -419,9 +425,12 @@ static auto CheckCompleteClassType(
     auto [vtable_id, carbon_native_vtable] = BuildVtable(
         context, node_id, class_id, base_class_type, vtable_contents);
     foreign_vtable = !carbon_native_vtable;
-    auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
-    class_info.vtable_decl_id = AddInst<SemIR::VtableDecl>(
-        context, node_id, {.type_id = vptr_type_id, .vtable_id = vtable_id});
+    if (vtable_id.has_value()) {
+      auto vptr_type_id =
+          GetPointerType(context, SemIR::VtableType::TypeInstId);
+      class_info.vtable_decl_id = AddInst<SemIR::VtableDecl>(
+          context, node_id, {.type_id = vptr_type_id, .vtable_id = vtable_id});
+    }
   }
 
   auto struct_type_id = GetStructType(
@@ -434,7 +443,7 @@ static auto CheckCompleteClassType(
            context.types().GetTypeInstId(struct_type_id)});
   class_info.complete_type_witness_id = complete_type_witness_id;
 
-  if (foreign_vtable) {
+  if (foreign_vtable && class_info.vtable_decl_id.has_value()) {
     if (class_info.generic_id.has_value()) {
       context.TODO(class_info.first_decl_id(),
                    "generic class deriving from C++ virtual class");
