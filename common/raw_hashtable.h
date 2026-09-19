@@ -79,16 +79,12 @@
 //   users, and instead only the underlying keys and values.
 //
 // - Every key of every table is hashed with `Hasher::DefaultSeed`; there is no
-//   per-table seed. A constant is both the cheapest and the strongest seed
-//   available here. It is an immediate, so hashing needs neither a relocation
-//   nor a load on its critical path, where the address of a global can instead
-//   be folded into the hash's first mix. An address is also weak seed material:
-//   its load bias is page-aligned, so the low bits are fixed by the link and
-//   the high bits are zero. A constant further keeps the layout of a table, and
-//   so any collisions within it, reproducible and measurable from run to run.
-//   Varying the iteration order is instead the job of the range returned by
-//   `entries()`, which varies it directly and only where it matters, in debug
-//   builds.
+//   per-table seed. The constant is an immediate, so hashing needs neither a
+//   relocation nor a load, unlike the address of a global. It is also better
+//   seed material than an address: a PIE load bias is page-aligned, so an
+//   address has its low bits fixed by the link and its high bits zero. And it
+//   makes a table's layout, and any collisions in it, reproducible between
+//   runs. Debug builds vary the iteration order in `entries()` instead.
 //
 // - The hash addressing and probing occurs over *groups* of slots rather than
 //   individual entries. When inserting a new entry, it can be added to the
@@ -136,15 +132,16 @@
 //   null. Since it doesn't track the exact number of filled entries in a table,
 //   it doesn't support a container-style `size` API.
 //
-// - Iteration is provided by a range object rather than by iterators hanging
-//   directly off the table, because the debug-only checks for mutation during
-//   iteration need state that outlives a single iterator: see `EntryRange`
-//   below. Obtaining one is an explicit call (`entries()`), as scanning an
-//   entire table is a costly operation that shouldn't be hidden behind a bare
-//   `begin()`/`end()` pair.
+// - Iteration uses a range object rather than iterators on the table itself,
+//   because the debug-only checks for mutation during iteration need state
+//   that outlives a single iterator: see `EntryRange` below. Getting one is an
+//   explicit call (`entries()`) rather than `begin()`/`end()` on the table,
+//   because scanning a whole table is expensive, and because each call returns
+//   a distinct range that may walk the table in a different order.
 //
-//   The order of iteration is not guaranteed, and debug builds actively vary it
-//   between ranges to keep callers from depending on it.
+//   The order of iteration is not guaranteed, and debug builds vary it between
+//   range objects, even for the same hash table, so callers cannot depend on
+//   it.
 namespace Carbon::RawHashtable {
 
 // Which prefetch strategies to enable can be controlled via macros to enable
@@ -595,8 +592,8 @@ class ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::EntryRange::Iterator
     : public EntryRange::IteratorBase {
  public:
   // Both the set and map forms satisfy C++20's `std::forward_iterator`. A
-  // map's `reference` is a proxy, which pins its C++17 `iterator_category` to
-  // `input`, but the C++20 concept is unaffected. See `EntryRefT`.
+  // map's `reference` is a proxy, which forces its C++17 `iterator_category`
+  // to `input`, but the C++20 concept is unaffected. See `EntryRefT`.
   using iterator_concept = std::forward_iterator_tag;
 
   Iterator() = default;
@@ -650,6 +647,14 @@ class ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::EntryRange::Iterator
   // The entries of the group the iterator is currently within. Both builds
   // track the current group, but they encode it differently, so the encoding
   // is hidden behind this accessor.
+  //
+  // In release builds this scales `group_offset_` by `sizeof(EntryT)`, a
+  // multiply when that size isn't a power of two. Advancing a second pointer
+  // alongside `group_offset_` removes the multiply but measures worse: 8-9%
+  // more cycles for `Set<int>`, which has no multiply to remove, and 3-7% more
+  // for the 24-byte entries of `Map<llvm::StringRef, int>` despite retiring
+  // 1-2% fewer instructions. The second induction variable costs more than the
+  // multiply saves.
   auto group_entries() const -> EntryT* {
 #ifndef NDEBUG
     return group_entries_;
@@ -891,6 +896,9 @@ extern std::atomic<HashCode> entropy_hash;
 // read-modify-write so that consuming entropy is just a load, and refreshing
 // the pool doesn't block the iteration that follows. Racing callers can lose an
 // update and draw the same value, which is fine for a debug aid.
+//
+// Hashing is a bijection on 64-bit values, so the pool follows a permutation
+// and cannot fall into a short cycle.
 inline auto NextRangeEntropy() -> HashCode {
   HashCode prev_entropy_hash = entropy_hash.load(std::memory_order_relaxed);
   entropy_hash.store(Carbon::HashValue(prev_entropy_hash),

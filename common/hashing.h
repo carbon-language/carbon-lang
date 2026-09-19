@@ -371,10 +371,17 @@ class Hasher {
   static auto WeakMix(uint64_t value) -> uint64_t;
 
   // We have a 64-byte random data pool designed to fit on a single cache line.
-  // This routine allows sampling it at byte indices, which allows getting 64 -
-  // 8 different random 64-bit results. The offset must be in the range [0, 56).
+  // This routine allows sampling it at byte indices, which allows getting 49
+  // different random 64-bit results. The offset must be in the range [0, 48].
+  //
+  // The range excludes the last chunk of the pool, which is reserved for
+  // `DefaultSeed`, so no offset can return the seed. See `DefaultSeed` for why.
   static auto SampleRandomData(ssize_t offset) -> uint64_t {
-    CARBON_DCHECK(offset + sizeof(uint64_t) < sizeof(StaticRandomData));
+    CARBON_DCHECK(offset >= 0, "Negative offset!");
+    CARBON_DCHECK(
+        static_cast<size_t>(offset) + sizeof(uint64_t) <=
+            sizeof(StaticRandomData) - sizeof(uint64_t),
+        "Offset would sample the last chunk reserved for `DefaultSeed`!");
     uint64_t data;
     memcpy(&data,
            reinterpret_cast<const unsigned char*>(&StaticRandomData) + offset,
@@ -397,6 +404,11 @@ class Hasher {
   // be aware that this is the underlying pool. The goal is to reuse the same
   // single cache-line of constant data.
   //
+  // Take care not to combine a chunk with itself. These are XOR-ed into the
+  // hash state on many paths, and XOR-ing a value with itself gives zero.
+  // `Mix(x, 0)` is `0`, so a zeroed buffer hashes an entire class of keys to
+  // the same value. The last chunk is reserved for `DefaultSeed`.
+  //
   // The initializers here can be generated with the following shell script,
   // which will generate 8 64-bit values and one more digit. The `bc` command's
   // decimal based scaling means that without getting at least some extra hex
@@ -417,22 +429,15 @@ class Hasher {
       0xc0ac'29b7'c97c'50dd, 0x3f84'd5b5'b547'0917,
   };
 
-  // The seed to use when there is no better one available. This is what the
-  // unseeded `HashValue` overload uses, and what Carbon's hashtables use as
-  // they have no per-table seed.
+  // The seed used when there is no better one available: by the unseeded
+  // `HashValue` overload, and by Carbon's hashtables, which have no per-table
+  // seed.
   //
-  // This must be the *last* chunk of the pool. The size-specific hashing paths
-  // XOR other chunks into the buffer alongside the seed: `StaticRandomData[0]`
-  // for several ranges of byte counts, and `SampleRandomData(size)` for 17 to
-  // 32 byte keys, which is exactly `StaticRandomData[3]` at size 24 and
-  // `StaticRandomData[4]` at size 32. Seeding with a chunk that a path also
-  // XOR-s in cancels the buffer to zero on that path. Because `Mix` folds a
-  // 128-bit product in half, `Mix(x, 0)` is `0`, and so every key whose
-  // remaining input to that `Mix` is also zero hashes to zero. That collapses
-  // an entire class of keys onto one hash, making insertion of `n` of them
-  // quadratic -- measured at roughly 5700x slower for 65536 keys. Only the
-  // last chunk is out of reach: `SampleRandomData` reads at byte offsets in
-  // `[0, 56)`, and the last chunk is at offset 56.
+  // This is the last chunk of the pool, the one `SampleRandomData` cannot
+  // return. The size-specific paths XOR a sampled chunk into the buffer
+  // alongside the seed, so a seed the sampler can also return would zero the
+  // buffer for a class of keys and hash them all to the same value. Inserting
+  // `n` such keys is then quadratic.
   static constexpr uint64_t DefaultSeed = StaticRandomData[7];
 
   // We need a multiplicative hashing constant for both 64-bit multiplicative
