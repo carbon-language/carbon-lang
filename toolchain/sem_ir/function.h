@@ -51,6 +51,9 @@ struct FunctionFields {
     // A function that was imported from C++, for which we generated a
     // `CppThunk`. `special_function_kind_data` is the `InstId` of that thunk.
     HasCppThunk,
+    // A thunk that calls a C++ function pointer. `special_function_kind_data`
+    // is unused.
+    CppFunctionPointerThunk,
   };
 
   // Kinds of virtual modifiers that can apply to functions.
@@ -374,11 +377,17 @@ struct Function : public EntityWithParamsBase,
     special_function_kind_data = AnyRawId(thunk_id.index);
   }
 
-  // Sets that this function is a C++ thunk.
+  // Sets that this function is a thunk for a C++ function.
   auto SetCppThunk(InstId decl_id) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::CppThunk;
     special_function_kind_data = AnyRawId(decl_id.index);
+  }
+
+  // Sets that this function is a thunk for a C++ function pointer.
+  auto SetCppFunctionPointerThunk() -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::CppFunctionPointerThunk;
   }
 
   // Sets that this function is a C++ function that should be called using a C++
@@ -416,8 +425,13 @@ struct CalleeFunction {
   // The bound `Self` type or facet value. `None` if not a bound interface
   // member.
   InstId self_type_id;
-  // The bound `self` parameter. `None` if not a method.
+  // The bound `self` argument. `None` if not a method.
   InstId self_id;
+};
+
+// Information about a callee that's a C++ function pointer.
+struct CalleeCppFunctionPointer {
+  ClangFunctionPointerTypeId function_type_id;
 };
 
 // Information about a callee that may be a generic type, or could be an
@@ -425,8 +439,8 @@ struct CalleeFunction {
 struct CalleeNonFunction {};
 
 // A variant combining the callee forms.
-using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
-                            CalleeNonFunction>;
+using Callee = std::variant<CalleeCppFunctionPointer, CalleeCppOverloadSet,
+                            CalleeError, CalleeFunction, CalleeNonFunction>;
 
 // Given a callee expression in a function call, attempt to convert the callee
 // to a `BoundMethod`, minimally unwrapping it while doing so.

@@ -510,6 +510,13 @@ struct ClangDeclSignatureId : public IdBase<ClangDeclSignatureId> {
   using IdBase::IdBase;
 };
 
+// The ID of a `ClangFunctionPointerTypeInfo`.
+struct ClangFunctionPointerTypeId : public IdBase<ClangFunctionPointerTypeId> {
+  static constexpr llvm::StringLiteral Label = "clang_function_pointer_type";
+
+  using IdBase::IdBase;
+};
+
 // A boolean value.
 struct BoolValue : public IdBase<BoolValue> {
   // Not used by `Print`, but for `IdKind`.
