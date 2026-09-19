@@ -1,0 +1,51 @@
+# Golden scopes for the TextMate grammar. Regenerate with:
+#   ./utils/textmate/golden_test.py --update
+#
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+   1 | // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-79 ' Part of the Carbon L...' comment.line.double-slash.carbon
+   2 | // Exceptions. See /LICENSE for license information.
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-52 ' Exceptions. See /LIC...' comment.line.double-slash.carbon
+   3 | // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-58 ' SPDX-License-Identif...' comment.line.double-slash.carbon
+   5 | choice SomeChoice(T: type) {
+     |       0-6 'choice'                   storage.type.carbon
+     |      7-17 'SomeChoice'               entity.name.type.carbon
+     |     17-18 '('                        -
+     |     18-19 'T'                        entity.name.type.carbon
+     |     19-20 ':'                        keyword.operator.carbon
+     |     21-25 'type'                     support.type.builtin.carbon
+     |     25-29 ') {'                      -
+   6 |     Val1,
+     |       4-8 'Val1'                     entity.name.type.carbon
+     |       8-9 ','                        punctuation.separator.carbon
+   7 |     Val2(a: i32, b: array(T, 5), t: T),
+     |       4-8 'Val2'                     entity.name.function.carbon
+     |       8-9 '('                        -
+     |      9-10 'a'                        variable.other.carbon
+     |     10-11 ':'                        keyword.operator.carbon
+     |     12-15 'i32'                      support.type.builtin.carbon
+     |     15-16 ','                        punctuation.separator.carbon
+     |     17-18 'b'                        variable.other.carbon
+     |     18-19 ':'                        keyword.operator.carbon
+     |     20-25 'array'                    support.type.builtin.carbon
+     |     25-26 '('                        -
+     |     26-27 'T'                        entity.name.type.carbon
+     |     27-28 ','                        punctuation.separator.carbon
+     |     29-30 '5'                        constant.numeric.decimal.carbon
+     |     30-31 ')'                        -
+     |     31-32 ','                        punctuation.separator.carbon
+     |     33-34 't'                        variable.other.carbon
+     |     34-35 ':'                        keyword.operator.carbon
+     |     36-37 'T'                        entity.name.type.carbon
+     |     37-38 ')'                        -
+     |     38-39 ','                        punctuation.separator.carbon
+   8 |     Val3
+     |       4-8 'Val3'                     entity.name.type.carbon
+   9 | }
+     |       0-2 '}'                        -

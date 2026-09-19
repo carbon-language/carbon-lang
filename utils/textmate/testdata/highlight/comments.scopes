@@ -1,0 +1,67 @@
+# Golden scopes for the TextMate grammar. Regenerate with:
+#   ./utils/textmate/golden_test.py --update
+#
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+   1 | // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-79 ' Part of the Carbon L...' comment.line.double-slash.carbon
+   2 | // Exceptions. See /LICENSE for license information.
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-52 ' Exceptions. See /LIC...' comment.line.double-slash.carbon
+   3 | // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-58 ' SPDX-License-Identif...' comment.line.double-slash.carbon
+   5 | // This is a comment.
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-21 ' This is a comment.'      comment.line.double-slash.carbon
+   6 |     //    Comment with whitespace.
+     |       4-6 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      6-34 '    Comment with whit...' comment.line.double-slash.carbon
+   7 | // class C; fn F[T: A](a: T) -> i32 { return 86; }
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-50 ' class C; fn F[T: A](...' comment.line.double-slash.carbon
+   8 | //@dump-sem-ir-begin
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-20 '@dump-sem-ir-begin'       comment.line.double-slash.carbon keyword.other.directive.carbon
+   9 | //@dump-sem-ir-end
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-18 '@dump-sem-ir-end'         comment.line.double-slash.carbon keyword.other.directive.carbon
+  10 | //@include-in-dumps
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-19 '@include-in-dumps'        comment.line.double-slash.carbon keyword.other.directive.carbon
+  11 | //@dump-sem-ir-
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-15 '@dump-sem-ir-'            comment.line.double-slash.carbon
+  12 | //no whitespace after double slash
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-34 'no whitespace after d...' comment.line.double-slash.carbon
+  13 | /* invalid comment pattern. */
+     |       0-1 '/'                        keyword.operator.carbon
+     |       1-2 '*'                        keyword.operator.carbon
+     |      3-10 'invalid'                  variable.other.carbon
+     |     11-18 'comment'                  variable.other.carbon
+     |     19-26 'pattern'                  variable.other.carbon
+     |     26-27 '.'                        keyword.operator.carbon
+     |     28-29 '*'                        keyword.operator.carbon
+     |     29-30 '/'                        keyword.operator.carbon
+  14 | /// invalid comment pattern.
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-28 '/ invalid comment pat...' comment.line.double-slash.carbon
+  15 | class C; // Comment after a statement/expression/declaration.
+     |       0-5 'class'                    storage.type.carbon
+     |       6-7 'C'                        entity.name.type.carbon
+     |       7-8 ';'                        punctuation.terminator.carbon
+     |      9-11 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |     11-61 ' Comment after a stat...' comment.line.double-slash.carbon
+  16 | var x: i32 = 1;// Trailing, with no space before the introducer.
+     |       0-3 'var'                      storage.type.carbon
+     |       4-5 'x'                        variable.other.carbon
+     |       5-6 ':'                        keyword.operator.carbon
+     |      7-10 'i32'                      support.type.builtin.carbon
+     |     11-12 '='                        keyword.operator.carbon
+     |     13-14 '1'                        constant.numeric.decimal.carbon
+     |     14-15 ';'                        punctuation.terminator.carbon
+     |     15-17 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |     17-64 ' Trailing, with no sp...' comment.line.double-slash.carbon

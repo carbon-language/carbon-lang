@@ -76,3 +76,9 @@ This installs `vsce` and `ovsx` to `/usr/local/bin`. Ensure that
 ## Updating dependencies
 
 To update dependencies, run `npm update`.
+
+## Testing the TextMate grammar
+
+`package.json` resolves `carbon.tmLanguage.json` against the extension root, so
+the grammar has to be in this directory. The renderer, tokenizer, tests, and
+samples are all in `utils/textmate`. See [its README](../textmate/README.md).
