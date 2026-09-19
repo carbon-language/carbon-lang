@@ -272,6 +272,9 @@ class TypeCompleter {
       -> SemIR::CompleteTypeInfo;
   auto BuildInfoForInst(SemIR::TypeId type_id, SemIR::PointerType inst) const
       -> SemIR::CompleteTypeInfo;
+  auto BuildInfoForInst(SemIR::TypeId type_id,
+                        SemIR::CppFunctionPointerType inst) const
+      -> SemIR::CompleteTypeInfo;
   auto BuildInfoForInst(SemIR::TypeId type_id, SemIR::IntType inst) const
       -> SemIR::CompleteTypeInfo;
   auto BuildInfoForInst(SemIR::TypeId type_id, SemIR::FloatType inst) const
@@ -712,6 +715,13 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
 
 auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
                                      SemIR::PointerType /*inst*/) const
+    -> SemIR::CompleteTypeInfo {
+  return {.value_repr = MakeCopyValueRepr(type_id),
+          .object_layout = context_->sem_ir().GetPointerLayout()};
+}
+
+auto TypeCompleter::BuildInfoForInst(
+    SemIR::TypeId type_id, SemIR::CppFunctionPointerType /*inst*/) const
     -> SemIR::CompleteTypeInfo {
   return {.value_repr = MakeCopyValueRepr(type_id),
           .object_layout = context_->sem_ir().GetPointerLayout()};

@@ -226,6 +226,7 @@ cc_library(
         "//common:concepts",
         "//common:raw_string_ostream",
         "//toolchain/base:kind_switch",
+        "@llvm-project//clang:ast",
         "@llvm-project//llvm:Support",
     ],
 )

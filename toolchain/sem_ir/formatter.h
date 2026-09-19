@@ -291,6 +291,7 @@ class Formatter {
   auto FormatArg(StringLiteralValueId id) -> void;
   auto FormatArg(ConstantId id) -> void { FormatConstant(id); }
   auto FormatArg(ClangDeclId id) -> void;
+  auto FormatArg(ClangFunctionPointerTypeId id) -> void;
 
   template <typename BundleT>
   auto FormatArg(BundleId<BundleT> bundle_id) -> void {
