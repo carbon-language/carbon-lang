@@ -52,7 +52,7 @@ fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     name_scope60000001: {inst: inst60000011, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name(SelfType): inst60000013}}
 // CHECK:STDOUT:     name_scope60000002: {inst: inst60000016, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {name2: inst6000001A, name3: inst6000001E}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name60000000: {name: name(SelfType), parent_scope: name_scope60000001, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
+// CHECK:STDOUT:     entity_name60000000: {name: name(SelfType), parent_scope: name_scope60000001, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   interfaces:
@@ -219,19 +219,19 @@ fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     name_scope50000004: {inst: inst50000027, parent_scope: name_scope50000001, has_error: false, extended_scopes: [], names: {name(SelfType): inst50000030}}
 // CHECK:STDOUT:     name_scope50000005: {inst: inst50000029, parent_scope: name_scope50000004, has_error: false, extended_scopes: [], names: {name2: inst5000002B, name3: inst5000002C}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name50000000: {name: name(SelfType), parent_scope: name_scope50000002, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name50000001: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1}, form: inst<none>}
-// CHECK:STDOUT:     entity_name50000002: {name: name6, parent_scope: name_scope50000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name50000003: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name50000004: {name: name2, parent_scope: name_scope50000005, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name50000005: {name: name3, parent_scope: name_scope50000005, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name50000006: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name50000007: {name: name5, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name50000008: {name: name(Underscore), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 1, form: inst<none>}
-// CHECK:STDOUT:     entity_name50000009: {name: name(Underscore), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 1, form: inst<none>}
-// CHECK:STDOUT:     entity_name5000000A: {name: name5, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name5000000B: {name: name(Underscore), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 1, form: inst<none>}
-// CHECK:STDOUT:     entity_name5000000C: {name: name(Underscore), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 1, form: inst<none>}
+// CHECK:STDOUT:     entity_name50000000: {name: name(SelfType), parent_scope: name_scope50000002, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name50000001: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1}, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name50000002: {name: name6, parent_scope: name_scope50000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name50000003: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name50000004: {name: name2, parent_scope: name_scope50000005, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name50000005: {name: name3, parent_scope: name_scope50000005, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name50000006: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name50000007: {name: name5, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst50000031}
+// CHECK:STDOUT:     entity_name50000008: {name: name(Underscore), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 1, form: inst<none>, type: inst50000045}
+// CHECK:STDOUT:     entity_name50000009: {name: name(Underscore), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 1, form: inst<none>, type: inst5000005A}
+// CHECK:STDOUT:     entity_name5000000A: {name: name5, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst50000077}
+// CHECK:STDOUT:     entity_name5000000B: {name: name(Underscore), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 1, form: inst<none>, type: inst50000087}
+// CHECK:STDOUT:     entity_name5000000C: {name: name(Underscore), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 1, form: inst<none>, type: inst50000099}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function50000000: {name: name4, parent_scope: name_scope0, call_param_patterns_id: inst_block50000018, call_params_id: inst_block50000019, body: [inst_block5000001F]}
 // CHECK:STDOUT:     function50000001: {name: name7, parent_scope: name_scope0, call_param_patterns_id: inst_block50000028, call_params_id: inst_block50000029, body: [inst_block5000002F]}

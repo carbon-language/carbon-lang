@@ -146,7 +146,7 @@ fn B() {
 // CHECK:STDOUT:     name_scope0:     {inst: inst10, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: inst70000012, name0: inst70000013}}
 // CHECK:STDOUT:     name_scope70000001: {inst: inst70000012, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst70000018}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name70000000: {name: name1, parent_scope: name_scope70000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
+// CHECK:STDOUT:     entity_name70000000: {name: name1, parent_scope: name_scope70000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function70000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, body: [inst_block70000006]}
 // CHECK:STDOUT:     function70000001: {name: name1, parent_scope: name_scope70000001, call_param_patterns_id: inst_block_empty}

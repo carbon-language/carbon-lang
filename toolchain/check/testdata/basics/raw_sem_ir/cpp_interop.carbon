@@ -70,10 +70,10 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     name_scope50000001: {inst: inst50000012, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name2: inst50000014, name3: inst5000002D, name4: inst50000055}}
 // CHECK:STDOUT:     name_scope50000002: {inst: inst50000014, parent_scope: name_scope50000001, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name50000000: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name50000001: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name50000002: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name50000003: {name: name4, parent_scope: name_scope50000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
+// CHECK:STDOUT:     entity_name50000000: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst50000016}
+// CHECK:STDOUT:     entity_name50000001: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name50000002: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name50000003: {name: name4, parent_scope: name_scope50000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function50000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block50000007, call_params_id: inst_block50000008, body: [inst_block5000000B]}
 // CHECK:STDOUT:     function50000001: {name: name3, parent_scope: name_scope50000001, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, cpp_thunk_decl: inst50000033}

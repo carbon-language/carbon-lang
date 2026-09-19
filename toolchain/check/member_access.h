@@ -13,7 +13,7 @@ namespace Carbon::Check {
 // Returns the highest allowed access for members of `name_scope_const_id`. For
 // example, if this returns `Protected` then only `Public` and `Protected`
 // accesses are allowed -- not `Private`.
-auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
+auto GetHighestAllowedAccess(Context& context,
                              SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind;
 

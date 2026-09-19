@@ -2425,7 +2425,7 @@ static auto ImportFunctionDecl(
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_param_patterns_id = SemIR::InstBlockId::None,
         .call_params_id = SemIR::InstBlockId::None,
-        .call_param_default_values_id = SemIR::InstBlockId::None,
+        .call_param_default_values_id = SemIR::InstBlockId::Empty,
         .call_param_ranges = import_function.call_param_ranges,
         .return_type_inst_id = SemIR::TypeInstId::None,
         .return_form_inst_id = SemIR::InstId::None,
@@ -2573,15 +2573,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_function.call_param_patterns_id);
   auto call_param_default_values = GetLocalBlockImportRefInfo(
       resolver, import_function.call_param_default_values_id);
-  llvm::SmallVector<SemIR::InstId> imported_default_values;
-  if (call_param_default_values.has_value()) {
-    auto import_fn = [&resolver](const auto& import_info) {
-      return GetLocalConstantInstId(resolver, import_info.import_inst_id);
-    };
-    llvm::append_range(imported_default_values,
-                       llvm::map_range(*call_param_default_values, import_fn));
-  }
-
   auto return_type_const_id = SemIR::ConstantId::None;
   if (import_function.return_type_inst_id.has_value()) {
     return_type_const_id =
@@ -2621,6 +2612,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto thunk_specific_data = GetLocalSpecificData(
       resolver, import_thunk_info ? import_thunk_info->specific_id
                                   : SemIR::SpecificId::None);
+  auto thunk_override_self_type_const_id = SemIR::ConstantId::None;
+  if (import_thunk_info) {
+    thunk_override_self_type_const_id =
+        GetLocalConstantId(resolver, import_thunk_info->override_self_type_id);
+  }
 
   auto& new_function = resolver.local_functions().Get(function_id);
   if (resolver.HasNewWork()) {
@@ -2633,7 +2629,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       AddLoadedImportRefBlock(resolver, call_param_patterns);
   if (call_param_default_values.has_value()) {
     new_function.call_param_default_values_id =
-        resolver.local_inst_blocks().Add(imported_default_values);
+        AddLoadedImportRefBlock(resolver, *call_param_default_values);
   }
   new_function.parent_scope_id = parent_scope_id;
   new_function.implicit_param_patterns_id =
@@ -2688,6 +2684,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       if (import_thunk_info->specific_id.has_value()) {
         local_thunk_info.specific_id = GetOrAddLocalSpecific(
             resolver, import_thunk_info->specific_id, thunk_specific_data);
+      }
+      if (thunk_override_self_type_const_id.has_value()) {
+        local_thunk_info.override_self_type_id =
+            resolver.local_types().GetTypeIdForTypeConstantId(
+                thunk_override_self_type_const_id);
       }
       new_function.SetThunk(resolver.local_ir().thunks().Add(local_thunk_info));
       break;

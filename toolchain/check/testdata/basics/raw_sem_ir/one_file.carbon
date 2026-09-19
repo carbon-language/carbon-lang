@@ -355,76 +355,76 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     name_scope7800000C: {inst: inst7800012E, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:     name_scope7800000D: {inst: inst7800018D, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name78000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1}, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000001: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000002: {name: name2, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000003: {name: name3, parent_scope: name_scope78000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000004: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000005: {name: name4, parent_scope: name_scope78000003, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000006: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000007: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000008: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000009: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800000A: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800000B: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800000C: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800000D: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800000E: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800000F: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000010: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000011: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000012: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000013: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000014: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000015: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000016: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000017: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000018: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000019: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800001A: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800001B: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800001C: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800001D: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800001E: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800001F: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000020: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000021: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000022: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000023: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000024: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000025: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000026: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000027: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000028: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000029: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800002A: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800002B: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800002C: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800002D: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800002E: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800002F: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000030: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000031: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000032: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000033: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000034: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000035: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000036: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000037: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000038: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000039: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800003A: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800003B: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800003C: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800003D: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800003E: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name7800003F: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000040: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000041: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000042: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000043: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000044: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name78000045: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
+// CHECK:STDOUT:     entity_name78000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1}, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000001: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst78000016}
+// CHECK:STDOUT:     entity_name78000002: {name: name2, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst7800001F}
+// CHECK:STDOUT:     entity_name78000003: {name: name3, parent_scope: name_scope78000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000004: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000005: {name: name4, parent_scope: name_scope78000003, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000006: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000007: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000008: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000009: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800000A: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800000B: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800000C: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800000D: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800000E: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800000F: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000010: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000011: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000012: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000013: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000014: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000015: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000016: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000017: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000018: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000019: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800001A: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800001B: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800001C: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800001D: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800001E: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800001F: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000020: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000021: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000022: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000023: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000024: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000025: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000026: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000027: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000028: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000029: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800002A: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800002B: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800002C: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800002D: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800002E: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800002F: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000030: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000031: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000032: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000033: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000034: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000035: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000036: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000037: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000038: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000039: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800003A: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800003B: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800003C: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800003D: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800003E: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name7800003F: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000040: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000041: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000042: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000043: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000044: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000045: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function78000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block78000010, call_params_id: inst_block78000011, return_type_inst_id: inst78000037, return_form_inst_id: inst78000039, return_pattern_id: inst78000041, body: [inst_block78000018]}
 // CHECK:STDOUT:     function78000001: {name: name4, parent_scope: name_scope78000003, call_param_patterns_id: inst_block7800001E, return_type_inst_id: inst78000073, return_form_inst_id: inst78000074, return_pattern_id: inst78000075}
