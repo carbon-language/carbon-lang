@@ -79,7 +79,7 @@ import Cpp;
 
 fn F() {
   let cpp_long: Cpp.long = 1;
-  // CHECK:STDERR: fail_implicit_conversion_long_to_i32.carbon:[[@LINE+7]]:32: error: cannot implicitly convert expression of type `Cpp.long` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_implicit_conversion_long_to_i32.carbon:[[@LINE+7]]:32: error: cannot implicitly convert expression of type `long` to `i32` [ConversionFailure]
   // CHECK:STDERR:   let unused carbon_i32: i32 = cpp_long;
   // CHECK:STDERR:                                ^~~~~~~~
   // CHECK:STDERR: fail_implicit_conversion_long_to_i32.carbon:[[@LINE+4]]:32: note: type `Cpp.long` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
@@ -656,7 +656,7 @@ fn F() {
 
   // For portability reasons, this is not allowed even though `unsigned long`
   // happens to fit in `u32` on this target.
-  // CHECK:STDERR: fail_no_ulong_to_u32.carbon:[[@LINE+11]]:25: error: cannot implicitly convert expression of type `Cpp.unsigned_long` to `u32` [ConversionFailure]
+  // CHECK:STDERR: fail_no_ulong_to_u32.carbon:[[@LINE+11]]:25: error: cannot implicitly convert expression of type `unsigned_long` to `u32` [ConversionFailure]
   // CHECK:STDERR:   let carbon_u32: u32 = cpp_unsigned_long;
   // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_no_ulong_to_u32.carbon:[[@LINE+8]]:25: note: type `Cpp.unsigned_long` does not implement interface `Core.ImplicitAs(u32)` [MissingImplInMemberAccessInContext]
