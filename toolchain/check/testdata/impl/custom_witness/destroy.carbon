@@ -75,3 +75,77 @@ fn F() {
   // CHECK:STDERR:
   C({}) as Core.Destroy;
 }
+
+// --- generic_destroy.carbon
+library "[[@TEST_NAME]]";
+
+// Constructing this type constructs a FacetValue containing a custom witness
+// for Destroy that references a generated function `Destroy.Op`. If multiple
+// functions are generated, they result in different `C` types.
+class C(T: Core.Destroy) { adapt (); }
+
+fn F() -> C(()) {
+  return () as C(());
+}
+
+// --- generic_destroy_2.carbon
+library "[[@TEST_NAME]]";
+
+// Same as in generic_destroy.carbon. Allows us to import different witnesses
+// for Core.Destroy and ensure they are all deduplicated.
+class D(T: Core.Destroy) { adapt (); }
+
+fn G() -> D(()) {
+  return () as D(());
+}
+
+// --- imported_custom_witness_then_local_custom_witness_share_op_function.carbon
+library "[[@TEST_NAME]]";
+
+import library "generic_destroy";
+
+fn H() {
+  // Imports a witness of `() as Core.Destroy` for `C` from the call to `F()`.
+  F();
+  // Locally constructs a witness of `() as Core.Destroy` for `C` for the local
+  // variable. And uses the imported witness for the return of `F`.
+  //
+  // The witnesses must use the same `Destroy.Op` function for the assignment
+  // to work, as otherwise they are different types.
+  let _: C(()) = F();
+}
+
+// --- local_custom_witness_then_imported_custom_witness_share_op_function.carbon
+library "[[@TEST_NAME]]";
+
+import library "generic_destroy";
+
+fn H() {
+  // Locally constructs a witness of `() as Core.Destroy` for `C` for the local
+  // variable.
+  var _: C(()) = () as C(());
+  // Imports a witness of `() as Core.Destroy` for `C` from the call to `F()`.
+  // And uses the local witness for the local variable.
+  //
+  // The witnesses must use the same `Destroy.Op` function for the assignment
+  // to work, as otherwise they are different types.
+  let _: C(()) = F();
+}
+
+// --- two_imported_custom_witnesses_share_op_function.carbon
+library "[[@TEST_NAME]]";
+
+import library "generic_destroy";
+import library "generic_destroy_2";
+
+// Verifies that we have the same facet value, and the same custom witness for
+// Core.Destroy in both C(T) and D(T).
+fn TestSameFacetValue[T: Core.Destroy](_: C(T), _: D(T)) {}
+
+fn H() {
+  // Imports a witness of `() as Core.Destroy` for `C` from the call to `F()`,
+  // and for `D` from the call the `G()`. These each come from a different
+  // library but they should be the same witness built on the canonical
+  // `Core.Destroy.Op` generated function.
+  TestSameFacetValue(F(), G());
+}

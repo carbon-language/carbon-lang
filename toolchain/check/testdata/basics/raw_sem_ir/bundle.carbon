@@ -34,9 +34,9 @@ fn F(generic Form: Core.Form) ->? Form;
 // CHECK:STDOUT:     name_scope0:     {inst: inst10, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Core): inst70000012, name0: inst70000033}}
 // CHECK:STDOUT:     name_scope70000001: {inst: inst70000012, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst70000017}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name70000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1}, form: inst<none>}
-// CHECK:STDOUT:     entity_name70000001: {name: name1, parent_scope: name_scope70000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
-// CHECK:STDOUT:     entity_name70000002: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>}
+// CHECK:STDOUT:     entity_name70000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1}, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name70000001: {name: name1, parent_scope: name_scope70000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name70000002: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst70000018}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function70000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block70000007, call_params_id: inst_block70000008, return_type_inst_id: inst70000021, return_form_inst_id: inst70000020, return_pattern_id: inst7000002A}
 // CHECK:STDOUT:   classes:         {}

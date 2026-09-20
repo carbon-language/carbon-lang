@@ -19,6 +19,12 @@ namespace Carbon::SemIR {
 auto StringifyConstantInst(const File& sem_ir, InstId outer_inst_id)
     -> std::string;
 
+// Produces a string version of the type of an instruction, describing the type
+// the way it was written in the source where we can determine that. Generally,
+// this should not be called directly. To format the type of an expression into
+// a diagnostic, use a diagnostic parameter of type `TypeOfInstId`.
+auto StringifyTypeOfInst(const File& sem_ir, InstId inst_id) -> std::string;
+
 // Produces a string version of the name of a specific. Generally, this should
 // not be called directly. To format a string into a diagnostic, use a
 // diagnostic parameter of type `SpecificId`.

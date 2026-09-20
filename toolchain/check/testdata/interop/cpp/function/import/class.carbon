@@ -436,7 +436,7 @@ fn F() {
   // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+5]]:3-29: error: function returns incomplete type `Cpp.DeclValueReturnClass` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE-6]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: ./decl_value_return_type.h:4:1: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: ./decl_value_return_type.h:4:33: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR:
   Cpp.foo_decl_value_return();
 }

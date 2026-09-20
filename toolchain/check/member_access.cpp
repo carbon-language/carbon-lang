@@ -99,26 +99,13 @@ static auto IsInstanceType(Context& context, SemIR::TypeId type_id) -> bool {
   return false;
 }
 
-auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
+auto GetHighestAllowedAccess(Context& context,
                              SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
-  SemIR::ScopeLookupResult lookup_result =
-      LookupUnqualifiedName(context, loc_id, SemIR::NameId::SelfType,
-                            /*required=*/false)
-          .scope_result;
-  CARBON_CHECK(!lookup_result.is_poisoned());
-  if (!lookup_result.is_found()) {
+  SemIR::NameScopeId access_context_scope_id = context.access_context();
+  if (!access_context_scope_id.has_value()) {
     return SemIR::AccessKind::Public;
   }
-
-  // TODO: Support other types for `Self`.
-  auto self_class_type = context.insts().TryGetAs<SemIR::ClassType>(
-      lookup_result.target_inst_id());
-  if (!self_class_type) {
-    return SemIR::AccessKind::Public;
-  }
-
-  auto self_class_info = context.classes().Get(self_class_type->class_id);
 
   // TODO: Support other types.
   if (auto class_type =
@@ -126,27 +113,27 @@ auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
               name_scope_const_id)) {
     auto class_info = context.classes().Get(class_type->class_id);
 
-    if (self_class_info.self_type_id == class_info.self_type_id) {
-      return SemIR::AccessKind::Private;
+    // Check if private access is allowed.
+    while (access_context_scope_id.has_value()) {
+      if (class_info.scope_id == access_context_scope_id) {
+        return SemIR::AccessKind::Private;
+      }
+
+      const auto& scope = context.name_scopes().Get(access_context_scope_id);
+      access_context_scope_id = scope.parent_scope_id();
     }
 
-    // If the `type_id` of `Self` does not match with the one we're currently
-    // accessing, try checking if this class is of the parent type of `Self`.
-    if (auto base_type_id = self_class_info.GetBaseType(
-            context.sem_ir(), self_class_type->specific_id);
-        base_type_id.has_value()) {
-      if (context.types().GetConstantId(base_type_id) == name_scope_const_id) {
+    // Check if protected access is allowed.
+    access_context_scope_id = context.access_context();
+    const auto& scope = context.name_scopes().Get(access_context_scope_id);
+    for (auto extended_scope_id : scope.extended_scopes()) {
+      auto const_id = context.constant_values().Get(extended_scope_id);
+      if (const_id == name_scope_const_id) {
         return SemIR::AccessKind::Protected;
       }
-      // TODO: Also check whether this base class has a base class of its own.
-    } else if (auto adapt_type_id = self_class_info.GetAdaptedType(
-                   context.sem_ir(), self_class_type->specific_id);
-               adapt_type_id.has_value()) {
-      if (context.types().GetConstantId(adapt_type_id) == name_scope_const_id) {
-        // TODO: Should we be allowed to access protected fields of a type we
-        // are adapting? The design doesn't allow this.
-        return SemIR::AccessKind::Protected;
-      }
+
+      // TODO: also check indirectly-extended scopes, as well as extended
+      // scopes of parent scopes of the access context.
     }
   }
 
@@ -318,7 +305,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   AccessInfo access_info = {
       .constant_id = name_scope_const_id,
       .highest_allowed_access =
-          GetHighestAllowedAccess(context, loc_id, name_scope_const_id),
+          GetHighestAllowedAccess(context, name_scope_const_id),
   };
   LookupResult result = LookupQualifiedName(
       context, loc_id, name_id, lookup_scopes, required, access_info);

@@ -226,6 +226,10 @@ class FunctionContext {
   // When fingerprinting for a specific, adds the type.
   auto AddTypeToCurrentFingerprint(llvm::Type* type) -> void;
 
+  // When fingerprinting for a specific of a template, adds the given
+  // instruction.
+  auto AddInstToCurrentFingerprint(SemIR::InstId inst_id) -> void;
+
   // Emits the final function fingerprints. Only called when function lowering
   // is complete.
   auto EmitFinalFingerprint() -> void;

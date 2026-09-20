@@ -112,7 +112,7 @@ import Cpp library "conversions.h";
 
 fn ConstructorExplicit(s: Cpp.Source) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+3]]:42: error: cannot implicitly convert expression of type `Cpp.Source` to `Cpp.ConditionallyExplicit` [ConversionFailure]
+  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+3]]:42: error: cannot implicitly convert expression of type `Source` to `Cpp.ConditionallyExplicit` [ConversionFailure]
   // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+2]]:42: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.ConditionallyExplicit)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   let _: Cpp.ConditionallyExplicitTrue = s;

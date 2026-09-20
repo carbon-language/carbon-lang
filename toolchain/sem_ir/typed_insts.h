@@ -706,6 +706,11 @@ struct CustomWitness {
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
   // The witness table of instructions.
+  //
+  // TODO: Change this to a ImplWitnessTable (or similar) instruction to move
+  // the InstBlock out of line, so that we can use the witness InstId while we
+  // build up the table entries for the CustomWitness, and mutate the table as
+  // we go.
   InstBlockId elements_id;
   // The `SpecificInterface` of the lookup query.
   SpecificInterfaceId query_specific_interface_id;
@@ -1572,21 +1577,6 @@ struct PointerType {
 
   TypeId type_id;
   TypeInstId pointee_id;
-};
-
-// An action that performs refinement for an instruction, by creating an
-// instruction that has the same semantics but the specific type and constant
-// value.
-struct RefineInstAction {
-  static constexpr auto Kind = InstKind::RefineInstAction.Define<Parse::NodeId>(
-      {.ir_name = "refine_inst_action",
-       .expr_category = ActionExprCategory(ExprCategory::Dependent),
-       .constant_kind = InstConstantKind::InstAction,
-       .action_needs_specific_id = true,
-       .is_lowered = false});
-
-  TypeId type_id;
-  MetaInstId inst_id;
 };
 
 // Represents a reference binding pattern that is not a parameter. See

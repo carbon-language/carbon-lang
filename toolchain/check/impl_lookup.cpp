@@ -891,19 +891,14 @@ static auto FindNonFinalWitness(
     }
   }
 
-  // TODO: Remove SpecificInterfaceId from LookupCustomWitness apis, switch to
-  // just SpecificInterface.
-  auto query_specific_interface_id =
-      context.specific_interfaces().Add(req_specific_interface);
-
   // Consider a custom witness for core interfaces.
   // TODO: This needs to expand to more interfaces, and we might want to have
   // that dispatch in custom_witness.cpp instead of here.
   auto core_interface =
       GetCoreInterface(context, req_specific_interface.interface_id);
-  if (auto witness_id = LookupCustomWitness(
-          context, loc_id, core_interface, req_self_const_id,
-          query_specific_interface_id, false)) {
+  if (auto witness_id = LookupCustomWitness(context, loc_id, core_interface,
+                                            req_self_const_id,
+                                            req_specific_interface, false)) {
     // If there's a final witness, we would have already found it via evaluating
     // the LookupImplWitness instruction.
     CARBON_CHECK(!witness_id->has_value());
@@ -1277,7 +1272,7 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
   bool used_custom_witness = false;
   if (auto witness_inst_id = LookupCustomWitness(
           context, loc_id, core_interface, query_self_const_id,
-          eval_query.query_specific_interface_id, true)) {
+          query_specific_interface, true)) {
     if (witness_inst_id->has_value()) {
       lookup_result = {.witness_id =
                            context.constant_values().Get(*witness_inst_id)};
@@ -1318,8 +1313,8 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
     // `impl` we may have found in Carbon.
     auto cpp_witness_id = LookupCppImpl(
         context, loc_id, core_interface, query_self_const_id,
-        eval_query.query_specific_interface_id,
-        lookup_result.impl_type_structure, lookup_result.impl_loc_id);
+        query_specific_interface, lookup_result.impl_type_structure,
+        lookup_result.impl_loc_id);
     if (cpp_witness_id.has_value()) {
       lookup_result = {.witness_id =
                            context.constant_values().Get(cpp_witness_id)};

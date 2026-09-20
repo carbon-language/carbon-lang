@@ -270,6 +270,8 @@ class MatchContext {
 
 }  // namespace
 
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto MatchContext::Match(State state, WorkItem entry) -> void {
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context_.emitter(), [&](auto& builder) {
@@ -286,6 +288,8 @@ auto MatchContext::Match(State state, WorkItem entry) -> void {
   }
 }
 
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto MatchContext::MatchWithResult(State state, WorkItem entry)
     -> SemIR::InstId {
   results_stack_.PushArray();
@@ -806,6 +810,8 @@ auto MatchContext::DoPostWork(State /*state*/,
   results_stack_.AppendToTop(tuple_value_id);
 }
 
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto MatchContext::DoPreWork(State state, SemIR::SpliceInst /*splice*/,
                              SemIR::InstId scrutinee_id, WorkItem entry)
     -> void {
@@ -946,7 +952,7 @@ auto MatchContext::DoPreWork(State state,
 
 auto MatchContext::DoPostWork(State state,
                               SemIR::DefaultValuePattern default_value_pattern,
-                              WorkItem entry) -> void {
+                              WorkItem /*entry*/) -> void {
   if (!std::holds_alternative<CalleeState*>(state)) {
     CARBON_FATAL("Unhandled state kind in DefaultValuePattern post-work");
   }
@@ -954,30 +960,24 @@ auto MatchContext::DoPostWork(State state,
   auto param_inst_id = results_stack_.PeekArray().back();
   auto param_type_id = context_.insts().Get(param_inst_id).type_id();
 
-  auto default_value_inst_id =
-      context_.full_pattern_stack()
-          .GetDefaultValues()[default_value_pattern.default_value_id.index];
   // If a constant was specified, we should be able to convert it into the
   // type of the parameter.
-  if (!context_.insts().Is<SemIR::UnspecifiedValue>(default_value_inst_id)) {
-    // We should be able to convert the supplied constant into the type of
-    // the parameter.
-    auto converted_id =
-        TryConvertToValueOfType(context_, SemIR::LocId(default_value_inst_id),
-                                default_value_inst_id, param_type_id);
-    if (converted_id == SemIR::ErrorInst::InstId) {
-      CARBON_DIAGNOSTIC(
-          PatternDefaultValueTypeMismatch, Error,
-          "default value expression type {0} doesn't match pattern type {1}",
-          TypeOfInstId, TypeOfInstId);
+  auto raw_default_value_inst_id =
+      context_.full_pattern_stack()
+          .GetRawDefaultValues()[default_value_pattern.default_value_id.index];
+  auto converted_inst_id =
+      context_.insts().Is<SemIR::UnspecifiedValue>(raw_default_value_inst_id)
+          ? raw_default_value_inst_id
+          : ConvertToValueOfType(context_,
+                                 SemIR::LocId(raw_default_value_inst_id),
+                                 raw_default_value_inst_id, param_type_id);
 
-      // TODO: should be able to provide precise locations for both default
-      // value expression and the type of the pattern, but we can't because
-      // they are both constants.
-      context_.emitter().Emit(entry.pattern_id, PatternDefaultValueTypeMismatch,
-                              default_value_inst_id, param_inst_id);
-    }
-  }
+  // The index of the converted value should be the same as the raw value.
+  auto converted_default_id =
+      context_.full_pattern_stack().AddConvertedDefaultValue(converted_inst_id);
+  CARBON_CHECK(converted_default_id.index ==
+               default_value_pattern.default_value_id.index);
+
   results_stack_.PopArray();
 
   // If something at a higher level in the stack needed these results, bubble
@@ -987,6 +987,8 @@ auto MatchContext::DoPostWork(State state,
   }
 }
 
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
   if (entry.pattern_id == SemIR::ErrorInst::InstId) {
     if (need_subpattern_results()) {
@@ -1177,6 +1179,8 @@ auto ThunkPatternMatch(Context& context,
           .ignored_call_args = state.outer_call_args};
 }
 
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
                    SemIR::CallerPatternMatchAction action) -> SemIR::InstId {
   auto args = context.bundles().Get(action.args_id);
@@ -1193,6 +1197,8 @@ auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
   return state.call_args[0];
 }
 
+// TODO: There is a cycle through pattern matching with an action.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
                    SemIR::CalleePatternMatchAction action) -> SemIR::InstId {
   auto args = context.bundles().Get(action.args_id);

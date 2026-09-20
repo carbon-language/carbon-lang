@@ -546,6 +546,9 @@ auto Emitter<LocT>::Builder::FormatArgs(llvm::StringLiteral format,
                                         std::index_sequence<N...> /*indices*/)
     -> std::string {
   return llvm::formatv(
+      // `format` is a StringLiteral which is always NUL terminated, so data()
+      // is okay here. Too bad there's no c_str() method available.
+      // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
       format.data(),
       llvm::any_cast<
           typename Internal::DiagnosticTypeForArg<Args>::StorageType>(

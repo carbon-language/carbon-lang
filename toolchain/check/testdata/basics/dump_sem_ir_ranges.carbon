@@ -105,8 +105,8 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc5 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
 // CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %return.param_patt: %pattern_type.cb1 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt: %pattern_type.cb1 = return_slot_pattern %return.param_patt, %empty_tuple.type [concrete]
@@ -164,8 +164,8 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %c.ref.loc20: ref %empty_tuple.type = name_ref c, %c
 // CHECK:STDOUT:   %.loc20_10: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc20_11: init %empty_tuple.type = converted %c.ref.loc20, %.loc20_10 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %c.var, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%c.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %c.var, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound(%c.var)
 // CHECK:STDOUT:   return %.loc20_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -220,8 +220,8 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [concrete]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc17 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
@@ -242,15 +242,15 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %empty_tuple.loc17: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc17_7.3: %empty_tuple.type = converted %C.call, %empty_tuple.loc17 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Destroy.Op.bound.loc17: <bound method> = bound_method %.loc17_7.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc17: init %empty_tuple.type = call %Destroy.Op.bound.loc17(%.loc17_7.2)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc17: <bound method> = bound_method %.loc17_7.2, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc17: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc17(%.loc17_7.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Destroy.Op.bound.loc13: <bound method> = bound_method %.loc13_7.2, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call.loc13: init %empty_tuple.type = call %Destroy.Op.bound.loc13(%.loc13_7.2)
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc13: <bound method> = bound_method %.loc13_7.2, constants.%Destroy.WithSelf.Op.403
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc13: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc13(%.loc13_7.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc17(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- file_without_ranges.carbon
 // CHECK:STDOUT:

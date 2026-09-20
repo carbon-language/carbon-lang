@@ -99,16 +99,31 @@ auto AddIdentifierName(Context& context, llvm::StringRef name)
 }
 
 // Adds a namespace for the `Cpp` import and returns its `NameScopeId`.
-static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
+static auto AddNamespace(Context& context,
                          llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
     -> SemIR::NameScopeId {
+  if (imports.empty()) {
+    return AddImportNamespace(
+               context,
+               GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
+               SemIR::NameId::Cpp, SemIR::NameScopeId::Package,
+               /*import_id=*/SemIR::InstId::None)
+        .name_scope_id;
+  }
+
+  PackageNameId package_id = imports.front().package_id;
+  CARBON_CHECK(
+      llvm::all_of(imports, [&](const Parse::Tree::PackagingNames& import) {
+        return import.package_id == package_id;
+      }));
+
   return AddImportNamespaceToScope(
              context,
              GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
-             SemIR::NameId::ForPackageName(cpp_package_id),
+             SemIR::NameId::ForPackageName(package_id),
              SemIR::NameScopeId::Package,
              /*diagnose_duplicate_namespace=*/false,
-             [&]() {
+             [&] {
                return AddInst<SemIR::ImportCppDecl>(
                    context,
                    context.parse_tree().As<Parse::ImportDeclId>(
@@ -121,19 +136,13 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                SemIR::CppDomain* domain) -> void {
-  if (imports.empty()) {
-    // TODO: Consider always having a (non-null) AST even if there are no Cpp
-    // imports.
+  // If there are no direct C++ imports and no shared domain covers this unit,
+  // there is nothing to import.
+  if (imports.empty() && !domain) {
     return;
   }
 
-  PackageNameId package_id = imports.front().package_id;
-  CARBON_CHECK(
-      llvm::all_of(imports, [&](const Parse::Tree::PackagingNames& import) {
-        return import.package_id == package_id;
-      }));
-
-  auto name_scope_id = AddNamespace(context, package_id, imports);
+  auto name_scope_id = AddNamespace(context, imports);
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
 
@@ -353,28 +362,13 @@ auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::ConstantId;
   }
 
-  auto const_inst_id = file.constant_values().GetConstantInstId(inst_id);
-  CARBON_KIND_SWITCH(file.insts().Get(const_inst_id)) {
-    case CARBON_KIND(SemIR::ClassType class_type): {
-      const auto& class_info = file.classes().Get(class_type.class_id);
-      CARBON_CHECK(class_info.scope_id.has_value());
-      return ImportCppDeclFromFile(
-          context, loc_id, file,
-          file.name_scopes().Get(class_info.scope_id).clang_decl_context_id());
-    }
-
-    case CARBON_KIND(SemIR::Namespace namespace_decl): {
-      return ImportCppDeclFromFile(context, loc_id, file,
-                                   file.name_scopes()
-                                       .Get(namespace_decl.name_scope_id)
-                                       .clang_decl_context_id());
-    }
-
-    default: {
-      context.TODO(loc_id, "indirect import of unsupported C++ declaration");
-      return SemIR::ErrorInst::ConstantId;
-    }
+  if (const auto* clang_decl = file.clang_decls().Lookup(inst_id)) {
+    auto clang_decl_id = file.clang_decls().LookupId(clang_decl->key);
+    return ImportCppDeclFromFile(context, loc_id, file, clang_decl_id);
   }
+
+  context.TODO(loc_id, "indirect import of unsupported C++ declaration");
+  return SemIR::ErrorInst::ConstantId;
 }
 
 // Returns the Clang `DeclContext` for the given name scope. Return the
@@ -1973,7 +1967,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .call_param_patterns_id =
                   function_params_insts->call_param_patterns_id,
               .call_params_id = function_params_insts->call_params_id,
-              .call_param_default_values_id = SemIR::InstBlockId::None,
+              .call_param_default_values_id = SemIR::InstBlockId::Empty,
               .call_param_ranges = function_params_insts->param_ranges,
               .return_type_inst_id = function_params_insts->return_type_inst_id,
               .return_form_inst_id = function_params_insts->return_form_inst_id,

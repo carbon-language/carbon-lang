@@ -206,7 +206,7 @@ interface Z {}
 fn F() {
   class C {}
   impl C as Z;
-  // CHECK:STDERR: fail_redecl_in_fn_scope.carbon:[[@LINE+4]]:3-15: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
+  // CHECK:STDERR: fail_redecl_in_fn_scope.carbon:[[@LINE+4]]:3-15: error: impl redeclaration not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_redecl_in_fn_scope.carbon:[[@LINE-3]]:3-14: error: impl declared but not defined [ImplMissingDefinition]
   // CHECK:STDERR:
@@ -224,7 +224,7 @@ fn F() {
 }
 
 fn G() {
-  // CHECK:STDERR: fail_redecl_in_different_fn_scope.carbon:[[@LINE+4]]:3-15: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
+  // CHECK:STDERR: fail_redecl_in_different_fn_scope.carbon:[[@LINE+4]]:3-15: error: impl redeclaration not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_redecl_in_different_fn_scope.carbon:[[@LINE-6]]:3-14: error: impl declared but not defined [ImplMissingDefinition]
   // CHECK:STDERR:
@@ -240,7 +240,7 @@ fn F() {
   if (true) {
     class C {}
     impl C as Z;
-    // CHECK:STDERR: fail_redecl_in_block_scope.carbon:[[@LINE+4]]:5-17: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
+    // CHECK:STDERR: fail_redecl_in_block_scope.carbon:[[@LINE+4]]:5-17: error: impl redeclaration not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
     // CHECK:STDERR:
     // CHECK:STDERR: fail_redecl_in_block_scope.carbon:[[@LINE-3]]:5-16: error: impl declared but not defined [ImplMissingDefinition]
     // CHECK:STDERR:
@@ -259,7 +259,7 @@ fn F() {
     impl C as Z;
   }
   if (true) {
-    // CHECK:STDERR: fail_redecl_in_different_block_scope.carbon:[[@LINE+4]]:5-17: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
+    // CHECK:STDERR: fail_redecl_in_different_block_scope.carbon:[[@LINE+4]]:5-17: error: impl redeclaration not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
     // CHECK:STDERR:
     // CHECK:STDERR: fail_redecl_in_different_block_scope.carbon:[[@LINE-5]]:5-16: error: impl declared but not defined [ImplMissingDefinition]
     // CHECK:STDERR:

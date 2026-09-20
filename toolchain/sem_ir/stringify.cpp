@@ -19,6 +19,7 @@
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
+#include "toolchain/sem_ir/sugared_type.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -348,15 +349,24 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, ConstType inst) -> void {
     *out_ << "const ";
 
+    // `const (const T)` is the same type as `const T`, so don't print a chain
+    // of `const`s.
+    // TODO: Do this generically for all type qualifiers, and don't repeat
+    // qualifiers in types like `const (partial (const T))`.
+    auto inner_id = inst.inner_id;
+    while (auto inner_const = sem_ir_->insts().TryGetAs<ConstType>(inner_id)) {
+      inner_id = inner_const->inner_id;
+    }
+
     // Add parentheses if required.
-    if (GetPrecedence(sem_ir_->insts().Get(inst.inner_id).kind()) <
+    if (GetPrecedence(sem_ir_->insts().Get(inner_id).kind()) <
         GetPrecedence(ConstType::Kind)) {
       *out_ << "(";
-      // Note the `inst.inner_id` ends up here.
+      // Note the `inner_id` ends up here.
       step_stack_->PushString(")");
     }
 
-    step_stack_->PushInstId(inst.inner_id);
+    step_stack_->PushInstId(inner_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, CppTemplateNameType inst) -> void {
@@ -874,6 +884,10 @@ auto StringifyConstantInst(const File& sem_ir, InstId outer_inst_id)
   StepStack step_stack(&sem_ir);
   step_stack.PushInstId(outer_inst_id);
   return Stringify(sem_ir, step_stack);
+}
+
+auto StringifyTypeOfInst(const File& sem_ir, InstId inst_id) -> std::string {
+  return StringifyConstantInst(sem_ir, GetSugaredTypeOfInst(sem_ir, inst_id));
 }
 
 auto StringifySpecific(const File& sem_ir, SpecificId specific_id)

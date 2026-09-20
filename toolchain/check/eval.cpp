@@ -12,6 +12,7 @@
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
@@ -878,12 +879,8 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
 
 // Function template that can be called with an argument of type `T`. Used below
 // to detect which overloads of `GetConstantValue` exist.
-//
-// Marked as maybe unused at it seems the use in a requires isn't tracked by the
-// latest version of Clang's `-Wunused-template`.
-// https://github.com/llvm/llvm-project/issues/218429
 template <typename T>
-[[maybe_unused]] static auto Accept(T /*arg*/) -> void {}
+static auto Accept(T /*arg*/) -> void {}
 
 // Determines whether a `GetConstantValue` overload exists for a given ID type.
 // Note that we do not check whether `GetConstantValue` is *callable* with a
@@ -2947,7 +2944,7 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   auto evaluation_mode = SemIR::Function::EvaluationMode::None;
   if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
     function = &eval_context.functions().Get(callee_function->function_id);
-    builtin_kind = function->builtin_function_kind();
+    builtin_kind = function->GetBuiltinFunctionKind(eval_context.sem_ir());
     evaluation_mode = function->evaluation_mode;
     // Calls to builtins and to `eval` or `musteval` functions might be
     // constant.
@@ -3462,12 +3459,30 @@ auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
+// Update `context.access_context` to the type of the innermost enclosing type
+// scope of the generic.
+static auto SetAccessContext(Context& context, const SemIR::Generic& generic) {
+  auto function_decl =
+      context.insts().TryGetAs<SemIR::FunctionDecl>(generic.decl_id);
+  if (!function_decl || !function_decl->function_id.has_value()) {
+    return;
+  }
+  const auto& function = context.functions().Get(function_decl->function_id);
+  if (!function.parent_scope_id.has_value()) {
+    return;
+  }
+
+  context.access_context() = function.parent_scope_id;
+}
+
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region) -> void {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
-  auto eval_block_id = context.generics().Get(generic_id).GetEvalBlock(region);
+  const auto& generic = context.generics().Get(generic_id);
+  auto eval_block_id = generic.GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
+  llvm::SaveAndRestore access_context(context.access_context());
 
   // Allocate the value block and store it back onto the specific, so that our
   // in-progress results are visible.
@@ -3479,6 +3494,8 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
     inst_id = SemIR::InstId::None;
   }
   specific.SetValueBlock(region, value_block_id);
+
+  SetAccessContext(context, generic);
 
   EvalContext eval_context(&context, loc_id, specific_id);
 

@@ -1,0 +1,26 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/let/fail_let_struct_identifier_only.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/let/fail_let_struct_identifier_only.carbon
+
+// CHECK:STDERR: fail_let_struct_identifier_only.carbon:[[@LINE+2]]:7: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR:
+let {s};
+
+// CHECK:STDOUT: - filename: fail_let_struct_identifier_only.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 's'
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse '}' has_error
+// CHECK:STDOUT:   │ │ │ ├─InvalidParse '}' has_error
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern 's' has_error
+// CHECK:STDOUT:   │ ├─StructPattern '}' has_error
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

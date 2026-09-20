@@ -54,7 +54,7 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
 static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
     -> bool {
   auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
-  Context::FormExpr form_expr = [&]() {
+  Context::FormExpr form_expr = [&] {
     if (context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind) {
       return ReturnExprAsForm(context, expr_node_id, expr_inst_id);
     } else {
@@ -373,6 +373,25 @@ static auto DiagnosePositionalParams(Context& context,
   function_info.param_patterns_id = SemIR::InstBlockId::Empty;
 }
 
+// Diagnoses that the default values for function parameters have been
+// completely specified, which is a requirement on the first owning declaration
+// of a function.
+static auto CheckDefaultValuesCompletelySpecified(
+    Context& context, SemIR::Function& function_info) -> void {
+  auto unspecified_value_ids = llvm::make_filter_range(
+      context.inst_blocks().GetOrEmpty(
+          function_info.call_param_default_values_id),
+      [&context](auto inst_id) {
+        return context.insts().Is<SemIR::UnspecifiedValue>(inst_id);
+      });
+  for (auto inst_id : unspecified_value_ids) {
+    CARBON_DIAGNOSTIC(PatternDefaultValueNotSpecified, Error,
+                      "found unspecified default parameter value in the "
+                      "function's first owning declaration");
+    context.emitter().Emit(inst_id, PatternDefaultValueNotSpecified);
+  }
+}
+
 // Build a FunctionDecl describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
@@ -457,6 +476,10 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   DiagnosePositionalParams(context, function_info);
+  if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
+      !name_context.prev_inst_id().has_value()) {
+    CheckDefaultValuesCompletelySpecified(context, function_info);
+  }
 
   TryMergeRedecl(
       context, name_context, std::nullopt,

@@ -6,6 +6,7 @@
 #define CARBON_COMMON_RAW_HASHTABLE_H_
 
 #include <algorithm>
+#include <atomic>
 #include <concepts>
 #include <cstddef>
 #include <cstring>
@@ -18,6 +19,7 @@
 #include "common/concepts.h"
 #include "common/hashing.h"
 #include "common/raw_hashtable_metadata_group.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
 
@@ -122,10 +124,15 @@
 //   null. Since it doesn't track the exact number of filled entries in a table,
 //   it doesn't support a container-style `size` API.
 //
-// - There is no direct iterator support because of the complexity of embedding
-//   the group-based metadata scanning into an iterator model. Instead, there is
-//   just a for-each method that is passed a lambda to observe all entries. The
-//   order of this observation is also not guaranteed.
+// - Iteration is provided by a range object rather than by iterators hanging
+//   directly off the table, because the debug-only checks for mutation during
+//   iteration need state that outlives a single iterator: see `EntryRange`
+//   below. Obtaining one is an explicit call (`entries()`), as scanning an
+//   entire table is a costly operation that shouldn't be hidden behind a bare
+//   `begin()`/`end()` pair.
+//
+//   The order of iteration is not guaranteed, and debug builds actively vary it
+//   between ranges to keep callers from depending on it.
 namespace Carbon::RawHashtable {
 
 // Which prefetch strategies to enable can be controlled via macros to enable
@@ -152,7 +159,7 @@ inline constexpr ssize_t MinAllocatedSize = std::max<ssize_t>(64, MaxGroupSize);
 // An entry in the hashtable storage of a `KeyT` and `ValueT` object.
 //
 // Allows manual construction, destruction, and access to these values so we can
-// create arrays af the entries prior to populating them with actual keys and
+// create arrays of the entries prior to populating them with actual keys and
 // values.
 template <typename KeyT, typename ValueT>
 struct StorageEntry {
@@ -167,6 +174,20 @@ struct StorageEntry {
   static constexpr bool IsCopyable =
       IsTriviallyRelocatable || (std::is_copy_constructible_v<KeyT> &&
                                  std::is_copy_constructible_v<ValueT>);
+
+  // How iteration refers to an entry, and the iterator traits that follow.
+  //
+  // The key and value are stored side by side with nothing combining them, so
+  // a reference to an entry is a pair of references built on demand. That pair
+  // is a *proxy* reference: C++20 forward iterators permit one, but C++17
+  // algorithms may assume a forward iterator's reference is a real lvalue, so
+  // the C++17 category is `input`.
+  using RefT = std::pair<KeyT&, ValueT&>;
+  using IterValueT = RefT;
+  using IterPointerT = const RefT*;
+  using IterCategoryT = std::input_iterator_tag;
+
+  auto ref() -> RefT { return RefT(key(), value()); }
 
   auto key() const -> const KeyT& {
     // Ensure we don't need more alignment than available. Inside a method body
@@ -194,11 +215,21 @@ struct StorageEntry {
   // construction. As a consequence, this struct only provides the storage and
   // we have to manually manage the construction, move, and destruction of the
   // objects.
+  //
+  // Destroys the key and value behind an entry reference. Iteration hands back
+  // `RefT` rather than the entry, so this is how a walked entry is destroyed.
+  static auto DestroyRef(RefT ref) -> void {
+    ref.first.~KeyT();
+    ref.second.~ValueT();
+  }
+
+  // Destroys the key and value of this entry. The common case is destroying an
+  // entry found in the table's storage, where there is no reference to hand to
+  // `DestroyRef`.
   auto Destroy() -> void {
     static_assert(!IsTriviallyDestructible,
                   "Should never instantiate when trivial!");
-    key().~KeyT();
-    value().~ValueT();
+    DestroyRef(ref());
   }
 
   auto CopyFrom(const StorageEntry& entry) -> void {
@@ -241,6 +272,15 @@ struct StorageEntry<KeyT, void> {
   static constexpr bool IsCopyable =
       IsTriviallyRelocatable || std::is_copy_constructible_v<KeyT>;
 
+  // As above, but a set's entry is nothing but its key, so a reference to an
+  // entry is a true lvalue reference and the iterator is a plain forward one.
+  using RefT = KeyT&;
+  using IterValueT = std::remove_cv_t<KeyT>;
+  using IterPointerT = KeyT*;
+  using IterCategoryT = std::forward_iterator_tag;
+
+  auto ref() -> RefT { return key(); }
+
   auto key() const -> const KeyT& {
     // Ensure we don't need more alignment than available.
     static_assert(
@@ -254,10 +294,12 @@ struct StorageEntry<KeyT, void> {
     return const_cast<KeyT&>(const_cast<const StorageEntry*>(this)->key());
   }
 
+  static auto DestroyRef(RefT ref) -> void { ref.~KeyT(); }
+
   auto Destroy() -> void {
     static_assert(!IsTriviallyDestructible,
                   "Should never instantiate when trivial!");
-    key().~KeyT();
+    DestroyRef(ref());
   }
 
   auto CopyFrom(const StorageEntry& entry) -> void
@@ -360,6 +402,13 @@ class ViewImpl {
   using EntryT = StorageEntry<KeyT, ValueT>;
   using MetricsT = Metrics;
 
+  // What iterating over the table's entries produces: a `KeyT&` for a set, and
+  // a `std::pair<KeyT&, ValueT&>` for a map. See `StorageEntry`.
+  using EntryRefT = EntryT::RefT;
+
+  // The range type produced by `EntriesImpl`.
+  class EntryRange;
+
   friend class BaseImpl<KeyT, ValueT, KeyContextT>;
   template <typename InputBaseT, ssize_t SmallSize>
   friend class TableImpl;
@@ -385,13 +434,11 @@ class ViewImpl {
   auto LookupEntry(LookupKeyT lookup_key, KeyContextT key_context) const
       -> EntryT*;
 
-  // Calls `entry_callback` for each entry in the hashtable. All the entries
-  // within a specific group are visited first, and then `group_callback` is
-  // called on the group itself. The `group_callback` is typically only used by
-  // the internals of the hashtable.
-  template <typename EntryCallbackT, typename GroupCallbackT>
-  auto ForEachEntry(EntryCallbackT entry_callback,
-                    GroupCallbackT group_callback) const -> void;
+  // Returns a range for iterating over all entries in the hashtable.
+  //
+  // The returned range copies this view, so it remains valid for as long as the
+  // underlying table does, independent of this view's lifetime.
+  auto EntriesImpl() const -> EntryRange;
 
   // Returns a collection of informative metrics on the the current state of the
   // table, useful for performance analysis. These include relatively slow to
@@ -425,7 +472,7 @@ class ViewImpl {
   auto metadata() const -> uint8_t* {
     return reinterpret_cast<uint8_t*>(storage_);
   }
-  auto entries() const -> EntryT* {
+  auto entries_data() const -> EntryT* {
     return reinterpret_cast<EntryT*>(reinterpret_cast<std::byte*>(storage_) +
                                      EntriesOffset(alloc_size_));
   }
@@ -457,6 +504,172 @@ class ViewImpl {
   Storage* storage_;
 };
 
+// A range over the entries of a hashtable.
+//
+// A dedicated range object is used rather than a plain pair of iterators (such
+// as `llvm::iterator_range`) because the range scopes two debug-only behaviors
+// that a bare iterator pair has nowhere to store:
+//
+// - Mutation checking: the range snapshots a hash of the table's metadata on
+//   construction and re-checks it on destruction, catching tables that were
+//   mutated while iteration was active.
+// - Traversal order: the group at which iteration starts, and the stride it
+//   walks the groups with, are drawn from an entropy pool once when the range
+//   is constructed.
+//   Deriving them here rather than in `begin()` keeps `begin()` a pure function
+//   of the range so that it can be called repeatedly, as forward ranges
+//   require, while still varying the order between separately created ranges.
+//
+// The range holds the view *by value*; views are two words and designed to be
+// cheap to copy. It deliberately does not point back at the view it was created
+// from, as views are routinely temporaries or by-value parameters whose
+// lifetime is shorter than the table they refer to.
+//
+// This type provides only the minimal `begin()` and `end()` interface needed by
+// range-based for loops and the range concepts, which also avoids any
+// compile-time cost from including `<ranges>`.
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+class ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::EntryRange {
+ public:
+  class Iterator;
+
+  using value_type = typename EntryT::IterValueT;
+  using reference = EntryRefT;
+  using difference_type = ssize_t;
+
+  explicit EntryRange(ViewImpl view);
+
+  // Copyable: every member is a scalar snapshot of the table. Copying a range
+  // in a debug build simply validates the same table state more than once.
+  EntryRange(const EntryRange&) = default;
+  auto operator=(const EntryRange&) -> EntryRange& = default;
+
+#ifndef NDEBUG
+  // Only debug builds declare a destructor, and so only they re-check the
+  // table on the way out. Release builds leave the range trivially
+  // destructible, and so trivial for the purposes of calls, letting it be
+  // passed and returned in registers.
+  ~EntryRange() { CheckInvariants(); }
+#endif
+
+  auto begin() const -> Iterator;
+  auto end() const -> Iterator;
+
+ private:
+  // The facade `Iterator` derives from. A class can't name one of its own
+  // aliases in its base-specifier, so naming it here lets `Iterator` spell it
+  // once instead of repeating it to get at the members it inherits.
+  using IteratorBase =
+      llvm::iterator_facade_base<Iterator, typename EntryT::IterCategoryT,
+                                 value_type, difference_type,
+                                 typename EntryT::IterPointerT, reference>;
+
+#ifndef NDEBUG
+  // Checks that the table's metadata has not changed since construction.
+  auto CheckInvariants() const -> void;
+#endif
+
+  ViewImpl view_;
+#ifndef NDEBUG
+  HashCode initial_metadata_hash_ = {};
+  ssize_t start_group_ = 0;
+  ssize_t step_ = GroupSize;
+#endif
+};
+
+// Two-level forward iterator through present hashtable entries.
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+class ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::EntryRange::Iterator
+    : public EntryRange::IteratorBase {
+ public:
+  // Both the set and map forms satisfy C++20's `std::forward_iterator`. A
+  // map's `reference` is a proxy, which pins its C++17 `iterator_category` to
+  // `input`, but the C++20 concept is unaffected. See `EntryRefT`.
+  using iterator_concept = std::forward_iterator_tag;
+
+  Iterator() = default;
+
+  using EntryRange::IteratorBase::operator++;
+
+  [[clang::always_inline]] auto operator*() const -> EntryRefT {
+    CARBON_DCHECK(present_bits_ != 0, "Dereferencing end iterator!");
+    __builtin_assume(present_bits_ != 0);
+    // `index_ptr` folds scaling the match index by the entry size together
+    // with decoding the index itself, which saves a shift on the portable
+    // byte-encoded code path.
+    return MatchIndex(present_bits_).index_ptr(group_entries())->ref();
+  }
+
+  [[clang::always_inline]] auto operator++() -> Iterator& {
+    CARBON_DCHECK(present_bits_ != 0, "Incrementing end iterator!");
+    __builtin_assume(present_bits_ != 0);
+    present_bits_ &= (present_bits_ - 1);
+    if (LLVM_LIKELY(present_bits_ != 0)) {
+      return *this;
+    }
+    AdvanceToNextPresentGroup();
+    return *this;
+  }
+
+  friend auto operator==(const Iterator& lhs, const Iterator& rhs) -> bool {
+    if (lhs.present_bits_ == 0 || rhs.present_bits_ == 0) {
+      return lhs.present_bits_ == rhs.present_bits_;
+    }
+    // The entry pointer already encodes the base and the group offset, so it
+    // uniquely identifies the group without a separate index.
+    return lhs.group_entries() == rhs.group_entries() &&
+           lhs.present_bits_ == rhs.present_bits_;
+  }
+
+ private:
+  friend class EntryRange;
+
+  using MatchBitsT = typename MetadataGroup::MatchPresentRange::BitsT;
+  using MatchIndex = typename MetadataGroup::MatchIndex;
+
+  // Builds an iterator to the first present entry of `range`, or an iterator
+  // equal to `end()` when the range has no entries to walk. The parameters of
+  // the walk differ between builds, so both are drawn from the range here
+  // rather than passed in.
+  [[clang::always_inline]] explicit Iterator(const EntryRange& range);
+
+  [[clang::always_inline]] auto AdvanceToNextPresentGroup() -> void;
+
+  // The entries of the group the iterator is currently within. Both builds
+  // track the current group, but they encode it differently, so the encoding
+  // is hidden behind this accessor.
+  auto group_entries() const -> EntryT* {
+#ifndef NDEBUG
+    return group_entries_;
+#else
+    return entries_end_ + group_offset_;
+#endif
+  }
+
+#ifndef NDEBUG
+  // Debug builds walk groups in a randomized order and so must retain the
+  // array bases along with the parameters of the walk. The randomized walk
+  // revisits no group but also never reaches the end of the array, so it does
+  // need an explicit count of the groups left to visit.
+  EntryT* group_entries_ = nullptr;
+  const uint8_t* metadata_ = nullptr;
+  EntryT* entries_ = nullptr;
+  ssize_t groups_remaining_ = 0;
+  ssize_t group_index_ = 0;
+  size_t probe_mask_ = 0;
+  ssize_t step_ = GroupSize;
+#else
+  // Release builds walk the groups in order, tracking the position as a
+  // *negative* byte offset from the end of each array that counts up to zero.
+  // Anchoring at the ends rather than the beginnings means the walk needs only
+  // this one induction variable, and reaching zero is the bound.
+  EntryT* entries_end_ = nullptr;
+  const uint8_t* metadata_end_ = nullptr;
+  ssize_t group_offset_ = 0;
+#endif
+  MatchBitsT present_bits_ = 0;
+};
+
 // Implementation helper for defining a read-write base type for a hashtable
 // that type-erases any SSO buffer.
 //
@@ -474,8 +687,8 @@ class BaseImpl {
   using ValueT = InputValueT;
   using KeyContextT = InputKeyContextT;
   using ViewImplT = ViewImpl<KeyT, ValueT, KeyContextT>;
-  using EntryT = typename ViewImplT::EntryT;
-  using MetricsT = typename ViewImplT::MetricsT;
+  using EntryT = ViewImplT::EntryT;
+  using MetricsT = ViewImplT::MetricsT;
 
   BaseImpl(int small_alloc_size, Storage* small_storage)
       : small_alloc_size_(small_alloc_size) {
@@ -495,7 +708,10 @@ class BaseImpl {
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
   explicit(false) operator ViewImplT() const { return view_impl(); }
 
-  auto view_impl() const -> ViewImplT { return view_impl_; }
+  auto view_impl() const -> const ViewImplT& { return view_impl_; }
+
+  // Destroys all non-trivially destructible entries in the table.
+  auto DestroyEntries() -> void;
 
   // Looks up the provided key in the hashtable. If found, returns a pointer to
   // that entry and `false`.
@@ -510,7 +726,7 @@ class BaseImpl {
 
   // Grow the table to specific allocation size.
   //
-  // This will grow the the table if necessary for it to have an allocation size
+  // This will grow the table if necessary for it to have an allocation size
   // of `target_alloc_size` which must be a power of two. Note that this will
   // not allow that many keys to be inserted into the hashtable, but a smaller
   // number based on the load factor. If a specific number of insertions need to
@@ -561,7 +777,7 @@ class BaseImpl {
   auto storage() const -> Storage* { return view_impl_.storage_; }
   auto storage() -> Storage*& { return view_impl_.storage_; }
   auto metadata() const -> uint8_t* { return view_impl_.metadata(); }
-  auto entries() const -> EntryT* { return view_impl_.entries(); }
+  auto entries_data() const -> EntryT* { return view_impl_.entries_data(); }
   auto small_alloc_size() const -> ssize_t {
     return static_cast<unsigned>(small_alloc_size_);
   }
@@ -665,6 +881,25 @@ inline auto ComputeSeed() -> uint64_t {
   return reinterpret_cast<uint64_t>(&global_addr_seed);
 }
 
+#ifndef NDEBUG
+// A pool of entropy used to vary the iteration order of hashtables in debug
+// builds. It is seeded from ASLR where available.
+extern std::atomic<HashCode> entropy_hash;
+
+// Returns a pseudo-random value from the entropy pool, advancing the pool.
+//
+// The load and store are separate relaxed operations rather than one atomic
+// read-modify-write so that consuming entropy is just a load, and refreshing
+// the pool doesn't block the iteration that follows. Racing callers can lose an
+// update and draw the same value, which is fine for a debug aid.
+inline auto NextRangeEntropy() -> HashCode {
+  HashCode prev_entropy_hash = entropy_hash.load(std::memory_order_relaxed);
+  entropy_hash.store(Carbon::HashValue(prev_entropy_hash),
+                     std::memory_order_relaxed);
+  return prev_entropy_hash;
+}
+#endif
+
 inline auto ComputeProbeMaskFromSize(ssize_t size) -> size_t {
   CARBON_DCHECK(llvm::isPowerOf2_64(size),
                 "Size must be a power of two for a hashed buffer!");
@@ -748,7 +983,7 @@ auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::LookupEntry(
   HashCode hash = key_context.HashKey(lookup_key, ComputeSeed());
   auto [hash_index, tag] = hash.ExtractIndexAndTag<7>();
 
-  EntryT* local_entries = entries();
+  EntryT* local_entries = entries_data();
 
   // Walk through groups of entries using a quadratic probe starting from
   // `hash_index`.
@@ -799,41 +1034,11 @@ auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::LookupEntry(
   } while (LLVM_UNLIKELY(true));
 }
 
-// Note that we force inlining here because we expect to be called with lambdas
-// that will in turn be inlined to form the loop body. We don't want function
-// boundaries within the loop for performance, and recognizing the degree of
-// simplification from inlining these callbacks may be difficult to
-// automatically recognize.
-template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
-template <typename EntryCallbackT, typename GroupCallbackT>
-[[clang::always_inline]] auto
-ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::ForEachEntry(
-    EntryCallbackT entry_callback, GroupCallbackT group_callback) const
-    -> void {
-  uint8_t* local_metadata = metadata();
-  EntryT* local_entries = entries();
-
-  ssize_t local_size = alloc_size_;
-  for (ssize_t group_index = 0; group_index < local_size;
-       group_index += GroupSize) {
-    auto g = MetadataGroup::Load(local_metadata, group_index);
-    auto present_matched_range = g.MatchPresent();
-    if (!present_matched_range) {
-      continue;
-    }
-    for (ssize_t byte_index : present_matched_range) {
-      entry_callback(local_entries[group_index + byte_index]);
-    }
-
-    group_callback(&local_metadata[group_index]);
-  }
-}
-
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::ComputeMetricsImpl(
     KeyContextT key_context) const -> Metrics {
   uint8_t* local_metadata = metadata();
-  EntryT* local_entries = entries();
+  EntryT* local_entries = entries_data();
   ssize_t local_size = alloc_size_;
 
   Metrics metrics;
@@ -898,6 +1103,147 @@ auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::ComputeMetricsImpl(
   return metrics;
 }
 
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+[[clang::always_inline]] auto
+ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::EntriesImpl() const
+    -> EntryRange {
+  return EntryRange(*this);
+}
+
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+[[clang::always_inline]]
+ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::EntryRange::Iterator::
+    Iterator(const EntryRange& range) {
+  const ViewImpl& view = range.view_;
+  ssize_t alloc_size = view.alloc_size_;
+
+  // An empty or moved-from table has no groups to load from, and the
+  // default-initialized state left behind already compares equal to `end()`.
+  if (alloc_size == 0 || view.storage_ == nullptr) {
+    return;
+  }
+
+#ifndef NDEBUG
+  entries_ = view.entries_data();
+  metadata_ = view.metadata();
+  // The starting group and stride were drawn when the range was constructed,
+  // so every iterator built from it walks the same order.
+  group_index_ = range.start_group_;
+  group_entries_ = entries_ + group_index_;
+  groups_remaining_ = alloc_size / GroupSize - 1;
+  probe_mask_ = ComputeProbeMaskFromSize(alloc_size);
+  step_ = range.step_;
+
+  auto g = MetadataGroup::Load(metadata_, group_index_);
+#else
+  // The allocation size bounds the metadata array directly, so anchoring at
+  // the ends of the arrays lets the walk run off a single induction variable
+  // without ever dividing by the group size.
+  entries_end_ = view.entries_data() + alloc_size;
+  metadata_end_ = view.metadata() + alloc_size;
+  group_offset_ = -alloc_size;
+
+  auto g = MetadataGroup::Load(metadata_end_, group_offset_);
+#endif
+
+  auto present_range = g.MatchPresent();
+  if (present_range) {
+    present_bits_ = static_cast<MatchBitsT>(present_range);
+  } else {
+    AdvanceToNextPresentGroup();
+  }
+}
+
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+[[clang::always_inline]] auto
+ViewImpl<InputKeyT, InputValueT,
+         InputKeyContextT>::EntryRange::Iterator::AdvanceToNextPresentGroup()
+    -> void {
+#ifndef NDEBUG
+  while (--groups_remaining_ >= 0) {
+    group_index_ = static_cast<ssize_t>(
+        static_cast<size_t>(group_index_ + step_) & probe_mask_);
+    auto g = MetadataGroup::Load(metadata_, group_index_);
+    auto range = g.MatchPresent();
+    if (range) {
+      group_entries_ = entries_ + group_index_;
+      present_bits_ = static_cast<MatchBitsT>(range);
+      return;
+    }
+  }
+#else
+  for (group_offset_ += GroupSize; group_offset_ != 0;
+       group_offset_ += GroupSize) {
+    auto g = MetadataGroup::Load(metadata_end_, group_offset_);
+    auto range = g.MatchPresent();
+    if (range) {
+      present_bits_ = static_cast<MatchBitsT>(range);
+      return;
+    }
+  }
+#endif
+  present_bits_ = 0;
+}
+
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::EntryRange::EntryRange(
+    ViewImpl view)
+    : view_(view) {
+#ifndef NDEBUG
+  if (view_.alloc_size_ <= 0 || view_.storage_ == nullptr) {
+    return;
+  }
+  initial_metadata_hash_ = Carbon::HashValue(
+      llvm::ArrayRef<uint8_t>(view_.metadata(), view_.alloc_size_));
+
+  // Draw the traversal order once, here, so that `begin()` remains a pure
+  // function of the range and can be called repeatedly. Two separately
+  // constructed ranges still walk the table in different orders.
+  start_group_ = NextRangeEntropy().ExtractIndex() &
+                 ComputeProbeMaskFromSize(view_.alloc_size_);
+
+  // Walk the groups with a stride of an odd number of groups. The group count
+  // is always a power of two, so any odd stride is coprime with it and visits
+  // every group exactly once before repeating. That scrambles the group order
+  // far more thoroughly than a forward or reverse scan, and costs nothing in
+  // the loop itself as the increment already adds a stride and masks.
+  ssize_t num_groups = view_.alloc_size_ / GroupSize;
+  ssize_t stride_groups =
+      (NextRangeEntropy().ExtractIndex() & (num_groups - 1)) | 1;
+  step_ = stride_groups * GroupSize;
+#endif
+}
+
+#ifndef NDEBUG
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto ViewImpl<InputKeyT, InputValueT,
+              InputKeyContextT>::EntryRange::CheckInvariants() const -> void {
+  if (view_.alloc_size_ <= 0 || view_.storage_ == nullptr) {
+    return;
+  }
+  HashCode current_hash = Carbon::HashValue(
+      llvm::ArrayRef<uint8_t>(view_.metadata(), view_.alloc_size_));
+  CARBON_CHECK(current_hash == initial_metadata_hash_,
+               "Hashtable mutated during iteration: metadata changed!");
+}
+#endif
+
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+[[clang::always_inline]] auto
+ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::EntryRange::begin() const
+    -> Iterator {
+  // The traversal order is fixed when the range is constructed, so repeated
+  // calls yield equal iterators as forward ranges require.
+  return Iterator(*this);
+}
+
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+[[clang::always_inline]] auto
+ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::EntryRange::end() const
+    -> Iterator {
+  return Iterator();
+}
+
 // TODO: Evaluate whether it is worth forcing this out-of-line given the
 // reasonable ABI boundary it forms and large volume of code necessary to
 // implement it.
@@ -921,7 +1267,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertImpl(
   ssize_t group_with_deleted_index;
   MetadataGroup::MatchIndex deleted_match = {};
 
-  EntryT* local_entries = entries();
+  EntryT* local_entries = entries_data();
 
   auto return_insert_at_index = [&](ssize_t index) -> std::pair<EntryT*, bool> {
     // We'll need to insert at this index so set the control group byte to the
@@ -1017,7 +1363,7 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToAllocSizeImpl(
   bool old_small = is_small();
   Storage* old_storage = storage();
   uint8_t* old_metadata = metadata();
-  EntryT* old_entries = entries();
+  EntryT* old_entries = entries_data();
 
   // Configure for the new size and allocate the new storage.
   alloc_size() = target_alloc_size;
@@ -1093,7 +1439,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::EraseImpl(
   // If we mark the slot as empty, we'll also need to increase the growth
   // budget.
   uint8_t* local_metadata = metadata();
-  EntryT* local_entries = entries();
+  EntryT* local_entries = entries_data();
   ssize_t index = entry - local_entries;
   ssize_t group_index = index & ~GroupMask;
   auto g = MetadataGroup::Load(local_metadata, group_index);
@@ -1114,16 +1460,10 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::EraseImpl(
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::ClearImpl() -> void {
-  view_impl_.ForEachEntry(
-      [](EntryT& entry) {
-        if constexpr (!EntryT::IsTriviallyDestructible) {
-          entry.Destroy();
-        }
-      },
-      [](uint8_t* metadata_group) {
-        // Clear the group.
-        std::memset(metadata_group, 0, GroupSize);
-      });
+  DestroyEntries();
+  if (storage() != nullptr) {
+    std::memset(metadata(), 0, alloc_size());
+  }
   growth_budget_ = GrowthThresholdForAllocSize(alloc_size());
 }
 
@@ -1186,10 +1526,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::Destroy() -> void {
   }
 
   // Destroy all the entries.
-  if constexpr (!EntryT::IsTriviallyDestructible) {
-    view_impl_.ForEachEntry([](EntryT& entry) { entry.Destroy(); },
-                            [](auto...) {});
-  }
+  DestroyEntries();
 
   // If small, nothing to deallocate.
   if (is_small()) {
@@ -1199,6 +1536,16 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::Destroy() -> void {
   // Just deallocate the storage without updating anything when destroying the
   // object.
   Deallocate(storage(), alloc_size());
+}
+
+template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
+auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::DestroyEntries()
+    -> void {
+  if constexpr (!EntryT::IsTriviallyDestructible) {
+    for (typename EntryT::RefT entry : view_impl_.EntriesImpl()) {
+      EntryT::DestroyRef(entry);
+    }
+  }
 }
 
 // Copy all of the slots over from another table that is exactly the same
@@ -1224,9 +1571,9 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::CopySlotsFrom(
   // all of the keys. This is especially important as we don't have an easy way
   // to access the key context needed for rehashing here.
   uint8_t* local_metadata = metadata();
-  EntryT* local_entries = entries();
+  EntryT* local_entries = entries_data();
   const uint8_t* local_arg_metadata = arg.metadata();
-  const EntryT* local_arg_entries = arg.entries();
+  const EntryT* local_arg_entries = arg.entries_data();
   memcpy(local_metadata, local_arg_metadata, local_size);
 
   for (ssize_t group_index = 0; group_index < local_size;
@@ -1269,9 +1616,9 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::MoveFrom(
     // themselves. We do this preserving their slots and even tombstones to
     // avoid rehashing.
     uint8_t* local_metadata = this->metadata();
-    EntryT* local_entries = this->entries();
+    EntryT* local_entries = this->entries_data();
     uint8_t* local_arg_metadata = arg.metadata();
-    EntryT* local_arg_entries = arg.entries();
+    EntryT* local_arg_entries = arg.entries_data();
     memcpy(local_metadata, local_arg_metadata, local_size);
     if (EntryT::IsTriviallyRelocatable) {
       memcpy(local_entries, local_arg_entries, local_size * sizeof(EntryT));
@@ -1306,7 +1653,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertIntoEmpty(
     HashCode hash) -> EntryT* {
   auto [hash_index, tag] = hash.ExtractIndexAndTag<7>();
   uint8_t* local_metadata = metadata();
-  EntryT* local_entries = entries();
+  EntryT* local_entries = entries_data();
 
   for (ProbeSequence s(hash_index, alloc_size());; s.Next()) {
     ssize_t group_index = s.index();
@@ -1392,7 +1739,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToNextAllocSize(
   bool old_small = is_small();
   Storage* old_storage = storage();
   uint8_t* old_metadata = metadata();
-  EntryT* old_entries = entries();
+  EntryT* old_entries = entries_data();
 
 #ifndef NDEBUG
   // Count how many of the old table slots will end up being empty after we grow
@@ -1417,7 +1764,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToNextAllocSize(
 
   // Now extract the new components of the table.
   uint8_t* new_metadata = metadata();
-  EntryT* new_entries = entries();
+  EntryT* new_entries = entries_data();
 
   // Walk the metadata groups, clearing deleted to empty, duplicating the
   // metadata for the low and high halves, and updating it based on where each
@@ -1596,10 +1943,7 @@ auto TableImpl<InputBaseT, SmallSize>::operator=(const TableImpl& arg)
       return *this;
     }
     CARBON_DCHECK(arg.storage() != this->storage());
-    if constexpr (!EntryT::IsTriviallyDestructible) {
-      this->view_impl_.ForEachEntry([](EntryT& entry) { entry.Destroy(); },
-                                    [](auto...) {});
-    }
+    this->DestroyEntries();
   } else {
     // The sizes don't match so destroy everything and re-setup the table
     // storage.

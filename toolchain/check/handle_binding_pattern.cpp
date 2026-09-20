@@ -132,6 +132,10 @@ struct BindingPatternTypeInfo {
   // For a `:?` binding this is the type component of the form denoted by
   // `inst_id`. Otherwise this is the type denoted by `inst_id`.
   SemIR::TypeId type_component_id;
+  // The instruction describing `type_component_id` as it was written. For a
+  // `:?` binding this is a `TypeComponentOf` the form; otherwise it is
+  // `inst_id` itself.
+  SemIR::TypeInstId type_component_inst_id;
 };
 }  // namespace
 
@@ -211,7 +215,8 @@ static auto HandleAnyBindingPatternType(
     auto as_type = ExprAsType(context, binding_node_id, *self_type_inst_id);
     return {.node_id = binding_node_id,
             .inst_id = as_type.inst_id,
-            .type_component_id = as_type.type_id};
+            .type_component_id = as_type.type_id,
+            .type_component_inst_id = as_type.inst_id};
   }
 
   auto [node_id, original_inst_id] = context.node_stack().PopExprWithNodeId();
@@ -277,12 +282,14 @@ static auto HandleAnyBindingPatternType(
     auto as_form = FormExprAsForm(context, node_id, original_inst_id);
     return {.node_id = node_id,
             .inst_id = as_form.form_inst_id,
-            .type_component_id = as_form.type_component_id};
+            .type_component_id = as_form.type_component_id,
+            .type_component_inst_id = as_form.type_component_inst_id};
   } else {
     auto as_type = ExprAsType(context, node_id, original_inst_id);
     return {.node_id = node_id,
             .inst_id = as_type.inst_id,
-            .type_component_id = as_type.type_id};
+            .type_component_id = as_type.type_id,
+            .type_component_inst_id = as_type.inst_id};
   }
 }
 
@@ -339,8 +346,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         context, node_id, type_expr_region_id, type_expr.type_component_id,
         {.kind = kind,
          .type_id = GetPatternType(context, type_expr.type_component_id),
-         .entity_name_id = AddBindingEntityName(context, name_id, form_id,
-                                                /*is_unused=*/false, phase),
+         .entity_name_id = AddBindingEntityName(
+             context, name_id, type_expr.type_component_inst_id, form_id,
+             /*is_unused=*/false, phase),
          .subpattern_id = subpattern_id});
 
     // TODO: If `is_generic`, then `binding.bind_id is a SymbolicBinding. Subst

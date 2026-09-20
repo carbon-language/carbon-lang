@@ -70,7 +70,7 @@ fn Class.F(unused self: Class) {}
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+3]]:17-20: error: cannot implicitly convert non-type value of type `Class` to `type` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+3]]:17-20: error: cannot implicitly convert non-type value of type `Self` to `type` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+2]]:17-20: note: type `Class` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   fn F(self) -> self;

@@ -444,9 +444,9 @@ auto BM_CreateDirectories(benchmark::State& state) -> void {
   CARBON_CHECK(existing_depth <= depth);
   CARBON_CHECK(depth > 0);
 
-  // Use a batch size of 10 to get avoid completely swamping the measurements
+  // Use a batch size of 5 to get avoid completely swamping the measurements
   // with overhead from creating existing directories and cleaning up.
-  constexpr int BatchSize = 10;
+  constexpr int BatchSize = 5;
 
   // Pre-build both the paths and the existing paths. Note that we use
   // relatively short paths here, which if anything makes the benefits of the

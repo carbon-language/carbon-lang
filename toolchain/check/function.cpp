@@ -91,7 +91,7 @@ struct FunctionSignatureInsts {
   SemIR::InstBlockId param_patterns_id = SemIR::InstBlockId::None;
   SemIR::InstBlockId call_param_patterns_id = SemIR::InstBlockId::None;
   SemIR::InstBlockId call_params_id = SemIR::InstBlockId::None;
-  SemIR::InstBlockId call_param_default_values_id = SemIR::InstBlockId::None;
+  SemIR::InstBlockId call_param_default_values_id = SemIR::InstBlockId::Empty;
   SemIR::Function::CallParamIndexRanges call_param_ranges =
       SemIR::Function::CallParamIndexRanges::Empty;
   SemIR::TypeInstId return_type_inst_id = SemIR::TypeInstId::None;
@@ -306,100 +306,60 @@ static auto CheckFunctionEvaluationModeMatches(
   return false;
 }
 
-// Given a parameter patterns block, extracts the locations of all
-// `SemIR::DefaultValuePattern` instructions and returns them in an array.
-static auto ExtractDefaultValueLocations(Context& context,
-                                         SemIR::InstBlockId param_patterns_id)
-    -> llvm::SmallVector<SemIR::LocId> {
-  llvm::SmallVector<SemIR::LocId> locations;
-  for (auto inst_id : context.inst_blocks().GetOrEmpty(param_patterns_id)) {
-    if (context.insts().Is<SemIR::DefaultValuePattern>(inst_id)) {
-      locations.push_back(SemIR::LocId(inst_id));
+// Checks that if `new_id` has a specified value, it has the same value as
+// specified by `prev_id`. If `diagnose` is true this will issue a diagnostic
+// if it detects a difference. Returns true if the values are the same or
+// `new_id` is unspecified.
+//
+// Note: this function is only called on the function's first owning
+// declaration, as that is the declaration with this requirement.
+static auto CheckDefaultValueIsSame(Context& context, SemIR::InstId new_id,
+                                    SemIR::InstId prev_id, bool diagnose)
+    -> bool {
+  CARBON_CHECK(!context.insts().Is<SemIR::UnspecifiedValue>(prev_id));
+  if (!context.insts().Is<SemIR::UnspecifiedValue>(new_id)) {
+    auto new_constant_id = context.constant_values().Get(new_id);
+    auto prev_constant_id = context.constant_values().Get(prev_id);
+    if (new_constant_id != prev_constant_id) {
+      if (diagnose) {
+        CARBON_DIAGNOSTIC(
+            PatternDefaultValueDiffers, Error,
+            "default value of {0} differs from the previously declared default "
+            "value of {1}",
+            InstIdAsConstant, InstIdAsConstant);
+        CARBON_DIAGNOSTIC_LABEL(PatternDefaultValueDiffersNote, Info,
+                                "different previous declaration here");
+        context.emitter()
+            .Build(new_id, PatternDefaultValueDiffers, new_id, prev_id)
+            .Attach(prev_id, PatternDefaultValueDiffersNote)
+            .Emit();
+      }
+      return false;
     }
   }
-  return locations;
+
+  return true;
 }
 
 // Checks every parameter in `prev_function` and `new_function`, that if they
-// both specify a default value those values are identical, or that at most
-// one has an unspecified default value. If `diagnose` is true, issues
-// diagnostics where either condition is violated. Returns true if every
-// parameter met both criteria.
+// both specify a default value those values are identical. If `diagnose` is
+// true, issues diagnostics when that condition is violated. Returns true if
+// every parameter met the condition.
 static auto CheckDefaultValueConsistency(Context& context,
                                          const SemIR::Function& new_function,
                                          const SemIR::Function& prev_function,
                                          bool diagnose) -> bool {
-  // Both functions must either have defaults or not.
-  CARBON_CHECK(prev_function.call_param_default_values_id.has_value() ==
-               new_function.call_param_default_values_id.has_value());
+  auto new_default_value_ids = context.inst_blocks().GetOrEmpty(
+      new_function.call_param_default_values_id);
+  auto prev_default_value_ids = context.inst_blocks().GetOrEmpty(
+      prev_function.call_param_default_values_id);
 
-  if (!prev_function.call_param_default_values_id.has_value()) {
-    return true;
-  }
-
-  auto prev_value_inst_ids =
-      context.inst_blocks().Get(prev_function.call_param_default_values_id);
-  auto new_value_inst_ids =
-      context.inst_blocks().Get(new_function.call_param_default_values_id);
-  CARBON_CHECK(prev_value_inst_ids.size() == new_value_inst_ids.size());
-
-  llvm::SmallVector<size_t> indices_without_values;
-  llvm::SmallVector<size_t> indices_with_different_values;
-  for (size_t i = 0; i < prev_value_inst_ids.size(); ++i) {
-    bool prev_value_specified =
-        !context.insts().Is<SemIR::UnspecifiedValue>(prev_value_inst_ids[i]);
-    bool new_value_specified =
-        !context.insts().Is<SemIR::UnspecifiedValue>(new_value_inst_ids[i]);
-    if (!prev_value_specified && !new_value_specified) {
-      indices_without_values.push_back(i);
-    } else if (prev_value_specified && new_value_specified) {
-      auto prev_constant_id = TryEvalInst(context, prev_value_inst_ids[i]);
-      CARBON_CHECK(prev_constant_id != SemIR::ConstantId::NotConstant);
-      auto new_constant_id = TryEvalInst(context, new_value_inst_ids[i]);
-      CARBON_CHECK(new_constant_id != SemIR::ConstantId::NotConstant);
-      if (prev_constant_id != new_constant_id) {
-        indices_with_different_values.push_back(i);
-      }
-    }
-  }
-
-  bool check_ok =
-      indices_without_values.empty() && indices_with_different_values.empty();
-
-  if (check_ok || !diagnose) {
-    return check_ok;
-  }
-
-  // TODO: for imported functions we don't seem to have the previous parameter
-  // pattern block, so we can't add their locations to the diagnostic.
-  auto prev_param_locations =
-      ExtractDefaultValueLocations(context, prev_function.param_patterns_id);
-  auto new_param_locations =
-      ExtractDefaultValueLocations(context, new_function.param_patterns_id);
-
-  for (auto index : indices_without_values) {
-    CARBON_DIAGNOSTIC(PatternDefaultValueNeverSpecified, Error,
-                      "no value for default number {0} is ever specified.",
-                      size_t);
-    CARBON_DIAGNOSTIC_LABEL(PatternDefaultValueNeverSpecifiedNote, Info,
-                            "previous declaration here.");
-    auto builder = context.emitter().Build(
-        new_param_locations[index], PatternDefaultValueNeverSpecified, index);
-    if (index < prev_param_locations.size()) {
-      builder.Attach(prev_param_locations[index],
-                     PatternDefaultValueNeverSpecifiedNote);
-    }
-    builder.Emit();
-  }
-
-  for (auto index : indices_with_different_values) {
-    CARBON_DIAGNOSTIC(PatternDefaultValueDiffers, Error,
-                      "default value differs from the previous declaration.");
-    context.emitter().Emit(new_param_locations[index],
-                           PatternDefaultValueDiffers);
-  }
-
-  return false;
+  return llvm::all_of(
+      llvm::zip_equal(new_default_value_ids, prev_default_value_ids),
+      [&context, diagnose](auto id_pair) -> bool {
+        auto [new_id, prev_id] = id_pair;
+        return CheckDefaultValueIsSame(context, new_id, prev_id, diagnose);
+      });
 }
 
 auto CheckFunctionTypeMatches(Context& context,

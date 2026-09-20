@@ -92,7 +92,7 @@ import Cpp library "implicit_conversions.h";
 
 fn NonConstConversionTest(s: Cpp.NonConstConversion) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+3]]:21: error: cannot implicitly convert expression of type `Cpp.NonConstConversion` to `Cpp.Dest` [ConversionFailure]
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+3]]:21: error: cannot implicitly convert expression of type `NonConstConversion` to `Cpp.Dest` [ConversionFailure]
   // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+2]]:21: note: type `Cpp.NonConstConversion` does not implement interface `Core.ImplicitAs(Cpp.Dest)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   let _: Cpp.Dest = s;
@@ -133,7 +133,7 @@ import Cpp library "implicit_conversions.h";
 
 fn DeletedConstructorTest(s: Cpp.Source) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+3]]:35: error: cannot implicitly convert expression of type `Cpp.Source` to `Cpp.DeletedConstructor` [ConversionFailure]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+3]]:35: error: cannot implicitly convert expression of type `Source` to `Cpp.DeletedConstructor` [ConversionFailure]
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE+2]]:35: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.DeletedConstructor)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   let _: Cpp.DeletedConstructor = s;
@@ -142,7 +142,7 @@ fn DeletedConstructorTest(s: Cpp.Source) {
 
 fn DeletedConversionTest(s: Cpp.DeletedConversion) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+3]]:21: error: cannot implicitly convert expression of type `Cpp.DeletedConversion` to `Cpp.Dest` [ConversionFailure]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+3]]:21: error: cannot implicitly convert expression of type `DeletedConversion` to `Cpp.Dest` [ConversionFailure]
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE+2]]:21: note: type `Cpp.DeletedConversion` does not implement interface `Core.ImplicitAs(Cpp.Dest)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   let _: Cpp.Dest = s;
@@ -157,7 +157,7 @@ import Cpp library "implicit_conversions.h";
 
 fn ExplicitConstructorTest(s: Cpp.Source) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_explicit.carbon:[[@LINE+3]]:36: error: cannot implicitly convert expression of type `Cpp.Source` to `Cpp.ExplicitConstructor` [ConversionFailure]
+  // CHECK:STDERR: fail_explicit.carbon:[[@LINE+3]]:36: error: cannot implicitly convert expression of type `Source` to `Cpp.ExplicitConstructor` [ConversionFailure]
   // CHECK:STDERR: fail_explicit.carbon:[[@LINE+2]]:36: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.ExplicitConstructor)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   let _: Cpp.ExplicitConstructor = s;
@@ -166,7 +166,7 @@ fn ExplicitConstructorTest(s: Cpp.Source) {
 
 fn ExplicitConversionTest(s: Cpp.ExplicitConversion) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_explicit.carbon:[[@LINE+3]]:21: error: cannot implicitly convert expression of type `Cpp.ExplicitConversion` to `Cpp.Dest` [ConversionFailure]
+  // CHECK:STDERR: fail_explicit.carbon:[[@LINE+3]]:21: error: cannot implicitly convert expression of type `ExplicitConversion` to `Cpp.Dest` [ConversionFailure]
   // CHECK:STDERR: fail_explicit.carbon:[[@LINE+2]]:21: note: type `Cpp.ExplicitConversion` does not implement interface `Core.ImplicitAs(Cpp.Dest)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   let _: Cpp.Dest = s;

@@ -78,7 +78,7 @@ fn TestCppCompat() {
   var a: Core.CppCompat.Long32 = 1;
   // CHECK:STDERR: fail_todo_cpp_compat_widen_long32_to_i33.carbon:[[@LINE+5]]:17-19: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(33)` instead [IntWidthNotMultipleOf8]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_cpp_compat_widen_long32_to_i33.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Core.CppCompat.Long32` to `i33` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_cpp_compat_widen_long32_to_i33.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Long32` to `i33` [ConversionFailure]
   // CHECK:STDERR: fail_todo_cpp_compat_widen_long32_to_i33.carbon:[[@LINE+2]]:3-19: note: type `Core.CppCompat.Long32` does not implement interface `Core.ImplicitAs(i33)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var unused b: i33 = a;
@@ -92,7 +92,7 @@ fn TestCppCompat() {
   var c: Core.CppCompat.Long64 = 1;
   // CHECK:STDERR: fail_todo_cpp_compat_widen_long64_to_i65.carbon:[[@LINE+5]]:17-19: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(65)` instead [IntWidthNotMultipleOf8]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_cpp_compat_widen_long64_to_i65.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Core.CppCompat.Long64` to `i65` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_cpp_compat_widen_long64_to_i65.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Long64` to `i65` [ConversionFailure]
   // CHECK:STDERR: fail_todo_cpp_compat_widen_long64_to_i65.carbon:[[@LINE+2]]:3-19: note: type `Core.CppCompat.Long64` does not implement interface `Core.ImplicitAs(i65)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var unused d: i65 = c;
@@ -106,7 +106,7 @@ fn TestCppCompat() {
   var e: Core.CppCompat.LongLong64 = 1;
   // CHECK:STDERR: fail_todo_cpp_compat_widen_longlong64_to_i65.carbon:[[@LINE+5]]:17-19: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(65)` instead [IntWidthNotMultipleOf8]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_cpp_compat_widen_longlong64_to_i65.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Core.CppCompat.LongLong64` to `i65` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_cpp_compat_widen_longlong64_to_i65.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `LongLong64` to `i65` [ConversionFailure]
   // CHECK:STDERR: fail_todo_cpp_compat_widen_longlong64_to_i65.carbon:[[@LINE+2]]:3-19: note: type `Core.CppCompat.LongLong64` does not implement interface `Core.ImplicitAs(i65)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var unused f: i65 = e;
@@ -120,7 +120,7 @@ fn TestCppCompat() {
   var g: Core.CppCompat.ULong32 = 1;
   // CHECK:STDERR: fail_todo_cpp_compat_widen_ulong32_to_u33.carbon:[[@LINE+5]]:17-19: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(33)` instead [IntWidthNotMultipleOf8]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_cpp_compat_widen_ulong32_to_u33.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Core.CppCompat.ULong32` to `u33` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_cpp_compat_widen_ulong32_to_u33.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `ULong32` to `u33` [ConversionFailure]
   // CHECK:STDERR: fail_todo_cpp_compat_widen_ulong32_to_u33.carbon:[[@LINE+2]]:3-19: note: type `Core.CppCompat.ULong32` does not implement interface `Core.ImplicitAs(u33)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var unused h: u33 = g;
@@ -134,7 +134,7 @@ fn TestCppCompat() {
   var i: Core.CppCompat.ULong64 = 1;
   // CHECK:STDERR: fail_todo_cpp_compat_widen_ulong64_to_u65.carbon:[[@LINE+5]]:17-19: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(65)` instead [IntWidthNotMultipleOf8]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_cpp_compat_widen_ulong64_to_u65.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Core.CppCompat.ULong64` to `u65` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_cpp_compat_widen_ulong64_to_u65.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `ULong64` to `u65` [ConversionFailure]
   // CHECK:STDERR: fail_todo_cpp_compat_widen_ulong64_to_u65.carbon:[[@LINE+2]]:3-19: note: type `Core.CppCompat.ULong64` does not implement interface `Core.ImplicitAs(u65)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var unused j: u65 = i;
@@ -148,7 +148,7 @@ fn TestCppCompat() {
   var k: Core.CppCompat.ULongLong64 = 1;
   // CHECK:STDERR: fail_todo_cpp_compat_widen_ulonglong64_to_u65.carbon:[[@LINE+5]]:17-19: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(65)` instead [IntWidthNotMultipleOf8]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_cpp_compat_widen_ulonglong64_to_u65.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Core.CppCompat.ULongLong64` to `u65` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_cpp_compat_widen_ulonglong64_to_u65.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `ULongLong64` to `u65` [ConversionFailure]
   // CHECK:STDERR: fail_todo_cpp_compat_widen_ulonglong64_to_u65.carbon:[[@LINE+2]]:3-19: note: type `Core.CppCompat.ULongLong64` does not implement interface `Core.ImplicitAs(u65)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var unused l: u65 = k;
@@ -161,7 +161,7 @@ library "[[@TEST_NAME]]";
 fn TestCppCompat() {
   // Long32 is slightly wider than i32.
   var a: Core.CppCompat.Long32 = 1;
-  // CHECK:STDERR: fail_cpp_compat_narrow_long32_to_i32.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Core.CppCompat.Long32` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_cpp_compat_narrow_long32_to_i32.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Long32` to `i32` [ConversionFailure]
   // CHECK:STDERR: fail_cpp_compat_narrow_long32_to_i32.carbon:[[@LINE+2]]:3-19: note: type `Core.CppCompat.Long32` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var unused b: i32 = a;
@@ -187,7 +187,7 @@ library "[[@TEST_NAME]]";
 fn TestCppCompat() {
   // LongLong64 is slightly wider than i64.
   var e: Core.CppCompat.LongLong64 = 1;
-  // CHECK:STDERR: fail_cpp_compat_narrow_longlong64_to_i64.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Core.CppCompat.LongLong64` to `i64` [ConversionFailure]
+  // CHECK:STDERR: fail_cpp_compat_narrow_longlong64_to_i64.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `LongLong64` to `i64` [ConversionFailure]
   // CHECK:STDERR: fail_cpp_compat_narrow_longlong64_to_i64.carbon:[[@LINE+2]]:3-19: note: type `Core.CppCompat.LongLong64` does not implement interface `Core.ImplicitAs(i64)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var unused f: i64 = e;
@@ -200,7 +200,7 @@ library "[[@TEST_NAME]]";
 fn TestCppCompat() {
   // ULong32 is slightly wider than u32.
   var g: Core.CppCompat.ULong32 = 1;
-  // CHECK:STDERR: fail_cpp_compat_narrow_ulong32_to_u32.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Core.CppCompat.ULong32` to `u32` [ConversionFailure]
+  // CHECK:STDERR: fail_cpp_compat_narrow_ulong32_to_u32.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `ULong32` to `u32` [ConversionFailure]
   // CHECK:STDERR: fail_cpp_compat_narrow_ulong32_to_u32.carbon:[[@LINE+2]]:3-19: note: type `Core.CppCompat.ULong32` does not implement interface `Core.ImplicitAs(u32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var unused h: u32 = g;
@@ -226,7 +226,7 @@ library "[[@TEST_NAME]]";
 fn TestCppCompat() {
   // ULongLong64 is slightly wider than u64.
   var k: Core.CppCompat.ULongLong64 = 1;
-  // CHECK:STDERR: fail_cpp_compat_narrow_ulonglong64_to_u64.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Core.CppCompat.ULongLong64` to `u64` [ConversionFailure]
+  // CHECK:STDERR: fail_cpp_compat_narrow_ulonglong64_to_u64.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `ULongLong64` to `u64` [ConversionFailure]
   // CHECK:STDERR: fail_cpp_compat_narrow_ulonglong64_to_u64.carbon:[[@LINE+2]]:3-19: note: type `Core.CppCompat.ULongLong64` does not implement interface `Core.ImplicitAs(u64)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var unused l: u64 = k;

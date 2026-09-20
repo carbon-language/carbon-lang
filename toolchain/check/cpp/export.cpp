@@ -192,8 +192,9 @@ static auto CreateClassTemplateSpecializationDecl(
           template_args,
           /*StrictPackMatch=*/false,
           /*PrevDecl=*/nullptr);
-  class_template_decl->AddSpecialization(class_template_specialization_decl,
-                                         /*InsertPos=*/nullptr);
+  class_template_decl->AddSpecialization(
+      class_template_specialization_decl,
+      /*InsertPos=*/llvm::FoldingSetInsertToken());
   class_template_specialization_decl->setHasExternalLexicalStorage();
   class_template_specialization_decl->setHasExternalVisibleStorage();
 
@@ -290,6 +291,16 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
         .set_clang_decl_context_id(clang_decl_id, /*is_cpp_scope=*/false);
   }
   return record_decl;
+}
+
+auto ExportAndCompleteClassToCpp(Context& context, SemIR::ClassType class_type)
+    -> clang::TagDecl* {
+  auto* tag_decl = ExportClassToCpp(context, class_type);
+  if (tag_decl && context.cpp_context() &&
+      context.ast_context().getExternalSource()) {
+    context.ast_context().getExternalSource()->CompleteType(tag_decl);
+  }
+  return tag_decl;
 }
 
 // Export the bindings in a generic as a `clang::TemplateParameterList`.
@@ -1451,7 +1462,8 @@ auto ExportFunctionSpecializationToCpp(
       context.ast_context(), template_args);
   function_decl->setFunctionTemplateSpecialization(
       function_template_decl, template_arg_list,
-      /*InsertPos=*/nullptr, clang::TSK_ExplicitSpecialization,
+      /*InsertPos=*/llvm::FoldingSetInsertToken(),
+      clang::TSK_ExplicitSpecialization,
       /*TemplateArgsAsWritten=*/nullptr,
       /*PointOfInstantiation=*/clang::SourceLocation());
 

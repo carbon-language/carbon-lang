@@ -425,7 +425,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   }
 
   // Don't lower builtins.
-  if (function.builtin_function_kind() != SemIR::BuiltinFunctionKind::None) {
+  if (function.GetBuiltinFunctionKind(sem_ir()) !=
+      SemIR::BuiltinFunctionKind::None) {
     return std::nullopt;
   }
 
@@ -563,11 +564,11 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     // Specific functions are emitted in each file they are referenced in.
     linkage = llvm::Function::LinkOnceODRLinkage;
   } else if (declaration_function.special_function_kind ==
-                 SemIR::Function::SpecialFunctionKind::CoreWitness ||
+                 SemIR::Function::SpecialFunctionKind::Generated ||
              declaration_function.special_function_kind ==
                  SemIR::Function::SpecialFunctionKind::Thunk) {
-    // TODO: Emit CoreWitness functions and thunks in files where they're called
-    // instead of in files where they're defined. That should allow
+    // TODO: Emit custom witness functions and thunks in files where they're
+    // called instead of in files where they're defined. That should allow
     // LinkOnceODRLinkage.
     linkage = llvm::Function::WeakODRLinkage;
   }
@@ -773,8 +774,11 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
     -> llvm::Constant* {
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
   if (!vtable.carbon_native_vtable) {
-    auto* cxx_record_decl = cast<clang::CXXRecordDecl>(
-        sem_ir().clang_decls().Lookup(class_info.latest_decl_id())->key.decl);
+    const auto* clang_decl =
+        sem_ir().clang_decls().Lookup(class_info.first_decl_id());
+    CARBON_CHECK(clang_decl, "Missing Clang declaration for class {0}",
+                 class_info.name_id);
+    auto* cxx_record_decl = cast<clang::CXXRecordDecl>(clang_decl->key.decl);
     // TODO: This code generator can be for the wrong AST if we're not using
     // --share-cpp-ast.
     return context().cpp_code_generator()->GetAddrOfVTable(

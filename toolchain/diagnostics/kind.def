@@ -519,8 +519,7 @@ CARBON_DIAGNOSTIC_KIND(RequiredPatternDefaultValueMissing)
 CARBON_DIAGNOSTIC_KIND(PatternDefaultValueDiffers)
 CARBON_DIAGNOSTIC_KIND(PatternDefaultValueNotConstant)
 CARBON_DIAGNOSTIC_KIND(PatternDefaultValueNotInParameterList)
-CARBON_DIAGNOSTIC_KIND(PatternDefaultValueTypeMismatch)
-CARBON_DIAGNOSTIC_KIND(PatternDefaultValueNeverSpecified)
+CARBON_DIAGNOSTIC_KIND(PatternDefaultValueNotSpecified)
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
 
 // Unused diagnostics.

@@ -51,9 +51,8 @@ auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionType interface_function_type,
     SemIR::SpecificId enclosing_specific_id, SemIR::InstId impl_decl_id,
     bool defer_thunk_definition) -> SemIR::InstId {
-  auto impl_function_decl =
-      context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
-  if (!impl_function_decl) {
+  auto impl_function_decl = context.insts().Get(impl_decl_id).type_id();
+  if (!context.types().Is<SemIR::FunctionType>(impl_function_decl)) {
     if (impl_decl_id != SemIR::ErrorInst::InstId) {
       CARBON_DIAGNOSTIC(ImplFunctionWithNonFunction, Error,
                         "associated function {0} implemented by non-function",
@@ -149,7 +148,7 @@ static auto ScopesMatch(Context& context, const SemIR::Impl& new_impl,
 
   // The redecl is is an invalid scope.
   CARBON_DIAGNOSTIC(ImplDeclInInvalidScope, Error,
-                    "impl redeclation not in a declarative scope; "
+                    "impl redeclaration not in a declarative scope; "
                     "redeclaration is allowed only in a class or namespace");
   context.emitter().Emit(new_impl.latest_decl_id(), ImplDeclInInvalidScope);
   return ImplRedeclType::DiagnosedInvalidRedecl;
