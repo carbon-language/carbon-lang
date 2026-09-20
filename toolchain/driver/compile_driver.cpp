@@ -33,6 +33,7 @@
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/diagnostics/stream_consumer.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
 #include "toolchain/lower/options.h"

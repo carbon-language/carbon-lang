@@ -11,14 +11,10 @@
 fn F() {
   var n: i32 = 0;
   // TODO: It'd be nice to produce a custom diagnostic here.
-  // CHECK:STDERR: fail_postincrement.carbon:[[@LINE+4]]:4: error: expected `;` after expression statement [ExpectedExprSemi]
-  // CHECK:STDERR:   n++;
-  // CHECK:STDERR:    ^~
+  // CHECK:STDERR: fail_postincrement.carbon:[[@LINE+2]]:4-5: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   n++;
-  // CHECK:STDERR: fail_postincrement.carbon:[[@LINE+4]]:4: error: expected `;` after expression statement [ExpectedExprSemi]
-  // CHECK:STDERR:   n--;
-  // CHECK:STDERR:    ^~
+  // CHECK:STDERR: fail_postincrement.carbon:[[@LINE+2]]:4-5: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   n--;
 }

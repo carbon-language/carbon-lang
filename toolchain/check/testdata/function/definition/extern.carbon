@@ -42,12 +42,8 @@ extern fn F() {}
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE+3]]:1-8: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE-2]]:1-14: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn F() {}
 
@@ -56,12 +52,8 @@ fn F() {}
 library "[[@TEST_NAME]]";
 
 fn F();
-// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern fn F() {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: fn F();
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE+3]]:1-15: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE-2]]:1-7: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 extern fn F() {}
 
@@ -70,20 +62,12 @@ extern fn F() {}
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant [RedeclRedundant]
-// CHECK:STDERR: fn F();
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+3]]:1-7: error: redeclaration of `fn F` is redundant [RedeclRedundant]
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-2]]:1-14: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn F();
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-12]]:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+3]]:1-8: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-6]]:1-14: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn F() {}
 
@@ -92,12 +76,8 @@ fn F() {}
 library "[[@TEST_NAME]]";
 
 fn F() {}
-// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant [RedeclRedundant]
-// CHECK:STDERR: extern fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE+3]]:1-14: error: redeclaration of `fn F` is redundant [RedeclRedundant]
+// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE-2]]:1-8: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 extern fn F();
 
@@ -109,9 +89,7 @@ library "[[@TEST_NAME]]";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+4]]:1: error: `extern` entities must have a declaration in the API file [ExternRequiresDeclInApiFile]
-// CHECK:STDERR: extern fn F() {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+2]]:1-15: error: `extern` entities must have a declaration in the API file [ExternRequiresDeclInApiFile]
 // CHECK:STDERR:
 extern fn F() {}
 
@@ -203,7 +181,7 @@ extern fn F() {}
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc8: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
@@ -223,7 +201,7 @@ extern fn F() {}
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc8: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -243,8 +221,8 @@ extern fn F() {}
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc8: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc20: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
@@ -264,7 +242,7 @@ extern fn F() {}
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc8: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

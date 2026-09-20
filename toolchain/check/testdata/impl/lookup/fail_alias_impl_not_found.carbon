@@ -21,14 +21,10 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+4]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   C.F();
-  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+2]]:3-5: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   C.F();
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+4]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   c.F();
-  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+2]]:3-5: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   c.F();
 }
@@ -105,10 +101,10 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc28: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc28: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %C.ref.loc26: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %F.ref.loc26: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc33: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %F.ref.loc29: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

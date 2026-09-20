@@ -80,12 +80,8 @@ fn While() {
 library "[[@TEST_NAME]]";
 
 fn While() {
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+7]]:9: error: cannot implicitly convert expression of type `{}` to `bool` [ConversionFailure]
-  // CHECK:STDERR:   while ({}) {}
-  // CHECK:STDERR:         ^~~~
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+4]]:9: note: type `{}` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   while ({}) {}
-  // CHECK:STDERR:         ^~~~
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9-12: error: cannot implicitly convert expression of type `{}` to `bool` [ConversionFailure]
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+2]]:9-12: note: type `{}` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   while ({}) {}
 }
@@ -94,28 +90,20 @@ fn While() {
 library "[[@TEST_NAME]]";
 
 fn While() {
-  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+4]]:3: error: `continue` can only be used in a loop [ContinueOutsideLoop]
-  // CHECK:STDERR:   continue;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+2]]:3-10: error: `continue` can only be used in a loop [ContinueOutsideLoop]
   // CHECK:STDERR:
   continue;
-  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+4]]:3: error: `break` can only be used in a loop [BreakOutsideLoop]
-  // CHECK:STDERR:   break;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+2]]:3-7: error: `break` can only be used in a loop [BreakOutsideLoop]
   // CHECK:STDERR:
   break;
   while (false) {
     continue;
     break;
   }
-  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+4]]:3: error: `continue` can only be used in a loop [ContinueOutsideLoop]
-  // CHECK:STDERR:   continue;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+2]]:3-10: error: `continue` can only be used in a loop [ContinueOutsideLoop]
   // CHECK:STDERR:
   continue;
-  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+4]]:3: error: `break` can only be used in a loop [BreakOutsideLoop]
-  // CHECK:STDERR:   break;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+2]]:3-7: error: `break` can only be used in a loop [BreakOutsideLoop]
   // CHECK:STDERR:
   break;
 }

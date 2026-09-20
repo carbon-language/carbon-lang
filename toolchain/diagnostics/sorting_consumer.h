@@ -40,6 +40,12 @@ class SortingConsumer : public Consumer {
 
   // Sorts and flushes buffered diagnostics.
   auto Flush() -> void override {
+    // TODO: Diagnostics sharing a byte offset print in the order they were
+    // emitted, which is not the order they read in: a diagnostic names the
+    // token it is about, not the token the phase had reached when it noticed.
+    // Sort each run of equal offsets by the position leading the diagnostic,
+    // for runs led from a single file, since positions in two files say
+    // nothing about which comes first.
     llvm::stable_sort(
         diagnostics_, [](const Diagnostic& lhs, const Diagnostic& rhs) {
           if (lhs.last_byte_offset != rhs.last_byte_offset) {
@@ -48,8 +54,8 @@ class SortingConsumer : public Consumer {
 
           if (lhs.is_on_scope && rhs.is_on_scope) {
             // When both are on-scope, we need to compare the locations.
-            const auto& lhs_loc = lhs.messages[0].loc;
-            const auto& rhs_loc = rhs.messages[0].loc;
+            const auto& lhs_loc = lhs.message.loc;
+            const auto& rhs_loc = rhs.message.loc;
             return std::tie(lhs_loc.line_number, lhs_loc.column_number) <
                    std::tie(rhs_loc.line_number, rhs_loc.column_number);
           } else {

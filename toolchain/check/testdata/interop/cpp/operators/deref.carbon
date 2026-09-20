@@ -62,9 +62,7 @@ public:
 ''';
 
 fn TestDerefPass(var int_ptr: Cpp.MultiDeref) -> ref i32 {
-  // CHECK:STDERR: fail_todo_multi_deref.carbon:[[@LINE+4]]:10: error: semantics TODO: `operator* overload sets not implemented yet` [SemanticsTodo]
-  // CHECK:STDERR:   return int_ptr.(Core.CppUnsafeDeref.Op)();
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_multi_deref.carbon:[[@LINE+2]]:10-41: error: semantics TODO: `operator* overload sets not implemented yet` [SemanticsTodo]
   // CHECK:STDERR:
   return int_ptr.(Core.CppUnsafeDeref.Op)();
 }
@@ -91,9 +89,7 @@ public:
 ''';
 
 fn TestDerefPass(var int_ptr: Cpp.MaybeDeref(i32)) -> ref i32 {
-  // CHECK:STDERR: fail_todo_maybe_deref.carbon:[[@LINE+4]]:10: error: semantics TODO: `operator* overload sets not implemented yet` [SemanticsTodo]
-  // CHECK:STDERR:   return int_ptr.(Core.CppUnsafeDeref.Op)();
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_maybe_deref.carbon:[[@LINE+2]]:10-41: error: semantics TODO: `operator* overload sets not implemented yet` [SemanticsTodo]
   // CHECK:STDERR:
   return int_ptr.(Core.CppUnsafeDeref.Op)();
 }
@@ -107,9 +103,7 @@ class NotAPtr {};
 ''';
 
 fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
-  // CHECK:STDERR: fail_not_a_ptr.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.CppUnsafeDeref` in type `Cpp.NotAPtr` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   not_ptr.(Core.CppUnsafeDeref.Op)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_not_a_ptr.carbon:[[@LINE+2]]:3-34: error: cannot access member of interface `Core.CppUnsafeDeref` in type `Cpp.NotAPtr` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   not_ptr.(Core.CppUnsafeDeref.Op)();
 }

@@ -110,19 +110,13 @@ import library "f32";
 import library "f64";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_truncate_overflow.carbon:[[@LINE+4]]:14: error: value 9.9999999999999994E+38 too large for floating-point type `f32` [FloatTooLargeForType]
-// CHECK:STDERR: let a: f32 = Float64ToFloat32(1.0e39);
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_truncate_overflow.carbon:[[@LINE+2]]:14-37: error: value 9.9999999999999994E+38 too large for floating-point type `f32` [FloatTooLargeForType]
 // CHECK:STDERR:
 let a: f32 = Float64ToFloat32(1.0e39);
-// CHECK:STDERR: fail_truncate_overflow.carbon:[[@LINE+4]]:14: error: value 10*10^38 too large for floating-point type `f32` [FloatLiteralTooLargeForType]
-// CHECK:STDERR: let b: f32 = FloatLiteralToFloat32(1.0e39);
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_truncate_overflow.carbon:[[@LINE+2]]:14-42: error: value 10*10^38 too large for floating-point type `f32` [FloatLiteralTooLargeForType]
 // CHECK:STDERR:
 let b: f32 = FloatLiteralToFloat32(1.0e39);
-// CHECK:STDERR: fail_truncate_overflow.carbon:[[@LINE+4]]:14: error: value 10*10^308 too large for floating-point type `f64` [FloatLiteralTooLargeForType]
-// CHECK:STDERR: let c: f64 = FloatLiteralToFloat64(1.0e309);
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_truncate_overflow.carbon:[[@LINE+2]]:14-43: error: value 10*10^308 too large for floating-point type `f64` [FloatLiteralTooLargeForType]
 // CHECK:STDERR:
 let c: f64 = FloatLiteralToFloat64(1.0e309);
 //@dump-sem-ir-end
@@ -144,13 +138,9 @@ import library "f64";
 
 //@dump-sem-ir-begin
 let not_constant_64: f64 = 0.0;
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+8]]:33: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
-// CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE-7]]:1: in import [InImport]
-// CHECK:STDERR: f64.carbon:5:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn Float64ToFloat64(a: f64) -> f64 = "float.convert_checked";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:33-65: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: imported from: fail_not_constant.carbon:[[@LINE-5]]:1 [InImport]
+// CHECK:STDERR: f64.carbon:5:1-36: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 //@dump-sem-ir-end
@@ -618,24 +608,24 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc11_37.1: %f32.c73 = value_of_initializer @__global_init.%Float64ToFloat32.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc11_37.2: %f32.c73 = converted @__global_init.%Float64ToFloat32.call, %.loc11_37.1 [concrete = <error>]
-// CHECK:STDOUT:   %f32.loc11: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
-// CHECK:STDOUT:   %a: %f32.c73 = wrapper_binding a, %.loc11_37.2 [concrete = <error>]
+// CHECK:STDOUT:   %.loc9_37.1: %f32.c73 = value_of_initializer @__global_init.%Float64ToFloat32.call [concrete = <error>]
+// CHECK:STDOUT:   %.loc9_37.2: %f32.c73 = converted @__global_init.%Float64ToFloat32.call, %.loc9_37.1 [concrete = <error>]
+// CHECK:STDOUT:   %f32.loc9: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
+// CHECK:STDOUT:   %a: %f32.c73 = wrapper_binding a, %.loc9_37.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.240 = value_binding_pattern a [concrete = constants.%a.patt.895]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_42.1: %f32.c73 = value_of_initializer @__global_init.%FloatLiteralToFloat32.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc16_42.2: %f32.c73 = converted @__global_init.%FloatLiteralToFloat32.call, %.loc16_42.1 [concrete = <error>]
-// CHECK:STDOUT:   %f32.loc16: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
-// CHECK:STDOUT:   %b: %f32.c73 = wrapper_binding b, %.loc16_42.2 [concrete = <error>]
+// CHECK:STDOUT:   %.loc12_42.1: %f32.c73 = value_of_initializer @__global_init.%FloatLiteralToFloat32.call [concrete = <error>]
+// CHECK:STDOUT:   %.loc12_42.2: %f32.c73 = converted @__global_init.%FloatLiteralToFloat32.call, %.loc12_42.1 [concrete = <error>]
+// CHECK:STDOUT:   %f32.loc12: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
+// CHECK:STDOUT:   %b: %f32.c73 = wrapper_binding b, %.loc12_42.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.240 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21_43.1: %f64.dc1 = value_of_initializer @__global_init.%FloatLiteralToFloat64.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc21_43.2: %f64.dc1 = converted @__global_init.%FloatLiteralToFloat64.call, %.loc21_43.1 [concrete = <error>]
+// CHECK:STDOUT:   %.loc15_43.1: %f64.dc1 = value_of_initializer @__global_init.%FloatLiteralToFloat64.call [concrete = <error>]
+// CHECK:STDOUT:   %.loc15_43.2: %f64.dc1 = converted @__global_init.%FloatLiteralToFloat64.call, %.loc15_43.1 [concrete = <error>]
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %c: %f64.dc1 = wrapper_binding c, %.loc21_43.2 [concrete = <error>]
+// CHECK:STDOUT:   %c: %f64.dc1 = wrapper_binding c, %.loc15_43.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.fb7 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
@@ -644,21 +634,21 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Float64ToFloat32.ref: %Float64ToFloat32.type = name_ref Float64ToFloat32, imports.%Main.Float64ToFloat32 [concrete = constants.%Float64ToFloat32]
-// CHECK:STDOUT:   %float.loc11: Core.FloatLiteral = float_literal_value 10e38 [concrete = constants.%float.cfcfd2.1]
+// CHECK:STDOUT:   %float.loc9: Core.FloatLiteral = float_literal_value 10e38 [concrete = constants.%float.cfcfd2.1]
 // CHECK:STDOUT:   %impl.elem0: %.194 = impl_witness_access constants.%ImplicitAs.impl_witness.d4c, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.cf0]
-// CHECK:STDOUT:   %bound_method.loc11_31.1: <bound method> = bound_method %float.loc11, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc9_31.1: <bound method> = bound_method %float.loc9, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc11_31.2: <bound method> = bound_method %float.loc11, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.dc1 = call %bound_method.loc11_31.2(%float.loc11) [concrete = constants.%float.7b6]
-// CHECK:STDOUT:   %.loc11_31.1: %f64.dc1 = value_of_initializer %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.7b6]
-// CHECK:STDOUT:   %.loc11_31.2: %f64.dc1 = converted %float.loc11, %.loc11_31.1 [concrete = constants.%float.7b6]
-// CHECK:STDOUT:   %Float64ToFloat32.call: init %f32.c73 = call %Float64ToFloat32.ref(%.loc11_31.2) [concrete = <error>]
+// CHECK:STDOUT:   %bound_method.loc9_31.2: <bound method> = bound_method %float.loc9, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.dc1 = call %bound_method.loc9_31.2(%float.loc9) [concrete = constants.%float.7b6]
+// CHECK:STDOUT:   %.loc9_31.1: %f64.dc1 = value_of_initializer %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.7b6]
+// CHECK:STDOUT:   %.loc9_31.2: %f64.dc1 = converted %float.loc9, %.loc9_31.1 [concrete = constants.%float.7b6]
+// CHECK:STDOUT:   %Float64ToFloat32.call: init %f32.c73 = call %Float64ToFloat32.ref(%.loc9_31.2) [concrete = <error>]
 // CHECK:STDOUT:   %FloatLiteralToFloat32.ref: %FloatLiteralToFloat32.type = name_ref FloatLiteralToFloat32, imports.%Main.FloatLiteralToFloat32 [concrete = constants.%FloatLiteralToFloat32]
-// CHECK:STDOUT:   %float.loc16: Core.FloatLiteral = float_literal_value 10e38 [concrete = constants.%float.cfcfd2.2]
-// CHECK:STDOUT:   %FloatLiteralToFloat32.call: init %f32.c73 = call %FloatLiteralToFloat32.ref(%float.loc16) [concrete = <error>]
+// CHECK:STDOUT:   %float.loc12: Core.FloatLiteral = float_literal_value 10e38 [concrete = constants.%float.cfcfd2.2]
+// CHECK:STDOUT:   %FloatLiteralToFloat32.call: init %f32.c73 = call %FloatLiteralToFloat32.ref(%float.loc12) [concrete = <error>]
 // CHECK:STDOUT:   %FloatLiteralToFloat64.ref: %FloatLiteralToFloat64.type = name_ref FloatLiteralToFloat64, imports.%Main.FloatLiteralToFloat64 [concrete = constants.%FloatLiteralToFloat64]
-// CHECK:STDOUT:   %float.loc21: Core.FloatLiteral = float_literal_value 10e308 [concrete = constants.%float.82f]
-// CHECK:STDOUT:   %FloatLiteralToFloat64.call: init %f64.dc1 = call %FloatLiteralToFloat64.ref(%float.loc21) [concrete = <error>]
+// CHECK:STDOUT:   %float.loc15: Core.FloatLiteral = float_literal_value 10e308 [concrete = constants.%float.82f]
+// CHECK:STDOUT:   %FloatLiteralToFloat64.call: init %f64.dc1 = call %FloatLiteralToFloat64.ref(%float.loc15) [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -791,10 +781,10 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_constant_64.patt: %pattern_type.fb7 = value_binding_pattern not_constant_64 [concrete = constants.%not_constant_64.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_65.1: %f64.dc1 = value_of_initializer @__global_init.%Float64ToFloat64.call
-// CHECK:STDOUT:   %.loc15_65.2: %f64.dc1 = converted @__global_init.%Float64ToFloat64.call, %.loc15_65.1
-// CHECK:STDOUT:   %f64.loc15: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %convert_not_constant: %f64.dc1 = wrapper_binding convert_not_constant, %.loc15_65.2
+// CHECK:STDOUT:   %.loc11_65.1: %f64.dc1 = value_of_initializer @__global_init.%Float64ToFloat64.call
+// CHECK:STDOUT:   %.loc11_65.2: %f64.dc1 = converted @__global_init.%Float64ToFloat64.call, %.loc11_65.1
+// CHECK:STDOUT:   %f64.loc11: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
+// CHECK:STDOUT:   %convert_not_constant: %f64.dc1 = wrapper_binding convert_not_constant, %.loc11_65.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %convert_not_constant.patt: %pattern_type.fb7 = value_binding_pattern convert_not_constant [concrete = constants.%convert_not_constant.patt]
 // CHECK:STDOUT:   }

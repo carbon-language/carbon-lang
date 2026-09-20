@@ -43,12 +43,8 @@ class C {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_private_static_field_invalid_access.carbon:[[@LINE+7]]:3: error: cannot access private member `static_field` of type `C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   C.static_field = 123;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_private_static_field_invalid_access.carbon:[[@LINE-7]]:22: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private static var static_field: i32;
-  // CHECK:STDERR:                      ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_private_static_field_invalid_access.carbon:[[@LINE+3]]:3-16: error: cannot access private member `static_field` of type `C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_private_static_field_invalid_access.carbon:[[@LINE-5]]:22-38: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   C.static_field = 123;
 }

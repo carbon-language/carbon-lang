@@ -14,12 +14,8 @@
 library "[[@TEST_NAME]]";
 
 fn F(x: i32 = 0, y: i32 = 10);
-// CHECK:STDERR: fail_defaults_different_values_redecl.carbon:[[@LINE+7]]:41: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: fn F(unused x: i32 = 0, unused y: i32 = 22) { }
-// CHECK:STDERR:                                         ^~
-// CHECK:STDERR: fail_defaults_different_values_redecl.carbon:[[@LINE-4]]:27: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: fn F(x: i32 = 0, y: i32 = 10);
-// CHECK:STDERR:                           ^~
+// CHECK:STDERR: fail_defaults_different_values_redecl.carbon:[[@LINE+3]]:41-42: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_defaults_different_values_redecl.carbon:[[@LINE-2]]:27-28: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:
 fn F(unused x: i32 = 0, unused y: i32 = 22) { }
 
@@ -31,13 +27,9 @@ fn F(x: i32 = 0, y: i32 = 1, z: i32 = 2);
 // --- fail_imported_default_presence_mismatch.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_imported_default_presence_mismatch.impl.carbon:[[@LINE+8]]:13: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
-// CHECK:STDERR: fn F(unused x: i32, unused y: i32 = _, unused z: i32 = _) { }
-// CHECK:STDERR:             ^~~~~~
-// CHECK:STDERR: fail_imported_default_presence_mismatch.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: imported_default_presence_mismatch.carbon:3:6: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: fn F(x: i32 = 0, y: i32 = 1, z: i32 = 2);
-// CHECK:STDERR:      ^~~~~~~~~~
+// CHECK:STDERR: fail_imported_default_presence_mismatch.impl.carbon:[[@LINE+4]]:13-18: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
+// CHECK:STDERR: imported from: fail_imported_default_presence_mismatch.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: imported_default_presence_mismatch.carbon:3:6-15: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR:
 fn F(unused x: i32, unused y: i32 = _, unused z: i32 = _) { }
 
@@ -49,13 +41,9 @@ fn F(x: i32 = 0, y: i32 = 10);
 // --- fail_imported_defaults_different_values.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE+8]]:41: error: default value of `22` differs from the previously declared default value of `10` [PatternDefaultValueDiffers]
-// CHECK:STDERR: fn F(unused x: i32 = 0, unused y: i32 = 22) { }
-// CHECK:STDERR:                                         ^~
-// CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: imported_defaults_different_values.carbon:3:27: note: different previous declaration here [PatternDefaultValueDiffersNote]
-// CHECK:STDERR: fn F(x: i32 = 0, y: i32 = 10);
-// CHECK:STDERR:                           ^~
+// CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE+4]]:41-42: error: default value of `22` differs from the previously declared default value of `10` [PatternDefaultValueDiffers]
+// CHECK:STDERR: imported from: fail_imported_defaults_different_values.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: imported_defaults_different_values.carbon:3:27-28: note: different previous declaration here [PatternDefaultValueDiffersNote]
 // CHECK:STDERR:
 fn F(unused x: i32 = 0, unused y: i32 = 22) { }
 

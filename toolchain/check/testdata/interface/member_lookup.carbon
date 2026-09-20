@@ -37,17 +37,13 @@ interface Interface(T: type) {
 }
 
 fn AccessMissingGeneric[T: type](generic I: Interface(T)) -> T {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Interface(T)` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR:   return I.nonesuch;
-  // CHECK:STDERR:          ^~~~~~~~~~
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+2]]:10-19: error: member name `nonesuch` not found in `Interface(T)` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:
   return I.nonesuch;
 }
 
 fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Interface(i32)` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR:   return I.nonesuch;
-  // CHECK:STDERR:          ^~~~~~~~~~
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+2]]:10-19: error: member name `nonesuch` not found in `Interface(i32)` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:
   return I.nonesuch;
 }
@@ -475,19 +471,19 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT:     %return: ref @AccessMissingGeneric.%T.loc8_26.1 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessMissingConcrete.decl: %AccessMissingConcrete.type = fn_decl @AccessMissingConcrete [concrete = constants.%AccessMissingConcrete] {
-// CHECK:STDOUT:     %I.patt.loc16_35.1: %pattern_type.3cf = symbolic_binding_pattern I, 0 [symbolic = %I.patt.loc16_35.2 (constants.%I.patt.b65)]
+// CHECK:STDOUT:     %I.patt.loc14_35.1: %pattern_type.3cf = symbolic_binding_pattern I, 0 [symbolic = %I.patt.loc14_35.2 (constants.%I.patt.b65)]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc16_56 [concrete = constants.%return.patt.e1b]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc14_56 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc16_56: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc16_56: Core.Form = init_form %i32.loc16_56 [concrete = constants.%.795]
-// CHECK:STDOUT:     %.loc16_50: type = splice_block %Interface.type [concrete = constants.%Interface.type.c5f] {
+// CHECK:STDOUT:     %i32.loc14_56: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc14_56: Core.Form = init_form %i32.loc14_56 [concrete = constants.%.795]
+// CHECK:STDOUT:     %.loc14_50: type = splice_block %Interface.type [concrete = constants.%Interface.type.c5f] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.1b1 = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.generic]
-// CHECK:STDOUT:       %i32.loc16_47: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:       %i32.loc14_47: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %Interface.type: type = facet_type <@Interface, @Interface(constants.%i32)> [concrete = constants.%Interface.type.c5f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %I.loc16_35.2: %Interface.type.c5f = symbolic_binding I, 0 [symbolic = %I.loc16_35.1 (constants.%I.e05)]
+// CHECK:STDOUT:     %I.loc14_35.2: %Interface.type.c5f = symbolic_binding I, 0 [symbolic = %I.loc14_35.1 (constants.%I.e05)]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -536,31 +532,31 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type %T.loc8_26.1 [symbolic = %require_complete.loc8 (constants.%require_complete.944)]
-// CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type %Interface.type.loc8_56.1 [symbolic = %require_complete.loc13 (constants.%require_complete.08a)]
-// CHECK:STDOUT:   %I.as_type.loc13_11.2: type = facet_access_type %I.loc8_43.1 [symbolic = %I.as_type.loc13_11.2 (constants.%I.as_type.3c3)]
+// CHECK:STDOUT:   %require_complete.loc11: <witness> = require_complete_type %Interface.type.loc8_56.1 [symbolic = %require_complete.loc11 (constants.%require_complete.08a)]
+// CHECK:STDOUT:   %I.as_type.loc11_11.2: type = facet_access_type %I.loc8_43.1 [symbolic = %I.as_type.loc11_11.2 (constants.%I.as_type.3c3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @AccessMissingGeneric.%T.loc8_26.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %I.ref: @AccessMissingGeneric.%Interface.type.loc8_56.1 (%Interface.type.fe8) = name_ref I, %I.loc8_43.2 [symbolic = %I.loc8_43.1 (constants.%I.63c)]
-// CHECK:STDOUT:     %I.as_type.loc13_11.1: type = facet_access_type %I.ref [symbolic = %I.as_type.loc13_11.2 (constants.%I.as_type.3c3)]
-// CHECK:STDOUT:     %.loc13: type = converted %I.ref, %I.as_type.loc13_11.1 [symbolic = %I.as_type.loc13_11.2 (constants.%I.as_type.3c3)]
+// CHECK:STDOUT:     %I.as_type.loc11_11.1: type = facet_access_type %I.ref [symbolic = %I.as_type.loc11_11.2 (constants.%I.as_type.3c3)]
+// CHECK:STDOUT:     %.loc11: type = converted %I.ref, %I.as_type.loc11_11.1 [symbolic = %I.as_type.loc11_11.2 (constants.%I.as_type.3c3)]
 // CHECK:STDOUT:     %nonesuch.ref: <error> = name_ref nonesuch, <error> [concrete = <error>]
 // CHECK:STDOUT:     return <error> to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @AccessMissingConcrete(%I.loc16_35.2: %Interface.type.c5f) {
-// CHECK:STDOUT:   %I.patt.loc16_35.2: %pattern_type.3cf = symbolic_binding_pattern I, 0 [symbolic = %I.patt.loc16_35.2 (constants.%I.patt.b65)]
-// CHECK:STDOUT:   %I.loc16_35.1: %Interface.type.c5f = symbolic_binding I, 0 [symbolic = %I.loc16_35.1 (constants.%I.e05)]
+// CHECK:STDOUT: generic fn @AccessMissingConcrete(%I.loc14_35.2: %Interface.type.c5f) {
+// CHECK:STDOUT:   %I.patt.loc14_35.2: %pattern_type.3cf = symbolic_binding_pattern I, 0 [symbolic = %I.patt.loc14_35.2 (constants.%I.patt.b65)]
+// CHECK:STDOUT:   %I.loc14_35.1: %Interface.type.c5f = symbolic_binding I, 0 [symbolic = %I.loc14_35.1 (constants.%I.e05)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.as_type.loc21_11.2: type = facet_access_type %I.loc16_35.1 [symbolic = %I.as_type.loc21_11.2 (constants.%I.as_type.307)]
+// CHECK:STDOUT:   %I.as_type.loc17_11.2: type = facet_access_type %I.loc14_35.1 [symbolic = %I.as_type.loc17_11.2 (constants.%I.as_type.307)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: %i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %I.ref: %Interface.type.c5f = name_ref I, %I.loc16_35.2 [symbolic = %I.loc16_35.1 (constants.%I.e05)]
-// CHECK:STDOUT:     %I.as_type.loc21_11.1: type = facet_access_type %I.ref [symbolic = %I.as_type.loc21_11.2 (constants.%I.as_type.307)]
-// CHECK:STDOUT:     %.loc21: type = converted %I.ref, %I.as_type.loc21_11.1 [symbolic = %I.as_type.loc21_11.2 (constants.%I.as_type.307)]
+// CHECK:STDOUT:     %I.ref: %Interface.type.c5f = name_ref I, %I.loc14_35.2 [symbolic = %I.loc14_35.1 (constants.%I.e05)]
+// CHECK:STDOUT:     %I.as_type.loc17_11.1: type = facet_access_type %I.ref [symbolic = %I.as_type.loc17_11.2 (constants.%I.as_type.307)]
+// CHECK:STDOUT:     %.loc17: type = converted %I.ref, %I.as_type.loc17_11.1 [symbolic = %I.as_type.loc17_11.2 (constants.%I.as_type.307)]
 // CHECK:STDOUT:     %nonesuch.ref: <error> = name_ref nonesuch, <error> [concrete = <error>]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
@@ -614,8 +610,8 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessMissingConcrete(constants.%I.e05) {
-// CHECK:STDOUT:   %I.patt.loc16_35.2 => constants.%I.patt.b65
-// CHECK:STDOUT:   %I.loc16_35.1 => constants.%I.e05
+// CHECK:STDOUT:   %I.patt.loc14_35.2 => constants.%I.patt.b65
+// CHECK:STDOUT:   %I.loc14_35.1 => constants.%I.e05
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.WithSelf(constants.%i32, constants.%Self.45e) {

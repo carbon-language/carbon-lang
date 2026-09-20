@@ -13,9 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_member_of_function.carbon
 
 fn A() {
-  // CHECK:STDERR: fail_member_of_function.carbon:[[@LINE+4]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
-  // CHECK:STDERR:   A.y;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR: fail_member_of_function.carbon:[[@LINE+2]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
   // CHECK:STDERR:
   A.y;
 }

@@ -13,14 +13,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_todo_assoc_const_default.carbon
 
 interface I {
-  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
-  // CHECK:STDERR:   default let T: type = (i32, i32);
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+2]]:3-9: error: semantics TODO: `interface modifier` [SemanticsTodo]
   // CHECK:STDERR:
   default let T: type = (i32, i32);
-  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
-  // CHECK:STDERR:   default let N: i32 = 42;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+2]]:3-9: error: semantics TODO: `interface modifier` [SemanticsTodo]
   // CHECK:STDERR:
   default let N: i32 = 42;
 }
@@ -88,21 +84,21 @@ interface I {
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%T [concrete = constants.%assoc0.2ce]
-// CHECK:STDOUT:     %i32.loc20_26: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc20_31: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc20_34: %tuple.type.24b = tuple_literal (%i32.loc20_26, %i32.loc20_31) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc20_35: type = converted %.loc20_34, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
+// CHECK:STDOUT:     %i32.loc18_26: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc18_31: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc18_34: %tuple.type.24b = tuple_literal (%i32.loc18_26, %i32.loc18_31) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc18_35: type = converted %.loc18_34, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [concrete] {
 // CHECK:STDOUT:     %assoc1: %I.assoc_type = assoc_entity element1, @I.WithSelf.%N [concrete = constants.%assoc1]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
 // CHECK:STDOUT:     %impl.elem0: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:     %bound_method.loc25_26.1: <bound method> = bound_method %int_42, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:     %bound_method.loc21_26.1: <bound method> = bound_method %int_42, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc25_26.2: <bound method> = bound_method %int_42, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc25_26.2(%int_42) [concrete = constants.%int_42.ac4]
-// CHECK:STDOUT:     %.loc25_26.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_42.ac4]
-// CHECK:STDOUT:     %.loc25_26.2: %i32 = converted %int_42, %.loc25_26.1 [concrete = constants.%int_42.ac4]
+// CHECK:STDOUT:     %bound_method.loc21_26.2: <bound method> = bound_method %int_42, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc21_26.2(%int_42) [concrete = constants.%int_42.ac4]
+// CHECK:STDOUT:     %.loc21_26.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_42.ac4]
+// CHECK:STDOUT:     %.loc21_26.2: %i32 = converted %int_42, %.loc21_26.1 [concrete = constants.%int_42.ac4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

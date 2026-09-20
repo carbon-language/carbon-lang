@@ -10,32 +10,24 @@
 //
 
 // Comments have to have whitespace after `//` currently.
-// CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+4]]:3: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
-// CHECK:STDERR: //abc
-// CHECK:STDERR:   ^
+// CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+2]]:3: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
 // CHECK:STDERR:
 //abc
 
-    // CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+4]]:7: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
-    // CHECK:STDERR:     //indented
-    // CHECK:STDERR:       ^
+    // CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+2]]:7: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
     // CHECK:STDERR:
     //indented
 
 // We only want to diagnose these on the first line of a block of similarly
 // indented comments.
 
-// CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+4]]:3: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
-// CHECK:STDERR: //abc
-// CHECK:STDERR:   ^
+// CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+2]]:3: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
 // CHECK:STDERR:
 //abc
 //123
 //dce
 
-        // CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+4]]:11: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
-        // CHECK:STDERR:         //indented block
-        // CHECK:STDERR:           ^
+        // CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+2]]:11: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
         // CHECK:STDERR:
         //indented block
         //indented block
@@ -45,9 +37,7 @@
 // As we have specialized code to scan short indented comment blocks, make sure
 // the behavior is preserved even for (absurdly) large indents.
 
-                                                                                // CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+4]]:83: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
-                                                                                // CHECK:STDERR:                                                                                 //very indented block
-                                                                                // CHECK:STDERR:                                                                                   ^
+                                                                                // CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+2]]:83: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
                                                                                 // CHECK:STDERR:
                                                                                 //very indented block
                                                                                 //very indented block

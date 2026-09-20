@@ -9,8 +9,8 @@
 
 namespace Carbon::Check {
 
-CARBON_DIAGNOSTIC(ModifierPrevious, Note, "`{0}` previously appeared here",
-                  Lex::TokenKind);
+CARBON_DIAGNOSTIC_LABEL(ModifierPrevious, Info,
+                        "`{0}` previously appeared here", Lex::TokenKind);
 
 static auto DiagnoseRepeated(Context& context, Parse::NodeId first_node,
                              Parse::NodeId second_node) -> void {
@@ -18,7 +18,7 @@ static auto DiagnoseRepeated(Context& context, Parse::NodeId first_node,
                     Lex::TokenKind);
   context.emitter()
       .Build(second_node, ModifierRepeated, context.token_kind(second_node))
-      .Note(first_node, ModifierPrevious, context.token_kind(first_node))
+      .Attach(first_node, ModifierPrevious, context.token_kind(first_node))
       .Emit();
 }
 
@@ -30,7 +30,7 @@ static auto DiagnoseNotAllowedWith(Context& context, Parse::NodeId first_node,
   context.emitter()
       .Build(second_node, ModifierNotAllowedWith,
              context.token_kind(second_node), context.token_kind(first_node))
-      .Note(first_node, ModifierPrevious, context.token_kind(first_node))
+      .Attach(first_node, ModifierPrevious, context.token_kind(first_node))
       .Emit();
 }
 
@@ -97,8 +97,8 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
     context.emitter()
         .Build(node_id, ModifierMustAppearBefore, context.token_kind(node_id),
                context.token_kind(closest_later_modifier))
-        .Note(closest_later_modifier, ModifierPrevious,
-              context.token_kind(closest_later_modifier))
+        .Attach(closest_later_modifier, ModifierPrevious,
+                context.token_kind(closest_later_modifier))
         .Emit();
     return false;
   }

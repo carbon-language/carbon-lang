@@ -22,9 +22,7 @@ library "[[@TEST_NAME]]";
 
 class C {
   fn F() -> () { return x; }
-  // CHECK:STDERR: fail_let_after.carbon:[[@LINE+4]]:15: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-  // CHECK:STDERR:   let generic x: () = ();
-  // CHECK:STDERR:               ^~~~~
+  // CHECK:STDERR: fail_let_after.carbon:[[@LINE+2]]:15-19: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:
   let generic x: () = ();
 }
@@ -34,9 +32,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_let_before.carbon:[[@LINE+4]]:15: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-  // CHECK:STDERR:   let generic x: () = ();
-  // CHECK:STDERR:               ^~~~~
+  // CHECK:STDERR: fail_let_before.carbon:[[@LINE+2]]:15-19: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:
   let generic x: () = ();
   fn F() -> () { return x; }
@@ -47,9 +43,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:15: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-  // CHECK:STDERR:   let generic a: () = ();
-  // CHECK:STDERR:               ^~~~~
+  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+2]]:15-19: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:
   let generic a: () = ();
   fn F(generic b: ((),)) {
@@ -60,13 +54,9 @@ class C {
     var unused c1: ((), ()) = c;
     var unused d1: ((), (), ()) = d;
   }
-  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+8]]:15: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-  // CHECK:STDERR:   let generic d: ((), (), ()) = ((), (), ());
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE+4]]:15-29: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE-11]]:17: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:     let generic c: ((), ()) = ((), ());
-  // CHECK:STDERR:                 ^~~~~~~~~~~
+  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE-9]]:17-27: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:
   let generic d: ((), (), ()) = ((), (), ());
 }
@@ -77,13 +67,9 @@ library "[[@TEST_NAME]]";
 
 class C {
   fn F() -> () { return x; }
-  // CHECK:STDERR: fail_invalid_let_after.carbon:[[@LINE+8]]:15: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-  // CHECK:STDERR:   let generic x: ();
-  // CHECK:STDERR:               ^~~~~
+  // CHECK:STDERR: fail_invalid_let_after.carbon:[[@LINE+4]]:15-19: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_let_after.carbon:[[@LINE+4]]:20: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
-  // CHECK:STDERR:   let generic x: ();
-  // CHECK:STDERR:                    ^
+  // CHECK:STDERR: fail_invalid_let_after.carbon:[[@LINE+2]]:20: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
   // CHECK:STDERR:
   let generic x: ();
 }
@@ -93,9 +79,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 fn F() -> i32 {
-  // CHECK:STDERR: fail_todo_use_in_function.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic Zero: i32 = 0;
-  // CHECK:STDERR:               ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_in_function.carbon:[[@LINE+2]]:15-23: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:
   let generic Zero: i32 = 0;
   return Zero;
@@ -107,9 +91,7 @@ library "[[@TEST_NAME]]";
 
 fn F() -> i32 {
   if (true) {
-    // CHECK:STDERR: fail_todo_use_in_block.carbon:[[@LINE+4]]:17: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-    // CHECK:STDERR:     let generic Zero: i32 = 0;
-    // CHECK:STDERR:                 ^~~~~~~~~
+    // CHECK:STDERR: fail_todo_use_in_block.carbon:[[@LINE+2]]:17-25: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
     // CHECK:STDERR:
     let generic Zero: i32 = 0;
     return Zero;
@@ -131,14 +113,10 @@ interface I {
 library "[[@TEST_NAME]]";
 
 class I {
-  // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+4]]:15: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-  // CHECK:STDERR:   let generic T: type = i32;
-  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+2]]:15-21: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:
   let generic T: type = i32;
-  // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+4]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   fn F() -> T;
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR: fail_return_in_class.carbon:[[@LINE+2]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:
   fn F() -> T;
 }
@@ -147,14 +125,10 @@ class I {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+4]]:13: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-// CHECK:STDERR: let generic T: type = i32;
-// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+2]]:13-19: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR:
 let generic T: type = i32;
-// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+4]]:11: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-// CHECK:STDERR: fn F() -> T;
-// CHECK:STDERR:           ^
+// CHECK:STDERR: fail_return_in_package_scope.carbon:[[@LINE+2]]:11: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR:
 fn F() -> T;
 
@@ -165,9 +139,7 @@ library "[[@TEST_NAME]]";
 interface Empty {}
 
 impl i32 as Empty {
-  // CHECK:STDERR: fail_use_in_impl.carbon:[[@LINE+4]]:15: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-  // CHECK:STDERR:   let generic Zero: i32 = 0;
-  // CHECK:STDERR:               ^~~~~~~~~
+  // CHECK:STDERR: fail_use_in_impl.carbon:[[@LINE+2]]:15-23: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:
   let generic Zero: i32 = 0;
 }
@@ -218,15 +190,15 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_24.2: %empty_tuple.type = converted %.loc10_24.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_19.1: type = splice_block %.loc10_19.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:   %.loc8_24.2: %empty_tuple.type = converted %.loc8_24.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_19.1: type = splice_block %.loc8_19.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc10_19.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc10_19.3: type = converted %.loc10_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc8_19.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_19.3: type = converted %.loc8_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %empty_tuple.type = wrapper_binding x, %.loc10_24.2
+// CHECK:STDOUT:   %x: %empty_tuple.type = wrapper_binding x, %.loc8_24.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
@@ -283,25 +255,25 @@ impl i32 as Empty {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc9_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_24.2: %empty_tuple.type = converted %.loc9_24.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_19.1: type = splice_block %.loc9_19.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:   %.loc7_24.2: %empty_tuple.type = converted %.loc7_24.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_19.1: type = splice_block %.loc7_19.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc9_19.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc9_19.3: type = converted %.loc9_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc7_19.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc7_19.3: type = converted %.loc7_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %empty_tuple.type = wrapper_binding x, %.loc9_24.2
+// CHECK:STDOUT:   %x: %empty_tuple.type = wrapper_binding x, %.loc7_24.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc10_14.2 [concrete = constants.%return.patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc8_14.2 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc10_14.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc10_14.2: type = converted %.loc10_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc10_14.3: Core.Form = init_form %.loc10_14.2 [concrete = constants.%.262]
+// CHECK:STDOUT:     %.loc8_14.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_14.2: type = converted %.loc8_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc8_14.3: Core.Form = init_form %.loc8_14.2 [concrete = constants.%.262]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -317,9 +289,9 @@ impl i32 as Empty {
 // CHECK:STDOUT: fn @C.F() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, @C.%x
-// CHECK:STDOUT:   %.loc10_25: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_26: init %empty_tuple.type = converted %x.ref, %.loc10_25 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc10_26
+// CHECK:STDOUT:   %.loc8_25: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_26: init %empty_tuple.type = converted %x.ref, %.loc8_25 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   return %.loc8_26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_multiple_lets.carbon
@@ -348,54 +320,54 @@ impl i32 as Empty {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc9_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %empty_tuple.loc9: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_24.2: %empty_tuple.type = converted %.loc9_24.1, %empty_tuple.loc9 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_19.1: type = splice_block %.loc9_19.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.Self.frozen.loc9: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc9_19.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc9_19.3: type = converted %.loc9_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc7_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc7: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_24.2: %empty_tuple.type = converted %.loc7_24.1, %empty_tuple.loc7 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_19.1: type = splice_block %.loc7_19.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.Self.frozen.loc7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc7_19.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc7_19.3: type = converted %.loc7_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc9_24.2
+// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc7_24.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {
-// CHECK:STDOUT:     %b.patt.loc10_17.1: %pattern_type.559 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_17.2 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.patt.loc8_17.1: %pattern_type.559 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc8_17.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc10_23.1: type = splice_block %.loc10_23.4 [concrete = constants.%tuple.type.9fb] {
+// CHECK:STDOUT:     %.loc8_23.1: type = splice_block %.loc8_23.4 [concrete = constants.%tuple.type.9fb] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc10_21: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc10_23.2: %tuple.type.9fb = tuple_literal (%.loc10_21) [concrete = constants.%tuple.f41]
-// CHECK:STDOUT:       %.loc10_23.3: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc10_23.4: type = converted %.loc10_23.2, constants.%tuple.type.9fb [concrete = constants.%tuple.type.9fb]
+// CHECK:STDOUT:       %.loc8_21: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc8_23.2: %tuple.type.9fb = tuple_literal (%.loc8_21) [concrete = constants.%tuple.f41]
+// CHECK:STDOUT:       %.loc8_23.3: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:       %.loc8_23.4: type = converted %.loc8_23.2, constants.%tuple.type.9fb [concrete = constants.%tuple.type.9fb]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc10_17.2: %tuple.type.9fb = symbolic_binding b, 0 [symbolic = %b.loc10_17.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc8_17.2: %tuple.type.9fb = symbolic_binding b, 0 [symbolic = %b.loc8_17.1 (constants.%b)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc26_35: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc26_39: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc26_43: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc26_44.1: %tuple.type.2d5 = tuple_literal (%.loc26_35, %.loc26_39, %.loc26_43) [concrete = constants.%tuple.7e4]
-// CHECK:STDOUT:   %empty_tuple.loc26_35: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc26_44.2: %empty_tuple.type = converted %.loc26_35, %empty_tuple.loc26_35 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %empty_tuple.loc26_39: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc26_44.3: %empty_tuple.type = converted %.loc26_39, %empty_tuple.loc26_39 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %empty_tuple.loc26_43: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc26_44.4: %empty_tuple.type = converted %.loc26_43, %empty_tuple.loc26_43 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %tuple: %tuple.type.2d5 = tuple_value (%.loc26_44.2, %.loc26_44.3, %.loc26_44.4) [concrete = constants.%tuple.7e4]
-// CHECK:STDOUT:   %.loc26_44.5: %tuple.type.2d5 = converted %.loc26_44.1, %tuple [concrete = constants.%tuple.7e4]
-// CHECK:STDOUT:   %.loc26_29.1: type = splice_block %.loc26_29.6 [concrete = constants.%tuple.type.2d5] {
-// CHECK:STDOUT:     %.Self.frozen.loc26: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc26_20: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc26_24: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc26_28: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc26_29.2: %tuple.type.2d5 = tuple_literal (%.loc26_20, %.loc26_24, %.loc26_28) [concrete = constants.%tuple.7e4]
-// CHECK:STDOUT:     %.loc26_29.3: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc26_29.4: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc26_29.5: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc26_29.6: type = converted %.loc26_29.2, constants.%tuple.type.2d5 [concrete = constants.%tuple.type.2d5]
+// CHECK:STDOUT:   %.loc20_35: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc20_39: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc20_43: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc20_44.1: %tuple.type.2d5 = tuple_literal (%.loc20_35, %.loc20_39, %.loc20_43) [concrete = constants.%tuple.7e4]
+// CHECK:STDOUT:   %empty_tuple.loc20_35: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc20_44.2: %empty_tuple.type = converted %.loc20_35, %empty_tuple.loc20_35 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc20_39: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc20_44.3: %empty_tuple.type = converted %.loc20_39, %empty_tuple.loc20_39 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc20_43: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc20_44.4: %empty_tuple.type = converted %.loc20_43, %empty_tuple.loc20_43 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %tuple: %tuple.type.2d5 = tuple_value (%.loc20_44.2, %.loc20_44.3, %.loc20_44.4) [concrete = constants.%tuple.7e4]
+// CHECK:STDOUT:   %.loc20_44.5: %tuple.type.2d5 = converted %.loc20_44.1, %tuple [concrete = constants.%tuple.7e4]
+// CHECK:STDOUT:   %.loc20_29.1: type = splice_block %.loc20_29.6 [concrete = constants.%tuple.type.2d5] {
+// CHECK:STDOUT:     %.Self.frozen.loc20: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc20_20: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc20_24: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc20_28: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc20_29.2: %tuple.type.2d5 = tuple_literal (%.loc20_20, %.loc20_24, %.loc20_28) [concrete = constants.%tuple.7e4]
+// CHECK:STDOUT:     %.loc20_29.3: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc20_29.4: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc20_29.5: type = converted constants.%empty_tuple, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc20_29.6: type = converted %.loc20_29.2, constants.%tuple.type.2d5 [concrete = constants.%tuple.type.2d5]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: %tuple.type.2d5 = wrapper_binding d, %.loc26_44.5
+// CHECK:STDOUT:   %d: %tuple.type.2d5 = wrapper_binding d, %.loc20_44.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.8c1 = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
@@ -409,16 +381,16 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .d = %d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @C.F(%b.loc10_17.2: %tuple.type.9fb) {
-// CHECK:STDOUT:   %b.patt.loc10_17.2: %pattern_type.559 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_17.2 (constants.%b.patt)]
-// CHECK:STDOUT:   %b.loc10_17.1: %tuple.type.9fb = symbolic_binding b, 0 [symbolic = %b.loc10_17.1 (constants.%b)]
+// CHECK:STDOUT: generic fn @C.F(%b.loc8_17.2: %tuple.type.9fb) {
+// CHECK:STDOUT:   %b.patt.loc8_17.2: %pattern_type.559 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc8_17.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %b.loc8_17.1: %tuple.type.9fb = symbolic_binding b, 0 [symbolic = %b.loc8_17.1 (constants.%b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.F(constants.%b) {
-// CHECK:STDOUT:   %b.patt.loc10_17.2 => constants.%b.patt
-// CHECK:STDOUT:   %b.loc10_17.1 => constants.%b
+// CHECK:STDOUT:   %b.patt.loc8_17.2 => constants.%b.patt
+// CHECK:STDOUT:   %b.loc8_17.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_let_after.carbon
@@ -474,12 +446,12 @@ impl i32 as Empty {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = %C.F.decl
-// CHECK:STDOUT:   .x = <unexpected>.inst{{[0-9A-F]+}}.loc14_16
+// CHECK:STDOUT:   .x = <unexpected>.inst{{[0-9A-F]+}}.loc10_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.F() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, <unexpected>.inst{{[0-9A-F]+}}.loc14_16
+// CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, <unexpected>.inst{{[0-9A-F]+}}.loc10_16
 // CHECK:STDOUT:   %.loc5_25: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_26: init %empty_tuple.type = converted %x.ref, %.loc5_25 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return %.loc5_26
@@ -635,9 +607,9 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @I {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc9_18.1: type = splice_block %.loc9_18.2 [concrete = type] {
+// CHECK:STDOUT:   %.loc7_18.1: type = splice_block %.loc7_18.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc9_18.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc7_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: type = wrapper_binding T, %i32
 // CHECK:STDOUT:   name_binding_decl {
@@ -691,9 +663,9 @@ impl i32 as Empty {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc8_16.1: type = splice_block %.loc8_16.2 [concrete = type] {
+// CHECK:STDOUT:   %.loc6_16.1: type = splice_block %.loc6_16.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc8_16.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc6_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: type = wrapper_binding T, @__global_init.%i32
 // CHECK:STDOUT:   name_binding_decl {
@@ -791,17 +763,17 @@ impl i32 as Empty {
 // CHECK:STDOUT: impl @i32.as.Empty.impl: %i32.loc6 as %Empty.ref {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc11_27.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc9_27.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc11_27.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc11_27.2(%int_0) [concrete = constants.%int_0.3c0]
-// CHECK:STDOUT:   %.loc11_27.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
-// CHECK:STDOUT:   %.loc11_27.2: %i32 = converted %int_0, %.loc11_27.1 [concrete = constants.%int_0.3c0]
-// CHECK:STDOUT:   %.loc11_21: type = splice_block %i32.loc11 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %bound_method.loc9_27.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc9_27.2(%int_0) [concrete = constants.%int_0.3c0]
+// CHECK:STDOUT:   %.loc9_27.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
+// CHECK:STDOUT:   %.loc9_27.2: %i32 = converted %int_0, %.loc9_27.1 [concrete = constants.%int_0.3c0]
+// CHECK:STDOUT:   %.loc9_21: type = splice_block %i32.loc9 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %i32.loc11: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Zero: %i32 = wrapper_binding Zero, %.loc11_27.2
+// CHECK:STDOUT:   %Zero: %i32 = wrapper_binding Zero, %.loc9_27.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Zero.patt: %pattern_type.6b6 = value_binding_pattern Zero [concrete = constants.%Zero.patt]
 // CHECK:STDOUT:   }

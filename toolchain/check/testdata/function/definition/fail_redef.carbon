@@ -13,12 +13,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/definition/fail_redef.carbon
 
 fn F() {}
-// CHECK:STDERR: fail_redef.carbon:[[@LINE+7]]:1: error: redefinition of `fn F` [RedeclRedef]
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redef.carbon:[[@LINE-4]]:1: note: previously defined here [RedeclPrevDef]
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_redef.carbon:[[@LINE+3]]:1-8: error: redefinition of `fn F` [RedeclRedef]
+// CHECK:STDERR: fail_redef.carbon:[[@LINE-2]]:1-8: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR:
 fn F() {}
 
@@ -27,7 +23,7 @@ fn F() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type.eb3ec9.1: type = fn_type @F.loc15 [concrete]
 // CHECK:STDOUT:   %F.7088cc.1: %F.type.eb3ec9.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type.eb3ec9.2: type = fn_type @F.loc23 [concrete]
+// CHECK:STDOUT:   %F.type.eb3ec9.2: type = fn_type @F.loc19 [concrete]
 // CHECK:STDOUT:   %F.7088cc.2: %F.type.eb3ec9.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -36,7 +32,7 @@ fn F() {}
 // CHECK:STDOUT:     .F = %F.decl.loc15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc15: %F.type.eb3ec9.1 = fn_decl @F.loc15 [concrete = constants.%F.7088cc.1] {} {}
-// CHECK:STDOUT:   %F.decl.loc23: %F.type.eb3ec9.2 = fn_decl @F.loc23 [concrete = constants.%F.7088cc.2] {} {}
+// CHECK:STDOUT:   %F.decl.loc19: %F.type.eb3ec9.2 = fn_decl @F.loc19 [concrete = constants.%F.7088cc.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.loc15() {
@@ -44,7 +40,7 @@ fn F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.loc23() {
+// CHECK:STDOUT: fn @F.loc19() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

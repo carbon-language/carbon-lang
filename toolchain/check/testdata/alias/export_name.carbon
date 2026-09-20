@@ -56,9 +56,7 @@ library "[[@TEST_NAME]]";
 
 import library "export";
 
-// CHECK:STDERR: fail_orig_name_not_in_export.carbon:[[@LINE+4]]:8: error: name `C` not found [NameNotFound]
-// CHECK:STDERR: var c: C = {};
-// CHECK:STDERR:        ^
+// CHECK:STDERR: fail_orig_name_not_in_export.carbon:[[@LINE+2]]:8: error: name `C` not found [NameNotFound]
 // CHECK:STDERR:
 var c: C = {};
 
@@ -272,7 +270,7 @@ var d: D* = &c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

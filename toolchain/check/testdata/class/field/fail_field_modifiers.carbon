@@ -12,27 +12,19 @@
 
 class Class {
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   default var j: i32;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+2]]:3-9: error: `default` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   default var j: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `final` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   final var k: i32;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+2]]:3-7: error: `final` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   final var k: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
-  // CHECK:STDERR:   default let l: i32 = 0;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+2]]:3-9: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
   // CHECK:STDERR:
   default let l: i32 = 0;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: error: `final` not allowed; requires interface scope [ModifierRequiresInterface]
-  // CHECK:STDERR:   final let m: i32 = 1;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+2]]:3-7: error: `final` not allowed; requires interface scope [ModifierRequiresInterface]
   // CHECK:STDERR:
   final let m: i32 = 1;
 }

@@ -4,15 +4,12 @@
 
 load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
 load("//bazel/manifest:defs.bzl", "manifest")
+load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "emitter",
-    srcs = [
-        "consumer.cpp",
-        "diagnostic.cpp",
-    ],
     hdrs = [
         "consumer.h",
         "diagnostic.h",
@@ -27,6 +24,35 @@ cc_library(
     ],
 )
 
+# Drawing diagnostics, kept apart from `:emitter` so that naming a `Consumer`
+# doesn't pull the terminal library -- and through it `<filesystem>` -- into
+# every layer that emits a diagnostic.
+cc_library(
+    name = "renderer",
+    srcs = [
+        "renderer.cpp",
+        "stream_consumer.cpp",
+    ],
+    hdrs = [
+        "renderer.h",
+        "stream_consumer.h",
+    ],
+    deps = [
+        ":emitter",
+        ":format_providers",
+        ":kind",
+        "//common:check",
+        "//common:ostream",
+        "//common/terminal:buffer",
+        "//common/terminal:capabilities",
+        "//common/terminal:color",
+        "//common/terminal:metrics",
+        "//common/terminal:output_buffer_ref",
+        "//common/terminal:style",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "emitter_test",
     size = "small",
@@ -36,6 +62,38 @@ cc_test(
         ":mocks",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "renderer_test",
+    size = "small",
+    srcs = ["renderer_test.cpp"],
+    deps = [
+        ":emitter",
+        ":renderer",
+        "//common:raw_string_ostream",
+        "//common/terminal:capabilities",
+        "//common/terminal:metrics",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_fuzz_test(
+    name = "renderer_fuzzer",
+    size = "small",
+    srcs = ["renderer_fuzzer.cpp"],
+    corpus = glob(["fuzzer_corpus/*"]),
+    deps = [
+        ":emitter",
+        ":renderer",
+        "//common:check",
+        "//common/terminal:capabilities",
+        "//common/terminal:output_buffer_ref",
+        "//testing/fuzzing:libfuzzer_header",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -153,4 +211,9 @@ cc_library(
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
+)
+
+filegroup(
+    name = "testdata",
+    srcs = glob(["testdata/**/*.carbon"]),
 )

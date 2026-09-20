@@ -12,6 +12,7 @@
 #include "common/command_line.h"
 #include "common/pretty_stack_trace_function.h"
 #include "common/version.h"
+#include "toolchain/diagnostics/stream_consumer.h"
 #include "toolchain/driver/build_runtimes_subcommand.h"
 #include "toolchain/driver/build_subcommand.h"
 #include "toolchain/driver/clang_subcommand.h"
@@ -34,8 +35,11 @@ struct Options {
   bool verbose = false;
   bool fuzzing = false;
   bool include_diagnostic_kind = false;
+  bool diagnostic_snippets = true;
   bool threads = true;
   bool build_runtimes_on_demand = false;
+
+  Terminal::Preferences terminal;
 
   llvm::StringRef runtimes_cache_path;
   llvm::StringRef prebuilt_runtimes_path;
@@ -136,6 +140,96 @@ the installation tree in the default searched locations.
 
   b.AddFlag(
       {
+          .name = "diagnostic-snippets",
+          .help = R"""(
+Whether diagnostics show snippets of the source they point at.
+
+By default a diagnostic shows one view of each file it points into, with the
+lines between its ranges elided, so a message and a label near it read as one
+piece of code. `--no-diagnostic-snippets` drops that: each part of a diagnostic
+is one line, led by its location and the extent of its range, positioned
+against nothing, which is what a build log and a golden file want.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&diagnostic_snippets);
+      });
+
+  b.AddOneOfOption(
+      {
+          .name = "terminal-background",
+          .value_name = "(auto|dark|light)",
+          .help = R"""(
+What the terminal draws its text on, which decides the colors a diagnostic is
+drawn in.
+
+By default this is read from `COLORFGBG`, which some terminals set, and is
+otherwise taken to be dark: guessing dark when the terminal is light costs
+contrast, while guessing light when it is dark puts pale text on a pale
+background.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.SetOneOf(
+            {
+                arg_b.OneOfValue("auto", Terminal::BackgroundPreference::Auto)
+                    .Default(true),
+                arg_b.OneOfValue("dark", Terminal::BackgroundPreference::Dark),
+                arg_b.OneOfValue("light",
+                                 Terminal::BackgroundPreference::Light),
+            },
+            &terminal.background);
+      });
+
+  b.AddOneOfOption(
+      {
+          .name = "color",
+          .value_name = "(auto|always|never)",
+          .help = R"""(
+Whether to color diagnostics.
+
+By default, color is used when the error stream is a terminal that is known to
+render it. `NO_COLOR` in the environment disables it, and `CLICOLOR_FORCE` or
+`FORCE_COLOR` enables it even when the stream isn't a terminal.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.SetOneOf(
+            {
+                arg_b.OneOfValue("auto", Terminal::Preference::Auto)
+                    .Default(true),
+                arg_b.OneOfValue("always", Terminal::Preference::Always),
+                arg_b.OneOfValue("never", Terminal::Preference::Never),
+            },
+            &terminal.color);
+      });
+
+  b.AddOneOfOption(
+      {
+          .name = "terminal-unicode",
+          .value_name = "(auto|always|never)",
+          .help = R"""(
+Whether to draw output with Unicode box drawing characters.
+
+By default, they are used when the locale says the terminal decodes UTF-8.
+Drawing them for a terminal that doesn't misaligns every line that isn't plain
+ASCII, so this is deliberately separate from `--color`.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.SetOneOf(
+            {
+                arg_b.OneOfValue("auto", Terminal::Preference::Auto)
+                    .Default(true),
+                arg_b.OneOfValue("always", Terminal::Preference::Always),
+                arg_b.OneOfValue("never", Terminal::Preference::Never),
+            },
+            &terminal.utf8);
+      });
+
+  b.AddFlag(
+      {
           .name = "fuzzing",
           .help = "Configure the command line for fuzzing.",
       },
@@ -146,7 +240,7 @@ the installation tree in the default searched locations.
           .name = "include-diagnostic-kind",
           .help = R"""(
 When printing diagnostics, include the diagnostic kind as part of output. This
-applies to each message that forms a diagnostic, not just the primary message.
+applies to each label as well as to the message.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&include_diagnostic_kind); });
@@ -229,6 +323,22 @@ static auto HandleRuntimesOptions(const Options& options, DriverEnv& driver_env)
   return true;
 }
 
+auto Driver::ErrorCapabilities(Terminal::Preferences preferences) const
+    -> Terminal::Capabilities {
+  if (error_file_.is_valid()) {
+    return Terminal::Capabilities::Detect(error_file_, preferences);
+  }
+
+  // With no file behind the error stream, as in tests and in-process uses,
+  // nothing is detected: detection would make output depend on the environment
+  // a test happens to run in. Only an explicit preference has any effect.
+  return {.color_mode = Terminal::ChooseColorMode(preferences.color, {},
+                                                  /*is_terminal=*/false),
+          .charset = Terminal::ChooseCharset(preferences.utf8, /*locale=*/""),
+          .background = Terminal::ChooseBackground(preferences.background,
+                                                   /*colorfgbg=*/"")};
+}
+
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   PrettyStackTraceFunction trace_version([&](llvm::raw_ostream& out) {
     out << "Carbon version: " << Version::String << "\n";
@@ -245,8 +355,10 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
       [&](CommandLine::CommandBuilder& b) { options.Build(b); });
 
   // Regardless of whether the parse succeeded, try to use the diagnostic kind
-  // flag.
+  // flag and render for whatever is behind the error stream.
   consumer.set_include_diagnostic_kind(options.include_diagnostic_kind);
+  consumer.set_diagnostic_snippets(options.diagnostic_snippets);
+  consumer.set_capabilities(ErrorCapabilities(options.terminal));
 
   if (env.installation->error()) {
     CARBON_DIAGNOSTIC(DriverInstallInvalid, Error, "{0}", std::string);

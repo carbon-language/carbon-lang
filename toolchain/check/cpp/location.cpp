@@ -68,8 +68,10 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
       SemIR::GetAbsoluteNodeRef(&context.sem_ir(), loc_id);
   const auto& final_node = absolute_node_refs.back();
   if (final_node.is_cpp()) {
-    return final_node.file()->clang_source_locs().Get(
-        final_node.clang_source_loc_id());
+    return final_node.file()
+        ->clang_source_locs()
+        .Get(final_node.clang_source_loc_id())
+        .getBegin();
   }
 
   if (!final_node.node_id().has_value()) {
@@ -88,11 +90,48 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
   return start_loc.getLocWithOffset(offset);
 }
 
+auto GetCppRange(Context& context, SemIR::LocId loc_id) -> clang::SourceRange {
+  if (!context.sem_ir().cpp_file()) {
+    return clang::SourceRange();
+  }
+
+  llvm::SmallVector<SemIR::AbsoluteNodeRef> absolute_node_refs =
+      SemIR::GetAbsoluteNodeRef(&context.sem_ir(), loc_id);
+  const auto& final_node = absolute_node_refs.back();
+
+  // Only the file being checked has its subtrees to hand, since a `Context`
+  // holds the one `TreeAndSubtrees`. Anything else falls back to the token.
+  if (final_node.is_cpp() || !final_node.node_id().has_value() ||
+      final_node.check_ir_id() != context.sem_ir().check_ir_id()) {
+    auto loc = GetCppLocation(context, loc_id);
+    return clang::SourceRange(loc, loc);
+  }
+
+  auto [ir, start_loc] = GetFileInfo(context, final_node.check_ir_id());
+  const auto& tokens = ir->parse_tree().tokens();
+  auto token_range = context.parse_tree_and_subtrees().GetSubtreeTokenRange(
+      final_node.node_id());
+  return clang::SourceRange(
+      start_loc.getLocWithOffset(tokens.GetByteOffset(token_range.begin)),
+      start_loc.getLocWithOffset(tokens.GetByteOffset(token_range.end)));
+}
+
+auto AddImportIRInst(SemIR::File& file, clang::CharSourceRange clang_range)
+    -> SemIR::ImportIRInstId {
+  // Stored as its two ends: every range reaching here is a character range, so
+  // `CharSourceRange`'s token-or-character bit would always say the same thing
+  // and cost a word to say it. Rebuilt as one where it is read.
+  CARBON_CHECK(!clang_range.isTokenRange(),
+               "A token range would lose which it was; widen it first.");
+  SemIR::ClangSourceLocId clang_source_loc_id =
+      file.clang_source_locs().Add(clang_range.getAsRange());
+  return file.import_ir_insts().Add(SemIR::ImportIRInst(clang_source_loc_id));
+}
+
 auto AddImportIRInst(SemIR::File& file, clang::SourceLocation clang_source_loc)
     -> SemIR::ImportIRInstId {
-  SemIR::ClangSourceLocId clang_source_loc_id =
-      file.clang_source_locs().Add(clang_source_loc);
-  return file.import_ir_insts().Add(SemIR::ImportIRInst(clang_source_loc_id));
+  return AddImportIRInst(file, clang::CharSourceRange::getCharRange(
+                                   clang_source_loc, clang_source_loc));
 }
 
 }  // namespace Carbon::Check

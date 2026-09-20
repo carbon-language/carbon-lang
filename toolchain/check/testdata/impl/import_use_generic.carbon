@@ -34,22 +34,14 @@ import library "import_generic";
 
 var c: C({}) = {};
 // We're just checking that this doesn't crash. It's not expected to compile.
-// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+8]]:11: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
-// CHECK:STDERR: fn G() -> c.(I.F)() {}
-// CHECK:STDERR:           ^~~~~~~
+// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+4]]:11-17: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+4]]:22: error: missing `return` at end of function with declared return type [MissingReturnStatement]
-// CHECK:STDERR: fn G() -> c.(I.F)() {}
-// CHECK:STDERR:                      ^
+// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+2]]:22: error: missing `return` at end of function with declared return type [MissingReturnStatement]
 // CHECK:STDERR:
 fn G() -> c.(I.F)() {}
-// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+8]]:11: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
-// CHECK:STDERR: fn H() -> C({}).(I.F)() {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+4]]:11-23: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+4]]:26: error: missing `return` at end of function with declared return type [MissingReturnStatement]
-// CHECK:STDERR: fn H() -> C({}).(I.F)() {}
-// CHECK:STDERR:                          ^
+// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+2]]:26: error: missing `return` at end of function with declared return type [MissingReturnStatement]
 // CHECK:STDERR:
 fn H() -> C({}).(I.F)() {}
 
@@ -306,24 +298,24 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %c.ref: ref %C.d8e = name_ref c, file.%c [concrete = file.%c.var]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.1b3 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %.loc16: %I.type = converted %c.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc12: %I.type = converted %c.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C.generic]
-// CHECK:STDOUT:     %.loc25_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc25_15: type = converted %.loc25_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc17_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc17_15: type = converted %.loc17_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%empty_struct_type) [concrete = constants.%C.d8e]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.1b3 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %I.facet: %I.type = facet_value %C, (constants.%I.impl_witness.873) [concrete = constants.%I.facet]
-// CHECK:STDOUT:     %.loc25_16: %I.type = converted %C, %I.facet [concrete = constants.%I.facet]
+// CHECK:STDOUT:     %.loc17_16: %I.type = converted %C, %I.facet [concrete = constants.%I.facet]
 // CHECK:STDOUT:     %impl.elem0: %.c92 = impl_witness_access constants.%I.impl_witness.873, element0 [concrete = constants.%C.as.I.impl.F.899]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @C.as.I.impl.F(constants.%empty_struct_type) [concrete = constants.%C.as.I.impl.F.specific_fn]
 // CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %specific_fn()
-// CHECK:STDOUT:     %.loc25_23: type = converted %C.as.I.impl.F.call, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc17_23: type = converted %C.as.I.impl.F.call, <error> [concrete = <error>]
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

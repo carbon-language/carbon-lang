@@ -13,9 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_negative_indexing.carbon
 
 var c: array(i32, 2) = (42, 42);
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+4]]:16: error: array index `-10` is past the end of type `array(i32, 2)` [ArrayIndexOutOfBounds]
-// CHECK:STDERR: var d: i32 = c[-10];
-// CHECK:STDERR:                ^~~
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+2]]:16-18: error: array index `-10` is past the end of type `array(i32, 2)` [ArrayIndexOutOfBounds]
 // CHECK:STDERR:
 var d: i32 = c[-10];
 
@@ -124,7 +122,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.7b0 = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %i32 = var_storage %d.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc18: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %d: ref %i32 = wrapper_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.6b6 = ref_binding_pattern d [concrete = constants.%d.patt]
@@ -161,24 +159,24 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %c.ref: ref %array_type = name_ref c, file.%c [concrete = file.%c.var]
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [concrete = constants.%int_10]
 // CHECK:STDOUT:   %impl.elem1: %.758 = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc20_16.1: <bound method> = bound_method %int_10, %impl.elem1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op.bound]
-// CHECK:STDOUT:   %Core.IntLiteral.as.Negate.impl.Op.call: init Core.IntLiteral = call %bound_method.loc20_16.1(%int_10) [concrete = constants.%int_-10.06d]
-// CHECK:STDOUT:   %impl.elem0.loc20_16: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc20_16.2: <bound method> = bound_method %Core.IntLiteral.as.Negate.impl.Op.call, %impl.elem0.loc20_16 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f93]
-// CHECK:STDOUT:   %specific_fn.loc20_16: <specific function> = specific_function %impl.elem0.loc20_16, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc20_16.3: <bound method> = bound_method %Core.IntLiteral.as.Negate.impl.Op.call, %specific_fn.loc20_16 [concrete = constants.%bound_method.27d]
-// CHECK:STDOUT:   %.loc20_16.1: Core.IntLiteral = value_of_initializer %Core.IntLiteral.as.Negate.impl.Op.call [concrete = constants.%int_-10.06d]
-// CHECK:STDOUT:   %.loc20_16.2: Core.IntLiteral = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc20_16.1 [concrete = constants.%int_-10.06d]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20: init %i32 = call %bound_method.loc20_16.3(%.loc20_16.2) [concrete = constants.%int_-10.642]
-// CHECK:STDOUT:   %.loc20_16.3: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20 [concrete = constants.%int_-10.642]
-// CHECK:STDOUT:   %.loc20_16.4: %i32 = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc20_16.3 [concrete = constants.%int_-10.642]
-// CHECK:STDOUT:   %.loc20_19.1: ref %i32 = array_index %c.ref, %.loc20_16.4 [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_19.2: %i32 = acquire_value %.loc20_19.1 [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0.loc20_19: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
-// CHECK:STDOUT:   %bound_method.loc20_19.1: <bound method> = bound_method %.loc20_19.2, %impl.elem0.loc20_19 [concrete = <error>]
-// CHECK:STDOUT:   %specific_fn.loc20_19: <specific function> = specific_function %impl.elem0.loc20_19, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc20_19.2: <bound method> = bound_method %.loc20_19.2, %specific_fn.loc20_19 [concrete = <error>]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc20_19.2(%.loc20_19.2) [concrete = <error>]
+// CHECK:STDOUT:   %bound_method.loc18_16.1: <bound method> = bound_method %int_10, %impl.elem1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op.bound]
+// CHECK:STDOUT:   %Core.IntLiteral.as.Negate.impl.Op.call: init Core.IntLiteral = call %bound_method.loc18_16.1(%int_10) [concrete = constants.%int_-10.06d]
+// CHECK:STDOUT:   %impl.elem0.loc18_16: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
+// CHECK:STDOUT:   %bound_method.loc18_16.2: <bound method> = bound_method %Core.IntLiteral.as.Negate.impl.Op.call, %impl.elem0.loc18_16 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f93]
+// CHECK:STDOUT:   %specific_fn.loc18_16: <specific function> = specific_function %impl.elem0.loc18_16, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc18_16.3: <bound method> = bound_method %Core.IntLiteral.as.Negate.impl.Op.call, %specific_fn.loc18_16 [concrete = constants.%bound_method.27d]
+// CHECK:STDOUT:   %.loc18_16.1: Core.IntLiteral = value_of_initializer %Core.IntLiteral.as.Negate.impl.Op.call [concrete = constants.%int_-10.06d]
+// CHECK:STDOUT:   %.loc18_16.2: Core.IntLiteral = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc18_16.1 [concrete = constants.%int_-10.06d]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18: init %i32 = call %bound_method.loc18_16.3(%.loc18_16.2) [concrete = constants.%int_-10.642]
+// CHECK:STDOUT:   %.loc18_16.3: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18 [concrete = constants.%int_-10.642]
+// CHECK:STDOUT:   %.loc18_16.4: %i32 = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc18_16.3 [concrete = constants.%int_-10.642]
+// CHECK:STDOUT:   %.loc18_19.1: ref %i32 = array_index %c.ref, %.loc18_16.4 [concrete = <error>]
+// CHECK:STDOUT:   %.loc18_19.2: %i32 = acquire_value %.loc18_19.1 [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0.loc18_19: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %bound_method.loc18_19.1: <bound method> = bound_method %.loc18_19.2, %impl.elem0.loc18_19 [concrete = <error>]
+// CHECK:STDOUT:   %specific_fn.loc18_19: <specific function> = specific_function %impl.elem0.loc18_19, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc18_19.2: <bound method> = bound_method %.loc18_19.2, %specific_fn.loc18_19 [concrete = <error>]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc18_19.2(%.loc18_19.2) [concrete = <error>]
 // CHECK:STDOUT:   assign file.%d.var, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

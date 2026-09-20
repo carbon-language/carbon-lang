@@ -263,7 +263,7 @@ auto ComputeClangDeclSignatureFromBestViableFunction(
 }
 
 auto PerformCppOverloadResolution(
-    Context& context, SemIR::LocId loc_id,
+    Context& context, SemIR::LocId loc_id, SemIR::InstId callee_expr_id,
     const SemIR::CppOverloadSet& overload_set,
     llvm::ArrayRef<SemIR::InstId> template_arg_ids, SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
@@ -287,7 +287,13 @@ auto PerformCppOverloadResolution(
   }
   auto& arg_exprs = *maybe_arg_exprs;
 
-  clang::SourceLocation loc = GetCppLocation(context, loc_id);
+  // What a diagnostic about the call marks is the callee, not the call: the
+  // message names the callee, and the arguments it was given are described by
+  // the notes hanging off each candidate. This is where Clang points such a
+  // diagnostic too.
+  clang::SourceRange callee_range =
+      GetCppRange(context, SemIR::LocId(callee_expr_id));
+  clang::SourceLocation loc = callee_range.getBegin();
 
   // Add candidate functions from the name lookup.
   const auto& rewrite_info = overload_set.operator_rewrite_info;
@@ -332,7 +338,8 @@ auto PerformCppOverloadResolution(
       candidate_set.NoteCandidates(
           clang::PartialDiagnosticAt(
               loc, sema.PDiag(clang::diag::err_ovl_no_viable_function_in_call)
-                       << GetCppName(context, overload_set.name_id)),
+                       << GetCppName(context, overload_set.name_id)
+                       << callee_range),
           sema, clang::OCD_AllCandidates, arg_exprs);
       return SemIR::ErrorInst::InstId;
     }
@@ -340,15 +347,15 @@ auto PerformCppOverloadResolution(
       candidate_set.NoteCandidates(
           clang::PartialDiagnosticAt(
               loc, sema.PDiag(clang::diag::err_ovl_ambiguous_call)
-                       << GetCppName(context, overload_set.name_id)),
+                       << GetCppName(context, overload_set.name_id)
+                       << callee_range),
           sema, clang::OCD_AmbiguousCandidates, arg_exprs);
       return SemIR::ErrorInst::InstId;
     }
     case clang::OverloadingResult::OR_Deleted: {
       sema.DiagnoseUseOfDeletedFunction(
-          loc, clang::SourceRange(loc, loc),
-          GetCppName(context, overload_set.name_id), candidate_set,
-          best_viable_fn->Function, arg_exprs);
+          loc, callee_range, GetCppName(context, overload_set.name_id),
+          candidate_set, best_viable_fn->Function, arg_exprs);
       return SemIR::ErrorInst::InstId;
     }
   }

@@ -16,19 +16,13 @@ class Class {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: missing value for field `b` in struct initialization [StructInitMissingFieldInLiteral]
-  // CHECK:STDERR:   {.a = 1} as Class;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+2]]:3-10: error: missing value for field `b` in struct initialization [StructInitMissingFieldInLiteral]
   // CHECK:STDERR:
   {.a = 1} as Class;
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: struct `Class` has no field named `c` [StructInitUnexpectedFieldInLiteral]
-  // CHECK:STDERR:   {.a = 1, .c = 2} as Class;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+2]]:3-18: error: struct `Class` has no field named `c` [StructInitUnexpectedFieldInLiteral]
   // CHECK:STDERR:
   {.a = 1, .c = 2} as Class;
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: struct `Class` has no field named `c` [StructInitUnexpectedFieldInLiteral]
-  // CHECK:STDERR:   {.a = 1, .b = 2, .c = 3} as Class;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+2]]:3-26: error: struct `Class` has no field named `c` [StructInitUnexpectedFieldInLiteral]
   // CHECK:STDERR:
   {.a = 1, .b = 2, .c = 3} as Class;
 }

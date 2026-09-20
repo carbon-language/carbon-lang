@@ -49,12 +49,8 @@ class A {
 
     impl B as I {
         fn Get(self: B) -> i32 {
-            // CHECK:STDERR: fail_impl_in_other_class1.carbon:[[@LINE+7]]:20: error: cannot access private member `m` of type `B` [ClassInvalidMemberAccess]
-            // CHECK:STDERR:             return self.m;
-            // CHECK:STDERR:                    ^~~~~~
-            // CHECK:STDERR: fail_impl_in_other_class1.carbon:[[@LINE-11]]:17: note: declared here [ClassMemberDeclaration]
-            // CHECK:STDERR:     private var m: i32;
-            // CHECK:STDERR:                 ^~~~~~
+            // CHECK:STDERR: fail_impl_in_other_class1.carbon:[[@LINE+3]]:20-25: error: cannot access private member `m` of type `B` [ClassInvalidMemberAccess]
+            // CHECK:STDERR: fail_impl_in_other_class1.carbon:[[@LINE-9]]:17-22: note: declared here [ClassMemberDeclaration]
             // CHECK:STDERR:
             return self.m;
         }
@@ -74,12 +70,8 @@ class A {
 
     impl as K(B) {
         fn Get(t: B) -> i32 {
-            // CHECK:STDERR: fail_impl_in_other_class2.carbon:[[@LINE+7]]:20: error: cannot access private member `m` of type `B` [ClassInvalidMemberAccess]
-            // CHECK:STDERR:             return t.m;
-            // CHECK:STDERR:                    ^~~
-            // CHECK:STDERR: fail_impl_in_other_class2.carbon:[[@LINE-11]]:17: note: declared here [ClassMemberDeclaration]
-            // CHECK:STDERR:     private var m: i32;
-            // CHECK:STDERR:                 ^~~~~~
+            // CHECK:STDERR: fail_impl_in_other_class2.carbon:[[@LINE+3]]:20-22: error: cannot access private member `m` of type `B` [ClassInvalidMemberAccess]
+            // CHECK:STDERR: fail_impl_in_other_class2.carbon:[[@LINE-9]]:17-22: note: declared here [ClassMemberDeclaration]
             // CHECK:STDERR:
             return t.m;
         }
@@ -96,12 +88,8 @@ class A {
 
 impl A as J {
     fn Get(self: Self) -> i32 {
-        // CHECK:STDERR: fail_impl_outside_class1.carbon:[[@LINE+7]]:16: error: cannot access private member `n` of type `A` [ClassInvalidMemberAccess]
-        // CHECK:STDERR:         return self.n;
-        // CHECK:STDERR:                ^~~~~~
-        // CHECK:STDERR: fail_impl_outside_class1.carbon:[[@LINE-8]]:17: note: declared here [ClassMemberDeclaration]
-        // CHECK:STDERR:     private var n: i32;
-        // CHECK:STDERR:                 ^~~~~~
+        // CHECK:STDERR: fail_impl_outside_class1.carbon:[[@LINE+3]]:16-21: error: cannot access private member `n` of type `A` [ClassInvalidMemberAccess]
+        // CHECK:STDERR: fail_impl_outside_class1.carbon:[[@LINE-6]]:17-22: note: declared here [ClassMemberDeclaration]
         // CHECK:STDERR:
         return self.n;
     }
@@ -117,12 +105,8 @@ class B {
 
 impl B as J {
     fn Get(self: B) -> i32 {
-        // CHECK:STDERR: fail_impl_outside_class2.carbon:[[@LINE+7]]:16: error: cannot access private member `m` of type `B` [ClassInvalidMemberAccess]
-        // CHECK:STDERR:         return self.m;
-        // CHECK:STDERR:                ^~~~~~
-        // CHECK:STDERR: fail_impl_outside_class2.carbon:[[@LINE-8]]:17: note: declared here [ClassMemberDeclaration]
-        // CHECK:STDERR:     private var m: i32;
-        // CHECK:STDERR:                 ^~~~~~
+        // CHECK:STDERR: fail_impl_outside_class2.carbon:[[@LINE+3]]:16-21: error: cannot access private member `m` of type `B` [ClassInvalidMemberAccess]
+        // CHECK:STDERR: fail_impl_outside_class2.carbon:[[@LINE-6]]:17-22: note: declared here [ClassMemberDeclaration]
         // CHECK:STDERR:
         return self.m;
     }

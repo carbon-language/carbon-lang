@@ -40,14 +40,26 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
 
   llvm::raw_null_ostream null_ostream;
   Driver driver(fs, install_paths, /*input_stream=*/nullptr, &null_ostream,
-                &null_ostream, /*fuzzing=*/true);
+                &null_ostream, /*error_file=*/{}, /*fuzzing=*/true);
+
+  // Rendering is asked for what an error file cannot detect on its own. Left to
+  // detect, a null stream is not a terminal, so a diagnostic renders as plain
+  // ASCII with no color and no width -- and the UTF-8 decoding, the
+  // double-width accounting and every windowing path go unreached, which is the
+  // arithmetic in the renderer most worth pointing arbitrary bytes at.
+  static constexpr llvm::StringLiteral RenderArgs[] = {
+      "--terminal-unicode=always", "--color=always"};
 
   // TODO: Get checking to a point where it can handle invalid parse trees
   // without crashing.
-  if (!driver.RunCommand({"compile", "--phase=parse", TestFileName}).success) {
+  if (!driver
+           .RunCommand({RenderArgs[0], RenderArgs[1], "compile",
+                        "--phase=parse", TestFileName})
+           .success) {
     return 0;
   }
-  driver.RunCommand({"compile", "--phase=check", TestFileName});
+  driver.RunCommand(
+      {RenderArgs[0], RenderArgs[1], "compile", "--phase=check", TestFileName});
   return 0;
 }
 

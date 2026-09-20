@@ -53,6 +53,7 @@ static auto SplitCallArgumentList(Context& context,
 }
 
 auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
+                              SemIR::InstId callee_expr_id,
                               SemIR::CppOverloadSetId overload_set_id,
                               SemIR::InstId self_id,
                               llvm::ArrayRef<SemIR::InstId> arg_ids,
@@ -60,8 +61,9 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
   auto [template_arg_ids, function_arg_ids] =
       SplitCallArgumentList(context, arg_ids);
   auto callee_id = PerformCppOverloadResolution(
-      context, loc_id, context.cpp_overload_sets().Get(overload_set_id),
-      template_arg_ids, self_id, function_arg_ids);
+      context, loc_id, callee_expr_id,
+      context.cpp_overload_sets().Get(overload_set_id), template_arg_ids,
+      self_id, function_arg_ids);
   SemIR::Callee callee = GetCallee(context.sem_ir(), callee_id);
   CARBON_KIND_SWITCH(callee) {
     case CARBON_KIND(SemIR::CalleeError _): {

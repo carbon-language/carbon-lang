@@ -16,12 +16,8 @@ interface I {}
 
 impl i32 as I {}
 
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:1: error: redefinition of `impl i32 as I` [ImplRedefinition]
-// CHECK:STDERR: impl i32 as I {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-5]]:1: note: previous definition was here [ImplPreviousDefinition]
-// CHECK:STDERR: impl i32 as I {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+3]]:1-15: error: redefinition of `impl i32 as I` [ImplRedefinition]
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-3]]:1-15: note: previous definition was here [ImplPreviousDefinition]
 // CHECK:STDERR:
 impl i32 as I {}
 
@@ -64,7 +60,7 @@ impl i32 as I {}
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc26: <witness> = impl_self_witness @i32.as.I.impl.6a2a49.2.%i32, @I [concrete = constants.%.2a7]
+// CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness @i32.as.I.impl.6a2a49.2.%i32, @I [concrete = constants.%.2a7]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

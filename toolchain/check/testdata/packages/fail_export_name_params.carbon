@@ -27,9 +27,7 @@ import library "a";
 
 export C1;
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:10: error: `export` declaration cannot have parameters [UnexpectedDeclNameParams]
-// CHECK:STDERR: export C2(T: type);
-// CHECK:STDERR:          ^~~~~~~~~
+// CHECK:STDERR: fail_b.carbon:[[@LINE+2]]:10-18: error: `export` declaration cannot have parameters [UnexpectedDeclNameParams]
 // CHECK:STDERR:
 export C2(T: type);
 
@@ -124,9 +122,9 @@ export C2(T: type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C1: %C1.type = export C1, imports.%Foo.C1 [concrete = constants.%C1.generic]
-// CHECK:STDOUT:   %.loc12_14.1: type = splice_block %.loc12_14.2 [concrete = type] {
+// CHECK:STDOUT:   %.loc10_14.1: type = splice_block %.loc10_14.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc12_14.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc10_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = constants.%T]
 // CHECK:STDOUT:   %C2: %C2.type = export C2, imports.%Foo.C2 [concrete = constants.%C2.generic]

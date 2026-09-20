@@ -8,21 +8,15 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/var/fail_bad_name.carbon
 
-// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+4]]:6: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: var *;
-// CHECK:STDERR:      ^
+// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+2]]:6: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 var *;
 
-// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+4]]:11: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
-// CHECK:STDERR: var choice: i32;
-// CHECK:STDERR:           ^
+// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+2]]:11: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
 // CHECK:STDERR:
 var choice: i32;
 
-// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+4]]:7: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
-// CHECK:STDERR: var f2: f32;
-// CHECK:STDERR:       ^
+// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+2]]:7: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
 // CHECK:STDERR:
 var f2: f32;
 

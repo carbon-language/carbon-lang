@@ -19,9 +19,7 @@ interface I {
 
 interface J {
   alias U = I.T;
-  // CHECK:STDERR: fail_alias_to_different_interface.carbon:[[@LINE+4]]:13: error: cannot convert type `Self` that implements `J` into type implementing `I` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   fn F() -> U;
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR: fail_alias_to_different_interface.carbon:[[@LINE+2]]:13: error: cannot convert type `Self` that implements `J` into type implementing `I` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:
   fn F() -> U;
 }
@@ -52,9 +50,7 @@ interface A {
 }
 interface B {
   alias F = A.F;
-  // CHECK:STDERR: fail_call_method_alias.carbon:[[@LINE+4]]:13: error: cannot convert type `Self` that implements `B` into type implementing `A` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   fn G() -> F();
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR: fail_call_method_alias.carbon:[[@LINE+2]]:13: error: cannot convert type `Self` that implements `B` into type implementing `A` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:
   fn G() -> F();
 }

@@ -16,9 +16,7 @@
 
 package Implicit;
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:13: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-// CHECK:STDERR: let generic T: type = i32;
-// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+2]]:13-19: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR:
 let generic T: type = i32;
 
@@ -27,9 +25,7 @@ let generic T: type = i32;
 impl package Implicit;
 
 // TODO: Should this be valid?
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-// CHECK:STDERR: let a: T = 0;
-// CHECK:STDERR:        ^
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+2]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR:
 let a: T = 0;
 
@@ -61,9 +57,9 @@ let a: T = 0;
 // CHECK:STDOUT:     .T = %T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc8_16.1: type = splice_block %.loc8_16.2 [concrete = type] {
+// CHECK:STDOUT:   %.loc6_16.1: type = splice_block %.loc6_16.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc8_16.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc6_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: type = wrapper_binding T, @__global_init.%i32
 // CHECK:STDOUT:   name_binding_decl {

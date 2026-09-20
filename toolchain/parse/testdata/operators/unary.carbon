@@ -11,9 +11,7 @@
 // --- fail_space_before.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_space_before.carbon:[[@LINE+4]]:16: error: whitespace is required before this unary operator [UnaryOperatorRequiresWhitespace]
-  // CHECK:STDERR:   if (false) {}--0;
-  // CHECK:STDERR:                ^~
+  // CHECK:STDERR: fail_space_before.carbon:[[@LINE+2]]:16-17: error: whitespace is required before this unary operator [UnaryOperatorRequiresWhitespace]
   // CHECK:STDERR:
   if (false) {}--0;
 }

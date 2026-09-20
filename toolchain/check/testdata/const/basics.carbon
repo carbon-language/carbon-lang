@@ -32,9 +32,7 @@ class C;
 
 // OK, `const (const C)` is the same type as `const C`.
 //@dump-sem-ir-begin
-// CHECK:STDERR: collapse.carbon:[[@LINE+4]]:23: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
-// CHECK:STDERR: fn F(p: const C**) -> const (const C)** {
-// CHECK:STDERR:                       ^~~~~~~~~~~~~~~
+// CHECK:STDERR: collapse.carbon:[[@LINE+2]]:23-37: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
 // CHECK:STDERR:
 fn F(p: const C**) -> const (const C)** {
   return p;
@@ -46,17 +44,11 @@ library "[[@TEST_NAME]]";
 
 class C;
 
-// CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+4]]:9: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
-// CHECK:STDERR: fn G(p: const (const C)**) -> C** {
-// CHECK:STDERR:         ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+2]]:9-23: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
 // CHECK:STDERR:
 fn G(p: const (const C)**) -> C** {
-  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `const C**` to `C**` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+4]]:3: note: type `const C**` does not implement interface `Core.ImplicitAs(C**)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `const C**` to `C**` [ConversionFailure]
+  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+2]]:3-11: note: type `const C**` does not implement interface `Core.ImplicitAs(C**)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
@@ -114,15 +106,9 @@ class X {
 }
 
 fn PassConstReferenceToReference(p: const X*) {
-  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `const X` to `X` [ConversionFailure]
-  // CHECK:STDERR:   p->(X.TakeSelf)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+7]]:3: note: type `const X` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   p->(X.TakeSelf)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE-10]]:15: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn TakeSelf(ref self);
-  // CHECK:STDERR:               ^~~~~~~~
+  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+4]]:3-17: error: cannot implicitly convert expression of type `const X` to `X` [ConversionFailure]
+  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+3]]:3-17: note: type `const X` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE-6]]:15-22: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   p->(X.TakeSelf)();
 }
@@ -294,20 +280,20 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.803 = value_param_pattern [concrete = constants.%p.param_patt]
 // CHECK:STDOUT:     %p.patt: %pattern_type.803 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.803 = out_param_pattern [concrete = constants.%return.param_patt.934]
-// CHECK:STDOUT:     %return.patt: %pattern_type.803 = return_slot_pattern %return.param_patt, %ptr.loc11_39 [concrete = constants.%return.patt.895]
+// CHECK:STDOUT:     %return.patt: %pattern_type.803 = return_slot_pattern %return.param_patt, %ptr.loc9_39 [concrete = constants.%return.patt.895]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc11_36: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %const.loc11_30: type = const_type %C.ref.loc11_36 [concrete = constants.%const.13f]
-// CHECK:STDOUT:     %const.loc11_23: type = const_type %const.loc11_30 [concrete = constants.%const.13f]
-// CHECK:STDOUT:     %ptr.loc11_38: type = ptr_type %const.loc11_23 [concrete = constants.%ptr.77f]
-// CHECK:STDOUT:     %ptr.loc11_39: type = ptr_type %ptr.loc11_38 [concrete = constants.%ptr.0c8]
-// CHECK:STDOUT:     %.loc11_39: Core.Form = init_form %ptr.loc11_39 [concrete = constants.%.5f5]
+// CHECK:STDOUT:     %C.ref.loc9_36: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %const.loc9_30: type = const_type %C.ref.loc9_36 [concrete = constants.%const.13f]
+// CHECK:STDOUT:     %const.loc9_23: type = const_type %const.loc9_30 [concrete = constants.%const.13f]
+// CHECK:STDOUT:     %ptr.loc9_38: type = ptr_type %const.loc9_23 [concrete = constants.%ptr.77f]
+// CHECK:STDOUT:     %ptr.loc9_39: type = ptr_type %ptr.loc9_38 [concrete = constants.%ptr.0c8]
+// CHECK:STDOUT:     %.loc9_39: Core.Form = init_form %ptr.loc9_39 [concrete = constants.%.5f5]
 // CHECK:STDOUT:     %p.param: %ptr.0c8 = value_param call_param0
-// CHECK:STDOUT:     %.loc11_17: type = splice_block %ptr.loc11_17 [concrete = constants.%ptr.0c8] {
-// CHECK:STDOUT:       %C.ref.loc11_15: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const.loc11_9: type = const_type %C.ref.loc11_15 [concrete = constants.%const.13f]
-// CHECK:STDOUT:       %ptr.loc11_16: type = ptr_type %const.loc11_9 [concrete = constants.%ptr.77f]
-// CHECK:STDOUT:       %ptr.loc11_17: type = ptr_type %ptr.loc11_16 [concrete = constants.%ptr.0c8]
+// CHECK:STDOUT:     %.loc9_17: type = splice_block %ptr.loc9_17 [concrete = constants.%ptr.0c8] {
+// CHECK:STDOUT:       %C.ref.loc9_15: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:       %const.loc9_9: type = const_type %C.ref.loc9_15 [concrete = constants.%const.13f]
+// CHECK:STDOUT:       %ptr.loc9_16: type = ptr_type %const.loc9_9 [concrete = constants.%ptr.77f]
+// CHECK:STDOUT:       %ptr.loc9_17: type = ptr_type %ptr.loc9_16 [concrete = constants.%ptr.0c8]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.0c8 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.0c8 = out_param call_param1
@@ -319,10 +305,10 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.0c8 = name_ref p, %p
 // CHECK:STDOUT:   %impl.elem0: %.4bf = impl_witness_access constants.%Copy.impl_witness.8dc, element0 [concrete = constants.%ptr.as.Copy.impl.Op.2de]
-// CHECK:STDOUT:   %bound_method.loc12_10.1: <bound method> = bound_method %p.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc10_10.1: <bound method> = bound_method %p.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%ptr.77f) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_10.2: <bound method> = bound_method %p.ref, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.0c8 = call %bound_method.loc12_10.2(%p.ref)
+// CHECK:STDOUT:   %bound_method.loc10_10.2: <bound method> = bound_method %p.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.0c8 = call %bound_method.loc10_10.2(%p.ref)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

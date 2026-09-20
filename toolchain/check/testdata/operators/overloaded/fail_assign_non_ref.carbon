@@ -24,23 +24,15 @@ impl C as Core.AddAssignWith(C) {
 }
 
 fn TestIncNonRef(a: C) {
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:5: error: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR:   ++a;
-  // CHECK:STDERR:     ^
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:9: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn Op(ref self: C);
-  // CHECK:STDERR:         ^~~~~~~~~~~
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+3]]:5: error: value expression passed to reference parameter [ValueForRefParam]
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-8]]:9-19: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   ++a;
 }
 
 fn TestAddAssignNonRef(a: C, b: C) {
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:3: error: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR:   a += b;
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:9: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn Op(ref self: C, other: C);
-  // CHECK:STDERR:         ^~~~~~~~~~~
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+3]]:3: error: value expression passed to reference parameter [ValueForRefParam]
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-12]]:9-19: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   a += b;
 }
@@ -134,10 +126,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %b.patt: %pattern_type.4a7 = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc37_27: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc33_27: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %C = value_param call_param1
-// CHECK:STDOUT:     %C.ref.loc37_33: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc33_33: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %b: %C = wrapper_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -48,23 +48,15 @@ UnusupportedType unsupported_global;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_unsupported_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: included from: fail_import_unsupported_type.carbon:[[@LINE+2]]:10 [InCppInclude]
 // CHECK:STDERR: ./unsupported_type.h:2:7: error: semantics TODO: `Unsupported: Type declaration: UnusupportedType` [SemanticsTodo]
-// CHECK:STDERR: using UnusupportedType = _BitInt(23);
-// CHECK:STDERR:       ^
 import Cpp library "unsupported_type.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_unsupported_type.carbon:[[@LINE+11]]:21: note: in `Cpp` name lookup for `UnusupportedType` [InCppNameLookup]
-  // CHECK:STDERR:   let unused local: Cpp.UnusupportedType = Cpp.unsupported_global;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_unsupported_type.carbon:[[@LINE+5]]:21-40: note: in `Cpp` name lookup for `UnusupportedType` [InCppNameLookup]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_unsupported_type.carbon:[[@LINE+7]]:44: error: semantics TODO: `Unsupported: var type: UnusupportedType` [SemanticsTodo]
-  // CHECK:STDERR:   let unused local: Cpp.UnusupportedType = Cpp.unsupported_global;
-  // CHECK:STDERR:                                            ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_type.carbon:[[@LINE+4]]:44: note: in `Cpp` name lookup for `unsupported_global` [InCppNameLookup]
-  // CHECK:STDERR:   let unused local: Cpp.UnusupportedType = Cpp.unsupported_global;
-  // CHECK:STDERR:                                            ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_unsupported_type.carbon:[[@LINE+3]]:44-65: error: semantics TODO: `Unsupported: var type: UnusupportedType` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_unsupported_type.carbon:[[@LINE+2]]:44-65: note: in `Cpp` name lookup for `unsupported_global` [InCppNameLookup]
   // CHECK:STDERR:
   let unused local: Cpp.UnusupportedType = Cpp.unsupported_global;
 }
@@ -218,10 +210,10 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc22_44: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc14_44: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %unsupported_global.ref: <error> = name_ref unsupported_global, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %Cpp.ref.loc22_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Cpp.ref.loc14_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %UnusupportedType.ref: <error> = name_ref UnusupportedType, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %local: <error> = wrapper_binding local, <error> [concrete = <error>]

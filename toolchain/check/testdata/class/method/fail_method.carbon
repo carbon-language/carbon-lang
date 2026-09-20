@@ -22,22 +22,14 @@ fn F(c: Class) {
   c.WithSelf();
 
   Class.NoSelf();
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-  // CHECK:STDERR:   Class.WithSelf();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-13]]:3: note: calling function declared here [InCallToEntity]
-  // CHECK:STDERR:   fn WithSelf(self: Class);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+3]]:3-18: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-11]]:3-27: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR:
   Class.WithSelf();
   Class.WithSelf(c);
 
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-  // CHECK:STDERR:   A();
-  // CHECK:STDERR:   ^~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-23]]:3: note: calling function declared here [InCallToEntity]
-  // CHECK:STDERR:   fn WithSelf(self: Class);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+3]]:3-5: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-17]]:3-27: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR:
   A();
 }

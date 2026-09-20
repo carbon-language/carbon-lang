@@ -8,9 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/package/fail_library_skips_name.carbon
 
-// CHECK:STDERR: fail_library_skips_name.carbon:[[@LINE+4]]:9: error: expected identifier after `package` [ExpectedIdentifierAfterPackage]
-// CHECK:STDERR: package library "Shapes";
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR: fail_library_skips_name.carbon:[[@LINE+2]]:9-15: error: expected identifier after `package` [ExpectedIdentifierAfterPackage]
 // CHECK:STDERR:
 package library "Shapes";
 

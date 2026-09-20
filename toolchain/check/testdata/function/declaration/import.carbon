@@ -62,49 +62,29 @@ library "[[@TEST_NAME]]";
 
 import library "api";
 
-// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+8]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern fn A();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+4]]:1-14: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: imported from: fail_redecl_api.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: api.carbon:4:1-7: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 extern fn A();
-// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+8]]:1: error: redeclarations of `fn B` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern fn B(b: i32) -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-14]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:5:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: fn B(b: i32) -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+4]]:1-27: error: redeclarations of `fn B` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: imported from: fail_redecl_api.carbon:[[@LINE-8]]:1 [InImport]
+// CHECK:STDERR: api.carbon:5:1-20: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 extern fn B(b: i32) -> i32;
-// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+8]]:1: error: redeclarations of `fn C` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-23]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:6:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+4]]:1-36: error: redeclarations of `fn C` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: imported from: fail_redecl_api.carbon:[[@LINE-13]]:1 [InImport]
+// CHECK:STDERR: api.carbon:6:1-29: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 extern fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+8]]:1: error: redeclaration of `fn D` is redundant [RedeclRedundant]
-// CHECK:STDERR: extern fn D();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-32]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:7:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern fn D();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+4]]:1-14: error: redeclaration of `fn D` is redundant [RedeclRedundant]
+// CHECK:STDERR: imported from: fail_redecl_api.carbon:[[@LINE-18]]:1 [InImport]
+// CHECK:STDERR: api.carbon:7:1-14: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 extern fn D();
-// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+8]]:1: error: redeclarations of `fn E` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern fn NS.E();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE-41]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:10:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: fn NS.E();
-// CHECK:STDERR: ^~~~~~~~~~
+// CHECK:STDERR: fail_redecl_api.carbon:[[@LINE+4]]:1-17: error: redeclarations of `fn E` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: imported from: fail_redecl_api.carbon:[[@LINE-23]]:1 [InImport]
+// CHECK:STDERR: api.carbon:10:1-10: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 extern fn NS.E();
 
@@ -136,50 +116,30 @@ var e: () = NS.E();
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_merge.carbon:[[@LINE+45]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:4:1: error: duplicate name `A` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: extern library "redecl_extern_api" fn A();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_merge.carbon:[[@LINE+41]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: imported from: fail_merge.carbon:[[@LINE+25]]:1 [InImport]
+// CHECK:STDERR: extern_api.carbon:4:1-42: error: duplicate name `A` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_merge.carbon:[[@LINE+23]]:1 [InImport]
+// CHECK:STDERR: api.carbon:4:1-7: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_merge.carbon:[[@LINE+36]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:5:1: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: extern library "redecl_extern_api" fn B(b: i32) -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_merge.carbon:[[@LINE+32]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:5:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: fn B(b: i32) -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: imported from: fail_merge.carbon:[[@LINE+20]]:1 [InImport]
+// CHECK:STDERR: extern_api.carbon:5:1-55: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_merge.carbon:[[@LINE+18]]:1 [InImport]
+// CHECK:STDERR: api.carbon:5:1-20: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_merge.carbon:[[@LINE+27]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:6:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: extern library "redecl_extern_api" fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_merge.carbon:[[@LINE+23]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:6:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: imported from: fail_merge.carbon:[[@LINE+15]]:1 [InImport]
+// CHECK:STDERR: extern_api.carbon:6:1-64: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_merge.carbon:[[@LINE+13]]:1 [InImport]
+// CHECK:STDERR: api.carbon:6:1-29: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_merge.carbon:[[@LINE+18]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:7:1: error: duplicate name `D` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: extern library "redecl_extern_api" fn D();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_merge.carbon:[[@LINE+14]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:7:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: extern fn D();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: imported from: fail_merge.carbon:[[@LINE+10]]:1 [InImport]
+// CHECK:STDERR: extern_api.carbon:7:1-42: error: duplicate name `D` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_merge.carbon:[[@LINE+8]]:1 [InImport]
+// CHECK:STDERR: api.carbon:7:1-14: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_merge.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:10:1: error: duplicate name `E` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: extern library "redecl_extern_api" fn NS.E();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_merge.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:10:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: fn NS.E();
-// CHECK:STDERR: ^~~~~~~~~~
+// CHECK:STDERR: imported from: fail_merge.carbon:[[@LINE+5]]:1 [InImport]
+// CHECK:STDERR: extern_api.carbon:10:1-45: error: duplicate name `E` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_merge.carbon:[[@LINE+3]]:1 [InImport]
+// CHECK:STDERR: api.carbon:10:1-10: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
 import library "api";
 import library "extern_api";
@@ -194,50 +154,30 @@ var e: () = NS.E();
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+45]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:4:1: error: duplicate name `A` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+41]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: extern library "redecl_extern_api" fn A();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: imported from: fail_merge_reverse.carbon:[[@LINE+25]]:1 [InImport]
+// CHECK:STDERR: api.carbon:4:1-7: error: duplicate name `A` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_merge_reverse.carbon:[[@LINE+23]]:1 [InImport]
+// CHECK:STDERR: extern_api.carbon:4:1-42: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+36]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:5:1: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn B(b: i32) -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+32]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:5:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: extern library "redecl_extern_api" fn B(b: i32) -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: imported from: fail_merge_reverse.carbon:[[@LINE+20]]:1 [InImport]
+// CHECK:STDERR: api.carbon:5:1-20: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_merge_reverse.carbon:[[@LINE+18]]:1 [InImport]
+// CHECK:STDERR: extern_api.carbon:5:1-55: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+27]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:6:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+23]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:6:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: extern library "redecl_extern_api" fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: imported from: fail_merge_reverse.carbon:[[@LINE+15]]:1 [InImport]
+// CHECK:STDERR: api.carbon:6:1-29: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_merge_reverse.carbon:[[@LINE+13]]:1 [InImport]
+// CHECK:STDERR: extern_api.carbon:6:1-64: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+18]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:7:1: error: duplicate name `D` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: extern fn D();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+14]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:7:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: extern library "redecl_extern_api" fn D();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: imported from: fail_merge_reverse.carbon:[[@LINE+10]]:1 [InImport]
+// CHECK:STDERR: api.carbon:7:1-14: error: duplicate name `D` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_merge_reverse.carbon:[[@LINE+8]]:1 [InImport]
+// CHECK:STDERR: extern_api.carbon:7:1-42: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: api.carbon:10:1: error: duplicate name `E` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn NS.E();
-// CHECK:STDERR: ^~~~~~~~~~
-// CHECK:STDERR: fail_merge_reverse.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:10:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: extern library "redecl_extern_api" fn NS.E();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: imported from: fail_merge_reverse.carbon:[[@LINE+5]]:1 [InImport]
+// CHECK:STDERR: api.carbon:10:1-10: error: duplicate name `E` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_merge_reverse.carbon:[[@LINE+3]]:1 [InImport]
+// CHECK:STDERR: extern_api.carbon:10:1-45: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
 import library "extern_api";
 import library "api";
@@ -760,23 +700,23 @@ import library "extern_api";
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {
-// CHECK:STDOUT:     %i32.loc23_24: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc23: Core.Form = init_form %i32.loc23_24 [concrete = constants.%.795f]
+// CHECK:STDOUT:     %i32.loc15_24: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32.loc15_24 [concrete = constants.%.795f]
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc23_16: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc15_16: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %b: %i32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [concrete = constants.%C] {} {
-// CHECK:STDOUT:     %i32.loc32_32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc20_32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [concrete = constants.%struct_type.c]
-// CHECK:STDOUT:     %.loc32_35: Core.Form = init_form %struct_type.c [concrete = constants.%.510]
+// CHECK:STDOUT:     %.loc20_35: Core.Form = init_form %struct_type.c [concrete = constants.%.510]
 // CHECK:STDOUT:     %c.param: %tuple.type.a8a = value_param call_param0
-// CHECK:STDOUT:     %.loc32_21.1: type = splice_block %.loc32_21.3 [concrete = constants.%tuple.type.a8a] {
-// CHECK:STDOUT:       %i32.loc32_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc32_21.2: %tuple.type.85c = tuple_literal (%i32.loc32_17) [concrete = constants.%tuple.19c]
-// CHECK:STDOUT:       %.loc32_21.3: type = converted %.loc32_21.2, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
+// CHECK:STDOUT:     %.loc20_21.1: type = splice_block %.loc20_21.3 [concrete = constants.%tuple.type.a8a] {
+// CHECK:STDOUT:       %i32.loc20_17: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:       %.loc20_21.2: %tuple.type.85c = tuple_literal (%i32.loc20_17) [concrete = constants.%tuple.19c]
+// CHECK:STDOUT:       %.loc20_21.3: type = converted %.loc20_21.2, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.a8a = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.c = out_param call_param1
@@ -785,9 +725,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [concrete = constants.%E] {} {}
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var_storage %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc52_9.1: type = splice_block %.loc52_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc52_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc52_9.3: type = converted %.loc52_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc32_9.1: type = splice_block %.loc32_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc32_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc32_9.3: type = converted %.loc32_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -795,15 +735,15 @@ import library "extern_api";
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var_storage %b.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc53: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc33: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = ref_binding_pattern b [concrete = constants.%b.patt.b23]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.6b6 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %struct_type.c = var_storage %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc54: type = splice_block %struct_type.c [concrete = constants.%struct_type.c] {
-// CHECK:STDOUT:     %i32.loc54: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc34: type = splice_block %struct_type.c [concrete = constants.%struct_type.c] {
+// CHECK:STDOUT:     %i32.loc34: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [concrete = constants.%struct_type.c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %struct_type.c = wrapper_binding c, %c.var [concrete = %c.var]
@@ -812,9 +752,9 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.e1a = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var_storage %d.var_patt [concrete]
-// CHECK:STDOUT:   %.loc55_9.1: type = splice_block %.loc55_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc55_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc55_9.3: type = converted %.loc55_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc35_9.1: type = splice_block %.loc35_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc35_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc35_9.3: type = converted %.loc35_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %empty_tuple.type = wrapper_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -822,9 +762,9 @@ import library "extern_api";
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.cb1 = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var_storage %e.var_patt [concrete]
-// CHECK:STDOUT:   %.loc56_9.1: type = splice_block %.loc56_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc56_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc56_9.3: type = converted %.loc56_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc36_9.1: type = splice_block %.loc36_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc36_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc36_9.3: type = converted %.loc36_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = wrapper_binding e, %e.var [concrete = %e.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -849,29 +789,29 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %int_1.loc53: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc53: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc53_16.1: <bound method> = bound_method %int_1.loc53, %impl.elem0.loc53 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc53: <specific function> = specific_function %impl.elem0.loc53, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc53_16.2: <bound method> = bound_method %int_1.loc53, %specific_fn.loc53 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc53: init %i32 = call %bound_method.loc53_16.2(%int_1.loc53) [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc53_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc53 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc53_16.2: %i32 = converted %int_1.loc53, %.loc53_16.1 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc53_16.2)
+// CHECK:STDOUT:   %int_1.loc33: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem0.loc33: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
+// CHECK:STDOUT:   %bound_method.loc33_16.1: <bound method> = bound_method %int_1.loc33, %impl.elem0.loc33 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc33: <specific function> = specific_function %impl.elem0.loc33, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc33_16.2: <bound method> = bound_method %int_1.loc33, %specific_fn.loc33 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc33: init %i32 = call %bound_method.loc33_16.2(%int_1.loc33) [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc33_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc33 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc33_16.2: %i32 = converted %int_1.loc33, %.loc33_16.1 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc33_16.2)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %int_1.loc54: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc54_25.1: %tuple.type.985 = tuple_literal (%int_1.loc54) [concrete = constants.%tuple.378]
-// CHECK:STDOUT:   %impl.elem0.loc54: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc54_25.1: <bound method> = bound_method %int_1.loc54, %impl.elem0.loc54 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc54: <specific function> = specific_function %impl.elem0.loc54, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc54_25.2: <bound method> = bound_method %int_1.loc54, %specific_fn.loc54 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc54: init %i32 = call %bound_method.loc54_25.2(%int_1.loc54) [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc54_25.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc54 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc54_25.3: %i32 = converted %int_1.loc54, %.loc54_25.2 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %tuple: %tuple.type.a8a = tuple_value (%.loc54_25.3) [concrete = constants.%tuple.a1e]
-// CHECK:STDOUT:   %.loc54_25.4: %tuple.type.a8a = converted %.loc54_25.1, %tuple [concrete = constants.%tuple.a1e]
-// CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc54_25.4)
+// CHECK:STDOUT:   %int_1.loc34: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc34_25.1: %tuple.type.985 = tuple_literal (%int_1.loc34) [concrete = constants.%tuple.378]
+// CHECK:STDOUT:   %impl.elem0.loc34: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
+// CHECK:STDOUT:   %bound_method.loc34_25.1: <bound method> = bound_method %int_1.loc34, %impl.elem0.loc34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc34: <specific function> = specific_function %impl.elem0.loc34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc34_25.2: <bound method> = bound_method %int_1.loc34, %specific_fn.loc34 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc34: init %i32 = call %bound_method.loc34_25.2(%int_1.loc34) [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc34_25.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc34 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc34_25.3: %i32 = converted %int_1.loc34, %.loc34_25.2 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %tuple: %tuple.type.a8a = tuple_value (%.loc34_25.3) [concrete = constants.%tuple.a1e]
+// CHECK:STDOUT:   %.loc34_25.4: %tuple.type.a8a = converted %.loc34_25.1, %tuple [concrete = constants.%tuple.a1e]
+// CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc34_25.4)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()
@@ -1196,9 +1136,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var_storage %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc52_9.1: type = splice_block %.loc52_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc52_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc52_9.3: type = converted %.loc52_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc32_9.1: type = splice_block %.loc32_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc32_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc32_9.3: type = converted %.loc32_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -1206,15 +1146,15 @@ import library "extern_api";
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var_storage %b.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc53: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc33: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = ref_binding_pattern b [concrete = constants.%b.patt.b23]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.6b6 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %struct_type.c = var_storage %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc54: type = splice_block %struct_type.c [concrete = constants.%struct_type.c] {
-// CHECK:STDOUT:     %i32.loc54: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc34: type = splice_block %struct_type.c [concrete = constants.%struct_type.c] {
+// CHECK:STDOUT:     %i32.loc34: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [concrete = constants.%struct_type.c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %struct_type.c = wrapper_binding c, %c.var [concrete = %c.var]
@@ -1223,9 +1163,9 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.e1a = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var_storage %d.var_patt [concrete]
-// CHECK:STDOUT:   %.loc55_9.1: type = splice_block %.loc55_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc55_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc55_9.3: type = converted %.loc55_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc35_9.1: type = splice_block %.loc35_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc35_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc35_9.3: type = converted %.loc35_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %empty_tuple.type = wrapper_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -1233,9 +1173,9 @@ import library "extern_api";
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.cb1 = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var_storage %e.var_patt [concrete]
-// CHECK:STDOUT:   %.loc56_9.1: type = splice_block %.loc56_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc56_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc56_9.3: type = converted %.loc56_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc36_9.1: type = splice_block %.loc36_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc36_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc36_9.3: type = converted %.loc36_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = wrapper_binding e, %e.var [concrete = %e.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -1260,29 +1200,29 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%Main.B [concrete = constants.%B]
-// CHECK:STDOUT:   %int_1.loc53: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc53: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc53_16.1: <bound method> = bound_method %int_1.loc53, %impl.elem0.loc53 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc53: <specific function> = specific_function %impl.elem0.loc53, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc53_16.2: <bound method> = bound_method %int_1.loc53, %specific_fn.loc53 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc53: init %i32 = call %bound_method.loc53_16.2(%int_1.loc53) [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc53_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc53 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc53_16.2: %i32 = converted %int_1.loc53, %.loc53_16.1 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc53_16.2)
+// CHECK:STDOUT:   %int_1.loc33: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem0.loc33: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
+// CHECK:STDOUT:   %bound_method.loc33_16.1: <bound method> = bound_method %int_1.loc33, %impl.elem0.loc33 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc33: <specific function> = specific_function %impl.elem0.loc33, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc33_16.2: <bound method> = bound_method %int_1.loc33, %specific_fn.loc33 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc33: init %i32 = call %bound_method.loc33_16.2(%int_1.loc33) [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc33_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc33 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc33_16.2: %i32 = converted %int_1.loc33, %.loc33_16.1 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc33_16.2)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %int_1.loc54: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc54_25.1: %tuple.type.985 = tuple_literal (%int_1.loc54) [concrete = constants.%tuple.378]
-// CHECK:STDOUT:   %impl.elem0.loc54: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc54_25.1: <bound method> = bound_method %int_1.loc54, %impl.elem0.loc54 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc54: <specific function> = specific_function %impl.elem0.loc54, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc54_25.2: <bound method> = bound_method %int_1.loc54, %specific_fn.loc54 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc54: init %i32 = call %bound_method.loc54_25.2(%int_1.loc54) [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc54_25.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc54 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc54_25.3: %i32 = converted %int_1.loc54, %.loc54_25.2 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %tuple: %tuple.type.a8a = tuple_value (%.loc54_25.3) [concrete = constants.%tuple.a1e]
-// CHECK:STDOUT:   %.loc54_25.4: %tuple.type.a8a = converted %.loc54_25.1, %tuple [concrete = constants.%tuple.a1e]
-// CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc54_25.4)
+// CHECK:STDOUT:   %int_1.loc34: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc34_25.1: %tuple.type.985 = tuple_literal (%int_1.loc34) [concrete = constants.%tuple.378]
+// CHECK:STDOUT:   %impl.elem0.loc34: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
+// CHECK:STDOUT:   %bound_method.loc34_25.1: <bound method> = bound_method %int_1.loc34, %impl.elem0.loc34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc34: <specific function> = specific_function %impl.elem0.loc34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc34_25.2: <bound method> = bound_method %int_1.loc34, %specific_fn.loc34 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc34: init %i32 = call %bound_method.loc34_25.2(%int_1.loc34) [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc34_25.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc34 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc34_25.3: %i32 = converted %int_1.loc34, %.loc34_25.2 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %tuple: %tuple.type.a8a = tuple_value (%.loc34_25.3) [concrete = constants.%tuple.a1e]
+// CHECK:STDOUT:   %.loc34_25.4: %tuple.type.a8a = converted %.loc34_25.1, %tuple [concrete = constants.%tuple.a1e]
+// CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc34_25.4)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%Main.D [concrete = constants.%D]
 // CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()
@@ -1389,9 +1329,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var_storage %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc52_9.1: type = splice_block %.loc52_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc52_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc52_9.3: type = converted %.loc52_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc32_9.1: type = splice_block %.loc32_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc32_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc32_9.3: type = converted %.loc32_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -1399,15 +1339,15 @@ import library "extern_api";
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var_storage %b.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc53: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc33: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = ref_binding_pattern b [concrete = constants.%b.patt.b23]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.6b6 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %struct_type.c = var_storage %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc54: type = splice_block %struct_type.c [concrete = constants.%struct_type.c] {
-// CHECK:STDOUT:     %i32.loc54: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc34: type = splice_block %struct_type.c [concrete = constants.%struct_type.c] {
+// CHECK:STDOUT:     %i32.loc34: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [concrete = constants.%struct_type.c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %struct_type.c = wrapper_binding c, %c.var [concrete = %c.var]
@@ -1416,9 +1356,9 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.e1a = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var_storage %d.var_patt [concrete]
-// CHECK:STDOUT:   %.loc55_9.1: type = splice_block %.loc55_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc55_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc55_9.3: type = converted %.loc55_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc35_9.1: type = splice_block %.loc35_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc35_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc35_9.3: type = converted %.loc35_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %empty_tuple.type = wrapper_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -1426,9 +1366,9 @@ import library "extern_api";
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.cb1 = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var_storage %e.var_patt [concrete]
-// CHECK:STDOUT:   %.loc56_9.1: type = splice_block %.loc56_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc56_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc56_9.3: type = converted %.loc56_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc36_9.1: type = splice_block %.loc36_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc36_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc36_9.3: type = converted %.loc36_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = wrapper_binding e, %e.var [concrete = %e.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -1453,29 +1393,29 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%Main.B [concrete = constants.%B]
-// CHECK:STDOUT:   %int_1.loc53: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc53: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc53_16.1: <bound method> = bound_method %int_1.loc53, %impl.elem0.loc53 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc53: <specific function> = specific_function %impl.elem0.loc53, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc53_16.2: <bound method> = bound_method %int_1.loc53, %specific_fn.loc53 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc53: init %i32 = call %bound_method.loc53_16.2(%int_1.loc53) [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc53_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc53 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc53_16.2: %i32 = converted %int_1.loc53, %.loc53_16.1 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc53_16.2)
+// CHECK:STDOUT:   %int_1.loc33: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem0.loc33: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
+// CHECK:STDOUT:   %bound_method.loc33_16.1: <bound method> = bound_method %int_1.loc33, %impl.elem0.loc33 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc33: <specific function> = specific_function %impl.elem0.loc33, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc33_16.2: <bound method> = bound_method %int_1.loc33, %specific_fn.loc33 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc33: init %i32 = call %bound_method.loc33_16.2(%int_1.loc33) [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc33_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc33 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc33_16.2: %i32 = converted %int_1.loc33, %.loc33_16.1 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc33_16.2)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %int_1.loc54: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc54_25.1: %tuple.type.985 = tuple_literal (%int_1.loc54) [concrete = constants.%tuple.378]
-// CHECK:STDOUT:   %impl.elem0.loc54: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc54_25.1: <bound method> = bound_method %int_1.loc54, %impl.elem0.loc54 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc54: <specific function> = specific_function %impl.elem0.loc54, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc54_25.2: <bound method> = bound_method %int_1.loc54, %specific_fn.loc54 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc54: init %i32 = call %bound_method.loc54_25.2(%int_1.loc54) [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc54_25.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc54 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc54_25.3: %i32 = converted %int_1.loc54, %.loc54_25.2 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %tuple: %tuple.type.a8a = tuple_value (%.loc54_25.3) [concrete = constants.%tuple.a1e]
-// CHECK:STDOUT:   %.loc54_25.4: %tuple.type.a8a = converted %.loc54_25.1, %tuple [concrete = constants.%tuple.a1e]
-// CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc54_25.4)
+// CHECK:STDOUT:   %int_1.loc34: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc34_25.1: %tuple.type.985 = tuple_literal (%int_1.loc34) [concrete = constants.%tuple.378]
+// CHECK:STDOUT:   %impl.elem0.loc34: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
+// CHECK:STDOUT:   %bound_method.loc34_25.1: <bound method> = bound_method %int_1.loc34, %impl.elem0.loc34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc34: <specific function> = specific_function %impl.elem0.loc34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc34_25.2: <bound method> = bound_method %int_1.loc34, %specific_fn.loc34 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc34: init %i32 = call %bound_method.loc34_25.2(%int_1.loc34) [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc34_25.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc34 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %.loc34_25.3: %i32 = converted %int_1.loc34, %.loc34_25.2 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %tuple: %tuple.type.a8a = tuple_value (%.loc34_25.3) [concrete = constants.%tuple.a1e]
+// CHECK:STDOUT:   %.loc34_25.4: %tuple.type.a8a = converted %.loc34_25.1, %tuple [concrete = constants.%tuple.a1e]
+// CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc34_25.4)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%Main.D [concrete = constants.%D]
 // CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()

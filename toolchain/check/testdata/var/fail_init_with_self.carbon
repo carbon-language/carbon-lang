@@ -15,16 +15,10 @@
 // --- fail_basic.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_basic.carbon:[[@LINE+11]]:22: error: `x` used before initialization [UsedBeforeInitialization]
-  // CHECK:STDERR:   var unused x: () = x;
-  // CHECK:STDERR:                      ^
+  // CHECK:STDERR: fail_basic.carbon:[[@LINE+5]]:22: error: `x` used before initialization [UsedBeforeInitialization]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_basic.carbon:[[@LINE+7]]:14: error: variable `x` marked `unused` but used [UnusedButUsed]
-  // CHECK:STDERR:   var unused x: () = x;
-  // CHECK:STDERR:              ^~~~~
-  // CHECK:STDERR: fail_basic.carbon:[[@LINE+4]]:22: note: usage here [UnusedButUsedHere]
-  // CHECK:STDERR:   var unused x: () = x;
-  // CHECK:STDERR:                      ^
+  // CHECK:STDERR: fail_basic.carbon:[[@LINE+3]]:14-18: error: variable `x` marked `unused` but used [UnusedButUsed]
+  // CHECK:STDERR: fail_basic.carbon:[[@LINE+2]]:22: note: usage here [UnusedButUsedHere]
   // CHECK:STDERR:
   var unused x: () = x;
 }
@@ -40,7 +34,7 @@ fn Main() {
 // CHECK:STDOUT:   %x.patt: %pattern_type.cb1 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %x.var_patt: %pattern_type.cb1 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc14 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -67,9 +61,9 @@ fn Main() {
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var_storage %x.var_patt
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc14_18.1: type = splice_block %.loc14_18.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc14_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc14_18.3: type = converted %.loc14_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc8_18.1: type = splice_block %.loc8_18.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_18.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_18.3: type = converted %.loc8_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = wrapper_binding x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -81,5 +75,5 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc14(%self.param: ref %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc8(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:

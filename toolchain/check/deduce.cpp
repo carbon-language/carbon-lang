@@ -213,11 +213,12 @@ class DeductionContext {
                              auto& builder) -> void {
     if (auto param = context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
             param_id)) {
-      CARBON_DIAGNOSTIC(InitializingGenericParam, Note,
-                        "initializing generic parameter `{0}` declared here",
-                        SemIR::NameId);
-      builder.Note(loc_id, InitializingGenericParam,
-                   context().entity_names().Get(param->entity_name_id).name_id);
+      CARBON_DIAGNOSTIC_LABEL(
+          InitializingGenericParam, Info,
+          "initializing generic parameter `{0}` declared here", SemIR::NameId);
+      builder.Attach(
+          loc_id, InitializingGenericParam,
+          context().entity_names().Get(param->entity_name_id).name_id);
     } else {
       NoteGenericHere(context(), generic_id_, builder);
     }
@@ -241,9 +242,9 @@ class DeductionContext {
 
 static auto NoteGenericHere(Context& context, SemIR::GenericId generic_id,
                             DiagnosticBuilder& diag) -> void {
-  CARBON_DIAGNOSTIC(DeductionGenericHere, Note,
-                    "while deducing parameters of generic declared here");
-  diag.Note(context.generics().Get(generic_id).decl_id, DeductionGenericHere);
+  CARBON_DIAGNOSTIC_LABEL(DeductionGenericHere, Info,
+                          "while deducing parameters of generic declared here");
+  diag.Attach(context.generics().Get(generic_id).decl_id, DeductionGenericHere);
 }
 
 DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
@@ -549,12 +550,12 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       {
         Diagnostics::ContextScope diag_context(
             &context().emitter(), [&](auto& builder) {
-              CARBON_DIAGNOSTIC(
-                  SubstitutingGenericParamType, Context,
+              CARBON_DIAGNOSTIC_CONTEXT(
+                  SubstitutingGenericParamType,
                   "constructed invalid specific for {0} from argument",
                   SemIR::TypeId);
-              builder.Context(loc_id_, SubstitutingGenericParamType,
-                              binding_type_id);
+              builder.Attach(loc_id_, SubstitutingGenericParamType,
+                             binding_type_id);
             });
         auto param_type_const_id =
             SubstConstant(context(), SemIR::LocId(binding_id),

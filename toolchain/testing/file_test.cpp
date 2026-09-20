@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "absl/strings/str_replace.h"
+#include "common/check.h"
 #include "common/error.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -172,7 +173,8 @@ auto ToolchainFileTest::Run(
   overlay_fs->pushOverlay(fs);
 
   llvm::SmallVector<llvm::StringRef> filtered_test_args;
-  if (component_ == "check" || component_ == "lower") {
+  if (component_ == "check" || component_ == "lower" ||
+      component_ == "diagnostics") {
     filtered_test_args.reserve(test_args.size());
     bool found_prelude_flag = false;
     bool found_include_core_flag = false;
@@ -204,6 +206,25 @@ auto ToolchainFileTest::Run(
     }
   } else {
     filtered_test_args = test_args;
+  }
+
+  // Most tests are about which diagnostics are produced and what they point at
+  // rather than how they are drawn, so they render compactly: one line per
+  // part, led by its location and the extent of its range. Nothing is then
+  // positioned against a line number, so adding a `CHECK` line above a
+  // diagnostic doesn't move anything inside one. A test that is about the
+  // drawing itself asks for `--diagnostic-snippets` in its `ARGS` and takes on
+  // goldens whose frames number their own `CHECK` lines. This is applied here
+  // rather than in `GetDefaultArgs` so that a test writing its own `ARGS` line
+  // still renders compactly unless it asks not to.
+  bool chooses_snippets =
+      llvm::any_of(filtered_test_args, [](llvm::StringRef arg) {
+        return arg == "--diagnostic-snippets" ||
+               arg == "--no-diagnostic-snippets";
+      });
+  if (!chooses_snippets) {
+    filtered_test_args.insert(filtered_test_args.begin(),
+                              "--no-diagnostic-snippets");
   }
 
   Driver driver(overlay_fs, &data_->installation, input_stream, &output_stream,
@@ -269,7 +290,9 @@ auto ToolchainFileTest::GetDefaultArgs() const
 
   args.insert(args.end(), {
                               "compile",
-                              "--phase=" + component_.str(),
+                              "--phase=" + (component_ == "diagnostics"
+                                                ? std::string("check")
+                                                : component_.str()),
                               // Use the install path to exclude prelude files.
                               "--exclude-dump-file-prefix=" +
                                   data_->installation.core_package().native(),
@@ -282,6 +305,8 @@ auto ToolchainFileTest::GetDefaultArgs() const
     args.insert(args.end(), {"--no-prelude-import", "--dump-parse-tree"});
   } else if (component_ == "check") {
     args.insert(args.end(), {"--dump-sem-ir", "--dump-sem-ir-ranges=only"});
+  } else if (component_ == "diagnostics") {
+    // Nothing to dump: these tests are only about the rendered diagnostics.
   } else if (component_ == "lower") {
     args.insert(args.end(), {"--dump-llvm-ir", "--target=x86_64-linux-gnu"});
   } else if (component_ == "codegen") {
@@ -388,7 +413,11 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
 auto ToolchainFileTest::FinalizeCheckLines(CheckLineArray& check_lines,
                                            bool is_stderr) const -> void {
   if (is_stderr) {
-    static const RE2 is_new_diagnostic_re(R"(.*:\d*:\d*: (error|warning): )");
+    // A diagnostic's headline carries its location only when snippets are off;
+    // with them on, the location is on the frame row below it. A compact
+    // location can carry the extent of its range as `-<end>` after the column.
+    static const RE2 is_new_diagnostic_re(
+        R"(^// CHECK:STDERR: (?:.*:\d*:\d*(?:-\d+)?: )?(?:error|warning): )");
     // If a diagnostic isn't attached to a line, try to position it with its
     // first note.
     FileTestAutoupdater::CheckLine* diagnostic_without_loc = nullptr;

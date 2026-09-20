@@ -26,23 +26,15 @@ interface I {}
 class J {}
 class K {}
 
-// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:10: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F1[T: I & J](unused t: T) {}
-// CHECK:STDERR:          ^~~~~
+// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+2]]:10-14: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
 // CHECK:STDERR:
 fn F1[T: I & J](unused t: T) {}
-// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:10: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F2[T: J & I](unused t: T) {}
-// CHECK:STDERR:          ^~~~~
+// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+2]]:10-14: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
 // CHECK:STDERR:
 fn F2[T: J & I](unused t: T) {}
-// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+8]]:10: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F3[T: J & K](unused t: T) {}
-// CHECK:STDERR:          ^~~~~
+// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:10-14: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:10: error: non-facet type `K` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F3[T: J & K](unused t: T) {}
-// CHECK:STDERR:          ^~~~~
+// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+2]]:10-14: error: non-facet type `K` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
 // CHECK:STDERR:
 fn F3[T: J & K](unused t: T) {}
 
@@ -68,9 +60,7 @@ class J { adapt {}; }
 fn F() {
   let a: J = {} as J;
   let b: J = {} as J;
-  // CHECK:STDERR: fail_bit_and_values_no_impl.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.BitAndWith(J)` in type `J` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   a & b;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_bit_and_values_no_impl.carbon:[[@LINE+2]]:3-7: error: cannot access member of interface `Core.BitAndWith(J)` in type `J` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   a & b;
 }

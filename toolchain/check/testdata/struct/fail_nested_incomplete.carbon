@@ -14,12 +14,8 @@
 
 class Incomplete;
 
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+7]]:8: error: binding pattern has incomplete type `{.a: Incomplete}` in name binding declaration [IncompleteTypeInBindingDecl]
-// CHECK:STDERR: var s: {.a: Incomplete};
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class Incomplete;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+3]]:8-23: error: binding pattern has incomplete type `{.a: Incomplete}` in name binding declaration [IncompleteTypeInBindingDecl]
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-3]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:
 var s: {.a: Incomplete};
 
@@ -44,8 +40,8 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [concrete = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %s.var: ref <error> = var_storage %s.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc24: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
-// CHECK:STDOUT:     %Incomplete.ref.loc24: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
+// CHECK:STDOUT:   %.loc20: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
+// CHECK:STDOUT:     %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %Incomplete} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: <error> = wrapper_binding s, <error> [concrete = <error>]
@@ -54,9 +50,9 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:     %s.var_patt: <error> = var_pattern %s.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var_storage %p.var_patt [concrete]
-// CHECK:STDOUT:   %.loc26: type = splice_block %ptr [concrete = constants.%ptr] {
-// CHECK:STDOUT:     %Incomplete.ref.loc26: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc26 [concrete = constants.%ptr]
+// CHECK:STDOUT:   %.loc22: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %Incomplete.ref.loc22: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc22 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = wrapper_binding p, %p.var [concrete = %p.var]
 // CHECK:STDOUT:   name_binding_decl {

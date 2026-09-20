@@ -13,14 +13,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_function.carbon
 
 fn A() {
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+4]]:4: error: expression cannot be used as a value [UseOfNonExprAsValue]
-  // CHECK:STDERR:   *A;
-  // CHECK:STDERR:    ^
+  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+2]]:4: error: expression cannot be used as a value [UseOfNonExprAsValue]
   // CHECK:STDERR:
   *A;
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+4]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
-  // CHECK:STDERR:   A->foo;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+2]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
   // CHECK:STDERR:
   A->foo;
 }
@@ -50,10 +46,10 @@ fn A() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc20: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc20: ref <error> = deref <error> [concrete = <error>]
-// CHECK:STDOUT:   %A.ref.loc25: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc25: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc18: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %.loc18: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc21: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %.loc21: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

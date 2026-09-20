@@ -52,13 +52,9 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_extern";
 
-// CHECK:STDERR: fail_extern.carbon:[[@LINE+8]]:8: error: binding pattern has incomplete type `C` in name binding declaration [IncompleteTypeInBindingDecl]
-// CHECK:STDERR: var c: Other.C = {};
-// CHECK:STDERR:        ^~~~~~~
-// CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: other_extern.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_extern.carbon:[[@LINE+4]]:8-14: error: binding pattern has incomplete type `C` in name binding declaration [IncompleteTypeInBindingDecl]
+// CHECK:STDERR: imported from: fail_extern.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: other_extern.carbon:4:1-15: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:
 var c: Other.C = {};
 
@@ -66,20 +62,14 @@ var c: Other.C = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: other_extern.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:1: in import [InImport]
-// CHECK:STDERR: other_define.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR: imported from: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:1 [InImport]
+// CHECK:STDERR: other_extern.carbon:4:1-15: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_todo_merge_define_extern.carbon:[[@LINE+2]]:1 [InImport]
+// CHECK:STDERR: other_define.carbon:4:1-9: note: name is previously declared here [NameDeclPrevious]
 import Other library "other_define";
 import Other library "other_extern";
 
-// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:8: note: in name lookup for `C` [InNameLookup]
-// CHECK:STDERR: var c: Other.C = {};
-// CHECK:STDERR:        ^~~~~~~
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+2]]:8-14: note: in name lookup for `C` [InNameLookup]
 // CHECK:STDERR:
 var c: Other.C = {};
 
@@ -87,20 +77,14 @@ var c: Other.C = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: other_conflict.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn C() {}
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:1: in import [InImport]
-// CHECK:STDERR: other_define.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR: imported from: fail_conflict.carbon:[[@LINE+4]]:1 [InImport]
+// CHECK:STDERR: other_conflict.carbon:4:1-8: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_conflict.carbon:[[@LINE+2]]:1 [InImport]
+// CHECK:STDERR: other_define.carbon:4:1-9: note: name is previously declared here [NameDeclPrevious]
 import Other library "other_define";
 import Other library "other_conflict";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:8: note: in name lookup for `C` [InNameLookup]
-// CHECK:STDERR: var c: Other.C = {};
-// CHECK:STDERR:        ^~~~~~~
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+2]]:8-14: note: in name lookup for `C` [InNameLookup]
 // CHECK:STDERR:
 var c: Other.C = {};
 
@@ -280,7 +264,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %c.var: ref <error> = var_storage %c.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc14: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc10: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -295,7 +279,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -337,7 +321,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc19: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc13: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -357,10 +341,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc19_19.2: init %C to file.%c.var = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc19_1: init %C = converted %.loc19_19.1, %.loc19_19.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc19_1
+// CHECK:STDOUT:   %.loc13_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc13_19.2: init %C to file.%c.var = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc13_1: init %C = converted %.loc13_19.1, %.loc13_19.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc13_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -401,7 +385,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %c.var: ref %C = var_storage %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc19: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc13: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -421,10 +405,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc19_19.2: init %C to file.%c.var = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc19_1: init %C = converted %.loc19_19.1, %.loc19_19.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc19_1
+// CHECK:STDOUT:   %.loc13_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc13_19.2: init %C to file.%c.var = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc13_1: init %C = converted %.loc13_19.1, %.loc13_19.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc13_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

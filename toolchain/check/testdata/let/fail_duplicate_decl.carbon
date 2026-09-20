@@ -14,12 +14,8 @@
 
 fn F() {
   let unused a: i32 = 1;
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+7]]:14: error: duplicate name `a` being declared in the same scope [NameDeclDuplicate]
-  // CHECK:STDERR:   let unused a: i32 = 2;
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-4]]:14: note: name is previously declared here [NameDeclPrevious]
-  // CHECK:STDERR:   let unused a: i32 = 1;
-  // CHECK:STDERR:              ^~~~~~
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+3]]:14: error: duplicate name `a` being declared in the same scope [NameDeclDuplicate]
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-2]]:14-19: note: name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:
   let unused a: i32 = 2;
 }
@@ -97,17 +93,17 @@ fn F() {
 // CHECK:STDOUT:     %a.patt.loc16: %pattern_type.6b6 = value_binding_pattern a [concrete = constants.%a.patt.bb2e5b.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0.loc24: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc24_23.1: <bound method> = bound_method %int_2, %impl.elem0.loc24 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.9f3]
-// CHECK:STDOUT:   %specific_fn.loc24: <specific function> = specific_function %impl.elem0.loc24, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc24_23.2: <bound method> = bound_method %int_2, %specific_fn.loc24 [concrete = constants.%bound_method.3cb]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc24: init %i32 = call %bound_method.loc24_23.2(%int_2) [concrete = constants.%int_2.295]
-// CHECK:STDOUT:   %.loc24_23.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc24 [concrete = constants.%int_2.295]
-// CHECK:STDOUT:   %.loc24_23.2: %i32 = converted %int_2, %.loc24_23.1 [concrete = constants.%int_2.295]
-// CHECK:STDOUT:   %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a.loc24: %i32 = wrapper_binding a, %.loc24_23.2
+// CHECK:STDOUT:   %impl.elem0.loc20: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
+// CHECK:STDOUT:   %bound_method.loc20_23.1: <bound method> = bound_method %int_2, %impl.elem0.loc20 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.9f3]
+// CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem0.loc20, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc20_23.2: <bound method> = bound_method %int_2, %specific_fn.loc20 [concrete = constants.%bound_method.3cb]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20: init %i32 = call %bound_method.loc20_23.2(%int_2) [concrete = constants.%int_2.295]
+// CHECK:STDOUT:   %.loc20_23.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20 [concrete = constants.%int_2.295]
+// CHECK:STDOUT:   %.loc20_23.2: %i32 = converted %int_2, %.loc20_23.1 [concrete = constants.%int_2.295]
+// CHECK:STDOUT:   %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %a.loc20: %i32 = wrapper_binding a, %.loc20_23.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt.loc24: %pattern_type.6b6 = value_binding_pattern a [concrete = constants.%a.patt.bb2e5b.2]
+// CHECK:STDOUT:     %a.patt.loc20: %pattern_type.6b6 = value_binding_pattern a [concrete = constants.%a.patt.bb2e5b.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

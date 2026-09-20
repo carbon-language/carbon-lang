@@ -12,9 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/fail_param_in_type.carbon
 
-// CHECK:STDERR: fail_param_in_type.carbon:[[@LINE+4]]:28: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: fn F(n: i32, a: array(i32, n)*);
-// CHECK:STDERR:                            ^
+// CHECK:STDERR: fail_param_in_type.carbon:[[@LINE+2]]:28: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR:
 fn F(n: i32, a: array(i32, n)*);
 
@@ -54,11 +52,11 @@ fn F(n: i32, a: array(i32, n)*);
 // CHECK:STDOUT:     %a.patt: <error> = wrapper_binding_pattern a, %a.param_patt [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc19_9: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc17_9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %n: %i32 = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %a.param: <error> = value_param call_param1
-// CHECK:STDOUT:     %.loc19: type = splice_block %ptr [concrete = <error>] {
-// CHECK:STDOUT:       %i32.loc19_23: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc17: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:       %i32.loc17_23: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }

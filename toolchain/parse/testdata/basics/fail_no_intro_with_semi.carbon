@@ -8,9 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/basics/fail_no_intro_with_semi.carbon
 
-// CHECK:STDERR: fail_no_intro_with_semi.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: foo;
-// CHECK:STDERR: ^~~
+// CHECK:STDERR: fail_no_intro_with_semi.carbon:[[@LINE+2]]:1-3: error: unrecognized declaration introducer [UnrecognizedDecl]
 // CHECK:STDERR:
 foo;
 

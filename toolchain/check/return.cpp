@@ -53,26 +53,27 @@ static auto GetCurrentReturnedVar(Context& context) -> SemIR::InstId {
 // Produces a note that the given function has no explicit return type.
 static auto NoteNoReturnTypeProvided(DiagnosticBuilder& diag,
                                      const SemIR::Function& function) {
-  CARBON_DIAGNOSTIC(ReturnTypeOmittedNote, Note,
-                    "there was no return type provided");
-  diag.Note(function.latest_decl_id(), ReturnTypeOmittedNote);
+  CARBON_DIAGNOSTIC_LABEL(ReturnTypeOmittedNote, Info,
+                          "there was no return type provided");
+  diag.Attach(function.latest_decl_id(), ReturnTypeOmittedNote);
 }
 
 // Produces a note describing the return type of the given function, which
 // must be a function whose definition is currently being checked.
 static auto NoteReturnType(DiagnosticBuilder& diag,
                            const SemIR::Function& function) {
-  CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note, "return type of function is {0}",
-                    InstIdAsType);
-  diag.Note(function.return_type_inst_id, ReturnTypeHereNote,
-            function.return_type_inst_id);
+  CARBON_DIAGNOSTIC_LABEL(ReturnTypeHereNote, Info,
+                          "return type of function is {0}", InstIdAsType);
+  diag.Attach(function.return_type_inst_id, ReturnTypeHereNote,
+              function.return_type_inst_id);
 }
 
 // Produces a note pointing at the currently in scope `returned var`.
 static auto NoteReturnedVar(DiagnosticBuilder& diag,
                             SemIR::InstId returned_var_id) {
-  CARBON_DIAGNOSTIC(ReturnedVarHere, Note, "`returned var` was declared here");
-  diag.Note(returned_var_id, ReturnedVarHere);
+  CARBON_DIAGNOSTIC_LABEL(ReturnedVarHere, Info,
+                          "`returned var` was declared here");
+  diag.Attach(returned_var_id, ReturnedVarHere);
 }
 
 auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
@@ -110,8 +111,9 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
                       "`returned var` declaration in function with "
                       "non-initializing return form");
     auto diag = context.emitter().Build(returned_node, ReturnedVarNotInit);
-    CARBON_DIAGNOSTIC(ReturnFormHereNote, Note, "return form declared here");
-    diag.Note(function.return_form_inst_id, ReturnFormHereNote);
+    CARBON_DIAGNOSTIC_LABEL(ReturnFormHereNote, Info,
+                            "return form declared here");
+    diag.Attach(function.return_form_inst_id, ReturnFormHereNote);
     diag.Emit();
   }
 

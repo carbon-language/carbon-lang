@@ -63,9 +63,7 @@ e
 // CHECK:STDOUT: - filename: fail_extra_text.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_extra_text.carbon:[[@LINE+4]]:3: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
-// CHECK:STDERR: //@dump-sem-ir-begin more text
-// CHECK:STDERR:   ^
+// CHECK:STDERR: fail_extra_text.carbon:[[@LINE+2]]:3: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
 // CHECK:STDERR:
 //@dump-sem-ir-begin more text
 
@@ -76,18 +74,14 @@ e
 // CHECK:STDOUT:   - {begin: 1, end: 0}
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_start_only.carbon:[[@LINE+4]]:1: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
-// CHECK:STDERR:
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_start_only.carbon:[[@LINE+2]]:1: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
 // CHECK:STDERR:
 
 // --- fail_end_only.carbon
 // CHECK:STDOUT: - filename: fail_end_only.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_end_only.carbon:[[@LINE+4]]:1: error: missing `//@dump-sem-ir-begin` to match `//@dump-sem-ir-end` [DumpSemIRRangeMissingBegin]
-// CHECK:STDERR: //@dump-sem-ir-end
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_end_only.carbon:[[@LINE+2]]:1: error: missing `//@dump-sem-ir-begin` to match `//@dump-sem-ir-end` [DumpSemIRRangeMissingBegin]
 // CHECK:STDERR:
 //@dump-sem-ir-end
 
@@ -100,9 +94,7 @@ a
 //@dump-sem-ir-begin
 b
 // CHECK:STDOUT:   - { index: 2, kind: "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "b", identifier: 1, has_leading_space: true }
-// CHECK:STDERR: fail_misordered.carbon:[[@LINE+4]]:1: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
-// CHECK:STDERR: //@dump-sem-ir-begin
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_misordered.carbon:[[@LINE+2]]:1: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
 // CHECK:STDERR:
 //@dump-sem-ir-begin
 c
@@ -110,9 +102,7 @@ c
 //@dump-sem-ir-end
 d
 // CHECK:STDOUT:   - { index: 4, kind: "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "d", identifier: 3, has_leading_space: true }
-// CHECK:STDERR: fail_misordered.carbon:[[@LINE+4]]:1: error: missing `//@dump-sem-ir-begin` to match `//@dump-sem-ir-end` [DumpSemIRRangeMissingBegin]
-// CHECK:STDERR: //@dump-sem-ir-end
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_misordered.carbon:[[@LINE+2]]:1: error: missing `//@dump-sem-ir-begin` to match `//@dump-sem-ir-end` [DumpSemIRRangeMissingBegin]
 // CHECK:STDERR:
 //@dump-sem-ir-end
 e
@@ -140,7 +130,5 @@ d
 // CHECK:STDOUT:   - {begin: 2, end: 2}
 // CHECK:STDOUT:   - {begin: 4, end: 4}
 
-// CHECK:STDERR: fail_count_mismatch.carbon:[[@LINE+3]]:17: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
-// CHECK:STDERR: // CHECK:STDERR:
-// CHECK:STDERR:                 ^
+// CHECK:STDERR: fail_count_mismatch.carbon:[[@LINE+1]]:17: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
 // CHECK:STDERR:

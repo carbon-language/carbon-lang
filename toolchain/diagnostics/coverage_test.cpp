@@ -22,12 +22,7 @@ constexpr Kind Kinds[] = {
 constexpr Kind UntestedKinds[] = {
     // These exist only for unit tests.
     Kind::TestDiagnostic,
-    Kind::TestDiagnosticContext,
-    Kind::TestDiagnosticContext2,
-    Kind::TestDiagnosticNote,
     Kind::TestDiagnosticOnScope,
-    Kind::TestDiagnosticSoftContext,
-    Kind::TestDiagnosticSoftContext2,
 
     // Diagnosing erroneous install conditions, but test environments are
     // typically correct.
@@ -60,27 +55,33 @@ constexpr Kind UntestedKinds[] = {
     // Producing an emit failure may be infeasible.
     Kind::CodeGenUnableToEmit,
 
-    // TODO: This is currently hard to test because it requires building and
-    // importing a module, which attempts to create additional files with
-    // unpredictable names in the module cache, which bazel doesn't permit.
-    Kind::InCppModule,
+    // Degradation for a Clang note that leads a flushed buffer instead of
+    // trailing the diagnostic it explains, which needs a mistimed flush or a
+    // Clang bug to produce.
+    Kind::CppInteropStrayNote,
 
-    // TODO: This can only fire if the first message in a diagnostic is rooted
-    // in a file other than the file being compiled. The language server
-    // currently only supports compiling one file at a time. Do one of:
-    // - When imports are supported, find a diagnostic whose first message isn't
-    //   in the current file.
-    // - Require all diagnostics produced by compiling have their first location
-    //   be in the file being compiled, never an import.
+    // TODO: This can only fire if a diagnostic's message is rooted in a file
+    // other than the file being compiled. The language server currently only
+    // supports compiling one file at a time. Do one of:
+    // - When imports are supported, find a diagnostic whose message isn't in
+    //   the current file.
+    // - Require all diagnostics produced by compiling have their message's
+    //   location be in the file being compiled, never an import.
     Kind::LanguageServerDiagnosticInWrongFile,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.
+//
+// A line names either a kind or an attached label, and there is no list of
+// labels to enumerate from here, so a match that isn't a kind is left alone.
+// `check_diagnostics.py` is what covers them: it reads the declarations and the
+// testdata directly, so it checks that every label is exercised and that every
+// name a test matches on is a kind or a label that exists.
 TEST(Coverage, Kind) {
-  Testing::TestKindCoverage(absl::GetFlag(FLAGS_testdata_manifest),
-                            R"(^ *// CHECK:STDERR: .* \[(\w+)\]$)",
-                            llvm::ArrayRef(Kinds),
-                            llvm::ArrayRef(UntestedKinds));
+  Testing::TestKindCoverage(
+      absl::GetFlag(FLAGS_testdata_manifest),
+      R"(^ *// CHECK:STDERR: .* \[(\w+)\]$)", llvm::ArrayRef(Kinds),
+      llvm::ArrayRef(UntestedKinds), /*allow_unlisted_matches=*/true);
 }
 
 }  // namespace

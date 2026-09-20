@@ -13,57 +13,43 @@
 
 // --- fail_not_designator.carbon
 
-// CHECK:STDERR: fail_not_designator.carbon:[[@LINE+4]]:44: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-// CHECK:STDERR: fn NotDesignator(generic T: type where i32 = .U);
-// CHECK:STDERR:                                            ^
+// CHECK:STDERR: fail_not_designator.carbon:[[@LINE+2]]:44: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
 // CHECK:STDERR:
 fn NotDesignator(generic T: type where i32 = .U);
 
 // --- fail_designator_in_parens.carbon
 
-// CHECK:STDERR: fail_designator_in_parens.carbon:[[@LINE+4]]:47: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-// CHECK:STDERR: fn DesignatorInParens(generic V: I where (.J) = bool);
-// CHECK:STDERR:                                               ^
+// CHECK:STDERR: fail_designator_in_parens.carbon:[[@LINE+2]]:47: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
 // CHECK:STDERR:
 fn DesignatorInParens(generic V: I where (.J) = bool);
 
 // --- fail_dot_self.carbon
 
-// CHECK:STDERR: fail_dot_self.carbon:[[@LINE+4]]:37: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-// CHECK:STDERR: fn DotSelf(generic W: K where .Self = f32);
-// CHECK:STDERR:                                     ^
+// CHECK:STDERR: fail_dot_self.carbon:[[@LINE+2]]:37: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
 // CHECK:STDERR:
 fn DotSelf(generic W: K where .Self = f32);
 
 // --- fail_dot_keyword.carbon
 
-// CHECK:STDERR: fail_dot_keyword.carbon:[[@LINE+4]]:35: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-// CHECK:STDERR: fn DotKeyword(generic W: K where .and = u8);
-// CHECK:STDERR:                                   ^~~
+// CHECK:STDERR: fail_dot_keyword.carbon:[[@LINE+2]]:35-37: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
 // CHECK:STDERR:
 fn DotKeyword(generic W: K where .and = u8);
 
 // --- fail_postfix_after_designator.carbon
 
-// CHECK:STDERR: fail_postfix_after_designator.carbon:[[@LINE+4]]:50: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-// CHECK:STDERR: fn PostfixAfterDesignator(generic X: L where .M* = u64*);
-// CHECK:STDERR:                                                  ^
+// CHECK:STDERR: fail_postfix_after_designator.carbon:[[@LINE+2]]:50: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
 // CHECK:STDERR:
 fn PostfixAfterDesignator(generic X: L where .M* = u64*);
 
 // --- fail_binary_op_after_designator.carbon
 
-// CHECK:STDERR: fail_binary_op_after_designator.carbon:[[@LINE+4]]:55: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-// CHECK:STDERR: fn BinaryOpAfterDesignator(generic Y: N where .O + .P = {});
-// CHECK:STDERR:                                                       ^
+// CHECK:STDERR: fail_binary_op_after_designator.carbon:[[@LINE+2]]:55: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
 // CHECK:STDERR:
 fn BinaryOpAfterDesignator(generic Y: N where .O + .P = {});
 
 // --- fail_after_and.carbon
 
-// CHECK:STDERR: fail_after_and.carbon:[[@LINE+4]]:50: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-// CHECK:STDERR: fn AfterAnd(generic Z: Q where .R impls S and () = .A);
-// CHECK:STDERR:                                                  ^
+// CHECK:STDERR: fail_after_and.carbon:[[@LINE+2]]:50: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
 // CHECK:STDERR:
 fn AfterAnd(generic Z: Q where .R impls S and () = .A);
 

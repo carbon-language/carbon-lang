@@ -10,41 +10,31 @@
 
 // --- fail_redundant_generic_deduced.carbon
 
-// CHECK:STDERR: fail_redundant_generic_deduced.carbon:[[@LINE+4]]:6: error: `generic` is redundant here; this binding is a checked generic by default [RedundantGenericModifier]
-// CHECK:STDERR: fn F[generic T: type]();
-// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR: fail_redundant_generic_deduced.carbon:[[@LINE+2]]:6-12: error: `generic` is redundant here; this binding is a checked generic by default [RedundantGenericModifier]
 // CHECK:STDERR:
 fn F[generic T: type]();
 
 // --- fail_redundant_generic_class_param.carbon
 
-// CHECK:STDERR: fail_redundant_generic_class_param.carbon:[[@LINE+4]]:9: error: `generic` is redundant here; this binding is a checked generic by default [RedundantGenericModifier]
-// CHECK:STDERR: class C(generic T: type) {}
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR: fail_redundant_generic_class_param.carbon:[[@LINE+2]]:9-15: error: `generic` is redundant here; this binding is a checked generic by default [RedundantGenericModifier]
 // CHECK:STDERR:
 class C(generic T: type) {}
 
 // --- fail_redundant_runtime_explicit.carbon
 
-// CHECK:STDERR: fail_redundant_runtime_explicit.carbon:[[@LINE+4]]:6: error: `runtime` is redundant here; this binding is runtime by default [RedundantRuntimeModifier]
-// CHECK:STDERR: fn G(runtime x: i32);
-// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR: fail_redundant_runtime_explicit.carbon:[[@LINE+2]]:6-12: error: `runtime` is redundant here; this binding is runtime by default [RedundantRuntimeModifier]
 // CHECK:STDERR:
 fn G(runtime x: i32);
 
 // --- fail_redundant_generic_qualified.carbon
 
-// CHECK:STDERR: fail_redundant_generic_qualified.carbon:[[@LINE+4]]:8: error: `generic` is redundant here; this binding is a checked generic by default [RedundantGenericModifier]
-// CHECK:STDERR: fn C.F[generic T: type]();
-// CHECK:STDERR:        ^~~~~~~
+// CHECK:STDERR: fail_redundant_generic_qualified.carbon:[[@LINE+2]]:8-14: error: `generic` is redundant here; this binding is a checked generic by default [RedundantGenericModifier]
 // CHECK:STDERR:
 fn C.F[generic T: type]();
 
 // --- fail_redundant_runtime_qualified.carbon
 
-// CHECK:STDERR: fail_redundant_runtime_qualified.carbon:[[@LINE+4]]:8: error: `runtime` is redundant here; this binding is runtime by default [RedundantRuntimeModifier]
-// CHECK:STDERR: fn C.G(runtime x: i32);
-// CHECK:STDERR:        ^~~~~~~
+// CHECK:STDERR: fail_redundant_runtime_qualified.carbon:[[@LINE+2]]:8-14: error: `runtime` is redundant here; this binding is runtime by default [RedundantRuntimeModifier]
 // CHECK:STDERR:
 fn C.G(runtime x: i32);
 

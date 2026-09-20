@@ -716,20 +716,21 @@ static auto DiagnoseOutOfOrderDefaults(Context& context,
     if (!state->patterns_missing_defaults.empty()) {
       CARBON_DIAGNOSTIC(RequiredPatternDefaultValueMissing, Error,
                         "this pattern is missing a required default value.");
-      CARBON_DIAGNOSTIC(RequiredPatternDefaultValueFirstDefault, Note,
-                        "all patterns to the right of this first pattern with "
-                        "a default value must also specify a default value.");
-      CARBON_DIAGNOSTIC(
-          RequiredPatternDefaultValueMissingAdditional, Note,
+      CARBON_DIAGNOSTIC_LABEL(RequiredPatternDefaultValueFirstDefault, Info,
+                              "all patterns to the right of this first pattern "
+                              "with a default value must also specify a "
+                              "default value.");
+      CARBON_DIAGNOSTIC_LABEL(
+          RequiredPatternDefaultValueMissingAdditional, Primary,
           "this pattern is also missing a required default value.");
       auto inst_ref = llvm::ArrayRef(state->patterns_missing_defaults);
       auto builder = context.emitter().Build(
           inst_ref.consume_front(), RequiredPatternDefaultValueMissing);
       for (auto inst_id : inst_ref) {
-        builder.Note(inst_id, RequiredPatternDefaultValueMissingAdditional);
+        builder.Attach(inst_id, RequiredPatternDefaultValueMissingAdditional);
       }
-      builder.Note(state->first_pattern_with_default,
-                   RequiredPatternDefaultValueFirstDefault);
+      builder.Attach(state->first_pattern_with_default,
+                     RequiredPatternDefaultValueFirstDefault);
       builder.Emit();
     }
     level_state_stack.pop_back();

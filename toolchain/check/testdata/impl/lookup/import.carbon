@@ -216,9 +216,7 @@ import HasExtraInterfaces;
 fn Test(c: HasExtraInterfaces.C(type)) {
   // This triggers the import of a bunch more interfaces, which reallocates the
   // interface ValueStore. Ensure that doesn't result in a use-after-free crash.
-  // CHECK:STDERR: fail_use_has_extra_interfaces.carbon:[[@LINE+4]]:3: error: cannot access member of interface `HasExtraInterfaces.I` in type `HasExtraInterfaces.C(type)` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   c.(HasExtraInterfaces.I.F)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_use_has_extra_interfaces.carbon:[[@LINE+2]]:3-28: error: cannot access member of interface `HasExtraInterfaces.I` in type `HasExtraInterfaces.C(type)` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   c.(HasExtraInterfaces.I.F)();
 }
@@ -3339,7 +3337,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @Test(%c.param: %C.62c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C.62c = name_ref c, %c
-// CHECK:STDOUT:   %HasExtraInterfaces.ref.loc12: <namespace> = name_ref HasExtraInterfaces, imports.%HasExtraInterfaces [concrete = imports.%HasExtraInterfaces]
+// CHECK:STDOUT:   %HasExtraInterfaces.ref.loc10: <namespace> = name_ref HasExtraInterfaces, imports.%HasExtraInterfaces [concrete = imports.%HasExtraInterfaces]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%HasExtraInterfaces.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%HasExtraInterfaces.import_ref.8f6 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   return

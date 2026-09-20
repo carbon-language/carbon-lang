@@ -17,15 +17,11 @@
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_let.carbon:[[@LINE+4]]:15: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-  // CHECK:STDERR:   let generic A: type = Class;
-  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR: fail_let.carbon:[[@LINE+2]]:15-21: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:
   let generic A: type = Class;
 
-  // CHECK:STDERR: fail_let.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-  // CHECK:STDERR:   let template B: type = Class;
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_let.carbon:[[@LINE+2]]:7-22: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:
   let template B: type = Class;
 }
@@ -35,19 +31,13 @@ class Class {
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+8]]:15: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   var generic C: type = Class;
-  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:15-21: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:23: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
-  // CHECK:STDERR:   var generic C: type = Class;
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+2]]:23: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
   // CHECK:STDERR:
   var generic C: type = Class;
 
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:24: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
-  // CHECK:STDERR:   var template D: type = Class;
-  // CHECK:STDERR:                        ^
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+2]]:24: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
   // CHECK:STDERR:
   var template D: type = Class;
 }
@@ -75,21 +65,21 @@ var x: Class = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %Class.ref.loc9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc9_18.1: type = splice_block %.loc9_18.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.frozen.loc9: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc9_18.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %Class.ref.loc7: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %.loc7_18.1: type = splice_block %.loc7_18.2 [concrete = type] {
+// CHECK:STDOUT:     %.Self.frozen.loc7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc7_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A: type = wrapper_binding A, %Class.ref.loc9
+// CHECK:STDOUT:   %A: type = wrapper_binding A, %Class.ref.loc7
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %A.patt: %pattern_type = value_binding_pattern A [concrete = constants.%A.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.ref.loc15: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc15_19.1: type = splice_block %.loc15_19.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.frozen.loc15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc15_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %Class.ref.loc11: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %.loc11_19.1: type = splice_block %.loc11_19.2 [concrete = type] {
+// CHECK:STDOUT:     %.Self.frozen.loc11: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc11_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B: type = wrapper_binding B, %Class.ref.loc15
+// CHECK:STDOUT:   %B: type = wrapper_binding B, %Class.ref.loc11
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %B.patt: %pattern_type = value_binding_pattern B [concrete = constants.%B.patt]
 // CHECK:STDOUT:   }

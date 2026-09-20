@@ -31,9 +31,7 @@ impl C as B {
 fn F() {
   // TODO: This error message is wrong here, we are not using `extend`.
 
-  // CHECK:STDERR: fail_name_collision.carbon:[[@LINE+4]]:14: error: ambiguous use of name `G` found in multiple extended scopes [NameAmbiguousDueToExtend]
-  // CHECK:STDERR:   ({} as C).((A & B).G)();
-  // CHECK:STDERR:              ^~~~~~~~~
+  // CHECK:STDERR: fail_name_collision.carbon:[[@LINE+2]]:14-22: error: ambiguous use of name `G` found in multiple extended scopes [NameAmbiguousDueToExtend]
   // CHECK:STDERR:
   ({} as C).((A & B).G)();
 }
@@ -98,12 +96,8 @@ impl C as B {}
 fn G[T: A(P2) & B](unused t: T) {}
 
 fn F() {
-  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `A(P2) & B` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   G({} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn G[T: A(P2) & B](unused t: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+3]]:3-12: error: cannot convert type `C` into type implementing `A(P2) & B` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE-4]]:1-33: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   G({} as C);
 }
@@ -179,12 +173,8 @@ interface J {}
 interface K {}
 
 fn Test() {
-  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR:   Same(Type(I & J), Type(K & I & J));
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE-11]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE+3]]:3-36: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE-9]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Same(Type(I & J), Type(K & I & J));
 }
@@ -200,12 +190,8 @@ interface I {}
 interface J(T: type) {}
 
 fn Test() {
-  // CHECK:STDERR: fail_compare_not_equal_parameterized.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR:   Same(Type(I & J(())), Type(J({}) & I));
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_compare_not_equal_parameterized.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_compare_not_equal_parameterized.carbon:[[@LINE+3]]:3-40: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR: fail_compare_not_equal_parameterized.carbon:[[@LINE-8]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Same(Type(I & J(())), Type(J({}) & I));
 }
@@ -221,12 +207,8 @@ interface I {}
 interface J(T: type) {}
 
 fn Test() {
-  // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR:   Same(Type(I & J(())), Type(J(()) & J({}) & I));
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE+3]]:3-48: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE-8]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Same(Type(I & J(())), Type(J(()) & J({}) & I));
 }

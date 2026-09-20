@@ -50,7 +50,7 @@ using DiagnosticEmitterBase = Diagnostics::Emitter<LocIdForDiagnostics>;
 using DiagnosticBuilder = DiagnosticEmitterBase::Builder;
 using DiagnosticContextBuilder = DiagnosticEmitterBase::ContextBuilder;
 
-// A function that adds a Context message for a diagnostic.
+// A function that adds a context label to a diagnostic.
 using DiagnosticContextFn =
     llvm::function_ref<auto(DiagnosticContextBuilder&)->void>;
 

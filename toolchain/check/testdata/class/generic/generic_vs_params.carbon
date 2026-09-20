@@ -37,9 +37,7 @@ var e: C(X).GenericAndParams(X) = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+4]]:9: error: parameters of generic types must be constant [GenericParamMustBeConstant]
-// CHECK:STDERR: class A[runtime T: type]() {}
-// CHECK:STDERR:         ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_non_generic_implicit_params.carbon:[[@LINE+2]]:9-23: error: parameters of generic types must be constant [GenericParamMustBeConstant]
 // CHECK:STDERR:
 class A[runtime T: type]() {}
 
@@ -47,9 +45,7 @@ class A[runtime T: type]() {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+4]]:9: error: parameters of generic types must be constant [GenericParamMustBeConstant]
-// CHECK:STDERR: class A(runtime T: type) {}
-// CHECK:STDERR:         ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+2]]:9-23: error: parameters of generic types must be constant [GenericParamMustBeConstant]
 // CHECK:STDERR:
 class A(runtime T: type) {}
 
@@ -62,9 +58,7 @@ fn F(generic T: type) {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_implicit_params_only_empty.carbon:[[@LINE+4]]:10: error: expected explicit parameters after implicit parameters [GenericMissingExplicitParameters]
-// CHECK:STDERR: class Foo[];
-// CHECK:STDERR:          ^~
+// CHECK:STDERR: fail_implicit_params_only_empty.carbon:[[@LINE+2]]:10-11: error: expected explicit parameters after implicit parameters [GenericMissingExplicitParameters]
 // CHECK:STDERR:
 class Foo[];
 
@@ -72,9 +66,7 @@ class Foo[];
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_implicit_params_only.carbon:[[@LINE+4]]:10: error: expected explicit parameters after implicit parameters [GenericMissingExplicitParameters]
-// CHECK:STDERR: class Foo[T: type];
-// CHECK:STDERR:          ^~~~~~~~~
+// CHECK:STDERR: fail_implicit_params_only.carbon:[[@LINE+2]]:10-18: error: expected explicit parameters after implicit parameters [GenericMissingExplicitParameters]
 // CHECK:STDERR:
 class Foo[T: type];
 
@@ -441,13 +433,13 @@ class Foo[T: type];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [concrete = constants.%A.generic] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc11_15.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc9_15.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc11_17.1: type = splice_block %.loc11_17.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc9_17.1: type = splice_block %.loc9_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc11_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc9_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc11_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc11_15.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc9_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -459,24 +451,24 @@ class Foo[T: type];
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc11_15.2: type) {
-// CHECK:STDOUT:   %T.patt.loc11_15.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_15.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc11_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc11_15.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc9_15.2: type) {
+// CHECK:STDOUT:   %T.patt.loc9_15.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc9_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc9_15.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A.generic]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_15.2 [symbolic = %T.loc11_15.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc9_15.2 [symbolic = %T.loc9_15.1 (constants.%T)]
 // CHECK:STDOUT:     %A: type = class_type @A [concrete = constants.%A]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc11_15.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc11_15.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc9_15.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc9_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_implicit_params_only_empty.carbon
@@ -512,25 +504,25 @@ class Foo[T: type];
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [concrete = constants.%Foo.generic] {
-// CHECK:STDOUT:     %T.patt.loc8_12.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_12.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc6_12.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_14.1: type = splice_block %.loc8_14.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc6_14.1: type = splice_block %.loc6_14.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc8_14.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc6_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc8_12.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_12.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc6_12.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_12.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo(%T.loc8_12.2: type) {
-// CHECK:STDOUT:   %T.patt.loc8_12.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_12.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc8_12.1: type = symbolic_binding T, 0 [symbolic = %T.loc8_12.1 (constants.%T)]
+// CHECK:STDOUT: generic class @Foo(%T.loc6_12.2: type) {
+// CHECK:STDOUT:   %T.patt.loc6_12.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_12.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc6_12.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_12.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc8_12.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc8_12.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_12.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc6_12.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

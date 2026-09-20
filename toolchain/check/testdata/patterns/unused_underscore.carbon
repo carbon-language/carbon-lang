@@ -11,15 +11,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/patterns/unused_underscore.carbon
 
 fn F() {
-  // CHECK:STDERR: unused_underscore.carbon:[[@LINE+4]]:7: warning: `unused` modifier on pattern without bindings [UnusedPatternNoBindings]
-  // CHECK:STDERR:   var unused _: i32 = 1;
-  // CHECK:STDERR:       ^~~~~~~~~~~~~
+  // CHECK:STDERR: unused_underscore.carbon:[[@LINE+2]]:7-19: warning: `unused` modifier on pattern without bindings [UnusedPatternNoBindings]
   // CHECK:STDERR:
   var unused _: i32 = 1;
 
-  // CHECK:STDERR: unused_underscore.carbon:[[@LINE+4]]:7: warning: `unused` modifier on pattern without bindings [UnusedPatternNoBindings]
-  // CHECK:STDERR:   let unused (_: i32, _: i32) = (1, 1);
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: unused_underscore.carbon:[[@LINE+2]]:7-29: warning: `unused` modifier on pattern without bindings [UnusedPatternNoBindings]
   // CHECK:STDERR:
   let unused (_: i32, _: i32) = (1, 1);
 }

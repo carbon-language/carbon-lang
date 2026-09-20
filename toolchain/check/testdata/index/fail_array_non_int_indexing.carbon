@@ -13,12 +13,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_array_non_int_indexing.carbon
 
 var a: array(i32, 1) = (12,);
-// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
-// CHECK:STDERR: var b: i32 = a[2.6];
-// CHECK:STDERR:                ^~~
-// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+4]]:16: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var b: i32 = a[2.6];
-// CHECK:STDERR:                ^~~
+// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+3]]:16-18: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
+// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+2]]:16-18: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 var b: i32 = a[2.6];
 
@@ -108,7 +104,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.97e = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var_storage %b.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc23: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc19: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = ref_binding_pattern b [concrete = constants.%b.patt]
@@ -134,14 +130,14 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   assign file.%a.var, %.loc15_1
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, file.%a [concrete = file.%a.var]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 26e-1 [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc23_16: %i32 = converted %float, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc23_19.1: ref %i32 = array_index %a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc23_19.2: %i32 = acquire_value %.loc23_19.1 [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0.loc23: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
-// CHECK:STDOUT:   %bound_method.loc23_19.1: <bound method> = bound_method %.loc23_19.2, %impl.elem0.loc23 [concrete = <error>]
-// CHECK:STDOUT:   %specific_fn.loc23: <specific function> = specific_function %impl.elem0.loc23, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc23_19.2: <bound method> = bound_method %.loc23_19.2, %specific_fn.loc23 [concrete = <error>]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc23_19.2(%.loc23_19.2) [concrete = <error>]
+// CHECK:STDOUT:   %.loc19_16: %i32 = converted %float, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc19_19.1: ref %i32 = array_index %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc19_19.2: %i32 = acquire_value %.loc19_19.1 [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0.loc19: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %bound_method.loc19_19.1: <bound method> = bound_method %.loc19_19.2, %impl.elem0.loc19 [concrete = <error>]
+// CHECK:STDOUT:   %specific_fn.loc19: <specific function> = specific_function %impl.elem0.loc19, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc19_19.2: <bound method> = bound_method %.loc19_19.2, %specific_fn.loc19 [concrete = <error>]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc19_19.2(%.loc19_19.2) [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b.var, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -36,9 +36,7 @@ interface I {}
 // Because there's an error inside the `where`, the constant value of the
 // `where` should be an error also.
 //
-// CHECK:STDERR: fail_self_impls_error.carbon:[[@LINE+4]]:37: error: name `J` not found [NameNotFound]
-// CHECK:STDERR: fn F(generic T: I where .Self impls J);
-// CHECK:STDERR:                                     ^
+// CHECK:STDERR: fail_self_impls_error.carbon:[[@LINE+2]]:37: error: name `J` not found [NameNotFound]
 // CHECK:STDERR:
 fn F(generic T: I where .Self impls J);
 //@dump-sem-ir-end
@@ -81,9 +79,7 @@ fn AssociatedTypeImpls(generic W: K where .Associated impls M);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:39: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn NonTypeImpls(generic U: type where 7 impls type);
-// CHECK:STDERR:                                       ^~~~~~~~~~~~
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+2]]:39-50: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
 // CHECK:STDERR:
 fn NonTypeImpls(generic U: type where 7 impls type);
 
@@ -91,12 +87,8 @@ fn NonTypeImpls(generic U: type where 7 impls type);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+7]]:51: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fn ImplsNonType(generic U: type where .Self impls 7);
-// CHECK:STDERR:                                                   ^
-// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+4]]:51: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: fn ImplsNonType(generic U: type where .Self impls 7);
-// CHECK:STDERR:                                                   ^
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+3]]:51: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+2]]:51: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 fn ImplsNonType(generic U: type where .Self impls 7);
 
@@ -104,9 +96,7 @@ fn ImplsNonType(generic U: type where .Self impls 7);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_right_of_impls_non_facet_type.carbon:[[@LINE+4]]:58: error: right argument of `impls` requirement must be a facet type [ImplsOnNonFacetType]
-// CHECK:STDERR: fn ImplsOfNonFacetType(generic U: type where .Self impls i32);
-// CHECK:STDERR:                                                          ^~~
+// CHECK:STDERR: fail_right_of_impls_non_facet_type.carbon:[[@LINE+2]]:58-60: error: right argument of `impls` requirement must be a facet type [ImplsOnNonFacetType]
 // CHECK:STDERR:
 fn ImplsOfNonFacetType(generic U: type where .Self impls i32);
 
@@ -121,13 +111,9 @@ class C {}
 impl C as J {}
 
 fn DoesNotImplI() {
-  // CHECK:STDERR: fail_enforce_impls_constraint.carbon:[[@LINE+8]]:3: error: cannot convert type `C` into type implementing `J where .Self impls I` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Impls(C);
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_enforce_impls_constraint.carbon:[[@LINE-10]]:1: in import [InImport]
-  // CHECK:STDERR: state_constraints.carbon:14:18: note: initializing generic parameter `V` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn Impls(generic V: J where .Self impls I);
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_enforce_impls_constraint.carbon:[[@LINE+4]]:3-10: error: cannot convert type `C` into type implementing `J where .Self impls I` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_enforce_impls_constraint.carbon:[[@LINE-8]]:1 [InImport]
+  // CHECK:STDERR: state_constraints.carbon:14:18-41: note: initializing generic parameter `V` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   Impls(C);
 }
@@ -147,12 +133,8 @@ fn EmptyStruct(generic Y: J where .Self == {});
 // now there is no support for `==` constraints so it rejects it as an
 // "other currently unsupported constraint."
 fn NotEmptyStruct() {
-  // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `J where...` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   EmptyStruct(C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE-9]]:24: note: initializing generic parameter `Y` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn EmptyStruct(generic Y: J where .Self == {});
-  // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE+3]]:3-16: error: cannot convert type `C` into type implementing `J where...` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE-7]]:24-45: note: initializing generic parameter `Y` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   EmptyStruct(C);
 }
@@ -162,9 +144,7 @@ fn NotEmptyStruct() {
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_error_in_constraint.carbon:[[@LINE+4]]:48: error: name `I` not found [NameNotFound]
-// CHECK:STDERR: fn WithError(generic U: type where .Self impls I);
-// CHECK:STDERR:                                                ^
+// CHECK:STDERR: fail_error_in_constraint.carbon:[[@LINE+2]]:48: error: name `I` not found [NameNotFound]
 // CHECK:STDERR:
 fn WithError(generic U: type where .Self impls I);
 //@dump-sem-ir-end
@@ -295,24 +275,24 @@ fn F() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: <error> = symbolic_binding_pattern T, 0 [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc14_19.1: type = splice_block %.loc14_19.2 [concrete = <error>] {
-// CHECK:STDOUT:       %.Self.frozen.loc14_15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:     %.loc12_19.1: type = splice_block %.loc12_19.2 [concrete = <error>] {
+// CHECK:STDOUT:       %.Self.frozen.loc12_15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:       %.Self.frozen.loc14_19: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.3a0]
+// CHECK:STDOUT:       %.Self.frozen.loc12_19: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.3a0]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:       %.Self.ref.loc14_25.1: %I.type = name_ref .Self, %.Self.frozen.loc14_19 [symbolic_self = constants.%.Self.frozen.3a0]
+// CHECK:STDOUT:       %.Self.ref.loc12_25.1: %I.type = name_ref .Self, %.Self.frozen.loc12_19 [symbolic_self = constants.%.Self.frozen.3a0]
 // CHECK:STDOUT:       %J.ref: <error> = name_ref J, <error> [concrete = <error>]
-// CHECK:STDOUT:       %.Self.as_type.loc14_25.1: type = facet_access_type %.Self.ref.loc14_25.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:       %.loc14_25.1: type = converted %.Self.ref.loc14_25.1, %.Self.as_type.loc14_25.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:       %impls.loc14_31.1 = requirement_impls %.loc14_25.1, <error> [concrete]
+// CHECK:STDOUT:       %.Self.as_type.loc12_25.1: type = facet_access_type %.Self.ref.loc12_25.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.loc12_25.1: type = converted %.Self.ref.loc12_25.1, %.Self.as_type.loc12_25.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %impls.loc12_31.1 = requirement_impls %.loc12_25.1, <error> [concrete]
 // CHECK:STDOUT:       %.Self: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.Self.ref.loc14_25.2: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.Self.as_type.loc14_25.2: type = facet_access_type %.Self.ref.loc14_25.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %.loc14_25.2: type = converted %.Self.ref.loc14_25.1, %.Self.as_type.loc14_25.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %impls.loc14_31.2 = requirement_impls %.loc14_25.2, <error> [concrete]
-// CHECK:STDOUT:       %.loc14_19.2: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:       %.Self.ref.loc12_25.2: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.as_type.loc12_25.2: type = facet_access_type %.Self.ref.loc12_25.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.loc12_25.2: type = converted %.Self.ref.loc12_25.1, %.Self.as_type.loc12_25.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %impls.loc12_31.2 = requirement_impls %.loc12_25.2, <error> [concrete]
+// CHECK:STDOUT:       %.loc12_19.2: type = where_expr [concrete = <error>] {
 // CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:         %impls.loc14_31.2 = requirement_impls %.loc14_25.2, <error> [concrete]
+// CHECK:STDOUT:         %impls.loc12_31.2 = requirement_impls %.loc12_25.2, <error> [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T: <error> = symbolic_binding T, 0 [concrete = <error>]
@@ -574,24 +554,24 @@ fn F() {
 // CHECK:STDOUT:   %WithError.decl: %WithError.type = fn_decl @WithError [concrete = constants.%WithError] {
 // CHECK:STDOUT:     %U.patt: <error> = symbolic_binding_pattern U, 0 [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9_30.1: type = splice_block %.loc9_30.2 [concrete = <error>] {
-// CHECK:STDOUT:       %.Self.frozen.loc9_23: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc9_25: type = type_literal type [concrete = type]
-// CHECK:STDOUT:       %.Self.frozen.loc9_30: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc9_25 [concrete]
-// CHECK:STDOUT:       %.Self.ref.loc9_36.1: %type = name_ref .Self, %.Self.frozen.loc9_30 [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc7_30.1: type = splice_block %.loc7_30.2 [concrete = <error>] {
+// CHECK:STDOUT:       %.Self.frozen.loc7_23: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc7_25: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.Self.frozen.loc7_30: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc7_25 [concrete]
+// CHECK:STDOUT:       %.Self.ref.loc7_36.1: %type = name_ref .Self, %.Self.frozen.loc7_30 [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref: <error> = name_ref I, <error> [concrete = <error>]
-// CHECK:STDOUT:       %.Self.as_type.loc9_36.1: type = facet_access_type %.Self.ref.loc9_36.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:       %.loc9_36.1: type = converted %.Self.ref.loc9_36.1, %.Self.as_type.loc9_36.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:       %impls.loc9_42.1 = requirement_impls %.loc9_36.1, <error> [concrete]
+// CHECK:STDOUT:       %.Self.as_type.loc7_36.1: type = facet_access_type %.Self.ref.loc7_36.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.loc7_36.1: type = converted %.Self.ref.loc7_36.1, %.Self.as_type.loc7_36.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %impls.loc7_42.1 = requirement_impls %.loc7_36.1, <error> [concrete]
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.Self.ref.loc9_36.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.Self.as_type.loc9_36.2: type = facet_access_type %.Self.ref.loc9_36.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %.loc9_36.2: type = converted %.Self.ref.loc9_36.1, %.Self.as_type.loc9_36.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %impls.loc9_42.2 = requirement_impls %.loc9_36.2, <error> [concrete]
-// CHECK:STDOUT:       %.loc9_30.2: type = where_expr [concrete = <error>] {
-// CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %.loc9_25 [concrete]
-// CHECK:STDOUT:         %impls.loc9_42.2 = requirement_impls %.loc9_36.2, <error> [concrete]
+// CHECK:STDOUT:       %.Self.ref.loc7_36.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.as_type.loc7_36.2: type = facet_access_type %.Self.ref.loc7_36.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.loc7_36.2: type = converted %.Self.ref.loc7_36.1, %.Self.as_type.loc7_36.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %impls.loc7_42.2 = requirement_impls %.loc7_36.2, <error> [concrete]
+// CHECK:STDOUT:       %.loc7_30.2: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %.loc7_25 [concrete]
+// CHECK:STDOUT:         %impls.loc7_42.2 = requirement_impls %.loc7_36.2, <error> [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: <error> = symbolic_binding U, 0 [concrete = <error>]

@@ -26,21 +26,15 @@ fn ToChar(c: CharLiteral) -> UInt(8) = "char_literal.convert_char";
 library "[[@TEST_NAME]]";
 import library "builtin";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char_literal.convert_char" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ToCharBarResultU16(c: CharLiteral) -> UInt(16) = "char_literal.convert_char";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-51: error: invalid signature for builtin function "char_literal.convert_char" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn ToCharBarResultU16(c: CharLiteral) -> UInt(16) = "char_literal.convert_char";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char_literal.convert_char" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ToCharBadResultU9(c: CharLiteral) -> UInt(9) = "char_literal.convert_char";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-49: error: invalid signature for builtin function "char_literal.convert_char" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn ToCharBadResultU9(c: CharLiteral) -> UInt(9) = "char_literal.convert_char";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "char_literal.convert_char" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ToCharNoParam() -> UInt(8) = "char_literal.convert_char";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-31: error: invalid signature for builtin function "char_literal.convert_char" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn ToCharNoParam() -> UInt(8) = "char_literal.convert_char";
 
@@ -50,13 +44,9 @@ library "[[@TEST_NAME]]";
 import library "builtin";
 
 let c: CharLiteral = 'a';
-// CHECK:STDERR: fail_runtime_call.carbon:[[@LINE+8]]:18: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: let d: UInt(8) = ToChar(c);
-// CHECK:STDERR:                  ^~~~~~~~~
-// CHECK:STDERR: fail_runtime_call.carbon:[[@LINE-6]]:1: in import [InImport]
-// CHECK:STDERR: builtin.carbon:10:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn ToChar(c: CharLiteral) -> UInt(8) = "char_literal.convert_char";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_runtime_call.carbon:[[@LINE+4]]:18-26: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: imported from: fail_runtime_call.carbon:[[@LINE-4]]:1 [InImport]
+// CHECK:STDERR: builtin.carbon:10:1-38: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 let d: UInt(8) = ToChar(c);
 
@@ -76,9 +66,7 @@ let c: UInt(8) = ToChar('\u{7F}');
 library "[[@TEST_NAME]]";
 import library "builtin";
 
-// CHECK:STDERR: fail_size_small.carbon:[[@LINE+4]]:18: error: character value U+0080 too large for type `<builtin u8>` [CharTooLargeForType]
-// CHECK:STDERR: let c: UInt(8) = ToChar('\u{80}');
-// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_size_small.carbon:[[@LINE+2]]:18-33: error: character value U+0080 too large for type `<builtin u8>` [CharTooLargeForType]
 // CHECK:STDERR:
 let c: UInt(8) = ToChar('\u{80}');
 
@@ -87,9 +75,7 @@ let c: UInt(8) = ToChar('\u{80}');
 library "[[@TEST_NAME]]";
 import library "builtin";
 
-// CHECK:STDERR: fail_size_multi_byte.carbon:[[@LINE+4]]:18: error: character value U+1E15 too large for type `<builtin u8>` [CharTooLargeForType]
-// CHECK:STDERR: let c: UInt(8) = ToChar('\u{1E15}');
-// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_size_multi_byte.carbon:[[@LINE+2]]:18-35: error: character value U+1E15 too large for type `<builtin u8>` [CharTooLargeForType]
 // CHECK:STDERR:
 let c: UInt(8) = ToChar('\u{1E15}');
 

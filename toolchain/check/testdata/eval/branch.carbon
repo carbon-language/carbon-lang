@@ -57,9 +57,7 @@ var b: F(false) = MakeB();
 library "[[@TEST_NAME]]";
 import library "types";
 
-// CHECK:STDERR: fail_todo_if_expression_direct.carbon:[[@LINE+4]]:8: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-// CHECK:STDERR: var a: if true then A else B = MakeA();
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_if_expression_direct.carbon:[[@LINE+2]]:8-28: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR:
 var a: if true then A else B = MakeA();
 var b: if false then A else B = MakeB();

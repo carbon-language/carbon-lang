@@ -24,9 +24,7 @@ class C {}
 // This impl can never deduce its implicit generic parameter `V`, which
 // should be diagnosed.
 //
-// CHECK:STDERR: fail_no_binding_used.carbon:[[@LINE+4]]:13: error: `impl` with unused generic binding [ImplUnusedBinding]
-// CHECK:STDERR: impl forall [V: type] C as I where .T = {.unmatched: ()} {}
-// CHECK:STDERR:             ^~~~~~~~~
+// CHECK:STDERR: fail_no_binding_used.carbon:[[@LINE+2]]:13-21: error: `impl` with unused generic binding [ImplUnusedBinding]
 // CHECK:STDERR:
 impl forall [V: type] C as I where .T = {.unmatched: ()} {}
 
@@ -53,9 +51,7 @@ class C {}
 // should be diagnosed.
 // https://discord.com/channels/655572317891461132/941071822756143115/1354563497731686550
 //
-// CHECK:STDERR: fail_one_binding_unused.carbon:[[@LINE+4]]:13: error: `impl` with unused generic binding [ImplUnusedBinding]
-// CHECK:STDERR: impl forall [V: type, W: type] V as I where .T = {.unmatched: ()} {}
-// CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_one_binding_unused.carbon:[[@LINE+2]]:13-30: error: `impl` with unused generic binding [ImplUnusedBinding]
 // CHECK:STDERR:
 impl forall [V: type, W: type] V as I where .T = {.unmatched: ()} {}
 
@@ -81,9 +77,7 @@ class C(U: type) {
   //
   // TODO: We should point the diagnostic at the binding `U` in C.
   //
-  // CHECK:STDERR: fail_inherited_binding_unused.carbon:[[@LINE+4]]:3: error: `impl` with unused generic binding [ImplUnusedBinding]
-  // CHECK:STDERR:   impl C(()) as I where .T = {.unmatched: ()} {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_inherited_binding_unused.carbon:[[@LINE+2]]:3-47: error: `impl` with unused generic binding [ImplUnusedBinding]
   // CHECK:STDERR:
   impl C(()) as I where .T = {.unmatched: ()} {}
 }
@@ -107,9 +101,7 @@ class C(U: type) {
   //
   // TODO: We should point the diagnostic at the binding `U` in C.
   //
-  // CHECK:STDERR: fail_inherited_binding_in_forall_unused.carbon:[[@LINE+4]]:15: error: `impl` with unused generic binding [ImplUnusedBinding]
-  // CHECK:STDERR:   impl forall [V: type] C(V) as I where .T = {.unmatched: ()} {}
-  // CHECK:STDERR:               ^~~~~~~~~
+  // CHECK:STDERR: fail_inherited_binding_in_forall_unused.carbon:[[@LINE+2]]:15-23: error: `impl` with unused generic binding [ImplUnusedBinding]
   // CHECK:STDERR:
   impl forall [V: type] C(V) as I where .T = {.unmatched: ()} {}
 }

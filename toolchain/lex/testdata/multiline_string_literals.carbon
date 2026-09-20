@@ -38,12 +38,8 @@ var s: String = '''py // A trailing comment with ', #, and " in it.
 // --- AUTOUPDATE-SPLIT
 
 // CHECK:STDERR: fail_indent_mismatch.carbon:3:1: error: indentation does not match that of the closing `'''` in multi-line string literal [MismatchedIndentInString]
-// CHECK:STDERR: a
-// CHECK:STDERR: ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_quotes.carbon:2:1: error: use `'''` delimiters for a multi-line string literal, not `"""` [MultiLineStringWithDoubleQuotes]
-// CHECK:STDERR: """
-// CHECK:STDERR: ^
 // CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_indent_mismatch.carbon
 // CHECK:STDOUT:   tokens:

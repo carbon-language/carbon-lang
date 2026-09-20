@@ -30,13 +30,9 @@ library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE+8]]:1: error: declaration in library "wrong_library" doesn't match `extern library` declaration [ExternLibraryIncorrect]
-// CHECK:STDERR: extern fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern_library.carbon:4:1: note: previously declared with `extern library` here [ExternLibraryExpected]
-// CHECK:STDERR: extern library default fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE+4]]:1-14: error: declaration in library "wrong_library" doesn't match `extern library` declaration [ExternLibraryIncorrect]
+// CHECK:STDERR: imported from: fail_wrong_library.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: extern_library.carbon:4:1-30: note: previously declared with `extern library` here [ExternLibraryExpected]
 // CHECK:STDERR:
 extern fn F();
 

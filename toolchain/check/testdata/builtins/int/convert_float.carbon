@@ -48,9 +48,7 @@ library "[[@TEST_NAME]]";
 import library "int_to_float";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:21: error: integer value 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 too large for floating-point type `f64` [IntTooLargeForFloatType]
-// CHECK:STDERR: let overflow: f64 = ConvertIntLiteralToF64(1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000);
-// CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:21-354: error: integer value 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 too large for floating-point type `f64` [IntTooLargeForFloatType]
 // CHECK:STDERR:
 let overflow: f64 = ConvertIntLiteralToF64(1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000);
 //@dump-sem-ir-end
@@ -72,10 +70,10 @@ let overflow: f64 = ConvertIntLiteralToF64(1000000000000000000000000000000000000
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc9_354.1: %f64.dc1 = value_of_initializer @__global_init.%ConvertIntLiteralToF64.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc9_354.2: %f64.dc1 = converted @__global_init.%ConvertIntLiteralToF64.call, %.loc9_354.1 [concrete = <error>]
+// CHECK:STDOUT:   %.loc7_354.1: %f64.dc1 = value_of_initializer @__global_init.%ConvertIntLiteralToF64.call [concrete = <error>]
+// CHECK:STDOUT:   %.loc7_354.2: %f64.dc1 = converted @__global_init.%ConvertIntLiteralToF64.call, %.loc7_354.1 [concrete = <error>]
 // CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %overflow: %f64.dc1 = wrapper_binding overflow, %.loc9_354.2 [concrete = <error>]
+// CHECK:STDOUT:   %overflow: %f64.dc1 = wrapper_binding overflow, %.loc7_354.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %overflow.patt: %pattern_type.fb7 = value_binding_pattern overflow [concrete = constants.%overflow.patt]
 // CHECK:STDOUT:   }

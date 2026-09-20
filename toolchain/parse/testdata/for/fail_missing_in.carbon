@@ -9,9 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/for/fail_missing_in.carbon
 
 fn foo() {
-  // CHECK:STDERR: fail_missing_in.carbon:[[@LINE+4]]:19: error: expected `in` after loop pattern [ExpectedIn]
-  // CHECK:STDERR:   for (var x: i32 y) {
-  // CHECK:STDERR:                   ^
+  // CHECK:STDERR: fail_missing_in.carbon:[[@LINE+2]]:19: error: expected `in` after loop pattern [ExpectedIn]
   // CHECK:STDERR:
   for (var x: i32 y) {
     Print(x);

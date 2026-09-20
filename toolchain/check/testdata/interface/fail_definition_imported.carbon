@@ -24,13 +24,9 @@ library "[[@TEST_NAME]]";
 import library "a";
 
 // TODO: Replace this diagnostic with one that better describes the error, such as 'DeclaredInMultipleLibraries'.
-// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:1: error: redeclaration of `interface I` is redundant [RedeclRedundant]
-// CHECK:STDERR: interface I {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-6]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: interface I;
-// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:1-13: error: redeclaration of `interface I` is redundant [RedeclRedundant]
+// CHECK:STDERR: imported from: fail_b.carbon:[[@LINE-4]]:1 [InImport]
+// CHECK:STDERR: a.carbon:4:1-12: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 interface I {}
 

@@ -22,14 +22,10 @@ class D {
   extend base: B;
 }
 
-// CHECK:STDERR: fail_base_method_define.carbon:[[@LINE+4]]:6: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
-// CHECK:STDERR: fn D.F() {}
-// CHECK:STDERR:      ^
+// CHECK:STDERR: fail_base_method_define.carbon:[[@LINE+2]]:6: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
 // CHECK:STDERR:
 fn D.F() {}
 
-// CHECK:STDERR: fail_base_method_define.carbon:[[@LINE+4]]:6: error: name `C` not found [NameNotFound]
-// CHECK:STDERR: fn D.C.F() {}
-// CHECK:STDERR:      ^
+// CHECK:STDERR: fail_base_method_define.carbon:[[@LINE+2]]:6: error: name `C` not found [NameNotFound]
 // CHECK:STDERR:
 fn D.C.F() {}

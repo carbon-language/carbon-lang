@@ -30,9 +30,7 @@ let c: f64 = Div(0.0, 0.0);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.div" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooFew(a: f64) -> f64 = "float.div";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE+2]]:1-26: error: invalid signature for builtin function "float.div" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooFew(a: f64) -> f64 = "float.div";
 
@@ -44,9 +42,7 @@ fn RuntimeCallIsValidTooFew(a: f64) -> f64 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.div" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.div";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE+2]]:1-43: error: invalid signature for builtin function "float.div" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.div";
 
@@ -58,9 +54,7 @@ fn RuntimeCallIsValidTooMany(a: f64, b: f64, c: f64) -> f64 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.div" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn BadReturnType(a: f64, b: f64) -> bool = "float.div";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+2]]:1-42: error: invalid signature for builtin function "float.div" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn BadReturnType(a: f64, b: f64) -> bool = "float.div";
 
@@ -73,9 +67,7 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 library "[[@TEST_NAME]]";
 
 fn Literal() -> type = "float_literal.make_type";
-// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.div" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn DivLiteral(a: Literal(), b: Literal()) -> Literal() = "float.div";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_literal.carbon:[[@LINE+2]]:1-56: error: invalid signature for builtin function "float.div" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn DivLiteral(a: Literal(), b: Literal()) -> Literal() = "float.div";
 
