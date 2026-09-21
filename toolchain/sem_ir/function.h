@@ -407,8 +407,7 @@ struct CalleeFunction {
   SpecificId enclosing_specific_id;
   // The specific for the callee itself, in a resolved call.
   SpecificId resolved_specific_id;
-  // The bound `Self` type or facet value. `None` if not a bound interface
-  // member.
+  // The bound `Self` facet. `None` if not a bound interface member.
   InstId self_type_id;
   // The bound `self` parameter. `None` if not a method.
   InstId self_id;
