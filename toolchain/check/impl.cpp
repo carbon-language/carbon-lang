@@ -736,7 +736,11 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
         }
 
         if (fn.interface_modifier != InterfaceModifier::None) {
-          witness_value = decl_id;
+          // We are updating the impl witness table in-place, and we pulled this
+          // instruction out of a constant value in a different generic, so
+          // manually ensure the new value gets added to the eval block.
+          witness_value =
+              GetOrAddInstWithSpecificConstantValue(context, decl_id);
           break;
         } else {
           CARBON_DIAGNOSTIC(

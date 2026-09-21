@@ -67,25 +67,23 @@ fn Test() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CCallF.Main.09b4c7e3e8092f9c() #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.I.Main.0ae81cce71fbdc7a(), !dbg !26
+// CHECK:STDOUT:   call void @_CF.I.Main.09b4c7e3e8092f9c(), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.I.Main.0ae81cce71fbdc7a() #0 !dbg !28 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.I.Main.09b4c7e3e8092f9c() #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CG.d90909b043297e37:I.Main.e87421c5184a6dd6"(), !dbg !29
+// CHECK:STDOUT:   call void @"_CG.d90909b043297e37:I.Main.a9d0daf36987b80b"(), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CG.d90909b043297e37:I.Main.e87421c5184a6dd6"() #0 !dbg !31 {
+// CHECK:STDOUT: define linkonce_odr void @"_CG.d90909b043297e37:I.Main.a9d0daf36987b80b"() #0 !dbg !31 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CH.J.Main.e87421c5184a6dd6(), !dbg !32
+// CHECK:STDOUT:   call void @"_CH.61ea2aba74ab3bf1:J.Main"(), !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CH.J.Main.e87421c5184a6dd6()
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
@@ -107,10 +105,10 @@ fn Test() {
 // CHECK:STDOUT: !24 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main.09b4c7e3e8092f9c", scope: null, file: !14, line: 26, type: !17, spFlags: DISPFlagDefinition, unit: !15)
 // CHECK:STDOUT: !26 = !DILocation(line: 27, column: 3, scope: !24)
 // CHECK:STDOUT: !27 = !DILocation(line: 26, column: 1, scope: !24)
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "F", linkageName: "_CF.I.Main.0ae81cce71fbdc7a", scope: null, file: !14, line: 4, type: !17, spFlags: DISPFlagDefinition, unit: !15)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "F", linkageName: "_CF.I.Main.09b4c7e3e8092f9c", scope: null, file: !14, line: 4, type: !17, spFlags: DISPFlagDefinition, unit: !15)
 // CHECK:STDOUT: !29 = !DILocation(line: 5, column: 5, scope: !28)
 // CHECK:STDOUT: !30 = !DILocation(line: 4, column: 3, scope: !28)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "G", linkageName: "_CG.d90909b043297e37:I.Main.e87421c5184a6dd6", scope: null, file: !14, line: 14, type: !17, spFlags: DISPFlagDefinition, unit: !15)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "G", linkageName: "_CG.d90909b043297e37:I.Main.a9d0daf36987b80b", scope: null, file: !14, line: 14, type: !17, spFlags: DISPFlagDefinition, unit: !15)
 // CHECK:STDOUT: !32 = !DILocation(line: 14, column: 12, scope: !31)
 // CHECK:STDOUT: !33 = !DILocation(line: 14, column: 3, scope: !31)
 // CHECK:STDOUT:
