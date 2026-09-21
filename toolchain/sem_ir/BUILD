@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
+load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -100,6 +100,7 @@ cc_library(
         "cpp_initializer_list.cpp",
         "cpp_overload_set.cpp",
         "declared_facet_type.cpp",
+        "dominance.cpp",
         "entity_name.cpp",
         "field.cpp",
         "file.cpp",
@@ -135,6 +136,7 @@ cc_library(
         "cpp_initializer_list.h",
         "cpp_overload_set.h",
         "declared_facet_type.h",
+        "dominance.h",
         "entity_name.h",
         "entity_with_params_base.h",
         "field.h",
@@ -180,6 +182,7 @@ cc_library(
         "//common:struct_reflection",
         "//toolchain/base:block_value_store",
         "//toolchain/base:canonical_value_store",
+        "//toolchain/base:grouped_value_store",
         "//toolchain/base:id_tag",
         "//toolchain/base:index_base",
         "//toolchain/base:int",
@@ -376,6 +379,38 @@ cc_test(
         ":typed_insts",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+    ],
+)
+
+cc_test(
+    name = "dominance_test",
+    size = "small",
+    srcs = ["dominance_test.cpp"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//testing/base:gtest_main",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/parse:node_kind",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "dominance_benchmark",
+    testonly = 1,
+    srcs = ["dominance_benchmark.cpp"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//common:check",
+        "//common:error",
+        "//testing/base:benchmark_main",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/parse:node_kind",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
     ],
 )
 
