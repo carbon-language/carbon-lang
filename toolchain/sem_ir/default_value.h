@@ -26,9 +26,9 @@ struct DefaultValue : public Printable<DefaultValue> {
   // scrutinee type.
   InstId value_id;
 
-  // Whether the user left this default value unspecified. We store these
-  // so the location of the unspecified default value can be used in
-  // diagnostics.
+  // Whether the user left this default value unspecified. The `value_id` will
+  // be `None` but the `raw_id` will contain the `UnspecifiedValue` instruction
+  // for use in diagnostics if needed.
   bool is_unspecified;
 };
 
