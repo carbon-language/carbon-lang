@@ -6,6 +6,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/call.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
@@ -15,7 +16,10 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/member_access.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/operator.h"
+#include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -481,6 +485,57 @@ static auto MakeSubobjectDestroyOpFunction(
   return decl_id;
 }
 
+// Returns a manufactured `Destroy.SelfDestruct` function with the `self`
+// parameter typed to `self_type_id`.
+static auto MakeDestroySelfDestructFunction(
+    Context& context, SemIR::LocId loc_id, SemIR::TypeId self_type_id,
+    SemIR::InterfaceId interface_id, SemIR::InstId op_id,
+    [[maybe_unused]] SemIR::InstId subobject_destroy_id) -> SemIR::InstId {
+  auto name_id =
+      context.core_identifiers().AddNameId(CoreIdentifier::SelfDestruct);
+  const auto& interface = context.interfaces().Get(interface_id);
+  auto specific_interface = MakeCoreSpecificInterface(
+      context, loc_id, interface_id, interface.generic_id, {});
+  auto canonical_key = MakeGeneratedFunctionKey(context, specific_interface,
+                                                self_type_id, name_id);
+
+  auto [decl_id, function_id] = TryGetGeneratedFunction(context, canonical_key);
+  if (!decl_id.has_value()) {
+    std::tie(decl_id, function_id) = MakeGeneratedFunctionDecl(
+        context, loc_id,
+        {.parent_scope_id = interface.scope_with_self_id,
+         .name_id = name_id,
+         .self_type_id = self_type_id,
+         .self_kind = ParamPatternKind::Ref});
+
+    auto& function = context.functions().Get(function_id);
+    context.inst_block_stack().Push();
+    StartFunctionDefinition(context, decl_id, function_id);
+    auto params = context.inst_blocks().Get(function.call_params_id);
+    CARBON_CHECK(
+        params.size() == 1,
+        "`Core.Destroy.SelfDestruct` should only have `ref self` as its "
+        "parameter");
+    // op_id = PerformCompoundMemberAccess(context, loc_id, params[0], op_id);
+    op_id = PerformCall(context, loc_id, op_id, {params[0]}, true);
+    DiscardExpr(context, op_id);
+    // subobject_destroy_id = PerformCompoundMemberAccess(
+    //     context, loc_id, params[0], subobject_destroy_id);
+    subobject_destroy_id =
+        PerformCall(context, loc_id, subobject_destroy_id, {params[0]}, true);
+    DiscardExpr(context, subobject_destroy_id);
+    BuildReturnWithNoExpr(context, loc_id);
+    FinishFunctionDefinition(context, function_id);
+    context.inst_block_stack().Pop();
+    function.SetGenerated(context.generated_functions().Add(
+        {.canonical_key = canonical_key,
+         .function_id = function_id,
+         .decl_id = decl_id,
+         .builtin_function_kind = SemIR::BuiltinFunctionKind::None}));
+  }
+  return decl_id;
+}
+
 static auto MakeCustomWitnessConstantInst(
     Context& context, SemIR::LocId loc_id,
     SemIR::SpecificInterface query_specific_interface,
@@ -536,14 +591,6 @@ static auto MakeSelfFacetWithCustomWitness(
        .type_inst_id =
            context.types().GetTypeInstId(query_types.query_self_as_type_id),
        .witnesses_block_id = witnesses_block_id});
-}
-
-static auto LoadAssociatedFunction(
-    Context& context, SemIR::InstId assoc_fn_id,
-    SemIR::SpecificId interface_with_self_specific_id) -> SemIR::InstId {
-  LoadImportRef(context, assoc_fn_id);
-  return context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-      context.sem_ir(), interface_with_self_specific_id, assoc_fn_id));
 }
 
 auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
@@ -729,17 +776,13 @@ auto BuildDestroyWitness(Context& context, SemIR::LocId loc_id,
                context.names().GetAsStringIfIdentifier(interface.name_id),
                assoc_entities.size());
 
-  auto self_facet_id = GetConstantFacetValueForType(
-      context, context.types().GetTypeInstId(self_type_id));
-  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-      context, loc_id, interface.generic_id, interface.generic_with_self_id,
-      query_specific_interface.specific_id, self_facet_id);
-
   auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_id,
                                      query_specific_interface.interface_id);
 
-  auto self_destruct_fn_id = LoadAssociatedFunction(
-      context, assoc_entities[2], interface_with_self_specific_id);
+  auto self_destruct_fn_id = MakeDestroySelfDestructFunction(
+      context, loc_id, self_type_id, query_specific_interface.interface_id,
+      op_id, subobject_destroy_fn_id);
+
   return BuildCustomWitness(
       context, loc_id, query_self_const_id, query_specific_interface,
       {op_id, subobject_destroy_fn_id, self_destruct_fn_id});
