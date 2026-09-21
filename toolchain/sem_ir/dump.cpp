@@ -307,9 +307,12 @@ LLVM_DUMP_METHOD auto Dump(const File& file, DefaultValueId value_id)
     -> std::string {
   RawStringOstream out;
   out << value_id;
-  const auto& default_value = file.default_values().Get(value_id);
-  out << "\n  - raw: " << DumpInstSummary(file, default_value.raw_id)
-      << "\n  - value: " << DumpInstSummary(file, default_value.value_id);
+  if (value_id.has_value()) {
+    const auto& default_value = file.default_values().Get(value_id);
+    out << ": " << default_value
+        << "\n  - raw: " << DumpInstSummary(file, default_value.raw_id)
+        << "\n  - value: " << DumpInstSummary(file, default_value.value_id);
+  }
   return out.TakeStr();
 }
 
