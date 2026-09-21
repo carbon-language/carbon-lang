@@ -373,18 +373,13 @@ static auto DiagnosePositionalParams(Context& context,
   function_info.param_patterns_id = SemIR::InstBlockId::Empty;
 }
 
-// Diagnoses that the default values for function parameters have been
+// Diagnoses any default values for function parameters that have not been
 // completely specified, which is a requirement on the first owning declaration
 // of a function.
-static auto CheckDefaultValuesCompletelySpecified(
-    Context& context, SemIR::Function& function_info) -> void {
-  auto unspecified_value_ids = llvm::make_filter_range(
-      context.inst_blocks().GetOrEmpty(
-          function_info.call_param_default_values_id),
-      [&context](auto inst_id) {
-        return context.insts().Is<SemIR::UnspecifiedValue>(inst_id);
-      });
-  for (auto inst_id : unspecified_value_ids) {
+static auto DiagnoseDefaultValuesNotSpecified(
+    Context& context, llvm::ArrayRef<SemIR::InstId> unspecified_inst_ids)
+    -> void {
+  for (auto inst_id : unspecified_inst_ids) {
     CARBON_DIAGNOSTIC(PatternDefaultValueNotSpecified, Error,
                       "found unspecified default parameter value in the "
                       "function's first owning declaration");
@@ -455,22 +450,21 @@ static auto BuildFunctionDecl(Context& context,
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
-  auto function_info = SemIR::Function{
-      name_context.MakeEntityWithParamsBase(name, decl_id, is_extern,
-                                            introducer.extern_library),
-      {
-          .call_param_patterns_id = name.call_param_patterns_id,
-          .call_params_id = name.call_params_id,
-          .call_param_default_values_id = name.call_param_default_values_id,
-          .call_param_ranges = name.param_ranges,
-          .return_type_inst_id = return_type_inst_id,
-          .return_form_inst_id = return_form_inst_id,
-          .return_pattern_id = return_pattern_id,
-          .virtual_modifier = virtual_modifier,
-          .evaluation_mode = evaluation_mode,
-          .interface_modifier = interface_modifier,
-          .self_param_id = self_param_id,
-      }};
+  auto function_info =
+      SemIR::Function{name_context.MakeEntityWithParamsBase(
+                          name, decl_id, is_extern, introducer.extern_library),
+                      {
+                          .call_param_patterns_id = name.call_param_patterns_id,
+                          .call_params_id = name.call_params_id,
+                          .call_param_ranges = name.param_ranges,
+                          .return_type_inst_id = return_type_inst_id,
+                          .return_form_inst_id = return_form_inst_id,
+                          .return_pattern_id = return_pattern_id,
+                          .virtual_modifier = virtual_modifier,
+                          .evaluation_mode = evaluation_mode,
+                          .interface_modifier = interface_modifier,
+                          .self_param_id = self_param_id,
+                      }};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
@@ -478,7 +472,8 @@ static auto BuildFunctionDecl(Context& context,
   DiagnosePositionalParams(context, function_info);
   if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
       !name_context.prev_inst_id().has_value()) {
-    CheckDefaultValuesCompletelySpecified(context, function_info);
+    DiagnoseDefaultValuesNotSpecified(
+        context, context.inst_blocks().Get(name.unspecified_values_block_id));
   }
 
   TryMergeRedecl(
