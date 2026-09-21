@@ -345,7 +345,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
             new_default_value_pattern.default_value_id);
 
         if (!new_default_value.is_unspecified) {
-          auto& prev_default_value = context.default_values().Get(
+          const auto& prev_default_value = context.default_values().Get(
               prev_default_value_pattern.default_value_id);
           // We require first owning declaration to always specify a default
           // value.

@@ -125,7 +125,7 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.d3f: %pattern_type.6b6 = default_value_pattern %x.patt, @F.%.loc7_15.2: %i32 [concrete]
+// CHECK:STDOUT:   %.d3f: %pattern_type.6b6 = default_value_pattern %x.patt, @F.%.loc7_15.2 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
@@ -151,7 +151,7 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT:   %F.decl.loc7: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc7_13: %pattern_type.6b6 = default_value_pattern %x.patt, %.loc7_15.2: %i32 [concrete = constants.%.d3f]
+// CHECK:STDOUT:     %.loc7_13: %pattern_type.6b6 = default_value_pattern %x.patt, %.loc7_15.2 [concrete = constants.%.d3f]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc7_21 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -224,7 +224,7 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT:   %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
-// CHECK:STDOUT:   %.3d1: %pattern_type.6b6 = default_value_pattern %x.patt, @F.%.loc4_15.2: %i32 [concrete]
+// CHECK:STDOUT:   %.3d1: %pattern_type.6b6 = default_value_pattern %x.patt, @F.%.loc4_15.2 [concrete]
 // CHECK:STDOUT:   %.795f: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
@@ -264,7 +264,7 @@ fn F(x: i32 = _) -> i32 { return x; }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc4_13: %pattern_type.6b6 = default_value_pattern %x.patt, %.loc4_15.2: %i32 [concrete = constants.%.3d1]
+// CHECK:STDOUT:     %.loc4_13: %pattern_type.6b6 = default_value_pattern %x.patt, %.loc4_15.2 [concrete = constants.%.3d1]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc4_21 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
