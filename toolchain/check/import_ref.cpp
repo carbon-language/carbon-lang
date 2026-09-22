@@ -2661,6 +2661,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (import_function.definition_id.has_value()) {
     new_function.definition_id = new_function.first_owning_decl_id;
   }
+  new_function.default_value_arity = import_function.default_value_arity;
 
   switch (import_function.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::CppThunk:
