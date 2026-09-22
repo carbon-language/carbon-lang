@@ -2304,15 +2304,14 @@ struct TypeOfInst {
   InstId inst_id;
 };
 
-// Represents the empty facet type `type`.
-struct TypeType {
-  static constexpr auto TypeInstId = MakeBuiltinTypeTypeInstId();
-  static constexpr auto ConstantId =
-      ConstantId::ForConcreteConstant(TypeInstId);
+// A constant builtin inst that represents the empty facet type `type`.
+namespace TypeType {
+inline constexpr auto TypeInstId = MakeBuiltinTypeTypeInstId();
+inline constexpr auto ConstantId = ConstantId::ForConcreteConstant(TypeInstId);
 
-  // `TypeType` is always set complete in file.cpp.
-  static constexpr auto TypeId = TypeId::ForTypeConstant(ConstantId);
-};
+// `TypeType` is always set complete in file.cpp.
+inline constexpr auto TypeId = TypeId::ForTypeConstant(ConstantId);
+}  // namespace TypeType
 
 // The `not` operator, such as `not operand`.
 struct UnaryOperatorNot {
