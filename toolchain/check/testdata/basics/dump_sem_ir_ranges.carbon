@@ -100,6 +100,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT: --- function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
@@ -172,6 +173,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT: --- class.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %A.G.type: type = fn_type @A.G [concrete]
 // CHECK:STDOUT:   %A.G: %A.G.type = struct_value () [concrete]
@@ -214,6 +216,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT: --- call_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
@@ -255,6 +258,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT: --- file_without_ranges.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }

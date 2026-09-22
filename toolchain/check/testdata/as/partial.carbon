@@ -109,6 +109,7 @@ fn Use() {
 // CHECK:STDOUT: --- add_partial.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %Init.type: type = fn_type @Init [concrete]
@@ -213,6 +214,7 @@ fn Use() {
 // CHECK:STDOUT: --- remove_partial_in_init.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %.d74: type = partial_type %X [concrete]
@@ -292,6 +294,7 @@ fn Use() {
 // CHECK:STDOUT: --- unsafe_remove_partial.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %.d74: type = partial_type %X [concrete]
 // CHECK:STDOUT:   %ptr.44a: type = ptr_type %.d74 [concrete]

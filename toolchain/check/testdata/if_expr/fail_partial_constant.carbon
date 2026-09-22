@@ -47,6 +47,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT: --- fail_non_constant_condition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %b.param_patt: %pattern_type.831 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.831 = wrapper_binding_pattern b, %b.param_patt [concrete]
@@ -124,9 +125,10 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT: --- fail_non_constant_result.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %t.param_patt: %pattern_type.98f = value_param_pattern [concrete]
-// CHECK:STDOUT:   %t.patt: %pattern_type.98f = wrapper_binding_pattern t, %t.param_patt [concrete]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %t.param_patt: %pattern_type.9a5 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %t.patt: %pattern_type.9a5 = wrapper_binding_pattern t, %t.param_patt [concrete]
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant.type: type = fn_type @ChosenBranchIsNonConstant [concrete]
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant: %ChosenBranchIsNonConstant.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
@@ -157,8 +159,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant.decl: %ChosenBranchIsNonConstant.type = fn_decl @ChosenBranchIsNonConstant [concrete = constants.%ChosenBranchIsNonConstant] {
-// CHECK:STDOUT:     %t.param_patt: %pattern_type.98f = value_param_pattern [concrete = constants.%t.param_patt]
-// CHECK:STDOUT:     %t.patt: %pattern_type.98f = wrapper_binding_pattern t, %t.param_patt [concrete = constants.%t.patt]
+// CHECK:STDOUT:     %t.param_patt: %pattern_type.9a5 = value_param_pattern [concrete = constants.%t.param_patt]
+// CHECK:STDOUT:     %t.patt: %pattern_type.9a5 = wrapper_binding_pattern t, %t.param_patt [concrete = constants.%t.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %t.param: type = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = type_literal type [concrete = type]

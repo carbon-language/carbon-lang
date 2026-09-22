@@ -146,7 +146,6 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
     case IntLiteralType::Kind:
     case NamespaceType::Kind:
     case RequireSpecificDefinitionType::Kind:
-    case TypeType::Kind:
     case UnboundElementType::Kind:
     case UnspecifiedValueType::Kind:
     case VtableType::Kind:
@@ -313,7 +312,7 @@ auto TypeIterator::PushInstId(InstId inst_id) -> void {
   // non-canonical input through other Add() methods.
   inst_id = sem_ir_->constant_values().GetConstantInstId(inst_id);
 
-  if (sem_ir_->types().IsFacetType(sem_ir_->insts().Get(inst_id).type_id())) {
+  if (sem_ir_->types().Is<FacetType>(sem_ir_->insts().Get(inst_id).type_id())) {
     Push(TypeValue{.inst_id = inst_id});
   } else if (sem_ir_->constant_values().Get(inst_id).is_symbolic()) {
     Push(SymbolicNonTypeValue{.inst_id = inst_id});

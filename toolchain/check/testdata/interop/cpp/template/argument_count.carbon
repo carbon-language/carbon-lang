@@ -121,6 +121,7 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT: --- valid.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %TwoTypes: type = class_type @TwoTypes [concrete]
 // CHECK:STDOUT:   %pattern_type.83a: type = pattern_type %TwoTypes [concrete]
 // CHECK:STDOUT:   %x.patt: %pattern_type.83a = ref_binding_pattern x [concrete]
@@ -168,6 +169,7 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT: --- pack.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %TypePack.78f: type = class_type @TypePack.1 [concrete]
 // CHECK:STDOUT:   %pattern_type.a64: type = pattern_type %TypePack.78f [concrete]
 // CHECK:STDOUT:   %a0.patt: %pattern_type.a64 = ref_binding_pattern a0 [concrete]

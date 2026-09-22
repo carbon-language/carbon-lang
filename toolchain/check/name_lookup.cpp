@@ -9,7 +9,6 @@
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/cpp/import.h"
-#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
@@ -297,50 +296,24 @@ struct ProhibitedAccessInfo {
 static auto GetSelfFacetForInterfaceFromLookupSelfType(
     Context& context, const SemIR::GenericId generic_with_self_id,
     SemIR::ConstantId self_type_const_id) -> SemIR::ConstantId {
-  if (!self_type_const_id.has_value()) {
-    // In a lookup into a non-lexical scope, there is no self-type from the
-    // lookup for the interface-with-self specific. So the self-type we use is
-    // the abstract symbolic Self from the self specific of the
-    // interface-with-self.
-    auto self_specific_args_id = context.specifics().GetArgsOrEmpty(
-        context.generics().GetSelfSpecific(generic_with_self_id));
-    auto self_specific_args = context.inst_blocks().Get(self_specific_args_id);
-    return context.constant_values().Get(self_specific_args.back());
+  if (self_type_const_id.has_value() &&
+      !context.constant_values().InstIs<SemIR::FacetType>(self_type_const_id)) {
+    // Extended name lookup into the type of `x`, such as in a member access
+    // `x.F`. We can find a facet type extended scope from the type of `x`.
+    return self_type_const_id;
   }
 
-  if (context.constant_values().InstIs<SemIR::FacetType>(self_type_const_id)) {
-    // We are looking directly in a facet type, like `I.F` for an interface `I`,
-    // which means there is no self-type from the lookup for the
-    // interface-with-self specific. So the self-type we use is the abstract
-    // symbolic Self from the self specific of the interface-with-self.
-    auto self_specific_args_id = context.specifics().GetArgsOrEmpty(
-        context.generics().GetSelfSpecific(generic_with_self_id));
-    auto self_specific_args = context.inst_blocks().Get(self_specific_args_id);
-    return context.constant_values().Get(self_specific_args.back());
-  }
-
-  // Extended name lookup into a type, like `x.F`, can find a facet
-  // type extended scope from the type of `x`. The type of `x` maybe a
-  // facet converted to a type, so drop the `as type` conversion if
-  // so.
-  auto canonical_facet_or_type =
-      GetCanonicalFacetOrTypeValue(context, self_type_const_id);
-
-  auto type_of_canonical_facet_or_type =
-      context.insts()
-          .Get(context.constant_values().GetInstId(canonical_facet_or_type))
-          .type_id();
-  if (type_of_canonical_facet_or_type == SemIR::TypeType::TypeId) {
-    // If we still have a type, turn it into a facet for use in the
-    // interface-with-self specific.
-    return GetConstantFacetValueForType(
-        context, context.types().GetAsTypeInstId(
-                     context.constant_values().GetInstId(self_type_const_id)));
-  }
-
-  // We have a facet for the self-type (or perhaps an ErrorInst), which we can
-  // use directly in the interface-with-self specific.
-  return canonical_facet_or_type;
+  // If `self_type_const_id` is None, we are doing lookup into a non-lexical
+  // scope. If it is a `FacetType`, then we are doing lookup directly on a facet
+  // type, such as `I.F` on an interface `I`.
+  //
+  // In these cases, there is no self-type from the lookup for the
+  // interface-with-self specific. So the self-type we use is the abstract
+  // symbolic Self from the self specific of the interface-with-self.
+  auto self_specific_args_id = context.specifics().GetArgsOrEmpty(
+      context.generics().GetSelfSpecific(generic_with_self_id));
+  auto self_specific_args = context.inst_blocks().Get(self_specific_args_id);
+  return context.constant_values().Get(self_specific_args.back());
 }
 
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,

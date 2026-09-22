@@ -36,6 +36,7 @@ fn F() {
 // CHECK:STDOUT: --- use_class_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %X.f.cpp_overload_set.type: type = cpp_overload_set_type @X.f.cpp_overload_set [concrete]

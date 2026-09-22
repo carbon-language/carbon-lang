@@ -124,10 +124,10 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: --- core.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %Dest.patt: %pattern_type.9a5 = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
@@ -152,10 +152,10 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:     .ImplicitAs = %ImplicitAs.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.0ff = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
-// CHECK:STDOUT:     %Dest.patt.loc3_26.1: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_26.2 (constants.%Dest.patt)]
+// CHECK:STDOUT:     %Dest.patt.loc3_26.1: %pattern_type.9a5 = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_26.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc3_28.1: type = splice_block %.loc3_28.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc3_28.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Dest.loc3_26.2: type = symbolic_binding Dest, 0 [symbolic = %Dest.loc3_26.1 (constants.%Dest)]
@@ -163,7 +163,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(%Dest.loc3_26.2: type) {
-// CHECK:STDOUT:   %Dest.patt.loc3_26.2: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_26.2 (constants.%Dest.patt)]
+// CHECK:STDOUT:   %Dest.patt.loc3_26.2: %pattern_type.9a5 = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_26.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   %Dest.loc3_26.1: type = symbolic_binding Dest, 0 [symbolic = %Dest.loc3_26.1 (constants.%Dest)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -247,6 +247,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: --- non-instance_success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NonInstance1.type: type = facet_type <@NonInstance1> [concrete]
 // CHECK:STDOUT:   %Self: %NonInstance1.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %NonInstance1.WithSelf.F1.type.448: type = fn_type @NonInstance1.WithSelf.F1, @NonInstance1.WithSelf(%Self) [symbolic]
@@ -355,6 +356,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: --- fail_non-instance.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NonInstance2.type: type = facet_type <@NonInstance2> [concrete]
 // CHECK:STDOUT:   %Self.598: %NonInstance2.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %NonInstance2.WithSelf.F2.type.9a0: type = fn_type @NonInstance2.WithSelf.F2, @NonInstance2.WithSelf(%Self.598) [symbolic]
@@ -380,8 +382,8 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.3aa: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %Dest.patt: %pattern_type.9a5 = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Self.294: %ImplicitAs.type.3aa = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.fcc: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.97e: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Dest, %Self.294) [symbolic]
@@ -465,7 +467,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.b3bc94.3: type) [from "core.carbon"] {
-// CHECK:STDOUT:   %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
+// CHECK:STDOUT:   %Dest.patt: %pattern_type.9a5 = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -589,6 +591,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: --- fail_non-instance_indirect.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NonInstance3.type: type = facet_type <@NonInstance3> [concrete]
 // CHECK:STDOUT:   %Self.6e1: %NonInstance3.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %NonInstance3.WithSelf.F3.type.be9: type = fn_type @NonInstance3.WithSelf.F3, @NonInstance3.WithSelf(%Self.6e1) [symbolic]
@@ -615,8 +618,8 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.3aa: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %Dest.patt: %pattern_type.9a5 = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Self.294: %ImplicitAs.type.3aa = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.fcc: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.97e: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Dest, %Self.294) [symbolic]
@@ -701,7 +704,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.b3bc94.3: type) [from "core.carbon"] {
-// CHECK:STDOUT:   %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
+// CHECK:STDOUT:   %Dest.patt: %pattern_type.9a5 = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
 // CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -826,6 +829,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: --- instance_success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Instance1.type: type = facet_type <@Instance1> [concrete]
 // CHECK:STDOUT:   %Self: %Instance1.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
@@ -1025,6 +1029,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: --- fail_instance.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Instance2.type: type = facet_type <@Instance2> [concrete]
 // CHECK:STDOUT:   %Self: %Instance2.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]

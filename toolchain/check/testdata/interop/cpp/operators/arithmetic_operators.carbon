@@ -309,6 +309,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: --- arithmetic_operators.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.429: type = pattern_type %Destroy.type [concrete]
 // CHECK:STDOUT:   %Result.patt: %pattern_type.429 = symbolic_binding_pattern Result, 0 [symbolic]
@@ -318,7 +319,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Other: type = symbolic_binding Other, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.7e9: type = facet_type <@AddWith.1, @AddWith.1(%Other)> [symbolic]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Self.96a: %AddWith.type.7e9 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %AddWith.assoc_type.588: type = assoc_entity_type @AddWith.1, @AddWith.1(%Other) [symbolic]
 // CHECK:STDOUT:   %AddWith.WithSelf.Op.type.28e: type = fn_type @AddWith.WithSelf.Op, @AddWith.WithSelf(%Other, %Self.96a) [symbolic]
@@ -1048,7 +1049,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %facet_value.20a: %facet_type.546 = facet_value %Int64, (%custom_witness.e7a31c.3, %custom_witness.e66) [concrete]
 // CHECK:STDOUT:   %pattern_type.5db: type = pattern_type %facet_type.546 [concrete]
 // CHECK:STDOUT:   %T.patt.ed0: %pattern_type.5db = symbolic_binding_pattern T, 2 [symbolic]
-// CHECK:STDOUT:   %U.patt.d47: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   %U.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U.67d: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %AddAssignWith.type.2c8890.1: type = facet_type <@AddAssignWith.1, @AddAssignWith.1(%Other)> [symbolic]
 // CHECK:STDOUT:   %Self.792732.1: %AddAssignWith.type.2c8890.1 = symbolic_binding Self, 1 [symbolic]
@@ -4061,7 +4062,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddAssignWith.loc225(constants.%U.67d, constants.%T.792) {
-// CHECK:STDOUT:   %U.patt.loc225_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc225_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc225_19.1 => constants.%U.67d
 // CHECK:STDOUT:   %AddAssignWith.type.loc225_50.1 => constants.%AddAssignWith.type.2c8890.2
 // CHECK:STDOUT:   %pattern_type.loc225_28 => constants.%pattern_type.82d
@@ -4077,7 +4078,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubAssignWith.loc231(constants.%U.67d, constants.%T.f6c) {
-// CHECK:STDOUT:   %U.patt.loc231_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc231_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc231_19.1 => constants.%U.67d
 // CHECK:STDOUT:   %SubAssignWith.type.loc231_50.1 => constants.%SubAssignWith.type.7e53cf.2
 // CHECK:STDOUT:   %pattern_type.loc231_28 => constants.%pattern_type.260
@@ -4093,7 +4094,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulAssignWith.loc237(constants.%U.67d, constants.%T.64d) {
-// CHECK:STDOUT:   %U.patt.loc237_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc237_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc237_19.1 => constants.%U.67d
 // CHECK:STDOUT:   %MulAssignWith.type.loc237_50.1 => constants.%MulAssignWith.type.3a0e4d.2
 // CHECK:STDOUT:   %pattern_type.loc237_28 => constants.%pattern_type.8c2
@@ -4109,7 +4110,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivAssignWith.loc243(constants.%U.67d, constants.%T.c33) {
-// CHECK:STDOUT:   %U.patt.loc243_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc243_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc243_19.1 => constants.%U.67d
 // CHECK:STDOUT:   %DivAssignWith.type.loc243_50.1 => constants.%DivAssignWith.type.7e58ca.2
 // CHECK:STDOUT:   %pattern_type.loc243_28 => constants.%pattern_type.f74
@@ -4125,7 +4126,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModAssignWith.loc249(constants.%U.67d, constants.%T.bca) {
-// CHECK:STDOUT:   %U.patt.loc249_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc249_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc249_19.1 => constants.%U.67d
 // CHECK:STDOUT:   %ModAssignWith.type.loc249_50.1 => constants.%ModAssignWith.type.778d68.2
 // CHECK:STDOUT:   %pattern_type.loc249_28 => constants.%pattern_type.fb8
@@ -4141,7 +4142,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddAssignWith.loc225(constants.%i16, constants.%AddAssignWith.facet.e34) {
-// CHECK:STDOUT:   %U.patt.loc225_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc225_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc225_19.1 => constants.%i16
 // CHECK:STDOUT:   %AddAssignWith.type.loc225_50.1 => constants.%AddAssignWith.type.2a0
 // CHECK:STDOUT:   %pattern_type.loc225_28 => constants.%pattern_type.b256
@@ -4169,7 +4170,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubAssignWith.loc231(constants.%i16, constants.%SubAssignWith.facet.a52) {
-// CHECK:STDOUT:   %U.patt.loc231_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc231_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc231_19.1 => constants.%i16
 // CHECK:STDOUT:   %SubAssignWith.type.loc231_50.1 => constants.%SubAssignWith.type.e8b
 // CHECK:STDOUT:   %pattern_type.loc231_28 => constants.%pattern_type.c22
@@ -4197,7 +4198,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulAssignWith.loc237(constants.%i16, constants.%MulAssignWith.facet.201) {
-// CHECK:STDOUT:   %U.patt.loc237_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc237_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc237_19.1 => constants.%i16
 // CHECK:STDOUT:   %MulAssignWith.type.loc237_50.1 => constants.%MulAssignWith.type.7d4
 // CHECK:STDOUT:   %pattern_type.loc237_28 => constants.%pattern_type.a24
@@ -4225,7 +4226,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivAssignWith.loc243(constants.%i16, constants.%DivAssignWith.facet.a72) {
-// CHECK:STDOUT:   %U.patt.loc243_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc243_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc243_19.1 => constants.%i16
 // CHECK:STDOUT:   %DivAssignWith.type.loc243_50.1 => constants.%DivAssignWith.type.081
 // CHECK:STDOUT:   %pattern_type.loc243_28 => constants.%pattern_type.c970
@@ -4253,7 +4254,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModAssignWith.loc249(constants.%i16, constants.%ModAssignWith.facet.4a2) {
-// CHECK:STDOUT:   %U.patt.loc249_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc249_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc249_19.1 => constants.%i16
 // CHECK:STDOUT:   %ModAssignWith.type.loc249_50.1 => constants.%ModAssignWith.type.1ea
 // CHECK:STDOUT:   %pattern_type.loc249_28 => constants.%pattern_type.6ef
@@ -4281,7 +4282,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddAssignWith.loc225(constants.%Int32, constants.%AddAssignWith.facet.348) {
-// CHECK:STDOUT:   %U.patt.loc225_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc225_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc225_19.1 => constants.%Int32
 // CHECK:STDOUT:   %AddAssignWith.type.loc225_50.1 => constants.%AddAssignWith.type.23a
 // CHECK:STDOUT:   %pattern_type.loc225_28 => constants.%pattern_type.5ad
@@ -4309,7 +4310,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubAssignWith.loc231(constants.%Int32, constants.%SubAssignWith.facet.e0e) {
-// CHECK:STDOUT:   %U.patt.loc231_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc231_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc231_19.1 => constants.%Int32
 // CHECK:STDOUT:   %SubAssignWith.type.loc231_50.1 => constants.%SubAssignWith.type.4fc
 // CHECK:STDOUT:   %pattern_type.loc231_28 => constants.%pattern_type.190
@@ -4337,7 +4338,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulAssignWith.loc237(constants.%Int32, constants.%MulAssignWith.facet.13c) {
-// CHECK:STDOUT:   %U.patt.loc237_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc237_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc237_19.1 => constants.%Int32
 // CHECK:STDOUT:   %MulAssignWith.type.loc237_50.1 => constants.%MulAssignWith.type.5fb
 // CHECK:STDOUT:   %pattern_type.loc237_28 => constants.%pattern_type.f3b
@@ -4365,7 +4366,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivAssignWith.loc243(constants.%Int32, constants.%DivAssignWith.facet.e59) {
-// CHECK:STDOUT:   %U.patt.loc243_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc243_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc243_19.1 => constants.%Int32
 // CHECK:STDOUT:   %DivAssignWith.type.loc243_50.1 => constants.%DivAssignWith.type.3ea
 // CHECK:STDOUT:   %pattern_type.loc243_28 => constants.%pattern_type.8f3
@@ -4393,7 +4394,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModAssignWith.loc249(constants.%Int32, constants.%ModAssignWith.facet.dac) {
-// CHECK:STDOUT:   %U.patt.loc249_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc249_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc249_19.1 => constants.%Int32
 // CHECK:STDOUT:   %ModAssignWith.type.loc249_50.1 => constants.%ModAssignWith.type.567
 // CHECK:STDOUT:   %pattern_type.loc249_28 => constants.%pattern_type.9ff
@@ -4421,7 +4422,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddAssignWith.loc225(constants.%Int32, constants.%AddAssignWith.facet.144) {
-// CHECK:STDOUT:   %U.patt.loc225_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc225_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc225_19.1 => constants.%Int32
 // CHECK:STDOUT:   %AddAssignWith.type.loc225_50.1 => constants.%AddAssignWith.type.23a
 // CHECK:STDOUT:   %pattern_type.loc225_28 => constants.%pattern_type.5ad
@@ -4449,7 +4450,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubAssignWith.loc231(constants.%Int32, constants.%SubAssignWith.facet.a7e) {
-// CHECK:STDOUT:   %U.patt.loc231_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc231_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc231_19.1 => constants.%Int32
 // CHECK:STDOUT:   %SubAssignWith.type.loc231_50.1 => constants.%SubAssignWith.type.4fc
 // CHECK:STDOUT:   %pattern_type.loc231_28 => constants.%pattern_type.190
@@ -4477,7 +4478,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulAssignWith.loc237(constants.%Int32, constants.%MulAssignWith.facet.b35) {
-// CHECK:STDOUT:   %U.patt.loc237_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc237_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc237_19.1 => constants.%Int32
 // CHECK:STDOUT:   %MulAssignWith.type.loc237_50.1 => constants.%MulAssignWith.type.5fb
 // CHECK:STDOUT:   %pattern_type.loc237_28 => constants.%pattern_type.f3b
@@ -4505,7 +4506,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivAssignWith.loc243(constants.%Int32, constants.%DivAssignWith.facet.b1e) {
-// CHECK:STDOUT:   %U.patt.loc243_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc243_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc243_19.1 => constants.%Int32
 // CHECK:STDOUT:   %DivAssignWith.type.loc243_50.1 => constants.%DivAssignWith.type.3ea
 // CHECK:STDOUT:   %pattern_type.loc243_28 => constants.%pattern_type.8f3
@@ -4533,7 +4534,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModAssignWith.loc249(constants.%Int32, constants.%ModAssignWith.facet.342) {
-// CHECK:STDOUT:   %U.patt.loc249_19.2 => constants.%U.patt.d47
+// CHECK:STDOUT:   %U.patt.loc249_19.2 => constants.%U.patt.3a0
 // CHECK:STDOUT:   %U.loc249_19.1 => constants.%Int32
 // CHECK:STDOUT:   %ModAssignWith.type.loc249_50.1 => constants.%ModAssignWith.type.567
 // CHECK:STDOUT:   %pattern_type.loc249_28 => constants.%pattern_type.9ff

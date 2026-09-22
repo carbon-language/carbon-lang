@@ -430,6 +430,7 @@ fn F() {
 // CHECK:STDOUT: --- import_non_nullable_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NonNullableParamS: type = class_type @NonNullableParamS [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -491,6 +492,7 @@ fn F() {
 // CHECK:STDOUT: --- import_non_nullable_pointer_param_using_const_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NonNullableParamS: type = class_type @NonNullableParamS [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %NonNullableParamS [concrete]
 // CHECK:STDOUT:   %const: type = const_type %ptr [concrete]
@@ -562,6 +564,7 @@ fn F() {
 // CHECK:STDOUT: --- import_double_non_nullable_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DoubleNonNullableParamS: type = class_type @DoubleNonNullableParamS [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -665,6 +668,7 @@ fn F() {
 // CHECK:STDOUT: --- import_non_nullable_pointer_to_const_param_using_const.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NonNullablePointerToConstParamS: type = class_type @NonNullablePointerToConstParamS [concrete]
 // CHECK:STDOUT:   %const: type = const_type %NonNullablePointerToConstParamS [concrete]
 // CHECK:STDOUT:   %pattern_type.291: type = pattern_type %const [concrete]
@@ -732,6 +736,7 @@ fn F() {
 // CHECK:STDOUT: --- import_non_nullable_pointer_to_const_param_using_non_const.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NonNullablePointerToConstParamS: type = class_type @NonNullablePointerToConstParamS [concrete]
 // CHECK:STDOUT:   %pattern_type.2f7: type = pattern_type %NonNullablePointerToConstParamS [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -796,6 +801,7 @@ fn F() {
 // CHECK:STDOUT: --- import_const_non_nullable_pointer_param_using_const.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %ConstNonNullableParamS: type = class_type @ConstNonNullableParamS [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %ConstNonNullableParamS [concrete]
 // CHECK:STDOUT:   %const: type = const_type %ptr [concrete]
@@ -867,6 +873,7 @@ fn F() {
 // CHECK:STDOUT: --- import_const_non_nullable_pointer_param_using_non_const.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %ConstNonNullableParamS: type = class_type @ConstNonNullableParamS [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %ConstNonNullableParamS [concrete]
 // CHECK:STDOUT:   %pattern_type.c28: type = pattern_type %ptr [concrete]
@@ -929,6 +936,7 @@ fn F() {
 // CHECK:STDOUT: --- import_const_nullable_pointer_param_using_const.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %ConstNullableParamS: type = class_type @ConstNullableParamS [concrete]
 // CHECK:STDOUT:   %ptr.13b: type = ptr_type %ConstNullableParamS [concrete]
 // CHECK:STDOUT:   %const.2f4: type = const_type %ptr.13b [concrete]
@@ -1085,6 +1093,7 @@ fn F() {
 // CHECK:STDOUT: --- import_const_nullable_pointer_param_using_non_const.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %ConstNullableParamS: type = class_type @ConstNullableParamS [concrete]
 // CHECK:STDOUT:   %ptr.13b: type = ptr_type %ConstNullableParamS [concrete]
 // CHECK:STDOUT:   %pattern_type.550: type = pattern_type %ptr.13b [concrete]
@@ -1224,6 +1233,7 @@ fn F() {
 // CHECK:STDOUT: --- import_non_nullable_pointer_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NonNullableReturnS: type = class_type @NonNullableReturnS [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %NonNullableReturnS [concrete]
 // CHECK:STDOUT:   %IngestDoublePointer.type: type = fn_type @IngestDoublePointer [concrete]
@@ -1268,6 +1278,7 @@ fn F() {
 // CHECK:STDOUT: --- import_double_pointer_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DoubleNonNullableReturnS: type = class_type @DoubleNonNullableReturnS [concrete]
 // CHECK:STDOUT:   %ptr.33a: type = ptr_type %DoubleNonNullableReturnS [concrete]
 // CHECK:STDOUT:   %ptr.297: type = ptr_type %ptr.33a [concrete]
@@ -1313,6 +1324,7 @@ fn F() {
 // CHECK:STDOUT: --- import_const_non_nullable_pointer_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %ConstNonNullableReturnS: type = class_type @ConstNonNullableReturnS [concrete]
 // CHECK:STDOUT:   %const: type = const_type %ConstNonNullableReturnS [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %const [concrete]
@@ -1358,6 +1370,7 @@ fn F() {
 // CHECK:STDOUT: --- non_nullable_pointer_arg_to_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NullableParamS: type = class_type @NullableParamS [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -1500,6 +1513,7 @@ fn F() {
 // CHECK:STDOUT: --- null_pointer_arg_to_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.cpp_overload_set.type: type = cpp_overload_set_type @nullable_param_foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.cpp_overload_set.value: %nullable_param_foo.cpp_overload_set.type = cpp_overload_set_value @nullable_param_foo.cpp_overload_set [concrete]
@@ -1617,6 +1631,7 @@ fn F() {
 // CHECK:STDOUT: --- nonnull_pointer_arg_to_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NullableParamS: type = class_type @NullableParamS [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -1764,6 +1779,7 @@ fn F() {
 // CHECK:STDOUT: --- forward_nullable_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.cpp_overload_set.type: type = cpp_overload_set_type @nullable_param_foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.cpp_overload_set.value: %nullable_param_foo.cpp_overload_set.type = cpp_overload_set_value @nullable_param_foo.cpp_overload_set [concrete]
@@ -1865,6 +1881,7 @@ fn F() {
 // CHECK:STDOUT: --- import_deduced_any_param_as_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DeducedAnyS: type = class_type @DeducedAnyS [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -1939,6 +1956,7 @@ fn F() {
 // CHECK:STDOUT: --- import_deduced_pointer_param_as_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DeducedPointerS: type = class_type @DeducedPointerS [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]

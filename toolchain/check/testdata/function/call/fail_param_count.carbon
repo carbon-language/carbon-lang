@@ -72,6 +72,7 @@ fn Main() {
 // CHECK:STDOUT: --- fail_param_count.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Run0.type: type = fn_type @Run0 [concrete]
 // CHECK:STDOUT:   %Run0: %Run0.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]

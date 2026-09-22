@@ -21,6 +21,7 @@ fn UnknownBuiltin() = "unknown.builtin.name";
 // CHECK:STDOUT: --- fail_unknown.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %UnknownBuiltin.type: type = fn_type @UnknownBuiltin [concrete]
 // CHECK:STDOUT:   %UnknownBuiltin: %UnknownBuiltin.type = struct_value () [concrete]
 // CHECK:STDOUT: }

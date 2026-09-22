@@ -28,6 +28,7 @@ fn Run() {
 // CHECK:STDOUT: --- fail_return_type_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

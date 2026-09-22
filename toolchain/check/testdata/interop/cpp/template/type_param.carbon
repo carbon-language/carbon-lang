@@ -67,6 +67,7 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT: --- valid.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %TwoTypes: type = class_type @TwoTypes [concrete]
 // CHECK:STDOUT:   %pattern_type.83a: type = pattern_type %TwoTypes [concrete]
 // CHECK:STDOUT:   %x.patt: %pattern_type.83a = ref_binding_pattern x [concrete]
@@ -114,6 +115,7 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT: --- char.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %TwoTypes: type = class_type @TwoTypes [concrete]
 // CHECK:STDOUT:   %pattern_type.0c3: type = pattern_type %TwoTypes [concrete]
 // CHECK:STDOUT:   %x.patt: %pattern_type.0c3 = ref_binding_pattern x [concrete]

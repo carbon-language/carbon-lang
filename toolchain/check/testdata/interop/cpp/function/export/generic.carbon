@@ -140,6 +140,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT: --- generic_type_impls_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self.37e: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type.c84: type = facet_access_type %Self.37e [symbolic]
@@ -187,8 +188,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %I.WithSelf.Doit.type.a07: type = fn_type @I.WithSelf.Doit, @I.WithSelf(%I.facet.a68) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.Doit.9cf: %I.WithSelf.Doit.type.a07 = struct_value () [concrete]
 // CHECK:STDOUT:   %B.val: %B = struct_value () [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = symbolic_binding T, 0 [symbolic]
@@ -255,7 +255,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:     %.loc24_21.3: type = converted %T.ref.loc24_21, %T.as_type.loc24_21 [symbolic = %T.as_type.loc24_15.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc24_21.4: Core.Form = init_form %.loc24_21.3 [symbolic = %.loc24_21.2 (constants.%.0ce)]
 // CHECK:STDOUT:     %.loc24_9: type = splice_block %I.ref [concrete = constants.%I.type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc24_7.2: %I.type = symbolic_binding T, 0 [symbolic = %T.loc24_7.1 (constants.%T)]

@@ -15,7 +15,11 @@ namespace Carbon::SemIR {
 
 auto InstId::Print(llvm::raw_ostream& out) const -> void {
   if (IsSingletonInstId(*this)) {
-    out << Label << "(" << SingletonInstKinds[index] << ")";
+    out << Label << "(" << GetSingletonInstKind(*this) << ")";
+  } else if (*this == TypeType::TypeInstId) {
+    out << Label << "(TypeType)";
+  } else if (*this == Namespace::PackageInstId) {
+    out << Label << "(Package)";
   } else if (*this == InitTombstone) {
     out << Label << "(InitTombstone)";
   } else if (*this == ImplWitnessTablePlaceholder) {
@@ -47,8 +51,12 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
   }
 }
 
-auto CheckIRId::Print(llvm::raw_ostream& out) const -> void {
-  IdBase::Print(out);
+auto DeclaredFacetTypeId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Empty) {
+    out << Label << "(Empty)";
+  } else {
+    IdBase::Print(out);
+  }
 }
 
 auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {

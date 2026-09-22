@@ -33,6 +33,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: --- bit_complement.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %BitComplement.type: type = facet_type <@BitComplement> [concrete]
 // CHECK:STDOUT:   %BitComplement.impl_witness: <witness> = impl_witness @C.as.BitComplement.impl.%BitComplement.impl_witness_table [concrete]

@@ -78,10 +78,10 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT: --- generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %GenericType.type.d1d: type = generic_named_constaint_type @GenericType [concrete]
 // CHECK:STDOUT:   %empty_struct.b7e: %GenericType.type.d1d = struct_value () [concrete]
@@ -110,10 +110,10 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     .ForwardDeclaredGeneric = %ForwardDeclaredGeneric.decl.loc9
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericType.decl: %GenericType.type.d1d = constraint_decl @GenericType [concrete = constants.%empty_struct.b7e] {
-// CHECK:STDOUT:     %T.patt.loc4_25.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_25.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4_25.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_25.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_27.1: type = splice_block %.loc4_27.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_27.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_25.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_25.1 (constants.%T)]
@@ -123,25 +123,25 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     %U.patt.loc7_22.1: %pattern_type.5d7 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc7_22.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7: type = splice_block %Z.ref [concrete = constants.%Z.type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc7_22.2: %Z.type = symbolic_binding U, 0 [symbolic = %U.loc7_22.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.decl.loc9: %ForwardDeclaredGeneric.type.650 = constraint_decl @ForwardDeclaredGeneric [concrete = constants.%empty_struct.43d] {
-// CHECK:STDOUT:     %T.patt.loc10: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc10: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_38.1: type = splice_block %.loc9_38.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen.loc9: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc9: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc9_38.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc9_36.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_36.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.decl.loc10: %ForwardDeclaredGeneric.type.650 = constraint_decl @ForwardDeclaredGeneric [concrete = constants.%empty_struct.43d] {
-// CHECK:STDOUT:     %T.patt.loc10: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc10: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_38.1: type = splice_block %.loc10_38.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen.loc10: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc10: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc10_38.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc10: type = symbolic_binding T, 0 [symbolic = %T.loc9_36.1 (constants.%T)]
@@ -160,7 +160,7 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @GenericType(%T.loc4_25.2: type) {
-// CHECK:STDOUT:   %T.patt.loc4_25.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_25.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc4_25.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_25.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc4_25.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_25.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -198,7 +198,7 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @ForwardDeclaredGeneric(%T.loc9_36.2: type) {
-// CHECK:STDOUT:   %T.patt.loc9: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc9: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc9_36.1: type = symbolic_binding T, 0 [symbolic = %T.loc9_36.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

@@ -32,7 +32,7 @@ interface Z {
   let X: type;
 }
 
-// CHECK:STDERR: fail_todo_struct_access_through_witness.carbon:[[@LINE+4]]:43: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
+// CHECK:STDERR: fail_todo_struct_access_through_witness.carbon:[[@LINE+4]]:43: error: member name `t` not found [MemberNameNotFound]
 // CHECK:STDERR: fn F(generic T: Z where .X = {.t: ()}) -> T.X.t {
 // CHECK:STDERR:                                           ^~~~~
 // CHECK:STDERR:

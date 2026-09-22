@@ -51,6 +51,7 @@ fn Run() {
 // CHECK:STDOUT: --- use_inline_function_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %func.cpp_overload_set.type: type = cpp_overload_set_type @func.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %func.cpp_overload_set.value: %func.cpp_overload_set.type = cpp_overload_set_value @func.cpp_overload_set [concrete]
@@ -84,6 +85,7 @@ fn Run() {
 // CHECK:STDOUT: --- with_language_marker.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %another_func.cpp_overload_set.type: type = cpp_overload_set_type @another_func.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %another_func.cpp_overload_set.value: %another_func.cpp_overload_set.type = cpp_overload_set_value @another_func.cpp_overload_set [concrete]

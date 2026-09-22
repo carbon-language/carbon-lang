@@ -414,6 +414,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- implicit_conversions.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Source: type = class_type @Source [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Dest: type = class_type @Dest [concrete]
@@ -566,6 +567,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- fail_expr_category.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NonConstConversion: type = class_type @NonConstConversion [concrete]
 // CHECK:STDOUT:   %Dest.980: type = class_type @Dest [concrete]
 // CHECK:STDOUT:   %pattern_type.b72: type = pattern_type %Dest.980 [concrete]
@@ -600,6 +602,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- fail_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Source: type = class_type @Source [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %InaccessibleConstructor: type = class_type @InaccessibleConstructor [concrete]
@@ -717,6 +720,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- fail_deleted.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Source: type = class_type @Source [concrete]
 // CHECK:STDOUT:   %DeletedConstructor: type = class_type @DeletedConstructor [concrete]
 // CHECK:STDOUT:   %pattern_type.937: type = pattern_type %DeletedConstructor [concrete]
@@ -774,6 +778,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- fail_explicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Source: type = class_type @Source [concrete]
 // CHECK:STDOUT:   %ExplicitConstructor: type = class_type @ExplicitConstructor [concrete]
 // CHECK:STDOUT:   %pattern_type.eae: type = pattern_type %ExplicitConstructor [concrete]
@@ -831,6 +836,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- i32_to_int.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -893,6 +899,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- fail_no_u32_to_int_conversion_in_carbon.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
@@ -957,6 +964,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- default_constructor.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DefaultConstructor: type = class_type @DefaultConstructor [concrete]
 // CHECK:STDOUT:   %pattern_type.be4: type = pattern_type %DefaultConstructor [concrete]
@@ -1018,6 +1026,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- construct_multi_argument.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Two: type = class_type @Two [concrete]
 // CHECK:STDOUT:   %pattern_type.586: type = pattern_type %Two [concrete]
@@ -1235,6 +1244,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- fail_todo_aggregate_from_tuple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Aggregate: type = class_type @Aggregate [concrete]
 // CHECK:STDOUT:   %pattern_type.5dc: type = pattern_type %Aggregate [concrete]
@@ -1297,6 +1307,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- fail_todo_aggregate_from_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Aggregate: type = class_type @Aggregate [concrete]
 // CHECK:STDOUT:   %pattern_type.5dc: type = pattern_type %Aggregate [concrete]
 // CHECK:STDOUT:   %_.patt: %pattern_type.5dc = value_binding_pattern _ [concrete]
@@ -1359,6 +1370,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- non_aggregate_from_tuple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NonAggregate: type = class_type @NonAggregate [concrete]
 // CHECK:STDOUT:   %pattern_type.273: type = pattern_type %NonAggregate [concrete]
@@ -1525,6 +1537,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT: --- fail_non_aggregate_from_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NonAggregate: type = class_type @NonAggregate [concrete]
 // CHECK:STDOUT:   %pattern_type.273: type = pattern_type %NonAggregate [concrete]
 // CHECK:STDOUT:   %_.patt: %pattern_type.273 = value_binding_pattern _ [concrete]
