@@ -64,10 +64,17 @@ refactoring, the expected STDERR diff is empty.
 never see it. Churn here is normal and often unavoidable, so the standard is not
 "no change" but "no change I cannot account for".
 
-For a change that is supposed to preserve behavior, write down the list of
-accepted STDERR changes _before_ you start, and keep it current. An explicit
-list is what lets an unexpected change stand out; without one, every diagnostic
-change looks equally plausible.
+For a change that is supposed to preserve behavior, write the list of accepted
+STDERR changes down _before_ you autoupdate, and keep it current. Order matters
+more than form: written first, the list is a prediction the diff can falsify;
+written afterwards, it is a description of whatever happened, and describes a
+regression exactly as well as an intended change.
+
+The list does not have to be a deliverable. Scratch notes you never publish do
+the job, because the work is in committing to the list, not in presenting it.
+What a reader needs is not the list but its exceptions: diagnostics that changed
+without being predicted, and predictions that did not occur. Both are findings.
+The matches are not, and reporting them buries the two entries that matter.
 
 ## Judging STDOUT churn
 
@@ -106,19 +113,22 @@ Each of these needs its own explanation:
 
 ## Fewer instructions is not automatically better
 
-A diff that removes instructions looks like an optimization, but it is not
-always correct. Whether it is correct depends entirely on **what the
-function that changed was trying to do**. For example, if a function is
-working with constant values, but was creating extraneous instructions in
-the process, it would be correct to remove those instructions and just
-work with constants. But if a function is working with **non-canonical
-instructions** then it may make the tests shorter to change the code to
-work with constants instead, as it no longer has to create insts of its
-own. But this would be **wrong** and would lose location information associated
-with non-canonical instructions, and break symbolic constant substitution.
+A diff that removes instructions looks like an optimization. Whether it is one
+depends on what the changed function owes its caller, and two functions can
+produce the same shrinking diff for opposite reasons:
 
-Decide which kind of behaviour is required first. The instruction count follows
-from that; it is not the thing being optimized.
+-   A function that only needs a constant value, but built instructions on the
+    way to it, was doing wasted work. Dropping them and using the constant
+    directly is correct, and the shorter output reflects that.
+-   A function whose caller needs a **non-canonical instruction** can be made
+    shorter the same way, by using the constant instead of creating an
+    instruction of its own — and that is wrong. The instruction carries location
+    information, and symbolic constant substitution operates on it; the constant
+    value alone loses both.
+
+The instruction count is identical evidence in both cases, so it cannot be the
+thing you judge. Decide what the function is required to produce; the count
+follows from that.
 
 The same reasoning runs in reverse: a diff that _adds_ instructions is not
 automatically a regression.
@@ -142,8 +152,11 @@ diagnostics are worth:
     further from the intended eventual behavior — which, for many such files, is
     no diagnostic at all.
 -   **`todo_fail_...`** — the test should produce errors but does not. Gaining a
-    diagnostic here may be _progress_, not a regression. If it now produces the
-    right error, rename the file to `fail_...`.
+    diagnostic here may be _progress_, not a regression. Either way the file
+    must be renamed, since the framework requires a `fail_` prefix on any file
+    that errors: `fail_...` if it now produces the right error, `fail_todo_...`
+    if the error is the wrong one. Both renames make the test pass, so record
+    which case it is instead of letting the rename settle it.
 -   **`todo_...`** — behavior is wrong but produces no errors, and shouldn't.
     Gaining a diagnostic here is a regression unless you can argue otherwise.
 
@@ -153,11 +166,17 @@ diagnostics are worth:
 
 ### Reclassifying tests
 
-If your change fixes a test, the prefix must move with it. The correspondence
-between the `fail_` prefix and whether compilation actually failed is enforced
-by the test framework, not by the autoupdater, so it surfaces when you run
-`bazelisk test` and not when you autoupdate. **Autoupdating is not a substitute
-for running the tests.**
+If your change moves a test between the states above, the prefix must move with
+it: when the test is fixed, when it starts failing, and when it starts failing
+differently. The correspondence between the `fail_` prefix and whether
+compilation actually failed is enforced by the test framework, not by the
+autoupdater, so it surfaces when you run `bazelisk test` and not when you
+autoupdate. **Autoupdating is not a substitute for running the tests.**
+
+Only that half of the name is checked. Nothing enforces `todo_`, so a file whose
+behavior you have just fixed can keep its `todo_` prefix indefinitely and still
+pass. A missing `fail_` stops the build; a stale `todo_` is silent, and is yours
+to catch.
 
 When a fix drops a file's prefix, also check that the file still belongs where
 it is and that its comments do not still describe the old broken behavior.
@@ -216,17 +235,19 @@ explicitly-justified change, not diff cleanup.
 
 ## Review loop
 
-Iterate narrow, then widen. Only widen once the narrow scope is clean:
+Autoupdate everything, then read the diff a directory at a time. Passing no
+paths is the default and updates every file test in the toolchain:
 
 ```bash
-# One subdirectory that is currently misbehaving.
+./toolchain/autoupdate_testdata.py
+```
+
+Narrow the scope only while iterating on one subdirectory you know you are not
+done with, where each round would otherwise regenerate output you have already
+read:
+
+```bash
 ./toolchain/autoupdate_testdata.py toolchain/check/testdata/SUBDIR/**/*
-
-# Then the whole phase.
-./toolchain/autoupdate_testdata.py toolchain/check/**/*
-
-# Finally every file test in the toolchain.
-./toolchain/autoupdate_testdata.py toolchain/**/*
 ```
 
 The globs are expanded by the shell; the script filters its arguments to
@@ -236,11 +257,19 @@ The globs are expanded by the shell; the script filters its arguments to
 > `--non-fatal-checks` so you can see the full set of downstream damage in one
 > run instead of one crash at a time.
 
+> [!IMPORTANT] Return to the full scope before judging the diff. Whether churn
+> is proportional to the change, and whether a change to one phase moved another
+> phase's testdata, are only visible across everything.
+
 Inspect the diagnostics first, since that is the acceptance criterion:
 
 ```bash
-# STDERR-only view.
+# STDERR-only view, with jj.
 jj --no-pager diff --git 'glob:toolchain/*/testdata/**' \
+  | grep -E '^[-+].*CHECK:STDERR'
+
+# The same, with git.
+git diff -- 'toolchain/*/testdata/*' \
   | grep -E '^[-+].*CHECK:STDERR'
 ```
 
@@ -251,7 +280,14 @@ helper from the
 ```bash
 jj --no-pager diff --git 'glob:toolchain/*/testdata/**' \
   | python3 .agents/skills/summarize_testdata_changes/scripts/parse_diff.py
+
+git diff -- 'toolchain/*/testdata/*' \
+  | python3 .agents/skills/summarize_testdata_changes/scripts/parse_diff.py
 ```
+
+The argument after the tool name is not interchangeable: `glob:...` is a jj
+fileset, `-- ...` is a git pathspec. `--git` and `--no-pager` are jj flags; git
+already emits this format and skips the pager when piped.
 
 Then run the tests, which is what catches prefix mismatches and non-autoupdated
 expectations:
@@ -266,8 +302,8 @@ See the [Bazel usage](../bazel/SKILL.md) skill.
 
 Before presenting a testdata diff as finished:
 
--   [ ] Every STDERR change is on a written list of accepted behavior changes,
-        each with a reason.
+-   [ ] The list of accepted STDERR changes was written before autoupdating, and
+        every change either matches it or is reported as an exception.
 -   [ ] Every STDOUT change is either an instance of a named mechanical pattern
         or has its own explanation.
 -   [ ] Instructions that appeared or disappeared are justified by what the
@@ -276,4 +312,3 @@ Before presenting a testdata diff as finished:
 -   [ ] No test input was changed, and no test was deleted, to make the diff
         smaller.
 -   [ ] The size of the diff is proportional to the size of the change.
--   [ ] `bazelisk test //toolchain/...` passes.
