@@ -148,7 +148,7 @@ fn F(T: Z) {
 library "[[@TEST_NAME]]";
 
 fn F(T: type) {
-  // CHECK:STDERR: fail_member_access_runtime_type.carbon:[[@LINE+4]]:3: error: member name `G` not found in `type`; use compound member access to name a member of an interface it implements [MemberNameNotFoundInType]
+  // CHECK:STDERR: fail_member_access_runtime_type.carbon:[[@LINE+4]]:3: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   T.G();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:

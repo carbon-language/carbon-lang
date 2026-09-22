@@ -324,15 +324,16 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                    llvm::SmallVector<LookupScope>* scopes)
     -> bool {
   auto lookup_inst_id = context.constant_values().GetInstId(lookup_const_id);
-  auto lookup = context.insts().Get(lookup_inst_id);
 
-  if (auto ns = lookup.TryAs<SemIR::Namespace>()) {
+  if (auto ns = context.insts().TryGetAs<SemIR::Namespace>(lookup_inst_id)) {
     scopes->push_back(LookupScope{.name_scope_id = ns->name_scope_id,
                                   .specific_id = SemIR::SpecificId::None,
                                   .self_const_id = SemIR::ConstantId::None});
     return true;
   }
-  if (auto class_ty = lookup.TryAs<SemIR::ClassType>()) {
+
+  if (auto class_ty =
+          context.insts().TryGetAs<SemIR::ClassType>(lookup_inst_id)) {
     if (!extended_scope) {
       // TODO: Allow name lookup into classes that are being defined even if
       // they are not complete.
@@ -352,8 +353,14 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                   .self_const_id = self_type_const_id});
     return true;
   }
-  // Extended scopes may point to a FacetType.
-  if (auto facet_type = lookup.TryAs<SemIR::FacetType>()) {
+
+  // Extended scopes may point to a FacetType. If it has constraints, collect
+  // the extended ones as scopes.
+  auto lookup_type_id =
+      context.types().TryGetTypeIdForTypeInstId(lookup_inst_id);
+  if (lookup_type_id.has_value() &&
+      context.types().IsConstrainedFacetType(lookup_type_id)) {
+    auto facet_type = context.types().GetAs<SemIR::FacetType>(lookup_type_id);
     if (!extended_scope) {
       // TODO: Allow name lookup into facet types that are being defined even if
       // they are not complete.
@@ -379,7 +386,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     }
 
     auto declared_facet_type =
-        context.declared_facet_types().Get(facet_type->declared_facet_type_id);
+        context.declared_facet_types().Get(facet_type.declared_facet_type_id);
     // Name lookup into "extend" constraints but not "self impls" constraints.
     for (const auto& extend : declared_facet_type.extend_constraints) {
       auto& interface = context.interfaces().Get(extend.interface_id);
@@ -414,6 +421,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     }
     return true;
   }
+
   if (lookup_const_id == SemIR::ErrorInst::ConstantId) {
     // Lookup into this scope should fail without producing an error.
     scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
@@ -421,6 +429,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                   .self_const_id = SemIR::ConstantId::None});
     return true;
   }
+
   // TODO: Per the design, if `base_id` is any kind of type, then lookup should
   // treat it as a name scope, even if it doesn't have members. For example,
   // `(i32*).X` should fail because there's no name `X` in `i32*`, not because
@@ -431,8 +440,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
 // Prints a diagnostic for a missing qualified name.
 static auto DiagnoseMemberNameNotFound(
     Context& context, SemIR::LocId loc_id, SemIR::NameId name_id,
-    llvm::ArrayRef<LookupScope> lookup_scopes,
-    std::optional<AccessInfo> access_info) -> void {
+    llvm::ArrayRef<LookupScope> lookup_scopes) -> void {
   if (lookup_scopes.size() == 1 &&
       lookup_scopes.front().name_scope_id.has_value()) {
     if (auto specific_id = lookup_scopes.front().specific_id;
@@ -452,17 +460,6 @@ static auto DiagnoseMemberNameNotFound(
       context.emitter().Emit(loc_id, MemberNameNotFoundInInstScope, name_id,
                              scope_inst_id);
     }
-    return;
-  }
-
-  if (lookup_scopes.empty() && access_info &&
-      access_info->constant_id == SemIR::TypeType::ConstantId) {
-    CARBON_DIAGNOSTIC(
-        MemberNameNotFoundInType, Error,
-        "member name `{0}` not found in `type`; use compound member access to "
-        "name a member of an interface it implements",
-        SemIR::NameId);
-    context.emitter().Emit(loc_id, MemberNameNotFoundInType, name_id);
     return;
   }
 
@@ -566,8 +563,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
       !result.scope_result.is_found()) {
     if (!has_error) {
       if (prohibited_accesses.empty()) {
-        DiagnoseMemberNameNotFound(context, loc_id, name_id, lookup_scopes,
-                                   access_info);
+        DiagnoseMemberNameNotFound(context, loc_id, name_id, lookup_scopes);
       } else {
         //  TODO: We should report multiple prohibited accesses in case we don't
         //  find a valid lookup. Reporting the last one should suffice for now.
