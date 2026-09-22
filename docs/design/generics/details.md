@@ -2298,6 +2298,55 @@ var y: MySerializableType = Deserialize(MySerializableType, "4");
 This is instead of declaring an associated constant using `let` with a function
 type.
 
+An associated function of an interface `I` is callable, and in a call to it, the
+`Self` parameter is treated as a generic parameter that can be deduced. After
+`Self` is deduced,
+[`impl` lookup](/docs/design/expressions/member_access.md#impl-lookup) is
+performed for `Self as I`, and the corresponding function from the `impl` is
+called. Note that this is allowed for any associated function for which `Self`
+can be deduced, not just for associated methods.
+
+```carbon
+interface Interface {
+  fn Method(self);
+}
+
+class Class {
+  extend impl as Interface { fn Method(unused self) {} }
+}
+
+fn Fn(value: Class) {
+  // Calling by way of facet member access:
+  (Class as Interface).Method(value);
+  // Calling the associated method directly deduces `Self = Class`:
+  Interface.Method(value);
+}
+```
+
+Here is an example from
+[leads issue #7606](https://github.com/carbon-language/carbon-lang/issues/7606)
+where `Self` is deduced and used for
+[`impl` lookup](/docs/design/expressions/member_access.md#impl-lookup) when
+calling a non-method associated function:
+
+```carbon
+interface Printable {
+  // Print one `Self` object.
+  fn Print(self);
+  // Print a sequence of `Self` objects.
+  fn PrintSlice(s: slice(Self));
+}
+impl Widget as Printable { ... }
+fn PrintWidgets(s: slice(Widget)) {
+  // OK, deduces `Self` is `Widget`. Equivalent to
+  // `(Widget as Printable).PrintSlice(s)`.
+  Printable.PrintSlice(s);
+}
+```
+
+Note that `Self` is in deducible position, but not directly the type of any
+argument.
+
 > **TODO:** Document rules on where associated function implementations can be
 > declared, as adopted in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
@@ -6941,3 +6990,5 @@ and
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
 -   [#2964: Expression phase terminology](https://github.com/carbon-language/carbon-lang/pull/2964)
 -   [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
+-   [Issue #7606: Should associated function names be callable?](https://github.com/carbon-language/carbon-lang/issues/7606)
+-   [#7697: Updates to member access](https://github.com/carbon-language/carbon-lang/pull/7697)
