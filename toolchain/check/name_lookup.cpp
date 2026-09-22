@@ -21,6 +21,7 @@
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -430,7 +431,8 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
 // Prints a diagnostic for a missing qualified name.
 static auto DiagnoseMemberNameNotFound(
     Context& context, SemIR::LocId loc_id, SemIR::NameId name_id,
-    llvm::ArrayRef<LookupScope> lookup_scopes) -> void {
+    llvm::ArrayRef<LookupScope> lookup_scopes,
+    std::optional<AccessInfo> access_info) -> void {
   if (lookup_scopes.size() == 1 &&
       lookup_scopes.front().name_scope_id.has_value()) {
     if (auto specific_id = lookup_scopes.front().specific_id;
@@ -450,6 +452,17 @@ static auto DiagnoseMemberNameNotFound(
       context.emitter().Emit(loc_id, MemberNameNotFoundInInstScope, name_id,
                              scope_inst_id);
     }
+    return;
+  }
+
+  if (lookup_scopes.empty() && access_info &&
+      access_info->constant_id == SemIR::TypeType::ConstantId) {
+    CARBON_DIAGNOSTIC(
+        MemberNameNotFoundInType, Error,
+        "member name `{0}` not found in `type`; use compound member access to "
+        "name a member of an interface it implements",
+        SemIR::NameId);
+    context.emitter().Emit(loc_id, MemberNameNotFoundInType, name_id);
     return;
   }
 
@@ -553,7 +566,8 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
       !result.scope_result.is_found()) {
     if (!has_error) {
       if (prohibited_accesses.empty()) {
-        DiagnoseMemberNameNotFound(context, loc_id, name_id, lookup_scopes);
+        DiagnoseMemberNameNotFound(context, loc_id, name_id, lookup_scopes,
+                                   access_info);
       } else {
         //  TODO: We should report multiple prohibited accesses in case we don't
         //  find a valid lookup. Reporting the last one should suffice for now.

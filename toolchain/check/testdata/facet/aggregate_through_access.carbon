@@ -32,7 +32,7 @@ interface Z {
   let X: type;
 }
 
-// CHECK:STDERR: fail_todo_struct_access_through_witness.carbon:[[@LINE+4]]:43: error: member name `t` not found [MemberNameNotFound]
+// CHECK:STDERR: fail_todo_struct_access_through_witness.carbon:[[@LINE+4]]:43: error: member name `t` not found in `type`; use compound member access to name a member of an interface it implements [MemberNameNotFoundInType]
 // CHECK:STDERR: fn F(generic T: Z where .X = {.t: ()}) -> T.X.t {
 // CHECK:STDERR:                                           ^~~~~
 // CHECK:STDERR:

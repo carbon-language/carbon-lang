@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_lookup_in_type.carbon:[[@LINE+4]]:8: error: member name `not_found` not found [MemberNameNotFound]
+// CHECK:STDERR: fail_lookup_in_type.carbon:[[@LINE+4]]:8: error: member name `not_found` not found in `type`; use compound member access to name a member of an interface it implements [MemberNameNotFoundInType]
 // CHECK:STDERR: let T: type.not_found = {};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -26,7 +26,7 @@ let T: type.not_found = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+4]]:8: error: member name `missing` not found [MemberNameNotFound]
+// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+4]]:8: error: member name `missing` not found in `type`; use compound member access to name a member of an interface it implements [MemberNameNotFoundInType]
 // CHECK:STDERR: let U: (type where .Self impls type).missing = {};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
