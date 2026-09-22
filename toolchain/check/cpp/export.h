@@ -7,7 +7,6 @@
 
 #include "clang/AST/Decl.h"
 #include "toolchain/check/context.h"
-#include "toolchain/check/convert.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace clang {

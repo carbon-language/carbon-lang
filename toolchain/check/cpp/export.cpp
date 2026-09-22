@@ -1512,15 +1512,12 @@ static auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
 auto GetOrExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
                               SemIR::FunctionId function_id)
     -> clang::NamedDecl* {
-  auto id_to_named_decl =
-      [&context](SemIR::ClangDeclId id) -> clang::NamedDecl* {
-    return llvm::cast<clang::NamedDecl>(context.clang_decls().Get(id).decl());
-  };
   SemIR::Function& function = context.functions().Get(function_id);
   if (auto clang_decl_id =
           context.clang_decls().LookupId(function.first_decl_id());
       clang_decl_id.has_value()) {
-    return id_to_named_decl(clang_decl_id);
+    return llvm::cast<clang::NamedDecl>(
+        context.clang_decls().Get(clang_decl_id).decl());
   }
 
   auto* named_decl = ExportFunctionToCpp(context, loc_id, function_id);
@@ -1530,10 +1527,10 @@ auto GetOrExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
 
   if (auto* function_template_decl =
           llvm::dyn_cast<clang::FunctionTemplateDecl>(named_decl)) {
-    auto clang_decl_id = context.clang_decls().Add(
+    context.clang_decls().Add(
         {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(function_template_decl),
          .inst_id = function.first_decl_id()});
-    return id_to_named_decl(clang_decl_id);
+    return function_template_decl;
   }
 
   auto* clang_function_decl = llvm::cast<clang::FunctionDecl>(named_decl);
@@ -1544,12 +1541,12 @@ auto GetOrExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
   thunk_signature.passing_modes.assign(
       thunk_signature.num_params,
       SemIR::ClangDeclSignature::PassingMode::ByValue);
-  auto clang_decl_id = context.clang_decls().Add(
+  context.clang_decls().Add(
       {.key = SemIR::ClangDeclKey::ForFunctionDecl(
            clang_function_decl,
            context.clang_decl_signatures().Add(std::move(thunk_signature))),
        .inst_id = function.first_decl_id()});
-  return id_to_named_decl(clang_decl_id);
+  return clang_function_decl;
 }
 
 auto ExportFunctionToCppPointerConversion(
