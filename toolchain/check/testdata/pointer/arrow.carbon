@@ -30,6 +30,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT: --- arrow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt: %pattern_type.98b = value_param_pattern [concrete]

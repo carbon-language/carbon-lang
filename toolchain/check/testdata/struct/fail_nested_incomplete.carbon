@@ -28,6 +28,7 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT: --- fail_nested_incomplete.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %Incomplete} [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [concrete]

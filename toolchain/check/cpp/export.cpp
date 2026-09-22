@@ -332,8 +332,7 @@ static auto ExportGenericBindings(Context& context, SemIR::LocId loc_id,
     CARBON_CHECK(param_ident, "non-identifier param name {0}",
                  entity_name.name_id);
 
-    if (symbolic_binding.type_id != SemIR::TypeType::TypeId &&
-        !context.types().Is<SemIR::FacetType>(symbolic_binding.type_id)) {
+    if (!context.types().Is<SemIR::FacetType>(symbolic_binding.type_id)) {
       context.TODO(loc_id, "binding maps to a non-type template parameter");
       return nullptr;
     }

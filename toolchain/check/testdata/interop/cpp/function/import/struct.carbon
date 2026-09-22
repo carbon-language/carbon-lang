@@ -494,6 +494,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_no_data_members_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %EmptyStruct: type = class_type @EmptyStruct [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_empty.cpp_overload_set.type: type = cpp_overload_set_type @foo_empty.cpp_overload_set [concrete]
@@ -532,6 +533,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_import_non_copyable_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NonCopyableStruct: type = class_type @NonCopyableStruct [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_non_copyable.cpp_overload_set.type: type = cpp_overload_set_type @foo_non_copyable.cpp_overload_set [concrete]
@@ -567,6 +569,7 @@ fn F() {
 // CHECK:STDOUT: --- definition_single_data_member_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %SingleMemberStruct: type = class_type @SingleMemberStruct [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_single_member.cpp_overload_set.type: type = cpp_overload_set_type @foo_single_member.cpp_overload_set [concrete]
@@ -605,6 +608,7 @@ fn F() {
 // CHECK:STDOUT: --- definition_multiple_data_members_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %MultipleMembersStruct: type = class_type @MultipleMembersStruct [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_multiple_members.cpp_overload_set.type: type = cpp_overload_set_type @foo_multiple_members.cpp_overload_set [concrete]
@@ -643,6 +647,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_in_namespace_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %InNamespaceStruct: type = class_type @InNamespaceStruct [concrete]
 // CHECK:STDOUT:   %pattern_type.d3e: type = pattern_type %InNamespaceStruct [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -724,6 +729,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_in_relative_namespace_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %InRelativeNamespaceStruct: type = class_type @InRelativeNamespaceStruct [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
@@ -771,6 +777,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_in_outer_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %OuterStruct: type = class_type @OuterStruct [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %InnerStruct: type = class_type @InnerStruct [concrete]
@@ -848,6 +855,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_and_static_method_call_before.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %StaticMethodStruct: type = class_type @StaticMethodStruct [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %StaticMethodStruct.bar.cpp_overload_set.type: type = cpp_overload_set_type @StaticMethodStruct.bar.cpp_overload_set [concrete]
@@ -896,6 +904,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_and_static_method_call_after.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %StaticMethodStruct: type = class_type @StaticMethodStruct [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_static_method.cpp_overload_set.type: type = cpp_overload_set_type @foo_static_method.cpp_overload_set [concrete]
@@ -944,6 +953,7 @@ fn F() {
 // CHECK:STDOUT: --- import_decl_pointer_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DeclPointerParamStruct: type = class_type @DeclPointerParamStruct [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %DeclPointerParamStruct [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -980,6 +990,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_pointer_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DefPointerParamStruct: type = class_type @DefPointerParamStruct [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %DefPointerParamStruct [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -1016,6 +1027,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_value_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_def_value_return.cpp_overload_set.type: type = cpp_overload_set_type @foo_def_value_return.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_def_value_return.cpp_overload_set.value: %foo_def_value_return.cpp_overload_set.type = cpp_overload_set_value @foo_def_value_return.cpp_overload_set [concrete]
@@ -1057,6 +1069,7 @@ fn F() {
 // CHECK:STDOUT: --- import_decl_pointer_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %foo_decl_pointer_return.cpp_overload_set.type: type = cpp_overload_set_type @foo_decl_pointer_return.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_decl_pointer_return.cpp_overload_set.value: %foo_decl_pointer_return.cpp_overload_set.type = cpp_overload_set_value @foo_decl_pointer_return.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %DeclPointerReturnStruct: type = class_type @DeclPointerReturnStruct [concrete]
@@ -1089,6 +1102,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_pointer_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %foo_def_pointer_return.cpp_overload_set.type: type = cpp_overload_set_type @foo_def_pointer_return.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_def_pointer_return.cpp_overload_set.value: %foo_def_pointer_return.cpp_overload_set.type = cpp_overload_set_value @foo_def_pointer_return.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %DefPointerReturnStruct: type = class_type @DefPointerReturnStruct [concrete]

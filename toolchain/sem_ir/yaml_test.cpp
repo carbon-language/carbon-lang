@@ -46,12 +46,12 @@ TEST(SemIRTest, Yaml) {
 
   // Matches the ID of an instruction. Instruction counts may change as various
   // support changes, so this code is only doing loose structural checks.
-  auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst[0-9A-F]+)"));
+  auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\(\w+\)|inst[0-9A-F]+)"));
   auto inst_block_id =
       Yaml::Scalar(MatchesRegex(R"(inst_block([0-9A-F]+|_empty))"));
   auto inst_block = Pair(inst_block_id, Yaml::Mapping(Each(Pair(_, inst_id))));
-  auto constant_id =
-      Yaml::Scalar(MatchesRegex(R"(concrete_constant\(inst[0-9A-F]+\))"));
+  auto constant_id = Yaml::Scalar(
+      MatchesRegex(R"(concrete_constant\((inst\(\w+\)|inst[0-9A-F]+)\))"));
   auto type_id =
       Yaml::Scalar(MatchesRegex(R"(type\((\w+|inst\(\w+\)|inst[0-9A-F]+)\))"));
   auto type_builtin = Pair(type_id, Yaml::Mapping(_));
@@ -75,7 +75,7 @@ TEST(SemIRTest, Yaml) {
       Pair("specific_interfaces", Yaml::Mapping(SizeIs(0))),
       Pair("struct_type_fields", Yaml::Mapping(SizeIs(1))),
       Pair("types", Yaml::Mapping(Each(type_builtin))),
-      Pair("declared_facet_types", Yaml::Mapping(SizeIs(0))),
+      Pair("declared_facet_types", Yaml::Mapping(SizeIs(1))),
       Pair("insts",
            Yaml::Mapping(AllOf(
                Each(Key(inst_id)),

@@ -337,6 +337,7 @@ impl forall [T: type] T as GivesI where .X = () {}
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %B.type: type = generic_named_constaint_type @B [concrete]
 // CHECK:STDOUT:   %empty_struct: %B.type = struct_value () [concrete]
 // CHECK:STDOUT: }

@@ -49,12 +49,13 @@ fn H() {
 // CHECK:STDOUT: --- in_place_tuple_init.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
-// CHECK:STDOUT:   %tuple.b59: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.693: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple.94e: %tuple.type.693 = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.e55: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.394: type = pattern_type %tuple.type.e55 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -94,7 +95,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc7_19.1: type = splice_block %.loc7_19.3 [concrete = constants.%tuple.type.e55] {
 // CHECK:STDOUT:     %i32.loc7_11: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc7_16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc7_19.2: %tuple.type.24b = tuple_literal (%i32.loc7_11, %i32.loc7_16) [concrete = constants.%tuple.b59]
+// CHECK:STDOUT:     %.loc7_19.2: %tuple.type.693 = tuple_literal (%i32.loc7_11, %i32.loc7_16) [concrete = constants.%tuple.94e]
 // CHECK:STDOUT:     %.loc7_19.3: type = converted %.loc7_19.2, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %tuple.type.e55 = wrapper_binding v, %v.var
@@ -149,16 +150,17 @@ fn H() {
 // CHECK:STDOUT: --- nested_tuple_in_place.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %tuple.type.ff9: type = tuple_type (type, type, type) [concrete]
-// CHECK:STDOUT:   %tuple.04d: %tuple.type.ff9 = tuple_value (%i32, %i32, %i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.531: type = tuple_type (type, type, type) [concrete]
+// CHECK:STDOUT:   %tuple.276: %tuple.type.531 = tuple_value (%i32, %i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.555: type = tuple_type (%i32, %i32, %i32) [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %tuple.type.f9f: type = tuple_type (%tuple.type.ff9, %tuple.type.ff9) [concrete]
-// CHECK:STDOUT:   %tuple.6a5: %tuple.type.f9f = tuple_value (%tuple.04d, %tuple.04d) [concrete]
+// CHECK:STDOUT:   %tuple.type.d58: type = tuple_type (%tuple.type.531, %tuple.type.531) [concrete]
+// CHECK:STDOUT:   %tuple.4cf: %tuple.type.d58 = tuple_value (%tuple.276, %tuple.276) [concrete]
 // CHECK:STDOUT:   %tuple.type.015: type = tuple_type (%tuple.type.555, %tuple.type.555) [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %pattern_type.e12: type = pattern_type %tuple.type.015 [concrete]
@@ -166,8 +168,8 @@ fn H() {
 // CHECK:STDOUT:   %v.var_patt.678: %pattern_type.e12 = var_pattern %v.patt.dde [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.4: type = fn_type @Destroy.WithSelf.Op.loc7_3.4 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.4: %Destroy.WithSelf.Op.type.ef016f.4 = struct_value () [concrete]
-// CHECK:STDOUT:   %tuple.type.3a3: type = tuple_type (type, %tuple.type.ff9, type) [concrete]
-// CHECK:STDOUT:   %tuple.82e: %tuple.type.3a3 = tuple_value (%i32, %tuple.04d, %i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.f8d: type = tuple_type (type, %tuple.type.531, type) [concrete]
+// CHECK:STDOUT:   %tuple.a61: %tuple.type.f8d = tuple_value (%i32, %tuple.276, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.b7e: type = tuple_type (%i32, %tuple.type.555, %i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.f8e: type = pattern_type %tuple.type.b7e [concrete]
 // CHECK:STDOUT:   %v.patt.7e2: %pattern_type.f8e = ref_binding_pattern v [concrete]
@@ -218,14 +220,14 @@ fn H() {
 // CHECK:STDOUT:     %i32.loc7_19: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc7_24: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc7_29: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc7_32: %tuple.type.ff9 = tuple_literal (%i32.loc7_19, %i32.loc7_24, %i32.loc7_29) [concrete = constants.%tuple.04d]
+// CHECK:STDOUT:     %.loc7_32: %tuple.type.531 = tuple_literal (%i32.loc7_19, %i32.loc7_24, %i32.loc7_29) [concrete = constants.%tuple.276]
 // CHECK:STDOUT:     %i32.loc7_36: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc7_41: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc7_46: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc7_49: %tuple.type.ff9 = tuple_literal (%i32.loc7_36, %i32.loc7_41, %i32.loc7_46) [concrete = constants.%tuple.04d]
-// CHECK:STDOUT:     %.loc7_50.2: %tuple.type.f9f = tuple_literal (%.loc7_32, %.loc7_49) [concrete = constants.%tuple.6a5]
-// CHECK:STDOUT:     %.loc7_50.3: type = converted constants.%tuple.04d, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
-// CHECK:STDOUT:     %.loc7_50.4: type = converted constants.%tuple.04d, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
+// CHECK:STDOUT:     %.loc7_49: %tuple.type.531 = tuple_literal (%i32.loc7_36, %i32.loc7_41, %i32.loc7_46) [concrete = constants.%tuple.276]
+// CHECK:STDOUT:     %.loc7_50.2: %tuple.type.d58 = tuple_literal (%.loc7_32, %.loc7_49) [concrete = constants.%tuple.4cf]
+// CHECK:STDOUT:     %.loc7_50.3: type = converted constants.%tuple.276, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
+// CHECK:STDOUT:     %.loc7_50.4: type = converted constants.%tuple.276, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
 // CHECK:STDOUT:     %.loc7_50.5: type = converted %.loc7_50.2, constants.%tuple.type.015 [concrete = constants.%tuple.type.015]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %tuple.type.015 = wrapper_binding v, %v.var
@@ -288,10 +290,10 @@ fn H() {
 // CHECK:STDOUT:     %i32.loc13_24: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc13_29: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc13_34: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc13_37: %tuple.type.ff9 = tuple_literal (%i32.loc13_24, %i32.loc13_29, %i32.loc13_34) [concrete = constants.%tuple.04d]
+// CHECK:STDOUT:     %.loc13_37: %tuple.type.531 = tuple_literal (%i32.loc13_24, %i32.loc13_29, %i32.loc13_34) [concrete = constants.%tuple.276]
 // CHECK:STDOUT:     %i32.loc13_40: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc13_43.2: %tuple.type.3a3 = tuple_literal (%i32.loc13_18, %.loc13_37, %i32.loc13_40) [concrete = constants.%tuple.82e]
-// CHECK:STDOUT:     %.loc13_43.3: type = converted constants.%tuple.04d, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
+// CHECK:STDOUT:     %.loc13_43.2: %tuple.type.f8d = tuple_literal (%i32.loc13_18, %.loc13_37, %i32.loc13_40) [concrete = constants.%tuple.a61]
+// CHECK:STDOUT:     %.loc13_43.3: type = converted constants.%tuple.276, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
 // CHECK:STDOUT:     %.loc13_43.4: type = converted %.loc13_43.2, constants.%tuple.type.b7e [concrete = constants.%tuple.type.b7e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %tuple.type.b7e = wrapper_binding v, %v.var

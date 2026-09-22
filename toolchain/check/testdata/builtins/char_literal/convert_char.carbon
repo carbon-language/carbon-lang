@@ -96,6 +96,7 @@ let c: UInt(8) = ToChar('\u{1E15}');
 // CHECK:STDOUT: --- narrow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %UInt.type: type = fn_type @UInt [concrete]
 // CHECK:STDOUT:   %UInt: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]

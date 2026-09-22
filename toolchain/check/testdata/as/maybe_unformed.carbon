@@ -136,6 +136,7 @@ fn Use() {
 // CHECK:STDOUT: --- add_unformed.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %ptr.db8: type = ptr_type %X [concrete]
@@ -212,6 +213,7 @@ fn Use() {
 // CHECK:STDOUT: --- fail_todo_add_unformed_nonref.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %Init.type: type = fn_type @Init [concrete]
@@ -314,6 +316,7 @@ fn Use() {
 // CHECK:STDOUT: --- unsafe_remove_unformed.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.198: type = class_type @MaybeUnformed, @MaybeUnformed(%X) [concrete]
 // CHECK:STDOUT:   %ptr.b8c: type = ptr_type %MaybeUnformed.198 [concrete]

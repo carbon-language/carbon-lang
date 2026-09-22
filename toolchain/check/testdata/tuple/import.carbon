@@ -84,14 +84,15 @@ fn F() -> (i32,) {
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.845: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74 = struct_value () [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
-// CHECK:STDOUT:   %tuple.19c: %tuple.type.85c = tuple_value (%i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.135: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple.e3d: %tuple.type.135 = tuple_value (%i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.a8a: type = tuple_type (%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.e71: type = pattern_type %tuple.type.a8a [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.e71 = ref_binding_pattern a [concrete]
@@ -109,12 +110,12 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
-// CHECK:STDOUT:   %tuple.type.8c7: type = tuple_type (%tuple.type.85c, type) [concrete]
-// CHECK:STDOUT:   %tuple.8ca: %tuple.type.8c7 = tuple_value (%tuple.19c, %i32) [concrete]
-// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
-// CHECK:STDOUT:   %tuple.b59: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
-// CHECK:STDOUT:   %tuple.type.58c: type = tuple_type (%tuple.type.8c7, %tuple.type.24b) [concrete]
-// CHECK:STDOUT:   %tuple.368: %tuple.type.58c = tuple_value (%tuple.8ca, %tuple.b59) [concrete]
+// CHECK:STDOUT:   %tuple.type.bbc: type = tuple_type (%tuple.type.135, type) [concrete]
+// CHECK:STDOUT:   %tuple.450: %tuple.type.bbc = tuple_value (%tuple.e3d, %i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.693: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple.94e: %tuple.type.693 = tuple_value (%i32, %i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.a3a: type = tuple_type (%tuple.type.bbc, %tuple.type.693) [concrete]
+// CHECK:STDOUT:   %tuple.4d1: %tuple.type.a3a = tuple_value (%tuple.450, %tuple.94e) [concrete]
 // CHECK:STDOUT:   %tuple.type.cc8: type = tuple_type (%tuple.type.a8a, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.e55: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.e23: type = tuple_type (%tuple.type.cc8, %tuple.type.e55) [concrete]
@@ -182,7 +183,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %a.var: ref %tuple.type.a8a = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5_13.1: type = splice_block %.loc5_13.3 [concrete = constants.%tuple.type.a8a] {
 // CHECK:STDOUT:     %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc5_13.2: %tuple.type.85c = tuple_literal (%i32.loc5) [concrete = constants.%tuple.19c]
+// CHECK:STDOUT:     %.loc5_13.2: %tuple.type.135 = tuple_literal (%i32.loc5) [concrete = constants.%tuple.e3d]
 // CHECK:STDOUT:     %.loc5_13.3: type = converted %.loc5_13.2, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %tuple.type.a8a = wrapper_binding a, %a.var [concrete = %a.var]
@@ -193,16 +194,16 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %b.var: ref %tuple.type.e23 = var_storage %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6_34.1: type = splice_block %.loc6_34.6 [concrete = constants.%tuple.type.e23] {
 // CHECK:STDOUT:     %i32.loc6_11: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6_15: %tuple.type.85c = tuple_literal (%i32.loc6_11) [concrete = constants.%tuple.19c]
+// CHECK:STDOUT:     %.loc6_15: %tuple.type.135 = tuple_literal (%i32.loc6_11) [concrete = constants.%tuple.e3d]
 // CHECK:STDOUT:     %i32.loc6_18: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6_21: %tuple.type.8c7 = tuple_literal (%.loc6_15, %i32.loc6_18) [concrete = constants.%tuple.8ca]
+// CHECK:STDOUT:     %.loc6_21: %tuple.type.bbc = tuple_literal (%.loc6_15, %i32.loc6_18) [concrete = constants.%tuple.450]
 // CHECK:STDOUT:     %i32.loc6_25: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc6_30: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6_33: %tuple.type.24b = tuple_literal (%i32.loc6_25, %i32.loc6_30) [concrete = constants.%tuple.b59]
-// CHECK:STDOUT:     %.loc6_34.2: %tuple.type.58c = tuple_literal (%.loc6_21, %.loc6_33) [concrete = constants.%tuple.368]
-// CHECK:STDOUT:     %.loc6_34.3: type = converted constants.%tuple.19c, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
-// CHECK:STDOUT:     %.loc6_34.4: type = converted constants.%tuple.8ca, constants.%tuple.type.cc8 [concrete = constants.%tuple.type.cc8]
-// CHECK:STDOUT:     %.loc6_34.5: type = converted constants.%tuple.b59, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
+// CHECK:STDOUT:     %.loc6_33: %tuple.type.693 = tuple_literal (%i32.loc6_25, %i32.loc6_30) [concrete = constants.%tuple.94e]
+// CHECK:STDOUT:     %.loc6_34.2: %tuple.type.a3a = tuple_literal (%.loc6_21, %.loc6_33) [concrete = constants.%tuple.4d1]
+// CHECK:STDOUT:     %.loc6_34.3: type = converted constants.%tuple.e3d, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
+// CHECK:STDOUT:     %.loc6_34.4: type = converted constants.%tuple.450, constants.%tuple.type.cc8 [concrete = constants.%tuple.type.cc8]
+// CHECK:STDOUT:     %.loc6_34.5: type = converted constants.%tuple.94e, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
 // CHECK:STDOUT:     %.loc6_34.6: type = converted %.loc6_34.2, constants.%tuple.type.e23 [concrete = constants.%tuple.type.e23]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %tuple.type.e23 = wrapper_binding b, %b.var [concrete = %b.var]
@@ -315,6 +316,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT: --- import_symbolic_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
