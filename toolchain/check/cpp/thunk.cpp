@@ -5,8 +5,10 @@
 #include "toolchain/check/cpp/thunk.h"
 
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/DeclarationName.h"
 #include "clang/AST/GlobalDecl.h"
 #include "clang/AST/Mangle.h"
+#include "clang/AST/TypeBase.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
@@ -165,23 +167,20 @@ static auto IsSimpleAbiType(clang::ASTContext& ast_context,
   return false;
 }
 
-CalleeFunctionInfo::CalleeFunctionInfo(Context& context,
+CalleeFunctionInfo::CalleeFunctionInfo(Context* context,
                                        clang::FunctionDecl* decl,
                                        SemIR::ClangDeclSignatureId signature_id)
-    : decl(decl),
-      decl_name(decl->getDeclName()),
-      clang_loc(decl->getLocation()),
-      sem_ir_loc(AddImportIRInst(context.sem_ir(), clang_loc)),
+    : context(context),
+      decl_or_pointer_type(decl),
+      sem_ir_loc(AddImportIRInst(context->sem_ir(), decl->getLocation())),
       function_type(decl->getType()->getAs<clang::FunctionProtoType>()),
       signature_id(signature_id),
-      signature(&context.clang_decl_signatures().Get(signature_id)),
+      signature(&context->clang_decl_signatures().Get(signature_id)),
       num_callee_params(signature->num_params +
                         decl->hasCXXExplicitFunctionObjectParameter()) {
   auto& ast_context = decl->getASTContext();
-  const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(decl);
-  bool is_ctor = isa<clang::CXXConstructorDecl>(decl);
   if (IsObjectMemberFunction(*decl)) {
-    self_param_type = method_decl->getFunctionObjectParameterReferenceType();
+    const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(decl);
     if (method_decl->isImplicitObjectMemberFunction()) {
       self_param_kind = SelfParamKind::ImplicitObjectParam;
     } else {
@@ -190,30 +189,21 @@ CalleeFunctionInfo::CalleeFunctionInfo(Context& context,
   } else {
     self_param_kind = SelfParamKind::None;
   }
-  effective_return_type =
-      is_ctor ? ast_context.getCanonicalTagType(method_decl->getParent())
-              : decl->getReturnType();
-  has_simple_return_type = IsSimpleAbiType(ast_context, effective_return_type,
+  has_simple_return_type = IsSimpleAbiType(ast_context, effective_return_type(),
                                            /*for_parameter=*/false);
 }
 
-CalleeFunctionInfo::CalleeFunctionInfo(Context& context,
+CalleeFunctionInfo::CalleeFunctionInfo(Context* context,
                                        const clang::Type* function_pointer_type)
-    : self_param_kind(SelfParamKind::FunctionPointer),
-      decl(nullptr),
-      decl_name(&context.ast_context().Idents.get("__invoke")),
-      clang_loc(),
+    : context(context),
+      self_param_kind(SelfParamKind::FunctionPointer),
+      decl_or_pointer_type(function_pointer_type),
       sem_ir_loc(SemIR::LocId::None),
       function_type(function_pointer_type->getPointeeType()
                         ->getAs<clang::FunctionProtoType>()),
       signature_id(SemIR::ClangDeclSignatureId::None),
       signature(nullptr),
-      num_callee_params(function_type->getNumParams()),
-      self_param_type(function_pointer_type, 0),
-      effective_return_type(function_type->getReturnType()),
-      has_simple_return_type(IsSimpleAbiType(context.ast_context(),
-                                             effective_return_type,
-                                             /*for_parameter=*/false)) {
+      num_callee_params(function_type->getNumParams()) {
   SemIR::ClangDeclSignature local_signature;
   local_signature.kind = SemIR::ClangDeclSignature::Normal;
   local_signature.num_params =
@@ -224,33 +214,72 @@ CalleeFunctionInfo::CalleeFunctionInfo(Context& context,
       local_signature.num_params,
       SemIR::ClangDeclSignature::PassingMode::ByValue);
   signature_id =
-      context.clang_decl_signatures().Add(std::move(local_signature));
-  signature = &context.clang_decl_signatures().Get(signature_id);
+      context->clang_decl_signatures().Add(std::move(local_signature));
+  signature = &context->clang_decl_signatures().Get(signature_id);
+  has_simple_return_type =
+      IsSimpleAbiType(context->ast_context(), function_type->getReturnType(),
+                      /*for_parameter=*/false);
+}
+
+auto CalleeFunctionInfo::decl_name() const -> clang::DeclarationName {
+  if (auto* decl = decl_or_pointer_type.dyn_cast<clang::FunctionDecl*>()) {
+    return decl->getDeclName();
+  }
+  return &context->ast_context().Idents.get("__invoke");
+}
+
+auto CalleeFunctionInfo::clang_location() const -> clang::SourceLocation {
+  if (auto* decl = decl_or_pointer_type.dyn_cast<clang::FunctionDecl*>()) {
+    return decl->getLocation();
+  }
+  return {};
+}
+
+auto CalleeFunctionInfo::self_param_type() const -> clang::QualType {
+  if (auto* decl = decl_or_pointer_type.dyn_cast<clang::FunctionDecl*>()) {
+    if (IsObjectMemberFunction(*decl)) {
+      const auto* method_decl = cast<clang::CXXMethodDecl>(decl);
+      return method_decl->getFunctionObjectParameterReferenceType();
+    } else {
+      return {};
+    }
+  } else if (const auto* type =
+                 decl_or_pointer_type.dyn_cast<const clang::Type*>()) {
+    return clang::QualType(type, 0);
+  }
+  CARBON_FATAL("Unreachable");
+}
+
+auto CalleeFunctionInfo::effective_return_type() const -> clang::QualType {
+  if (auto* decl = decl_or_pointer_type.dyn_cast<clang::FunctionDecl*>()) {
+    if (isa<clang::CXXConstructorDecl>(decl)) {
+      const auto* method_decl = cast<clang::CXXMethodDecl>(decl);
+      return method_decl->getASTContext().getCanonicalTagType(
+          method_decl->getParent());
+    }
+  }
+  return function_type->getReturnType();
 }
 
 auto CalleeFunctionInfo::GetCalleeParamIdentifier(int i) const
     -> clang::IdentifierInfo* {
-  switch (self_param_kind) {
-    case SelfParamKind::FunctionPointer:
-      return nullptr;
-    default:
-      return decl->getParamDecl(i)->getIdentifier();
+  if (auto* decl = decl_or_pointer_type.dyn_cast<clang::FunctionDecl*>()) {
+    return decl->getParamDecl(i)->getIdentifier();
   }
+  return nullptr;
 }
 
 auto CalleeFunctionInfo::GetCalleeParamLocation(int i) const
     -> clang::SourceLocation {
-  switch (self_param_kind) {
-    case SelfParamKind::FunctionPointer:
-      return {};
-    default:
-      return decl->getParamDecl(i)->getLocation();
+  if (auto* decl = decl_or_pointer_type.dyn_cast<clang::FunctionDecl*>()) {
+    return decl->getParamDecl(i)->getLocation();
   }
+  return {};
 }
 
 auto IsCppThunkRequired(Context& context, const CalleeFunctionInfo& callee_info)
     -> bool {
-  auto* decl = cast<clang::FunctionDecl>(callee_info.decl);
+  auto* decl = callee_info.decl();
   if (callee_info.signature->kind != SemIR::ClangDeclSignature::Normal ||
       callee_info.signature->num_params !=
           static_cast<int>(decl->getNumNonObjectParams())) {
@@ -265,8 +294,9 @@ auto IsCppThunkRequired(Context& context, const CalleeFunctionInfo& callee_info)
   }
 
   auto& ast_context = context.ast_context();
-  if (!callee_info.self_param_type.isNull() &&
-      (!IsSimpleAbiType(ast_context, callee_info.self_param_type,
+  auto self_param_type = callee_info.self_param_type();
+  if (!self_param_type.isNull() &&
+      (!IsSimpleAbiType(ast_context, self_param_type,
                         /*for_parameter=*/true) ||
        callee_info.signature->self_passing_mode ==
            SemIR::ClangDeclSignature::PassingMode::ByVar)) {
@@ -321,7 +351,7 @@ static auto BuildThunkParameterTypes(clang::ASTContext& ast_context,
   llvm::SmallVector<clang::QualType> thunk_param_types;
   thunk_param_types.reserve(callee_info.num_thunk_params());
   if (callee_info.callee_param_to_carbon_param_offset() > 0) {
-    thunk_param_types.push_back(callee_info.self_param_type);
+    thunk_param_types.push_back(callee_info.self_param_type());
   }
 
   for (int i : llvm::seq(callee_info.num_callee_params)) {
@@ -331,7 +361,7 @@ static auto BuildThunkParameterTypes(clang::ASTContext& ast_context,
 
   if (!callee_info.has_simple_return_type) {
     thunk_param_types.push_back(GetNonNullablePointerType(
-        ast_context, callee_info.effective_return_type));
+        ast_context, callee_info.effective_return_type()));
   }
 
   CARBON_CHECK(thunk_param_types.size() == callee_info.num_thunk_params());
@@ -432,11 +462,11 @@ static auto CreateThunkFunctionDecl(
     llvm::ArrayRef<clang::QualType> thunk_param_types) -> clang::FunctionDecl* {
   clang::ASTContext& ast_context = context.ast_context();
   clang::DeclarationName name =
-      GetDeclNameForThunk(ast_context, callee_info.decl_name);
+      GetDeclNameForThunk(ast_context, callee_info.decl_name());
 
   auto ext_proto_info = clang::FunctionProtoType::ExtProtoInfo();
   clang::QualType thunk_function_type = ast_context.getFunctionType(
-      callee_info.has_simple_return_type ? callee_info.effective_return_type
+      callee_info.has_simple_return_type ? callee_info.effective_return_type()
                                          : ast_context.VoidTy,
       thunk_param_types, ext_proto_info);
 
@@ -460,7 +490,7 @@ static auto CreateThunkFunctionDecl(
   thunk_function_decl->addAttr(clang::AsmLabelAttr::CreateImplicit(
       ast_context,
       GenerateThunkMangledName(context.cpp_context()->clang_mangle_context(),
-                               callee_info.decl, *callee_info.signature),
+                               callee_info.decl(), *callee_info.signature),
       clang_loc));
 
   // Set function declaration type source info.
@@ -545,6 +575,7 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
   // TODO: Consider building a CompoundStmt holding our created statement to
   // make our result more closely resemble a real C++ function.
 
+  auto* callee_decl = callee_info.decl();
   // If the callee has an object parameter, build a member access expression as
   // the callee. Otherwise, build a regular reference to the function.
   clang::ExprResult callee;
@@ -552,7 +583,7 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
     case CalleeFunctionInfo::SelfParamKind::ExplicitObjectParam:
     case CalleeFunctionInfo::SelfParamKind::ImplicitObjectParam: {
       clang::QualType object_param_type =
-          cast<clang::CXXMethodDecl>(callee_info.decl)
+          cast<clang::CXXMethodDecl>(callee_decl)
               ->getFunctionObjectParameterReferenceType();
       auto* object_param_ref = BuildThunkParamRef(
           sema, thunk_function_decl, /*thunk_index=*/0,
@@ -565,11 +596,10 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
       }
       callee = sema.BuildMemberExpr(
           object.get(), IsArrow, clang_loc, clang::NestedNameSpecifierLoc(),
-          clang::SourceLocation(), callee_info.decl,
-          clang::DeclAccessPair::make(callee_info.decl, clang::AS_public),
+          clang::SourceLocation(), callee_decl,
+          clang::DeclAccessPair::make(callee_decl, clang::AS_public),
           /*HadMultipleCandidates=*/false,
-          clang::DeclarationNameInfo(callee_info.decl->getDeclName(),
-                                     clang_loc),
+          clang::DeclarationNameInfo(callee_decl->getDeclName(), clang_loc),
           sema.getASTContext().BoundMemberTy, clang::VK_PRValue,
           clang::OK_Ordinary);
       break;
@@ -577,16 +607,16 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
     case CalleeFunctionInfo::SelfParamKind::FunctionPointer:
       callee = BuildThunkParamRef(sema, thunk_function_decl, 0,
                                   callee_info.signature->self_passing_mode,
-                                  callee_info.self_param_type);
+                                  callee_info.self_param_type());
       break;
-    case CalleeFunctionInfo::SelfParamKind::None:
-      if (isa<clang::CXXConstructorDecl>(callee_info.decl)) {
+    case CalleeFunctionInfo::SelfParamKind::None: {
+      if (isa<clang::CXXConstructorDecl>(callee_decl)) {
         break;
       }
-      callee =
-          sema.BuildDeclRefExpr(callee_info.decl, callee_info.decl->getType(),
-                                clang::VK_PRValue, clang_loc);
+      callee = sema.BuildDeclRefExpr(callee_decl, callee_decl->getType(),
+                                     clang::VK_PRValue, clang_loc);
       break;
+    }
   }
 
   if (callee.isInvalid()) {
@@ -598,13 +628,13 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
       BuildCalleeArgs(sema, thunk_function_decl, callee_info);
 
   clang::ExprResult call;
-  if (auto info = callee_info.decl ? clang::getConstructorInfo(callee_info.decl)
-                                   : clang::ConstructorInfo{};
+  if (auto info = callee_decl ? clang::getConstructorInfo(callee_decl)
+                              : clang::ConstructorInfo{};
       info.Constructor) {
     // In C++, there are no direct calls to constructors, only initialization,
     // so we need to type-check and build the call ourselves.
     auto type = sema.Context.getCanonicalTagType(
-        cast<clang::CXXRecordDecl>(callee_info.decl->getParent()));
+        cast<clang::CXXRecordDecl>(callee_decl->getParent()));
     llvm::SmallVector<clang::Expr*> converted_args;
     converted_args.reserve(call_args.size());
     if (sema.CompleteConstructorCall(info.Constructor, type, call_args,
@@ -612,9 +642,8 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
       return clang::StmtError();
     }
     call = sema.BuildCXXConstructExpr(
-        clang_loc, type, callee_info.decl, info.Constructor, converted_args,
-        false, false, false, false, clang::CXXConstructionKind::Complete,
-        clang_loc);
+        clang_loc, type, callee_decl, info.Constructor, converted_args, false,
+        false, false, false, clang::CXXConstructionKind::Complete, clang_loc);
   } else {
     call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc, call_args,
                               clang_loc);
@@ -632,7 +661,7 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
   auto* return_object_addr =
       BuildThunkParamRef(sema, thunk_function_decl, return_thunk_index,
                          SemIR::ClangDeclSignature::PassingMode::ByValue);
-  auto return_type = callee_info.effective_return_type.getNonReferenceType();
+  auto return_type = callee_info.effective_return_type().getNonReferenceType();
   auto* return_type_info =
       sema.Context.getTrivialTypeSourceInfo(return_type, clang_loc);
 
@@ -662,15 +691,16 @@ auto BuildCppThunk(Context& context, const CalleeFunctionInfo& callee_info)
   // Build the thunk function declaration.
   auto thunk_param_types =
       BuildThunkParameterTypes(context.ast_context(), callee_info);
+  auto clang_loc = callee_info.clang_location();
   clang::FunctionDecl* thunk_function_decl = CreateThunkFunctionDecl(
-      context, callee_info, callee_info.clang_loc, thunk_param_types);
+      context, callee_info, clang_loc, thunk_param_types);
 
   // Build the thunk function body.
   clang::Sema& sema = context.clang_sema();
   clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
   clang::StmtResult body =
-      BuildThunkBody(*context.cpp_context(), sema, callee_info.clang_loc,
+      BuildThunkBody(*context.cpp_context(), sema, clang_loc,
                      thunk_function_decl, callee_info);
   sema.ActOnFinishFunctionBody(thunk_function_decl, body.get());
   if (body.isInvalid()) {

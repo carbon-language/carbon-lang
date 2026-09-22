@@ -5,10 +5,17 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CPP_THUNK_H_
 #define CARBON_TOOLCHAIN_CHECK_CPP_THUNK_H_
 
-#include "clang/AST/DeclarationName.h"
-#include "clang/AST/TypeBase.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
+
+namespace clang {
+class Decl;
+class DeclarationName;
+class FunctionDecl;
+class FunctionProtoType;
+class QualType;
+class SourceLocation;
+}  // namespace clang
 
 namespace Carbon::Check {
 
@@ -25,7 +32,7 @@ namespace Carbon::Check {
 struct CalleeFunctionInfo {
   // Constructs a CalleeFunctionInfo that represents the given C++ function with
   // the given signature.
-  explicit CalleeFunctionInfo(Context& context, clang::FunctionDecl* decl,
+  explicit CalleeFunctionInfo(Context* context, clang::FunctionDecl* decl,
                               SemIR::ClangDeclSignatureId signature_id);
 
   // Constructs a CalleeFunctionInfo that represents a C++ function pointer.
@@ -36,7 +43,7 @@ struct CalleeFunctionInfo {
   // return types already have simple ABIs). The Carbon counterpart of this
   // method is real, however, and takes the pointer value as its `self`
   // parameter.
-  explicit CalleeFunctionInfo(Context& context,
+  explicit CalleeFunctionInfo(Context* context,
                               const clang::Type* function_pointer_type);
 
   // Returns the offset I such that callee parameter N corresponds to
@@ -94,6 +101,8 @@ struct CalleeFunctionInfo {
   // Returns the location of the i-th callee parameter declaration.
   auto GetCalleeParamLocation(int i) const -> clang::SourceLocation;
 
+  Context* context;
+
   // Information about the C++ parameter that corresponds to the `self`
   // parameter in the Carbon function.
   enum class SelfParamKind {
@@ -124,13 +133,18 @@ struct CalleeFunctionInfo {
   SelfParamKind self_param_kind;
 
   // The callee function's declaration, or null if it doesn't have one.
-  clang::FunctionDecl* decl;
+  llvm::PointerUnion<clang::FunctionDecl*, const clang::Type*>
+      decl_or_pointer_type;
+
+  auto decl() const -> clang::FunctionDecl* {
+    return decl_or_pointer_type.dyn_cast<clang::FunctionDecl*>();
+  }
 
   // The name of the callee function.
-  clang::DeclarationName decl_name;
+  auto decl_name() const -> clang::DeclarationName;
 
   // The location of the callee function declaration.
-  clang::SourceLocation clang_loc;
+  auto clang_location() const -> clang::SourceLocation;
 
   // The SemIR representation of `clang_loc`.
   SemIR::LocId sem_ir_loc;
@@ -151,12 +165,12 @@ struct CalleeFunctionInfo {
 
   // The type of the callee parameter that is treated as `self` in the Carbon
   // function, or null if there isn't one.
-  clang::QualType self_param_type;
+  auto self_param_type() const -> clang::QualType;
 
   // The return type that the callee has when viewed from Carbon. This is the
   // C++ return type, except that constructors return the class type in Carbon
   // and return void in Clang's AST.
-  clang::QualType effective_return_type;
+  auto effective_return_type() const -> clang::QualType;
 
   // Whether the callee has a simple return type, that we can return directly.
   // If not, we'll return through an out parameter instead.
