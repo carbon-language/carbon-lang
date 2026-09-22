@@ -1622,7 +1622,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // location of the function as a whole.
     auto [self_param_pattern_id, _] = MakeParamPattern(
         context, loc_id, function_info.sem_ir_loc,
-        function_info.self_param_type,
+        function_info.self_param_type(),
         function_info.signature->self_passing_mode, SemIR::NameId::SelfValue);
     if (self_param_pattern_id == SemIR::ErrorInst::InstId) {
       return SemIR::InstBlockId::None;
@@ -1735,8 +1735,8 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
     return result;
   }
 
-  auto* ctor =
-      dyn_cast_if_present<clang::CXXConstructorDecl>(function_info.decl);
+  auto* ctor = llvm::dyn_cast_if_present<clang::CXXConstructorDecl>(
+      function_info.decl());
   if (!ctor) {
     // void.
     return {.form_inst_id = SemIR::InstId::None,
@@ -1783,14 +1783,14 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
   }
   auto pattern_type_id = GetPatternType(context, type_id);
   clang::SourceLocation return_type_loc;
-  if (function_info.decl != nullptr) {
-    return_type_loc = function_info.decl->getReturnTypeSourceRange().getBegin();
+  if (auto* callee_decl = function_info.decl()) {
+    return_type_loc = callee_decl->getReturnTypeSourceRange().getBegin();
     if (return_type_loc.isInvalid()) {
       // TODO: While `getReturnTypeSourceRange()` should work, it seems broken
       // for trailing return type. See
       // https://github.com/llvm/llvm-project/issues/162649. Until this is
       // fixed, we fallback to `getTypeSpecStartLoc()`.
-      return_type_loc = function_info.decl->getTypeSpecStartLoc();
+      return_type_loc = callee_decl->getTypeSpecStartLoc();
     }
   }
   SemIR::ImportIRInstId return_type_import_ir_inst_id =
@@ -1878,11 +1878,11 @@ static auto CreateFunctionSignatureInsts(
 static auto GetFunctionName(Context& context,
                             const CalleeFunctionInfo& function_info)
     -> SemIR::NameId {
-  clang::DeclarationName decl_name = function_info.decl_name;
+  clang::DeclarationName decl_name = function_info.decl_name();
   switch (decl_name.getNameKind()) {
     case clang::DeclarationName::CXXConstructorName: {
       auto key = SemIR::ClangDeclKey(
-          cast<clang::CXXConstructorDecl>(function_info.decl)->getParent());
+          cast<clang::CXXConstructorDecl>(function_info.decl())->getParent());
       return context.classes()
           .Get(context.insts()
                    .GetAs<SemIR::ClassDecl>(LookupClangDeclInstId(context, key))
@@ -1933,7 +1933,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
   auto virtual_modifier = SemIR::Function::VirtualModifier::None;
   int32_t virtual_index = -1;
   if (auto* method_decl =
-          dyn_cast_if_present<clang::CXXMethodDecl>(function_info.decl)) {
+          dyn_cast_if_present<clang::CXXMethodDecl>(function_info.decl())) {
     if (method_decl->size_overridden_methods()) {
       virtual_modifier = SemIR::Function::VirtualModifier::Override;
     } else if (method_decl->isVirtual()) {
@@ -1956,10 +1956,10 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 
   SemIR::FunctionFields::EvaluationMode evaluation_mode =
       SemIR::FunctionFields::EvaluationMode::None;
-  if (function_info.decl != nullptr) {
-    if (function_info.decl->isConsteval()) {
+  if (auto* decl = function_info.decl()) {
+    if (decl->isConsteval()) {
       evaluation_mode = SemIR::FunctionFields::EvaluationMode::MustEval;
-    } else if (function_info.decl->isConstexpr()) {
+    } else if (decl->isConstexpr()) {
       evaluation_mode = SemIR::FunctionFields::EvaluationMode::Eval;
     }
   }
@@ -1971,7 +1971,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
           {
               .name_id = GetFunctionName(context, function_info),
               .parent_scope_id =
-                  GetParentNameScopeId(context, function_info.decl),
+                  GetParentNameScopeId(context, function_info.decl()),
               .generic_id = SemIR::GenericId::None,
               .first_param_node_id = Parse::NodeId::None,
               .last_param_node_id = Parse::NodeId::None,
@@ -2032,7 +2032,7 @@ static auto DefineAsThunkCall(Context& context, SemIR::LocId loc_id,
   SemIR::ClangDeclSignatureId thunk_signature_id =
       context.clang_decl_signatures().Add(std::move(thunk_signature));
 
-  CalleeFunctionInfo thunk_callee_info(context, thunk_clang_decl,
+  CalleeFunctionInfo thunk_callee_info(&context, thunk_clang_decl,
                                        thunk_signature_id);
   auto thunk_decl_id = ImportFunction(context, loc_id, thunk_callee_info);
   if (thunk_decl_id == std::nullopt) {
@@ -2081,7 +2081,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   CARBON_CHECK(clang_decl->getFunctionType()->isFunctionProtoType(),
                "Not Prototype function (non-C++ code)");
-  CalleeFunctionInfo callee_info(context, clang_decl, key.signature_id);
+  CalleeFunctionInfo callee_info(&context, clang_decl, key.signature_id);
   auto function_decl_id = ImportFunction(context, loc_id, callee_info);
   if (!function_decl_id) {
     MarkFailedDecl(context, key);
@@ -2157,7 +2157,7 @@ auto ImportFunctionPointerInvoke(
         builder.Note(loc_id, InCppFunctionPointerThunk);
       });
 
-  CalleeFunctionInfo callee_info(context, info.clang_type);
+  CalleeFunctionInfo callee_info(&context, info.clang_type);
   SemIR::ClangFunctionPointerTypeInfo result = {
       .clang_type = info.clang_type,
       .decl_id = SemIR::ErrorInst::InstId,
