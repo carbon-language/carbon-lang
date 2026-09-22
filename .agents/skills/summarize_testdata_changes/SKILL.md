@@ -40,10 +40,11 @@ input changes.
 
 #### For Git Users:
 
--   **Summarize code changes**: `git diff --stat -- ':!toolchain/*/testdata'`
+-   **Summarize code changes**: `git diff --stat -- ':!toolchain/*/testdata/*'`
     -   To see content of non-testdata changes:
-        `git diff -- ':!toolchain/*/testdata'`
--   **Identify testdata changes**: `git diff --name-only 'toolchain/*/testdata'`
+        `git diff -- ':!toolchain/*/testdata/*'`
+-   **Identify testdata changes**:
+    `git diff --name-only 'toolchain/*/testdata/*'`
 
 #### For Jujutsu (jj) Users:
 
@@ -80,7 +81,7 @@ STDOUT changes. This script reads a unified diff from stdin.
 
 ```bash
 # For Git:
-git diff -- 'toolchain/*/testdata' | python3 .agents/skills/summarize_testdata_changes/scripts/parse_diff.py
+git diff -- 'toolchain/*/testdata/*' | python3 .agents/skills/summarize_testdata_changes/scripts/parse_diff.py
 
 # For Jujutsu (jj):
 jj diff --git 'toolchain/*/testdata' | python3 .agents/skills/summarize_testdata_changes/scripts/parse_diff.py
