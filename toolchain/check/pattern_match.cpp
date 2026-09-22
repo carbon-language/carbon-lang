@@ -939,7 +939,7 @@ auto MatchContext::DoPreWork(State state,
                              SemIR::InstId scrutinee_id, WorkItem entry)
     -> void {
   CARBON_KIND_SWITCH(state) {
-    case CARBON_KIND(CallerState* caller_state): {
+    case CARBON_KIND(CallerState* _): {
       // If there's no scrutinee supplied, supply the default value instead.
       if (!scrutinee_id.has_value()) {
         const auto& default_value = context_.default_values().Get(
@@ -949,7 +949,6 @@ auto MatchContext::DoPreWork(State state,
             context_, SemIR::LocId(default_value.value_id),
             default_value.value_id, specific_id_stack_.back());
         scrutinee_id = inst_id;
-        caller_state->call_args.push_back(scrutinee_id);
       }
       break;
     }

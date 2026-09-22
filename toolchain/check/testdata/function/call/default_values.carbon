@@ -248,7 +248,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc8_6.6: %C = acquire_value %.loc8_6.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %tuple.elem0: %C = tuple_access @F.%.loc5_55.8, element0 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %tuple.elem1: %C = tuple_access @F.%.loc5_55.8, element1 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc8_6.6, @F.%.loc5_55.8, %tuple.elem0, %tuple.elem1)
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc8_6.6, %tuple.elem0, %tuple.elem1, @F.%.loc5_73.6)
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call constants.%Destroy.WithSelf.Op.bound(constants.%.115)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
