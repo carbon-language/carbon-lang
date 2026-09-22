@@ -86,10 +86,13 @@ Expected, and cheap to accept in bulk once you have confirmed the pattern:
 
 -   **Renaming.** An instruction, type, or scope prints under a new name.
 -   **Positional name renumbering.** Names like `%x.loc18_46.3` embed a line,
-    column, and disambiguating index. Adding or removing an instruction at a
-    location renumbers the rest, so a _single_ removed instruction can show up
-    as many changed lines in the same block. Confirm the cascade is a cascade
-    before accepting it as one.
+    column, and disambiguating index. Two different events move them:
+    -   Adding or removing an instruction at a location renumbers the rest, so a
+        _single_ removed instruction can show up as many changed lines in the
+        same block. Confirm the cascade is a cascade before accepting it as one.
+    -   Adding or removing a _diagnostic_ moves the source lines themselves, so
+        the line component changes everywhere below it in the file. See
+        [Autoupdate to a fixed point](#autoupdate-to-a-fixed-point).
 -   **Fingerprint-derived names.** Mangled names and some scope names are
     derived from a hash of their inputs. If you changed a hashed input, these
     move. Confirm that each such difference is _only_ the fingerprint, and not a
@@ -235,6 +238,8 @@ explicitly-justified change, not diff cleanup.
 
 ## Review loop
 
+### Run the autoupdater
+
 Autoupdate everything, then read the diff a directory at a time. Passing no
 paths is the default and updates every file test in the toolchain:
 
@@ -260,6 +265,49 @@ The globs are expanded by the shell; the script filters its arguments to
 > [!IMPORTANT] Return to the full scope before judging the diff. Whether churn
 > is proportional to the change, and whether a change to one phase moved another
 > phase's testdata, are only visible across everything.
+
+### Autoupdate to a fixed point
+
+One pass is not always enough, because the autoupdater's output is part of its
+own input. `// CHECK:STDERR:` lines sit inline, immediately above the source
+line they describe, and the compiler reads them as comments in the file.
+Gaining or losing a diagnostic therefore moves every source line below it.
+
+Within a single run, the compiler has already read the file as it was, so the
+two kinds of output end up in different states:
+
+-   **STDERR is correct after one pass.** These lines locate themselves
+    relatively, as `[[@LINE+N]]`, and the autoupdater recomputes `N` as it
+    places them.
+-   **STDOUT is stale after one pass.** SemIR names like `%x.loc18_46.3` embed
+    an absolute line and column with no filename attached, and the autoupdater
+    only remaps `file.carbon:18`-style references. Nothing rewrites the `loc`,
+    so it still describes where the instruction was _before_ the diagnostic
+    lines moved it.
+
+Running again compiles the shifted file and the names catch up. The diagnostic
+set does not change this time, so nothing shifts again and a third run is a
+no-op. Keep running the autoupdater until it stops changing files: one pass when
+the diagnostics held still, two when they didn't.
+
+> [!WARNING] The intermediate state is self-inconsistent, not just unfinished:
+> its `loc` names describe a file layout that no longer exists. Keep reading the
+> diff after every run — that rule does not change — but do not chase positional
+> churn to a cause until the file has converged, and do not present the diff
+> until then either.
+
+The converging pass should be positional renumbering and nothing else. If it
+moves an instruction, a type, or a constant value, then something other than a
+`loc` name is sensitive to where lines fall in the file. Find out what before
+accepting it.
+
+The file tests do catch a file left unconverged, since each test re-runs the
+autoupdate in memory and fails with
+`Autoupdate would make changes to the file content` when the result differs. But
+that arrives at `bazelisk test` time, after you have already read a diff that
+was describing a file which had moved out from under it.
+
+### Inspect the diff
 
 Inspect the diagnostics first, since that is the acceptance criterion:
 
@@ -289,6 +337,8 @@ The argument after the tool name is not interchangeable: `glob:...` is a jj
 fileset, `-- ...` is a git pathspec. `--git` and `--no-pager` are jj flags; git
 already emits this format and skips the pager when piped.
 
+### Run the tests
+
 Then run the tests, which is what catches prefix mismatches and non-autoupdated
 expectations:
 
@@ -302,6 +352,8 @@ See the [Bazel usage](../bazel/SKILL.md) skill.
 
 Before presenting a testdata diff as finished:
 
+-   [ ] The autoupdater was run until it made no further changes, so no `loc`
+        name describes a stale line numbering.
 -   [ ] The list of accepted STDERR changes was written before autoupdating, and
         every change either matches it or is reported as an exception.
 -   [ ] Every STDOUT change is either an instance of a named mechanical pattern
