@@ -2447,8 +2447,7 @@ static auto ImportFunctionDecl(
         .virtual_modifier = import_function.virtual_modifier,
         .virtual_index = import_function.virtual_index,
         .evaluation_mode = import_function.evaluation_mode,
-        .interface_modifier = import_function.interface_modifier,
-        .default_value_arity = import_function.default_value_arity}});
+        .interface_modifier = import_function.interface_modifier}});
 
   // Directly add the function type constant. Don't use `GetFunctionType`
   // because that will evaluate the function type, which we can't do if the
@@ -2661,6 +2660,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (import_function.definition_id.has_value()) {
     new_function.definition_id = new_function.first_owning_decl_id;
   }
+  new_function.default_value_arity = import_function.default_value_arity;
 
   switch (import_function.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::CppThunk:

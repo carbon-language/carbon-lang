@@ -953,13 +953,15 @@ auto MatchContext::DoPreWork(State state,
       }
       break;
     }
-    default: {
-      CARBON_CHECK(std::holds_alternative<CalleeState*>(state),
-                   "Unhandled state kind in DefaultValuePattern pre-work");
+    case CARBON_KIND(CalleeState* _): {
       // We will need to check the type of the parameter to make sure it
       // matches the provided default, so add ourselves to the post-work list.
       results_stack_.PushArray();
       AddAsPostWork(entry);
+      break;
+    }
+    default: {
+      CARBON_FATAL("Unhandled state kind in DefaultValuePattern pre-work");
     }
   }
 

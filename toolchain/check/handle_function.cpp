@@ -399,8 +399,7 @@ static auto DiagnoseDefaultValuesNotSpecified(
 // of the out-of-order detection. It will also need to detect the error
 // condition when a default is also specified for those fully-specified tuple
 // subpatterns.
-static auto CheckForOutOfOrderDefaultsAndCountArity(Context& context,
-                                                    SemIR::Function& function)
+static auto CheckDefaults(Context& context, SemIR::Function& function)
     -> int32_t {
   if (!function.param_patterns_id.has_value()) {
     return 0;
@@ -616,8 +615,7 @@ static auto BuildFunctionDecl(Context& context,
     function_info.definition_id = decl_id;
   }
 
-  function_info.default_value_arity =
-      CheckForOutOfOrderDefaultsAndCountArity(context, function_info);
+  function_info.default_value_arity = CheckDefaults(context, function_info);
 
   DiagnosePositionalParams(context, function_info);
   if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
