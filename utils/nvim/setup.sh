@@ -11,7 +11,7 @@ ROOT="$(git rev-parse --show-toplevel)"
 mkdir -p ~/.config/nvim/{lua,parser,queries}
 
 # add highlight queries
-ln -sTf "$PWD/utils/tree_sitter/queries" ~/.config/nvim/queries/carbon
+ln -sf "$PWD/utils/tree_sitter/queries" ~/.config/nvim/queries/carbon
 
 # add carbon.lua
 ln -sf "$PWD/utils/nvim/carbon.lua" ~/.config/nvim/lua/carbon.lua
