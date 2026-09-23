@@ -284,6 +284,13 @@ Supported comment markers are:
     Output line matchers may contain `[[@LINE+offset]` and `{{regex}}` syntaxes,
     similar to `FileCheck`.
 
+    When the file uses an `AUTOUPDATE-SPLIT`, only `CHECK` lines in that split
+    are matchers; elsewhere they are ordinary content. This is what allows a
+    split to hold a test file that itself contains `CHECK` lines, as the
+    language server's SemIR tests do. Note that such a split still can't contain
+    a `// ---` line, which would split the enclosing file; write the `/`
+    characters as `[[@0x2f]]` to avoid that.
+
 -   ```
     // TIP: <tip>
     ```
