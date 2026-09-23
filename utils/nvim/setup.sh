@@ -17,7 +17,7 @@ ln -sf "$PWD/utils/tree_sitter/queries" ~/.config/nvim/queries/carbon
 ln -sf "$PWD/utils/nvim/carbon.lua" ~/.config/nvim/lua/carbon.lua
 
 # load carbon.lua on startup
-grep 'require "carbon"' ~/.config/nvim/init.lua || echo 'require "carbon"' >> ~/.config/nvim/init.lua
+grep 'require "carbon"' ~/.config/nvim/init.lua >/dev/null || echo 'require "carbon"' >> ~/.config/nvim/init.lua
 
 # build tree_sitter
 cd utils/tree_sitter
