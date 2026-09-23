@@ -349,15 +349,24 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, ConstType inst) -> void {
     *out_ << "const ";
 
+    // `const (const T)` is the same type as `const T`, so don't print a chain
+    // of `const`s.
+    // TODO: Do this generically for all type qualifiers, and don't repeat
+    // qualifiers in types like `const (partial (const T))`.
+    auto inner_id = inst.inner_id;
+    while (auto inner_const = sem_ir_->insts().TryGetAs<ConstType>(inner_id)) {
+      inner_id = inner_const->inner_id;
+    }
+
     // Add parentheses if required.
-    if (GetPrecedence(sem_ir_->insts().Get(inst.inner_id).kind()) <
+    if (GetPrecedence(sem_ir_->insts().Get(inner_id).kind()) <
         GetPrecedence(ConstType::Kind)) {
       *out_ << "(";
-      // Note the `inst.inner_id` ends up here.
+      // Note the `inner_id` ends up here.
       step_stack_->PushString(")");
     }
 
-    step_stack_->PushInstId(inst.inner_id);
+    step_stack_->PushInstId(inner_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, CppTemplateNameType inst) -> void {

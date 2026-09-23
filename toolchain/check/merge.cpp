@@ -339,14 +339,33 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         auto prev_default_value_pattern =
             prev_param_pattern.As<SemIR::DefaultValuePattern>();
 
+        // If the new pattern specified a default value, it must match the
+        // previously declared default value.
+        auto& new_default_value = context.default_values().Get(
+            new_default_value_pattern.default_value_id);
+        const auto& prev_default_value = context.default_values().Get(
+            prev_default_value_pattern.default_value_id);
+        if (!new_default_value.is_unspecified) {
+          // We require first owning declaration to always specify a default
+          // value.
+          CARBON_CHECK(!prev_default_value.is_unspecified);
+          auto new_constant_id =
+              context.constant_values().Get(new_default_value.value_id);
+          auto prev_constant_id =
+              context.constant_values().Get(prev_default_value.value_id);
+          if (new_constant_id != prev_constant_id) {
+            emit_general_diagnostic();
+            return false;
+          }
+        } else {
+          // If the new default value was left unspecified, we copy the previous
+          // processed default value into the new default value.
+          new_default_value.value_id = prev_default_value.value_id;
+        }
+
         pattern_stack.push_back(
             {.prev_id = prev_default_value_pattern.subpattern_id,
              .new_id = new_default_value_pattern.subpattern_id});
-
-        // The node kind comparison should catch this on the mismatched patterns
-        // prior to this, so the indices should never mismatch.
-        CARBON_CHECK(prev_default_value_pattern.default_value_id.index ==
-                     new_default_value_pattern.default_value_id.index);
         break;
       }
       default: {
@@ -693,43 +712,6 @@ static auto FillPrevEntityInfo(Context& context,
   }
 }
 
-// Updates the default values in `prev_function` to include any of those not
-// previously specified and that are now specified in `new_function`.
-static auto MergeFunctionParamDefaultValues(Context& context,
-                                            SemIR::Function& prev_function,
-                                            const SemIR::Function& new_function)
-    -> void {
-  CARBON_CHECK(prev_function.call_param_default_values_id.has_value() ==
-               new_function.call_param_default_values_id.has_value());
-  if (!prev_function.call_param_default_values_id.has_value()) {
-    return;
-  }
-
-  auto prev_value_inst_ids =
-      context.inst_blocks().Get(prev_function.call_param_default_values_id);
-  auto new_value_inst_ids =
-      context.inst_blocks().Get(new_function.call_param_default_values_id);
-  CARBON_CHECK(prev_value_inst_ids.size() == new_value_inst_ids.size());
-
-  llvm::SmallVector<SemIR::InstId> merged_value_inst_ids;
-  bool merge_has_new_info = false;
-  merged_value_inst_ids.reserve(prev_value_inst_ids.size());
-
-  for (size_t i = 0; i < prev_value_inst_ids.size(); ++i) {
-    bool had_value =
-        !context.insts().Is<SemIR::UnspecifiedValue>(prev_value_inst_ids[i]);
-    auto merged_id = had_value ? prev_value_inst_ids[i] : new_value_inst_ids[i];
-    merge_has_new_info |=
-        !had_value && !context.insts().Is<SemIR::UnspecifiedValue>(merged_id);
-    merged_value_inst_ids.push_back(merged_id);
-  }
-
-  if (merge_has_new_info) {
-    auto merged_block_id = context.inst_blocks().Add(merged_value_inst_ids);
-    prev_function.call_param_default_values_id = merged_block_id;
-  }
-}
-
 template <typename EntityT>
 auto TryMergeRedecl(Context& context,
                     const DeclNameStack::NameContext& name_context,
@@ -904,10 +886,6 @@ auto TryMergeRedecl(Context& context,
 
   if (is_definition) {
     prev_entity.MergeDefinition(entity_info.new_entity);
-    if constexpr (IsFunction) {
-      MergeFunctionParamDefaultValues(context, prev_entity,
-                                      entity_info.new_entity);
-    }
   }
 
   auto replace_prev_inst = prev_import_ir_id.has_value();

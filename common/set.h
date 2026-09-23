@@ -7,6 +7,7 @@
 
 #include <concepts>
 #include <type_traits>
+#include <utility>
 
 #include "common/check.h"
 #include "common/hashtable_key_context.h"
@@ -60,6 +61,10 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
   using KeyContextT = ImplT::KeyContextT;
   using MetricsT = ImplT::MetricsT;
 
+  // A range over the keys of the set. Bound to the lifetime of the viewed set,
+  // and invalidated by mutating it.
+  using Range = ImplT::EntryRange;
+
   // This type represents the result of lookup operations. It encodes whether
   // the lookup was a success as well as accessors for the key.
   class LookupResult {
@@ -91,10 +96,8 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
   auto Lookup(LookupKeyT lookup_key,
               KeyContextT key_context = KeyContextT()) const -> LookupResult;
 
-  // Run the provided callback for every key in the set.
-  template <typename CallbackT>
-  auto ForEach(CallbackT callback) const -> void
-    requires(std::invocable<CallbackT, KeyT&>);
+  // Returns a range for iterating over all keys in the set.
+  auto entries() const -> Range;
 
   // This routine is relatively inefficient and only intended for use in
   // benchmarking or logging of performance anomalies. The specific metrics
@@ -131,7 +134,7 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
 // A pointer or reference to this type is the preferred way to pass a mutable
 // handle to a `Set` type across API boundaries as it avoids encoding specific
 // SSO sizing information while providing a near-complete mutable API.
-template <typename InputKeyT, typename InputKeyContextT>
+template <typename InputKeyT, typename InputKeyContextT = DefaultKeyContext>
 class SetBase
     : protected RawHashtable::BaseImpl<InputKeyT, void, InputKeyContextT> {
  protected:
@@ -143,6 +146,7 @@ class SetBase
   using ViewT = SetView<KeyT, KeyContextT>;
   using LookupResult = ViewT::LookupResult;
   using MetricsT = ImplT::MetricsT;
+  using Range = ViewT::Range;
 
   // The result type for insertion operations both indicates whether an insert
   // was needed (as opposed to the key already being in the set), and provides
@@ -190,12 +194,12 @@ class SetBase
   }
 
   // Convenience forwarder to the view type.
-  template <typename CallbackT>
-  auto ForEach(CallbackT callback) const -> void
-    requires(std::invocable<CallbackT, KeyT&>)
-  {
-    return ViewT(*this).ForEach(callback);
-  }
+  auto entries() const& -> Range { return ViewT(*this).entries(); }
+  // Deleted on rvalues: the range refers to storage owned by this table, so a
+  // range built from a temporary set would dangle. Both qualifiers are needed
+  // as `&&` alone would leave a const rvalue binding to the `const&` overload.
+  auto entries() && = delete;
+  auto entries() const&& = delete;
 
   // Convenience forwarder to the view type.
   auto ComputeMetrics(KeyContextT key_context = KeyContextT()) const
@@ -211,10 +215,10 @@ class SetBase
   auto Insert(LookupKeyT lookup_key, KeyContextT key_context = KeyContextT())
       -> InsertResult;
 
-  // Insert a key into the map and call the provided callback if necessary to
-  // produce a new key when no existing value is found.
+  // Insert a key into the set and call the provided callback if necessary to
+  // produce a new key when no existing key is found.
   //
-  // Example: `m.Insert(key_equivalent, [] { return real_key; });`
+  // Example: `s.Insert(key_equivalent, [] { return real_key; });`
   //
   // The point of this function is when the lookup key is _different_from the
   // stored key. However, we don't restrict it in case that blocks generic
@@ -333,13 +337,8 @@ auto SetView<InputKeyT, InputKeyContextT>::Lookup(LookupKeyT lookup_key,
 }
 
 template <typename InputKeyT, typename InputKeyContextT>
-template <typename CallbackT>
-auto SetView<InputKeyT, InputKeyContextT>::ForEach(CallbackT callback) const
-    -> void
-  requires(std::invocable<CallbackT, KeyT&>)
-{
-  this->ForEachEntry([callback](EntryT& entry) { callback(entry.key()); },
-                     [](auto...) {});
+auto SetView<InputKeyT, InputKeyContextT>::entries() const -> Range {
+  return this->ImplT::EntriesImpl();
 }
 
 template <typename InputKeyT, typename InputKeyContextT>

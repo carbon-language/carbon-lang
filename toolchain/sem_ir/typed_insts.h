@@ -808,13 +808,18 @@ struct FacetAccessType {
   InstId facet_value_inst_id;
 };
 
-// A facet type value.
+// A facet type which constrains a facet. This has a deliberately
+// self-referential type.
+//
+// The empty FacetType, which has no constraints, represents `type`. We have
+// constants in the `TypeType` struct for referencing it.
 struct FacetType {
   static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
       {.ir_name = "facet_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
 
+  // Always `TypeType`, the empty `FacetType`.
   TypeId type_id;
   DeclaredFacetTypeId declared_facet_type_id;
 };
@@ -1508,8 +1513,8 @@ struct Namespace {
            // namespace redeclarations.
            .constant_kind = InstConstantKind::AlwaysUnique});
   // The file's package namespace is a well-known instruction to help `package.`
-  // qualified names. It will always be immediately after singletons.
-  static constexpr InstId PackageInstId = InstId(SingletonInstKinds.size());
+  // qualified names.
+  static constexpr InstId PackageInstId = MakeBuiltinNamespacePackageInstId();
 
   TypeId type_id;
   NameScopeId name_scope_id;
@@ -2326,13 +2331,14 @@ struct TypeOfInst {
   InstId inst_id;
 };
 
-// Tracks expressions which are valid as types. This has a deliberately
-// self-referential type.
-struct TypeType : public SingletonTypeInst<InstKind::TypeType, "type"> {
-  // `TypeType` is always set complete in file.cpp.
-  static constexpr auto TypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
-};
+// A constant builtin inst that represents the empty facet type `type`.
+namespace TypeType {
+inline constexpr auto TypeInstId = MakeBuiltinTypeTypeInstId();
+inline constexpr auto ConstantId = ConstantId::ForConcreteConstant(TypeInstId);
+
+// `TypeType` is always set complete in file.cpp.
+inline constexpr auto TypeId = TypeId::ForTypeConstant(ConstantId);
+}  // namespace TypeType
 
 // The `not` operator, such as `not operand`.
 struct UnaryOperatorNot {

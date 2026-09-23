@@ -362,28 +362,13 @@ auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::ConstantId;
   }
 
-  auto const_inst_id = file.constant_values().GetConstantInstId(inst_id);
-  CARBON_KIND_SWITCH(file.insts().Get(const_inst_id)) {
-    case CARBON_KIND(SemIR::ClassType class_type): {
-      const auto& class_info = file.classes().Get(class_type.class_id);
-      CARBON_CHECK(class_info.scope_id.has_value());
-      return ImportCppDeclFromFile(
-          context, loc_id, file,
-          file.name_scopes().Get(class_info.scope_id).clang_decl_context_id());
-    }
-
-    case CARBON_KIND(SemIR::Namespace namespace_decl): {
-      return ImportCppDeclFromFile(context, loc_id, file,
-                                   file.name_scopes()
-                                       .Get(namespace_decl.name_scope_id)
-                                       .clang_decl_context_id());
-    }
-
-    default: {
-      context.TODO(loc_id, "indirect import of unsupported C++ declaration");
-      return SemIR::ErrorInst::ConstantId;
-    }
+  if (const auto* clang_decl = file.clang_decls().Lookup(inst_id)) {
+    auto clang_decl_id = file.clang_decls().LookupId(clang_decl->key);
+    return ImportCppDeclFromFile(context, loc_id, file, clang_decl_id);
   }
+
+  context.TODO(loc_id, "indirect import of unsupported C++ declaration");
+  return SemIR::ErrorInst::ConstantId;
 }
 
 // Returns the Clang `DeclContext` for the given name scope. Return the
@@ -1982,7 +1967,6 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .call_param_patterns_id =
                   function_params_insts->call_param_patterns_id,
               .call_params_id = function_params_insts->call_params_id,
-              .call_param_default_values_id = SemIR::InstBlockId::None,
               .call_param_ranges = function_params_insts->param_ranges,
               .return_type_inst_id = function_params_insts->return_type_inst_id,
               .return_form_inst_id = function_params_insts->return_form_inst_id,

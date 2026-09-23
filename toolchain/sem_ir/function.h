@@ -82,10 +82,6 @@ struct FunctionFields {
   // because it is relevant only for a function definition.
   InstBlockId call_params_id;
 
-  // Instructions representing the canonical default values for parameters.
-  // TODO: Change this to non-canonical values.
-  InstBlockId call_param_default_values_id;
-
   // The index ranges within the `Call` parameters that correspond to the
   // implicit parameters, explicit parameters, and return.
   //
@@ -234,9 +230,6 @@ struct Function : public EntityWithParamsBase,
     }
     if (call_params_id.has_value()) {
       out << ", call_params_id: " << call_params_id;
-    }
-    if (call_param_default_values_id.has_value()) {
-      out << ", call_param_default_values_id: " << call_param_default_values_id;
     }
     if (return_type_inst_id.has_value()) {
       out << ", return_type_inst_id: " << return_type_inst_id;
@@ -414,8 +407,7 @@ struct CalleeFunction {
   SpecificId enclosing_specific_id;
   // The specific for the callee itself, in a resolved call.
   SpecificId resolved_specific_id;
-  // The bound `Self` type or facet value. `None` if not a bound interface
-  // member.
+  // The bound `Self` facet. `None` if not a bound interface member.
   InstId self_type_id;
   // The bound `self` parameter. `None` if not a method.
   InstId self_id;

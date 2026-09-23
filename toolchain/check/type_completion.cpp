@@ -8,7 +8,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/import.h"
-#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
@@ -258,9 +257,8 @@ class TypeCompleter {
              SemIR::ErrorInst, SemIR::FacetType, SemIR::FloatLiteralType,
              SemIR::FormType, SemIR::IntLiteralType, SemIR::NamespaceType,
              SemIR::PatternType, SemIR::RequireSpecificDefinitionType,
-             SemIR::SpecificFunctionType, SemIR::TypeType,
-             SemIR::UnspecifiedValueType, SemIR::VtableType,
-             SemIR::WitnessType>())
+             SemIR::SpecificFunctionType, SemIR::UnspecifiedValueType,
+             SemIR::VtableType, SemIR::WitnessType>())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     // These types are empty at runtime but have values to copy at compile time.
@@ -948,25 +946,6 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
   return false;
 }
 
-// Given a canonical facet value, or a type value, return a facet value.
-static auto GetSelfFacetValue(Context& context, SemIR::ConstantId self_const_id)
-    -> SemIR::ConstantId {
-  if (self_const_id == SemIR::ErrorInst::ConstantId) {
-    return SemIR::ErrorInst::ConstantId;
-  }
-
-  auto self_inst_id = context.constant_values().GetInstId(self_const_id);
-  auto type_id = context.insts().Get(self_inst_id).type_id();
-  CARBON_CHECK(context.types().IsFacetType(type_id));
-
-  if (context.types().Is<SemIR::FacetType>(type_id)) {
-    return self_const_id;
-  }
-
-  return GetConstantFacetValueForType(
-      context, context.types().GetAsTypeInstId(self_inst_id));
-}
-
 // Identifies the facet type in the `facet_type_inst_id`. Returns None if an
 // error is encountered or diagnosed.
 static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
@@ -1027,7 +1006,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
   while (!work.empty()) {
     SelfImplsFacetType next_impls = work.pop_back_val();
     bool facet_type_extends = next_impls.extend;
-    auto self_const_id = GetCanonicalFacetOrTypeValue(context, next_impls.self);
+    auto self_const_id = GetCanonicalFacet(context, next_impls.self);
     const auto& declared_facet_type =
         context.declared_facet_types().Get(next_impls.declared_facet_type);
 
@@ -1064,11 +1043,6 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       continue;
     }
 
-    // The self may have type TypeType. But the `Self` in a generic require decl
-    // has type FacetType, so we need something similar to replace it in the
-    // specific.
-    auto self_facet = GetSelfFacetValue(context, self_const_id);
-
     for (auto extends : declared_facet_type.extend_named_constraints) {
       const auto& constraint =
           context.named_constraints().Get(extends.named_constraint_id);
@@ -1095,7 +1069,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
-          constraint.generic_with_self_id, extends.specific_id, self_facet);
+          constraint.generic_with_self_id, extends.specific_id, self_const_id);
       if (SpecificHasError(context, constraint_with_self_specific_id)) {
         return SemIR::IdentifiedFacetTypeId::None;
       }
@@ -1152,7 +1126,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
-          constraint.generic_with_self_id, impls.specific_id, self_facet);
+          constraint.generic_with_self_id, impls.specific_id, self_const_id);
       if (SpecificHasError(context, constraint_with_self_specific_id)) {
         return SemIR::IdentifiedFacetTypeId::None;
       }
@@ -1208,12 +1182,10 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
         return SemIR::IdentifiedFacetTypeId::None;
       }
 
-      auto self_type_facet = GetSelfFacetValue(
-          context, context.constant_values().Get(self_type_inst_id));
-
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
-          constraint.generic_with_self_id, impls.specific_id, self_type_facet);
+          constraint.generic_with_self_id, impls.specific_id,
+          context.constant_values().Get(self_type_inst_id));
       if (SpecificHasError(context, constraint_with_self_specific_id)) {
         return SemIR::IdentifiedFacetTypeId::None;
       }

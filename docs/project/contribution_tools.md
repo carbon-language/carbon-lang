@@ -333,6 +333,12 @@ jj config set --repo 'revset-aliases."trunk()"' 'trunk@upstream'
 # Treat github.com/carbon-language/carbon-lang as immutable, but treat your fork
 # as mutable.
 jj config set --repo 'revset-aliases."immutable_heads()"' 'remote_bookmarks(*, upstream)'
+
+# Run `prek` over the commits a push would send, and push only if they pass.
+jj config set --repo aliases.push '["util", "exec", "--", "sh", "-c", "exec \"$(jj workspace root)/scripts/jj_push.sh\" \"$@\"", "jj push"]'
+
+# Run `prek` over the changes between `trunk()` and `@`.
+jj config set --repo aliases.prek '["util", "exec", "--", "sh", "-c", "exec \"$(jj workspace root)/scripts/jj_prek.sh\" \"$@\"", "jj prek"]'
 ```
 
 <!-- google-doc-style-resume -->
@@ -340,6 +346,18 @@ jj config set --repo 'revset-aliases."immutable_heads()"' 'remote_bookmarks(*, u
 The above assumes that you have configured the remote name `origin` to refer to
 your fork and `upstream` to refer to `github.com/carbon-language/carbon-lang`,
 and will need to be adjusted if you use different remote names.
+
+The `prek` alias runs [`scripts/jj_prek.sh`](/scripts/jj_prek.sh), which runs
+`prek` against `@` from anywhere in the workspace, including a non-colocated
+one. Arguments go to `prek run`, so `jj prek --all-files` checks everything.
+
+The `push` alias runs [`scripts/jj_push.sh`](/scripts/jj_push.sh), which checks
+the commits the push would send and leaves anything the hooks change in a commit
+for you to squash. It takes the same arguments as `jj git push`, and `--dry-run`
+still runs the checks. `jj` only knows the name of an alias, not what it expands
+to, so it completes file names after `jj push`.
+[`scripts/completions`](/scripts/completions/README.md) has Bash, Zsh, and Fish
+completions for the alias.
 
 #### AI assistants
 

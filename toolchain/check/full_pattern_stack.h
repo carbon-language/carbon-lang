@@ -81,6 +81,7 @@ class FullPatternStack {
     bind_name_stack_.PushArray();
     var_pattern_stack_.PushArray();
     next_var_index_stack_.push_back(-1);
+    unspecified_default_values_stack_.PushArray();
   }
 
   // Marks the start of a new full-pattern for a name binding declaration.
@@ -89,6 +90,7 @@ class FullPatternStack {
     bind_name_stack_.PushArray();
     var_pattern_stack_.PushArray();
     next_var_index_stack_.push_back(-1);
+    unspecified_default_values_stack_.PushArray();
   }
 
   // Marks the start of a new full-pattern for a class `var` declaration.
@@ -97,6 +99,7 @@ class FullPatternStack {
     bind_name_stack_.PushArray();
     var_pattern_stack_.PushArray();
     next_var_index_stack_.push_back(-1);
+    unspecified_default_values_stack_.PushArray();
   }
 
   // Marks the start of the current parameterized entity's implicit parameter
@@ -121,7 +124,6 @@ class FullPatternStack {
     CARBON_CHECK(kind_stack_.back() == Kind::NotInEitherParamList, "{0}",
                  kind_stack_.back());
     kind_stack_.back() = Kind::ExplicitParamList;
-    default_values_stack_.PushArray();
   }
 
   // Marks the end of the current parameterized entity's explicit parameter
@@ -141,16 +143,14 @@ class FullPatternStack {
   // Marks the end of checking and pattern matching for the current
   // full-pattern.
   auto PopFullPattern() -> void {
-    auto kind = kind_stack_.pop_back_val();
+    kind_stack_.pop_back();
     bind_name_stack_.PopArray();
     int index = next_var_index_stack_.pop_back_val();
     CARBON_CHECK(index < 0 || static_cast<size_t>(index) ==
                                   var_pattern_stack_.PeekArray().size(),
                  "`GetLocalVarStorage` not called for all var patterns");
     var_pattern_stack_.PopArray();
-    if (kind == Kind::ExplicitParamList) {
-      default_values_stack_.PopArray();
-    }
+    unspecified_default_values_stack_.PopArray();
   }
 
   // Records that `name_id` was introduced by the current full-pattern.
@@ -205,23 +205,15 @@ class FullPatternStack {
                  kind_stack_.size());
   }
 
-  // Adds the inst id for a constant value provided as a default value for
-  // any subpattern in the full-pattern. Returns the index of that element
-  // as a `DefaultValueId`. Note default values are only supported for
-  // explicit parameter lists.
-  auto AddDefaultValue(SemIR::InstId inst_id) -> SemIR::DefaultValueId {
-    auto index = SemIR::FromRaw<SemIR::DefaultValueId>(
-        static_cast<int32_t>(default_values_stack_.PeekArray().size()));
-    CARBON_CHECK(kind_stack_.back() == Kind::ExplicitParamList);
-    default_values_stack_.AppendToTop(inst_id);
-    return index;
+  // Adds an unspecified pattern default value to the array at the top of the
+  // full pattern stack. We track these for possible later use in diagnostics.
+  auto AddUnspecifiedDefaultValue(SemIR::InstId inst_id) -> void {
+    unspecified_default_values_stack_.AppendToTop(inst_id);
   }
 
-  // Returns a reference to the array of default value inst ids at the top of
-  // the stack. Note default values are only supported for explicit parameter
-  // lists.
-  auto GetDefaultValues() -> llvm::ArrayRef<SemIR::InstId> {
-    return default_values_stack_.PeekArray();
+  // Returns the unspecified default values array at the top of the stack.
+  auto GetUnspecifiedDefaultValues() -> llvm::ArrayRef<SemIR::InstId> {
+    return unspecified_default_values_stack_.PeekArray();
   }
 
  private:
@@ -256,9 +248,9 @@ class FullPatternStack {
   // of that frame are not ready for consumption.
   llvm::SmallVector<int> next_var_index_stack_;
 
-  // The stack of instructions specifying default values for subpatterns
-  // within this full-pattern.
-  ArrayStack<SemIR::InstId> default_values_stack_;
+  // For each full pattern we maintain a list of the InstIds of any
+  // unspecified default values, for use in diagnostics.
+  ArrayStack<SemIR::InstId> unspecified_default_values_stack_;
 };
 
 }  // namespace Carbon::Check

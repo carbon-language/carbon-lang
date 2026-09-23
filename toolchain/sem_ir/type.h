@@ -251,16 +251,23 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto TryGetIntTypeInfo(TypeId int_type_id) const
       -> std::optional<IntTypeInfo>;
 
-  // Returns whether `type_id` represents a valid facet type.
-  auto IsFacetType(TypeId type_id) const -> bool {
-    return type_id == TypeType::TypeId || Is<FacetType>(type_id);
+  // Returns whether `type_id` represents a facet type that constrains the
+  // types which satisfy it. This is any facet type other than the
+  // unconstrained facet type `type`.
+  //
+  // A facet whose `type_id` is a constrained facet type will be symbolic, and
+  // there won't be a `TypeId` representation of the facet. Whereas a facet
+  // whose `type_id` is an unconstrained facet type (`TypeType`) will have a
+  // `TypeId` representation, and may be either concrete or symbolic.
+  auto IsConstrainedFacetType(TypeId type_id) const -> bool {
+    return Is<FacetType>(type_id) && type_id != TypeType::TypeId;
   }
 
   // Returns whether `type_id` represents any kind of facet type, including the
   // error instruction, which can be used as a type and so should be treated as
   // a facet type in some contexts.
   auto IsFacetTypeOrError(TypeId type_id) const -> bool {
-    return IsFacetType(type_id) || type_id == ErrorInst::TypeId;
+    return Is<FacetType>(type_id) || type_id == ErrorInst::TypeId;
   }
 
   // Returns a list of types that were completed in this file, in the order in

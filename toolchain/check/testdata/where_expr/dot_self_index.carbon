@@ -28,12 +28,12 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT: --- dot_self_index.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen.197: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen.e58: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Empty.type.c52: type = generic_interface_type @Empty [concrete]
 // CHECK:STDOUT:   %Empty.generic: %Empty.type.c52 = struct_value () [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Empty.type.95d624.2: type = facet_type <@Empty, @Empty(%T)> [symbolic]
 // CHECK:STDOUT:   %.Self.frozen.063: %Empty.type.95d624.2 = symbolic_binding .Self [symbolic]
@@ -51,7 +51,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %pattern_type.a0f: type = pattern_type %Empty_where.type.696 [symbolic]
 // CHECK:STDOUT:   %U.param_patt.558: %pattern_type.a0f = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %U.patt.1ea: %pattern_type.a0f = wrapper_binding_pattern U, %U.param_patt.558 [symbolic]
-// CHECK:STDOUT:   %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 1 [symbolic]
+// CHECK:STDOUT:   %V.patt: %pattern_type.9a5 = symbolic_binding_pattern V, 1 [symbolic]
 // CHECK:STDOUT:   %V: type = symbolic_binding V, 1 [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
@@ -79,13 +79,13 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
-// CHECK:STDOUT:     %T.patt.loc21_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc21_15.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.param_patt.loc21_31.1: @H.%pattern_type (%pattern_type.a0f) = value_param_pattern [symbolic = %U.param_patt.loc21_31.2 (constants.%U.param_patt.558)]
 // CHECK:STDOUT:     %U.patt.loc21_31.1: @H.%pattern_type (%pattern_type.a0f) = wrapper_binding_pattern U, %U.param_patt.loc21_31.1 [symbolic = %U.patt.loc21_31.2 (constants.%U.patt.1ea)]
-// CHECK:STDOUT:     %V.patt.loc21_73.1: %pattern_type.98f = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc21_73.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.patt.loc21_73.1: %pattern_type.9a5 = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc21_73.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc21_17.1: type = splice_block %.loc21_17.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen.loc21_15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc21_15: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %.loc21_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc21_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc21_15.1 (constants.%T)]
@@ -114,7 +114,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.696) = wrapper_binding U, %U.param
 // CHECK:STDOUT:     %.loc21_75.1: type = splice_block %.loc21_75.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen.loc21_73: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc21_73: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %.loc21_75.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc21_73.2: type = symbolic_binding V, 1 [symbolic = %V.loc21_73.1 (constants.%V)]
@@ -122,7 +122,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @H(%T.loc21_15.2: type, %V.loc21_73.2: type) {
-// CHECK:STDOUT:   %T.patt.loc21_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc21_15.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc21_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc21_15.1 (constants.%T)]
 // CHECK:STDOUT:   %Empty.type.loc21_40.1: type = facet_type <@Empty, @Empty(%T.loc21_15.1)> [symbolic = %Empty.type.loc21_40.1 (constants.%Empty.type.95d624.2)]
 // CHECK:STDOUT:   %.Self.frozen.loc21_42.1: @H.%Empty.type.loc21_40.1 (%Empty.type.95d624.2) = symbolic_binding .Self [symbolic = %.Self.frozen.loc21_42.1 (constants.%.Self.frozen.063)]
@@ -140,7 +140,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Empty_where.type [symbolic = %pattern_type (constants.%pattern_type.a0f)]
 // CHECK:STDOUT:   %U.param_patt.loc21_31.2: @H.%pattern_type (%pattern_type.a0f) = value_param_pattern [symbolic = %U.param_patt.loc21_31.2 (constants.%U.param_patt.558)]
 // CHECK:STDOUT:   %U.patt.loc21_31.2: @H.%pattern_type (%pattern_type.a0f) = wrapper_binding_pattern U, %U.param_patt.loc21_31.2 [symbolic = %U.patt.loc21_31.2 (constants.%U.patt.1ea)]
-// CHECK:STDOUT:   %V.patt.loc21_73.2: %pattern_type.98f = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc21_73.2 (constants.%V.patt)]
+// CHECK:STDOUT:   %V.patt.loc21_73.2: %pattern_type.9a5 = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc21_73.2 (constants.%V.patt)]
 // CHECK:STDOUT:   %V.loc21_73.1: type = symbolic_binding V, 1 [symbolic = %V.loc21_73.1 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

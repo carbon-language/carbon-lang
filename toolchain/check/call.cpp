@@ -42,9 +42,13 @@ enum class EntityKind : uint8_t {
 }  // namespace
 
 // Resolves the callee expression in a call to a specific callee, or diagnoses
-// if no specific callee can be identified. This verifies the arity of the
-// callee and determines any compile-time arguments, but doesn't check that the
-// runtime arguments are convertible to the parameter types.
+// if no specific callee can be identified. This determines any compile-time
+// arguments, but doesn't check that the runtime arguments are convertible to
+// the parameter types. It also verifies that the number of arguments is within
+// the range [callee_arity - arity_lower_bound_margin, callee_arity]. This
+// allows arity matching when the callee has default arguments for some
+// subpatterns. In all other cases supply the default value `0` for exact arity
+// checking.
 //
 // `self_id` and `arg_ids` are the self argument and explicit arguments in the
 // call.
@@ -56,14 +60,21 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                                 EntityKind entity_kind_for_diagnostic,
                                 SemIR::SpecificId enclosing_specific_id,
                                 SemIR::InstId self_id,
-                                llvm::ArrayRef<SemIR::InstId> arg_ids)
+                                llvm::ArrayRef<SemIR::InstId> arg_ids,
+                                int32_t arity_lower_bound_margin = 0)
     -> std::optional<SemIR::SpecificId> {
-  // Check that the arity matches the explicit arguments.
+  // Check that the arity exactly matches or is the upper bound of the explicit
+  // arguments.
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(entity.param_patterns_id);
   size_t expected_args_size =
       param_patterns.size() - (self_id.has_value() ? 1 : 0);
-  if (arg_ids.size() != expected_args_size) {
+  CARBON_CHECK(static_cast<size_t>(arity_lower_bound_margin) <=
+               expected_args_size);
+  size_t size_lower_bound =
+      expected_args_size - static_cast<size_t>(arity_lower_bound_margin);
+  if (arg_ids.size() < size_lower_bound ||
+      arg_ids.size() > expected_args_size) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument{0:s} passed to "
                       "{1:=0:function|=1:generic class|=2:generic "
@@ -219,11 +230,13 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
                            llvm::ArrayRef<SemIR::InstId> arg_ids,
                            bool is_desugared) -> SemIR::InstId {
   // If the callee is a generic function, determine the generic argument values
-  // for the call.
+  // for the call. Also check the arity of the function against the arguments,
+  // with allowance for default argument values.
+  const auto& function = context.functions().Get(callee_function.function_id);
   auto callee_specific_id = ResolveCalleeInCall(
-      context, loc_id, context.functions().Get(callee_function.function_id),
-      EntityKind::Function, callee_function.enclosing_specific_id,
-      callee_function.self_id, arg_ids);
+      context, loc_id, function, EntityKind::Function,
+      callee_function.enclosing_specific_id, callee_function.self_id, arg_ids,
+      function.default_value_arity);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::InstId;
   }

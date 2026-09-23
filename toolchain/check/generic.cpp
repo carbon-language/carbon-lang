@@ -871,7 +871,9 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
   if (self_facet == SemIR::ErrorInst::ConstantId) {
     args.push_back(SemIR::ErrorInst::InstId);
   } else {
-    auto self_facet_inst_id = context.constant_values().GetInstId(self_facet);
+    // Use the canonical facet for self in order to produce fewer specifics.
+    auto self_facet_inst_id = context.constant_values().GetInstId(
+        GetCanonicalFacet(context, self_facet));
     CARBON_CHECK(context.types().Is<SemIR::FacetType>(
         context.insts().Get(self_facet_inst_id).type_id()));
     args.push_back(self_facet_inst_id);

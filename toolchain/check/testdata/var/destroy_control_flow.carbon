@@ -126,6 +126,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: --- if_then.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Destructible: type = class_type @Destructible [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -207,6 +208,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: --- if_else.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Destructible: type = class_type @Destructible [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -310,6 +312,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: --- if_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Destructible: type = class_type @Destructible [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -389,6 +392,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: --- while_break.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Destructible: type = class_type @Destructible [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -505,6 +509,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: --- while_continue.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Destructible: type = class_type @Destructible [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
