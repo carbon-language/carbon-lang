@@ -389,8 +389,7 @@ auto AddSpecificInst(Context& context, SemIR::InstId inst_id,
        .specific_id = specific_id});
 }
 
-auto AddSpecificInstToPendingBlock(PendingBlock& block,
-                                   SemIR::InstId inst_id,
+auto AddSpecificInstToPendingBlock(PendingBlock& block, SemIR::InstId inst_id,
                                    SemIR::SpecificId specific_id)
     -> SemIR::InstId {
   if (!NeedsSpecificInst(block.context(), inst_id)) {
@@ -454,8 +453,7 @@ static auto RefineOperandInSpecific(Context& context,
                                     SemIR::SpecificId specific_id,
                                     SemIR::IdAndKind arg) -> int32_t {
   return arg.Dispatch<int32_t>([&](auto id) {
-    return SemIR::ToRaw(
-        RefineTypedOperandInSpecific(context, specific_id, id));
+    return SemIR::ToRaw(RefineTypedOperandInSpecific(context, specific_id, id));
   });
 }
 
