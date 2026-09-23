@@ -12,10 +12,12 @@ ROOT="$(git -C "$DIR" rev-parse --show-toplevel)"
 mkdir -p ~/.config/nvim/{lua,parser,queries}
 
 # add highlight queries
-ln -sf "$PWD/utils/tree_sitter/queries" ~/.config/nvim/queries/carbon
+[ -e ~/.config/nvim/queries/carbon ] && unlink ~/.config/nvim/queries/carbon
+ln -sf "$ROOT/utils/tree_sitter/queries" ~/.config/nvim/queries/carbon
 
 # add carbon.lua
-ln -sf "$PWD/utils/nvim/carbon.lua" ~/.config/nvim/lua/carbon.lua
+[ -e ~/.config/nvim/lua/carbon.lua ] && unlink ~/.config/nvim/lua/carbon.lua
+ln -sf "$ROOT/utils/nvim/carbon.lua" ~/.config/nvim/lua/carbon.lua
 
 # load carbon.lua on startup
 grep 'require "carbon"' ~/.config/nvim/init.lua >/dev/null || echo 'require "carbon"' >> ~/.config/nvim/init.lua
