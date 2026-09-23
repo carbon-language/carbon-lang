@@ -16,7 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_lookup_in_type.carbon:[[@LINE+4]]:8: error: member name `not_found` not found [MemberNameNotFound]
+// CHECK:STDERR: fail_lookup_in_type.carbon:[[@LINE+4]]:8: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
 // CHECK:STDERR: let T: type.not_found = {};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -26,7 +26,7 @@ let T: type.not_found = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+4]]:8: error: member name `missing` not found [MemberNameNotFound]
+// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+4]]:8: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
 // CHECK:STDERR: let U: (type where .Self impls type).missing = {};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -44,10 +44,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .T = %T
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %.loc8: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %not_found.ref: <error> = name_ref not_found, <error> [concrete = <error>]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %T: <error> = wrapper_binding T, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %T.patt: <error> = value_binding_pattern T [concrete = <error>]
@@ -88,7 +85,6 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc8_9 [concrete]
 // CHECK:STDOUT:       %impls.loc8_26.2 = requirement_impls %.Self.ref.loc8_20.2, %.loc8_32 [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %U: <error> = wrapper_binding U, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
