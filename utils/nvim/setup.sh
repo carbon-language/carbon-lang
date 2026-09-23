@@ -5,8 +5,9 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 set -euo pipefail
-
-ROOT="$(git rev-parse --show-toplevel)"
+ 
+DIR="$(dirname -- "$(readlink -f -- "$0")")"
+ROOT="$(git -C "$DIR" rev-parse --show-toplevel)"
 
 mkdir -p ~/.config/nvim/{lua,parser,queries}
 
