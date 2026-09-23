@@ -439,8 +439,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc44_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %nullptr.ref: %Cpp.nullptr_t = name_ref nullptr, %uninit [concrete = constants.%uninit]
-// CHECK:STDOUT:   %.loc44_32: type = cpp_fn_ptr_type clang_function_pointer_type41000000 [concrete = constants.%.659]
-// CHECK:STDOUT:   %.loc44_24: %.659 = converted %nullptr.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc44: %.659 = converted %nullptr.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %TakesFunction.call: init %empty_tuple.type = call imports.%TakesFunction.decl(<error>)
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %n.var, constants.%Destroy.WithSelf.Op.403171.4
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound(%n.var)

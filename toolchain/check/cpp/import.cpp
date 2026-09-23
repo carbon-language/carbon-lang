@@ -2122,7 +2122,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 // function. The function itself must be imported separately with
 // `ImportFunctionPointerInvoke` when it's called, because that requires the
 // types in the signature to be complete.
-static auto ImportFunctionPointer(Context& context, SemIR::LocId loc_id,
+static auto ImportFunctionPointer(Context& context,
                                   const clang::Type* pointer_type)
     -> SemIR::InstId {
   CARBON_CHECK(pointer_type->isFunctionPointerType());
@@ -2138,9 +2138,8 @@ static auto ImportFunctionPointer(Context& context, SemIR::LocId loc_id,
          .decl_id = SemIR::InstId::None,
          .function_id = SemIR::FunctionId::None});
   }
-  return AddInst<SemIR::CppFunctionPointerType>(
-      context, loc_id,
-      {.type_id = SemIR::TypeType::TypeId, .clang_type_id = clang_type_id});
+  return context.types().GetTypeInstId(
+      GetCppFunctionPointerType(context, clang_type_id));
 }
 
 auto ImportFunctionPointerInvoke(
@@ -2440,7 +2439,7 @@ static auto ImportAfterDependencies(Context& context, SemIR::LocId loc_id,
     }
     case CARBON_KIND(const clang::Type* type): {
       if (type->isFunctionPointerType()) {
-        return ImportFunctionPointer(context, loc_id, type);
+        return ImportFunctionPointer(context, type);
       }
 
       context.TODO(loc_id,
