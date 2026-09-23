@@ -1195,15 +1195,14 @@ static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
 static auto DiagnoseConversionFailureToConstraintValue(
     Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     SemIR::TypeId target_type_id) -> void {
-  CARBON_CHECK(context.types().IsFacetType(target_type_id));
+  CARBON_CHECK(context.types().Is<SemIR::FacetType>(target_type_id));
 
-  // If the source type is/has a facet value (converted with `as type` or
-  // otherwise), then we can include its `FacetType` in the diagnostic to help
-  // explain what interfaces the source type implements.
-  auto const_expr_id = GetCanonicalFacetOrTypeValue(context, expr_id);
+  // If the source is a facet with constraints (possibly converted to `type`),
+  // then we can include those constraints in the diagnostic.
+  auto const_expr_id = GetCanonicalFacet(context, expr_id);
   auto const_expr_type_id = context.insts().Get(const_expr_id).type_id();
 
-  if (context.types().Is<SemIR::FacetType>(const_expr_type_id)) {
+  if (context.types().IsConstrainedFacetType(const_expr_type_id)) {
     CARBON_DIAGNOSTIC(ConversionFailureFacetToFacet, Error,
                       "cannot convert type {0} that implements {1} into type "
                       "implementing {2}",
@@ -1556,7 +1555,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  if (sem_ir.types().IsFacetType(target.type_id)) {
+  if (sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
     auto type_value_id = SemIR::TypeInstId::None;
 
     // A tuple of types converts to type `type`.
@@ -1574,7 +1573,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     }
 
     if (type_value_id != SemIR::InstId::None) {
-      if (sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
+      if (target.type_id != SemIR::TypeType::TypeId) {
         // Use the converted `TypeType` value for converting to a facet.
         value_id = type_value_id;
         value_type_id = SemIR::TypeType::TypeId;
@@ -1585,21 +1584,18 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  // FacetType converts to Type by wrapping the facet value in
-  // FacetAccessType.
+  // All facets convert to `type` by wrapping the facet in FacetAccessType.
   if (target.type_id == SemIR::TypeType::TypeId &&
-      sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
+      sem_ir.types().IsConstrainedFacetType(value_type_id)) {
     return AddInst<SemIR::FacetAccessType>(
         context, loc_id,
         {.type_id = target.type_id, .facet_value_inst_id = value_id});
   }
 
-  // Type values can convert to facet values, and facet values can convert to
-  // other facet values, as long as they satisfy the required interfaces of the
-  // target `FacetType`.
-  if (sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
-      sem_ir.types().IsOneOf<SemIR::TypeType, SemIR::FacetType>(
-          value_type_id)) {
+  // All facets (including types) can convert into other facets, as long as they
+  // satisfy the constraints of the target `FacetType`.
+  if (sem_ir.types().IsConstrainedFacetType(target.type_id) &&
+      sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
     // TODO: Runtime facet values should be allowed to convert based on their
     // FacetTypes, but we assume constant values for impl lookup at the moment.
     if (!context.constant_values().Get(value_id).is_constant()) {
@@ -1608,9 +1604,9 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     }
 
     // Get the canonical type for which we want to attach a new set of witnesses
-    // to match the requirements of the target FacetType.
+    // to match the requirements of the target `FacetType`.
     auto type_inst_id = SemIR::TypeInstId::None;
-    if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
+    if (value_type_id != SemIR::TypeType::TypeId) {
       type_inst_id = AddTypeInst<SemIR::FacetAccessType>(
           context, loc_id,
           {.type_id = SemIR::TypeType::TypeId,
@@ -1627,8 +1623,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
       // would evaluate back to the original SymbolicBinding as its canonical
       // form. We can skip past the whole impl lookup step then and do that
       // here.
-      auto facet_value_inst_id =
-          GetCanonicalFacetOrTypeValue(context, type_inst_id);
+      auto facet_value_inst_id = GetCanonicalFacet(context, type_inst_id);
       if (sem_ir.insts().Get(facet_value_inst_id).type_id() == target.type_id) {
         return facet_value_inst_id;
       }
@@ -1742,8 +1737,7 @@ static auto PerformUserDefinedConversion(Context& context, SemIR::LocId loc_id,
             target.kind == ConversionTarget::ExplicitAs         ? 1
             : target.kind == ConversionTarget::ExplicitUnsafeAs ? 2
                                                                 : 0;
-        if (target.type_id == SemIR::TypeType::TypeId ||
-            context.types().Is<SemIR::FacetType>(target.type_id)) {
+        if (context.types().Is<SemIR::FacetType>(target.type_id)) {
           CARBON_DIAGNOSTIC(
               ConversionFailureNonTypeToFacet, Context,
               "cannot{0:=0: implicitly|:} convert non-type value of type {1} "
@@ -2113,7 +2107,7 @@ static auto ConversionNeedsCompleteTarget(Context& context,
   // We allow conversion to incomplete facet types, since their representation
   // is fixed. This allows us to support using the `Self` of an interface inside
   // its definition.
-  if (context.types().IsFacetType(target.type_id)) {
+  if (context.types().Is<SemIR::FacetType>(target.type_id)) {
     return false;
   }
 
@@ -2388,9 +2382,10 @@ auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
                      SemIR::InstId return_arg_id, const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id, bool is_desugared)
     -> SemIR::InstBlockId {
-  // The caller should have ensured this callee has the right arity.
+  // The caller should have ensured this callee has the right arity, modulo
+  // default arguments.
   CARBON_CHECK(
-      (self_id.has_value() ? 1 : 0) + arg_refs.size() ==
+      (self_id.has_value() ? 1 : 0) + arg_refs.size() <=
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id).size());
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,

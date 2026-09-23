@@ -38,6 +38,7 @@
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/observe.h"
+#include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/type_info.h"
@@ -2660,6 +2661,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (import_function.definition_id.has_value()) {
     new_function.definition_id = new_function.first_owning_decl_id;
   }
+  new_function.default_value_arity = import_function.default_value_arity;
 
   switch (import_function.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::CppThunk:
@@ -4578,8 +4580,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
                 "Constant value of constant instruction should refer to "
                 "the same instruction");
 
-  if (SemIR::IsSingletonInstId(constant_inst_id)) {
-    // Constants for builtins can be directly copied.
+  if (SemIR::IsSingletonInstId(constant_inst_id) ||
+      constant_inst_id == SemIR::TypeType::TypeInstId) {
+    // Constants for singletons and TypeType can be directly copied.
     return ResolveResult::Done(
         resolver.local_constant_values().Get(constant_inst_id));
   }
@@ -4985,15 +4988,21 @@ auto ImportRefResolver::ResolveType(SemIR::TypeId import_type_id)
   auto import_type_const_id = import_ir().types().GetConstantId(import_type_id);
   CARBON_CHECK(import_type_const_id.has_value());
 
-  if (auto import_type_inst_id = import_ir().types().GetAsTypeInstId(
-          import_ir().constant_values().GetInstId(import_type_const_id));
-      SemIR::IsSingletonInstId(import_type_inst_id)) {
-    // Builtins don't require constant resolution; we can use them directly.
+  auto import_type_inst_id = import_ir().types().GetAsTypeInstId(
+      import_ir().constant_values().GetInstId(import_type_const_id));
+
+  // Builtin types don't require constant resolution; we can use them directly.
+  if (SemIR::IsSingletonInstId(import_type_inst_id)) {
+    // Singletons are all types, and need to go through GetSingletonType to
+    // complete them.
     return GetSingletonType(local_context(), import_type_inst_id);
-  } else {
-    return local_types().GetTypeIdForTypeConstantId(
-        ResolveConstant(import_type_id.AsConstantId()));
+  } else if (import_type_inst_id == SemIR::TypeType::TypeInstId) {
+    // TypeType is the other builtin type, and is already complete.
+    return SemIR::TypeType::TypeId;
   }
+
+  return local_types().GetTypeIdForTypeConstantId(
+      ResolveConstant(import_type_id.AsConstantId()));
 }
 
 auto ImportRefResolver::HasNewWork() -> bool {

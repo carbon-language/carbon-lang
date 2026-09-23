@@ -1621,6 +1621,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- import_non_function_member_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NonFunctionMemberPublic: type = class_type @NonFunctionMemberPublic [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -1670,6 +1671,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- import_non_function_member_public_extend.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %NonFunctionMemberPublic: type = class_type @NonFunctionMemberPublic [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -1716,6 +1718,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- import_non_function_member_protected_extend_call_in_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %NonFunctionMemberProtected: type = class_type @NonFunctionMemberProtected [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -1799,6 +1802,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- import_function_member_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %FunctionMemberPublic: type = class_type @FunctionMemberPublic [concrete]
 // CHECK:STDOUT:   %ptr.9a9: type = ptr_type %FunctionMemberPublic [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -1845,6 +1849,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %FunctionMemberProtected.instance_fn.cpp_overload_set.type: type = cpp_overload_set_type @FunctionMemberProtected.instance_fn.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %FunctionMemberProtected.instance_fn.cpp_overload_set.value: %FunctionMemberProtected.instance_fn.cpp_overload_set.type = cpp_overload_set_value @FunctionMemberProtected.instance_fn.cpp_overload_set [concrete]
@@ -1877,6 +1882,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- import_function_member_protected_extend_call_static_in_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %FunctionMemberProtected: type = class_type @FunctionMemberProtected [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -1926,6 +1932,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- import_overload_set_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %OverloadSet: type = class_type @OverloadSet [concrete]
 // CHECK:STDOUT:   %OverloadSet.OverloadSet.cpp_overload_set.type: type = cpp_overload_set_type @OverloadSet.OverloadSet.cpp_overload_set [concrete]
@@ -2025,6 +2032,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- import_overload_set_protected_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %OverloadSet: type = class_type @OverloadSet [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -2225,6 +2233,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- import_overload_set_public_base_class_call_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %OverloadPublic: type = class_type @OverloadPublic [concrete]
 // CHECK:STDOUT:   %OverloadPublic.Overload.cpp_overload_set.type: type = cpp_overload_set_type @OverloadPublic.Overload.cpp_overload_set [concrete]
@@ -2288,6 +2297,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- import_overload_set_public_base_class_derived_call_non_private.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %OverloadPublic: type = class_type @OverloadPublic [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -2400,6 +2410,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- import_overload_set_protected_base_class_derived_call_non_private.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %OverloadProtected: type = class_type @OverloadProtected [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -2512,6 +2523,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- base_class_public_access_allowed.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Public: type = class_type @Public [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
@@ -2635,6 +2647,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- fail_base_class_public_access_denied.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Public: type = class_type @Public [concrete]
 // CHECK:STDOUT: }
@@ -2663,6 +2676,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- base_class_protected_access_allowed.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Protected: type = class_type @Protected [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
@@ -2762,6 +2776,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: --- base_class_public_protected_access_allowed.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %PublicProtected: type = class_type @PublicProtected [concrete]
 // CHECK:STDOUT:   %Protected: type = class_type @Protected [concrete]

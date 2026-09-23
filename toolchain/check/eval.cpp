@@ -3340,15 +3340,15 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
     llvm::append_range(declared_facet_type->self_impls_named_constraints,
                        rhs.extend_named_constraints);
   } else {
-    auto lhs_facet_or_type = GetCanonicalFacetOrTypeValue(context, lhs_id);
+    auto lhs_facet = GetCanonicalFacet(context, lhs_id);
 
     auto extends_interface = [=](SemIR::SpecificInterface si)
         -> SemIR::DeclaredFacetType::TypeImplsInterface {
-      return {lhs_facet_or_type, si};
+      return {lhs_facet, si};
     };
     auto extends_constraint = [=](SemIR::SpecificNamedConstraint sc)
         -> SemIR::DeclaredFacetType::TypeImplsNamedConstraint {
-      return {lhs_facet_or_type, sc};
+      return {lhs_facet, sc};
     };
 
     // Extend constraints are copied over without replacing anything, but are

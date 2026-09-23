@@ -131,6 +131,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %const.13f: type = const_type %C [concrete]
 // CHECK:STDOUT:   %ptr.77f: type = ptr_type %const.13f [concrete]
@@ -259,6 +260,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT: --- collapse.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %const.13f: type = const_type %C [concrete]
 // CHECK:STDOUT:   %ptr.77f: type = ptr_type %const.13f [concrete]
