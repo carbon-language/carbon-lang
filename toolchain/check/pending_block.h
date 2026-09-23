@@ -24,6 +24,8 @@ class PendingBlock {
   PendingBlock(const PendingBlock&) = delete;
   auto operator=(const PendingBlock&) -> PendingBlock& = delete;
 
+  auto context() -> Context& { return *context_; }
+
   // A scope in which we will tentatively add instructions to a pending block.
   // If we leave the scope without inserting or merging the block, instructions
   // added after this point will be removed again.
@@ -126,9 +128,11 @@ class PendingBlock {
     return result_id;
   }
 
-  // Like MergeReplacing, but just return the resulting instruuction rather than
-  // replacing an existing instruction with it. Does not add the instruction to
-  // a block.
+  // Merges this pending block into a single instruction that executes the
+  // instructions in the block and produces `value_id`. Cleanups are registered,
+  // but the new instruction is not added to a block; the caller is expected to
+  // add it somewhere suitable. This is used during template actions to produce
+  // the pending block as an action result.
   auto MergeInNoBlock(SemIR::InstId value_id) -> SemIR::InstId {
     auto result_id = value_id;
     if (insts_.size() != 1 || insts_[0] != value_id) {

@@ -265,10 +265,21 @@ auto GetOrAddInstWithSpecificConstantValue(Context& context,
                                            SemIR::InstId inst_id)
     -> SemIR::InstId {
   auto const_id = context.constant_values().GetAttached(inst_id);
-  if (!const_id.is_symbolic() ||
-      context.constant_values().IsAttached(const_id)) {
+  if (!const_id.is_symbolic()) {
     return inst_id;
   }
+
+  // If the instruction's constant value is is already attached to the current
+  // generic, we can use it directly. Otherwise, map to the unattached constant.
+  if (context.constant_values().IsAttached(const_id)) {
+    auto symbolic = context.constant_values().GetSymbolicConstant(const_id);
+    if (symbolic.generic_id ==
+        context.generic_region_stack().PeekPendingGeneric().generic_id) {
+      return inst_id;
+    }
+    inst_id = symbolic.inst_id;
+  }
+
   return AddGenericConstantInstToEvalBlock(context, inst_id);
 }
 

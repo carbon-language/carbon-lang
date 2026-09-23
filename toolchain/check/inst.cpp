@@ -81,7 +81,7 @@ auto AddInstInNoBlock(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
   return inst_id;
 }
 
-auto AddInstToEvalBlock(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
+auto AddTemplateConstantInstToEvalBlock(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
   CARBON_VLOG_TO(context.vlog_stream(), "AddInstToEvalBlock: {0}\n",

@@ -1261,16 +1261,20 @@ struct InitializeAction {
        .is_lowered = false});
 
   struct Target {
-    // The target type for the conversion.
+    // The target type for the initialization.
     TypeInstId target_type_inst_id;
-    // The storage for the conversion.
+    // The storage for the initialization.
     MetaInstId storage_id;
     // Whether this is required to be an in-place initialization.
     BoolValue in_place;
   };
 
+  // A tuple of InstTypes: one for the finished initialization expression, then
+  // one for each of the storage arguments in the source expression.
   TypeId type_id;
-  MetaInstId inst_id;
+  // The source initializing expression.
+  MetaInstId init_id;
+  // Information about the target of the initialization.
   BundleId<Target> target_id;
 };
 

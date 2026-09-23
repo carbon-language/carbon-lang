@@ -74,9 +74,10 @@ static auto GetStorageArgKind(const SemIR::File& sem_ir,
           sem_ir.insts().TryGetAs<SemIR::SpliceBlock>(storage_id)) {
     storage_id = splice_block->result_id;
   }
-  if (auto splice_id = sem_ir.insts().TryGetAs<SemIR::SpliceInst>(storage_id)) {
+  if (auto splice_inst =
+          sem_ir.insts().TryGetAs<SemIR::SpliceInst>(storage_id)) {
     if (auto tuple_access_id =
-            sem_ir.insts().TryGetAs<SemIR::TupleAccess>(splice_id->inst_id)) {
+            sem_ir.insts().TryGetAs<SemIR::TupleAccess>(splice_inst->inst_id)) {
       return {.kind = StorageArgKind::Splice,
               .index = tuple_access_id->index.index};
     }
@@ -84,13 +85,21 @@ static auto GetStorageArgKind(const SemIR::File& sem_ir,
   return {.kind = StorageArgKind::Other};
 }
 
-// If the initializing expression `init_id` has a storage argument that refers
-// to a temporary, overwrites it with the inst at `target.storage_id`, and
-// returns the ID that should now be used to refer to `init_id`'s storage. Has
-// no effect and returns `target.storage_id` unchanged if `target.storage_id` is
-// None, if `init_id` doesn't have a storage arg, or if the storage argument
-// doesn't point to a temporary. In the latter case, we assume it was set
-// correctly when the instruction was created.
+// Updates the storage argument of an initializer to refer to the storage of the
+// given conversion target. Consumes the target's `storage_id` instruction and
+// returns a reference instruction that should be used to refer to the storage
+// of the initializer.
+//
+// - If `target.storage_id` is None or the initializing expression `init_id`
+//   doesn't have a storage argument, has no effect.
+// - If `init_id`'s storage argument refers to a temporary, overwrites it with
+//   the inst at `target.storage_id`.
+// - If `init_id`'s storage argument refers to a splice, then we are performing
+//   instantiation of an initialization action; the storage for that slice is
+//   tracked in the `template_storage_args` on the `ConversionTarget` instead of
+//   modifying the template's IR.
+// - Otherwise, `init_id`'s storage argument is assumed to have already been set
+//   to the correct storage when the instruction was created.
 static auto OverwriteTemporaryStorageArg(SemIR::File& sem_ir,
                                          SemIR::InstId init_id,
                                          const ConversionTarget& target)
@@ -128,6 +137,8 @@ static auto OverwriteTemporaryStorageArg(SemIR::File& sem_ir,
     case StorageArgKind::Other: {
       // Something else is already in the storage argument: leave it alone.
       // TODO: Should this happen?
+      // TODO: Should we return the InstId we found in the storage argument
+      // instead of the target's storage?
       return target.storage_id;
     }
   }
@@ -151,17 +162,15 @@ static auto VisitAllTemporaryStorageArgs(
             context.insts().TryGetAsIfValid<SemIR::AnyCompoundLiteral>(
                 init_id)) {
       // Reverse the elements so we pop them in order.
-      auto range = llvm::reverse(
-          context.inst_blocks().Get(compound_lit_inst->elements_id));
-      worklist.append(range.begin(), range.end());
+      llvm::append_range(worklist, llvm::reverse(context.inst_blocks().Get(
+                                       compound_lit_inst->elements_id)));
       continue;
     }
 
     // If it's not an initializing expression, it doesn't have a storage
     // argument.
     auto category = SemIR::GetExprCategory(context.sem_ir(), init_id);
-    if (category != SemIR::ExprCategory::InPlaceInitializing &&
-        category != SemIR::ExprCategory::ReprInitializing) {
+    if (!SemIR::IsInitializerCategory(category)) {
       continue;
     }
 
@@ -304,6 +313,9 @@ struct LiteralElements {
   // behalf of a specific, the specific in which the elements should be
   // interpreted. Otherwise `None`.
   SemIR::SpecificId specific_id = SemIR::SpecificId::None;
+
+  // Returns whether the aggregate expression was a literal.
+  auto has_value() const -> bool { return elems_id.has_value(); }
 };
 }  // namespace
 
@@ -312,13 +324,10 @@ struct LiteralElements {
 // aggregate and indexing into it. When performing a conversion as an action
 // within a specific, the literal is wrapped in a `SpecificInst`, and its
 // elements are instructions within the generic, so the specific is returned
-// along with them.
-//
-// Otherwise, returns no elements, and materializes a temporary for `value_id`
-// if it is an initializing expression.
+// along with them. Otherwise, returns no elements.
 template <typename LiteralInstT>
-static auto GetAggregateLiteralElementsOrMaterialize(Context& context,
-                                                     SemIR::InstId& value_id)
+static auto GetAggregateLiteralElements(Context& context,
+                                        SemIR::InstId value_id)
     -> LiteralElements {
   auto& sem_ir = context.sem_ir();
   auto value = sem_ir.insts().Get(value_id);
@@ -337,8 +346,7 @@ static auto GetAggregateLiteralElementsOrMaterialize(Context& context,
             .specific_id = specific_id};
   }
 
-  value_id = MaterializeIfInitializer(context, value_id);
-  return LiteralElements();
+  return {};
 }
 
 // Converts an element of one aggregate so that it can be used as an element of
@@ -379,8 +387,8 @@ static auto ConvertAggregateElement(
     if (src_literal.specific_id.has_value()) {
       // The literal is an instruction in a generic, and so are its elements.
       // Refer to the corresponding instruction in the specific instead.
-      src_elem_id = AddSpecificInst(context, src_literal.specific_id, loc_id,
-                                    src_elem_id);
+      src_elem_id =
+          AddSpecificInst(context, src_elem_id, src_literal.specific_id);
     }
   }
 
@@ -416,8 +424,11 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   // If we're initializing from a tuple literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
   // result.
-  auto literal = GetAggregateLiteralElementsOrMaterialize<SemIR::TupleLiteral>(
-      context, value_id);
+  auto literal =
+      GetAggregateLiteralElements<SemIR::TupleLiteral>(context, value_id);
+  if (!literal.has_value()) {
+    value_id = MaterializeIfInitializer(context, value_id);
+  }
 
   // Check that the tuple is the right size.
   std::optional<uint64_t> array_bound =
@@ -512,8 +523,11 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   // If we're initializing from a tuple literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
   // result.
-  auto literal = GetAggregateLiteralElementsOrMaterialize<SemIR::TupleLiteral>(
-      context, value_id);
+  auto literal =
+      GetAggregateLiteralElements<SemIR::TupleLiteral>(context, value_id);
+  if (!literal.has_value()) {
+    value_id = MaterializeIfInitializer(context, value_id);
+  }
 
   // Check that the tuples are the same size.
   if (src_elem_types.size() != dest_elem_types.size()) {
@@ -787,8 +801,11 @@ static auto ConvertStructToStructOrClass(
   // If we're initializing from a struct literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
   // result.
-  auto literal = GetAggregateLiteralElementsOrMaterialize<SemIR::StructLiteral>(
-      context, value_id);
+  auto literal =
+      GetAggregateLiteralElements<SemIR::StructLiteral>(context, value_id);
+  if (!literal.has_value()) {
+    value_id = MaterializeIfInitializer(context, value_id);
+  }
 
   Set<SemIR::NameId> dest_field_names;
   for (auto field : dest_elem_fields) {
@@ -2003,12 +2020,11 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
       return Done{SemIR::ErrorInst::InstId};
 
     case SemIR::ExprCategory::Dependent:
-      return Done{AddDependentActionSplice(
+      return Done{AddDependentActionSplice<SemIR::ConvertToCategoryAction>(
           context_, loc_id_,
-          SemIR::ConvertToCategoryAction{
-              .type_id = SemIR::InstType::TypeId,
-              .inst_id = expr_id,
-              .conversion_kind = SemIR::ElementIndex(target_.kind)},
+          {.type_id = SemIR::InstType::TypeId,
+           .inst_id = expr_id,
+           .conversion_kind = SemIR::ElementIndex(target_.kind)},
           context_.types().GetTypeInstId(
               context_.insts().Get(expr_id).type_id()))};
 
@@ -2172,23 +2188,21 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
     auto action_type_id = GetTupleType(context, action_type_elements_id);
 
     // Create the initialization action.
-    auto action_id = AddDependentActionInst(
+    auto action_id = AddDependentActionInst<SemIR::InitializeAction>(
         context, loc_id,
-        SemIR::InitializeAction{
-            .type_id = action_type_id,
-            .inst_id = expr_id,
-            .target_id =
-                context.bundles().AddCanonical(SemIR::InitializeAction::Target{
-                    .target_type_inst_id = target_type_inst_id,
-                    .storage_id = target.storage_id,
-                    .in_place = SemIR::BoolValue::From(
-                        target.kind ==
-                        ConversionTarget::InPlaceInitializing)})});
+        {.type_id = action_type_id,
+         .init_id = expr_id,
+         .target_id =
+             context.bundles().AddCanonical(SemIR::InitializeAction::Target{
+                 .target_type_inst_id = target_type_inst_id,
+                 .storage_id = target.storage_id,
+                 .in_place = SemIR::BoolValue::From(
+                     target.kind == ConversionTarget::InPlaceInitializing)})});
 
     // Extract the first result: this is the instruction that performs the
     // initialization and produces the result.
     int32_t index = 0;
-    auto result_id = AddInstToEvalBlock<SemIR::TupleAccess>(
+    auto result_id = AddTemplateConstantInstToEvalBlock<SemIR::TupleAccess>(
         context, loc_id,
         {.type_id = SemIR::InstType::TypeId,
          .tuple_id = action_id,
@@ -2199,18 +2213,19 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
     VisitAllTemporaryStorageArgs(
         context, target, expr_id, [&](SemIR::InstId storage_arg_id) {
           // Find the storage instructions in the action result.
-          auto storage_inst_id = AddInstToEvalBlock<SemIR::TupleAccess>(
-              context, loc_id,
-              {.type_id = SemIR::InstType::TypeId,
-               .tuple_id = action_id,
-               .index = SemIR::ElementIndex(index++)});
+          auto storage_inst_id =
+              AddTemplateConstantInstToEvalBlock<SemIR::TupleAccess>(
+                  context, loc_id,
+                  {.type_id = SemIR::InstType::TypeId,
+                   .tuple_id = action_id,
+                   .index = SemIR::ElementIndex(index++)});
 
           // Create new storage and replace the current storage argument with
           // it.
           auto type_id = context.insts().Get(storage_arg_id).type_id();
-          auto storage_id = target.storage_access_block->AddInst(
-              loc_id, SemIR::SpliceInst{.type_id = type_id,
-                                        .inst_id = storage_inst_id});
+          auto storage_id =
+              target.storage_access_block->AddInst<SemIR::SpliceInst>(
+                  loc_id, {.type_id = type_id, .inst_id = storage_inst_id});
           target.storage_access_block->MergeReplacing(storage_arg_id,
                                                       storage_id);
         });
@@ -2228,12 +2243,11 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
     }
     case ConversionTarget::Value: {
       // Special-cased action for the case where we know the target category.
-      return AddDependentActionSplice(
+      return AddDependentActionSplice<SemIR::ConvertToValueAction>(
           context, loc_id,
-          SemIR::ConvertToValueAction{
-              .type_id = SemIR::InstType::TypeId,
-              .inst_id = expr_id,
-              .target_type_inst_id = target_type_inst_id},
+          {.type_id = SemIR::InstType::TypeId,
+           .inst_id = expr_id,
+           .target_type_inst_id = target_type_inst_id},
           target_type_inst_id);
     }
     case ConversionTarget::ValueOrRef:
@@ -2244,15 +2258,14 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
     case ConversionTarget::ExplicitUnsafeAs:
     case ConversionTarget::Initializing:
     case ConversionTarget::InPlaceInitializing: {
-      return AddDependentActionSplice(
+      return AddDependentActionSplice<SemIR::ConvertAction>(
           context, loc_id,
-          SemIR::ConvertAction{
-              .type_id = SemIR::InstType::TypeId,
-              .inst_id = expr_id,
-              .target_id =
-                  context.bundles().AddCanonical(SemIR::ConvertAction::Target{
-                      .target_type_inst_id = target_type_inst_id,
-                      .conversion_kind = SemIR::ElementIndex(target.kind)})},
+          {.type_id = SemIR::InstType::TypeId,
+           .inst_id = expr_id,
+           .target_id =
+               context.bundles().AddCanonical(SemIR::ConvertAction::Target{
+                   .target_type_inst_id = target_type_inst_id,
+                   .conversion_kind = SemIR::ElementIndex(target.kind)})},
           target_type_inst_id);
     }
 
@@ -2309,18 +2322,16 @@ auto PerformAction(Context& context, SemIR::SpecificId specific_id,
   // will overwrite the other elements (the storage arguments) when we encounter
   // them during initialization.
   llvm::SmallVector<SemIR::InstId> result_ids;
-  result_ids.resize(context.inst_blocks()
-                        .Get(context.types()
-                                 .GetAs<SemIR::TupleType>(action.type_id)
-                                 .type_elements_id)
-                        .size(),
-                    SemIR::InstId::None);
+  auto result_tuple_type =
+      context.types().GetAs<SemIR::TupleType>(action.type_id);
+  result_ids.resize(
+      context.inst_blocks().Get(result_tuple_type.type_elements_id).size(),
+      SemIR::InstId::None);
 
   const auto& target_bundle = context.bundles().Get(action.target_id);
   PendingBlock target_block(&context);
-  auto specific_storage_id = AddSpecificInst(
-      context, target_block, specific_id,
-      SemIR::LocId(target_bundle.storage_id), target_bundle.storage_id);
+  auto specific_storage_id = AddSpecificInstToPendingBlock(
+      target_block, target_bundle.storage_id, specific_id);
   ConversionTarget target = {
       .kind = ConversionTarget::Kind(target_bundle.in_place.ToBool()
                                          ? ConversionTarget::InPlaceInitializing
@@ -2332,11 +2343,10 @@ auto PerformAction(Context& context, SemIR::SpecificId specific_id,
       .template_storage_args = result_ids};
 
   // Form a specific initializer and initialize from it.
-  auto expr_id = AddSpecificInst(context, specific_id,
-                                 SemIR::LocId(action.inst_id), action.inst_id);
+  auto expr_id = AddSpecificInst(context, action.init_id, specific_id);
 
   // Perform the initialization. As a side effect, this will update
-  // template_storage_args to refer to parts of storage_id.
+  // `result_ids` to refer to parts of storage_id.
   expr_id = PerformBuiltinConversion(context, loc_id, expr_id, target);
   expr_id = PerformUserDefinedConversion(context, loc_id, expr_id, target);
   result_ids[0] = PerformCategoryConversion(context, loc_id, expr_id, target);
@@ -2345,7 +2355,7 @@ auto PerformAction(Context& context, SemIR::SpecificId specific_id,
   // initialize.
   int next_result_index = 1;
   VisitAllTemporaryStorageArgs(
-      context, target, action.inst_id, [&](SemIR::InstId storage_arg_id) {
+      context, target, action.init_id, [&](SemIR::InstId storage_arg_id) {
         // TODO: We shouldn't need to do this. Instead, we should turn off
         // rewriting of `action.inst_id` and map into the specific ourselves
         // where needed.
