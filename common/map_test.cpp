@@ -7,7 +7,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <concepts>
 #include <initializer_list>
+#include <iterator>
+#include <ranges>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -37,6 +40,7 @@ using RawHashtable::MoveOnlyTestData;
 using RawHashtable::TestData;
 using RawHashtable::TestKeyContext;
 using ::testing::Pair;
+using ::testing::UnorderedElementsAre;
 using ::testing::UnorderedElementsAreArray;
 
 template <typename MapT, typename MatcherRangeT>
@@ -47,9 +51,9 @@ auto ExpectMapElementsAre(MapT&& m, MatcherRangeT element_matchers) -> void {
   std::vector<
       std::pair<std::reference_wrapper<KeyT>, std::reference_wrapper<ValueT>>>
       map_entries;
-  m.ForEach([&map_entries](KeyT& k, ValueT& v) {
+  for (auto [k, v] : m.entries()) {
     map_entries.push_back({std::ref(k), std::ref(v)});
-  });
+  }
 
   // Use the GoogleMock unordered container matcher to validate and show errors
   // on wrong elements.
@@ -864,6 +868,113 @@ TEST(MapContextTest, Basic) {
   ExpectMapElementsAre(
       m, MakeKeyValues([](int k) { return k * 100 + 1; }, llvm::seq(1, 512)));
 }
+
+TYPED_TEST(MapTest, Range) {
+  using MapT = TypeParam;
+  using Range = decltype(std::declval<const MapT&>().entries());
+  using Iter = typename Range::Iterator;
+
+  static_assert(std::forward_iterator<Iter>);
+  static_assert(std::same_as<decltype(std::declval<Range>().begin()), Iter>);
+  static_assert(std::same_as<decltype(std::declval<Range>().end()), Iter>);
+  static_assert(std::ranges::forward_range<Range>);
+  static_assert(std::ranges::common_range<Range>);
+
+  MapT m;
+  EXPECT_EQ(m.entries().begin(), m.entries().end());
+  for (auto [k, v] : m.entries()) {
+    static_cast<void>(k);
+    static_cast<void>(v);
+    FAIL() << "Empty map range should have no elements";
+  }
+
+  for (int i = 1; i <= 5; ++i) {
+    m.Insert(i, i * 10);
+  }
+
+  int count = 0;
+  for (const auto& [k, v] : m.entries()) {
+    EXPECT_EQ(v, m.Lookup(k).value());
+    ++count;
+  }
+  EXPECT_EQ(count, 5);
+
+  EXPECT_THAT(m.entries(),
+              UnorderedElementsAre(Pair(1, 10), Pair(2, 20), Pair(3, 30),
+                                   Pair(4, 40), Pair(5, 50)));
+
+  using KeyT = typename MapT::KeyT;
+  using ValueT = typename MapT::ValueT;
+  using KeyContextT = typename MapT::KeyContextT;
+  MapView<const KeyT, const ValueT, KeyContextT> cv = m;
+  int cv_count = 0;
+  for (auto [k, v] : cv.entries()) {
+    static_assert(std::is_const_v<std::remove_reference_t<decltype(k)>>);
+    static_assert(std::is_const_v<std::remove_reference_t<decltype(v)>>);
+    EXPECT_EQ(v, m.Lookup(k).value());
+    ++cv_count;
+  }
+  EXPECT_EQ(cv_count, 5);
+  EXPECT_THAT(cv.entries(),
+              UnorderedElementsAre(Pair(1, 10), Pair(2, 20), Pair(3, 30),
+                                   Pair(4, 40), Pair(5, 50)));
+
+  for (auto [k, v] : m.entries()) {
+    if constexpr (requires { v.value; }) {
+      v.value = 99;
+    } else {
+      v = 99;
+    }
+  }
+  for (const auto& [k, v] : m.entries()) {
+    if constexpr (requires { v.value; }) {
+      EXPECT_EQ(v.value, 99);
+    } else {
+      EXPECT_EQ(v, 99);
+    }
+  }
+  EXPECT_THAT(m.entries(),
+              UnorderedElementsAre(Pair(1, 99), Pair(2, 99), Pair(3, 99),
+                                   Pair(4, 99), Pair(5, 99)));
+
+  auto r = m.entries();
+  int iter_count = 0;
+  for (auto it = r.begin(); it != r.end(); ++it) {
+    EXPECT_EQ(it->second, m.Lookup(it->first).value());
+    EXPECT_EQ((*it).second, m.Lookup((*it).first).value());
+    ++iter_count;
+  }
+  EXPECT_EQ(iter_count, 5);
+
+  auto it = r.begin();
+  auto prev = it++;
+  EXPECT_NE(it, prev);
+}
+
+TYPED_TEST(MoveOnlyMapTest, Range) {
+  TypeParam m;
+  m.Insert(1, 10);
+  m.Insert(2, 20);
+
+  int count = 0;
+  for (auto [k, v] : m.entries()) {
+    EXPECT_EQ(v.value, k.value * 10);
+    ++count;
+  }
+  EXPECT_EQ(count, 2);
+}
+
+#ifndef NDEBUG
+TEST(MapDeathTest, MutateDuringIterationFails) {
+  EXPECT_DEATH(([] {
+                 Map<int, int> m;
+                 m.Insert(1, 10);
+                 auto range = m.entries();
+                 m.Insert(2, 20);
+               }()),
+               "Hashtable mutated during iteration");
+}
+#endif
 
 }  // namespace
 }  // namespace Carbon::Testing

@@ -83,6 +83,7 @@ var x: Cpp.TwoTemplates(Cpp.A, true);
 // CHECK:STDOUT: --- valid.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %TwoTemplates: type = class_type @TwoTemplates [concrete]
 // CHECK:STDOUT:   %pattern_type.f5e: type = pattern_type %TwoTemplates [concrete]
 // CHECK:STDOUT:   %x.patt: %pattern_type.f5e = ref_binding_pattern x [concrete]

@@ -265,7 +265,9 @@ static auto BuildCppDestroyWitness(
     return fn_id;
   }
   return BuildDestroyWitness(
-      context, loc_id, GetFacetAsType(context, query_self_const_id),
+      context, loc_id,
+      GetFacetAccessType(
+          context, context.constant_values().GetInstId(query_self_const_id)),
       query_self_const_id, query_specific_interface, {fn_id});
 }
 

@@ -67,11 +67,6 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::SpecificInterface query_specific_interface,
                          bool build_witness) -> std::optional<SemIR::InstId>;
 
-// Given a value whose type `IsFacetTypeOrError`, returns the corresponding
-// type.
-auto GetFacetAsType(Context& context, SemIR::ConstantId facet_or_type_const_id)
-    -> SemIR::TypeId;
-
 // Builds a witness for the `Destroy` interface.
 //
 // `op_id` refers to the synthesised `Destroy.Op` and is generated differently

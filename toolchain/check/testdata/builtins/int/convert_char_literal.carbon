@@ -61,6 +61,7 @@ let c: CharLiteral = ConvertFromIntLiteral(0x110000);
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.8c6: type = pattern_type Core.CharLiteral [concrete]
 // CHECK:STDOUT:   %ConvertFromIntLiteral.type: type = fn_type @ConvertFromIntLiteral [concrete]
 // CHECK:STDOUT:   %ConvertFromIntLiteral: %ConvertFromIntLiteral.type = struct_value () [concrete]

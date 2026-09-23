@@ -69,6 +69,14 @@ class MapView
   using KeyContextT = ImplT::KeyContextT;
   using MetricsT = ImplT::MetricsT;
 
+  // A key and its value, as a pair of references. This is what iterating the
+  // map produces; there is no object in the table combining the two.
+  using Entry = ImplT::EntryRefT;
+
+  // A range over the key-value entries of the map. Bound to the lifetime of
+  // the viewed map, and invalidated by mutating it.
+  using Range = ImplT::EntryRange;
+
   // This type represents the result of lookup operations. It encodes whether
   // the lookup was a success as well as accessors for the key and value.
   class LookupKVResult {
@@ -111,10 +119,8 @@ class MapView
   auto operator[](LookupKeyT lookup_key) const -> ValueT*
     requires(std::default_initializable<KeyContextT>);
 
-  // Run the provided callback for every key and value in the map.
-  template <typename CallbackT>
-  auto ForEach(CallbackT callback) -> void
-    requires(std::invocable<CallbackT, KeyT&, ValueT&>);
+  // Returns a range for iterating over all key-value entries in the map.
+  auto entries() const -> Range;
 
   // This routine is relatively inefficient and only intended for use in
   // benchmarking or logging of performance anomalies. The specific metrics
@@ -169,6 +175,8 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
   using ViewT = MapView<KeyT, ValueT, KeyContextT>;
   using LookupKVResult = ViewT::LookupKVResult;
   using MetricsT = ImplT::MetricsT;
+  using Entry = ViewT::Entry;
+  using Range = ViewT::Range;
 
   // The result type for insertion operations both indicates whether an insert
   // was needed (as opposed to finding an existing element), and provides access
@@ -228,12 +236,12 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
   }
 
   // Convenience forwarder to the view type.
-  template <typename CallbackT>
-  auto ForEach(CallbackT callback) const -> void
-    requires(std::invocable<CallbackT, KeyT&, ValueT&>)
-  {
-    return ViewT(*this).ForEach(callback);
-  }
+  auto entries() const& -> Range { return ViewT(*this).entries(); }
+  // Deleted on rvalues: the range refers to storage owned by this table, so a
+  // range built from a temporary map would dangle. Both qualifiers are needed
+  // as `&&` alone would leave a const rvalue binding to the `const&` overload.
+  auto entries() && = delete;
+  auto entries() const&& = delete;
 
   // Convenience forwarder to the view type.
   auto ComputeMetrics(KeyContextT key_context = KeyContextT()) const
@@ -424,14 +432,9 @@ auto MapView<InputKeyT, InputValueT, InputKeyContextT>::operator[](
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
-template <typename CallbackT>
-auto MapView<InputKeyT, InputValueT, InputKeyContextT>::ForEach(
-    CallbackT callback) -> void
-  requires(std::invocable<CallbackT, KeyT&, ValueT&>)
-{
-  this->ForEachEntry(
-      [callback](EntryT& entry) { callback(entry.key(), entry.value()); },
-      [](auto...) {});
+auto MapView<InputKeyT, InputValueT, InputKeyContextT>::entries() const
+    -> Range {
+  return this->ImplT::EntriesImpl();
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>

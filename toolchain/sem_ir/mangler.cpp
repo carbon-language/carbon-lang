@@ -123,7 +123,6 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           case SemIR::NamespaceType::Kind:
           case SemIR::RequireSpecificDefinitionType::Kind:
           case SemIR::SpecificFunctionType::Kind:
-          case SemIR::TypeType::Kind:
           case SemIR::UnspecifiedValueType::Kind:
           case SemIR::VtableType::Kind:
           case SemIR::WitnessType::Kind: {
@@ -140,6 +139,11 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
             break;
           }
           default: {
+            if (self_const_inst_id == SemIR::TypeType::TypeInstId) {
+              os << "type";
+              break;
+            }
+
             // Fall back to including a fingerprint.
             MangleFingerprint(os, &sem_ir(), self_const_inst_id);
             break;

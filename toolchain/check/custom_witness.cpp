@@ -34,23 +34,6 @@
 
 namespace Carbon::Check {
 
-// Given a value whose type `IsFacetTypeOrError`, returns the corresponding
-// type.
-auto GetFacetAsType(Context& context, SemIR::ConstantId facet_or_type_const_id)
-    -> SemIR::TypeId {
-  auto facet_or_type_id =
-      context.constant_values().GetInstId(facet_or_type_const_id);
-  auto type_type_id = context.insts().Get(facet_or_type_id).type_id();
-  CARBON_CHECK(context.types().IsFacetTypeOrError(type_type_id));
-
-  if (context.types().Is<SemIR::FacetType>(type_type_id)) {
-    // It's a facet; access its type.
-    facet_or_type_id = context.types().GetTypeInstId(
-        GetFacetAccessType(context, facet_or_type_id));
-  }
-  return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
-}
-
 // Make the CanonicalKey for a generated function `op_name_id` in the interface
 // `core_specific_interface`.
 static auto MakeGeneratedFunctionKey(
@@ -247,13 +230,13 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
                            SemIR::SpecificInterface query_specific_interface)
     -> DestroyFormat {
   auto inst_id = context.constant_values().GetInstId(
-      GetCanonicalFacetOrTypeValue(context, query_self_const_id));
+      GetCanonicalFacet(context, query_self_const_id));
   auto inst = context.insts().Get(inst_id);
 
-  if (context.types().Is<SemIR::FacetType>(inst.type_id())) {
-    // The value's type is a facet (whose type is a facet type). We don't
-    // provide a custom witness for symbolic values of type facet. The witness
-    // will be found from impl lookup.
+  if (context.types().IsConstrainedFacetType(inst.type_id())) {
+    // The value's type is a symbolic constrained facet. We don't provide a
+    // custom witness for constrained facets. The witness must be found in the
+    // constraints by impl lookup.
     CARBON_CHECK(query_self_const_id.is_symbolic());
     return DestroyFormat::NoDestroy;
   }
@@ -365,7 +348,6 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
     case SemIR::IntLiteralType::Kind:
     case SemIR::IntType::Kind:
     case SemIR::PointerType::Kind:
-    case SemIR::TypeType::Kind:
       // Trivially destructible.
       return DestroyFormat::Trivial;
 
@@ -398,7 +380,7 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
       // TODO: Implement destruction of the type.
       break;
     default:
-      CARBON_FATAL("Unexpected type for MakeDestroyOpBody: {0}", inst);
+      CARBON_FATAL("Unexpected type for MakeSubobjectDestroyOpBody: {0}", inst);
   }
 
   AddInst(context, loc_id, SemIR::Return{});
@@ -516,11 +498,8 @@ static auto MakeDestroySelfDestructFunction(
         params.size() == 1,
         "`Core.Destroy.SelfDestruct` should only have `ref self` as its "
         "parameter");
-    // op_id = PerformCompoundMemberAccess(context, loc_id, params[0], op_id);
     op_id = PerformCall(context, loc_id, op_id, {params[0]}, true);
     DiscardExpr(context, op_id);
-    // subobject_destroy_id = PerformCompoundMemberAccess(
-    //     context, loc_id, params[0], subobject_destroy_id);
     subobject_destroy_id =
         PerformCall(context, loc_id, subobject_destroy_id, {params[0]}, true);
     DiscardExpr(context, subobject_destroy_id);
@@ -569,7 +548,8 @@ static auto GetTypesForSelfFacet(
                                                 query_specific_interface));
   // The Self facet needs to point to a type value. If it's not one already,
   // convert to type.
-  auto query_self_as_type_id = GetFacetAsType(context, query_self_const_id);
+  auto query_self_as_type_id = GetFacetAccessType(
+      context, context.constant_values().GetInstId(query_self_const_id));
   return {facet_type_for_query_specific_interface, query_self_as_type_id};
 }
 
@@ -751,7 +731,8 @@ auto BuildPrimitiveCopyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
-  auto self_type_id = GetFacetAsType(context, query_self_const_id);
+  auto self_type_id = GetFacetAccessType(
+      context, context.constant_values().GetInstId(query_self_const_id));
 
   auto op_id = MakeBuiltinOperatorFunction(
       context, loc_id, {self_type_id}, self_type_id, CoreIdentifier::Op,
@@ -797,7 +778,8 @@ static auto BuildCarbonDestroyWitness(
     -> SemIR::InstId {
   CARBON_CHECK(format != DestroyFormat::NoDestroy);
 
-  auto self_type_id = GetFacetAsType(context, query_self_const_id);
+  auto self_type_id = GetFacetAccessType(
+      context, context.constant_values().GetInstId(query_self_const_id));
   auto subobject_destroy_op_id = MakeSubobjectDestroyOpFunction(
       context, loc_id, self_type_id, query_specific_interface.interface_id,
       format);
@@ -856,8 +838,10 @@ static auto MakeIntFitsInWitness(
     return std::nullopt;
   }
 
-  auto src_type_id = GetFacetAsType(context, query_self_const_id);
-  auto dest_type_id = GetFacetAsType(context, dest_const_id);
+  auto src_type_id = GetFacetAccessType(
+      context, context.constant_values().GetInstId(query_self_const_id));
+  auto dest_type_id = GetFacetAccessType(
+      context, context.constant_values().GetInstId(dest_const_id));
 
   auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
   if (!RequireCompleteType(context, src_type_id, loc_id, context_fn) ||
@@ -952,8 +936,10 @@ static auto MakeFloatFitsInWitness(
     return std::nullopt;
   }
 
-  auto src_type_id = GetFacetAsType(context, query_self_const_id);
-  auto dest_type_id = GetFacetAsType(context, dest_const_id);
+  auto src_type_id = GetFacetAccessType(
+      context, context.constant_values().GetInstId(query_self_const_id));
+  auto dest_type_id = GetFacetAccessType(
+      context, context.constant_values().GetInstId(dest_const_id));
 
   auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
   if (!RequireCompleteType(context, src_type_id, loc_id, context_fn) ||

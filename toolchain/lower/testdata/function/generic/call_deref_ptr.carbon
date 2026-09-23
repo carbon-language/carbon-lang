@@ -120,7 +120,7 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.4d9f279dbc2b9f6f(ptr %x) #0 !dbg !84 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %A.call = call %type.26 @_CA.Main.71d6c598da8ca542(%type.26 zeroinitializer), !dbg !87
+// CHECK:STDOUT:   %A.call = call %type.26 @_CA.Main.c3359c2c217ad593(%type.26 zeroinitializer), !dbg !87
 // CHECK:STDOUT:   call void @_CB.Main.4d9f279dbc2b9f6f(ptr %x), !dbg !91
 // CHECK:STDOUT:   ret void, !dbg !92
 // CHECK:STDOUT: }
@@ -128,13 +128,13 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.cfa50e0c7743522e(ptr %x) #0 !dbg !94 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %A.call = call %type.26 @_CA.Main.71d6c598da8ca542(%type.26 zeroinitializer), !dbg !97
+// CHECK:STDOUT:   %A.call = call %type.26 @_CA.Main.c3359c2c217ad593(%type.26 zeroinitializer), !dbg !97
 // CHECK:STDOUT:   call void @_CB.Main.cfa50e0c7743522e(ptr %x), !dbg !99
 // CHECK:STDOUT:   ret void, !dbg !100
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr %type.26 @_CA.Main.71d6c598da8ca542(%type.26 %x) #0 !dbg !102 {
+// CHECK:STDOUT: define linkonce_odr %type.26 @_CA.Main.c3359c2c217ad593(%type.26 %x) #0 !dbg !102 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret %type.26 %x, !dbg !108
 // CHECK:STDOUT: }
@@ -177,7 +177,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 1, 3, 2 }
-// CHECK:STDOUT: uselistorder ptr @_CA.Main.71d6c598da8ca542, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CA.Main.c3359c2c217ad593, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -251,7 +251,7 @@ fn M() {
 // CHECK:STDOUT: !99 = !DILocation(line: 32, column: 3, scope: !94)
 // CHECK:STDOUT: !100 = !DILocation(line: 30, column: 1, scope: !94)
 // CHECK:STDOUT: !101 = !{!95}
-// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "A", linkageName: "_CA.Main.71d6c598da8ca542", scope: null, file: !32, line: 18, type: !89, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !109)
+// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "A", linkageName: "_CA.Main.c3359c2c217ad593", scope: null, file: !32, line: 18, type: !89, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !109)
 // CHECK:STDOUT: !103 = !DILocalVariable(arg: 1, scope: !102, type: !39)
 // CHECK:STDOUT: !108 = !DILocation(line: 19, column: 3, scope: !102)
 // CHECK:STDOUT: !109 = !{!103}

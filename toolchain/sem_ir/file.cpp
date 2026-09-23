@@ -20,6 +20,7 @@
 #include "toolchain/base/value_store_impl.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -40,6 +41,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       value_stores_(&value_stores),
       filename_(std::move(filename)),
       entity_names_(check_ir_id),
+      default_values_(check_ir_id),
       functions_(check_ir_id),
       generated_functions_(check_ir_id),
       cpp_overload_sets_(check_ir_id),
@@ -55,7 +57,8 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       // 1 reserved id for `ObserveBlockId::Empty`.
       observe_blocks_(allocator_, check_ir_id, 1),
       associated_constants_(check_ir_id),
-      declared_facet_types_(check_ir_id),
+      // 1 reserved id for `DeclaredFacetTypeId::Empty`.
+      declared_facet_types_(check_ir_id, 1),
       identified_facet_types_(check_ir_id),
       impls_(*this),
       specific_interfaces_(check_ir_id),
@@ -66,10 +69,9 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       import_irs_(check_ir_id, 2),
       clang_decls_(check_ir_id),
       clang_decl_signatures_(check_ir_id),
-      // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
-      // instruction. It's not a "singleton" instruction, but it's a unique
-      // instruction id that comes right after the singletons.
-      insts_(this, SingletonInstKinds.size() + 1),
+      // We have some builtin instructions that have untagged fixed indices, and
+      // `NumBuiltinInsts` tracks how many.
+      insts_(this, NumBuiltinInsts),
       vtables_(check_ir_id),
       constant_values_(ConstantId::NotConstant, &insts_),
       inst_blocks_(allocator_, check_ir_id),
@@ -102,7 +104,20 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = InstType::TypeId},
        .object_layout = SemIR::ObjectLayout::Empty()});
 
-  insts_.Reserve(SingletonInstKinds.size());
+  auto empty_facet_type_id = declared_facet_types_.Add({});
+  CARBON_CHECK(empty_facet_type_id == DeclaredFacetTypeId::Empty);
+
+  insts_.Reserve(NumBuiltinInsts);
+  // Construct the `TypeType:TypeInstId` inst first, as it has InstId of 0. It
+  // goes in the `constants_` store so that all empty facet types dedupe to the
+  // singleton's constant value.
+  auto type_type_const_id = constants_.GetOrAdd(
+      FacetType{.type_id = TypeType::TypeId,
+                .declared_facet_type_id = DeclaredFacetTypeId::Empty},
+      ConstantDependence::None);
+  CARBON_CHECK(type_type_const_id == TypeType::ConstantId);
+  CARBON_CHECK(constant_values_.GetInstId(type_type_const_id) ==
+               TypeType::TypeInstId);
   for (auto kind : SingletonInstKinds) {
     auto inst_id =
         insts_.AddInNoBlock(LocIdAndInst::NoLoc(Inst::MakeSingleton(kind)));
@@ -160,6 +175,7 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
           map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
           map.Add("clang_decls", clang_decls_.OutputYaml());
           map.Add("clang_decl_signatures", clang_decl_signatures_.OutputYaml());
+          map.Add("default_values", default_values_.OutputYaml());
           map.Add("name_scopes", name_scopes_.OutputYaml());
           map.Add("entity_names", entity_names_.OutputYaml());
           map.Add("functions", functions_.OutputYaml());
@@ -200,6 +216,8 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "thunks_"), thunks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "default_values_"),
+                    default_values_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "interfaces_"), interfaces_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "impls_"), impls_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "generics_"), generics_);

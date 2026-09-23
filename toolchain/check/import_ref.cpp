@@ -38,6 +38,7 @@
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/observe.h"
+#include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/type_info.h"
@@ -179,6 +180,9 @@ class ImportContext {
   auto import_constant_values() -> const SemIR::ConstantValueStore& {
     return import_ir().constant_values();
   }
+  auto import_default_values() -> const SemIR::DefaultValueStore& {
+    return import_ir().default_values();
+  }
   auto import_entity_names() -> const SemIR::EntityNameStore& {
     return import_ir().entity_names();
   }
@@ -266,6 +270,9 @@ class ImportContext {
   auto local_vtables() -> SemIR::VtableStore& { return local_ir().vtables(); }
   auto local_constant_values() -> SemIR::ConstantValueStore& {
     return local_ir().constant_values();
+  }
+  auto local_default_values() -> SemIR::DefaultValueStore& {
+    return local_ir().default_values();
   }
   auto local_entity_names() -> SemIR::EntityNameStore& {
     return local_ir().entity_names();
@@ -2306,6 +2313,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::DefaultValuePattern inst)
     -> ResolveResult {
   auto subpattern = GetLocalImportRefInfo(resolver, inst.subpattern_id);
+  const auto& import_default_value =
+      resolver.import_default_values().Get(inst.default_value_id);
+  // We import the first owning declaration of a function, which must always
+  // have default values completely specified.
+  CARBON_CHECK(!import_default_value.is_unspecified);
+  auto value = GetLocalImportRefInfo(resolver, import_default_value.value_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -2316,7 +2329,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           .type_id = resolver.local_types().GetTypeIdForTypeConstantId(
               subpattern.local_type_const_id),
           .subpattern_id = AddLoadedImportRef(resolver, subpattern),
-          .default_value_id = inst.default_value_id,
+          .default_value_id = resolver.local_default_values().Add(
+              {.raw_id = SemIR::InstId::None,
+               .value_id = AddLoadedImportRef(resolver, value),
+               .is_unspecified = false}),
       });
 }
 
@@ -2425,7 +2441,6 @@ static auto ImportFunctionDecl(
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_param_patterns_id = SemIR::InstBlockId::None,
         .call_params_id = SemIR::InstBlockId::None,
-        .call_param_default_values_id = SemIR::InstBlockId::None,
         .call_param_ranges = import_function.call_param_ranges,
         .return_type_inst_id = SemIR::TypeInstId::None,
         .return_form_inst_id = SemIR::InstId::None,
@@ -2571,17 +2586,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   auto call_param_patterns = GetLocalBlockImportRefInfo(
       resolver, import_function.call_param_patterns_id);
-  auto call_param_default_values = GetLocalBlockImportRefInfo(
-      resolver, import_function.call_param_default_values_id);
-  llvm::SmallVector<SemIR::InstId> imported_default_values;
-  if (call_param_default_values.has_value()) {
-    auto import_fn = [&resolver](const auto& import_info) {
-      return GetLocalConstantInstId(resolver, import_info.import_inst_id);
-    };
-    llvm::append_range(imported_default_values,
-                       llvm::map_range(*call_param_default_values, import_fn));
-  }
-
   auto return_type_const_id = SemIR::ConstantId::None;
   if (import_function.return_type_inst_id.has_value()) {
     return_type_const_id =
@@ -2621,6 +2625,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto thunk_specific_data = GetLocalSpecificData(
       resolver, import_thunk_info ? import_thunk_info->specific_id
                                   : SemIR::SpecificId::None);
+  auto thunk_override_self_type_const_id = SemIR::ConstantId::None;
+  if (import_thunk_info) {
+    thunk_override_self_type_const_id =
+        GetLocalConstantId(resolver, import_thunk_info->override_self_type_id);
+  }
 
   auto& new_function = resolver.local_functions().Get(function_id);
   if (resolver.HasNewWork()) {
@@ -2631,10 +2640,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // Add the function declaration.
   new_function.call_param_patterns_id =
       AddLoadedImportRefBlock(resolver, call_param_patterns);
-  if (call_param_default_values.has_value()) {
-    new_function.call_param_default_values_id =
-        resolver.local_inst_blocks().Add(imported_default_values);
-  }
   new_function.parent_scope_id = parent_scope_id;
   new_function.implicit_param_patterns_id =
       AddLoadedImportRefBlock(resolver, implicit_param_patterns);
@@ -2656,6 +2661,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (import_function.definition_id.has_value()) {
     new_function.definition_id = new_function.first_owning_decl_id;
   }
+  new_function.default_value_arity = import_function.default_value_arity;
 
   switch (import_function.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::CppThunk:
@@ -2688,6 +2694,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       if (import_thunk_info->specific_id.has_value()) {
         local_thunk_info.specific_id = GetOrAddLocalSpecific(
             resolver, import_thunk_info->specific_id, thunk_specific_data);
+      }
+      if (thunk_override_self_type_const_id.has_value()) {
+        local_thunk_info.override_self_type_id =
+            resolver.local_types().GetTypeIdForTypeConstantId(
+                thunk_override_self_type_const_id);
       }
       new_function.SetThunk(resolver.local_ir().thunks().Add(local_thunk_info));
       break;
@@ -4569,8 +4580,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
                 "Constant value of constant instruction should refer to "
                 "the same instruction");
 
-  if (SemIR::IsSingletonInstId(constant_inst_id)) {
-    // Constants for builtins can be directly copied.
+  if (SemIR::IsSingletonInstId(constant_inst_id) ||
+      constant_inst_id == SemIR::TypeType::TypeInstId) {
+    // Constants for singletons and TypeType can be directly copied.
     return ResolveResult::Done(
         resolver.local_constant_values().Get(constant_inst_id));
   }
@@ -4976,15 +4988,21 @@ auto ImportRefResolver::ResolveType(SemIR::TypeId import_type_id)
   auto import_type_const_id = import_ir().types().GetConstantId(import_type_id);
   CARBON_CHECK(import_type_const_id.has_value());
 
-  if (auto import_type_inst_id = import_ir().types().GetAsTypeInstId(
-          import_ir().constant_values().GetInstId(import_type_const_id));
-      SemIR::IsSingletonInstId(import_type_inst_id)) {
-    // Builtins don't require constant resolution; we can use them directly.
+  auto import_type_inst_id = import_ir().types().GetAsTypeInstId(
+      import_ir().constant_values().GetInstId(import_type_const_id));
+
+  // Builtin types don't require constant resolution; we can use them directly.
+  if (SemIR::IsSingletonInstId(import_type_inst_id)) {
+    // Singletons are all types, and need to go through GetSingletonType to
+    // complete them.
     return GetSingletonType(local_context(), import_type_inst_id);
-  } else {
-    return local_types().GetTypeIdForTypeConstantId(
-        ResolveConstant(import_type_id.AsConstantId()));
+  } else if (import_type_inst_id == SemIR::TypeType::TypeInstId) {
+    // TypeType is the other builtin type, and is already complete.
+    return SemIR::TypeType::TypeId;
   }
+
+  return local_types().GetTypeIdForTypeConstantId(
+      ResolveConstant(import_type_id.AsConstantId()));
 }
 
 auto ImportRefResolver::HasNewWork() -> bool {

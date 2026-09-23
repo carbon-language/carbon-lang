@@ -32,6 +32,7 @@ let min: i32 = SubCharCharToI32('\u{0}', '\u{10FFFF}');
 // CHECK:STDOUT: --- sub_char.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %SubCharCharToIntLiteral.type: type = fn_type @SubCharCharToIntLiteral [concrete]
 // CHECK:STDOUT:   %SubCharCharToIntLiteral: %SubCharCharToIntLiteral.type = struct_value () [concrete]

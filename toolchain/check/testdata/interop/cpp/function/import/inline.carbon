@@ -88,6 +88,7 @@ fn MyF() {
 // CHECK:STDOUT: --- import_with_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %inline_with_def.cpp_overload_set.type: type = cpp_overload_set_type @inline_with_def.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %inline_with_def.cpp_overload_set.value: %inline_with_def.cpp_overload_set.type = cpp_overload_set_value @inline_with_def.cpp_overload_set [concrete]
@@ -115,6 +116,7 @@ fn MyF() {
 // CHECK:STDOUT: --- todo_fail_import_without_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %inline_without_def.cpp_overload_set.type: type = cpp_overload_set_type @inline_without_def.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %inline_without_def.cpp_overload_set.value: %inline_without_def.cpp_overload_set.type = cpp_overload_set_value @inline_without_def.cpp_overload_set [concrete]
@@ -145,6 +147,7 @@ fn MyF() {
 // CHECK:STDOUT: --- automatic_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]

@@ -21,22 +21,33 @@ struct EntityName : public Printable<EntityName> {
     if (name_id == SemIR::NameId::PeriodSelf) {
       out << ", is_frozen_period_self: " << is_frozen_period_self << "}";
     }
-    out << ", form: " << form_id << "}";
+    out << ", form: " << form_id << ", type: " << type_inst_id << "}";
+  }
+
+  // Returns a copy of this name with the fields that are not part of its
+  // identity cleared. Two `EntityName`s that differ only in how the declared
+  // type of the binding was written describe the same name.
+  auto IdentityKey() const -> EntityName {
+    EntityName key = *this;
+    key.type_inst_id = TypeInstId::None;
+    return key;
   }
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
       -> bool {
     // This requires that there are no padding bits in the type. This is upheld
     // since it holds values all of the same size: each is 32 bits, with one
-    // split into 30, 1, and 1 bits.
-    return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
+    // split into 29, 1, 1, and 1 bits.
+    EntityName lhs_key = lhs.IdentityKey();
+    EntityName rhs_key = rhs.IdentityKey();
+    return std::memcmp(&lhs_key, &rhs_key, sizeof(EntityName)) == 0;
   }
 
   // Hashing for EntityName. See common/hashing.h.
   friend auto CarbonHashValue(const EntityName& value, uint64_t seed)
       -> HashCode {
     Hasher hasher(seed);
-    hasher.HashRaw(value);
+    hasher.HashRaw(value.IdentityKey());
     return static_cast<HashCode>(hasher);
   }
 
@@ -73,6 +84,14 @@ struct EntityName : public Printable<EntityName> {
   // TODO: Unify this with the previous three fields, which also represent form
   // information.
   InstId form_id = InstId::None;
+
+  // The declared type of the binding, as written. This describes the same type
+  // as the binding's `type_id`, but may retain type sugar that `type_id` loses,
+  // such as the use of an alias to name the type. For a `:?` binding, this is
+  // the type component of `form_id`. This is `None` if the binding has no
+  // declared type, or if it was not written in the source, for example because
+  // the binding was synthesized or imported.
+  TypeInstId type_inst_id = TypeInstId::None;
 };
 
 // Value store for EntityName. In addition to the regular ValueStore

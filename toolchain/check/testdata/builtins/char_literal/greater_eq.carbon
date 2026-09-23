@@ -26,6 +26,7 @@ let c: bool = GreaterEq('a', 'b');
 // CHECK:STDOUT: --- greater_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %GreaterEq.type: type = fn_type @GreaterEq [concrete]
 // CHECK:STDOUT:   %GreaterEq: %GreaterEq.type = struct_value () [concrete]

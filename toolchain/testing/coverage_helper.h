@@ -72,8 +72,9 @@ auto TestKindCoverage(const std::string& manifest_path,
                                      << llvm::join(missing_kinds, Bullet);
 
   llvm::SmallVector<std::string> unexpected_matches;
-  covered_kinds.ForEach(
-      [&](const std::string& match) { unexpected_matches.push_back(match); });
+  for (const std::string& match : covered_kinds.entries()) {
+    unexpected_matches.push_back(match);
+  }
   llvm::sort(unexpected_matches);
   EXPECT_TRUE(unexpected_matches.empty())
       << "Matched things that aren't in the kind list:" << Bullet

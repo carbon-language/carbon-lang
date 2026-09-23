@@ -314,6 +314,7 @@ fn F() {
 // CHECK:STDOUT: --- import_default.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DefaultC: type = class_type @DefaultC [concrete]
 // CHECK:STDOUT:   %pattern_type.903: type = pattern_type %DefaultC [concrete]
@@ -398,6 +399,7 @@ fn F() {
 // CHECK:STDOUT: --- implicit_default.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DefaultC: type = class_type @DefaultC [concrete]
 // CHECK:STDOUT:   %pattern_type.903: type = pattern_type %DefaultC [concrete]
@@ -486,6 +488,7 @@ fn F() {
 // CHECK:STDOUT: --- import_non_default.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NonDefaultC: type = class_type @NonDefaultC [concrete]
 // CHECK:STDOUT:   %pattern_type.714: type = pattern_type %NonDefaultC [concrete]
@@ -609,6 +612,7 @@ fn F() {
 // CHECK:STDOUT: --- import_multiple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MultipleC: type = class_type @MultipleC [concrete]
 // CHECK:STDOUT:   %pattern_type.56a: type = pattern_type %MultipleC [concrete]
@@ -759,6 +763,7 @@ fn F() {
 // CHECK:STDOUT: --- import_default_arguments.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DefaultArgsC: type = class_type @DefaultArgsC [concrete]
 // CHECK:STDOUT:   %pattern_type.52d: type = pattern_type %DefaultArgsC [concrete]
@@ -917,6 +922,7 @@ fn F() {
 // CHECK:STDOUT: --- import_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TemplateC: type = class_type @TemplateC [concrete]
 // CHECK:STDOUT:   %pattern_type.f20: type = pattern_type %TemplateC [concrete]
@@ -1147,6 +1153,7 @@ fn F() {
 // CHECK:STDOUT: --- import_implicit_single_argument.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %SingleArgC: type = class_type @SingleArgC [concrete]
 // CHECK:STDOUT:   %pattern_type.bac: type = pattern_type %SingleArgC [concrete]
@@ -1299,6 +1306,7 @@ fn F() {
 // CHECK:STDOUT: --- import_implicit_multi_arguments.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MultiArgC: type = class_type @MultiArgC [concrete]
 // CHECK:STDOUT:   %pattern_type.b5c: type = pattern_type %MultiArgC [concrete]
