@@ -177,6 +177,12 @@ auto GetClassType(Context& context, SemIR::ClassId class_id,
   return GetTypeImpl<SemIR::ClassType>(context, class_id, specific_id);
 }
 
+auto GetCppFunctionPointerType(Context& context,
+                               SemIR::ClangFunctionPointerTypeId clang_type_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::CppFunctionPointerType>(context, clang_type_id);
+}
+
 auto GetCppOverloadSetType(Context& context,
                            SemIR::CppOverloadSetId overload_set_id,
                            SemIR::SpecificId specific_id) -> SemIR::TypeId {

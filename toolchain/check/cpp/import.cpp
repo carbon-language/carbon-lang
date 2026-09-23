@@ -1338,7 +1338,7 @@ static auto MapTagType(Context& context, const clang::TagType& type)
       .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
 }
 
-static auto MapFunctionPointerType(Context& context, SemIR::LocId loc_id,
+static auto MapFunctionPointerType(Context& context, SemIR::LocId /*loc_id*/,
                                    clang::QualType type) -> TypeExpr {
   CARBON_CHECK(type->isFunctionPointerType());
 
@@ -1346,14 +1346,10 @@ static auto MapFunctionPointerType(Context& context, SemIR::LocId loc_id,
       type.getCanonicalType().getTypePtr());
   CARBON_CHECK(clang_type_id.has_value());
 
-  auto inst_id = AddInst<SemIR::CppFunctionPointerType>(
-      context, loc_id,
-      {.type_id = SemIR::TypeType::TypeId, .clang_type_id = clang_type_id});
-  auto pointer_type_expr = ExprAsType(context, loc_id, inst_id);
-
   // TODO: wrap the pointer type in `Optional` unless it was marked
   // non-nullable.
-  return pointer_type_expr;
+  return TypeExpr::ForUnsugared(
+      context, GetCppFunctionPointerType(context, clang_type_id));
 }
 
 // Maps a C++ type that is not a wrapper type such as a pointer to a Carbon
@@ -2012,9 +2008,9 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 // Given a C++ callee and its imported Carbon function (as produced by
 // `ImportFunction`), this builds a simple-ABI thunk that invokes the callee,
 // and defines the imported function as calling it.
-static auto InsertThunk(Context& context, SemIR::LocId loc_id,
-                        const CalleeFunctionInfo& callee_info,
-                        SemIR::Function& function) -> void {
+static auto DefineAsThunkCall(Context& context, SemIR::LocId loc_id,
+                              const CalleeFunctionInfo& callee_info,
+                              SemIR::Function& function) -> void {
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(InCppThunk, Note,
@@ -2022,34 +2018,35 @@ static auto InsertThunk(Context& context, SemIR::LocId loc_id,
         builder.Note(loc_id, InCppThunk);
       });
 
-  if (clang::FunctionDecl* thunk_clang_decl =
-          BuildCppThunk(context, callee_info)) {
-    SemIR::ClangDeclSignature thunk_signature;
-    thunk_signature.kind = SemIR::ClangDeclSignature::Normal;
-    thunk_signature.num_params =
-        static_cast<int32_t>(thunk_clang_decl->getNumParams());
-    thunk_signature.passing_modes.assign(
-        thunk_signature.num_params,
-        SemIR::ClangDeclSignature::PassingMode::ByValue);
-    SemIR::ClangDeclSignatureId thunk_signature_id =
-        context.clang_decl_signatures().Add(std::move(thunk_signature));
-
-    CalleeFunctionInfo thunk_callee_info(context, thunk_clang_decl,
-                                         thunk_signature_id);
-    if (auto thunk_decl_id =
-            ImportFunction(context, loc_id, thunk_callee_info)) {
-      context.clang_decls().Add({.key = SemIR::ClangDeclKey::ForFunctionDecl(
-                                     thunk_clang_decl, thunk_signature_id),
-                                 .inst_id = *thunk_decl_id,
-                                 .is_imported = true});
-      auto thunk_function_id = context.insts()
-                                   .GetAs<SemIR::FunctionDecl>(*thunk_decl_id)
-                                   .function_id;
-      auto& thunk_function = context.functions().Get(thunk_function_id);
-      thunk_function.SetCppThunk(function.first_owning_decl_id);
-      function.SetHasCppThunk(*thunk_decl_id);
-    }
+  clang::FunctionDecl* thunk_clang_decl = BuildCppThunk(context, callee_info);
+  if (thunk_clang_decl == nullptr) {
+    return;
   }
+  SemIR::ClangDeclSignature thunk_signature;
+  thunk_signature.kind = SemIR::ClangDeclSignature::Normal;
+  thunk_signature.num_params =
+      static_cast<int32_t>(thunk_clang_decl->getNumParams());
+  thunk_signature.passing_modes.assign(
+      thunk_signature.num_params,
+      SemIR::ClangDeclSignature::PassingMode::ByValue);
+  SemIR::ClangDeclSignatureId thunk_signature_id =
+      context.clang_decl_signatures().Add(std::move(thunk_signature));
+
+  CalleeFunctionInfo thunk_callee_info(context, thunk_clang_decl,
+                                       thunk_signature_id);
+  auto thunk_decl_id = ImportFunction(context, loc_id, thunk_callee_info);
+  if (thunk_decl_id == std::nullopt) {
+    return;
+  }
+  context.clang_decls().Add({.key = SemIR::ClangDeclKey::ForFunctionDecl(
+                                 thunk_clang_decl, thunk_signature_id),
+                             .inst_id = *thunk_decl_id,
+                             .is_imported = true});
+  auto thunk_function_id =
+      context.insts().GetAs<SemIR::FunctionDecl>(*thunk_decl_id).function_id;
+  auto& thunk_function = context.functions().Get(thunk_function_id);
+  thunk_function.SetCppThunk(function.first_owning_decl_id);
+  function.SetHasCppThunk(*thunk_decl_id);
 }
 
 // Imports a C++ function, returning a corresponding Carbon function.
@@ -2097,7 +2094,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
       context.insts().GetAs<SemIR::FunctionDecl>(*function_decl_id).function_id;
   SemIR::Function& imported_function = context.functions().Get(function_id);
   if (IsCppThunkRequired(context, callee_info)) {
-    InsertThunk(context, loc_id, callee_info, imported_function);
+    DefineAsThunkCall(context, loc_id, callee_info, imported_function);
   } else {
     // Inform Clang that the function has been referenced. This will trigger
     // instantiation if needed.
@@ -2172,8 +2169,8 @@ auto ImportFunctionPointerInvoke(
     result.function_id = context.insts()
                              .GetAs<SemIR::FunctionDecl>(*function_decl_id)
                              .function_id;
-    InsertThunk(context, loc_id, callee_info,
-                context.functions().Get(result.function_id));
+    DefineAsThunkCall(context, loc_id, callee_info,
+                      context.functions().Get(result.function_id));
   }
   context.clang_function_pointer_types().Update(clang_type_id, result);
   return result;
