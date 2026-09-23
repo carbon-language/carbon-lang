@@ -56,8 +56,8 @@ REMOTE="$(sed -n 's/^Changes to push to \(.*\):$/\1/p' <<<"$PLAN")"
 
 # Each updated bookmark or tag reports the commit it moves to. Deletions have no
 # such commit, and send nothing to check.
-TARGETS="$(sed -n 's/^  \(bookmark\|tag\): .* to \([0-9a-f]\{8,\}\)\]$/\2/p' <<<"$PLAN" |
-  paste -sd '|')"
+TARGETS="$(sed -E -n 's/^  (bookmark|tag): .* to ([0-9a-f]{8,})\]$/\2/p' <<<"$PLAN" |
+  paste -sd '|' -)"
 
 # Nothing to check, so just push.
 if [[ -z "$REMOTE" || -z "$TARGETS" ]]; then
