@@ -4,7 +4,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-set -xeuo pipefail
+set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
 
