@@ -469,6 +469,7 @@ class V {
 // CHECK:STDOUT: --- use_derived_to_base_conversion.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %ptr.976: type = ptr_type %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.d23: type = pattern_type %ptr.976 [concrete]
@@ -578,6 +579,7 @@ class V {
 // CHECK:STDOUT: --- use_static_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %StaticBase: type = class_type @StaticBase [concrete]
 // CHECK:STDOUT:   %StaticBase.base_fn.cpp_overload_set.type: type = cpp_overload_set_type @StaticBase.base_fn.cpp_overload_set [concrete]
@@ -628,6 +630,7 @@ class V {
 // CHECK:STDOUT: --- use_base_field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %FieldDerived: type = class_type @FieldDerived [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
@@ -695,6 +698,7 @@ class V {
 // CHECK:STDOUT: --- use_base_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %MethodDerived: type = class_type @MethodDerived [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MethodBase: type = class_type @MethodBase [concrete]

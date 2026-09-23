@@ -91,7 +91,6 @@ struct FunctionSignatureInsts {
   SemIR::InstBlockId param_patterns_id = SemIR::InstBlockId::None;
   SemIR::InstBlockId call_param_patterns_id = SemIR::InstBlockId::None;
   SemIR::InstBlockId call_params_id = SemIR::InstBlockId::None;
-  SemIR::InstBlockId call_param_default_values_id = SemIR::InstBlockId::Empty;
   SemIR::Function::CallParamIndexRanges call_param_ranges =
       SemIR::Function::CallParamIndexRanges::Empty;
   SemIR::TypeInstId return_type_inst_id = SemIR::TypeInstId::None;
@@ -191,8 +190,6 @@ auto MakeGeneratedFunctionDecl(Context& context, SemIR::LocId loc_id,
           {
               .call_param_patterns_id = insts.call_param_patterns_id,
               .call_params_id = insts.call_params_id,
-              .call_param_default_values_id =
-                  insts.call_param_default_values_id,
               .call_param_ranges = insts.call_param_ranges,
               .return_type_inst_id = insts.return_type_inst_id,
               .return_form_inst_id = insts.return_form_inst_id,
@@ -305,62 +302,6 @@ static auto CheckFunctionEvaluationModeMatches(
   return false;
 }
 
-// Checks that if `new_id` has a specified value, it has the same value as
-// specified by `prev_id`. If `diagnose` is true this will issue a diagnostic
-// if it detects a difference. Returns true if the values are the same or
-// `new_id` is unspecified.
-//
-// Note: this function is only called on the function's first owning
-// declaration, as that is the declaration with this requirement.
-static auto CheckDefaultValueIsSame(Context& context, SemIR::InstId new_id,
-                                    SemIR::InstId prev_id, bool diagnose)
-    -> bool {
-  CARBON_CHECK(!context.insts().Is<SemIR::UnspecifiedValue>(prev_id));
-  if (!context.insts().Is<SemIR::UnspecifiedValue>(new_id)) {
-    auto new_constant_id = context.constant_values().Get(new_id);
-    auto prev_constant_id = context.constant_values().Get(prev_id);
-    if (new_constant_id != prev_constant_id) {
-      if (diagnose) {
-        CARBON_DIAGNOSTIC(
-            PatternDefaultValueDiffers, Error,
-            "default value of {0} differs from the previously declared default "
-            "value of {1}",
-            InstIdAsConstant, InstIdAsConstant);
-        CARBON_DIAGNOSTIC(PatternDefaultValueDiffersNote, Note,
-                          "different previous declaration here");
-        context.emitter()
-            .Build(new_id, PatternDefaultValueDiffers, new_id, prev_id)
-            .Note(prev_id, PatternDefaultValueDiffersNote)
-            .Emit();
-      }
-      return false;
-    }
-  }
-
-  return true;
-}
-
-// Checks every parameter in `prev_function` and `new_function`, that if they
-// both specify a default value those values are identical. If `diagnose` is
-// true, issues diagnostics when that condition is violated. Returns true if
-// every parameter met the condition.
-static auto CheckDefaultValueConsistency(Context& context,
-                                         const SemIR::Function& new_function,
-                                         const SemIR::Function& prev_function,
-                                         bool diagnose) -> bool {
-  auto new_default_value_ids = context.inst_blocks().GetOrEmpty(
-      new_function.call_param_default_values_id);
-  auto prev_default_value_ids = context.inst_blocks().GetOrEmpty(
-      prev_function.call_param_default_values_id);
-
-  return llvm::all_of(
-      llvm::zip_equal(new_default_value_ids, prev_default_value_ids),
-      [&context, diagnose](auto id_pair) -> bool {
-        auto [new_id, prev_id] = id_pair;
-        return CheckDefaultValueIsSame(context, new_id, prev_id, diagnose);
-      });
-}
-
 auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& new_function,
                               const SemIR::Function& prev_function,
@@ -377,10 +318,6 @@ auto CheckFunctionTypeMatches(Context& context,
   }
   if (!CheckFunctionEvaluationModeMatches(context, new_function, prev_function,
                                           diagnose)) {
-    return false;
-  }
-  if (!CheckDefaultValueConsistency(context, new_function, prev_function,
-                                    diagnose)) {
     return false;
   }
   return true;

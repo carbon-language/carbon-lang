@@ -29,8 +29,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
+// CHECK:STDOUT:   default_values:  {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst10, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst5000002F}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst5000002F}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name50000000: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst50000014}
 // CHECK:STDOUT:   functions:
@@ -90,9 +91,11 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:   declared_facet_types: {}
+// CHECK:STDOUT:   declared_facet_types:
+// CHECK:STDOUT:     'declared_facet_type(Empty)': {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst10:          {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'inst(TypeType)':  {kind: FacetType, arg0: declared_facet_type(Empty), type: type(TypeType)}
+// CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000011:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000012:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000011)}
 // CHECK:STDOUT:     inst50000013:    {kind: TupleValue, arg0: inst_block_empty, type: type(inst50000011)}
@@ -143,7 +146,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
-// CHECK:STDOUT:       inst10:          concrete_constant(inst10)
+// CHECK:STDOUT:       'inst(TypeType)':  concrete_constant(inst(TypeType))
+// CHECK:STDOUT:       'inst(Package)':   concrete_constant(inst(Package))
 // CHECK:STDOUT:       inst50000011:    concrete_constant(inst50000011)
 // CHECK:STDOUT:       inst50000012:    concrete_constant(inst50000013)
 // CHECK:STDOUT:       inst50000013:    concrete_constant(inst50000013)
@@ -253,7 +257,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       0:               inst50000038
 // CHECK:STDOUT:       1:               inst5000003C
 // CHECK:STDOUT:     inst_block50000012:
-// CHECK:STDOUT:       0:               inst10
+// CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               inst5000002F
 // CHECK:STDOUT:   value_stores:
 // CHECK:STDOUT:     shared_values:
@@ -268,6 +272,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT: --- one_file_with_textual_ir.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]

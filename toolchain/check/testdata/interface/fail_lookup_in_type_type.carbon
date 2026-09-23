@@ -26,7 +26,7 @@ let T: type.not_found = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+4]]:8: error: member name `missing` not found [MemberNameNotFound]
+// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+4]]:8: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
 // CHECK:STDERR: let U: (type where .Self impls type).missing = {};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -35,6 +35,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT: --- fail_lookup_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -59,11 +60,9 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT: --- fail_lookup_type_where.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen [symbolic_self]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -74,23 +73,18 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %.loc8_9: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %.loc8_9 [concrete]
-// CHECK:STDOUT:     %.Self.ref.loc8_20.1: %type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.Self.ref.loc8_20.1: type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.loc8_32: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.Self.as_type.loc8_20.1: type = facet_access_type %.Self.ref.loc8_20.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %.loc8_20.1: type = converted %.Self.ref.loc8_20.1, %.Self.as_type.loc8_20.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %impls.loc8_26.1 = requirement_impls %.loc8_20.1, %.loc8_32 [concrete]
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc8_20.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.as_type.loc8_20.2: type = facet_access_type %.Self.ref.loc8_20.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:     %.loc8_20.2: type = converted %.Self.ref.loc8_20.1, %.Self.as_type.loc8_20.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:     %impls.loc8_26.2 = requirement_impls %.loc8_20.2, %.loc8_32 [concrete]
-// CHECK:STDOUT:     %.loc8_14: type = where_expr [concrete = constants.%type] {
+// CHECK:STDOUT:     %impls.loc8_26.1 = requirement_impls %.Self.ref.loc8_20.1, %.loc8_32 [concrete]
+// CHECK:STDOUT:     %.Self: type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc8_20.2: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %impls.loc8_26.2 = requirement_impls %.Self.ref.loc8_20.2, %.loc8_32 [concrete]
+// CHECK:STDOUT:     %.loc8_14: type = where_expr [concrete = type] {
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc8_9 [concrete]
-// CHECK:STDOUT:       %impls.loc8_26.2 = requirement_impls %.loc8_20.2, %.loc8_32 [concrete]
+// CHECK:STDOUT:       %impls.loc8_26.2 = requirement_impls %.Self.ref.loc8_20.2, %.loc8_32 [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %U: <error> = wrapper_binding U, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

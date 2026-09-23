@@ -53,7 +53,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     import_ir_inst3: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc50000003}
 // CHECK:STDOUT:     import_ir_inst4: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc50000004}
 // CHECK:STDOUT:   clang_decls:
-// CHECK:STDOUT:     clang_decl_id50000000: {key: {decl: "namespace Carbon {\n}"}, inst_id: inst10}
+// CHECK:STDOUT:     clang_decl_id50000000: {key: {decl: "namespace Carbon {\n}"}, inst_id: inst(Package)}
 // CHECK:STDOUT:     clang_decl_id50000001: {key: {decl: "<translation unit>"}, inst_id: inst50000012}
 // CHECK:STDOUT:     clang_decl_id50000002: {key: {decl: "struct X {}"}, inst_id: inst50000014}
 // CHECK:STDOUT:     clang_decl_id50000003: {key: {decl: "X * _Nonnull p"}, inst_id: inst50000025}
@@ -65,8 +65,9 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:   clang_decl_signatures:
 // CHECK:STDOUT:     clang_decl_signature_id50000000: {kind: normal, num_params: 0}
 // CHECK:STDOUT:     clang_decl_signature_id50000001: {kind: normal, num_params: 1, modes: [value]}
+// CHECK:STDOUT:   default_values:  {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst10, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Cpp): inst50000012, name0: inst5000001F}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Cpp): inst50000012, name0: inst5000001F}}
 // CHECK:STDOUT:     name_scope50000001: {inst: inst50000012, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name2: inst50000014, name3: inst5000002D, name4: inst50000055}}
 // CHECK:STDOUT:     name_scope50000002: {inst: inst50000014, parent_scope: name_scope50000001, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:
@@ -180,9 +181,10 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:   declared_facet_types: {}
+// CHECK:STDOUT:   declared_facet_types:
+// CHECK:STDOUT:     'declared_facet_type(Empty)': {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     'inst(TypeType)':  {kind: TypeType, type: type(TypeType)}
+// CHECK:STDOUT:     'inst(TypeType)':  {kind: FacetType, arg0: declared_facet_type(Empty), type: type(TypeType)}
 // CHECK:STDOUT:     'inst(AutoType)':  {kind: AutoType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(BoolType)':  {kind: BoolType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(BoundMethodType)': {kind: BoundMethodType, type: type(TypeType)}
@@ -198,7 +200,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     'inst(UnspecifiedValueType)': {kind: UnspecifiedValueType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(VtableType)': {kind: VtableType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(WitnessType)': {kind: WitnessType, type: type(TypeType)}
-// CHECK:STDOUT:     inst10:          {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000011:    {kind: ImportCppDecl}
 // CHECK:STDOUT:     inst50000012:    {kind: Namespace, arg0: name_scope50000001, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000013:    {kind: NameRef, arg0: name(Cpp), arg1: inst50000012, type: type(inst(NamespaceType))}
@@ -295,7 +297,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       'inst(UnspecifiedValueType)': concrete_constant(inst(UnspecifiedValueType))
 // CHECK:STDOUT:       'inst(VtableType)': concrete_constant(inst(VtableType))
 // CHECK:STDOUT:       'inst(WitnessType)': concrete_constant(inst(WitnessType))
-// CHECK:STDOUT:       inst10:          concrete_constant(inst10)
+// CHECK:STDOUT:       'inst(Package)':   concrete_constant(inst(Package))
 // CHECK:STDOUT:       inst50000012:    concrete_constant(inst50000012)
 // CHECK:STDOUT:       inst50000013:    concrete_constant(inst50000012)
 // CHECK:STDOUT:       inst50000014:    concrete_constant(inst50000015)
@@ -449,7 +451,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst_block5000001D:
 // CHECK:STDOUT:       0:               inst5000005B
 // CHECK:STDOUT:     inst_block5000001E:
-// CHECK:STDOUT:       0:               inst10
+// CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               inst50000011
 // CHECK:STDOUT:       2:               inst5000001F
 // CHECK:STDOUT:   value_stores:

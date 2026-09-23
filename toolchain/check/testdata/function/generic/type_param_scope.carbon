@@ -25,8 +25,9 @@ fn F(generic T: type, n: T*) -> T* {
 // CHECK:STDOUT: --- local_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt.d47: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T.67d [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr [symbolic]
@@ -86,7 +87,7 @@ fn F(generic T: type, n: T*) -> T* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67d) {
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt.d47
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt.3a0
 // CHECK:STDOUT:   %T.loc4_15.1 => constants.%T.67d
 // CHECK:STDOUT:   %ptr.loc4_27.1 => constants.%ptr
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4

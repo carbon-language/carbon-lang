@@ -339,14 +339,33 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         auto prev_default_value_pattern =
             prev_param_pattern.As<SemIR::DefaultValuePattern>();
 
+        // If the new pattern specified a default value, it must match the
+        // previously declared default value.
+        auto& new_default_value = context.default_values().Get(
+            new_default_value_pattern.default_value_id);
+        const auto& prev_default_value = context.default_values().Get(
+            prev_default_value_pattern.default_value_id);
+        if (!new_default_value.is_unspecified) {
+          // We require first owning declaration to always specify a default
+          // value.
+          CARBON_CHECK(!prev_default_value.is_unspecified);
+          auto new_constant_id =
+              context.constant_values().Get(new_default_value.value_id);
+          auto prev_constant_id =
+              context.constant_values().Get(prev_default_value.value_id);
+          if (new_constant_id != prev_constant_id) {
+            emit_general_diagnostic();
+            return false;
+          }
+        } else {
+          // If the new default value was left unspecified, we copy the previous
+          // processed default value into the new default value.
+          new_default_value.value_id = prev_default_value.value_id;
+        }
+
         pattern_stack.push_back(
             {.prev_id = prev_default_value_pattern.subpattern_id,
              .new_id = new_default_value_pattern.subpattern_id});
-
-        // The node kind comparison should catch this on the mismatched patterns
-        // prior to this, so the indices should never mismatch.
-        CARBON_CHECK(prev_default_value_pattern.default_value_id.index ==
-                     new_default_value_pattern.default_value_id.index);
         break;
       }
       default: {

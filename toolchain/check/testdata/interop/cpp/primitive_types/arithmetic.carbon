@@ -114,6 +114,7 @@ fn F() {
 // CHECK:STDOUT: --- supported_types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %i8: type = class_type @Int, @Int(%int_8) [concrete]
 // CHECK:STDOUT:   %pattern_type.0cf: type = pattern_type %i8 [concrete]
@@ -470,6 +471,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_todo_unsupported_types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %float.6da: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
@@ -524,6 +526,7 @@ fn F() {
 // CHECK:STDOUT: --- override_builtin.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %unsigned_int: type = class_type @unsigned_int [concrete]
 // CHECK:STDOUT:   %pattern_type.990: type = pattern_type %unsigned_int [concrete]

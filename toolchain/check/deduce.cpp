@@ -306,11 +306,11 @@ auto DeductionContext::Deduce() -> bool {
     if (context().types().Is<SemIR::PatternType>(param_type_id)) {
       param_type_id =
           SemIR::ExtractScrutineeType(context().sem_ir(), param_type_id);
-    } else if (context().types().IsFacetType(param_type_id)) {
+    } else if (context().types().Is<SemIR::FacetType>(param_type_id)) {
       // Given `fn F[G: Interface](g: G)`, the type of `g` is `G as type`. For
       // deduction, we want to ignore the `as type`, and check that the argument
-      // can convert to the FacetType of the canonical facet value.
-      param_id = GetCanonicalFacetOrTypeValue(context(), param_id);
+      // can convert to the FacetType of the canonical facet.
+      param_id = GetCanonicalFacet(context(), param_id);
       param = context().insts().Get(param_id);
       param_type_id = param.type_id();
     }
