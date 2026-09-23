@@ -52,6 +52,8 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     import_ir_inst2: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc50000002}
 // CHECK:STDOUT:     import_ir_inst3: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc50000003}
 // CHECK:STDOUT:     import_ir_inst4: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc50000004}
+// CHECK:STDOUT:     import_ir_inst5: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc50000005}
+// CHECK:STDOUT:     import_ir_inst6: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc50000006}
 // CHECK:STDOUT:   clang_decls:
 // CHECK:STDOUT:     clang_decl_id50000000: {key: {decl: "namespace Carbon {\n}"}, inst_id: inst(Package)}
 // CHECK:STDOUT:     clang_decl_id50000001: {key: {decl: "<translation unit>"}, inst_id: inst50000012}

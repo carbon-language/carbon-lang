@@ -313,6 +313,13 @@ auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
             .GetAs<SemIR::FunctionDecl>(thunk_callee_inst_id)
             .function_id);
 
+    const auto* clang_decl_info =
+        context.clang_decls().Lookup(thunk_callee_function.first_decl_id());
+    if (clang_decl_info == nullptr) {
+      // The `__invoke` thunk for a function pointer doesn't have a declared
+      // C++ callee.
+      return;
+    }
     function_decl = cast<clang::FunctionDecl>(
         context.clang_decls()
             .Lookup(thunk_callee_function.first_decl_id())

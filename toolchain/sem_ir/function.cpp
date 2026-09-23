@@ -64,6 +64,12 @@ auto GetCallee(const File& sem_ir, InstId callee_id,
                  "Invalid callee id in a specific context");
   }
 
+  if (auto fn_ptr_type = sem_ir.types().TryGetAs<CppFunctionPointerType>(
+          sem_ir.insts().Get(callee_id).type_id())) {
+    return CalleeCppFunctionPointer{.function_type_id =
+                                        fn_ptr_type->clang_type_id};
+  }
+
   auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);
   if (!val_id.has_value()) {
     return CalleeNonFunction();
