@@ -15,6 +15,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/block_value_store_impl.h"
+#include "toolchain/base/canonical_value_store_impl.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_store_impl.h"
@@ -82,7 +83,8 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       custom_layouts_(allocator_, check_ir_id, 1),
       expr_regions_(check_ir_id),
       clang_source_locs_(check_ir_id),
-      bundles_(allocator_, check_ir_id) {
+      bundles_(allocator_, check_ir_id),
+      clang_function_pointer_types_(check_ir_id) {
   // `type`, `form`, and the error type are both complete & concrete types.
   // TODO: This duplicates the code in `check/type_completion.cpp`. Consider
   // requiring these types to be complete from Check initialization instead,
@@ -283,4 +285,7 @@ template class BlockValueStore<SemIR::CustomLayoutId, SemIR::ObjectSize,
                                Tag<SemIR::CheckIRId>>;
 template class BlockValueStore<SemIR::RawBundleId, SemIR::AnyRawId,
                                Tag<SemIR::CheckIRId>>;
+template class CanonicalValueStore<SemIR::ClangFunctionPointerTypeId,
+                                   const clang::Type*, Tag<SemIR::CheckIRId>,
+                                   SemIR::ClangFunctionPointerTypeInfo>;
 }  // namespace Carbon

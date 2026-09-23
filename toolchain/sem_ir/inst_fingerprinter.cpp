@@ -439,6 +439,11 @@ struct Worklist {
     // See also: https://github.com/carbon-language/carbon-lang/issues/6728
   }
 
+  auto Add(ClangFunctionPointerTypeId /*type_id*/) -> void {
+    // TODO: Add fingerprinting for `ClangFunctionPointerTypeId`.
+    // See also: https://github.com/carbon-language/carbon-lang/issues/6728
+  }
+
   auto Add(ClassId class_id) -> void {
     AddEntity(sem_ir->classes().Get(class_id));
     // Imported C++ classes are not uniquely identified by their name and parent

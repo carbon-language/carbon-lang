@@ -12,8 +12,8 @@
 
 // --- params.h
 
-void TakesArray(int arr[42]);
-void TakesFunction(int f(int));
+void TakesArray(int arr [_Nullable 42]);
+void TakesFunction(int (* _Nonnull f) (int));
 
 int Function(int);
 
@@ -31,6 +31,8 @@ fn F() {
   Cpp.TakesArray(&n[0]);
 
   Cpp.TakesArray(Cpp.nullptr);
+
+  Cpp.TakesFunction(G);
   //@dump-sem-ir-end
 }
 
@@ -44,12 +46,6 @@ fn G(n: i32) -> i32;
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE+4]]:21: error: call argument of type `<type of G>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.TakesFunction(G);
-  // CHECK:STDERR:                     ^
-  // CHECK:STDERR:
-  Cpp.TakesFunction(G);
-
   // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE+4]]:21: error: call argument of type `<type of Cpp.Function>` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.TakesFunction(Cpp.Function);
   // CHECK:STDERR:                     ^~~~~~~~~~~~
@@ -58,18 +54,25 @@ fn F() {
 
   var n: array(i32, 42);
   // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE+8]]:26: error: no matching function for call to 'TakesFunction' [CppInteropParseError]
-  // CHECK:STDERR:    31 |   Cpp.TakesFunction(&n[0]);
+  // CHECK:STDERR:    25 |   Cpp.TakesFunction(&n[0]);
   // CHECK:STDERR:       |                          ^
-  // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE-22]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./params.h:3:6: note: candidate function not viable: no known conversion from 'int * _Nonnull' to 'int (*)(int)' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     3 | void TakesFunction(int f(int));
-  // CHECK:STDERR:       |      ^             ~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./params.h:3:6: note: candidate function not viable: no known conversion from 'int * _Nonnull' to 'int (* _Nonnull)(int)' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     3 | void TakesFunction(int (* _Nonnull f) (int));
+  // CHECK:STDERR:       |      ^             ~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.TakesFunction(&n[0]);
 
-  // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: int (*)(int)` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE+11]]:21: error: cannot implicitly convert expression of type `Cpp.nullptr_t` to `<C++ type int (*)(int)>` [ConversionFailure]
   // CHECK:STDERR:   Cpp.TakesFunction(Cpp.nullptr);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                     ^~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE+8]]:21: note: type `Cpp.nullptr_t` does not implement interface `Core.ImplicitAs(<C++ type int (*)(int)>)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:   Cpp.TakesFunction(Cpp.nullptr);
+  // CHECK:STDERR:                     ^~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE-29]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./params.h:3:36: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: void TakesFunction(int (* _Nonnull f) (int));
+  // CHECK:STDERR:                                    ^
   // CHECK:STDERR:
   Cpp.TakesFunction(Cpp.nullptr);
   //@dump-sem-ir-end
@@ -82,6 +85,8 @@ fn F() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %array_type.d58: type = array_type %int_42, %i32 [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
@@ -172,6 +177,12 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.60f [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.60f, @Cpp.nullptr_t.as.ImplicitAs.impl.Convert(%i32) [concrete]
 // CHECK:STDOUT:   %bound_method.518: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %TakesFunction.cpp_overload_set.type: type = cpp_overload_set_type @TakesFunction.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %TakesFunction.cpp_overload_set.value: %TakesFunction.cpp_overload_set.type = cpp_overload_set_value @TakesFunction.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %.659: type = cpp_fn_ptr_type clang_function_pointer_type_id7E000000 [concrete]
+// CHECK:STDOUT:   %TakesFunction.type: type = fn_type @TakesFunction [concrete]
+// CHECK:STDOUT:   %TakesFunction: %TakesFunction.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.266: %.659 = cpp_addr_of_fn %G, @G [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.8: type = fn_type @Destroy.WithSelf.Op.loc10_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.8: %Destroy.WithSelf.Op.type.ef016f.8 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -180,6 +191,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .TakesArray = %TakesArray.cpp_overload_set.value
 // CHECK:STDOUT:     .nullptr = @F.%uninit
+// CHECK:STDOUT:     .TakesFunction = %TakesFunction.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.083: @T.as_type.as.DefaultOrUnformed.impl.52f.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.215) = import_ref Core//prelude/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.52f.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.f65)]
@@ -214,6 +226,14 @@ fn F() {
 // CHECK:STDOUT:   %OptionalAs.impl_witness_table.2e9 = impl_witness_table (%Core.import_ref.017d8), @T.as_type.as.OptionalAs.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.49d: @Cpp.nullptr_t.as.ImplicitAs.impl.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type (%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.1b3) = import_ref Core//prelude/types/cpp/nullptr, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.nullptr_t.as.ImplicitAs.impl.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert (constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.208)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.898 = impl_witness_table (%Core.import_ref.49d), @Cpp.nullptr_t.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %TakesFunction.cpp_overload_set.value: %TakesFunction.cpp_overload_set.type = cpp_overload_set_value @TakesFunction.cpp_overload_set [concrete = constants.%TakesFunction.cpp_overload_set.value]
+// CHECK:STDOUT:   %TakesFunction.decl: %TakesFunction.type = fn_decl @TakesFunction [concrete = constants.%TakesFunction] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc15: type = cpp_fn_ptr_type clang_function_pointer_type_id7E000000 [concrete = constants.%.659]
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -279,6 +299,13 @@ fn F() {
 // CHECK:STDOUT:   %TakesArray.call.loc13: init %empty_tuple.type = call imports.%TakesArray.decl(%.loc13_21.4)
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc13: <bound method> = bound_method %.loc13_21.3, constants.%Destroy.WithSelf.Op.403171.4
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc13: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc13(%.loc13_21.3)
+// CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesFunction.ref: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
+// CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
+// CHECK:STDOUT:   %.loc15_22: type = cpp_fn_ptr_type clang_function_pointer_type_id7E000000 [concrete = constants.%.659]
+// CHECK:STDOUT:   %.loc15_21.1: %.659 = cpp_addr_of_fn %G.ref, @G [concrete = constants.%.266]
+// CHECK:STDOUT:   %.loc15_21.2: %.659 = converted %G.ref, %.loc15_21.1 [concrete = constants.%.266]
+// CHECK:STDOUT:   %TakesFunction.call: init %empty_tuple.type = call imports.%TakesFunction.decl(%.loc15_21.2)
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc10: <bound method> = bound_method %n.var, constants.%Destroy.WithSelf.Op.403171.8
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc10: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc10(%n.var)
 // CHECK:STDOUT:   <elided>
@@ -318,8 +345,6 @@ fn F() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
-// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %TakesFunction.cpp_overload_set.type: type = cpp_overload_set_type @TakesFunction.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %TakesFunction.cpp_overload_set.value: %TakesFunction.cpp_overload_set.type = cpp_overload_set_value @TakesFunction.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Function.cpp_overload_set.type: type = cpp_overload_set_type @Function.cpp_overload_set [concrete]
@@ -359,7 +384,10 @@ fn F() {
 // CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t: type = class_type @NullptrT [concrete]
 // CHECK:STDOUT:   %uninit: %Cpp.nullptr_t = uninitialized_value [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.4: type = fn_type @Destroy.WithSelf.Op.loc22_3.3 [concrete]
+// CHECK:STDOUT:   %.659: type = cpp_fn_ptr_type clang_function_pointer_type_id41000000 [concrete]
+// CHECK:STDOUT:   %TakesFunction.type: type = fn_type @TakesFunction [concrete]
+// CHECK:STDOUT:   %TakesFunction: %TakesFunction.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.4: type = fn_type @Destroy.WithSelf.Op.loc16_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.4: %Destroy.WithSelf.Op.type.ef016f.4 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -378,27 +406,31 @@ fn F() {
 // CHECK:STDOUT:   %UnformedInit.impl_witness_table.9b9 = impl_witness_table (), @Int.as.UnformedInit.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.edf: @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1aa = impl_witness_table (%Core.import_ref.edf), @Core.IntLiteral.as.ImplicitAs.impl.0e9 [concrete]
+// CHECK:STDOUT:   %TakesFunction.decl: %TakesFunction.type = fn_decl @TakesFunction [concrete = constants.%TakesFunction] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc38: type = cpp_fn_ptr_type clang_function_pointer_type_id41000000 [concrete = constants.%.659]
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc14_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesFunction.ref.loc14: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
-// CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %Cpp.ref.loc20_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesFunction.ref.loc20: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc20_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc14_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Function.ref: %Function.cpp_overload_set.type = name_ref Function, imports.%Function.cpp_overload_set.value [concrete = constants.%Function.cpp_overload_set.value]
 // CHECK:STDOUT:   %n.var: ref %array_type.d58 = var_storage %n.var_patt
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%array_type.d58, (constants.%DefaultOrUnformed.impl_witness.06a) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc22_24.1: %DefaultOrUnformed.type = converted constants.%array_type.d58, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc22_24.1 [concrete = constants.%array_type.d58]
-// CHECK:STDOUT:   %.loc22_24.2: type = converted %.loc22_24.1, %as_type [concrete = constants.%array_type.d58]
+// CHECK:STDOUT:   %.loc16_24.1: %DefaultOrUnformed.type = converted constants.%array_type.d58, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc16_24.1 [concrete = constants.%array_type.d58]
+// CHECK:STDOUT:   %.loc16_24.2: type = converted %.loc16_24.1, %as_type [concrete = constants.%array_type.d58]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc22_3: ref %array_type.d58 = splice_block %n.var {}
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %array_type.d58 to %.loc22_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   %.loc16_3: ref %array_type.d58 = splice_block %n.var {}
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %array_type.d58 to %.loc16_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %n.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call
-// CHECK:STDOUT:   %.loc22_23: type = splice_block %array_type [concrete = constants.%array_type.d58] {
+// CHECK:STDOUT:   %.loc16_23: type = splice_block %array_type [concrete = constants.%array_type.d58] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
 // CHECK:STDOUT:     %array_type: type = array_type %int_42, %i32 [concrete = constants.%array_type.d58]
@@ -408,37 +440,40 @@ fn F() {
 // CHECK:STDOUT:     %n.patt: %pattern_type.c07 = ref_binding_pattern n [concrete = constants.%n.patt.dac]
 // CHECK:STDOUT:     %n.var_patt: %pattern_type.c07 = var_pattern %n.patt [concrete = constants.%n.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesFunction.ref.loc31: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesFunction.ref.loc25: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
 // CHECK:STDOUT:   %n.ref: ref %array_type.d58 = name_ref n, %n
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc31_24.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc25_24.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc31_24.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc31_24.2(%int_0) [concrete = constants.%int_0.3c0]
-// CHECK:STDOUT:   %.loc31_24.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
-// CHECK:STDOUT:   %.loc31_24.2: %i32 = converted %int_0, %.loc31_24.1 [concrete = constants.%int_0.3c0]
-// CHECK:STDOUT:   %.loc31_25: ref %i32 = array_index %n.ref, %.loc31_24.2
-// CHECK:STDOUT:   %addr: %ptr.d08 = addr_of %.loc31_25
-// CHECK:STDOUT:   %Cpp.ref.loc37_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesFunction.ref.loc37: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc37_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %bound_method.loc25_24.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc25_24.2(%int_0) [concrete = constants.%int_0.3c0]
+// CHECK:STDOUT:   %.loc25_24.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.3c0]
+// CHECK:STDOUT:   %.loc25_24.2: %i32 = converted %int_0, %.loc25_24.1 [concrete = constants.%int_0.3c0]
+// CHECK:STDOUT:   %.loc25_25: ref %i32 = array_index %n.ref, %.loc25_24.2
+// CHECK:STDOUT:   %addr: %ptr.d08 = addr_of %.loc25_25
+// CHECK:STDOUT:   %Cpp.ref.loc38_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesFunction.ref.loc38: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc38_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %nullptr.ref: %Cpp.nullptr_t = name_ref nullptr, %uninit [concrete = constants.%uninit]
+// CHECK:STDOUT:   %.loc38_32: type = cpp_fn_ptr_type clang_function_pointer_type_id41000000 [concrete = constants.%.659]
+// CHECK:STDOUT:   %.loc38_24: %.659 = converted %nullptr.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %TakesFunction.call: init %empty_tuple.type = call imports.%TakesFunction.decl(<error>)
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %n.var, constants.%Destroy.WithSelf.Op.403171.4
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound(%n.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc22_3.1(%self.param: ref %i32.builtin) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc16_3.1(%self.param: ref %i32.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc22_3.2(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc16_3.2(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc22_3.3(%self.param: ref %array_type.d58) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc16_3.3(%self.param: ref %array_type.d58) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

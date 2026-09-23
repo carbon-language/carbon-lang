@@ -339,6 +339,8 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
     case SemIR::FacetType::Kind:
     case SemIR::FloatType::Kind:
     case SemIR::FormType::Kind:
+    case SemIR::FunctionType::Kind:
+    case SemIR::CppFunctionPointerType::Kind:
     case SemIR::IntLiteralType::Kind:
     case SemIR::IntType::Kind:
     case SemIR::PointerType::Kind:

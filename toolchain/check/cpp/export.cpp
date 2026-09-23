@@ -745,7 +745,7 @@ static auto MapToCppThunkParamType(Context& context, SemIR::TypeId type_id)
 }
 
 // Build FunctionInfo for an export of the given Carbon function. Exports the
-// name scope if necessary.
+// name scope if necessary. Returns `nullopt` if an error was diagnosed.
 static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
                               SemIR::FunctionId callee_function_id)
     -> std::optional<FunctionInfo> {
@@ -1497,8 +1497,10 @@ static auto ExportGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
   return template_decl;
 }
 
-auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                         SemIR::FunctionId callee_function_id)
+// Exports the given function to C++ and returns the exported `NamedDecl`,
+// or `nullptr` if an error was diagnosed.
+static auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
+                                SemIR::FunctionId callee_function_id)
     -> clang::NamedDecl* {
   auto target = BuildFunctionInfo(context, loc_id, callee_function_id);
   if (!target) {
@@ -1514,6 +1516,93 @@ auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
   }
 
   return ExportNonGenericFunctionToCpp(context, loc_id, *target);
+}
+
+auto GetOrExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
+                              SemIR::FunctionId function_id)
+    -> clang::NamedDecl* {
+  SemIR::Function& function = context.functions().Get(function_id);
+  if (auto clang_decl_id =
+          context.clang_decls().LookupId(function.first_decl_id());
+      clang_decl_id.has_value()) {
+    return llvm::cast<clang::NamedDecl>(
+        context.clang_decls().Get(clang_decl_id).decl());
+  }
+
+  auto* named_decl = ExportFunctionToCpp(context, loc_id, function_id);
+  if (!named_decl) {
+    return nullptr;
+  }
+
+  if (auto* function_template_decl =
+          llvm::dyn_cast<clang::FunctionTemplateDecl>(named_decl)) {
+    context.clang_decls().Add(
+        {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(function_template_decl),
+         .inst_id = function.first_decl_id()});
+    return function_template_decl;
+  }
+
+  auto* clang_function_decl = llvm::cast<clang::FunctionDecl>(named_decl);
+
+  SemIR::ClangDeclSignature thunk_signature{
+      .kind = SemIR::ClangDeclSignature::Normal,
+      .num_params = static_cast<int32_t>(clang_function_decl->getNumParams())};
+  thunk_signature.passing_modes.assign(
+      thunk_signature.num_params,
+      SemIR::ClangDeclSignature::PassingMode::ByValue);
+  context.clang_decls().Add(
+      {.key = SemIR::ClangDeclKey::ForFunctionDecl(
+           clang_function_decl,
+           context.clang_decl_signatures().Add(std::move(thunk_signature))),
+       .inst_id = function.first_decl_id()});
+  return clang_function_decl;
+}
+
+auto ExportFunctionToCppPointerConversion(
+    Context& context, SemIR::InstId src_id, SemIR::FunctionType src_type,
+    SemIR::CppFunctionPointerType dest_type, bool diagnose) -> bool {
+  if (src_type.specific_id.has_value()) {
+    context.TODO(
+        src_id,
+        "can't convert generic function specific to a C++ function pointer");
+    return false;
+  }
+  auto* src_clang_decl = GetOrExportFunctionToCpp(context, SemIR::LocId(src_id),
+                                                  src_type.function_id);
+  if (src_clang_decl == nullptr) {
+    return false;
+  }
+
+  CARBON_CHECK(!src_clang_decl->isTemplateDecl(),
+               "can't form a pointer to a template");
+
+  const auto* exported_fn_type =
+      src_clang_decl->getFunctionType()
+          ->getAsCanonical<clang::FunctionProtoType>();
+  auto dest_function_ptr_type_info =
+      context.clang_function_pointer_types().Get(dest_type.clang_type_id);
+  const auto* dest_fn_type =
+      dest_function_ptr_type_info.clang_type->getPointeeType()
+          ->getAsCanonical<clang::FunctionProtoType>();
+
+  if (exported_fn_type != dest_fn_type) {
+    if (diagnose) {
+      auto function = context.functions().Get(src_type.function_id);
+      CARBON_DIAGNOSTIC(ExportedFunctionPtrTypeMismatch, Error,
+                        "can't convert exported function type to `{0}`",
+                        CppType);
+      CARBON_DIAGNOSTIC(ExportedFromFunction, Note,
+                        "function exported with type `{0}`", CppType);
+      context.emitter()
+          .Build(src_id, ExportedFunctionPtrTypeMismatch, dest_fn_type)
+          .Note(function.first_decl_id(), ExportedFromFunction,
+                exported_fn_type)
+          .Emit();
+    }
+    return false;
+  }
+
+  return true;
 }
 
 // Returns whether the given class has any abstract methods.

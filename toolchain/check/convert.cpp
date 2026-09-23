@@ -16,6 +16,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/core_identifier.h"
+#include "toolchain/check/cpp/export.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/impl_lookup.h"
@@ -339,6 +340,25 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
                                    {.type_id = target.type_id,
                                     .inits_id = sem_ir.inst_blocks().Add(inits),
                                     .dest_id = return_slot_arg_id});
+}
+
+// Performs a conversion from a function to a C++ function pointer type.
+static auto ConvertFunctionToCppPointer(Context& context, SemIR::LocId loc_id,
+                                        SemIR::FunctionType src_type,
+                                        SemIR::CppFunctionPointerType dest_type,
+                                        SemIR::InstId value_id,
+                                        ConversionTarget target)
+    -> SemIR::InstId {
+  if (!ExportFunctionToCppPointerConversion(context, value_id, src_type,
+                                            dest_type, target.diagnose)) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  return AddInst<SemIR::CppAddrOfFunction>(
+      context, loc_id,
+      {.type_id = target.type_id,
+       .function_ref_id = value_id,
+       .function_id = src_type.function_id});
 }
 
 // Performs a conversion from a tuple to a tuple type. This function only
@@ -1473,6 +1493,17 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
             sem_ir.types().TryGetAs<SemIR::TupleType>(value_type_id)) {
       return ConvertTupleToArray(context, *src_tuple_type, *target_array_type,
                                  value_id, target);
+    }
+  }
+
+  // Function types can convert to C++ function pointer types.
+  if (auto fn_ptr_type =
+          context.types().TryGetAs<SemIR::CppFunctionPointerType>(
+              target.type_id)) {
+    if (auto src_fn_type =
+            context.types().TryGetAs<SemIR::FunctionType>(value_type_id)) {
+      return ConvertFunctionToCppPointer(context, loc_id, *src_fn_type,
+                                         *fn_ptr_type, value_id, target);
     }
   }
 
