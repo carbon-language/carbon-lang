@@ -1403,11 +1403,17 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc9_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc9_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.f8f19d.2: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2, %Destroy.WithSelf.SubobjectDestroy.d01daf.2, %Destroy.WithSelf.SelfDestruct.db3fdb.2), @Destroy [concrete]
 // CHECK:STDOUT:   %pattern_type.4c3: type = pattern_type %struct_type.a.b.f38 [concrete]
 // CHECK:STDOUT:   %self.param_patt.bd8: %pattern_type.4c3 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.7ce: %pattern_type.4c3 = wrapper_binding_pattern self, %self.param_patt.bd8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc9_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet.747: %Destroy.type = facet_value %X, (%custom_witness.f8f19d.2) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.36b: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.747) [concrete]
+// CHECK:STDOUT:   %.163: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.36b, %Destroy.facet.747 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc9_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.165: %pattern_type.9a0 = ref_param_pattern [concrete]
@@ -1485,11 +1491,17 @@ fn Test(d: D) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.5: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.5 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.5: type = fn_type @Destroy.WithSelf.Op.loc9_3.5 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.5: %Destroy.WithSelf.Op.type.ef016f.5 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.5: type = fn_type @Destroy.WithSelf.SelfDestruct.loc9_3.5 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.5: %Destroy.WithSelf.SelfDestruct.type.fbceb5.5 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.f8f19d.5: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.5, %Destroy.WithSelf.SubobjectDestroy.d01daf.5, %Destroy.WithSelf.SelfDestruct.db3fdb.5), @Destroy [concrete]
 // CHECK:STDOUT:   %pattern_type.83c: type = pattern_type %struct_type.a.b.095 [concrete]
 // CHECK:STDOUT:   %self.param_patt.201: %pattern_type.83c = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.2b2: %pattern_type.83c = wrapper_binding_pattern self, %self.param_patt.201 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.6: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc9_3.6 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.6: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.6 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet.09f: %Destroy.type = facet_value %Y, (%custom_witness.f8f19d.5) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.575: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.09f) [concrete]
+// CHECK:STDOUT:   %.dbd: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.575, %Destroy.facet.09f [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.6: type = fn_type @Destroy.WithSelf.Op.loc9_3.6 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.6: %Destroy.WithSelf.Op.type.ef016f.6 = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.7ad: %pattern_type.2cd = ref_param_pattern [concrete]
@@ -1829,6 +1841,14 @@ fn Test(d: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc9_3.3(%self.param: ref %struct_type.a.b.f38) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc9_3.1: ref %X = struct_access %self.param, element0
+// CHECK:STDOUT:   %impl.elem2.loc9_3.1: %.163 = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc9_3.1: <bound method> = bound_method %.loc9_3.1, %impl.elem2.loc9_3.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc9_3.1: init %empty_tuple.type = call %bound_method.loc9_3.1(%.loc9_3.1)
+// CHECK:STDOUT:   %.loc9_3.2: ref %X = struct_access %self.param, element1
+// CHECK:STDOUT:   %impl.elem2.loc9_3.2: %.163 = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc9_3.2: <bound method> = bound_method %.loc9_3.2, %impl.elem2.loc9_3.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc9_3.2: init %empty_tuple.type = call %bound_method.loc9_3.2(%.loc9_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1868,6 +1888,14 @@ fn Test(d: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc9_3.6(%self.param: ref %struct_type.a.b.095) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc9_3.1: ref %Y = struct_access %self.param, element0
+// CHECK:STDOUT:   %impl.elem2.loc9_3.1: %.dbd = impl_witness_access constants.%custom_witness.f8f19d.5, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5]
+// CHECK:STDOUT:   %bound_method.loc9_3.1: <bound method> = bound_method %.loc9_3.1, %impl.elem2.loc9_3.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc9_3.1: init %empty_tuple.type = call %bound_method.loc9_3.1(%.loc9_3.1)
+// CHECK:STDOUT:   %.loc9_3.2: ref %Y = struct_access %self.param, element1
+// CHECK:STDOUT:   %impl.elem2.loc9_3.2: %.dbd = impl_witness_access constants.%custom_witness.f8f19d.5, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5]
+// CHECK:STDOUT:   %bound_method.loc9_3.2: <bound method> = bound_method %.loc9_3.2, %impl.elem2.loc9_3.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc9_3.2: init %empty_tuple.type = call %bound_method.loc9_3.2(%.loc9_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1896,6 +1924,14 @@ fn Test(d: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc9_3.8(%self.param: ref %struct_type.a.b.297) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc9_3.1: ref %X = struct_access %self.param, element0
+// CHECK:STDOUT:   %impl.elem2.loc9_3.1: %.163 = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc9_3.1: <bound method> = bound_method %.loc9_3.1, %impl.elem2.loc9_3.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc9_3.1: init %empty_tuple.type = call %bound_method.loc9_3.1(%.loc9_3.1)
+// CHECK:STDOUT:   %.loc9_3.2: ref %Y = struct_access %self.param, element1
+// CHECK:STDOUT:   %impl.elem2.loc9_3.2: %.dbd = impl_witness_access constants.%custom_witness.f8f19d.5, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5]
+// CHECK:STDOUT:   %bound_method.loc9_3.2: <bound method> = bound_method %.loc9_3.2, %impl.elem2.loc9_3.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc9_3.2: init %empty_tuple.type = call %bound_method.loc9_3.2(%.loc9_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
