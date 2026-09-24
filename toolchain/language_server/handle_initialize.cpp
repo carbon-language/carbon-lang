@@ -35,6 +35,7 @@ auto HandleInitialize(
                                   {"documentFormattingProvider", true},
                                   {"documentSymbolProvider", true},
                                   {"hoverProvider", true},
+                                  {"implementationProvider", true},
                                   {"positionEncoding", encoding},
                                   {"referencesProvider", true},
                                   {"textDocumentSync", /*Incremental=*/2},
