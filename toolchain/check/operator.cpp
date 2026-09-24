@@ -105,18 +105,6 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
 auto BuildSelfDestructCall(Context& context, SemIR::LocId loc_id,
                            SemIR::InstId object_id) -> SemIR::InstId {
-  if (auto class_info = context.insts().TryGetAs<SemIR::ClassType>(object_id)) {
-    if (auto adapted_type_id =
-            context.classes()
-                .Get(class_info->class_id)
-                .GetAdaptedType(context.sem_ir(), class_info->specific_id);
-        adapted_type_id.has_value()) {
-      object_id = Convert(
-          context, loc_id, object_id,
-          {.kind = ConversionTarget::ExplicitAs, .type_id = adapted_type_id});
-    }
-  }
-
   return BuildUnaryOperator(context, loc_id,
                             {.interface_name = CoreIdentifier::Destroy,
                              .op_name = CoreIdentifier::SelfDestruct},
