@@ -474,6 +474,21 @@ struct Worklist {
     AddEntity(sem_ir->interfaces().Get(interface_id));
   }
 
+  auto Add(MetaInstId /*meta_inst_id*/) -> void {
+    // TODO: Add some mechanism to fingerprint the target instruction. We allow
+    // "cycles" via `MetaInstId`, so we can't profile it here, and `MetaInstId`
+    // refers to the identity of the instruction, not merely its abstract value,
+    // so profiling it recursively wouldn't be correct either.
+  }
+
+  auto Add(MetaInstBlockId meta_inst_block_id) -> void {
+    if (!meta_inst_block_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+    AddBlock(sem_ir->inst_blocks().Get(meta_inst_block_id));
+  }
+
   auto Add(NamedConstraintId named_constraint_id) -> void {
     AddEntity(sem_ir->named_constraints().Get(named_constraint_id));
   }

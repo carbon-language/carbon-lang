@@ -24,6 +24,8 @@ class PendingBlock {
   PendingBlock(const PendingBlock&) = delete;
   auto operator=(const PendingBlock&) -> PendingBlock& = delete;
 
+  auto context() -> Context& { return *context_; }
+
   // A scope in which we will tentatively add instructions to a pending block.
   // If we leave the scope without inserting or merging the block, instructions
   // added after this point will be removed again.
@@ -120,6 +122,28 @@ class PendingBlock {
     }
 
     ReplaceLocIdAndInstBeforeConstantUse(*context_, target_id, value);
+    insts_.clear();
+
+    AddPendingCleanups();
+    return result_id;
+  }
+
+  // Merges this pending block into a single instruction that executes the
+  // instructions in the block and produces `value_id`. Cleanups are registered,
+  // but the new instruction is not added to a block; the caller is expected to
+  // add it somewhere suitable. This is used during template actions to produce
+  // the pending block as an action result.
+  auto MergeInNoBlock(SemIR::InstId value_id) -> SemIR::InstId {
+    auto result_id = value_id;
+    if (insts_.size() != 1 || insts_[0] != value_id) {
+      // Create a splice block if the block is not exactly `{value_id}`.
+      result_id = AddInstInNoBlock<SemIR::SpliceBlock>(
+          *context_, SemIR::LocId(value_id),
+          {.type_id = context_->insts().Get(value_id).type_id(),
+           .block_id = context_->inst_blocks().Add(insts_),
+           .result_id = value_id});
+    }
+
     insts_.clear();
 
     AddPendingCleanups();
