@@ -28,7 +28,7 @@ _Note:_ This document only describes non-function associated constants.
 An associated constant is declared within an interface scope with the syntax:
 
 ```carbon
-[MODIFIERS] let NAME:! TYPE [= INITIALIZER] ;
+[MODIFIERS] let NAME: TYPE [= INITIALIZER] ;
 ```
 
 Associated constants introduce a slot in the witness table for an interface that
@@ -54,7 +54,7 @@ the checking logic is also shared. This logic is in
 constant declaration handling proceeds as follows:
 
 1.  ```carbon
-    let NAME:! TYPE [= INITIALIZER] ;
+    let NAME: TYPE [= INITIALIZER] ;
     ^
     ```
 
@@ -66,25 +66,22 @@ constant declaration handling proceeds as follows:
     of the constant. These form the body of the generic.
 
 2.  ```carbon
-    let NAME:! TYPE [= INITIALIZER] ;
-        ~~~~^~~~~~~
+    let NAME: TYPE [= INITIALIZER] ;
+        ~~~~^~~~~~
     ```
 
-    Process the symbolic binding pattern. This is done in
+    Process the name and type. This is done by the handler for
+    `AssociatedConstantNameAndType` in
     [handle_binding_pattern.cpp](/toolchain/check/handle_binding_pattern.cpp),
-    which detects that we are at interface scope, and creates an
-    `AssociatedConstantDecl` and corresponding `AssociatedConstant` entity. This
-    binding is then produced as the instruction associated with the binding
-    pattern.
-
-    _Note:_ This is somewhat unusual: usually, a pattern instruction would be
-    associated with a pattern parse node.
+    which creates an `AssociatedConstantDecl` and corresponding
+    `AssociatedConstant` entity. This instruction is then produced as the
+    pattern for the declaration.
 
 3.  ```carbon
-    let NAME:! TYPE ;
-                    ^
-    let NAME:! TYPE = INITIALIZER ;
-                    ^
+    let NAME: TYPE ;
+                   ^
+    let NAME: TYPE = INITIALIZER ;
+                   ^
     ```
 
     When we reach the end of the pattern in an interface-scope `let` binding,
@@ -102,15 +99,15 @@ constant declaration handling proceeds as follows:
     and continue. The invalid pattern will be diagnosed later.
 
 4.  ```carbon
-    let NAME:! TYPE = INITIALIZER ;
-                    ^
+    let NAME: TYPE = INITIALIZER ;
+                   ^
     ```
 
     If there is an initializer, we start the generic definition region.
 
 5.  ```carbon
-    let NAME:! TYPE [= INITIALIZER] ;
-                                    ^
+    let NAME: TYPE [= INITIALIZER] ;
+                                   ^
     ```
 
     At the end of the declaration, `FinishAssociatedConstant` is called to
