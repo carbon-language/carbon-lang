@@ -71,7 +71,7 @@ class FileBuilder {
                  int num_uses = InstsPerBlock) -> void {
     llvm::SmallVector<InstId> insts;
     insts.reserve(num_uses + terminators.size());
-    for (int i = 0; i != num_uses; ++i) {
+    for (auto _ : llvm::seq(num_uses)) {
       insts.push_back(AddNonConstInst(
           ValueAsRef{.type_id = TypeType::TypeId, .value_id = value_id_}));
     }
@@ -202,12 +202,12 @@ auto BuildChain(FileBuilder& file, int num_blocks)
   int size = std::max(num_blocks, 2);
   llvm::SmallVector<InstBlockId> blocks;
   blocks.reserve(size);
-  for (int i = 0; i != size; ++i) {
+  for (auto _ : llvm::seq(size)) {
     blocks.push_back(file.AddBlock());
   }
 
   file.FillEntryBlock(blocks[0], blocks[1]);
-  for (int i = 1; i != size; ++i) {
+  for (auto i : llvm::seq(1, size)) {
     file.FillBlock(blocks[i], {i + 1 == size ? file.AddReturn()
                                              : file.AddBranch(blocks[i + 1])});
   }
@@ -228,13 +228,13 @@ auto BuildDiamonds(FileBuilder& file, int num_blocks)
 
   llvm::SmallVector<InstBlockId> blocks = {file.AddBlock()};
   llvm::SmallVector<InstBlockId> heads;
-  for (int i = 0; i != num_diamonds + 1; ++i) {
+  for (auto _ : llvm::seq(num_diamonds + 1)) {
     heads.push_back(file.AddBlock());
     blocks.push_back(heads.back());
   }
 
   file.FillEntryBlock(blocks[0], heads[0]);
-  for (int i = 0; i != num_diamonds; ++i) {
+  for (auto i : llvm::seq(num_diamonds)) {
     auto then_id = file.AddBlock();
     auto else_id = file.AddBlock();
     blocks.push_back(then_id);
@@ -268,7 +268,7 @@ auto BuildFanOutFanIn(FileBuilder& file, int num_blocks)
 
   llvm::SmallVector<InstId> head_terminators;
   head_terminators.reserve(num_arms);
-  for (int i = 0; i != num_arms; ++i) {
+  for (auto i : llvm::seq(num_arms)) {
     auto arm_id = file.AddBlock();
     blocks.push_back(arm_id);
     // The last arm is reached unconditionally, as the `else` of the last
@@ -300,24 +300,23 @@ auto BuildNestedLoops(FileBuilder& file, int num_blocks)
   llvm::SmallVector<InstBlockId> headers;
   llvm::SmallVector<InstBlockId> bodies;
   llvm::SmallVector<InstBlockId> exits;
-  for (int i = 0; i != num_loops; ++i) {
+  for (auto _ : llvm::seq(num_loops)) {
     headers.push_back(file.AddBlock());
     bodies.push_back(file.AddBlock());
     exits.push_back(file.AddBlock());
-    blocks.append({headers[i], bodies[i], exits[i]});
+    blocks.append({headers.back(), bodies.back(), exits.back()});
   }
 
   file.FillEntryBlock(entry_id, headers[0]);
-  for (int i = 0; i != num_loops; ++i) {
-    file.FillBlock(headers[i],
-                   {file.AddBranchIf(bodies[i]), file.AddBranch(exits[i])});
+  for (auto [i, header, body, exit] : llvm::enumerate(headers, bodies, exits)) {
+    file.FillBlock(header, {file.AddBranchIf(body), file.AddBranch(exit)});
     // The innermost body closes its own loop; every other body enters the next
     // loop, whose exit branches back to this header.
+    file.FillBlock(body, {file.AddBranch(static_cast<int>(i + 1) == num_loops
+                                             ? header
+                                             : headers[i + 1])});
     file.FillBlock(
-        bodies[i],
-        {file.AddBranch(i + 1 == num_loops ? headers[i] : headers[i + 1])});
-    file.FillBlock(
-        exits[i], {i == 0 ? file.AddReturn() : file.AddBranch(headers[i - 1])});
+        exit, {i == 0 ? file.AddReturn() : file.AddBranch(headers[i - 1])});
   }
   return blocks;
 }
@@ -373,7 +372,7 @@ BENCHMARK(BM_VerifyDominance<BuildFanOutFanIn>)
 // function body.
 auto BM_VerifyDominanceManyFunctions(benchmark::State& state) -> void {
   FileBuilder file;
-  for (int i = 0, n = state.range(0); i != n; ++i) {
+  for (auto _ : llvm::seq(state.range(0))) {
     file.AddFunction(BuildDiamonds(file, /*num_blocks=*/5));
   }
   RunBenchmark(state, file);
@@ -388,7 +387,7 @@ BENCHMARK(BM_VerifyDominanceManyFunctions)
 // file rather than linear in the number of specifics.
 auto BM_VerifyDominanceManyGenericFunctions(benchmark::State& state) -> void {
   FileBuilder file;
-  for (int i = 0, n = state.range(0); i != n; ++i) {
+  for (auto _ : llvm::seq(state.range(0))) {
     file.AddFunction(BuildDiamonds(file, /*num_blocks=*/5), file.AddGeneric());
   }
   RunBenchmark(state, file);

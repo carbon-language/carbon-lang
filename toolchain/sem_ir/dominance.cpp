@@ -165,6 +165,9 @@ auto CollectSpecifics(const File& file) -> SpecificsByGeneric {
 
 // The dominator tree of a function body: the blocks that each block
 // immediately dominates, indexed by `BlockIndex`.
+// TODO: Explore replacing this with a flattened vector plus a vector of
+// starting indexes to reduce the number of heap allocations required and the
+// vector overhead.
 using DominatorTree = llvm::SmallVector<llvm::SmallVector<BlockIndex, 2>>;
 
 // Builds the control flow graph of a function body and its dominator tree.
@@ -322,15 +325,15 @@ auto DominanceVerifier::Verify() -> ErrorOr<Success> {
 }
 
 auto DominatorTreeBuilder::BuildControlFlowGraph() -> ErrorOr<Success> {
-  for (int i = 0; i != num_blocks(); ++i) {
-    block_indexes_.Insert(body_blocks_[i], BlockIndex(i));
+  for (auto [i, block] : llvm::enumerate(body_blocks_)) {
+    block_indexes_.Insert(block, BlockIndex(i));
   }
 
   successors_.resize(num_blocks());
   predecessors_.resize(num_blocks());
-  for (int i = 0; i != num_blocks(); ++i) {
+  for (auto [i, block] : llvm::enumerate(body_blocks_)) {
     BlockIndex from(i);
-    for (InstId inst_id : file_.inst_blocks().Get(body_blocks_[i])) {
+    for (InstId inst_id : file_.inst_blocks().Get(block)) {
       InstBlockId target_id = GetBranchTargetId(file_.insts().Get(inst_id));
       if (!target_id.has_value()) {
         continue;
@@ -338,8 +341,8 @@ auto DominatorTreeBuilder::BuildControlFlowGraph() -> ErrorOr<Success> {
       BlockIndex* to = block_indexes_[target_id];
       if (!to) {
         return ErrorBuilder()
-               << "Branch in block " << body_blocks_[i] << " targets block "
-               << target_id << " which is not in function body";
+               << "Branch in block " << block << " targets block " << target_id
+               << " which is not in function body";
       }
       // A block that branches to the same target more than once produces a
       // duplicate edge. That's harmless: the post-order walk skips blocks it
@@ -359,7 +362,7 @@ auto DominatorTreeBuilder::BuildPostOrder(
   // The blocks whose successors are still being visited, each paired with the
   // number of its successors that have been visited so far. A block is appended
   // to `post_order` once all of its successors have been visited.
-  llvm::SmallVector<std::pair<BlockIndex, int>> stack;
+  llvm::SmallVector<std::pair<BlockIndex, int>, 30> stack;
   visited.set(EntryBlockIndex.index);
   stack.push_back({EntryBlockIndex, 0});
 
@@ -393,16 +396,16 @@ auto DominatorTreeBuilder::Build() -> ErrorOr<DominatorTree> {
   BuildPostOrder(visited, reverse_post_order);
   std::reverse(reverse_post_order.begin(), reverse_post_order.end());
 
-  for (int i = 0; i != num_blocks(); ++i) {
+  for (auto [i, block] : llvm::enumerate(body_blocks_)) {
     if (!visited.test(i)) {
       return ErrorBuilder()
-             << "Block " << body_blocks_[i] << " in function "
-             << function_.name_id << " is unreachable from entry block";
+             << "Block " << block << " in function " << function_.name_id
+             << " is unreachable from entry block";
     }
   }
 
   llvm::SmallVector<int> order(num_blocks(), -1);
-  for (int i = 0; i != num_blocks(); ++i) {
+  for (auto i : llvm::seq(num_blocks())) {
     order[reverse_post_order[i].index] = i;
   }
 
@@ -699,6 +702,8 @@ auto VerifyDominance(const File& file) -> ErrorOr<Success> {
 
     // For a generic function, also verify the body as it will be evaluated in
     // each of its specifics, in which spliced instructions can be resolved.
+    // TODO: Only re-verify the spliced instructions, rather than all the
+    // instructions in the function, for each specific.
     for (SpecificId specific_id : specifics.Get(function.generic_id)) {
       CARBON_RETURN_IF_ERROR(DominanceVerifier(file, decl_insts, function,
                                                dom_tree, evaluated, specific_id)

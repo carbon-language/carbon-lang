@@ -440,12 +440,12 @@ TEST_F(DominanceTest, LongChainOfBlocks) {
 
   llvm::SmallVector<InstBlockId> block_ids;
   block_ids.reserve(NumBlocks);
-  for (int i = 0; i != NumBlocks; ++i) {
+  for (auto _ : llvm::seq(NumBlocks)) {
     block_ids.push_back(file_.inst_blocks().AddPlaceholder());
   }
 
   auto value_id = AddValue();
-  for (int i = 0; i != NumBlocks; ++i) {
+  for (auto [i, block] : llvm::enumerate(block_ids)) {
     llvm::SmallVector<InstId> insts;
     if (i == 0) {
       insts.push_back(value_id);
@@ -454,7 +454,7 @@ TEST_F(DominanceTest, LongChainOfBlocks) {
     }
     insts.push_back(i + 1 == NumBlocks ? AddReturn()
                                        : AddBranch(block_ids[i + 1]));
-    file_.inst_blocks().ReplacePlaceholder(block_ids[i], insts);
+    file_.inst_blocks().ReplacePlaceholder(block, insts);
   }
   AddFunction(block_ids);
 

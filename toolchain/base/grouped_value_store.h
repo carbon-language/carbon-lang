@@ -11,6 +11,7 @@
 
 #include "common/check.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/id_tag.h"
 
@@ -114,7 +115,7 @@ GroupedValueStore<IdT, ValueT, TagIdT>::GroupedValueStore(size_t num_ids,
   // Perform a prefix sum, so that `starts_[i + 2]` holds the number of values
   // for IDs with `.index <= i`, that is, the end of the group for ID `i`, and
   // hence `starts_[i + 1]` is the start of the group for ID `i`.
-  for (size_t i = 1; i < starts_.size(); ++i) {
+  for (auto i : llvm::seq<size_t>(1, starts_.size())) {
     starts_[i] += starts_[i - 1];
   }
 
