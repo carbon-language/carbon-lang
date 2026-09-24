@@ -14,9 +14,36 @@
 
 package Core library "destroy";
 
+// TODO: uncomment when `require impls` adds a witness table entry.
+// interface SubobjectDestroy {
+//   final fn Op(ref self) = "subobject.destroy";
+// }
+
 interface Destroy {
+  // TODO: uncomment when `require impls` adds a witness table entry.
+  // require impls SubobjectDestroy;
+
+  // TODO: change `Self` to `partial Self`.
   fn Op(ref self);
+
+  // TODO: remove when `require impls` adds a witness table entry.
+  final fn SubobjectDestroy(unused ref self) {
+    // This function body is ignored by the toolchain. We can't use
+    // a built-in because the compiler treats it as an error. We
+    // should address this at some point, but it's not a high
+    // priority right now.
+  }
+
+  final fn SelfDestruct(ref self) {
+    self.Op();
+    self.SubobjectDestroy();
+  }
 }
+
+// TODO: uncomment when `require impls` adds a witness table entry.
+// impl forall [T: SubobjectDestroy] partial T as Destroy {
+//   alias Op = T.Op;
+// }
 
 impl forall [T: type] T as Destroy {
   fn Op(unused ref self) {}
@@ -40,7 +67,7 @@ struct A {
 // CHECK:STDERR: class B {
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE-14]]:1: in import [InImport]
-// CHECK:STDERR: destroy.carbon:8:1: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
+// CHECK:STDERR: destroy.carbon:35:1: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
 // CHECK:STDERR: impl forall [T: type] T as Destroy {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
