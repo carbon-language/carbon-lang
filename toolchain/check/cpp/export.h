@@ -33,12 +33,12 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 // If the class has already been exported, returns the existing C++ class.
 // Otherwise, creates a new C++ class and returns it. Returns nullptr if the
 // class could not be exported and an error was diagnosed.
-auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
+auto ExportClassToCpp(Context& context, const SemIR::File* sem_ir, SemIR::ClassType class_type)
     -> clang::TagDecl*;
 
 // Exports a dynamic Carbon class with a foreign (C++) vtable into C++ as a
 // class, and completes its definition.
-auto ExportAndCompleteClassToCpp(Context& context, SemIR::ClassType class_type)
+auto ExportAndCompleteClassToCpp(Context& context, const SemIR::File* sem_ir, SemIR::ClassType class_type)
     -> clang::TagDecl*;
 
 // Exports a generic Carbon class into C++ as a templated class.

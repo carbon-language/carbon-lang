@@ -121,7 +121,7 @@ static auto ConvertArgToTemplateArg(
     if (type.type_id == SemIR::ErrorInst::TypeId) {
       return std::nullopt;
     }
-    auto clang_type = MapToCppType(context, type.type_id);
+    auto clang_type = MapToCppType(context, &context.sem_ir(), type.type_id);
     if (clang_type.isNull()) {
       if (diagnose) {
         context.TODO(arg_id, "unsupported type used as template argument");

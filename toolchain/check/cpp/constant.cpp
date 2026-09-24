@@ -149,7 +149,7 @@ auto EvalCppVarDecl(Context& context, SemIR::LocId loc_id,
   // If the C++ global is constant, map it to a Carbon constant.
   if (var_decl->isUsableInConstantExpressions(context.ast_context())) {
     if (const auto* ap_value = var_decl->getEvaluatedValue()) {
-      auto clang_type = MapToCppType(context, type_id);
+      auto clang_type = MapToCppType(context, &context.sem_ir(), type_id);
       if (clang_type.isNull()) {
         context.TODO(loc_id, "failed to map C++ type to Carbon");
         return SemIR::ErrorInst::ConstantId;

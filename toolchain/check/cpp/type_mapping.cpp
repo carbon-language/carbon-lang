@@ -60,7 +60,8 @@ using TryMapTypeResult = std::variant<clang::QualType, WrappedType>;
 // diagnostic is emitted and the function returns IntId::None. Returns
 // IntId::None also if the argument is not a constant integer, if it is an
 // error constant, or if it is a symbolic constant.
-static auto FindIntLiteralBitWidth(Context& context, SemIR::LocId loc_id,
+static auto FindIntLiteralBitWidth(Context& context, const SemIR::File* sem_ir,
+                                   SemIR::LocId loc_id,
                                    SemIR::ConstantId arg_const_id) -> IntId {
   if (!arg_const_id.is_constant() ||
       arg_const_id == SemIR::ErrorInst::ConstantId ||
@@ -69,11 +70,11 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::LocId loc_id,
     return IntId::None;
   }
   auto arg =
-      context.constant_values().TryGetInstAs<SemIR::IntValue>(arg_const_id);
+      sem_ir->constant_values().TryGetInstAs<SemIR::IntValue>(arg_const_id);
   if (!arg) {
     return IntId::None;
   }
-  llvm::APInt arg_val = context.ints().Get(arg->int_id);
+  llvm::APInt arg_val = sem_ir->ints().Get(arg->int_id);
   int arg_non_sign_bits = arg_val.getSignificantBits() - 1;
 
   if (arg_non_sign_bits >= 128) {
@@ -140,14 +141,13 @@ static auto VerifyIntegerTypeWidth(Context& context, clang::QualType type,
 
 // Maps a Carbon class type to a C++ type. Returns a null `QualType` if the
 // type is not supported.
-static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
-    -> TryMapTypeResult {
+static auto TryMapClassType(Context& context, const SemIR::File* sem_ir,
+                            SemIR::ClassType class_type) -> TryMapTypeResult {
   clang::ASTContext& ast_context = context.ast_context();
 
   // If the class represents a Carbon type literal, map it to the corresponding
   // C++ builtin type.
-  auto type_info =
-      SemIR::RecognizedTypeInfo::ForType(context.sem_ir(), class_type);
+  auto type_info = SemIR::RecognizedTypeInfo::ForType(*sem_ir, class_type);
   switch (type_info.kind) {
     case SemIR::RecognizedTypeInfo::None: {
       break;
@@ -205,16 +205,16 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
       return ast_context.VoidTy;
     }
     case SemIR::RecognizedTypeInfo::Optional: {
-      auto args = context.inst_blocks().GetOrEmpty(type_info.args_id);
+      auto args = sem_ir->inst_blocks().GetOrEmpty(type_info.args_id);
       if (args.size() == 1) {
         auto arg_id = args[0];
-        if (auto facet = context.insts().TryGetAs<SemIR::FacetValue>(arg_id)) {
+        if (auto facet = sem_ir->insts().TryGetAs<SemIR::FacetValue>(arg_id)) {
           arg_id = facet->type_inst_id;
         }
         if (auto pointer_type =
-                context.insts().TryGetAs<SemIR::PointerType>(arg_id)) {
+                sem_ir->insts().TryGetAs<SemIR::PointerType>(arg_id)) {
           return WrappedType{
-              .inner_type_id = context.types().GetTypeIdForTypeInstId(
+              .inner_type_id = sem_ir->types().GetTypeIdForTypeInstId(
                   pointer_type->pointee_id),
               .wrap_fn = [](Context& context, clang::QualType inner_type) {
                 return context.ast_context().getPointerType(inner_type);
@@ -229,7 +229,7 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
   }
 
   // Otherwise, find the existing C++ declaration or create a new one.
-  auto* tag_decl = ExportClassToCpp(context, class_type);
+  auto* tag_decl = ExportClassToCpp(context, sem_ir, class_type);
   if (!tag_decl) {
     return clang::QualType();
   }
@@ -237,9 +237,9 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
 }
 
 // Maps a symbolic Carbon type to a C++ template parameter type.
-static auto TryMapSymbolicType(Context& context,
+static auto TryMapSymbolicType(Context& context, const SemIR::File* sem_ir,
                                SemIR::InstId symbolic_inst_id) {
-  const auto* clang_decl = context.clang_decls().Lookup(symbolic_inst_id);
+  const auto* clang_decl = sem_ir->clang_decls().Lookup(symbolic_inst_id);
   if (!clang_decl) {
     return clang::QualType();
   }
@@ -253,9 +253,9 @@ static auto TryMapSymbolicType(Context& context,
 // representing a type that needs more work before it can be mapped.
 // TODO: Have both Carbon -> C++ and C++ -> Carbon mappings in a single place
 // to keep them in sync.
-static auto TryMapType(Context& context, SemIR::TypeId type_id)
-    -> TryMapTypeResult {
-  auto type_inst = context.types().GetAsInst(type_id);
+static auto TryMapType(Context& context, const SemIR::File* sem_ir,
+                       SemIR::TypeId type_id) -> TryMapTypeResult {
+  auto type_inst = sem_ir->types().GetAsInst(type_id);
 
   CARBON_KIND_SWITCH(type_inst) {
     case SemIR::BoolType::Kind: {
@@ -265,12 +265,12 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
       return context.ast_context().CharTy;
     }
     case CARBON_KIND(SemIR::ClassType class_type): {
-      return TryMapClassType(context, class_type);
+      return TryMapClassType(context, sem_ir, class_type);
     }
     case CARBON_KIND(SemIR::ConstType const_type): {
       return WrappedType{
           .inner_type_id =
-              context.types().GetTypeIdForTypeInstId(const_type.inner_id),
+              sem_ir->types().GetTypeIdForTypeInstId(const_type.inner_id),
           .wrap_fn = [](Context& /*context*/, clang::QualType inner_type) {
             return inner_type.withConst();
           }};
@@ -290,18 +290,18 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
           }};
     }
     case CARBON_KIND(SemIR::ArrayType array_type): {
-      auto bound_const_id = context.constant_values().Get(array_type.bound_id);
+      auto bound_const_id = sem_ir->constant_values().Get(array_type.bound_id);
       if (!bound_const_id.is_constant()) {
         return clang::QualType();
       }
       auto bound_val_inst =
-          context.constant_values().TryGetInstAs<SemIR::IntValue>(
+          sem_ir->constant_values().TryGetInstAs<SemIR::IntValue>(
               bound_const_id);
       if (!bound_val_inst) {
         return clang::QualType();
       }
       return WrappedType{
-          .inner_type_id = context.types().GetTypeIdForTypeInstId(
+          .inner_type_id = sem_ir->types().GetTypeIdForTypeInstId(
               array_type.element_type_inst_id),
           .wrap_fn = [int_id = bound_val_inst->int_id](
                          Context& context, clang::QualType inner_type) {
@@ -312,10 +312,11 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
     }
     case SemIR::SymbolicBinding::Kind: {
       auto type_inst_id = context.types().GetTypeInstId(type_id);
-      return TryMapSymbolicType(context, type_inst_id);
+      return TryMapSymbolicType(context, sem_ir, type_inst_id);
     }
     case CARBON_KIND(SemIR::FacetAccessType facet_access_type): {
-      return TryMapSymbolicType(context, facet_access_type.facet_value_inst_id);
+      return TryMapSymbolicType(context, sem_ir,
+                                facet_access_type.facet_value_inst_id);
     }
 
     default: {
@@ -326,11 +327,12 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
   return clang::QualType();
 }
 
-auto MapToCppType(Context& context, SemIR::TypeId type_id) -> clang::QualType {
+auto MapToCppType(Context& context, const SemIR::File* sem_ir, SemIR::TypeId type_id)
+    -> clang::QualType {
   // TODO: unify this with the C++ to Carbon type mapping function.
   llvm::SmallVector<WrapFn> wrap_fns;
   while (true) {
-    CARBON_KIND_SWITCH(TryMapType(context, type_id)) {
+    CARBON_KIND_SWITCH(TryMapType(context, sem_ir, type_id)) {
       case CARBON_KIND(clang::QualType type): {
         for (const auto& wrap_fn : llvm::reverse(wrap_fns)) {
           if (type.isNull()) {
@@ -352,8 +354,8 @@ auto MapToCppType(Context& context, SemIR::TypeId type_id) -> clang::QualType {
 
 // Invent a primitive Clang argument given the form of the corresponding Carbon
 // expression.
-static auto InventPrimitiveClangArg(Context& context, SemIR::FormInfo form)
-    -> clang::Expr* {
+static auto InventPrimitiveClangArg(Context& context, const SemIR::File* sem_ir,
+                                    SemIR::FormInfo form) -> clang::Expr* {
   clang::ExprValueKind value_kind;
   switch (form.category) {
     case SemIR::ExprCategory::Error:
@@ -402,9 +404,9 @@ static auto InventPrimitiveClangArg(Context& context, SemIR::FormInfo form)
   // TODO: Consider producing a `clang::IntegerLiteral` in this case instead, so
   // that C++ overloads that behave differently for zero-valued int literals can
   // recognize it.
-  if (context.types().Is<SemIR::IntLiteralType>(form.type_id)) {
+  if (sem_ir->types().Is<SemIR::IntLiteralType>(form.type_id)) {
     IntId bit_width_id =
-        FindIntLiteralBitWidth(context, form.loc_id, form.constant_id);
+        FindIntLiteralBitWidth(context, sem_ir, form.loc_id, form.constant_id);
     if (bit_width_id != IntId::None) {
       arg_cpp_type = context.ast_context().getIntTypeForBitwidth(
           bit_width_id.AsValue(), true);
@@ -412,7 +414,7 @@ static auto InventPrimitiveClangArg(Context& context, SemIR::FormInfo form)
   }
 
   if (arg_cpp_type.isNull()) {
-    arg_cpp_type = MapToCppType(context, form.type_id);
+    arg_cpp_type = MapToCppType(context, sem_ir, form.type_id);
   }
 
   if (arg_cpp_type.isNull()) {
@@ -517,10 +519,11 @@ static auto InventCompoundClangArg(Context& context, SemIR::FormInfo form,
   }
 }
 
-auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
+auto InventClangArg(Context& context, const SemIR::File* sem_ir, SemIR::InstId arg_id)
+    -> clang::Expr* {
   enum Phase { Initial, AfterSubexpressions };
   llvm::SmallVector<std::pair<SemIR::FormInfo, Phase>> worklist = {
-      {SemIR::GetFormInfo(context.sem_ir(), arg_id), Initial}};
+      {SemIR::GetFormInfo(*sem_ir, arg_id), Initial}};
   llvm::SmallVector<clang::Expr*> pending_results = {};
 
   while (!worklist.empty()) {
@@ -528,10 +531,10 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
 
     switch (phase) {
       case Initial: {
-        form = SemIR::DecomposeForm(context.sem_ir(), form);
+        form = SemIR::DecomposeForm(*sem_ir, form);
         switch (form.kind) {
           case SemIR::FormInfo::Primitive: {
-            auto* expr = InventPrimitiveClangArg(context, form);
+            auto* expr = InventPrimitiveClangArg(context, sem_ir, form);
             if (!expr) {
               return nullptr;
             }
@@ -587,7 +590,7 @@ auto InventClangArgs(Context& context, llvm::ArrayRef<SemIR::InstId> arg_ids)
   arg_exprs.emplace();
   arg_exprs->reserve(arg_ids.size());
   for (SemIR::InstId arg_id : arg_ids) {
-    auto* arg_expr = InventClangArg(context, arg_id);
+    auto* arg_expr = InventClangArg(context, &context.sem_ir(), arg_id);
     if (!arg_expr) {
       arg_exprs = std::nullopt;
       return arg_exprs;

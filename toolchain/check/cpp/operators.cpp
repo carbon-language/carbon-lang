@@ -366,12 +366,12 @@ static auto LookupCppConversion(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
 
-  auto dest_type = MapToCppType(context, dest_type_id);
+  auto dest_type = MapToCppType(context, &context.sem_ir(), dest_type_id);
   if (dest_type.isNull()) {
     return SemIR::InstId::None;
   }
 
-  auto* arg_expr = InventClangArg(context, source_id);
+  auto* arg_expr = InventClangArg(context, &context.sem_ir(), source_id);
   // If we can't map the argument, we can't perform the conversion.
   if (!arg_expr) {
     return SemIR::InstId::None;
@@ -734,7 +734,7 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
     clang::OpaqueValueExpr expression;
   };
 
-  auto cpp_type = MapToCppType(context, arg_type_ids[0]);
+  auto cpp_type = MapToCppType(context, &context.sem_ir(), arg_type_ids[0]);
   if (cpp_type.isNull()) {
     return SemIR::InstId::None;
   }
@@ -743,7 +743,7 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
     return FindClangOperator(context, loc_id, *op_kind, {&arg0.expression});
   }
   CARBON_CHECK(arg_type_ids.size() == 2);
-  cpp_type = MapToCppType(context, arg_type_ids[1]);
+  cpp_type = MapToCppType(context, &context.sem_ir(), arg_type_ids[1]);
   if (cpp_type.isNull()) {
     return SemIR::InstId::None;
   }

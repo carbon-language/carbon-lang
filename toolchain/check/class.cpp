@@ -440,7 +440,7 @@ static auto CheckCompleteClassType(
                    "generic class deriving from C++ virtual class");
     } else {
       ExportAndCompleteClassToCpp(
-          context,
+          context, &context.sem_ir(),
           context.types().GetAs<SemIR::ClassType>(class_info.self_type_id));
     }
   }

@@ -16,11 +16,11 @@ namespace Carbon::Check {
 // type mapping, which is suitable for template arguments, typedefs, etc. but
 // may not be the right mapping to use in a function signature. Returns a null
 // type if there is no mapping.
-auto MapToCppType(Context& context, SemIR::TypeId type_id) -> clang::QualType;
+auto MapToCppType(Context& context, const SemIR::File* sem_ir, SemIR::TypeId type_id) -> clang::QualType;
 
 // Invents a Clang argument expression to use in overload resolution to
 // represent the given Carbon argument instruction.
-auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr*;
+auto InventClangArg(Context& context, const SemIR::File* sem_ir, SemIR::InstId arg_id) -> clang::Expr*;
 
 // For each arg, invents a Clang argument expression to use in overload
 // resolution or argument dependent lookup (ADL) to represent the given Carbon
