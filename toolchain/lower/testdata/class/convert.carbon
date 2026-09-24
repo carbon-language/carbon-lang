@@ -93,6 +93,8 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.9edb2ca1f7e7a271:core.Destroy.Core"(ptr %self) #0 !dbg !62 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc14.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !64
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc14.n), !dbg !64
 // CHECK:STDOUT:   ret void, !dbg !64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

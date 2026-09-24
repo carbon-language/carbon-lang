@@ -213,6 +213,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !65 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc5.x = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !67
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc5.x), !dbg !67
 // CHECK:STDOUT:   ret void, !dbg !67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -334,6 +336,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !106 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc7.x = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !108
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc7.x), !dbg !108
 // CHECK:STDOUT:   ret void, !dbg !108
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -444,6 +448,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !138 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc6.x = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !140
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc6.x), !dbg !140
 // CHECK:STDOUT:   ret void, !dbg !140
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -559,6 +565,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !175 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc7.x = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !177
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc7.x), !dbg !177
 // CHECK:STDOUT:   ret void, !dbg !177
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -707,6 +715,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !227 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc7.x = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !229
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc7.x), !dbg !229
 // CHECK:STDOUT:   ret void, !dbg !229
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -833,6 +843,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !262 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc7.x = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !264
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc7.x), !dbg !264
 // CHECK:STDOUT:   ret void, !dbg !264
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -970,6 +982,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !303 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc6.x = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !305
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc6.x), !dbg !305
 // CHECK:STDOUT:   ret void, !dbg !305
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1085,6 +1099,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.a15077f50f3020c3:core.Destroy.Core"(ptr %self) #0 !dbg !338 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc7.x = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !340
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc7.x), !dbg !340
 // CHECK:STDOUT:   ret void, !dbg !340
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
