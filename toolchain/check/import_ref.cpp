@@ -176,12 +176,9 @@ class ImportContext {
   }
   auto import_vtables() -> const SemIR::VtableStore& {
     return import_ir().vtables();
-  }
+  } 
   auto import_constant_values() -> const SemIR::ConstantValueStore& {
     return import_ir().constant_values();
-  }
-  auto import_default_values() -> const SemIR::DefaultValueStore& {
-    return import_ir().default_values();
   }
   auto import_entity_names() -> const SemIR::EntityNameStore& {
     return import_ir().entity_names();
@@ -270,9 +267,6 @@ class ImportContext {
   auto local_vtables() -> SemIR::VtableStore& { return local_ir().vtables(); }
   auto local_constant_values() -> SemIR::ConstantValueStore& {
     return local_ir().constant_values();
-  }
-  auto local_default_values() -> SemIR::DefaultValueStore& {
-    return local_ir().default_values();
   }
   auto local_entity_names() -> SemIR::EntityNameStore& {
     return local_ir().entity_names();
@@ -2313,12 +2307,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::DefaultValuePattern inst)
     -> ResolveResult {
   auto subpattern = GetLocalImportRefInfo(resolver, inst.subpattern_id);
-  const auto& import_default_value =
-      resolver.import_default_values().Get(inst.default_value_id);
   // We import the first owning declaration of a function, which must always
   // have default values completely specified.
-  CARBON_CHECK(!import_default_value.is_unspecified);
-  auto value = GetLocalImportRefInfo(resolver, import_default_value.value_id);
+  CARBON_CHECK(
+      !resolver.import_insts().Is<SemIR::UnspecifiedValue>(inst.value_id));
+  auto value = GetLocalImportRefInfo(resolver, inst.value_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -2329,10 +2322,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           .type_id = resolver.local_types().GetTypeIdForTypeConstantId(
               subpattern.local_type_const_id),
           .subpattern_id = AddLoadedImportRef(resolver, subpattern),
-          .default_value_id = resolver.local_default_values().Add(
-              {.raw_id = SemIR::InstId::None,
-               .value_id = AddLoadedImportRef(resolver, value),
-               .is_unspecified = false}),
+          .value_id = AddLoadedImportRef(resolver, value),
       });
 }
 

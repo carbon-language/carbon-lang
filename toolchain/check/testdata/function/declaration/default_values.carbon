@@ -171,7 +171,6 @@ fn F(x: C = {});
 // CHECK:STDOUT:   %a.patt: %pattern_type.d8d = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %.e44: %pattern_type.d8d = default_value_pattern %a.patt, @F.%.loc10_16.7 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %C.val, %C.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %.115: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -182,16 +181,13 @@ fn F(x: C = {});
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.d8d = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type.d8d = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %.loc10_11: %pattern_type.d8d = default_value_pattern %a.patt, %.loc10_16.7 [concrete = constants.%.e44]
+// CHECK:STDOUT:     %.loc10_11: %pattern_type.d8d = default_value_pattern %a.patt, %.loc10_16.7
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc10_14.2: ref %C = temporary_storage
 // CHECK:STDOUT:     %.loc10_14.3: init %C to %.loc10_14.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:     %.loc10_16.1: init %C = converted %.loc10_14.1, %.loc10_14.3 [concrete = constants.%C.val]
-// CHECK:STDOUT:     %a.param: %D = value_param call_param0
-// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %a: %D = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %impl.elem0: %.ee7 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc10_16.1, %impl.elem0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:     %.loc10_16.2: ref %D = temporary_storage
@@ -201,6 +197,9 @@ fn F(x: C = {});
 // CHECK:STDOUT:     %.loc10_16.5: init %D = converted %.loc10_16.1, %C.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:     %.loc10_16.6: ref %D = temporary %.loc10_16.2, %.loc10_16.5
 // CHECK:STDOUT:     %.loc10_16.7: %D = acquire_value %.loc10_16.6
+// CHECK:STDOUT:     %a.param: %D = value_param call_param0
+// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %a: %D = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -239,12 +238,12 @@ fn F(x: C = {});
 // CHECK:STDOUT:   %tuple.56c: %tuple.type.6ca = tuple_value (%empty_struct, %tuple.9a3) [concrete]
 // CHECK:STDOUT:   %tuple.type.bcdf: type = tuple_type (%empty_struct_type, %tuple.type.6ca) [concrete]
 // CHECK:STDOUT:   %tuple.4f4: %tuple.type.bcdf = tuple_value (%empty_struct, %tuple.56c) [concrete]
-// CHECK:STDOUT:   %.391: %pattern_type.f5f = default_value_pattern %.341, @F.%.loc6_62.6 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %.115: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %tuple.d3e: %tuple.type.748 = tuple_value (%C.val, %C.val) [concrete]
 // CHECK:STDOUT:   %tuple.109: %tuple.type.d76 = tuple_value (%C.val, %tuple.d3e) [concrete]
 // CHECK:STDOUT:   %tuple.800: %tuple.type.a40 = tuple_value (%C.val, %tuple.109) [concrete]
+// CHECK:STDOUT:   %.caf: %pattern_type.f5f = default_value_pattern %.341, %tuple.800 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -264,7 +263,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:     %.loc6_37: %pattern_type.8b4 = tuple_pattern (%d.patt, %e.patt) [concrete = constants.%.fe8]
 // CHECK:STDOUT:     %.loc6_38: %pattern_type.4fa = tuple_pattern (%c.patt, %.loc6_37) [concrete = constants.%.972]
 // CHECK:STDOUT:     %.loc6_39: %pattern_type.f5f = tuple_pattern (%b.patt, %.loc6_38) [concrete = constants.%.341]
-// CHECK:STDOUT:     %.loc6_41: %pattern_type.f5f = default_value_pattern %.loc6_39, %.loc6_62.6 [concrete = constants.%.391]
+// CHECK:STDOUT:     %.loc6_41: %pattern_type.f5f = default_value_pattern %.loc6_39, %.loc6_62.6 [concrete = constants.%.caf]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_45.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc6_50.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -273,24 +272,6 @@ fn F(x: C = {});
 // CHECK:STDOUT:     %.loc6_60.1: %tuple.type.b6b = tuple_literal (%.loc6_55.1, %.loc6_59.1) [concrete = constants.%tuple.9a3]
 // CHECK:STDOUT:     %.loc6_61.1: %tuple.type.6ca = tuple_literal (%.loc6_50.1, %.loc6_60.1) [concrete = constants.%tuple.56c]
 // CHECK:STDOUT:     %.loc6_62.1: %tuple.type.bcdf = tuple_literal (%.loc6_45.1, %.loc6_61.1) [concrete = constants.%tuple.4f4]
-// CHECK:STDOUT:     %a.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc6_9: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a: %C = wrapper_binding a, %a.param
-// CHECK:STDOUT:     %b.param: %C = value_param call_param1
-// CHECK:STDOUT:     %C.ref.loc6_16: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %b: %C = wrapper_binding b, %b.param
-// CHECK:STDOUT:     %c.param: %C = value_param call_param2
-// CHECK:STDOUT:     %C.ref.loc6_23: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %c: %C = wrapper_binding c, %c.param
-// CHECK:STDOUT:     %d.param: %C = value_param call_param3
-// CHECK:STDOUT:     %C.ref.loc6_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %d: %C = wrapper_binding d, %d.param
-// CHECK:STDOUT:     %e.param: %C = value_param call_param4
-// CHECK:STDOUT:     %C.ref.loc6_36: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %e: %C = wrapper_binding e, %e.param
-// CHECK:STDOUT:     %tuple.loc6_37: %tuple.type.748 = tuple_value (%d.param, %e.param)
-// CHECK:STDOUT:     %tuple.loc6_38: %tuple.type.d76 = tuple_value (%c.param, %tuple.loc6_37)
-// CHECK:STDOUT:     %tuple.loc6_39: %tuple.type.a40 = tuple_value (%b.param, %tuple.loc6_38)
 // CHECK:STDOUT:     %.loc6_45.2: ref %C = temporary_storage
 // CHECK:STDOUT:     %.loc6_45.3: init %C to %.loc6_45.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:     %.loc6_62.2: init %C = converted %.loc6_45.1, %.loc6_45.3 [concrete = constants.%C.val]
@@ -317,6 +298,21 @@ fn F(x: C = {});
 // CHECK:STDOUT:     %.loc6_62.5: %tuple.type.d76 = converted %.loc6_61.1, %tuple.loc6_61 [concrete = constants.%tuple.109]
 // CHECK:STDOUT:     %tuple.loc6_62: %tuple.type.a40 = tuple_value (%.loc6_62.4, %.loc6_62.5) [concrete = constants.%tuple.800]
 // CHECK:STDOUT:     %.loc6_62.6: %tuple.type.a40 = converted %.loc6_62.1, %tuple.loc6_62 [concrete = constants.%tuple.800]
+// CHECK:STDOUT:     %a.param: %C = value_param call_param0
+// CHECK:STDOUT:     %C.ref.loc6_9: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %a: %C = wrapper_binding a, %a.param
+// CHECK:STDOUT:     %b.param: %C = value_param call_param1
+// CHECK:STDOUT:     %C.ref.loc6_16: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %b: %C = wrapper_binding b, %b.param
+// CHECK:STDOUT:     %c.param: %C = value_param call_param2
+// CHECK:STDOUT:     %C.ref.loc6_23: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %c: %C = wrapper_binding c, %c.param
+// CHECK:STDOUT:     %d.param: %C = value_param call_param3
+// CHECK:STDOUT:     %C.ref.loc6_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %d: %C = wrapper_binding d, %d.param
+// CHECK:STDOUT:     %e.param: %C = value_param call_param4
+// CHECK:STDOUT:     %C.ref.loc6_36: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %e: %C = wrapper_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -332,9 +328,9 @@ fn F(x: C = {});
 // CHECK:STDOUT:   %x.param_patt: %pattern_type = value_param_pattern [concrete]
 // CHECK:STDOUT:   %x.patt: %pattern_type = wrapper_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %.ff4: %pattern_type = default_value_pattern %x.patt, @F.%.loc6_14.6 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %.115: ref %C = temporary invalid, %C.val [concrete]
+// CHECK:STDOUT:   %.66f: %pattern_type = default_value_pattern %x.patt, %C.val [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -343,17 +339,17 @@ fn F(x: C = {});
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc6_11: %pattern_type = default_value_pattern %x.patt, %.loc6_14.6 [concrete = constants.%.ff4]
+// CHECK:STDOUT:     %.loc6_11: %pattern_type = default_value_pattern %x.patt, %.loc6_14.6 [concrete = constants.%.66f]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %x.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %x: %C = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %.loc6_14.2: ref %C = temporary_storage
 // CHECK:STDOUT:     %.loc6_14.3: init %C to %.loc6_14.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:     %.loc6_14.4: init %C = converted %.loc6_14.1, %.loc6_14.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:     %.loc6_14.5: ref %C = temporary %.loc6_14.2, %.loc6_14.4 [concrete = constants.%.115]
 // CHECK:STDOUT:     %.loc6_14.6: %C = acquire_value %.loc6_14.5 [concrete = constants.%C.val]
+// CHECK:STDOUT:     %x.param: %C = value_param call_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %x: %C = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

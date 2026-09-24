@@ -38,7 +38,6 @@ fn B() {
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
-// CHECK:STDOUT:   default_values:  {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst50000011}}
 // CHECK:STDOUT:   entity_names:    {}
@@ -166,7 +165,6 @@ fn B() {
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir70000002, inst_id: inst50000011}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
-// CHECK:STDOUT:   default_values:  {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: inst70000012, name0: inst70000013}}
 // CHECK:STDOUT:     name_scope70000001: {inst: inst70000012, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst70000018}}

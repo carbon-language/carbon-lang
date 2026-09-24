@@ -21,7 +21,6 @@
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
-// CHECK:STDOUT:   default_values:  {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:    {}

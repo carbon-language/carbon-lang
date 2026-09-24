@@ -41,7 +41,6 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       value_stores_(&value_stores),
       filename_(std::move(filename)),
       entity_names_(check_ir_id),
-      default_values_(check_ir_id),
       functions_(check_ir_id),
       generated_functions_(check_ir_id),
       cpp_overload_sets_(check_ir_id),
@@ -175,7 +174,6 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
           map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
           map.Add("clang_decls", clang_decls_.OutputYaml());
           map.Add("clang_decl_signatures", clang_decl_signatures_.OutputYaml());
-          map.Add("default_values", default_values_.OutputYaml());
           map.Add("name_scopes", name_scopes_.OutputYaml());
           map.Add("entity_names", entity_names_.OutputYaml());
           map.Add("functions", functions_.OutputYaml());
@@ -216,8 +214,6 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "thunks_"), thunks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "default_values_"),
-                    default_values_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "interfaces_"), interfaces_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "impls_"), impls_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "generics_"), generics_);

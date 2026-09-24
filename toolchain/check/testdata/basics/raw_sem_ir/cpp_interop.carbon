@@ -65,7 +65,6 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:   clang_decl_signatures:
 // CHECK:STDOUT:     clang_decl_signature_id50000000: {kind: normal, num_params: 0}
 // CHECK:STDOUT:     clang_decl_signature_id50000001: {kind: normal, num_params: 1, modes: [value]}
-// CHECK:STDOUT:   default_values:  {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Cpp): inst50000012, name0: inst5000001F}}
 // CHECK:STDOUT:     name_scope50000001: {inst: inst50000012, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name2: inst50000014, name3: inst5000002D, name4: inst50000055}}

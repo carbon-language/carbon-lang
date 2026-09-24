@@ -653,9 +653,8 @@ struct Worklist {
   }
 
   template <typename T>
-    requires(
-        SameAsOneOf<T, BoolValue, CharId, CompileTimeBindIndex, DefaultValueId,
-                    ElementIndex, FloatKind, IntKind, CallParamIndex>)
+    requires(SameAsOneOf<T, BoolValue, CharId, CompileTimeBindIndex,
+                         ElementIndex, FloatKind, IntKind, CallParamIndex>)
   auto Add(T arg) -> void {
     // Index-like ID: just include the value directly.
     AddInteger(arg.index);

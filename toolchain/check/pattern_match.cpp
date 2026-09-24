@@ -942,21 +942,17 @@ auto MatchContext::DoPreWork(State state,
     case CARBON_KIND(CallerState* _): {
       // If there's no scrutinee supplied, supply the default value instead.
       if (!scrutinee_id.has_value()) {
-        const auto& default_value = context_.default_values().Get(
-            default_value_pattern.default_value_id);
-        CARBON_CHECK(default_value.value_id.has_value());
+        CARBON_CHECK(!context_.insts().Is<SemIR::UnspecifiedValue>(
+            default_value_pattern.value_id));
         auto [inst_id, _] = WrapInstForSpecific(
-            context_, SemIR::LocId(default_value.value_id),
-            default_value.value_id, specific_id_stack_.back());
+            context_, SemIR::LocId(default_value_pattern.value_id),
+            default_value_pattern.value_id, specific_id_stack_.back());
         scrutinee_id = inst_id;
       }
       break;
     }
     case CARBON_KIND(CalleeState* _): {
-      // We will need to check the type of the parameter to make sure it
-      // matches the provided default, so add ourselves to the post-work list.
-      results_stack_.PushArray();
-      AddAsPostWork(entry);
+      /* no-op */
       break;
     }
     default: {
@@ -968,35 +964,6 @@ auto MatchContext::DoPreWork(State state,
   AddWork({.pattern_id = default_value_pattern.subpattern_id,
            .work = PreWork{.scrutinee_id = scrutinee_id},
            .allow_unmarked_ref = entry.allow_unmarked_ref});
-}
-
-auto MatchContext::DoPostWork(State state,
-                              SemIR::DefaultValuePattern default_value_pattern,
-                              WorkItem /*entry*/) -> void {
-  if (!std::holds_alternative<CalleeState*>(state)) {
-    CARBON_FATAL("Unhandled state kind in DefaultValuePattern post-work");
-  }
-  // Extract the type of the parameter from the parameter instruction.
-  auto param_inst_id = results_stack_.PeekArray().back();
-  auto param_type_id = context_.insts().Get(param_inst_id).type_id();
-
-  // If a constant was specified, we should be able to convert it into the
-  // type of the parameter.
-  auto& default_value =
-      context_.default_values().Get(default_value_pattern.default_value_id);
-  if (!default_value.is_unspecified) {
-    default_value.value_id =
-        ConvertToValueOfType(context_, SemIR::LocId(default_value.raw_id),
-                             default_value.raw_id, param_type_id);
-  }
-
-  results_stack_.PopArray();
-
-  // If something at a higher level in the stack needed these results, bubble
-  // up the parameter instruction we popped off our own results array.
-  if (need_subpattern_results()) {
-    results_stack_.AppendToTop(param_inst_id);
-  }
 }
 
 // TODO: There is a cycle through pattern matching with an action.
@@ -1101,10 +1068,6 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
         }
         case CARBON_KIND(SemIR::ImportRefLoaded import_ref): {
           DoPostWork(state, import_ref, entry);
-          break;
-        }
-        case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
-          DoPostWork(state, default_value_pattern, entry);
           break;
         }
         default: {
