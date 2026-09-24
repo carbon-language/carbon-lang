@@ -17,18 +17,18 @@ ROOT="$(git -C "$DIR" rev-parse --show-toplevel)"
 
 mkdir -p ~/.config/nvim/{lua,parser,queries}
 
-# add highlight queries
+echo "Linking carbon queries and carbon.lua to neovim's configuration..." >&2
 [ -e ~/.config/nvim/queries/carbon ] && unlink ~/.config/nvim/queries/carbon
 ln -sf "$ROOT/utils/tree_sitter/queries" ~/.config/nvim/queries/carbon
-
-# add carbon.lua
 [ -e ~/.config/nvim/lua/carbon.lua ] && unlink ~/.config/nvim/lua/carbon.lua
 ln -sf "$ROOT/utils/nvim/carbon.lua" ~/.config/nvim/lua/carbon.lua
 
 # load carbon.lua on startup
+echo "Adding \`require \"carbon\"\` to init.lua..." >&2
 grep 'require "carbon"' ~/.config/nvim/init.lua >/dev/null || echo 'require "carbon"' >> ~/.config/nvim/init.lua
 
 # build tree_sitter
+echo "Building and copying in tree-sitter binary..." >&2
 cd utils/tree_sitter
 tree-sitter generate
 clang -o ~/.config/nvim/parser/carbon.so -shared src/parser.c src/scanner.c -I ./src -Os -fPIC
