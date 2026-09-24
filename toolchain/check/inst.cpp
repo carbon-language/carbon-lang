@@ -85,7 +85,8 @@ auto AddTemplateConstantInstToEvalBlock(Context& context,
                                         SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  CARBON_VLOG_TO(context.vlog_stream(), "AddInstToEvalBlock: {0}\n",
+  CARBON_VLOG_TO(context.vlog_stream(),
+                 "AddTemplateConstantInstToEvalBlock: {0}\n",
                  loc_id_and_inst.inst);
 
   // Set the constant value of this instruction to point back to itself.

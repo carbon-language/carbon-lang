@@ -367,12 +367,12 @@ static auto RefineTypedOperandInSpecific(Context& /*context*/,
 
 // Returns whether `inst_id`, which is an instruction within a generic, needs a
 // `SpecificInst` in order to be referred to from within a specific. If the
-// instruction isn't template-dependent within the generic, then either it
-// doesn't depend on the specific at all, or evaluation has already replaced it
-// with the corresponding instruction from the specific.
+// instruction isn't symbolic within the generic, then either it doesn't depend
+// on the specific at all, or evaluation has already replaced it with the
+// corresponding instruction from the specific.
 static auto NeedsSpecificInst(Context& context, SemIR::InstId inst_id) -> bool {
-  return OperandDependence(context, SemIR::MetaInstId(inst_id)) ==
-         SemIR::ConstantDependence::Template;
+  return context.insts().Get(inst_id).type_id().is_symbolic() ||
+         context.constant_values().Get(inst_id).is_symbolic();
 }
 
 auto AddSpecificInst(Context& context, SemIR::InstId inst_id,
