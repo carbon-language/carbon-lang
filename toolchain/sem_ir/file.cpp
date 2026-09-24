@@ -56,6 +56,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       observes_(check_ir_id),
       // 1 reserved id for `ObserveBlockId::Empty`.
       observe_blocks_(allocator_, check_ir_id, 1),
+      pack_expansions_(check_ir_id),
       associated_constants_(check_ir_id),
       // 1 reserved id for `DeclaredFacetTypeId::Empty`.
       declared_facet_types_(check_ir_id, 1),
@@ -135,8 +136,9 @@ auto File::Verify() const -> ErrorOr<Success> {
 
   // Check that every code block has a terminator sequence that appears at the
   // end of the block.
-  for (const Function& function : functions_.values()) {
-    for (InstBlockId block_id : function.body_block_ids) {
+  auto verify_code_blocks =
+      [&](llvm::ArrayRef<InstBlockId> block_ids) -> ErrorOr<Success> {
+    for (InstBlockId block_id : block_ids) {
       TerminatorKind prior_kind = TerminatorKind::NotTerminator;
       for (InstId inst_id : inst_blocks().Get(block_id)) {
         TerminatorKind inst_kind =
@@ -157,6 +159,13 @@ auto File::Verify() const -> ErrorOr<Success> {
         return Error(llvm::formatv("No terminator in block {0}", block_id));
       }
     }
+    return Success();
+  };
+  for (const Function& function : functions_.values()) {
+    CARBON_RETURN_IF_ERROR(verify_code_blocks(function.body_block_ids));
+  }
+  for (const PackExpansion& pack_expansion : pack_expansions_.values()) {
+    CARBON_RETURN_IF_ERROR(verify_code_blocks(pack_expansion.body_block_ids));
   }
 
   // TODO: Check that an instruction only references other instructions that are

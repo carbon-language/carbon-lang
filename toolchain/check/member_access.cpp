@@ -911,4 +911,35 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
                                            .index = tuple_index});
 }
 
+auto PerformVariadicTupleAccess(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId tuple_inst_id,
+                                SemIR::InstId index_inst_id) -> SemIR::InstId {
+  auto tuple_type_id = context.insts().Get(tuple_inst_id).type_id();
+  auto tuple_type = context.types().GetAs<SemIR::TupleType>(tuple_type_id);
+  auto type_block = context.inst_blocks().Get(tuple_type.type_elements_id);
+
+  // Determine the element type. If all elements have the same type, use that.
+  // Otherwise, index into the tuple type.
+  // TODO: `TupleIndex` is treated as template-dependent, so the element type
+  // is template-dependent in this case. It should eventually be treated as
+  // checked-dependent instead.
+  SemIR::TypeId element_type_id = SemIR::TypeId::None;
+  if (!type_block.empty() && llvm::all_equal(type_block)) {
+    element_type_id = context.types().GetTypeIdForTypeInstId(type_block[0]);
+  } else {
+    auto element_type_inst_id = AddTypeInst<SemIR::TupleIndex>(
+        context, loc_id,
+        {.type_id = SemIR::TypeType::TypeId,
+         .tuple_id = context.types().GetTypeInstId(tuple_type_id),
+         .index_id = index_inst_id});
+    element_type_id =
+        context.types().GetTypeIdForTypeInstId(element_type_inst_id);
+  }
+
+  return AddInst<SemIR::TupleIndex>(context, loc_id,
+                                    {.type_id = element_type_id,
+                                     .tuple_id = tuple_inst_id,
+                                     .index_id = index_inst_id});
+}
+
 }  // namespace Carbon::Check

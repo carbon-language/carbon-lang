@@ -355,6 +355,20 @@ struct BranchIf {
   InstId cond_id;
 };
 
+// Control flow at the end of the body of a pack expansion. Continues with the
+// next value of the variadic index, or leaves the pack expansion if the
+// current index is the last one. See `SpliceBranches`.
+struct BranchNextIndex {
+  static constexpr auto Kind =
+      InstKind::BranchNextIndex.Define<Parse::PackExpansionStatementId>(
+          {.ir_name = "br_next_index",
+           .constant_kind = InstConstantKind::Never,
+           .terminator_kind = TerminatorKind::Terminator});
+
+  // TODO: Add an optional value to contribute to the result of the enclosing
+  // `SpliceBranches` for this index, for use in expression pack expansions.
+};
+
 // Control flow to branch to the target block, passing an argument for
 // `BlockArg` to read.
 struct BranchWithArg {
@@ -1544,6 +1558,30 @@ struct OutParamPattern {
   NameId pretty_name_id;
 };
 
+// Introduces a pack expansion, such as a `...` statement. The pack expansion
+// entity describes a generic whose final binding is the variadic index.
+//
+// The type of this instruction is a tuple of `<instruction>` types, with one
+// element for each value of the variadic index. The constant value of this
+// instruction is a tuple of `InstValue`s, each of which is a `SpecificInst`
+// that refers to the pack expansion's entry branch, in the specific for the
+// corresponding index. This is expected to be used as the operand of a
+// `SpliceBranches` instruction.
+struct PackExpansionDecl {
+  static constexpr auto Kind =
+      InstKind::PackExpansionDecl.Define<Parse::NodeId>(
+          {.ir_name = "pack_expansion",
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  TypeId type_id;
+  PackExpansionId pack_expansion_id;
+  // The self-specific for the pack expansion's generic. The arguments other
+  // than the last one are the enclosing generic arguments, which are
+  // substituted into during evaluation.
+  SpecificId specific_id;
+};
+
 // Indicates `partial` on a type, such as `partial MyClass`.
 struct PartialType {
   static constexpr auto Kind =
@@ -2027,6 +2065,27 @@ struct SpliceBlock {
   InstId result_id;
 };
 
+// Control flow that executes a sequence of spliced branches in turn, and then
+// branches to `exit_id`.
+//
+// `insts_id` computes a tuple of `InstValue`s, each of which is a branch
+// instruction, typically wrapped in a `SpecificInst`. Control flow branches
+// to the target of the first branch. The code reached by that branch ends
+// with a `BranchNextIndex`, which continues with the next branch in the
+// sequence, or with `exit_id` after the last one.
+struct SpliceBranches {
+  static constexpr auto Kind =
+      InstKind::SpliceBranches.Define<Parse::PackExpansionStatementId>(
+          {.ir_name = "splice_br",
+           .constant_kind = InstConstantKind::Never,
+           .terminator_kind = TerminatorKind::Terminator});
+
+  // TODO: Add a way to collect a value from each branch, for use in expression
+  // pack expansions.
+  InstId insts_id;
+  LabelId exit_id;
+};
+
 // Splices an instruction computed by an action into the location where this
 // appears.
 struct SpliceInst {
@@ -2195,6 +2254,29 @@ struct TupleAccess {
   TypeId type_id;
   InstId tuple_id;
   ElementIndex index;
+};
+
+// Access to a tuple member with a symbolic index. When the index is known,
+// this evaluates to the corresponding `TupleAccess`, or to the element itself
+// if the tuple is a constant value.
+//
+// This can also be applied to a tuple type, in which case it produces the
+// corresponding element type. This is used to form the type of a
+// `TupleIndex` on a tuple value.
+//
+// TODO: For now, a `TupleIndex` with a symbolic index is treated as having a
+// template-dependent value, even if the index is only checked-dependent. The
+// type should eventually remain checked-symbolic in that case.
+struct TupleIndex {
+  static constexpr auto Kind = InstKind::TupleIndex.Define<Parse::NodeId>(
+      {.ir_name = "tuple_index",
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
+       .is_type = InstIsType::Maybe,
+       .constant_kind = InstConstantKind::TemplateOnly});
+
+  TypeId type_id;
+  InstId tuple_id;
+  InstId index_id;
 };
 
 // Initializes the destination tuple with the given elements.

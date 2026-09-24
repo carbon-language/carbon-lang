@@ -366,6 +366,23 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::BranchNextIndex /*inst*/) -> void {
+  CARBON_FATAL("TODO: Lowering for pack expansions not implemented yet");
+}
+
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::SpliceBranches /*inst*/) -> void {
+  CARBON_FATAL("TODO: Lowering for pack expansions not implemented yet");
+}
+
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::TupleIndex /*inst*/) -> void {
+  // TODO: Evaluate the index in the current specific and lower as a
+  // `TupleAccess`.
+  CARBON_FATAL("TODO: Lowering for TupleIndex not implemented yet");
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::SpliceInst inst) -> void {
   auto [inst_ir, inst_value_id] = GetConstantValueInSpecific(

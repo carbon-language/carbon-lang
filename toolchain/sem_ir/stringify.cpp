@@ -953,6 +953,13 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
       step_stack.Push("require");
       break;
     }
+    case CARBON_KIND(PackExpansionDecl _): {
+      // The last argument is the variadic index.
+      // TODO: Include the enclosing entity's specific arguments.
+      step_stack.Push("pack expansion element ",
+                      sem_ir.inst_blocks().Get(specific.args_id).back());
+      break;
+    }
     default: {
       // TODO: Include the specific arguments here.
       step_stack.PushInstId(generic.decl_id);

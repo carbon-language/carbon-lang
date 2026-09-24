@@ -418,6 +418,7 @@ class NodeStack {
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::MatchFirstDefinitionStart:
       case Parse::NodeKind::ObserveIntroducer:
+      case Parse::NodeKind::PackExpansionStart:
       case Parse::NodeKind::RequireIntroducer:
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:
@@ -468,7 +469,6 @@ class NodeStack {
       case Parse::NodeKind::LetInitializer:
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::NamedConstraintIntroducer:
-      case Parse::NodeKind::PackExpansionStart:
       case Parse::NodeKind::RefBindingName:
       case Parse::NodeKind::RuntimeBindingName:
       case Parse::NodeKind::ReturnStatementStart:

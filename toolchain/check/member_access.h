@@ -54,6 +54,13 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId tuple_inst_id,
                         SemIR::InstId index_inst_id) -> SemIR::InstId;
 
+// Creates SemIR to access an element of the tuple `tuple_inst_id`, which must
+// have tuple type, at the symbolic variadic index `index_inst_id`, which must
+// have type `Core.IntLiteral` and is assumed to be in range.
+auto PerformVariadicTupleAccess(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId tuple_inst_id,
+                                SemIR::InstId index_inst_id) -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_MEMBER_ACCESS_H_

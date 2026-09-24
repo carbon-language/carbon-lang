@@ -200,6 +200,10 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
       [[fallthrough]];
     case ScopeIdTypeEnum::For<ObserveId>:
 
+      offset += sem_ir_->pack_expansions().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<PackExpansionId>:
+
       offset += sem_ir_->require_impls().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<RequireImplsId>:
@@ -466,6 +470,9 @@ struct BranchNames {
       case Parse::NodeKind::IfStatement:
         return {{.prefix = "if", .branch = "done"}};
 
+      case Parse::NodeKind::PackExpansionStart:
+        return {{.prefix = "pack", .branch = "body"}};
+
       case Parse::NodeKind::ShortCircuitOperandAnd:
         return {
             {.prefix = "and", .branch_if = "rhs", .branch_with_arg = "result"}};
@@ -676,6 +683,29 @@ auto InstNamer::PushEntity(ObserveId observe_id, ScopeId /*scope_id*/,
       globals_.AllocateName(*this, observe_loc,
                             llvm::formatv("{0}{1}observe", scope_prefix,
                                           scope_prefix.empty() ? "" : "."));
+}
+
+auto InstNamer::PushEntity(PackExpansionId pack_expansion_id, ScopeId scope_id,
+                           Scope& scope, llvm::StringRef prefix) -> void {
+  const auto& pack = sem_ir_->pack_expansions().Get(pack_expansion_id);
+  LocId pack_loc(pack.decl_id);
+
+  scope.name = globals_.AllocateName(
+      *this, pack_loc,
+      llvm::formatv("{0}{1}pack", prefix, prefix.empty() ? "" : "."));
+
+  // The first body block is the entry block, which contains the variadic index
+  // binding and the branch to the rest of the body.
+  if (!pack.body_block_ids.empty()) {
+    AddBlockLabel(scope_id, pack.body_block_ids.front(), "pack.entry",
+                  pack_loc);
+  }
+
+  // Push blocks in reverse order.
+  for (auto block_id : llvm::reverse(pack.body_block_ids)) {
+    PushBlockId(scope_id, block_id);
+  }
+  PushGeneric(scope_id, pack.generic_id);
 }
 
 auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
@@ -1001,6 +1031,19 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case CARBON_KIND_ANY(AnyBranch, branch): {
       inst_namer_->AddBlockLabel(scope_id_, LocId(inst_id_), branch);
+      // Branches are normally unnamed, but the entry branch of a pack
+      // expansion is referenced by the `specific_inst`s in its value.
+      if (inst_.Is<Branch>()) {
+        auto pack_index = static_cast<int32_t>(scope_id_) -
+                          inst_namer_->GetScopeIdOffset(
+                              ScopeIdTypeEnum::For<PackExpansionId>);
+        const auto& packs = sem_ir().pack_expansions();
+        if (pack_index >= 0 &&
+            pack_index < static_cast<int32_t>(packs.size()) &&
+            packs.Get(packs.ids().begin()[pack_index]).entry_id == inst_id_) {
+          AddInstName("entry");
+        }
+      }
       return;
     }
     case CARBON_KIND(Call inst): {
@@ -1342,6 +1385,25 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("impls");
       return;
     }
+    case CARBON_KIND(PackExpansionDecl inst): {
+      // Name and push the pack expansion entity when we first see its
+      // declaration from within an entity scope. Its constant value may be
+      // visited earlier from the constants block, but that doesn't tell us the
+      // enclosing entity.
+      if (inst.pack_expansion_id.has_value() &&
+          static_cast<int32_t>(scope_id_) >=
+              static_cast<int32_t>(ScopeId::FirstEntityScope)) {
+        auto pack_scope_id = inst_namer_->GetScopeFor(inst.pack_expansion_id);
+        auto& pack_scope = inst_namer_->GetScopeInfo(pack_scope_id);
+        if (!pack_scope.name) {
+          inst_namer_->PushEntity(
+              inst.pack_expansion_id, pack_scope_id, pack_scope,
+              inst_namer_->GetScopeInfo(scope_id_).name.GetBaseName());
+        }
+      }
+      AddInstName("pack");
+      return;
+    }
     case CARBON_KIND_ANY(AnyParam, inst): {
       AddInstNameId(inst.pretty_name_id, ".param");
       return;
@@ -1417,6 +1479,10 @@ auto InstNamer::NamingContext::NameInst() -> void {
     case CARBON_KIND(SpliceBlock inst): {
       PushBlockId(scope_id_, inst.block_id);
       AddInstName("");
+      return;
+    }
+    case CARBON_KIND(SpliceBranches inst): {
+      AddBlockLabel(scope_id_, inst.exit_id, "pack.done", LocId(inst_id_));
       return;
     }
     case StringLiteral::Kind: {

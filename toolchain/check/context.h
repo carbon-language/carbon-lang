@@ -413,6 +413,9 @@ class Context {
   }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
   auto specifics() -> SemIR::SpecificStore& { return sem_ir().specifics(); }
+  auto pack_expansions() -> SemIR::PackExpansionStore& {
+    return sem_ir().pack_expansions();
+  }
   auto import_irs() -> SemIR::ImportIRStore& { return sem_ir().import_irs(); }
   auto import_ir_insts() -> SemIR::ImportIRInstStore& {
     return sem_ir().import_ir_insts();

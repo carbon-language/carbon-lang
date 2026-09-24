@@ -70,6 +70,7 @@ using IdKind = TypeEnum<
     NameScopeId,
     NamedConstraintId,
     ObserveId,
+    PackExpansionId,
     RawBundleId,
     RequireImplsId,
     SpecificId,
