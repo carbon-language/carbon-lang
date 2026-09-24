@@ -98,6 +98,8 @@ void f() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.5a23cc09585c55d2:core.Destroy.Core"(ptr %self) #1 !dbg !38 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc15.price = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !40
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc15.price), !dbg !40
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
