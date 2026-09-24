@@ -170,6 +170,7 @@ class A {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %Circle.elem: type = unbound_element_type %Circle, %i32 [concrete]
 // CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.914: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
@@ -396,6 +397,10 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc20_36.4(%self.param: ref %Circle) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %radius.ref: %Circle.elem = name_ref radius, @Circle.%field_decl [concrete = @Circle.%field_decl]
+// CHECK:STDOUT:   %.loc20: ref %i32 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc20, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc20)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -561,6 +561,10 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc39_20.4(%self.param: ref %Class) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %k.ref: %Class.elem = name_ref k, @Class.%field_decl [concrete = @Class.%field_decl]
+// CHECK:STDOUT:   %.loc39: ref %i32 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc39, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc39)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

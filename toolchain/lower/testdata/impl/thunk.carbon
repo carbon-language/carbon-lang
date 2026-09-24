@@ -156,6 +156,8 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.8c4b83ecd900f1ea:core.Destroy.Core"(ptr %self) #0 !dbg !80 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc20.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !82
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc20.b), !dbg !82
 // CHECK:STDOUT:   ret void, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

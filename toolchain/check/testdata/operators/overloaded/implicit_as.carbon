@@ -487,6 +487,10 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc34_20.4(%self.param: ref %X) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%field_decl [concrete = @X.%field_decl]
+// CHECK:STDOUT:   %.loc34: ref %i32 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc34, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc34)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

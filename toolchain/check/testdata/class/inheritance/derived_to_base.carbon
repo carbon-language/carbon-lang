@@ -131,10 +131,13 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a92: type = struct_type {.a: %i32} [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %B.elem.eea: type = unbound_element_type %B, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.base.b.6c4: type = struct_type {.base: %A, .b: %i32} [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %C.elem.e33: type = unbound_element_type %C, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.base.c.faf: type = struct_type {.base: %B, .c: %i32} [concrete]
 // CHECK:STDOUT:   %ptr.6b6: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.fcb: type = pattern_type %ptr.6b6 [concrete]
@@ -679,6 +682,10 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.4(%self.param: ref %A) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a.ref: %A.elem = name_ref a, @A.%field_decl [concrete = @A.%field_decl]
+// CHECK:STDOUT:   %.loc32: ref %i32 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc32, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc32)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -713,6 +720,10 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.6(%self.param: ref %B) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %b.ref: %B.elem.eea = name_ref b, @B.%field_decl [concrete = @B.%field_decl]
+// CHECK:STDOUT:   %.loc32: ref %i32 = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc32, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc32)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -747,6 +758,10 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.8(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %c.ref: %C.elem.e33 = name_ref c, @C.%field_decl [concrete = @C.%field_decl]
+// CHECK:STDOUT:   %.loc32: ref %i32 = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc32, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc32)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -331,6 +331,10 @@ fn G(o: Outer) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc26_3.4(%self.param: ref %Inner) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%field_decl [concrete = @Inner.%field_decl]
+// CHECK:STDOUT:   %.loc26: ref %i32 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc26, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc26)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

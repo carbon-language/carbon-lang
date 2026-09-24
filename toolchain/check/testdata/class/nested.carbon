@@ -523,6 +523,18 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc19_5.4(%self.param: ref %Inner) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %pi.ref: %Inner.elem.df9 = name_ref pi, @Inner.%field_decl.loc23 [concrete = @Inner.%field_decl.loc23]
+// CHECK:STDOUT:   %.loc19_5.1: ref %ptr.001 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc19_5.1: <bound method> = bound_method %.loc19_5.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc19_5.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc19_5.1(%.loc19_5.1)
+// CHECK:STDOUT:   %po.ref: %Inner.elem.2a2 = name_ref po, @Inner.%field_decl.loc24 [concrete = @Inner.%field_decl.loc24]
+// CHECK:STDOUT:   %.loc19_5.2: ref %ptr.286 = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc19_5.2: <bound method> = bound_method %.loc19_5.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc19_5.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc19_5.2(%.loc19_5.2)
+// CHECK:STDOUT:   %qi.ref: %Inner.elem.df9 = name_ref qi, @Inner.%field_decl.loc25 [concrete = @Inner.%field_decl.loc25]
+// CHECK:STDOUT:   %.loc19_5.3: ref %ptr.001 = class_element_access %self.param, element2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc19_5.3: <bound method> = bound_method %.loc19_5.3, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc19_5.3: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc19_5.3(%.loc19_5.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -560,6 +572,18 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc18_5.2(%self.param: ref %Outer) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %po.ref: %Outer.elem.3ef = name_ref po, @Outer.%field_decl.loc40 [concrete = @Outer.%field_decl.loc40]
+// CHECK:STDOUT:   %.loc18_5.1: ref %ptr.286 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc18_5.1: <bound method> = bound_method %.loc18_5.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc18_5.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc18_5.1(%.loc18_5.1)
+// CHECK:STDOUT:   %qo.ref: %Outer.elem.3ef = name_ref qo, @Outer.%field_decl.loc41 [concrete = @Outer.%field_decl.loc41]
+// CHECK:STDOUT:   %.loc18_5.2: ref %ptr.286 = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc18_5.2: <bound method> = bound_method %.loc18_5.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc18_5.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc18_5.2(%.loc18_5.2)
+// CHECK:STDOUT:   %pi.ref: %Outer.elem.fe3 = name_ref pi, @Outer.%field_decl.loc42 [concrete = @Outer.%field_decl.loc42]
+// CHECK:STDOUT:   %.loc18_5.3: ref %ptr.001 = class_element_access %self.param, element2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc18_5.3: <bound method> = bound_method %.loc18_5.3, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc18_5.3: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc18_5.3(%.loc18_5.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
