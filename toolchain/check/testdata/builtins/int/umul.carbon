@@ -37,6 +37,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT: --- int_mul.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Mul.type: type = fn_type @Mul [concrete]

@@ -138,35 +138,32 @@ auto GetTypeComponent(Context& context, SemIR::InstId form_inst_id)
 auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
                            SemIR::TypeInstId element_type_id) -> SemIR::TypeId;
 
-// Given a facet value or a type value, get the canonical facet value if
-// possible, or return the canonical value of the input type expression if it
-// has no canonical facet value.
+// Given a facet, returns its canonical facet representation.
 //
-// A facet value can be appear in two ways: as a facet value of type
-// `FacetType`, or through an `as type` conversion which has type `TypeType` but
-// still refers to the original facet value. While both have canonical values of
-// their own, in cases that want to work with the facet value when possible,
-// this collapses the two cases back together by undoing the `as type`
-// conversion.
+// Facet values can be converted to `type` by wrapping them in an `as type`
+// conversion. While this wraps the facet in an additional instruction, it does
+// not destroy access to the underlying facet. This operation unwraps the
+// `as type` conversion if present so that there's only one (canonical) way to
+// represent the underlying facet, and returns the canonical inst from the
+// facet's constant value.
 //
-// This extra canonicalization step is important for constant comparison of
-// facet values, when the `as type` conversion is not required to compare as a
-// different value.
+// This extra canonicalization step of unwrapping `as type` is important for
+// constant comparison of facet values, when the `as type` conversion is not
+// required to compare as a different value.
 //
-// For type expressions other than `<facet value> as type`, the canonical type
-// value is returned.
-auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
+// For all facets other than `<facet> as type`, the canonical inst from the
+// facet's constant value is returned.
+auto GetCanonicalFacet(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId;
-auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::ConstantId const_id)
+auto GetCanonicalFacet(Context& context, SemIR::ConstantId const_id)
     -> SemIR::ConstantId;
 
-// If `inst_id` is a type value which wraps a facet value, return that canonical
-// facet value. Otherwise, return None.
+// If `inst_id` is a `facet as type`, return that canonical facet inside the
+// conversion. Otherwise, return None.
 //
 // In particular, this returns None for non-canonical instructions if no
-// transformation was needed to return a facet value, to preserve source
-// locations in the caller.
-auto TryGetCanonicalFacetValue(Context& context, SemIR::InstId inst_id)
+// conversion was unwrapped, to preserve source locations in the caller.
+auto TryGetCanonicalFacet(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId;
 
 }  // namespace Carbon::Check

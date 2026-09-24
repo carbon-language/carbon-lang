@@ -53,6 +53,7 @@ let v1: Core.FloatLiteral = Sub(0x1.0p1024000000000, 0.0000000000000000001);
 // CHECK:STDOUT: --- float_literal_sub.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.dab: type = pattern_type Core.FloatLiteral [concrete]
 // CHECK:STDOUT:   %Sub.type: type = fn_type @Sub [concrete]
 // CHECK:STDOUT:   %Sub: %Sub.type = struct_value () [concrete]

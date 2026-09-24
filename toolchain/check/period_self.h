@@ -72,7 +72,7 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
 // Returns whether the constant value of `inst_id` is a reference to `.Self`.
 //
 // If `canonicalize` is true, look at the constant value of `inst_id` and get
-// the canonicalized facet or type to look through FacetAccessType.
+// the canonicalized facet to look through FacetAccessType.
 auto IsPeriodSelf(Context& context, SemIR::InstId inst_id,
                   bool canonicalize = true) -> bool;
 

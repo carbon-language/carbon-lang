@@ -104,6 +104,7 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT: --- use_abstract_final.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %AbstractFinal: type = class_type @AbstractFinal [concrete]
 // CHECK:STDOUT:   %.dbd: Core.Form = init_form %AbstractFinal [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %AbstractFinal [concrete]

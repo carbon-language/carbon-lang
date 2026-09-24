@@ -13,7 +13,6 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
     -> NameComponent {
   Parse::NodeId first_param_node_id = Parse::NoneNodeId();
   Parse::NodeId last_param_node_id = Parse::NoneNodeId();
-  auto call_param_default_values_id = SemIR::InstBlockId::None;
 
   // Explicit params.
   auto [params_node_id, param_patterns_id] =
@@ -24,10 +23,6 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
         context.node_stack()
             .PopForSoloNodeId<Parse::NodeKind::ExplicitParamListStart>();
     last_param_node_id = params_node_id;
-    if (!context.full_pattern_stack().GetDefaultValues().empty()) {
-      call_param_default_values_id = context.inst_blocks().Add(
-          context.full_pattern_stack().GetDefaultValues());
-    }
   } else {
     param_patterns_id = SemIR::InstBlockId::None;
   }
@@ -53,6 +48,7 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
   auto call_params_id = SemIR::InstBlockId::None;
   auto param_ranges = SemIR::Function::CallParamIndexRanges::Empty;
   auto pattern_block_id = SemIR::InstBlockId::None;
+  auto unspecified_values_block_id = SemIR::InstBlockId::Empty;
   if (param_patterns_id->has_value() ||
       implicit_param_patterns_id->has_value() ||
       return_pattern_id.has_value()) {
@@ -61,6 +57,8 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
     call_param_patterns_id = results.call_param_patterns_id;
     call_params_id = results.call_params_id;
     param_ranges = results.param_ranges;
+    unspecified_values_block_id = context.inst_blocks().Add(
+        context.full_pattern_stack().GetUnspecifiedDefaultValues());
     pattern_block_id = context.pattern_block_stack().Pop();
     context.full_pattern_stack().PopFullPattern();
   }
@@ -68,21 +66,19 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
   auto [name_loc_id, name_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::NonExprName>();
 
-  return {
-      .name_loc_id = name_loc_id,
-      .name_id = name_id,
-      .first_param_node_id = first_param_node_id,
-      .last_param_node_id = last_param_node_id,
-      .implicit_params_loc_id = implicit_params_node_id,
-      .implicit_param_patterns_id = *implicit_param_patterns_id,
-      .params_loc_id = params_node_id,
-      .param_patterns_id = *param_patterns_id,
-      .call_param_patterns_id = call_param_patterns_id,
-      .call_params_id = call_params_id,
-      .call_param_default_values_id = call_param_default_values_id,
-      .param_ranges = param_ranges,
-      .pattern_block_id = pattern_block_id,
-  };
+  return {.name_loc_id = name_loc_id,
+          .name_id = name_id,
+          .first_param_node_id = first_param_node_id,
+          .last_param_node_id = last_param_node_id,
+          .implicit_params_loc_id = implicit_params_node_id,
+          .implicit_param_patterns_id = *implicit_param_patterns_id,
+          .params_loc_id = params_node_id,
+          .param_patterns_id = *param_patterns_id,
+          .call_param_patterns_id = call_param_patterns_id,
+          .call_params_id = call_params_id,
+          .param_ranges = param_ranges,
+          .pattern_block_id = pattern_block_id,
+          .unspecified_values_block_id = unspecified_values_block_id};
 }
 
 // Pop the name of a declaration from the node stack, and diagnose if it has

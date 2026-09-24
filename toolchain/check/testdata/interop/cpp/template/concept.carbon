@@ -36,6 +36,7 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT: --- use_concept.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X.type: type = generic_class_type @X [concrete]
 // CHECK:STDOUT:   %X.generic: %X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IsLarge.type: type = cpp_type_template_type IsLarge [concrete]

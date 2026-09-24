@@ -161,6 +161,7 @@ let a: array(i32, F()) = (1, 2, 3);
 // CHECK:STDOUT: --- fail_todo_constructor.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
@@ -197,10 +198,14 @@ let a: array(i32, F()) = (1, 2, 3);
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %self.param_patt.d94: %pattern_type.3cc = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.d4e: %pattern_type.3cc = wrapper_binding_pattern self, %self.param_patt.d94 [concrete]
 // CHECK:STDOUT:   %ConstexprC.cpp_destructor.type: type = fn_type @ConstexprC.cpp_destructor [concrete]
 // CHECK:STDOUT:   %ConstexprC.cpp_destructor: %ConstexprC.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ConstexprC.Op.type: type = fn_type @ConstexprC.Op [concrete]
-// CHECK:STDOUT:   %ConstexprC.Op: %ConstexprC.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc19 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc19 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -222,6 +227,16 @@ let a: array(i32, F()) = (1, 2, 3);
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generated {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc19 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.3cc = ref_param_pattern [concrete = constants.%self.param_patt.d94]
+// CHECK:STDOUT:     %self.patt: %pattern_type.3cc = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.d4e]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %ConstexprC = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %ConstexprC = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -260,11 +275,18 @@ let a: array(i32, F()) = (1, 2, 3);
 // CHECK:STDOUT:   %bound_method.loc20_11.2: <bound method> = bound_method %.loc20_11.2, %specific_fn.loc20
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc20_11.2(%.loc20_11.2)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %ConstexprC.Op.bound: <bound method> = bound_method %.loc19_27.6, constants.%ConstexprC.Op
-// CHECK:STDOUT:   %Op.ref: %ConstexprC.cpp_destructor.type = name_ref Op, imports.%ConstexprC.cpp_destructor.decl [concrete = constants.%ConstexprC.cpp_destructor]
-// CHECK:STDOUT:   %ConstexprC.cpp_destructor.bound: <bound method> = bound_method %.loc19_27.6, %Op.ref
-// CHECK:STDOUT:   %ConstexprC.cpp_destructor.call: init %empty_tuple.type = call %ConstexprC.cpp_destructor.bound(%.loc19_27.6)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc19_27.6, constants.%Destroy.WithSelf.SelfDestruct.db3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc19_27.6)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc19(%self.param: ref %ConstexprC) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc19(%self.param: ref %ConstexprC) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
+// CHECK:STDOUT:   %ConstexprC.cpp_destructor.call: init %empty_tuple.type = call imports.%ConstexprC.cpp_destructor.decl(%self.param)
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

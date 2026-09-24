@@ -88,6 +88,7 @@ fn MyF() {
 // CHECK:STDOUT: --- import_with_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %inline_with_def.cpp_overload_set.type: type = cpp_overload_set_type @inline_with_def.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %inline_with_def.cpp_overload_set.value: %inline_with_def.cpp_overload_set.type = cpp_overload_set_value @inline_with_def.cpp_overload_set [concrete]
@@ -115,6 +116,7 @@ fn MyF() {
 // CHECK:STDOUT: --- todo_fail_import_without_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %inline_without_def.cpp_overload_set.type: type = cpp_overload_set_type @inline_without_def.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %inline_without_def.cpp_overload_set.value: %inline_without_def.cpp_overload_set.type = cpp_overload_set_value @inline_without_def.cpp_overload_set [concrete]
@@ -145,6 +147,7 @@ fn MyF() {
 // CHECK:STDOUT: --- automatic_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
@@ -215,9 +218,22 @@ fn MyF() {
 // CHECK:STDOUT:   %ThunkOnBoth.cpp_overload_set.value: %ThunkOnBoth.cpp_overload_set.type = cpp_overload_set_value @ThunkOnBoth.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ThunkOnBoth__carbon_thunk.type: type = fn_type @ThunkOnBoth__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ThunkOnBoth__carbon_thunk: %ThunkOnBoth__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.08e: type = pattern_type %i16.builtin [concrete]
+// CHECK:STDOUT:   %self.param_patt.b41: %pattern_type.08e = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.277: %pattern_type.08e = wrapper_binding_pattern self, %self.param_patt.b41 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc16_41.1 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc16_41.1 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %self.param_patt.f77: %pattern_type.203 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.91f: %pattern_type.203 = wrapper_binding_pattern self, %self.param_patt.f77 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc16_41.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc16_41.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %.597, %Destroy.WithSelf.Op.403171.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc16_41.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.597, %Destroy.WithSelf.SelfDestruct.db3fdb.2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -255,6 +271,37 @@ fn MyF() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generated {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc16_41.1 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.1] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.08e = ref_param_pattern [concrete = constants.%self.param_patt.b41]
+// CHECK:STDOUT:     %self.patt: %pattern_type.08e = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.277]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %i16.builtin = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %i16.builtin = wrapper_binding self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc16_41.1 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.08e = ref_param_pattern [concrete = constants.%self.param_patt.b41]
+// CHECK:STDOUT:     %self.patt: %pattern_type.08e = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.277]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %i16.builtin = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %i16.builtin = wrapper_binding self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc16_41.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.203 = ref_param_pattern [concrete = constants.%self.param_patt.f77]
+// CHECK:STDOUT:     %self.patt: %pattern_type.203 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.91f]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %i16 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %i16 = wrapper_binding self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc16_41.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.203 = ref_param_pattern [concrete = constants.%self.param_patt.f77]
+// CHECK:STDOUT:     %self.patt: %pattern_type.203 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.91f]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %i16 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %i16 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -354,19 +401,37 @@ fn MyF() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %r4.patt: %pattern_type.203 = value_binding_pattern r4 [concrete = constants.%r4.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc16: <bound method> = bound_method %.loc16_41.3, constants.%Destroy.WithSelf.Op.403171.2
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc16_41: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc16(%.loc16_41.3)
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc16_40: init %empty_tuple.type = call constants.%Destroy.WithSelf.Op.bound(constants.%.597)
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound.loc15: <bound method> = bound_method %.loc15_43.3, constants.%Destroy.WithSelf.Op.403171.2
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc15: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound.loc15(%.loc15_43.3)
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call.loc14: init %empty_tuple.type = call constants.%Destroy.WithSelf.Op.bound(constants.%.597)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc16: <bound method> = bound_method %.loc16_41.3, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc16_41: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc16(%.loc16_41.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc16_40: init %empty_tuple.type = call constants.%Destroy.WithSelf.SelfDestruct.bound(constants.%.597)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc15: <bound method> = bound_method %.loc15_43.3, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc15: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc15(%.loc15_43.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc14: init %empty_tuple.type = call constants.%Destroy.WithSelf.SelfDestruct.bound(constants.%.597)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc16_41.1(%self.param: ref %i16.builtin) = "no_op";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc16_41.1(%self.param: ref %i16.builtin) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc16_41.2(%self.param: ref %i16) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc16_41.1(%self.param: ref %i16.builtin) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.1(%self.param)
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.1(%self.param)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc16_41.2(%self.param: ref %i16) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc16_41.2(%self.param: ref %i16) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc16_41.2(%self.param: ref %i16) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.2(%self.param)
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.2(%self.param)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

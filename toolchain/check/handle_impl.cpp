@@ -200,9 +200,9 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
           .param_patterns_id = SemIR::InstBlockId::None,
           .call_param_patterns_id = SemIR::InstBlockId::None,
           .call_params_id = SemIR::InstBlockId::None,
-          .call_param_default_values_id = SemIR::InstBlockId::None,
           .param_ranges = SemIR::Function::CallParamIndexRanges::Empty,
-          .pattern_block_id = pattern_block_id};
+          .pattern_block_id = pattern_block_id,
+          .unspecified_values_block_id = SemIR::InstBlockId::Empty};
 }
 
 // Build an ImplDecl describing the signature of an impl. This handles the

@@ -162,10 +162,10 @@ fn Test(d: D) {
 // CHECK:STDOUT: --- convert.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt.d47011.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.51d1c4.1: type = pattern_type %T.67db0b.1 [template]
 // CHECK:STDOUT:   %x.param_patt.91d: %pattern_type.51d1c4.1 = value_param_pattern [template]
@@ -230,7 +230,7 @@ fn Test(d: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc5_16.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_16.2 (constants.%T.patt.d47011.1)]
+// CHECK:STDOUT:     %T.patt.loc5_16.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_16.2 (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:     %x.param_patt.loc5_25.1: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc5_25.2 (constants.%x.param_patt.91d)]
 // CHECK:STDOUT:     %x.patt.loc5_25.1: @F.%pattern_type (%pattern_type.51d1c4.1) = wrapper_binding_pattern x, %x.param_patt.loc5_25.1 [template = %x.patt.loc5_25.2 (constants.%x.patt.260)]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
@@ -239,7 +239,7 @@ fn Test(d: D) {
 // CHECK:STDOUT:     %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc5_33: Core.Form = init_form %i32.loc5 [concrete = constants.%.795f]
 // CHECK:STDOUT:     %.loc5_18.1: type = splice_block %.loc5_18.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc5_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_16.2: type = symbolic_binding T, 0, template [template = %T.loc5_16.1 (constants.%T.67db0b.1)]
@@ -252,7 +252,7 @@ fn Test(d: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc5_16.2: type) {
-// CHECK:STDOUT:   %T.patt.loc5_16.2: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_16.2 (constants.%T.patt.d47011.1)]
+// CHECK:STDOUT:   %T.patt.loc5_16.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_16.2 (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:   %T.loc5_16.1: type = symbolic_binding T, 0, template [template = %T.loc5_16.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc5_16.1 [template = %pattern_type (constants.%pattern_type.51d1c4.1)]
 // CHECK:STDOUT:   %x.param_patt.loc5_25.2: @F.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc5_25.2 (constants.%x.param_patt.91d)]
@@ -283,7 +283,7 @@ fn Test(d: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.1) {
-// CHECK:STDOUT:   %T.patt.loc5_16.2 => constants.%T.patt.d47011.1
+// CHECK:STDOUT:   %T.patt.loc5_16.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc5_16.1 => constants.%T.67db0b.1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d1c4.1
 // CHECK:STDOUT:   %x.param_patt.loc5_25.2 => constants.%x.param_patt.91d
@@ -291,7 +291,7 @@ fn Test(d: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%i32) {
-// CHECK:STDOUT:   %T.patt.loc5_16.2 => constants.%T.patt.d47011.1
+// CHECK:STDOUT:   %T.patt.loc5_16.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc5_16.1 => constants.%i32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %x.param_patt.loc5_25.2 => constants.%x.param_patt.cee
@@ -304,7 +304,7 @@ fn Test(d: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
-// CHECK:STDOUT:   %T.patt.loc5_16.2 => constants.%T.patt.d47011.1
+// CHECK:STDOUT:   %T.patt.loc5_16.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc5_16.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.98b
 // CHECK:STDOUT:   %x.param_patt.loc5_25.2 => constants.%x.param_patt.0f9
@@ -319,10 +319,10 @@ fn Test(d: D) {
 // CHECK:STDOUT: --- as.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt.d47011.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.51d1c4.1: type = pattern_type %T.67db0b.1 [template]
 // CHECK:STDOUT:   %x.param_patt.91d: %pattern_type.51d1c4.1 = value_param_pattern [template]
@@ -405,7 +405,7 @@ fn Test(d: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %AsI32.decl: %AsI32.type = fn_decl @AsI32 [concrete = constants.%AsI32] {
-// CHECK:STDOUT:     %T.patt.loc5_20.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_20.2 (constants.%T.patt.d47011.1)]
+// CHECK:STDOUT:     %T.patt.loc5_20.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_20.2 (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:     %x.param_patt.loc5_29.1: @AsI32.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc5_29.2 (constants.%x.param_patt.91d)]
 // CHECK:STDOUT:     %x.patt.loc5_29.1: @AsI32.%pattern_type (%pattern_type.51d1c4.1) = wrapper_binding_pattern x, %x.param_patt.loc5_29.1 [template = %x.patt.loc5_29.2 (constants.%x.patt.260)]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
@@ -414,7 +414,7 @@ fn Test(d: D) {
 // CHECK:STDOUT:     %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc5_37: Core.Form = init_form %i32.loc5 [concrete = constants.%.795]
 // CHECK:STDOUT:     %.loc5_22.1: type = splice_block %.loc5_22.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc5_22.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_20.2: type = symbolic_binding T, 0, template [template = %T.loc5_20.1 (constants.%T.67db0b.1)]
@@ -427,7 +427,7 @@ fn Test(d: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @AsI32(%T.loc5_20.2: type) {
-// CHECK:STDOUT:   %T.patt.loc5_20.2: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_20.2 (constants.%T.patt.d47011.1)]
+// CHECK:STDOUT:   %T.patt.loc5_20.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_20.2 (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:   %T.loc5_20.1: type = symbolic_binding T, 0, template [template = %T.loc5_20.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc5_20.1 [template = %pattern_type (constants.%pattern_type.51d1c4.1)]
 // CHECK:STDOUT:   %x.param_patt.loc5_29.2: @AsI32.%pattern_type (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc5_29.2 (constants.%x.param_patt.91d)]
@@ -451,7 +451,7 @@ fn Test(d: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AsI32(constants.%T.67db0b.1) {
-// CHECK:STDOUT:   %T.patt.loc5_20.2 => constants.%T.patt.d47011.1
+// CHECK:STDOUT:   %T.patt.loc5_20.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc5_20.1 => constants.%T.67db0b.1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d1c4.1
 // CHECK:STDOUT:   %x.param_patt.loc5_29.2 => constants.%x.param_patt.91d
@@ -459,7 +459,7 @@ fn Test(d: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AsI32(constants.%i32) {
-// CHECK:STDOUT:   %T.patt.loc5_20.2 => constants.%T.patt.d47011.1
+// CHECK:STDOUT:   %T.patt.loc5_20.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc5_20.1 => constants.%i32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %x.param_patt.loc5_29.2 => constants.%x.param_patt.cee
@@ -474,7 +474,7 @@ fn Test(d: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AsI32(constants.%C) {
-// CHECK:STDOUT:   %T.patt.loc5_20.2 => constants.%T.patt.d47011.1
+// CHECK:STDOUT:   %T.patt.loc5_20.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc5_20.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.98b
 // CHECK:STDOUT:   %x.param_patt.loc5_29.2 => constants.%x.param_patt.0f9
@@ -491,15 +491,15 @@ fn Test(d: D) {
 // CHECK:STDOUT: --- as_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt.d47011.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.51d1c4.1: type = pattern_type %T.67db0b.1 [template]
 // CHECK:STDOUT:   %x.param_patt.91d: %pattern_type.51d1c4.1 = value_param_pattern [template]
 // CHECK:STDOUT:   %x.patt.260: %pattern_type.51d1c4.1 = wrapper_binding_pattern x, %x.param_patt.91d [template]
-// CHECK:STDOUT:   %U.patt.014: %pattern_type.98f = symbolic_binding_pattern U, 1, template [template]
+// CHECK:STDOUT:   %U.patt.cb8: %pattern_type.9a5 = symbolic_binding_pattern U, 1, template [template]
 // CHECK:STDOUT:   %U.091: type = symbolic_binding U, 1, template [template]
 // CHECK:STDOUT:   %AsType.type: type = fn_type @AsType [concrete]
 // CHECK:STDOUT:   %AsType: %AsType.type = struct_value () [concrete]
@@ -552,13 +552,13 @@ fn Test(d: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %AsType.decl: %AsType.type = fn_decl @AsType [concrete = constants.%AsType] {
-// CHECK:STDOUT:     %T.patt.loc5_21.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_21.2 (constants.%T.patt.d47011.1)]
+// CHECK:STDOUT:     %T.patt.loc5_21.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_21.2 (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:     %x.param_patt.loc5_30.1: @AsType.%pattern_type.loc5 (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc5_30.2 (constants.%x.param_patt.91d)]
 // CHECK:STDOUT:     %x.patt.loc5_30.1: @AsType.%pattern_type.loc5 (%pattern_type.51d1c4.1) = wrapper_binding_pattern x, %x.param_patt.loc5_30.1 [template = %x.patt.loc5_30.2 (constants.%x.patt.260)]
-// CHECK:STDOUT:     %U.patt.loc5_45.1: %pattern_type.98f = symbolic_binding_pattern U, 1, template [template = %U.patt.loc5_45.2 (constants.%U.patt.014)]
+// CHECK:STDOUT:     %U.patt.loc5_45.1: %pattern_type.9a5 = symbolic_binding_pattern U, 1, template [template = %U.patt.loc5_45.2 (constants.%U.patt.cb8)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5_23.1: type = splice_block %.loc5_23.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen.loc5_21: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc5_21: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc5_23.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_21.2: type = symbolic_binding T, 0, template [template = %T.loc5_21.1 (constants.%T.67db0b.1)]
@@ -566,7 +566,7 @@ fn Test(d: D) {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc5_21.2 [template = %T.loc5_21.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:     %x: @AsType.%T.loc5_21.1 (%T.67db0b.1) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     %.loc5_47.1: type = splice_block %.loc5_47.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen.loc5_45: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc5_45: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc5_47.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc5_45.2: type = symbolic_binding U, 1, template [template = %U.loc5_45.1 (constants.%U.091)]
@@ -574,12 +574,12 @@ fn Test(d: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @AsType(%T.loc5_21.2: type, %U.loc5_45.2: type) {
-// CHECK:STDOUT:   %T.patt.loc5_21.2: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_21.2 (constants.%T.patt.d47011.1)]
+// CHECK:STDOUT:   %T.patt.loc5_21.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0, template [template = %T.patt.loc5_21.2 (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:   %T.loc5_21.1: type = symbolic_binding T, 0, template [template = %T.loc5_21.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:   %pattern_type.loc5: type = pattern_type %T.loc5_21.1 [template = %pattern_type.loc5 (constants.%pattern_type.51d1c4.1)]
 // CHECK:STDOUT:   %x.param_patt.loc5_30.2: @AsType.%pattern_type.loc5 (%pattern_type.51d1c4.1) = value_param_pattern [template = %x.param_patt.loc5_30.2 (constants.%x.param_patt.91d)]
 // CHECK:STDOUT:   %x.patt.loc5_30.2: @AsType.%pattern_type.loc5 (%pattern_type.51d1c4.1) = wrapper_binding_pattern x, %x.param_patt.loc5_30.2 [template = %x.patt.loc5_30.2 (constants.%x.patt.260)]
-// CHECK:STDOUT:   %U.patt.loc5_45.2: %pattern_type.98f = symbolic_binding_pattern U, 1, template [template = %U.patt.loc5_45.2 (constants.%U.patt.014)]
+// CHECK:STDOUT:   %U.patt.loc5_45.2: %pattern_type.9a5 = symbolic_binding_pattern U, 1, template [template = %U.patt.loc5_45.2 (constants.%U.patt.cb8)]
 // CHECK:STDOUT:   %U.loc5_45.1: type = symbolic_binding U, 1, template [template = %U.loc5_45.1 (constants.%U.091)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -608,22 +608,22 @@ fn Test(d: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AsType(constants.%T.67db0b.1, constants.%U.091) {
-// CHECK:STDOUT:   %T.patt.loc5_21.2 => constants.%T.patt.d47011.1
+// CHECK:STDOUT:   %T.patt.loc5_21.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc5_21.1 => constants.%T.67db0b.1
 // CHECK:STDOUT:   %pattern_type.loc5 => constants.%pattern_type.51d1c4.1
 // CHECK:STDOUT:   %x.param_patt.loc5_30.2 => constants.%x.param_patt.91d
 // CHECK:STDOUT:   %x.patt.loc5_30.2 => constants.%x.patt.260
-// CHECK:STDOUT:   %U.patt.loc5_45.2 => constants.%U.patt.014
+// CHECK:STDOUT:   %U.patt.loc5_45.2 => constants.%U.patt.cb8
 // CHECK:STDOUT:   %U.loc5_45.1 => constants.%U.091
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AsType(constants.%i32, constants.%i32) {
-// CHECK:STDOUT:   %T.patt.loc5_21.2 => constants.%T.patt.d47011.1
+// CHECK:STDOUT:   %T.patt.loc5_21.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc5_21.1 => constants.%i32
 // CHECK:STDOUT:   %pattern_type.loc5 => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %x.param_patt.loc5_30.2 => constants.%x.param_patt.cee
 // CHECK:STDOUT:   %x.patt.loc5_30.2 => constants.%x.patt.e3b
-// CHECK:STDOUT:   %U.patt.loc5_45.2 => constants.%U.patt.014
+// CHECK:STDOUT:   %U.patt.loc5_45.2 => constants.%U.patt.cb8
 // CHECK:STDOUT:   %U.loc5_45.1 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -638,12 +638,12 @@ fn Test(d: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AsType(constants.%C, constants.%i32) {
-// CHECK:STDOUT:   %T.patt.loc5_21.2 => constants.%T.patt.d47011.1
+// CHECK:STDOUT:   %T.patt.loc5_21.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc5_21.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type.loc5 => constants.%pattern_type.98b
 // CHECK:STDOUT:   %x.param_patt.loc5_30.2 => constants.%x.param_patt.0f9
 // CHECK:STDOUT:   %x.patt.loc5_30.2 => constants.%x.patt.953
-// CHECK:STDOUT:   %U.patt.loc5_45.2 => constants.%U.patt.014
+// CHECK:STDOUT:   %U.patt.loc5_45.2 => constants.%U.patt.cb8
 // CHECK:STDOUT:   %U.loc5_45.1 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

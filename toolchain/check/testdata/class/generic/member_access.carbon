@@ -62,10 +62,33 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
   //@dump-sem-ir-end
 }
 
+// --- access_private_method_after_specific_eval.carbon
+
+library "[[@TEST_NAME]]";
+
+interface I(T: type) {
+  fn F(self, t: T);
+}
+
+class A {}
+class B {}
+
+impl A as I(B) {
+  fn F(unused self, unused b: B) {}
+}
+
+class C {
+  private fn G(ref self) {
+    let a: A = {};
+    a.(I(B).F)({});
+    self.G();
+  }
+}
 
 // CHECK:STDOUT: --- member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %pattern_type.e81: type = pattern_type %Copy.type [concrete]
 // CHECK:STDOUT:   %T.patt.fe6: %pattern_type.e81 = symbolic_binding_pattern T, 0 [symbolic]
@@ -410,8 +433,9 @@ fn StaticMemberFunctionCall(generic T: type) -> Class(T) {
 // CHECK:STDOUT: --- static_member_fn_call.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]

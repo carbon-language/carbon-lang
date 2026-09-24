@@ -21,6 +21,7 @@ fn Six() -> x;
 // CHECK:STDOUT: --- fail_error_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Six.type: type = fn_type @Six [concrete]
 // CHECK:STDOUT:   %Six: %Six.type = struct_value () [concrete]
 // CHECK:STDOUT: }

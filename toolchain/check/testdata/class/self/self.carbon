@@ -82,7 +82,7 @@ fn Class.F(unused self: Class) {}
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+7]]:17: error: cannot implicitly convert non-type value of type `Class` to `type` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+7]]:17: error: cannot implicitly convert non-type value of type `Self` to `type` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   fn F(self) -> self;
   // CHECK:STDERR:                 ^~~~
   // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+4]]:17: note: type `Class` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
@@ -96,6 +96,7 @@ class Class {
 // CHECK:STDOUT: --- self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %pattern_type.f15: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %self.param_patt.c01: %pattern_type.f15 = value_param_pattern [concrete]
@@ -253,6 +254,7 @@ class Class {
 // CHECK:STDOUT: --- fail_self_syntax_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %self.param_patt: %pattern_type = value_param_pattern [concrete]
@@ -344,6 +346,7 @@ class Class {
 // CHECK:STDOUT: --- fail_self_type_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %self.param_patt: %pattern_type = value_param_pattern [concrete]
@@ -408,6 +411,7 @@ class Class {
 // CHECK:STDOUT: --- fail_return_self_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %pattern_type.f15: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %self.param_patt.c01: %pattern_type.f15 = value_param_pattern [concrete]

@@ -112,9 +112,12 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
     phase = entity_name.is_template ? BindingPhase::Template
                                     : BindingPhase::Symbolic;
   }
-  pattern.entity_name_id = AddBindingEntityName(context, entity_name.name_id,
-                                                /*form_id=*/SemIR::InstId::None,
-                                                entity_name.is_unused, phase);
+  // The type of the clone is the result of substitution, so the type as
+  // written in the original declaration no longer describes it.
+  pattern.entity_name_id = AddBindingEntityName(
+      context, entity_name.name_id,
+      /*type_inst_id=*/SemIR::TypeInstId::None,
+      /*form_id=*/SemIR::InstId::None, entity_name.is_unused, phase);
   if (pattern.kind == SemIR::WrapperBindingPattern::Kind) {
     // Now that we're inside the binding pattern, we can use CloneInstId.
     pattern.subpattern_id =
@@ -246,7 +249,6 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
           {
               .call_param_patterns_id = match_results.call_param_patterns_id,
               .call_params_id = match_results.call_params_id,
-              .call_param_default_values_id = SemIR::InstBlockId::None,
               .call_param_ranges = match_results.param_ranges,
               .return_type_inst_id = return_type_inst_id,
               .return_form_inst_id = return_form_inst_id,
@@ -552,9 +554,11 @@ auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
   auto self_inst_id = params[0];
 
   // Build the function body. This calls the `Destroy` operator on `self`.
-  auto destroy_inst_id = BuildUnaryOperator(
-      context, loc_id, {.interface_name = CoreIdentifier::Destroy},
-      self_inst_id);
+  auto destroy_inst_id =
+      BuildUnaryOperator(context, loc_id,
+                         {.interface_name = CoreIdentifier::Destroy,
+                          .op_name = CoreIdentifier::SelfDestruct},
+                         self_inst_id);
   DiscardExpr(context, destroy_inst_id);
   BuildReturnWithNoExpr(context, loc_id);
 
