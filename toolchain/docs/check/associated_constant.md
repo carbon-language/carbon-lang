@@ -34,10 +34,12 @@ An associated constant is declared within an interface scope with the syntax:
 Associated constants introduce a slot in the witness table for an interface that
 contains a value of type `TYPE`.
 
-Associated constants are always generic entities, because they're always
-parameterized at least by the `Self` type of the interface, as well as any other
-enclosing generic parameters. Note that the interface itself is _not_
-parameterized by its `Self`.
+Associated constants are declared within the interface-with-self generic, which
+is parameterized by the `Self` type of the interface, and is nested within the
+interface generic, which is parameterized by any other generic parameters of the
+interface. Symbolic instructions within the declaration of an associated
+constant, such as those used to compute its type, are part of the
+interface-with-self generic.
 
 Associated constant entities are held in the `associated_constants` value store
 as objects of type `AssociatedConstant`. Each declaration of an associated
@@ -50,20 +52,22 @@ be found.
 
 Because associated constants share the syntax of `let` declarations, a lot of
 the checking logic is also shared. This logic is in
-[handle_let_and_var.cpp](/toolchain/check/handle_let_and_var.cpp). Associated
-constant declaration handling proceeds as follows:
+[handle_let_and_var.cpp](/toolchain/check/handle_let_and_var.cpp). The parser
+produces distinct parse nodes for a `let` declaration in an interface scope, and
+associated constant declaration handling proceeds as follows:
 
 1.  ```carbon
     let NAME: TYPE [= INITIALIZER] ;
     ^
     ```
 
-    `StartAssociatedConstant` is called at the start of an interface-scope `let`
-    declaration. This:
+    The handler for `AssociatedConstantIntroducer` is called at the start of
+    the declaration. This:
 
--   Starts a generic declaration region.
--   Pushes an instruction block to hold instructions within the declaration
-    of the constant. These form the body of the generic.
+    -   Pushes an instruction block to hold instructions within the declaration
+        of the constant.
+    -   Performs the same setup as for other `let` declarations, such as
+        starting a full pattern and an expression region for the type.
 
 2.  ```carbon
     let NAME: TYPE [= INITIALIZER] ;
@@ -84,43 +88,40 @@ constant declaration handling proceeds as follows:
                    ^
     ```
 
-    When we reach the end of the pattern in an interface-scope `let` binding,
-    either because we reached the `=` or because we reached the `;` and there
-    was no initializer, `EndAssociatedConstantDeclRegion` is called. This:
+    When we reach the end of the pattern, either because we reached the `=` or
+    because we reached the `;` and there was no initializer, the full pattern
+    is ended and `EndAssociatedConstantDeclRegion` is called. This:
 
--   Ends the generic declaration region.
--   Builds an `AssociatedEntity` object, reserving a slot in the interface's
-    witness table for the constant.
--   Adds the associated constant to name lookup.
-
-    _Note:_ The pattern might not be valid for an associated constant. In this
-    case, we won't have built an `AssociatedConstantDecl` in the previous step.
-    When this happens, we instead just discard the generic declaration region
-    and continue. The invalid pattern will be diagnosed later.
+    -   Builds an `AssociatedEntity` object, reserving a slot in the
+        interface's witness table for the constant.
+    -   Adds the associated constant to name lookup.
 
 4.  ```carbon
     let NAME: TYPE = INITIALIZER ;
                    ^
     ```
 
-    If there is an initializer, we start the generic definition region.
+    If there is an initializer, the handler for `AssociatedConstantInitializer`
+    starts processing it, in the same way as for other `let` declarations.
 
 5.  ```carbon
     let NAME: TYPE [= INITIALIZER] ;
                                    ^
     ```
 
-    At the end of the declaration, `FinishAssociatedConstant` is called to
-    finalize the declaration. This:
+    At the end of the declaration, the handler for `AssociatedConstantDecl`
+    finalizes the declaration. This:
 
--   Diagnoses if the pattern handling didn't create an
-    `AssociatedConstantDecl`.
--   Finishes handling the initializer, if it's present:
-    -   Converts the initializer to the type of the constant.
-    -   Ends the generic definition region.
--   Pops the inst block created by `StartAssociatedConstant` and attaches it
-    to the `AssociatedConstantDecl`.
--   Adds the `AssociatedConstantDecl` to the enclosing inst block.
+    -   If the pattern is an error, marks the interface-with-self scope as
+        having an error, and discards the instruction block.
+    -   Otherwise:
+        -   If there is an initializer, converts it to the type of the
+            constant, and stores the result as the `default_value_id` of the
+            `AssociatedConstant`.
+        -   Pops the instruction block created in step 1 and attaches it to
+            the `AssociatedConstantDecl`.
+        -   Adds the `AssociatedConstantDecl` to the enclosing instruction
+            block.
 
 ## Specifying rewrite constraints
 
@@ -150,35 +151,43 @@ depends on how the member name was found.
 In `LookupMemberNameInScope`, if lookup for `y` in `x.y` finds an associated
 constant from interface `I`, then a witness is determined as follows:
 
--   If the lookup scope is the type `T` of `x`, then:
-    -   If `T` is a non-type facet, the witness for that facet is used. TODO:
-        That facet might not contain a witness for `I`. In that case we will
-        need to perform impl lookup for `T as I` instead.
-    -   Otherwise, impl lookup for `T as I` is performed to find the witness.
+-   If the lookup scope is the type `T` of `x`, then `PerformImplLookup` is
+    called to perform impl lookup for `T as I`.
 -   If the lookup scope is `x` itself, then:
-    -   If `x` is a facet type or a namespace, impl lookup is not performed, and
-        the result is simply `y`. This happens for cases such as
-        `Interface.AssocConst`.
-    -   Otherwise, `x` must be a type other than a facet type, and impl lookup
-        for `x as I` is performed to find the witness.
+    -   If `x` is a namespace or a facet type other than `type`, impl lookup is
+        not performed, and the result is simply `y`. This happens for cases
+        such as `Interface.AssocConst`.
+    -   Otherwise, `x` must be a type, and `PerformImplLookup` is called to
+        perform impl lookup for `x as I`.
 
 ### Compound member access
 
 In `PerformCompoundMemberAccess` for `x.(y)`, if `y` is an associated constant
-then impl lookup is performed for `T as I`, where `T` is the type of `x` and `I`
-is the interface in which `y` is declared to find the witness containing the
-constant value.
+from interface `I`, then `GetAssociatedValueImpl` converts `x` itself to a facet
+value of type `I`, and performs impl lookup for `x as I` to find the witness
+containing the constant value. The same logic is used by `GetAssociatedValue`,
+which finds the value of an associated entity for a given type or facet without
+going through member access syntax.
+
+_Note:_ This differs from the handling of associated functions that are
+instance methods, for which impl lookup is performed for `T as I`, where `T`
+is the type of `x`.
 
 ### Forming the constant value
 
-Once the witness is determined, `AccessMemberOfImplWitness` is called to find
-the value of the associated constant in the witness. In the case where an impl
-lookup is needed, `PerformImplLookup` calls `AccessMemberOfImplWitness`,
-otherwise it's called directly.
+Once the witness is determined, a specific for the interface-with-self generic
+is formed by `MakeSpecificWithInnerSelf` from the specific for the interface and
+the self facet value. For simple member access, this happens in
+`PerformImplLookup`, which then calls `AccessMemberOfImplWitness`. For compound
+member access, this happens directly in `GetAssociatedValueImpl`.
 
-`AccessMemberOfImplWitness` uses `GetTypeForSpecificAssociatedEntity` to form
-the type of the constant. This substitutes both the generic arguments (if any)
-for the interface and the `Self` type into the type of the associated constant.
-Then, an `ImplWitnessAccess` instruction is created to extract the relevant slot
-from the witness. Constant evaluation of this instruction reads the associated
-constant from the witness table.
+`GetTypeForSpecificAssociatedEntity` is then used to form the type of the
+constant by substituting the interface-with-self specific into the type of the
+associated constant. Then, an `ImplWitnessAccess` instruction is created to
+extract the relevant slot from the witness. Constant evaluation of this
+instruction reads the associated constant from the witness table.
+
+If the access appears within a `where` expression that has a rewrite constraint
+for the same associated constant, the `ImplWitnessAccess` is wrapped in an
+`ImplWitnessAccessSubstituted` instruction that also records the rewritten
+value.
