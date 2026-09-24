@@ -29,6 +29,7 @@ grep 'require "carbon"' ~/.config/nvim/init.lua >/dev/null || echo 'require "car
 
 # build tree_sitter
 echo "Building and copying in tree-sitter binary..." >&2
-cd utils/tree_sitter
-tree-sitter generate
-clang -o ~/.config/nvim/parser/carbon.so -shared src/parser.c src/scanner.c -I ./src -Os -fPIC
+(cd "$ROOT" && bazel build //utils/tree_sitter:parser_shared -c opt --action_env=PATH)
+cp "$ROOT/bazel-bin/utils/tree_sitter/carbon.so" ~/.config/nvim/parser/carbon.so
+# bazel builds read-only binaries
+chmod +w ~/.config/nvim/parser/carbon.so
