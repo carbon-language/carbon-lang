@@ -29,80 +29,8 @@ namespace Carbon::Check {
 //   Carbon.
 // - The Carbon function that is actually called by user code, and maps its
 //   parameters to the simple ABI.
-struct CalleeFunctionInfo {
-  // Constructs a CalleeFunctionInfo that represents the given C++ function with
-  // the given signature.
-  explicit CalleeFunctionInfo(Context* context, clang::FunctionDecl* decl,
-                              SemIR::ClangDeclSignatureId signature_id);
-
-  // Constructs a CalleeFunctionInfo that represents a C++ function pointer.
-  // We treat function pointer types as having an `__invoke` method, with the
-  // pointer value acting as the implicit object parameter. On the C++ side this
-  // method is notional, and has no declaration: in effect, it is inlined into
-  // its own simple-ABI thunk (which always exists, even if the parameter and
-  // return types already have simple ABIs). The Carbon counterpart of this
-  // method is real, however, and takes the pointer value as its `self`
-  // parameter.
-  explicit CalleeFunctionInfo(Context* context,
-                              const clang::Type* function_pointer_type);
-
-  // Returns the offset I such that callee parameter N corresponds to
-  // parameter N+I of the imported Carbon function.
-  auto callee_param_to_carbon_param_offset() const -> int {
-    switch (self_param_kind) {
-      case SelfParamKind::ImplicitObjectParam:
-      case SelfParamKind::FunctionPointer:
-        return 1;
-      case SelfParamKind::None:
-      case SelfParamKind::ExplicitObjectParam:
-        return 0;
-    }
-  }
-
-  // Returns the offset I such that callee argument N corresponds to callee
-  // parameter N+I.
-  auto callee_arg_to_callee_param_offset() const -> int {
-    switch (self_param_kind) {
-      case SelfParamKind::ExplicitObjectParam:
-        return 1;
-      case SelfParamKind::ImplicitObjectParam:
-      case SelfParamKind::FunctionPointer:
-      case SelfParamKind::None:
-        return 0;
-    }
-  }
-
-  // Returns the number of parameters that the imported Carbon function should
-  // have.
-  auto num_carbon_params() const -> int {
-    return num_callee_params + callee_param_to_carbon_param_offset();
-  }
-
-  // Returns the number of parameters the simple-ABI thunk should have.
-  auto num_thunk_params() const -> unsigned {
-    return num_carbon_params() + !has_simple_return_type;
-  }
-
-  // Returns true if the imported Carbon function should have a self parameter.
-  auto carbon_has_self_param() const -> bool {
-    return self_param_kind != SelfParamKind::None;
-  }
-
-  // Returns true if the callee has an object parameter (i.e. `this`).
-  auto callee_has_object_param() const -> bool {
-    return self_param_kind == SelfParamKind::ImplicitObjectParam ||
-           self_param_kind == SelfParamKind::ExplicitObjectParam;
-  }
-
-  // Returns the identifier for the i-th callee parameter, or null if it doesn't
-  // have one.
-  auto GetCalleeParamIdentifier(int i) const -> clang::IdentifierInfo*;
-
-  // Returns the location of the i-th callee parameter declaration.
-  auto GetCalleeParamLocation(int i) const -> clang::SourceLocation;
-
-  Context* context;
-
+class CalleeFunctionInfo {
+ public:
   // Information about the C++ parameter that corresponds to the `self`
   // parameter in the Carbon function.
   enum class SelfParamKind {
@@ -130,38 +58,111 @@ struct CalleeFunctionInfo {
     // N-1th callee parameter.
     FunctionPointer,
   };
-  SelfParamKind self_param_kind;
 
-  // The callee function's declaration, or null if it doesn't have one.
-  llvm::PointerUnion<clang::FunctionDecl*, const clang::Type*>
-      decl_or_pointer_type;
+  // Constructs a CalleeFunctionInfo that represents the given C++ function with
+  // the given signature.
+  explicit CalleeFunctionInfo(Context* context, clang::FunctionDecl* decl,
+                              SemIR::ClangDeclSignatureId signature_id);
 
+  // Constructs a CalleeFunctionInfo that represents a C++ function pointer.
+  // We treat function pointer types as having an `__invoke` method, with the
+  // pointer value acting as the implicit object parameter. On the C++ side this
+  // method is notional, and has no declaration: in effect, it is inlined into
+  // its own simple-ABI thunk (which always exists, even if the parameter and
+  // return types already have simple ABIs). The Carbon counterpart of this
+  // method is real, however, and takes the pointer value as its `self`
+  // parameter.
+  explicit CalleeFunctionInfo(Context* context,
+                              const clang::Type* function_pointer_type);
+
+  // The declaration of the callee, or nullptr if this represents a function
+  // pointer.
   auto decl() const -> clang::FunctionDecl* {
-    return decl_or_pointer_type.dyn_cast<clang::FunctionDecl*>();
+    return decl_or_pointer_type_.dyn_cast<clang::FunctionDecl*>();
   }
 
-  // The name of the callee function.
+  // The type of the callee function. Never null.
+  auto function_type() const -> const clang::FunctionProtoType* {
+    return function_type_;
+  }
+
+  // Metadata about the C++ function signature.
+  auto signature() const -> const SemIR::ClangDeclSignature* {
+    return signature_;
+  }
+
+  // The name of the callee function. Never empty.
   auto decl_name() const -> clang::DeclarationName;
 
-  // The location of the callee function declaration.
+  // The location of the callee function declaration, or an invalid location
+  // if there was no declaration.
   auto clang_location() const -> clang::SourceLocation;
 
-  // The SemIR representation of `clang_loc`.
-  SemIR::LocId sem_ir_loc;
+  // The SemIR representation of `clang_location()`.
+  auto sem_ir_loc() const -> SemIR::LocId { return sem_ir_loc_; }
 
-  // The function type of the callee. This is never null.
-  const clang::FunctionProtoType* function_type;
+  // The number of parameters in the C++ callee that should be imported.
+  // This may be less than the number of parameters that the function has if
+  // default arguments are being used.
+  auto num_callee_params() const -> int { return num_callee_params_; }
 
-  // The ID of `signature`.
-  SemIR::ClangDeclSignatureId signature_id;
+  // The number of parameters that the imported Carbon function should have.
+  auto num_carbon_params() const -> int {
+    return num_callee_params_ + callee_param_to_carbon_param_offset();
+  }
 
-  // The signature of the function being imported.
-  const SemIR::ClangDeclSignature* signature;
+  // The number of parameters that the simple-ABI thunk should have.
+  auto num_thunk_params() const -> unsigned {
+    return num_carbon_params() + !has_simple_return_type_;
+  }
 
-  // The number of explicit parameters to import. This may be less than the
-  // number of parameters that the function has if default arguments are being
-  // used.
-  int num_callee_params;
+  // The offset I such that callee parameter N corresponds to parameter N+I of
+  // the imported Carbon function.
+  auto callee_param_to_carbon_param_offset() const -> int {
+    switch (self_param_kind_) {
+      case SelfParamKind::ImplicitObjectParam:
+      case SelfParamKind::FunctionPointer:
+        return 1;
+      case SelfParamKind::None:
+      case SelfParamKind::ExplicitObjectParam:
+        return 0;
+    }
+  }
+
+  // The offset I such that callee argument N corresponds to callee parameter
+  // N+I.
+  auto callee_arg_to_callee_param_offset() const -> int {
+    switch (self_param_kind_) {
+      case SelfParamKind::ExplicitObjectParam:
+        return 1;
+      case SelfParamKind::ImplicitObjectParam:
+      case SelfParamKind::FunctionPointer:
+      case SelfParamKind::None:
+        return 0;
+    }
+  }
+
+  // Returns the declared name of the i-th callee parameter, or null if it
+  // doesn't have a declaration.
+  auto GetCalleeParamIdentifier(int i) const -> clang::IdentifierInfo*;
+
+  // Returns the location of the i-th callee parameter declaration, or an
+  // invalid location if it doesn't have a declaration.
+  auto GetCalleeParamLocation(int i) const -> clang::SourceLocation;
+
+  // Whether the callee has an object parameter (i.e. `this`).
+  auto callee_has_object_param() const -> bool {
+    return self_param_kind_ == SelfParamKind::ImplicitObjectParam ||
+           self_param_kind_ == SelfParamKind::ExplicitObjectParam;
+  }
+
+  // The kind of C++ parameter that corresponds to the Carbon `self` parameter.
+  auto self_param_kind() const -> SelfParamKind { return self_param_kind_; }
+
+  // Whether the imported Carbon function should have a self parameter.
+  auto carbon_has_self_param() const -> bool {
+    return self_param_kind_ != SelfParamKind::None;
+  }
 
   // The type of the callee parameter that is treated as `self` in the Carbon
   // function, or null if there isn't one.
@@ -172,9 +173,28 @@ struct CalleeFunctionInfo {
   // and return void in Clang's AST.
   auto effective_return_type() const -> clang::QualType;
 
-  // Whether the callee has a simple return type, that we can return directly.
-  // If not, we'll return through an out parameter instead.
-  bool has_simple_return_type;
+  // Whether the callee's effective return type is simple, such that we can
+  // return it directly rather than using an out parameter.
+  auto has_simple_return_type() const -> bool {
+    return has_simple_return_type_;
+  }
+
+ private:
+  Context* context_;
+  SelfParamKind self_param_kind_;
+
+  // If `self_param_kind_ == FunctionPointer`, this is the type of the
+  // function pointer. Otherwise it is the declaration of the callee function.
+  // Never null.
+  llvm::PointerUnion<clang::FunctionDecl*, const clang::Type*>
+      decl_or_pointer_type_;
+
+  SemIR::LocId sem_ir_loc_;
+  const clang::FunctionProtoType* function_type_;
+  SemIR::ClangDeclSignatureId signature_id_;
+  const SemIR::ClangDeclSignature* signature_;
+  int num_callee_params_;
+  bool has_simple_return_type_;
 };
 
 // Returns whether the given C++ imported function requires a C++ thunk to be

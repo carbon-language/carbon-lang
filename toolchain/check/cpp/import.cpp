@@ -1621,9 +1621,9 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // TODO: Use a location associated with the object parameter instead of the
     // location of the function as a whole.
     auto [self_param_pattern_id, _] = MakeParamPattern(
-        context, loc_id, function_info.sem_ir_loc,
+        context, loc_id, function_info.sem_ir_loc(),
         function_info.self_param_type(),
-        function_info.signature->self_passing_mode, SemIR::NameId::SelfValue);
+        function_info.signature()->self_passing_mode, SemIR::NameId::SelfValue);
     if (self_param_pattern_id == SemIR::ErrorInst::InstId) {
       return SemIR::InstBlockId::None;
     }
@@ -1635,12 +1635,12 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
   // args, so we can use the callee args offset to index into the signature
   // params.
   for (auto signature_index :
-       llvm::seq(function_info.num_callee_params -
+       llvm::seq(function_info.num_callee_params() -
                  function_info.callee_arg_to_callee_param_offset())) {
     int callee_index =
         signature_index + function_info.callee_arg_to_callee_param_offset();
     clang::QualType orig_param_type =
-        function_info.function_type->getParamType(callee_index);
+        function_info.function_type()->getParamType(callee_index);
 
     // The parameter type is decayed but hasn't necessarily had its qualifiers
     // removed.
@@ -1660,7 +1660,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // TODO: Add template support.
     auto [pattern_id, type_inst_id] = MakeParamPattern(
         context, loc_id, param_loc_id, param_type,
-        function_info.signature->GetPassingMode(signature_index), name_id);
+        function_info.signature()->GetPassingMode(signature_index), name_id);
     if (pattern_id == SemIR::ErrorInst::InstId) {
       return SemIR::InstBlockId::None;
     }
@@ -1668,7 +1668,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     param_type_ids.push_back(type_inst_id);
   }
 
-  switch (function_info.signature->kind) {
+  switch (function_info.signature()->kind) {
     case SemIR::ClangDeclSignature::Normal: {
       // Use the converted parameter list as-is.
       break;
@@ -1683,7 +1683,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
           GetPatternType(context, GetTupleType(context, param_type_ids));
       SemIR::InstId pattern_id = AddInst(
           context, SemIR::LocIdAndInst::RuntimeVerified(
-                       context.sem_ir(), function_info.sem_ir_loc,
+                       context.sem_ir(), function_info.sem_ir_loc(),
                        SemIR::TuplePattern{.type_id = tuple_pattern_type_id,
                                            .elements_id = param_block_id}));
       param_ids = {pattern_id};
@@ -1711,7 +1711,8 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
                            .type_component_inst_id = type_component_inst_id};
     return context.constant_values().GetInstId(TryEvalInst(context, inst));
   };
-  clang::QualType orig_ret_type = function_info.function_type->getReturnType();
+  clang::QualType orig_ret_type =
+      function_info.function_type()->getReturnType();
   if (!orig_ret_type->isVoidType()) {
     bool is_reference = orig_ret_type->isReferenceType();
     if (is_reference) {
@@ -1965,7 +1966,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
   }
 
   auto [decl_id, function_id] = MakeFunctionDecl(
-      context, function_info.sem_ir_loc, decl_block_id, /*build_generic=*/false,
+      context, function_info.sem_ir_loc(), decl_block_id,
+      /*build_generic=*/false,
       /*is_definition=*/false,
       SemIR::Function{
           {
