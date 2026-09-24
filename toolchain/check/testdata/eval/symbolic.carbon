@@ -136,7 +136,7 @@ class C {
 }
 
 fn UseM(generic c: C, x: c.M(true));
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+7]]:23: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for (c).M(true)>` [RedeclParamDiffersType]
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+7]]:23: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for c.M(true)>` [RedeclParamDiffersType]
 // CHECK:STDERR: fn UseM(generic c: C, x: bool);
 // CHECK:STDERR:                       ^~~~~~~
 // CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-4]]:23: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
@@ -144,6 +144,24 @@ fn UseM(generic c: C, x: c.M(true));
 // CHECK:STDERR:                       ^~~~~~~~~~~~
 // CHECK:STDERR:
 fn UseM(generic c: C, x: bool);
+
+// Parentheses are added around the `self` argument if needed.
+interface J {
+  eval fn N(self: Self) -> type;
+}
+impl type as J {
+  eval fn N(self: Self) -> type { return self; }
+}
+
+fn UseN(generic T: type, x: (const T).(J.N)());
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+7]]:26: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for (const T).N()>` [RedeclParamDiffersType]
+// CHECK:STDERR: fn UseN(generic T: type, x: bool);
+// CHECK:STDERR:                          ^~~~~~~
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-4]]:26: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR: fn UseN(generic T: type, x: (const T).(J.N)());
+// CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn UseN(generic T: type, x: bool);
 
 // CHECK:STDOUT: --- dependent_symbolic_instruction.carbon
 // CHECK:STDOUT:

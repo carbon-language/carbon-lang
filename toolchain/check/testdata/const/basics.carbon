@@ -127,6 +127,45 @@ fn PassConstReferenceToReference(p: const X*) {
   p->(X.TakeSelf)();
 }
 
+// --- fail_print_const_facet_type.carbon
+library "[[@TEST_NAME]]";
+
+interface I { let T: type; }
+interface J {}
+
+// A redeclaration with a mismatched return type prints the original return
+// type. The operand of `const` is parenthesized if it's a facet type formed
+// with `&` or `where`.
+fn F() -> const (I & J);
+// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fn F() -> {};
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE-4]]:1: note: previously declared with return type `const (I & J)` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR: fn F() -> const (I & J);
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F() -> {};
+
+fn G() -> const (I where .T = ());
+// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fn G() -> {};
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE-4]]:1: note: previously declared with return type `const (I where .(I.T) = ())` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR: fn G() -> const (I where .T = ());
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn G() -> {};
+
+// No parentheses are needed for a single interface.
+fn H() -> const I;
+// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fn H() -> {};
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE-4]]:1: note: previously declared with return type `const I` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR: fn H() -> const I;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn H() -> {};
 
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
