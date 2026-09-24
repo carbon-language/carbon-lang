@@ -245,11 +245,21 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 
     const clang::SourceManager* source_manager =
         info.hasSourceManager() ? &info.getSourceManager() : nullptr;
+    std::string snippet_str = snippet_stream.TakeStr();
+    // The `__carbon_include_filename` macro is synthesized for quoted
+    // filenames. Its expansion note points at generated code rather than the
+    // Carbon import, so drop it and keep only the file-not-found error.
+    if (diag_level == clang::DiagnosticsEngine::Note &&
+        (message.str().str().find("__carbon_include_filename") !=
+             std::string::npos ||
+         snippet_str.find("__carbon_include_filename") != std::string::npos)) {
+      return;
+    }
     diagnostic_infos_.push_back({.level = diag_level,
                                  .location = info.getLocation(),
                                  .source_manager = source_manager,
                                  .message = message.str().str(),
-                                 .snippet = snippet_stream.TakeStr()});
+                                 .snippet = std::move(snippet_str)});
   }
 
  private:
