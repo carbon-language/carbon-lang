@@ -25,18 +25,82 @@
 
 namespace Carbon::SemIR {
 
-// Map an instruction kind representing an expression into an integer describing
-// the precedence of that expression's syntax. Higher numbers correspond to
-// higher precedence.
-static auto GetPrecedence(InstKind kind) -> int {
-  if (kind == ConstType::Kind) {
-    return -1;
+// Precedence levels for the syntax produced when stringifying an instruction.
+// Higher numbers correspond to higher precedence. An operand needs to be
+// parenthesized if its precedence is lower than that required by the enclosing
+// syntax.
+//
+// Carbon's precedence is a partial order, not a total order, but the only
+// enclosing syntax that we currently check for is prefix and postfix operators,
+// which have higher precedence than all infix operators, so a total order
+// suffices for now.
+enum class Precedence : int8_t {
+  // `A where ...`
+  Where = -5,
+  // `A & B`
+  BitwiseAnd = -4,
+  // `A as B`
+  As = -3,
+  // `T*`
+  PostfixStar = -2,
+  // `const T`, `partial T`
+  PrefixType = -1,
+  // Names, literals, calls, member access, and anything parenthesized or
+  // otherwise bracketed.
+  Primary = 0,
+};
+
+// Returns the precedence of the syntax that stringifying `inst_id` produces.
+static auto GetPrecedence(const File& sem_ir, InstId inst_id) -> Precedence {
+  while (inst_id.has_value()) {
+    auto inst = sem_ir.insts().Get(inst_id);
+    switch (inst.kind()) {
+      case Call::Kind:
+      case TypeOfInst::Kind: {
+        // These print their constant value instead, if it's different.
+        auto const_inst_id =
+            sem_ir.constant_values().GetConstantInstId(inst_id);
+        if (!const_inst_id.has_value() || const_inst_id == inst_id) {
+          return Precedence::Primary;
+        }
+        inst_id = const_inst_id;
+        break;
+      }
+      case FacetAccessType::Kind: {
+        inst_id = inst.As<FacetAccessType>().facet_value_inst_id;
+        break;
+      }
+      case FacetType::Kind: {
+        const auto& info = sem_ir.declared_facet_types().Get(
+            inst.As<FacetType>().declared_facet_type_id);
+        if (info.other_requirements || !info.rewrite_constraints.empty() ||
+            !info.self_impls_constraints.empty() ||
+            !info.self_impls_named_constraints.empty() ||
+            !info.type_impls_interfaces.empty() ||
+            !info.type_impls_named_constraints.empty()) {
+          return Precedence::Where;
+        }
+        if (info.extend_constraints.size() +
+                info.extend_named_constraints.size() >
+            1) {
+          return Precedence::BitwiseAnd;
+        }
+        return Precedence::Primary;
+      }
+      case FacetValue::Kind:
+      case LookupImplWitness::Kind:
+        return Precedence::As;
+      case PointerType::Kind:
+        return Precedence::PostfixStar;
+      case ConstType::Kind:
+      case PartialType::Kind:
+        return Precedence::PrefixType;
+      default:
+        // TODO: Handle other kinds of expressions with precedence.
+        return Precedence::Primary;
+    }
   }
-  if (kind == PointerType::Kind) {
-    return -2;
-  }
-  // TODO: Handle other kinds of expressions with precedence.
-  return 0;
+  return Precedence::Primary;
 }
 
 namespace {
@@ -490,8 +554,13 @@ class Stringifier {
     }
 
     if (self_id.has_value()) {
-      // TODO: Omit the parentheses when they're not needed.
-      step_stack_->Push("(", self_id, ").");
+      // Member access is a postfix operator, so the object expression needs
+      // parentheses unless it's a primary expression.
+      if (GetPrecedence(*sem_ir_, self_id) < Precedence::Primary) {
+        step_stack_->Push("(", self_id, ").");
+      } else {
+        step_stack_->Push(self_id, ".");
+      }
     }
   }
 
@@ -510,8 +579,7 @@ class Stringifier {
     *out_ << "const ";
 
     // Add parentheses if required.
-    if (GetPrecedence(sem_ir_->insts().Get(inst.inner_id).kind()) <
-        GetPrecedence(ConstType::Kind)) {
+    if (GetPrecedence(*sem_ir_, inst.inner_id) < Precedence::PrefixType) {
       *out_ << "(";
       // Note the `inst.inner_id` ends up here.
       step_stack_->PushString(")");
