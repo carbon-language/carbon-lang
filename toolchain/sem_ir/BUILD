@@ -368,15 +368,28 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "dominance_test_helpers",
+    testonly = 1,
+    hdrs = ["dominance_test_helpers.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/parse:node_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "dominance_test",
     size = "small",
     srcs = ["dominance_test.cpp"],
     deps = [
+        ":dominance_test_helpers",
         ":file",
         ":typed_insts",
         "//testing/base:gtest_main",
-        "//toolchain/base:shared_value_stores",
         "//toolchain/parse:node_kind",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
@@ -388,13 +401,12 @@ cc_binary(
     testonly = 1,
     srcs = ["dominance_benchmark.cpp"],
     deps = [
+        ":dominance_test_helpers",
         ":file",
         ":typed_insts",
         "//common:check",
         "//common:error",
         "//testing/base:benchmark_main",
-        "//toolchain/base:shared_value_stores",
-        "//toolchain/parse:node_kind",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],

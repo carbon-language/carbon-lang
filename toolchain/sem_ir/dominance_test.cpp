@@ -7,19 +7,15 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <optional>
 #include <string>
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
-#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/function.h"
-#include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/dominance_test_helpers.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -28,54 +24,13 @@ namespace {
 using ::testing::HasSubstr;
 using ::testing::IsEmpty;
 
-class DominanceTest : public ::testing::Test {
+class DominanceTest : public ::testing::Test, public DominanceTestFile {
  public:
-  DominanceTest()
-      : file_(/*parse_tree=*/nullptr, CheckIRId(0),
-              /*packaging_decl=*/std::nullopt, value_stores_,
-              "test_file.carbon") {}
-
   // Runs the dominance check, and returns the error message it produced, or an
   // empty string if it succeeded.
   auto Verify() -> std::string {
     ErrorOr<Success> result = VerifyDominance(file_);
     return result.ok() ? "" : result.error().message();
-  }
-
-  // Adds an instruction that is not in any block.
-  template <typename InstT>
-  auto AddInst(InstT inst) -> InstId {
-    return file_.insts().AddInNoBlock(LocIdAndInst::NoLoc(inst));
-  }
-
-  // Adds an instruction with no constant value, so that uses of it must be
-  // dominated by its evaluation.
-  template <typename InstT>
-  auto AddNonConstInst(InstT inst) -> InstId {
-    auto inst_id = AddInst(inst);
-    file_.constant_values().Set(inst_id, ConstantId::NotConstant);
-    return inst_id;
-  }
-
-  // Adds an instruction producing a non-constant value.
-  auto AddValue() -> InstId {
-    return AddNonConstInst(
-        BoolLiteral{.type_id = TypeType::TypeId, .value = BoolValue(false)});
-  }
-
-  // Adds an instruction producing a constant value.
-  auto AddConstant() -> InstId {
-    auto inst_id = AddInst(
-        BoolLiteral{.type_id = TypeType::TypeId, .value = BoolValue(true)});
-    file_.constant_values().Set(inst_id,
-                                ConstantId::ForConcreteConstant(inst_id));
-    return inst_id;
-  }
-
-  // Adds an instruction that uses the value of `value_id`.
-  auto AddUse(InstId value_id) -> InstId {
-    return AddNonConstInst(
-        ValueAsRef{.type_id = TypeType::TypeId, .value_id = value_id});
   }
 
   // Adds an instruction that refers to `inst_id` as a `MetaInstId`, which names
@@ -84,38 +39,6 @@ class DominanceTest : public ::testing::Test {
     return AddNonConstInst(AccessMemberAction{.type_id = TypeType::TypeId,
                                               .base_id = MetaInstId(inst_id),
                                               .name_id = NameId(0)});
-  }
-
-  auto AddReturn() -> InstId { return AddInst(Return{}); }
-
-  auto AddBranch(InstBlockId target_id) -> InstId {
-    return AddInst(Branch{.target_id = LabelId(target_id)});
-  }
-
-  auto AddBranchIf(InstBlockId target_id, InstId cond_id) -> InstId {
-    return AddInst(
-        BranchIf{.target_id = LabelId(target_id), .cond_id = cond_id});
-  }
-
-  // Adds a generic, along with a specific for it that a function can be
-  // attached to. The specific is resolved, with `value_block_id` as the value
-  // block for its declaration, so that the function body is also verified as it
-  // will be evaluated in that specific.
-  auto AddGeneric(InstBlockId value_block_id = InstBlockId::Empty)
-      -> GenericId {
-    auto decl_id =
-        AddInst(FunctionDecl{.type_id = TypeType::TypeId,
-                             .function_id = FunctionId(0),
-                             .decl_block_id = DeclInstBlockId::None});
-    auto generic_id =
-        file_.generics().Add(Generic{.decl_id = decl_id,
-                                     .bindings_id = InstBlockId::Empty,
-                                     .self_specific_id = SpecificId::None});
-    auto specific_id =
-        file_.specifics().GetOrAdd(generic_id, InstBlockId::Empty);
-    auto& specific = file_.specifics().Get(specific_id);
-    specific.SetValueBlock(GenericInstIndex::Declaration, value_block_id);
-    return generic_id;
   }
 
   // Adds an instruction whose constant value is an `inst_value` naming
@@ -132,37 +55,6 @@ class DominanceTest : public ::testing::Test {
                                 ConstantId::ForConcreteConstant(value_id));
     return use_id;
   }
-
-  auto AddFunction(llvm::ArrayRef<InstBlockId> body_block_ids = {},
-                   llvm::StringRef name = "F",
-                   GenericId generic_id = GenericId::None) -> FunctionId {
-    auto name_id = file_.identifiers().Add(name);
-    return file_.functions().Add(
-        {{.name_id = SemIR::NameId::ForIdentifier(name_id),
-          .parent_scope_id = SemIR::NameScopeId::Package,
-          .generic_id = generic_id,
-          .first_param_node_id = Parse::NodeId::None,
-          .last_param_node_id = Parse::NodeId::None,
-          .pattern_block_id = SemIR::InstBlockId::Empty,
-          .implicit_param_patterns_id = SemIR::InstBlockId::None,
-          .param_patterns_id = SemIR::InstBlockId::Empty,
-          .is_extern = false,
-          .extern_library_id = SemIR::LibraryNameId::None,
-          .non_owning_decl_id = SemIR::InstId::None,
-          .first_owning_decl_id = SemIR::InstId::None},
-         {.call_param_patterns_id = SemIR::InstBlockId::Empty,
-          .call_params_id = SemIR::InstBlockId::Empty,
-          .call_param_default_values_id = SemIR::InstBlockId::Empty,
-          .call_param_ranges = SemIR::Function::CallParamIndexRanges::Empty,
-          .return_type_inst_id = SemIR::TypeInstId::None,
-          .return_form_inst_id = SemIR::InstId::None,
-          .return_pattern_id = SemIR::InstId::None,
-          .body_block_ids = llvm::SmallVector<InstBlockId>(
-              body_block_ids.begin(), body_block_ids.end())}});
-  }
-
-  SharedValueStores value_stores_;
-  File file_;
 };
 
 TEST_F(DominanceTest, FunctionWithNoBody) {
@@ -173,7 +65,7 @@ TEST_F(DominanceTest, FunctionWithNoBody) {
 TEST_F(DominanceTest, StraightLineUseAfterEvaluation) {
   auto value_id = AddValue();
   auto use_id = AddUse(value_id);
-  AddFunction({file_.inst_blocks().Add({value_id, use_id, AddReturn()})});
+  AddFunction({AddBlock({value_id, use_id, AddReturn()})});
 
   EXPECT_THAT(Verify(), IsEmpty());
 }
@@ -181,7 +73,7 @@ TEST_F(DominanceTest, StraightLineUseAfterEvaluation) {
 TEST_F(DominanceTest, StraightLineUseBeforeEvaluation) {
   auto value_id = AddValue();
   auto use_id = AddUse(value_id);
-  AddFunction({file_.inst_blocks().Add({use_id, value_id, AddReturn()})});
+  AddFunction({AddBlock({use_id, value_id, AddReturn()})});
 
   EXPECT_THAT(Verify(), HasSubstr("not dominated by any evaluation"));
 }
@@ -191,7 +83,7 @@ TEST_F(DominanceTest, NeverEvaluatedValue) {
   // happen for a non-constant global or import, doesn't dominate its uses.
   auto global_id = AddValue();
   auto use_id = AddUse(global_id);
-  AddFunction({file_.inst_blocks().Add({use_id, AddReturn()})});
+  AddFunction({AddBlock({use_id, AddReturn()})});
 
   EXPECT_THAT(Verify(),
               HasSubstr("not dominated by any evaluation and is not constant"));
@@ -200,7 +92,7 @@ TEST_F(DominanceTest, NeverEvaluatedValue) {
 TEST_F(DominanceTest, ConstantIsExempt) {
   auto constant_id = AddConstant();
   auto use_id = AddUse(constant_id);
-  AddFunction({file_.inst_blocks().Add({use_id, AddReturn()})});
+  AddFunction({AddBlock({use_id, AddReturn()})});
 
   EXPECT_THAT(Verify(), IsEmpty());
 }
@@ -214,10 +106,10 @@ TEST_F(DominanceTest, FileScopeInstIsAllowlisted) {
   // A file-scope instruction is evaluated in `__global_init`, if at all, so it
   // doesn't dominate uses in any other function.
   auto global_id = AddValue();
-  file_.set_top_inst_block_id(file_.inst_blocks().Add({global_id}));
+  file_.set_top_inst_block_id(AddBlock({global_id}));
 
   auto use_id = AddUse(global_id);
-  AddFunction({file_.inst_blocks().Add({use_id, AddReturn()})});
+  AddFunction({AddBlock({use_id, AddReturn()})});
 
   EXPECT_THAT(Verify(), IsEmpty());
 }
@@ -235,25 +127,24 @@ TEST_F(DominanceTest, ClassBodyInstIsAllowlisted) {
                                      .entity_name_id = EntityNameId::None,
                                      .value_id = AddConstant()});
   auto name_id = file_.identifiers().Add("A");
-  file_.classes().Add(
-      {{.name_id = NameId::ForIdentifier(name_id),
-        .parent_scope_id = NameScopeId::Package,
-        .generic_id = GenericId::None,
-        .first_param_node_id = Parse::NodeId::None,
-        .last_param_node_id = Parse::NodeId::None,
-        .pattern_block_id = InstBlockId::Empty,
-        .implicit_param_patterns_id = InstBlockId::None,
-        .param_patterns_id = InstBlockId::Empty,
-        .is_extern = false,
-        .extern_library_id = LibraryNameId::None,
-        .non_owning_decl_id = InstId::None,
-        .first_owning_decl_id = InstId::None},
-       {.self_type_id = TypeType::TypeId,
-        .inheritance_kind = Class::Final,
-        .body_block_id = file_.inst_blocks().Add({binding_id})}});
+  file_.classes().Add({{.name_id = NameId::ForIdentifier(name_id),
+                        .parent_scope_id = NameScopeId::Package,
+                        .generic_id = GenericId::None,
+                        .first_param_node_id = Parse::NodeId::None,
+                        .last_param_node_id = Parse::NodeId::None,
+                        .pattern_block_id = InstBlockId::Empty,
+                        .implicit_param_patterns_id = InstBlockId::None,
+                        .param_patterns_id = InstBlockId::Empty,
+                        .is_extern = false,
+                        .extern_library_id = LibraryNameId::None,
+                        .non_owning_decl_id = InstId::None,
+                        .first_owning_decl_id = InstId::None},
+                       {.self_type_id = TypeType::TypeId,
+                        .inheritance_kind = Class::Final,
+                        .body_block_id = AddBlock({binding_id})}});
 
   auto use_id = AddUse(binding_id);
-  AddFunction({file_.inst_blocks().Add({use_id, AddReturn()})});
+  AddFunction({AddBlock({use_id, AddReturn()})});
 
   EXPECT_THAT(Verify(), IsEmpty());
 }
@@ -265,7 +156,7 @@ TEST_F(DominanceTest, ImportRefIsAllowlisted) {
                                       .import_ir_inst_id = ImportIRInstId::None,
                                       .entity_name_id = EntityNameId::None});
   auto use_id = AddUse(import_id);
-  AddFunction({file_.inst_blocks().Add({use_id, AddReturn()})});
+  AddFunction({AddBlock({use_id, AddReturn()})});
 
   EXPECT_THAT(Verify(), IsEmpty());
 }
@@ -275,7 +166,7 @@ TEST_F(DominanceTest, MetaInstIdOperandIsExempt) {
   // so it needn't be dominated even though it's evaluated later.
   auto value_id = AddValue();
   auto use_id = AddMetaUse(value_id);
-  AddFunction({file_.inst_blocks().Add({use_id, value_id, AddReturn()})});
+  AddFunction({AddBlock({use_id, value_id, AddReturn()})});
 
   EXPECT_THAT(Verify(), IsEmpty());
 }
@@ -283,7 +174,7 @@ TEST_F(DominanceTest, MetaInstIdOperandIsExempt) {
 TEST_F(DominanceTest, ErroneousFileIsNotChecked) {
   auto value_id = AddValue();
   auto use_id = AddUse(value_id);
-  AddFunction({file_.inst_blocks().Add({use_id, value_id, AddReturn()})});
+  AddFunction({AddBlock({use_id, value_id, AddReturn()})});
   file_.set_has_errors(true);
 
   EXPECT_THAT(Verify(), IsEmpty());
@@ -293,7 +184,7 @@ TEST_F(DominanceTest, FileVerifyChecksDominance) {
   // `File::Verify` should run the dominance check as well as its other checks.
   auto value_id = AddValue();
   auto use_id = AddUse(value_id);
-  AddFunction({file_.inst_blocks().Add({use_id, value_id, AddReturn()})});
+  AddFunction({AddBlock({use_id, value_id, AddReturn()})});
 
   auto result = file_.Verify();
   ASSERT_FALSE(result.ok());
@@ -310,44 +201,23 @@ TEST_F(DominanceTest, FileVerifyChecksDominance) {
 //      exit
 class DominanceDiamondTest : public DominanceTest {
  public:
-  DominanceDiamondTest()
-      : entry_id_(file_.inst_blocks().AddPlaceholder()),
-        then_id_(file_.inst_blocks().AddPlaceholder()),
-        else_id_(file_.inst_blocks().AddPlaceholder()),
-        exit_id_(file_.inst_blocks().AddPlaceholder()) {}
-
-  // Fills in the diamond, prefixing each block with the given instructions.
+  // Builds the diamond, prefixing each block with the given instructions.
   auto BuildDiamond(llvm::ArrayRef<InstId> entry_insts,
                     llvm::ArrayRef<InstId> then_insts,
                     llvm::ArrayRef<InstId> else_insts,
                     llvm::ArrayRef<InstId> exit_insts) -> void {
-    auto cond_id = AddConstant();
+    auto entry_id = AddBlock();
+    auto then_id = AddBlock();
+    auto else_id = AddBlock();
+    auto exit_id = AddBlock();
 
-    llvm::SmallVector<InstId> entry(entry_insts.begin(), entry_insts.end());
-    entry.push_back(cond_id);
-    entry.push_back(AddBranchIf(then_id_, cond_id));
-    entry.push_back(AddBranch(else_id_));
-    file_.inst_blocks().ReplacePlaceholder(entry_id_, entry);
+    SetBlock(entry_id, entry_insts, {AddBranchIf(then_id), AddBranch(else_id)});
+    SetBlock(then_id, then_insts, {AddBranch(exit_id)});
+    SetBlock(else_id, else_insts, {AddBranch(exit_id)});
+    SetBlock(exit_id, exit_insts, {AddReturn()});
 
-    llvm::SmallVector<InstId> then(then_insts.begin(), then_insts.end());
-    then.push_back(AddBranch(exit_id_));
-    file_.inst_blocks().ReplacePlaceholder(then_id_, then);
-
-    llvm::SmallVector<InstId> otherwise(else_insts.begin(), else_insts.end());
-    otherwise.push_back(AddBranch(exit_id_));
-    file_.inst_blocks().ReplacePlaceholder(else_id_, otherwise);
-
-    llvm::SmallVector<InstId> exit(exit_insts.begin(), exit_insts.end());
-    exit.push_back(AddReturn());
-    file_.inst_blocks().ReplacePlaceholder(exit_id_, exit);
-
-    AddFunction({entry_id_, then_id_, else_id_, exit_id_});
+    AddFunction({entry_id, then_id, else_id, exit_id});
   }
-
-  InstBlockId entry_id_;
-  InstBlockId then_id_;
-  InstBlockId else_id_;
-  InstBlockId exit_id_;
 };
 
 TEST_F(DominanceDiamondTest, EvaluationInEntryDominatesAllBranches) {
@@ -397,17 +267,16 @@ TEST_F(DominanceDiamondTest, MultipleEvaluationsEachDominateTheirOwnUse) {
 }
 
 TEST_F(DominanceTest, UnreachableBlock) {
-  auto entry_id = file_.inst_blocks().AddPlaceholder();
-  auto unreachable_id = file_.inst_blocks().Add({AddReturn()});
-  file_.inst_blocks().ReplacePlaceholder(entry_id, {AddReturn()});
+  auto entry_id = AddBlock({AddReturn()});
+  auto unreachable_id = AddBlock({AddReturn()});
   AddFunction({entry_id, unreachable_id});
 
   EXPECT_THAT(Verify(), HasSubstr("is unreachable from entry block"));
 }
 
 TEST_F(DominanceTest, BranchOutsideFunctionBody) {
-  auto outside_id = file_.inst_blocks().Add({AddReturn()});
-  auto entry_id = file_.inst_blocks().Add({AddBranch(outside_id)});
+  auto outside_id = AddBlock({AddReturn()});
+  auto entry_id = AddBlock({AddBranch(outside_id)});
   AddFunction({entry_id});
 
   EXPECT_THAT(Verify(), HasSubstr("which is not in function body"));
@@ -418,15 +287,12 @@ TEST_F(DominanceTest, RepeatedBranchToSameBlock) {
   // arms of an `if` are empty. That produces a duplicate control flow edge,
   // which shouldn't disturb the dominance computation: the exit block is still
   // dominated by the entry block.
-  auto entry_id = file_.inst_blocks().AddPlaceholder();
-  auto exit_id = file_.inst_blocks().AddPlaceholder();
+  auto entry_id = AddBlock();
+  auto exit_id = AddBlock();
 
   auto value_id = AddValue();
-  file_.inst_blocks().ReplacePlaceholder(
-      entry_id,
-      {value_id, AddBranchIf(exit_id, AddConstant()), AddBranch(exit_id)});
-  file_.inst_blocks().ReplacePlaceholder(exit_id,
-                                         {AddUse(value_id), AddReturn()});
+  SetBlock(entry_id, {value_id, AddBranchIf(exit_id), AddBranch(exit_id)});
+  SetBlock(exit_id, {AddUse(value_id), AddReturn()});
   AddFunction({entry_id, exit_id});
 
   EXPECT_THAT(Verify(), IsEmpty());
@@ -441,20 +307,14 @@ TEST_F(DominanceTest, LongChainOfBlocks) {
   llvm::SmallVector<InstBlockId> block_ids;
   block_ids.reserve(NumBlocks);
   for (auto _ : llvm::seq(NumBlocks)) {
-    block_ids.push_back(file_.inst_blocks().AddPlaceholder());
+    block_ids.push_back(AddBlock());
   }
 
   auto value_id = AddValue();
   for (auto [i, block] : llvm::enumerate(block_ids)) {
-    llvm::SmallVector<InstId> insts;
-    if (i == 0) {
-      insts.push_back(value_id);
-    } else {
-      insts.push_back(AddUse(value_id));
-    }
-    insts.push_back(i + 1 == NumBlocks ? AddReturn()
-                                       : AddBranch(block_ids[i + 1]));
-    file_.inst_blocks().ReplacePlaceholder(block, insts);
+    SetBlock(block,
+             {i == 0 ? value_id : AddUse(value_id),
+              i + 1 == NumBlocks ? AddReturn() : AddBranch(block_ids[i + 1])});
   }
   AddFunction(block_ids);
 
@@ -467,29 +327,20 @@ TEST_F(DominanceTest, LongChainOfBlocks) {
 //                   -> exit
 class DominanceLoopTest : public DominanceTest {
  public:
-  // Fills in the loop, prefixing the header and body blocks with the given
+  // Builds the loop, prefixing the header and body blocks with the given
   // instructions.
   auto BuildLoop(llvm::ArrayRef<InstId> header_insts,
                  llvm::ArrayRef<InstId> body_insts) -> void {
-    auto entry_id = file_.inst_blocks().AddPlaceholder();
-    auto header_id = file_.inst_blocks().AddPlaceholder();
-    auto body_id = file_.inst_blocks().AddPlaceholder();
-    auto exit_id = file_.inst_blocks().AddPlaceholder();
+    auto entry_id = AddBlock();
+    auto header_id = AddBlock();
+    auto body_id = AddBlock();
+    auto exit_id = AddBlock();
 
-    auto cond_id = AddConstant();
-    file_.inst_blocks().ReplacePlaceholder(entry_id,
-                                           {cond_id, AddBranch(header_id)});
-
-    llvm::SmallVector<InstId> header(header_insts);
-    header.push_back(AddBranchIf(body_id, cond_id));
-    header.push_back(AddBranch(exit_id));
-    file_.inst_blocks().ReplacePlaceholder(header_id, header);
-
-    llvm::SmallVector<InstId> body(body_insts);
-    body.push_back(AddBranch(header_id));
-    file_.inst_blocks().ReplacePlaceholder(body_id, body);
-
-    file_.inst_blocks().ReplacePlaceholder(exit_id, {AddReturn()});
+    SetBlock(entry_id, {AddBranch(header_id)});
+    SetBlock(header_id, header_insts,
+             {AddBranchIf(body_id), AddBranch(exit_id)});
+    SetBlock(body_id, body_insts, {AddBranch(header_id)});
+    SetBlock(exit_id, {AddReturn()});
 
     AddFunction({entry_id, header_id, body_id, exit_id});
   }
@@ -518,10 +369,10 @@ TEST_F(DominanceTest, SpliceBlockEvaluatesItsContents) {
 
   // A spliced block that evaluates a use of `value_id` and produces it.
   auto inner_id = AddUse(value_id);
-  auto splice_block_id = AddInst(SpliceBlock{
-      .type_id = TypeType::TypeId,
-      .block_id = AbsoluteInstBlockId(file_.inst_blocks().Add({inner_id})),
-      .result_id = inner_id});
+  auto splice_block_id =
+      AddInst(SpliceBlock{.type_id = TypeType::TypeId,
+                          .block_id = AbsoluteInstBlockId(AddBlock({inner_id})),
+                          .result_id = inner_id});
 
   auto action_id = AddInstValue(splice_block_id);
   auto splice_id =
@@ -529,9 +380,9 @@ TEST_F(DominanceTest, SpliceBlockEvaluatesItsContents) {
 
   // The use after the splice sees the instructions the splice evaluated.
   auto late_use_id = AddUse(inner_id);
-  AddFunction({file_.inst_blocks().Add(
-                  {value_id, action_id, splice_id, late_use_id, AddReturn()})},
-              "GenericFn", generic_id);
+  AddFunction(
+      {AddBlock({value_id, action_id, splice_id, late_use_id, AddReturn()})},
+      generic_id);
 
   EXPECT_THAT(Verify(), IsEmpty());
 }
@@ -542,18 +393,17 @@ TEST_F(DominanceTest, SpliceBlockUsingLaterValue) {
   // A spliced block that uses a value evaluated after the splice.
   auto value_id = AddValue();
   auto inner_id = AddUse(value_id);
-  auto splice_block_id = AddInst(SpliceBlock{
-      .type_id = TypeType::TypeId,
-      .block_id = AbsoluteInstBlockId(file_.inst_blocks().Add({inner_id})),
-      .result_id = inner_id});
+  auto splice_block_id =
+      AddInst(SpliceBlock{.type_id = TypeType::TypeId,
+                          .block_id = AbsoluteInstBlockId(AddBlock({inner_id})),
+                          .result_id = inner_id});
 
   auto action_id = AddInstValue(splice_block_id);
   auto splice_id =
       AddInst(SpliceInst{.type_id = TypeType::TypeId, .inst_id = action_id});
 
-  AddFunction(
-      {file_.inst_blocks().Add({action_id, splice_id, value_id, AddReturn()})},
-      "GenericFn", generic_id);
+  AddFunction({AddBlock({action_id, splice_id, value_id, AddReturn()})},
+              generic_id);
 
   EXPECT_THAT(Verify(), HasSubstr("not dominated by any evaluation"));
 }
@@ -572,8 +422,7 @@ class DominanceSpecificSpliceTest : public DominanceTest {
                      InstId specific_spliced_id) -> void {
     // In the specific, the splice's operand takes its value from the entry of
     // the specific's value block that its symbolic constant indexes.
-    auto generic_id = AddGeneric(
-        file_.inst_blocks().Add({AddInstValue(specific_spliced_id)}));
+    auto generic_id = AddGeneric(AddBlock({AddInstValue(specific_spliced_id)}));
 
     // In the generic, it takes the value of the unattached form of that
     // symbolic constant, which is the constant value of the instruction that
@@ -601,9 +450,9 @@ class DominanceSpecificSpliceTest : public DominanceTest {
 
     auto splice_id =
         AddInst(SpliceInst{.type_id = TypeType::TypeId, .inst_id = action_id});
-    AddFunction({file_.inst_blocks().Add(
-                    {early_id, action_id, splice_id, late_id, AddReturn()})},
-                "GenericFn", generic_id);
+    AddFunction(
+        {AddBlock({early_id, action_id, splice_id, late_id, AddReturn()})},
+        generic_id);
   }
 };
 

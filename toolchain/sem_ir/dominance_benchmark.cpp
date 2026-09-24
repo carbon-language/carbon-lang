@@ -5,22 +5,16 @@
 #include <benchmark/benchmark.h>
 
 #include <algorithm>
-#include <optional>
 
 #include "common/check.h"
 #include "common/error.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
-#include "toolchain/base/shared_value_stores.h"
-#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/dominance.h"
-#include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/function.h"
-#include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/dominance_test_helpers.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 namespace {
@@ -32,37 +26,13 @@ namespace {
 constexpr int InstsPerBlock = 8;
 
 // Builds a file containing synthetic function bodies to verify.
-//
-// The generated IR only has the properties that `VerifyDominance` looks at: it
-// has no locations or real types, and instructions are shared between
-// functions, neither of which the verifier examines.
-class FileBuilder {
+class FileBuilder : public DominanceTestFile {
  public:
-  FileBuilder()
-      : file_(/*parse_tree=*/nullptr, CheckIRId(0),
-              /*packaging_decl=*/std::nullopt, value_stores_,
-              "dominance_benchmark.carbon"),
-        value_id_(AddNonConstInst(BoolLiteral{.type_id = TypeType::TypeId,
-                                              .value = BoolValue(false)})),
-        cond_id_(AddConstant()) {}
-
-  auto file() -> File& { return file_; }
-
-  // The condition used by every conditional branch. It's constant, so it needs
-  // no dominating evaluation.
-  auto cond_id() const -> InstId { return cond_id_; }
-
-  // Adds a block whose contents are filled in later.
-  auto AddBlock() -> InstBlockId {
-    return file_.inst_blocks().AddPlaceholder();
-  }
-
   // Fills the entry block of a function body. It evaluates the value that the
   // rest of the body uses, so that every use in the body is dominated, and
   // branches to `next_id`.
   auto FillEntryBlock(InstBlockId block_id, InstBlockId next_id) -> void {
-    file_.inst_blocks().ReplacePlaceholder(block_id,
-                                           {value_id_, AddBranch(next_id)});
+    SetBlock(block_id, {value_id_, AddBranch(next_id)});
   }
 
   // Fills a non-entry block with `num_uses` uses of the value evaluated in the
@@ -70,103 +40,16 @@ class FileBuilder {
   auto FillBlock(InstBlockId block_id, llvm::ArrayRef<InstId> terminators,
                  int num_uses = InstsPerBlock) -> void {
     llvm::SmallVector<InstId> insts;
-    insts.reserve(num_uses + terminators.size());
+    insts.reserve(num_uses);
     for (auto _ : llvm::seq(num_uses)) {
-      insts.push_back(AddNonConstInst(
-          ValueAsRef{.type_id = TypeType::TypeId, .value_id = value_id_}));
+      insts.push_back(AddUse(value_id_));
     }
-    insts.append(terminators.begin(), terminators.end());
-    file_.inst_blocks().ReplacePlaceholder(block_id, insts);
-  }
-
-  auto AddReturn() -> InstId { return AddInst(Return{}); }
-
-  auto AddBranch(InstBlockId target_id) -> InstId {
-    return AddInst(Branch{.target_id = LabelId(target_id)});
-  }
-
-  auto AddBranchIf(InstBlockId target_id) -> InstId {
-    return AddInst(
-        BranchIf{.target_id = LabelId(target_id), .cond_id = cond_id_});
-  }
-
-  // Adds a generic, along with a resolved specific for it, that a function can
-  // be attached to. `VerifyDominance` verifies a generic function's body once
-  // for the generic itself and once for each resolved specific.
-  auto AddGeneric() -> GenericId {
-    auto decl_id =
-        AddInst(FunctionDecl{.type_id = TypeType::TypeId,
-                             .function_id = FunctionId(0),
-                             .decl_block_id = DeclInstBlockId::None});
-    auto generic_id =
-        file_.generics().Add(Generic{.decl_id = decl_id,
-                                     .bindings_id = InstBlockId::Empty,
-                                     .self_specific_id = SpecificId::None});
-    // A specific is only verified once it's been resolved, which is indicated
-    // by it having a value block for its declaration.
-    auto specific_id =
-        file_.specifics().GetOrAdd(generic_id, InstBlockId::Empty);
-    file_.specifics()
-        .Get(specific_id)
-        .SetValueBlock(GenericInstIndex::Declaration, InstBlockId::Empty);
-    return generic_id;
-  }
-
-  auto AddFunction(llvm::ArrayRef<InstBlockId> body_block_ids,
-                   GenericId generic_id = GenericId::None) -> FunctionId {
-    auto name_id = file_.identifiers().Add("F");
-    return file_.functions().Add(
-        {{.name_id = NameId::ForIdentifier(name_id),
-          .parent_scope_id = NameScopeId::Package,
-          .generic_id = generic_id,
-          .first_param_node_id = Parse::NodeId::None,
-          .last_param_node_id = Parse::NodeId::None,
-          .pattern_block_id = InstBlockId::Empty,
-          .implicit_param_patterns_id = InstBlockId::None,
-          .param_patterns_id = InstBlockId::Empty,
-          .is_extern = false,
-          .extern_library_id = LibraryNameId::None,
-          .non_owning_decl_id = InstId::None,
-          .first_owning_decl_id = InstId::None},
-         {.call_param_patterns_id = InstBlockId::Empty,
-          .call_params_id = InstBlockId::Empty,
-          .call_param_default_values_id = InstBlockId::Empty,
-          .call_param_ranges = Function::CallParamIndexRanges::Empty,
-          .return_type_inst_id = TypeInstId::None,
-          .return_form_inst_id = InstId::None,
-          .return_pattern_id = InstId::None,
-          .body_block_ids = llvm::SmallVector<InstBlockId>(
-              body_block_ids.begin(), body_block_ids.end())}});
+    SetBlock(block_id, insts, terminators);
   }
 
  private:
-  template <typename InstT>
-  auto AddInst(InstT inst) -> InstId {
-    return file_.insts().AddInNoBlock(LocIdAndInst::NoLoc(inst));
-  }
-
-  // Adds an instruction with no constant value, so that uses of it must be
-  // dominated by its evaluation.
-  template <typename InstT>
-  auto AddNonConstInst(InstT inst) -> InstId {
-    auto inst_id = AddInst(inst);
-    file_.constant_values().Set(inst_id, ConstantId::NotConstant);
-    return inst_id;
-  }
-
-  auto AddConstant() -> InstId {
-    auto inst_id = AddInst(
-        BoolLiteral{.type_id = TypeType::TypeId, .value = BoolValue(true)});
-    file_.constant_values().Set(inst_id,
-                                ConstantId::ForConcreteConstant(inst_id));
-    return inst_id;
-  }
-
-  SharedValueStores value_stores_;
-  File file_;
   // The non-constant value that every generated block uses.
-  InstId value_id_;
-  InstId cond_id_;
+  InstId value_id_ = AddValue();
 };
 
 // Builds a function body with a given control flow shape and approximate

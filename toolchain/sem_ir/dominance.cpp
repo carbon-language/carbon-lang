@@ -13,6 +13,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/grouped_value_store.h"
@@ -152,6 +153,9 @@ using SpecificsByGeneric =
 //
 // This grouping is built once for the file so that each generic function can
 // find its own specifics without scanning all of them.
+//
+// TODO: Consider moving this to `File` or `SpecificStore` if other passes need
+// to look up all specifics of a generic.
 auto CollectSpecifics(const File& file) -> SpecificsByGeneric {
   return SpecificsByGeneric(file.generics(), [&](auto add) {
     for (const auto& [specific_id, specific] : file.specifics().enumerate()) {
@@ -461,7 +465,7 @@ auto DominatorTreeBuilder::Build() -> ErrorOr<DominatorTree> {
 }
 
 auto DominanceVerifier::VerifyBlocks() -> ErrorOr<Success> {
-  llvm::SmallVector<WalkStep> worklist = {
+  llvm::SmallVector<WalkStep, 30> worklist = {
       WalkStep::EnterBlock(EntryBlockIndex)};
 
   while (!worklist.empty()) {
