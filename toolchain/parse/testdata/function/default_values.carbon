@@ -10,7 +10,7 @@
 
 fn F(x: i32, y: i32 = 0);
 fn G((x: i32, y: i32) = (1, 2));
-fn H(unused x: i32 = 25);
+fn H(unused x: i32 = _);
 var b: auto = fn (x: i32 = 0) => x;
 
 // CHECK:STDOUT: - filename: default_values.carbon
@@ -64,7 +64,7 @@ var b: auto = fn (x: i32 = 0) => x;
 // CHECK:STDOUT:   │ │ │   ╭─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │ │ ╭─UnusedPattern 'unused'
 // CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
-// CHECK:STDOUT:   │ │ │ ├─IntLiteral '25'
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueUnspecified '_'
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '='
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')'
 // CHECK:STDOUT:   ├─FunctionDecl ';'
