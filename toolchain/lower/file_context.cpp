@@ -642,19 +642,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
             .decl_block_id;
   }
 
-  // Lowers the contents of decl_block_id into the corresponding LLVM block,
-  // creating it if it doesn't already exist.
-  auto lower_block = [&](SemIR::InstBlockId block_id) {
-    CARBON_VLOG("Lowering {0}\n", block_id);
-    auto* llvm_block = function_lowering.GetBlock(block_id);
-    // Keep the LLVM blocks in lexical order.
-    llvm_block->moveBefore(function_info->llvm_function->end());
-    function_lowering.builder().SetInsertPoint(llvm_block);
-    function_lowering.LowerBlockContents(block_id);
-  };
-
   CARBON_CHECK(function_lowering.llvm_function().isDeclaration());
-  lower_block(decl_block_id);
+  function_lowering.LowerBlock(decl_block_id);
 
   // If the decl block is empty, reuse it as the first body block. We don't do
   // this when the decl block is non-empty so that any branches back to the
@@ -670,7 +659,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
 
   // Lower all blocks.
   for (auto block_id : body_block_ids) {
-    lower_block(block_id);
+    function_lowering.LowerBlock(block_id);
   }
 
   // LLVM requires that the entry block has no predecessors.

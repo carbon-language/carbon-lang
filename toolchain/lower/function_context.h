@@ -89,14 +89,18 @@ class FunctionContext {
   };
 
   // Returns a basic block corresponding to the start of the given semantics
-  // block, and enqueues it for emission.
+  // block in the current specific.
   auto GetBlock(SemIR::InstBlockId block_id) -> llvm::BasicBlock*;
 
   // If we have not yet allocated a `BasicBlock` for this `block_id`, set it to
-  // `block`, and enqueue `block_id` for emission. Returns whether we set the
-  // block.
+  // `block`. Returns whether we set the block.
   auto TryToReuseBlock(SemIR::InstBlockId block_id, llvm::BasicBlock* block)
       -> bool;
+
+  // Builds LLVM IR for the sequence of instructions in `block_id`, in the
+  // `BasicBlock` returned by `GetBlock`, which is moved to the end of the
+  // function to keep the blocks in lexical order.
+  auto LowerBlock(SemIR::InstBlockId block_id) -> void;
 
   // Builds LLVM IR for the sequence of instructions in `block_id`.
   auto LowerBlockContents(SemIR::InstBlockId block_id) -> void;
@@ -104,10 +108,32 @@ class FunctionContext {
   // Builds LLVM IR for the specified instruction.
   auto LowerInst(SemIR::InstId inst_id) -> void;
 
+  // Builds LLVM IR for a spliced branch instruction, such as an element of the
+  // `SpliceBranches` operand, and for all blocks reachable from it. If the
+  // instruction is a `SpecificInst`, the branch and the code it reaches are
+  // lowered in that specific. Each spliced branch gets its own values and
+  // blocks, but can refer to values from the enclosing code. A
+  // `BranchNextIndex` in the spliced code branches to `next_block`.
+  auto LowerSplicedBranch(SemIR::InstId inst_id, llvm::BasicBlock* next_block)
+      -> void;
+
+  // Returns the block that a `BranchNextIndex` in the current spliced code
+  // branches to.
+  auto GetNextIndexBlock() -> llvm::BasicBlock* {
+    CARBON_CHECK(scope_->next_index_block,
+                 "`BranchNextIndex` outside of spliced branch");
+    return scope_->next_index_block;
+  }
+
   // Returns a phi node corresponding to the block argument of the given basic
   // block.
   auto GetBlockArg(SemIR::InstBlockId block_id, TypeInFile type)
       -> llvm::PHINode*;
+
+  // Returns the constant value of the given instruction in the current
+  // specific, and the file that constant value is within.
+  auto GetConstantValue(SemIR::InstId inst_id)
+      -> std::pair<const SemIR::File*, SemIR::ConstantId>;
 
   // Returns whether the given instruction is treated as a constant in this
   // function. For template-dependent instructions this requires looking in the
@@ -118,9 +144,9 @@ class FunctionContext {
   // Returns a value for the given instruction.
   auto GetValue(SemIR::InstId inst_id) -> llvm::Value*;
 
-  // Sets the value for the given instruction.
+  // Sets the value for the given instruction in the current specific.
   auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) -> void {
-    bool added = locals_.Insert(inst_id, value).is_inserted();
+    bool added = scope_->locals.Insert(inst_id, value).is_inserted();
     CARBON_CHECK(added, "Duplicate local insert: {0} {1}", inst_id,
                  sem_ir().insts().Get(inst_id));
   }
@@ -267,9 +293,11 @@ class FunctionContext {
     return specific_sem_ir_function_id_;
   }
 
-  // The specific ID for the function that is being lowered. Note that this is
-  // an ID from `specific_sem_ir()`, not from `sem_ir()`.
-  auto specific_id() -> SemIR::SpecificId { return specific_id_; }
+  // The specific ID for the code that is being lowered. This is the specific
+  // for the function, unless we are lowering spliced code from a nested
+  // generic, such as the body of a pack expansion. Note that this is an ID from
+  // `specific_sem_ir()`, not from `sem_ir()`.
+  auto specific_id() -> SemIR::SpecificId { return scope_->specific_id; }
 
   // TODO: could template on BuiltinFunctionKind if more format
   // globals are eventually needed.
@@ -310,6 +338,35 @@ class FunctionContext {
     SemIR::InstId inst_id_ = SemIR::InstId::None;
   };
 
+  // State for lowering the instructions of a particular specific within this
+  // function. The function body is lowered in the outermost scope. Code that is
+  // spliced into the function from a nested generic, such as the body of a pack
+  // expansion, is lowered in a nested scope for the corresponding specific, so
+  // that each splice gets its own values and blocks.
+  struct SpecificScope {
+    // The specific whose instructions are being lowered, if any. This is an ID
+    // from `specific_sem_ir()`.
+    SemIR::SpecificId specific_id;
+
+    // The enclosing scope, or null for the function body. Values from the
+    // enclosing scopes can be used in this scope.
+    SpecificScope* parent = nullptr;
+
+    // The block that a `BranchNextIndex` branches to, or null if not within a
+    // spliced branch.
+    llvm::BasicBlock* next_index_block = nullptr;
+
+    // Maps SemIR::File blocks to lowered blocks.
+    Map<SemIR::InstBlockId, llvm::BasicBlock*> blocks;
+
+    // The keys of `blocks`, in the order in which they were added. This is used
+    // to find the blocks to lower for spliced code.
+    llvm::SmallVector<SemIR::InstBlockId> block_ids;
+
+    // Maps SemIR::File instructions to lowered values.
+    Map<SemIR::InstId, llvm::Value*> locals;
+  };
+
   // Emits a value copy for type `type` from `source_id` to `dest_id`.
   // `source_id` must produce a value representation for `type`, and
   // `dest_id` must be a pointer to a `type` object.
@@ -322,6 +379,11 @@ class FunctionContext {
   auto CopyObject(TypeInFile type, SemIR::InstId source_id,
                   SemIR::InstId dest_id) -> void;
 
+  // Returns the specific to use to evaluate the given constant from
+  // `sem_ir()`. This is the specific for the enclosing scope whose generic the
+  // constant belongs to, which is usually the current scope.
+  auto GetSpecificForConstant(SemIR::ConstantId const_id) -> SemIR::SpecificId;
+
   // When fingerprinting for a specific, adds the global.
   auto AddGlobalToCurrentFingerprint(llvm::Value* global) -> void;
 
@@ -332,17 +394,14 @@ class FunctionContext {
   // The IR function we're generating.
   llvm::Function* function_;
 
-  // Context for lowering in the file that contains our `specific_id_`. Note
-  // that this is a different file than the one referred to by `file_context_`
-  // if we are lowering a specific that was generated for a generic function
-  // defined in a different file.
+  // Context for lowering in the file that contains our specifics. Note that
+  // this is a different file than the one referred to by `file_context_` if we
+  // are lowering a specific that was generated for a generic function defined
+  // in a different file.
   FileContext* specific_file_context_;
 
   // The function id of the function we're lowering.
   SemIR::FunctionId specific_sem_ir_function_id_;
-
-  // The specific id, if the function is a specific.
-  SemIR::SpecificId specific_id_;
 
   // Builder for creating code in this function. The insertion point is held at
   // the location of the current SemIR instruction.
@@ -366,15 +425,16 @@ class FunctionContext {
   // specific functions, otherwise, this will be nullptr.
   SpecificCoalescer::SpecificFunctionFingerprint* function_fingerprint_;
 
-  // Maps a function's SemIR::File blocks to lowered blocks.
-  Map<SemIR::InstBlockId, llvm::BasicBlock*> blocks_;
-
   // The synthetic block we most recently created. May be null if there is no
   // such block.
   llvm::BasicBlock* synthetic_block_ = nullptr;
 
-  // Maps a function's SemIR::File instructions to lowered values.
-  Map<SemIR::InstId, llvm::Value*> locals_;
+  // The scope for the function body. Its specific is the function's specific,
+  // if the function is a specific.
+  SpecificScope function_scope_;
+
+  // The scope that we are currently lowering instructions within.
+  SpecificScope* scope_ = &function_scope_;
 };
 
 namespace Internal {

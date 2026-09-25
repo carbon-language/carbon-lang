@@ -6,6 +6,7 @@
 
 #include "common/pretty_stack_trace_function.h"
 #include "common/vlog.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 #include "toolchain/sem_ir/expr_info.h"
@@ -25,32 +26,36 @@ FunctionContext::FunctionContext(
       function_(function),
       specific_file_context_(&specific_file_context),
       specific_sem_ir_function_id_(specific_sem_ir_function_id),
-      specific_id_(specific_id),
       builder_(file_context.llvm_context(), llvm::ConstantFolder(),
                Inserter(file_context.inst_namer())),
       di_subprogram_(di_subprogram),
       vlog_stream_(vlog_stream),
-      function_fingerprint_(function_fingerprint) {
+      function_fingerprint_(function_fingerprint),
+      function_scope_{.specific_id = specific_id} {
   function_->setSubprogram(di_subprogram_);
 }
 
 auto FunctionContext::GetBlock(SemIR::InstBlockId block_id)
     -> llvm::BasicBlock* {
-  auto result = blocks_.Insert(block_id, [&] {
+  auto result = scope_->blocks.Insert(block_id, [&] {
     llvm::StringRef label_name;
     if (const auto* inst_namer = file_context_->inst_namer()) {
       label_name = inst_namer->GetUnscopedLabelFor(block_id);
     }
     return llvm::BasicBlock::Create(llvm_context(), label_name, function_);
   });
+  if (result.is_inserted()) {
+    scope_->block_ids.push_back(block_id);
+  }
   return result.value();
 }
 
 auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
                                       llvm::BasicBlock* block) -> bool {
-  if (!blocks_.Insert(block_id, block).is_inserted()) {
+  if (!scope_->blocks.Insert(block_id, block).is_inserted()) {
     return false;
   }
+  scope_->block_ids.push_back(block_id);
   if (block == synthetic_block_) {
     synthetic_block_ = nullptr;
   }
@@ -58,6 +63,18 @@ auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
     block->setName(inst_namer->GetUnscopedLabelFor(block_id));
   }
   return true;
+}
+
+auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
+  CARBON_VLOG("Lowering {0}\n", block_id);
+  auto* llvm_block = GetBlock(block_id);
+  // Keep the LLVM blocks in lexical order. The entry block must stay first,
+  // which can matter if it was reused for this block.
+  if (llvm_block != &function_->getEntryBlock()) {
+    llvm_block->moveBefore(function_->end());
+  }
+  builder_.SetInsertPoint(llvm_block);
+  LowerBlockContents(block_id);
 }
 
 auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
@@ -81,6 +98,31 @@ auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
   for (auto inst_id : sem_ir().inst_blocks().Get(block_id)) {
     inst_id_for_stack_trace = inst_id;
     LowerInst(inst_id);
+  }
+}
+
+auto FunctionContext::LowerSplicedBranch(SemIR::InstId inst_id,
+                                         llvm::BasicBlock* next_block) -> void {
+  SpecificScope scope = {.specific_id = scope_->specific_id,
+                         .parent = scope_,
+                         .next_index_block = next_block};
+  if (auto specific_inst =
+          sem_ir().insts().TryGetAs<SemIR::SpecificInst>(inst_id)) {
+    // TODO: Support splicing code from a specific in a different file.
+    CARBON_CHECK(&sem_ir() == &specific_sem_ir(),
+                 "Cross-file spliced branches not supported yet");
+    inst_id = specific_inst->inst_id;
+    scope.specific_id = specific_inst->specific_id;
+  }
+
+  llvm::SaveAndRestore restore_scope(scope_, &scope);
+  AddInstToCurrentFingerprint(inst_id);
+  LowerInst(inst_id);
+
+  // Lower all the blocks reached by the branch. Lowering a block can add more
+  // blocks to the scope, so we can't use a range-based for loop here.
+  for (size_t i = 0; i != scope.block_ids.size(); ++i) {
+    LowerBlock(scope.block_ids[i]);
   }
 }
 
@@ -168,10 +210,39 @@ auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id, TypeInFile type)
   return phi;
 }
 
+auto FunctionContext::GetSpecificForConstant(SemIR::ConstantId const_id)
+    -> SemIR::SpecificId {
+  // In the common case of a single scope, we always use its specific. In
+  // spliced code, we can also find instructions from enclosing generics, which
+  // need to be evaluated in the corresponding enclosing specific.
+  if (!scope_->parent || !const_id.is_symbolic() ||
+      &sem_ir() != &specific_sem_ir()) {
+    return scope_->specific_id;
+  }
+  auto generic_id =
+      sem_ir().constant_values().GetSymbolicConstant(const_id).generic_id;
+  if (!generic_id.has_value()) {
+    return scope_->specific_id;
+  }
+  for (auto* scope = scope_; scope; scope = scope->parent) {
+    if (scope->specific_id.has_value() &&
+        sem_ir().specifics().Get(scope->specific_id).generic_id == generic_id) {
+      return scope->specific_id;
+    }
+  }
+  return scope_->specific_id;
+}
+
+auto FunctionContext::GetConstantValue(SemIR::InstId inst_id)
+    -> std::pair<const SemIR::File*, SemIR::ConstantId> {
+  auto specific_id =
+      GetSpecificForConstant(sem_ir().constant_values().GetAttached(inst_id));
+  return GetConstantValueInSpecific(specific_sem_ir(), specific_id, sem_ir(),
+                                    inst_id);
+}
+
 auto FunctionContext::IsConstant(SemIR::InstId inst_id) -> bool {
-  return GetConstantValueInSpecific(specific_sem_ir(), specific_id_, sem_ir(),
-                                    inst_id)
-      .second.is_constant();
+  return GetConstantValue(inst_id).second.is_constant();
 }
 
 auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
@@ -182,20 +253,21 @@ auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
     return GetTypeAsValue();
   }
 
-  if (auto result = locals_.Lookup(inst_id)) {
-    return result.value();
+  for (auto* scope = scope_; scope; scope = scope->parent) {
+    if (auto result = scope->locals.Lookup(inst_id)) {
+      return result.value();
+    }
   }
 
   if (auto result = file_context_->global_variables().Lookup(inst_id)) {
     return result.value();
   }
 
-  auto [const_ir, const_id] = GetConstantValueInSpecific(
-      specific_sem_ir(), specific_id_, sem_ir(), inst_id);
+  auto [const_ir, const_id] = GetConstantValue(inst_id);
   CARBON_CHECK(const_ir == &sem_ir() || const_ir == &specific_sem_ir());
   CARBON_CHECK(const_id.is_concrete(),
                "Missing value: {0} {1} in {2} has non-concrete value {3}",
-               inst_id, sem_ir().insts().Get(inst_id), specific_id_, const_id);
+               inst_id, sem_ir().insts().Get(inst_id), specific_id(), const_id);
   // We can only pass on the InstId if it refers to the file in which the
   // constant value was provided.
   auto* global = GetFileContext(const_ir).GetConstant(
@@ -312,8 +384,11 @@ auto FunctionContext::InitializeStorage(SemIR::InstId init_id) -> void {
 }
 
 auto FunctionContext::GetTypeIdOfInst(SemIR::InstId inst_id) -> TypeInFile {
+  auto type_const_id =
+      sem_ir().types().GetConstantId(sem_ir().insts().GetAttachedType(inst_id));
   auto [file, type_id] = SemIR::GetTypeOfInstInSpecific(
-      specific_sem_ir(), specific_id(), sem_ir(), inst_id);
+      specific_sem_ir(), GetSpecificForConstant(type_const_id), sem_ir(),
+      inst_id);
   return {.file = file, .type_id = type_id};
 }
 

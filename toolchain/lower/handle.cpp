@@ -366,28 +366,48 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::BranchNextIndex /*inst*/) -> void {
-  CARBON_FATAL("TODO: Lowering for pack expansions not implemented yet");
+  context.builder().CreateBr(context.GetNextIndexBlock());
+  context.builder().ClearInsertionPoint();
 }
 
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::SpliceBranches /*inst*/) -> void {
-  CARBON_FATAL("TODO: Lowering for pack expansions not implemented yet");
-}
+auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
+                SemIR::SpliceBranches inst) -> void {
+  auto* exit_block = context.GetBlock(inst.exit_id);
 
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::TupleIndex /*inst*/) -> void {
-  // TODO: Evaluate the index in the current specific and lower as a
-  // `TupleAccess`.
-  CARBON_FATAL("TODO: Lowering for TupleIndex not implemented yet");
+  auto [insts_ir, insts_const_id] = context.GetConstantValue(inst.insts_id);
+  // TODO: Support splicing branches from a different file.
+  CARBON_CHECK(insts_ir == &context.sem_ir(),
+               "Cross-file spliced branches not supported yet");
+  auto insts =
+      insts_ir->constant_values().GetInstAs<SemIR::TupleValue>(insts_const_id);
+  auto elements = insts_ir->inst_blocks().Get(insts.elements_id);
+  context.AddIntToCurrentFingerprint(elements.size());
+
+  // Lower each branch in turn. Each one continues with the next on
+  // `BranchNextIndex`, with the last continuing to the exit block.
+  if (elements.empty()) {
+    context.builder().CreateBr(exit_block);
+  }
+  for (auto [i, element_id] : llvm::enumerate(elements)) {
+    auto branch = insts_ir->insts().GetAs<SemIR::InstValue>(element_id);
+    bool is_last = i + 1 == elements.size();
+    auto* next_block = is_last ? exit_block
+                               : llvm::BasicBlock::Create(
+                                     context.llvm_context(), "splice.next",
+                                     &context.llvm_function());
+    context.LowerSplicedBranch(branch.inst_id, next_block);
+    if (!is_last) {
+      context.builder().SetInsertPoint(next_block);
+    }
+  }
+  context.builder().ClearInsertionPoint();
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::SpliceInst inst) -> void {
-  auto [inst_ir, inst_value_id] = GetConstantValueInSpecific(
-      context.specific_sem_ir(), context.specific_id(), context.sem_ir(),
-      inst.inst_id);
+  auto [inst_ir, inst_value_id] = context.GetConstantValue(inst.inst_id);
   auto inst_value =
       inst_ir->constant_values().GetInstAs<SemIR::InstValue>(inst_value_id);
   if (inst_ir == &context.sem_ir()) {
