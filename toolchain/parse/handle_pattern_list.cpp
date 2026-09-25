@@ -183,14 +183,6 @@ auto HandlePatternListElementCheckForDefaultValue(Context& context) -> void {
   state.kind = StateKind::PatternListElementFinishDefaultValue;
   context.PushState(state);
 
-  // Check for the underscore `_` indicating the default value is unspecified.
-  auto underscore = context.ConsumeIf(Lex::TokenKind::Underscore);
-  if (underscore) {
-    context.AddLeafNode(NodeKind::DefaultValueUnspecified, *underscore);
-    return;
-  }
-
-  // No underscore, we parse this as a normal expression.
   context.PushStateForExpr(state.ambient_precedence);
 }
 

@@ -176,7 +176,7 @@ class ImportContext {
   }
   auto import_vtables() -> const SemIR::VtableStore& {
     return import_ir().vtables();
-  } 
+  }
   auto import_constant_values() -> const SemIR::ConstantValueStore& {
     return import_ir().constant_values();
   }
@@ -2307,10 +2307,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::DefaultValuePattern inst)
     -> ResolveResult {
   auto subpattern = GetLocalImportRefInfo(resolver, inst.subpattern_id);
-  // We import the first owning declaration of a function, which must always
-  // have default values completely specified.
-  CARBON_CHECK(
-      !resolver.import_insts().Is<SemIR::UnspecifiedValue>(inst.value_id));
   auto value = GetLocalImportRefInfo(resolver, inst.value_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -4462,16 +4458,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                  .element_type_inst_id = elem_const_inst_id});
 }
 
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::UnspecifiedValue inst) -> ResolveResult {
-  CARBON_CHECK(resolver.import_ir().types().Is<SemIR::UnspecifiedValueType>(
-      inst.type_id));
-  auto type_id = GetSingletonType(resolver.local_context(),
-                                  SemIR::UnspecifiedValueType::TypeInstId);
-  return ResolveResult::Deduplicated<SemIR::UnspecifiedValue>(
-      resolver, {.type_id = type_id});
-}
-
 template <typename VarPatternT>
   requires SemIR::Internal::HasInstCategory<SemIR::AnyVarPattern, VarPatternT>
 static auto TryResolveTypedInst(ImportRefResolver& resolver, VarPatternT inst)
@@ -4785,9 +4771,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::UnboundElementType inst): {
-      return TryResolveTypedInst(resolver, inst);
-    }
-    case CARBON_KIND(SemIR::UnspecifiedValue inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ValueBindingPattern inst): {

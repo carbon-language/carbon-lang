@@ -942,8 +942,6 @@ auto MatchContext::DoPreWork(State state,
     case CARBON_KIND(CallerState* _): {
       // If there's no scrutinee supplied, supply the default value instead.
       if (!scrutinee_id.has_value()) {
-        CARBON_CHECK(!context_.insts().Is<SemIR::UnspecifiedValue>(
-            default_value_pattern.value_id));
         auto [inst_id, _] = WrapInstForSpecific(
             context_, SemIR::LocId(default_value_pattern.value_id),
             default_value_pattern.value_id, specific_id_stack_.back());

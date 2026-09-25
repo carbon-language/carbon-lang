@@ -12,8 +12,6 @@ fn F(x: i32, y: i32 = 0);
 fn G((x: i32, y: i32) = (1, 2));
 fn H(unused x: i32 = 25);
 var b: auto = fn (x: i32 = 0) => x;
-// Can be used in def to avoid repeating values defined in decl.
-fn I(x: i32 = _);
 
 // CHECK:STDOUT: - filename: default_values.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
@@ -91,17 +89,5 @@ fn I(x: i32 = _);
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'x'
 // CHECK:STDOUT:   │ ├─Lambda 'fn'
 // CHECK:STDOUT:   ├─VariableDecl ';'
-// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'I'
-// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
-// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │   ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │ ╭─LetBindingPattern ':'
-// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
-// CHECK:STDOUT:   │ │ │ ├─DefaultValueUnspecified '_'
-// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '='
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
-// CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

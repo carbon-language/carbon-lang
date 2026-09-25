@@ -153,20 +153,6 @@ auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::DefaultValueUnspecifiedId node_id)
-    -> bool {
-  auto inst_id = AddInst<SemIR::UnspecifiedValue>(
-      context, node_id,
-      {.type_id =
-           GetSingletonType(context, SemIR::UnspecifiedValueType::TypeInstId)});
-
-  // Add the unspecified default value for later diagnostics checks.
-  context.full_pattern_stack().AddUnspecifiedDefaultValue(inst_id);
-
-  context.node_stack().Push(node_id, inst_id);
-  return true;
-}
-
 auto HandleParseNode(Context& context,
                      Parse::DefaultValueExprStartId /*node_id*/) -> bool {
   // We want to check the default value expression as a normal expression,
@@ -203,15 +189,12 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
   // place.
   auto pattern_inst_id = context.node_stack().PopPattern();
   auto pattern_type_id = context.insts().Get(pattern_inst_id).type_id();
-  SemIR::InstId converted_inst_id = expr_inst_id;
-  if (!context.insts().Is<SemIR::UnspecifiedValue>(expr_inst_id)) {
-    auto scrutinee_type_id =
-        SemIR::ExtractScrutineeType(context.sem_ir(), pattern_type_id);
-    converted_inst_id = ConvertToValueOfType(
-        context, SemIR::LocId(expr_inst_id), expr_inst_id, scrutinee_type_id);
-    if (converted_inst_id == SemIR::ErrorInst::InstId) {
-      return false;
-    }
+  auto scrutinee_type_id =
+      SemIR::ExtractScrutineeType(context.sem_ir(), pattern_type_id);
+  auto converted_inst_id = ConvertToValueOfType(
+      context, SemIR::LocId(expr_inst_id), expr_inst_id, scrutinee_type_id);
+  if (converted_inst_id == SemIR::ErrorInst::InstId) {
+    return false;
   }
 
   // The default value pattern should have the same type as the subpattern.

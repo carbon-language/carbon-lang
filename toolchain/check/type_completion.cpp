@@ -257,8 +257,8 @@ class TypeCompleter {
              SemIR::ErrorInst, SemIR::FacetType, SemIR::FloatLiteralType,
              SemIR::FormType, SemIR::IntLiteralType, SemIR::NamespaceType,
              SemIR::PatternType, SemIR::RequireSpecificDefinitionType,
-             SemIR::SpecificFunctionType, SemIR::UnspecifiedValueType,
-             SemIR::VtableType, SemIR::WitnessType>())
+             SemIR::SpecificFunctionType, SemIR::VtableType,
+             SemIR::WitnessType>())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     // These types are empty at runtime but have values to copy at compile time.

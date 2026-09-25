@@ -47,17 +47,6 @@ class C {}
 // CHECK:STDERR:
 let (y: C, x: C = {}) = ({}, {});
 
-// --- fail_default_values_unspecified.carbon
-library "[[@TEST_NAME]]";
-
-class C {}
-
-// CHECK:STDERR: fail_default_values_unspecified.carbon:[[@LINE+4]]:24: error: found unspecified default parameter value in the function's first owning declaration [PatternDefaultValueNotSpecified]
-// CHECK:STDERR: fn Z(x: C = {}, y: C = _);
-// CHECK:STDERR:                        ^
-// CHECK:STDERR:
-fn Z(x: C = {}, y: C = _);
-
 // --- fail_required_default_values_missing.carbon
 library "[[@TEST_NAME]]";
 
