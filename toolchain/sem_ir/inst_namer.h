@@ -260,9 +260,8 @@ class InstNamer {
   auto PushEntity(ObserveId observe_id, ScopeId scope_id, Scope& scope) -> void;
   // Pack expansions don't know their enclosing entity, so the caller provides
   // a name prefix. This is not reachable through `MaybePushEntity`.
-  auto PushEntity(PackExpandedRegionId pack_expanded_region_id,
-                  ScopeId scope_id, Scope& scope, llvm::StringRef prefix)
-      -> void;
+  auto PushEntity(PackExpandedRegionId region_id, ScopeId scope_id,
+                  Scope& scope, llvm::StringRef prefix) -> void;
   auto PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
                   Scope& scope) -> void;
   auto PushEntity(VtableId vtable_id, ScopeId scope_id, Scope& scope) -> void;

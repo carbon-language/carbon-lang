@@ -20,19 +20,22 @@ namespace Carbon::SemIR {
 // most declarations, with a name and parameters, so it does not inherit
 // EntityWithParamsBase.
 struct PackExpandedRegion : Printable<PackExpandedRegion> {
-  // The `PackExpansion` instruction that introduces this region.
-  InstId decl_id;
+  // The first `PackExpansion` instruction for this region, which is the one
+  // that introduces the region. There may be other `PackExpansion`
+  // instructions that refer to this region; this one is used to determine
+  // where the region is printed in formatted SemIR.
+  InstId expansion_id;
   // The generic for the region.
   GenericId generic_id;
   // The variadic index binding. This is the last binding in the generic.
   InstId index_id;
   // The blocks that make up the region. The first block contains the index
   // binding and a `Branch` to the rest of the region, which is the `inst_id`
-  // of the `PackExpansion` at `decl_id`.
+  // of the `PackExpansion` at `expansion_id`.
   llvm::SmallVector<InstBlockId> body_block_ids = {};
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{decl_id: " << decl_id << ", generic_id: " << generic_id
+    out << "{expansion_id: " << expansion_id << ", generic_id: " << generic_id
         << ", index_id: " << index_id << ", body: [";
     llvm::ListSeparator sep;
     for (auto block_id : body_block_ids) {

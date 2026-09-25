@@ -1406,16 +1406,15 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 auto Formatter::FormatPackExpansionRhs(InstId inst_id, PackExpansion inst)
     -> void {
   out() << " ";
-  if (!inst.pack_expanded_region_id.has_value()) {
+  if (!inst.region_id.has_value()) {
     // This can happen if we format a placeholder.
     out() << "<none>";
     return;
   }
-  FormatArg(inst.pack_expanded_region_id);
+  FormatArg(inst.region_id);
 
-  const auto& region =
-      sem_ir_->pack_expanded_regions().Get(inst.pack_expanded_region_id);
-  if (inst_id != region.decl_id) {
+  const auto& region = sem_ir_->pack_expanded_regions().Get(inst.region_id);
+  if (inst_id != region.expansion_id) {
     // This is a copy of the declaration, such as a symbolic constant or an
     // instruction in an eval block. Only print the body at the declaration.
     out() << ", ";
@@ -1423,8 +1422,8 @@ auto Formatter::FormatPackExpansionRhs(InstId inst_id, PackExpansion inst)
     return;
   }
 
-  llvm::SaveAndRestore region_scope(
-      scope_, inst_namer_.GetScopeFor(inst.pack_expanded_region_id));
+  llvm::SaveAndRestore region_scope(scope_,
+                                    inst_namer_.GetScopeFor(inst.region_id));
 
   // Format the generic inline, followed by the body blocks.
   const auto& generic = sem_ir_->generics().Get(region.generic_id);

@@ -1584,7 +1584,7 @@ struct PackExpansion {
        .is_lowered = false});
 
   TypeId type_id;
-  PackExpandedRegionId pack_expanded_region_id;
+  PackExpandedRegionId region_id;
   // The instruction within the region's generic to produce a specific version
   // of for each index.
   AbsoluteInstId inst_id;

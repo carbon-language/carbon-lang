@@ -41,13 +41,13 @@ auto HandleParseNode(Context& context, Parse::PackExpansionStartId node_id)
   // Create the pack expanded region and a placeholder `PackExpansion`
   // instruction for it. The instruction is filled in once we know the arity.
   auto region_id =
-      context.pack_expanded_regions().Add({.decl_id = SemIR::InstId::None,
+      context.pack_expanded_regions().Add({.expansion_id = SemIR::InstId::None,
                                            .generic_id = SemIR::GenericId::None,
                                            .index_id = SemIR::InstId::None});
-  auto decl_id = AddPlaceholderInstInNoBlock(
+  auto expansion_id = AddPlaceholderInstInNoBlock(
       context, node_id,
       SemIR::PackExpansion{.type_id = SemIR::TypeId::None,
-                           .pack_expanded_region_id = region_id,
+                           .region_id = region_id,
                            .inst_id = SemIR::InstId::None});
 
   // Start the entry block of the body, which is the start of a new region.
@@ -66,7 +66,7 @@ auto HandleParseNode(Context& context, Parse::PackExpansionStartId node_id)
        .entity_name_id = entity_name_id,
        .value_id = SemIR::InstId::None});
   context.scope_stack().PushCompileTimeBinding(index_id);
-  auto generic_id = BuildGeneric(context, decl_id);
+  auto generic_id = BuildGeneric(context, expansion_id);
   FinishGenericDecl(context, node_id, generic_id);
   StartGenericDefinition(context, generic_id);
   context.generic_region_stack().SetPackExpansionIndex(index_id);
@@ -79,20 +79,20 @@ auto HandleParseNode(Context& context, Parse::PackExpansionStartId node_id)
   context.region_stack().AddToRegion(body_id, node_id);
 
   auto& region = context.pack_expanded_regions().Get(region_id);
-  region.decl_id = decl_id;
+  region.expansion_id = expansion_id;
   region.generic_id = generic_id;
   region.index_id = index_id;
 
-  context.node_stack().Push(node_id, decl_id);
+  context.node_stack().Push(node_id, expansion_id);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::PackExpansionStatementId node_id)
     -> bool {
-  auto decl_id =
+  auto expansion_id =
       context.node_stack().Pop<Parse::NodeKind::PackExpansionStart>();
-  auto expansion = context.insts().GetAs<SemIR::PackExpansion>(decl_id);
-  auto region_id = expansion.pack_expanded_region_id;
+  auto expansion = context.insts().GetAs<SemIR::PackExpansion>(expansion_id);
+  auto region_id = expansion.region_id;
   auto generic_id = context.pack_expanded_regions().Get(region_id).generic_id;
 
   auto* info = context.generic_region_stack().PeekPackExpansion();
@@ -130,13 +130,13 @@ auto HandleParseNode(Context& context, Parse::PackExpansionStatementId node_id)
   expansion.type_id = type_id;
   expansion.inst_id =
       context.inst_blocks().Get(region.body_block_ids.front()).back();
-  ReplaceInstBeforeConstantUse(context, decl_id, expansion);
-  context.inst_block_stack().AddInstId(decl_id);
+  ReplaceInstBeforeConstantUse(context, expansion_id, expansion);
+  context.inst_block_stack().AddInstId(expansion_id);
 
   // Execute the body for each index, then continue in the exit block.
   auto exit_id = context.inst_blocks().AddPlaceholder();
-  AddInst<SemIR::SpliceBranches>(context, node_id,
-                                 {.insts_id = decl_id, .exit_id = exit_id});
+  AddInst<SemIR::SpliceBranches>(
+      context, node_id, {.insts_id = expansion_id, .exit_id = exit_id});
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(exit_id);
   context.region_stack().AddToRegion(exit_id, node_id);

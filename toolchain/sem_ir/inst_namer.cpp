@@ -685,29 +685,27 @@ auto InstNamer::PushEntity(ObserveId observe_id, ScopeId /*scope_id*/,
                                           scope_prefix.empty() ? "" : "."));
 }
 
-auto InstNamer::PushEntity(PackExpandedRegionId pack_expanded_region_id,
-                           ScopeId scope_id, Scope& scope,
-                           llvm::StringRef prefix) -> void {
-  const auto& pack =
-      sem_ir_->pack_expanded_regions().Get(pack_expanded_region_id);
-  LocId pack_loc(pack.decl_id);
+auto InstNamer::PushEntity(PackExpandedRegionId region_id, ScopeId scope_id,
+                           Scope& scope, llvm::StringRef prefix) -> void {
+  const auto& region = sem_ir_->pack_expanded_regions().Get(region_id);
+  LocId region_loc(region.expansion_id);
 
   scope.name = globals_.AllocateName(
-      *this, pack_loc,
+      *this, region_loc,
       llvm::formatv("{0}{1}pack", prefix, prefix.empty() ? "" : "."));
 
   // The first body block is the entry block, which contains the variadic index
   // binding and the branch to the rest of the body.
-  if (!pack.body_block_ids.empty()) {
-    AddBlockLabel(scope_id, pack.body_block_ids.front(), "pack.entry",
-                  pack_loc);
+  if (!region.body_block_ids.empty()) {
+    AddBlockLabel(scope_id, region.body_block_ids.front(), "pack.entry",
+                  region_loc);
   }
 
   // Push blocks in reverse order.
-  for (auto block_id : llvm::reverse(pack.body_block_ids)) {
+  for (auto block_id : llvm::reverse(region.body_block_ids)) {
     PushBlockId(scope_id, block_id);
   }
-  PushGeneric(scope_id, pack.generic_id);
+  PushGeneric(scope_id, region.generic_id);
 }
 
 auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
@@ -1036,15 +1034,16 @@ auto InstNamer::NamingContext::NameInst() -> void {
       // Branches are normally unnamed, but the entry branch of a pack
       // expansion is referenced by the `specific_inst`s in its value.
       if (inst_.Is<Branch>()) {
-        auto pack_index = static_cast<int32_t>(scope_id_) -
-                          inst_namer_->GetScopeIdOffset(
-                              ScopeIdTypeEnum::For<PackExpandedRegionId>);
-        const auto& packs = sem_ir().pack_expanded_regions();
-        if (pack_index >= 0 &&
-            pack_index < static_cast<int32_t>(packs.size())) {
-          auto decl_id = packs.Get(packs.ids().begin()[pack_index]).decl_id;
-          if (decl_id.has_value() &&
-              sem_ir().insts().GetAs<PackExpansion>(decl_id).inst_id ==
+        auto region_index = static_cast<int32_t>(scope_id_) -
+                            inst_namer_->GetScopeIdOffset(
+                                ScopeIdTypeEnum::For<PackExpandedRegionId>);
+        const auto& regions = sem_ir().pack_expanded_regions();
+        if (region_index >= 0 &&
+            region_index < static_cast<int32_t>(regions.size())) {
+          auto expansion_id =
+              regions.Get(regions.ids().begin()[region_index]).expansion_id;
+          if (expansion_id.has_value() &&
+              sem_ir().insts().GetAs<PackExpansion>(expansion_id).inst_id ==
                   inst_id_) {
             AddInstName("entry");
           }
@@ -1396,15 +1395,14 @@ auto InstNamer::NamingContext::NameInst() -> void {
       // declaration from within an entity scope. Its constant value may be
       // visited earlier from the constants block, but that doesn't tell us the
       // enclosing entity.
-      if (inst.pack_expanded_region_id.has_value() &&
+      if (inst.region_id.has_value() &&
           static_cast<int32_t>(scope_id_) >=
               static_cast<int32_t>(ScopeId::FirstEntityScope)) {
-        auto pack_scope_id =
-            inst_namer_->GetScopeFor(inst.pack_expanded_region_id);
+        auto pack_scope_id = inst_namer_->GetScopeFor(inst.region_id);
         auto& pack_scope = inst_namer_->GetScopeInfo(pack_scope_id);
         if (!pack_scope.name) {
           inst_namer_->PushEntity(
-              inst.pack_expanded_region_id, pack_scope_id, pack_scope,
+              inst.region_id, pack_scope_id, pack_scope,
               inst_namer_->GetScopeInfo(scope_id_).name.GetBaseName());
         }
       }

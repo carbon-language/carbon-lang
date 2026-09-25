@@ -3279,8 +3279,7 @@ auto TryEvalTypedInst<SemIR::PackExpansion>(EvalContext& eval_context,
   // Find the enclosing arguments. These are the values of all but the last of
   // the region's bindings, which is the variadic index.
   auto& context = eval_context.context();
-  const auto& region =
-      context.pack_expanded_regions().Get(expansion.pack_expanded_region_id);
+  const auto& region = context.pack_expanded_regions().Get(expansion.region_id);
   auto bindings = context.inst_blocks().Get(
       context.generics().Get(region.generic_id).bindings_id);
   CARBON_CHECK(!bindings.empty(), "Missing variadic index binding");
