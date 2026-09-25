@@ -153,6 +153,11 @@ auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::DefaultValueUnspecifiedId node_id)
+    -> bool {
+  return context.TODO(node_id, "unspecified default values");
+}
+
 auto HandleParseNode(Context& context,
                      Parse::DefaultValueExprStartId /*node_id*/) -> bool {
   // We want to check the default value expression as a normal expression,
@@ -172,16 +177,16 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
                       "default values are only supported in parameter lists");
     context.emitter().Emit(LocIdForDiagnostics(expr_node_id),
                            PatternDefaultValueNotInParameterList);
-    return false;
+    expr_inst_id = SemIR::ErrorInst::InstId;
   }
 
-  if (TryEvalInst(context, expr_inst_id) == SemIR::ConstantId::NotConstant) {
+  if (!context.constant_values().Get(expr_inst_id).is_constant()) {
     CARBON_DIAGNOSTIC(PatternDefaultValueNotConstant, Error,
                       "default value is not a constant");
     context.emitter().Emit(
         LocIdForDiagnostics(context.insts().GetCanonicalLocId(expr_inst_id)),
         PatternDefaultValueNotConstant);
-    return false;
+    expr_inst_id = SemIR::ErrorInst::InstId;
   }
 
   // Next on the node stack should be the pattern for which this default was
@@ -191,11 +196,11 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
   auto pattern_type_id = context.insts().Get(pattern_inst_id).type_id();
   auto scrutinee_type_id =
       SemIR::ExtractScrutineeType(context.sem_ir(), pattern_type_id);
-  auto converted_inst_id = ConvertToValueOfType(
-      context, SemIR::LocId(expr_inst_id), expr_inst_id, scrutinee_type_id);
-  if (converted_inst_id == SemIR::ErrorInst::InstId) {
-    return false;
-  }
+  auto converted_inst_id =
+      expr_inst_id == SemIR::ErrorInst::InstId
+          ? SemIR::ErrorInst::InstId
+          : ConvertToValueOfType(context, SemIR::LocId(expr_inst_id),
+                                 expr_inst_id, scrutinee_type_id);
 
   // The default value pattern should have the same type as the subpattern.
   auto default_value_inst_id =

@@ -2657,17 +2657,9 @@ auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
       (self_id.has_value() ? 1 : 0) + arg_refs.size() <=
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id).size());
 
-  const auto* match_callee = &callee;
-  if (callee.first_owning_decl_id.has_value()) {
-    auto decl =
-        context.insts().GetAs<SemIR::FunctionDecl>(callee.first_owning_decl_id);
-    match_callee = &context.functions().Get(decl.function_id);
-  }
-
-  return CallerPatternMatch(
-      context, callee_specific_id, match_callee->self_param_id,
-      match_callee->param_patterns_id, match_callee->return_pattern_id, self_id,
-      arg_refs, return_arg_id, is_desugared);
+  return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
+                            callee.param_patterns_id, callee.return_pattern_id,
+                            self_id, arg_refs, return_arg_id, is_desugared);
 }
 
 auto TypeExpr::ForUnsugared(Context& context, SemIR::TypeId type_id)

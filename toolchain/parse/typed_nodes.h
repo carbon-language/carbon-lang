@@ -373,6 +373,10 @@ struct UnusedPattern {
   AnyPatternId inner;
 };
 
+using DefaultValueUnspecified =
+    LeafNode<NodeKind::DefaultValueUnspecified, Lex::UnderscoreTokenIndex,
+             NodeCategory::Expr>;
+
 struct DefaultValueExprStart {
   static constexpr auto Kind =
       NodeKind::DefaultValueExprStart.Define({.child_count = 0});

@@ -954,7 +954,7 @@ auto MatchContext::DoPreWork(State state,
       break;
     }
     default: {
-      CARBON_FATAL("Unhandled state kind in DefaultValuePattern pre-work");
+      break;
     }
   }
 
