@@ -414,17 +414,17 @@ class Stringifier {
     // order. We process these from the back, so that we walk the patterns from
     // right to left, which is the order in which the step stack wants to be
     // given them, and which lets us consume `args` from the back.
-    llvm::SmallVector<std::variant<InstId, llvm::StringRef>> pending;
-    pending.push_back(llvm::StringRef("("));
+    llvm::SmallVector<std::variant<InstId, llvm::StringRef>> worklist;
+    worklist.push_back(llvm::StringRef("("));
     llvm::ListSeparator sep;
     for (auto param_id : param_patterns) {
-      pending.push_back(llvm::StringRef(sep));
-      pending.push_back(param_id);
+      worklist.push_back(llvm::StringRef(sep));
+      worklist.push_back(param_id);
     }
-    pending.push_back(llvm::StringRef(")"));
+    worklist.push_back(llvm::StringRef(")"));
 
-    while (!pending.empty()) {
-      auto next = pending.pop_back_val();
+    while (!worklist.empty()) {
+      auto next = worklist.pop_back_val();
       if (auto* string = std::get_if<llvm::StringRef>(&next)) {
         step_stack_->PushString(*string);
         continue;
@@ -434,22 +434,22 @@ class Stringifier {
       auto pattern = sem_ir_->insts().Get(pattern_id);
       if (auto tuple = pattern.TryAs<TuplePattern>()) {
         auto elements = sem_ir_->inst_blocks().Get(tuple->elements_id);
-        pending.push_back(llvm::StringRef("("));
+        worklist.push_back(llvm::StringRef("("));
         llvm::ListSeparator element_sep;
         for (auto element_id : elements) {
-          pending.push_back(llvm::StringRef(element_sep));
-          pending.push_back(element_id);
+          worklist.push_back(llvm::StringRef(element_sep));
+          worklist.push_back(element_id);
         }
         // A tuple of one element has a comma to disambiguate from a
         // parenthesized pattern.
-        pending.push_back(llvm::StringRef(elements.size() == 1 ? ",)" : ")"));
+        worklist.push_back(llvm::StringRef(elements.size() == 1 ? ",)" : ")"));
       } else if (auto var_pattern = pattern.TryAs<AnyVarPattern>()) {
-        pending.push_back(var_pattern->subpattern_id);
+        worklist.push_back(var_pattern->subpattern_id);
       } else if (auto default_value = pattern.TryAs<DefaultValuePattern>()) {
-        pending.push_back(default_value->subpattern_id);
+        worklist.push_back(default_value->subpattern_id);
       } else if (auto binding = pattern.TryAs<AnyBindingPattern>()) {
         if (binding->subpattern_id.has_value()) {
-          pending.push_back(binding->subpattern_id);
+          worklist.push_back(binding->subpattern_id);
           continue;
         }
         // A compile-time binding's argument is an argument of the specific.
