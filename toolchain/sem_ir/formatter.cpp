@@ -1274,7 +1274,7 @@ auto Formatter::FormatInstRhs(InstId inst_id, Inst inst) -> void {
       return;
     }
 
-    case CARBON_KIND(PackExpansionDecl decl): {
+    case CARBON_KIND(PackExpansion decl): {
       FormatPackExpansionRhs(inst_id, decl);
       return;
     }
@@ -1403,33 +1403,34 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
   out() << ')';
 }
 
-auto Formatter::FormatPackExpansionRhs(InstId inst_id, PackExpansionDecl inst)
+auto Formatter::FormatPackExpansionRhs(InstId inst_id, PackExpansion inst)
     -> void {
   out() << " ";
-  if (!inst.pack_expansion_id.has_value()) {
+  if (!inst.pack_expanded_region_id.has_value()) {
     // This can happen if we format a placeholder.
     out() << "<none>";
     return;
   }
-  FormatArg(inst.pack_expansion_id);
+  FormatArg(inst.pack_expanded_region_id);
 
-  const auto& pack = sem_ir_->pack_expansions().Get(inst.pack_expansion_id);
-  if (inst_id != pack.decl_id) {
+  const auto& region =
+      sem_ir_->pack_expanded_regions().Get(inst.pack_expanded_region_id);
+  if (inst_id != region.decl_id) {
     // This is a copy of the declaration, such as a symbolic constant or an
     // instruction in an eval block. Only print the body at the declaration.
     out() << ", ";
-    FormatArg(inst.entry_id);
+    FormatArg(inst.inst_id);
     return;
   }
 
-  llvm::SaveAndRestore pack_scope(
-      scope_, inst_namer_.GetScopeFor(inst.pack_expansion_id));
+  llvm::SaveAndRestore region_scope(
+      scope_, inst_namer_.GetScopeFor(inst.pack_expanded_region_id));
 
   // Format the generic inline, followed by the body blocks.
-  const auto& generic = sem_ir_->generics().Get(pack.generic_id);
+  const auto& generic = sem_ir_->generics().Get(region.generic_id);
   FormatParamList(generic.bindings_id);
   out() << ", ";
-  FormatArg(inst.entry_id);
+  FormatArg(inst.inst_id);
   out() << ' ';
   OpenBrace();
   FormatCodeBlock(generic.decl_block_id);
@@ -1438,7 +1439,7 @@ auto Formatter::FormatPackExpansionRhs(InstId inst_id, PackExpansionDecl inst)
     out() << "!definition:\n";
     FormatCodeBlock(generic.definition_block_id);
   }
-  for (auto block_id : pack.body_block_ids) {
+  for (auto block_id : region.body_block_ids) {
     IndentLabel();
     FormatLabel(block_id);
     out() << ":\n";

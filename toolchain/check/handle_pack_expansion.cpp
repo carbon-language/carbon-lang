@@ -24,7 +24,7 @@ namespace Carbon::Check {
 //   of the body. Instances of this branch in specifics of the generic represent
 //   executing the body for particular index values.
 // - The body ends with `BranchNextIndex`.
-// - The `PackExpansionDecl` instruction evaluates to a tuple of `InstValue`s,
+// - The `PackExpansion` instruction evaluates to a tuple of `InstValue`s,
 //   one for each iteration, and `SpliceBranches` executes them in sequence
 //   before continuing to its exit block.
 //
@@ -38,17 +38,17 @@ auto HandleParseNode(Context& context, Parse::PackExpansionStartId node_id)
 
   context.scope_stack().PushForSameRegion(ScopeStack::CleanupScopeKind::Owned);
 
-  // Create the pack expansion and a placeholder declaration for it. The
-  // declaration is filled in once we know the arity.
-  auto pack_id =
-      context.pack_expansions().Add({.decl_id = SemIR::InstId::None,
-                                     .generic_id = SemIR::GenericId::None,
-                                     .index_id = SemIR::InstId::None});
+  // Create the pack expanded region and a placeholder `PackExpansion`
+  // instruction for it. The instruction is filled in once we know the arity.
+  auto region_id =
+      context.pack_expanded_regions().Add({.decl_id = SemIR::InstId::None,
+                                           .generic_id = SemIR::GenericId::None,
+                                           .index_id = SemIR::InstId::None});
   auto decl_id = AddPlaceholderInstInNoBlock(
       context, node_id,
-      SemIR::PackExpansionDecl{.type_id = SemIR::TypeId::None,
-                               .pack_expansion_id = pack_id,
-                               .entry_id = SemIR::InstId::None});
+      SemIR::PackExpansion{.type_id = SemIR::TypeId::None,
+                           .pack_expanded_region_id = region_id,
+                           .inst_id = SemIR::InstId::None});
 
   // Start the entry block of the body, which is the start of a new region.
   context.inst_block_stack().Push();
@@ -78,10 +78,10 @@ auto HandleParseNode(Context& context, Parse::PackExpansionStartId node_id)
   context.inst_block_stack().Push(body_id);
   context.region_stack().AddToRegion(body_id, node_id);
 
-  auto& pack = context.pack_expansions().Get(pack_id);
-  pack.decl_id = decl_id;
-  pack.generic_id = generic_id;
-  pack.index_id = index_id;
+  auto& region = context.pack_expanded_regions().Get(region_id);
+  region.decl_id = decl_id;
+  region.generic_id = generic_id;
+  region.index_id = index_id;
 
   context.node_stack().Push(node_id, decl_id);
   return true;
@@ -91,9 +91,9 @@ auto HandleParseNode(Context& context, Parse::PackExpansionStatementId node_id)
     -> bool {
   auto decl_id =
       context.node_stack().Pop<Parse::NodeKind::PackExpansionStart>();
-  auto pack_decl = context.insts().GetAs<SemIR::PackExpansionDecl>(decl_id);
-  auto pack_id = pack_decl.pack_expansion_id;
-  auto generic_id = context.pack_expansions().Get(pack_id).generic_id;
+  auto expansion = context.insts().GetAs<SemIR::PackExpansion>(decl_id);
+  auto region_id = expansion.pack_expanded_region_id;
+  auto generic_id = context.pack_expanded_regions().Get(region_id).generic_id;
 
   auto* info = context.generic_region_stack().PeekPackExpansion();
   CARBON_CHECK(info, "Pack expansion body is not a pack expansion region");
@@ -115,23 +115,22 @@ auto HandleParseNode(Context& context, Parse::PackExpansionStatementId node_id)
   FinishGenericDefinition(context, generic_id);
   auto body_block_ids = context.region_stack().PopRegion();
   context.scope_stack().Pop(/*check_unused=*/true);
-  context.pack_expansions().Get(pack_id).body_block_ids =
-      std::move(body_block_ids);
+  auto& region = context.pack_expanded_regions().Get(region_id);
+  region.body_block_ids = std::move(body_block_ids);
 
-  // Now we know the arity, fill in the declaration. Its type is a tuple of
-  // `InstValue`s, one per iteration.
+  // Now we know the arity, fill in the `PackExpansion`. Its type is a tuple of
+  // `InstValue`s, one per iteration, and the instruction it expands is the
+  // branch at the end of the entry block.
   auto type_id = SemIR::ErrorInst::TypeId;
   if (arity >= 0) {
     llvm::SmallVector<SemIR::InstId> element_type_ids(
         arity, SemIR::InstType::TypeInstId);
     type_id = GetTupleType(context, element_type_ids);
   }
-  pack_decl.type_id = type_id;
-  pack_decl.entry_id =
-      context.inst_blocks()
-          .Get(context.pack_expansions().Get(pack_id).body_block_ids.front())
-          .back();
-  ReplaceInstBeforeConstantUse(context, decl_id, pack_decl);
+  expansion.type_id = type_id;
+  expansion.inst_id =
+      context.inst_blocks().Get(region.body_block_ids.front()).back();
+  ReplaceInstBeforeConstantUse(context, decl_id, expansion);
   context.inst_block_stack().AddInstId(decl_id);
 
   // Execute the body for each index, then continue in the exit block.

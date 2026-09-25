@@ -494,11 +494,11 @@ struct Worklist {
     Add(observe.enclosing_scope_inst_id);
   }
 
-  auto Add(PackExpansionId pack_expansion_id) -> void {
+  auto Add(PackExpandedRegionId pack_expanded_region_id) -> void {
     // TODO: Find a more stable way to fingerprint pack expansions. Everything
     // reachable from the pack expansion leads back to its declaration, so for
     // now we use the index, as we do for labels.
-    AddInteger(pack_expansion_id.index);
+    AddInteger(pack_expanded_region_id.index);
   }
 
   auto Add(AssociatedConstantId assoc_const_id) -> void {
@@ -553,10 +553,10 @@ struct Worklist {
       return;
     }
     auto decl_id = sem_ir->generics().Get(generic_id).decl_id;
-    if (auto pack_decl = sem_ir->insts().TryGetAs<PackExpansionDecl>(decl_id)) {
+    if (auto pack_decl = sem_ir->insts().TryGetAs<PackExpansion>(decl_id)) {
       // The pack expansion declaration refers back to this generic through its
       // specific, so identify the generic by its pack expansion instead.
-      Add(pack_decl->pack_expansion_id);
+      Add(pack_decl->pack_expanded_region_id);
       return;
     }
     Add(decl_id);

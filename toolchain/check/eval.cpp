@@ -3252,23 +3252,23 @@ auto TryEvalTypedInst<SemIR::Temporary>(EvalContext& eval_context,
   return MakeConstantResult(eval_context.context(), temporary, phase);
 }
 
-// Pack expansions are evaluated by forming a specific of the pack expansion's
-// generic for each value of the variadic index. The other arguments of those
-// specifics are the values of the enclosing generic's bindings in the current
-// eval context, which may be symbolic.
+// Pack expansions are evaluated by forming a specific of the pack expanded
+// region's generic for each value of the variadic index. The other arguments
+// of those specifics are the values of the enclosing generic's bindings in the
+// current eval context, which may be symbolic.
 template <>
-auto TryEvalTypedInst<SemIR::PackExpansionDecl>(EvalContext& eval_context,
-                                                SemIR::InstId inst_id,
-                                                SemIR::Inst inst)
+auto TryEvalTypedInst<SemIR::PackExpansion>(EvalContext& eval_context,
+                                            SemIR::InstId inst_id,
+                                            SemIR::Inst inst)
     -> SemIR::ConstantId {
-  auto pack_decl = inst.As<SemIR::PackExpansionDecl>();
-  if (!pack_decl.entry_id.has_value()) {
+  auto expansion = inst.As<SemIR::PackExpansion>();
+  if (!expansion.inst_id.has_value()) {
     // This is a placeholder that hasn't been filled in yet.
     return SemIR::ConstantId::NotConstant;
   }
 
   Phase phase = Phase::Concrete;
-  if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &pack_decl,
+  if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &expansion,
                                     &phase)) {
     return SemIR::ConstantId::NotConstant;
   }
@@ -3277,11 +3277,12 @@ auto TryEvalTypedInst<SemIR::PackExpansionDecl>(EvalContext& eval_context,
   }
 
   // Find the enclosing arguments. These are the values of all but the last of
-  // the pack expansion's bindings, which is the variadic index.
+  // the region's bindings, which is the variadic index.
   auto& context = eval_context.context();
-  const auto& pack = context.pack_expansions().Get(pack_decl.pack_expansion_id);
+  const auto& region =
+      context.pack_expanded_regions().Get(expansion.pack_expanded_region_id);
   auto bindings = context.inst_blocks().Get(
-      context.generics().Get(pack.generic_id).bindings_id);
+      context.generics().Get(region.generic_id).bindings_id);
   CARBON_CHECK(!bindings.empty(), "Missing variadic index binding");
   llvm::SmallVector<SemIR::InstId> specific_args;
   specific_args.reserve(bindings.size());
@@ -3298,11 +3299,11 @@ auto TryEvalTypedInst<SemIR::PackExpansionDecl>(EvalContext& eval_context,
   specific_args.push_back(SemIR::InstId::None);
 
   // Form the specific for each index, and produce a tuple of the corresponding
-  // instances of `entry_id`.
+  // instances of `inst_id`.
   // TODO: This creates new `SpecificInst` instructions each time the pack
   // expansion is evaluated. Consider caching them.
   auto loc_id = eval_context.GetDiagnosticLoc(inst_id);
-  auto tuple_type = context.types().GetAs<SemIR::TupleType>(pack_decl.type_id);
+  auto tuple_type = context.types().GetAs<SemIR::TupleType>(expansion.type_id);
   auto arity = context.inst_blocks().Get(tuple_type.type_elements_id).size();
   auto int_literal_type_id =
       GetSingletonType(context, SemIR::IntLiteralType::TypeInstId);
@@ -3318,24 +3319,25 @@ auto TryEvalTypedInst<SemIR::PackExpansionDecl>(EvalContext& eval_context,
         Phase::Concrete);
     specific_args.back() = context.constant_values().GetInstId(index_const_id);
     auto specific_id =
-        MakeSpecific(context, loc_id, pack.generic_id, specific_args);
+        MakeSpecific(context, loc_id, region.generic_id, specific_args);
     if (phase == Phase::Concrete) {
       ResolveSpecificDefinition(context, loc_id, specific_id);
     }
-    auto entry_id =
+    auto specific_inst_id =
         AddInstInNoBlock(context, loc_id,
                          SemIR::SpecificInst{.type_id = SemIR::TypeId::None,
-                                             .inst_id = pack_decl.entry_id,
+                                             .inst_id = expansion.inst_id,
                                              .specific_id = specific_id});
     auto element_const_id = MakeConstantResult(
-        context, SemIR::InstValue{.type_id = inst_type_id, .inst_id = entry_id},
+        context,
+        SemIR::InstValue{.type_id = inst_type_id, .inst_id = specific_inst_id},
         phase);
     elements.push_back(context.constant_values().GetInstId(element_const_id));
   }
   return MakeConstantResult(
       context,
       SemIR::TupleValue{
-          .type_id = pack_decl.type_id,
+          .type_id = expansion.type_id,
           .elements_id = context.inst_blocks().AddCanonical(elements)},
       phase);
 }

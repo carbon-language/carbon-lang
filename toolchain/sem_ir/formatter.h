@@ -226,7 +226,7 @@ class Formatter {
 
   // Formats a pack expansion. For the declaration itself, this includes its
   // generic and body blocks.
-  auto FormatPackExpansionRhs(InstId inst_id, PackExpansionDecl inst) -> void;
+  auto FormatPackExpansionRhs(InstId inst_id, PackExpansion inst) -> void;
 
   // Standard formatting for a declaration instruction's arguments.
   template <typename IdT>

@@ -57,7 +57,7 @@ class InstNamer {
   using ScopeIdTypeEnum =
       TypeEnum<AssociatedConstantId, ClassId, CppOverloadSetId, FunctionId,
                ImplId, InterfaceId, InterfaceWithSelfId, NamedConstraintId,
-               NamedConstraintWithSelfId, ObserveId, PackExpansionId,
+               NamedConstraintWithSelfId, ObserveId, PackExpandedRegionId,
                RequireImplsId, SpecificInterfaceId, VtableId>;
 
   // Construct the instruction namer, and assign names to all instructions in
@@ -90,8 +90,8 @@ class InstNamer {
       index = sem_ir_->named_constraints().GetRawIndex(id.id);
     } else if constexpr (std::is_same_v<IdT, ObserveId>) {
       index = sem_ir_->observes().GetRawIndex(id);
-    } else if constexpr (std::is_same_v<IdT, PackExpansionId>) {
-      index = sem_ir_->pack_expansions().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, PackExpandedRegionId>) {
+      index = sem_ir_->pack_expanded_regions().GetRawIndex(id);
     } else if constexpr (std::is_same_v<IdT, RequireImplsId>) {
       index = sem_ir_->require_impls().GetRawIndex(id);
     } else if constexpr (std::is_same_v<IdT, SpecificInterfaceId>) {
@@ -260,8 +260,9 @@ class InstNamer {
   auto PushEntity(ObserveId observe_id, ScopeId scope_id, Scope& scope) -> void;
   // Pack expansions don't know their enclosing entity, so the caller provides
   // a name prefix. This is not reachable through `MaybePushEntity`.
-  auto PushEntity(PackExpansionId pack_expansion_id, ScopeId scope_id,
-                  Scope& scope, llvm::StringRef prefix) -> void;
+  auto PushEntity(PackExpandedRegionId pack_expanded_region_id,
+                  ScopeId scope_id, Scope& scope, llvm::StringRef prefix)
+      -> void;
   auto PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
                   Scope& scope) -> void;
   auto PushEntity(VtableId vtable_id, ScopeId scope_id, Scope& scope) -> void;

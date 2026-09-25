@@ -1558,36 +1558,36 @@ struct OutParamPattern {
   NameId pretty_name_id;
 };
 
-// Introduces a pack expansion, such as a `...` statement. The pack expansion
-// entity describes a generic whose final binding is the variadic index.
+// A pack expansion, such as a `...` statement, which produces a specific
+// version of an instruction within a pack expanded region for each value of the
+// variadic index. The pack expanded region describes a generic whose final
+// binding is the variadic index.
 //
 // The type of this instruction is a tuple of `<instruction>` types, with one
 // element for each value of the variadic index. The constant value of this
 // instruction is a tuple of `InstValue`s, each of which is a `SpecificInst`
-// that refers to `entry_id` in the pack expansion's specific for the
-// corresponding index. The arguments of those specifics other than the index
-// are taken from the enclosing specific in which this is evaluated, and may be
-// symbolic.
+// that refers to `inst_id` in the region's specific for the corresponding
+// index. The arguments of those specifics other than the index are taken from
+// the enclosing specific in which this is evaluated, and may be symbolic.
 //
-// When `entry_id` is the pack expansion's entry branch, the result is expected
-// to be used as the operand of a `SpliceBranches` instruction.
+// When `inst_id` is the region's entry branch, the result is expected to be
+// used as the operand of a `SpliceBranches` instruction.
 //
-// TODO: Add further `PackExpansionDecl`s for the same pack expansion whose
-// `entry_id` is a value computed within the body, to extract per-index results
-// from the code spliced in by `SpliceBranches`. An (`InstId`, `SpecificId`)
-// pair identifies the same instruction in both.
-struct PackExpansionDecl {
-  static constexpr auto Kind =
-      InstKind::PackExpansionDecl.Define<Parse::NodeId>(
-          {.ir_name = "pack_expansion",
-           .constant_kind = InstConstantKind::SymbolicOnly,
-           .is_lowered = false});
+// TODO: Add further `PackExpansion`s for the same region whose `inst_id` is a
+// value computed within the body, to extract per-index results from the code
+// spliced in by `SpliceBranches`. An (`InstId`, `SpecificId`) pair identifies
+// the same instruction in both.
+struct PackExpansion {
+  static constexpr auto Kind = InstKind::PackExpansion.Define<Parse::NodeId>(
+      {.ir_name = "pack_expansion",
+       .constant_kind = InstConstantKind::SymbolicOnly,
+       .is_lowered = false});
 
   TypeId type_id;
-  PackExpansionId pack_expansion_id;
-  // The instruction within the pack expansion's generic to produce for each
-  // index.
-  AbsoluteInstId entry_id;
+  PackExpandedRegionId pack_expanded_region_id;
+  // The instruction within the region's generic to produce a specific version
+  // of for each index.
+  AbsoluteInstId inst_id;
 };
 
 // Indicates `partial` on a type, such as `partial MyClass`.

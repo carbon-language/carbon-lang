@@ -56,7 +56,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       observes_(check_ir_id),
       // 1 reserved id for `ObserveBlockId::Empty`.
       observe_blocks_(allocator_, check_ir_id, 1),
-      pack_expansions_(check_ir_id),
+      pack_expanded_regions_(check_ir_id),
       associated_constants_(check_ir_id),
       // 1 reserved id for `DeclaredFacetTypeId::Empty`.
       declared_facet_types_(check_ir_id, 1),
@@ -164,8 +164,8 @@ auto File::Verify() const -> ErrorOr<Success> {
   for (const Function& function : functions_.values()) {
     CARBON_RETURN_IF_ERROR(verify_code_blocks(function.body_block_ids));
   }
-  for (const PackExpansion& pack_expansion : pack_expansions_.values()) {
-    CARBON_RETURN_IF_ERROR(verify_code_blocks(pack_expansion.body_block_ids));
+  for (const PackExpandedRegion& region : pack_expanded_regions_.values()) {
+    CARBON_RETURN_IF_ERROR(verify_code_blocks(region.body_block_ids));
   }
 
   // TODO: Check that an instruction only references other instructions that are

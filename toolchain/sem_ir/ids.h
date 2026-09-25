@@ -1080,9 +1080,9 @@ struct ObserveBlockId : public IdBase<ObserveBlockId> {
 
 inline constexpr ObserveBlockId ObserveBlockId::Empty = ObserveBlockId(0);
 
-// The ID of a `PackExpansion`.
-struct PackExpansionId : public IdBase<PackExpansionId> {
-  static constexpr llvm::StringLiteral Label = "pack_expansion";
+// The ID of a `PackExpandedRegion`.
+struct PackExpandedRegionId : public IdBase<PackExpandedRegionId> {
+  static constexpr llvm::StringLiteral Label = "pack_expanded_region";
 
   using IdBase::IdBase;
 };
