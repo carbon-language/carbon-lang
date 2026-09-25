@@ -723,12 +723,12 @@ struct DefaultValuePattern {
       InstKind::DefaultValuePattern.Define<Parse::DefaultValuePatternId>(
           {.ir_name = "default_value_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::Always,
+           .constant_kind = InstConstantKind::WheneverPossible,
            .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
-  DefaultValueId default_value_id;
+  InstId value_id;
 };
 
 // The `*` dereference operator, as in `*pointer`.
@@ -2374,21 +2374,6 @@ struct UninitializedValue {
           {.ir_name = "uninitialized_value",
            .constant_kind = InstConstantKind::Always});
 
-  TypeId type_id;
-};
-
-using UnspecifiedValueType =
-    SingletonTypeInst<InstKind::UnspecifiedValueType, "<unspecified_value>">;
-
-// A placeholder value for default values in function definitions.
-struct UnspecifiedValue {
-  static constexpr auto Kind =
-      InstKind::UnspecifiedValue.Define<Parse::DefaultValueUnspecifiedId>(
-          {.ir_name = "unspecified_value",
-           .constant_kind = InstConstantKind::Always,
-           .is_lowered = false});
-  // Always the type of the builtin `UnspecifiedValueType` singleton
-  // instruction.
   TypeId type_id;
 };
 

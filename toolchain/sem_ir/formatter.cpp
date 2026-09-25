@@ -1638,15 +1638,6 @@ auto Formatter::FormatArg(DeclaredFacetTypeId id) -> void {
   out() << ">";
 }
 
-auto Formatter::FormatArg(DefaultValueId id) -> void {
-  const auto& default_value = sem_ir_->default_values().Get(id);
-  if (default_value.is_unspecified) {
-    out() << "<unspecified>";
-  } else {
-    FormatArg(default_value.value_id);
-  }
-}
-
 auto Formatter::FormatArg(FieldId id) -> void {
   const auto& field = sem_ir_->fields().Get(id);
   FormatName(field.name_id);

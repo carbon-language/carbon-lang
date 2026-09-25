@@ -373,20 +373,6 @@ static auto DiagnosePositionalParams(Context& context,
   function_info.param_patterns_id = SemIR::InstBlockId::Empty;
 }
 
-// Diagnoses any default values for function parameters that have not been
-// completely specified, which is a requirement on the first owning declaration
-// of a function.
-static auto DiagnoseDefaultValuesNotSpecified(
-    Context& context, llvm::ArrayRef<SemIR::InstId> unspecified_inst_ids)
-    -> void {
-  for (auto inst_id : unspecified_inst_ids) {
-    CARBON_DIAGNOSTIC(PatternDefaultValueNotSpecified, Error,
-                      "found unspecified default parameter value in the "
-                      "function's first owning declaration");
-    context.emitter().Emit(inst_id, PatternDefaultValueNotSpecified);
-  }
-}
-
 // For the top-level parameter patterns list, and for any level of nested tuple
 // patterns, ensure that if a subpattern provides a default value, all
 // subsequent patterns at that level of nesting must provide a default value as
@@ -618,11 +604,6 @@ static auto BuildFunctionDecl(Context& context,
   function_info.default_value_arity = CheckDefaults(context, function_info);
 
   DiagnosePositionalParams(context, function_info);
-  if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
-      !name_context.prev_inst_id().has_value()) {
-    DiagnoseDefaultValuesNotSpecified(
-        context, context.inst_blocks().Get(name.unspecified_values_block_id));
-  }
 
   TryMergeRedecl(
       context, name_context, std::nullopt,
