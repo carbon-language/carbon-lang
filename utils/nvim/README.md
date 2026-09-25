@@ -8,8 +8,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Treesitter based syntax highlighting and language server client for Neovim.
 
-This requires neovim >= 0.9 and
-[nvim-lspconfig](https://github.com/neovim/nvim-lspconfig) to be installed.
+This requires neovim >= 0.11.
 
 1.  Run `bazel build //toolchain` in project root.
 2.  Run `utils/nvim/setup.sh`.

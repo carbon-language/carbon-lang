@@ -81,7 +81,6 @@
 [
   "abstract"
   ; "adapt"
-  "addr"
   "alias"
   "and"
   "api"
