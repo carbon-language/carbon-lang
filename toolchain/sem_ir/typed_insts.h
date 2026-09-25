@@ -500,7 +500,7 @@ struct ClassDecl {
   DeclInstBlockId decl_block_id;
 };
 
-// Access to a member of a class, such as `base.index`. This provides a
+// Access to a member of a class, such as `base.index`. This provides as
 // reference for either reading or writing.
 struct ClassElementAccess {
   // TODO: Make Parse::NodeId more specific.
@@ -1564,9 +1564,18 @@ struct OutParamPattern {
 // The type of this instruction is a tuple of `<instruction>` types, with one
 // element for each value of the variadic index. The constant value of this
 // instruction is a tuple of `InstValue`s, each of which is a `SpecificInst`
-// that refers to the pack expansion's entry branch, in the specific for the
-// corresponding index. This is expected to be used as the operand of a
-// `SpliceBranches` instruction.
+// that refers to `entry_id` in the pack expansion's specific for the
+// corresponding index. The arguments of those specifics other than the index
+// are taken from the enclosing specific in which this is evaluated, and may be
+// symbolic.
+//
+// When `entry_id` is the pack expansion's entry branch, the result is expected
+// to be used as the operand of a `SpliceBranches` instruction.
+//
+// TODO: Add further `PackExpansionDecl`s for the same pack expansion whose
+// `entry_id` is a value computed within the body, to extract per-index results
+// from the code spliced in by `SpliceBranches`. An (`InstId`, `SpecificId`)
+// pair identifies the same instruction in both.
 struct PackExpansionDecl {
   static constexpr auto Kind =
       InstKind::PackExpansionDecl.Define<Parse::NodeId>(
@@ -1576,10 +1585,9 @@ struct PackExpansionDecl {
 
   TypeId type_id;
   PackExpansionId pack_expansion_id;
-  // The self-specific for the pack expansion's generic. The arguments other
-  // than the last one are the enclosing generic arguments, which are
-  // substituted into during evaluation.
-  SpecificId specific_id;
+  // The instruction within the pack expansion's generic to produce for each
+  // index.
+  AbsoluteInstId entry_id;
 };
 
 // Indicates `partial` on a type, such as `partial MyClass`.

@@ -1418,7 +1418,7 @@ auto Formatter::FormatPackExpansionRhs(InstId inst_id, PackExpansionDecl inst)
     // This is a copy of the declaration, such as a symbolic constant or an
     // instruction in an eval block. Only print the body at the declaration.
     out() << ", ";
-    FormatArg(inst.specific_id);
+    FormatArg(inst.entry_id);
     return;
   }
 
@@ -1429,7 +1429,7 @@ auto Formatter::FormatPackExpansionRhs(InstId inst_id, PackExpansionDecl inst)
   const auto& generic = sem_ir_->generics().Get(pack.generic_id);
   FormatParamList(generic.bindings_id);
   out() << ", ";
-  FormatArg(pack.entry_id);
+  FormatArg(inst.entry_id);
   out() << ' ';
   OpenBrace();
   FormatCodeBlock(generic.decl_block_id);

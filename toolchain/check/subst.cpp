@@ -132,6 +132,18 @@ static auto PushOperand(Context& context, Worklist& worklist,
       push_specific(specific_id);
       break;
     }
+    case CARBON_KIND(SemIR::MetaInstId inst_id): {
+      // A meta-instruction operand that refers to an instruction in a specific,
+      // such as an element of a pack expansion's value, depends on the
+      // arguments of that specific.
+      if (inst_id.has_value()) {
+        if (auto specific_inst = context.insts().TryGetAs<SemIR::SpecificInst>(
+                SemIR::InstId(inst_id))) {
+          push_specific(specific_inst->specific_id);
+        }
+      }
+      break;
+    }
     case CARBON_KIND(SemIR::SpecificInterfaceId interface_id): {
       auto interface = context.specific_interfaces().Get(interface_id);
       push_specific(interface.specific_id);
@@ -237,6 +249,22 @@ static auto PopOperand(Context& context, Worklist& worklist,
     }
     case CARBON_KIND(SemIR::SpecificId specific_id): {
       return pop_specific(specific_id).index;
+    }
+    case CARBON_KIND(SemIR::MetaInstId inst_id): {
+      if (inst_id.has_value()) {
+        if (auto specific_inst = context.insts().TryGetAs<SemIR::SpecificInst>(
+                SemIR::InstId(inst_id))) {
+          auto specific_id = pop_specific(specific_inst->specific_id);
+          if (specific_id != specific_inst->specific_id) {
+            specific_inst->specific_id = specific_id;
+            return AddInstInNoBlock(context,
+                                    SemIR::LocId(SemIR::InstId(inst_id)),
+                                    *specific_inst)
+                .index;
+          }
+        }
+      }
+      return arg.value();
     }
     case CARBON_KIND(SemIR::SpecificInterfaceId interface_id): {
       auto interface = context.specific_interfaces().Get(interface_id);

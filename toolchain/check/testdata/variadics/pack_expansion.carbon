@@ -229,7 +229,7 @@ fn F(x: (i32, i32)) {
 // CHECK:STDOUT:     %G.call: init %empty_tuple.type = call %G.ref(%.loc7)
 // CHECK:STDOUT:     br_next_index
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   splice_branches %pack, !pack.done
+// CHECK:STDOUT:   splice_br %pack, !pack.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !pack.done:
 // CHECK:STDOUT:   return
@@ -419,7 +419,7 @@ fn F(x: (i32, i32)) {
 // CHECK:STDOUT:   !if.else:
 // CHECK:STDOUT:     br_next_index
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   splice_branches %pack, !pack.done
+// CHECK:STDOUT:   splice_br %pack, !pack.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !pack.done:
 // CHECK:STDOUT:   return
@@ -492,7 +492,15 @@ fn F(x: (i32, i32)) {
 // CHECK:STDOUT:   %pack_index: Core.IntLiteral = symbolic_binding <pack index>, 1 [symbolic]
 // CHECK:STDOUT:   %G.specific_fn.058: <specific function> = specific_function %G, @G(%T) [symbolic]
 // CHECK:STDOUT:   %tuple.type.413: type = tuple_type (<instruction>, <instruction>) [concrete]
-// CHECK:STDOUT:   %pack: %tuple.type.413 = pack_expansion @F.pack, @F.pack(%T, %pack_index) [symbolic]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %inst.specific_inst.11b: <instruction> = inst_value [symbolic] {
+// CHECK:STDOUT:     %.1a2 = specific_inst @F.pack.%entry, @F.pack(%T, %int_0)
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %inst.specific_inst.2a3: <instruction> = inst_value [symbolic] {
+// CHECK:STDOUT:     %.bd4 = specific_inst @F.pack.%entry, @F.pack(%T, %int_1)
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %tuple.95b: %tuple.type.413 = tuple_value (%inst.specific_inst.11b, %inst.specific_inst.2a3) [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.94e: %tuple.type.693 = tuple_value (%i32, %i32) [concrete]
@@ -501,12 +509,10 @@ fn F(x: (i32, i32)) {
 // CHECK:STDOUT:   %x.param_patt.8a8: %pattern_type.394 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %x.patt.7e4: %pattern_type.394 = wrapper_binding_pattern x, %x.param_patt.8a8 [concrete]
 // CHECK:STDOUT:   %complete_type.6c4: <witness> = complete_type_witness %tuple.type.e55 [concrete]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %G.specific_fn.ef1: <specific function> = specific_function %G, @G(%i32) [concrete]
 // CHECK:STDOUT:   %inst.specific_inst.238: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.bda = specific_inst @F.pack.%entry, @F.pack(%i32, %int_0)
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %inst.specific_inst.169: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.368 = specific_inst @F.pack.%entry, @F.pack(%i32, %int_1)
 // CHECK:STDOUT:   }
@@ -528,7 +534,7 @@ fn F(x: (i32, i32)) {
 // CHECK:STDOUT:     %.loc6_23.1: type = splice_block %.loc6_23.3 [symbolic = %tuple.type (constants.%tuple.type.07a)] {
 // CHECK:STDOUT:       %T.ref.loc6_19: type = name_ref T, %T.loc6_7.2 [symbolic = %T.loc6_7.1 (constants.%T)]
 // CHECK:STDOUT:       %T.ref.loc6_22: type = name_ref T, %T.loc6_7.2 [symbolic = %T.loc6_7.1 (constants.%T)]
-// CHECK:STDOUT:       %.loc6_23.2: %tuple.type.693 = tuple_literal (%T.ref.loc6_19, %T.ref.loc6_22) [symbolic = %tuple (constants.%tuple.3df)]
+// CHECK:STDOUT:       %.loc6_23.2: %tuple.type.693 = tuple_literal (%T.ref.loc6_19, %T.ref.loc6_22) [symbolic = %tuple.loc6 (constants.%tuple.3df)]
 // CHECK:STDOUT:       %.loc6_23.3: type = converted %.loc6_23.2, constants.%tuple.type.07a [symbolic = %tuple.type (constants.%tuple.type.07a)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @F.%tuple.type (%tuple.type.07a) = wrapper_binding x, %x.param
@@ -538,7 +544,7 @@ fn F(x: (i32, i32)) {
 // CHECK:STDOUT: generic fn @F(%T.loc6_7.2: type) {
 // CHECK:STDOUT:   %T.patt.loc6_7.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_7.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc6_7.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_7.1 (constants.%T)]
-// CHECK:STDOUT:   %tuple: %tuple.type.693 = tuple_value (%T.loc6_7.1, %T.loc6_7.1) [symbolic = %tuple (constants.%tuple.3df)]
+// CHECK:STDOUT:   %tuple.loc6: %tuple.type.693 = tuple_value (%T.loc6_7.1, %T.loc6_7.1) [symbolic = %tuple.loc6 (constants.%tuple.3df)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%T.loc6_7.1, %T.loc6_7.1) [symbolic = %tuple.type (constants.%tuple.type.07a)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %tuple.type [symbolic = %pattern_type (constants.%pattern_type.c3f)]
 // CHECK:STDOUT:   %x.param_patt.loc6_16.2: @F.%pattern_type (%pattern_type.c3f) = value_param_pattern [symbolic = %x.param_patt.loc6_16.2 (constants.%x.param_patt.13d)]
@@ -546,12 +552,17 @@ fn F(x: (i32, i32)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type [symbolic = %require_complete (constants.%require_complete.22a)]
-// CHECK:STDOUT:   %pack_index: Core.IntLiteral = symbolic_binding <pack index>, 1 [symbolic = %pack_index (constants.%pack_index)]
-// CHECK:STDOUT:   %pack.loc7_3.2: %tuple.type.413 = pack_expansion @F.pack, @F.pack(%T.loc6_7.1, %pack_index) [symbolic = %pack.loc7_3.2 (constants.%pack)]
+// CHECK:STDOUT:   %inst.specific_inst.loc7_3.1: <instruction> = inst_value [symbolic = %inst.specific_inst.loc7_3.1 (constants.%inst.specific_inst.11b)] {
+// CHECK:STDOUT:     %.loc7_3.1 = specific_inst @F.pack.%entry, @F.pack(%T.loc6_7.1, constants.%int_0)
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %inst.specific_inst.loc7_3.2: <instruction> = inst_value [symbolic = %inst.specific_inst.loc7_3.2 (constants.%inst.specific_inst.2a3)] {
+// CHECK:STDOUT:     %.loc7_3.2 = specific_inst @F.pack.%entry, @F.pack(%T.loc6_7.1, constants.%int_1)
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %tuple.loc7: %tuple.type.413 = tuple_value (%inst.specific_inst.loc7_3.1, %inst.specific_inst.loc7_3.2) [symbolic = %tuple.loc7 (constants.%tuple.95b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%tuple.type (%tuple.type.07a)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %pack.loc7_3.1: %tuple.type.413 = pack_expansion @F.pack(@F.%T.loc6_7.2: type, %pack_index.loc7_3.2: Core.IntLiteral), %entry [symbolic = @F.%pack.loc7_3.2 (constants.%pack)] {
+// CHECK:STDOUT:     %pack: %tuple.type.413 = pack_expansion @F.pack(@F.%T.loc6_7.2: type, %pack_index.loc7_3.2: Core.IntLiteral), %entry [symbolic = @F.%tuple.loc7 (constants.%tuple.95b)] {
 // CHECK:STDOUT:       %pack_index.loc7_3.1: Core.IntLiteral = symbolic_binding <pack index>, 1 [symbolic = %pack_index.loc7_3.1 (constants.%pack_index)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:     !definition:
@@ -571,7 +582,7 @@ fn F(x: (i32, i32)) {
 // CHECK:STDOUT:       %G.call: init %empty_tuple.type = call %G.specific_fn.loc7_7.2(%.loc7)
 // CHECK:STDOUT:       br_next_index
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     splice_branches %pack.loc7_3.1, !pack.done
+// CHECK:STDOUT:     splice_br %pack, !pack.done
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !pack.done:
 // CHECK:STDOUT:     return
@@ -581,7 +592,7 @@ fn F(x: (i32, i32)) {
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc6_7.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc6_7.1 => constants.%T
-// CHECK:STDOUT:   %tuple => constants.%tuple.3df
+// CHECK:STDOUT:   %tuple.loc6 => constants.%tuple.3df
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.07a
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c3f
 // CHECK:STDOUT:   %x.param_patt.loc6_16.2 => constants.%x.param_patt.13d
@@ -592,10 +603,18 @@ fn F(x: (i32, i32)) {
 // CHECK:STDOUT:   %pack_index.loc7_3.1 => constants.%pack_index
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.pack(constants.%T, constants.%int_0) {
+// CHECK:STDOUT:   %pack_index.loc7_3.1 => constants.%int_0
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.pack(constants.%T, constants.%int_1) {
+// CHECK:STDOUT:   %pack_index.loc7_3.1 => constants.%int_1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%i32) {
 // CHECK:STDOUT:   %T.patt.loc6_7.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc6_7.1 => constants.%i32
-// CHECK:STDOUT:   %tuple => constants.%tuple.94e
+// CHECK:STDOUT:   %tuple.loc6 => constants.%tuple.94e
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.e55
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.394
 // CHECK:STDOUT:   %x.param_patt.loc6_16.2 => constants.%x.param_patt.8a8
@@ -603,8 +622,9 @@ fn F(x: (i32, i32)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.6c4
-// CHECK:STDOUT:   %pack_index => constants.%pack_index
-// CHECK:STDOUT:   %pack.loc7_3.2 => constants.%tuple.fcb
+// CHECK:STDOUT:   %inst.specific_inst.loc7_3.1 => constants.%inst.specific_inst.238
+// CHECK:STDOUT:   %inst.specific_inst.loc7_3.2 => constants.%inst.specific_inst.169
+// CHECK:STDOUT:   %tuple.loc7 => constants.%tuple.fcb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.pack(constants.%i32, constants.%int_0) {

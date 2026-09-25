@@ -26,18 +26,14 @@ struct PackExpansion : Printable<PackExpansion> {
   GenericId generic_id;
   // The variadic index binding. This is the last binding in the generic.
   InstId index_id;
-  // A `Branch` instruction that branches to the start of the body. This is
-  // within the generic, and an instance of this branch in a specific
-  // corresponds to executing the body for a particular index.
-  InstId entry_id;
   // The blocks that make up the body of the pack expansion. The first block
-  // contains the index binding and `entry_id`.
+  // contains the index binding and a `Branch` to the rest of the body, which is
+  // the `entry_id` of the `PackExpansionDecl` at `decl_id`.
   llvm::SmallVector<InstBlockId> body_block_ids = {};
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{decl_id: " << decl_id << ", generic_id: " << generic_id
-        << ", index_id: " << index_id << ", entry_id: " << entry_id
-        << ", body: [";
+        << ", index_id: " << index_id << ", body: [";
     llvm::ListSeparator sep;
     for (auto block_id : body_block_ids) {
       out << sep << block_id;

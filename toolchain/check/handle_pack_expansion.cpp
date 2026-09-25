@@ -43,13 +43,12 @@ auto HandleParseNode(Context& context, Parse::PackExpansionStartId node_id)
   auto pack_id =
       context.pack_expansions().Add({.decl_id = SemIR::InstId::None,
                                      .generic_id = SemIR::GenericId::None,
-                                     .index_id = SemIR::InstId::None,
-                                     .entry_id = SemIR::InstId::None});
+                                     .index_id = SemIR::InstId::None});
   auto decl_id = AddPlaceholderInstInNoBlock(
       context, node_id,
       SemIR::PackExpansionDecl{.type_id = SemIR::TypeId::None,
                                .pack_expansion_id = pack_id,
-                               .specific_id = SemIR::SpecificId::None});
+                               .entry_id = SemIR::InstId::None});
 
   // Start the entry block of the body, which is the start of a new region.
   context.inst_block_stack().Push();
@@ -74,8 +73,7 @@ auto HandleParseNode(Context& context, Parse::PackExpansionStartId node_id)
 
   // Branch from the entry block to the body.
   auto body_id = context.inst_blocks().AddPlaceholder();
-  auto entry_id =
-      AddInst<SemIR::Branch>(context, node_id, {.target_id = body_id});
+  AddInst<SemIR::Branch>(context, node_id, {.target_id = body_id});
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(body_id);
   context.region_stack().AddToRegion(body_id, node_id);
@@ -84,7 +82,6 @@ auto HandleParseNode(Context& context, Parse::PackExpansionStartId node_id)
   pack.decl_id = decl_id;
   pack.generic_id = generic_id;
   pack.index_id = index_id;
-  pack.entry_id = entry_id;
 
   context.node_stack().Push(node_id, decl_id);
   return true;
@@ -130,7 +127,10 @@ auto HandleParseNode(Context& context, Parse::PackExpansionStatementId node_id)
     type_id = GetTupleType(context, element_type_ids);
   }
   pack_decl.type_id = type_id;
-  pack_decl.specific_id = context.generics().GetSelfSpecific(generic_id);
+  pack_decl.entry_id =
+      context.inst_blocks()
+          .Get(context.pack_expansions().Get(pack_id).body_block_ids.front())
+          .back();
   ReplaceInstBeforeConstantUse(context, decl_id, pack_decl);
   context.inst_block_stack().AddInstId(decl_id);
 

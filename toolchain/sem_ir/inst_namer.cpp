@@ -1039,9 +1039,13 @@ auto InstNamer::NamingContext::NameInst() -> void {
                               ScopeIdTypeEnum::For<PackExpansionId>);
         const auto& packs = sem_ir().pack_expansions();
         if (pack_index >= 0 &&
-            pack_index < static_cast<int32_t>(packs.size()) &&
-            packs.Get(packs.ids().begin()[pack_index]).entry_id == inst_id_) {
-          AddInstName("entry");
+            pack_index < static_cast<int32_t>(packs.size())) {
+          auto decl_id = packs.Get(packs.ids().begin()[pack_index]).decl_id;
+          if (decl_id.has_value() &&
+              sem_ir().insts().GetAs<PackExpansionDecl>(decl_id).entry_id ==
+                  inst_id_) {
+            AddInstName("entry");
+          }
         }
       }
       return;
