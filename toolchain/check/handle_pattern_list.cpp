@@ -196,11 +196,8 @@ auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
   auto pattern_type_id = context.insts().Get(pattern_inst_id).type_id();
   auto scrutinee_type_id =
       SemIR::ExtractScrutineeType(context.sem_ir(), pattern_type_id);
-  auto converted_inst_id =
-      expr_inst_id == SemIR::ErrorInst::InstId
-          ? SemIR::ErrorInst::InstId
-          : ConvertToValueOfType(context, SemIR::LocId(expr_inst_id),
-                                 expr_inst_id, scrutinee_type_id);
+  auto converted_inst_id = ConvertToValueOfType(
+      context, SemIR::LocId(expr_inst_id), expr_inst_id, scrutinee_type_id);
 
   // The default value pattern should have the same type as the subpattern.
   auto default_value_inst_id =
