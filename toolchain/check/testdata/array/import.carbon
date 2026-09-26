@@ -75,6 +75,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.956: type = pattern_type %i32.builtin [concrete]
 // CHECK:STDOUT:   %self.param_patt.331: %pattern_type.956 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.319: %pattern_type.956 = wrapper_binding_pattern self, %self.param_patt.331 [concrete]
@@ -88,10 +89,57 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc6_12.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc6_12.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.f8f19d.2: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2, %Destroy.WithSelf.SubobjectDestroy.d01daf.2, %Destroy.WithSelf.SelfDestruct.db3fdb.2), @Destroy [concrete]
 // CHECK:STDOUT:   %self.param_patt.087: %pattern_type.c07 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.b22: %pattern_type.c07 = wrapper_binding_pattern self, %self.param_patt.087 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc6_12.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %int_41: Core.IntLiteral = int_value 41 [concrete]
+// CHECK:STDOUT:   %Destroy.facet.b41: %Destroy.type = facet_value %i32, (%custom_witness.f8f19d.2) [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.11b: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.b41) [concrete]
+// CHECK:STDOUT:   %.bbc: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.11b, %Destroy.facet.b41 [concrete]
+// CHECK:STDOUT:   %int_40: Core.IntLiteral = int_value 40 [concrete]
+// CHECK:STDOUT:   %int_39: Core.IntLiteral = int_value 39 [concrete]
+// CHECK:STDOUT:   %int_38: Core.IntLiteral = int_value 38 [concrete]
+// CHECK:STDOUT:   %int_37: Core.IntLiteral = int_value 37 [concrete]
+// CHECK:STDOUT:   %int_36: Core.IntLiteral = int_value 36 [concrete]
+// CHECK:STDOUT:   %int_35: Core.IntLiteral = int_value 35 [concrete]
+// CHECK:STDOUT:   %int_34: Core.IntLiteral = int_value 34 [concrete]
+// CHECK:STDOUT:   %int_33: Core.IntLiteral = int_value 33 [concrete]
+// CHECK:STDOUT:   %int_31: Core.IntLiteral = int_value 31 [concrete]
+// CHECK:STDOUT:   %int_30: Core.IntLiteral = int_value 30 [concrete]
+// CHECK:STDOUT:   %int_29: Core.IntLiteral = int_value 29 [concrete]
+// CHECK:STDOUT:   %int_28: Core.IntLiteral = int_value 28 [concrete]
+// CHECK:STDOUT:   %int_27: Core.IntLiteral = int_value 27 [concrete]
+// CHECK:STDOUT:   %int_26: Core.IntLiteral = int_value 26 [concrete]
+// CHECK:STDOUT:   %int_25: Core.IntLiteral = int_value 25 [concrete]
+// CHECK:STDOUT:   %int_24: Core.IntLiteral = int_value 24 [concrete]
+// CHECK:STDOUT:   %int_23: Core.IntLiteral = int_value 23 [concrete]
+// CHECK:STDOUT:   %int_22: Core.IntLiteral = int_value 22 [concrete]
+// CHECK:STDOUT:   %int_21: Core.IntLiteral = int_value 21 [concrete]
+// CHECK:STDOUT:   %int_20: Core.IntLiteral = int_value 20 [concrete]
+// CHECK:STDOUT:   %int_19: Core.IntLiteral = int_value 19 [concrete]
+// CHECK:STDOUT:   %int_18: Core.IntLiteral = int_value 18 [concrete]
+// CHECK:STDOUT:   %int_17: Core.IntLiteral = int_value 17 [concrete]
+// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
+// CHECK:STDOUT:   %int_15: Core.IntLiteral = int_value 15 [concrete]
+// CHECK:STDOUT:   %int_14: Core.IntLiteral = int_value 14 [concrete]
+// CHECK:STDOUT:   %int_13: Core.IntLiteral = int_value 13 [concrete]
+// CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete]
+// CHECK:STDOUT:   %int_11: Core.IntLiteral = int_value 11 [concrete]
+// CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [concrete]
+// CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete]
+// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
+// CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete]
+// CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete]
+// CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete]
+// CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete]
+// CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc6_12.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.3: type = fn_type @Destroy.WithSelf.SelfDestruct.loc6_12.3 [concrete]
@@ -195,6 +243,216 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc6_12.3(%self.param: ref %array_type) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int_41: Core.IntLiteral = int_value 41 [concrete = constants.%int_41]
+// CHECK:STDOUT:   %.loc6_12.1: ref %i32 = array_index %self.param, %int_41
+// CHECK:STDOUT:   %impl.elem2.loc6_12.1: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.1: <bound method> = bound_method %.loc6_12.1, %impl.elem2.loc6_12.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.1: init %empty_tuple.type = call %bound_method.loc6_12.1(%.loc6_12.1)
+// CHECK:STDOUT:   %int_40: Core.IntLiteral = int_value 40 [concrete = constants.%int_40]
+// CHECK:STDOUT:   %.loc6_12.2: ref %i32 = array_index %self.param, %int_40
+// CHECK:STDOUT:   %impl.elem2.loc6_12.2: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.2: <bound method> = bound_method %.loc6_12.2, %impl.elem2.loc6_12.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.2: init %empty_tuple.type = call %bound_method.loc6_12.2(%.loc6_12.2)
+// CHECK:STDOUT:   %int_39: Core.IntLiteral = int_value 39 [concrete = constants.%int_39]
+// CHECK:STDOUT:   %.loc6_12.3: ref %i32 = array_index %self.param, %int_39
+// CHECK:STDOUT:   %impl.elem2.loc6_12.3: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.3: <bound method> = bound_method %.loc6_12.3, %impl.elem2.loc6_12.3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.3: init %empty_tuple.type = call %bound_method.loc6_12.3(%.loc6_12.3)
+// CHECK:STDOUT:   %int_38: Core.IntLiteral = int_value 38 [concrete = constants.%int_38]
+// CHECK:STDOUT:   %.loc6_12.4: ref %i32 = array_index %self.param, %int_38
+// CHECK:STDOUT:   %impl.elem2.loc6_12.4: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.4: <bound method> = bound_method %.loc6_12.4, %impl.elem2.loc6_12.4
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.4: init %empty_tuple.type = call %bound_method.loc6_12.4(%.loc6_12.4)
+// CHECK:STDOUT:   %int_37: Core.IntLiteral = int_value 37 [concrete = constants.%int_37]
+// CHECK:STDOUT:   %.loc6_12.5: ref %i32 = array_index %self.param, %int_37
+// CHECK:STDOUT:   %impl.elem2.loc6_12.5: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.5: <bound method> = bound_method %.loc6_12.5, %impl.elem2.loc6_12.5
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.5: init %empty_tuple.type = call %bound_method.loc6_12.5(%.loc6_12.5)
+// CHECK:STDOUT:   %int_36: Core.IntLiteral = int_value 36 [concrete = constants.%int_36]
+// CHECK:STDOUT:   %.loc6_12.6: ref %i32 = array_index %self.param, %int_36
+// CHECK:STDOUT:   %impl.elem2.loc6_12.6: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.6: <bound method> = bound_method %.loc6_12.6, %impl.elem2.loc6_12.6
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.6: init %empty_tuple.type = call %bound_method.loc6_12.6(%.loc6_12.6)
+// CHECK:STDOUT:   %int_35: Core.IntLiteral = int_value 35 [concrete = constants.%int_35]
+// CHECK:STDOUT:   %.loc6_12.7: ref %i32 = array_index %self.param, %int_35
+// CHECK:STDOUT:   %impl.elem2.loc6_12.7: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.7: <bound method> = bound_method %.loc6_12.7, %impl.elem2.loc6_12.7
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.7: init %empty_tuple.type = call %bound_method.loc6_12.7(%.loc6_12.7)
+// CHECK:STDOUT:   %int_34: Core.IntLiteral = int_value 34 [concrete = constants.%int_34]
+// CHECK:STDOUT:   %.loc6_12.8: ref %i32 = array_index %self.param, %int_34
+// CHECK:STDOUT:   %impl.elem2.loc6_12.8: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.8: <bound method> = bound_method %.loc6_12.8, %impl.elem2.loc6_12.8
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.8: init %empty_tuple.type = call %bound_method.loc6_12.8(%.loc6_12.8)
+// CHECK:STDOUT:   %int_33: Core.IntLiteral = int_value 33 [concrete = constants.%int_33]
+// CHECK:STDOUT:   %.loc6_12.9: ref %i32 = array_index %self.param, %int_33
+// CHECK:STDOUT:   %impl.elem2.loc6_12.9: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.9: <bound method> = bound_method %.loc6_12.9, %impl.elem2.loc6_12.9
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.9: init %empty_tuple.type = call %bound_method.loc6_12.9(%.loc6_12.9)
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %.loc6_12.10: ref %i32 = array_index %self.param, %int_32
+// CHECK:STDOUT:   %impl.elem2.loc6_12.10: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.10: <bound method> = bound_method %.loc6_12.10, %impl.elem2.loc6_12.10
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.10: init %empty_tuple.type = call %bound_method.loc6_12.10(%.loc6_12.10)
+// CHECK:STDOUT:   %int_31: Core.IntLiteral = int_value 31 [concrete = constants.%int_31]
+// CHECK:STDOUT:   %.loc6_12.11: ref %i32 = array_index %self.param, %int_31
+// CHECK:STDOUT:   %impl.elem2.loc6_12.11: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.11: <bound method> = bound_method %.loc6_12.11, %impl.elem2.loc6_12.11
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.11: init %empty_tuple.type = call %bound_method.loc6_12.11(%.loc6_12.11)
+// CHECK:STDOUT:   %int_30: Core.IntLiteral = int_value 30 [concrete = constants.%int_30]
+// CHECK:STDOUT:   %.loc6_12.12: ref %i32 = array_index %self.param, %int_30
+// CHECK:STDOUT:   %impl.elem2.loc6_12.12: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.12: <bound method> = bound_method %.loc6_12.12, %impl.elem2.loc6_12.12
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.12: init %empty_tuple.type = call %bound_method.loc6_12.12(%.loc6_12.12)
+// CHECK:STDOUT:   %int_29: Core.IntLiteral = int_value 29 [concrete = constants.%int_29]
+// CHECK:STDOUT:   %.loc6_12.13: ref %i32 = array_index %self.param, %int_29
+// CHECK:STDOUT:   %impl.elem2.loc6_12.13: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.13: <bound method> = bound_method %.loc6_12.13, %impl.elem2.loc6_12.13
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.13: init %empty_tuple.type = call %bound_method.loc6_12.13(%.loc6_12.13)
+// CHECK:STDOUT:   %int_28: Core.IntLiteral = int_value 28 [concrete = constants.%int_28]
+// CHECK:STDOUT:   %.loc6_12.14: ref %i32 = array_index %self.param, %int_28
+// CHECK:STDOUT:   %impl.elem2.loc6_12.14: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.14: <bound method> = bound_method %.loc6_12.14, %impl.elem2.loc6_12.14
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.14: init %empty_tuple.type = call %bound_method.loc6_12.14(%.loc6_12.14)
+// CHECK:STDOUT:   %int_27: Core.IntLiteral = int_value 27 [concrete = constants.%int_27]
+// CHECK:STDOUT:   %.loc6_12.15: ref %i32 = array_index %self.param, %int_27
+// CHECK:STDOUT:   %impl.elem2.loc6_12.15: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.15: <bound method> = bound_method %.loc6_12.15, %impl.elem2.loc6_12.15
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.15: init %empty_tuple.type = call %bound_method.loc6_12.15(%.loc6_12.15)
+// CHECK:STDOUT:   %int_26: Core.IntLiteral = int_value 26 [concrete = constants.%int_26]
+// CHECK:STDOUT:   %.loc6_12.16: ref %i32 = array_index %self.param, %int_26
+// CHECK:STDOUT:   %impl.elem2.loc6_12.16: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.16: <bound method> = bound_method %.loc6_12.16, %impl.elem2.loc6_12.16
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.16: init %empty_tuple.type = call %bound_method.loc6_12.16(%.loc6_12.16)
+// CHECK:STDOUT:   %int_25: Core.IntLiteral = int_value 25 [concrete = constants.%int_25]
+// CHECK:STDOUT:   %.loc6_12.17: ref %i32 = array_index %self.param, %int_25
+// CHECK:STDOUT:   %impl.elem2.loc6_12.17: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.17: <bound method> = bound_method %.loc6_12.17, %impl.elem2.loc6_12.17
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.17: init %empty_tuple.type = call %bound_method.loc6_12.17(%.loc6_12.17)
+// CHECK:STDOUT:   %int_24: Core.IntLiteral = int_value 24 [concrete = constants.%int_24]
+// CHECK:STDOUT:   %.loc6_12.18: ref %i32 = array_index %self.param, %int_24
+// CHECK:STDOUT:   %impl.elem2.loc6_12.18: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.18: <bound method> = bound_method %.loc6_12.18, %impl.elem2.loc6_12.18
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.18: init %empty_tuple.type = call %bound_method.loc6_12.18(%.loc6_12.18)
+// CHECK:STDOUT:   %int_23: Core.IntLiteral = int_value 23 [concrete = constants.%int_23]
+// CHECK:STDOUT:   %.loc6_12.19: ref %i32 = array_index %self.param, %int_23
+// CHECK:STDOUT:   %impl.elem2.loc6_12.19: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.19: <bound method> = bound_method %.loc6_12.19, %impl.elem2.loc6_12.19
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.19: init %empty_tuple.type = call %bound_method.loc6_12.19(%.loc6_12.19)
+// CHECK:STDOUT:   %int_22: Core.IntLiteral = int_value 22 [concrete = constants.%int_22]
+// CHECK:STDOUT:   %.loc6_12.20: ref %i32 = array_index %self.param, %int_22
+// CHECK:STDOUT:   %impl.elem2.loc6_12.20: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.20: <bound method> = bound_method %.loc6_12.20, %impl.elem2.loc6_12.20
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.20: init %empty_tuple.type = call %bound_method.loc6_12.20(%.loc6_12.20)
+// CHECK:STDOUT:   %int_21: Core.IntLiteral = int_value 21 [concrete = constants.%int_21]
+// CHECK:STDOUT:   %.loc6_12.21: ref %i32 = array_index %self.param, %int_21
+// CHECK:STDOUT:   %impl.elem2.loc6_12.21: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.21: <bound method> = bound_method %.loc6_12.21, %impl.elem2.loc6_12.21
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.21: init %empty_tuple.type = call %bound_method.loc6_12.21(%.loc6_12.21)
+// CHECK:STDOUT:   %int_20: Core.IntLiteral = int_value 20 [concrete = constants.%int_20]
+// CHECK:STDOUT:   %.loc6_12.22: ref %i32 = array_index %self.param, %int_20
+// CHECK:STDOUT:   %impl.elem2.loc6_12.22: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.22: <bound method> = bound_method %.loc6_12.22, %impl.elem2.loc6_12.22
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.22: init %empty_tuple.type = call %bound_method.loc6_12.22(%.loc6_12.22)
+// CHECK:STDOUT:   %int_19: Core.IntLiteral = int_value 19 [concrete = constants.%int_19]
+// CHECK:STDOUT:   %.loc6_12.23: ref %i32 = array_index %self.param, %int_19
+// CHECK:STDOUT:   %impl.elem2.loc6_12.23: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.23: <bound method> = bound_method %.loc6_12.23, %impl.elem2.loc6_12.23
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.23: init %empty_tuple.type = call %bound_method.loc6_12.23(%.loc6_12.23)
+// CHECK:STDOUT:   %int_18: Core.IntLiteral = int_value 18 [concrete = constants.%int_18]
+// CHECK:STDOUT:   %.loc6_12.24: ref %i32 = array_index %self.param, %int_18
+// CHECK:STDOUT:   %impl.elem2.loc6_12.24: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.24: <bound method> = bound_method %.loc6_12.24, %impl.elem2.loc6_12.24
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.24: init %empty_tuple.type = call %bound_method.loc6_12.24(%.loc6_12.24)
+// CHECK:STDOUT:   %int_17: Core.IntLiteral = int_value 17 [concrete = constants.%int_17]
+// CHECK:STDOUT:   %.loc6_12.25: ref %i32 = array_index %self.param, %int_17
+// CHECK:STDOUT:   %impl.elem2.loc6_12.25: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.25: <bound method> = bound_method %.loc6_12.25, %impl.elem2.loc6_12.25
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.25: init %empty_tuple.type = call %bound_method.loc6_12.25(%.loc6_12.25)
+// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
+// CHECK:STDOUT:   %.loc6_12.26: ref %i32 = array_index %self.param, %int_16
+// CHECK:STDOUT:   %impl.elem2.loc6_12.26: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.26: <bound method> = bound_method %.loc6_12.26, %impl.elem2.loc6_12.26
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.26: init %empty_tuple.type = call %bound_method.loc6_12.26(%.loc6_12.26)
+// CHECK:STDOUT:   %int_15: Core.IntLiteral = int_value 15 [concrete = constants.%int_15]
+// CHECK:STDOUT:   %.loc6_12.27: ref %i32 = array_index %self.param, %int_15
+// CHECK:STDOUT:   %impl.elem2.loc6_12.27: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.27: <bound method> = bound_method %.loc6_12.27, %impl.elem2.loc6_12.27
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.27: init %empty_tuple.type = call %bound_method.loc6_12.27(%.loc6_12.27)
+// CHECK:STDOUT:   %int_14: Core.IntLiteral = int_value 14 [concrete = constants.%int_14]
+// CHECK:STDOUT:   %.loc6_12.28: ref %i32 = array_index %self.param, %int_14
+// CHECK:STDOUT:   %impl.elem2.loc6_12.28: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.28: <bound method> = bound_method %.loc6_12.28, %impl.elem2.loc6_12.28
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.28: init %empty_tuple.type = call %bound_method.loc6_12.28(%.loc6_12.28)
+// CHECK:STDOUT:   %int_13: Core.IntLiteral = int_value 13 [concrete = constants.%int_13]
+// CHECK:STDOUT:   %.loc6_12.29: ref %i32 = array_index %self.param, %int_13
+// CHECK:STDOUT:   %impl.elem2.loc6_12.29: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.29: <bound method> = bound_method %.loc6_12.29, %impl.elem2.loc6_12.29
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.29: init %empty_tuple.type = call %bound_method.loc6_12.29(%.loc6_12.29)
+// CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12]
+// CHECK:STDOUT:   %.loc6_12.30: ref %i32 = array_index %self.param, %int_12
+// CHECK:STDOUT:   %impl.elem2.loc6_12.30: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.30: <bound method> = bound_method %.loc6_12.30, %impl.elem2.loc6_12.30
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.30: init %empty_tuple.type = call %bound_method.loc6_12.30(%.loc6_12.30)
+// CHECK:STDOUT:   %int_11: Core.IntLiteral = int_value 11 [concrete = constants.%int_11]
+// CHECK:STDOUT:   %.loc6_12.31: ref %i32 = array_index %self.param, %int_11
+// CHECK:STDOUT:   %impl.elem2.loc6_12.31: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.31: <bound method> = bound_method %.loc6_12.31, %impl.elem2.loc6_12.31
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.31: init %empty_tuple.type = call %bound_method.loc6_12.31(%.loc6_12.31)
+// CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [concrete = constants.%int_10]
+// CHECK:STDOUT:   %.loc6_12.32: ref %i32 = array_index %self.param, %int_10
+// CHECK:STDOUT:   %impl.elem2.loc6_12.32: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.32: <bound method> = bound_method %.loc6_12.32, %impl.elem2.loc6_12.32
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.32: init %empty_tuple.type = call %bound_method.loc6_12.32(%.loc6_12.32)
+// CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9]
+// CHECK:STDOUT:   %.loc6_12.33: ref %i32 = array_index %self.param, %int_9
+// CHECK:STDOUT:   %impl.elem2.loc6_12.33: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.33: <bound method> = bound_method %.loc6_12.33, %impl.elem2.loc6_12.33
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.33: init %empty_tuple.type = call %bound_method.loc6_12.33(%.loc6_12.33)
+// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
+// CHECK:STDOUT:   %.loc6_12.34: ref %i32 = array_index %self.param, %int_8
+// CHECK:STDOUT:   %impl.elem2.loc6_12.34: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.34: <bound method> = bound_method %.loc6_12.34, %impl.elem2.loc6_12.34
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.34: init %empty_tuple.type = call %bound_method.loc6_12.34(%.loc6_12.34)
+// CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7]
+// CHECK:STDOUT:   %.loc6_12.35: ref %i32 = array_index %self.param, %int_7
+// CHECK:STDOUT:   %impl.elem2.loc6_12.35: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.35: <bound method> = bound_method %.loc6_12.35, %impl.elem2.loc6_12.35
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.35: init %empty_tuple.type = call %bound_method.loc6_12.35(%.loc6_12.35)
+// CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6]
+// CHECK:STDOUT:   %.loc6_12.36: ref %i32 = array_index %self.param, %int_6
+// CHECK:STDOUT:   %impl.elem2.loc6_12.36: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.36: <bound method> = bound_method %.loc6_12.36, %impl.elem2.loc6_12.36
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.36: init %empty_tuple.type = call %bound_method.loc6_12.36(%.loc6_12.36)
+// CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
+// CHECK:STDOUT:   %.loc6_12.37: ref %i32 = array_index %self.param, %int_5
+// CHECK:STDOUT:   %impl.elem2.loc6_12.37: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.37: <bound method> = bound_method %.loc6_12.37, %impl.elem2.loc6_12.37
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.37: init %empty_tuple.type = call %bound_method.loc6_12.37(%.loc6_12.37)
+// CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
+// CHECK:STDOUT:   %.loc6_12.38: ref %i32 = array_index %self.param, %int_4
+// CHECK:STDOUT:   %impl.elem2.loc6_12.38: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.38: <bound method> = bound_method %.loc6_12.38, %impl.elem2.loc6_12.38
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.38: init %empty_tuple.type = call %bound_method.loc6_12.38(%.loc6_12.38)
+// CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
+// CHECK:STDOUT:   %.loc6_12.39: ref %i32 = array_index %self.param, %int_3
+// CHECK:STDOUT:   %impl.elem2.loc6_12.39: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.39: <bound method> = bound_method %.loc6_12.39, %impl.elem2.loc6_12.39
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.39: init %empty_tuple.type = call %bound_method.loc6_12.39(%.loc6_12.39)
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %.loc6_12.40: ref %i32 = array_index %self.param, %int_2
+// CHECK:STDOUT:   %impl.elem2.loc6_12.40: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.40: <bound method> = bound_method %.loc6_12.40, %impl.elem2.loc6_12.40
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.40: init %empty_tuple.type = call %bound_method.loc6_12.40(%.loc6_12.40)
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc6_12.41: ref %i32 = array_index %self.param, %int_1
+// CHECK:STDOUT:   %impl.elem2.loc6_12.41: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.41: <bound method> = bound_method %.loc6_12.41, %impl.elem2.loc6_12.41
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.41: init %empty_tuple.type = call %bound_method.loc6_12.41(%.loc6_12.41)
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %.loc6_12.42: ref %i32 = array_index %self.param, %int_0
+// CHECK:STDOUT:   %impl.elem2.loc6_12.42: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
+// CHECK:STDOUT:   %bound_method.loc6_12.42: <bound method> = bound_method %.loc6_12.42, %impl.elem2.loc6_12.42
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc6_12.42: init %empty_tuple.type = call %bound_method.loc6_12.42(%.loc6_12.42)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

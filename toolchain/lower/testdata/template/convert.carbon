@@ -455,6 +455,12 @@ fn Test2(c: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.4c02ca82d7b9fa3c:core.Destroy.Core"(ptr %self) #0 !dbg !164 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc8_3.1.array.index = getelementptr inbounds [3 x {}], ptr %self, i32 0, i64 2, !dbg !166
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %.loc8_3.1.array.index), !dbg !166
+// CHECK:STDOUT:   %.loc8_3.2.array.index = getelementptr inbounds [3 x {}], ptr %self, i32 0, i64 1, !dbg !166
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %.loc8_3.2.array.index), !dbg !166
+// CHECK:STDOUT:   %.loc8_3.3.array.index = getelementptr inbounds [3 x {}], ptr %self, i32 0, i64 0, !dbg !166
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %.loc8_3.3.array.index), !dbg !166
 // CHECK:STDOUT:   ret void, !dbg !166
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -133,6 +133,12 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.dc7dedd104b837b2:core.Destroy.Core"(ptr %self) #0 !dbg !40 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc13_50.1.array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i64 2, !dbg !42
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc13_50.1.array.index), !dbg !42
+// CHECK:STDOUT:   %.loc13_50.2.array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i64 1, !dbg !42
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc13_50.2.array.index), !dbg !42
+// CHECK:STDOUT:   %.loc13_50.3.array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i64 0, !dbg !42
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc13_50.3.array.index), !dbg !42
 // CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -266,6 +272,12 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.71d86972d5684aff:core.Destroy.Core"(ptr %self) #0 !dbg !76 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc23_69.1.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %self, i32 0, i64 2, !dbg !78
+// CHECK:STDOUT:   call void @"_CSelfDestruct.cbb50137a92c3ee4:core.Destroy.Core"(ptr %.loc23_69.1.array.index), !dbg !78
+// CHECK:STDOUT:   %.loc23_69.2.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %self, i32 0, i64 1, !dbg !78
+// CHECK:STDOUT:   call void @"_CSelfDestruct.cbb50137a92c3ee4:core.Destroy.Core"(ptr %.loc23_69.2.array.index), !dbg !78
+// CHECK:STDOUT:   %.loc23_69.3.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %self, i32 0, i64 0, !dbg !78
+// CHECK:STDOUT:   call void @"_CSelfDestruct.cbb50137a92c3ee4:core.Destroy.Core"(ptr %.loc23_69.3.array.index), !dbg !78
 // CHECK:STDOUT:   ret void, !dbg !78
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

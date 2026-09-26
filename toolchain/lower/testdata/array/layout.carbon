@@ -95,6 +95,12 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.9e05708f03266b13:core.Destroy.Core"(ptr %self) #0 !dbg !65 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc9_3.1.array.index = getelementptr inbounds [3 x <{ <{ ptr, i32 }>, [4 x i8] }>], ptr %self, i32 0, i64 2, !dbg !67
+// CHECK:STDOUT:   call void @"_CSelfDestruct.0bcbe81284b6bcb5:core.Destroy.Core"(ptr %.loc9_3.1.array.index), !dbg !67
+// CHECK:STDOUT:   %.loc9_3.2.array.index = getelementptr inbounds [3 x <{ <{ ptr, i32 }>, [4 x i8] }>], ptr %self, i32 0, i64 1, !dbg !67
+// CHECK:STDOUT:   call void @"_CSelfDestruct.0bcbe81284b6bcb5:core.Destroy.Core"(ptr %.loc9_3.2.array.index), !dbg !67
+// CHECK:STDOUT:   %.loc9_3.3.array.index = getelementptr inbounds [3 x <{ <{ ptr, i32 }>, [4 x i8] }>], ptr %self, i32 0, i64 0, !dbg !67
+// CHECK:STDOUT:   call void @"_CSelfDestruct.0bcbe81284b6bcb5:core.Destroy.Core"(ptr %.loc9_3.3.array.index), !dbg !67
 // CHECK:STDOUT:   ret void, !dbg !67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
