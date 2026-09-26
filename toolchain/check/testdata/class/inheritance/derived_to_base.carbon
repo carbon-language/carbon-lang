@@ -134,9 +134,11 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a92: type = struct_type {.a: %i32} [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %B.elem.405: type = unbound_element_type %B, %A [concrete]
 // CHECK:STDOUT:   %B.elem.eea: type = unbound_element_type %B, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.base.b.6c4: type = struct_type {.base: %A, .b: %i32} [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %C.elem.c7c: type = unbound_element_type %C, %B [concrete]
 // CHECK:STDOUT:   %C.elem.e33: type = unbound_element_type %C, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.base.c.faf: type = struct_type {.base: %B, .c: %i32} [concrete]
 // CHECK:STDOUT:   %ptr.6b6: type = ptr_type %C [concrete]
@@ -721,9 +723,13 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.6(%self.param: ref %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: %B.elem.eea = name_ref b, @B.%field_decl [concrete = @B.%field_decl]
-// CHECK:STDOUT:   %.loc32: ref %i32 = class_element_access %self.param, element1
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc32, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc32)
+// CHECK:STDOUT:   %.loc32_66.1: ref %i32 = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1: <bound method> = bound_method %.loc32_66.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1(%.loc32_66.1)
+// CHECK:STDOUT:   %base.ref: %B.elem.405 = name_ref base, @B.%.loc9 [concrete = @B.%.loc9]
+// CHECK:STDOUT:   %.loc32_66.2: ref %A = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2: <bound method> = bound_method %.loc32_66.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2(%.loc32_66.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -759,9 +765,13 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.8(%self.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C.elem.e33 = name_ref c, @C.%field_decl [concrete = @C.%field_decl]
-// CHECK:STDOUT:   %.loc32: ref %i32 = class_element_access %self.param, element1
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc32, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc32)
+// CHECK:STDOUT:   %.loc32_66.1: ref %i32 = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1: <bound method> = bound_method %.loc32_66.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1(%.loc32_66.1)
+// CHECK:STDOUT:   %base.ref: %C.elem.c7c = name_ref base, @C.%.loc14 [concrete = @C.%.loc14]
+// CHECK:STDOUT:   %.loc32_66.2: ref %B = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2: <bound method> = bound_method %.loc32_66.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.6
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2(%.loc32_66.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

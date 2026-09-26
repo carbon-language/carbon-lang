@@ -359,11 +359,11 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
 }
 
 // Calls `self.<field>.(Destroy.SelfDestruct)` for each field in a `StructType`.
-static auto DestroyStructField(Context& context, SemIR::LocId loc_id,
+static auto DestroyFieldByName(Context& context, SemIR::LocId loc_id,
                                SemIR::InstId callee_self_param_id,
-                               SemIR::StructTypeField struct_field) -> void {
-  auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
-                                       struct_field.name_id);
+                               SemIR::NameId field_name_id) -> void {
+  auto member_id =
+      PerformMemberAccess(context, loc_id, callee_self_param_id, field_name_id);
   auto self_destruct_call = BuildSelfDestructCall(
       context, context.insts().GetLocIdForDesugaring(loc_id), member_id);
   DiscardExpr(context, self_destruct_call);
@@ -410,21 +410,19 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
                 context.name_scopes().Get(class_info.scope_id), field)
                 .has_value();
         if (field_defined_in_self_type) {
-          DestroyStructField(context, loc_id, params[0], field);
+          DestroyFieldByName(context, loc_id, params[0], field.name_id);
         }
       }
-      // TODO: Call `base.(Destroy.SelfDestruct)()`.
-      //
-      // This will be added in a separate change (to trunk) so that it's visibly
-      // clear the base component is being destroyed correctly. The TODO doesn't
-      // generate a diagnostic because it will be too disruptive over a short
-      // period of time.
+
+      if (class_info.base_id.has_value()) {
+        DestroyFieldByName(context, loc_id, params[0], SemIR::NameId::Base);
+      }
       break;
     }
     case CARBON_KIND(SemIR::StructType struct_type): {
       auto fields = context.struct_type_fields().Get(struct_type.fields_id);
       for (auto field : fields) {
-        DestroyStructField(context, loc_id, params[0], field);
+        DestroyFieldByName(context, loc_id, params[0], field.name_id);
       }
       break;
     }

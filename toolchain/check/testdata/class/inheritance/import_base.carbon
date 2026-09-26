@@ -151,6 +151,7 @@ fn Run() {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %struct_type.x.unused_y.258: type = struct_type {.x: %i32, .unused_y: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.6c3: <witness> = complete_type_witness %struct_type.x.unused_y.258 [concrete]
+// CHECK:STDOUT:   %Child.elem: type = unbound_element_type %Child, %Base [concrete]
 // CHECK:STDOUT:   %struct_type.base.cae: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.c02: <witness> = complete_type_witness %struct_type.base.cae [concrete]
 // CHECK:STDOUT:   %pattern_type.860: type = pattern_type %Child [concrete]
@@ -257,9 +258,11 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.077 = import_ref Main//a, loc6_18, unloaded
 // CHECK:STDOUT:   %Main.import_ref.dea: %Base.elem = import_ref Main//a, loc8_8, loaded [concrete = %field_decl]
 // CHECK:STDOUT:   %Main.import_ref.bf9 = import_ref Main//a, loc9_15, unloaded
+// CHECK:STDOUT:   %Main.import_ref.439419.1: type = import_ref Main//a, loc13_16, loaded [concrete = constants.%Base]
+// CHECK:STDOUT:   %.754: %Child.elem = base_decl %Main.import_ref.439419.1, element0 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.60e: <witness> = import_ref Main//a, loc14_1, loaded [concrete = constants.%complete_type.c02]
 // CHECK:STDOUT:   %Main.import_ref.6e8 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.bd6 = import_ref Main//a, loc13_20, unloaded
+// CHECK:STDOUT:   %Main.import_ref.d51: %Child.elem = import_ref Main//a, loc13_20, loaded [concrete = %.754]
 // CHECK:STDOUT:   %Main.import_ref.439419.2: type = import_ref Main//a, loc13_16, loaded [concrete = constants.%Base]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.edf: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
@@ -373,7 +376,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.6e8
-// CHECK:STDOUT:   .base = imports.%Main.import_ref.bd6
+// CHECK:STDOUT:   .base = imports.%Main.import_ref.d51
 // CHECK:STDOUT:   .x = <poisoned>
 // CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend imports.%Main.import_ref.439419.2
@@ -531,6 +534,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc7_3.6(%self.param: ref %Child) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %base.ref: %Child.elem = name_ref base, imports.%Main.import_ref.d51 [concrete = imports.%.754]
+// CHECK:STDOUT:   %.loc7: ref %Base = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc7, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
