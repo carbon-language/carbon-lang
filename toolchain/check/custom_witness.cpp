@@ -5,8 +5,10 @@
 #include "toolchain/check/custom_witness.h"
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
+#include "toolchain/check/class.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
@@ -356,6 +358,17 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Calls `self.<field>.(Destroy.SelfDestruct)` for each field in a `StructType`.
+static auto DestroyStructField(Context& context, SemIR::LocId loc_id,
+                               SemIR::InstId callee_self_param_id,
+                               SemIR::StructTypeField struct_field) -> void {
+  auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
+                                       struct_field.name_id);
+  auto self_destruct_call = BuildSelfDestructCall(
+      context, context.insts().GetLocIdForDesugaring(loc_id), member_id);
+  DiscardExpr(context, self_destruct_call);
+}
+
 // Returns the body for `SubobjectDestroy.Op`.
 //
 // TODO: This is a placeholder still not actually destroying things, intended to
@@ -363,18 +376,61 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
 // also means using `self`.
 static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
                                        SemIR::TypeId self_type_id,
-                                       SemIR::InstId self_param_id)
-    -> SemIR::InstBlockId {
+                                       SemIR::InstId self_param_id,
+                                       SemIR::InstBlockId params_id,
+                                       SemIR::InstId decl_id,
+                                       SemIR::FunctionId function_id) -> void {
+  // TODO: should we make a NameRef for `self`?
+  auto params = context.inst_blocks().Get(params_id);
+  CARBON_CHECK(params.size() == 1,
+               "`Core.SubobjectDestroy.Op` should only have `ref self` as its "
+               "parameter");
+
   context.inst_block_stack().Push();
   auto inst = context.types().GetAsInst(self_type_id);
 
+  StartFunctionDefinition(context, decl_id, function_id);
   CARBON_KIND_SWITCH(inst) {
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      auto class_info = context.classes().Get(class_type.class_id);
+      auto access_context = llvm::SaveAndRestore(context.access_context(),
+          context.functions()
+              .Get(context.insts()
+                       .GetAs<SemIR::FunctionDecl>(decl_id)
+                       .function_id)
+              .parent_scope_id);
+
+      auto struct_fields = class_info.GetStructTypeFields(
+          context.sem_ir(), class_type.specific_id);
+      for (auto field : struct_fields) {
+        auto field_defined_in_self_type =
+            SemIR::LookupClassFieldByStructField(
+                context.sem_ir(),
+                context.name_scopes().Get(class_info.scope_id), field)
+                .has_value();
+        if (field_defined_in_self_type) {
+          DestroyStructField(context, loc_id, params[0], field);
+        }
+      }
+      // TODO: Call `base.(Destroy.SelfDestruct)()`.
+      //
+      // This will be added in a separate change (to trunk) so that it's visibly
+      // clear the base component is being destroyed correctly. The TODO doesn't
+      // generate a diagnostic because it will be too disruptive over a short
+      // period of time.
+      break;
+    }
+    case CARBON_KIND(SemIR::StructType struct_type): {
+      auto fields = context.struct_type_fields().Get(struct_type.fields_id);
+      for (auto field : fields) {
+        DestroyStructField(context, loc_id, params[0], field);
+      }
+      break;
+    }
     case SemIR::ArrayType::Kind:
-    case SemIR::ClassType::Kind:
     case SemIR::ConstType::Kind:
     case SemIR::MaybeUnformedType::Kind:
     case SemIR::PartialType::Kind:
-    case SemIR::StructType::Kind:
     case SemIR::TupleType::Kind:
       (void)self_param_id;
       // TODO: Implement destruction of the type.
@@ -383,8 +439,9 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
       CARBON_FATAL("Unexpected type for MakeSubobjectDestroyOpBody: {0}", inst);
   }
 
-  AddInst(context, loc_id, SemIR::Return{});
-  return context.inst_block_stack().Pop();
+  BuildReturnWithNoExpr(context, loc_id);
+  FinishFunctionDefinition(context, function_id);
+  context.inst_block_stack().Pop();
 }
 
 // Returns a manufactured `Destroy.Op` function with the `self` parameter typed
@@ -449,9 +506,9 @@ static auto MakeSubobjectDestroyOpFunction(
         builtin_kind = SemIR::BuiltinFunctionKind::NoOp;
         break;
       case DestroyFormat::NonTrivial: {
-        auto body_id = MakeSubobjectDestroyOpBody(context, loc_id, self_type_id,
-                                                  function.self_param_id);
-        function.body_block_ids.push_back(body_id);
+        MakeSubobjectDestroyOpBody(
+            context, loc_id, self_type_id, function.self_param_id,
+            function.call_params_id, decl_id, function_id);
         break;
       }
       case DestroyFormat::NoDestroy:

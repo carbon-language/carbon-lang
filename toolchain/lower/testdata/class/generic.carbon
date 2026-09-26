@@ -335,6 +335,10 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.861652b2c489f7cc:core.Destroy.Core"(ptr %self) #0 !dbg !155 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc16_3.1.v = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 0, !dbg !157
+// CHECK:STDOUT:   call void @"_CSelfDestruct.48e0adf639fe7af4:core.Destroy.Core"(ptr %.loc16_3.1.v), !dbg !157
+// CHECK:STDOUT:   %.loc16_3.2.w = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 1, !dbg !157
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc16_3.2.w), !dbg !157
 // CHECK:STDOUT:   ret void, !dbg !157
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -348,6 +352,10 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.d012f76a41f764ee:core.Destroy.Core"(ptr %self) #0 !dbg !163 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc16_3.1.v = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 0, !dbg !165
+// CHECK:STDOUT:   call void @"_CSelfDestruct.48e0adf639fe7af4:core.Destroy.Core"(ptr %.loc16_3.1.v), !dbg !165
+// CHECK:STDOUT:   %.loc16_3.2.w = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 1, !dbg !165
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc16_3.2.w), !dbg !165
 // CHECK:STDOUT:   ret void, !dbg !165
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -393,6 +401,10 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.82468d70c8d12e86:core.Destroy.Core"(ptr %self) #0 !dbg !193 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc26_3.1.v = getelementptr inbounds nuw { i1, {} }, ptr %self, i32 0, i32 0, !dbg !195
+// CHECK:STDOUT:   call void @"_CSelfDestruct.48e0adf639fe7af4:core.Destroy.Core"(ptr %.loc26_3.1.v), !dbg !195
+// CHECK:STDOUT:   %.loc26_3.2.w = getelementptr inbounds nuw { i1, {} }, ptr %self, i32 0, i32 1, !dbg !195
+// CHECK:STDOUT:   call void @"_CSelfDestruct.61ea2aba74ab3bf1:core.Destroy.Core"(ptr %.loc26_3.2.w), !dbg !195
 // CHECK:STDOUT:   ret void, !dbg !195
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -406,6 +418,10 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.0477b985a5aa27cc:core.Destroy.Core"(ptr %self) #0 !dbg !201 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc26_3.1.v = getelementptr inbounds nuw { i1, {} }, ptr %self, i32 0, i32 0, !dbg !203
+// CHECK:STDOUT:   call void @"_CSelfDestruct.48e0adf639fe7af4:core.Destroy.Core"(ptr %.loc26_3.1.v), !dbg !203
+// CHECK:STDOUT:   %.loc26_3.2.w = getelementptr inbounds nuw { i1, {} }, ptr %self, i32 0, i32 1, !dbg !203
+// CHECK:STDOUT:   call void @"_CSelfDestruct.61ea2aba74ab3bf1:core.Destroy.Core"(ptr %.loc26_3.2.w), !dbg !203
 // CHECK:STDOUT:   ret void, !dbg !203
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -448,6 +464,10 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.1ada7ed46fb16378:core.Destroy.Core"(ptr %self) #0 !dbg !226 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc31_3.1.v = getelementptr inbounds nuw { i1, { i32, i32, i32 } }, ptr %self, i32 0, i32 0, !dbg !228
+// CHECK:STDOUT:   call void @"_CSelfDestruct.48e0adf639fe7af4:core.Destroy.Core"(ptr %.loc31_3.1.v), !dbg !228
+// CHECK:STDOUT:   %.loc31_3.2.w = getelementptr inbounds nuw { i1, { i32, i32, i32 } }, ptr %self, i32 0, i32 1, !dbg !228
+// CHECK:STDOUT:   call void @"_CSelfDestruct.555b1314256372b8:core.Destroy.Core"(ptr %.loc31_3.2.w), !dbg !228
 // CHECK:STDOUT:   ret void, !dbg !228
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -461,6 +481,10 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.3cffcf67f1271f67:core.Destroy.Core"(ptr %self) #0 !dbg !234 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc31_3.1.v = getelementptr inbounds nuw { i1, { i32, i32, i32 } }, ptr %self, i32 0, i32 0, !dbg !236
+// CHECK:STDOUT:   call void @"_CSelfDestruct.48e0adf639fe7af4:core.Destroy.Core"(ptr %.loc31_3.1.v), !dbg !236
+// CHECK:STDOUT:   %.loc31_3.2.w = getelementptr inbounds nuw { i1, { i32, i32, i32 } }, ptr %self, i32 0, i32 1, !dbg !236
+// CHECK:STDOUT:   call void @"_CSelfDestruct.555b1314256372b8:core.Destroy.Core"(ptr %.loc31_3.2.w), !dbg !236
 // CHECK:STDOUT:   ret void, !dbg !236
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
