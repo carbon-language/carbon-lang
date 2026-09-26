@@ -26,22 +26,6 @@ auto HandleParseNode(Context& /*context*/, Parse::IndexExprStartId /*node_id*/)
   return true;
 }
 
-// Performs an index with base expression `operand_inst_id` and
-// `operand_type_id` for types that are not an array. This checks if
-// the base expression implements the `IndexWith` interface; if so, uses the
-// `At` associative method, otherwise prints a diagnostic.
-static auto PerformIndexWith(Context& context, Parse::NodeId node_id,
-                             SemIR::InstId operand_inst_id,
-                             SemIR::InstId index_inst_id) -> SemIR::InstId {
-  SemIR::InstId args[] = {context.types().GetTypeInstId(
-      context.insts().Get(index_inst_id).type_id())};
-  Operator op{.interface_name = CoreIdentifier::IndexWith,
-              .interface_args_ref = args,
-              .op_name = CoreIdentifier::At};
-  return BuildBinaryOperator(context, node_id, op, operand_inst_id,
-                             index_inst_id);
-}
-
 auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
   auto index_inst_id = context.node_stack().PopExpr();
   auto operand_inst_id = context.node_stack().PopExpr();
