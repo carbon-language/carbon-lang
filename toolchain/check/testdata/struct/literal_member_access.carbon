@@ -69,6 +69,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc18_26.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc18_26.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.267: %pattern_type.62c = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.ef2: %pattern_type.62c = wrapper_binding_pattern self, %self.param_patt.267 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc18_26.3 [concrete]
@@ -229,6 +231,15 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc18_26.3(%self.param: ref %struct_type.x.y.z) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc18_26.1: ref %i32 = struct_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc18_26.1: <bound method> = bound_method %.loc18_26.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc18_26.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc18_26.1(%.loc18_26.1)
+// CHECK:STDOUT:   %.loc18_26.2: ref %i32 = struct_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc18_26.2: <bound method> = bound_method %.loc18_26.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc18_26.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc18_26.2(%.loc18_26.2)
+// CHECK:STDOUT:   %.loc18_26.3: ref %i32 = struct_access %self.param, element2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc18_26.3: <bound method> = bound_method %.loc18_26.3, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc18_26.3: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc18_26.3(%.loc18_26.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

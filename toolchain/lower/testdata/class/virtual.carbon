@@ -335,6 +335,10 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.f7b08e0f33b30342:core.Destroy.Core"(ptr %self) #0 !dbg !71 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc12_3.1.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %self, i32 0, i32 0, !dbg !73
+// CHECK:STDOUT:   call void @"_CSelfDestruct.454fecbcedcd86e1:core.Destroy.Core"(ptr %.loc12_3.1.vptr), !dbg !73
+// CHECK:STDOUT:   %.loc12_3.2.base = getelementptr inbounds nuw { ptr, {} }, ptr %self, i32 0, i32 1, !dbg !73
+// CHECK:STDOUT:   call void @"_CSelfDestruct.bf085e1f873e33df:core.Destroy.Core"(ptr %.loc12_3.2.base), !dbg !73
 // CHECK:STDOUT:   ret void, !dbg !73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -361,6 +365,8 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.3c3534e993db7939:core.Destroy.Core"(ptr %self) #0 !dbg !87 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc12.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %self, i32 0, i32 0, !dbg !89
+// CHECK:STDOUT:   call void @"_CSelfDestruct.4487e305711510e9:core.Destroy.Core"(ptr %.loc12.base), !dbg !89
 // CHECK:STDOUT:   ret void, !dbg !89
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -657,6 +663,10 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.fd9d4a98e93fc879:core.Destroy.Core"(ptr %self) #0 !dbg !183 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc13_3.1.vptr = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 0, !dbg !185
+// CHECK:STDOUT:   call void @"_CSelfDestruct.454fecbcedcd86e1:core.Destroy.Core"(ptr %.loc13_3.1.vptr), !dbg !185
+// CHECK:STDOUT:   %.loc13_3.2.m = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 1, !dbg !185
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc13_3.2.m), !dbg !185
 // CHECK:STDOUT:   ret void, !dbg !185
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -788,6 +798,8 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.95528a86e1127e2d:core.Destroy.Core"(ptr %self) #0 !dbg !211 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc13.vptr = getelementptr inbounds nuw { ptr }, ptr %self, i32 0, i32 0, !dbg !213
+// CHECK:STDOUT:   call void @"_CSelfDestruct.454fecbcedcd86e1:core.Destroy.Core"(ptr %.loc13.vptr), !dbg !213
 // CHECK:STDOUT:   ret void, !dbg !213
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -814,6 +826,8 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.caed8a96bf328d09:core.Destroy.Core"(ptr %self) #0 !dbg !227 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc13.base = getelementptr inbounds nuw { { ptr } }, ptr %self, i32 0, i32 0, !dbg !229
+// CHECK:STDOUT:   call void @"_CSelfDestruct.294df737cd074d60:core.Destroy.Core"(ptr %.loc13.base), !dbg !229
 // CHECK:STDOUT:   ret void, !dbg !229
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -986,6 +1000,8 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.95528a86e1127e2d:core.Destroy.Core"(ptr %self) #1 !dbg !269 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc14.vptr = getelementptr inbounds nuw { ptr }, ptr %self, i32 0, i32 0, !dbg !271
+// CHECK:STDOUT:   call void @"_CSelfDestruct.454fecbcedcd86e1:core.Destroy.Core"(ptr %.loc14.vptr), !dbg !271
 // CHECK:STDOUT:   ret void, !dbg !271
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1012,6 +1028,8 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.caed8a96bf328d09:core.Destroy.Core"(ptr %self) #1 !dbg !285 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc14.base = getelementptr inbounds nuw { { ptr } }, ptr %self, i32 0, i32 0, !dbg !287
+// CHECK:STDOUT:   call void @"_CSelfDestruct.294df737cd074d60:core.Destroy.Core"(ptr %.loc14.base), !dbg !287
 // CHECK:STDOUT:   ret void, !dbg !287
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1167,6 +1185,8 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.f2f12ab22a0a6b87:core.Destroy.Core"(ptr %self) #0 !dbg !325 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc17.v = getelementptr inbounds nuw { {} }, ptr %self, i32 0, i32 0, !dbg !327
+// CHECK:STDOUT:   call void @"_CSelfDestruct.13f86630f401913f:core.Destroy.Core"(ptr %.loc17.v), !dbg !327
 // CHECK:STDOUT:   ret void, !dbg !327
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1199,6 +1219,8 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.95528a86e1127e2d:core.Destroy.Core"(ptr %self) #0 !dbg !345 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc17.vptr = getelementptr inbounds nuw { ptr }, ptr %self, i32 0, i32 0, !dbg !347
+// CHECK:STDOUT:   call void @"_CSelfDestruct.454fecbcedcd86e1:core.Destroy.Core"(ptr %.loc17.vptr), !dbg !347
 // CHECK:STDOUT:   ret void, !dbg !347
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1375,6 +1397,8 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.95528a86e1127e2d:core.Destroy.Core"(ptr %self) #0 !dbg !393 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc15.vptr = getelementptr inbounds nuw { ptr }, ptr %self, i32 0, i32 0, !dbg !395
+// CHECK:STDOUT:   call void @"_CSelfDestruct.454fecbcedcd86e1:core.Destroy.Core"(ptr %.loc15.vptr), !dbg !395
 // CHECK:STDOUT:   ret void, !dbg !395
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1401,6 +1425,8 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.2f190654c863951f:core.Destroy.Core"(ptr %self) #0 !dbg !409 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc15.base = getelementptr inbounds nuw { { ptr } }, ptr %self, i32 0, i32 0, !dbg !411
+// CHECK:STDOUT:   call void @"_CSelfDestruct.5b23b4f14feb87e1:core.Destroy.Core"(ptr %.loc15.base), !dbg !411
 // CHECK:STDOUT:   ret void, !dbg !411
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1594,6 +1620,8 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.95528a86e1127e2d:core.Destroy.Core"(ptr %self) #0 !dbg !487 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc23.vptr = getelementptr inbounds nuw { ptr }, ptr %self, i32 0, i32 0, !dbg !489
+// CHECK:STDOUT:   call void @"_CSelfDestruct.454fecbcedcd86e1:core.Destroy.Core"(ptr %.loc23.vptr), !dbg !489
 // CHECK:STDOUT:   ret void, !dbg !489
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1620,6 +1648,8 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.caed8a96bf328d09:core.Destroy.Core"(ptr %self) #0 !dbg !503 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc23.base = getelementptr inbounds nuw { { ptr } }, ptr %self, i32 0, i32 0, !dbg !505
+// CHECK:STDOUT:   call void @"_CSelfDestruct.294df737cd074d60:core.Destroy.Core"(ptr %.loc23.base), !dbg !505
 // CHECK:STDOUT:   ret void, !dbg !505
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
