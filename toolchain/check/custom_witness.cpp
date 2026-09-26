@@ -393,13 +393,12 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
   CARBON_KIND_SWITCH(inst) {
     case CARBON_KIND(SemIR::ClassType class_type): {
       auto class_info = context.classes().Get(class_type.class_id);
-      auto access_context = llvm::SaveAndRestore(context.access_context());
-      context.access_context() =
+      auto access_context = llvm::SaveAndRestore(context.access_context(),
           context.functions()
               .Get(context.insts()
                        .GetAs<SemIR::FunctionDecl>(decl_id)
                        .function_id)
-              .parent_scope_id;
+              .parent_scope_id);
 
       auto struct_fields = class_info.GetStructTypeFields(
           context.sem_ir(), class_type.specific_id);
