@@ -116,14 +116,6 @@ class AbsoluteInstId : public InstId {
   using InstId::InstId;
 };
 
-// The ID of a default value.
-class DefaultValueId : public IdBase<DefaultValueId> {
- public:
-  static constexpr llvm::StringLiteral Label = "default_value";
-
-  using IdBase::IdBase;
-};
-
 // An ID of an instruction that is used as the destination of an initializing
 // expression. This should only be used as the type of a field within a typed
 // instruction class.
@@ -529,7 +521,7 @@ struct BoolValue : public IdBase<BoolValue> {
   static constexpr auto From(bool b) -> BoolValue { return b ? True : False; }
 
   // Returns the `bool` corresponding to this `BoolValue`.
-  constexpr auto ToBool() -> bool {
+  constexpr auto ToBool() const -> bool {
     CARBON_CHECK(*this == False || *this == True, "Invalid bool value {0}",
                  index);
     return *this != False;

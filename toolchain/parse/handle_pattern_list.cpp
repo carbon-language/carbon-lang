@@ -190,7 +190,6 @@ auto HandlePatternListElementCheckForDefaultValue(Context& context) -> void {
     return;
   }
 
-  // No underscore, we parse this as a normal expression.
   context.PushStateForExpr(state.ambient_precedence);
 }
 

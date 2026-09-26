@@ -44,9 +44,6 @@ struct NameComponent {
 
   // The pattern block.
   SemIR::InstBlockId pattern_block_id;
-
-  // The `UnspecifiedValue` insts from the parameter default values, if any.
-  SemIR::InstBlockId unspecified_values_block_id;
 };
 
 // Pops a name component from the node stack (and pattern block stack, if it has

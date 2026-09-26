@@ -123,7 +123,6 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           case SemIR::NamespaceType::Kind:
           case SemIR::RequireSpecificDefinitionType::Kind:
           case SemIR::SpecificFunctionType::Kind:
-          case SemIR::UnspecifiedValueType::Kind:
           case SemIR::VtableType::Kind:
           case SemIR::WitnessType::Kind: {
             os << self_inst.kind().ir_name();

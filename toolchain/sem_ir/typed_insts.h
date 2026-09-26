@@ -723,12 +723,12 @@ struct DefaultValuePattern {
       InstKind::DefaultValuePattern.Define<Parse::DefaultValuePatternId>(
           {.ir_name = "default_value_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::Always,
+           .constant_kind = InstConstantKind::WheneverPossible,
            .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
-  DefaultValueId default_value_id;
+  InstId value_id;
 };
 
 // The `*` dereference operator, as in `*pointer`.
@@ -1254,6 +1254,33 @@ struct InitForm {
   TypeId type_id;
   // The type component of the form.
   TypeInstId type_component_inst_id;
+};
+
+// An action that performs initialization of a given target.
+struct InitializeAction {
+  static constexpr auto Kind = InstKind::InitializeAction.Define<Parse::NodeId>(
+      {.ir_name = "initialize_action",
+       .expr_category = ActionExprCategory(ExprCategory::Dependent),
+       .constant_kind = InstConstantKind::MultiInstAction,
+       .action_needs_specific_id = true,
+       .is_lowered = false});
+
+  struct Target {
+    // The target type for the initialization.
+    TypeInstId target_type_inst_id;
+    // The storage for the initialization.
+    MetaInstId storage_id;
+    // Whether this is required to be an in-place initialization.
+    BoolValue in_place;
+  };
+
+  // A tuple of InstTypes: one for the finished initialization expression, then
+  // one for each of the storage arguments in the source expression.
+  TypeId type_id;
+  // The source initializing expression.
+  MetaInstId init_id;
+  // Information about the target of the initialization.
+  BundleId<Target> target_id;
 };
 
 // Consumes the repr-initializing expression `src_id` and forms an in-place
@@ -2347,21 +2374,6 @@ struct UninitializedValue {
           {.ir_name = "uninitialized_value",
            .constant_kind = InstConstantKind::Always});
 
-  TypeId type_id;
-};
-
-using UnspecifiedValueType =
-    SingletonTypeInst<InstKind::UnspecifiedValueType, "<unspecified_value>">;
-
-// A placeholder value for default values in function definitions.
-struct UnspecifiedValue {
-  static constexpr auto Kind =
-      InstKind::UnspecifiedValue.Define<Parse::DefaultValueUnspecifiedId>(
-          {.ir_name = "unspecified_value",
-           .constant_kind = InstConstantKind::Always,
-           .is_lowered = false});
-  // Always the type of the builtin `UnspecifiedValueType` singleton
-  // instruction.
   TypeId type_id;
 };
 

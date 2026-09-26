@@ -4,6 +4,7 @@
 
 #include "toolchain/language_server/context.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -78,11 +79,25 @@ class DiagnosticConsumer : public Diagnostics::Consumer {
  private:
   // Returns the LSP range for a diagnostic. Note that Carbon uses 1-based
   // numbers while LSP uses 0-based.
+  //
+  // A location may have no line number (for example, a diagnostic about the
+  // file as a whole) or no column number. LSP has no way to express either, and
+  // clients reject negative positions, so point at the start of the file or
+  // line instead.
   auto GetRange(const Diagnostics::Loc& loc) -> clang::clangd::Range {
-    return {.start = {.line = loc.line_number - 1,
-                      .character = loc.column_number - 1},
-            .end = {.line = loc.line_number - 1,
-                    .character = loc.column_number + loc.length - 1}};
+    if (loc.line_number <= 0) {
+      return {.start = {.line = 0, .character = 0},
+              .end = {.line = 0, .character = 0}};
+    }
+    int line = loc.line_number - 1;
+    if (loc.column_number <= 0) {
+      return {.start = {.line = line, .character = 0},
+              .end = {.line = line, .character = 0}};
+    }
+    int start_character = loc.column_number - 1;
+    return {.start = {.line = line, .character = start_character},
+            .end = {.line = line,
+                    .character = start_character + std::max(loc.length, 0)}};
   }
 
   // Converts a diagnostic level to an LSP severity.

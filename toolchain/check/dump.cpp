@@ -71,12 +71,6 @@ LLVM_DUMP_METHOD static auto Dump(
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,
-                                  SemIR::DefaultValueId value_id)
-    -> std::string {
-  return SemIR::Dump(context.sem_ir(), value_id);
-}
-
-LLVM_DUMP_METHOD static auto Dump(const Context& context,
                                   SemIR::EntityNameId entity_name_id)
     -> std::string {
   return SemIR::Dump(context.sem_ir(), entity_name_id);

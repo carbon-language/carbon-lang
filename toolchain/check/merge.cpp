@@ -339,28 +339,15 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         auto prev_default_value_pattern =
             prev_param_pattern.As<SemIR::DefaultValuePattern>();
 
-        // If the new pattern specified a default value, it must match the
-        // previously declared default value.
-        auto& new_default_value = context.default_values().Get(
-            new_default_value_pattern.default_value_id);
-        const auto& prev_default_value = context.default_values().Get(
-            prev_default_value_pattern.default_value_id);
-        if (!new_default_value.is_unspecified) {
-          // We require first owning declaration to always specify a default
-          // value.
-          CARBON_CHECK(!prev_default_value.is_unspecified);
-          auto new_constant_id =
-              context.constant_values().Get(new_default_value.value_id);
-          auto prev_constant_id =
-              context.constant_values().Get(prev_default_value.value_id);
-          if (new_constant_id != prev_constant_id) {
-            emit_general_diagnostic();
-            return false;
-          }
-        } else {
-          // If the new default value was left unspecified, we copy the previous
-          // processed default value into the new default value.
-          new_default_value.value_id = prev_default_value.value_id;
+        // The new pattern default value must match the previously declared
+        // default value.
+        auto new_constant_id =
+            context.constant_values().Get(new_default_value_pattern.value_id);
+        auto prev_constant_id =
+            context.constant_values().Get(prev_default_value_pattern.value_id);
+        if (new_constant_id != prev_constant_id) {
+          emit_general_diagnostic();
+          return false;
         }
 
         pattern_stack.push_back(
@@ -541,14 +528,6 @@ static auto CheckRedeclParamSyntax(Context& context,
           new_node_kind == Parse::NodeKind::SelfTypeNameExpr &&
           context.parse_tree().node_kind(new_iter[1]) ==
               Parse::NodeKind::ImplTypeAs) {
-        ++new_iter;
-        continue;
-      }
-      // We don't require default values to be repeated on re-declaration,
-      // so skip over any comparisons to unspecified default values.
-      if (prev_node_kind == Parse::NodeKind::DefaultValueUnspecified ||
-          new_node_kind == Parse::NodeKind::DefaultValueUnspecified) {
-        ++prev_iter;
         ++new_iter;
         continue;
       }
