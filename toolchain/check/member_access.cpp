@@ -113,13 +113,20 @@ auto GetHighestAllowedAccess(Context& context,
               name_scope_const_id)) {
     auto class_info = context.classes().Get(class_type->class_id);
 
+    // TODO: find a way to more efficiently identify that we're in a custom
+    // witness.
+    bool is_custom_witness = false;
+
     // Check if private access is allowed.
     while (access_context_scope_id.has_value()) {
-      if (class_info.scope_id == access_context_scope_id) {
+      const auto& scope = context.name_scopes().Get(access_context_scope_id);
+      if (class_info.scope_id == access_context_scope_id ||
+          (is_custom_witness && scope.name_id() == SemIR::NameId::Core)) {
         return SemIR::AccessKind::Private;
       }
 
-      const auto& scope = context.name_scopes().Get(access_context_scope_id);
+      is_custom_witness |= context.insts().Get(scope.inst_id()).kind() ==
+                           SemIR::InterfaceWithSelfDecl::Kind;
       access_context_scope_id = scope.parent_scope_id();
     }
 
