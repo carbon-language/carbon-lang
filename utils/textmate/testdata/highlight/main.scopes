@@ -1,0 +1,218 @@
+# Golden scopes for the TextMate grammar. Regenerate with:
+#   ./utils/textmate/golden_test.py --update
+#
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+   1 | // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-79 ' Part of the Carbon L...' comment.line.double-slash.carbon
+   2 | // Exceptions. See /LICENSE for license information.
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-52 ' Exceptions. See /LIC...' comment.line.double-slash.carbon
+   3 | // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-58 ' SPDX-License-Identif...' comment.line.double-slash.carbon
+   5 | // More single line comments
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-28 ' More single line com...' comment.line.double-slash.carbon
+   7 | package Carbon;
+     |       0-7 'package'                  storage.type.carbon
+     |      8-14 'Carbon'                   entity.name.namespace.carbon
+     |     14-15 ';'                        punctuation.terminator.carbon
+   9 | interface HasValueParam(T: type, V: T) {
+     |       0-9 'interface'                storage.type.carbon
+     |     10-23 'HasValueParam'            entity.name.type.carbon
+     |     23-24 '('                        -
+     |     24-25 'T'                        entity.name.type.carbon
+     |     25-26 ':'                        keyword.operator.carbon
+     |     27-31 'type'                     support.type.builtin.carbon
+     |     31-32 ','                        punctuation.separator.carbon
+     |     33-34 'V'                        entity.name.type.carbon
+     |     34-35 ':'                        keyword.operator.carbon
+     |     36-37 'T'                        entity.name.type.carbon
+     |     37-41 ') {'                      -
+  10 |   fn Go(self) -> T;
+     |       2-4 'fn'                       storage.type.carbon
+     |       5-7 'Go'                       entity.name.function.carbon
+     |       7-8 '('                        -
+     |      8-12 'self'                     variable.language.carbon
+     |     12-14 ') '                       -
+     |     14-16 '->'                       keyword.operator.carbon
+     |     17-18 'T'                        entity.name.type.carbon
+     |     18-19 ';'                        punctuation.terminator.carbon
+  11 | }
+     |       0-2 '}'                        -
+  13 | impl () as HasValueParam(i32, 5) {
+     |       0-4 'impl'                     storage.type.carbon
+     |       4-8 ' () '                     -
+     |      8-10 'as'                       keyword.control.carbon
+     |     11-24 'HasValueParam'            entity.name.function.carbon
+     |     24-25 '('                        -
+     |     25-28 'i32'                      support.type.builtin.carbon
+     |     28-29 ','                        punctuation.separator.carbon
+     |     30-31 '5'                        constant.numeric.decimal.carbon
+     |     31-35 ') {'                      -
+  14 |   fn Go(self) -> i32 { return 42; }
+     |       2-4 'fn'                       storage.type.carbon
+     |       5-7 'Go'                       entity.name.function.carbon
+     |       7-8 '('                        -
+     |      8-12 'self'                     variable.language.carbon
+     |     12-14 ') '                       -
+     |     14-16 '->'                       keyword.operator.carbon
+     |     17-20 'i32'                      support.type.builtin.carbon
+     |     20-23 ' { '                      -
+     |     23-29 'return'                   keyword.control.carbon
+     |     30-32 '42'                       constant.numeric.decimal.carbon
+     |     32-33 ';'                        punctuation.terminator.carbon
+     |     33-36 ' }'                       -
+  15 | }
+     |       0-2 '}'                        -
+  17 | class Point {
+     |       0-5 'class'                    storage.type.carbon
+     |      6-11 'Point'                    entity.name.type.carbon
+     |     11-14 ' {'                       -
+  18 |   fn Origin() -> Self {
+     |       2-4 'fn'                       storage.type.carbon
+     |      5-11 'Origin'                   entity.name.function.carbon
+     |     11-14 '() '                      -
+     |     14-16 '->'                       keyword.operator.carbon
+     |     17-21 'Self'                     variable.language.carbon
+     |     21-24 ' {'                       -
+  19 |     return {.x = 0, .y = 0};
+     |      4-10 'return'                   keyword.control.carbon
+     |     10-12 ' {'                       -
+     |     12-13 '.'                        keyword.operator.carbon
+     |     13-14 'x'                        variable.other.carbon
+     |     15-16 '='                        keyword.operator.carbon
+     |     17-18 '0'                        constant.numeric.decimal.carbon
+     |     18-19 ','                        punctuation.separator.carbon
+     |     20-21 '.'                        keyword.operator.carbon
+     |     21-22 'y'                        variable.other.carbon
+     |     23-24 '='                        keyword.operator.carbon
+     |     25-26 '0'                        constant.numeric.decimal.carbon
+     |     26-27 '}'                        -
+     |     27-28 ';'                        punctuation.terminator.carbon
+  20 |   }
+     |       0-4 '  }'                      -
+  22 |   var x: i32;
+     |       2-5 'var'                      storage.type.carbon
+     |       6-7 'x'                        variable.other.carbon
+     |       7-8 ':'                        keyword.operator.carbon
+     |      9-12 'i32'                      support.type.builtin.carbon
+     |     12-13 ';'                        punctuation.terminator.carbon
+  23 |   var y: i32;
+     |       2-5 'var'                      storage.type.carbon
+     |       6-7 'y'                        variable.other.carbon
+     |       7-8 ':'                        keyword.operator.carbon
+     |      9-12 'i32'                      support.type.builtin.carbon
+     |     12-13 ';'                        punctuation.terminator.carbon
+  24 | }
+     |       0-2 '}'                        -
+  26 | fn Procedure() -> i32 {
+     |       0-2 'fn'                       storage.type.carbon
+     |      3-12 'Procedure'                entity.name.function.carbon
+     |     12-15 '() '                      -
+     |     15-17 '->'                       keyword.operator.carbon
+     |     18-21 'i32'                      support.type.builtin.carbon
+     |     21-24 ' {'                       -
+  27 |   returned var zoop: i32 = 0;
+     |      2-10 'returned'                 keyword.control.carbon
+     |     11-14 'var'                      storage.type.carbon
+     |     15-19 'zoop'                     variable.other.carbon
+     |     19-20 ':'                        keyword.operator.carbon
+     |     21-24 'i32'                      support.type.builtin.carbon
+     |     25-26 '='                        keyword.operator.carbon
+     |     27-28 '0'                        constant.numeric.decimal.carbon
+     |     28-29 ';'                        punctuation.terminator.carbon
+  28 |   while (DoSomeJob()) {
+     |       2-7 'while'                    keyword.control.carbon
+     |       7-9 ' ('                       -
+     |      9-18 'DoSomeJob'                entity.name.function.carbon
+     |     18-24 '()) {'                    -
+  29 |     zoop += 1;
+     |       4-8 'zoop'                     variable.other.carbon
+     |      9-11 '+='                       keyword.operator.carbon
+     |     12-13 '1'                        constant.numeric.decimal.carbon
+     |     13-14 ';'                        punctuation.terminator.carbon
+  30 |   }
+     |       0-4 '  }'                      -
+  32 |   return var;
+     |       2-8 'return'                   keyword.control.carbon
+     |      9-12 'var'                      storage.type.carbon
+     |     12-13 ';'                        punctuation.terminator.carbon
+  33 | }
+     |       0-2 '}'                        -
+  35 | fn Main() -> i32 {
+     |       0-2 'fn'                       storage.type.carbon
+     |       3-7 'Main'                     entity.name.function.carbon
+     |      7-10 '() '                      -
+     |     10-12 '->'                       keyword.operator.carbon
+     |     13-16 'i32'                      support.type.builtin.carbon
+     |     16-19 ' {'                       -
+  36 |   let str = "Hello world";
+     |       2-5 'let'                      storage.type.carbon
+     |       6-9 'str'                      support.type.builtin.carbon
+     |     10-11 '='                        keyword.operator.carbon
+     |     12-13 '"'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |     13-24 'Hello world'              string.quoted.double.carbon
+     |     24-25 '"'                        string.quoted.double.carbon punctuation.definition.string.end.carbon
+     |     25-26 ';'                        punctuation.terminator.carbon
+  37 |   let hex = 0xABCDEF1234567890;
+     |       2-5 'let'                      storage.type.carbon
+     |       6-9 'hex'                      variable.other.carbon
+     |     10-11 '='                        keyword.operator.carbon
+     |     12-30 '0xABCDEF1234567890'       constant.numeric.hex.carbon
+     |     30-31 ';'                        punctuation.terminator.carbon
+  38 |   let bin = 0b0000111001010010;
+     |       2-5 'let'                      storage.type.carbon
+     |       6-9 'bin'                      variable.other.carbon
+     |     10-11 '='                        keyword.operator.carbon
+     |     12-30 '0b0000111001010010'       constant.numeric.binary.carbon
+     |     30-31 ';'                        punctuation.terminator.carbon
+  39 |   let dec = 123456789012345678;
+     |       2-5 'let'                      storage.type.carbon
+     |       6-9 'dec'                      variable.other.carbon
+     |     10-11 '='                        keyword.operator.carbon
+     |     12-30 '123456789012345678'       constant.numeric.decimal.carbon
+     |     30-31 ';'                        punctuation.terminator.carbon
+  41 |   let big: Core.Int(1024) = 1234;
+     |       2-5 'let'                      storage.type.carbon
+     |       6-9 'big'                      variable.other.carbon
+     |      9-10 ':'                        keyword.operator.carbon
+     |     11-15 'Core'                     support.class.carbon
+     |     15-16 '.'                        keyword.operator.carbon
+     |     16-19 'Int'                      entity.name.function.carbon
+     |     19-20 '('                        -
+     |     20-24 '1024'                     constant.numeric.decimal.carbon
+     |     24-26 ') '                       -
+     |     26-27 '='                        keyword.operator.carbon
+     |     28-32 '1234'                     constant.numeric.decimal.carbon
+     |     32-33 ';'                        punctuation.terminator.carbon
+  42 |   let aaa: auto = "Carbon";
+     |       2-5 'let'                      storage.type.carbon
+     |       6-9 'aaa'                      variable.other.carbon
+     |      9-10 ':'                        keyword.operator.carbon
+     |     11-15 'auto'                     support.type.builtin.carbon
+     |     16-17 '='                        keyword.operator.carbon
+     |     18-19 '"'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |     19-25 'Carbon'                   string.quoted.double.carbon
+     |     25-26 '"'                        string.quoted.double.carbon punctuation.definition.string.end.carbon
+     |     26-27 ';'                        punctuation.terminator.carbon
+  43 |   let view: str = "Carbon";
+     |       2-5 'let'                      storage.type.carbon
+     |      6-10 'view'                     variable.other.carbon
+     |     10-11 ':'                        keyword.operator.carbon
+     |     12-15 'str'                      support.type.builtin.carbon
+     |     16-17 '='                        keyword.operator.carbon
+     |     18-19 '"'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |     19-25 'Carbon'                   string.quoted.double.carbon
+     |     25-26 '"'                        string.quoted.double.carbon punctuation.definition.string.end.carbon
+     |     26-27 ';'                        punctuation.terminator.carbon
+  45 |   return Procedure();
+     |       2-8 'return'                   keyword.control.carbon
+     |      9-18 'Procedure'                entity.name.function.carbon
+     |     18-20 '()'                       -
+     |     20-21 ';'                        punctuation.terminator.carbon
+  46 | }
+     |       0-2 '}'                        -

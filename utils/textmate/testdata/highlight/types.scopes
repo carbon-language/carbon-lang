@@ -1,0 +1,232 @@
+# Golden scopes for the TextMate grammar. Regenerate with:
+#   ./utils/textmate/golden_test.py --update
+#
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+   1 | // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-79 ' Part of the Carbon L...' comment.line.double-slash.carbon
+   2 | // Exceptions. See /LICENSE for license information.
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-52 ' Exceptions. See /LIC...' comment.line.double-slash.carbon
+   3 | // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-58 ' SPDX-License-Identif...' comment.line.double-slash.carbon
+   5 | class C1;
+     |       0-5 'class'                    storage.type.carbon
+     |       6-8 'C1'                       entity.name.type.carbon
+     |       8-9 ';'                        punctuation.terminator.carbon
+   6 | class C2(T1: type, T2: C1) {}
+     |       0-5 'class'                    storage.type.carbon
+     |       6-8 'C2'                       entity.name.type.carbon
+     |       8-9 '('                        -
+     |      9-11 'T1'                       entity.name.type.carbon
+     |     11-12 ':'                        keyword.operator.carbon
+     |     13-17 'type'                     support.type.builtin.carbon
+     |     17-18 ','                        punctuation.separator.carbon
+     |     19-21 'T2'                       entity.name.type.carbon
+     |     21-22 ':'                        keyword.operator.carbon
+     |     23-25 'C1'                       entity.name.type.carbon
+     |     25-30 ') {}'                     -
+   7 | class C3 {
+     |       0-5 'class'                    storage.type.carbon
+     |       6-8 'C3'                       entity.name.type.carbon
+     |      8-11 ' {'                       -
+   8 |     extend base: C1;
+     |      4-10 'extend'                   storage.modifier.carbon
+     |     11-15 'base'                     storage.type.carbon
+     |     15-16 ':'                        keyword.operator.carbon
+     |     17-19 'C1'                       entity.name.type.carbon
+     |     19-20 ';'                        punctuation.terminator.carbon
+   9 | }
+     |       0-2 '}'                        -
+  10 | class
+     |       0-5 'class'                    storage.type.carbon
+  11 |         (C4(
+     |       0-9 '        ('                -
+     |      9-11 'C4'                       entity.name.function.carbon
+     |     11-13 '('                        -
+  12 |             (T1: type),
+     |      0-13 '            ('            -
+     |     13-15 'T1'                       entity.name.type.carbon
+     |     15-16 ':'                        keyword.operator.carbon
+     |     17-21 'type'                     support.type.builtin.carbon
+     |     21-22 ')'                        -
+     |     22-23 ','                        punctuation.separator.carbon
+  13 |             T2:
+     |     12-14 'T2'                       entity.name.type.carbon
+     |     14-15 ':'                        keyword.operator.carbon
+  14 |                     (A.(B(E, F(G)).C)
+     |      0-21 '                    ('    -
+     |     21-22 'A'                        entity.name.type.carbon
+     |     22-23 '.'                        keyword.operator.carbon
+     |     23-24 '('                        -
+     |     24-25 'B'                        entity.name.function.carbon
+     |     25-26 '('                        -
+     |     26-27 'E'                        entity.name.type.carbon
+     |     27-28 ','                        punctuation.separator.carbon
+     |     29-30 'F'                        entity.name.function.carbon
+     |     30-31 '('                        -
+     |     31-32 'G'                        entity.name.type.carbon
+     |     32-34 '))'                       -
+     |     34-35 '.'                        keyword.operator.carbon
+     |     35-36 'C'                        entity.name.type.carbon
+     |     36-38 ')'                        -
+  15 |                                         .D))) ;
+     |     40-41 '.'                        keyword.operator.carbon
+     |     41-42 'D'                        entity.name.type.carbon
+     |     42-46 '))) '                     -
+     |     46-47 ';'                        punctuation.terminator.carbon
+  17 | class C5 {
+     |       0-5 'class'                    storage.type.carbon
+     |       6-8 'C5'                       entity.name.type.carbon
+     |      8-11 ' {'                       -
+  18 |     impl as I;
+     |       4-8 'impl'                     storage.type.carbon
+     |      9-11 'as'                       keyword.control.carbon
+     |     12-13 'I'                        entity.name.type.carbon
+     |     13-14 ';'                        punctuation.terminator.carbon
+  19 |     extend impl as I;
+     |      4-10 'extend'                   storage.modifier.carbon
+     |     11-15 'impl'                     storage.type.carbon
+     |     16-18 'as'                       keyword.control.carbon
+     |     19-20 'I'                        entity.name.type.carbon
+     |     20-21 ';'                        punctuation.terminator.carbon
+  20 | }
+     |       0-2 '}'                        -
+  22 | alias a1 = C1;
+     |       0-5 'alias'                    storage.type.carbon
+     |       6-8 'a1'                       entity.name.type.carbon
+     |      9-10 '='                        keyword.operator.carbon
+     |     11-13 'C1'                       entity.name.type.carbon
+     |     13-14 ';'                        punctuation.terminator.carbon
+  23 | alias a2 = i32;
+     |       0-5 'alias'                    storage.type.carbon
+     |       6-8 'a2'                       entity.name.type.carbon
+     |      9-10 '='                        keyword.operator.carbon
+     |     11-14 'i32'                      support.type.builtin.carbon
+     |     14-15 ';'                        punctuation.terminator.carbon
+  25 | adapt SomeClass;
+     |       0-5 'adapt'                    storage.type.carbon
+     |      6-15 'SomeClass'                entity.name.type.carbon
+     |     15-16 ';'                        punctuation.terminator.carbon
+  26 | adapt {.a: SomeClass, .b: i32};
+     |       0-5 'adapt'                    storage.type.carbon
+     |       5-7 ' {'                       -
+     |       7-8 '.'                        keyword.operator.carbon
+     |       8-9 'a'                        variable.other.carbon
+     |      9-10 ':'                        keyword.operator.carbon
+     |     11-20 'SomeClass'                entity.name.type.carbon
+     |     20-21 ','                        punctuation.separator.carbon
+     |     22-23 '.'                        keyword.operator.carbon
+     |     23-24 'b'                        variable.other.carbon
+     |     24-25 ':'                        keyword.operator.carbon
+     |     26-29 'i32'                      support.type.builtin.carbon
+     |     29-30 '}'                        -
+     |     30-31 ';'                        punctuation.terminator.carbon
+  27 | adapt i32;
+     |       0-5 'adapt'                    storage.type.carbon
+     |       6-9 'i32'                      support.type.builtin.carbon
+     |      9-10 ';'                        punctuation.terminator.carbon
+  29 | interface I;
+     |       0-9 'interface'                storage.type.carbon
+     |     10-11 'I'                        entity.name.type.carbon
+     |     11-12 ';'                        punctuation.terminator.carbon
+  30 | impl C as (I(A, B, C.(D.E(F, G)).H)) {}
+     |       0-4 'impl'                     storage.type.carbon
+     |       5-6 'C'                        entity.name.type.carbon
+     |       7-9 'as'                       keyword.control.carbon
+     |      9-11 ' ('                       -
+     |     11-12 'I'                        entity.name.function.carbon
+     |     12-13 '('                        -
+     |     13-14 'A'                        entity.name.type.carbon
+     |     14-15 ','                        punctuation.separator.carbon
+     |     16-17 'B'                        entity.name.type.carbon
+     |     17-18 ','                        punctuation.separator.carbon
+     |     19-20 'C'                        entity.name.type.carbon
+     |     20-21 '.'                        keyword.operator.carbon
+     |     21-22 '('                        -
+     |     22-23 'D'                        entity.name.type.carbon
+     |     23-24 '.'                        keyword.operator.carbon
+     |     24-25 'E'                        entity.name.function.carbon
+     |     25-26 '('                        -
+     |     26-27 'F'                        entity.name.type.carbon
+     |     27-28 ','                        punctuation.separator.carbon
+     |     29-30 'G'                        entity.name.type.carbon
+     |     30-32 '))'                       -
+     |     32-33 '.'                        keyword.operator.carbon
+     |     33-34 'H'                        entity.name.type.carbon
+     |     34-40 ')) {}'                    -
+  31 | impl C as I where .A = (B where .Self = {}) {}
+     |       0-4 'impl'                     storage.type.carbon
+     |       5-6 'C'                        entity.name.type.carbon
+     |       7-9 'as'                       keyword.control.carbon
+     |     10-11 'I'                        entity.name.type.carbon
+     |     12-17 'where'                    keyword.control.carbon
+     |     18-19 '.'                        keyword.operator.carbon
+     |     19-20 'A'                        entity.name.type.carbon
+     |     21-22 '='                        keyword.operator.carbon
+     |     22-24 ' ('                       -
+     |     24-25 'B'                        entity.name.type.carbon
+     |     26-31 'where'                    keyword.control.carbon
+     |     32-33 '.'                        keyword.operator.carbon
+     |     33-37 'Self'                     variable.language.carbon
+     |     38-39 '='                        keyword.operator.carbon
+     |     39-47 ' {}) {}'                  -
+  32 | impl C as I where .A = {} and .B = C {}
+     |       0-4 'impl'                     storage.type.carbon
+     |       5-6 'C'                        entity.name.type.carbon
+     |       7-9 'as'                       keyword.control.carbon
+     |     10-11 'I'                        entity.name.type.carbon
+     |     12-17 'where'                    keyword.control.carbon
+     |     18-19 '.'                        keyword.operator.carbon
+     |     19-20 'A'                        entity.name.type.carbon
+     |     21-22 '='                        keyword.operator.carbon
+     |     22-26 ' {} '                     -
+     |     26-29 'and'                      keyword.control.carbon
+     |     30-31 '.'                        keyword.operator.carbon
+     |     31-32 'B'                        entity.name.type.carbon
+     |     33-34 '='                        keyword.operator.carbon
+     |     35-36 'C'                        entity.name.type.carbon
+     |     36-40 ' {}'                      -
+  33 | impl Self as I;
+     |       0-4 'impl'                     storage.type.carbon
+     |       5-9 'Self'                     variable.language.carbon
+     |     10-12 'as'                       keyword.control.carbon
+     |     13-14 'I'                        entity.name.type.carbon
+     |     14-15 ';'                        punctuation.terminator.carbon
+  34 | impl as I;
+     |       0-4 'impl'                     storage.type.carbon
+     |       5-7 'as'                       keyword.control.carbon
+     |       8-9 'I'                        entity.name.type.carbon
+     |      9-10 ';'                        punctuation.terminator.carbon
+  36 | constraint Constraint {
+     |      0-10 'constraint'               storage.type.carbon
+     |     11-21 'Constraint'               entity.name.type.carbon
+     |     21-24 ' {'                       -
+  37 |     require T impls I;
+     |      4-11 'require'                  storage.type.carbon
+     |     12-13 'T'                        entity.name.type.carbon
+     |     14-19 'impls'                    keyword.control.carbon
+     |     20-21 'I'                        entity.name.type.carbon
+     |     21-22 ';'                        punctuation.terminator.carbon
+  38 |     require Self impls I;
+     |      4-11 'require'                  storage.type.carbon
+     |     12-16 'Self'                     variable.language.carbon
+     |     17-22 'impls'                    keyword.control.carbon
+     |     23-24 'I'                        entity.name.type.carbon
+     |     24-25 ';'                        punctuation.terminator.carbon
+  39 |     require impls I;
+     |      4-11 'require'                  storage.type.carbon
+     |     12-17 'impls'                    keyword.control.carbon
+     |     18-19 'I'                        entity.name.type.carbon
+     |     19-20 ';'                        punctuation.terminator.carbon
+  40 |     extern require impls I;
+     |      4-10 'extern'                   storage.modifier.carbon
+     |     11-18 'require'                  storage.type.carbon
+     |     19-24 'impls'                    keyword.control.carbon
+     |     25-26 'I'                        entity.name.type.carbon
+     |     26-27 ';'                        punctuation.terminator.carbon
+  41 | }
+     |       0-2 '}'                        -

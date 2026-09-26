@@ -1,0 +1,194 @@
+# Golden scopes for the TextMate grammar. Regenerate with:
+#   ./utils/textmate/golden_test.py --update
+#
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+   1 | // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-79 ' Part of the Carbon L...' comment.line.double-slash.carbon
+   2 | // Exceptions. See /LICENSE for license information.
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-52 ' Exceptions. See /LIC...' comment.line.double-slash.carbon
+   3 | // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-58 ' SPDX-License-Identif...' comment.line.double-slash.carbon
+   5 | // --- operators
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-16 ' --- operators'           comment.line.double-slash.carbon
+   7 | >>= <=> <<= ->? &= ^= := :? == => != >= >> <= <> << <- -= -> -- %= |= += ++ /=
+     |       0-3 '>>='                      keyword.operator.carbon
+     |       4-7 '<=>'                      keyword.operator.carbon
+     |      8-11 '<<='                      keyword.operator.carbon
+     |     12-15 '->?'                      keyword.operator.carbon
+     |     16-18 '&='                       keyword.operator.carbon
+     |     19-21 '^='                       keyword.operator.carbon
+     |     22-24 ':='                       keyword.operator.carbon
+     |     25-27 ':?'                       keyword.operator.carbon
+     |     28-30 '=='                       keyword.operator.carbon
+     |     31-33 '=>'                       keyword.operator.carbon
+     |     34-36 '!='                       keyword.operator.carbon
+     |     37-39 '>='                       keyword.operator.carbon
+     |     40-42 '>>'                       keyword.operator.carbon
+     |     43-45 '<='                       keyword.operator.carbon
+     |     46-48 '<>'                       keyword.operator.carbon
+     |     49-51 '<<'                       keyword.operator.carbon
+     |     52-54 '<-'                       keyword.operator.carbon
+     |     55-57 '-='                       keyword.operator.carbon
+     |     58-60 '->'                       keyword.operator.carbon
+     |     61-63 '--'                       keyword.operator.carbon
+     |     64-66 '%='                       keyword.operator.carbon
+     |     67-69 '|='                       keyword.operator.carbon
+     |     70-72 '+='                       keyword.operator.carbon
+     |     73-75 '++'                       keyword.operator.carbon
+     |     76-78 '/='                       keyword.operator.carbon
+   8 | *= ~= & @ ^ : = ! > < - % . | + ? / * ~ \
+     |       0-2 '*='                       keyword.operator.carbon
+     |       3-5 '~='                       keyword.operator.carbon
+     |       6-7 '&'                        keyword.operator.carbon
+     |       8-9 '@'                        keyword.operator.carbon
+     |     10-11 '^'                        keyword.operator.carbon
+     |     12-13 ':'                        keyword.operator.carbon
+     |     14-15 '='                        keyword.operator.carbon
+     |     16-17 '!'                        keyword.operator.carbon
+     |     18-19 '>'                        keyword.operator.carbon
+     |     20-21 '<'                        keyword.operator.carbon
+     |     22-23 '-'                        keyword.operator.carbon
+     |     24-25 '%'                        keyword.operator.carbon
+     |     26-27 '.'                        keyword.operator.carbon
+     |     28-29 '|'                        keyword.operator.carbon
+     |     30-31 '+'                        keyword.operator.carbon
+     |     32-33 '?'                        keyword.operator.carbon
+     |     34-35 '/'                        keyword.operator.carbon
+     |     36-37 '*'                        keyword.operator.carbon
+     |     38-39 '~'                        keyword.operator.carbon
+     |     40-41 '\\'                       keyword.operator.carbon
+   9 | and as impls in like not or where
+     |       0-3 'and'                      keyword.control.carbon
+     |       4-6 'as'                       keyword.control.carbon
+     |      7-12 'impls'                    keyword.control.carbon
+     |     13-15 'in'                       keyword.control.carbon
+     |     16-20 'like'                     keyword.control.carbon
+     |     21-24 'not'                      keyword.control.carbon
+     |     25-27 'or'                       keyword.control.carbon
+     |     28-33 'where'                    keyword.control.carbon
+  11 | // --- special-keywords
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-23 ' --- special-keywords'    comment.line.double-slash.carbon
+  13 | break case continue else if for match return returned then while
+     |       0-5 'break'                    keyword.control.carbon
+     |      6-10 'case'                     keyword.control.carbon
+     |     11-19 'continue'                 keyword.control.carbon
+     |     20-24 'else'                     keyword.control.carbon
+     |     25-27 'if'                       keyword.control.carbon
+     |     28-31 'for'                      keyword.control.carbon
+     |     32-37 'match'                    keyword.control.carbon
+     |     38-44 'return'                   keyword.control.carbon
+     |     45-53 'returned'                 keyword.control.carbon
+     |     54-58 'then'                     keyword.control.carbon
+     |     59-64 'while'                    keyword.control.carbon
+  14 | default =>
+     |       0-7 'default'                  keyword.control.carbon
+     |      8-10 '=>'                       keyword.operator.carbon
+  16 | // --- introducer-keywords
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-26 ' --- introducer-keywords' comment.line.double-slash.carbon
+  18 | adapt alias choice class constraint fn import inline interface let library
+     |       0-5 'adapt'                    storage.type.carbon
+     |      6-11 'alias'                    storage.type.carbon
+     |     12-18 'choice'                   entity.name.type.carbon
+     |     19-24 'class'                    storage.type.carbon
+     |     25-35 'constraint'               entity.name.type.carbon
+     |     36-38 'fn'                       storage.type.carbon
+     |     39-45 'import'                   entity.name.function.carbon
+     |     46-52 'inline'                   storage.type.carbon
+     |     53-62 'interface'                storage.type.carbon
+     |     63-66 'let'                      entity.name.type.carbon
+     |     67-74 'library'                  storage.type.carbon
+  19 | match_first namespace observe require var
+     |      0-11 'match_first'              storage.type.carbon
+     |     12-21 'namespace'                storage.type.carbon
+     |     22-29 'observe'                  entity.name.namespace.carbon
+     |     30-37 'require'                  storage.type.carbon
+     |     38-41 'var'                      storage.type.carbon
+  20 | base
+     |       0-4 'base'                     storage.type.carbon
+  21 | export
+     |       0-6 'export'                   storage.type.carbon
+  22 | impl
+     |       0-4 'impl'                     storage.type.carbon
+  23 | package
+     |       0-7 'package'                  storage.type.carbon
+  25 | // --- modifier-keywords
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-24 ' --- modifier-keywords'   comment.line.double-slash.carbon
+  27 | abstract const eval extend extern final generic musteval override partial
+     |       0-8 'abstract'                 storage.modifier.carbon
+     |      9-14 'const'                    storage.modifier.carbon
+     |     15-19 'eval'                     storage.modifier.carbon
+     |     20-26 'extend'                   storage.modifier.carbon
+     |     27-33 'extern'                   storage.modifier.carbon
+     |     34-39 'final'                    storage.modifier.carbon
+     |     40-47 'generic'                  storage.modifier.carbon
+     |     48-56 'musteval'                 storage.modifier.carbon
+     |     57-65 'override'                 storage.modifier.carbon
+     |     66-73 'partial'                  storage.modifier.carbon
+  28 | private protected ref runtime static template unsafe unused val virtual
+     |       0-7 'private'                  storage.modifier.carbon
+     |      8-17 'protected'                storage.modifier.carbon
+     |     18-21 'ref'                      storage.modifier.carbon
+     |     22-29 'runtime'                  storage.modifier.carbon
+     |     30-36 'static'                   storage.modifier.carbon
+     |     37-45 'template'                 storage.modifier.carbon
+     |     46-52 'unsafe'                   storage.modifier.carbon
+     |     53-59 'unused'                   storage.modifier.carbon
+     |     60-63 'val'                      storage.modifier.carbon
+     |     64-71 'virtual'                  storage.modifier.carbon
+  29 | base class
+     |       0-4 'base'                     storage.modifier.carbon
+     |      5-10 'class'                    storage.type.carbon
+  30 | default
+     |       0-7 'default'                  storage.modifier.carbon
+  31 | export import
+     |       0-6 'export'                   storage.modifier.carbon
+     |      7-13 'import'                   storage.type.carbon
+  32 | impl fn
+     |       0-4 'impl'                     storage.modifier.carbon
+     |       5-7 'fn'                       storage.type.carbon
+  33 | impl library
+     |       0-4 'impl'                     storage.modifier.carbon
+     |      5-12 'library'                  storage.type.carbon
+  34 | impl package
+     |       0-4 'impl'                     storage.modifier.carbon
+     |      5-12 'package'                  storage.type.carbon
+  36 | // --- misc-keywords
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-20 ' --- misc-keywords'       comment.line.double-slash.carbon
+  38 | forall form friend
+     |       0-6 'forall'                   keyword.other.carbon
+     |      7-11 'form'                     keyword.other.carbon
+     |     12-18 'friend'                   keyword.other.carbon
+  39 | .base
+     |       0-1 '.'                        keyword.operator.carbon
+     |       1-5 'base'                     storage.type.carbon
+  41 | // --- self-keywords
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-20 ' --- self-keywords'       comment.line.double-slash.carbon
+  43 | self Self
+     |       0-4 'self'                     variable.language.carbon
+     |       5-9 'Self'                     variable.language.carbon
+  45 | // --- package-roots
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-20 ' --- package-roots'       comment.line.double-slash.carbon
+  47 | Core Cpp
+     |       0-4 'Core'                     support.class.carbon
+     |       5-8 'Cpp'                      support.class.carbon
+  49 | // --- underscore
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-17 ' --- underscore'          comment.line.double-slash.carbon
+  51 | ;
+     |       0-1 ';'                        punctuation.terminator.carbon
+  52 | _
+     |       0-1 '_'                        variable.language.carbon
+  53 | _some_var
+     |       0-9 '_some_var'                variable.other.carbon

@@ -1,0 +1,195 @@
+# Golden scopes for the TextMate grammar. Regenerate with:
+#   ./utils/textmate/golden_test.py --update
+#
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+   1 | // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-79 ' Part of the Carbon L...' comment.line.double-slash.carbon
+   2 | // Exceptions. See /LICENSE for license information.
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-52 ' Exceptions. See /LIC...' comment.line.double-slash.carbon
+   3 | // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-58 ' SPDX-License-Identif...' comment.line.double-slash.carbon
+   5 | // --- string
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-13 ' --- string'              comment.line.double-slash.carbon
+   7 | 'C'
+     |       0-1 "'"                        string.quoted.single.carbon punctuation.definition.string.begin.carbon
+     |       1-2 'C'                        string.quoted.single.carbon
+     |       2-3 "'"                        string.quoted.single.carbon punctuation.definition.string.end.carbon
+   8 | "Hello\nWorld\n"
+     |       0-1 '"'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |       1-6 'Hello'                    string.quoted.double.carbon
+     |       6-8 '\\n'                      string.quoted.double.carbon constant.character.escape.carbon
+     |      8-13 'World'                    string.quoted.double.carbon
+     |     13-15 '\\n'                      string.quoted.double.carbon constant.character.escape.carbon
+     |     15-16 '"'                        string.quoted.double.carbon punctuation.definition.string.end.carbon
+   9 | "\"\'\t\r\n"
+     |       0-1 '"'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |       1-3 '\\"'                      string.quoted.double.carbon constant.character.escape.carbon
+     |       3-5 "\\'"                      string.quoted.double.carbon constant.character.escape.carbon
+     |       5-7 '\\t'                      string.quoted.double.carbon constant.character.escape.carbon
+     |       7-9 '\\r'                      string.quoted.double.carbon constant.character.escape.carbon
+     |      9-11 '\\n'                      string.quoted.double.carbon constant.character.escape.carbon
+     |     11-12 '"'                        string.quoted.double.carbon punctuation.definition.string.end.carbon
+  10 | '''Single line string'''
+     |       0-3 "'''"                      string.quoted.triple.carbon punctuation.definition.string.begin.carbon
+     |       3-9 'Single'                   string.quoted.triple.carbon entity.name.tag.language.carbon
+     |      9-21 ' line string'             string.quoted.triple.carbon
+     |     21-24 "'''"                      string.quoted.triple.carbon punctuation.definition.string.end.carbon
+  11 | ''' Multi line
+     |       0-3 "'''"                      string.quoted.triple.carbon punctuation.definition.string.begin.carbon
+     |      3-15 ' Multi line'              string.quoted.triple.carbon
+  12 |     string
+     |      0-11 '    string'               string.quoted.triple.carbon
+  13 | '''
+     |       0-3 "'''"                      string.quoted.triple.carbon punctuation.definition.string.end.carbon
+  14 | '''py
+     |       0-3 "'''"                      string.quoted.triple.carbon punctuation.definition.string.begin.carbon
+     |       3-5 'py'                       string.quoted.triple.carbon entity.name.tag.language.carbon
+     |       5-6 ''                         string.quoted.triple.carbon
+  15 |     Block literal with a file type indicator.
+     |      0-46 '    Block literal wit...' string.quoted.triple.carbon
+  16 | '''
+     |       0-3 "'''"                      string.quoted.triple.carbon punctuation.definition.string.end.carbon
+  18 | #"a raw \n literal, where \#n is the escape"#
+     |       0-1 '#'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |       1-2 '"'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |      2-26 'a raw \\n literal, wh...' string.quoted.double.carbon
+     |     26-29 '\\#n'                     string.quoted.double.carbon constant.character.escape.carbon
+     |     29-43 ' is the escape'           string.quoted.double.carbon
+     |     43-45 '"#'                       string.quoted.double.carbon punctuation.definition.string.end.carbon
+  19 | ##"nested "# stays inside, and \##n is the escape"##
+     |       0-2 '##'                       string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |       2-3 '"'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |      3-31 'nested "# stays insid...' string.quoted.double.carbon
+     |     31-35 '\\##n'                    string.quoted.double.carbon constant.character.escape.carbon
+     |     35-49 ' is the escape'           string.quoted.double.carbon
+     |     49-52 '"##'                      string.quoted.double.carbon punctuation.definition.string.end.carbon
+  20 | #'''
+     |       0-1 '#'                        string.quoted.triple.carbon punctuation.definition.string.begin.carbon
+     |       1-4 "'''"                      string.quoted.triple.carbon punctuation.definition.string.begin.carbon
+     |       4-5 ''                         string.quoted.triple.carbon
+  21 |     A raw block literal.
+     |      0-25 '    A raw block literal.' string.quoted.triple.carbon
+  22 | '''#
+     |       0-4 "'''#"                     string.quoted.triple.carbon punctuation.definition.string.end.carbon
+  24 | "unterminated
+     |       0-1 '"'                        string.quoted.double.carbon punctuation.definition.string.begin.carbon
+     |      1-13 'unterminated'             string.quoted.double.carbon
+  26 | // --- characters
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-17 ' --- characters'          comment.line.double-slash.carbon
+  28 | 'a' '\n' '\0' '\u{1F600}'
+     |       0-1 "'"                        string.quoted.single.carbon punctuation.definition.string.begin.carbon
+     |       1-2 'a'                        string.quoted.single.carbon
+     |       2-3 "'"                        string.quoted.single.carbon punctuation.definition.string.end.carbon
+     |       4-5 "'"                        string.quoted.single.carbon punctuation.definition.string.begin.carbon
+     |       5-7 '\\n'                      string.quoted.single.carbon constant.character.escape.carbon
+     |       7-8 "'"                        string.quoted.single.carbon punctuation.definition.string.end.carbon
+     |      9-10 "'"                        string.quoted.single.carbon punctuation.definition.string.begin.carbon
+     |     10-12 '\\0'                      string.quoted.single.carbon constant.character.escape.carbon
+     |     12-13 "'"                        string.quoted.single.carbon punctuation.definition.string.end.carbon
+     |     14-15 "'"                        string.quoted.single.carbon punctuation.definition.string.begin.carbon
+     |     15-24 '\\u{1F600}'               string.quoted.single.carbon constant.character.escape.carbon
+     |     24-25 "'"                        string.quoted.single.carbon punctuation.definition.string.end.carbon
+  29 | '\x70'
+     |       0-1 "'"                        string.quoted.single.carbon punctuation.definition.string.begin.carbon
+     |       1-5 '\\x70'                    string.quoted.single.carbon constant.character.escape.carbon
+     |       5-6 "'"                        string.quoted.single.carbon punctuation.definition.string.end.carbon
+  30 | ''
+     |       0-1 "'"                        string.quoted.single.carbon punctuation.definition.string.begin.carbon
+     |       1-2 "'"                        string.quoted.single.carbon punctuation.definition.string.end.carbon
+  31 | 'abcde'
+     |       0-1 "'"                        string.quoted.single.carbon punctuation.definition.string.begin.carbon
+     |       1-6 'abcde'                    string.quoted.single.carbon
+     |       6-7 "'"                        string.quoted.single.carbon punctuation.definition.string.end.carbon
+  33 | // --- true-false
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-17 ' --- true-false'          comment.line.double-slash.carbon
+  35 | true false
+     |       0-4 'true'                     constant.language.carbon
+     |      5-10 'false'                    constant.language.carbon
+  37 | // --- type-literals
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-20 ' --- type-literals'       comment.line.double-slash.carbon
+  39 | array auto bool char str type
+     |       0-5 'array'                    support.type.builtin.carbon
+     |      6-10 'auto'                     support.type.builtin.carbon
+     |     11-15 'bool'                     support.type.builtin.carbon
+     |     16-20 'char'                     support.type.builtin.carbon
+     |     21-24 'str'                      support.type.builtin.carbon
+     |     25-29 'type'                     support.type.builtin.carbon
+  40 | i8 i16 i32 i64 i128 i10
+     |       0-2 'i8'                       support.type.builtin.carbon
+     |       3-6 'i16'                      support.type.builtin.carbon
+     |      7-10 'i32'                      support.type.builtin.carbon
+     |     11-14 'i64'                      support.type.builtin.carbon
+     |     15-19 'i128'                     support.type.builtin.carbon
+     |     20-23 'i10'                      support.type.builtin.carbon
+  41 | u8 u16 u32 u64 u128 u11
+     |       0-2 'u8'                       support.type.builtin.carbon
+     |       3-6 'u16'                      support.type.builtin.carbon
+     |      7-10 'u32'                      support.type.builtin.carbon
+     |     11-14 'u64'                      support.type.builtin.carbon
+     |     15-19 'u128'                     support.type.builtin.carbon
+     |     20-23 'u11'                      support.type.builtin.carbon
+  42 | f8 f16 f32 f64 f128 f12
+     |       0-2 'f8'                       support.type.builtin.carbon
+     |       3-6 'f16'                      support.type.builtin.carbon
+     |      7-10 'f32'                      support.type.builtin.carbon
+     |     11-14 'f64'                      support.type.builtin.carbon
+     |     15-19 'f128'                     support.type.builtin.carbon
+     |     20-23 'f12'                      support.type.builtin.carbon
+  44 | // --- numbers
+     |       0-2 '//'                       comment.line.double-slash.carbon punctuation.definition.comment.carbon
+     |      2-14 ' --- numbers'             comment.line.double-slash.carbon
+  46 | 12345 6789 00012345
+     |       0-5 '12345'                    constant.numeric.decimal.carbon
+     |      6-10 '6789'                     constant.numeric.decimal.carbon
+     |     11-19 '00012345'                 constant.numeric.decimal.carbon
+  48 | 1234.56789
+     |      0-10 '1234.56789'               constant.numeric.decimal.carbon
+  49 | 0.875
+     |       0-5 '0.875'                    constant.numeric.decimal.carbon
+  50 | 0.3e5
+     |       0-5 '0.3e5'                    constant.numeric.decimal.carbon
+  51 | 1e5
+     |       0-3 '1e5'                      constant.numeric.decimal.carbon
+  52 | .123
+     |       0-1 '.'                        keyword.operator.carbon
+     |       1-4 '123'                      constant.numeric.decimal.carbon
+  53 | .1e3
+     |       0-1 '.'                        keyword.operator.carbon
+     |       1-4 '1e3'                      constant.numeric.decimal.carbon
+  55 | 0o755
+     |       0-5 '0o755'                    constant.numeric.octal.carbon
+  56 | 0o_17
+     |       0-5 '0o_17'                    constant.numeric.octal.carbon
+  57 | 0o8
+     |       0-2 '0o'                       constant.numeric.octal.carbon
+     |       2-4 '8'                        -
+  59 | 0b1011_0010
+     |      0-11 '0b1011_0010'              constant.numeric.binary.carbon
+  60 | 0b_010
+     |       0-6 '0b_010'                   constant.numeric.binary.carbon
+  61 | 0b2345
+     |       0-2 '0b'                       constant.numeric.binary.carbon
+     |       2-7 '2345'                     -
+  62 | 0B011
+     |       0-1 '0'                        constant.numeric.decimal.carbon
+     |       1-6 'B011'                     -
+  64 | 0x2AE5
+     |       0-6 '0x2AE5'                   constant.numeric.hex.carbon
+  65 | 0x_F109
+     |       0-7 '0x_F109'                  constant.numeric.hex.carbon
+  66 | 0xD8_E2.5F_7Bp8
+     |      0-15 '0xD8_E2.5F_7Bp8'          constant.numeric.hex.carbon
+  67 | 0xabcdef.abcdef
+     |      0-15 '0xabcdef.abcdef'          constant.numeric.hex.carbon
+  68 | 0XA85CE
+     |       0-1 '0'                        constant.numeric.decimal.carbon
+     |       1-8 'XA85CE'                   -

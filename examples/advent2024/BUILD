@@ -27,3 +27,9 @@ excluded = []
     for carbon_file in glob(["day*_part*.carbon"])
     if carbon_file not in excluded
 ]
+
+filegroup(
+    name = "carbon_files",
+    srcs = glob(["**/*.carbon"]),
+    visibility = ["//examples:__pkg__"],
+)
