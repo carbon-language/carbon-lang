@@ -2794,8 +2794,11 @@ auto UnsafeUndoConvert(Context& context, SemIR::LocId loc_id,
   auto quals =
       context.types().GetUnqualifiedTypeAndQualifiers(source_type_id).second;
   auto path = ComputeInheritancePath(context, loc_id, type_id, source_type_id);
-  CARBON_CHECK(path.has_value(),
-               "only derived-to-base conversions can currently be undone");
+  if (!path.has_value()) {
+    context.TODO(loc_id,
+                 "only derived-to-base conversions can currently be undone");
+    return SemIR::ErrorInst::InstId;
+  }
 
   if (path->empty()) {
     // No-op conversion.
