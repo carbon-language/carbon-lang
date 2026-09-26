@@ -19,7 +19,7 @@ local util = require 'lspconfig.util'
 if not configs.carbon then
   configs.carbon = {
     default_config = {
-      cmd = { "./bazel-bin/toolchain/carbon language-server" },
+      cmd = { "./bazel-bin/toolchain/carbon","language-server" },
       filetypes = { "carbon" },
       root_dir = util.find_git_ancestor,
     }
