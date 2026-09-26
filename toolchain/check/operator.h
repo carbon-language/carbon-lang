@@ -52,6 +52,14 @@ auto BuildBinaryOperator(
 auto BuildSelfDestructCall(Context& context, SemIR::LocId loc_id,
                            SemIR::InstId object_id) -> SemIR::InstId;
 
+// Performs an index with base expression `operand_inst_id` and
+// `operand_type_id` for types that are not an array. This checks if
+// the base expression implements the `IndexWith` interface; if so, uses the
+// `At` associative method, otherwise prints a diagnostic.
+auto PerformIndexWith(Context& context, SemIR::LocId loc_id,
+                      SemIR::InstId operand_inst_id,
+                      SemIR::InstId index_inst_id) -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_OPERATOR_H_
