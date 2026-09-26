@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Importing C++ macros](#importing-c-macros)
 -   [Calling C++ code from Carbon](#calling-c-code-from-carbon)
     -   [Function call syntax and semantics](#function-call-syntax-and-semantics)
-    -   [TODO: Overload resolution](#todo-overload-resolution)
+    -   [Overload resolution](#overload-resolution)
     -   [TODO: Constructors](#todo-constructors)
     -   [TODO: Struct literals](#todo-struct-literals)
 -   [TODO: Accessing C++ classes, structs, and members](#todo-accessing-c-classes-structs-and-members)
@@ -207,7 +207,13 @@ fn Run() {
 }
 ```
 
-### TODO: Overload resolution
+### Overload resolution
+
+Calls to overloaded functions are resolved using C++ rules (including template
+argument deduction and implicit conversion sequences), determining which
+function to call. However, the arguments are passed using the Carbon rules for
+performing a function call, determining how to call it. See
+[C++ overload resolution](overload_resolution.md) for details.
 
 ### TODO: Constructors
 
