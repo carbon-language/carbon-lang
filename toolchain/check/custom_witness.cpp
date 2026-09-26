@@ -364,15 +364,36 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
 static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
                                        SemIR::InstId callee_self_param_id,
                                        SemIR::TypeId self_type_id) -> void {
-  (void)loc_id;
-  (void)callee_self_param_id;
-
   while (self_type_id.has_value()) {
     auto inst = context.types().GetAsInst(self_type_id);
     CARBON_KIND_SWITCH(inst) {
       case CARBON_KIND(SemIR::ArrayType array_type): {
-        // TODO: implement destruction for array types.
-        (void)array_type;
+        auto size = context.ints()
+                        .Get(context.insts()
+                                 .GetAs<SemIR::IntValue>(array_type.bound_id)
+                                 .int_id)
+                        .getSExtValue();
+        auto index_type_id =
+            GetSingletonType(context, SemIR::IntLiteralType::TypeInstId);
+
+        // TODO: replace this with a synthesised loop to prevent stack
+        // explosions.
+        //
+        // This probably requires `StartLoopHeader`, `BranchAndStartLoopBody`,
+        // and `FinishLoopBody` be public.
+        while (--size >= 0) {
+          auto int_id = context.ints().Add(size);
+          auto index_id = AddInst(
+              context, loc_id,
+              SemIR::IntValue{.type_id = index_type_id, .int_id = int_id});
+          auto element_id = AddInst<SemIR::ArrayIndex>(
+              context, loc_id,
+              {.type_id = context.types().GetTypeIdForTypeInstId(
+                   array_type.element_type_inst_id),
+               .array_id = callee_self_param_id,
+               .index_id = index_id});
+          BuildSelfDestructCall(context, loc_id, element_id);
+        }
         return;
       }
       case CARBON_KIND(SemIR::ClassType class_type): {
