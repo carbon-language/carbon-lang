@@ -13,9 +13,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Matching redeclarations of an entity](#matching-redeclarations-of-an-entity)
     -   [Details](#details)
+        -   [Modifier keywords](#modifier-keywords)
+        -   [Syntactic matching and scopes](#syntactic-matching-and-scopes)
 -   [`extern` and `extern library`](#extern-and-extern-library)
     -   [Valid scopes for `extern`](#valid-scopes-for-extern)
     -   [Effect on indirect imports](#effect-on-indirect-imports)
+        -   [Indirect imports of non-`extern` types](#indirect-imports-of-non-extern-types)
+    -   [Using imported declarations](#using-imported-declarations)
+    -   [Validation for non-owning `extern library` declarations](#validation-for-non-owning-extern-library-declarations)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -32,10 +37,10 @@ Entities may have up to four declarations:
 -   A required, owning definition.
     -   For example, `class MyClass { ... }`.
     -   The definition might be the _only_ declaration.
--   An optional, owning declaration in a `match_first` block.
+-   An optional, owning declaration in a `match_first` block
     -   This only applies to `impl` declarations.
     -   This must be in the same file as the first owning declaration.
--   An optional, non-owning `extern library "<owning_library>"` declaration.
+-   An optional, non-owning `extern library "<owning_library>"` declaration
     -   For example, `extern library "OtherLibrary" class MyClass;`.
     -   It must be in a separate library from the definition.
     -   The owning library's API file must import the `extern` declaration, and
@@ -64,11 +69,10 @@ fn DoSomething() {
 }
 ```
 
-A `match_first` block contains owning declarations of `impl`s. A declaration
-in a `match_first` block may be the forward declaration or the definition. It
-may also be a fourth declaration that is neither, and which is only allowed to
-exist within such a block. All declarations in a `match_first` block must be
-in the same file as the first owning declaration.
+An `impl` may appear in at most one `match_first` block, and only once within
+it. A declaration in a `match_first` block may be the forward declaration or the
+definition. It may also be a fourth declaration that is neither, and which is
+only allowed to exist within such a block.
 
 ## Matching redeclarations of an entity
 
@@ -103,22 +107,77 @@ fn A.F(n: (i32)) {}
 
 ### Details
 
-TODO: Figure out what details to pull from
-[#3762](https://github.com/carbon-language/carbon-lang/pull/3762) and
-[#3763](https://github.com/carbon-language/carbon-lang/pull/3763).
+#### Modifier keywords
+
+Rules for modifier keywords are adopted from
+[proposal #3762](/proposals/p003762-merging-forward-declarations.md#modifier-keywords)
+and
+[proposal #3980](/proposals/p003980-singular-extern-declarations.md#proposal).
+As a rule of thumb, modifier keywords are required when, if prior optional
+declarations were removed, the lack of the modifier keyword would change
+behavior.
+
+-   `extend` in `extend impl` is only on the declaration in the class body
+    (whether that is a forward declaration or definition).
+-   Class and interface modifiers other than `extend` (`abstract`, `base`,
+    `final`) exist only on the definition, not on the forward declaration.
+-   Function modifiers (`override`, `virtual`, `default`, `abstract`, `final`)
+    must match between forward declaration and definition (though `abstract`
+    functions won't have definitions).
+-   If any owning declaration has the `extern` modifier, all owning declarations
+    must have it (see
+    [proposal #3980](/proposals/p003980-singular-extern-declarations.md#owning-extern-declarations)).
+-   Access modifiers (`private` and `protected`) must match across all
+    declarations and definitions, including between an `extern library
+    "<owning_library>"` declaration and the owning `extern` declaration.
+
+#### Syntactic matching and scopes
+
+-   Two owned declarations _syntactically match_ if the sequence of tokens in
+    the declaration following the introducer keyword and the optional scope, up
+    to the semicolon or open brace, is identical, except for `unused` modifiers
+    on parameters (see
+    [proposal #3763](/proposals/p003763-matching-redeclarations.md#proposal)
+    and
+    [proposal #3980](/proposals/p003980-singular-extern-declarations.md#declarations)).
+-   For a qualified declaration (see
+    [proposal #3763](/proposals/p003763-matching-redeclarations.md#scope-differences)):
+    -   Take the portion of the declaration from the introducer up to the end of
+        the scope.
+    -   Replace the introducer keyword with the introducer keyword of the scope.
+    -   Replace the trailing `.` with a `;`.
+    -   The result must be a valid declaration of the scope, ignoring
+        restrictions on how often the scope can be redeclared.
+-   To redeclare an `impl` after the end of the `class` scope it was declared
+    in, that scope may be re-entered as part of the `impl` redeclaration, in the
+    same way, except with parentheses around the name of the `impl`, as in
+    `impl X.(as Y) { ... }` (see
+    [proposal #5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#proposal)).
+-   For `let` and `var` declarations with a single name binding
+    (`let Scope.A: Type = Value;`), the end of the declaration is at the `=` or
+    `;` rather than at the `}` or `;`. An arbitrary pattern that is not a single
+    binding (`let (A: Type1, B: Type2) = Value;`) does not permit
+    redeclarations (see
+    [proposal #3763](/proposals/p003763-matching-redeclarations.md#let-and-var-declarations)).
 
 ## `extern` and `extern library`
 
 There are two forms of the `extern` modifier:
 
 -   On an owning declaration, `extern` limits access to the definition.
-    -   The entity must be directly imported in order to use of the definition.
+    -   The entity must be directly imported in order to use the definition;
+        otherwise it is incomplete (see
+        [proposal #3980](/proposals/p003980-singular-extern-declarations.md#impact-on-indirect-imports)).
     -   An `extern library` declaration is optional.
 -   On a non-owning declaration, `extern library` allows references to an entity
     without depending on the owning library.
     -   The library name indicates where the entity is defined.
     -   This can be used to improve build performance, such as by splitting out
         a declaration in order to reduce a library's dependencies.
+
+The non-owned `extern library` declarations will only use semantic matching for
+redeclarations, not syntactic matching (see
+[proposal #3980](/proposals/p003980-singular-extern-declarations.md#no-syntactic-matching-for-extern-library-declarations)).
 
 For example, a use of both might look like:
 
@@ -214,6 +273,74 @@ fn ValidUse() -> i32 {
 }
 ```
 
+#### Indirect imports of non-`extern` types
+
+As adopted in
+[proposal #3980](/proposals/p003980-singular-extern-declarations.md#indirect-imports-of-non-extern-types),
+non-`extern` entities are complete if their definition is imported, even if that
+import is indirect, as in:
+
+```
+library "a";
+
+class C { fn F(); }
+```
+
+```
+library "b";
+import library "a";
+
+fn G() -> C;
+```
+
+```
+library "c";
+import library "b";
+
+// Valid: `C` is complete here, even though it's not in name lookup.
+G().F();
+```
+
+### Using imported declarations
+
+As adopted in
+[proposal #3980](/proposals/p003980-singular-extern-declarations.md#using-imported-declarations),
+since `extern library "a" class C;` must be imported by the owning library, we
+allow uses of the imported name prior to its declaration within the same file.
+This means the following works:
+
+```
+library "extern";
+
+extern library "use_extern" class MyType;
+```
+
+```
+library "use_extern";
+import library "extern";
+
+// Uses the `extern library` declaration.
+fn Foo(val: MyType*);
+
+extern class MyType {
+  fn Bar[ref self: Self]() { Foo(&self); }
+}
+```
+
+### Validation for non-owning `extern library` declarations
+
+As adopted in
+[proposal #3980](/proposals/p003980-singular-extern-declarations.md#validation-for-non-owning-extern-library-declarations),
+we offer some validation that the library in `extern library` is correct. When
+the owning library is incorrect, it's very likely to be detected in two cases:
+
+-   A compile-time error when the owning library imports the non-owning library,
+    when the owning declaration is evaluated.
+-   A link-time error as a fallback.
+
+Other cases, such as when both libraries are independently imported, may or may
+not be caught, dependent upon the cost of validation.
+
 ## Alternatives considered
 
 -   [Other modifier keyword merging approaches](/proposals/p003762-merging-forward-declarations.md#other-modifier-keyword-merging-approaches)
@@ -238,6 +365,7 @@ fn ValidUse() -> i32 {
 -   [Other `extern` syntaxes](/proposals/p003980-singular-extern-declarations.md#other-extern-syntaxes)
 -   [Have types with `extern` members re-export them](/proposals/p003980-singular-extern-declarations.md#have-types-with-extern-members-re-export-them)
 -   [Require syntactic matching for `extern library` declarations](/proposals/p003980-singular-extern-declarations.md#require-syntactic-matching-for-extern-library-declarations)
+-   [Use semantic match for the scope](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#use-semantic-match-for-the-scope)
 
 ## References
 
@@ -247,3 +375,9 @@ fn ValidUse() -> i32 {
     [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
 -   Proposal
     [#3980: Singular `extern` declarations](https://github.com/carbon-language/carbon-lang/pull/3980)
+-   Proposal
+    [#5337: Interface extension and `final impl` update](https://github.com/carbon-language/carbon-lang/pull/5337)
+-   Proposal
+    [#5366: The name of an `impl` in `class` scope](https://github.com/carbon-language/carbon-lang/pull/5366)
+-   Proposal
+    [#7493: Disallow impl in match_first twice](https://github.com/carbon-language/carbon-lang/pull/7493)

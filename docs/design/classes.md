@@ -51,6 +51,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Inheritance](#inheritance)
         -   [Virtual methods](#virtual-methods)
             -   [Virtual modifier keywords](#virtual-modifier-keywords)
+            -   [Signature differences in overrides](#signature-differences-in-overrides)
         -   [Subtyping](#subtyping)
         -   [`Self` refers to the current type](#self-refers-to-the-current-type)
         -   [Constructors](#constructors)
@@ -801,9 +802,40 @@ class GraphNode {
 // `GraphNode` is first complete here.
 ```
 
+Class modifiers (`abstract`, `base`, `final`) exist only on the
+definition, not on the forward declaration, while access modifiers (`private`
+and `protected`) must match (see
+[proposal #3762](/proposals/p003762-merging-forward-declarations.md#modifier-keywords)).
+
 An incomplete type cannot be used as the target of an `extend` declaration (such
 as `extend base: T` or `extend adapt T`), as the target type must be complete to
 allow name lookup into it.
+
+As adopted in
+[proposal #3762](/proposals/p003762-merging-forward-declarations.md#type-scopes-may-contain-both-a-forward-declaration-and-definition),
+the combination of a forward declaration and a definition is allowed in type
+scopes. This includes both member functions and member types.
+
+For example:
+
+```carbon
+class C {
+  class D;
+
+  fn F() -> D;
+
+  class D {
+    fn G() -> Self { return C.F(); }
+
+    var x: i32;
+  }
+
+  fn F() -> D { return {.x = 42}; }
+}
+```
+
+This is necessary because type bodies are not automatically moved out-of-line,
+unlike function bodies.
 
 > **TODO:** Document that qualified names can be looked up in an incomplete
 > type, as adopted in
@@ -1344,6 +1376,72 @@ methods with the same name in the base class, virtual methods must be declared
 after the `extend base` declaration when present in a class definition. This
 simplifies the compiler, and follows the
 [information accumulation principle](/docs/project/principles/information_accumulation.md).
+
+It is an error for a class with a custom value representation to declare or
+implement a virtual function that passes `self` by value.
+
+##### Signature differences in overrides
+
+An `override` function can be used directly in the derived class if it has the
+same signature as in the base class, except with the derived class as the type
+of `self`. Otherwise, as adopted in
+[proposal #3763](/proposals/p003763-matching-redeclarations.md#virtual-functions),
+a thunk is generated that differs from the declaration in the base class by
+replacing the type of `self` with the derived class.
+
+When a virtual function is used directly in a
+base class and not overridden in the derived class, it is also used directly in
+the derived class, even though its declared `self` parameter does not have a
+matching type.
+
+```carbon
+base class B {
+  // No thunk used.
+  virtual fn F[ref self: B]();
+  virtual fn G[ref self: B]();
+}
+base class C {
+  extend B;
+  // No thunk used: `self` has expected type `C`.
+  override fn F[ref self: C]();
+  // Uses a thunk due to unexpected `self` type.
+  override fn G[ref self: B]();
+}
+class D {
+  // No thunk for `F`, because no thunk was used in `C`.
+  // Uses thunk for `F`, because thunk was used in `C`.
+  extend C;
+}
+```
+
+Note that this supports covariant return types automatically, as well as any
+other case where the return value from the derived class function can be
+implicitly converted to the base class function's return type. However, an
+`impl fn` doesn't introduce a new name lookup result, so the return type of a
+call expression is always that of the `virtual fn`, which means this feature is
+not useful.
+
+This matches the approach used for
+[`impl` members that implement `interface` members](/docs/design/generics/details.md#impl-members-vs-interface-members).
+
+> **Future work:** It might be useful to allow a declaration to both implement
+> an existing virtual function and introduce a new one. This would allow
+> introducing functions with covariant return types that work as expected. This
+> could be achieved with syntax such as:
+>
+> ```carbon
+> base class A {
+>   virtual fn Clone[self: Self]() -> A*;
+> }
+> base class B {
+>   virtual override fn Clone[self: Self]() -> B*;
+> }
+> ```
+>
+> Here, a call to `b->Clone()` would find `B.Clone` rather than `A.Clone`, and
+> so would have return type `B*`. The downside is that the vtable for `B` would
+> have two `Clone` slots, for `A.Clone` and `B.Clone`, whereas a covariant
+> return in C++ would only need a single vtable slot to express the same thing.
 
 #### Subtyping
 
@@ -2513,5 +2611,7 @@ the type of `U.x`."
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
 -   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
+-   [#3762: Merging forward declarations](https://github.com/carbon-language/carbon-lang/pull/3762)
+-   [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
 -   [#5017: Destructor syntax](https://github.com/carbon-language/carbon-lang/pull/5017)
 -   [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)

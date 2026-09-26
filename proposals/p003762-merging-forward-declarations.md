@@ -94,13 +94,13 @@ there is ambiguity about behavior:
 
 Example rules for forward declarations in the current design:
 
--   [High-level](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/README.md#declarations-definitions-and-scopes)
--   [Classes](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#forward-declaration)
--   [Functions](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/functions.md#forward-declarationss)
+-   [High-level](https://github.com/carbon-language/carbon-lang/blob/4721a18c426eaf737fca334fa2f93224c4a570f1/docs/design/README.md#declarations-definitions-and-scopes)
+-   [Classes](https://github.com/carbon-language/carbon-lang/blob/4721a18c426eaf737fca334fa2f93224c4a570f1/docs/design/classes.md#forward-declaration)
+-   [Functions](https://github.com/carbon-language/carbon-lang/blob/4721a18c426eaf737fca334fa2f93224c4a570f1/docs/design/functions.md#forward-declarationss)
 -   Generics:
-    -   [`impl`](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/generics/details.md#forward-impl-declaration)
-    -   [`interface`](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/generics/details.md#declaring-interfaces-and-named-constraints)
--   [Matching and agreeing](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/generics/details.md#matching-and-agreeing)
+    -   [`impl`](https://github.com/carbon-language/carbon-lang/blob/4721a18c426eaf737fca334fa2f93224c4a570f1/docs/design/generics/details.md#forward-impl-declaration)
+    -   [`interface`](https://github.com/carbon-language/carbon-lang/blob/4721a18c426eaf737fca334fa2f93224c4a570f1/docs/design/generics/details.md#declaring-interfaces-and-named-constraints)
+-   [Matching and agreeing](https://github.com/carbon-language/carbon-lang/blob/4721a18c426eaf737fca334fa2f93224c4a570f1/docs/design/generics/details.md#matching-and-agreeing)
 
 ### ODR (One definition rule)
 
