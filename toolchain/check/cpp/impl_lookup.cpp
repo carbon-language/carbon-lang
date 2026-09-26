@@ -441,7 +441,7 @@ static auto LookupCppUnqualified(Context& context, clang::Sema& clang_sema,
 
   auto self_type_id =
       context.types().GetTypeIdForTypeConstantId(query_self_const_id);
-  auto type = MapToCppType(context, self_type_id);
+  auto type = MapToCppType(context, &context.sem_ir(), self_type_id);
   if (type.isNull()) {
     return SemIR::InstId::None;
   }

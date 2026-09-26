@@ -276,7 +276,7 @@ auto PerformCppOverloadResolution(
   // Map Carbon call argument types to C++ types.
   clang::Expr* self_expr = nullptr;
   if (self_id.has_value()) {
-    self_expr = InventClangArg(context, self_id);
+    self_expr = InventClangArg(context, &context.sem_ir(), self_id);
     if (!self_expr) {
       return SemIR::ErrorInst::InstId;
     }

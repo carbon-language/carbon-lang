@@ -20,8 +20,7 @@ struct FileInfo {
 
 // Map a CheckIRId into information about the corresponding file in both SemIR
 // and Clang's source manager.
-static auto GetFileInfo(Context& context, SemIR::CheckIRId ir_id) -> FileInfo {
-  const SemIR::File* sem_ir = &context.sem_ir();
+static auto GetFileInfo(Context& context, const SemIR::File* sem_ir, SemIR::CheckIRId ir_id) -> FileInfo {
   int file_index = 0;
 
   // If the file is imported, locate it in our imports map.
@@ -56,16 +55,16 @@ static auto GetFileInfo(Context& context, SemIR::CheckIRId ir_id) -> FileInfo {
   return {.sem_ir = sem_ir, .start_loc = file_start_loc};
 }
 
-auto GetCppLocation(Context& context, SemIR::LocId loc_id)
+auto GetCppLocation(Context& context, const SemIR::File* sem_ir, SemIR::LocId loc_id)
     -> clang::SourceLocation {
-  if (!context.sem_ir().cpp_file()) {
+  if (!sem_ir->cpp_file()) {
     return clang::SourceLocation();
   }
 
   // Break down the `LocId` into an import path. If that ends in a C++ location,
   // we can just return that directly.
   llvm::SmallVector<SemIR::AbsoluteNodeRef> absolute_node_refs =
-      SemIR::GetAbsoluteNodeRef(&context.sem_ir(), loc_id);
+      SemIR::GetAbsoluteNodeRef(sem_ir, loc_id);
   const auto& final_node = absolute_node_refs.back();
   if (final_node.is_cpp()) {
     return final_node.file()->clang_source_locs().Get(

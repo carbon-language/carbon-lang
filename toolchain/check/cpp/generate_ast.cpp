@@ -205,7 +205,7 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
   if (target_inst.type_id() == SemIR::TypeType::TypeId) {
     auto type_id =
         context_->types().GetTypeIdForTypeConstantId(target_const_id);
-    auto type = MapToCppType(*context_, type_id);
+    auto type = MapToCppType(*context_, &context_->sem_ir(), type_id);
     if (type.isNull()) {
       context_->TODO(GetCurrentCppLocId(), "interop with unsupported type");
       return nullptr;
@@ -464,7 +464,8 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
       class_info.GetBaseType(context_->sem_ir(), class_type.specific_id);
   if (base_type_id.has_value()) {
     auto base_loc = GetCppLocation(*context_, SemIR::LocId(class_info.base_id));
-    if (auto base_type = MapToCppType(*context_, base_type_id);
+    if (auto base_type =
+            MapToCppType(*context_, &context_->sem_ir(), base_type_id);
         !base_type.isNull() && base_type->isStructureOrClassType() &&
         !context_->clang_sema().RequireCompleteType(
             base_loc, base_type, clang::diag::err_incomplete_base_class)) {
