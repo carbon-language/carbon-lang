@@ -76,7 +76,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other implementations](#example-creating-an-impl-out-of-other-implementations)
     -   [Sized types and facet types](#sized-types-and-facet-types)
-    -   [Destructor constraints](#destructor-constraints)
 -   [Compile-time `let`](#compile-time-let)
 -   [Parameterized impl declarations](#parameterized-impl-declarations)
     -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
@@ -4177,39 +4176,6 @@ with the size? So you could say `T.ByteSize` in the above example to get a
 symbolic integer value with the size of `T`. Similarly you might say
 `T.ByteStride` to get the number of bytes used for each element of an array of
 `T`.
-
-### Destructor constraints
-
-There are four facet types related to
-[the destructors of types](/docs/design/classes.md#destructors):
-
--   `Concrete` types may be local or member variables.
--   `Deletable` types may be safely deallocated by pointer using the `Delete`
-    method on the `Allocator` used to allocate it.
--   `Destructible` types have a destructor and may be deallocated by pointer
-    using the `UnsafeDelete` method on the correct `Allocator`, but it may be
-    unsafe. The concerning case is deleting a pointer to a derived class through
-    a pointer to its base class without a virtual destructor.
--   `TrivialDestructor` types have empty destructors. This facet type may be
-    used with [specialization](#lookup-resolution-and-specialization) to unlock
-    specific optimizations.
-
-**Note:** The names `Deletable` and `Destructible` are
-[**placeholders**](/proposals/p001154-destructors.md#type-of-type-naming) since
-they do not conform to the decision on
-[question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
-
-The facet types `Concrete`, `Deletable`, and `TrivialDestructor` all extend
-`Destructible`. Combinations of them may be formed using
-[the `&` operator](#combining-interfaces-by-anding-facet-types). For example, a
-checked-generic function that both instantiates and deletes values of a type `T`
-would require `T` implement `Concrete & Deletable`.
-
-Types are forbidden from explicitly implementing these facet types directly.
-Instead they use
-[`destructor` declarations in their class definition](/docs/design/classes.md#destructors)
-and the compiler uses them to determine which of these facet types are
-implemented.
 
 ## Compile-time `let`
 
