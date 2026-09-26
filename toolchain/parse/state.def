@@ -1410,6 +1410,11 @@ CARBON_PARSE_STATE(FinishUnusedPattern)
 // ^
 //   1. MatchIntroducer
 //
+// ... ...
+// ^~~
+//   1. Statement
+//   2. StatementPackExpansionFinish
+//
 //  <decl introducer or modifier>
 // ^
 //   1. Decl
@@ -1529,6 +1534,13 @@ CARBON_PARSE_STATE(StatementReturn)
 //            ^
 //   (state done)
 CARBON_PARSE_STATE(StatementReturnFinish)
+
+// Handles a statement pack expansion after its body.
+//
+// ... <statement>
+//                ^
+//   (state done)
+CARBON_PARSE_STATE(StatementPackExpansionFinish)
 
 // Handles processing of statements within a scope.
 //

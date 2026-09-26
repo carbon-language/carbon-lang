@@ -468,6 +468,7 @@ class NodeStack {
       case Parse::NodeKind::LetInitializer:
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::NamedConstraintIntroducer:
+      case Parse::NodeKind::PackExpansionStart:
       case Parse::NodeKind::RefBindingName:
       case Parse::NodeKind::RuntimeBindingName:
       case Parse::NodeKind::ReturnStatementStart:
