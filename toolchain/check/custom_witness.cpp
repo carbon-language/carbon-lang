@@ -363,7 +363,8 @@ static auto DestroyStructFields(
   for (auto struct_field : struct_fields) {
     auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
                                          struct_field.name_id);
-    auto self_destruct_call = BuildSelfDestructCall(context, loc_id, member_id);
+    auto self_destruct_call = BuildSelfDestructCall(
+        context, context.insts().GetLocIdForDesugaring(loc_id), member_id);
     DiscardExpr(context, self_destruct_call);
   }
 }

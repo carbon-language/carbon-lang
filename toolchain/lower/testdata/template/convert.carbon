@@ -667,6 +667,10 @@ fn Test2(c: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.f38e1c3ccdfe019b:core.Destroy.Core"(ptr %self) #0 !dbg !223 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc9_3.1.a = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 0, !dbg !225
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %.loc9_3.1.a), !dbg !225
+// CHECK:STDOUT:   %.loc9_3.2.b = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 1, !dbg !225
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %.loc9_3.2.b), !dbg !225
 // CHECK:STDOUT:   ret void, !dbg !225
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -706,6 +710,10 @@ fn Test2(c: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.0950f8aecfaebf0b:core.Destroy.Core"(ptr %self) #0 !dbg !247 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc9_3.1.a = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 0, !dbg !249
+// CHECK:STDOUT:   call void @"_CSelfDestruct.12212b84320f2fd6:core.Destroy.Core"(ptr %.loc9_3.1.a), !dbg !249
+// CHECK:STDOUT:   %.loc9_3.2.b = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 1, !dbg !249
+// CHECK:STDOUT:   call void @"_CSelfDestruct.12212b84320f2fd6:core.Destroy.Core"(ptr %.loc9_3.2.b), !dbg !249
 // CHECK:STDOUT:   ret void, !dbg !249
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -732,6 +740,10 @@ fn Test2(c: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.2970be6ba4c2615c:core.Destroy.Core"(ptr %self) #0 !dbg !263 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc9_3.1.a = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 0, !dbg !265
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %.loc9_3.1.a), !dbg !265
+// CHECK:STDOUT:   %.loc9_3.2.b = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 1, !dbg !265
+// CHECK:STDOUT:   call void @"_CSelfDestruct.12212b84320f2fd6:core.Destroy.Core"(ptr %.loc9_3.2.b), !dbg !265
 // CHECK:STDOUT:   ret void, !dbg !265
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

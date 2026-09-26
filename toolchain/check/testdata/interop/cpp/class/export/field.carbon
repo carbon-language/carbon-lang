@@ -173,10 +173,10 @@ inline Cpp '''
 int AccessPrivateField() {
   auto c = Carbon::ClassWithPrivateField::Make();
   // CHECK:STDERR: fail_private_field.carbon:[[@LINE+7]]:12: error: 'x' is a private member of 'Carbon::ClassWithPrivateField' [CppInteropParseError]
-  // CHECK:STDERR:    29 |   return c.x;
+  // CHECK:STDERR:    22 |   return c.x;
   // CHECK:STDERR:       |            ^
   // CHECK:STDERR: fail_private_field.carbon:[[@LINE-9]]:16: note: implicitly declared private here [CppInteropParseNote]
-  // CHECK:STDERR:    16 |   private var x: i32;
+  // CHECK:STDERR:     9 |   private var x: i32;
   // CHECK:STDERR:       |                ^
   // CHECK:STDERR:
   return c.x;

@@ -229,7 +229,6 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %.084: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %.107: ref %B = class_element_access %.084, element0 [concrete]
 // CHECK:STDOUT:   %.5ce: ref %A = class_element_access %.107, element0 [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.956: type = pattern_type %i32.builtin [concrete]
 // CHECK:STDOUT:   %self.param_patt.331: %pattern_type.956 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.319: %pattern_type.956 = wrapper_binding_pattern self, %self.param_patt.331 [concrete]
@@ -245,15 +244,11 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc32_66.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.f8f19d.2: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2, %Destroy.WithSelf.SubobjectDestroy.d01daf.2, %Destroy.WithSelf.SelfDestruct.db3fdb.2), @Destroy [concrete]
 // CHECK:STDOUT:   %pattern_type.506: type = pattern_type %struct_type.a.a92 [concrete]
 // CHECK:STDOUT:   %self.param_patt.7eb: %pattern_type.506 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.68d: %pattern_type.506 = wrapper_binding_pattern self, %self.param_patt.7eb [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc32_66.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.facet.b41: %Destroy.type = facet_value %i32, (%custom_witness.f8f19d.2) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.11b: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.b41) [concrete]
-// CHECK:STDOUT:   %.bbc: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.11b, %Destroy.facet.b41 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc32_66.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.8fb: %pattern_type.9ef = ref_param_pattern [concrete]
@@ -264,15 +259,11 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.4: %Destroy.WithSelf.Op.type.ef016f.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.4: type = fn_type @Destroy.WithSelf.SelfDestruct.loc32_66.4 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.4: %Destroy.WithSelf.SelfDestruct.type.fbceb5.4 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.f8f19d.4: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.4, %Destroy.WithSelf.SubobjectDestroy.d01daf.4, %Destroy.WithSelf.SelfDestruct.db3fdb.4), @Destroy [concrete]
 // CHECK:STDOUT:   %pattern_type.a6a: type = pattern_type %struct_type.base.b.6c4 [concrete]
 // CHECK:STDOUT:   %self.param_patt.d69: %pattern_type.a6a = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.915: %pattern_type.a6a = wrapper_binding_pattern self, %self.param_patt.d69 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.5: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc32_66.5 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.5: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.5 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.facet.61a: %Destroy.type = facet_value %A, (%custom_witness.f8f19d.4) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fb1: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.61a) [concrete]
-// CHECK:STDOUT:   %.353: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.fb1, %Destroy.facet.61a [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.5: type = fn_type @Destroy.WithSelf.Op.loc32_66.5 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.5: %Destroy.WithSelf.Op.type.ef016f.5 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.e39: type = pattern_type %B [concrete]
@@ -284,15 +275,11 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.6: %Destroy.WithSelf.Op.type.ef016f.6 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.6: type = fn_type @Destroy.WithSelf.SelfDestruct.loc32_66.6 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.6: %Destroy.WithSelf.SelfDestruct.type.fbceb5.6 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.f8f19d.6: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.6, %Destroy.WithSelf.SubobjectDestroy.d01daf.6, %Destroy.WithSelf.SelfDestruct.db3fdb.6), @Destroy [concrete]
 // CHECK:STDOUT:   %pattern_type.863: type = pattern_type %struct_type.base.c.faf [concrete]
 // CHECK:STDOUT:   %self.param_patt.27e: %pattern_type.863 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.67e: %pattern_type.863 = wrapper_binding_pattern self, %self.param_patt.27e [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.7: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc32_66.7 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.7: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.7 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.facet.872: %Destroy.type = facet_value %B, (%custom_witness.f8f19d.6) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.0b2: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.872) [concrete]
-// CHECK:STDOUT:   %.0fa: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.0b2, %Destroy.facet.872 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.7: type = fn_type @Destroy.WithSelf.Op.loc32_66.7 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.7: %Destroy.WithSelf.Op.type.ef016f.7 = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.99a: %pattern_type.98b = ref_param_pattern [concrete]
@@ -676,9 +663,8 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.3(%self.param: ref %struct_type.a.a92) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc32: ref %i32 = struct_access %self.param, element0
-// CHECK:STDOUT:   %impl.elem2: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc32, %impl.elem2
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %bound_method(%.loc32)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc32, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc32)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -708,13 +694,11 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.5(%self.param: ref %struct_type.base.b.6c4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc32_66.1: ref %A = struct_access %self.param, element0
-// CHECK:STDOUT:   %impl.elem2.loc32_66.1: %.353 = impl_witness_access constants.%custom_witness.f8f19d.4, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4]
-// CHECK:STDOUT:   %bound_method.loc32_66.1: <bound method> = bound_method %.loc32_66.1, %impl.elem2.loc32_66.1
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.1: init %empty_tuple.type = call %bound_method.loc32_66.1(%.loc32_66.1)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1: <bound method> = bound_method %.loc32_66.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1(%.loc32_66.1)
 // CHECK:STDOUT:   %.loc32_66.2: ref %i32 = struct_access %self.param, element1
-// CHECK:STDOUT:   %impl.elem2.loc32_66.2: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
-// CHECK:STDOUT:   %bound_method.loc32_66.2: <bound method> = bound_method %.loc32_66.2, %impl.elem2.loc32_66.2
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.2: init %empty_tuple.type = call %bound_method.loc32_66.2(%.loc32_66.2)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2: <bound method> = bound_method %.loc32_66.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2(%.loc32_66.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -744,13 +728,11 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.7(%self.param: ref %struct_type.base.c.faf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc32_66.1: ref %B = struct_access %self.param, element0
-// CHECK:STDOUT:   %impl.elem2.loc32_66.1: %.0fa = impl_witness_access constants.%custom_witness.f8f19d.6, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.6]
-// CHECK:STDOUT:   %bound_method.loc32_66.1: <bound method> = bound_method %.loc32_66.1, %impl.elem2.loc32_66.1
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.1: init %empty_tuple.type = call %bound_method.loc32_66.1(%.loc32_66.1)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1: <bound method> = bound_method %.loc32_66.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.6
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1(%.loc32_66.1)
 // CHECK:STDOUT:   %.loc32_66.2: ref %i32 = struct_access %self.param, element1
-// CHECK:STDOUT:   %impl.elem2.loc32_66.2: %.bbc = impl_witness_access constants.%custom_witness.f8f19d.2, element2 [concrete = constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2]
-// CHECK:STDOUT:   %bound_method.loc32_66.2: <bound method> = bound_method %.loc32_66.2, %impl.elem2.loc32_66.2
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.2: init %empty_tuple.type = call %bound_method.loc32_66.2(%.loc32_66.2)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2: <bound method> = bound_method %.loc32_66.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2(%.loc32_66.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
