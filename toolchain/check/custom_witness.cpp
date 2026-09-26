@@ -397,12 +397,33 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
           context.struct_type_fields().Get(struct_type.fields_id));
       break;
     }
+    case CARBON_KIND(SemIR::TupleType tuple_type): {
+      auto tuple_elements =
+          context.inst_blocks().Get(tuple_type.type_elements_id);
+      if (tuple_elements.empty()) {
+        break;
+      }
+
+      for (auto i = static_cast<std::int64_t>(tuple_elements.size()) - 1;
+           i >= 0; --i) {
+        auto int_id = context.ints().Add(i);
+        BuildSelfDestructCall(
+            context, loc_id,
+            PerformTupleAccess(
+                context, loc_id, params[0],
+                AddInst(context, loc_id,
+                        SemIR::IntValue{
+                            .type_id = GetSingletonType(
+                                context, SemIR::IntLiteralType::TypeInstId),
+                            .int_id = int_id})));
+      }
+      break;
+    }
     case SemIR::ArrayType::Kind:
     case SemIR::ClassType::Kind:
     case SemIR::ConstType::Kind:
     case SemIR::MaybeUnformedType::Kind:
     case SemIR::PartialType::Kind:
-    case SemIR::TupleType::Kind:
       (void)self_param_id;
       // TODO: Implement destruction of the type.
       break;
