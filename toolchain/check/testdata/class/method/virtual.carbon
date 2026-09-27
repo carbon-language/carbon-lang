@@ -1402,12 +1402,12 @@ class T2(G2: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc15_3.5(%self.param: ref %Base) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %m1.ref: %Base.elem = name_ref m1, @Base.%field_decl.loc5 [concrete = @Base.%field_decl.loc5]
-// CHECK:STDOUT:   %.loc15_3.1: ref %i32 = class_element_access %self.param, element1
+// CHECK:STDOUT:   %m2.ref: %Base.elem = name_ref m2, @Base.%field_decl.loc6 [concrete = @Base.%field_decl.loc6]
+// CHECK:STDOUT:   %.loc15_3.1: ref %i32 = class_element_access %self.param, element2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc15_3.1: <bound method> = bound_method %.loc15_3.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc15_3.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc15_3.1(%.loc15_3.1)
-// CHECK:STDOUT:   %m2.ref: %Base.elem = name_ref m2, @Base.%field_decl.loc6 [concrete = @Base.%field_decl.loc6]
-// CHECK:STDOUT:   %.loc15_3.2: ref %i32 = class_element_access %self.param, element2
+// CHECK:STDOUT:   %m1.ref: %Base.elem = name_ref m1, @Base.%field_decl.loc5 [concrete = @Base.%field_decl.loc5]
+// CHECK:STDOUT:   %.loc15_3.2: ref %i32 = class_element_access %self.param, element1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc15_3.2: <bound method> = bound_method %.loc15_3.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc15_3.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc15_3.2(%.loc15_3.2)
 // CHECK:STDOUT:   return

@@ -314,10 +314,10 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.5a318796badc8ab7:core.Destroy.Core"(ptr %self) #5 !dbg !79 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc6_20.1.x = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 0, !dbg !81
-// CHECK:STDOUT:   call void @"_CSelfDestruct.d088c7eb746488be:core.Destroy.Core"(ptr %.loc6_20.1.x), !dbg !81
-// CHECK:STDOUT:   %.loc6_20.2.y = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 1, !dbg !81
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc6_20.2.y), !dbg !81
+// CHECK:STDOUT:   %.loc6_20.1.y = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 1, !dbg !81
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc6_20.1.y), !dbg !81
+// CHECK:STDOUT:   %.loc6_20.2.x = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 0, !dbg !81
+// CHECK:STDOUT:   call void @"_CSelfDestruct.d088c7eb746488be:core.Destroy.Core"(ptr %.loc6_20.2.x), !dbg !81
 // CHECK:STDOUT:   ret void, !dbg !81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -359,10 +359,10 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.98b9397038fd95a2:core.Destroy.Core"(ptr %self) #5 !dbg !103 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_15.1.a = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 0, !dbg !105
-// CHECK:STDOUT:   call void @"_CSelfDestruct.5a318796badc8ab7:core.Destroy.Core"(ptr %.loc11_15.1.a), !dbg !105
-// CHECK:STDOUT:   %.loc11_15.2.b = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 1, !dbg !105
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc11_15.2.b), !dbg !105
+// CHECK:STDOUT:   %.loc11_15.1.b = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 1, !dbg !105
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc11_15.1.b), !dbg !105
+// CHECK:STDOUT:   %.loc11_15.2.a = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 0, !dbg !105
+// CHECK:STDOUT:   call void @"_CSelfDestruct.5a318796badc8ab7:core.Destroy.Core"(ptr %.loc11_15.2.a), !dbg !105
 // CHECK:STDOUT:   ret void, !dbg !105
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -607,10 +607,10 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.718874c3c75b803e:core.Destroy.Core"(ptr %self) #2 !dbg !167 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc6_14.1.a = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !169
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc6_14.1.a), !dbg !169
-// CHECK:STDOUT:   %.loc6_14.2.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !169
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc6_14.2.b), !dbg !169
+// CHECK:STDOUT:   %.loc6_14.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !169
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc6_14.1.b), !dbg !169
+// CHECK:STDOUT:   %.loc6_14.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !169
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc6_14.2.a), !dbg !169
 // CHECK:STDOUT:   ret void, !dbg !169
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
