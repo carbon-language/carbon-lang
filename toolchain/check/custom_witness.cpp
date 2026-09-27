@@ -402,9 +402,9 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         return;
       }
       case CARBON_KIND(SemIR::MaybeUnformedType maybe_unformed_type): {
-        // TODO: implement destruction for `Core.MaybeUnformed(T)`.
-        (void)maybe_unformed_type;
-        return;
+        self_type_id = context.types().GetTypeIdForTypeInstId(
+            maybe_unformed_type.inner_id);
+        break;
       }
       case CARBON_KIND(SemIR::PartialType partial_type): {
         // TODO: implement destruction for partial types.
