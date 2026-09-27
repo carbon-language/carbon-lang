@@ -320,6 +320,10 @@ def _process_pr(
             f"PR #{pr_number} has 1 or fewer commits, skipping overlap check."
         )
     else:
+        # Sort by PR number so the partial overlap fallback deterministically
+        # prioritizes older PRs when accounting for shared commits.
+        pr_to_commits = dict(sorted(pr_to_commits.items()))
+
         # Dependency Logic: Commit Subset Inclusion
         #
         # We consider PR B dependent on PR A if:
@@ -333,7 +337,7 @@ def _process_pr(
         #   subset of B's commits.
         # - Prevents false dependencies between sibling PRs by requiring all
         #   of A's commits to be in B, rather than just a shared base commit.
-        for other_pr_num, other_oids_set in sorted(pr_to_commits.items()):
+        for other_pr_num, other_oids_set in pr_to_commits.items():
             if other_pr_num == pr_number:
                 continue
             if other_oids_set < current_oids_set:
@@ -356,15 +360,22 @@ def _process_pr(
         # - Handles minor fixes or differences by only requiring overlap, not
         #   strict subset inclusion.
         # - Avoids circular dependencies via the sequence check.
-        for other_pr_num, other_oids_set in sorted(pr_to_commits.items()):
+        for other_pr_num, other_oids_set in pr_to_commits.items():
             if other_pr_num == pr_number or other_pr_num in open_deps:
                 continue
+
             # If current PR is a strict subset of other PR, current PR is an
             # ancestor.
             if current_oids_set < other_oids_set:
                 continue
-            unaccounted_shared = (current_oids_set & other_oids_set) - dep_oids
-            if unaccounted_shared and other_pr_num < pr_number:
+
+            # The current PR depends on an older PR if they share commits that
+            # have not already been provided by another dependency. This avoids
+            # redundant dependencies.
+            new_commits_in_other_pr = (
+                current_oids_set & other_oids_set
+            ) - dep_oids
+            if new_commits_in_other_pr and other_pr_num < pr_number:
                 open_deps.append(other_pr_num)
                 dep_oids.update(other_oids_set)
 
@@ -450,7 +461,9 @@ def _process_pr(
                 first_non_dep_oid = oid
                 break
 
-        # Find the dependency containing the commit closest to HEAD.
+        # Find the dependency containing the commit closest to HEAD. PR numbers
+        # do not reflect stack order, and selecting the immediate parent
+        # ensures the review diff link starts after all dependency commits.
         def _dep_latest_index(dep_pr: int) -> int:
             dep_oids_set = pr_to_commits[dep_pr]
             return max(
