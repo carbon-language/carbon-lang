@@ -310,6 +310,7 @@ def _process_pr(
     labels = pr_node["labels"]["nodes"]
 
     open_deps: list[int] = []
+    dep_oids: set[str] = set()
 
     current_oids = [c["commit"]["oid"] for c in commits]
     current_oids_set = set(current_oids)
@@ -321,10 +322,10 @@ def _process_pr(
     else:
         # Dependency Logic: Commit Subset Inclusion
         #
-        # PR B depends on PR A if:
-        # 1. A is not B.
+        # We consider PR B dependent on PR A if:
+        # 1. PR A is not PR B.
         # 2. All commits in PR A are also in PR B.
-        # 3. PR B contains commits not present in PR A.
+        # 3. PR B has at least one commit not present in PR A.
         #
         # Why this works:
         # - Does not assume dependency direction matches PR creation order.
@@ -337,6 +338,35 @@ def _process_pr(
                 continue
             if other_oids_set < current_oids_set:
                 open_deps.append(other_pr_num)
+
+        for d in open_deps:
+            dep_oids.update(pr_to_commits[d])
+
+        # Dependency Logic: Overlap Fallback for Older PRs
+        #
+        # If neither PR is a strict subset of the other, we consider PR B
+        # dependent on PR A if:
+        # 1. The dependency PR A was created before PR B (A.number < B.number).
+        # 2. There is a non-empty overlap of commits between PR A and PR B not
+        #    already accounted for by an identified dependency.
+        # 3. PR B is not a strict subset of PR A.
+        #
+        # Why this works:
+        # - Ensures the dependency direction reflects the creation sequence.
+        # - Handles minor fixes or differences by only requiring overlap, not
+        #   strict subset inclusion.
+        # - Avoids circular dependencies via the sequence check.
+        for other_pr_num, other_oids_set in sorted(pr_to_commits.items()):
+            if other_pr_num == pr_number or other_pr_num in open_deps:
+                continue
+            # If current PR is a strict subset of other PR, current PR is an
+            # ancestor.
+            if current_oids_set < other_oids_set:
+                continue
+            unaccounted_shared = (current_oids_set & other_oids_set) - dep_oids
+            if unaccounted_shared and other_pr_num < pr_number:
+                open_deps.append(other_pr_num)
+                dep_oids.update(other_oids_set)
 
     # Parse existing comment
     marker_prefix = "<!-- check_dependent_pr "
@@ -364,10 +394,6 @@ def _process_pr(
                     body[start:end], open_pr_numbers, max_merged_pr, pr_number
                 )
             )
-
-    dep_oids = set()
-    for d in open_deps:
-        dep_oids.update(pr_to_commits[d])
 
     # Keep tracking previously identified dependencies if they are still open,
     # unless current PR is an ancestor of that PR or current PR already has
