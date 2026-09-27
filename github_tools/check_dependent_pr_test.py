@@ -476,11 +476,9 @@ class TestCheckDependentPR(unittest.TestCase):
             label_id="label_dependent",
             token="test_token",
         )
-        self.assertEqual(self.mock_client.execute.call_count, 3)
-        calls = self.mock_client.execute.call_args_list
-        self.assertIn("addLabelsToLabelable", calls[1][0][0])
+        self.assertEqual(self.mock_client.execute.call_count, 1)
         self._assert_status(
-            _OID4, "pending", "This PR has open dependencies: #1"
+            _OID4, "success", "This PR has no open dependencies"
         )
 
     def test_always_sets_status_check_success(self) -> None:
@@ -553,6 +551,91 @@ class TestCheckDependentPR(unittest.TestCase):
         self.assertNotIn("#2", variable_values["body"])
         self._assert_status(
             _OID3, "pending", "This PR has open dependencies: #1"
+        )
+
+    def test_process_pr_base_created_after_dependent(self) -> None:
+        # PR 1: [_OID1, _OID2]
+        # PR 2: [_OID1]
+        # PR 1 depends on PR 2 even though PR 2 has a higher number.
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_1",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=1,
+            pr_to_commits={1: {_OID1, _OID2}, 2: {_OID1}},
+            pr_to_head={1: _OID2, 2: _OID1},
+            open_pr_numbers={1, 2},
+            label_id="label_dependent",
+            token="test_token",
+        )
+        self.assertEqual(self.mock_client.execute.call_count, 3)
+        calls = self.mock_client.execute.call_args_list
+        self.assertIn("addLabelsToLabelable", calls[1][0][0])
+        variable_values = calls[2][1]["variable_values"]
+        self.assertIn("Depends on #2", variable_values["body"])
+        self._assert_status(
+            _OID2, "pending", "This PR has open dependencies: #2"
+        )
+
+    def test_process_pr_inverted_dependency_pruned(self) -> None:
+        # PR 1: [_OID1, _OID2]
+        # PR 2: [_OID1]
+        # PR 2 drops PR 1 from previously recorded dependencies.
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_2",
+            head_ref_oid=_OID1,
+            commits=[_OID1],
+            comments=[self._make_comment(open_deps=[1])],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=2,
+            pr_to_commits={1: {_OID1, _OID2}, 2: {_OID1}},
+            pr_to_head={1: _OID2, 2: _OID1},
+            open_pr_numbers={1, 2},
+            label_id="label_dependent",
+            token="test_token",
+        )
+        calls = self.mock_client.execute.call_args_list
+        self.assertIn("removeLabelsFromLabelable", calls[1][0][0])
+        self.assertIn("updateIssueComment", calls[2][0][0])
+        self._assert_status(
+            _OID1, "success", "This PR has no open dependencies"
+        )
+
+    def test_process_pr_non_sequential_stack_review_commit(self) -> None:
+        # PR 1: [_OID1, _OID2]
+        # PR 2: [_OID1]
+        # PR 3: [_OID1, _OID2, _OID3]
+        # PR 3 review link starts after PR 1's HEAD, not PR 2's HEAD.
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_3",
+            head_ref_oid=_OID3,
+            commits=[_OID1, _OID2, _OID3],
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=3,
+            pr_to_commits={
+                1: {_OID1, _OID2},
+                2: {_OID1},
+                3: {_OID1, _OID2, _OID3},
+            },
+            pr_to_head={1: _OID2, 2: _OID1, 3: _OID3},
+            open_pr_numbers={1, 2, 3},
+            label_id="label_dependent",
+            token="test_token",
+        )
+        calls = self.mock_client.execute.call_args_list
+        variable_values = calls[2][1]["variable_values"]
+        self.assertIn("Depends on #1, #2", variable_values["body"])
+        self.assertIn(f"changes/{_OID2}..HEAD", variable_values["body"])
+        self._assert_status(
+            _OID3, "pending", "This PR has open dependencies: #1, #2"
         )
 
     def test_query_max_merged_pr_explicit_orderBy_and_first_one(self) -> None:

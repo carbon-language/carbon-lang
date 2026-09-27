@@ -312,40 +312,31 @@ def _process_pr(
     open_deps: list[int] = []
 
     current_oids = [c["commit"]["oid"] for c in commits]
+    current_oids_set = set(current_oids)
 
     if len(commits) <= 1:
         _print_err(
             f"PR #{pr_number} has 1 or fewer commits, skipping overlap check."
         )
     else:
-        # Dependency Logic: Overlap and Sequence
+        # Dependency Logic: Commit Subset Inclusion
         #
-        # We consider PR B dependent on PR A if:
-        # 1. The dependency PR A was created before PR B (A.number < B.number).
-        # 2. There is a non-empty overlap of commits between PR A and PR B.
-        # 3. PR B has at least one commit not present in PR A.
+        # PR B depends on PR A if:
+        # 1. A is not B.
+        # 2. All commits in PR A are also in PR B.
+        # 3. PR B contains commits not present in PR A.
         #
         # Why this works:
-        # - Ensures the dependency direction reflects the creation sequence.
-        # - Handles minor fixes or differences by only requiring overlap, not
-        #   strict subset inclusion.
-        # - Avoids circular dependencies via the sequence check.
-        current_oids_set = set(current_oids)
-        for other_pr_num, other_oids_set in pr_to_commits.items():
-            if other_pr_num >= pr_number:
+        # - Does not assume dependency direction matches PR creation order.
+        # - Prevents dependency cycles by checking A's commits are a strict
+        #   subset of B's commits.
+        # - Prevents false dependencies between sibling PRs by requiring all
+        #   of A's commits to be in B, rather than just a shared base commit.
+        for other_pr_num, other_oids_set in sorted(pr_to_commits.items()):
+            if other_pr_num == pr_number:
                 continue
-
-            # Filter out commits from PRs earlier than other_pr_num.
-            new_commits_in_other_pr = other_oids_set.copy()
-            for prev_pr_num, prev_oids_set in pr_to_commits.items():
-                if prev_pr_num < other_pr_num:
-                    new_commits_in_other_pr -= prev_oids_set
-
-            if not (new_commits_in_other_pr & current_oids_set):
-                continue
-            if not (current_oids_set - other_oids_set):
-                continue
-            open_deps.append(other_pr_num)
+            if other_oids_set < current_oids_set:
+                open_deps.append(other_pr_num)
 
     # Parse existing comment
     marker_prefix = "<!-- check_dependent_pr "
@@ -374,11 +365,24 @@ def _process_pr(
                 )
             )
 
+    dep_oids = set()
+    for d in open_deps:
+        dep_oids.update(pr_to_commits[d])
+
     # Keep tracking previously identified dependencies if they are still open,
-    # even if they no longer pass the subset check (e.g. they got new commits).
+    # unless current PR is an ancestor of that PR or current PR already has
+    # identified dependencies and shares no unique commits with that PR.
     for pr in parsed_open_deps:
         if pr in open_pr_numbers and pr not in open_deps:
+            other_oids = pr_to_commits.get(pr, set())
+            if current_oids_set < other_oids:
+                continue
+            if open_deps and not ((current_oids_set & other_oids) - dep_oids):
+                continue
             open_deps.append(pr)
+            dep_oids.update(other_oids)
+
+    open_deps.sort()
 
     # Identify newly merged PRs
     newly_merged_deps = []
@@ -420,7 +424,19 @@ def _process_pr(
                 first_non_dep_oid = oid
                 break
 
-        last_dep_pr_num = max(open_deps)
+        # Find the dependency containing the commit closest to HEAD.
+        def _dep_latest_index(dep_pr: int) -> int:
+            dep_oids_set = pr_to_commits[dep_pr]
+            return max(
+                (
+                    i
+                    for i, oid in enumerate(current_oids)
+                    if oid in dep_oids_set
+                ),
+                default=-1,
+            )
+
+        last_dep_pr_num = max(open_deps, key=_dep_latest_index)
         last_dep_oids = pr_to_commits[last_dep_pr_num]
 
         # Find the most recent commit in the current PR that is also in the
