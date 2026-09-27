@@ -232,8 +232,8 @@ auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
 auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                      SemIR::NameId name_id,
                      SemIR::ExprRegionId type_expr_region_id,
-                     SemIR::TypeId type_id, ParamPatternKind kind)
-    -> SemIR::InstId {
+                     SemIR::TypeId type_id, ParamPatternKind kind,
+                     SemIR::InstId default_value_expr_id) -> SemIR::InstId {
   auto param_pattern_kind = [kind]() -> SemIR::InstKind {
     switch (kind) {
       case ParamPatternKind::Value:
@@ -255,6 +255,7 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                            /*phase=*/BindingPhase::Runtime);
 
   auto pattern_type_id = GetPatternType(context, type_id);
+  auto pattern_inst_id = SemIR::InstId::None;
   if (kind == ParamPatternKind::Var) {
     auto pattern_id =
         AddBindingPattern(context, loc_id, type_expr_region_id, type_id,
@@ -262,11 +263,12 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                            .type_id = pattern_type_id,
                            .entity_name_id = entity_name_id,
                            .subpattern_id = SemIR::InstId::None});
-    return AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
-                                context.sem_ir(), loc_id,
-                                SemIR::VarParamPattern{
-                                    .type_id = pattern_type_id,
-                                    .subpattern_id = pattern_id.pattern_id}));
+    pattern_inst_id = AddInst(
+        context,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), loc_id,
+            SemIR::VarParamPattern{.type_id = pattern_type_id,
+                                   .subpattern_id = pattern_id.pattern_id}));
   } else {
     auto pattern_id = AddInst(
         context, SemIR::LocIdAndInst::RuntimeVerified(
@@ -275,13 +277,28 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                                                 .type_id = pattern_type_id,
                                                 .pretty_name_id = name_id}));
 
-    return AddBindingPattern(context, loc_id, type_expr_region_id, type_id,
-                             {.kind = SemIR::WrapperBindingPattern::Kind,
-                              .type_id = GetPatternType(context, type_id),
-                              .entity_name_id = entity_name_id,
-                              .subpattern_id = pattern_id})
-        .pattern_id;
+    pattern_inst_id =
+        AddBindingPattern(context, loc_id, type_expr_region_id, type_id,
+                          {.kind = SemIR::WrapperBindingPattern::Kind,
+                           .type_id = GetPatternType(context, type_id),
+                           .entity_name_id = entity_name_id,
+                           .subpattern_id = pattern_id})
+            .pattern_id;
   }
+  CARBON_CHECK(pattern_inst_id.has_value());
+
+  if (default_value_expr_id.has_value()) {
+    pattern_inst_id =
+        AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                             context.sem_ir(), loc_id,
+                             SemIR::DefaultValuePattern{
+                                 .type_id = pattern_type_id,
+                                 .subpattern_id = pattern_inst_id,
+                                 .value_id = default_value_expr_id,
+                             }));
+  }
+
+  return pattern_inst_id;
 }
 
 auto PerformAction(Context& context, SemIR::LocId loc_id,
