@@ -345,36 +345,23 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: define internal noundef i32 @_ZNK4IntBcviEv.carbon_thunk._(ptr noundef nonnull align 1 dereferenceable(1) %this) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !140
-// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !tbaa !140, !nonnull !54
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !132
+// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !tbaa !132, !nonnull !54
 // CHECK:STDOUT:   %call = call noundef i32 @_ZNK4IntBcviEv(ptr noundef nonnull align 1 dereferenceable(1) %0)
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.6dae29ece9a708c4:core.Destroy.Core"(ptr %self) #0 !dbg !119 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !119 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !121
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !123 {
+// CHECK:STDOUT: define void @_CConvertToValue.Main(ptr %b) #0 !dbg !123 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !125
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !127 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CSubobjectDestroy.f58524831c37807e:core.Destroy.Core"(ptr %self), !dbg !129
+// CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK4IntBcviEv.carbon_thunk._(ptr %b), !dbg !126
 // CHECK:STDOUT:   ret void, !dbg !129
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CConvertToValue.Main(ptr %b) #0 !dbg !131 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK4IntBcviEv.carbon_thunk._(ptr %b), !dbg !134
-// CHECK:STDOUT:   ret void, !dbg !137
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -416,23 +403,15 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: !114 = !DILocation(line: 12, column: 3, scope: !111)
 // CHECK:STDOUT: !117 = !DILocation(line: 11, column: 1, scope: !111)
 // CHECK:STDOUT: !118 = !{!112}
-// CHECK:STDOUT: !119 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.6dae29ece9a708c4:core.Destroy.Core", scope: null, file: !105, line: 12, type: !110, spFlags: DISPFlagDefinition, unit: !106, retainedNodes: !122)
+// CHECK:STDOUT: !119 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f58524831c37807e:core.Destroy.Core", scope: null, file: !105, line: 12, type: !110, spFlags: DISPFlagDefinition, unit: !106, retainedNodes: !122)
 // CHECK:STDOUT: !120 = !DILocalVariable(arg: 1, scope: !119, type: !20)
 // CHECK:STDOUT: !121 = !DILocation(line: 12, column: 3, scope: !119)
 // CHECK:STDOUT: !122 = !{!120}
-// CHECK:STDOUT: !123 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.f58524831c37807e:core.Destroy.Core", scope: null, file: !105, line: 12, type: !110, spFlags: DISPFlagDefinition, unit: !106, retainedNodes: !126)
-// CHECK:STDOUT: !124 = !DILocalVariable(arg: 1, scope: !123, type: !20)
-// CHECK:STDOUT: !125 = !DILocation(line: 12, column: 3, scope: !123)
-// CHECK:STDOUT: !126 = !{!124}
-// CHECK:STDOUT: !127 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f58524831c37807e:core.Destroy.Core", scope: null, file: !105, line: 12, type: !110, spFlags: DISPFlagDefinition, unit: !106, retainedNodes: !130)
-// CHECK:STDOUT: !128 = !DILocalVariable(arg: 1, scope: !127, type: !20)
-// CHECK:STDOUT: !129 = !DILocation(line: 12, column: 3, scope: !127)
-// CHECK:STDOUT: !130 = !{!128}
-// CHECK:STDOUT: !131 = distinct !DISubprogram(name: "ConvertToValue", linkageName: "_CConvertToValue.Main", scope: null, file: !105, line: 15, type: !23, spFlags: DISPFlagDefinition, unit: !106, retainedNodes: !138)
-// CHECK:STDOUT: !132 = !DILocalVariable(arg: 1, scope: !131, type: !21)
-// CHECK:STDOUT: !134 = !DILocation(line: 16, column: 27, scope: !131)
-// CHECK:STDOUT: !137 = !DILocation(line: 15, column: 1, scope: !131)
-// CHECK:STDOUT: !138 = !{!132}
-// CHECK:STDOUT: !139 = !{!"p1 _ZTS4IntB", !48, i64 0}
-// CHECK:STDOUT: !140 = !{!139, !139, i64 0}
+// CHECK:STDOUT: !123 = distinct !DISubprogram(name: "ConvertToValue", linkageName: "_CConvertToValue.Main", scope: null, file: !105, line: 15, type: !23, spFlags: DISPFlagDefinition, unit: !106, retainedNodes: !130)
+// CHECK:STDOUT: !124 = !DILocalVariable(arg: 1, scope: !123, type: !21)
+// CHECK:STDOUT: !126 = !DILocation(line: 16, column: 27, scope: !123)
+// CHECK:STDOUT: !129 = !DILocation(line: 15, column: 1, scope: !123)
+// CHECK:STDOUT: !130 = !{!124}
+// CHECK:STDOUT: !131 = !{!"p1 _ZTS4IntB", !48, i64 0}
+// CHECK:STDOUT: !132 = !{!131, !131, i64 0}
 // CHECK:STDOUT:
