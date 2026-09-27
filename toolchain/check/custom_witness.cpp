@@ -371,7 +371,7 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
   }
 }
 
-// Calls `self.<field>.(Destroy.SelfDestruct)` for each field in a `StructType`.
+// Calls `self.<field>.(Destroy.SelfDestruct)` for a field in a `StructType`.
 static auto DestroyStructField(Context& context, SemIR::LocId loc_id,
                                SemIR::InstId callee_self_param_id,
                                SemIR::StructTypeField struct_field) -> void {
@@ -411,14 +411,20 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
 
         auto struct_fields = class_info.GetStructTypeFields(
             context.sem_ir(), class_type.specific_id);
-        for (auto field : struct_fields) {
+        CARBON_CHECK(
+            !struct_fields.empty(),
+            "empty structs should have a trivial `SubobjectDestroy.Op`");
+        for (auto i = static_cast<std::int64_t>(struct_fields.size()) - 1;
+             i >= 0; --i) {
           auto field_defined_in_self_type =
               SemIR::LookupClassFieldByStructField(
                   context.sem_ir(),
-                  context.name_scopes().Get(class_info.scope_id), field)
+                  context.name_scopes().Get(class_info.scope_id),
+                  struct_fields[i])
                   .has_value();
           if (field_defined_in_self_type) {
-            DestroyStructField(context, loc_id, callee_self_param_id, field);
+            DestroyStructField(context, loc_id, callee_self_param_id,
+                               struct_fields[i]);
           }
         }
         // TODO: Call `base.(Destroy.SelfDestruct)()`.
