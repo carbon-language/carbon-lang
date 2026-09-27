@@ -407,9 +407,9 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         return;
       }
       case CARBON_KIND(SemIR::PartialType partial_type): {
-        // TODO: implement destruction for partial types.
-        (void)partial_type;
-        return;
+        self_type_id =
+            context.types().GetTypeIdForTypeInstId(partial_type.inner_id);
+        break;
       }
       case CARBON_KIND(SemIR::StructType struct_type): {
         // TODO: implement destruction for struct types.
