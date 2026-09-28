@@ -58,8 +58,8 @@ cc_library(
 cc_shared_library(
     name = "parser_shared",
     shared_lib_name = "carbon.so",
-    deps = [":parser"],
     tags = ["manual"],
+    deps = [":parser"],
 )
 
 cc_binary(
