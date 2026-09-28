@@ -556,7 +556,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature ',' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse ',' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse ',' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ',' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ',' has_error
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
@@ -572,7 +572,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature '=' has_error
 // CHECK:STDOUT:   │ │ │   ├─InvalidParse '=' has_error
 // CHECK:STDOUT:   │ │ │   ├─InvalidParse '=' has_error
-// CHECK:STDOUT:   │ │ │ ╭─LetBindingPattern '=' has_error
+// CHECK:STDOUT:   │ │ │ ╭─StructPatternFieldLetBindingPattern '=' has_error
 // CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
 // CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'y'
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
@@ -661,7 +661,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature ',' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse ',' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse ',' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ',' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ',' has_error
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
@@ -712,7 +712,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature ':' has_error
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -847,7 +847,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'foo'
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '.' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '.' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'foo' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern 'foo' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -887,7 +887,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'foo'
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse 'y' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse 'y' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'foo' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern 'foo' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -902,7 +902,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature '!' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '!' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '!' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern '!' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern '!' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -979,7 +979,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature '"foo"' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '"foo"' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '"foo"' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern '"foo"' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern '"foo"' has_error
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'

@@ -39,7 +39,21 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::StructPatternStartId node_id)
     -> bool {
-  return context.TODO(node_id, "struct pattern start");
+  EndEmptyExprRegionForPattern(context);
+
+  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
+    CARBON_DIAGNOSTIC(FieldWithStructPattern, Error,
+                      "found struct pattern in class decl");
+    context.emitter().Emit(node_id, FieldWithStructPattern);
+
+    return false;
+  }
+
+  context.node_stack().Push(node_id);
+  context.struct_type_fields_stack().PushArray();
+  context.param_and_arg_refs_stack().Push();
+  BeginExprRegionForPattern(context);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::ExplicitParamListStartId node_id)
@@ -137,12 +151,103 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
-  return context.TODO(node_id, "struct pattern");
+  if (context.node_stack().PeekIs(Parse::NodeKind::StructPatternStart)) {
+    // End the pending region started by a trailing comma, or the opening
+    // delimiter of an empty list.
+    EndEmptyExprRegionForPattern(context);
+  } else {
+    // End the pending region for the last pattern in the list.
+    EndExprRegionForPattern(context, context.node_stack());
+  }
+
+  if (context.node_stack().PeekIs(Parse::NodeKind::UnderscoreName)) {
+    return context.TODO(node_id, "Struct pattern underscore field");
+  }
+
+  if (!context.node_stack().PeekIs(Parse::NodeCategory::MemberName)) {
+    // Remove the last parameter from the node stack before collecting names.
+    context.param_and_arg_refs_stack().EndNoPop(
+        Parse::NodeKind::StructPatternStart);
+  }
+
+  auto fields = context.struct_type_fields_stack().PeekArray();
+  auto field_count = fields.size();
+
+  // diagnose duplicate field names
+  // TODO: this code is shared with struct value/literal handling, could the
+  // relevant functions be made easily available here?
+  llvm::SmallVector<Parse::NodeId> field_name_nodes;
+  field_name_nodes.reserve(field_count);
+  for ([[maybe_unused]] auto i : llvm::seq(field_count)) {
+    auto [name_node, _] =
+        context.node_stack().PopWithNodeId<Parse::NodeCategory::MemberName>();
+    field_name_nodes.push_back(name_node);
+  }
+
+  bool has_error = false;
+  Map<SemIR::NameId, Parse::NodeId> names;
+  for (auto [field_name_node, field] :
+       llvm::zip_equal(field_name_nodes, fields)) {
+    auto result = names.Insert(field.name_id, field_name_node);
+    if (!result.is_inserted()) {
+      CARBON_DIAGNOSTIC(StructPatternNameDuplicate, Error,
+                        "duplicated field name `{0}` in struct pattern",
+                        SemIR::NameId);
+      CARBON_DIAGNOSTIC(StructPatternNamePrevious, Note,
+                        "field with the same name here");
+      context.emitter()
+          .Build(result.value(), StructPatternNameDuplicate, field.name_id)
+          .Note(field_name_node, StructPatternNamePrevious)
+          .Emit();
+      has_error = true;
+    }
+  }
+
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
+      Parse::NodeKind::StructPatternStart);
+
+  context.node_stack()
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::StructPatternStart>();
+
+  if (has_error) {
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+  } else {
+    auto type_id = GetPatternType(
+        context,
+        GetStructType(context,
+                      context.struct_type_fields().AddCanonical(fields)));
+
+    context.node_stack().Push(
+        node_id,
+        AddInst<SemIR::StructPattern>(
+            context, node_id, {.type_id = type_id, .elements_id = refs_id}));
+  }
+
+  context.struct_type_fields_stack().PopArray();
+  BeginExprRegionForPattern(context);
+  return true;
 }
 
 auto HandleParseNode(Context& context,
                      Parse::StructPatternDesignatedFieldId node_id) -> bool {
-  return context.TODO(node_id, "struct pattern field");
+  EndExprRegionForPattern(context, context.node_stack());
+  auto pattern_id = context.node_stack().PopPattern();
+
+  auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
+
+  auto type_id = ExtractScrutineeType(
+      context.sem_ir(), context.insts().Get(pattern_id).type_id());
+  auto type_inst = context.types().GetTypeInstId(type_id);
+
+  context.struct_type_fields_stack().AppendToTop(
+      {.name_id = name_id, .type_inst_id = type_inst});
+
+  context.node_stack().Push(node_id, pattern_id);
+
+  // Start a new pending `ExprRegion`, to maintain the invariant that one is
+  // pending at the end of handling for a pattern.
+  BeginExprRegionForPattern(context);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
