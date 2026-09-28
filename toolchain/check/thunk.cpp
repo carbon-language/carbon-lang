@@ -554,7 +554,7 @@ auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
   auto self_inst_id = params[0];
 
   // Build the function body. This calls the `Destroy` operator on `self`.
-  auto destroy_inst_id = BuildSelfDestructCall(context, loc_id, self_inst_id);
+  auto destroy_inst_id = BuildSelfDestructCall(context, self_inst_id);
   DiscardExpr(context, destroy_inst_id);
   BuildReturnWithNoExpr(context, loc_id);
 
