@@ -37,10 +37,10 @@ Entities may have up to four declarations:
 -   A required, owning definition.
     -   For example, `class MyClass { ... }`.
     -   The definition might be the _only_ declaration.
--   An optional, owning declaration in a `match_first` block
+-   An optional, owning declaration in a `match_first` block.
     -   This only applies to `impl` declarations.
     -   This must be in the same file as the first owning declaration.
--   An optional, non-owning `extern library "<owning_library>"` declaration
+-   An optional, non-owning `extern library "<owning_library>"` declaration.
     -   For example, `extern library "OtherLibrary" class MyClass;`.
     -   It must be in a separate library from the definition.
     -   The owning library's API file must import the `extern` declaration, and
@@ -133,32 +133,97 @@ behavior.
 
 #### Syntactic matching and scopes
 
--   Two owned declarations _syntactically match_ if the sequence of tokens in
-    the declaration following the introducer keyword and the optional scope, up
-    to the semicolon or open brace, is identical, except for `unused` modifiers
-    on parameters (see
-    [proposal #3763](/proposals/p003763-matching-redeclarations.md#proposal)
-    and
-    [proposal #3980](/proposals/p003980-singular-extern-declarations.md#declarations)).
--   For a qualified declaration (see
-    [proposal #3763](/proposals/p003763-matching-redeclarations.md#scope-differences)):
-    -   Take the portion of the declaration from the introducer up to the end of
-        the scope.
-    -   Replace the introducer keyword with the introducer keyword of the scope.
-    -   Replace the trailing `.` with a `;`.
-    -   The result must be a valid declaration of the scope, ignoring
-        restrictions on how often the scope can be redeclared.
--   To redeclare an `impl` after the end of the `class` scope it was declared
-    in, that scope may be re-entered as part of the `impl` redeclaration, in the
-    same way, except with parentheses around the name of the `impl`, as in
-    `impl X.(as Y) { ... }` (see
-    [proposal #5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#proposal)).
--   For `let` and `var` declarations with a single name binding
-    (`let Scope.A: Type = Value;`), the end of the declaration is at the `=` or
-    `;` rather than at the `}` or `;`. An arbitrary pattern that is not a single
-    binding (`let (A: Type1, B: Type2) = Value;`) does not permit
-    redeclarations (see
-    [proposal #3763](/proposals/p003763-matching-redeclarations.md#let-and-var-declarations)).
+Two owned declarations _syntactically match_ if the sequence of tokens in
+the declaration following the introducer keyword and the optional scope, up
+to the semicolon or open brace, is identical, except for `unused` modifiers
+on parameters (see
+[proposal #3763](/proposals/p003763-matching-redeclarations.md#proposal)
+and
+[proposal #3980](/proposals/p003980-singular-extern-declarations.md#declarations)).
+
+An entity may be redeclaration in a different scope using a a qualified
+declaration (see
+[proposal #3763](/proposals/p003763-matching-redeclarations.md#scope-differences)):
+
+-   Take the portion of the declaration from the introducer up to the end of
+    the scope.
+-   Replace the introducer keyword with the introducer keyword of the scope.
+-   Replace the trailing `.` with a `;`.
+-   The result must be a valid declaration of the scope, ignoring
+    restrictions on how often the scope can be redeclared.
+
+Put another way: each portion of the qualified name must not differ from the
+declaration of the corresponding entity.
+
+For example:
+
+```carbon
+namespace N;
+
+class N.C(T:! type) {
+  class D(U:! type) {
+    fn F(a: T, b: U);
+  }
+}
+
+fn N.C(T:! type).D(U:! type).F(a: T, b: U) {}
+```
+
+In this function definition:
+
+-   `F(a: T, b: U)` does not differ from the declaration of `F`.
+-   `class N.C(T:! type).D(U:! type);` would be a valid redeclaration of `D`,
+    because:
+    -   `D(U:! type)` does not differ from the declaration of `D`.
+    -   `class N.C(T:! type);` would be a valid redeclaration of `C`, because:
+        -   `C(T:! type)` does not differ from the declaration of `C`.
+        -   `namespace N;` would be a valid redeclaration of `N`.
+
+So this is a valid definition of `F`.
+
+Note that this means that, for example, all members of a class must use the same
+name for each generic parameter of that class. It cannot be `T` in one
+out-of-line member definition and `ElementType` in another, or the scope in the
+out-of-line definition would not match.
+
+To redeclare an `impl` after the end of the `class` scope it was declared
+in, that scope may be re-entered as part of the `impl` redeclaration, in the
+same way, except with parentheses around the name of the `impl`, as in
+`impl X.(as Y) { ... }` (see
+[proposal #5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#proposal)).
+See
+["Declaring implementations" in the "Generics: details" design document](generics/details.md#declaring-implementations).
+
+The members of an `impl` are not required to syntactically match the
+corresponding members of the interface they are implementing since:
+
+-   We don't want to syntactically couple declarations that could be
+    in different libraries or packages. Such coupling would make refactorings
+    that change the way that code is expressed but not its meaning either
+    difficult or impossible.
+-   The associated function in an `impl` is expected to have different syntax
+    than that in the interface in some cases. The two declarations are in
+    different scopes, so will refer to the same types in different ways. And the
+    declaration in the `impl` is declared with knowledge of the `Self` type and
+    associated constants for the interface, which we allow to be used
+    directly in the declaration of the function.
+
+See
+["`impl` members vs `interface` members" in the "Generics: details" design document](generics/details.md#impl-members-vs-interface-members).
+
+For `let` and `var` declarations with a single name binding
+(`let Scope.A: Type = Value;`), the end of the declaration is at the `=` or
+`;` rather than at the `}` or `;`. Note though it is an open question
+whether this form permits redeclarations. An arbitrary pattern that is not a
+single binding (`let (A: Type1, B: Type2) = Value;`) does not permit
+redeclarations (see
+[proposal #3763](/proposals/p003763-matching-redeclarations.md#let-and-var-declarations)).
+
+Any unqualified names used in syntactic matching will resolve to the same entity
+in redeclarations due to the poisoning of failed unqualified lookups (see
+[proposal #3763](/proposals/p003763-matching-redeclarations.md#unqualified-name-lookup)).
+See
+["Unqualified name lookup" in the "Name lookup" design document](name_lookup.md#unqualified-name-lookup).
 
 ## `extern` and `extern library`
 
@@ -174,10 +239,9 @@ There are two forms of the `extern` modifier:
     -   The library name indicates where the entity is defined.
     -   This can be used to improve build performance, such as by splitting out
         a declaration in order to reduce a library's dependencies.
-
-The non-owned `extern library` declarations will only use semantic matching for
-redeclarations, not syntactic matching (see
-[proposal #3980](/proposals/p003980-singular-extern-declarations.md#no-syntactic-matching-for-extern-library-declarations)).
+    -   `extern library` declarations only use semantic matching for
+        redeclarations, not syntactic matching (see
+        [proposal #3980](/proposals/p003980-singular-extern-declarations.md#no-syntactic-matching-for-extern-library-declarations)).
 
 For example, a use of both might look like:
 
@@ -331,8 +395,10 @@ extern class MyType {
 
 As adopted in
 [proposal #3980](/proposals/p003980-singular-extern-declarations.md#validation-for-non-owning-extern-library-declarations),
-we offer some validation that the library in `extern library` is correct. When
-the owning library is incorrect, it's very likely to be detected in two cases:
+we offer some validation that the library in `extern library` is correct, in the
+sense of being the single non-owning library declaring that entity and naming
+the single owning library. When the owning library is incorrect, it's very
+likely to be detected in two cases:
 
 -   A compile-time error when the owning library imports the non-owning library,
     when the owning declaration is evaluated.
