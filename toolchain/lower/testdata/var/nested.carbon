@@ -51,15 +51,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.6dae29ece9a708c4:core.Destroy.Core"(ptr %self) #0 !dbg !39 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !41
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !43 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -94,12 +88,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !36 = !DILocation(line: 15, column: 3, scope: !25)
 // CHECK:STDOUT: !37 = !DILocation(line: 19, column: 10, scope: !25)
 // CHECK:STDOUT: !38 = !DILocation(line: 19, column: 3, scope: !25)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.6dae29ece9a708c4:core.Destroy.Core", scope: null, file: !18, line: 16, type: !24, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !42)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f58524831c37807e:core.Destroy.Core", scope: null, file: !18, line: 16, type: !24, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !42)
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !39, type: !20)
 // CHECK:STDOUT: !41 = !DILocation(line: 16, column: 5, scope: !39)
 // CHECK:STDOUT: !42 = !{!40}
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f58524831c37807e:core.Destroy.Core", scope: null, file: !18, line: 16, type: !24, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !46)
-// CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !43, type: !20)
-// CHECK:STDOUT: !45 = !DILocation(line: 16, column: 5, scope: !43)
-// CHECK:STDOUT: !46 = !{!44}
 // CHECK:STDOUT:
