@@ -95,7 +95,7 @@ git_override(
         "//bazel/llvm_project:0004_Introduce_basic_sources_exporting_for_libunwind.patch",
         "//bazel/llvm_project:0005_Introduce_basic_sources_exporting_for_libcxx_and_libcxxabi.patch",
         "//bazel/llvm_project:0006_Add_more_libc_math_excludes.patch",
-        "//bazel/llvm_project:0007_Drop_dependencies_on_linux_uapi_and_pyyaml.patch",
+        "//bazel/llvm_project:0012_Drop_dependencies_on_linux_uapi_and_pyyaml.patch",
     ],
     remote = "https://github.com/llvm/llvm-project.git",
 )
