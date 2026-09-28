@@ -131,6 +131,7 @@
   "template"
   "then"
   "type"
+  ; "typeof"
   "var"
   "virtual"
   "where"
