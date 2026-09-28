@@ -103,9 +103,10 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                      /*is_desugared=*/true);
 }
 
-auto BuildSelfDestructCall(Context& context, SemIR::LocId loc_id,
-                           SemIR::InstId object_id) -> SemIR::InstId {
-  return BuildUnaryOperator(context, loc_id,
+auto BuildSelfDestructCall(Context& context, SemIR::InstId object_id)
+    -> SemIR::InstId {
+  return BuildUnaryOperator(context,
+                            context.insts().GetLocIdForDesugaring(object_id),
                             {.interface_name = CoreIdentifier::Destroy,
                              .op_name = CoreIdentifier::SelfDestruct},
                             object_id);
