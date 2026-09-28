@@ -2,7 +2,9 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("//bazel/cc_toolchains:make_include_copts.bzl", "make_include_copts")
 
 package(default_visibility = ["//bazel/check_deps:__pkg__"])
 
@@ -34,12 +36,10 @@ genrule(
     name = "parser_files",
     srcs = ["grammar.js"],
     outs = [
-        "src/parser.c",
-        "src/tree_sitter/parser.h",
+        "parser.c",
+        "tree_sitter/parser.h",
     ],
-    cmd = "tree-sitter generate $(location grammar.js) &&\n" +
-          "cp src/parser.c $(location src/parser.c) &&\n" +
-          "cp src/tree_sitter/parser.h $(location src/tree_sitter/parser.h)",
+    cmd = "tree-sitter generate $(location grammar.js) -o $(RULEDIR)",
     tags = ["manual"],
 )
 
@@ -47,12 +47,19 @@ cc_library(
     name = "parser",
     srcs = [
         "src/scanner.c",
-        ":src/parser.c",
+        ":parser.c",
     ],
-    hdrs = [":src/tree_sitter/parser.h"],
-    copts = ["-Wno-missing-prototypes"],
+    hdrs = [":tree_sitter/parser.h"],
+    copts = make_include_copts(["."]) + ["-Wno-missing-prototypes"],
     tags = ["manual"],
     deps = ["@tree-sitter-bazel//:tree-sitter"],
+)
+
+cc_shared_library(
+    name = "parser_shared",
+    shared_lib_name = "carbon.so",
+    tags = ["manual"],
+    deps = [":parser"],
 )
 
 cc_binary(
