@@ -362,29 +362,55 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
 // maintain mostly-consistent behavior with current logic while working. That
 // also means using `self`.
 static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
-                                       SemIR::TypeId self_type_id,
-                                       SemIR::InstId self_param_id)
-    -> SemIR::InstBlockId {
-  context.inst_block_stack().Push();
-  auto inst = context.types().GetAsInst(self_type_id);
+                                       SemIR::InstId callee_self_param_id,
+                                       SemIR::TypeId self_type_id) -> void {
+  (void)loc_id;
+  (void)callee_self_param_id;
 
-  CARBON_KIND_SWITCH(inst) {
-    case SemIR::ArrayType::Kind:
-    case SemIR::ClassType::Kind:
-    case SemIR::ConstType::Kind:
-    case SemIR::MaybeUnformedType::Kind:
-    case SemIR::PartialType::Kind:
-    case SemIR::StructType::Kind:
-    case SemIR::TupleType::Kind:
-      (void)self_param_id;
-      // TODO: Implement destruction of the type.
-      break;
-    default:
-      CARBON_FATAL("Unexpected type for MakeSubobjectDestroyOpBody: {0}", inst);
+  while (self_type_id.has_value()) {
+    auto inst = context.types().GetAsInst(self_type_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::ArrayType array_type): {
+        // TODO: implement destruction for array types.
+        (void)array_type;
+        return;
+      }
+      case CARBON_KIND(SemIR::ClassType class_type): {
+        // TODO: implement destruction for class types.
+        (void)class_type;
+        return;
+      }
+      case CARBON_KIND(SemIR::ConstType const_type): {
+        // TODO: implement destruction for const-qualified types.
+        (void)const_type;
+        return;
+      }
+      case CARBON_KIND(SemIR::MaybeUnformedType maybe_unformed_type): {
+        // TODO: implement destruction for `Core.MaybeUnformed(T)`.
+        (void)maybe_unformed_type;
+        return;
+      }
+      case CARBON_KIND(SemIR::PartialType partial_type): {
+        // TODO: implement destruction for partial types.
+        (void)partial_type;
+        return;
+      }
+      case CARBON_KIND(SemIR::StructType struct_type): {
+        // TODO: implement destruction for struct types.
+        (void)struct_type;
+        return;
+      }
+      case CARBON_KIND(SemIR::TupleType tuple_type): {
+        // TODO: implement destruction for tuple types.
+        (void)tuple_type;
+        return;
+      }
+      default: {
+        CARBON_FATAL("Unexpected type for MakeSubobjectDestroyOpBody: {0}",
+                     inst);
+      }
+    }
   }
-
-  AddInst(context, loc_id, SemIR::Return{});
-  return context.inst_block_stack().Pop();
 }
 
 // Returns a manufactured `Destroy.Op` function with the `self` parameter typed
@@ -449,9 +475,19 @@ static auto MakeSubobjectDestroyOpFunction(
         builtin_kind = SemIR::BuiltinFunctionKind::NoOp;
         break;
       case DestroyFormat::NonTrivial: {
-        auto body_id = MakeSubobjectDestroyOpBody(context, loc_id, self_type_id,
-                                                  function.self_param_id);
-        function.body_block_ids.push_back(body_id);
+        // TODO: should we make a NameRef for `self`?
+        auto call_params = context.inst_blocks().Get(function.call_params_id);
+        CARBON_CHECK(
+            call_params.size() == 1,
+            "`Core.SubobjectDestroy.Op` should only have `ref self` as its "
+            "parameter");
+        context.inst_block_stack().Push();
+        StartFunctionDefinition(context, decl_id, function_id);
+        MakeSubobjectDestroyOpBody(context, loc_id, call_params[0],
+                                   self_type_id);
+        BuildReturnWithNoExpr(context, loc_id);
+        FinishFunctionDefinition(context, function_id);
+        context.inst_block_stack().Pop();
         break;
       }
       case DestroyFormat::NoDestroy:
