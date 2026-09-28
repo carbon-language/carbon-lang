@@ -291,10 +291,12 @@ class Stringifier {
   template <typename InstT>
   auto StringifyInst(InstId inst_id, InstT inst) -> void {
     // This doesn't use requires so that more specific overloads are chosen when
-    // provided.
-    static_assert(InstT::Kind.is_type() != InstIsType::Always ||
-                      std::same_as<InstT, WhereExpr>,
-                  "Types should have a dedicated overload");
+    // provided. Indirect constants can be printed by desugaring.
+    static_assert(
+        InstT::Kind.is_type() != InstIsType::Always ||
+            InstT::Kind.constant_kind() == InstConstantKind::Indirect ||
+            std::same_as<InstT, WhereExpr>,
+        "Types should have a dedicated overload");
     // TODO: We should have Stringify support for all types where
     // InstT::Kind.constant_kind() is neither Never nor Indirect.
     StringifyInstDefault(inst_id, inst);
