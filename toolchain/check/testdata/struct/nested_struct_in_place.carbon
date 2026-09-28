@@ -245,10 +245,10 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc18_3.4(%self.param: ref %struct_type.a.b.2a0) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_3.1: ref %tuple.type.555 = struct_access %self.param, element0
+// CHECK:STDOUT:   %.loc18_3.1: ref %tuple.type.555 = struct_access %self.param, element1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc18_3.1: <bound method> = bound_method %.loc18_3.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc18_3.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc18_3.1(%.loc18_3.1)
-// CHECK:STDOUT:   %.loc18_3.2: ref %tuple.type.555 = struct_access %self.param, element1
+// CHECK:STDOUT:   %.loc18_3.2: ref %tuple.type.555 = struct_access %self.param, element0
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc18_3.2: <bound method> = bound_method %.loc18_3.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc18_3.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc18_3.2(%.loc18_3.2)
 // CHECK:STDOUT:   return

@@ -690,11 +690,11 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.5(%self.param: ref %struct_type.base.b.6c4) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc32_66.1: ref %A = struct_access %self.param, element0
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1: <bound method> = bound_method %.loc32_66.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %.loc32_66.1: ref %i32 = struct_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1: <bound method> = bound_method %.loc32_66.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1(%.loc32_66.1)
-// CHECK:STDOUT:   %.loc32_66.2: ref %i32 = struct_access %self.param, element1
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2: <bound method> = bound_method %.loc32_66.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %.loc32_66.2: ref %A = struct_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2: <bound method> = bound_method %.loc32_66.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2(%.loc32_66.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -724,11 +724,11 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32_66.7(%self.param: ref %struct_type.base.c.faf) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc32_66.1: ref %B = struct_access %self.param, element0
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1: <bound method> = bound_method %.loc32_66.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.6
+// CHECK:STDOUT:   %.loc32_66.1: ref %i32 = struct_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1: <bound method> = bound_method %.loc32_66.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32_66.1(%.loc32_66.1)
-// CHECK:STDOUT:   %.loc32_66.2: ref %i32 = struct_access %self.param, element1
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2: <bound method> = bound_method %.loc32_66.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %.loc32_66.2: ref %B = struct_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2: <bound method> = bound_method %.loc32_66.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.6
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32_66.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32_66.2(%.loc32_66.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

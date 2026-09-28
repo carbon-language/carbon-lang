@@ -535,11 +535,11 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_48.3(%self.param: ref %struct_type.d.c.b36) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_48.1: ref %empty_struct_type = struct_access %self.param, element0
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc10_48.1: <bound method> = bound_method %.loc10_48.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %.loc10_48.1: ref %empty_tuple.type = struct_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc10_48.1: <bound method> = bound_method %.loc10_48.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc10_48.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc10_48.1(%.loc10_48.1)
-// CHECK:STDOUT:   %.loc10_48.2: ref %empty_tuple.type = struct_access %self.param, element1
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc10_48.2: <bound method> = bound_method %.loc10_48.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %.loc10_48.2: ref %empty_struct_type = struct_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc10_48.2: <bound method> = bound_method %.loc10_48.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc10_48.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc10_48.2(%.loc10_48.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -1839,10 +1839,10 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_29.2(%self.param: ref %struct_type.b.a.1b0) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_29.1: ref %empty_struct_type = struct_access %self.param, element0
+// CHECK:STDOUT:   %.loc10_29.1: ref %empty_struct_type = struct_access %self.param, element1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc10_29.1: <bound method> = bound_method %.loc10_29.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc10_29.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc10_29.1(%.loc10_29.1)
-// CHECK:STDOUT:   %.loc10_29.2: ref %empty_struct_type = struct_access %self.param, element1
+// CHECK:STDOUT:   %.loc10_29.2: ref %empty_struct_type = struct_access %self.param, element0
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc10_29.2: <bound method> = bound_method %.loc10_29.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc10_29.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc10_29.2(%.loc10_29.2)
 // CHECK:STDOUT:   return
