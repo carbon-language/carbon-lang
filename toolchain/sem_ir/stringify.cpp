@@ -367,50 +367,63 @@ class Stringifier {
       }
 
       auto pattern_id = std::get<InstId>(next);
-      auto pattern = sem_ir_->insts().Get(pattern_id);
-      if (auto tuple = pattern.TryAs<TuplePattern>()) {
-        auto elements = sem_ir_->inst_blocks().Get(tuple->elements_id);
-        worklist.push_back(llvm::StringRef("("));
-        llvm::ListSeparator element_sep;
-        for (auto element_id : elements) {
-          worklist.push_back(llvm::StringRef(element_sep));
-          worklist.push_back(element_id);
+      CARBON_KIND_SWITCH(sem_ir_->insts().Get(pattern_id)) {
+        case CARBON_KIND(TuplePattern tuple): {
+          auto elements = sem_ir_->inst_blocks().Get(tuple.elements_id);
+          worklist.push_back(llvm::StringRef("("));
+          llvm::ListSeparator element_sep;
+          for (auto element_id : elements) {
+            worklist.push_back(llvm::StringRef(element_sep));
+            worklist.push_back(element_id);
+          }
+          // A tuple of one element has a comma to disambiguate from a
+          // parenthesized pattern.
+          worklist.push_back(
+              llvm::StringRef(elements.size() == 1 ? ",)" : ")"));
+          break;
         }
-        // A tuple of one element has a comma to disambiguate from a
-        // parenthesized pattern.
-        worklist.push_back(llvm::StringRef(elements.size() == 1 ? ",)" : ")"));
-      } else if (auto var_pattern = pattern.TryAs<AnyVarPattern>()) {
-        worklist.push_back(var_pattern->subpattern_id);
-      } else if (auto default_value = pattern.TryAs<DefaultValuePattern>()) {
-        worklist.push_back(default_value->subpattern_id);
-      } else if (auto binding = pattern.TryAs<AnyBindingPattern>()) {
-        if (binding->subpattern_id.has_value()) {
-          worklist.push_back(binding->subpattern_id);
-          continue;
+        case CARBON_KIND_ANY(AnyVarPattern, var_pattern): {
+          worklist.push_back(var_pattern.subpattern_id);
+          break;
         }
-        // A compile-time binding's argument is an argument of the specific.
-        auto bind_index =
-            sem_ir_->entity_names().Get(binding->entity_name_id).bind_index();
-        if (bind_index.has_value() &&
-            static_cast<size_t>(bind_index.index) < specific_args.size()) {
-          step_stack_->PushInstId(specific_args[bind_index.index]);
-        } else {
-          // We don't know the argument, so name the parameter instead.
-          step_stack_->PushEntityNameId(binding->entity_name_id);
+        case CARBON_KIND(DefaultValuePattern default_value): {
+          worklist.push_back(default_value.subpattern_id);
+          break;
         }
-      } else if (pattern.Is<AnyLeafParamPattern>()) {
-        // A runtime parameter's argument is the next argument of the call,
-        // taken from the back because we're walking right to left.
-        if (args.empty()) {
-          step_stack_->PushString("<missing argument>");
-        } else {
-          step_stack_->PushInstId(args.back());
-          args = args.drop_back();
+        case CARBON_KIND_ANY(AnyBindingPattern, binding): {
+          if (binding.subpattern_id.has_value()) {
+            worklist.push_back(binding.subpattern_id);
+            break;
+          }
+          // A compile-time binding's argument is an argument of the specific.
+          auto bind_index =
+              sem_ir_->entity_names().Get(binding.entity_name_id).bind_index();
+          if (bind_index.has_value() &&
+              static_cast<size_t>(bind_index.index) < specific_args.size()) {
+            step_stack_->PushInstId(specific_args[bind_index.index]);
+          } else {
+            // We don't know the argument, so name the parameter instead.
+            step_stack_->PushEntityNameId(binding.entity_name_id);
+          }
+          break;
         }
-      } else {
-        // We don't know how to find the argument for this pattern, so print
-        // the pattern instead.
-        step_stack_->PushInstId(pattern_id);
+        case CARBON_KIND_ANY(AnyLeafParamPattern, _): {
+          // A runtime parameter's argument is the next argument of the call,
+          // taken from the back because we're walking right to left.
+          if (args.empty()) {
+            step_stack_->PushString("<missing argument>");
+          } else {
+            step_stack_->PushInstId(args.back());
+            args = args.drop_back();
+          }
+          break;
+        }
+        default: {
+          // We don't know how to find the argument for this pattern, so print
+          // the pattern instead.
+          step_stack_->PushInstId(pattern_id);
+          break;
+        }
       }
     }
   }
