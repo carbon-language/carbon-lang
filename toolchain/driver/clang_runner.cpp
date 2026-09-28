@@ -258,8 +258,8 @@ auto ClangRunner::RunClangCC1(llvm::SmallVectorImpl<const char*>& cstr_args,
   // the busybox dispatch logic.
   CARBON_VLOG("Calling clang_main for a cc1-based invocation...");
   // cstr_args[0] will be the `clang_path` so we don't need the prepend arg.
-  llvm::ToolContext tool_context = {
-      .Path = cstr_args[0], .PrependArg = "clang", .NeedsPrependArg = false};
+  llvm::ToolContext tool_context(cstr_args[0], /*PrependArg=*/"clang",
+                                 /*NeedsPrependArg=*/false);
   int exit_code = clang_main(
       cstr_args.size(), const_cast<char**>(cstr_args.data()), tool_context);
   return exit_code;
