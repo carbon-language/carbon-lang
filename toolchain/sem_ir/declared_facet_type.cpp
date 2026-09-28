@@ -180,11 +180,6 @@ auto DeclaredFacetType::TryAsSingleExtend() const
   return std::nullopt;
 }
 
-auto DeclaredFacetType::HasNoConstraints() const -> bool {
-  return extend_constraints.empty() && extend_named_constraints.empty() &&
-         IsExtendedOnly();
-}
-
 auto DeclaredFacetType::IsExtendedOnly() const -> bool {
   return self_impls_constraints.empty() &&
          self_impls_named_constraints.empty() &&

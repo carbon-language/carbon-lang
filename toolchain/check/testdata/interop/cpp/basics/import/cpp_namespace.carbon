@@ -134,6 +134,7 @@ fn F() {
 // CHECK:STDOUT: --- system_header.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %system_function.cpp_overload_set.type: type = cpp_overload_set_type @system_function.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %system_function.cpp_overload_set.value: %system_function.cpp_overload_set.type = cpp_overload_set_value @system_function.cpp_overload_set [concrete]

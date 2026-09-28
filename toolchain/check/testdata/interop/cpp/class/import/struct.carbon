@@ -31,6 +31,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: --- import_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]

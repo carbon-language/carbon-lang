@@ -10,4 +10,9 @@ namespace Carbon::RawHashtable {
 
 volatile std::byte global_addr_seed{1};
 
+#ifndef NDEBUG
+std::atomic<HashCode> entropy_hash =
+    Carbon::HashValue(reinterpret_cast<uint64_t>(&global_addr_seed));
+#endif
+
 }  // namespace Carbon::RawHashtable

@@ -133,6 +133,10 @@ struct EntityWithParamsBase {
 
   // The definition of the entity. This will be a <entity>Decl.
   InstId definition_id = InstId::None;
+
+  // A count of the top-level explicit parameters that have default values
+  // provided. This is useful for quickly bounds-checking caller argument arity.
+  int32_t default_value_arity = 0;
 };
 
 }  // namespace Carbon::SemIR

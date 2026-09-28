@@ -56,6 +56,7 @@ fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -103,8 +104,9 @@ fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT: --- runtime_call.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %t.patt.10b: %pattern_type = value_binding_pattern t [concrete]
+// CHECK:STDOUT:   %t.patt.81f: %pattern_type = value_binding_pattern t [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %u.patt: %pattern_type = value_binding_pattern u [concrete]
@@ -121,7 +123,7 @@ fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:   %.loc7_8: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %t: type = wrapper_binding t, %.loc7_16
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type = value_binding_pattern t [concrete = constants.%t.patt.10b]
+// CHECK:STDOUT:     %t.patt: %pattern_type = value_binding_pattern t [concrete = constants.%t.patt.81f]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_21.1: type = value_of_initializer @__global_init.%Make.call
 // CHECK:STDOUT:   %.loc8_21.2: type = converted @__global_init.%Make.call, %.loc8_21.1

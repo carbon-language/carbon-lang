@@ -57,6 +57,7 @@ let b: CharLiteral = SubCharInt('\u{10FFFF}', Negate(1));
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.8c6: type = pattern_type Core.CharLiteral [concrete]
 // CHECK:STDOUT:   %SubCharInt.type: type = fn_type @SubCharInt [concrete]
 // CHECK:STDOUT:   %SubCharInt: %SubCharInt.type = struct_value () [concrete]

@@ -23,6 +23,7 @@ fn Class.F(unused self, unused b: ()) {}
 // CHECK:STDOUT: --- redeclaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %pattern_type.f15: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %self.param_patt: %pattern_type.f15 = value_param_pattern [concrete]

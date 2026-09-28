@@ -25,6 +25,7 @@ let b: bool = Less('b', 'a');
 // CHECK:STDOUT: --- less.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %Less.type: type = fn_type @Less [concrete]
 // CHECK:STDOUT:   %Less: %Less.type = struct_value () [concrete]

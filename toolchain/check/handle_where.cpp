@@ -42,10 +42,6 @@ static auto GetPeriodSelfType(Context& context,
     auto frozen_const_id =
         FreezePeriodSelf(context, extended_id.AsConstantId());
     return context.types().GetTypeIdForTypeConstantId(frozen_const_id);
-  } else if (facet_type_type_id == SemIR::TypeType::TypeId) {
-    // The self may be `TypeType` in `type where X impls Y`, so we use an empty
-    // facet type.
-    return GetEmptyFacetType(context);
   } else {
     CARBON_CHECK(facet_type_type_id == SemIR::ErrorInst::TypeId,
                  "unexpected .Self type {0}", facet_type_type_id);
@@ -435,8 +431,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   // Check lhs is a facet and rhs is a facet type.
   auto lhs_as_type = ExprAsType(context, lhs_node, lhs_id);
   auto rhs_as_type = ExprAsType(context, rhs_node, rhs_id);
-  if (rhs_as_type.type_id != SemIR::ErrorInst::TypeId &&
-      !context.types().IsFacetType(rhs_as_type.type_id)) {
+  if (!context.types().IsFacetTypeOrError(rhs_as_type.type_id)) {
     DiagnoseImplsOnNonFacetType(context, rhs_node);
     rhs_as_type.type_id = SemIR::ErrorInst::TypeId;
     rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;

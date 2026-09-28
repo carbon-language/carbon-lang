@@ -119,7 +119,9 @@ using State =
 class MatchContext {
  public:
   struct PreWork : Printable<PreWork> {
-    // `None` when processing the callee side.
+    // `None` when processing the callee side, or when processing the caller
+    // side and no value was supplied, in expectation of using a default value
+    // from the corresponding callee pattern.
     SemIR::InstId scrutinee_id;
 
     auto Print(llvm::raw_ostream& out) const -> void {
@@ -936,61 +938,30 @@ auto MatchContext::DoPreWork(State state,
                              SemIR::DefaultValuePattern default_value_pattern,
                              SemIR::InstId scrutinee_id, WorkItem entry)
     -> void {
-  if (!std::holds_alternative<CalleeState*>(state)) {
-    CARBON_FATAL("Unhandled state kind in DefaultValuePattern pre-work");
+  CARBON_KIND_SWITCH(state) {
+    case CARBON_KIND(CallerState* _): {
+      // If there's no scrutinee supplied, supply the default value instead.
+      if (!scrutinee_id.has_value()) {
+        auto [inst_id, _] = WrapInstForSpecific(
+            context_, SemIR::LocId(default_value_pattern.value_id),
+            default_value_pattern.value_id, specific_id_stack_.back());
+        scrutinee_id = inst_id;
+      }
+      break;
+    }
+    case CARBON_KIND(CalleeState* _): {
+      /* no-op */
+      break;
+    }
+    default: {
+      break;
+    }
   }
-  // We will need to check the type of the parameter to make sure it
-  // matches the provided default, so add ourselves to the post-work list.
-  results_stack_.PushArray();
-  AddAsPostWork(entry);
 
   // Process the subpattern for the default.
   AddWork({.pattern_id = default_value_pattern.subpattern_id,
            .work = PreWork{.scrutinee_id = scrutinee_id},
            .allow_unmarked_ref = entry.allow_unmarked_ref});
-}
-
-auto MatchContext::DoPostWork(State state,
-                              SemIR::DefaultValuePattern default_value_pattern,
-                              WorkItem entry) -> void {
-  if (!std::holds_alternative<CalleeState*>(state)) {
-    CARBON_FATAL("Unhandled state kind in DefaultValuePattern post-work");
-  }
-  // Extract the type of the parameter from the parameter instruction.
-  auto param_inst_id = results_stack_.PeekArray().back();
-  auto param_type_id = context_.insts().Get(param_inst_id).type_id();
-
-  auto default_value_inst_id =
-      context_.full_pattern_stack()
-          .GetDefaultValues()[default_value_pattern.default_value_id.index];
-  // If a constant was specified, we should be able to convert it into the
-  // type of the parameter.
-  if (!context_.insts().Is<SemIR::UnspecifiedValue>(default_value_inst_id)) {
-    // We should be able to convert the supplied constant into the type of
-    // the parameter.
-    auto converted_id =
-        TryConvertToValueOfType(context_, SemIR::LocId(default_value_inst_id),
-                                default_value_inst_id, param_type_id);
-    if (converted_id == SemIR::ErrorInst::InstId) {
-      CARBON_DIAGNOSTIC(
-          PatternDefaultValueTypeMismatch, Error,
-          "default value expression type {0} doesn't match pattern type {1}",
-          TypeOfInstId, TypeOfInstId);
-
-      // TODO: should be able to provide precise locations for both default
-      // value expression and the type of the pattern, but we can't because
-      // they are both constants.
-      context_.emitter().Emit(entry.pattern_id, PatternDefaultValueTypeMismatch,
-                              default_value_inst_id, param_inst_id);
-    }
-  }
-  results_stack_.PopArray();
-
-  // If something at a higher level in the stack needed these results, bubble
-  // up the parameter instruction we popped off our own results array.
-  if (need_subpattern_results()) {
-    results_stack_.AppendToTop(param_inst_id);
-  }
 }
 
 // TODO: There is a cycle through pattern matching with an action.
@@ -1095,10 +1066,6 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
         }
         case CARBON_KIND(SemIR::ImportRefLoaded import_ref): {
           DoPostWork(state, import_ref, entry);
-          break;
-        }
-        case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
-          DoPostWork(state, default_value_pattern, entry);
           break;
         }
         default: {
@@ -1240,9 +1207,19 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
     CARBON_CHECK(self_pattern_id.has_value());
   }
 
-  for (const auto& [arg_id, param_pattern_id] : llvm::zip_equal(
+  // `arg_refs` may have a smaller arity than `param_patterns_id` due to the
+  // possible presence of default values for some parameters. We use
+  // `zip_longest` here to allow for that size disparity. But we presume we
+  // always have a parameter pattern, so test that presumption here.
+  CARBON_CHECK(self_arg_refs.size() + arg_refs.size() <=
+               context.inst_blocks().GetOrEmpty(param_patterns_id).size());
+  for (const auto& [maybe_arg_id, maybe_param_pattern_id] : llvm::zip_longest(
            llvm::concat<const SemIR::InstId>(self_arg_refs, arg_refs),
            context.inst_blocks().GetOrEmpty(param_patterns_id))) {
+    CARBON_CHECK(maybe_param_pattern_id.has_value());
+    const auto& param_pattern_id = *maybe_param_pattern_id;
+    const auto& arg_id =
+        maybe_arg_id.has_value() ? *maybe_arg_id : SemIR::InstId::None;
     match.Match(&state,
                 {.pattern_id = param_pattern_id,
                  .work = MatchContext::PreWork{.scrutinee_id = arg_id},

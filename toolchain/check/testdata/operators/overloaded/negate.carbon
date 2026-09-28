@@ -33,6 +33,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: --- negate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [concrete]
 // CHECK:STDOUT:   %Negate.impl_witness: <witness> = impl_witness @C.as.Negate.impl.%Negate.impl_witness_table [concrete]

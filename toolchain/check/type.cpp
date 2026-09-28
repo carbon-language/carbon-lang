@@ -4,6 +4,7 @@
 
 #include "toolchain/check/type.h"
 
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/inst.h"
@@ -283,7 +284,7 @@ auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
                                                 element_type_id);
 }
 
-auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
+auto GetCanonicalFacet(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
   CARBON_DCHECK(const_inst_id.has_value());
@@ -296,23 +297,29 @@ auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
   return const_inst_id;
 }
 
-auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::ConstantId const_id)
+auto GetCanonicalFacet(Context& context, SemIR::ConstantId const_id)
     -> SemIR::ConstantId {
-  return context.constant_values().Get(GetCanonicalFacetOrTypeValue(
+  return context.constant_values().Get(GetCanonicalFacet(
       context, context.constant_values().GetInstId(const_id)));
 }
 
-auto TryGetCanonicalFacetValue(Context& context, SemIR::InstId inst_id)
+auto TryGetCanonicalFacet(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
   if (context.insts().Get(inst_id).type_id() != SemIR::TypeType::TypeId) {
     return SemIR::InstId::None;
   }
-  auto const_id = context.constant_values().Get(inst_id);
-  if (!const_id.is_constant()) {
+
+  auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
+  if (!const_inst_id.has_value()) {
     return SemIR::InstId::None;
   }
-  return context.constant_values().GetInstId(
-      GetCanonicalFacetOrTypeValue(context, const_id));
+
+  if (auto access =
+          context.insts().TryGetAs<SemIR::FacetAccessType>(const_inst_id)) {
+    return access->facet_value_inst_id;
+  }
+
+  return SemIR::InstId::None;
 }
 
 }  // namespace Carbon::Check

@@ -109,27 +109,18 @@ auto EvalOrAddInst(Context& context, LocT loc, InstT inst)
 
 // Adds an instruction and enqueues it to be added to the eval block of the
 // enclosing generic, returning the produced ID. The instruction is expected to
-// be a dependent template instantiation action.
-auto AddDependentActionInst(Context& context,
-                            SemIR::LocIdAndInst loc_id_and_inst)
+// have a template constant value.
+auto AddTemplateConstantInstToEvalBlock(Context& context,
+                                        SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId;
 
-// Convenience wrapper for AddDependentActionInst.
+// Convenience wrapper for AddTemplateConstantInstToEvalBlock.
 template <typename InstT, typename LocT>
   requires std::convertible_to<LocT, SemIR::LocId>
-auto AddDependentActionInst(Context& context, LocT loc, InstT inst)
+auto AddTemplateConstantInstToEvalBlock(Context& context, LocT loc, InstT inst)
     -> SemIR::InstId {
-  return AddDependentActionInst(context, SemIR::LocIdAndInst(loc, inst));
-}
-
-// Like AddDependentActionInst, but for instructions with a type_id of
-// `TypeType`, which is encoded in the return type of `TypeInstId`.
-template <typename InstT, typename LocT>
-  requires std::convertible_to<LocT, SemIR::LocId>
-auto AddDependentActionTypeInst(Context& context, LocT loc, InstT inst)
-    -> SemIR::TypeInstId {
-  return context.types().GetAsTypeInstId(
-      AddDependentActionInst(context, loc, inst));
+  return AddTemplateConstantInstToEvalBlock(context,
+                                            SemIR::LocIdAndInst(loc, inst));
 }
 
 // Adds an instruction to the current block, returning the produced ID. The

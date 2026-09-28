@@ -93,6 +93,17 @@ struct MapWrapperImpl {
   }
 
   auto BenchErase(KeyT k) -> bool { return m.erase(k) != 0; }
+
+  // Visits every entry in the map, calling `cb` with the key and value of each
+  // one. Each map type is expected to traverse using whatever API it provides
+  // for this, so that the benchmark measures iterating the map rather than any
+  // specific iteration API.
+  template <typename CallbackT>
+  auto BenchIterate(CallbackT cb) -> void {
+    for (const auto& entry : m) {
+      cb(entry.first, entry.second);
+    }
+  }
 };
 
 // Explicit (partial) specialization for the Carbon map type that uses its
@@ -126,6 +137,13 @@ struct MapWrapperImpl<Map<KT, VT, MinSmallSize>> {
   }
 
   auto BenchErase(KeyT k) -> bool { return m.Erase(k); }
+
+  template <typename CallbackT>
+  auto BenchIterate(CallbackT cb) -> void {
+    for (auto [k, v] : m.entries()) {
+      cb(k, v);
+    }
+  }
 };
 
 // Provide a way to override the Carbon Map specific benchmark runs with another
@@ -515,6 +533,46 @@ static void BM_MapInsertSeq(benchmark::State& state) {
   }
 }
 MAP_BENCHMARK_ONE_OP(BM_MapInsertSeq, SizeArgs);
+
+// Benchmark visiting every entry in a map.
+//
+// Unlike the lookup benchmarks, this walks the table's storage from end to end
+// rather than probing it, so it is largely a measure of how densely entries are
+// packed and how cheaply empty slots can be skipped. There is no dependency
+// between the entries visited, and so this is a throughput measurement.
+//
+// Each batch is a single complete traversal of the map, with the batch size set
+// to the number of entries so that the reported time is the per-entry cost.
+template <typename MapT>
+static void BM_MapIterate(benchmark::State& state) {
+  using MapWrapperT = MapWrapper<MapT>;
+  using KT = typename MapWrapperT::KeyT;
+  using VT = typename MapWrapperT::ValueT;
+  MapWrapperT m;
+  auto [keys, _] = GetKeysAndMissKeys<KT>(state.range(0));
+  for (auto k : keys) {
+    bool inserted = m.BenchInsert(k, MakeValue<VT>());
+    CARBON_DCHECK(inserted, "Must be a successful insert!");
+  }
+
+  while (state.KeepRunningBatch(keys.size())) {
+    ssize_t sum = 0;
+    m.BenchIterate([&sum](const KT& k, const VT& v) {
+      // Consume both the key and the value so that neither the traversal nor
+      // the loads out of the entries can be optimized away.
+      sum += ValueToBool(k) + ValueToBool(v);
+    });
+    benchmark::DoNotOptimize(sum);
+  }
+
+  // The time is already per-entry, so an iteration-invariant rate of one gives
+  // the throughput of entries visited.
+  state.counters["KeyRate"] =
+      benchmark::Counter(1, benchmark::Counter::kIsIterationInvariantRate);
+
+  ReportMetrics(m, state);
+}
+MAP_BENCHMARK_ONE_OP(BM_MapIterate, SizeArgs);
 
 }  // namespace
 }  // namespace Carbon

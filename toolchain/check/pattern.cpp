@@ -92,8 +92,9 @@ auto MakeEmptyRegion(Context& context, SemIR::InstId result_id)
 }
 
 auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
-                          SemIR::InstId form_id, bool is_unused,
-                          BindingPhase phase) -> SemIR::EntityNameId {
+                          SemIR::TypeInstId type_inst_id, SemIR::InstId form_id,
+                          bool is_unused, BindingPhase phase)
+    -> SemIR::EntityNameId {
   SemIR::EntityName entity_name = {
       .name_id = name_id,
       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
@@ -104,6 +105,7 @@ auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
     entity_name.is_template = phase == BindingPhase::Template;
   }
   entity_name.form_id = form_id;
+  entity_name.type_inst_id = type_inst_id;
   return context.entity_names().Add(entity_name);
 }
 
@@ -243,10 +245,14 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
     }
   }();
 
-  auto entity_name_id = AddBindingEntityName(context, name_id,
-                                             /*form_id=*/SemIR::InstId::None,
-                                             /*is_unused=*/false,
-                                             /*phase=*/BindingPhase::Runtime);
+  // This pattern is synthesized rather than written in the source, so there is
+  // no spelling to record for its type.
+  auto entity_name_id =
+      AddBindingEntityName(context, name_id,
+                           /*type_inst_id=*/SemIR::TypeInstId::None,
+                           /*form_id=*/SemIR::InstId::None,
+                           /*is_unused=*/false,
+                           /*phase=*/BindingPhase::Runtime);
 
   auto pattern_type_id = GetPatternType(context, type_id);
   if (kind == ParamPatternKind::Var) {
