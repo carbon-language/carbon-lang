@@ -217,9 +217,22 @@ static auto CanDestroyClass(Context& context, SemIR::LocId loc_id,
         class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
   }
 
-  return HasWitnessForOneField(context, loc_id,
-                               context.types().GetTypeInstId(object_repr_id),
-                               query_specific_interface);
+  auto has_witness = HasWitnessForOneField(
+      context, loc_id, context.types().GetTypeInstId(object_repr_id),
+      query_specific_interface);
+  if (has_witness == DestroyFormat::NoDestroy) {
+    return DestroyFormat::NoDestroy;
+  }
+
+  if (class_info.GetStructTypeFields(context.sem_ir(), class_type.specific_id)
+          .empty()) {
+    return DestroyFormat::Trivial;
+  }
+
+  // TODO: check that a class' base has trivial destruction.
+  // TODO: check that a class' subobjects have trivial destruction.
+
+  return DestroyFormat::NonTrivial;
 }
 
 // Returns true if the `Self` should impl `Destroy`. This will recurse into impl
