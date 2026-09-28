@@ -1,0 +1,38 @@
+From 4020a36945726fec2081ca2562fa6f204fe166b6 Mon Sep 17 00:00:00 2001
+From: Nicholas Bishop <nicholsabishop@google.com>
+Date: Mon, 28 Sep 2026 16:41:28 -0400
+Subject: [PATCH] Drop dependencies on linux_uapi and pyyaml
+
+These cause bazel queries in check_deps and forbid_llvm_googletest.py to fail.
+---
+ utils/bazel/llvm-project-overlay/libc/BUILD.bazel          | 1 -
+ utils/bazel/llvm-project-overlay/libc/libc_build_rules.bzl | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/utils/bazel/llvm-project-overlay/libc/BUILD.bazel b/utils/bazel/llvm-project-overlay/libc/BUILD.bazel
+index 33fc35455fef..95a8d87beb4c 100644
+--- a/utils/bazel/llvm-project-overlay/libc/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/libc/BUILD.bazel
+@@ -153,7 +153,6 @@ py_binary(
+     srcs = glob(["utils/hdrgen/hdrgen/**/*.py"]),
+     imports = ["utils/hdrgen"],
+     main = "utils/hdrgen/hdrgen/main.py",
+-    deps = ["@pyyaml//:yaml"],
+ )
+ 
+ LLVM_LIBC_HEADERS = [
+diff --git a/utils/bazel/llvm-project-overlay/libc/libc_build_rules.bzl b/utils/bazel/llvm-project-overlay/libc/libc_build_rules.bzl
+index 4412ccc81dfe..4758af565fd4 100644
+--- a/utils/bazel/llvm-project-overlay/libc/libc_build_rules.bzl
++++ b/utils/bazel/llvm-project-overlay/libc/libc_build_rules.bzl
+@@ -48,7 +48,6 @@ def libc_common_deps():
+         "//conditions:default": [],
+     }) + select({
+         Label(":full_build_linux"): [
+-            "@linux_uapi//:linux_uapi_headers",
+         ],
+         "//conditions:default": [],
+     })
+-- 
+2.56.0.rc1.315.gc6ed9934b7-goog
+
