@@ -32,80 +32,82 @@ except FileNotFoundError:
 # This errors out on dependencies that aren't recognized, and continues on
 # allowed dependencies.
 for dep in deps:
-  print("Checking dependency: " + dep)
-  repo, _, rule = dep.partition("//")
+    print("Checking dependency: " + dep)
+    repo, _, rule = dep.partition("//")
 
-  if repo == "@@+llvm_project+llvm-project":
-    package, _, rule = rule.partition(":")
+    if repo == "@@+llvm_project+llvm-project":
+        package, _, rule = rule.partition(":")
 
-    # Other packages in the LLVM project shouldn't be accidentally used
-    # in Carbon. We can expand the above list if use cases emerge.
-    if package not in (
-        "clang",
-        "clang-tools-extra/clangd",
-        "libc",
-        "libcxx",
-        "libcxxabi",
-        "libunwind",
-        "lld",
-        "llvm",
-        # While this is in a `third_party` directory, its code is documented
-        # as part of LLVM and for use in compiler-rt.
-        "third-party/siphash",
-    ) and (
-        package == "third-party"
-        and rule
-        not in (
-            # LLVM wrappers for zlib-ng and zstd, which are fine as linked.
-            "libxml2",
-            "lzma",
-            "zlib",
-            "zstd",
-        )
-    ):
-      sys.exit("ERROR: unexpected dependency into the LLVM project: %s" % dep)
+        # Other packages in the LLVM project shouldn't be accidentally used
+        # in Carbon. We can expand the above list if use cases emerge.
+        if package not in (
+            "clang",
+            "clang-tools-extra/clangd",
+            "libc",
+            "libcxx",
+            "libcxxabi",
+            "libunwind",
+            "lld",
+            "llvm",
+            # While this is in a `third_party` directory, its code is documented
+            # as part of LLVM and for use in compiler-rt.
+            "third-party/siphash",
+        ) and (
+            package == "third-party"
+            and rule
+            not in (
+                # LLVM wrappers for zlib-ng and zstd, which are fine as linked.
+                "libxml2",
+                "lzma",
+                "zlib",
+                "zstd",
+            )
+        ):
+            sys.exit(
+                "ERROR: unexpected dependency into the LLVM project: %s" % dep
+            )
 
-    # Check for accidentally using the copy of GoogleTest in LLVM.
-    if rule in ("gmock", "gtest", "gtest_main"):
-      sys.exit(
+        # Check for accidentally using the copy of GoogleTest in LLVM.
+        if rule in ("gmock", "gtest", "gtest_main"):
+            sys.exit(
                 "ERROR: dependency on LLVM's GoogleTest from non-test code: %s"
                 % dep
             )
 
-    # The rest of LLVM, LLD, and Clang themselves are safe to depend on.
-    continue
+        # The rest of LLVM, LLD, and Clang themselves are safe to depend on.
+        continue
 
-  # Carbon code is always allowed.
-  if repo == "" and not rule.startswith("third_party"):
-    continue
+    # Carbon code is always allowed.
+    if repo == "" and not rule.startswith("third_party"):
+        continue
 
-  # LLVM code managed in the Carbon repository is still LLVM code and OK.
-  if repo == "" and rule.startswith("third_party/llvm:"):
-    continue
+    # LLVM code managed in the Carbon repository is still LLVM code and OK.
+    if repo == "" and rule.startswith("third_party/llvm:"):
+        continue
 
-  # Utility libraries provided by Bazel that are under a compatible license.
-  if repo in ("@@rules_cc+", "@@bazel_tools"):
-    continue
+    # Utility libraries provided by Bazel that are under a compatible license.
+    if repo in ("@@rules_cc+", "@@bazel_tools"):
+        continue
 
-  # These libraries have compatible licenses and are linked in without copying
-  # source, so fine for our binaries.
-  if repo in (
-      "@@libxml2+",
-      "@@xz+",
-      "@@zlib-ng+",
-      "@@zstd+",
-  ):
-    continue
+    # These libraries have compatible licenses and are linked in without copying
+    # source, so fine for our binaries.
+    if repo in (
+        "@@libxml2+",
+        "@@xz+",
+        "@@zlib-ng+",
+        "@@zstd+",
+    ):
+        continue
 
-  # This should never be reached from non-test code, but these targets do
-  # exist. Specially diagnose them to try to provide a more helpful
-  # message.
-  if repo in (
+    # This should never be reached from non-test code, but these targets do
+    # exist. Specially diagnose them to try to provide a more helpful
+    # message.
+    if repo in (
         "@google_benchmark",
         "@abseil-cpp",
         "@googletest",
     ):
-    sys.exit("ERROR: dependency only allowed in test code: %s" % dep)
+        sys.exit("ERROR: dependency only allowed in test code: %s" % dep)
 
-  # Conservatively fail if a dependency isn't explicitly allowed above.
-  sys.exit(f"ERROR: unknown dependency on {repo}: {dep}")
+    # Conservatively fail if a dependency isn't explicitly allowed above.
+    sys.exit(f"ERROR: unknown dependency on {repo}: {dep}")
