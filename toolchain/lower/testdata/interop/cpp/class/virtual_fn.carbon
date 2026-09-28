@@ -85,10 +85,10 @@ void delete_new_Base() {
 // CHECK:STDOUT: @_ZTVN6Carbon5FinalE = linkonce_odr dso_local constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTIN6Carbon5FinalE, ptr @_ZN6Carbon5FinalD2Ev, ptr @_ZN6Carbon5FinalD0Ev, ptr @_ZNK6Carbon5Final1FEv] }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN6Carbon4BaseE = linkonce_odr dso_local constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTIN6Carbon4BaseE, ptr @_ZN6Carbon4BaseD2Ev, ptr @_ZN6Carbon4BaseD0Ev, ptr @_ZNK6Carbon4Base1FEv] }, comdat, align 8
 // CHECK:STDOUT: @_ZTI1A = external constant ptr
-// CHECK:STDOUT: @_ZTIN6Carbon5FinalE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2), ptr @_ZTSN6Carbon5FinalE, ptr @_ZTI1A }, comdat, align 8
+// CHECK:STDOUT: @_ZTIN6Carbon5FinalE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 16), ptr @_ZTSN6Carbon5FinalE, ptr @_ZTI1A }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv120__si_class_type_infoE = external global [0 x ptr]
 // CHECK:STDOUT: @_ZTSN6Carbon5FinalE = linkonce_odr dso_local constant [16 x i8] c"N6Carbon5FinalE\00", comdat, align 1
-// CHECK:STDOUT: @_ZTIN6Carbon4BaseE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2), ptr @_ZTSN6Carbon4BaseE, ptr @_ZTI1A }, comdat, align 8
+// CHECK:STDOUT: @_ZTIN6Carbon4BaseE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 16), ptr @_ZTSN6Carbon4BaseE, ptr @_ZTI1A }, comdat, align 8
 // CHECK:STDOUT: @_ZTSN6Carbon4BaseE = linkonce_odr dso_local constant [15 x i8] c"N6Carbon4BaseE\00", comdat, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
@@ -126,7 +126,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !4
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN1AC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this1) #8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTVN6Carbon5FinalE, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !8
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon5FinalE, i64 16), ptr %this1, align 8, !tbaa !8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -178,7 +178,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !6
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN1AC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this1) #8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTVN6Carbon4BaseE, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !8
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon4BaseE, i64 16), ptr %this1, align 8, !tbaa !8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,7 +324,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !6
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTVN6Carbon4BaseE, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !8
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon4BaseE, i64 16), ptr %this1, align 8, !tbaa !8
 // CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.Base.Main"(ptr noundef nonnull align 8 dereferenceable(8) %this1)
 // CHECK:STDOUT:   call void @_ZN1AD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this1) #8
 // CHECK:STDOUT:   ret void
@@ -357,7 +357,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !87
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTV1A, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !8
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTV1A, i64 16), ptr %this1, align 8, !tbaa !8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

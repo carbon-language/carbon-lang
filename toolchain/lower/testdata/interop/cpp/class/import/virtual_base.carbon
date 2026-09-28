@@ -105,21 +105,21 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: @_ZTV1D = linkonce_odr dso_local constant { [3 x ptr], [3 x ptr] } { [3 x ptr] [ptr inttoptr (i64 32 to ptr), ptr null, ptr @_ZTI1D], [3 x ptr] [ptr inttoptr (i64 16 to ptr), ptr inttoptr (i64 -16 to ptr), ptr @_ZTI1D] }, comdat, align 8
 // CHECK:STDOUT: @_ZTV1C = linkonce_odr dso_local constant { [3 x ptr] } { [3 x ptr] [ptr inttoptr (i64 12 to ptr), ptr null, ptr @_ZTI1C] }, comdat, align 8
 // CHECK:STDOUT: @_ZTV1B = linkonce_odr dso_local constant { [3 x ptr] } { [3 x ptr] [ptr inttoptr (i64 12 to ptr), ptr null, ptr @_ZTI1B] }, comdat, align 8
-// CHECK:STDOUT: @_ZTT1D = linkonce_odr dso_local unnamed_addr constant [4 x ptr] [ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 0, i32 3), ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr] }, ptr @_ZTC1D0_1B, i32 0, i32 0, i32 3), ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr] }, ptr @_ZTC1D16_1C, i32 0, i32 0, i32 3), ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 1, i32 3)], comdat, align 8
+// CHECK:STDOUT: @_ZTT1D = linkonce_odr dso_local unnamed_addr constant [4 x ptr] [ptr getelementptr inbounds inrange(-24, 0) (i8, ptr @_ZTV1D, i64 24), ptr getelementptr inbounds inrange(-24, 0) (i8, ptr @_ZTC1D0_1B, i64 24), ptr getelementptr inbounds inrange(-24, 0) (i8, ptr @_ZTC1D16_1C, i64 24), ptr getelementptr inbounds inrange(-24, 0) (i8, ptr @_ZTV1D, i64 48)], comdat, align 8
 // CHECK:STDOUT: @_ZTC1D0_1B = linkonce_odr dso_local constant { [3 x ptr] } { [3 x ptr] [ptr inttoptr (i64 32 to ptr), ptr null, ptr @_ZTI1B] }, comdat, align 8
-// CHECK:STDOUT: @_ZTI1B = linkonce_odr dso_local constant { ptr, ptr, i32, i32, ptr, i64 } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv121__vmi_class_type_infoE, i64 2), ptr @_ZTS1B, i32 0, i32 1, ptr @_ZTI1A, i64 -6141 }, comdat, align 8
+// CHECK:STDOUT: @_ZTI1B = linkonce_odr dso_local constant { ptr, ptr, i32, i32, ptr, i64 } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv121__vmi_class_type_infoE, i64 16), ptr @_ZTS1B, i32 0, i32 1, ptr @_ZTI1A, i64 -6141 }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv121__vmi_class_type_infoE = external global [0 x ptr]
 // CHECK:STDOUT: @_ZTS1B = linkonce_odr dso_local constant [3 x i8] c"1B\00", comdat, align 1
-// CHECK:STDOUT: @_ZTI1A = linkonce_odr dso_local constant { ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv117__class_type_infoE, i64 2), ptr @_ZTS1A }, comdat, align 8
+// CHECK:STDOUT: @_ZTI1A = linkonce_odr dso_local constant { ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv117__class_type_infoE, i64 16), ptr @_ZTS1A }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv117__class_type_infoE = external global [0 x ptr]
 // CHECK:STDOUT: @_ZTS1A = linkonce_odr dso_local constant [3 x i8] c"1A\00", comdat, align 1
 // CHECK:STDOUT: @_ZTC1D16_1C = linkonce_odr dso_local constant { [3 x ptr] } { [3 x ptr] [ptr inttoptr (i64 16 to ptr), ptr null, ptr @_ZTI1C] }, comdat, align 8
-// CHECK:STDOUT: @_ZTI1C = linkonce_odr dso_local constant { ptr, ptr, i32, i32, ptr, i64 } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv121__vmi_class_type_infoE, i64 2), ptr @_ZTS1C, i32 0, i32 1, ptr @_ZTI1A, i64 -6141 }, comdat, align 8
+// CHECK:STDOUT: @_ZTI1C = linkonce_odr dso_local constant { ptr, ptr, i32, i32, ptr, i64 } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv121__vmi_class_type_infoE, i64 16), ptr @_ZTS1C, i32 0, i32 1, ptr @_ZTI1A, i64 -6141 }, comdat, align 8
 // CHECK:STDOUT: @_ZTS1C = linkonce_odr dso_local constant [3 x i8] c"1C\00", comdat, align 1
-// CHECK:STDOUT: @_ZTI1D = linkonce_odr dso_local constant { ptr, ptr, i32, i32, ptr, i64, ptr, i64 } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv121__vmi_class_type_infoE, i64 2), ptr @_ZTS1D, i32 2, i32 2, ptr @_ZTI1B, i64 2, ptr @_ZTI1C, i64 4098 }, comdat, align 8
+// CHECK:STDOUT: @_ZTI1D = linkonce_odr dso_local constant { ptr, ptr, i32, i32, ptr, i64, ptr, i64 } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv121__vmi_class_type_infoE, i64 16), ptr @_ZTS1D, i32 2, i32 2, ptr @_ZTI1B, i64 2, ptr @_ZTI1C, i64 4098 }, comdat, align 8
 // CHECK:STDOUT: @_ZTS1D = linkonce_odr dso_local constant [3 x i8] c"1D\00", comdat, align 1
-// CHECK:STDOUT: @_ZTT1C = linkonce_odr dso_local unnamed_addr constant [1 x ptr] [ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr] }, ptr @_ZTV1C, i32 0, i32 0, i32 3)], comdat, align 8
-// CHECK:STDOUT: @_ZTT1B = linkonce_odr dso_local unnamed_addr constant [1 x ptr] [ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr] }, ptr @_ZTV1B, i32 0, i32 0, i32 3)], comdat, align 8
+// CHECK:STDOUT: @_ZTT1C = linkonce_odr dso_local unnamed_addr constant [1 x ptr] [ptr getelementptr inbounds inrange(-24, 0) (i8, ptr @_ZTV1C, i64 24)], comdat, align 8
+// CHECK:STDOUT: @_ZTT1B = linkonce_odr dso_local unnamed_addr constant [1 x ptr] [ptr getelementptr inbounds inrange(-24, 0) (i8, ptr @_ZTV1B, i64 24)], comdat, align 8
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.Main() #0 !dbg !28 {
@@ -169,9 +169,9 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT:   call void @_ZN1BC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %this1, ptr noundef getelementptr inbounds nuw (i8, ptr @_ZTT1D, i64 8))
 // CHECK:STDOUT:   %1 = getelementptr inbounds i8, ptr %this1, i64 16
 // CHECK:STDOUT:   call void @_ZN1CC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %1, ptr noundef getelementptr inbounds nuw (i8, ptr @_ZTT1D, i64 16))
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 0, i32 3), ptr %this1, align 8, !tbaa !51
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) (i8, ptr @_ZTV1D, i64 24), ptr %this1, align 8, !tbaa !51
 // CHECK:STDOUT:   %add.ptr = getelementptr inbounds i8, ptr %this1, i64 16
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) ({ [3 x ptr], [3 x ptr] }, ptr @_ZTV1D, i32 0, i32 1, i32 3), ptr %add.ptr, align 8, !tbaa !51
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) (i8, ptr @_ZTV1D, i64 48), ptr %add.ptr, align 8, !tbaa !51
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
