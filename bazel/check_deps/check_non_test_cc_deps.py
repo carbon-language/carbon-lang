@@ -56,7 +56,7 @@ for dep in deps:
             package == "third-party"
             and rule
             not in (
-                # LLVM wrappers for zlib-ng and zstd, which are fine as linked.
+                # LLVM wrappers for libraries, which are fine as linked.
                 "libxml2",
                 "lzma",
                 "zlib",
