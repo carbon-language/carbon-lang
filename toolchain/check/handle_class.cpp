@@ -166,6 +166,7 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, class_id);
   context.field_decls_stack().PushArray();
+  context.friend_scopes_stack().PushArray();
   context.vtable_stack().Push();
 
   // TODO: Handle the case where there's control flow in the class body. For
@@ -443,13 +444,59 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::FriendIntroducerId node_id)
-    -> bool {
-  return context.TODO(node_id, "friend decl not supported in check");
+auto HandleParseNode(Context& /*context*/,
+                     Parse::FriendIntroducerId /*node_id*/) -> bool {
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::FriendDeclId node_id) -> bool {
-  return context.TODO(node_id, "friend decl not supported in check");
+  auto [scope_node_id, scope_inst_id] =
+      context.node_stack().PopWithNodeId<Parse::NodeKind::IdentifierNameExpr>();
+
+  auto access_scope_inst_id = context.scope_stack().PeekInstId();
+  auto access_scope_inst = context.constant_values().GetInst(
+      context.constant_values().Get(access_scope_inst_id));
+  CARBON_KIND_SWITCH(access_scope_inst) {
+    case SemIR::ClassType::Kind:
+    case SemIR::GenericClassType::Kind:
+      break;
+    default:
+      CARBON_DIAGNOSTIC(FriendNotAllowedInScope, Error,
+                        "`friend` declaration in non-class scope");
+      context.emitter().Emit(node_id, FriendNotAllowedInScope);
+      return false;
+  }
+
+  auto scope_const_id = context.constant_values().Get(scope_inst_id);
+  if (!scope_const_id.is_constant()) {
+    CARBON_DIAGNOSTIC(FriendIsNonConstant, Error,
+                      "friend declaration does not name a constant");
+    context.emitter().Emit(scope_node_id, FriendIsNonConstant);
+    return false;
+  }
+  context.friend_scopes_stack().AppendToTop(scope_const_id);
+  auto scope_constant = context.constant_values().GetInst(scope_const_id);
+  CARBON_KIND_SWITCH(scope_constant) {
+    case SemIR::StructValue::Kind: {
+      if (context.types().Is<SemIR::FunctionType>(scope_constant.type_id())) {
+        return context.TODO(node_id,
+                            "befriending a function not yet implemented");
+      }
+      [[fallthrough]];
+    }
+    case SemIR::ClassType::Kind:
+    case SemIR::GenericClassType::Kind:
+    case SemIR::FacetType::Kind:
+      break;
+    default: {
+      CARBON_DIAGNOSTIC(
+          FriendNotNameScope, Error,
+          "friend declaration names entity that is not a name scope");
+      context.emitter().Emit(scope_node_id, FriendNotNameScope);
+      return false;
+    }
+  }
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
@@ -467,7 +514,13 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
   context.field_decls_stack().PopArray();
   context.vtable_stack().Pop();
 
-  FinishGenericDefinition(context, context.classes().Get(class_id).generic_id);
+  auto& class_info = context.classes().Get(class_id);
+  for (auto friend_scope_id : context.friend_scopes_stack().PeekArray()) {
+    class_info.friend_scopes.Insert(friend_scope_id);
+  }
+  context.friend_scopes_stack().PopArray();
+
+  FinishGenericDefinition(context, class_info.generic_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;
