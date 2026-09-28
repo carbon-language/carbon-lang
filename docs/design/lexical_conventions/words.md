@@ -39,7 +39,7 @@ in Unicode Normalization Form C (NFC).
 
 <!--
 Keep in sync:
-- utils/textmate/Syntaxes/carbom.tmLanguage.json
+- utils/vscode/carbon.tmLanguage.json
 - utils/tree_sitter/queries/highlights.scm
 -->
 
