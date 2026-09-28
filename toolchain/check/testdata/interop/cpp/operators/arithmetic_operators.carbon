@@ -530,22 +530,22 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %AddWith.lookup_impl_witness.131: <witness> = lookup_impl_witness %.Self.45a, @AddWith.1, @AddWith.1(%Int16) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.28c: type = impl_witness_access %AddWith.lookup_impl_witness.131, element0 [symbolic_self]
 // CHECK:STDOUT:   %facet_type.225: type = facet_type <@Destroy & @AddWith.1, @AddWith.1(%Int16) where %impl.elem0.28c = %Int16> [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc176_34.2 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc176_34.3 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.3: type = fn_type @Destroy.WithSelf.SelfDestruct.loc176_34.3 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.3: %Destroy.WithSelf.SelfDestruct.type.fbceb5.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.f8f19d.2: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.3, %Destroy.WithSelf.SubobjectDestroy.d01daf.2, %Destroy.WithSelf.SelfDestruct.db3fdb.3), @Destroy [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc176 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01: %Destroy.WithSelf.SubobjectDestroy.type.dfc = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc176_34.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc176_34.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.f8f1: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2, %Destroy.WithSelf.SubobjectDestroy.d01, %Destroy.WithSelf.SelfDestruct.db3fdb.2), @Destroy [concrete]
 // CHECK:STDOUT:   %AddWith.type.b62: type = facet_type <@AddWith.1, @AddWith.1(%Int16)> [concrete]
 // CHECK:STDOUT:   %AddWith.assoc_type.c72: type = assoc_entity_type @AddWith.1, @AddWith.1(%Int16) [concrete]
 // CHECK:STDOUT:   %assoc0.261: %AddWith.assoc_type.c72 = assoc_entity element0, imports.%Core.import_ref.91f8 [concrete]
 // CHECK:STDOUT:   %assoc1.006: %AddWith.assoc_type.c72 = assoc_entity element1, imports.%Core.import_ref.3cf [concrete]
 // CHECK:STDOUT:   %Op.type.442b68.1: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %Op.72717c.1: %Op.type.442b68.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.facet.231: %Destroy.type = facet_value %i16, (%custom_witness.f8f19d.2) [concrete]
+// CHECK:STDOUT:   %Destroy.facet.231: %Destroy.type = facet_value %i16, (%custom_witness.f8f1) [concrete]
 // CHECK:STDOUT:   %custom_witness.248: <witness> = custom_witness (%Int16, %Op.72717c.1), @AddWith.1, @AddWith.1(%Int16) [concrete]
-// CHECK:STDOUT:   %facet_value.a37: %facet_type.225 = facet_value %i16, (%custom_witness.f8f19d.2, %custom_witness.248) [concrete]
+// CHECK:STDOUT:   %facet_value.a37: %facet_type.225 = facet_value %i16, (%custom_witness.f8f1, %custom_witness.248) [concrete]
 // CHECK:STDOUT:   %.Self.frozen.7e3: %facet_type.297 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %complete_type.a82: <witness> = complete_type_witness %facet_type.297 [concrete]
 // CHECK:STDOUT:   %.Self.frozen.as_type.85e: type = facet_access_type %.Self.frozen.7e3 [symbolic_self]
@@ -571,7 +571,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Op.type.442b68.2: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.72717c.2: %Op.type.442b68.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.f14: <witness> = custom_witness (%Int16, %Op.72717c.2), @SubWith.1, @SubWith.1(%Int16) [concrete]
-// CHECK:STDOUT:   %facet_value.0ee5e: %facet_type.b71 = facet_value %i16, (%custom_witness.f8f19d.2, %custom_witness.f14) [concrete]
+// CHECK:STDOUT:   %facet_value.0ee5e: %facet_type.b71 = facet_value %i16, (%custom_witness.f8f1, %custom_witness.f14) [concrete]
 // CHECK:STDOUT:   %.Self.frozen.581: %facet_type.b15 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %complete_type.647: <witness> = complete_type_witness %facet_type.b15 [concrete]
 // CHECK:STDOUT:   %.Self.frozen.as_type.092: type = facet_access_type %.Self.frozen.581 [symbolic_self]
@@ -591,7 +591,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Op.type.442b68.3: type = fn_type @Op.3 [concrete]
 // CHECK:STDOUT:   %Op.72717c.3: %Op.type.442b68.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.6bd: <witness> = custom_witness (%Int16, %Op.72717c.3), @MulWith.1, @MulWith.1(%Int16) [concrete]
-// CHECK:STDOUT:   %facet_value.58f: %facet_type.662 = facet_value %i16, (%custom_witness.f8f19d.2, %custom_witness.6bd) [concrete]
+// CHECK:STDOUT:   %facet_value.58f: %facet_type.662 = facet_value %i16, (%custom_witness.f8f1, %custom_witness.6bd) [concrete]
 // CHECK:STDOUT:   %.Self.frozen.05e: %facet_type.a64 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %complete_type.4d3: <witness> = complete_type_witness %facet_type.a64 [concrete]
 // CHECK:STDOUT:   %.Self.frozen.as_type.2d1: type = facet_access_type %.Self.frozen.05e [symbolic_self]
@@ -611,7 +611,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Op.type.442b68.4: type = fn_type @Op.4 [concrete]
 // CHECK:STDOUT:   %Op.72717c.4: %Op.type.442b68.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.22c: <witness> = custom_witness (%Int16, %Op.72717c.4), @DivWith.1, @DivWith.1(%Int16) [concrete]
-// CHECK:STDOUT:   %facet_value.b41: %facet_type.bd6 = facet_value %i16, (%custom_witness.f8f19d.2, %custom_witness.22c) [concrete]
+// CHECK:STDOUT:   %facet_value.b41: %facet_type.bd6 = facet_value %i16, (%custom_witness.f8f1, %custom_witness.22c) [concrete]
 // CHECK:STDOUT:   %.Self.frozen.ecc: %facet_type.0b4 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %complete_type.acc: <witness> = complete_type_witness %facet_type.0b4 [concrete]
 // CHECK:STDOUT:   %.Self.frozen.as_type.851: type = facet_access_type %.Self.frozen.ecc [symbolic_self]
@@ -631,7 +631,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Op.type.442b68.5: type = fn_type @Op.5 [concrete]
 // CHECK:STDOUT:   %Op.72717c.5: %Op.type.442b68.5 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.9e6: <witness> = custom_witness (%Int16, %Op.72717c.5), @ModWith.1, @ModWith.1(%Int16) [concrete]
-// CHECK:STDOUT:   %facet_value.b6e: %facet_type.a2b = facet_value %i16, (%custom_witness.f8f19d.2, %custom_witness.9e6) [concrete]
+// CHECK:STDOUT:   %facet_value.b6e: %facet_type.a2b = facet_value %i16, (%custom_witness.f8f1, %custom_witness.9e6) [concrete]
 // CHECK:STDOUT:   %.Self.frozen.9a7: %facet_type.ee8 = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %complete_type.8fc: <witness> = complete_type_witness %facet_type.ee8 [concrete]
 // CHECK:STDOUT:   %.Self.frozen.as_type.954: type = facet_access_type %.Self.frozen.9a7 [symbolic_self]
@@ -743,13 +743,13 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %impl.elem0.172: type = impl_witness_access %ModWith.lookup_impl_witness.5ab, element0 [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.4d8: type = pattern_type %facet_type.ee6 [concrete]
 // CHECK:STDOUT:   %T.patt.a7e: %pattern_type.4d8 = symbolic_binding_pattern T, 2 [symbolic]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.4: type = fn_type @Destroy.WithSelf.Op.loc190 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.4: %Destroy.WithSelf.Op.type.ef016f.4 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.4: type = fn_type @Destroy.WithSelf.SelfDestruct.loc190 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.4: %Destroy.WithSelf.SelfDestruct.type.fbceb5.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc190 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.3: type = fn_type @Destroy.WithSelf.SelfDestruct.loc190 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.3: %Destroy.WithSelf.SelfDestruct.type.fbceb5.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int32.SubobjectDestroy.type: type = fn_type @Int32.SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %Int32.SubobjectDestroy: %Int32.SubobjectDestroy.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.1bfa2a.2: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.4, %Int32.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.db3fdb.4), @Destroy [concrete]
+// CHECK:STDOUT:   %custom_witness.1bfa2a.2: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.3, %Int32.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.db3fdb.3), @Destroy [concrete]
 // CHECK:STDOUT:   %Destroy.facet.84d: %Destroy.type = facet_value %Int32, (%custom_witness.1bfa2a.2) [concrete]
 // CHECK:STDOUT:   %facet_type.698: type = facet_type <@Destroy & @AddWith.1, @AddWith.1(%Int32)> [concrete]
 // CHECK:STDOUT:   %.Self.591: %facet_type.698 = symbolic_binding .Self [symbolic_self]
@@ -914,13 +914,13 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Int32.Op.4dca31.10: %Int32.Op.type.83af6e.10 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.501c6d.2: <witness> = custom_witness (%Int32, %Int32.Op.4dca31.10), @ModWith.1, @ModWith.1(%Int32) [concrete]
 // CHECK:STDOUT:   %facet_value.105: %facet_type.c8c = facet_value %Int32, (%custom_witness.1bfa2a.2, %custom_witness.501c6d.2) [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.5: type = fn_type @Destroy.WithSelf.Op.loc211 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.5: %Destroy.WithSelf.Op.type.ef016f.5 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.5: type = fn_type @Destroy.WithSelf.SelfDestruct.loc211 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.5: %Destroy.WithSelf.SelfDestruct.type.fbceb5.5 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.4: type = fn_type @Destroy.WithSelf.Op.loc211 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.4: %Destroy.WithSelf.Op.type.ef016f.4 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.4: type = fn_type @Destroy.WithSelf.SelfDestruct.loc211 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.4: %Destroy.WithSelf.SelfDestruct.type.fbceb5.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int64.SubobjectDestroy.type: type = fn_type @Int64.SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %Int64.SubobjectDestroy: %Int64.SubobjectDestroy.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.1bfa2a.3: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.5, %Int64.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.db3fdb.5), @Destroy [concrete]
+// CHECK:STDOUT:   %custom_witness.1bfa2a.3: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.4, %Int64.SubobjectDestroy, %Destroy.WithSelf.SelfDestruct.db3fdb.4), @Destroy [concrete]
 // CHECK:STDOUT:   %Destroy.facet.0b4: %Destroy.type = facet_value %Int64, (%custom_witness.1bfa2a.3) [concrete]
 // CHECK:STDOUT:   %facet_type.afd1: type = facet_type <@Destroy & @AddWith.1, @AddWith.1(%Int64)> [concrete]
 // CHECK:STDOUT:   %.Self.d7b: %facet_type.afd1 = symbolic_binding .Self [symbolic_self]
@@ -2801,8 +2801,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc126_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc126_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc126_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Destroy.facet.84d, constants.%Destroy.facet.84d, constants.%facet_value.16e) {
@@ -2854,8 +2854,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc137_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc137_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc137_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Destroy.facet.84d, constants.%Destroy.facet.84d, constants.%facet_value.812) {
@@ -2907,8 +2907,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc148_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc148_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc148_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Destroy.facet.84d, constants.%Destroy.facet.84d, constants.%facet_value.0ee56) {
@@ -2960,8 +2960,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc159_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc159_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc159_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Destroy.facet.84d, constants.%Destroy.facet.84d, constants.%facet_value.d41) {
@@ -3013,8 +3013,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc170_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc170_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc170_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Destroy.facet.84d, constants.%Destroy.facet.f58, constants.%facet_value.169) {
@@ -3066,8 +3066,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc126_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc126_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc126_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Destroy.facet.84d, constants.%Destroy.facet.f58, constants.%facet_value.ddb) {
@@ -3119,8 +3119,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc137_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc137_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc137_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Destroy.facet.84d, constants.%Destroy.facet.f58, constants.%facet_value.ae7) {
@@ -3172,8 +3172,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc148_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc148_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc148_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Destroy.facet.84d, constants.%Destroy.facet.f58, constants.%facet_value.003) {
@@ -3225,8 +3225,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc159_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc159_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc159_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Destroy.facet.84d, constants.%Destroy.facet.f58, constants.%facet_value.af1) {
@@ -3278,8 +3278,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc170_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc170_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc170_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Destroy.facet.84d, constants.%Destroy.facet.84d, constants.%facet_value.c2c) {
@@ -3331,8 +3331,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc126_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc126_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc126_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Destroy.facet.84d, constants.%Destroy.facet.84d, constants.%facet_value.7a2) {
@@ -3384,8 +3384,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc137_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc137_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc137_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Destroy.facet.84d, constants.%Destroy.facet.84d, constants.%facet_value.84e) {
@@ -3437,8 +3437,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc148_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc148_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc148_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Destroy.facet.84d, constants.%Destroy.facet.84d, constants.%facet_value.0bf) {
@@ -3490,8 +3490,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc159_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc159_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc159_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Destroy.facet.84d, constants.%Destroy.facet.84d, constants.%facet_value.105) {
@@ -3543,8 +3543,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc170_5.7 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc170_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc170_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Destroy.facet.0b4, constants.%Destroy.facet.0b4, constants.%facet_value.c15) {
@@ -3596,8 +3596,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.bd9
 // CHECK:STDOUT:   %.loc126_5.7 => constants.%.9af
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.3
-// CHECK:STDOUT:   %impl.elem2.loc126_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
-// CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %impl.elem2.loc126_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Destroy.facet.0b4, constants.%Destroy.facet.0b4, constants.%facet_value.31d) {
@@ -3649,8 +3649,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.bd9
 // CHECK:STDOUT:   %.loc137_5.7 => constants.%.9af
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.3
-// CHECK:STDOUT:   %impl.elem2.loc137_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
-// CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %impl.elem2.loc137_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Destroy.facet.0b4, constants.%Destroy.facet.0b4, constants.%facet_value.c94) {
@@ -3702,8 +3702,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.bd9
 // CHECK:STDOUT:   %.loc148_5.7 => constants.%.9af
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.3
-// CHECK:STDOUT:   %impl.elem2.loc148_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
-// CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %impl.elem2.loc148_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Destroy.facet.0b4, constants.%Destroy.facet.0b4, constants.%facet_value.886) {
@@ -3755,8 +3755,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.bd9
 // CHECK:STDOUT:   %.loc159_5.7 => constants.%.9af
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.3
-// CHECK:STDOUT:   %impl.elem2.loc159_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
-// CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %impl.elem2.loc159_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Destroy.facet.0b4, constants.%Destroy.facet.0b4, constants.%facet_value.022) {
@@ -3808,8 +3808,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.bd9
 // CHECK:STDOUT:   %.loc170_5.7 => constants.%.9af
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.3
-// CHECK:STDOUT:   %impl.elem2.loc170_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
-// CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %impl.elem2.loc170_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith.loc124(constants.%Destroy.facet.0b4, constants.%Destroy.facet.84d, constants.%facet_value.ff6) {
@@ -3861,8 +3861,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.bd9
 // CHECK:STDOUT:   %.loc126_5.7 => constants.%.9af
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.3
-// CHECK:STDOUT:   %impl.elem2.loc126_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
-// CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %impl.elem2.loc126_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %specific_impl_fn.loc126_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SubWith.loc135(constants.%Destroy.facet.0b4, constants.%Destroy.facet.84d, constants.%facet_value.263) {
@@ -3914,8 +3914,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.bd9
 // CHECK:STDOUT:   %.loc137_5.7 => constants.%.9af
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.3
-// CHECK:STDOUT:   %impl.elem2.loc137_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
-// CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %impl.elem2.loc137_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %specific_impl_fn.loc137_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MulWith.loc146(constants.%Destroy.facet.0b4, constants.%Destroy.facet.84d, constants.%facet_value.ac4) {
@@ -3967,8 +3967,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.bd9
 // CHECK:STDOUT:   %.loc148_5.7 => constants.%.9af
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.3
-// CHECK:STDOUT:   %impl.elem2.loc148_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
-// CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %impl.elem2.loc148_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %specific_impl_fn.loc148_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DivWith.loc157(constants.%Destroy.facet.0b4, constants.%Destroy.facet.84d, constants.%facet_value.955) {
@@ -4020,8 +4020,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.bd9
 // CHECK:STDOUT:   %.loc159_5.7 => constants.%.9af
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.3
-// CHECK:STDOUT:   %impl.elem2.loc159_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
-// CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %impl.elem2.loc159_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %specific_impl_fn.loc159_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ModWith.loc168(constants.%Destroy.facet.0b4, constants.%Destroy.facet.84d, constants.%facet_value.03a) {
@@ -4073,8 +4073,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.bd9
 // CHECK:STDOUT:   %.loc170_5.7 => constants.%.9af
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.3
-// CHECK:STDOUT:   %impl.elem2.loc170_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
-// CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %impl.elem2.loc170_5.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %specific_impl_fn.loc170_5.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddAssignWith.loc225(constants.%U.67d, constants.%T.792) {
@@ -4674,8 +4674,8 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.bd9
 // CHECK:STDOUT:   %.loc296_3.8 => constants.%.9af
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.3
-// CHECK:STDOUT:   %impl.elem2.loc296_3.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
-// CHECK:STDOUT:   %specific_impl_fn.loc296_3.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %impl.elem2.loc296_3.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %specific_impl_fn.loc296_3.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestNegate(constants.%Destroy.facet.84d, constants.%facet_value.73e) {
@@ -4706,7 +4706,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.3e9
 // CHECK:STDOUT:   %.loc296_3.8 => constants.%.57b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.1bfa2a.2
-// CHECK:STDOUT:   %impl.elem2.loc296_3.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
-// CHECK:STDOUT:   %specific_impl_fn.loc296_3.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %impl.elem2.loc296_3.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %specific_impl_fn.loc296_3.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
