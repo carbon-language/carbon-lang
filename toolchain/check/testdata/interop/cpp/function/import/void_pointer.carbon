@@ -367,10 +367,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_26.1(%self.param: ref %.a7d) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_26.1(%self.param: ref %.a7d) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_26.1(%self.param: ref %.a7d) = "no_op";
 // CHECK:STDOUT:
@@ -583,10 +580,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_52.1(%self.param: ref %.a7d) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_52.1(%self.param: ref %.a7d) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_52.1(%self.param: ref %.a7d) = "no_op";
 // CHECK:STDOUT:
@@ -790,10 +784,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_73.1(%self.param: ref %.a7d) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_73.1(%self.param: ref %.a7d) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_73.1(%self.param: ref %.a7d) = "no_op";
 // CHECK:STDOUT:
