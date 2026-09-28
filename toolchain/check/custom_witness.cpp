@@ -217,9 +217,22 @@ static auto CanDestroyClass(Context& context, SemIR::LocId loc_id,
         class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
   }
 
-  return HasWitnessForOneField(context, loc_id,
-                               context.types().GetTypeInstId(object_repr_id),
-                               query_specific_interface);
+  auto has_witness = HasWitnessForOneField(
+      context, loc_id, context.types().GetTypeInstId(object_repr_id),
+      query_specific_interface);
+  if (has_witness == DestroyFormat::NoDestroy) {
+    return DestroyFormat::NoDestroy;
+  }
+
+  if (class_info.GetStructTypeFields(context.sem_ir(), class_type.specific_id)
+          .empty()) {
+    return DestroyFormat::Trivial;
+  }
+
+  // TODO: check that a class' base has trivial destruction.
+  // TODO: check that a class' subobjects have trivial destruction.
+
+  return DestroyFormat::NonTrivial;
 }
 
 // Returns true if the `Self` should impl `Destroy`. This will recurse into impl
@@ -364,9 +377,6 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
 static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
                                        SemIR::InstId callee_self_param_id,
                                        SemIR::TypeId self_type_id) -> void {
-  (void)loc_id;
-  (void)callee_self_param_id;
-
   while (self_type_id.has_value()) {
     auto inst = context.types().GetAsInst(self_type_id);
     CARBON_KIND_SWITCH(inst) {
@@ -410,7 +420,7 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
              i >= 0; --i) {
           auto int_id = context.ints().Add(i);
           BuildSelfDestructCall(
-              context, loc_id,
+              context,
               PerformTupleAccess(
                   context, loc_id, callee_self_param_id,
                   AddInst(context, loc_id,

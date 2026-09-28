@@ -49,8 +49,8 @@ auto BuildBinaryOperator(
 
 // Builds `<object>.(Destroy.SelfDestruct)()`, converting adapters to their
 // underlying types in the process.
-auto BuildSelfDestructCall(Context& context, SemIR::LocId loc_id,
-                           SemIR::InstId object_id) -> SemIR::InstId;
+auto BuildSelfDestructCall(Context& context, SemIR::InstId object_id)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

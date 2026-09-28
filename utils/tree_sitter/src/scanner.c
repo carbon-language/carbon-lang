@@ -2,19 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "utils/tree_sitter/src/tree_sitter/parser.h"
+#include "tree_sitter/parser.h"
 
 enum TokenType {
   BINARY_STAR,
   POSTFIX_STAR,
   STRING,
 };
-
-// This is part of a special rule that doesn't allow `copts` in Bazel, so we
-// disable warnings using `#pragma`s here.
-#pragma clang diagnostic push
-// The tree_sitter build uses C functions without prototypes.
-#pragma clang diagnostic ignored "-Wmissing-prototypes"
 
 // our scanner is stateless
 void* tree_sitter_carbon_external_scanner_create(void) { return NULL; }

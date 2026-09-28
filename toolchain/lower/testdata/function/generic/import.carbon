@@ -142,27 +142,20 @@ fn Call() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !61 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !61 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !63
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !65 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CSubobjectDestroy.f58524831c37807e:core.Destroy.Core"(ptr %self), !dbg !67
-// CHECK:STDOUT:   ret void, !dbg !67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CDirectGeneric.Main.84588f41d61dafba(ptr %y) #0 !dbg !69 {
-// CHECK:STDOUT:   call void @_CDirectDeclared.Main(), !dbg !74
-// CHECK:STDOUT:   call void @_CDirectDefined.Main(), !dbg !75
-// CHECK:STDOUT:   %1 = call ptr @_CIndirectGeneric.Main.84588f41d61dafba(ptr %y), !dbg !77
-// CHECK:STDOUT:   ret ptr %1, !dbg !78
+// CHECK:STDOUT: define linkonce_odr ptr @_CDirectGeneric.Main.84588f41d61dafba(ptr %y) #0 !dbg !65 {
+// CHECK:STDOUT:   call void @_CDirectDeclared.Main(), !dbg !70
+// CHECK:STDOUT:   call void @_CDirectDefined.Main(), !dbg !71
+// CHECK:STDOUT:   %1 = call ptr @_CIndirectGeneric.Main.84588f41d61dafba(ptr %y), !dbg !73
+// CHECK:STDOUT:   ret ptr %1, !dbg !74
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CDirectDeclared.Main()
@@ -170,10 +163,10 @@ fn Call() -> i32 {
 // CHECK:STDOUT: declare void @_CDirectDefined.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CIndirectGeneric.Main.84588f41d61dafba(ptr %x) #0 !dbg !80 {
-// CHECK:STDOUT:   call void @_CIndirectDeclared.Main(), !dbg !85
-// CHECK:STDOUT:   call void @_CIndirectDefined.Main(), !dbg !86
-// CHECK:STDOUT:   ret ptr %x, !dbg !88
+// CHECK:STDOUT: define linkonce_odr ptr @_CIndirectGeneric.Main.84588f41d61dafba(ptr %x) #0 !dbg !76 {
+// CHECK:STDOUT:   call void @_CIndirectDeclared.Main(), !dbg !81
+// CHECK:STDOUT:   call void @_CIndirectDefined.Main(), !dbg !82
+// CHECK:STDOUT:   ret ptr %x, !dbg !84
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CIndirectDeclared.Main()
@@ -220,25 +213,21 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !57, type: !30)
 // CHECK:STDOUT: !59 = !DILocation(line: 7, column: 3, scope: !57)
 // CHECK:STDOUT: !60 = !{!58}
-// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.f58524831c37807e:core.Destroy.Core", scope: null, file: !28, line: 7, type: !37, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !64)
+// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f58524831c37807e:core.Destroy.Core", scope: null, file: !28, line: 7, type: !37, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !64)
 // CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !61, type: !30)
 // CHECK:STDOUT: !63 = !DILocation(line: 7, column: 3, scope: !61)
 // CHECK:STDOUT: !64 = !{!62}
-// CHECK:STDOUT: !65 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f58524831c37807e:core.Destroy.Core", scope: null, file: !28, line: 7, type: !37, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !68)
-// CHECK:STDOUT: !66 = !DILocalVariable(arg: 1, scope: !65, type: !30)
-// CHECK:STDOUT: !67 = !DILocation(line: 7, column: 3, scope: !65)
-// CHECK:STDOUT: !68 = !{!66}
-// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "DirectGeneric", linkageName: "_CDirectGeneric.Main.84588f41d61dafba", scope: null, file: !24, line: 10, type: !48, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !79)
-// CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !69, type: !33)
-// CHECK:STDOUT: !74 = !DILocation(line: 11, column: 3, scope: !69)
-// CHECK:STDOUT: !75 = !DILocation(line: 12, column: 3, scope: !69)
-// CHECK:STDOUT: !77 = !DILocation(line: 13, column: 10, scope: !69)
-// CHECK:STDOUT: !78 = !DILocation(line: 13, column: 3, scope: !69)
-// CHECK:STDOUT: !79 = !{!70}
-// CHECK:STDOUT: !80 = distinct !DISubprogram(name: "IndirectGeneric", linkageName: "_CIndirectGeneric.Main.84588f41d61dafba", scope: null, file: !18, line: 8, type: !48, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !89)
-// CHECK:STDOUT: !81 = !DILocalVariable(arg: 1, scope: !80, type: !33)
-// CHECK:STDOUT: !85 = !DILocation(line: 9, column: 3, scope: !80)
-// CHECK:STDOUT: !86 = !DILocation(line: 10, column: 3, scope: !80)
-// CHECK:STDOUT: !88 = !DILocation(line: 11, column: 3, scope: !80)
-// CHECK:STDOUT: !89 = !{!81}
+// CHECK:STDOUT: !65 = distinct !DISubprogram(name: "DirectGeneric", linkageName: "_CDirectGeneric.Main.84588f41d61dafba", scope: null, file: !24, line: 10, type: !48, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !75)
+// CHECK:STDOUT: !66 = !DILocalVariable(arg: 1, scope: !65, type: !33)
+// CHECK:STDOUT: !70 = !DILocation(line: 11, column: 3, scope: !65)
+// CHECK:STDOUT: !71 = !DILocation(line: 12, column: 3, scope: !65)
+// CHECK:STDOUT: !73 = !DILocation(line: 13, column: 10, scope: !65)
+// CHECK:STDOUT: !74 = !DILocation(line: 13, column: 3, scope: !65)
+// CHECK:STDOUT: !75 = !{!66}
+// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "IndirectGeneric", linkageName: "_CIndirectGeneric.Main.84588f41d61dafba", scope: null, file: !18, line: 8, type: !48, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !85)
+// CHECK:STDOUT: !77 = !DILocalVariable(arg: 1, scope: !76, type: !33)
+// CHECK:STDOUT: !81 = !DILocation(line: 9, column: 3, scope: !76)
+// CHECK:STDOUT: !82 = !DILocation(line: 10, column: 3, scope: !76)
+// CHECK:STDOUT: !84 = !DILocation(line: 11, column: 3, scope: !76)
+// CHECK:STDOUT: !85 = !{!77}
 // CHECK:STDOUT:
