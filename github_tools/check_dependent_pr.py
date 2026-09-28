@@ -328,8 +328,7 @@ def _process_pr(
         #
         # We consider PR B dependent on PR A if:
         # 1. PR A is not PR B.
-        # 2. All commits in PR A are also in PR B.
-        # 3. PR B has at least one commit not present in PR A.
+        # 2. PR B is a strict subset of PR A.
         #
         # Why this works:
         # - Does not assume dependency direction matches PR creation order.
@@ -346,14 +345,14 @@ def _process_pr(
         for d in open_deps:
             dep_oids.update(pr_to_commits[d])
 
-        # Dependency Logic: Overlap Fallback for Older PRs
+        # Dependency Logic: Overlap and Sequence
         #
-        # If neither PR is a strict subset of the other, we consider PR B
-        # dependent on PR A if:
+        # We consider PR B dependent on PR A if:
         # 1. The dependency PR A was created before PR B (A.number < B.number).
         # 2. There is a non-empty overlap of commits between PR A and PR B not
         #    already accounted for by an identified dependency.
-        # 3. PR B is not a strict subset of PR A.
+        # 3. PR B has at least one commit not present in PR A.
+        # 4. PR B is not a strict subset of PR A.
         #
         # Why this works:
         # - Ensures the dependency direction reflects the creation sequence.
@@ -369,9 +368,9 @@ def _process_pr(
             if current_oids_set < other_oids_set:
                 continue
 
-            # The current PR depends on an older PR if they share commits that
-            # have not already been provided by another dependency. This avoids
-            # redundant dependencies.
+            # Avoid redundant dependencies by classifying the current PR as a
+            # dependent of an older PR, only if they share commits unaccounted
+            # for by other dependencies.
             new_commits_in_other_pr = (
                 current_oids_set & other_oids_set
             ) - dep_oids
