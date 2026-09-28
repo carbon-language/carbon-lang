@@ -371,17 +371,10 @@ class Hasher {
   static auto WeakMix(uint64_t value) -> uint64_t;
 
   // We have a 64-byte random data pool designed to fit on a single cache line.
-  // This routine allows sampling it at byte indices, which allows getting 49
-  // different random 64-bit results. The offset must be in the range [0, 48].
-  //
-  // The range excludes the last chunk of the pool, which is reserved for
-  // `DefaultSeed`, so no offset can return the seed. See `DefaultSeed` for why.
+  // This routine allows sampling it at byte indices, which allows getting 64 -
+  // 8 different random 64-bit results. The offset must be in the range [0, 56).
   static auto SampleRandomData(ssize_t offset) -> uint64_t {
-    CARBON_DCHECK(offset >= 0, "Negative offset!");
-    CARBON_DCHECK(
-        static_cast<size_t>(offset) + sizeof(uint64_t) <=
-            sizeof(StaticRandomData) - sizeof(uint64_t),
-        "Offset would sample the last chunk reserved for `DefaultSeed`!");
+    CARBON_DCHECK(offset + sizeof(uint64_t) < sizeof(StaticRandomData));
     uint64_t data;
     memcpy(&data,
            reinterpret_cast<const unsigned char*>(&StaticRandomData) + offset,
@@ -403,11 +396,6 @@ class Hasher {
   // used directly for convenience rather than calling `SampleRandomData`, but
   // be aware that this is the underlying pool. The goal is to reuse the same
   // single cache-line of constant data.
-  //
-  // Take care not to combine a chunk with itself. These are XOR-ed into the
-  // hash state on many paths, and XOR-ing a value with itself gives zero.
-  // `Mix(x, 0)` is `0`, so a zeroed buffer hashes an entire class of keys to
-  // the same value. The last chunk is reserved for `DefaultSeed`.
   //
   // The initializers here can be generated with the following shell script,
   // which will generate 8 64-bit values and one more digit. The `bc` command's
@@ -433,12 +421,22 @@ class Hasher {
   // `HashValue` overload, and by Carbon's hashtables, which have no per-table
   // seed.
   //
-  // This is the last chunk of the pool, the one `SampleRandomData` cannot
-  // return. The size-specific paths XOR a sampled chunk into the buffer
-  // alongside the seed, so a seed the sampler can also return would zero the
-  // buffer for a class of keys and hash them all to the same value. Inserting
-  // `n` such keys is then quadratic.
-  static constexpr uint64_t DefaultSeed = StaticRandomData[7];
+  // This is random data taken from the first 32 bits of the hexadecimal digits
+  // of e's fractional component, sign-extended to 64 bits. It is independent
+  // of `StaticRandomData` so that it can't cancel out a sample of that pool
+  // when the two are XOR-ed. It is a sign-extended 32-bit value so that x86-64
+  // can XOR it in as an immediate operand, where a full 64-bit constant costs
+  // an extra instruction to materialize on every hash. Zero-extended seeds
+  // measured much worse than sign-extended ones for lookups of dense integer
+  // keys that miss. The initializer can be generated with the following shell
+  // script:
+  //
+  // ```sh
+  // echo 'obase=16; scale=20; e(1)' | bc -l \
+  //  | cut -c 3-10 | tr '[:upper:]' '[:lower:]' \
+  //  | sed -e "s/.\{4\}/&'/g" -e "s/'$//" -e "s/^/0xffff'ffff'/"
+  // ```
+  static constexpr uint64_t DefaultSeed = 0xffff'ffff'b7e1'5162;
 
   // We need a multiplicative hashing constant for both 64-bit multiplicative
   // hashing fast paths and some other 128-bit folded multiplies. We use an

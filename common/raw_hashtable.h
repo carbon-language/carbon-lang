@@ -613,7 +613,7 @@ class ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::EntryRange::Iterator
     CARBON_DCHECK(present_bits_ != 0, "Incrementing end iterator!");
     __builtin_assume(present_bits_ != 0);
     present_bits_ &= (present_bits_ - 1);
-    if (LLVM_LIKELY(present_bits_ != 0)) {
+    if (present_bits_ != 0) {
       return *this;
     }
     AdvanceToNextPresentGroup();
