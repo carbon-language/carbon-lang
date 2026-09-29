@@ -509,16 +509,19 @@ auto MatchContext::DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
       auto loc_id = SemIR::LocId(entry.pattern_id);
       auto param_id = SemIR::InstId::None;
       // TODO: find a way to avoid this boilerplate.
-      switch (param.kind()) {
-        case SemIR::OutParam::Kind:
-          param_id = AddInst(context_, loc_id, param.As<SemIR::OutParam>());
+      CARBON_KIND_SWITCH(param) {
+        case CARBON_KIND(SemIR::OutParam out_param): {
+          param_id = AddInst(context_, loc_id, out_param);
           break;
-        case SemIR::RefParam::Kind:
-          param_id = AddInst(context_, loc_id, param.As<SemIR::RefParam>());
+        }
+        case CARBON_KIND(SemIR::RefParam ref_param): {
+          param_id = AddInst(context_, loc_id, ref_param);
           break;
-        case SemIR::ValueParam::Kind:
-          param_id = AddInst(context_, loc_id, param.As<SemIR::ValueParam>());
+        }
+        case CARBON_KIND(SemIR::ValueParam value_param): {
+          param_id = AddInst(context_, loc_id, value_param);
           break;
+        }
         default:
           CARBON_FATAL("Unexpected parameter kind");
       }

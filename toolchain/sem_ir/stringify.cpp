@@ -750,19 +750,23 @@ class Stringifier {
       auto entity_inst_id = entities[index];
       step_stack_->PushString(")");
       step_stack_->PushResumeQualfiedNames();
-      if (auto associated_const =
-              sem_ir_->insts().TryGetAs<AssociatedConstantDecl>(
-                  entity_inst_id)) {
-        step_stack_->PushNameId(sem_ir_->associated_constants()
-                                    .Get(associated_const->assoc_const_id)
-                                    .name_id);
-      } else if (auto function_decl =
-                     sem_ir_->insts().TryGetAs<FunctionDecl>(entity_inst_id)) {
-        const auto& function =
-            sem_ir_->functions().Get(function_decl->function_id);
-        step_stack_->PushNameId(function.name_id);
-      } else {
-        step_stack_->PushInstId(entity_inst_id);
+      CARBON_KIND_SWITCH(sem_ir_->insts().Get(entity_inst_id)) {
+        case CARBON_KIND(AssociatedConstantDecl associated_const): {
+          step_stack_->PushNameId(sem_ir_->associated_constants()
+                                      .Get(associated_const.assoc_const_id)
+                                      .name_id);
+          break;
+        }
+        case CARBON_KIND(FunctionDecl function_decl): {
+          const auto& function =
+              sem_ir_->functions().Get(function_decl.function_id);
+          step_stack_->PushNameId(function.name_id);
+          break;
+        }
+        default: {
+          step_stack_->PushInstId(entity_inst_id);
+          break;
+        }
       }
       // Don't qualify names after the `.` operator, until the closing `)`.
       step_stack_->PushStopQualfiedNames();
