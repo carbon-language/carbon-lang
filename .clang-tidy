@@ -38,14 +38,32 @@ Checks:
   - '-readability-trailing-comma'
   - '-readability-use-anyofallof'
 
+  # These are copies of older google- prefixed rules that have been moved
+  # out of that prefix, but the google- prefix names still exist as aliases to
+  # these. We enable the google- prefix rules and use those in our NOLINT
+  # expressions, so we disable the newer aliased rules.
+  #
+  # Alias for google-explicit-constructor.
+  - '-misc-explicit-constructor'
+  # Alias for google-readability-casting.
+  - '-modernize-avoid-c-style-cast'
+
   # Warns when we have multiple empty cases in switches, which we do for comment
   # reasons.
   - '-bugprone-branch-clone'
+  # We use CRTP inheritence widely and across distant areas of the codebase,
+  # which makes maintaining friend lists for the constructors frustrating.
+  - '-bugprone-crtp-constructor-accessibility'
+  # We shadow methods with CRTP, instead of using virtual, such as for Print().
+  - '-bugprone-derived-method-shadowing-base-method'
   # Frequently warns on multiple parameters of the same type.
   - '-bugprone-easily-swappable-parameters'
   # Finds issues like out-of-memory in main(). We don't use exceptions, so it's
   # unlikely to find real issues.
   - '-bugprone-exception-escape'
+  # We have File class types in different namespaces and we forward declare it,
+  # but don't find this to be problematic.
+  - '-bugprone-forward-declaration-namespace'
   # Doesn't respect `[[clang::enum_extensibility(open)]]`.
   - '-bugprone-invalid-enum-default-initialization'
   # Has false positives in places such as using an argument to declare a name,
@@ -54,6 +72,8 @@ Checks:
   - '-bugprone-macro-parentheses'
   # Conflicts with integer type C++ style.
   - '-bugprone-narrowing-conversions'
+  # We return const references from value stores.
+  - '-bugprone-return-const-ref-from-parameter'
   # Complains about reasonable code like `1 << 20` and would push us away from
   # our integer type C++ style rules.
   - '-bugprone-signed-bitwise'
@@ -97,6 +117,9 @@ Checks:
   - '-readability-enum-initial-value'
   # Warns too frequently.
   - '-readability-function-cognitive-complexity'
+  # Allows naming styles we don't use, and has errors on our use of `_1`, `_2`
+  # to have multiple unnamed vars in a destructuring declaration.
+  - '-readability-identifier-naming'
   # Warns on use of CARBON_KIND() and can't use NOLINT effectively inside a
   # macro.
   - '-readability-inconsistent-ifelse-braces'
@@ -105,12 +128,21 @@ Checks:
   # Warns on `= {}` which is also used to indicate which fields do not need to
   # be explicitly initialized in aggregate initialization.
   - '-readability-redundant-member-init'
+  # We generally do want to collapse if statements, and ask for it in review.
+  # But this check ignores when ifs are nested to place comments above/below
+  # the nested if block. And when the outer if block is also initializing a
+  # variable. There are more than a handful of cases where we want to do this,
+  # especially working with LLVM apis like dyn_cast.
+  - '-readability-redundant-nested-if'
   # Broken, wants to remove parens from `*(p + 1)` and `("Foo" + s).str()`.
   # TODO: Re-enable once https://github.com/llvm/llvm-project/issues/192435 and
   # related bugs are fixed.
   - '-readability-redundant-parentheses'
   # Warns when callers use similar names as different parameters.
   - '-readability-suspicious-call-argument'
+  # Low value check, and it's a stylistic choice to use `#if defined(...)` when
+  # paired with `#elif defined(...)`.
+  - '-readability-use-concise-preprocessor-directives'
 
 CheckOptions:
   # Don't warn on structs; done by ignoring when there are only public members.

@@ -45,11 +45,23 @@ cc_library(
 )
 
 cc_library(
+    name = "sem_ir_text",
+    srcs = ["sem_ir_text.cpp"],
+    hdrs = ["sem_ir_text.h"],
+    deps = [
+        "//common:raw_string_ostream",
+        "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "context",
     srcs = ["context.cpp"],
     hdrs = ["context.h"],
     deps = [
         ":sem_ir_index",
+        ":sem_ir_text",
         "//common:check",
         "//common:map",
         "//common:raw_string_ostream",
@@ -93,12 +105,16 @@ cc_library(
 
 cc_library(
     name = "handle",
-    srcs = glob(["handle_*"]),
-    hdrs = ["handle.h"],
+    srcs = glob(["handle_*.cpp"]),
+    hdrs = [
+        "handle.h",
+        "handle_sem_ir_text.h",
+    ],
     deps = [
         ":context",
         ":position",
         ":sem_ir_index",
+        ":sem_ir_text",
         "//common:check",
         "//common:raw_string_ostream",
         "//toolchain/base:shared_value_stores",

@@ -134,7 +134,7 @@ class Tree : public Printable<Tree> {
 
   template <typename IdT>
   auto IsValid(IdT id) const -> bool {
-    using T = typename NodeForId<IdT>::TypedNode;
+    using T = NodeForId<IdT>::TypedNode;
     CARBON_DCHECK(node_kind(id) == T::Kind);
     return !node_has_error(id);
   }

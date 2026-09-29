@@ -23,35 +23,35 @@ fn Run() {
 // CHECK:STDOUT: source_filename = "namespace_run.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CRun.Foo.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CRun.Foo.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @main() #0 !dbg !8 {
+// CHECK:STDOUT: define i32 @main() #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CRun.Foo.Main(), !dbg !12
-// CHECK:STDOUT:   ret i32 0, !dbg !13
+// CHECK:STDOUT:   call void @_CRun.Foo.Main(), !dbg !14
+// CHECK:STDOUT:   ret i32 0, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "namespace_run.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "_CRun.Foo.Main", scope: null, file: !1, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !4 = !DIFile(filename: "namespace_run.carbon", directory: "")
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !4, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 15, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !1, line: 17, type: !9, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
-// CHECK:STDOUT: !10 = !{!11}
-// CHECK:STDOUT: !11 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !12 = !DILocation(line: 18, column: 5, scope: !8)
-// CHECK:STDOUT: !13 = !DILocation(line: 17, column: 1, scope: !8)
+// CHECK:STDOUT: !7 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !8 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !9 = !{!8}
+// CHECK:STDOUT: !10 = !DISubroutineType(types: !9)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Run", linkageName: "_CRun.Foo.Main", scope: null, file: !4, line: 15, type: !7, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 1, scope: !11)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !4, line: 17, type: !10, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !14 = !DILocation(line: 18, column: 5, scope: !13)
+// CHECK:STDOUT: !15 = !DILocation(line: 17, column: 1, scope: !13)
 // CHECK:STDOUT:

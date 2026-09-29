@@ -264,9 +264,23 @@ static auto AddGenericConstantToEvalBlock(Context& context,
 auto GetOrAddInstWithSpecificConstantValue(Context& context,
                                            SemIR::InstId inst_id)
     -> SemIR::InstId {
-  if (!context.constant_values().Get(inst_id).is_symbolic()) {
+  auto const_id = context.constant_values().GetAttached(inst_id);
+  if (!const_id.is_symbolic()) {
     return inst_id;
   }
+
+  // If the instruction's constant value is is already attached to the current
+  // generic, we can use it directly. Otherwise, map to the unattached constant.
+  if (context.constant_values().IsAttached(const_id)) {
+    const auto& symbolic =
+        context.constant_values().GetSymbolicConstant(const_id);
+    if (symbolic.generic_id ==
+        context.generic_region_stack().PeekPendingGeneric().generic_id) {
+      return inst_id;
+    }
+    inst_id = symbolic.inst_id;
+  }
+
   return AddGenericConstantInstToEvalBlock(context, inst_id);
 }
 
@@ -334,9 +348,6 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   // declaration in this case instead of attempting to attach the new
   // declaration to a generic region that we're no longer within.
   if (context.generic_region_stack().Empty()) {
-    // This should only happen for `*Decl` instructions, never for template
-    // actions.
-    CARBON_CHECK(!dep_kind.HasAnyOf(DependentInstKind::Template));
     return;
   }
 
@@ -861,7 +872,9 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
   if (self_facet == SemIR::ErrorInst::ConstantId) {
     args.push_back(SemIR::ErrorInst::InstId);
   } else {
-    auto self_facet_inst_id = context.constant_values().GetInstId(self_facet);
+    // Use the canonical facet for self in order to produce fewer specifics.
+    auto self_facet_inst_id = context.constant_values().GetInstId(
+        GetCanonicalFacet(context, self_facet));
     CARBON_CHECK(context.types().Is<SemIR::FacetType>(
         context.insts().Get(self_facet_inst_id).type_id()));
     args.push_back(self_facet_inst_id);

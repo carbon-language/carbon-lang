@@ -33,6 +33,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT: --- base_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
@@ -177,10 +178,9 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.loc30_4.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %F.ref: %Base.F.type = name_ref F, @Base.%Base.F.decl [concrete = constants.%Base.F]
 // CHECK:STDOUT:   %Base.F.bound: <bound method> = bound_method %.loc30_4.1, %F.ref
-// CHECK:STDOUT:   %.loc30_4.2: ref %Base = as_compatible %.loc30_4.1
-// CHECK:STDOUT:   %.loc30_4.3: ref %Base = class_element_access %.loc30_4.2, element0
-// CHECK:STDOUT:   %.loc30_4.4: ref %Base = converted %.loc30_4.1, %.loc30_4.3
-// CHECK:STDOUT:   %Base.F.call: init %empty_tuple.type = call %Base.F.bound(%.loc30_4.4)
+// CHECK:STDOUT:   %.loc30_4.2: ref %Base = class_element_access %.loc30_4.1, element0
+// CHECK:STDOUT:   %.loc30_4.3: ref %Base = converted %.loc30_4.1, %.loc30_4.2
+// CHECK:STDOUT:   %Base.F.call: init %empty_tuple.type = call %Base.F.bound(%.loc30_4.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

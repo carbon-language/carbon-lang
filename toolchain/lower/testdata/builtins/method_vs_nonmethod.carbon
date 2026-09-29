@@ -21,41 +21,41 @@ fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 // CHECK:STDOUT: source_filename = "method_vs_nonmethod.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CTestAddNonmethod.Main(i32 %a, i32 %b) #0 !dbg !4 {
+// CHECK:STDOUT: define i32 @_CTestAddNonmethod.Main(i32 %a, i32 %b) #0 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %AddNonmethod.call = add i32 %a, %b, !dbg !11
-// CHECK:STDOUT:   ret i32 %AddNonmethod.call, !dbg !12
+// CHECK:STDOUT:   %AddNonmethod.call = add i32 %a, %b, !dbg !32
+// CHECK:STDOUT:   ret i32 %AddNonmethod.call, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CTestAddMethod.Main(i32 %a, i32 %b) #0 !dbg !13 {
+// CHECK:STDOUT: define i32 @_CTestAddMethod.Main(i32 %a, i32 %b) #0 !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %AddMethod.call = add i32 %a, %b, !dbg !17
-// CHECK:STDOUT:   ret i32 %AddMethod.call, !dbg !18
+// CHECK:STDOUT:   %AddMethod.call = add i32 %a, %b, !dbg !42
+// CHECK:STDOUT:   ret i32 %AddMethod.call, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "method_vs_nonmethod.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestAddNonmethod", linkageName: "_CTestAddNonmethod.Main", scope: null, file: !1, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !8)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{!7, !7, !7}
-// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !8 = !{!9, !10}
-// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
-// CHECK:STDOUT: !10 = !DILocalVariable(arg: 2, scope: !4, type: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 16, column: 53, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 16, column: 46, scope: !4)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "TestAddMethod", linkageName: "_CTestAddMethod.Main", scope: null, file: !1, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !14)
-// CHECK:STDOUT: !14 = !{!15, !16}
-// CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !13, type: !7)
-// CHECK:STDOUT: !16 = !DILocalVariable(arg: 2, scope: !13, type: !7)
-// CHECK:STDOUT: !17 = !DILocation(line: 17, column: 50, scope: !13)
-// CHECK:STDOUT: !18 = !DILocation(line: 17, column: 43, scope: !13)
+// CHECK:STDOUT: !18 = !DIFile(filename: "method_vs_nonmethod.carbon", directory: "")
+// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !21 = !{!20, !20, !20}
+// CHECK:STDOUT: !22 = !DISubroutineType(types: !21)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "TestAddNonmethod", linkageName: "_CTestAddNonmethod.Main", scope: null, file: !18, line: 16, type: !22, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !34)
+// CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !23, type: !20)
+// CHECK:STDOUT: !25 = !DILocalVariable(arg: 2, scope: !23, type: !20)
+// CHECK:STDOUT: !32 = !DILocation(line: 16, column: 53, scope: !23)
+// CHECK:STDOUT: !33 = !DILocation(line: 16, column: 46, scope: !23)
+// CHECK:STDOUT: !34 = !{!24, !25}
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "TestAddMethod", linkageName: "_CTestAddMethod.Main", scope: null, file: !18, line: 17, type: !22, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !45)
+// CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !35, type: !20)
+// CHECK:STDOUT: !37 = !DILocalVariable(arg: 2, scope: !35, type: !20)
+// CHECK:STDOUT: !42 = !DILocation(line: 17, column: 50, scope: !35)
+// CHECK:STDOUT: !44 = !DILocation(line: 17, column: 43, scope: !35)
+// CHECK:STDOUT: !45 = !{!36, !37}
 // CHECK:STDOUT:

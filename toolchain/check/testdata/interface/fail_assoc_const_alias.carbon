@@ -77,6 +77,7 @@ interface C {
 // CHECK:STDOUT: --- alias_to_different_interface_with_requires.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I2.type: type = facet_type <@I2> [concrete]
 // CHECK:STDOUT:   %I2.assoc_type: type = assoc_entity_type @I2 [concrete]
 // CHECK:STDOUT:   %assoc0.d6c: %I2.assoc_type = assoc_entity element0, @I2.WithSelf.%T2 [concrete]
@@ -168,6 +169,7 @@ interface C {
 // CHECK:STDOUT: --- call_with_compound_member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C.type: type = facet_type <@C> [concrete]
 // CHECK:STDOUT:   %Self: %C.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]

@@ -23,12 +23,14 @@ namespace Carbon::SemIR {
 
 auto Dump(const File& file) -> std::string;
 auto Dump(const File& file, RawBundleId bundle_id) -> std::string;
+auto Dump(const File& file, GeneratedFunctionId generated_function_id)
+    -> std::string;
 auto Dump(const File& file, ClassId class_id) -> std::string;
 auto Dump(const File& file, ConstantId const_id) -> std::string;
 auto Dump(const File& file, CppOverloadSetId overload_set_id) -> std::string;
-auto Dump(const File& file, EntityNameId entity_name_id) -> std::string;
 auto Dump(const File& file, DeclaredFacetTypeId declared_facet_type_id)
     -> std::string;
+auto Dump(const File& file, EntityNameId entity_name_id) -> std::string;
 auto Dump(const File& file, FieldId field_id) -> std::string;
 auto Dump(const File& file, FunctionId function_id) -> std::string;
 auto Dump(const File& file, GenericId generic_id) -> std::string;

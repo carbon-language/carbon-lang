@@ -184,11 +184,17 @@ enum class InstConstantKind : int8_t {
   // operands, but never a concrete constant inst.
   TemplateOnly,
   // This instruction is a metaprogramming or template instantiation action that
-  // generates an instruction. Like `SymbolicOnly`, it may be a symbolic
-  // constant inst depending on its operands, but never a concrete constant
-  // inst. The instruction may or may not have a concrete constant value that is
-  // a generated instruction. Constant evaluation support for types with this
-  // constant kind is provided automatically, by calling `PerformDelayedAction`.
+  // generates and returns a tuple containing one or more instruction values.
+  // Like `SymbolicOnly`, it may be a symbolic constant inst depending on its
+  // operands, but never a concrete constant inst. The instruction may or may
+  // not have a concrete constant value that is a tuple of generated
+  // instructions. Constant evaluation support for types with this constant kind
+  // is provided automatically, by calling `PerformDelayedAction`.
+  MultiInstAction,
+  // This instruction is a metaprogramming or template instantiation action that
+  // generates and returns an instruction value. Like `MultiInstAction`, but
+  // optimized for the common case where the result is only a single
+  // instruction, in order to avoid creating an unnecessary 1-tuple.
   InstAction,
   // This instruction's operands determine whether it has a constant value,
   // whether it is a constant inst, and/or whether it results in a compile-time
@@ -327,6 +333,12 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     return definition_info(*this).constant_kind;
   }
 
+  // Returns whether this instruction kind is an action instruction.
+  auto is_action() const -> bool {
+    return constant_kind() == InstConstantKind::InstAction ||
+           constant_kind() == InstConstantKind::MultiInstAction;
+  }
+
   // Returns whether we need an `InstId` referring to the instruction to
   // constant evaluate this instruction. If this is set to `true`, then:
   //
@@ -443,6 +455,12 @@ class InstKind::Definition : public InstKind {
     return info_.constant_kind;
   }
 
+  // Returns whether this instruction kind is an action instruction.
+  constexpr auto is_action() const -> bool {
+    return constant_kind() == InstConstantKind::InstAction ||
+           constant_kind() == InstConstantKind::MultiInstAction;
+  }
+
   // Returns whether constant evaluation of this instruction needs an InstId.
   constexpr auto constant_needs_inst_id() const -> InstConstantNeedsInstIdKind {
     return info_.constant_needs_inst_id;
@@ -483,6 +501,8 @@ namespace Internal {
 
 // Storage for `internal_allowed_node_kinds` where there's a list of kinds.
 template <Parse::NodeKind::RawEnumType... T>
+// False positive: https://github.com/llvm/llvm-project/issues/222793
+// NOLINTNEXTLINE(google-readability-casting)
 constexpr std::array<Parse::NodeKind::RawEnumType, sizeof...(T)> Kinds = {T...};
 
 // `NoneNodeId` uses should never have a node associated; it's mainly for

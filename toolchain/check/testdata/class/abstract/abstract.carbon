@@ -193,7 +193,7 @@ class Derived {
 fn F() {
   // TODO: support destroying classes that derive from abstract types.
   //
-  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+4]]:28: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+4]]:28: error: cannot access member of interface `Core.Destroy` in type `Derived` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   let unused l: Abstract = {.base = {}} as Derived;
   // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -242,6 +242,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: --- fail_abstract_field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -290,6 +291,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: --- fail_abstract_var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -342,6 +344,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: --- fail_abstract_var_function_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -390,6 +393,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: --- abstract_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -448,6 +452,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: --- fail_abstract_adapter.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -494,6 +499,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: --- define_and_call_abstract_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -564,6 +570,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: --- return_nonabstract_derived.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -662,6 +669,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: --- fail_return_abstract.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -749,6 +757,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: --- access_abstract_subobject.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -874,18 +883,18 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %a.ref: %Abstract.elem = name_ref a, @Abstract.%field_decl [concrete = @Abstract.%field_decl]
-// CHECK:STDOUT:   %.loc18_11.1: %Abstract = as_compatible %d.ref
-// CHECK:STDOUT:   %.loc18_11.2: ref %Abstract = class_element_access %.loc18_11.1, element0
-// CHECK:STDOUT:   %.loc18_11.3: ref %Abstract = converted %d.ref, %.loc18_11.2
-// CHECK:STDOUT:   %.loc18_11.4: ref %empty_struct_type = class_element_access %.loc18_11.3, element0
-// CHECK:STDOUT:   %.loc18_11.5: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc18_13: init %empty_struct_type = converted %.loc18_11.4, %.loc18_11.5 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc18_11.1: ref %Abstract = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc18_11.2: ref %Abstract = converted %d.ref, %.loc18_11.1
+// CHECK:STDOUT:   %.loc18_11.3: ref %empty_struct_type = class_element_access %.loc18_11.2, element0
+// CHECK:STDOUT:   %.loc18_11.4: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc18_13: init %empty_struct_type = converted %.loc18_11.3, %.loc18_11.4 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return %.loc18_13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_let_temporary_struct_literal.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -946,6 +955,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: --- fail_todo_abstract_let_temporary.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -962,11 +972,10 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %struct: %struct_type.base.f5e = struct_value (%empty_struct.a40) [concrete]
 // CHECK:STDOUT:   %.79f: type = partial_type %Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct.5e0: %.79f = struct_value () [concrete]
-// CHECK:STDOUT:   %Abstract.val.b13: %Abstract = struct_value () [concrete]
-// CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Abstract.val.b13) [concrete]
-// CHECK:STDOUT:   %Abstract.val.1c8: %Abstract = struct_value (%Abstract.val.b13) [concrete]
-// CHECK:STDOUT:   %.383: ref %Abstract = temporary invalid, %Abstract.val.1c8 [concrete]
-// CHECK:STDOUT:   %.27a: ref %Abstract = class_element_access %.383, element0 [concrete]
+// CHECK:STDOUT:   %Abstract.val: %Abstract = struct_value () [concrete]
+// CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Abstract.val) [concrete]
+// CHECK:STDOUT:   %.521: ref %Derived = temporary invalid, %Derived.val [concrete]
+// CHECK:STDOUT:   %.5d3: ref %Abstract = class_element_access %.521, element0 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1022,16 +1031,15 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %.loc17_39.3: ref %.79f = class_element_access %.loc17_39.2, element0
 // CHECK:STDOUT:   %.loc17_38.2: init %.79f to %.loc17_39.3 = class_init () [concrete = constants.%empty_struct.5e0]
 // CHECK:STDOUT:   %.loc17_39.4: init %.79f = converted %.loc17_38.1, %.loc17_38.2 [concrete = constants.%empty_struct.5e0]
-// CHECK:STDOUT:   %.loc17_39.5: init %Abstract = as_compatible %.loc17_39.4 [concrete = constants.%Abstract.val.b13]
+// CHECK:STDOUT:   %.loc17_39.5: init %Abstract = as_compatible %.loc17_39.4 [concrete = constants.%Abstract.val]
 // CHECK:STDOUT:   %.loc17_39.6: init %Derived to %.loc17_39.2 = class_init (%.loc17_39.5) [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   %.loc17_41.1: init %Derived = converted %.loc17_39.1, %.loc17_39.6 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc17_41.2: init %Abstract = as_compatible %.loc17_41.1 [concrete = constants.%Abstract.val.1c8]
-// CHECK:STDOUT:   %.loc17_41.3: ref %Abstract = temporary %.loc17_39.2, %.loc17_41.2 [concrete = constants.%.383]
-// CHECK:STDOUT:   %.loc17_41.4: ref %Abstract = class_element_access %.loc17_41.3, element0 [concrete = constants.%.27a]
-// CHECK:STDOUT:   %.loc17_41.5: ref %Abstract = converted %.loc17_41.1, %.loc17_41.4 [concrete = constants.%.27a]
-// CHECK:STDOUT:   %.loc17_41.6: %Abstract = acquire_value %.loc17_41.5
+// CHECK:STDOUT:   %.loc17_41.2: ref %Derived = temporary %.loc17_39.2, %.loc17_41.1 [concrete = constants.%.521]
+// CHECK:STDOUT:   %.loc17_41.3: ref %Abstract = class_element_access %.loc17_41.2, element0 [concrete = constants.%.5d3]
+// CHECK:STDOUT:   %.loc17_41.4: ref %Abstract = converted %.loc17_41.1, %.loc17_41.3 [concrete = constants.%.5d3]
+// CHECK:STDOUT:   %.loc17_41.5: %Abstract = acquire_value %.loc17_41.4
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc17_41.6
+// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc17_41.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %pattern_type.169 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
@@ -1041,6 +1049,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: --- fail_call_abstract_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -1102,6 +1111,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT: --- fail_assign_to_abstract_ref.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]

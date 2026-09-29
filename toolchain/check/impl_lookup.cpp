@@ -270,7 +270,7 @@ static auto TryGetSpecificWitnessIdForImpl(
   // to the facet value here, and if the query was a FacetAccessType we did the
   // same there so they still match.
   auto deduced_self_const_id =
-      GetCanonicalFacetOrTypeValue(context, noncanonical_deduced_self_const_id);
+      GetCanonicalFacet(context, noncanonical_deduced_self_const_id);
   if (query_self_const_id != deduced_self_const_id) {
     return SemIR::ConstantId::None;
   }
@@ -431,8 +431,7 @@ static auto CollectFacetWitnessSources(
     // constraints.
     const auto& impls = context.where_stack().back().impls;
     for (auto [self_const_id, facet_type_const_id] : impls) {
-      auto canon_self_const_id =
-          GetCanonicalFacetOrTypeValue(context, self_const_id);
+      auto canon_self_const_id = GetCanonicalFacet(context, self_const_id);
       // TypeType (and ErrorInst) is never stored in the impls stack, so we
       // always have a FacetType in `facet_type_const_id`.
       auto identified_id = TryToIdentifyFacetType(
@@ -889,19 +888,14 @@ static auto FindNonFinalWitness(
     }
   }
 
-  // TODO: Remove SpecificInterfaceId from LookupCustomWitness apis, switch to
-  // just SpecificInterface.
-  auto query_specific_interface_id =
-      context.specific_interfaces().Add(req_specific_interface);
-
   // Consider a custom witness for core interfaces.
   // TODO: This needs to expand to more interfaces, and we might want to have
   // that dispatch in custom_witness.cpp instead of here.
   auto core_interface =
       GetCoreInterface(context, req_specific_interface.interface_id);
-  if (auto witness_id = LookupCustomWitness(
-          context, loc_id, core_interface, req_self_const_id,
-          query_specific_interface_id, false)) {
+  if (auto witness_id = LookupCustomWitness(context, loc_id, core_interface,
+                                            req_self_const_id,
+                                            req_specific_interface, false)) {
     // If there's a final witness, we would have already found it via evaluating
     // the LookupImplWitness instruction.
     CARBON_CHECK(!witness_id->has_value());
@@ -988,8 +982,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
         context.insts()
             .Get(context.constant_values().GetInstId(query_self_const_id))
             .type_id();
-    CARBON_CHECK((context.types().IsOneOf<SemIR::TypeType, SemIR::FacetType>(
-        query_self_type_id)));
+    CARBON_CHECK(context.types().Is<SemIR::FacetType>(query_self_type_id));
     // The query facet type value is indeed a facet type.
     CARBON_CHECK(context.constant_values().InstIs<SemIR::FacetType>(
         query_facet_type_const_id));
@@ -1127,8 +1120,8 @@ auto GetCanonicalQuerySelfForLookupImplWitness(Context& context,
   // LookupImplWitness instruction, avoiding multiple constant values for
   // `<facet value>` and `<facet value> as type`, which always have the same
   // lookup result.
-  return GetCanonicalFacetOrTypeValue(
-      context, context.constant_values().Get(self_inst_id));
+  return GetCanonicalFacet(context,
+                           context.constant_values().Get(self_inst_id));
 }
 
 // Record the query which found a final impl witness. It's illegal to
@@ -1176,7 +1169,7 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
       context.specific_interfaces().Get(eval_query.query_specific_interface_id);
 
   // Ensure specifics don't substitute in weird things for the query self.
-  CARBON_CHECK(context.types().IsFacetType(
+  CARBON_CHECK(context.types().Is<SemIR::FacetType>(
       context.insts().Get(eval_query.query_self_inst_id).type_id()));
   SemIR::ConstantId query_self_const_id =
       context.constant_values().Get(eval_query.query_self_inst_id);
@@ -1275,7 +1268,7 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
   bool used_custom_witness = false;
   if (auto witness_inst_id = LookupCustomWitness(
           context, loc_id, core_interface, query_self_const_id,
-          eval_query.query_specific_interface_id, true)) {
+          query_specific_interface, true)) {
     if (witness_inst_id->has_value()) {
       lookup_result = {.witness_id =
                            context.constant_values().Get(*witness_inst_id)};
@@ -1316,8 +1309,8 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
     // `impl` we may have found in Carbon.
     auto cpp_witness_id = LookupCppImpl(
         context, loc_id, core_interface, query_self_const_id,
-        eval_query.query_specific_interface_id,
-        lookup_result.impl_type_structure, lookup_result.impl_loc_id);
+        query_specific_interface, lookup_result.impl_type_structure,
+        lookup_result.impl_loc_id);
     if (cpp_witness_id.has_value()) {
       lookup_result = {.witness_id =
                            context.constant_values().Get(cpp_witness_id)};

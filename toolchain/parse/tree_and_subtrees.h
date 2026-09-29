@@ -309,7 +309,7 @@ auto TreeAndSubtrees::Extract(IdT id) const
     return std::nullopt;
   }
 
-  using T = typename NodeForId<IdT>::TypedNode;
+  using T = NodeForId<IdT>::TypedNode;
   return ExtractNodeFromChildren<T>(id, children(id));
 }
 

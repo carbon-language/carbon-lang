@@ -359,7 +359,7 @@ class ScopeStack {
 
     // Names which are registered with lexical_lookup_, and will need to be
     // unregistered when the scope ends.
-    Set<SemIR::NameId> names = {};
+    Set<SemIR::NameId, 16> names = {};
   };
 
   // A scope in which `return` can be used.

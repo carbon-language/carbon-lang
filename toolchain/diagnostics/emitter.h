@@ -487,6 +487,9 @@ auto Emitter<LocT>::Builder::FormatFn(const Message& message,
                "Argument count mismatch on {0}: {1} != {2}", message.kind,
                message.format_args.size(), sizeof...(Args));
   return llvm::formatv(
+      // `format` is a StringLiteral which is always NUL terminated, so data()
+      // is okay here. Too bad there's no c_str() method available.
+      // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
       message.format.data(),
       llvm::any_cast<
           typename Internal::DiagnosticTypeForArg<Args>::StorageType>(

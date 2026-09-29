@@ -37,3 +37,16 @@ fn F(ref a: A, const ref b: B);
 fn F() -> T;
 fn F() -> T.U { return val; }
 fn F() -> i32 => return val;
+
+// --- lambdas and positional parameters
+
+var explicit: auto = fn (x: i32) -> i32 { return x + 1; };
+var expression: auto = fn (x: i32) => x + 1;
+var positional: auto = fn { Print($0, $1, $42); };
+
+// --- raw identifiers
+
+r#class
+r#if
+r#i32
+var r#var: i32 = r#class;

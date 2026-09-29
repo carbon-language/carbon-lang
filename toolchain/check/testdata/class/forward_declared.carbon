@@ -19,6 +19,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT: --- forward_declared.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %ptr.7ee: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.8c5: type = pattern_type %ptr.7ee [concrete]

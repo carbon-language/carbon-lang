@@ -125,8 +125,8 @@ class ValueStoreEnumerateIterator
           std::pair<typename ValueStoreT::IdType,
                     typename ValueStoreT::ConstRefType>> {
  public:
-  using IdType = typename ValueStoreT::IdType;
-  using ConstRefType = typename ValueStoreT::ConstRefType;
+  using IdType = ValueStoreT::IdType;
+  using ConstRefType = ValueStoreT::ConstRefType;
   using ValueType = std::pair<IdType, ConstRefType>;
 
   auto operator*() const -> ValueType {

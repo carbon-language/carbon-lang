@@ -501,10 +501,14 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
   llvm::SmallVector<PendingVirtualFunction> pending_virtual_functions;
 
   if (class_info.vtable_decl_id.has_value()) {
+    LoadImportRef(*context_, class_info.vtable_decl_id);
+    auto canonical_vtable_decl_id =
+        context_->constant_values().GetConstantInstId(
+            class_info.vtable_decl_id);
     auto vtable_inst_block = context_->inst_blocks().Get(
         context_->vtables()
             .Get(context_->insts()
-                     .GetAs<SemIR::VtableDecl>(class_info.vtable_decl_id)
+                     .GetAs<SemIR::VtableDecl>(canonical_vtable_decl_id)
                      .vtable_id)
             .virtual_functions_id);
     for (auto vtable_entry_id : vtable_inst_block) {
@@ -942,7 +946,7 @@ auto InitializeCppDomain(
   // Ensure any diagnostics emitted in this function are flushed before we
   // return.
   auto on_exit =
-      llvm::scope_exit([&]() { FlushDiagnosticConsumer(*diags->getClient()); });
+      llvm::scope_exit([&] { FlushDiagnosticConsumer(*diags->getClient()); });
 
   // Extract the input from the frontend invocation and make sure it makes
   // sense.

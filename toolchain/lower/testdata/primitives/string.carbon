@@ -47,61 +47,61 @@ fn Copy(s: str) -> str {
 // CHECK:STDOUT: declare void @_CF.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.a16.String.val), !dbg !7
-// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.a16.String.val), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CH.Main() #0 !dbg !9 {
+// CHECK:STDOUT: define void @_CH.Main() #0 !dbg !18 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.a16.String.val), !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.a16.String.val), !dbg !22
+// CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CI.Main() #0 !dbg !12 {
+// CHECK:STDOUT: define void @_CI.Main() #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.296.String.val), !dbg !13
-// CHECK:STDOUT:   ret void, !dbg !14
+// CHECK:STDOUT:   call void @_CF.Main(ptr @String.val.296.String.val), !dbg !28
+// CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCopy.Main(ptr sret({ ptr, i64 }) %return, ptr %s) #0 !dbg !15 {
+// CHECK:STDOUT: define void @_CCopy.Main(ptr sret({ ptr, i64 }) %return, ptr %s) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.String.Core:Copy.Core"(ptr %return, ptr %s), !dbg !21
-// CHECK:STDOUT:   ret void, !dbg !22
+// CHECK:STDOUT:   call void @"_COp.String.Core:Copy.Core"(ptr %return, ptr %s), !dbg !35
+// CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_COp.String.Core:Copy.Core"(ptr sret({ ptr, i64 }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "string.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !1, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 19, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 18, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !1, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !10 = !DILocation(line: 25, column: 3, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 22, column: 1, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "I", linkageName: "_CI.Main", scope: null, file: !1, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !13 = !DILocation(line: 31, column: 3, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 28, column: 1, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !1, line: 34, type: !16, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !19)
-// CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
-// CHECK:STDOUT: !17 = !{!18, !18}
-// CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !19 = !{!20}
-// CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
-// CHECK:STDOUT: !21 = !DILocation(line: 35, column: 10, scope: !15)
-// CHECK:STDOUT: !22 = !DILocation(line: 35, column: 3, scope: !15)
+// CHECK:STDOUT: !4 = !DIFile(filename: "string.carbon", directory: "")
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !4, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !11 = !{null}
+// CHECK:STDOUT: !12 = !DISubroutineType(types: !11)
+// CHECK:STDOUT: !13 = !{!8, !8}
+// CHECK:STDOUT: !14 = !DISubroutineType(types: !13)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !4, line: 18, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !16 = !DILocation(line: 19, column: 3, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 18, column: 1, scope: !15)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !4, line: 22, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !22 = !DILocation(line: 25, column: 3, scope: !18)
+// CHECK:STDOUT: !23 = !DILocation(line: 22, column: 1, scope: !18)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "I", linkageName: "_CI.Main", scope: null, file: !4, line: 28, type: !12, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !28 = !DILocation(line: 31, column: 3, scope: !24)
+// CHECK:STDOUT: !29 = !DILocation(line: 28, column: 1, scope: !24)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !4, line: 34, type: !14, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !37)
+// CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !30, type: !8)
+// CHECK:STDOUT: !35 = !DILocation(line: 35, column: 10, scope: !30)
+// CHECK:STDOUT: !36 = !DILocation(line: 35, column: 3, scope: !30)
+// CHECK:STDOUT: !37 = !{!31}
 // CHECK:STDOUT:

@@ -554,16 +554,13 @@ auto SourceGen::AppendUniqueIdentifiers(
   // Append all the identifiers directly out of the set. We make no guarantees
   // about the relative order so we just use the non-deterministic order of the
   // set and avoid additional storage.
-  //
-  // TODO: It's awkward the `ForEach` here can't early-exit. This just walks the
-  // whole set which is harmless if inefficient. We should add early exiting
-  // the loop support to `Set` and update this code.
-  unique_idents.ForEach([&](llvm::StringRef ident) {
-    if (number > 0) {
-      dest.push_back(ident);
-      --number;
+  for (llvm::StringRef ident : unique_idents.entries()) {
+    if (number == 0) {
+      break;
     }
-  });
+    dest.push_back(ident);
+    --number;
+  }
   CARBON_CHECK(number == 0);
 }
 

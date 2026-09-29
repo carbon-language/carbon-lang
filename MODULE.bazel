@@ -33,7 +33,7 @@ bazel_dep(name = "google_benchmark", version = "1.9.5")
 bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
 bazel_dep(name = "libpfm", version = "4.13.0")
 bazel_dep(name = "re2", version = "2025-11-05.bcr.1")
-bazel_dep(name = "rules_cc", version = "0.2.18")
+bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "rules_pkg", version = "1.2.0")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "tcmalloc", version = "0.0.0-20250927-12f2552")
@@ -67,10 +67,12 @@ register_toolchains("@bazel_cc_toolchain//:all")
 register_toolchains("//toolchain/install:all")
 
 # Required for llvm-project.
+bazel_dep(name = "libxml2", version = "2.15.2")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "protobuf", version = "34.0.bcr.1", repo_name = "com_google_protobuf")
 bazel_dep(name = "zlib-ng", version = "2.3.3", repo_name = "llvm_zlib")
 bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")
+bazel_dep(name = "xz", version = "5.4.5.bcr.9", repo_name = "llvm_xz")
 
 ###############################################################################
 # llvm-project
@@ -83,8 +85,8 @@ git_override(
     build_file_content = "# empty",
     # We pin to specific upstream commits and try to track top-of-tree
     # reasonably closely rather than pinning to a specific release.
-    # HEAD as of 2026-08-06.
-    commit = "a6b0af7536ef0ae8383ec729c5fbf23c73243776",
+    # HEAD as of 2026-09-25.
+    commit = "6ec87e7ec4b3ca6f665a02e05d0e5fe9c37cd6cc",
     patch_cmds = ["echo \"module(name='llvm-raw')\" > MODULE.bazel"],
     patch_strip = 1,
     patches = [
@@ -93,8 +95,7 @@ git_override(
         "//bazel/llvm_project:0004_Introduce_basic_sources_exporting_for_libunwind.patch",
         "//bazel/llvm_project:0005_Introduce_basic_sources_exporting_for_libcxx_and_libcxxabi.patch",
         "//bazel/llvm_project:0006_Add_more_libc_math_excludes.patch",
-        "//bazel/llvm_project:0009_Introduce_starlark_exporting_compiler-rt_build_information.patch",
-        "//bazel/llvm_project:0011_Temporarily_remove_reference_to_hermetic_toolchain.patch",
+        "//bazel/llvm_project:0012_Drop_dependencies_on_linux_uapi_and_pyyaml.patch",
     ],
     remote = "https://github.com/llvm/llvm-project.git",
 )

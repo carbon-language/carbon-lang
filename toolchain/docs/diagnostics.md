@@ -29,6 +29,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 The diagnostic code is used by the toolchain to produce output.
 
+This document covers how a diagnostic is produced and worded.
+[Diagnostics rendering](/toolchain/docs/diagnostics_rendering.md) covers what a
+diagnostic is made of and how one is drawn on a terminal.
+
 ## Emitters
 
 [`Emitter`s](/toolchain/diagnostics/emitter.h) handle the main formatting of a

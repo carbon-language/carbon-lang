@@ -40,10 +40,10 @@ fn G() {
 // CHECK:STDOUT: --- fail_convert_class_type_to_generic_facet_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %Scalar.patt: %pattern_type.98f = symbolic_binding_pattern Scalar, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %Scalar.patt: %pattern_type.9a5 = symbolic_binding_pattern Scalar, 0 [symbolic]
 // CHECK:STDOUT:   %Scalar: type = symbolic_binding Scalar, 0 [symbolic]
 // CHECK:STDOUT:   %Generic.type.30d: type = generic_interface_type @Generic [concrete]
 // CHECK:STDOUT:   %Generic.generic: %Generic.type.30d = struct_value () [concrete]
@@ -71,7 +71,7 @@ fn G() {
 // CHECK:STDOUT:   %Generic.facet: %Generic.type.b40 = facet_value %ImplsGeneric, (%Generic.impl_witness) [concrete]
 // CHECK:STDOUT:   %Generic.WithSelf.F.type.7ef: type = fn_type @Generic.WithSelf.F, @Generic.WithSelf(%GenericParam, %Generic.facet) [concrete]
 // CHECK:STDOUT:   %Generic.WithSelf.F.e1b: %Generic.WithSelf.F.type.7ef = struct_value () [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Generic.type.ee14e9.2: type = facet_type <@Generic, @Generic(%T)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.4e0: type = pattern_type %Generic.type.ee14e9.2 [symbolic]
@@ -102,10 +102,10 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Generic.decl: %Generic.type.30d = interface_decl @Generic [concrete = constants.%Generic.generic] {
-// CHECK:STDOUT:     %Scalar.patt.loc15_25.1: %pattern_type.98f = symbolic_binding_pattern Scalar, 0 [symbolic = %Scalar.patt.loc15_25.2 (constants.%Scalar.patt)]
+// CHECK:STDOUT:     %Scalar.patt.loc15_25.1: %pattern_type.9a5 = symbolic_binding_pattern Scalar, 0 [symbolic = %Scalar.patt.loc15_25.2 (constants.%Scalar.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_27.1: type = splice_block %.loc15_27.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc15_27.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Scalar.loc15_25.2: type = symbolic_binding Scalar, 0 [symbolic = %Scalar.loc15_25.1 (constants.%Scalar)]
@@ -121,16 +121,16 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23: <witness> = impl_self_witness @ImplsGeneric.as.Generic.impl.%ImplsGeneric.ref, @Generic, @Generic(constants.%GenericParam) [concrete = constants.%.e53]
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [concrete = constants.%CallGenericMethod] {
-// CHECK:STDOUT:     %T.patt.loc27_31.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_31.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc27_31.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_31.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc27_55.1: @CallGenericMethod.%pattern_type (%pattern_type.4e0) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc27_55.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc27_33.1: type = splice_block %.loc27_33.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen.loc27_31: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc27_31: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc27_33.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc27_31.2: type = symbolic_binding T, 0 [symbolic = %T.loc27_31.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc27_66: type = splice_block %Generic.type.loc27_66.2 [symbolic = %Generic.type.loc27_66.1 (constants.%Generic.type.ee14e9.2)] {
-// CHECK:STDOUT:       %.Self.frozen.loc27_55: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc27_55: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.30d = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc27_31.2 [symbolic = %T.loc27_31.1 (constants.%T)]
 // CHECK:STDOUT:       %Generic.type.loc27_66.2: type = facet_type <@Generic, @Generic(constants.%T)> [symbolic = %Generic.type.loc27_66.1 (constants.%Generic.type.ee14e9.2)]
@@ -141,7 +141,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Generic(%Scalar.loc15_25.2: type) {
-// CHECK:STDOUT:   %Scalar.patt.loc15_25.2: %pattern_type.98f = symbolic_binding_pattern Scalar, 0 [symbolic = %Scalar.patt.loc15_25.2 (constants.%Scalar.patt)]
+// CHECK:STDOUT:   %Scalar.patt.loc15_25.2: %pattern_type.9a5 = symbolic_binding_pattern Scalar, 0 [symbolic = %Scalar.patt.loc15_25.2 (constants.%Scalar.patt)]
 // CHECK:STDOUT:   %Scalar.loc15_25.1: type = symbolic_binding Scalar, 0 [symbolic = %Scalar.loc15_25.1 (constants.%Scalar)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -210,7 +210,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CallGenericMethod(%T.loc27_31.2: type, %U.loc27_55.2: @CallGenericMethod.%Generic.type.loc27_66.1 (%Generic.type.ee14e9.2)) {
-// CHECK:STDOUT:   %T.patt.loc27_31.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_31.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc27_31.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_31.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc27_31.1: type = symbolic_binding T, 0 [symbolic = %T.loc27_31.1 (constants.%T)]
 // CHECK:STDOUT:   %Generic.type.loc27_66.1: type = facet_type <@Generic, @Generic(%T.loc27_31.1)> [symbolic = %Generic.type.loc27_66.1 (constants.%Generic.type.ee14e9.2)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Generic.type.loc27_66.1 [symbolic = %pattern_type (constants.%pattern_type.4e0)]

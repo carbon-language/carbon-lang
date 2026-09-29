@@ -123,6 +123,13 @@ auto HandleDocumentSymbol(
   if (!file) {
     return;
   }
+  if (file->is_test_file()) {
+    // A test file isn't Carbon source, so it has no parse tree to find symbols
+    // in.
+    // TODO: Report the file's splits, and the entities within each.
+    on_done(std::vector<clang::clangd::DocumentSymbol>());
+    return;
+  }
 
   const auto& tree_and_subtrees = file->tree_and_subtrees();
   const auto& tree = tree_and_subtrees.tree();

@@ -129,9 +129,36 @@ fn F(T: Z) {
   T.G();
 }
 
+// --- fail_member_access_runtime_facet.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  fn G();
+}
+
+fn F(T: Z) {
+  // CHECK:STDERR: fail_member_access_runtime_facet.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Z` in type `Z` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   T.G();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
+  T.G();
+}
+
+// --- fail_member_access_runtime_type.carbon
+library "[[@TEST_NAME]]";
+
+fn F(T: type) {
+  // CHECK:STDERR: fail_member_access_runtime_type.carbon:[[@LINE+4]]:3: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:   T.G();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
+  T.G();
+}
+
 // CHECK:STDOUT: --- facet_value_copy_from_reference.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
@@ -156,6 +183,7 @@ fn F(T: Z) {
 // CHECK:STDOUT: --- fail_todo_facet_copy_narrowing_from_reference.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@I & @J> [concrete]

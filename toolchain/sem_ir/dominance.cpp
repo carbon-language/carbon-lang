@@ -299,7 +299,6 @@ auto DominanceVerifier::Verify() -> ErrorOr<Success> {
   // evaluated before the body begins, so they dominate the whole body.
   RecordEvaluatedBlock(function_.call_params_id);
   RecordEvaluatedBlock(function_.call_param_patterns_id);
-  RecordEvaluatedBlock(function_.call_param_default_values_id);
   RecordEvaluatedBlock(function_.pattern_block_id);
   RecordEvaluated(function_.self_param_id);
   RecordEvaluated(function_.return_form_inst_id);

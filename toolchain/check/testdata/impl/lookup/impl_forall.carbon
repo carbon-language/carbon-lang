@@ -45,9 +45,9 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT: --- impl_forall.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [concrete]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
@@ -56,7 +56,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %I.generic: %I.type.335 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type.3fe556.1: type = facet_type <@I, @I(%U.67d)> [symbolic]
 // CHECK:STDOUT:   %Self.1916c4.1: %I.type.3fe556.1 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %V.patt.d47: %pattern_type.98f = symbolic_binding_pattern V, 0 [symbolic]
+// CHECK:STDOUT:   %V.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %V.67d: type = symbolic_binding V, 0 [symbolic]
 // CHECK:STDOUT:   %A.47a1de.2: type = class_type @A, @A(%V.67d) [symbolic]
 // CHECK:STDOUT:   %I.type.3fe556.2: type = facet_type <@I, @I(%V.67d)> [symbolic]
@@ -86,7 +86,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %.be5: type = fn_type_with_self_type %Copy.WithSelf.Op.type.884, %Copy.facet.302 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.484: %.be5 = impl_witness_access %Copy.lookup_impl_witness.1da, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.a76: <specific function> = specific_impl_function %impl.elem0.484, @Copy.WithSelf.Op(%Copy.facet.302) [symbolic]
-// CHECK:STDOUT:   %W.patt: %pattern_type.98f = symbolic_binding_pattern W, 0 [symbolic]
+// CHECK:STDOUT:   %W.patt: %pattern_type.9a5 = symbolic_binding_pattern W, 0 [symbolic]
 // CHECK:STDOUT:   %W: type = symbolic_binding W, 0 [symbolic]
 // CHECK:STDOUT:   %A.47a1de.3: type = class_type @A, @A(%W) [symbolic]
 // CHECK:STDOUT:   %ptr.5ab: type = ptr_type %A.47a1de.3 [symbolic]
@@ -158,7 +158,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   impl_decl @A.as.I.impl [concrete] {
-// CHECK:STDOUT:     %V.patt.loc12_15.1: %pattern_type.98f = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_15.2 (constants.%V.patt.d47)]
+// CHECK:STDOUT:     %V.patt.loc12_15.1: %pattern_type.9a5 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_15.2 (constants.%V.patt.3a0)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:     %V.ref.loc12_25: type = name_ref V, %V.loc12_15.2 [symbolic = %V.loc12_15.1 (constants.%V.67d)]
@@ -167,7 +167,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:     %V.ref.loc12_33: type = name_ref V, %V.loc12_15.2 [symbolic = %V.loc12_15.1 (constants.%V.67d)]
 // CHECK:STDOUT:     %I.type.loc12_34.2: type = facet_type <@I, @I(constants.%V.67d)> [symbolic = %I.type.loc12_34.1 (constants.%I.type.3fe556.2)]
 // CHECK:STDOUT:     %.loc12_17.1: type = splice_block %.loc12_17.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc12_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc12_15.2: type = symbolic_binding V, 0 [symbolic = %V.loc12_15.1 (constants.%V.67d)]
@@ -176,7 +176,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @A.as.I.impl(%V.loc12_15.2: type) {
-// CHECK:STDOUT:   %V.patt.loc12_15.2: %pattern_type.98f = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_15.2 (constants.%V.patt.d47)]
+// CHECK:STDOUT:   %V.patt.loc12_15.2: %pattern_type.9a5 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_15.2 (constants.%V.patt.3a0)]
 // CHECK:STDOUT:   %V.loc12_15.1: type = symbolic_binding V, 0 [symbolic = %V.loc12_15.1 (constants.%V.67d)]
 // CHECK:STDOUT:   %A.loc12_26.1: type = class_type @A, @A(%V.loc12_15.1) [symbolic = %A.loc12_26.1 (constants.%A.47a1de.2)]
 // CHECK:STDOUT:   %I.type.loc12_34.1: type = facet_type <@I, @I(%V.loc12_15.1)> [symbolic = %I.type.loc12_34.1 (constants.%I.type.3fe556.2)]
@@ -312,7 +312,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.as.I.impl(constants.%V.67d) {
-// CHECK:STDOUT:   %V.patt.loc12_15.2 => constants.%V.patt.d47
+// CHECK:STDOUT:   %V.patt.loc12_15.2 => constants.%V.patt.3a0
 // CHECK:STDOUT:   %V.loc12_15.1 => constants.%V.67d
 // CHECK:STDOUT:   %A.loc12_26.1 => constants.%A.47a1de.2
 // CHECK:STDOUT:   %I.type.loc12_34.1 => constants.%I.type.3fe556.2
@@ -354,7 +354,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.as.I.impl(constants.%W) {
-// CHECK:STDOUT:   %V.patt.loc12_15.2 => constants.%V.patt.d47
+// CHECK:STDOUT:   %V.patt.loc12_15.2 => constants.%V.patt.3a0
 // CHECK:STDOUT:   %V.loc12_15.1 => constants.%W
 // CHECK:STDOUT:   %A.loc12_26.1 => constants.%A.47a1de.3
 // CHECK:STDOUT:   %I.type.loc12_34.1 => constants.%I.type.3fe556.3
@@ -368,7 +368,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.as.I.impl(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %V.patt.loc12_15.2 => constants.%V.patt.d47
+// CHECK:STDOUT:   %V.patt.loc12_15.2 => constants.%V.patt.3a0
 // CHECK:STDOUT:   %V.loc12_15.1 => constants.%empty_struct_type
 // CHECK:STDOUT:   %A.loc12_26.1 => constants.%A.940
 // CHECK:STDOUT:   %I.type.loc12_34.1 => constants.%I.type.81d

@@ -214,9 +214,30 @@ cc_library(
         ":token_kind",
         "//common:check",
         "//common:hashing",
-        "//common:hashtable_key_context",
         "//common:map",
-        "//common:set",
+        "//toolchain/base:index_base",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "mismatched_brackets_benchmark",
+    testonly = 1,
+    srcs = ["mismatched_brackets_benchmark.cpp"],
+    deps = [
+        ":lex",
+        ":mismatched_brackets",
+        ":token_index",
+        ":tokenized_buffer",
+        "//common:check",
+        "//testing/base:benchmark_main",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/benchmarking:source_gen_lib",
+        "//toolchain/diagnostics:emitter",
+        "//toolchain/diagnostics:null_diagnostics",
+        "//toolchain/source:source_buffer",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
 )

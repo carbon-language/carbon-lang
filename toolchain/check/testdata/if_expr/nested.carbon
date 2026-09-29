@@ -19,6 +19,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.831 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.831 = wrapper_binding_pattern a, %a.param_patt [concrete]

@@ -7,7 +7,12 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <concepts>
 #include <initializer_list>
+#include <iterator>
+#include <ranges>
+#include <set>
+#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -19,14 +24,17 @@ namespace {
 using RawHashtable::IndexKeyContext;
 using RawHashtable::MoveOnlyTestData;
 using RawHashtable::TestData;
+using ::testing::UnorderedElementsAre;
 using ::testing::UnorderedElementsAreArray;
 
 template <typename SetT, typename MatcherRangeT>
 auto ExpectSetElementsAre(SetT&& s, MatcherRangeT element_matchers) -> void {
   // Collect the elements into a container.
-  using KeyT = typename std::remove_reference<SetT>::type::KeyT;
+  using KeyT = std::remove_reference<SetT>::type::KeyT;
   std::vector<std::reference_wrapper<KeyT>> entries;
-  s.ForEach([&entries](KeyT& k) { entries.push_back(std::ref(k)); });
+  for (auto& k : s.entries()) {
+    entries.push_back(std::ref(k));
+  }
 
   // Use the GoogleMock unordered container matcher to validate and show errors
   // on wrong elements.
@@ -176,6 +184,8 @@ TYPED_TEST(SetTest, Move) {
 
   SetT other_s1 = std::move(s);
   ExpectSetElementsAre(other_s1, MakeElements(llvm::seq(1, 24)));
+  // A moved-from set has a size but no storage, and must iterate as empty.
+  EXPECT_EQ(s.entries().begin(), s.entries().end());
 
   // Add some more elements.
   for (int i : llvm::seq(24, 32)) {
@@ -430,6 +440,176 @@ TEST(SetContextTest, Basic) {
 
   // Verify all the elements.
   ExpectSetElementsAre(s, MakeElements(llvm::seq(1, 512)));
+}
+
+TYPED_TEST(SetTest, Range) {
+  using SetT = TypeParam;
+  using Range = decltype(std::declval<const SetT&>().entries());
+  using Iter = typename Range::Iterator;
+
+  static_assert(std::forward_iterator<Iter>);
+  static_assert(std::same_as<decltype(std::declval<Range>().begin()), Iter>);
+  static_assert(std::same_as<decltype(std::declval<Range>().end()), Iter>);
+  static_assert(std::ranges::forward_range<Range>);
+  static_assert(std::ranges::common_range<Range>);
+
+  SetT s;
+  EXPECT_EQ(s.entries().begin(), s.entries().end());
+  for (const auto& k : s.entries()) {
+    static_cast<void>(k);
+    FAIL() << "Empty set range should have no elements";
+  }
+
+  for (int i = 1; i <= 5; ++i) {
+    s.Insert(i);
+  }
+
+  // Range-for traversal by const ref.
+  int count = 0;
+  for (const auto& k : s.entries()) {
+    EXPECT_GE(k, 1);
+    EXPECT_LE(k, 5);
+    ++count;
+  }
+  EXPECT_EQ(count, 5);
+
+  // Direct GMock container matching.
+  EXPECT_THAT(s.entries(), UnorderedElementsAre(1, 2, 3, 4, 5));
+
+  // Const view range iteration.
+  using KeyT = typename SetT::KeyT;
+  using KeyContextT = typename SetT::KeyContextT;
+  SetView<const KeyT, KeyContextT> cv = s;
+  int cv_count = 0;
+  for (const auto& k : cv.entries()) {
+    static_assert(std::is_const_v<std::remove_reference_t<decltype(k)>>);
+    EXPECT_GE(k, 1);
+    EXPECT_LE(k, 5);
+    ++cv_count;
+  }
+  EXPECT_EQ(cv_count, 5);
+  EXPECT_THAT(cv.entries(), UnorderedElementsAre(1, 2, 3, 4, 5));
+
+  // Explicit iterator traversal, dereference, and post-increment.
+  auto r = s.entries();
+  int iter_count = 0;
+  for (auto it = r.begin(); it != r.end(); ++it) {
+    EXPECT_NE(*it, 0);
+    ++iter_count;
+  }
+  EXPECT_EQ(iter_count, 5);
+
+  auto it = r.begin();
+  auto prev = it++;
+  EXPECT_NE(it, prev);
+}
+
+TYPED_TEST(MoveOnlySetTest, Range) {
+  TypeParam s;
+  s.Insert(1);
+  s.Insert(2);
+
+  int count = 0;
+  for (const auto& k : s.entries()) {
+    EXPECT_GT(k.value, 0);
+    ++count;
+  }
+  EXPECT_EQ(count, 2);
+}
+
+#ifndef NDEBUG
+TEST(SetDeathTest, MutateDuringIterationFails) {
+  EXPECT_DEATH(([] {
+                 Set<int> s;
+                 s.Insert(1);
+                 auto range = s.entries();
+                 s.Insert(2);
+               }()),
+               "Hashtable mutated during iteration");
+}
+#endif
+
+// A range outlives the *view* it was built from: views don't own storage, and
+// the range copies the view rather than pointing at it.
+TEST(SetTest, RangeOutlivesTemporaryView) {
+  Set<int> s;
+  s.Insert(1);
+
+  auto make_view = [&s]() -> SetView<int> { return s; };
+  auto range = make_view().entries();
+  EXPECT_THAT(range, UnorderedElementsAre(1));
+}
+
+#ifdef NDEBUG
+// Release iteration state is two end pointers, a group offset, and the
+// present-bit mask; it needs to stay small enough to live in registers across
+// the loop. Debug builds add the randomized walk and mutation-check state.
+static_assert(sizeof(Set<int>::Range::Iterator) <= 4 * sizeof(void*));
+#endif
+
+// Forward ranges guarantee multi-pass: `begin()` must be a pure function of the
+// range. Debug builds draw their traversal entropy when the range is
+// constructed rather than in `begin()` precisely so that repeated calls start
+// from the same group.
+TEST(SetTest, RangeIsMultiPass) {
+  Set<int, 16> s;
+  for (int i = 1; i <= 64; ++i) {
+    s.Insert(i);
+  }
+
+  auto range = s.entries();
+  EXPECT_EQ(range.begin(), range.begin());
+
+  // Two passes over the same range must agree on both the keys visited and the
+  // order they're visited in.
+  std::vector<int> first;
+  for (int k : range) {
+    first.push_back(k);
+  }
+  std::vector<int> second;
+  for (int k : range) {
+    second.push_back(k);
+  }
+  EXPECT_EQ(first, second);
+  EXPECT_EQ(static_cast<ssize_t>(first.size()), 64);
+}
+
+// Whatever order a range picks, it has to be a genuine permutation of the
+// table. Debug builds additionally vary that order between ranges over the same
+// table so that callers can't come to depend on it.
+TEST(SetTest, TraversalOrderIsAVaryingPermutation) {
+  Set<int, 64> s;
+  std::vector<int> inserted;
+  // Enough keys to populate every group of the small storage.
+  for (int i = 0; i < 36; ++i) {
+    int key = i * 17 + 7;
+    EXPECT_TRUE(s.Insert(key).is_inserted());
+    inserted.push_back(key);
+  }
+
+  std::set<std::vector<int>> distinct_orders;
+  for (int i = 0; i < 64; ++i) {
+    std::vector<int> visited;
+    for (int k : s.entries()) {
+      visited.push_back(k);
+    }
+    // A walk that skipped a group would drop keys and one that revisited a
+    // group would duplicate them, so comparing as a multiset covers both. This
+    // is what makes an odd group stride a valid traversal.
+    EXPECT_THAT(visited, UnorderedElementsAreArray(inserted));
+    distinct_orders.insert(visited);
+  }
+
+#ifndef NDEBUG
+  // Debug builds randomize both the starting group and the stride, so across
+  // this many ranges we should see more than the two orders (pure forward and
+  // pure reverse) that a simple direction flip would produce.
+  EXPECT_GT(distinct_orders.size(), 2)
+      << "Debug traversal order does not appear to be randomized.";
+#else
+  // Release builds always scan the groups in order.
+  EXPECT_EQ(distinct_orders.size(), 1);
+#endif
 }
 
 }  // namespace

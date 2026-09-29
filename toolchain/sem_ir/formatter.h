@@ -226,6 +226,8 @@ class Formatter {
 
   // Standard formatting for a declaration instruction's arguments.
   template <typename IdT>
+  // TODO: Recursive cycle when we format any decls inside the RHS.
+  // NOLINTNEXTLINE(misc-no-recursion)
   auto FormatDeclRhs(IdT decl_id, InstBlockId pattern_block_id,
                      InstBlockId decl_block_id) {
     FormatArgs(decl_id);
@@ -273,7 +275,6 @@ class Formatter {
   auto FormatArg(CharId c) -> void { out() << c; }
   auto FormatArg(EntityNameId id) -> void;
   auto FormatArg(DeclaredFacetTypeId id) -> void;
-  auto FormatArg(DefaultValueId id) -> void;
   auto FormatArg(FieldId id) -> void;
   auto FormatArg(IntKind k) -> void { k.Print(out()); }
   auto FormatArg(FloatKind k) -> void { k.Print(out()); }

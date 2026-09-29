@@ -273,10 +273,10 @@ auto NodeExtractor::ExtractTupleLikeType(
   // Use a fold over the `=` operator to parse fields from right to left.
   [[maybe_unused]] int unused;
   bool ok = true;
-  static_cast<void>(
-      ((ok && (ok = (std::get<Index>(fields) = Extractable<U>::Extract(*this))
-                        .has_value()),
-        unused) = ... = 0));
+  // NOLINTNEXTLINE(bugprone-assignment-in-selection-statement)
+  ((ok && (ok = (std::get<Index>(fields) = Extractable<U>::Extract(*this))
+                    .has_value()),
+    unused) = ... = 0);
   if (!ok) {
     MaybeTrace("Aggregate {0}: error\n", llvm::getTypeName<T>());
     return std::nullopt;

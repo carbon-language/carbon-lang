@@ -60,6 +60,7 @@ fn MyF() {
 // CHECK:STDOUT: --- import_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %UnsizedEnum: type = class_type @UnsizedEnum [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %UnsizedEnum [concrete]
 // CHECK:STDOUT:   %e.param_patt: %pattern_type = value_param_pattern [concrete]

@@ -110,6 +110,7 @@ extend impl nonexistent* as I {}
 // CHECK:STDOUT: --- extend_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %.ba1: <witness> = impl_self_witness %C, @HasF [concrete]

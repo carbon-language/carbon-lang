@@ -92,14 +92,7 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     if (!type_of_expr->inst_id.has_value()) {
       return "<none>";
     }
-    // TODO: Where possible, produce a better description of the type based on
-    // the expression.
-    return "`" +
-           StringifyConstantInst(
-               *sem_ir_,
-               sem_ir_->types().GetTypeInstId(
-                   sem_ir_->insts().Get(type_of_expr->inst_id).type_id())) +
-           "`";
+    return "`" + StringifyTypeOfInst(*sem_ir_, type_of_expr->inst_id) + "`";
   }
   if (auto* expr = llvm::any_cast<InstIdAsConstant>(&arg)) {
     return "`" + StringifyConstantInst(*sem_ir_, expr->inst_id) + "`";
