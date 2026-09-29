@@ -160,7 +160,7 @@ class DominanceTestFile {
               body_block_ids.begin(), body_block_ids.end())}});
   }
 
- protected:
+ private:
   SharedValueStores value_stores_;
   File file_;
   // The condition used by conditional branches. It's constant, so it needs no

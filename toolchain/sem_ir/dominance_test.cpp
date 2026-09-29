@@ -29,7 +29,7 @@ class DominanceTest : public ::testing::Test, public DominanceTestFile {
   // Runs the dominance check, and returns the error message it produced, or an
   // empty string if it succeeded.
   auto Verify() -> std::string {
-    ErrorOr<Success> result = VerifyDominance(file_);
+    ErrorOr<Success> result = VerifyDominance(file());
     return result.ok() ? "" : result.error().message();
   }
 
@@ -46,13 +46,13 @@ class DominanceTest : public ::testing::Test, public DominanceTestFile {
   auto AddInstValue(InstId target_id) -> InstId {
     auto value_id = AddInst(InstValue{.type_id = TypeType::TypeId,
                                       .inst_id = MetaInstId(target_id)});
-    file_.constant_values().Set(value_id,
-                                ConstantId::ForConcreteConstant(value_id));
+    file().constant_values().Set(value_id,
+                                 ConstantId::ForConcreteConstant(value_id));
 
     auto use_id = AddInst(InstValue{.type_id = TypeType::TypeId,
                                     .inst_id = MetaInstId(target_id)});
-    file_.constant_values().Set(use_id,
-                                ConstantId::ForConcreteConstant(value_id));
+    file().constant_values().Set(use_id,
+                                 ConstantId::ForConcreteConstant(value_id));
     return use_id;
   }
 };
@@ -106,7 +106,7 @@ TEST_F(DominanceTest, FileScopeInstIsAllowlisted) {
   // A file-scope instruction is evaluated in `__global_init`, if at all, so it
   // doesn't dominate uses in any other function.
   auto global_id = AddValue();
-  file_.set_top_inst_block_id(AddBlock({global_id}));
+  file().set_top_inst_block_id(AddBlock({global_id}));
 
   auto use_id = AddUse(global_id);
   AddFunction({AddBlock({use_id, AddReturn()})});
@@ -126,22 +126,22 @@ TEST_F(DominanceTest, ClassBodyInstIsAllowlisted) {
       AddNonConstInst(WrapperBinding{.type_id = TypeType::TypeId,
                                      .entity_name_id = EntityNameId::None,
                                      .value_id = AddConstant()});
-  auto name_id = file_.identifiers().Add("A");
-  file_.classes().Add({{.name_id = NameId::ForIdentifier(name_id),
-                        .parent_scope_id = NameScopeId::Package,
-                        .generic_id = GenericId::None,
-                        .first_param_node_id = Parse::NodeId::None,
-                        .last_param_node_id = Parse::NodeId::None,
-                        .pattern_block_id = InstBlockId::Empty,
-                        .implicit_param_patterns_id = InstBlockId::None,
-                        .param_patterns_id = InstBlockId::Empty,
-                        .is_extern = false,
-                        .extern_library_id = LibraryNameId::None,
-                        .non_owning_decl_id = InstId::None,
-                        .first_owning_decl_id = InstId::None},
-                       {.self_type_id = TypeType::TypeId,
-                        .inheritance_kind = Class::Final,
-                        .body_block_id = AddBlock({binding_id})}});
+  auto name_id = file().identifiers().Add("A");
+  file().classes().Add({{.name_id = NameId::ForIdentifier(name_id),
+                         .parent_scope_id = NameScopeId::Package,
+                         .generic_id = GenericId::None,
+                         .first_param_node_id = Parse::NodeId::None,
+                         .last_param_node_id = Parse::NodeId::None,
+                         .pattern_block_id = InstBlockId::Empty,
+                         .implicit_param_patterns_id = InstBlockId::None,
+                         .param_patterns_id = InstBlockId::Empty,
+                         .is_extern = false,
+                         .extern_library_id = LibraryNameId::None,
+                         .non_owning_decl_id = InstId::None,
+                         .first_owning_decl_id = InstId::None},
+                        {.self_type_id = TypeType::TypeId,
+                         .inheritance_kind = Class::Final,
+                         .body_block_id = AddBlock({binding_id})}});
 
   auto use_id = AddUse(binding_id);
   AddFunction({AddBlock({use_id, AddReturn()})});
@@ -175,7 +175,7 @@ TEST_F(DominanceTest, ErroneousFileIsNotChecked) {
   auto value_id = AddValue();
   auto use_id = AddUse(value_id);
   AddFunction({AddBlock({use_id, value_id, AddReturn()})});
-  file_.set_has_errors(true);
+  file().set_has_errors(true);
 
   EXPECT_THAT(Verify(), IsEmpty());
 }
@@ -186,7 +186,7 @@ TEST_F(DominanceTest, FileVerifyChecksDominance) {
   auto use_id = AddUse(value_id);
   AddFunction({AddBlock({use_id, value_id, AddReturn()})});
 
-  auto result = file_.Verify();
+  auto result = file().Verify();
   ASSERT_FALSE(result.ok());
   EXPECT_THAT(result.error().message(),
               HasSubstr("not dominated by any evaluation"));
@@ -430,8 +430,8 @@ class DominanceSpecificSpliceTest : public DominanceTest {
     auto unattached_id =
         AddInst(InstValue{.type_id = TypeType::TypeId,
                           .inst_id = MetaInstId(generic_spliced_id)});
-    file_.constant_values().Set(
-        unattached_id, file_.constant_values().AddSymbolicConstant(
+    file().constant_values().Set(
+        unattached_id, file().constant_values().AddSymbolicConstant(
                            {.inst_id = unattached_id,
                             .generic_id = GenericId::None,
                             .index = GenericInstIndex::None,
@@ -440,9 +440,9 @@ class DominanceSpecificSpliceTest : public DominanceTest {
     auto action_id =
         AddInst(InstValue{.type_id = TypeType::TypeId,
                           .inst_id = MetaInstId(generic_spliced_id)});
-    file_.constant_values().Set(
+    file().constant_values().Set(
         action_id,
-        file_.constant_values().AddSymbolicConstant(
+        file().constant_values().AddSymbolicConstant(
             {.inst_id = unattached_id,
              .generic_id = generic_id,
              .index = GenericInstIndex(GenericInstIndex::Declaration, 0),
