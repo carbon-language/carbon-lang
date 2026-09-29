@@ -1501,6 +1501,14 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("");
       return;
     }
+    case CARBON_KIND(TypeOf inst): {
+      for (auto block_id :
+           sem_ir().expr_regions().Get(inst.operand_region_id).block_ids) {
+        PushBlockId(scope_id_, block_id);
+      }
+      AddInstName("");
+      return;
+    }
     case CARBON_KIND(UnboundElementType inst): {
       if (auto class_ty =
               sem_ir().insts().TryGetAs<ClassType>(inst.class_type_inst_id)) {

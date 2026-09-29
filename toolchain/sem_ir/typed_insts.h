@@ -2313,6 +2313,22 @@ struct TypeLiteral {
   TypeInstId value_id;
 };
 
+// A `typeof(expr)` expression. The operand is held in a separate expression
+// region, which is never evaluated at runtime; only its type is used. The
+// constant value of this instruction is the type of the operand.
+struct TypeOf {
+  static constexpr auto Kind = InstKind::TypeOf.Define<Parse::TypeOfExprId>(
+      {.ir_name = "type_of",
+       .expr_category = ExprCategory::Value,
+       .is_type = InstIsType::Always});
+
+  // Always the builtin type TypeType.
+  TypeId type_id;
+  // The region that computes the operand expression. The operand is the
+  // region's `result_id`.
+  ExprRegionId operand_region_id;
+};
+
 // Returns the type of the instruction produced by an action. For example, given
 //
 //   %inst: <instruction> = some_action

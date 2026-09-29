@@ -144,6 +144,21 @@ CARBON_PARSE_STATE(PrimitiveFormFinish)
 //   (state done)
 CARBON_PARSE_STATE(FormLiteralFinish)
 
+// Handles the `typeof` keyword and opening paren in a `typeof` expression.
+//
+// typeof(x)
+// ^~~~~~~
+//   1. Expr
+//   2. TypeOfExprFinish
+CARBON_PARSE_STATE(TypeOfExpr)
+
+// Handles finishing the `typeof` expression.
+//
+// typeof(x)
+//         ^
+//   (state done)
+CARBON_PARSE_STATE(TypeOfExprFinish)
+
 // Handles the `{` of a brace expression.
 //
 // {}

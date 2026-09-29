@@ -3190,6 +3190,20 @@ auto TryEvalTypedInst<SemIR::Call>(EvalContext& eval_context,
   return MakeConstantForCall(eval_context, inst_id, inst.As<SemIR::Call>());
 }
 
+// `typeof` evaluates to the type of its operand. The operand is in a separate
+// region that is not evaluated, so we look at the type of the region's result
+// directly rather than evaluating any operands; this specialization avoids us
+// needing a way to map a `ExprRegionId` to an evaluated version in a specific.
+template <>
+auto TryEvalTypedInst<SemIR::TypeOf>(EvalContext& eval_context,
+                                     SemIR::InstId /*inst_id*/,
+                                     SemIR::Inst inst) -> SemIR::ConstantId {
+  auto region = eval_context.sem_ir().expr_regions().Get(
+      inst.As<SemIR::TypeOf>().operand_region_id);
+  return eval_context.types().GetConstantId(
+      eval_context.GetTypeOfInst(region.result_id));
+}
+
 // ImportRefLoaded can have a constant value, but it's owned and maintained by
 // `import_ref.cpp`, not by us.
 // TODO: Rearrange how `ImportRefLoaded` instructions are created so we never
