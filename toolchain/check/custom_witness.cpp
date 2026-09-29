@@ -239,9 +239,22 @@ static auto CanDestroyClass(Context& context, SemIR::LocId loc_id,
         class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
   }
 
-  return HasWitnessForOneField(context, loc_id,
-                               context.types().GetTypeInstId(object_repr_id),
-                               query_specific_interface);
+  auto has_witness = HasWitnessForOneField(
+      context, loc_id, context.types().GetTypeInstId(object_repr_id),
+      query_specific_interface);
+  if (has_witness == DestroyFormat::NoDestroy) {
+    return DestroyFormat::NoDestroy;
+  }
+
+  if (class_info.GetStructTypeFields(context.sem_ir(), class_type.specific_id)
+          .empty()) {
+    return DestroyFormat::Trivial;
+  }
+
+  // TODO: check that a class' base has trivial destruction.
+  // TODO: check that a class' subobjects have trivial destruction.
+
+  return DestroyFormat::NonTrivial;
 }
 
 // Returns true if the `Self` should impl `Destroy`. This will recurse into impl
@@ -372,6 +385,16 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Calls `self.<field>.(Destroy.SelfDestruct)` for a field in a `StructType`.
+static auto DestroyStructField(Context& context, SemIR::LocId loc_id,
+                               SemIR::InstId callee_self_param_id,
+                               SemIR::StructTypeField struct_field) -> void {
+  auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
+                                       struct_field.name_id);
+  auto self_destruct_call = BuildSelfDestructCall(context, member_id);
+  DiscardExpr(context, self_destruct_call);
+}
+
 // Returns the body for `SubobjectDestroy.Op`.
 //
 // TODO: This is a placeholder still not actually destroying things, intended to
@@ -380,9 +403,6 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
 static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
                                        SemIR::InstId callee_self_param_id,
                                        SemIR::TypeId self_type_id) -> void {
-  (void)loc_id;
-  (void)callee_self_param_id;
-
   while (self_type_id.has_value()) {
     auto inst = context.types().GetAsInst(self_type_id);
     CARBON_KIND_SWITCH(inst) {
@@ -412,13 +432,34 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         return;
       }
       case CARBON_KIND(SemIR::StructType struct_type): {
-        // TODO: implement destruction for struct types.
-        (void)struct_type;
+        auto struct_fields =
+            context.struct_type_fields().Get(struct_type.fields_id);
+        for (auto i = static_cast<std::int64_t>(struct_fields.size()) - 1;
+             i >= 0; --i) {
+          DestroyStructField(context, loc_id, callee_self_param_id,
+                             struct_fields[i]);
+        }
         return;
       }
       case CARBON_KIND(SemIR::TupleType tuple_type): {
-        // TODO: implement destruction for tuple types.
-        (void)tuple_type;
+        auto tuple_elements =
+            context.inst_blocks().Get(tuple_type.type_elements_id);
+        CARBON_CHECK(!tuple_elements.empty(),
+                     "empty tuples should be trivially destructible");
+
+        for (auto i = static_cast<std::int64_t>(tuple_elements.size()) - 1;
+             i >= 0; --i) {
+          auto int_id = context.ints().Add(i);
+          BuildSelfDestructCall(
+              context,
+              PerformTupleAccess(
+                  context, loc_id, callee_self_param_id,
+                  AddInst(context, loc_id,
+                          SemIR::IntValue{
+                              .type_id = GetSingletonType(
+                                  context, SemIR::IntLiteralType::TypeInstId),
+                              .int_id = int_id})));
+        }
         return;
       }
       default: {
