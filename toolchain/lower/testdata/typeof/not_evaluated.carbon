@@ -12,10 +12,15 @@
 
 // The operand of `typeof` should not be evaluated at runtime.
 
-fn Make() -> bool;
+class X {
+  var a: bool;
+}
+
+fn Get() -> X;
+fn Make(x: X) -> bool;
 
 fn F(a: bool, b: bool) -> bool {
-  let c: typeof(Make()) = a;
+  let c: typeof(Make(Get())) = a;
   let unused d: typeof(a and b) = c;
   return c;
 }
@@ -24,12 +29,14 @@ fn F(a: bool, b: bool) -> bool {
 // CHECK:STDOUT: ; ModuleID = 'not_evaluated.carbon'
 // CHECK:STDOUT: source_filename = "not_evaluated.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i1 @_CMake.Main()
+// CHECK:STDOUT: declare void @_CGet.Main(ptr sret({ i1 }))
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare i1 @_CMake.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i1 @_CF.Main(i1 %a, i1 %b) #0 !dbg !23 {
+// CHECK:STDOUT: define i1 @_CF.Main(i1 %a, i1 %b) #0 !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i1 %a, !dbg !37
+// CHECK:STDOUT:   ret i1 %a, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -42,11 +49,11 @@ fn F(a: bool, b: bool) -> bool {
 // CHECK:STDOUT: !16 = !DIFile(filename: "not_evaluated.carbon", directory: "")
 // CHECK:STDOUT: !17 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !16, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !21 = !{!18, !18, !18}
-// CHECK:STDOUT: !22 = !DISubroutineType(types: !21)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !16, line: 17, type: !22, spFlags: DISPFlagDefinition, unit: !17, retainedNodes: !38)
-// CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !23, type: !18)
-// CHECK:STDOUT: !25 = !DILocalVariable(arg: 2, scope: !23, type: !18)
-// CHECK:STDOUT: !37 = !DILocation(line: 20, column: 3, scope: !23)
-// CHECK:STDOUT: !38 = !{!24, !25}
+// CHECK:STDOUT: !23 = !{!18, !18, !18}
+// CHECK:STDOUT: !24 = !DISubroutineType(types: !23)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !16, line: 22, type: !24, spFlags: DISPFlagDefinition, unit: !17, retainedNodes: !40)
+// CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !25, type: !18)
+// CHECK:STDOUT: !27 = !DILocalVariable(arg: 2, scope: !25, type: !18)
+// CHECK:STDOUT: !39 = !DILocation(line: 25, column: 3, scope: !25)
+// CHECK:STDOUT: !40 = !{!26, !27}
 // CHECK:STDOUT:

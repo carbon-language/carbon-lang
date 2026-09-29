@@ -44,41 +44,37 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.6dae29ece9a708c4:core.Destroy.Core"(ptr %self) #0 !dbg !40 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !40 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !44 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.a9280e8bea6fc5f9:core.Destroy.Core"(ptr %self) #0 !dbg !44 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc18.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !46
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc18.a), !dbg !46
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.a9280e8bea6fc5f9:core.Destroy.Core"(ptr %self) #0 !dbg !48 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.a9280e8bea6fc5f9:core.Destroy.Core"(ptr %self) #0 !dbg !48 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.a9280e8bea6fc5f9:core.Destroy.Core"(ptr %self), !dbg !50
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.a9280e8bea6fc5f9:core.Destroy.Core"(ptr %self) #0 !dbg !52 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.8b0bf151036f045a:core.Destroy.Core"(ptr %self) #0 !dbg !52 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CSubobjectDestroy.a9280e8bea6fc5f9:core.Destroy.Core"(ptr %self), !dbg !54
 // CHECK:STDOUT:   ret void, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.8b0bf151036f045a:core.Destroy.Core"(ptr %self) #0 !dbg !56 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %self) #0 !dbg !56 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.8b0bf151036f045a:core.Destroy.Core"(ptr %self), !dbg !58
 // CHECK:STDOUT:   ret void, !dbg !58
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %self) #0 !dbg !60 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CSubobjectDestroy.8b0bf151036f045a:core.Destroy.Core"(ptr %self), !dbg !62
-// CHECK:STDOUT:   ret void, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -111,28 +107,24 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !34 = !DILocation(line: 19, column: 16, scope: !28)
 // CHECK:STDOUT: !37 = !DILocation(line: 20, column: 3, scope: !28)
 // CHECK:STDOUT: !39 = !DILocation(line: 22, column: 3, scope: !28)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.6dae29ece9a708c4:core.Destroy.Core", scope: null, file: !18, line: 18, type: !24, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !43)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f58524831c37807e:core.Destroy.Core", scope: null, file: !18, line: 18, type: !24, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !43)
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !40, type: !20)
 // CHECK:STDOUT: !42 = !DILocation(line: 18, column: 3, scope: !40)
 // CHECK:STDOUT: !43 = !{!41}
-// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f58524831c37807e:core.Destroy.Core", scope: null, file: !18, line: 18, type: !24, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !47)
-// CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !44, type: !20)
+// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.a9280e8bea6fc5f9:core.Destroy.Core", scope: null, file: !18, line: 18, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !47)
+// CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !44, type: !25)
 // CHECK:STDOUT: !46 = !DILocation(line: 18, column: 3, scope: !44)
 // CHECK:STDOUT: !47 = !{!45}
-// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.a9280e8bea6fc5f9:core.Destroy.Core", scope: null, file: !18, line: 18, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !51)
+// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.a9280e8bea6fc5f9:core.Destroy.Core", scope: null, file: !18, line: 18, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !51)
 // CHECK:STDOUT: !49 = !DILocalVariable(arg: 1, scope: !48, type: !25)
 // CHECK:STDOUT: !50 = !DILocation(line: 18, column: 3, scope: !48)
 // CHECK:STDOUT: !51 = !{!49}
-// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.a9280e8bea6fc5f9:core.Destroy.Core", scope: null, file: !18, line: 18, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !55)
+// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.8b0bf151036f045a:core.Destroy.Core", scope: null, file: !18, line: 18, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !55)
 // CHECK:STDOUT: !53 = !DILocalVariable(arg: 1, scope: !52, type: !25)
 // CHECK:STDOUT: !54 = !DILocation(line: 18, column: 3, scope: !52)
 // CHECK:STDOUT: !55 = !{!53}
-// CHECK:STDOUT: !56 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.8b0bf151036f045a:core.Destroy.Core", scope: null, file: !18, line: 18, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !59)
+// CHECK:STDOUT: !56 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core", scope: null, file: !18, line: 18, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !59)
 // CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !56, type: !25)
 // CHECK:STDOUT: !58 = !DILocation(line: 18, column: 3, scope: !56)
 // CHECK:STDOUT: !59 = !{!57}
-// CHECK:STDOUT: !60 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core", scope: null, file: !18, line: 18, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !63)
-// CHECK:STDOUT: !61 = !DILocalVariable(arg: 1, scope: !60, type: !25)
-// CHECK:STDOUT: !62 = !DILocation(line: 18, column: 3, scope: !60)
-// CHECK:STDOUT: !63 = !{!61}
 // CHECK:STDOUT:
