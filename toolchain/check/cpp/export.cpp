@@ -14,6 +14,7 @@
 #include "llvm/Support/Casting.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/access.h"
+#include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
@@ -630,17 +631,14 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
 namespace {
 
 static auto ExtractParameterDefaults(Context& context,
-                                     SemIR::InstBlockId call_param_patterns_id,
                                      SemIR::InstBlockId param_patterns_id)
     -> llvm::SmallVector<SemIR::InstId> {
-  auto call_params = context.inst_blocks().Get(call_param_patterns_id);
   auto canonical_params = llvm::map_range(
       context.inst_blocks().Get(param_patterns_id),
       [&context](SemIR::InstId inst_id) {
         return context.constant_values().GetConstantInstId(inst_id);
       });
   llvm::SmallVector<SemIR::InstId> parameter_defaults;
-  parameter_defaults.reserve(call_params.size());
   for (auto inst_id : canonical_params) {
     auto pattern_id = inst_id;
     auto default_id = SemIR::InstId::None;
@@ -648,8 +646,7 @@ static auto ExtractParameterDefaults(Context& context,
       CARBON_KIND_SWITCH(context.insts().Get(pattern_id)) {
         case CARBON_KIND(SemIR::DefaultValuePattern inst): {
           default_id = inst.value_id;
-          pattern_id =
-              context.constant_values().GetConstantInstId(inst.subpattern_id);
+          pattern_id = inst.subpattern_id;
           break;
         }
         case CARBON_KIND_ANY(SemIR::AnyBindingPattern, inst): {
@@ -661,6 +658,11 @@ static auto ExtractParameterDefaults(Context& context,
           pattern_id = SemIR::InstId::None;
           break;
         }
+        case CARBON_KIND_ANY(SemIR::AnyReturnPattern, _): {
+          parameter_defaults.push_back(SemIR::InstId::None);
+          pattern_id = SemIR::InstId::None;
+          break;
+        }
         default: {
           pattern_id = SemIR::InstId::None;
           break;
@@ -668,9 +670,6 @@ static auto ExtractParameterDefaults(Context& context,
       }
     }
   }
-  CARBON_CHECK(parameter_defaults.size() ==
-               context.inst_blocks().Get(call_param_patterns_id).size());
-
   return parameter_defaults;
 }
 
@@ -710,8 +709,11 @@ struct FunctionInfo {
     auto function_params =
         context.inst_blocks().Get(function.call_param_patterns_id);
 
-    auto parameter_defaults = ExtractParameterDefaults(
-        context, function.call_param_patterns_id, function.param_patterns_id);
+    auto parameter_defaults =
+        ExtractParameterDefaults(context, function.param_patterns_id);
+    CARBON_CHECK(
+        parameter_defaults.size() ==
+        context.inst_blocks().Get(function.call_param_patterns_id).size());
 
     const auto& ranges = function.call_param_ranges;
     auto explicit_begin = ranges.explicit_begin().index;
@@ -954,7 +956,9 @@ static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
     cpp_param_types.push_back(cpp_type);
     clang::Expr* default_value = nullptr;
     if (param.default_value_inst_id.has_value()) {
-      default_value = InventClangArg(context, param.default_value_inst_id);
+      default_value =
+          ConvertArgToExpr(context, param.default_value_inst_id, cpp_type);
+      CARBON_CHECK(default_value);
     }
     default_values.push_back(default_value);
   }
@@ -1199,21 +1203,17 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
         tinfo, clang::SC_None, uses_fp_intrin, inline_specified,
         /*hasWrittenPrototype=*/true, constexpr_kind, trailing_requires_clause);
   }
-  llvm::SmallVector<clang::Expr*> default_values;
-  llvm::append_range(
-      default_values,
-      llvm::map_range(
-          target.explicit_params, [&context](auto& param) -> clang::Expr* {
-            if (param.default_value_inst_id.has_value()) {
-              return InventClangArg(context, param.default_value_inst_id);
-            } else {
-              return nullptr;
-            }
-          }));
 
   llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
-  for (auto [type, default_value] :
-       llvm::zip_equal(thunk_function_type->param_types(), default_values)) {
+  CARBON_CHECK(thunk_function_type->param_types().size() ==
+               target.explicit_params.size());
+  for (auto [i, type] : llvm::enumerate(thunk_function_type->param_types())) {
+    const auto& param = target.explicit_params[i];
+    clang::Expr* default_value = nullptr;
+    if (param.default_value_inst_id.has_value()) {
+      default_value = ConvertArgToExpr(context, param.default_value_inst_id, type);
+      CARBON_CHECK(default_value);
+    }
     clang::ParmVarDecl* thunk_param = clang::ParmVarDecl::Create(
         ast_context, thunk_function_decl, /*StartLoc=*/clang_loc,
         /*IdLoc=*/clang_loc, /*Id=*/nullptr, type,

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -13,8 +13,7 @@
 // --- other_function.carbon
 
 package OtherFunction;
-class C {}
-fn F(unused i: C = {}) {}
+fn F(unused i: i32 = 0) {}
 
 // --- basic.carbon
 

@@ -196,7 +196,7 @@ auto MapConstantToAPValue(Context& context, SemIR::InstId const_inst_id,
   return std::nullopt;
 }
 
-static auto ConvertArgToExpr(Context& context, SemIR::InstId arg_inst_id,
+auto ConvertArgToExpr(Context& context, SemIR::InstId arg_inst_id,
                              clang::QualType param_type) -> clang::Expr* {
   if (auto temporary =
           context.insts().TryGetAs<SemIR::Temporary>(arg_inst_id)) {
