@@ -179,11 +179,33 @@ enum class DestroyFormat {
   NonTrivial,
 };
 
+// Returns true if the type is known to have trivial destruction.
+static auto IsBuiltinWithTrivialDestruction(Context& context,
+                                            SemIR::InstId inst_id) -> bool {
+  CARBON_KIND_SWITCH(context.insts().Get(inst_id)) {
+    case SemIR::BoolType::Kind:
+    case SemIR::FacetType::Kind:
+    case SemIR::FloatType::Kind:
+    case SemIR::FormType::Kind:
+    case SemIR::IntLiteralType::Kind:
+    case SemIR::IntType::Kind:
+    case SemIR::PointerType::Kind:
+      // Trivially destructible.
+      return true;
+    default:
+      return false;
+  }
+}
+
 // Similar to `HasWitnessForRepeatedField`, but for cases where there's only one
 // field, this can handle the call to `PrepareForHasWitness`.
 static auto HasWitnessForOneField(
     Context& context, SemIR::LocId loc_id, SemIR::InstId field_inst_id,
     SemIR::SpecificInterface query_specific_interface) -> DestroyFormat {
+  if (IsBuiltinWithTrivialDestruction(context, field_inst_id)) {
+    return DestroyFormat::Trivial;
+  }
+
   auto query_facet_type_const_id =
       PrepareForHasWitness(context, loc_id, query_specific_interface);
   auto has_witness = HasWitnessForRepeatedField(context, loc_id, field_inst_id,
@@ -217,9 +239,22 @@ static auto CanDestroyClass(Context& context, SemIR::LocId loc_id,
         class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
   }
 
-  return HasWitnessForOneField(context, loc_id,
-                               context.types().GetTypeInstId(object_repr_id),
-                               query_specific_interface);
+  auto has_witness = HasWitnessForOneField(
+      context, loc_id, context.types().GetTypeInstId(object_repr_id),
+      query_specific_interface);
+  if (has_witness == DestroyFormat::NoDestroy) {
+    return DestroyFormat::NoDestroy;
+  }
+
+  if (class_info.GetStructTypeFields(context.sem_ir(), class_type.specific_id)
+          .empty()) {
+    return DestroyFormat::Trivial;
+  }
+
+  // TODO: check that a class' base has trivial destruction.
+  // TODO: check that a class' subobjects have trivial destruction.
+
+  return DestroyFormat::NonTrivial;
 }
 
 // Returns true if the `Self` should impl `Destroy`. This will recurse into impl
@@ -231,8 +266,12 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
     -> DestroyFormat {
   auto inst_id = context.constant_values().GetInstId(
       GetCanonicalFacet(context, query_self_const_id));
-  auto inst = context.insts().Get(inst_id);
 
+  if (IsBuiltinWithTrivialDestruction(context, inst_id)) {
+    return DestroyFormat::Trivial;
+  }
+
+  auto inst = context.insts().Get(inst_id);
   if (context.types().IsConstrainedFacetType(inst.type_id())) {
     // The value's type is a symbolic constrained facet. We don't provide a
     // custom witness for constrained facets. The witness must be found in the
@@ -341,16 +380,6 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
       return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
     }
 
-    case SemIR::BoolType::Kind:
-    case SemIR::FacetType::Kind:
-    case SemIR::FloatType::Kind:
-    case SemIR::FormType::Kind:
-    case SemIR::IntLiteralType::Kind:
-    case SemIR::IntType::Kind:
-    case SemIR::PointerType::Kind:
-      // Trivially destructible.
-      return DestroyFormat::Trivial;
-
     default:
       CARBON_FATAL("Unexpected type for CanDestroyType: {0}", inst.kind());
   }
@@ -392,7 +421,7 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
                    array_type.element_type_inst_id),
                .array_id = callee_self_param_id,
                .index_id = index_id});
-          BuildSelfDestructCall(context, loc_id, element_id);
+          BuildSelfDestructCall(context, element_id);
         }
         return;
       }

@@ -155,8 +155,7 @@ static auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth)
     // TODO: This does the `Destroy` lookup and call at every cleanup block.
     // Control flow can lead to the same variable being destroyed by multiple
     // cleanup blocks, so we'll want to avoid this in the future.
-    BuildSelfDestructCall(
-        context, context.insts().GetLocIdForDesugaring(destroy_id), destroy_id);
+    BuildSelfDestructCall(context, destroy_id);
   }
 }
 

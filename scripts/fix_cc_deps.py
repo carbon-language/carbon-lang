@@ -83,6 +83,7 @@ EXTERNAL_REPOS: dict[str, ExternalRepo] = {
 IGNORE_SOURCE_FILE_REGEX = re.compile(
     r"^(third_party/clangd.*|common/version.*\.cpp"
     r"|.*_autogen_manifest\.cpp"
+    r"|utils/tree_sitter/.*"
     r"|toolchain/base/llvm_tools.def"
     r"|toolchain/base/runtimes_build_info.h)$"
 )
