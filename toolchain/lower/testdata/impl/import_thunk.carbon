@@ -124,6 +124,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.0bfe8bb35a2876b2:core.Destroy.Core"(ptr %self) #0 !dbg !64 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc20.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !66
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc20.b), !dbg !66
 // CHECK:STDOUT:   ret void, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -255,6 +257,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.0bfe8bb35a2876b2:core.Destroy.Core"(ptr %self) #0 !dbg !95 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc7.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !97
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc7.b), !dbg !97
 // CHECK:STDOUT:   ret void, !dbg !97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -372,6 +376,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.0bfe8bb35a2876b2:core.Destroy.Core"(ptr %self) #0 !dbg !131 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc9.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !133
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc9.b), !dbg !133
 // CHECK:STDOUT:   ret void, !dbg !133
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -491,6 +497,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.0bfe8bb35a2876b2:core.Destroy.Core"(ptr %self) #0 !dbg !162 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc8.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !164
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc8.b), !dbg !164
 // CHECK:STDOUT:   ret void, !dbg !164
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
