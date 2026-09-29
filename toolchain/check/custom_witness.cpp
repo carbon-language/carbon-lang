@@ -405,11 +405,13 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         auto index_type_id =
             GetSingletonType(context, SemIR::IntLiteralType::TypeInstId);
 
-        // TODO: replace this with a synthesised loop to prevent stack
-        // explosions.
+        // TODO: Significantly reduce how much SemIR we output by replacing O(N)
+        // calls to `Destroy.SelfDestruct` loop over the array that calls the
+        // method in its body.
         //
-        // This probably requires `StartLoopHeader`, `BranchAndStartLoopBody`,
-        // and `FinishLoopBody` be public.
+        // We probably need to use `StartLoopHeader`, `BranchAndStartLoopBody`,
+        // and `FinishLoopBody`, which are currently private functions in
+        // `/toolchain/check/handle_loop_statement.cpp`.
         while (--size >= 0) {
           auto int_id = context.ints().Add(size);
           auto index_id = AddInst(
