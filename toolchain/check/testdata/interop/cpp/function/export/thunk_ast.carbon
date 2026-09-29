@@ -35,20 +35,21 @@ fn F(i: i32) -> i32 {
 // CHECK:STDOUT: |   | | `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:21> 'const int' lvalue <NoOp>
 // CHECK:STDOUT: |   | |   `-DeclRefExpr {{0x[a-f0-9]+}} <col:21> 'int' lvalue Var {{0x[a-f0-9]+}} 'return_storage' 'int'
 // CHECK:STDOUT: |   | `-ReturnStmt {{0x[a-f0-9]+}} <col:21> nrvo_candidate(Var {{0x[a-f0-9]+}} 'return_storage' 'int')
-// CHECK:STDOUT: |   |   `-DeclRefExpr {{0x[a-f0-9]+}} <col:21> 'int' lvalue Var {{0x[a-f0-9]+}} 'return_storage' 'int'
+// CHECK:STDOUT: |   |   `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:21> 'int' <LValueToRValue>
+// CHECK:STDOUT: |   |     `-DeclRefExpr {{0x[a-f0-9]+}} <col:21> 'int' lvalue Var {{0x[a-f0-9]+}} 'return_storage' 'int'
 // CHECK:STDOUT: |   |-AlwaysInlineAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit always_inline
 // CHECK:STDOUT: |   `-InternalLinkageAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit
-// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <line:38:1, line:40:1> line:38:5 in thunk_with_args_and_return.carbon hidden G 'int (int)' external-linkage
+// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <line:39:1, line:41:1> line:39:5 in thunk_with_args_and_return.carbon hidden G 'int (int)' external-linkage
 // CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <col:7, col:11> col:11 in thunk_with_args_and_return.carbon hidden used i 'int'
-// CHECK:STDOUT: | `-CompoundStmt {{0x[a-f0-9]+}} <col:14, line:40:1>
-// CHECK:STDOUT: |   `-ReturnStmt {{0x[a-f0-9]+}} <line:39:3, col:21>
+// CHECK:STDOUT: | `-CompoundStmt {{0x[a-f0-9]+}} <col:14, line:41:1>
+// CHECK:STDOUT: |   `-ReturnStmt {{0x[a-f0-9]+}} <line:40:3, col:21>
 // CHECK:STDOUT: |     `-CallExpr {{0x[a-f0-9]+}} <col:10, col:21> 'int'
 // CHECK:STDOUT: |       |-ImplicitCastExpr {{0x[a-f0-9]+}} <col:10, col:18> 'int (*)(int)' <FunctionToPointerDecay>
 // CHECK:STDOUT: |       | `-DeclRefExpr {{0x[a-f0-9]+}} <col:10, col:18> 'int (int)' lvalue Function {{0x[a-f0-9]+}} 'F' 'int (int)'
 // CHECK:STDOUT: |       |   `-NestedNameSpecifier Namespace {{0x[a-f0-9]+}} 'Carbon'
 // CHECK:STDOUT: |       `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:20> 'int' <LValueToRValue>
 // CHECK:STDOUT: |         `-DeclRefExpr {{0x[a-f0-9]+}} <col:20> 'int' lvalue ParmVar {{0x[a-f0-9]+}} 'i' 'int'
-// CHECK:STDOUT: `-ImportDecl {{0x[a-f0-9]+}} <line:41:4> col:4 in thunk_with_args_and_return.carbon implicit thunk_with_args_and_return.carbon
+// CHECK:STDOUT: `-ImportDecl {{0x[a-f0-9]+}} <line:42:4> col:4 in thunk_with_args_and_return.carbon implicit thunk_with_args_and_return.carbon
   return i;
 }
 
