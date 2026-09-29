@@ -31,7 +31,7 @@ interface Copy {
 //@dump-sem-ir-begin
 fn UseNonCoreDestroy[T: NonCore.Destroy](_: T.T1, _: T.T2) {}
 fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
-fn UseRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, _: T.T2) {}
+fn HasRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, _: T.T2) {}
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: ---
@@ -195,7 +195,7 @@ fn UseRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, 
 // CHECK:STDOUT:     name5:           T
 // CHECK:STDOUT:     name6:           Destroy
 // CHECK:STDOUT:     name7:           UseLocalCopy
-// CHECK:STDOUT:     name8:           UseRewrites
+// CHECK:STDOUT:     name8:           HasRewrites
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
@@ -1289,6 +1289,6 @@ fn UseRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, 
 // CHECK:STDOUT:         identifier5:     T
 // CHECK:STDOUT:         identifier6:     Destroy
 // CHECK:STDOUT:         identifier7:     UseLocalCopy
-// CHECK:STDOUT:         identifier8:     UseRewrites
+// CHECK:STDOUT:         identifier8:     HasRewrites
 // CHECK:STDOUT:       strings:         {}
 // CHECK:STDOUT: ...
