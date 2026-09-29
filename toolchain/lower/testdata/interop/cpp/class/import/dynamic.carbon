@@ -66,7 +66,7 @@ fn DoThing() {
 // CHECK:STDOUT: @_ZTVN6Carbon7DerivedE = linkonce_odr dso_local constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTIN6Carbon7DerivedE, ptr @_ZN11FurtherBase17further_base_funcEv, ptr @_ZNR6Carbon7Derived4funcEv, ptr @_ZNK6Carbon7Derived10other_funcEv] }, comdat, align 8
 // CHECK:STDOUT: @_ZTI4Base = external constant ptr
 // CHECK:STDOUT: @_ZTI11FurtherBase = external constant ptr
-// CHECK:STDOUT: @_ZTIN6Carbon7DerivedE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2), ptr @_ZTSN6Carbon7DerivedE, ptr @_ZTI4Base }, comdat, align 8
+// CHECK:STDOUT: @_ZTIN6Carbon7DerivedE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 16), ptr @_ZTSN6Carbon7DerivedE, ptr @_ZTI4Base }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv120__si_class_type_infoE = external global [0 x ptr]
 // CHECK:STDOUT: @_ZTSN6Carbon7DerivedE = linkonce_odr dso_local constant [18 x i8] c"N6Carbon7DerivedE\00", comdat, align 1
 // CHECK:STDOUT:
@@ -117,6 +117,8 @@ fn DoThing() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.0a0b9df20a60c6f6:core.Destroy.Core"(ptr %self) #2 !dbg !68 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc22.base = getelementptr inbounds nuw { [16 x i8] }, ptr %self, i32 0, i32 0, !dbg !70
+// CHECK:STDOUT:   call void @"_CSelfDestruct.352b8f386f44a614:core.Destroy.Core"(ptr %.loc22.base), !dbg !70
 // CHECK:STDOUT:   ret void, !dbg !70
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -166,7 +168,7 @@ fn DoThing() {
 // CHECK:STDOUT:   %.loc31_44.7.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !94
 // CHECK:STDOUT:   %.loc31_44.8.base = getelementptr inbounds nuw [16 x i8], ptr %.loc31_44.7.base, i32 0, i32 0, !dbg !94
 // CHECK:STDOUT:   %.loc31_44.9.vptr = getelementptr inbounds nuw [8 x i8], ptr %.loc31_44.8.base, i32 0, i32 0, !dbg !94
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) ({ [5 x ptr] }, ptr @_ZTVN6Carbon7DerivedE, i32 0, i32 0, i32 2), ptr %.loc31_44.9.vptr, align 8, !dbg !94
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon7DerivedE, i64 16), ptr %.loc31_44.9.vptr, align 8, !dbg !94
 // CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !98
 // CHECK:STDOUT:   call void @_Z3UseR4Base(ptr %.loc32_11.2.base), !dbg !99
 // CHECK:STDOUT:   call void @"_CSelfDestruct.b25525d21a9bd472:core.Destroy.Core"(ptr %d.var), !dbg !93
@@ -216,7 +218,7 @@ fn DoThing() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !4
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN11FurtherBaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this1) #2
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 16) ({ [4 x ptr] }, ptr @_ZTV4Base, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !102
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 16) (i8, ptr @_ZTV4Base, i64 16), ptr %this1, align 8, !tbaa !102
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -226,7 +228,7 @@ fn DoThing() {
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !104
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) ({ [3 x ptr] }, ptr @_ZTV11FurtherBase, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !102
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) (i8, ptr @_ZTV11FurtherBase, i64 16), ptr %this1, align 8, !tbaa !102
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
