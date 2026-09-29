@@ -723,10 +723,19 @@ struct NameScopeId : public IdBase<NameScopeId> {
   // The package (or file) name scope, guaranteed to be the first added.
   static const NameScopeId Package;
 
+  // Allow highest access level
+  //
+  // A scope used by the toolchain to indicate it has access to all of a class'
+  // members.
+  static const NameScopeId AllowHighestAccessLevel;
+
   using IdBase::IdBase;
 };
 
 inline constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
+
+inline constexpr NameScopeId NameScopeId::AllowHighestAccessLevel =
+    NameScopeId(1);
 
 // The ID of an `InstId` block.
 struct InstBlockId : public IdBase<InstBlockId> {
