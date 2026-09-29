@@ -265,6 +265,28 @@ fn G() {
   F(C);
 }
 
+// --- fail_impl_as_constraint_missing_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1: type;
+  let I2: type;
+}
+
+constraint N {
+  extend require impls I where .I2 = .I1;
+}
+
+class C;
+// CHECK:STDERR: fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE+7]]:1: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: impl C as N {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE-12]]:7: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:   let I1: type;
+// CHECK:STDERR:       ^~~~~~~~
+// CHECK:STDERR:
+impl C as N {}
+
 // --- fail_no_require_self.carbon
 library "[[@TEST_NAME]]";
 
@@ -285,7 +307,7 @@ constraint Y {
 // CHECK:STDERR:
 impl () as Y {}
 
-// --- fail_todo_member_access_in_extend_require.carbon
+// --- member_access_in_extend_require.carbon
 library "[[@TEST_NAME]]";
 
 interface I { let X: type; }
@@ -304,10 +326,6 @@ constraint GivesI {
 // - Deduces for Self which tries to convert Self to type
 // - Requires the type of Self to be complete, and its type is GivesI
 // - Forms the self-specfic for GivesI's extend require....we have a loop.
-// CHECK:STDERR: fail_todo_member_access_in_extend_require.carbon:[[@LINE+4]]:1: error: constraint `GivesI where .(I.X) = ()` being implemented requires that `T.(I.X)` implements `J` [IdentifiedRequireImplsNotImplemented]
-// CHECK:STDERR: impl forall [T: type] T as GivesI where .X = () {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [T: type] T as GivesI where .X = () {}
 
 // --- require_specific_used_in_impl_as_then_outside.carbon
@@ -346,6 +364,44 @@ fn G() {
   // resolve to `D` (which doesn't impl `K`) or it may not resolve beyond the
   // symbolic `.X` at all.
   F(());
+}
+
+// --- witness_access_in_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+class G(T: type) {}
+
+interface Z(R: type) {
+  let Result: type;
+}
+interface Y(S: type) {}
+
+impl forall [T: type] () as Y(G(T)) {}
+
+// This is a blanket impl that overlaps with (but is less specific than)
+// `G(C) as Z(G(C))`, which is the next impl below.
+impl forall [T: type, U: type] G(T) as Z(U) where .Result = {} {}
+
+constraint N {
+  // Forming the specific with `Self=G(C)` must not choose a concrete value
+  // `.Result = {}` from the impl above, even though the query is concrete.
+  // The `impl G(C) as N` sets the `.Result = ()`.
+  //
+  // This specific is formed while checking the `impl G(C) as N` decl, and the
+  // `.Result` must remain a reference to that impl's witness table not some
+  // other impl.
+  //
+  // We have `.Result impls...` to ensure that we substitute `G(C)` into the
+  // `.Result` access while checking the impl decl, as rewrite constraints
+  // may be ignored until later.
+  extend require impls Z(G(C)) where .Result impls Y(G(C)) and .Result = ();
+}
+
+impl G(C) as N {}
+
+fn F() -> G(C).(Z(G(C)).Result) {
+  return ();
 }
 
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon

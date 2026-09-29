@@ -93,6 +93,15 @@ auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
 // IdentifiedFacetType. Comparing the `self_const_id` against the output self
 // values requires the caller to also canonicalize the `self_const_id`.
 //
+// Any symbolic witness (LookupImplWitness) in the IdentifiedFacetType that is
+// modified by identification, by having `.Self` substituted, will be returned
+// as an IdentifiedWitness instruction. This allows the caller control over how
+// to resolve those witnesses, either by evaluating them as a LookupImplWitness
+// which performs the impl lookup operation, or by replacing them with an
+// already-known witness. All values on the IdentifiedFacetType should be
+// modified by `EvaluateIdentifiedWitnesses` or `SubstIdentifiedWitnesses` to
+// replace those temporary witnesses.
+//
 // TODO: Remove `diagnose` and split into `TryIdentifyFacetType`.
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,

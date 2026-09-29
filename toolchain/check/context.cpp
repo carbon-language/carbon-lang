@@ -75,6 +75,7 @@ auto Context::VerifyOnFinish() const -> void {
   region_stack_.VerifyOnFinish();
   CARBON_CHECK(impl_lookup_stack_.empty());
   CARBON_CHECK(declaring_impl_decls_.empty());
+  CARBON_CHECK(eval_lookup_to_identified_witness_ == 0);
   CARBON_CHECK(return_form_expr_ == std::nullopt);
 
 #ifndef NDEBUG

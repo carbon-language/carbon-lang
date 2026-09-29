@@ -698,18 +698,21 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
 }
 
 auto MakeSpecific(Context& context, SemIR::LocId loc_id,
-                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id)
-    -> SemIR::SpecificId {
-  auto specific_id = context.specifics().GetOrAdd(generic_id, args_id);
+                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id,
+                  bool make_identified_specific) -> SemIR::SpecificId {
+  auto specific_id = context.specifics().GetOrAdd(generic_id, args_id,
+                                                  make_identified_specific);
   ResolveSpecificDecl(context, loc_id, specific_id);
   return specific_id;
 }
 
 auto MakeSpecific(Context& context, SemIR::LocId loc_id,
                   SemIR::GenericId generic_id,
-                  llvm::ArrayRef<SemIR::InstId> args) -> SemIR::SpecificId {
+                  llvm::ArrayRef<SemIR::InstId> args,
+                  bool make_identified_specific) -> SemIR::SpecificId {
   auto args_id = context.inst_blocks().AddCanonical(args);
-  return MakeSpecific(context, loc_id, generic_id, args_id);
+  return MakeSpecific(context, loc_id, generic_id, args_id,
+                      make_identified_specific);
 }
 
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
@@ -728,7 +731,9 @@ static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
     arg_ids.push_back(context.constant_values().GetConstantInstId(arg_id));
   }
   auto args_id = context.inst_blocks().AddCanonical(arg_ids);
-  return context.specifics().GetOrAdd(generic_id, args_id);
+  // Self specifics are not created as part of identifying a facet type.
+  CARBON_CHECK(!context.eval_lookup_to_identified_witness());
+  return context.specifics().GetOrAdd(generic_id, args_id, false);
 }
 
 auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
@@ -855,7 +860,8 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
                                SemIR::GenericId generic_without_self_id,
                                SemIR::GenericId generic_with_self_id,
                                SemIR::SpecificId specific_without_self_id,
-                               SemIR::ConstantId self_facet)
+                               SemIR::ConstantId self_facet,
+                               bool make_identified_specific)
     -> SemIR::SpecificId {
   ValidateGenericWithoutAndWithSelfMatch(context, generic_without_self_id,
                                          generic_with_self_id,
@@ -880,15 +886,16 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
     args.push_back(self_facet_inst_id);
   }
 
-  auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args);
+  auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args,
+                                  make_identified_specific);
   ResolveSpecificDefinition(context, loc_id, specific_id);
   return specific_id;
 }
 
 auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
                            SemIR::SpecificId specific_id,
-                           SemIR::GenericId target_generic_id)
-    -> SemIR::SpecificId {
+                           SemIR::GenericId target_generic_id,
+                           bool make_identified_specific) -> SemIR::SpecificId {
   if (!specific_id.has_value()) {
     const auto& target_generic = context.generics().Get(target_generic_id);
     auto target_bindings =
@@ -911,7 +918,8 @@ auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
   }
 
   auto args_id = context.specifics().GetArgsOrEmpty(specific_id);
-  return MakeSpecific(context, loc_id, target_generic_id, args_id);
+  return MakeSpecific(context, loc_id, target_generic_id, args_id,
+                      make_identified_specific);
 }
 
 auto DiagnoseImplsOnNonFacetType(Context& context, SemIR::LocId loc_id)
