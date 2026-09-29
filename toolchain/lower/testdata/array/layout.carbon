@@ -69,6 +69,10 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.0bcbe81284b6bcb5:core.Destroy.Core"(ptr %self) #0 !dbg !49 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc9_3.1.b = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 1, !dbg !51
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc9_3.1.b), !dbg !51
+// CHECK:STDOUT:   %.loc9_3.2.a = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 0, !dbg !51
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8436f795915f0543:core.Destroy.Core"(ptr %.loc9_3.2.a), !dbg !51
 // CHECK:STDOUT:   ret void, !dbg !51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -48,10 +48,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_ZTV1X = linkonce_odr dso_local constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI1X, ptr @_ZN1X1fEv] }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN6Carbon1ZE = linkonce_odr dso_local constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTIN6Carbon1ZE, ptr @_ZN6Carbon1Z1fEv] }, comdat, align 8
-// CHECK:STDOUT: @_ZTI1X = linkonce_odr dso_local constant { ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv117__class_type_infoE, i64 2), ptr @_ZTS1X }, comdat, align 8
+// CHECK:STDOUT: @_ZTI1X = linkonce_odr dso_local constant { ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv117__class_type_infoE, i64 16), ptr @_ZTS1X }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv117__class_type_infoE = external global [0 x ptr]
 // CHECK:STDOUT: @_ZTS1X = linkonce_odr dso_local constant [3 x i8] c"1X\00", comdat, align 1
-// CHECK:STDOUT: @_ZTIN6Carbon1ZE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (ptr, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2), ptr @_ZTSN6Carbon1ZE, ptr @_ZTI1X }, comdat, align 8
+// CHECK:STDOUT: @_ZTIN6Carbon1ZE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 16), ptr @_ZTSN6Carbon1ZE, ptr @_ZTI1X }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv120__si_class_type_infoE = external global [0 x ptr]
 // CHECK:STDOUT: @_ZTSN6Carbon1ZE = linkonce_odr dso_local constant [12 x i8] c"N6Carbon1ZE\00", comdat, align 1
 // CHECK:STDOUT:
@@ -93,6 +93,8 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.de73a19002e400c9:core.Destroy.Core"(ptr %self) #1 !dbg !31 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc18.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   call void @"_CSelfDestruct.3d7b8a41b4c67e71:core.Destroy.Core"(ptr %.loc18.base), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -132,7 +134,7 @@ fn F() {
 // CHECK:STDOUT:   call void @_ZN1XC1Ev.carbon_thunk.(ptr %.loc24_32.1.base), !dbg !54
 // CHECK:STDOUT:   %.loc24_32.7.base = getelementptr inbounds nuw { [8 x i8] }, ptr %_.var, i32 0, i32 0, !dbg !53
 // CHECK:STDOUT:   %.loc24_32.8.vptr = getelementptr inbounds nuw [8 x i8], ptr %.loc24_32.7.base, i32 0, i32 0, !dbg !53
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) ({ [3 x ptr] }, ptr @_ZTVN6Carbon1ZE, i32 0, i32 0, i32 2), ptr %.loc24_32.8.vptr, align 8, !dbg !53
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) (i8, ptr @_ZTVN6Carbon1ZE, i64 16), ptr %.loc24_32.8.vptr, align 8, !dbg !53
 // CHECK:STDOUT:   call void @"_CSelfDestruct.680f7fa3ef86df7a:core.Destroy.Core"(ptr %_.var), !dbg !52
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
@@ -166,7 +168,7 @@ fn F() {
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !61
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) ({ [3 x ptr] }, ptr @_ZTV1X, i32 0, i32 0, i32 2), ptr %this1, align 8, !tbaa !63
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) (i8, ptr @_ZTV1X, i64 16), ptr %this1, align 8, !tbaa !63
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

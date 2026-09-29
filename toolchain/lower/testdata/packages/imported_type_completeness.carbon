@@ -277,6 +277,8 @@ fn CallF() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.95528a86e1127e2d:core.Destroy.Core"(ptr %self) #0 !dbg !80 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc7.vptr = getelementptr inbounds nuw { ptr }, ptr %self, i32 0, i32 0, !dbg !82
+// CHECK:STDOUT:   call void @"_CSelfDestruct.454fecbcedcd86e1:core.Destroy.Core"(ptr %.loc7.vptr), !dbg !82
 // CHECK:STDOUT:   ret void, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -352,6 +354,8 @@ fn CallF() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.95528a86e1127e2d:core.Destroy.Core"(ptr %self) #0 !dbg !106 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.1.vptr = getelementptr inbounds nuw { ptr }, ptr %self, i32 0, i32 0, !dbg !108
+// CHECK:STDOUT:   call void @"_CSelfDestruct.454fecbcedcd86e1:core.Destroy.Core"(ptr %.1.vptr), !dbg !108
 // CHECK:STDOUT:   ret void, !dbg !108
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
