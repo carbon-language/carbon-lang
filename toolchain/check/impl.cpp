@@ -994,7 +994,7 @@ auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
   auto identified_id = RequireIdentifiedFacetType(
       context, SemIR::LocId(full_constraint_id),
       context.constant_values().Get(self_id),
-      context.constant_values().GetConstantTypeInstId(full_constraint_id),
+      context.types().GetTypeIdForTypeInstId(full_constraint_id),
       [&](auto& builder) {
         CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Context,
                           "facet type {0} cannot be identified in `impl as`",
