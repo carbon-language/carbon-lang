@@ -49,6 +49,7 @@ jobs:
             api.github.com:443
             api.ipify.org:443
             bcr.bazel.build:443
+            download.gnome.org:443
             downloads.sourceforge.net:443
             files.pythonhosted.org:443
             github.com:443
