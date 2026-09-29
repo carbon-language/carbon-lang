@@ -29,6 +29,7 @@ class A {
 // CHECK:STDOUT: --- self_in_class.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DefaultConstructible.type: type = facet_type <@DefaultConstructible> [concrete]
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]

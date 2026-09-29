@@ -32,6 +32,7 @@ fn G(c: C) {
 // CHECK:STDOUT: --- alias.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [concrete]
 // CHECK:STDOUT:   %Self: %HasF.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.type.a73: type = fn_type @HasF.WithSelf.F, @HasF.WithSelf(%Self) [symbolic]

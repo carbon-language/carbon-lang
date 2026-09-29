@@ -124,6 +124,7 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT: --- same_or_added_qualifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %const.435: type = const_type %X [concrete]
 // CHECK:STDOUT:   %ptr.faf: type = ptr_type %const.435 [concrete]
@@ -174,6 +175,7 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT: --- fail_todo_nested_qualifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %const.435: type = const_type %X [concrete]
 // CHECK:STDOUT:   %ptr.faf: type = ptr_type %const.435 [concrete]

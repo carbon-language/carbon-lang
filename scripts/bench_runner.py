@@ -464,7 +464,10 @@ def render_fixed_width_float(x: float) -> str:
 
     frac, whole = math.modf(x)
     frac_str = f"{math.fabs(frac):<4.3f}"[1:]
-    return f"{int(whole):> 3}{frac_str}"
+    # Render the sign separately, as the whole part of a value in (-1, 0) is
+    # zero, which has no sign as an `int`.
+    whole_str = f"{'-' if x < 0 else ' '}{int(math.fabs(whole))}"
+    return f"{whole_str:>3}{frac_str}"
 
 
 def render_ratio(ratio: float) -> str:

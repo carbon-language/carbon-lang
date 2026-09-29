@@ -18,28 +18,10 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 
-def main() -> None:
-    # Parse arguments.
-    parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument("--non-fatal-checks", action="store_true")
-    parser.add_argument(
-        "--print_slowest_tests", default=0, help="Forwarded to file_test"
-    )
-    parser.add_argument("--threads", help="Forwarded to file_test")
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Produce verbose output"
-    )
-    parser.add_argument("files", nargs="*")
-    args = parser.parse_args()
-
-    printv = print if args.verbose else lambda _: None
-
-    bazel = str(Path(__file__).parents[1] / "scripts" / "run_bazel.py")
-    configs = []
-    # Use the most recently used build mode, or `fastbuild` if missing
-    # `bazel-bin`.
+def _detect_build_mode(bazel: str, printv: Any) -> str:
     build_mode = "fastbuild"
     workspace = subprocess.check_output(
         [
@@ -64,6 +46,40 @@ def main() -> None:
             "Detected --compilation_mode: none (no `./bazel-bin`), "
             + f"falling back to {build_mode}"
         )
+    return build_mode
+
+
+def main() -> None:
+    # Parse arguments.
+    parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument("--non-fatal-checks", action="store_true")
+    parser.add_argument(
+        "--print_slowest_tests", default=0, help="Forwarded to file_test"
+    )
+    parser.add_argument("--threads", help="Forwarded to file_test")
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Produce verbose output"
+    )
+    parser.add_argument(
+        "--compilation-mode",
+        "-c",
+        help=(
+            "Compilation mode to use. The default is to detect the mode used "
+            "by the last bazel invocation"
+        ),
+        choices=["dbg", "fastbuild", "opt"],
+    )
+    parser.add_argument("files", nargs="*")
+    args = parser.parse_args()
+
+    printv = print if args.verbose else lambda _: None
+
+    bazel = str(Path(__file__).parents[1] / "scripts" / "run_bazel.py")
+    configs = []
+
+    # Unless the user chose one explicitly, use the most recently-used build
+    # mode, or `fastbuild` if missing `bazel-bin`.
+    build_mode = args.compilation_mode or _detect_build_mode(bazel, printv)
 
     if args.non_fatal_checks:
         if build_mode == "optimize":

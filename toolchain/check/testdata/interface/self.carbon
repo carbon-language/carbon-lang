@@ -20,6 +20,7 @@ interface UseSelf {
 // CHECK:STDOUT: --- self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %UseSelf.type: type = facet_type <@UseSelf> [concrete]
 // CHECK:STDOUT:   %Self: %UseSelf.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]

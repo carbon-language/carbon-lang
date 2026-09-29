@@ -123,6 +123,7 @@ fn While() {
 // CHECK:STDOUT: --- while.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Cond.type: type = fn_type @Cond [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Cond: %Cond.type = struct_value () [concrete]
@@ -167,6 +168,7 @@ fn While() {
 // CHECK:STDOUT: --- unreachable_end.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Cond.type: type = fn_type @Cond [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Cond: %Cond.type = struct_value () [concrete]
@@ -211,6 +213,7 @@ fn While() {
 // CHECK:STDOUT: --- break_continue.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]

@@ -13,7 +13,6 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
     -> NameComponent {
   Parse::NodeId first_param_node_id = Parse::NoneNodeId();
   Parse::NodeId last_param_node_id = Parse::NoneNodeId();
-  auto call_param_default_values_id = SemIR::InstBlockId::None;
 
   // Explicit params.
   auto [params_node_id, param_patterns_id] =
@@ -24,10 +23,6 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
         context.node_stack()
             .PopForSoloNodeId<Parse::NodeKind::ExplicitParamListStart>();
     last_param_node_id = params_node_id;
-    if (!context.full_pattern_stack().GetDefaultValues().empty()) {
-      call_param_default_values_id = context.inst_blocks().Add(
-          context.full_pattern_stack().GetDefaultValues());
-    }
   } else {
     param_patterns_id = SemIR::InstBlockId::None;
   }
@@ -68,21 +63,18 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
   auto [name_loc_id, name_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::NonExprName>();
 
-  return {
-      .name_loc_id = name_loc_id,
-      .name_id = name_id,
-      .first_param_node_id = first_param_node_id,
-      .last_param_node_id = last_param_node_id,
-      .implicit_params_loc_id = implicit_params_node_id,
-      .implicit_param_patterns_id = *implicit_param_patterns_id,
-      .params_loc_id = params_node_id,
-      .param_patterns_id = *param_patterns_id,
-      .call_param_patterns_id = call_param_patterns_id,
-      .call_params_id = call_params_id,
-      .call_param_default_values_id = call_param_default_values_id,
-      .param_ranges = param_ranges,
-      .pattern_block_id = pattern_block_id,
-  };
+  return {.name_loc_id = name_loc_id,
+          .name_id = name_id,
+          .first_param_node_id = first_param_node_id,
+          .last_param_node_id = last_param_node_id,
+          .implicit_params_loc_id = implicit_params_node_id,
+          .implicit_param_patterns_id = *implicit_param_patterns_id,
+          .params_loc_id = params_node_id,
+          .param_patterns_id = *param_patterns_id,
+          .call_param_patterns_id = call_param_patterns_id,
+          .call_params_id = call_params_id,
+          .param_ranges = param_ranges,
+          .pattern_block_id = pattern_block_id};
 }
 
 // Pop the name of a declaration from the node stack, and diagnose if it has

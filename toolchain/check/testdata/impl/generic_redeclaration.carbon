@@ -101,6 +101,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT: --- same_self_and_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
 // CHECK:STDOUT:   %Self.3ce: %Interface.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
@@ -111,8 +112,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:   %Self.a32: %K.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %L.type: type = facet_type <@L> [concrete]
 // CHECK:STDOUT:   %Self.480: %L.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT:   %T.patt.1df: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.dda: %I.type = symbolic_binding T, 0 [symbolic]
@@ -174,7 +174,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:     %.loc12_20: type = converted %T.ref.loc12, %T.as_type.loc12_20.1 [symbolic = %T.as_type.loc12_20.2 (constants.%T.as_type.b38)]
 // CHECK:STDOUT:     %Interface.ref.loc12: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %.loc12_17: type = splice_block %I.ref.loc12 [concrete = constants.%I.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc12: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc12: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref.loc12: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc12_15.1: %I.type = symbolic_binding T, 0 [symbolic = %T.loc12_15.2 (constants.%T.dda)]
@@ -188,7 +188,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:     %.loc13_20: type = converted %T.ref.loc13, %T.as_type.loc13_20.1 [symbolic = %T.as_type.loc13_20.2 (constants.%T.as_type.d90)]
 // CHECK:STDOUT:     %Interface.ref.loc13: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %.loc13_17: type = splice_block %J.ref.loc13 [concrete = constants.%J.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc13: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc13: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %J.ref.loc13: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc13_15.1: %J.type = symbolic_binding T, 0 [symbolic = %T.loc13_15.2 (constants.%T.e40)]
@@ -202,7 +202,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:     %.loc14_20: type = converted %T.ref.loc14, %T.as_type.loc14_20.1 [symbolic = %T.as_type.loc14_20.2 (constants.%T.as_type.1ea)]
 // CHECK:STDOUT:     %Interface.ref.loc14: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %.loc14_17: type = splice_block %K.ref.loc14 [concrete = constants.%K.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc14: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc14: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %K.ref.loc14: type = name_ref K, file.%K.decl [concrete = constants.%K.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc14_15.1: %K.type = symbolic_binding T, 0 [symbolic = %T.loc14_15.2 (constants.%T.062)]
@@ -216,7 +216,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:     %.loc15_20: type = converted %T.ref.loc15, %T.as_type.loc15_20.1 [symbolic = %T.as_type.loc15_20.2 (constants.%T.as_type.56f)]
 // CHECK:STDOUT:     %Interface.ref.loc15: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %.loc15_17: type = splice_block %L.ref.loc15 [concrete = constants.%L.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc15: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %L.ref.loc15: type = name_ref L, file.%L.decl [concrete = constants.%L.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc15_15.1: %L.type = symbolic_binding T, 0 [symbolic = %T.loc15_15.2 (constants.%T.709)]
@@ -230,7 +230,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:     %.loc20_20: type = converted %T.ref.loc20, %T.as_type.loc20 [symbolic = %T.as_type.loc12_20.2 (constants.%T.as_type.b38)]
 // CHECK:STDOUT:     %Interface.ref.loc20: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %.loc20_17: type = splice_block %I.ref.loc20 [concrete = constants.%I.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc20: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc20: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref.loc20: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc20: %I.type = symbolic_binding T, 0 [symbolic = %T.loc12_15.2 (constants.%T.dda)]
@@ -244,7 +244,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:     %.loc21_20: type = converted %T.ref.loc21, %T.as_type.loc21 [symbolic = %T.as_type.loc13_20.2 (constants.%T.as_type.d90)]
 // CHECK:STDOUT:     %Interface.ref.loc21: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %.loc21_17: type = splice_block %J.ref.loc21 [concrete = constants.%J.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc21: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc21: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %J.ref.loc21: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc21: %J.type = symbolic_binding T, 0 [symbolic = %T.loc13_15.2 (constants.%T.e40)]
@@ -258,7 +258,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:     %.loc22_20: type = converted %T.ref.loc22, %T.as_type.loc22 [symbolic = %T.as_type.loc14_20.2 (constants.%T.as_type.1ea)]
 // CHECK:STDOUT:     %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %.loc22_17: type = splice_block %K.ref.loc22 [concrete = constants.%K.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc22: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc22: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %K.ref.loc22: type = name_ref K, file.%K.decl [concrete = constants.%K.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc22: %K.type = symbolic_binding T, 0 [symbolic = %T.loc14_15.2 (constants.%T.062)]
@@ -272,7 +272,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:     %.loc23_20: type = converted %T.ref.loc23, %T.as_type.loc23 [symbolic = %T.as_type.loc15_20.2 (constants.%T.as_type.56f)]
 // CHECK:STDOUT:     %Interface.ref.loc23: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %.loc23_17: type = splice_block %L.ref.loc23 [concrete = constants.%L.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc23: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc23: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %L.ref.loc23: type = name_ref L, file.%L.decl [concrete = constants.%L.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc23: %L.type = symbolic_binding T, 0 [symbolic = %T.loc15_15.2 (constants.%T.709)]
@@ -478,12 +478,12 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT: --- fail_same_self_and_interface_redefined.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self.37e: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
 // CHECK:STDOUT:   %Self.653: %J.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = symbolic_binding T, 0 [symbolic]
@@ -517,7 +517,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:     %.loc7_20: type = converted %T.ref, %T.as_type.loc7_20.1 [symbolic = %T.as_type.loc7_20.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:     %.loc7_17: type = splice_block %I.ref [concrete = constants.%I.type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc7_15.1: %I.type = symbolic_binding T, 0 [symbolic = %T.loc7_15.2 (constants.%T)]
@@ -531,7 +531,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:     %.loc15_20: type = converted %T.ref, %T.as_type.loc15_20.1 [symbolic = %T.as_type.loc15_20.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:     %.loc15_17: type = splice_block %I.ref [concrete = constants.%I.type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc15_15.1: %I.type = symbolic_binding T, 0 [symbolic = %T.loc15_15.2 (constants.%T)]
@@ -623,6 +623,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT: --- fail_same_type_different_spelling.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
@@ -716,12 +717,12 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT: --- fail_redefinition_generic_regions.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %.917: <witness> = impl_self_witness %T, @I [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @T.as.I.impl.812d8b.1.%I.impl_witness_table, @T.as.I.impl.812d8b.1(%T) [symbolic]
@@ -758,24 +759,24 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @T.as.I.impl.812d8b.1 [concrete] {
-// CHECK:STDOUT:     %T.patt.loc4_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4_15.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_15.2 [symbolic = %T.loc4_15.1 (constants.%T)]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc4: <witness> = impl_self_witness @T.as.I.impl.812d8b.1.%T.ref, @I [symbolic = @T.as.I.impl.812d8b.1.%.loc4_30 (constants.%.917)]
 // CHECK:STDOUT:   impl_decl @T.as.I.impl.812d8b.2 [concrete] {
-// CHECK:STDOUT:     %T.patt.loc15_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc15_15.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_15.2 [symbolic = %T.loc15_15.1 (constants.%T)]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.loc15_17.1: type = splice_block %.loc15_17.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc15_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc15_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_15.1 (constants.%T)]
@@ -795,7 +796,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.I.impl.812d8b.1(%T.loc4_15.2: type) {
-// CHECK:STDOUT:   %T.patt.loc4_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc4_15.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc4_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_15.1 (constants.%T)]
 // CHECK:STDOUT:   %.loc4_30: <witness> = impl_self_witness %T.loc4_15.1, @I [symbolic = %.loc4_30 (constants.%.917)]
 // CHECK:STDOUT:   %I.impl_witness.loc4_30.2: <witness> = impl_witness %I.impl_witness_table, @T.as.I.impl.812d8b.1(%T.loc4_15.1) [symbolic = %I.impl_witness.loc4_30.2 (constants.%I.impl_witness)]
@@ -817,7 +818,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.I.impl.812d8b.2(%T.loc15_15.2: type) {
-// CHECK:STDOUT:   %T.patt.loc15_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc15_15.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc15_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_15.1 (constants.%T)]
 // CHECK:STDOUT:   %.loc15_30: <witness> = impl_self_witness %T.loc15_15.1, @I [symbolic = %.loc15_30 (constants.%.917)]
 // CHECK:STDOUT:

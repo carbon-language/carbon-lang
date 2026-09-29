@@ -20,6 +20,7 @@ fn Main() {
 // CHECK:STDOUT: --- code_after_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]

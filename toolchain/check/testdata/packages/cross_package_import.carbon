@@ -214,6 +214,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- other_fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -233,6 +234,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- other_fn_extern.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -249,6 +251,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- other_fn_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
@@ -283,6 +286,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- other_fn2.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F2.type: type = fn_type @F2 [concrete]
 // CHECK:STDOUT:   %F2: %F2.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -302,6 +306,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- other_fn_use.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -343,6 +348,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- main_use_other.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
@@ -390,6 +396,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_todo_main_use_other_extern.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
@@ -444,6 +451,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_main_use_other_ambiguous.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
@@ -482,6 +490,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type.2a8c71.1: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.1be9f8.1: %F.type.2a8c71.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type.2a8c71.2: type = fn_type @F.loc23 [concrete]
@@ -516,6 +525,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_main_reopen_other.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -547,6 +557,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_main_reopen_other_nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -577,6 +588,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_main_add_to_other.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -604,6 +616,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_use_other_fn_use.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %UseF.type: type = fn_type @UseF [concrete]
 // CHECK:STDOUT:   %UseF: %UseF.type = struct_value () [concrete]
 // CHECK:STDOUT: }

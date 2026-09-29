@@ -26,6 +26,7 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT: --- int_or.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Or.type: type = fn_type @Or [concrete]

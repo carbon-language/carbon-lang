@@ -179,6 +179,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(StateKind::FormLiteral);
       break;
     }
+    case Lex::TokenKind::TypeOf: {
+      context.PushState(state);
+      context.PushState(StateKind::TypeOfExpr);
+      break;
+    }
     case Lex::TokenKind::Package: {
       context.AddLeafNode(NodeKind::PackageExpr, context.Consume());
       if (context.PositionKind() != Lex::TokenKind::Period) {

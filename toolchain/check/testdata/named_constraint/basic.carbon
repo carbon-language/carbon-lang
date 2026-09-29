@@ -55,6 +55,7 @@ constraint Declared {}
 // CHECK:STDOUT: --- definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Declared.type: type = facet_type <@Declared> [concrete]
 // CHECK:STDOUT:   %Self: %Declared.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
@@ -81,6 +82,7 @@ constraint Declared {}
 // CHECK:STDOUT: --- forward_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [concrete]
 // CHECK:STDOUT:   %Self: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }

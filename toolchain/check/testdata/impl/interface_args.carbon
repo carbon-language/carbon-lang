@@ -111,10 +111,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: --- core.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %Dest.patt: %pattern_type.9a5 = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
@@ -145,10 +145,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.0ff = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
-// CHECK:STDOUT:     %Dest.patt.loc3_26.1: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_26.2 (constants.%Dest.patt)]
+// CHECK:STDOUT:     %Dest.patt.loc3_26.1: %pattern_type.9a5 = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_26.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc3_28.1: type = splice_block %.loc3_28.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc3_28.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Dest.loc3_26.2: type = symbolic_binding Dest, 0 [symbolic = %Dest.loc3_26.1 (constants.%Dest)]
@@ -156,7 +156,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(%Dest.loc3_26.2: type) {
-// CHECK:STDOUT:   %Dest.patt.loc3_26.2: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_26.2 (constants.%Dest.patt)]
+// CHECK:STDOUT:   %Dest.patt.loc3_26.2: %pattern_type.9a5 = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_26.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:   %Dest.loc3_26.1: type = symbolic_binding Dest, 0 [symbolic = %Dest.loc3_26.1 (constants.%Dest)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -240,10 +240,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: --- action.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Action.type.538: type = generic_interface_type @Action [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -304,10 +304,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Action.decl: %Action.type.538 = interface_decl @Action [concrete = constants.%Action.generic] {
-// CHECK:STDOUT:     %T.patt.loc4_19.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4_19.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_21.1: type = splice_block %.loc4_21.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_21.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_19.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_19.1 (constants.%T)]
@@ -333,7 +333,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Action(%T.loc4_19.2: type) {
-// CHECK:STDOUT:   %T.patt.loc4_19.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc4_19.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc4_19.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_19.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -503,6 +503,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: --- action.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -511,8 +512,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Action.generic: %Action.type.538 = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Action.type.cbf: type = facet_type <@Action, @Action(%T)> [symbolic]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Self.ea2: %Action.type.cbf = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Action.assoc_type.1c3: type = assoc_entity_type @Action, @Action(%T) [symbolic]
 // CHECK:STDOUT:   %Action.WithSelf.Op.type.a98: type = fn_type @Action.WithSelf.Op, @Action.WithSelf(%T, %Self.ea2) [symbolic]
@@ -598,7 +599,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Action(imports.%Main.import_ref.b3bc94.3: type) [from "action.carbon"] {
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -715,6 +716,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: --- fail_action.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -722,8 +724,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Action.generic: %Action.type.538 = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Action.type.cbf: type = facet_type <@Action, @Action(%T)> [symbolic]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Self.ea2: %Action.type.cbf = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Action.assoc_type.1c3: type = assoc_entity_type @Action, @Action(%T) [symbolic]
 // CHECK:STDOUT:   %Action.WithSelf.Op.type.a98: type = fn_type @Action.WithSelf.Op, @Action.WithSelf(%T, %Self.ea2) [symbolic]
@@ -805,7 +807,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Action(imports.%Main.import_ref.b3bc94.3: type) [from "action.carbon"] {
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -922,10 +924,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: --- factory.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Factory.type.9da: type = generic_interface_type @Factory [concrete]
 // CHECK:STDOUT:   %Factory.generic: %Factory.type.9da = struct_value () [concrete]
@@ -995,10 +997,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Factory.decl: %Factory.type.9da = interface_decl @Factory [concrete = constants.%Factory.generic] {
-// CHECK:STDOUT:     %T.patt.loc4_20.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_20.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4_20.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_20.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_22.1: type = splice_block %.loc4_22.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_22.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_20.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_20.1 (constants.%T)]
@@ -1015,7 +1017,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Factory(%T.loc4_20.2: type) {
-// CHECK:STDOUT:   %T.patt.loc4_20.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_20.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc4_20.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_20.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc4_20.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_20.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1243,6 +1245,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: --- factory.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -1250,8 +1253,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.generic: %Factory.type.9da = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Factory.type.711: type = facet_type <@Factory, @Factory(%T)> [symbolic]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Self.3e3: %Factory.type.711 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Factory.assoc_type.0ed: type = assoc_entity_type @Factory, @Factory(%T) [symbolic]
 // CHECK:STDOUT:   %Factory.WithSelf.Method.type.d40: type = fn_type @Factory.WithSelf.Method, @Factory.WithSelf(%T, %Self.3e3) [symbolic]
@@ -1378,7 +1381,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Factory(imports.%Main.import_ref.b3bc94.4: type) [from "factory.carbon"] {
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1548,6 +1551,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: --- fail_factory.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -1555,8 +1559,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.generic: %Factory.type.9da = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Factory.type.711: type = facet_type <@Factory, @Factory(%T)> [symbolic]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Self.3e3: %Factory.type.711 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Factory.assoc_type.0ed: type = assoc_entity_type @Factory, @Factory(%T) [symbolic]
 // CHECK:STDOUT:   %Factory.WithSelf.Method.type.d40: type = fn_type @Factory.WithSelf.Method, @Factory.WithSelf(%T, %Self.3e3) [symbolic]
@@ -1674,7 +1678,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Factory(imports.%Main.import_ref.b3bc94.4: type) [from "factory.carbon"] {
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

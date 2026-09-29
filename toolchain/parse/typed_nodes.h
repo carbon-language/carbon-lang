@@ -1111,6 +1111,25 @@ struct FormLiteral {
   Lex::CloseParenTokenIndex token;
 };
 
+using TypeOfExprKeyword =
+    LeafNode<NodeKind::TypeOfExprKeyword, Lex::TypeOfTokenIndex>;
+
+using TypeOfExprOpenParen =
+    LeafNode<NodeKind::TypeOfExprOpenParen, Lex::OpenParenTokenIndex>;
+
+// A `typeof` expression: `typeof(expr)`.
+struct TypeOfExpr {
+  static constexpr auto Kind =
+      NodeKind::TypeOfExpr.Define({.category = NodeCategory::Expr,
+                                   .bracketed_by = NodeKind::TypeOfExprKeyword,
+                                   .child_count = 3});
+
+  TypeOfExprKeywordId keyword;
+  TypeOfExprOpenParenId start;
+  AnyExprId operand;
+  Lex::CloseParenTokenIndex token;
+};
+
 // The opening portion of an indexing expression: `a[`.
 //
 // TODO: Consider flattening this into `IndexExpr`.

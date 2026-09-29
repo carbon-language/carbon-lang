@@ -122,7 +122,7 @@ auto CheckCppOverloadAccess(
   auto name_scope_const_id = context.constant_values().Get(
       context.name_scopes().Get(parent_scope_id).inst_id());
   SemIR::AccessKind allowed_access_kind =
-      GetHighestAllowedAccess(context, loc_id, name_scope_const_id);
+      GetHighestAllowedAccess(context, name_scope_const_id);
   CheckAccess(context, loc_id, SemIR::LocId(overload_inst_id), function.name_id,
               member_access_kind,
               /*is_parent_access=*/false,

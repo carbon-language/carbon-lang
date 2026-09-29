@@ -392,8 +392,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT: --- returns_bool.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %Other: type = symbolic_binding Other, 0 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.type.32ae87.1: type = facet_type <@OrderedWith.1, @OrderedWith.1(%Other)> [symbolic]
@@ -634,8 +635,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT: --- cross_type_ordering.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %Other: type = symbolic_binding Other, 0 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.type.32ae87.1: type = facet_type <@OrderedWith.1, @OrderedWith.1(%Other)> [symbolic]

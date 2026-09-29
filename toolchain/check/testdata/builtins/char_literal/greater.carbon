@@ -25,6 +25,7 @@ let b: bool = Greater('a', 'b');
 // CHECK:STDOUT: --- greater.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %Greater.type: type = fn_type @Greater [concrete]
 // CHECK:STDOUT:   %Greater: %Greater.type = struct_value () [concrete]

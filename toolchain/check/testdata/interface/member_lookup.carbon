@@ -56,10 +56,10 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT: --- member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt.d47: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Interface.type.1b1: type = generic_interface_type @Interface [concrete]
 // CHECK:STDOUT:   %Interface.generic: %Interface.type.1b1 = struct_value () [concrete]
@@ -148,16 +148,16 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: %Interface.type.1b1 = interface_decl @Interface [concrete = constants.%Interface.generic] {
-// CHECK:STDOUT:     %T.patt.loc4_22.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt.d47)]
+// CHECK:STDOUT:     %T.patt.loc4_22.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt.3a0)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_24.1: type = splice_block %.loc4_24.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_24.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_22.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessGeneric.decl: %AccessGeneric.type = fn_decl @AccessGeneric [concrete = constants.%AccessGeneric] {
-// CHECK:STDOUT:     %T.patt.loc8_19.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_19.2 (constants.%T.patt.d47)]
+// CHECK:STDOUT:     %T.patt.loc8_19.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_19.2 (constants.%T.patt.3a0)]
 // CHECK:STDOUT:     %I.patt.loc8_36.1: @AccessGeneric.%pattern_type.loc8_36 (%pattern_type.2c6f) = symbolic_binding_pattern I, 1 [symbolic = %I.patt.loc8_36.2 (constants.%I.patt.0cc)]
 // CHECK:STDOUT:     %return.param_patt.loc8_56.1: @AccessGeneric.%pattern_type.loc8_56 (%pattern_type.4f4) = out_param_pattern [symbolic = %return.param_patt.loc8_56.2 (constants.%return.param_patt.27f)]
 // CHECK:STDOUT:     %return.patt.loc8_52.1: @AccessGeneric.%pattern_type.loc8_56 (%pattern_type.4f4) = return_slot_pattern %return.param_patt.loc8_56.1, %ptr.loc8_56.2 [symbolic = %return.patt.loc8_52.2 (constants.%return.patt.d67)]
@@ -166,12 +166,12 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT:     %ptr.loc8_56.2: type = ptr_type %T.ref.loc8_55 [symbolic = %ptr.loc8_56.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:     %.loc8_56.2: Core.Form = init_form %ptr.loc8_56.2 [symbolic = %.loc8_56.1 (constants.%.cb6)]
 // CHECK:STDOUT:     %.loc8_21.1: type = splice_block %.loc8_21.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen.loc8_19: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc8_19: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc8_21.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_19.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_19.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %.loc8_49: type = splice_block %Interface.type.loc8_49.2 [symbolic = %Interface.type.loc8_49.1 (constants.%Interface.type.fe8)] {
-// CHECK:STDOUT:       %.Self.frozen.loc8_36: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc8_36: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.1b1 = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.generic]
 // CHECK:STDOUT:       %T.ref.loc8_48: type = name_ref T, %T.loc8_19.2 [symbolic = %T.loc8_19.1 (constants.%T.67d)]
 // CHECK:STDOUT:       %Interface.type.loc8_49.2: type = facet_type <@Interface, @Interface(constants.%T.67d)> [symbolic = %Interface.type.loc8_49.1 (constants.%Interface.type.fe8)]
@@ -189,7 +189,7 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc12_49 [concrete = constants.%ptr.d08]
 // CHECK:STDOUT:     %.loc12_52: Core.Form = init_form %ptr [concrete = constants.%.952]
 // CHECK:STDOUT:     %.loc12_43: type = splice_block %Interface.type [concrete = constants.%Interface.type.c5f] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.1b1 = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.generic]
 // CHECK:STDOUT:       %i32.loc12_40: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %Interface.type: type = facet_type <@Interface, @Interface(constants.%i32)> [concrete = constants.%Interface.type.c5f]
@@ -201,7 +201,7 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Interface(%T.loc4_22.2: type) {
-// CHECK:STDOUT:   %T.patt.loc4_22.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt.d47)]
+// CHECK:STDOUT:   %T.patt.loc4_22.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt.3a0)]
 // CHECK:STDOUT:   %T.loc4_22.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -229,7 +229,7 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @AccessGeneric(%T.loc8_19.2: type, %I.loc8_36.2: @AccessGeneric.%Interface.type.loc8_49.1 (%Interface.type.fe8)) {
-// CHECK:STDOUT:   %T.patt.loc8_19.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_19.2 (constants.%T.patt.d47)]
+// CHECK:STDOUT:   %T.patt.loc8_19.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_19.2 (constants.%T.patt.3a0)]
 // CHECK:STDOUT:   %T.loc8_19.1: type = symbolic_binding T, 0 [symbolic = %T.loc8_19.1 (constants.%T.67d)]
 // CHECK:STDOUT:   %Interface.type.loc8_49.1: type = facet_type <@Interface, @Interface(%T.loc8_19.1)> [symbolic = %Interface.type.loc8_49.1 (constants.%Interface.type.fe8)]
 // CHECK:STDOUT:   %pattern_type.loc8_36: type = pattern_type %Interface.type.loc8_49.1 [symbolic = %pattern_type.loc8_36 (constants.%pattern_type.2c6f)]
@@ -309,7 +309,7 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface(constants.%T.67d) {
-// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T.patt.d47
+// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T.patt.3a0
 // CHECK:STDOUT:   %T.loc4_22.1 => constants.%T.67d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -326,7 +326,7 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessGeneric(constants.%T.67d, constants.%I.63c) {
-// CHECK:STDOUT:   %T.patt.loc8_19.2 => constants.%T.patt.d47
+// CHECK:STDOUT:   %T.patt.loc8_19.2 => constants.%T.patt.3a0
 // CHECK:STDOUT:   %T.loc8_19.1 => constants.%T.67d
 // CHECK:STDOUT:   %Interface.type.loc8_49.1 => constants.%Interface.type.fe8
 // CHECK:STDOUT:   %pattern_type.loc8_36 => constants.%pattern_type.2c6f
@@ -348,7 +348,7 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface(constants.%i32) {
-// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T.patt.d47
+// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T.patt.3a0
 // CHECK:STDOUT:   %T.loc4_22.1 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -380,10 +380,10 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT: --- fail_no_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Interface.type.1b1: type = generic_interface_type @Interface [concrete]
 // CHECK:STDOUT:   %Interface.generic: %Interface.type.1b1 = struct_value () [concrete]
@@ -443,16 +443,16 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: %Interface.type.1b1 = interface_decl @Interface [concrete = constants.%Interface.generic] {
-// CHECK:STDOUT:     %T.patt.loc4_22.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4_22.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_24.1: type = splice_block %.loc4_24.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_24.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_22.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessMissingGeneric.decl: %AccessMissingGeneric.type = fn_decl @AccessMissingGeneric [concrete = constants.%AccessMissingGeneric] {
-// CHECK:STDOUT:     %T.patt.loc8_26.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_26.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc8_26.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_26.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %I.patt.loc8_43.1: @AccessMissingGeneric.%pattern_type.loc8_43 (%pattern_type.2c6) = symbolic_binding_pattern I, 1 [symbolic = %I.patt.loc8_43.2 (constants.%I.patt.0cc)]
 // CHECK:STDOUT:     %return.param_patt.loc8_62.1: @AccessMissingGeneric.%pattern_type.loc8_62 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc8_62.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:     %return.patt.loc8_59.1: @AccessMissingGeneric.%pattern_type.loc8_62 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc8_62.1, %T.ref.loc8_62 [symbolic = %return.patt.loc8_59.2 (constants.%return.patt.b39)]
@@ -460,12 +460,12 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT:     %T.ref.loc8_62: type = name_ref T, %T.loc8_26.2 [symbolic = %T.loc8_26.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc8_62.2: Core.Form = init_form %T.ref.loc8_62 [symbolic = %.loc8_62.1 (constants.%.184)]
 // CHECK:STDOUT:     %.loc8_28.1: type = splice_block %.loc8_28.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen.loc8_26: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc8_26: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc8_28.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_26.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_26.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc8_56: type = splice_block %Interface.type.loc8_56.2 [symbolic = %Interface.type.loc8_56.1 (constants.%Interface.type.fe8)] {
-// CHECK:STDOUT:       %.Self.frozen.loc8_43: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc8_43: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.1b1 = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.generic]
 // CHECK:STDOUT:       %T.ref.loc8_55: type = name_ref T, %T.loc8_26.2 [symbolic = %T.loc8_26.1 (constants.%T)]
 // CHECK:STDOUT:       %Interface.type.loc8_56.2: type = facet_type <@Interface, @Interface(constants.%T)> [symbolic = %Interface.type.loc8_56.1 (constants.%Interface.type.fe8)]
@@ -482,7 +482,7 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT:     %i32.loc16_56: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc16_56: Core.Form = init_form %i32.loc16_56 [concrete = constants.%.795]
 // CHECK:STDOUT:     %.loc16_50: type = splice_block %Interface.type [concrete = constants.%Interface.type.c5f] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.1b1 = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.generic]
 // CHECK:STDOUT:       %i32.loc16_47: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:       %Interface.type: type = facet_type <@Interface, @Interface(constants.%i32)> [concrete = constants.%Interface.type.c5f]
@@ -494,7 +494,7 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Interface(%T.loc4_22.2: type) {
-// CHECK:STDOUT:   %T.patt.loc4_22.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc4_22.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc4_22.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -523,7 +523,7 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @AccessMissingGeneric(%T.loc8_26.2: type, %I.loc8_43.2: @AccessMissingGeneric.%Interface.type.loc8_56.1 (%Interface.type.fe8)) {
-// CHECK:STDOUT:   %T.patt.loc8_26.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_26.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc8_26.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_26.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc8_26.1: type = symbolic_binding T, 0 [symbolic = %T.loc8_26.1 (constants.%T)]
 // CHECK:STDOUT:   %Interface.type.loc8_56.1: type = facet_type <@Interface, @Interface(%T.loc8_26.1)> [symbolic = %Interface.type.loc8_56.1 (constants.%Interface.type.fe8)]
 // CHECK:STDOUT:   %pattern_type.loc8_43: type = pattern_type %Interface.type.loc8_56.1 [symbolic = %pattern_type.loc8_43 (constants.%pattern_type.2c6)]

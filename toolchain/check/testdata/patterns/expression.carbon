@@ -84,6 +84,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_todo_control_flow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]

@@ -426,6 +426,7 @@ fn G() {
 // CHECK:STDOUT: --- fail_many_different.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %L.type: type = facet_type <@L> [concrete]
 // CHECK:STDOUT:   %L.assoc_type: type = assoc_entity_type @L [concrete]
 // CHECK:STDOUT:   %assoc0: %L.assoc_type = assoc_entity element0, @L.WithSelf.%W [concrete]
@@ -546,6 +547,7 @@ fn G() {
 // CHECK:STDOUT: --- fail_cycle.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %M.type: type = facet_type <@M> [concrete]
 // CHECK:STDOUT:   %M.assoc_type: type = assoc_entity_type @M [concrete]
 // CHECK:STDOUT:   %assoc0: %M.assoc_type = assoc_entity element0, @M.WithSelf.%X [concrete]

@@ -362,28 +362,13 @@ auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::ConstantId;
   }
 
-  auto const_inst_id = file.constant_values().GetConstantInstId(inst_id);
-  CARBON_KIND_SWITCH(file.insts().Get(const_inst_id)) {
-    case CARBON_KIND(SemIR::ClassType class_type): {
-      const auto& class_info = file.classes().Get(class_type.class_id);
-      CARBON_CHECK(class_info.scope_id.has_value());
-      return ImportCppDeclFromFile(
-          context, loc_id, file,
-          file.name_scopes().Get(class_info.scope_id).clang_decl_context_id());
-    }
-
-    case CARBON_KIND(SemIR::Namespace namespace_decl): {
-      return ImportCppDeclFromFile(context, loc_id, file,
-                                   file.name_scopes()
-                                       .Get(namespace_decl.name_scope_id)
-                                       .clang_decl_context_id());
-    }
-
-    default: {
-      context.TODO(loc_id, "indirect import of unsupported C++ declaration");
-      return SemIR::ErrorInst::ConstantId;
-    }
+  if (const auto* clang_decl = file.clang_decls().Lookup(inst_id)) {
+    auto clang_decl_id = file.clang_decls().LookupId(clang_decl->key);
+    return ImportCppDeclFromFile(context, loc_id, file, clang_decl_id);
   }
+
+  context.TODO(loc_id, "indirect import of unsupported C++ declaration");
+  return SemIR::ErrorInst::ConstantId;
 }
 
 // Returns the Clang `DeclContext` for the given name scope. Return the
@@ -1551,9 +1536,6 @@ static auto MakeParamPattern(
 
   auto param_info = MapParameterType(context, loc_id, type, passing_mode);
   auto [type_inst_id, type_id] = param_info.type;
-  // Type expression of the binding pattern - a single-entry/single-exit
-  // region that allows control flow in the type expression e.g. fn F(x: if C
-  // then i32 else i64).
   SemIR::ExprRegionId type_expr_region_id =
       ConsumeExprRegionForPattern(context, type_inst_id);
 
@@ -1580,9 +1562,9 @@ static auto MakeParamPattern(
 static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
                                      const CalleeFunctionInfo& function_info)
     -> SemIR::InstBlockId {
-  // The `self` parameter of a method (proposal #7016) is the
-  // first entry in the explicit parameter list. Build it (if any) first, then
-  // the remaining explicit parameters.
+  // The `self` parameter of a method is the first entry in the explicit
+  // parameter list. Build it (if any) first, then the remaining explicit
+  // parameters.
   llvm::SmallVector<SemIR::InstId> param_ids;
   llvm::SmallVector<SemIR::InstId> param_type_ids;
   param_ids.reserve(function_info.num_carbon_params());
@@ -1959,7 +1941,6 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .call_param_patterns_id =
                   function_params_insts->call_param_patterns_id,
               .call_params_id = function_params_insts->call_params_id,
-              .call_param_default_values_id = SemIR::InstBlockId::None,
               .call_param_ranges = function_params_insts->param_ranges,
               .return_type_inst_id = function_params_insts->return_type_inst_id,
               .return_form_inst_id = function_params_insts->return_form_inst_id,

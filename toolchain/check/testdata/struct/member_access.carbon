@@ -19,6 +19,7 @@ var z: i32 = y;
 // CHECK:STDOUT: --- member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]

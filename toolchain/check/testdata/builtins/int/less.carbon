@@ -35,6 +35,7 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: --- int_less.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Less.type: type = fn_type @Less [concrete]

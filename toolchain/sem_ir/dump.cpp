@@ -255,17 +255,6 @@ LLVM_DUMP_METHOD auto Dump(const File& file, CppOverloadSetId overload_set_id)
   return out.TakeStr();
 }
 
-LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
-    -> std::string {
-  RawStringOstream out;
-  out << entity_name_id;
-  if (entity_name_id.has_value()) {
-    auto entity_name = file.entity_names().Get(entity_name_id);
-    out << ": " << entity_name << DumpNameOfEntityName(file, entity_name);
-  }
-  return out.TakeStr();
-}
-
 LLVM_DUMP_METHOD auto Dump(const File& file,
                            DeclaredFacetTypeId declared_facet_type_id)
     -> std::string {
@@ -310,6 +299,17 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
     out << "\n"
         << "  - " << DumpInstSummary(file, rewrite.lhs_id) << "\n"
         << "  - " << DumpInstSummary(file, rewrite.rhs_id);
+  }
+  return out.TakeStr();
+}
+
+LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
+    -> std::string {
+  RawStringOstream out;
+  out << entity_name_id;
+  if (entity_name_id.has_value()) {
+    auto entity_name = file.entity_names().Get(entity_name_id);
+    out << ": " << entity_name << DumpNameOfEntityName(file, entity_name);
   }
   return out.TakeStr();
 }
