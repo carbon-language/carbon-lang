@@ -611,7 +611,7 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   declared_facet_types:
 // CHECK:STDOUT:     'declared_facet_type(Empty)': {}
-// CHECK:STDOUT:     declared_facet_type78000001: {extends interface: interface78000000}
+// CHECK:STDOUT:     declared_facet_type78000001: {extends interface: [interface78000000]}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst(TypeType)':  {kind: FacetType, arg0: declared_facet_type(Empty), type: type(TypeType)}
 // CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
