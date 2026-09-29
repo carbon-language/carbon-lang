@@ -286,6 +286,9 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
       case CARBON_KIND(MarkInPlaceInit init): {
         return init.dest_id;
       }
+      case CARBON_KIND(SpliceInst inst): {
+        return inst.inst_id;
+      }
       case CARBON_KIND(Call call): {
         auto callee_function =
             GetCalleeAsFunction(*ir, call.callee_id, specific_id);
