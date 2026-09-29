@@ -253,10 +253,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_5.2(%self.param: ref %Destructible) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_5.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_5.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
@@ -419,10 +416,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_5.2(%self.param: ref %Destructible) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_5.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_5.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
@@ -561,10 +555,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_5.2(%self.param: ref %Destructible) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_5.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_5.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
@@ -740,10 +731,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc14_7.2(%self.param: ref %Destructible) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc14_7.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc14_7.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
@@ -919,10 +907,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc14_7.2(%self.param: ref %Destructible) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc14_7.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc14_7.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:

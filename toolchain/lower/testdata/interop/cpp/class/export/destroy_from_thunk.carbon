@@ -68,23 +68,16 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.08d9e38b928ba575:core.Destroy.Core"(ptr %self) #0 !dbg !25 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.08d9e38b928ba575:core.Destroy.Core"(ptr %self) #0 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !27
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.08d9e38b928ba575:core.Destroy.Core"(ptr %self) #0 !dbg !29 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CSubobjectDestroy.08d9e38b928ba575:core.Destroy.Core"(ptr %self), !dbg !31
-// CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon1CD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !37
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !33
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.C.Main"(ptr noundef nonnull align 1 %this1)
 // CHECK:STDOUT:   ret void
@@ -96,8 +89,8 @@ fn Run() {
 // CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.module.flags = !{!39, !40, !41, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!44}
+// CHECK:STDOUT: !llvm.module.flags = !{!35, !36, !37, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!40}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -120,23 +113,19 @@ fn Run() {
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !21, type: !11)
 // CHECK:STDOUT: !23 = !DILocation(line: 4, column: 1, scope: !21)
 // CHECK:STDOUT: !24 = !{!22}
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.08d9e38b928ba575:core.Destroy.Core", scope: null, file: !4, line: 4, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.08d9e38b928ba575:core.Destroy.Core", scope: null, file: !4, line: 4, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !28)
 // CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !25, type: !11)
 // CHECK:STDOUT: !27 = !DILocation(line: 4, column: 1, scope: !25)
 // CHECK:STDOUT: !28 = !{!26}
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.08d9e38b928ba575:core.Destroy.Core", scope: null, file: !4, line: 4, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !32)
-// CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !29, type: !11)
-// CHECK:STDOUT: !31 = !DILocation(line: 4, column: 1, scope: !29)
-// CHECK:STDOUT: !32 = !{!30}
-// CHECK:STDOUT: !33 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !34 = !{!"omnipotent char", !33, i64 0}
-// CHECK:STDOUT: !35 = !{!"any pointer", !34, i64 0}
-// CHECK:STDOUT: !36 = !{!"p1 _ZTSN6Carbon1CE", !35, i64 0}
-// CHECK:STDOUT: !37 = !{!36, !36, i64 0}
-// CHECK:STDOUT: !39 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !40 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !41 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !42 = !{!"int", !34, i64 0}
-// CHECK:STDOUT: !43 = !{!"__libc_errno", !42, i64 0}
-// CHECK:STDOUT: !44 = !{!43, !42, i64 0}
+// CHECK:STDOUT: !29 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !30 = !{!"omnipotent char", !29, i64 0}
+// CHECK:STDOUT: !31 = !{!"any pointer", !30, i64 0}
+// CHECK:STDOUT: !32 = !{!"p1 _ZTSN6Carbon1CE", !31, i64 0}
+// CHECK:STDOUT: !33 = !{!32, !32, i64 0}
+// CHECK:STDOUT: !35 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !36 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !37 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !38 = !{!"int", !30, i64 0}
+// CHECK:STDOUT: !39 = !{!"__libc_errno", !38, i64 0}
+// CHECK:STDOUT: !40 = !{!39, !38, i64 0}
 // CHECK:STDOUT:
