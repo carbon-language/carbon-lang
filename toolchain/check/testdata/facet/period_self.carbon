@@ -354,6 +354,28 @@ interface Z(T: type) {}
 // CHECK:STDERR:
 fn F(generic T: L where .Self impls Z(.W), a: T.W) -> () { return a; }
 
+// --- fail_infinite_cycle_identifying_period_self_in_impls_interface_as_type_missing_m.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W: type; }
+
+interface M {}
+final impl forall [T: M] T as L where .W = () {}
+
+interface Z(T: L) {}
+
+// This is missing `.Self impls M` so the `final impl` is not used, through
+// deduction is attempted.
+//
+// CHECK:STDERR: fail_infinite_cycle_identifying_period_self_in_impls_interface_as_type_missing_m.carbon:[[@LINE+7]]:63: error: cannot implicitly convert expression of type `T.(L.W)` to `()` [ConversionFailure]
+// CHECK:STDERR: fn F(generic T: L where .Self impls Z(.Self), a: T.W) -> () { return a; }
+// CHECK:STDERR:                                                               ^~~~~~~~~
+// CHECK:STDERR: fail_infinite_cycle_identifying_period_self_in_impls_interface_as_type_missing_m.carbon:[[@LINE+4]]:63: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs(())` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fn F(generic T: L where .Self impls Z(.Self), a: T.W) -> () { return a; }
+// CHECK:STDERR:                                                               ^~~~~~~~~
+// CHECK:STDERR:
+fn F(generic T: L where .Self impls Z(.Self), a: T.W) -> () { return a; }
+
 // --- infinite_cycle_identifying_associated_constant_in_impls_interface_as_type.carbon
 library "[[@TEST_NAME]]";
 

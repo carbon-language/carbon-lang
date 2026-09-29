@@ -5,6 +5,7 @@
 #include "toolchain/check/type_completion.h"
 
 #include "common/concepts.h"
+#include "common/increment_scope.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/import.h"
@@ -988,13 +989,25 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
     return identified_id;
   }
 
+  // Within this scope, all LookupImplWitnesses that are modified by substing
+  // `.Self` will be resolved into IdentifiedWitnesses. As will any witnesses in
+  // specifics formed below for require decls.
+  //
+  // This prevents losing the structure of an ImplWitnessAccess for a designator
+  // (such as in the LHS of a rewrite), and allows the caller to choose to use
+  // their own witnesses in place of executing impl lookup. It means all values
+  // in IdentifiedFacetType need to have their IdentifiedWitnesses replaced
+  // before they are used, though.
+  IncrementScope identifying_scope(context.eval_lookup_to_identified_witness());
+
   {
-    auto subst_id = SubstPeriodSelfInFacetType(
-        context, loc_id,
-        context.constant_values().GetInstId(initial_self_const_id),
-        context.types().GetTypeInstIdForTypeConstantId(facet_type_const_id));
-    declared_facet_type_id = context.insts()
-                                 .GetAs<SemIR::FacetType>(subst_id)
+    auto subst_id = SubstPeriodSelf(context, loc_id, facet_type_const_id,
+                                    initial_self_const_id);
+    if (subst_id == SemIR::ErrorInst::ConstantId) {
+      return SemIR::IdentifiedFacetTypeId::None;
+    }
+    declared_facet_type_id = context.constant_values()
+                                 .GetInstAs<SemIR::FacetType>(subst_id)
                                  .declared_facet_type_id;
   }
 
@@ -1096,7 +1109,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
-          constraint.generic_with_self_id, extends.specific_id, self_const_id);
+          constraint.generic_with_self_id, extends.specific_id, self_const_id,
+          /*make_identified_specific=*/true);
       if (SpecificHasError(context, constraint_with_self_specific_id)) {
         return SemIR::IdentifiedFacetTypeId::None;
       }
@@ -1109,7 +1123,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
         // instantiated.
         auto require_specific_id = CopySpecificToGeneric(
             context, SemIR::LocId(require.decl_id),
-            constraint_with_self_specific_id, require.generic_id);
+            constraint_with_self_specific_id, require.generic_id,
+            /*make_identified_specific=*/true);
         auto require_self = GetConstantValueInSpecific(
             context.sem_ir(), require_specific_id, require.self_id);
         auto require_facet_type = GetConstantValueInSpecific(
@@ -1153,7 +1168,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
-          constraint.generic_with_self_id, impls.specific_id, self_const_id);
+          constraint.generic_with_self_id, impls.specific_id, self_const_id,
+          /*make_identified_specific=*/true);
       if (SpecificHasError(context, constraint_with_self_specific_id)) {
         return SemIR::IdentifiedFacetTypeId::None;
       }
@@ -1166,7 +1182,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
         // instantiated.
         auto require_specific_id = CopySpecificToGeneric(
             context, SemIR::LocId(require.decl_id),
-            constraint_with_self_specific_id, require.generic_id);
+            constraint_with_self_specific_id, require.generic_id,
+            /*make_identified_specific=*/true);
         auto require_self = GetConstantValueInSpecific(
             context.sem_ir(), require_specific_id, require.self_id);
         auto require_facet_type = GetConstantValueInSpecific(
@@ -1212,7 +1229,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
           constraint.generic_with_self_id, impls.specific_id,
-          context.constant_values().Get(self_type_inst_id));
+          context.constant_values().Get(self_type_inst_id),
+          /*make_identified_specific=*/true);
       if (SpecificHasError(context, constraint_with_self_specific_id)) {
         return SemIR::IdentifiedFacetTypeId::None;
       }
@@ -1225,7 +1243,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
         // instantiated.
         auto require_specific_id = CopySpecificToGeneric(
             context, SemIR::LocId(require.decl_id),
-            constraint_with_self_specific_id, require.generic_id);
+            constraint_with_self_specific_id, require.generic_id,
+            /*make_identified_specific=*/true);
         auto require_self = GetConstantValueInSpecific(
             context.sem_ir(), require_specific_id, require.self_id);
         auto require_facet_type = GetConstantValueInSpecific(

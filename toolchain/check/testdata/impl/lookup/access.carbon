@@ -59,3 +59,28 @@ fn H(generic U: type, generic V: Z where .Z1 = C(U)) {
   // CHECK:STDERR:
   V as X(U);
 }
+
+// --- lookup_query_self_is_access_with_witness_from_nested_facet.carbon
+library "[[@TEST_NAME]]";
+
+interface HasNested {
+  let Nested: type;
+}
+
+interface Z {}
+
+constraint ProvideZ {
+  require impls Z;
+}
+
+constraint NeedZ(T: Z) {}
+
+constraint N {
+  extend require impls HasNested;
+  require Self.(Nested) impls ProvideZ;
+
+  // This performs an impl lookup `Self.(Nested) as Z`. When we identify
+  // the facet type of `Self` to find witnesses, we find a witness that
+  // `Self.(Nested)` impls `Z`.
+  require impls NeedZ(Self.(Nested));
+}

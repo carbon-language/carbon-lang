@@ -9,6 +9,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
@@ -219,6 +220,10 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   auto name = PopImplIntroducerAndParamsAsNameComponent(context, node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
+  // Witnesses for this impl in the DeclaredFacetType of the decl will have
+  // been evaluated to ImplSelfWitness.
+  context.declaring_impl_decls().pop_back();
+
   // Convert the constraint expression to a type. This contains all constraints,
   // including rewrites and other constrains on the RHS of `where`.
   auto full_constraint_type_inst_id =
@@ -256,17 +261,13 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     full_constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }
 
-  // Identifying the constraint above replaces `.Self` which can evaluate
-  // LookupImplWitness, and we want affected designators to evaluate to
-  // ImplSelfWitness.
-  context.declaring_impl_decls().pop_back();
-
-  auto specific_interface =
-      full_constraint_type_inst_id != SemIR::ErrorInst::InstId
-          ? context.identified_facet_types()
-                .Get(identified_id)
-                .impl_as_target_interface()
-          : SemIR::SpecificInterface::None;
+  auto specific_interface = SemIR::SpecificInterface::None;
+  if (full_constraint_type_inst_id != SemIR::ErrorInst::InstId) {
+    const auto& identified =
+        context.identified_facet_types().Get(identified_id);
+    specific_interface = EvaluateIdentifiedWitnesses(
+        context, node_id, identified.impl_as_target_interface());
+  }
 
   // Store an instruction in the decl's eval block that contains the target
   // interface's specific, whose constant value will be updated when specifics

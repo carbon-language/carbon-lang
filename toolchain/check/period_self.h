@@ -55,15 +55,11 @@ auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
 // Replace `.Self` references with the self-type. The `facet_type_inst_id` must
 // be a `FacetType` instruction (or error).
 //
-// The `.Self` in the LHS of rewrite constraints is not replaced, to allow for
-// rewrite constraint resolution to recognise the designators and avoid
-// evaluation replacing them with a concrete value. Later use of rewrite
-// constraints requires further `.Self` replacement.
-//
 // Unlike SubstPeriodSelf, which works with constant values and thus canonical
-// instructions, this operation can be done for non-canonical facet types. A new
-// instruction is added for the output FacetType if anything does get replaced,
-// and the original instruction id is preserved otherwise.
+// instructions, this operation is meant for non-canonical facet type
+// instructions. A new FacetType instruction is added to the current InstBlock
+// and returned if anything does get replaced, and the original instruction ID
+// is preserved otherwise.
 auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_inst_id,
                                 SemIR::TypeInstId facet_type_inst_id)
