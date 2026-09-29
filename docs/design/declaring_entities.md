@@ -138,7 +138,7 @@ the declaration following the introducer keyword and the optional scope, up
 to the semicolon or open brace, is identical, except for `unused` modifiers
 on parameters.
 
-An entity may be redeclaration in a different scope using a a qualified
+An entity may be redeclaration in a different scope using a qualified
 declaration:
 
 -   Take the portion of the declaration from the introducer up to the end of
@@ -236,6 +236,7 @@ There are two forms of the `extern` modifier:
     -   The entity must be directly imported in order to use the definition;
         otherwise it is incomplete.
     -   An `extern library` declaration is optional.
+    -   Like all owning declarations, owning `extern` declarations use syntactic matching for redeclarations. 
 -   On a non-owning declaration, `extern library` allows references to an entity
     without depending on the owning library.
     -   The library name indicates where the entity is defined.
