@@ -8,6 +8,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
@@ -1002,6 +1003,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
   bool partially_identified = false;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> extends;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> impls;
+  llvm::SmallVector<SemIR::IdentifiedFacetType::Rewrite> rewrites;
 
   while (!work.empty()) {
     SelfImplsFacetType next_impls = work.pop_back_val();
@@ -1036,6 +1038,20 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
     llvm::append_range(
         impls, llvm::map_range(declared_facet_type.type_impls_interfaces,
                                type_and_interface));
+    if (facet_type_extends) {
+      auto rewrite_as_constants =
+          [&](auto rewrite) -> SemIR::IdentifiedFacetType::Rewrite {
+        return {context.constant_values().Get(
+                    GetImplWitnessAccessWithoutSubstitution(context,
+                                                            rewrite.lhs_id)),
+                context.constant_values().Get(rewrite.rhs_id)};
+      };
+      llvm::append_range(
+          rewrites, llvm::map_range(declared_facet_type.rewrite_constraints,
+                                    rewrite_as_constants));
+    } else {
+      // TODO: Store the rewrites as equality constraints.
+    }
 
     if (declared_facet_type.extend_named_constraints.empty() &&
         declared_facet_type.self_impls_named_constraints.empty() &&
@@ -1219,7 +1235,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 
   // TODO: Process other kinds of requirements.
   return context.identified_facet_types().Add(
-      {key, partially_identified, extends, impls});
+      {key, partially_identified, extends, impls, rewrites});
 }
 
 auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
