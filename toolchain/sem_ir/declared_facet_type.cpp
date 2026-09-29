@@ -204,7 +204,7 @@ auto DeclaredFacetType::Canonicalize() -> void {
 
 auto DeclaredFacetType::Print(llvm::raw_ostream& out) const -> void {
   out << "{";
-  llvm::ListSeparator outer_sep("; ");
+  llvm::ListSeparator outer_sep;
 
   if (!extend_constraints.empty()) {
     out << outer_sep << "extends interface: ";

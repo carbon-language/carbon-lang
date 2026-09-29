@@ -124,7 +124,7 @@ class IntId : public Printable<IntId> {
   constexpr auto AsRaw() const -> int32_t { return id_; }
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << Label << "(";
+    out << "'" << Label << "(";
     if (is_embedded_value()) {
       out << "value: " << AsValue();
     } else if (is_index()) {
@@ -133,7 +133,7 @@ class IntId : public Printable<IntId> {
       CARBON_CHECK(!has_value());
       out << "<none>";
     }
-    out << ")";
+    out << ")'";
   }
 
   friend constexpr auto operator==(IntId lhs, IntId rhs) -> bool {
