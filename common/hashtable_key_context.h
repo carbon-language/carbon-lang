@@ -79,10 +79,10 @@ auto HashtableEq(const LeftT& lhs, const RightT& rhs) -> bool;
 //       llvm::ArrayRef<llvm::StringRef> interned_strings)
 //       : interned_strings_(interned_strings) {}
 //
-//   auto HashKey(llvm::StringRef s, uint64_t seed) const -> HashCode {
+//   auto HashKey(llvm::StringRef s) const -> HashCode {
 //     return HashValue(s);
 //   }
-//   auto HashKey(int index_key, uint64_t seed) const -> HashCode {
+//   auto HashKey(int index_key) const -> HashCode {
 //     return HashKey(interned_strings_[index_key]);
 //   }
 //
@@ -99,7 +99,7 @@ auto HashtableEq(const LeftT& lhs, const RightT& rhs) -> bool;
 // ```
 struct DefaultKeyContext {
   template <typename AnyKeyT>
-  auto HashKey(const AnyKeyT& key, uint64_t seed) const -> HashCode;
+  auto HashKey(const AnyKeyT& key) const -> HashCode;
 
   template <typename AnyKeyT, typename TableKeyT>
   auto KeyEq(const AnyKeyT& lhs_key, const TableKeyT& rhs_key) const -> bool;
@@ -138,7 +138,7 @@ class TranslatingKeyContext {
   }
 
   template <typename AnyKeyT>
-  auto HashKey(const AnyKeyT& key, uint64_t seed) const -> HashCode;
+  auto HashKey(const AnyKeyT& key) const -> HashCode;
 
   template <typename AnyKeyT, typename TableKeyT>
   auto KeyEq(const AnyKeyT& lhs_key, const TableKeyT& rhs_key) const -> bool;
@@ -216,9 +216,8 @@ inline auto HashtableEq(const LeftT& lhs, const RightT& rhs) -> bool {
 }
 
 template <typename AnyKeyT>
-auto DefaultKeyContext::HashKey(const AnyKeyT& key, uint64_t seed) const
-    -> HashCode {
-  return HashValue(key, seed);
+auto DefaultKeyContext::HashKey(const AnyKeyT& key) const -> HashCode {
+  return HashValue(key);
 }
 
 template <typename AnyKeyT, typename TableKeyT>
@@ -229,13 +228,13 @@ auto DefaultKeyContext::KeyEq(const AnyKeyT& lhs_key,
 
 template <typename DerivedT>
 template <typename AnyKeyT>
-auto TranslatingKeyContext<DerivedT>::HashKey(const AnyKeyT& key,
-                                              uint64_t seed) const -> HashCode {
+auto TranslatingKeyContext<DerivedT>::HashKey(const AnyKeyT& key) const
+    -> HashCode {
   const DerivedT& self = *static_cast<const DerivedT*>(this);
   if constexpr (requires { self.TranslateKey(key); }) {
-    return HashValue(self.TranslateKey(key), seed);
+    return HashValue(self.TranslateKey(key));
   } else {
-    return HashValue(key, seed);
+    return HashValue(key);
   }
 }
 

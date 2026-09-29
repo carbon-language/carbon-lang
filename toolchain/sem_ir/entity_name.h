@@ -44,9 +44,8 @@ struct EntityName : public Printable<EntityName> {
   }
 
   // Hashing for EntityName. See common/hashing.h.
-  friend auto CarbonHashValue(const EntityName& value, uint64_t seed)
-      -> HashCode {
-    Hasher hasher(seed);
+  friend auto CarbonHashValue(const EntityName& value) -> HashCode {
+    Hasher hasher;
     hasher.HashRaw(value.IdentityKey());
     return static_cast<HashCode>(hasher);
   }

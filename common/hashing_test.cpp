@@ -98,15 +98,6 @@ TEST(HashingTest, Integers) {
   }
 }
 
-TEST(HashingTest, BasicSeeding) {
-  auto unseeded_hash = HashValue(42);
-  EXPECT_THAT(unseeded_hash, Ne(HashValue(42, 1)));
-  EXPECT_THAT(unseeded_hash, Ne(HashValue(42, 2)));
-  EXPECT_THAT(unseeded_hash, Ne(HashValue(42, 3)));
-  EXPECT_THAT(unseeded_hash,
-              Ne(HashValue(42, static_cast<uint64_t>(unseeded_hash))));
-}
-
 TEST(HashingTest, Pointers) {
   int object1 = 42;
   std::string object2 =
@@ -366,8 +357,8 @@ struct HashableType {
   // help ensure that the hashing framework doesn't accidentally override this.
   template <typename T>
     requires(std::same_as<T, HashableType>)
-  friend auto CarbonHashValue(const T& value, uint64_t seed) -> HashCode {
-    Hasher hasher(seed);
+  friend auto CarbonHashValue(const T& value) -> HashCode {
+    Hasher hasher;
     hasher.Hash(value.x, value.y);
     return static_cast<HashCode>(hasher);
   }
@@ -467,11 +458,6 @@ TEST(HashingTest, TupleRecursion) {
   EXPECT_THAT(HashValue(std::tuple{a, b, a}),
               Eq(HashValue(std::tuple{a, c, a})));
 }
-
-// The only significantly bad seed is zero, so pick a non-zero seed with a tiny
-// amount of entropy to make sure that none of the testing relies on the entropy
-// from this.
-constexpr uint64_t TestSeed = 42ULL * 1024;
 
 auto ToHexBytes(llvm::StringRef s) -> std::string {
   RawStringOstream rendered;
@@ -637,7 +623,7 @@ auto AllByteStringsHashedAndSorted() {
       bytes[j] = (static_cast<uint64_t>(i) >> (8 * j)) & 0xff;
     }
     std::string s(std::begin(bytes), std::end(bytes));
-    hashes.push_back({HashValue(s, TestSeed), s});
+    hashes.push_back({HashValue(s), s});
   }
 
   llvm::sort(hashes, [](const HashedString& lhs, const HashedString& rhs) {
@@ -748,7 +734,7 @@ struct SparseHashTest : ::testing::Test {
                SetBitCount::Begin, std::min(bits, SetBitCount::End))) {
         if (set_bit_count == 0) {
           std::string s(byte_count, '\0');
-          hashes.push_back({HashValue(s, TestSeed), std::move(s)});
+          hashes.push_back({HashValue(s), std::move(s)});
           continue;
         }
         for (int begin_set_bit : llvm::seq_inclusive(0, bits - set_bit_count)) {
@@ -793,7 +779,7 @@ struct SparseHashTest : ::testing::Test {
           if (has_end_byte_bits) {
             s[end_set_bit_byte_index] &= end_set_bit_byte;
           }
-          hashes.push_back({HashValue(s, TestSeed), std::move(s)});
+          hashes.push_back({HashValue(s), std::move(s)});
         }
       }
     }
