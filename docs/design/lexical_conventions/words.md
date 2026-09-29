@@ -39,8 +39,10 @@ in Unicode Normalization Form C (NFC).
 
 <!--
 Keep in sync:
-- utils/vscode/carbon.tmLanguage.json
+- utils/highlightjs/highlightjs_carbon_lang.js
 - utils/tree_sitter/queries/highlights.scm
+- utils/vim/syntax/carbon.vim
+- utils/vscode/carbon.tmLanguage.json
 -->
 
 The following words are interpreted as keywords:
