@@ -246,6 +246,30 @@ fn Test(d: D) {
   AsType(d, i32);
 }
 
+// --- splice_inst_storage_arg.carbon
+
+library "[[@TEST_NAME]]";
+
+class B {
+  fn MakeB() -> B {
+    return {};
+  }
+}
+
+//@dump-sem-ir-begin
+class A(template T: type) {
+  fn MakeA() -> A(T) {
+    return {.field = T.MakeB()};
+  }
+
+  var field: T;
+}
+
+fn F() {
+  A(B).MakeA();
+}
+//@dump-sem-ir-end
+
 // CHECK:STDOUT: --- convert.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
