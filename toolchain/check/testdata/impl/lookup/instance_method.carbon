@@ -32,6 +32,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: --- instance_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
@@ -67,10 +68,8 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %c.patt: %pattern_type.98b = wrapper_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %C.type.facet: %type = facet_value %C, () [concrete]
-// CHECK:STDOUT:   %I.WithSelf.F.type.b04: type = fn_type @I.WithSelf.F, @I.WithSelf(%C.type.facet) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.F.cef: %I.WithSelf.F.type.b04 = struct_value () [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.type.a90: type = fn_type @I.WithSelf.F, @I.WithSelf(%C) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.040: %I.WithSelf.F.type.a90 = struct_value () [concrete]
 // CHECK:STDOUT:   %.a89: type = fn_type_with_self_type %I.WithSelf.F.type.372, %I.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -235,10 +234,10 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %self.patt.loc18_8.2 => constants.%self.patt.36a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%C.type.facet) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%C) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%C.type.facet
-// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.b04
-// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.cef
+// CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.a90
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.040
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

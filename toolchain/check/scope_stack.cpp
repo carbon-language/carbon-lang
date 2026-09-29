@@ -143,7 +143,7 @@ auto ScopeStack::Pop(bool check_unused) -> void {
 
   // TODO: Multiple diagnostics on same line has non-deterministic order.
   // Add second sort key in diagnostics sorting.
-  scope.names.ForEach([&, check_unused](SemIR::NameId name_id) {
+  for (SemIR::NameId name_id : scope.names.entries()) {
     auto& lexical_results = lexical_lookup_.Get(name_id);
     CARBON_CHECK(lexical_results.back().scope_index == scope.index,
                  "Inconsistent scope index for name {0}", name_id);
@@ -151,7 +151,7 @@ auto ScopeStack::Pop(bool check_unused) -> void {
       CheckUnusedBinding(*context_, name_id, lexical_results.back());
     }
     lexical_results.pop_back();
-  });
+  }
 
   if (!scope.is_lexical_scope()) {
     CARBON_CHECK(non_lexical_scope_stack_.back().scope_index == scope.index);
@@ -375,7 +375,7 @@ auto ScopeStack::Suspend() -> SuspendedScope {
   result.suspended_items.reserve(result.entry.num_names +
                                  peek_compile_time_bindings.size());
 
-  result.entry.names.ForEach([&](SemIR::NameId name_id) {
+  for (SemIR::NameId name_id : result.entry.names.entries()) {
     auto suspended = lexical_lookup_.Suspend(name_id);
     CARBON_CHECK(suspended.index !=
                  SuspendedScope::ScopeItem::IndexForCompileTimeBinding);
@@ -384,7 +384,7 @@ auto ScopeStack::Suspend() -> SuspendedScope {
          .inst_id = suspended.inst_id,
          .is_decl_reachable = suspended.is_decl_reachable,
          .use_loc_id = suspended.use_loc_id});
-  });
+  }
   CARBON_CHECK(static_cast<int>(result.suspended_items.size()) ==
                result.entry.num_names);
 

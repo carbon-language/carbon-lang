@@ -30,10 +30,10 @@ fn Class(F: type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT: --- prefer_unqualified_lookup.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %F.patt: %pattern_type.98f = symbolic_binding_pattern F, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %F.patt: %pattern_type.9a5 = symbolic_binding_pattern F, 0 [symbolic]
 // CHECK:STDOUT:   %F: type = symbolic_binding F, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
@@ -93,10 +93,10 @@ fn Class(F: type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
-// CHECK:STDOUT:     %F.patt.loc5_14.1: %pattern_type.98f = symbolic_binding_pattern F, 0 [symbolic = %F.patt.loc5_14.2 (constants.%F.patt)]
+// CHECK:STDOUT:     %F.patt.loc5_14.1: %pattern_type.9a5 = symbolic_binding_pattern F, 0 [symbolic = %F.patt.loc5_14.2 (constants.%F.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5_16.1: type = splice_block %.loc5_16.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc5_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %F.loc5_14.2: type = symbolic_binding F, 0 [symbolic = %F.loc5_14.1 (constants.%F)]
@@ -106,7 +106,7 @@ fn Class(F: type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc13 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_13.1: type = splice_block %.loc13_13.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc13_13.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %F.loc13_11: type = symbolic_binding F, 0 [symbolic = @Class.%F.loc5_14.1 (constants.%F)]
@@ -118,7 +118,7 @@ fn Class(F: type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%F.loc5_14.2: type) {
-// CHECK:STDOUT:   %F.patt.loc5_14.2: %pattern_type.98f = symbolic_binding_pattern F, 0 [symbolic = %F.patt.loc5_14.2 (constants.%F.patt)]
+// CHECK:STDOUT:   %F.patt.loc5_14.2: %pattern_type.9a5 = symbolic_binding_pattern F, 0 [symbolic = %F.patt.loc5_14.2 (constants.%F.patt)]
 // CHECK:STDOUT:   %F.loc5_14.1: type = symbolic_binding F, 0 [symbolic = %F.loc5_14.1 (constants.%F)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

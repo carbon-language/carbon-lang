@@ -30,6 +30,7 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: --- raw_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %pattern_type.f15: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %self.param_patt.b2b: %pattern_type.f15 = ref_param_pattern [concrete]
@@ -46,8 +47,8 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.c01: %pattern_type.f15 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.1f6: %pattern_type.f15 = wrapper_binding_pattern self, %self.param_patt.c01 [concrete]
-// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
-// CHECK:STDOUT:   %tuple.b59: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.693: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple.94e: %tuple.type.693 = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.e55: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %.c11: Core.Form = init_form %tuple.type.e55 [concrete]
 // CHECK:STDOUT:   %pattern_type.394: type = pattern_type %tuple.type.e55 [concrete]
@@ -113,7 +114,7 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc25_35: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc25_40: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc25_43.1: %tuple.type.24b = tuple_literal (%i32.loc25_35, %i32.loc25_40) [concrete = constants.%tuple.b59]
+// CHECK:STDOUT:     %.loc25_43.1: %tuple.type.693 = tuple_literal (%i32.loc25_35, %i32.loc25_40) [concrete = constants.%tuple.94e]
 // CHECK:STDOUT:     %.loc25_43.2: type = converted %.loc25_43.1, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
 // CHECK:STDOUT:     %.loc25_43.3: Core.Form = init_form %.loc25_43.2 [concrete = constants.%.c11]
 // CHECK:STDOUT:     %self.param.loc25_12: %Class = value_param call_param0
@@ -151,7 +152,7 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc17_31: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc17_36: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc17_39.1: %tuple.type.24b = tuple_literal (%i32.loc17_31, %i32.loc17_36) [concrete = constants.%tuple.b59]
+// CHECK:STDOUT:     %.loc17_39.1: %tuple.type.693 = tuple_literal (%i32.loc17_31, %i32.loc17_36) [concrete = constants.%tuple.94e]
 // CHECK:STDOUT:     %.loc17_39.2: type = converted %.loc17_39.1, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
 // CHECK:STDOUT:     %.loc17_39.3: Core.Form = init_form %.loc17_39.2 [concrete = constants.%.c11]
 // CHECK:STDOUT:     %self.param.loc17_8: %Class = value_param call_param0

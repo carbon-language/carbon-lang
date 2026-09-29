@@ -47,6 +47,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: --- builtin_call.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Neq.type: type = fn_type @Neq [concrete]
 // CHECK:STDOUT:   %Neq: %Neq.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
@@ -92,6 +93,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: --- prelude.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]

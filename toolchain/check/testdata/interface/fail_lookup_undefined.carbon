@@ -53,6 +53,7 @@ interface BeingDefined {
 // CHECK:STDOUT: --- fail_lookup_undefined.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Undefined.type: type = facet_type <@Undefined> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]

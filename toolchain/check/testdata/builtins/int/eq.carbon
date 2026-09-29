@@ -110,6 +110,7 @@ fn Test(n: Core.IntLiteral) {
 // CHECK:STDOUT: --- int_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Eq.type: type = fn_type @Eq [concrete]

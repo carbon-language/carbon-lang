@@ -98,6 +98,7 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %WrongOrder.type: type = fn_type @WrongOrder [concrete]
 // CHECK:STDOUT:   %WrongOrder: %WrongOrder.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DuplicateVirtual.type: type = fn_type @DuplicateVirtual [concrete]

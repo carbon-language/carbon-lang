@@ -454,6 +454,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_no_data_members_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %EmptyUnion: type = class_type @EmptyUnion [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_empty.cpp_overload_set.type: type = cpp_overload_set_type @foo_empty.cpp_overload_set [concrete]
@@ -492,6 +493,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_single_data_member_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %SingleMemberUnion: type = class_type @SingleMemberUnion [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_single_member.cpp_overload_set.type: type = cpp_overload_set_type @foo_single_member.cpp_overload_set [concrete]
@@ -530,6 +532,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_multiple_data_members_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %MultipleMembersUnion: type = class_type @MultipleMembersUnion [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_multiple_members.cpp_overload_set.type: type = cpp_overload_set_type @foo_multiple_members.cpp_overload_set [concrete]
@@ -568,6 +571,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_in_namespace_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %InNamespaceUnion: type = class_type @InNamespaceUnion [concrete]
 // CHECK:STDOUT:   %pattern_type.007: type = pattern_type %InNamespaceUnion [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -589,8 +593,14 @@ fn F() {
 // CHECK:STDOUT:   %Default.facet.c4a: %Default.type = facet_value %InNamespaceUnion, (%custom_witness.85f) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.ee1: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.c4a) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %InNamespaceUnion, (%DefaultOrUnformed.impl_witness.ee1) [concrete]
+// CHECK:STDOUT:   %self.param_patt.ef9: %pattern_type.007 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.0ed: %pattern_type.007 = wrapper_binding_pattern self, %self.param_patt.ef9 [concrete]
 // CHECK:STDOUT:   %InNamespaceUnion.cpp_destructor.type: type = fn_type @InNamespaceUnion.cpp_destructor [concrete]
 // CHECK:STDOUT:   %InNamespaceUnion.cpp_destructor: %InNamespaceUnion.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc10 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc10 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -612,6 +622,21 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.c2f: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.cfe)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.162 = impl_witness_table (%Core.import_ref.c2f), @T.as_type.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %InNamespaceUnion.cpp_destructor.decl: %InNamespaceUnion.cpp_destructor.type = fn_decl @InNamespaceUnion.cpp_destructor [concrete = constants.%InNamespaceUnion.cpp_destructor] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generated {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc10 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.007 = ref_param_pattern [concrete = constants.%self.param_patt.ef9]
+// CHECK:STDOUT:     %self.patt: %pattern_type.007 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.0ed]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %InNamespaceUnion = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %InNamespaceUnion = wrapper_binding self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %InNamespaceUnion) {
@@ -641,14 +666,24 @@ fn F() {
 // CHECK:STDOUT:     %x.patt: %pattern_type.007 = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.007 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %InNamespaceUnion.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%InNamespaceUnion.cpp_destructor
-// CHECK:STDOUT:   %InNamespaceUnion.cpp_destructor.call: init %empty_tuple.type = call %InNamespaceUnion.cpp_destructor.bound(%x.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %x.var, constants.%Destroy.WithSelf.SelfDestruct.db3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%x.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10(%self.param: ref %InNamespaceUnion) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc10(%self.param: ref %InNamespaceUnion) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
+// CHECK:STDOUT:   %InNamespaceUnion.cpp_destructor.call: init %empty_tuple.type = call imports.%InNamespaceUnion.cpp_destructor.decl(%self.param)
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_in_relative_namespace_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %InRelativeNamespaceUnion: type = class_type @InRelativeNamespaceUnion [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
@@ -696,6 +731,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_in_outer_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %OuterUnion: type = class_type @OuterUnion [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %InnerUnion: type = class_type @InnerUnion [concrete]
@@ -718,8 +754,14 @@ fn F() {
 // CHECK:STDOUT:   %Default.facet.a9b: %Default.type = facet_value %OuterUnion, (%custom_witness.9b4) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.661: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.a9b) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %OuterUnion, (%DefaultOrUnformed.impl_witness.661) [concrete]
+// CHECK:STDOUT:   %self.param_patt.47b: %pattern_type.89d = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.67b: %pattern_type.89d = wrapper_binding_pattern self, %self.param_patt.47b [concrete]
 // CHECK:STDOUT:   %OuterUnion.cpp_destructor.type: type = fn_type @OuterUnion.cpp_destructor [concrete]
 // CHECK:STDOUT:   %OuterUnion.cpp_destructor: %OuterUnion.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc9 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc9 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -737,6 +779,21 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.c2f: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.cfe)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.162 = impl_witness_table (%Core.import_ref.c2f), @T.as_type.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %OuterUnion.cpp_destructor.decl: %OuterUnion.cpp_destructor.type = fn_decl @OuterUnion.cpp_destructor [concrete = constants.%OuterUnion.cpp_destructor] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generated {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc9 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.89d = ref_param_pattern [concrete = constants.%self.param_patt.47b]
+// CHECK:STDOUT:     %self.patt: %pattern_type.89d = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.67b]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %OuterUnion = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %OuterUnion = wrapper_binding self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %InnerUnion) {
@@ -765,14 +822,24 @@ fn F() {
 // CHECK:STDOUT:     %x.patt: %pattern_type.89d = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.89d = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %OuterUnion.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%OuterUnion.cpp_destructor
-// CHECK:STDOUT:   %OuterUnion.cpp_destructor.call: init %empty_tuple.type = call %OuterUnion.cpp_destructor.bound(%x.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %x.var, constants.%Destroy.WithSelf.SelfDestruct.db3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%x.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc9(%self.param: ref %OuterUnion) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc9(%self.param: ref %OuterUnion) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
+// CHECK:STDOUT:   %OuterUnion.cpp_destructor.call: init %empty_tuple.type = call imports.%OuterUnion.cpp_destructor.decl(%self.param)
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_definition_and_static_method_call_before.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %StaticMethodUnion: type = class_type @StaticMethodUnion [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %StaticMethodUnion.bar.cpp_overload_set.type: type = cpp_overload_set_type @StaticMethodUnion.bar.cpp_overload_set [concrete]
@@ -821,6 +888,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_and_static_method_call_after.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %StaticMethodUnion: type = class_type @StaticMethodUnion [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_static_method.cpp_overload_set.type: type = cpp_overload_set_type @foo_static_method.cpp_overload_set [concrete]
@@ -869,6 +937,7 @@ fn F() {
 // CHECK:STDOUT: --- import_decl_pointer_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DeclPointerParamUnion: type = class_type @DeclPointerParamUnion [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %DeclPointerParamUnion [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -905,6 +974,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_pointer_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DefPointerParamUnion: type = class_type @DefPointerParamUnion [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %DefPointerParamUnion [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -941,15 +1011,23 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_value_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_def_value_return.cpp_overload_set.type: type = cpp_overload_set_type @foo_def_value_return.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_def_value_return.cpp_overload_set.value: %foo_def_value_return.cpp_overload_set.type = cpp_overload_set_value @foo_def_value_return.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %DefValueReturnUnion: type = class_type @DefValueReturnUnion [concrete]
+// CHECK:STDOUT:   %pattern_type.133: type = pattern_type %DefValueReturnUnion [concrete]
 // CHECK:STDOUT:   %ptr.5e5: type = ptr_type %DefValueReturnUnion [concrete]
 // CHECK:STDOUT:   %foo_def_value_return__carbon_thunk.type: type = fn_type @foo_def_value_return__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo_def_value_return__carbon_thunk: %foo_def_value_return__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %self.param_patt.0ca: %pattern_type.133 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.00d: %pattern_type.133 = wrapper_binding_pattern self, %self.param_patt.0ca [concrete]
 // CHECK:STDOUT:   %DefValueReturnUnion.cpp_destructor.type: type = fn_type @DefValueReturnUnion.cpp_destructor [concrete]
 // CHECK:STDOUT:   %DefValueReturnUnion.cpp_destructor: %DefValueReturnUnion.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc8 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc8 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -963,6 +1041,21 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %DefValueReturnUnion.cpp_destructor.decl: %DefValueReturnUnion.cpp_destructor.type = fn_decl @DefValueReturnUnion.cpp_destructor [concrete = constants.%DefValueReturnUnion.cpp_destructor] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generated {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc8 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.133 = ref_param_pattern [concrete = constants.%self.param_patt.0ca]
+// CHECK:STDOUT:     %self.patt: %pattern_type.133 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.00d]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %DefValueReturnUnion = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %DefValueReturnUnion = wrapper_binding self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -974,14 +1067,24 @@ fn F() {
 // CHECK:STDOUT:   %foo_def_value_return__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_def_value_return__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc8_28.2: init %DefValueReturnUnion to %.loc8_28.1 = mark_in_place_init %foo_def_value_return__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_28.3: ref %DefValueReturnUnion = temporary %.loc8_28.1, %.loc8_28.2
-// CHECK:STDOUT:   %DefValueReturnUnion.cpp_destructor.bound: <bound method> = bound_method %.loc8_28.3, constants.%DefValueReturnUnion.cpp_destructor
-// CHECK:STDOUT:   %DefValueReturnUnion.cpp_destructor.call: init %empty_tuple.type = call %DefValueReturnUnion.cpp_destructor.bound(%.loc8_28.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc8_28.3, constants.%Destroy.WithSelf.SelfDestruct.db3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc8_28.3)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc8(%self.param: ref %DefValueReturnUnion) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc8(%self.param: ref %DefValueReturnUnion) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
+// CHECK:STDOUT:   %DefValueReturnUnion.cpp_destructor.call: init %empty_tuple.type = call imports.%DefValueReturnUnion.cpp_destructor.decl(%self.param)
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_decl_pointer_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %foo_decl_pointer_return.cpp_overload_set.type: type = cpp_overload_set_type @foo_decl_pointer_return.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_decl_pointer_return.cpp_overload_set.value: %foo_decl_pointer_return.cpp_overload_set.type = cpp_overload_set_value @foo_decl_pointer_return.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %DeclPointerReturnUnion: type = class_type @DeclPointerReturnUnion [concrete]
@@ -1014,6 +1117,7 @@ fn F() {
 // CHECK:STDOUT: --- import_definition_pointer_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %foo_def_pointer_return.cpp_overload_set.type: type = cpp_overload_set_type @foo_def_pointer_return.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_def_pointer_return.cpp_overload_set.value: %foo_def_pointer_return.cpp_overload_set.type = cpp_overload_set_value @foo_def_pointer_return.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %DefPointerReturnUnion: type = class_type @DefPointerReturnUnion [concrete]

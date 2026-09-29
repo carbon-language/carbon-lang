@@ -66,8 +66,8 @@ struct DeclaredFacetType : Printable<DeclaredFacetType> {
 
   // Requirements on types other than the generic self.
   struct TypeImplsInterface {
-    // A facet or type value, which is required to implement the interface.
-    // Must be a canonical instruction to ensure comparison works correctly.
+    // A facet that is required to implement the interface. Must be a canonical
+    // instruction to ensure comparison works correctly.
     InstId self_type;
     SpecificInterface specific_interface;
 
@@ -75,8 +75,8 @@ struct DeclaredFacetType : Printable<DeclaredFacetType> {
                            const TypeImplsInterface& rhs) -> bool = default;
   };
   struct TypeImplsNamedConstraint {
-    // A facet or type value, which is required to implement the constraint.
-    // Must be a canonical instruction to ensure comparison works correctly.
+    // A facet that is required to implement the constraint. Must be a canonical
+    // instruction to ensure comparison works correctly.
     InstId self_type;
     SpecificNamedConstraint specific_named_constraint;
 
@@ -120,10 +120,6 @@ struct DeclaredFacetType : Printable<DeclaredFacetType> {
   // named constraint that this facet type represents, or `std::nullopt` if it
   // has any other requirements.
   auto TryAsSingleExtend() const -> std::optional<SingleExtendFacetType>;
-
-  // Returns whether the facet type has no constraints, making it the facet type
-  // version of `TypeType`.
-  auto HasNoConstraints() const -> bool;
 
   // Returns whether the facet type only contains constraints that are extended
   // by the facet type. If true, `ExtendedOnly()` would be a no-op.

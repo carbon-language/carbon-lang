@@ -70,13 +70,12 @@ auto SpecificCoalescer::CoalesceEquivalentSpecifics(
           // When processing equivalences, we may change the canonical specific
           // multiple times, so we don't delete replaced specifics until the
           // end.
-          visited_equivalent_specifics.ForEach(
-              [&](std::pair<SemIR::SpecificId, SemIR::SpecificId>
-                      equivalent_entry) {
-                CARBON_VLOG("Found equivalent specifics: {0}, {1}",
-                            equivalent_entry.first, equivalent_entry.second);
-                ProcessSpecificEquivalence(equivalent_entry);
-              });
+          for (const auto& equivalent_entry :
+               visited_equivalent_specifics.entries()) {
+            CARBON_VLOG("Found equivalent specifics: {0}, {1}",
+                        equivalent_entry.first, equivalent_entry.second);
+            ProcessSpecificEquivalence(equivalent_entry);
+          }
 
           // Removed the replaced specific from the list of emitted specifics.
           // Only the top level, since the others are somewhere else in the

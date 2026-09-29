@@ -12,6 +12,7 @@
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
@@ -3120,10 +3121,34 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
         // The result is an instruction.
         return MakeConstantResult(
             eval_context.context(),
-            SemIR::InstValue{
-                .type_id = GetSingletonType(eval_context.context(),
-                                            SemIR::InstType::TypeInstId),
-                .inst_id = result_inst_id},
+            SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
+                             .inst_id = result_inst_id},
+            Phase::Concrete);
+      }
+      // Couldn't perform the action because it's still dependent.
+      return MakeConstantResult(eval_context.context(), inst,
+                                Phase::TemplateSymbolic);
+    } else if constexpr (ConstantKind ==
+                         SemIR::InstConstantKind::MultiInstAction) {
+      auto result_inst_ids = PerformDelayedAction(
+          eval_context.context(), eval_context.specific_id(),
+          SemIR::LocId(inst_id), inst.As<InstT>());
+      if (!result_inst_ids.empty()) {
+        // The result is a tuple of instruction values.
+        for (auto& result_inst_id : result_inst_ids) {
+          result_inst_id =
+              eval_context.constant_values().GetInstId(MakeConstantResult(
+                  eval_context.context(),
+                  SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
+                                   .inst_id = result_inst_id},
+                  Phase::Concrete));
+        }
+        return MakeConstantResult(
+            eval_context.context(),
+            SemIR::TupleValue{
+                .type_id = inst.type_id(),
+                .elements_id =
+                    eval_context.inst_blocks().AddCanonical(result_inst_ids)},
             Phase::Concrete);
       }
       // Couldn't perform the action because it's still dependent.
@@ -3339,15 +3364,15 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
     llvm::append_range(declared_facet_type->self_impls_named_constraints,
                        rhs.extend_named_constraints);
   } else {
-    auto lhs_facet_or_type = GetCanonicalFacetOrTypeValue(context, lhs_id);
+    auto lhs_facet = GetCanonicalFacet(context, lhs_id);
 
     auto extends_interface = [=](SemIR::SpecificInterface si)
         -> SemIR::DeclaredFacetType::TypeImplsInterface {
-      return {lhs_facet_or_type, si};
+      return {lhs_facet, si};
     };
     auto extends_constraint = [=](SemIR::SpecificNamedConstraint sc)
         -> SemIR::DeclaredFacetType::TypeImplsNamedConstraint {
-      return {lhs_facet_or_type, sc};
+      return {lhs_facet, sc};
     };
 
     // Extend constraints are copied over without replacing anything, but are
@@ -3458,12 +3483,30 @@ auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
+// Update `context.access_context` to the type of the innermost enclosing type
+// scope of the generic.
+static auto SetAccessContext(Context& context, const SemIR::Generic& generic) {
+  auto function_decl =
+      context.insts().TryGetAs<SemIR::FunctionDecl>(generic.decl_id);
+  if (!function_decl || !function_decl->function_id.has_value()) {
+    return;
+  }
+  const auto& function = context.functions().Get(function_decl->function_id);
+  if (!function.parent_scope_id.has_value()) {
+    return;
+  }
+
+  context.access_context() = function.parent_scope_id;
+}
+
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region) -> void {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
-  auto eval_block_id = context.generics().Get(generic_id).GetEvalBlock(region);
+  const auto& generic = context.generics().Get(generic_id);
+  auto eval_block_id = generic.GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
+  llvm::SaveAndRestore access_context(context.access_context());
 
   // Allocate the value block and store it back onto the specific, so that our
   // in-progress results are visible.
@@ -3475,6 +3518,8 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
     inst_id = SemIR::InstId::None;
   }
   specific.SetValueBlock(region, value_block_id);
+
+  SetAccessContext(context, generic);
 
   EvalContext eval_context(&context, loc_id, specific_id);
 

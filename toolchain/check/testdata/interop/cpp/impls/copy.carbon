@@ -120,7 +120,7 @@ fn CopyDeletedMove(c: Cpp.DeletedMove) -> Cpp.DeletedMove {
 
 fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
   // TODO: List candidates here.
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+7]]:10: error: cannot copy value of type `Cpp.NonConstCopy` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+7]]:10: error: cannot copy value of type `NonConstCopy` [CopyOfUncopyableType]
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:          ^
   // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: note: type `Cpp.NonConstCopy` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
@@ -132,7 +132,7 @@ fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
 
 fn CopyAmbiguousCopy(c: Cpp.AmbiguousCopy) -> Cpp.AmbiguousCopy {
   // TODO: List candidates here.
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+7]]:10: error: cannot copy value of type `Cpp.AmbiguousCopy` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+7]]:10: error: cannot copy value of type `AmbiguousCopy` [CopyOfUncopyableType]
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:          ^
   // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: note: type `Cpp.AmbiguousCopy` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
@@ -195,6 +195,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT: --- copy_copyable.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Copyable: type = class_type @Copyable [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -291,6 +292,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT: --- copy_generically.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Copy.type.bd0: type = facet_type <@Copy.1> [concrete]
 // CHECK:STDOUT:   %Copy.type.705: type = fn_type @Copy.loc6 [concrete]
 // CHECK:STDOUT:   %Copy: %Copy.type.705 = struct_value () [concrete]

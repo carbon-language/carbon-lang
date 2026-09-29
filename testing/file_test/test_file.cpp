@@ -25,6 +25,9 @@ using ::testing::Matcher;
 using ::testing::MatchesRegex;
 using ::testing::StrEq;
 
+// The name of the trailing split that autoupdate writes `CHECK` lines into.
+static constexpr llvm::StringLiteral AutoupdateSplit = "AUTOUPDATE-SPLIT";
+
 // Represents the different kinds of version-control conflict markers that are
 // relevant for the autoupdater. One key concern here is the distinction between
 // "snapshot" and "diff" conflict regions. Snapshot regions are the more
@@ -735,6 +738,22 @@ static auto TryConsumeSetFlag(llvm::StringRef line_trimmed,
   return true;
 }
 
+// Returns whether the file uses a `// --- AUTOUPDATE-SPLIT` split.
+//
+// Autoupdate writes every `CHECK` into that split, so when one is present, a
+// `CHECK` line anywhere else is part of the test input rather than an
+// expectation. That's what allows a split to hold a test file that itself
+// contains `CHECK` lines.
+static auto UsesAutoupdateSplit(llvm::StringRef content) -> bool {
+  for (llvm::StringRef line : llvm::split(content, '\n')) {
+    llvm::StringRef trimmed = line.trim();
+    if (trimmed.consume_front("// ---") && trimmed.trim() == AutoupdateSplit) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Process content for either the main file (with `test_file` and
 // `found_autoupdate` provided) or an included file (with those arguments null).
 //
@@ -760,6 +779,8 @@ static auto ProcessFileContent(llvm::StringRef filename,
   // When autoupdating, we track whether we're inside conflict markers.
   // Otherwise conflict markers are errors.
   auto previous_conflict_marker = MarkerKind::None;
+
+  const bool uses_autoupdate_split = UsesAutoupdateSplit(content_cursor);
 
   SplitState split_state;
 
@@ -802,13 +823,18 @@ static auto ProcessFileContent(llvm::StringRef filename,
       continue;
     }
 
-    CARBON_ASSIGN_OR_RETURN(
-        is_consumed,
-        TryConsumeCheck(running_autoupdate, line_index, line, line_trimmed,
-                        test_file ? &test_file->expected_stdout : nullptr,
-                        test_file ? &test_file->expected_stderr : nullptr));
-    if (is_consumed) {
-      continue;
+    // `CHECK` lines are only expectations where autoupdate would write them.
+    // Everywhere else they're input, which is how a split can hold a test file
+    // that itself contains `CHECK` lines.
+    if (!uses_autoupdate_split || split_state.filename == AutoupdateSplit) {
+      CARBON_ASSIGN_OR_RETURN(
+          is_consumed,
+          TryConsumeCheck(running_autoupdate, line_index, line, line_trimmed,
+                          test_file ? &test_file->expected_stdout : nullptr,
+                          test_file ? &test_file->expected_stderr : nullptr));
+      if (is_consumed) {
+        continue;
+      }
     }
 
     if (test_file) {
@@ -894,8 +920,6 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
   if (!found_autoupdate) {
     return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting";
   }
-
-  constexpr llvm::StringLiteral AutoupdateSplit = "AUTOUPDATE-SPLIT";
 
   // Validate AUTOUPDATE-SPLIT use, and remove it from test files if present.
   if (test_file.has_splits) {
