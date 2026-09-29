@@ -223,7 +223,7 @@ fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
 // CHECK:STDOUT:     name_scope50000005: {inst: inst50000027, parent_scope: name_scope50000004, has_error: false, extended_scopes: [], names: {name2: inst50000029, name3: inst5000002A}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name50000000: {name: name(SelfType), parent_scope: name_scope50000002, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
-// CHECK:STDOUT:     entity_name50000001: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1}, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name50000001: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:     entity_name50000002: {name: name6, parent_scope: name_scope50000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:     entity_name50000003: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:     entity_name50000004: {name: name2, parent_scope: name_scope50000005, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
