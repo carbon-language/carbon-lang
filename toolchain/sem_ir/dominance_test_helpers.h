@@ -152,7 +152,6 @@ class DominanceTestFile {
           .first_owning_decl_id = InstId::None},
          {.call_param_patterns_id = InstBlockId::Empty,
           .call_params_id = InstBlockId::Empty,
-          .call_param_default_values_id = InstBlockId::Empty,
           .call_param_ranges = Function::CallParamIndexRanges::Empty,
           .return_type_inst_id = TypeInstId::None,
           .return_form_inst_id = InstId::None,
