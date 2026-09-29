@@ -5469,9 +5469,7 @@ The declaration of an interface implementation consists of:
     [associated constants](#associated-constants) including
     [associated facets](#associated-facets).
 
-As adopted in
-[proposal #5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#proposal),
-an `impl` declaration is associated with the scope it is first declared in, and
+An `impl` declaration is associated with the scope it is first declared in, and
 can only be redeclared in that scope, matching all other declarations. To
 redeclare an `impl` after the end of the scope it was declared in, that scope
 may be re-entered as part of the `impl` redeclaration by writing it in the same
@@ -5541,8 +5539,7 @@ these rules:
     [information accumulation principle](/docs/project/principles/information_accumulation.md).
 
 For `impl` members defined out-of-line, parentheses are added around the
-corresponding portion of the scope (as adopted in
-[proposal #3763](/proposals/p003763-matching-redeclarations.md#out-of-line-definitions-of-associated-functions)).
+corresponding portion of the scope.
 For example:
 
 ```carbon
@@ -5579,6 +5576,11 @@ fn Class.(Self as Interface).F() {}
 fn Class.(as Interface).G() {}
 ```
 
+> References:
+>
+> -   ["Out-of-line definitions of associated functions" in proposal #3763](/proposals/p003763-matching-redeclarations.md#out-of-line-definitions-of-associated-functions)
+> -   [Proposal #5366: "The name of an `impl` in `class` scope"](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#proposal)
+
 ### Matching redeclarations
 
 > **TODO:** Update this section to reflect the new rules adopted in
@@ -5590,9 +5592,7 @@ nothing is defined twice. The program is invalid if it contains two declarations
 of the same entity that _differ_.
 
 Named declarations (such as interfaces and named constraints) follow the general
-[matching redeclaration rules](/docs/design/declaring_entities.md#matching-redeclarations-of-an-entity)
-adopted in
-[proposal #3763](/proposals/p003763-matching-redeclarations.md#proposal):
+[matching redeclaration rules](/docs/design/declaring_entities.md#matching-redeclarations-of-an-entity):
 two declarations declare the same entity if they have the same scope and the
 same name, and two owned declarations differ if the sequence of tokens following
 the introducer keyword and optional scope up to the semicolon or open brace is
@@ -5602,10 +5602,7 @@ Two `impl` declarations declare the same entity if the portion of the
 declaration from the introducer keyword until the `;` or `{` does not differ,
 except that an omitted type before `as` is normalized by inserting `Self` before
 `as` (inside the parentheses when redeclared outside of its `class` scope)
-before looking for and comparing with a previous declaration (see
-[proposal #3763](/proposals/p003763-matching-redeclarations.md#impl-declarations)
-and
-[proposal #5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#optional-self-before-as)).
+before looking for and comparing with a previous declaration.
 For example:
 
 ```carbon
@@ -5628,11 +5625,16 @@ impl A.(Self as As(i32)) { ... }
 impl A.(as As(bool)) { ... }
 ```
 
+> References:
+>
+> -   [Proposal #3763: "Matching redeclarations"](/proposals/p003763-matching-redeclarations.md#proposal),
+>     including section:
+>     -   ["`impl` declarations"](/proposals/p003763-matching-redeclarations.md#impl-declarations)
+> -   ["Optional `Self` before `as`" in proposal #5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#optional-self-before-as)
+
 #### `impl` members vs `interface` members
 
-As adopted in
-[proposal #3763](/proposals/p003763-matching-redeclarations.md#impl-members-vs-interface-members),
-associated functions in an `impl` are permitted to differ syntactically from the
+Associated functions in an `impl` are permitted to differ syntactically from the
 corresponding declarations in the `interface`:
 
 ```carbon
@@ -5673,6 +5675,10 @@ Otherwise, a synthetic function called a _thunk_ is generated:
 -   It is an error if a thunk is needed to wrap a function declaration with a
     `var` parameter, because otherwise a copy would always be performed when
     initializing the parameter.
+
+> References:
+>
+> -   ["`impl` members vs `interface` members" in proposal #3763](/proposals/p003763-matching-redeclarations.md#impl-members-vs-interface-members)
 
 ### Declaration examples
 

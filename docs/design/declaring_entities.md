@@ -109,10 +109,6 @@ fn A.F(n: (i32)) {}
 
 #### Modifier keywords
 
-Rules for modifier keywords are adopted from
-[proposal #3762](/proposals/p003762-merging-forward-declarations.md#modifier-keywords)
-and
-[proposal #3980](/proposals/p003980-singular-extern-declarations.md#proposal).
 As a rule of thumb, modifier keywords are required when, if prior optional
 declarations were removed, the lack of the modifier keyword would change
 behavior.
@@ -125,25 +121,25 @@ behavior.
     must match between forward declaration and definition (though `abstract`
     functions won't have definitions).
 -   If any owning declaration has the `extern` modifier, all owning declarations
-    must have it (see
-    [proposal #3980](/proposals/p003980-singular-extern-declarations.md#owning-extern-declarations)).
+    must have it.
 -   Access modifiers (`private` and `protected`) must match across all
     declarations and definitions, including between an `extern library
     "<owning_library>"` declaration and the owning `extern` declaration.
+
+> References:
+>
+> -   ["Modifier keywords" in proposal #3762](/proposals/p003762-merging-forward-declarations.md#modifier-keywords)
+> -   [Proposal #3980: "Singular `extern` declarations"](/proposals/p003980-singular-extern-declarations.md#proposal)
 
 #### Syntactic matching and scopes
 
 Two owned declarations _syntactically match_ if the sequence of tokens in
 the declaration following the introducer keyword and the optional scope, up
 to the semicolon or open brace, is identical, except for `unused` modifiers
-on parameters (see
-[proposal #3763](/proposals/p003763-matching-redeclarations.md#proposal)
-and
-[proposal #3980](/proposals/p003980-singular-extern-declarations.md#declarations)).
+on parameters.
 
 An entity may be redeclaration in a different scope using a a qualified
-declaration (see
-[proposal #3763](/proposals/p003763-matching-redeclarations.md#scope-differences)):
+declaration:
 
 -   Take the portion of the declaration from the introducer up to the end of
     the scope.
@@ -189,8 +185,7 @@ out-of-line definition would not match.
 To redeclare an `impl` after the end of the `class` scope it was declared
 in, that scope may be re-entered as part of the `impl` redeclaration, in the
 same way, except with parentheses around the name of the `impl`, as in
-`impl X.(as Y) { ... }` (see
-[proposal #5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#proposal)).
+`impl X.(as Y) { ... }`.
 See
 ["Declaring implementations" in the "Generics: details" design document](generics/details.md#declaring-implementations).
 
@@ -216,14 +211,22 @@ For `let` and `var` declarations with a single name binding
 `;` rather than at the `}` or `;`. Note though it is an open question
 whether this form permits redeclarations. An arbitrary pattern that is not a
 single binding (`let (A: Type1, B: Type2) = Value;`) does not permit
-redeclarations (see
-[proposal #3763](/proposals/p003763-matching-redeclarations.md#let-and-var-declarations)).
+redeclarations.
 
 Any unqualified names used in syntactic matching will resolve to the same entity
-in redeclarations due to the poisoning of failed unqualified lookups (see
-[proposal #3763](/proposals/p003763-matching-redeclarations.md#unqualified-name-lookup)).
+in redeclarations due to the poisoning of failed unqualified lookups.
 See
 ["Unqualified name lookup" in the "Name lookup" design document](name_lookup.md#unqualified-name-lookup).
+
+> References:
+>
+> -   [Proposal #3763: "Matching redeclarations"](/proposals/p003763-matching-redeclarations.md#proposal),
+>     including sections:
+>     -   ["Scope differences"](/proposals/p003763-matching-redeclarations.md#scope-differences)
+>     -   ["`let` and `var` declarations"](/proposals/p003763-matching-redeclarations.md#let-and-var-declarations)
+>     -   ["Unqualified name lookup"](/proposals/p003763-matching-redeclarations.md#unqualified-name-lookup)
+> -   ["Declarations" in proposal #3980](/proposals/p003980-singular-extern-declarations.md#declarations)
+> -   [Proposal #5366: "The name of an `impl` in `class` scope"](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#proposal)
 
 ## `extern` and `extern library`
 
@@ -231,8 +234,7 @@ There are two forms of the `extern` modifier:
 
 -   On an owning declaration, `extern` limits access to the definition.
     -   The entity must be directly imported in order to use the definition;
-        otherwise it is incomplete (see
-        [proposal #3980](/proposals/p003980-singular-extern-declarations.md#impact-on-indirect-imports)).
+        otherwise it is incomplete.
     -   An `extern library` declaration is optional.
 -   On a non-owning declaration, `extern library` allows references to an entity
     without depending on the owning library.
@@ -240,8 +242,7 @@ There are two forms of the `extern` modifier:
     -   This can be used to improve build performance, such as by splitting out
         a declaration in order to reduce a library's dependencies.
     -   `extern library` declarations only use semantic matching for
-        redeclarations, not syntactic matching (see
-        [proposal #3980](/proposals/p003980-singular-extern-declarations.md#no-syntactic-matching-for-extern-library-declarations)).
+        redeclarations, not syntactic matching.
 
 For example, a use of both might look like:
 
@@ -283,6 +284,11 @@ extern fn MyClassFactory(val: i32) -> MyClass* {
   return c;
 }
 ```
+
+> References:
+>
+> -   ["Impact on indirect imports" in proposal #3980](/proposals/p003980-singular-extern-declarations.md#impact-on-indirect-imports)
+> -   ["No syntactic matching for `extern library` declarations" in proposal #3980](/proposals/p003980-singular-extern-declarations.md#no-syntactic-matching-for-extern-library-declarations)
 
 ### Valid scopes for `extern`
 
@@ -339,9 +345,7 @@ fn ValidUse() -> i32 {
 
 #### Indirect imports of non-`extern` types
 
-As adopted in
-[proposal #3980](/proposals/p003980-singular-extern-declarations.md#indirect-imports-of-non-extern-types),
-non-`extern` entities are complete if their definition is imported, even if that
+Non-`extern` entities are complete if their definition is imported, even if that
 import is indirect, as in:
 
 ```
@@ -365,11 +369,13 @@ import library "b";
 G().F();
 ```
 
+> References:
+>
+> -   ["Indirect imports of non-`extern` types" in proposal #3980](/proposals/p003980-singular-extern-declarations.md#indirect-imports-of-non-extern-types)
+
 ### Using imported declarations
 
-As adopted in
-[proposal #3980](/proposals/p003980-singular-extern-declarations.md#using-imported-declarations),
-since `extern library "a" class C;` must be imported by the owning library, we
+Since `extern library "a" class C;` must be imported by the owning library, we
 allow uses of the imported name prior to its declaration within the same file.
 This means the following works:
 
@@ -391,11 +397,13 @@ extern class MyType {
 }
 ```
 
+> References:
+>
+> -   ["Using imported declarations" in proposal #3980](/proposals/p003980-singular-extern-declarations.md#using-imported-declarations)
+
 ### Validation for non-owning `extern library` declarations
 
-As adopted in
-[proposal #3980](/proposals/p003980-singular-extern-declarations.md#validation-for-non-owning-extern-library-declarations),
-we offer some validation that the library in `extern library` is correct, in the
+We offer some validation that the library in `extern library` is correct, in the
 sense of being the single non-owning library declaring that entity and naming
 the single owning library. When the owning library is incorrect, it's very
 likely to be detected in two cases:
@@ -406,6 +414,10 @@ likely to be detected in two cases:
 
 Other cases, such as when both libraries are independently imported, may or may
 not be caught, dependent upon the cost of validation.
+
+> References:
+>
+> -   ["Validation for non-owning `extern library` declarations" in proposal #3980](/proposals/p003980-singular-extern-declarations.md#validation-for-non-owning-extern-library-declarations)
 
 ## Alternatives considered
 

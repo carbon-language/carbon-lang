@@ -1277,9 +1277,7 @@ fn Add(a: i64, b: i64) -> i64 {
 ```
 
 The names of the parameters are in scope until the end of the definition or
-declaration. As adopted in
-[proposal #3763](/proposals/p003763-matching-redeclarations.md#_-parameter-names-and-unused-modifier),
-parameters may be marked with the `unused` keyword in the
+declaration. Parameters may be marked with the `unused` keyword in the
 definition or given the name `_` if they are unused.
 
 > References:
@@ -1295,6 +1293,7 @@ definition or given the name `_` if they are unused.
 >     [#476: Optional argument names (unused arguments)](https://github.com/carbon-language/carbon-lang/issues/476)
 > -   Question-for-leads issue
 >     [#1132: How do we match forward declarations with their definitions?](https://github.com/carbon-language/carbon-lang/issues/1132)
+> -   ["`_` parameter names and `unused` modifier" in proposal #3763](/proposals/p003763-matching-redeclarations.md#_-parameter-names-and-unused-modifier)
 
 ### Parameters
 

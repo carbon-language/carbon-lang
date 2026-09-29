@@ -804,16 +804,13 @@ class GraphNode {
 
 Class modifiers (`abstract`, `base`, `final`) exist only on the
 definition, not on the forward declaration, while access modifiers (`private`
-and `protected`) must match (see
-[proposal #3762](/proposals/p003762-merging-forward-declarations.md#modifier-keywords)).
+and `protected`) must match.
 
 An incomplete type cannot be used as the target of an `extend` declaration (such
 as `extend base: T` or `extend adapt T`), as the target type must be complete to
 allow name lookup into it.
 
-As adopted in
-[proposal #3762](/proposals/p003762-merging-forward-declarations.md#type-scopes-may-contain-both-a-forward-declaration-and-definition),
-the combination of a forward declaration and a definition is allowed in type
+The combination of a forward declaration and a definition is allowed in type
 scopes. This includes both member functions and member types.
 
 For example:
@@ -843,6 +840,11 @@ unlike function bodies.
 
 **Open question:** What else is specifically allowed and forbidden with an
 incomplete type has not yet been decided.
+
+> References:
+>
+> -   ["Modifier keywords" in proposal #3762](/proposals/p003762-merging-forward-declarations.md#modifier-keywords)
+> -   ["Type scopes may contain both a forward declaration and definition" in proposal #3762](/proposals/p003762-merging-forward-declarations.md#type-scopes-may-contain-both-a-forward-declaration-and-definition)
 
 ### `Self`
 
@@ -1384,10 +1386,8 @@ implement a virtual function that passes `self` by value.
 
 An `override` function can be used directly in the derived class if it has the
 same signature as in the base class, except with the derived class as the type
-of `self`. Otherwise, as adopted in
-[proposal #3763](/proposals/p003763-matching-redeclarations.md#virtual-functions),
-a thunk is generated that differs from the declaration in the base class by
-replacing the type of `self` with the derived class.
+of `self`. Otherwise, a thunk is generated that differs from the declaration in
+the base class by replacing the type of `self` with the derived class.
 
 When a virtual function is used directly in a
 base class and not overridden in the derived class, it is also used directly in
@@ -1442,6 +1442,10 @@ This matches the approach used for
 > so would have return type `B*`. The downside is that the vtable for `B` would
 > have two `Clone` slots, for `A.Clone` and `B.Clone`, whereas a covariant
 > return in C++ would only need a single vtable slot to express the same thing.
+
+> References:
+>
+> -   ["`virtual` functions" in proposal #3763](/proposals/p003763-matching-redeclarations.md#virtual-functions)
 
 #### Subtyping
 
