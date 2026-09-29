@@ -403,9 +403,6 @@ static auto DestroyStructField(Context& context, SemIR::LocId loc_id,
 static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
                                        SemIR::InstId callee_self_param_id,
                                        SemIR::TypeId self_type_id) -> void {
-  (void)loc_id;
-  (void)callee_self_param_id;
-
   while (self_type_id.has_value()) {
     auto inst = context.types().GetAsInst(self_type_id);
     CARBON_KIND_SWITCH(inst) {
@@ -445,8 +442,24 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         return;
       }
       case CARBON_KIND(SemIR::TupleType tuple_type): {
-        // TODO: implement destruction for tuple types.
-        (void)tuple_type;
+        auto tuple_elements =
+            context.inst_blocks().Get(tuple_type.type_elements_id);
+        CARBON_CHECK(!tuple_elements.empty(),
+                     "empty tuples should be trivially destructible");
+
+        for (auto i = static_cast<std::int64_t>(tuple_elements.size()) - 1;
+             i >= 0; --i) {
+          auto int_id = context.ints().Add(i);
+          BuildSelfDestructCall(
+              context,
+              PerformTupleAccess(
+                  context, loc_id, callee_self_param_id,
+                  AddInst(context, loc_id,
+                          SemIR::IntValue{
+                              .type_id = GetSingletonType(
+                                  context, SemIR::IntLiteralType::TypeInstId),
+                              .int_id = int_id})));
+        }
         return;
       }
       default: {

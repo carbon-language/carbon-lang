@@ -393,6 +393,12 @@ fn Test2(c: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.92e03c783d6af646:core.Destroy.Core"(ptr %self) #0 !dbg !136 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %self, i32 0, i32 2, !dbg !138
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %tuple.elem2.tuple.elem), !dbg !138
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %self, i32 0, i32 1, !dbg !138
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %tuple.elem1.tuple.elem), !dbg !138
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %self, i32 0, i32 0, !dbg !138
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %tuple.elem0.tuple.elem), !dbg !138
 // CHECK:STDOUT:   ret void, !dbg !138
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -613,6 +619,10 @@ fn Test2(c: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.4c2c335412ec52fa:core.Destroy.Core"(ptr %self) #0 !dbg !203 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %self, i32 0, i32 1, !dbg !205
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %tuple.elem1.tuple.elem), !dbg !205
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %self, i32 0, i32 0, !dbg !205
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f38e1c3ccdfe019b:core.Destroy.Core"(ptr %tuple.elem0.tuple.elem), !dbg !205
 // CHECK:STDOUT:   ret void, !dbg !205
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -649,6 +659,10 @@ fn Test2(c: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.2f43e328c637647f:core.Destroy.Core"(ptr %self) #0 !dbg !223 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %self, i32 0, i32 1, !dbg !225
+// CHECK:STDOUT:   call void @"_CSelfDestruct.12212b84320f2fd6:core.Destroy.Core"(ptr %tuple.elem1.tuple.elem), !dbg !225
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %self, i32 0, i32 0, !dbg !225
+// CHECK:STDOUT:   call void @"_CSelfDestruct.0950f8aecfaebf0b:core.Destroy.Core"(ptr %tuple.elem0.tuple.elem), !dbg !225
 // CHECK:STDOUT:   ret void, !dbg !225
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -692,6 +706,10 @@ fn Test2(c: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.bb4067704e9a198c:core.Destroy.Core"(ptr %self) #0 !dbg !247 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %self, i32 0, i32 1, !dbg !249
+// CHECK:STDOUT:   call void @"_CSelfDestruct.12212b84320f2fd6:core.Destroy.Core"(ptr %tuple.elem1.tuple.elem), !dbg !249
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %self, i32 0, i32 0, !dbg !249
+// CHECK:STDOUT:   call void @"_CSelfDestruct.680f7fa3ef86df7a:core.Destroy.Core"(ptr %tuple.elem0.tuple.elem), !dbg !249
 // CHECK:STDOUT:   ret void, !dbg !249
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
