@@ -10,6 +10,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/sem_ir/entity_name.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -136,6 +137,14 @@ auto SugaredTypeFinder::FindSpelledType(InstId inst_id) -> TypeInstId {
         continue;
       }
       case CARBON_KIND_ANY(AnyBinding, binding): {
+        // Prefer the type as written in the declaration of the binding.
+        auto declared_type_inst_id =
+            sem_ir_->entity_names().Get(binding.entity_name_id).type_inst_id;
+        if (declared_type_inst_id.has_value() &&
+            sem_ir_->types().GetTypeIdForTypeInstId(declared_type_inst_id) ==
+                inst.type_id()) {
+          return declared_type_inst_id;
+        }
         inst_id = LookThrough(inst.type_id(), binding.value_id);
         continue;
       }
@@ -161,11 +170,10 @@ auto SugaredTypeFinder::FindSpelledType(InstId inst_id) -> TypeInstId {
       }
 
       default: {
-        // TODO: Handle more cases here. For example, the type of a name
-        // reference to a binding or field should use the type as written in
-        // the declaration of that binding or field, and the type of an index
-        // into an array should be the element type as written in the array
-        // type.
+        // TODO: Handle more cases here. For example, the type of a reference to
+        // a class field should use the type as written in the declaration of
+        // that field, and the type of an index into an array should be the
+        // element type as written in the array type.
         return TypeInstId::None;
       }
     }

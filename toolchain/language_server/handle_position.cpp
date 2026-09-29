@@ -4,10 +4,12 @@
 
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/language_server/handle.h"
+#include "toolchain/language_server/handle_sem_ir_text.h"
 #include "toolchain/language_server/position.h"
 #include "toolchain/language_server/sem_ir_index.h"
 #include "toolchain/sem_ir/file.h"
@@ -32,34 +34,21 @@ static auto StringifyTypeForHover(const SemIR::File& sem_ir,
   return SemIR::StringifyTypeOfInst(sem_ir, inst_id);
 }
 
-// Given a position-based query, returns the corresponding position information.
-// If the request is invalid or there is no instruction at that position,
-// produces a response to the query: an InvalidParams error or a
-// default-constructed reply, as appropriate.
-//
-// TODO: If a default-constructed response is not the correct way to handle an
-// invalid location, we will need to extend this function to accept a fallback
-// value. For now, it's right for all the queries we support.
+// Returns the file a position-based query refers to. If the request names a
+// file we don't know, produces an InvalidParams error and returns null.
 template <typename ResponseType>
-static auto FindInstAtPositionOrFail(
+static auto FindFileOrFail(
     Context& context, const clang::clangd::TextDocumentPositionParams& params,
     llvm::function_ref<auto(llvm::Expected<ResponseType>)->void> on_done)
-    -> PositionInfo {
+    -> const Context::File* {
   auto* file = context.LookupFile(params.textDocument.uri.file());
   if (!file) {
     on_done(llvm::make_error<clang::clangd::LSPError>(
         llvm::formatv("Unknown textDocument `{0}`",
                       params.textDocument.uri.file()),
         clang::clangd::ErrorCode::InvalidParams));
-    return {};
   }
-
-  auto info = FindPositionInfo(*file, params.position);
-  if (!info.has_inst()) {
-    on_done(ResponseType());
-  }
-
-  return info;
+  return file;
 }
 
 // Implements `textDocument/hover`:
@@ -68,8 +57,19 @@ auto HandleHover(
     Context& context, const clang::clangd::TextDocumentPositionParams& params,
     llvm::function_ref<auto(llvm::Expected<clang::clangd::Hover>)->void>
         on_done) -> void {
-  auto info = FindInstAtPositionOrFail(context, params, on_done);
+  const auto* file =
+      FindFileOrFail<clang::clangd::Hover>(context, params, on_done);
+  if (!file) {
+    return;
+  }
+  if (auto hover = GetSemIRTextHover(*file, params.position)) {
+    on_done(std::move(*hover));
+    return;
+  }
+
+  auto info = FindPositionInfo(*file, params.position);
   if (!info.has_inst()) {
+    on_done(clang::clangd::Hover());
     return;
   }
 
@@ -91,12 +91,24 @@ auto HandleHover(
 // instruction they resolve to.
 static auto HandleGoto(
     Context& context, const clang::clangd::TextDocumentPositionParams& params,
-    bool use_type,
+    SemIRTextGoto sem_ir_text_goto, bool use_type,
     llvm::function_ref<
         auto(llvm::Expected<std::vector<clang::clangd::Location>>)->void>
         on_done) -> void {
-  auto info = FindInstAtPositionOrFail(context, params, on_done);
+  const auto* file = FindFileOrFail<std::vector<clang::clangd::Location>>(
+      context, params, on_done);
+  if (!file) {
+    return;
+  }
+  if (auto locations =
+          GetSemIRTextLocations(*file, params.position, sem_ir_text_goto)) {
+    on_done(std::move(*locations));
+    return;
+  }
+
+  auto info = FindPositionInfo(*file, params.position);
   if (!info.has_inst()) {
+    on_done(std::vector<clang::clangd::Location>());
     return;
   }
 
@@ -118,19 +130,58 @@ static auto HandleGoto(
   on_done(std::move(locations));
 }
 
-// Implements `textDocument/definition` and `textDocument/declaration`:
+// Implements `textDocument/definition`:
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_definition
-//
-// Carbon separates declaration from definition, but SemIR resolves a name to a
-// single entity instruction, so both requests currently answer the same way.
-// TODO: Point `definition` at the definition when an entity is declared in one
-// place and defined in another.
 auto HandleDefinition(
     Context& context, const clang::clangd::TextDocumentPositionParams& params,
     llvm::function_ref<
         auto(llvm::Expected<std::vector<clang::clangd::Location>>)->void>
         on_done) -> void {
-  HandleGoto(context, params, /*use_type=*/false, on_done);
+  HandleGoto(context, params, SemIRTextGoto::Definition, /*use_type=*/false,
+             on_done);
+}
+
+// Implements `textDocument/declaration`:
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_declaration
+//
+// In formatted SemIR this finds the source text the name was checked from,
+// which is the closest thing an instruction has to a declaration, and is the
+// more useful answer given `definition` already finds the instruction.
+//
+// Carbon separates declaration from definition, but SemIR resolves a name to a
+// single entity instruction, so for Carbon source both requests answer alike.
+// TODO: Point `definition` at the definition when an entity is declared in one
+// place and defined in another.
+auto HandleDeclaration(
+    Context& context, const clang::clangd::TextDocumentPositionParams& params,
+    llvm::function_ref<
+        auto(llvm::Expected<std::vector<clang::clangd::Location>>)->void>
+        on_done) -> void {
+  HandleGoto(context, params, SemIRTextGoto::Source, /*use_type=*/false,
+             on_done);
+}
+
+// Implements `textDocument/implementation`:
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_implementation
+//
+// In formatted SemIR this finds the value the name takes in each `specific` of
+// the generic that defines it.
+//
+// TODO: For Carbon source, find the `impl`s of an interface, and the functions
+// implementing an interface's associated functions.
+auto HandleImplementation(
+    Context& context, const clang::clangd::TextDocumentPositionParams& params,
+    llvm::function_ref<
+        auto(llvm::Expected<std::vector<clang::clangd::Location>>)->void>
+        on_done) -> void {
+  const auto* file = FindFileOrFail<std::vector<clang::clangd::Location>>(
+      context, params, on_done);
+  if (!file) {
+    return;
+  }
+  auto locations =
+      GetSemIRTextLocations(*file, params.position, SemIRTextGoto::Specifics);
+  on_done(locations.value_or(std::vector<clang::clangd::Location>()));
 }
 
 // Implements `textDocument/typeDefinition`:
@@ -140,7 +191,10 @@ auto HandleTypeDefinition(
     llvm::function_ref<
         auto(llvm::Expected<std::vector<clang::clangd::Location>>)->void>
         on_done) -> void {
-  HandleGoto(context, params, /*use_type=*/true, on_done);
+  // A SemIR name's type is written on its defining line, which `definition`
+  // already finds, so there's nothing extra to offer for formatted SemIR.
+  HandleGoto(context, params, SemIRTextGoto::Definition, /*use_type=*/true,
+             on_done);
 }
 
 // Implements `textDocument/references`:
@@ -153,8 +207,20 @@ auto HandleReferences(
     llvm::function_ref<
         auto(llvm::Expected<std::vector<clang::clangd::Location>>)->void>
         on_done) -> void {
-  auto info = FindInstAtPositionOrFail(context, params, on_done);
+  const auto* file = FindFileOrFail<std::vector<clang::clangd::Location>>(
+      context, params, on_done);
+  if (!file) {
+    return;
+  }
+  if (auto locations = GetSemIRTextLocations(*file, params.position,
+                                             SemIRTextGoto::References)) {
+    on_done(std::move(*locations));
+    return;
+  }
+
+  auto info = FindPositionInfo(*file, params.position);
   if (!info.has_inst()) {
+    on_done(std::vector<clang::clangd::Location>());
     return;
   }
 

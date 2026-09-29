@@ -30,10 +30,9 @@ namespace Carbon::Check {
 static auto IsTemplateArg(Context& context, SemIR::InstId arg_id) -> bool {
   auto arg_type_id = context.insts().Get(arg_id).type_id();
   auto arg_type = context.types().GetAsInst(arg_type_id);
-  return arg_type
-      .IsOneOf<SemIR::TypeType, SemIR::FacetType, SemIR::CppTemplateNameType,
-               SemIR::GenericClassType, SemIR::GenericInterfaceType,
-               SemIR::GenericNamedConstraintType>();
+  return arg_type.IsOneOf<SemIR::FacetType, SemIR::CppTemplateNameType,
+                          SemIR::GenericClassType, SemIR::GenericInterfaceType,
+                          SemIR::GenericNamedConstraintType>();
 }
 
 // Splits a call argument list into a list of template arguments followed by a

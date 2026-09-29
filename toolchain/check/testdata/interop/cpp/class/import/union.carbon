@@ -176,6 +176,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT: --- import_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DeclBar: type = class_type @DeclBar [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %DeclBar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
@@ -213,6 +214,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT: --- import_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DefBar: type = class_type @DefBar [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %DefBar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
@@ -250,6 +252,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT: --- import_declaration_and_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DeclDefBar: type = class_type @DeclDefBar [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %DeclDefBar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
@@ -287,6 +290,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT: --- import_static_member_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %StaticMemberFnBar: type = class_type @StaticMemberFnBar [concrete]
 // CHECK:STDOUT:   %StaticMemberFnBar.foo.cpp_overload_set.type: type = cpp_overload_set_type @StaticMemberFnBar.foo.cpp_overload_set [concrete]
@@ -317,6 +321,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT: --- import_static_data_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %StaticDataMemberBar: type = class_type @StaticDataMemberBar [concrete]
 // CHECK:STDOUT:   %ptr.a89: type = ptr_type %StaticDataMemberBar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.a89 [concrete]
@@ -357,6 +362,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT: --- import_data_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DataMemberBar: type = class_type @DataMemberBar [concrete]
 // CHECK:STDOUT:   %ptr.ec1: type = ptr_type %DataMemberBar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.ec1 [concrete]
@@ -413,6 +419,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT: --- import_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %TemplateBar.type: type = cpp_type_template_type TemplateBar [concrete]
 // CHECK:STDOUT:   %TemplateBar.template: %TemplateBar.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]

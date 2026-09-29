@@ -71,6 +71,7 @@ export default function (hljs) {
       'returned',
       'then',
       'type',
+      'typeof',
       '_',
       'unused',
       'var',

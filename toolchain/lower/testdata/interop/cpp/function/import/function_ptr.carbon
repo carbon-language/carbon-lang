@@ -151,8 +151,8 @@ fn F() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc6_41.3.temp), !dbg !35
 // CHECK:STDOUT:   %__invoke__carbon_thunk.call = call i32 @.carbon_thunk.__(ptr %GetCallback.call, ptr @float.943), !dbg !34
 // CHECK:STDOUT:   store i32 %__invoke__carbon_thunk.call, ptr %x.var, align 4, !dbg !33
-// CHECK:STDOUT:   call void @"_COp.c73f6eecd880c71a:core.Destroy.Core"(ptr @float.943), !dbg !35
-// CHECK:STDOUT:   call void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %x.var), !dbg !33
+// CHECK:STDOUT:   call void @"_CSelfDestruct.c73f6eecd880c71a:core.Destroy.Core"(ptr @float.943), !dbg !35
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %x.var), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -173,13 +173,13 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.c73f6eecd880c71a:core.Destroy.Core"(ptr %self) #0 !dbg !38 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.c73f6eecd880c71a:core.Destroy.Core"(ptr %self) #0 !dbg !38 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !42 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !42 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
@@ -224,11 +224,11 @@ fn F() {
 // CHECK:STDOUT: !34 = !DILocation(line: 6, column: 23, scope: !32)
 // CHECK:STDOUT: !35 = !DILocation(line: 6, column: 41, scope: !32)
 // CHECK:STDOUT: !37 = !DILocation(line: 5, column: 1, scope: !32)
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp.c73f6eecd880c71a:core.Destroy.Core", scope: null, file: !25, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !26, retainedNodes: !41)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.c73f6eecd880c71a:core.Destroy.Core", scope: null, file: !25, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !26, retainedNodes: !41)
 // CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !38, type: !8)
 // CHECK:STDOUT: !40 = !DILocation(line: 6, column: 41, scope: !38)
 // CHECK:STDOUT: !41 = !{!39}
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "Op", linkageName: "_COp.f58524831c37807e:core.Destroy.Core", scope: null, file: !25, line: 6, type: !31, spFlags: DISPFlagDefinition, unit: !26, retainedNodes: !45)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f58524831c37807e:core.Destroy.Core", scope: null, file: !25, line: 6, type: !31, spFlags: DISPFlagDefinition, unit: !26, retainedNodes: !45)
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !42, type: !27)
 // CHECK:STDOUT: !44 = !DILocation(line: 6, column: 3, scope: !42)
 // CHECK:STDOUT: !45 = !{!43}
@@ -301,6 +301,8 @@ fn F() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc6_58.1.temp), !dbg !65
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %.loc6_58.1.temp), !dbg !65
 // CHECK:STDOUT:   call void @.carbon_thunk.__(ptr %GetComplexCallback.call, ptr %.loc6_58.1.temp, ptr %x.var), !dbg !64
+// CHECK:STDOUT:   call void @"_CSelfDestruct.417eccf5eb8addbd:core.Destroy.Core"(ptr %.loc6_58.1.temp), !dbg !65
+// CHECK:STDOUT:   call void @"_CSelfDestruct.417eccf5eb8addbd:core.Destroy.Core"(ptr %x.var), !dbg !63
 // CHECK:STDOUT:   ret void, !dbg !67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -310,8 +312,8 @@ fn F() {
 // CHECK:STDOUT: define internal void @_ZN1CC1Ev.carbon_thunk.(ptr noundef %return) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !69
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !69
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !73
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !73
 // CHECK:STDOUT:   call void @_ZN1CC1Ev(ptr noundef nonnull align 4 dereferenceable(4) %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -324,14 +326,20 @@ fn F() {
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.C, align 4
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !47
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !69
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !69
-// CHECK:STDOUT:   %1 = load ptr, ptr %return.addr, align 8, !tbaa !69
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !73
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !73
+// CHECK:STDOUT:   %1 = load ptr, ptr %return.addr, align 8, !tbaa !73
 // CHECK:STDOUT:   %2 = load ptr, ptr %this.addr, align 8, !tbaa !47
-// CHECK:STDOUT:   %3 = load ptr, ptr %.addr, align 8, !tbaa !69
+// CHECK:STDOUT:   %3 = load ptr, ptr %.addr, align 8, !tbaa !73
 // CHECK:STDOUT:   call void @_ZN1CC1ERKS_(ptr noundef nonnull align 4 dereferenceable(4) %agg.tmp, ptr noundef nonnull align 4 dereferenceable(4) %3)
 // CHECK:STDOUT:   call void %2(ptr dead_on_unwind writable sret(%class.C) align 4 %1, ptr nofreeobj noundef align 4 dead_on_return dereferenceable(4) %agg.tmp)
 // CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.417eccf5eb8addbd:core.Destroy.Core"(ptr %self) #0 !dbg !68 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !70
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -342,6 +350,7 @@ fn F() {
 // CHECK:STDOUT: declare void @_ZN1CC1ERKS_(ptr noundef nonnull align 4 dereferenceable(4), ptr noundef nonnull align 4 dereferenceable(4)) unnamed_addr #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @"_CSelfDestruct.417eccf5eb8addbd:core.Destroy.Core", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -357,6 +366,9 @@ fn F() {
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !11 = !{null, !8}
+// CHECK:STDOUT: !12 = !DISubroutineType(types: !11)
 // CHECK:STDOUT: !17 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !18 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !19 = !{i32 7, !"uwtable", i32 2}
@@ -374,8 +386,12 @@ fn F() {
 // CHECK:STDOUT: !64 = !DILocation(line: 6, column: 25, scope: !62)
 // CHECK:STDOUT: !65 = !DILocation(line: 6, column: 50, scope: !62)
 // CHECK:STDOUT: !67 = !DILocation(line: 5, column: 1, scope: !62)
-// CHECK:STDOUT: !68 = !{!"p1 _ZTS1C", !46, i64 0}
-// CHECK:STDOUT: !69 = !{!68, !68, i64 0}
+// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.417eccf5eb8addbd:core.Destroy.Core", scope: null, file: !58, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !59, retainedNodes: !71)
+// CHECK:STDOUT: !69 = !DILocalVariable(arg: 1, scope: !68, type: !8)
+// CHECK:STDOUT: !70 = !DILocation(line: 6, column: 50, scope: !68)
+// CHECK:STDOUT: !71 = !{!69}
+// CHECK:STDOUT: !72 = !{!"p1 _ZTS1C", !46, i64 0}
+// CHECK:STDOUT: !73 = !{!72, !72, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'mention_forward_decl.carbon'
@@ -384,16 +400,23 @@ fn F() {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !73 {
+// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !77 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %callback.var = alloca ptr, align 8, !dbg !74
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %callback.var), !dbg !74
-// CHECK:STDOUT:   %ReturnCallback.call = call ptr @_Z14ReturnCallbackv(), !dbg !75
-// CHECK:STDOUT:   store ptr %ReturnCallback.call, ptr %callback.var, align 8, !dbg !74
-// CHECK:STDOUT:   ret void, !dbg !77
+// CHECK:STDOUT:   %callback.var = alloca ptr, align 8, !dbg !78
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %callback.var), !dbg !78
+// CHECK:STDOUT:   %ReturnCallback.call = call ptr @_Z14ReturnCallbackv(), !dbg !79
+// CHECK:STDOUT:   store ptr %ReturnCallback.call, ptr %callback.var, align 8, !dbg !78
+// CHECK:STDOUT:   call void @"_CSelfDestruct.659d177172b60c17:core.Destroy.Core"(ptr %callback.var), !dbg !78
+// CHECK:STDOUT:   ret void, !dbg !81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare noundef ptr @_Z14ReturnCallbackv() #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.659d177172b60c17:core.Destroy.Core"(ptr %self) #0 !dbg !82 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !84
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
@@ -402,7 +425,7 @@ fn F() {
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!72}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!76}
 // CHECK:STDOUT: !llvm.module.flags = !{!17, !18, !19, !2, !3}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!24}
 // CHECK:STDOUT:
@@ -410,6 +433,9 @@ fn F() {
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !11 = !{null, !8}
+// CHECK:STDOUT: !12 = !DISubroutineType(types: !11)
 // CHECK:STDOUT: !17 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !18 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !19 = !{i32 7, !"uwtable", i32 2}
@@ -418,10 +444,14 @@ fn F() {
 // CHECK:STDOUT: !22 = !{!"int", !21, i64 0}
 // CHECK:STDOUT: !23 = !{!"__libc_errno", !22, i64 0}
 // CHECK:STDOUT: !24 = !{!23, !22, i64 0}
-// CHECK:STDOUT: !71 = !DIFile(filename: "mention_forward_decl.carbon", directory: "")
-// CHECK:STDOUT: !72 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !71, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !73 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !71, line: 5, type: !7, spFlags: DISPFlagDefinition, unit: !72)
-// CHECK:STDOUT: !74 = !DILocation(line: 6, column: 3, scope: !73)
-// CHECK:STDOUT: !75 = !DILocation(line: 6, column: 43, scope: !73)
-// CHECK:STDOUT: !77 = !DILocation(line: 5, column: 1, scope: !73)
+// CHECK:STDOUT: !75 = !DIFile(filename: "mention_forward_decl.carbon", directory: "")
+// CHECK:STDOUT: !76 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !75, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !77 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !75, line: 5, type: !7, spFlags: DISPFlagDefinition, unit: !76)
+// CHECK:STDOUT: !78 = !DILocation(line: 6, column: 3, scope: !77)
+// CHECK:STDOUT: !79 = !DILocation(line: 6, column: 43, scope: !77)
+// CHECK:STDOUT: !81 = !DILocation(line: 5, column: 1, scope: !77)
+// CHECK:STDOUT: !82 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.659d177172b60c17:core.Destroy.Core", scope: null, file: !75, line: 6, type: !12, spFlags: DISPFlagDefinition, unit: !76, retainedNodes: !85)
+// CHECK:STDOUT: !83 = !DILocalVariable(arg: 1, scope: !82, type: !8)
+// CHECK:STDOUT: !84 = !DILocation(line: 6, column: 3, scope: !82)
+// CHECK:STDOUT: !85 = !{!83}
 // CHECK:STDOUT:

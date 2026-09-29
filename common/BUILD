@@ -287,9 +287,9 @@ sh_test(
     srcs = [":filesystem_benchmark"],
     args = [
         "--benchmark_dry_run",
-        # Restrict the sizes to 4-digit ones or smaller to keep test times low.
+        # Restrict the sizes to 2-digit ones or smaller to keep test times low.
         # The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=^[^/]+(/[0-9]{1,4}(/[0-9]+)?)?/real_time$$",
+        "--benchmark_filter=^[^/]+(/[0-9]{1,2}(/[0-9]+)?)?/real_time$$",
     ],
 )
 
@@ -501,7 +501,7 @@ sh_test(
     args = [
         "--benchmark_dry_run",
         # The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
+        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,2}(/[0-9]+)?$$",
     ],
 )
 
@@ -688,7 +688,7 @@ sh_test(
     args = [
         "--benchmark_dry_run",
         # The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
+        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,2}(/[0-9]+)?$$",
     ],
 )
 

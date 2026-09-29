@@ -343,7 +343,7 @@
         },
         {
           "name": "keyword.control.carbon",
-          "match": "\\b(and|as|impls|in|like|not|or|where)\\b"
+          "match": "\\b(and|as|impls|in|like|not|or|typeof|where)\\b"
         },
         {
           "name": "keyword.other.carbon",

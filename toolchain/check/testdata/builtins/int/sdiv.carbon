@@ -95,6 +95,7 @@ let d: Core.IntLiteral = DivLit(0, 0);
 // CHECK:STDOUT: --- int_div.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Div.type: type = fn_type @Div [concrete]

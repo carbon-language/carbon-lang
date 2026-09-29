@@ -6,7 +6,7 @@
 #define CARBON_TOOLCHAIN_LANGUAGE_SERVER_SEM_IR_INDEX_H_
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/grouped_value_store.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
@@ -49,19 +49,17 @@ class SemIRIndex {
   // punctuation and keywords usually contribute to an enclosing instruction
   // rather than producing one of their own.
   auto InstsForToken(Lex::TokenIndex token) const
-      -> llvm::ArrayRef<SemIR::InstId>;
+      -> llvm::ArrayRef<SemIR::InstId> {
+    return insts_.Get(token);
+  }
 
  private:
-  // Instructions grouped by token, in the compressed-sparse-row layout: the
-  // group for token `i` is `insts_[token_starts_[i] .. token_starts_[i + 1])`.
-  // `token_starts_` therefore has one more entry than there are tokens.
-  //
-  // Token indices are dense, so this is built by counting sort in a single pass
-  // over the instructions, and looked up in constant time. A hash map would
-  // need to handle the many-instructions-per-token case explicitly; here it
-  // falls out of the layout.
-  llvm::SmallVector<SemIR::InstId, 0> insts_;
-  llvm::SmallVector<int32_t, 0> token_starts_;
+  // Instructions grouped by the token they were checked from. Token indices are
+  // dense, so this is built by counting sort in a single pass over the
+  // instructions, and looked up in constant time. A hash map would need to
+  // handle the many-instructions-per-token case explicitly; here it falls out
+  // of the layout.
+  GroupedValueStore<Lex::TokenIndex, SemIR::InstId> insts_;
 };
 
 }  // namespace Carbon::LanguageServer

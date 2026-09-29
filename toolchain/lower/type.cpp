@@ -809,9 +809,7 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
   return BuildStructType(context, subtypes, layouts);
 }
 
-template <typename InstT>
-  requires(InstT::Kind.template IsAnyOf<SemIR::FacetType, SemIR::TypeType>())
-static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
+static auto BuildTypeForInst(FileContext& context, SemIR::FacetType /*inst*/)
     -> LoweredTypes {
   return {context.GetTypeType(), nullptr};
 }
@@ -836,8 +834,7 @@ template <typename InstT>
            SemIR::GenericNamedConstraintType, SemIR::InstType,
            SemIR::IntLiteralType, SemIR::NamespaceType,
            SemIR::RequireSpecificDefinitionType, SemIR::SpecificFunctionType,
-           SemIR::UnboundElementType, SemIR::UnspecifiedValueType,
-           SemIR::WhereExpr, SemIR::WitnessType>())
+           SemIR::UnboundElementType, SemIR::WhereExpr, SemIR::WitnessType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> LoweredTypes {
   // Return an empty struct as a placeholder.

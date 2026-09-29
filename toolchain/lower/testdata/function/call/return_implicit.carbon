@@ -23,18 +23,25 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "return_implicit.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMakeImplicitEmptyTuple.Main() #0 !dbg !18 {
+// CHECK:STDOUT: define void @_CMakeImplicitEmptyTuple.Main() #0 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !19
+// CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !20 {
+// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !21
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !21
-// CHECK:STDOUT:   call void @_CMakeImplicitEmptyTuple.Main(), !dbg !22
-// CHECK:STDOUT:   ret void, !dbg !24
+// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !24
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !24
+// CHECK:STDOUT:   call void @_CMakeImplicitEmptyTuple.Main(), !dbg !25
+// CHECK:STDOUT:   call void @"_CSelfDestruct.61ea2aba74ab3bf1:core.Destroy.Core"(ptr %_.var), !dbg !24
+// CHECK:STDOUT:   ret void, !dbg !27
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.61ea2aba74ab3bf1:core.Destroy.Core"(ptr %self) #0 !dbg !28 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -52,10 +59,17 @@ fn Main() {
 // CHECK:STDOUT: !15 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !14, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !16 = !{null}
 // CHECK:STDOUT: !17 = !DISubroutineType(types: !16)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "MakeImplicitEmptyTuple", linkageName: "_CMakeImplicitEmptyTuple.Main", scope: null, file: !14, line: 14, type: !17, spFlags: DISPFlagDefinition, unit: !15)
-// CHECK:STDOUT: !19 = !DILocation(line: 14, column: 1, scope: !18)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !14, line: 17, type: !17, spFlags: DISPFlagDefinition, unit: !15)
-// CHECK:STDOUT: !21 = !DILocation(line: 18, column: 3, scope: !20)
-// CHECK:STDOUT: !22 = !DILocation(line: 18, column: 15, scope: !20)
-// CHECK:STDOUT: !24 = !DILocation(line: 17, column: 1, scope: !20)
+// CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !19 = !{null, !18}
+// CHECK:STDOUT: !20 = !DISubroutineType(types: !19)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "MakeImplicitEmptyTuple", linkageName: "_CMakeImplicitEmptyTuple.Main", scope: null, file: !14, line: 14, type: !17, spFlags: DISPFlagDefinition, unit: !15)
+// CHECK:STDOUT: !22 = !DILocation(line: 14, column: 1, scope: !21)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !14, line: 17, type: !17, spFlags: DISPFlagDefinition, unit: !15)
+// CHECK:STDOUT: !24 = !DILocation(line: 18, column: 3, scope: !23)
+// CHECK:STDOUT: !25 = !DILocation(line: 18, column: 15, scope: !23)
+// CHECK:STDOUT: !27 = !DILocation(line: 17, column: 1, scope: !23)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.61ea2aba74ab3bf1:core.Destroy.Core", scope: null, file: !14, line: 18, type: !20, spFlags: DISPFlagDefinition, unit: !15, retainedNodes: !31)
+// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !28, type: !18)
+// CHECK:STDOUT: !30 = !DILocation(line: 18, column: 3, scope: !28)
+// CHECK:STDOUT: !31 = !{!29}
 // CHECK:STDOUT:
