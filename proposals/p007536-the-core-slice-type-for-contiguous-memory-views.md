@@ -20,11 +20,19 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Go](#go)
 -   [Proposal](#proposal)
 -   [Details](#details)
+    -   [Representation](#representation)
+    -   [Construction](#construction)
+    -   [Size and data pointer](#size-and-data-pointer)
+    -   [Element access](#element-access)
+    -   [Sub-slicing](#sub-slicing)
+    -   [Iteration](#iteration)
+    -   [Copying and initialization](#copying-and-initialization)
     -   [Conversions](#conversions)
     -   [Usage Example](#usage-example)
 -   [Future work](#future-work)
     -   [Safety](#safety)
     -   [Static bound](#static-bound)
+    -   [C++ interop](#c-interop)
     -   [Syntax](#syntax)
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
@@ -94,49 +102,61 @@ primitive keyword alias.
 
 ## Details
 
-The `Core.Slice(T)` type is defined as:
+### Representation
+
+`Core.Slice(T:! type)` is a class whose value is a pointer to the first element
+of the viewed sequence and a count of elements. As with `std::span<T>`, the
+bounds are represented as start and count rather than start and end. The fields
+are private; the representation is not part of the interface, and may change
+(for example, the size may become a word-sized integer, and the pointer may
+become an array iterator). In particular, this proposal doesn't guarantee layout
+compatibility with `std::span<T>`; see [C++ interop](#c-interop).
+
+### Construction
+
+A slice can be constructed from a pointer to the first element and an element
+count:
 
 ```carbon
-package Core library "prelude/types/slice";
-
-import library "prelude/copy";
-import library "prelude/default";
-import library "prelude/destroy";
-import library "prelude/operators/index";
-import library "prelude/types/uint";
-
-private fn PointerOffset[T:! type](p: T*, offset: u64) -> T* = "pointer.offset";
-
-class Slice(T:! type) {
-  fn Make(ptr: T*, size: u64) -> Self {
-    return {.ptr = ptr, .size = size};
-  }
-
-  fn Size(self) -> u64 { return self.size; }
-  fn Ptr(self) -> T* { return self.ptr; }
-
-  fn Range(self, start: u64, count: u64) -> Self {
-    return Make(PointerOffset(self.ptr, start), count);
-  }
-
-  impl as Copy {
-    fn Op(self) -> Self { return {.ptr = self.ptr, .size = self.size}; }
-  }
-
-  private var ptr: T*;
-  private var size: u64;
-}
-
-impl forall [T:! type, Subscript: ImplicitAs(u64)]
-    Slice(T) as IndirectIndexWith(Subscript)
-    where .ElementType = T {
-  fn Addr(self, subscript: Subscript) -> T* {
-    return PointerOffset(self.Ptr(), subscript as u64);
-  }
-}
-
-impl forall [T:! type] Slice(T) as UnformedInit {}
+var s: slice(i32) = Core.Slice(i32).Make(p, n);
 ```
+
+Nothing checks that `p` points to at least `n` valid elements, so this operation
+is expected to become unsafe once Carbon has a way to mark operations as such.
+Most slices are expected to come from [conversions](#conversions) instead.
+
+### Size and data pointer
+
+`s.Size()` returns the number of elements in the slice, and `s.Ptr()` returns a
+pointer to the first element.
+
+### Element access
+
+A slice supports indexing with any subscript type that implicitly converts to
+`u64`. `s[i]` refers to the `i`th element of the viewed sequence, and is a
+reference expression even if `s` is a value, because the slice doesn't own its
+elements. This is provided by implementing `IndirectIndexWith`.
+
+### Sub-slicing
+
+`s.Range(start, count)` returns a slice viewing `count` elements of `s`,
+beginning with element `start`.
+
+### Iteration
+
+When `T` is copyable, a slice can be iterated with a `for` loop, which visits
+each element in order:
+
+```carbon
+for (x: i32 in s) {
+  ...
+}
+```
+
+### Copying and initialization
+
+A slice is cheaply copyable; a copy views the same elements as the original.
+Slices also support unformed initialization.
 
 ### Conversions
 
@@ -202,6 +222,21 @@ from this one (more like Rust's `&[T; N]` versus `&[T]`, and unlike C++'s
 represent either the specific static bound, or the absence of a static bound -
 which seems like it might complicate the interface more than providing some
 generality over the two scenarios; see also the [`[T; N]` discussion in p004682](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#t-n-builtin-syntax)).
+
+### C++ interop
+
+We expect C++'s `std::span<T>` (with dynamic extent) to map to `slice(T)`,
+similar to how
+[p006177](/proposals/p006177-c-interop-mapping-std-string-view-to-core-str.md)
+maps `std::string_view` to `str`. A zero-cost mapping would require the two
+types to have identical representations, which depends on the member order used
+by each C++ standard library implementation, and on the size field matching
+`size_t` (which is 32 bits on 32-bit targets, whereas `Slice` currently uses
+`u64`). The specifics of this mapping, including any constraints it places on
+the representation of `Slice`, are left to a future proposal.
+
+A `std::span<T, N>` with static extent would more naturally map to the
+[statically bounded type](#static-bound) described above.
 
 ### Syntax
 
