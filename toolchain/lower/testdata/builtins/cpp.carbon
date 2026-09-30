@@ -109,6 +109,14 @@ fn Test() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.88cc3346b7991af5:core.Destroy.Core"(ptr %self) #0 !dbg !36 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc25_52.1.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 3, !dbg !38
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc25_52.1.array.index), !dbg !38
+// CHECK:STDOUT:   %.loc25_52.2.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 2, !dbg !38
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc25_52.2.array.index), !dbg !38
+// CHECK:STDOUT:   %.loc25_52.3.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 1, !dbg !38
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc25_52.3.array.index), !dbg !38
+// CHECK:STDOUT:   %.loc25_52.4.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 0, !dbg !38
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc25_52.4.array.index), !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

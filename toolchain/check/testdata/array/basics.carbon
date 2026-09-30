@@ -212,6 +212,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc10_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.3: type = fn_type @Destroy.WithSelf.SelfDestruct.loc10_3.3 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.3: %Destroy.WithSelf.SelfDestruct.type.fbceb5.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.e5f: %pattern_type.c3e = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.1ad: %pattern_type.c3e = wrapper_binding_pattern self, %self.param_patt.e5f [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.4: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc10_3.4 [concrete]
@@ -369,6 +371,14 @@ var a: array(1, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_3.4(%self.param: ref %array_type) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc10_3.1: ref %tuple.type.a8c = array_index %self.param, %int_1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc10_3.1: <bound method> = bound_method %.loc10_3.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc10_3.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc10_3.1(%.loc10_3.1)
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %.loc10_3.2: ref %tuple.type.a8c = array_index %self.param, %int_0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc10_3.2: <bound method> = bound_method %.loc10_3.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc10_3.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc10_3.2(%.loc10_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -577,6 +587,18 @@ var a: array(1, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc7(%self.param: ref %array_type) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %.loc7_3.1: ref %empty_tuple.type = array_index %self.param, %int_2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc7_3.1: <bound method> = bound_method %.loc7_3.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc7_3.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc7_3.1(%.loc7_3.1)
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc7_3.2: ref %empty_tuple.type = array_index %self.param, %int_1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc7_3.2: <bound method> = bound_method %.loc7_3.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc7_3.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc7_3.2(%.loc7_3.2)
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %.loc7_3.3: ref %empty_tuple.type = array_index %self.param, %int_0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc7_3.3: <bound method> = bound_method %.loc7_3.3, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc7_3.3: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc7_3.3(%.loc7_3.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -743,6 +765,10 @@ var a: array(1, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc8_3(%self.param: ref %array_type) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %.loc8: ref %empty_tuple.type = array_index %self.param, %int_0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc8, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc8)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
