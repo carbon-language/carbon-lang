@@ -58,7 +58,7 @@ syn keyword carbonLogicalOperator and or not
 syn keyword carbonKeywordOperator impls like where
 
 " handle any other keywords
-syn keyword carbonKeywordSelf Self self _
+syn keyword carbonKeywordSpecialName Self self _
 syn keyword carbonKeywordAs as
 syn keyword carbonKeywordTemplate template
 syn keyword carbonKeywordStatic static
@@ -105,7 +105,7 @@ hi def link carbonDeclarationMod carbonDeclaration
 hi def link carbonPackageDeclaration Include
 hi def link carbonLibraryDeclaration Include
 hi def link carbonDeclaration Structure
-hi def link carbonKeywordSelf carbonKeyword
+hi def link carbonKeywordSpecialName carbonKeyword
 hi def link carbonKeywordAs carbonKeyword
 hi def link carbonKeywordTemplate carbonKeyword
 hi def link carbonKeywordStatic carbonKeyword
