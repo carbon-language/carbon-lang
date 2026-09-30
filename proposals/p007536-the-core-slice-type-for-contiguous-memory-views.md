@@ -59,16 +59,19 @@ and without copying the data.
 
 In C++, this has historically been done by:
 
-1.  Passing a reference to `std::vector<T>` or `std::array<T, N>`. This limits
-    the function to only working with that specific container type (and for
-    `std::array`, requires templating on the size `N`).
+1.  Passing a reference to
+    [`std::vector<T>`](https://en.cppreference.com/w/cpp/container/vector) or
+    [`std::array<T, N>`](https://en.cppreference.com/w/cpp/container/array).
+    This limits the function to only working with that specific container type
+    (and for `std::array`, requires templating on the size `N`).
 2.  Passing a raw pointer and a size. This is unsafe, as it relies on the caller
     passing the correct size, and does not carry bounds information natively.
 3.  Templates, which can accept any container but lead to code bloat and require
     the function definition to be in the header.
 
-C++20 introduced `std::span<T>` to solve this, but Carbon needs a native, safe,
-and idiomatic solution from the start.
+C++20 introduced
+[`std::span<T>`](https://en.cppreference.com/w/cpp/container/span) to solve
+this, but Carbon needs a native, safe, and idiomatic solution from the start.
 
 ## Background
 
@@ -90,34 +93,43 @@ same kind of view for elements of any type `T`.
 
 ### C++
 
-C++20 `std::span<T>` is a non-owning view over a contiguous sequence of objects.
-It can have static extent (size known at compile time) or dynamic extent (size
-known at runtime). We are primarily concerned with dynamic extent here.
+C++20 [`std::span<T>`](https://en.cppreference.com/w/cpp/container/span) is a
+non-owning view over a contiguous sequence of objects. It can have static extent
+(size known at compile time) or
+[dynamic extent](https://en.cppreference.com/w/cpp/container/span/dynamic_extent)
+(size known at runtime). We are primarily concerned with dynamic extent here.
 
 ### Rust
 
-Rust uses slice references `&[T]` as a fundamental type. The slice `[T]` itself
-is a dynamically sized type (DST), and `&[T]` is a "fat pointer" containing
-both the pointer to the data and the length. For compile-time-sized views,
-Rust uses references to fixed-size arrays, `&[T; N]`, which are thin pointers
-and distinct from `&[T]`.
+Rust uses slice references
+[`&[T]`](https://doc.rust-lang.org/reference/types/slice.html) as a fundamental
+type. The slice `[T]` itself is a
+[dynamically sized type](https://doc.rust-lang.org/reference/dynamically-sized-types.html)
+(DST), and `&[T]` is a "fat pointer" containing both the pointer to the data and
+the length. For compile-time-sized views, Rust uses references to fixed-size
+arrays, [`&[T; N]`](https://doc.rust-lang.org/reference/types/array.html), which
+are thin pointers and distinct from `&[T]`.
 
 ### Go
 
-Go uses slices `[]T` as a primary data structure. Go slices are headers containing
-a pointer to an underlying array, a length, and a capacity. Slices in Go can
-be grown (which may reallocate), whereas Carbon's `Slice` is a view and cannot
-be grown.
+Go uses slices [`[]T`](https://go.dev/ref/spec#Slice_types) as a primary data
+structure. Go slices are headers containing a pointer to an underlying array, a
+length, and a capacity. Slices in Go can be
+[grown](https://go.dev/ref/spec#Appending_and_copying_slices) (which may
+reallocate), whereas Carbon's `Slice` is a view and cannot be grown.
 
 ### Swift
 
-Swift has long provided `UnsafeBufferPointer<T>`, a pointer and count that is
-only bounds-checked in debug builds and carries no lifetime information.
+Swift has long provided
+[`UnsafeBufferPointer<T>`](https://developer.apple.com/documentation/swift/unsafebufferpointer),
+a pointer and count that is only bounds-checked in debug builds and carries no
+lifetime information.
 [SE-0447](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0447-span-access-shared-contiguous-storage.md)
-(Swift 6.2) added `Span<T>`, a safe, non-owning view of contiguous initialized
-memory. It is also represented as a pointer and a count, but is bounds-checked
-on every access, and is a non-escapable type, so it cannot outlive the
-container it borrows from.
+(Swift 6.2) added
+[`Span<T>`](https://developer.apple.com/documentation/swift/span), a safe,
+non-owning view of contiguous initialized memory. It is also represented as a
+pointer and a count, but is bounds-checked on every access, and is a
+non-escapable type, so it cannot outlive the container it borrows from.
 
 ### Safe C++
 
