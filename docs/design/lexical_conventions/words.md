@@ -60,7 +60,6 @@ The following words are interpreted as keywords:
 -   `constraint`
 -   `continue`
 -   `default`
--   `destroy`
 -   `else`
 -   `export`
 -   `extend`
