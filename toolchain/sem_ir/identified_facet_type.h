@@ -42,15 +42,25 @@ struct IdentifiedFacetType {
     friend auto operator==(const RequiredImpl& lhs, const RequiredImpl& rhs)
         -> bool = default;
   };
+  struct Rewrite {
+    ConstantId lhs;
+    ConstantId rhs;
+
+    friend auto operator==(const Rewrite& lhs, const Rewrite& rhs)
+        -> bool = default;
+  };
 
   IdentifiedFacetType(IdentifiedFacetTypeKey key, bool partially_identified,
                       llvm::ArrayRef<RequiredImpl> extends,
-                      llvm::ArrayRef<RequiredImpl> self_impls);
+                      llvm::ArrayRef<RequiredImpl> self_impls,
+                      llvm::ArrayRef<Rewrite> rewrites);
 
   // The order here defines the order of impl witnesses for this facet type.
   auto required_impls() const -> llvm::ArrayRef<RequiredImpl> {
     return required_impls_;
   }
+
+  auto rewrites() const -> llvm::ArrayRef<Rewrite> { return rewrites_; }
 
   // Can this be used to the right of an `as` in an `impl` declaration?
   auto is_valid_impl_as_target() const -> bool {
@@ -89,6 +99,12 @@ struct IdentifiedFacetType {
   // constraint. Sorted and deduplicated.
   llvm::SmallVector<RequiredImpl> required_impls_;
 
+  // Rewrite constraints from a facet type and any named constraints that it
+  // references, flattened to a single list with `.Self` replaced on the RHS.
+  // The witness on the LHS should be ignored other than to specify in which
+  // interface the associated constant is being rewritten.
+  llvm::SmallVector<Rewrite> rewrites_;
+
   // The single interface from `required_impls` to implement if this is
   // the facet type to the right of an `impl`...`as`, or `None` if no such
   // single interface.
@@ -120,7 +136,7 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
 namespace Carbon {
 extern template class CanonicalValueStore<
     SemIR::IdentifiedFacetTypeId, SemIR::IdentifiedFacetTypeKey,
-    Tag<SemIR::CheckIRId>, SemIR ::IdentifiedFacetType>;
+    Tag<SemIR::CheckIRId>, SemIR::IdentifiedFacetType>;
 extern template class ValueStore<SemIR::IdentifiedFacetTypeId,
                                  SemIR::IdentifiedFacetType,
                                  Tag<SemIR::CheckIRId>>;

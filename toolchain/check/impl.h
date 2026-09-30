@@ -52,8 +52,9 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
 // constraint facet type. `self_specific_id` will be the `specific_id` of the
 // resulting witness.
 auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
+                                  SemIR::LocId constraint_loc_id,
                                   const SemIR::Impl& impl,
-                                  SemIR::TypeInstId full_constraint_id,
+                                  SemIR::IdentifiedFacetTypeId identified_id,
                                   SemIR::SpecificId self_specific_id)
     -> SemIR::InstId;
 
@@ -93,12 +94,13 @@ auto CheckConstraintIsFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::TypeInstId constraint_id) -> bool;
 
 // Checks that the constraint specified for the impl is a valid, identified
-// facet type that extends a single interface. Returns the interface that the
-// impl implements. On error, issues a diagnostic and returns `None`.
+// facet type that extends a single interface. Returns the IdentifiedFacetType
+// which contains the interface that the impl implements. On error, issues a
+// diagnostic and returns `None`.
 auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 SemIR::TypeInstId constraint_id)
-    -> SemIR::SpecificInterface;
+    -> SemIR::IdentifiedFacetTypeId;
 
 // Given a specific for the impl, returns the specific interface that the impl
 // declaration is implementing. Returns None in the case of an error being

@@ -471,6 +471,9 @@ static auto VerifyQueryFacetTypeConstraints(
     SemIR::ConstantId query_facet_type_const_id,
     llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls,
     llvm::ArrayRef<SemIR::InstId> witness_inst_ids) -> bool {
+  // TODO: Get the rewrites and equality constraints from the
+  // IdentifiedFacetType so that we also find and verify requirements from named
+  // constraints.
   const auto& declared_facet_type = context.declared_facet_types().Get(
       context.constant_values()
           .GetInstAs<SemIR::FacetType>(query_facet_type_const_id)
