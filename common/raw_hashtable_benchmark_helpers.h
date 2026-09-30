@@ -260,11 +260,24 @@ struct CarbonHashDI<llvm::StringRef> {
 // bytes and pad the start of their code by multiples of `BenchLayoutPadStep`
 // bytes within that range. See `RunLoopInRandomLayout`.
 //
-// The defaults cover every position of a loop within 256 bytes at the 16-byte
-// granularity that loop heads are aligned to. On Zen 5, a loop's performance
-// was measured to depend only on its address modulo 256.
+// The default step is the granularity that loop heads land at, so that the
+// layouts place a loop at every position within the range:
+//
+// - On x86-64, LLVM aligns loop heads to 16 bytes, giving 16 layouts.
+// - On AArch64, LLVM doesn't align loop heads for generic or Apple CPUs, so
+//   they land at any 4-byte instruction boundary, giving 64 layouts. A 16-byte
+//   step would leave each loop at whatever offset modulo 16 its build gives it.
+//
+// The default range is 256 bytes because on Zen 5, a loop's performance was
+// measured to depend only on its address modulo 256. On Apple M1, some loops
+// also have slow positions that depend on higher address bits, which this
+// range doesn't reach.
 #ifndef CARBON_BENCH_LAYOUT_PAD_STEP
+#if defined(__aarch64__)
+#define CARBON_BENCH_LAYOUT_PAD_STEP 4
+#else
 #define CARBON_BENCH_LAYOUT_PAD_STEP 16
+#endif
 #endif
 #ifndef CARBON_BENCH_LAYOUT_PAD_RANGE
 #define CARBON_BENCH_LAYOUT_PAD_RANGE 256
