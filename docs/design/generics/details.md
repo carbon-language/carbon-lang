@@ -2299,12 +2299,14 @@ This is instead of declaring an associated constant using `let` with a function
 type.
 
 An associated function of an interface `I` is callable, and in a call to it, the
-`Self` parameter is treated as a generic parameter that can be deduced. After
-`Self` is deduced,
-[`impl` lookup](/docs/design/expressions/member_access.md#impl-lookup) is
-performed for `Self as I`, and the corresponding function from the `impl` is
-called. Note that this is allowed for any associated function for which `Self`
-can be deduced, not just for associated methods.
+`Self` parameter is treated as a generic parameter that can be deduced. Since
+the interface itself requires `Self` to implement `I`, that will be validated as
+part of determining whether the deduced `Self` type valid meets its requirements
+(which may involve
+[`impl` lookup](/docs/design/expressions/member_access.md#impl-lookup)). Lastly,
+the corresponding function from the `impl` is called. Note that this is allowed
+for any associated function for which `Self` can be deduced, not just for
+associated methods.
 
 ```carbon
 interface Interface {

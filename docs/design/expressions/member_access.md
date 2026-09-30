@@ -638,9 +638,9 @@ let p: (i32, i32, i32)* = &t;
 let m: i32 = p->2;
 ```
 
-In a compound member access whose second operand is of integer or integer
+In a compound member access whose right operand is of integer or integer
 literal type, the first operand is required to be of tuple type or to extend a
-tuple type, otherwise member access fails. The second operand is required to
+tuple type, otherwise member access fails. The right operand is required to
 be a non-negative template constant that is less than the number of tuple
 elements, and the result is an instance member that refers to the corresponding
 positional element of the tuple.
@@ -709,8 +709,13 @@ follows:
 -   Compound member access into types, as in `C.(I.F)` or `I.(I.F)`, will use
     `typeof(C)` or `typeof(I)` as the `Self` type, which in both cases is
     `type`. This will generally fail, since `type` doesn't implement `I`.
+-   More generally, compound member access into facets, as in `T.(I.F)`, will
+    use `typeof(T)` or `I` as the `Self` type. Again `I` doesn't implement `I`,
+    so this would be an error.
 -   `impl` member access `C.impl(I.F)` will use the first operand `C` as the
-    `Self` type.
+    `Self` type. More generally, `impl` member access into a facet or a value
+    with an implicit conversion to `type` will perform that implicit conversion.
+    For example, `T.impl(I.F)` will use `T as type` as the `Self` type.
 -   Associated function call `I.M(y)` will deduce the `Self` type from the
     supplied arguments, in this case `Self` is deduced to be `typeof(y)` or `C`.
 
@@ -728,7 +733,7 @@ corresponding member of the `impl`. Using the definitions from the last example,
 `impl` lookup for `y.F` looks for and finds the implementation `C as I` and uses
 its `F` member, which is `C.impl(I.F)`. For
 [`impl` member access expressions](#impl-member-access), this is the result. For
-[compound member access](#compound-member-access), the result will be the second
+[compound member access](#compound-member-access), the result will be the right
 argument to [instance binding](#instance-binding). For
 [simple member access](#simple-member-access), the result is either used
 directly or passed to instance binding, depending on which case it is.
@@ -1719,7 +1724,7 @@ requires updating callers.
 
 ### Overloading
 
-Nothing about the second operand is used to decide whether to perform instance
+Nothing about the right operand is used to decide whether to perform instance
 binding or whether to use the value or type of the left operand for `impl`
 lookup. The only fact about the right operand that is used is whether it names
 an associated entity. This is to support overloading between instance and
