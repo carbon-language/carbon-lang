@@ -10,6 +10,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
+#include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
 #include "llvm/Support/Casting.h"
 #include "toolchain/base/kind_switch.h"
@@ -1081,11 +1082,16 @@ static auto MapToCppParamType(Context& context, SemIR::LocId loc_id,
 // thunk calling a Carbon function.
 static auto BuildCppToCarbonThunkFunctionType(Context& context,
                                               SemIR::LocId loc_id,
-                                              const FunctionInfo& target)
+                                              const FunctionInfo& target,
+                                              size_t elided_default_values)
     -> const clang::FunctionProtoType* {
+  CARBON_CHECK(elided_default_values <= target.explicit_params.size());
+  auto param_range =
+      llvm::ArrayRef(target.explicit_params)
+          .take_front(target.explicit_params.size() - elided_default_values);
   llvm::SmallVector<clang::QualType> thunk_param_types;
-  thunk_param_types.reserve(target.explicit_params.size());
-  for (auto param : target.explicit_params) {
+  thunk_param_types.reserve(param_range.size());
+  for (auto param : param_range) {
     auto cpp_type = MapToCppParamType(context, loc_id, param);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map C++ type to Carbon");
@@ -1128,9 +1134,11 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
 }
 
 // Create the declaration of the C++ thunk.
+// FIXME: overload set goes here I think?
 static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
                                       const FunctionInfo& target,
-                                      clang::DeclarationName thunk_name)
+                                      clang::DeclarationName thunk_name,
+                                      size_t elided_default_values)
     -> clang::FunctionDecl* {
   clang::ASTContext& ast_context = context.ast_context();
 
@@ -1141,6 +1149,9 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
   // back to C++.
   const clang::FunctionProtoType* thunk_function_type = nullptr;
   if (auto thunk_id = target.function.thunk_id(); thunk_id.has_value()) {
+    // Imported functions from C++ are assumed to never import a default value.
+    CARBON_CHECK(target.function.default_value_arity == 0);
+    CARBON_CHECK(elided_default_values == 0);
     const auto& thunk = context.thunks().Get(thunk_id);
     const auto& thunk_signature = context.functions().Get(thunk.signature_id);
     if (const auto* clang_decl =
@@ -1151,8 +1162,8 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
     }
   }
   if (!thunk_function_type) {
-    thunk_function_type =
-        BuildCppToCarbonThunkFunctionType(context, loc_id, target);
+    thunk_function_type = BuildCppToCarbonThunkFunctionType(
+        context, loc_id, target, elided_default_values);
     if (!thunk_function_type) {
       return nullptr;
     }
@@ -1187,8 +1198,8 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
     }
     // TODO: Map Carbon access to C++ access.
     thunk_function_decl->setAccess(clang::AS_public);
-    // Carbon overriders are non-virtual in C++; only the corresponding thunk is
-    // virtual.
+    // Carbon overriders are non-virtual in C++; only the corresponding thunk
+    // is virtual.
     thunk_function_decl->setVirtualAsWritten(
         target.function.virtual_modifier !=
             SemIR::Function::VirtualModifier::None &&
@@ -1206,20 +1217,14 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
   }
 
   llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
-  CARBON_CHECK(thunk_function_type->param_types().size() ==
+  CARBON_CHECK(thunk_function_type->param_types().size() +
+                   elided_default_values ==
                target.explicit_params.size());
   for (auto [i, type] : llvm::enumerate(thunk_function_type->param_types())) {
-    const auto& param = target.explicit_params[i];
-    clang::Expr* default_value = nullptr;
-    if (param.default_value_inst_id.has_value()) {
-      default_value =
-          ConvertArgToExpr(context, param.default_value_inst_id, type);
-      CARBON_CHECK(default_value);
-    }
     clang::ParmVarDecl* thunk_param = clang::ParmVarDecl::Create(
         ast_context, thunk_function_decl, /*StartLoc=*/clang_loc,
         /*IdLoc=*/clang_loc, /*Id=*/nullptr, type,
-        /*TInfo=*/nullptr, clang::SC_None, default_value);
+        /*TInfo=*/nullptr, clang::SC_None, /*DefArg=*/nullptr);
     param_var_decls.push_back(thunk_param);
   }
   thunk_function_decl->setParams(param_var_decls);
@@ -1438,8 +1443,14 @@ static auto ExportNonGenericFunctionDeclToCpp(Context& context,
                                               SemIR::LocId loc_id,
                                               const FunctionInfo& target)
     -> clang::FunctionDecl* {
-  return BuildCppToCarbonThunkDecl(context, loc_id, target,
-                                   target.GetCppName(context));
+  size_t max_arity = target.function.default_value_arity;
+  llvm::SmallVector<clang::FunctionDecl*> overload_decls;
+  overload_decls.reserve(max_arity + 1);
+  for (size_t i = 0; i <= max_arity; ++i) {
+    overload_decls.push_back(BuildCppToCarbonThunkDecl(
+        context, loc_id, target, target.GetCppName(context), i));
+  }
+  return overload_decls.back();
 }
 
 auto ExportVirtualFunctionDeclToCpp(Context& context, SemIR::LocId loc_id,
@@ -1501,6 +1512,7 @@ auto DefineExportedVirtualFunction(Context& context, SemIR::LocId loc_id,
 // name.
 //
 // Returns nullptr if an error occurs.
+// FIXME: This gets the overload set.
 auto ExportNonGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
                                    const FunctionInfo& target,
                                    std::string_view extra_name = "")
