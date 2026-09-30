@@ -716,7 +716,7 @@ follows:
 
 ### Query lookup
 
-Once the `Self` type `T` and interface `I` is determined, the appropriate `impl
+Once the `Self` type `T` and interface `I` are determined, the appropriate `impl
 T as I` implementation is located. The program is invalid if no such `impl`
 exists. When `T` or `I` depends on a checked binding, a suitable constraint must
 be specified to ensure that such an `impl` will exist. When `T` or `I` depends
@@ -1026,8 +1026,8 @@ To get the `M` member of interface `I` for a type `T`, use `T.impl(I.M)` or
 
 Instance binding is performed using the implementation of either
 [the `BindToValue` or `BindToRef` member binding interface](#member-binding-interfaces)
-by `typeof(a)`. The compiler provides `final` builtin implementations to provide
-default instance binding behavior.
+by `typeof(a)`. The compiler provides `final` builtin implementations for
+methods and fields to provide default instance binding behavior.
 
 For compiler-provided builtin implementations of instance binding, the result of
 instance binding depends on what instance member `M` was found:
