@@ -300,14 +300,16 @@ auto GetBenchLayout() -> int;
 template <int Pad, typename LoopT>
 [[gnu::noinline, gnu::aligned(BenchLayoutPadRange)]] auto RunLoopInLayout(
     LoopT& loop) -> void {
-  if constexpr (Pad > 0) {
+  // The `asm` statement is present even when `Pad` is zero, because it affects
+  // how the compiler schedules and allocates registers for the code around it.
+  // That keeps every copy's code the same apart from the padding.
 #if defined(__x86_64__)
-    __asm__ volatile(".nops %c0" : : "i"(Pad));
+  // `.nops` rejects a size of zero.
+  __asm__ volatile(".if %c0\n .nops %c0\n .endif" : : "i"(Pad));
 #elif defined(__aarch64__)
-    static_assert(Pad % 4 == 0, "AArch64 instructions are 4 bytes.");
-    __asm__ volatile(".rept %c0\n nop\n .endr" : : "i"(Pad / 4));
+  static_assert(Pad % 4 == 0, "AArch64 instructions are 4 bytes.");
+  __asm__ volatile(".rept %c0\n nop\n .endr" : : "i"(Pad / 4));
 #endif
-  }
   [[clang::always_inline]] loop();
 }
 
