@@ -39,6 +39,7 @@ using IdKind = TypeEnum<
     CallParamIndex,
     CharId,
     ClangDeclId,
+    ClangFunctionPointerTypeId,
     ClassId,
     CompileTimeBindIndex,
     ConstantId,

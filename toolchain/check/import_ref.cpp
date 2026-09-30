@@ -2695,6 +2695,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_context().TODO(SemIR::LocId::None,
                                     "Unsupported: Importing C++ functions that "
                                     "require thunks indirectly");
+      break;
+    }
+    case SemIR::Function::SpecialFunctionKind::CppFunctionPointerThunk: {
+      CARBON_FATAL(
+          "Function pointer thunks are always file-local, and should never be "
+          "imported.");
     }
   }
 
