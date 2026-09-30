@@ -131,6 +131,18 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.1366a4d5330239bd:core.Destroy.Core"(ptr %self) #0 !dbg !67 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc16_43.1.array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i64 5, !dbg !69
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc16_43.1.array.index), !dbg !69
+// CHECK:STDOUT:   %.loc16_43.2.array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i64 4, !dbg !69
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc16_43.2.array.index), !dbg !69
+// CHECK:STDOUT:   %.loc16_43.3.array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i64 3, !dbg !69
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc16_43.3.array.index), !dbg !69
+// CHECK:STDOUT:   %.loc16_43.4.array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i64 2, !dbg !69
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc16_43.4.array.index), !dbg !69
+// CHECK:STDOUT:   %.loc16_43.5.array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i64 1, !dbg !69
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc16_43.5.array.index), !dbg !69
+// CHECK:STDOUT:   %.loc16_43.6.array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i64 0, !dbg !69
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc16_43.6.array.index), !dbg !69
 // CHECK:STDOUT:   ret void, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
