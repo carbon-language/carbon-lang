@@ -188,6 +188,7 @@ static auto IsBuiltinWithTrivialDestruction(Context& context,
     case SemIR::FacetType::Kind:
     case SemIR::FloatType::Kind:
     case SemIR::FormType::Kind:
+    case SemIR::FunctionType::Kind:
     case SemIR::IntLiteralType::Kind:
     case SemIR::IntType::Kind:
     case SemIR::PointerType::Kind:

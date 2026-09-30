@@ -133,6 +133,12 @@ static auto BuildCopyWitness(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   auto& clang_sema = context.clang_sema();
 
+  if (context.constant_values().InstIs<SemIR::CppFunctionPointerType>(
+          query_self_const_id)) {
+    return BuildPrimitiveCopyWitness(context, loc_id, query_self_const_id,
+                                     query_specific_interface);
+  }
+
   auto* tag_decl = TypeAsTagDecl(context, query_self_const_id);
   if (!tag_decl) {
     return SemIR::InstId::None;

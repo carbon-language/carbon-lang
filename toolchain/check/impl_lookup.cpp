@@ -143,6 +143,22 @@ static auto FindAssociatedImportIRs(
           push_args(specific_id);
           break;
         }
+        case CARBON_KIND(SemIR::ClangFunctionPointerTypeId _): {
+          // C++ function pointer types aren't actually members of the `Cpp`
+          // package, because they don't have declarations in C++, or even names
+          // as such. However, they need to be associated with `ImportIRId::Cpp`
+          // in order for impl lookup to find their implementations of core
+          // interfaces like `Copy`.
+          //
+          // TODO: we can probably avoid this special case (and many others) by
+          // mapping C++ function pointers to instances of a parameterized
+          // prelude type, which can implement interfaces like `Copy` using
+          // builtins. However, that prelude type will need to take the
+          // parameter and return types as generic parameters, so we can't do
+          // that until we support variadics.
+          result.push_back(SemIR::ImportIRId::Cpp);
+          break;
+        }
         default: {
           break;
         }
