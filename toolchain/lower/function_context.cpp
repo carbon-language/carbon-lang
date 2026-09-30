@@ -193,9 +193,13 @@ auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
   auto [const_ir, const_id] = GetConstantValueInSpecific(
       specific_sem_ir(), specific_id_, sem_ir(), inst_id);
   CARBON_CHECK(const_ir == &sem_ir() || const_ir == &specific_sem_ir());
-  CARBON_CHECK(const_id.is_concrete(),
-               "Missing value: {0} {1} in {2} has non-concrete value {3}",
-               inst_id, sem_ir().insts().Get(inst_id), specific_id_, const_id);
+  // When lowering templates, the specific may contain instructions that do not
+  // emit a value during lowering, so the `locals_.Lookup` above doesn't find
+  // anything. In this case, it's OK if the instruction does not have a
+  // concrete constant.
+  if (!const_id.is_concrete()) {
+    return nullptr;
+  }
   // We can only pass on the InstId if it refers to the file in which the
   // constant value was provided.
   auto* global = GetFileContext(const_ir).GetConstant(
