@@ -1529,28 +1529,30 @@ static auto AddAssociatedEntities(ImportContext& context,
   for (auto inst_id : associated_entities) {
     // Determine the name of the associated entity, by switching on its kind.
     SemIR::NameId import_name_id = SemIR::NameId::None;
-    if (auto assoc_const_decl =
-            context.import_insts().TryGetAs<SemIR::AssociatedConstantDecl>(
-                inst_id)) {
-      const auto& assoc_const = context.import_associated_constants().Get(
-          assoc_const_decl->assoc_const_id);
-      import_name_id = assoc_const.name_id;
-    } else if (auto function_decl =
-                   context.import_insts().TryGetAs<SemIR::FunctionDecl>(
-                       inst_id)) {
-      const auto& function =
-          context.import_functions().Get(function_decl->function_id);
-      import_name_id = function.name_id;
-    } else if (auto import_ref =
-                   context.import_insts().TryGetAs<SemIR::AnyImportRef>(
-                       inst_id)) {
-      import_name_id =
-          context.import_entity_names().Get(import_ref->entity_name_id).name_id;
-    } else {
-      // We don't need `GetWithAttachedType` here because we don't access the
-      // type.
-      CARBON_FATAL("Unhandled associated entity kind: {0}",
-                   context.import_insts().Get(inst_id).kind());
+    // We don't need `GetWithAttachedType` here because we don't access the
+    // type.
+    auto inst = context.import_insts().Get(inst_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::AssociatedConstantDecl assoc_const_decl): {
+        const auto& assoc_const = context.import_associated_constants().Get(
+            assoc_const_decl.assoc_const_id);
+        import_name_id = assoc_const.name_id;
+        break;
+      }
+      case CARBON_KIND(SemIR::FunctionDecl function_decl): {
+        const auto& function =
+            context.import_functions().Get(function_decl.function_id);
+        import_name_id = function.name_id;
+        break;
+      }
+      case CARBON_KIND_ANY(SemIR::AnyImportRef, import_ref): {
+        import_name_id = context.import_entity_names()
+                             .Get(import_ref.entity_name_id)
+                             .name_id;
+        break;
+      }
+      default:
+        CARBON_FATAL("Unhandled associated entity kind: {0}", inst.kind());
     }
     auto name_id = GetLocalNameId(context, import_name_id);
     auto entity_name_id = context.local_entity_names().Add(
@@ -2693,6 +2695,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_context().TODO(SemIR::LocId::None,
                                     "Unsupported: Importing C++ functions that "
                                     "require thunks indirectly");
+      break;
+    }
+    case SemIR::Function::SpecialFunctionKind::CppFunctionPointerThunk: {
+      CARBON_FATAL(
+          "Function pointer thunks are always file-local, and should never be "
+          "imported.");
     }
   }
 

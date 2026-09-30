@@ -9,6 +9,7 @@
 #include <utility>
 #include <variant>
 
+#include "clang/AST/Type.h"
 #include "common/concepts.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
@@ -355,10 +356,12 @@ class Stringifier {
   template <typename InstT>
   auto StringifyInst(InstId inst_id, InstT inst) -> void {
     // This doesn't use requires so that more specific overloads are chosen when
-    // provided.
-    static_assert(InstT::Kind.is_type() != InstIsType::Always ||
-                      std::same_as<InstT, WhereExpr>,
-                  "Types should have a dedicated overload");
+    // provided. Indirect constants can be printed by desugaring.
+    static_assert(
+        InstT::Kind.is_type() != InstIsType::Always ||
+            InstT::Kind.constant_kind() == InstConstantKind::Indirect ||
+            std::same_as<InstT, WhereExpr>,
+        "Types should have a dedicated overload");
     // TODO: We should have Stringify support for all types where
     // InstT::Kind.constant_kind() is neither Never nor Indirect.
     StringifyInstDefault(inst_id, inst);
@@ -652,6 +655,14 @@ class Stringifier {
                       ">");
   }
 
+  auto StringifyInst(InstId /*inst_id*/, CppFunctionPointerType inst) -> void {
+    clang::QualType clang_type(sem_ir_->clang_function_pointer_types()
+                                   .Get(inst.clang_type_id)
+                                   .clang_type,
+                               0);
+    *out_ << "<C++ type " << clang_type.getAsString() << ">";
+  }
+
   auto StringifyInst(InstId /*inst_id*/, FunctionType inst) -> void {
     const auto& fn = sem_ir_->functions().Get(inst.function_id);
     *out_ << "<type of ";
@@ -748,19 +759,23 @@ class Stringifier {
       auto entity_inst_id = entities[index];
       step_stack_->PushString(")");
       step_stack_->PushResumeQualfiedNames();
-      if (auto associated_const =
-              sem_ir_->insts().TryGetAs<AssociatedConstantDecl>(
-                  entity_inst_id)) {
-        step_stack_->PushNameId(sem_ir_->associated_constants()
-                                    .Get(associated_const->assoc_const_id)
-                                    .name_id);
-      } else if (auto function_decl =
-                     sem_ir_->insts().TryGetAs<FunctionDecl>(entity_inst_id)) {
-        const auto& function =
-            sem_ir_->functions().Get(function_decl->function_id);
-        step_stack_->PushNameId(function.name_id);
-      } else {
-        step_stack_->PushInstId(entity_inst_id);
+      CARBON_KIND_SWITCH(sem_ir_->insts().Get(entity_inst_id)) {
+        case CARBON_KIND(AssociatedConstantDecl associated_const): {
+          step_stack_->PushNameId(sem_ir_->associated_constants()
+                                      .Get(associated_const.assoc_const_id)
+                                      .name_id);
+          break;
+        }
+        case CARBON_KIND(FunctionDecl function_decl): {
+          const auto& function =
+              sem_ir_->functions().Get(function_decl.function_id);
+          step_stack_->PushNameId(function.name_id);
+          break;
+        }
+        default: {
+          step_stack_->PushInstId(entity_inst_id);
+          break;
+        }
       }
       // Don't qualify names after the `.` operator, until the closing `)`.
       step_stack_->PushStopQualfiedNames();

@@ -451,6 +451,14 @@ class Context {
     return mangle_string_fingerprint_;
   }
 
+  auto clang_function_pointer_types() -> SemIR::ClangFunctionPointerTypeStore& {
+    return sem_ir().clang_function_pointer_types();
+  }
+  auto clang_function_pointer_types() const
+      -> const SemIR::ClangFunctionPointerTypeStore& {
+    return sem_ir().clang_function_pointer_types();
+  }
+
   // --------------------------------------------------------------------------
   // End of SemIR::File members.
   // --------------------------------------------------------------------------
