@@ -422,9 +422,7 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
 
         auto struct_fields = class_info.GetStructTypeFields(
             context.sem_ir(), class_type.specific_id);
-        CARBON_CHECK(
-            !struct_fields.empty(),
-            "empty structs should have a trivial `SubobjectDestroy.Op`");
+        // TODO: add check for empty structs.
         for (auto i = static_cast<std::int64_t>(struct_fields.size()) - 1;
              i >= 0; --i) {
           auto field_defined_in_self_type =
@@ -464,6 +462,7 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
       case CARBON_KIND(SemIR::StructType struct_type): {
         auto struct_fields =
             context.struct_type_fields().Get(struct_type.fields_id);
+        // TODO: add check for empty structs.
         for (auto i = static_cast<std::int64_t>(struct_fields.size()) - 1;
              i >= 0; --i) {
           DestroyStructField(context, loc_id, callee_self_param_id,
