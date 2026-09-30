@@ -319,11 +319,14 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
                                /*is_partial=*/false);
       }
 
+      case CARBON_KIND(SemIR::ConstType const_type): {
+        inst_id = GetCanonicalFacet(context, const_type.inner_id);
+        inst = context.insts().Get(inst_id);
+        if (context.types().IsConstrainedFacetType(inst.type_id())) {
+          return HasWitnessForOneField(context, loc_id, inst_id,
+                                       query_specific_interface);
+        }
 
-    case CARBON_KIND(SemIR::ConstType const_type): {
-      return HasWitnessForOneField(context, loc_id, const_type.inner_id,
-                                   query_specific_interface);
-    }
         continue;
       }
 

@@ -54,6 +54,12 @@ static auto GetClassScope(Context& context,
 static auto TypeAsTagDecl(Context& context,
                           SemIR::ConstantId query_self_const_id)
     -> clang::TagDecl* {
+  auto inst_id = context.constant_values().GetInstId(
+      GetCanonicalFacet(context, query_self_const_id));
+  if (auto const_type = context.insts().TryGetAs<SemIR::ConstType>(inst_id)) {
+    query_self_const_id = context.constant_values().Get(const_type->inner_id);
+  }
+
   SemIR::NameScopeId class_scope_id =
       GetClassScope(context, query_self_const_id);
   if (!class_scope_id.has_value()) {
