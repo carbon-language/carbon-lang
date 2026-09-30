@@ -921,6 +921,12 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
     return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting";
   }
 
+  // Autoupdate won't modify a NOAUTOUPDATE file, so process it as normal. This
+  // builds the expectations, which lets us report mismatches to the user.
+  if (running_autoupdate && !test_file.autoupdate_line_number) {
+    return ProcessTestFile(test_name, /*running_autoupdate=*/false);
+  }
+
   // Validate AUTOUPDATE-SPLIT use, and remove it from test files if present.
   if (test_file.has_splits) {
     for (const auto& test_file :
