@@ -804,7 +804,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.type.e9e: type = fn_type @Optional.HasValue, @Optional(%T.220) [symbolic]
 // CHECK:STDOUT:   %Optional.HasValue.6cd: %Optional.HasValue.type.e9e = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.283: %facet_type.f48 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.74b: type = facet_access_type %T.283 [symbolic]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness.28a: <witness> = lookup_impl_witness %T.283, @Destroy [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.16e: %Destroy.type = facet_value %T.as_type.74b, (%Destroy.lookup_impl_witness.28a) [symbolic]
+// CHECK:STDOUT:   %MaybeUnformed.a4b: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.16e) [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.d50: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%T.283) [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.e4c: type = unbound_element_type %DefaultOptionalStorage.d50, bool [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.915: type = unbound_element_type %DefaultOptionalStorage.d50, %MaybeUnformed.a4b [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.type.a12: type = fn_type @T.as_type.as.OptionalStorage.impl.Get, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.d32: %T.as_type.as.OptionalStorage.impl.Get.type.a12 = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Has.type.e5a: type = fn_type @T.as_type.as.OptionalStorage.impl.Has, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
@@ -896,6 +902,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.Get.529: %Optional.Get.type.2b4 = struct_value () [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.515: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.b41) [concrete]
 // CHECK:STDOUT:   %.1d6a7: type = maybe_unformed_type %i32 [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.02c: type = unbound_element_type %DefaultOptionalStorage.9f1, %MaybeUnformed.515 [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.c79: type = unbound_element_type %DefaultOptionalStorage.9f1, bool [concrete]
 // CHECK:STDOUT:   %struct_type.value.has_value.f6a: type = struct_type {.value: %MaybeUnformed.515, .has_value: bool} [concrete]
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn.15f: <specific function> = specific_function %Optional.HasValue.ed9, @Optional.HasValue(%OptionalStorage.facet.6c5) [concrete]
 // CHECK:STDOUT:   %Optional.Get.specific_fn.0dd: <specific function> = specific_function %Optional.Get.529, @Optional.Get(%OptionalStorage.facet.6c5) [concrete]
@@ -1099,6 +1107,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Core.import_ref.e9c: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get.type (%T.as_type.as.OptionalStorage.impl.Get.type.a12) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get (constants.%T.as_type.as.OptionalStorage.impl.Get.d32)]
 // CHECK:STDOUT:   %Core.import_ref.0b2 = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.460 = impl_witness_table (%Core.import_ref.0c6, %Core.import_ref.dc3, %Core.import_ref.c53, %Core.import_ref.ed4, %Core.import_ref.e9c, %Core.import_ref.0b2), @T.as_type.as.OptionalStorage.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e97: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a85]
+// CHECK:STDOUT:   %Core.import_ref.c86: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a94]
 // CHECK:STDOUT:   %Core.import_ref.eef: %facet_type.f48 = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%facet_value (constants.%facet_value.f93)]
 // CHECK:STDOUT:   %Core.import_ref.fcc: %Destroy.type = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%Destroy.facet (constants.%Destroy.facet.9cd)]
 // CHECK:STDOUT:   %Core.import_ref.fd1: @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor.type (%T.as_type.as.Iterate.impl.NewCursor.type.953) = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor (constants.%T.as_type.as.Iterate.impl.NewCursor.544)]
@@ -1114,6 +1124,10 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Core.import_ref.47b: Core.IntLiteral = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.AnyInt.impl.%N (constants.%N.fe9)]
 // CHECK:STDOUT:   %Core.import_ref.49b: @Int.as.AnyInt.impl.%Int.as.AnyInt.impl.AsInt.type (%Int.as.AnyInt.impl.AsInt.type.f15) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.AnyInt.impl.%Int.as.AnyInt.impl.AsInt (constants.%Int.as.AnyInt.impl.AsInt.d10)]
 // CHECK:STDOUT:   %AnyInt.impl_witness_table = impl_witness_table (%Core.import_ref.47b, %Core.import_ref.49b), @Int.as.AnyInt.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.b0d = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a94: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = field_decl has_value, element1, %Core.import_ref.b0d in [concrete] {}
+// CHECK:STDOUT:   %Core.import_ref.bb4 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a85: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = field_decl value, element0, %Core.import_ref.bb4 in [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
@@ -1372,6 +1386,14 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc34_19.5(%self.param: ref %DefaultOptionalStorage.9f1) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %has_value.ref: %DefaultOptionalStorage.elem.c79 = name_ref has_value, imports.%Core.import_ref.c86 [concrete = imports.%field_decl.a94]
+// CHECK:STDOUT:   %.loc34_19.1: ref bool = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc34_19.1: <bound method> = bound_method %.loc34_19.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc34_19.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc34_19.1(%.loc34_19.1)
+// CHECK:STDOUT:   %value.ref: %DefaultOptionalStorage.elem.02c = name_ref value, imports.%Core.import_ref.e97 [concrete = imports.%field_decl.a85]
+// CHECK:STDOUT:   %.loc34_19.2: ref %MaybeUnformed.515 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc34_19.2: <bound method> = bound_method %.loc34_19.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc34_19.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc34_19.2(%.loc34_19.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1638,7 +1660,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.type.e9e: type = fn_type @Optional.HasValue, @Optional(%T.220) [symbolic]
 // CHECK:STDOUT:   %Optional.HasValue.6cd: %Optional.HasValue.type.e9e = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.283: %facet_type.f48 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.74b: type = facet_access_type %T.283 [symbolic]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness.28a: <witness> = lookup_impl_witness %T.283, @Destroy [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.16e: %Destroy.type = facet_value %T.as_type.74b, (%Destroy.lookup_impl_witness.28a) [symbolic]
+// CHECK:STDOUT:   %MaybeUnformed.a4b: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.16e) [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.d50: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%T.283) [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.e4c: type = unbound_element_type %DefaultOptionalStorage.d50, bool [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.915: type = unbound_element_type %DefaultOptionalStorage.d50, %MaybeUnformed.a4b [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.type.a12: type = fn_type @T.as_type.as.OptionalStorage.impl.Get, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.d32: %T.as_type.as.OptionalStorage.impl.Get.type.a12 = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Has.type.e5a: type = fn_type @T.as_type.as.OptionalStorage.impl.Has, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
@@ -1725,6 +1753,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.facet.be4: %Destroy.type = facet_value %DiffValueType, (%custom_witness.1bfa2a.1) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.632: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.be4) [concrete]
 // CHECK:STDOUT:   %.a18: type = maybe_unformed_type %DiffValueType [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.07a: type = unbound_element_type %DefaultOptionalStorage.9a0, %MaybeUnformed.632 [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.b49: type = unbound_element_type %DefaultOptionalStorage.9a0, bool [concrete]
 // CHECK:STDOUT:   %struct_type.value.has_value.851: type = struct_type {.value: %MaybeUnformed.632, .has_value: bool} [concrete]
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn.a20: <specific function> = specific_function %Optional.HasValue.960, @Optional.HasValue(%OptionalStorage.facet.beb) [concrete]
 // CHECK:STDOUT:   %Optional.Get.specific_fn.084: <specific function> = specific_function %Optional.Get.294, @Optional.Get(%OptionalStorage.facet.beb) [concrete]
@@ -1925,6 +1955,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Core.import_ref.e9c: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get.type (%T.as_type.as.OptionalStorage.impl.Get.type.a12) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get (constants.%T.as_type.as.OptionalStorage.impl.Get.d32)]
 // CHECK:STDOUT:   %Core.import_ref.0b2 = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.460 = impl_witness_table (%Core.import_ref.0c6, %Core.import_ref.dc3, %Core.import_ref.c53, %Core.import_ref.ed4, %Core.import_ref.e9c, %Core.import_ref.0b2), @T.as_type.as.OptionalStorage.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e97: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a85]
+// CHECK:STDOUT:   %Core.import_ref.c86: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a94]
 // CHECK:STDOUT:   %Core.import_ref.eef: %facet_type.f48 = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%facet_value (constants.%facet_value.f93)]
 // CHECK:STDOUT:   %Core.import_ref.fcc: %Destroy.type = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%Destroy.facet (constants.%Destroy.facet.9cd)]
 // CHECK:STDOUT:   %Core.import_ref.fd1: @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor.type (%T.as_type.as.Iterate.impl.NewCursor.type.953) = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor (constants.%T.as_type.as.Iterate.impl.NewCursor.544)]
@@ -1936,6 +1968,10 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.b0d = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a94: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = field_decl has_value, element1, %Core.import_ref.b0d in [concrete] {}
+// CHECK:STDOUT:   %Core.import_ref.bb4 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a85: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = field_decl value, element0, %Core.import_ref.bb4 in [concrete] {}
 // CHECK:STDOUT:   %DiffMutableRange.decl: type = class_decl @DiffMutableRange [concrete = constants.%DiffMutableRange] {} {}
 // CHECK:STDOUT:   %DiffConstRange.decl: type = class_decl @DiffConstRange [concrete = constants.%DiffConstRange] {} {}
 // CHECK:STDOUT: }
@@ -2199,6 +2235,14 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc44_33.5(%self.param: ref %DefaultOptionalStorage.9a0) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %has_value.ref: %DefaultOptionalStorage.elem.b49 = name_ref has_value, imports.%Core.import_ref.c86 [concrete = imports.%field_decl.a94]
+// CHECK:STDOUT:   %.loc44_33.1: ref bool = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc44_33.1: <bound method> = bound_method %.loc44_33.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc44_33.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc44_33.1(%.loc44_33.1)
+// CHECK:STDOUT:   %value.ref: %DefaultOptionalStorage.elem.07a = name_ref value, imports.%Core.import_ref.e97 [concrete = imports.%field_decl.a85]
+// CHECK:STDOUT:   %.loc44_33.2: ref %MaybeUnformed.632 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc44_33.2: <bound method> = bound_method %.loc44_33.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc44_33.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc44_33.2(%.loc44_33.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2467,7 +2511,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.type.e9e: type = fn_type @Optional.HasValue, @Optional(%T.220) [symbolic]
 // CHECK:STDOUT:   %Optional.HasValue.6cd: %Optional.HasValue.type.e9e = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.283: %facet_type.f48 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.74b: type = facet_access_type %T.283 [symbolic]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness.28a: <witness> = lookup_impl_witness %T.283, @Destroy [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.16e: %Destroy.type = facet_value %T.as_type.74b, (%Destroy.lookup_impl_witness.28a) [symbolic]
+// CHECK:STDOUT:   %MaybeUnformed.a4b: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.16e) [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.d50: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%T.283) [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.e4c: type = unbound_element_type %DefaultOptionalStorage.d50, bool [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.915: type = unbound_element_type %DefaultOptionalStorage.d50, %MaybeUnformed.a4b [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.type.a12: type = fn_type @T.as_type.as.OptionalStorage.impl.Get, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.d32: %T.as_type.as.OptionalStorage.impl.Get.type.a12 = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Has.type.e5a: type = fn_type @T.as_type.as.OptionalStorage.impl.Has, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
@@ -2551,6 +2601,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.facet.d74: %Destroy.type = facet_value %OverloadValueType, (%custom_witness.1bfa2a.1) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.d16: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.d74) [concrete]
 // CHECK:STDOUT:   %.8a2: type = maybe_unformed_type %OverloadValueType [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.dbb: type = unbound_element_type %DefaultOptionalStorage.fbc, %MaybeUnformed.d16 [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.02d: type = unbound_element_type %DefaultOptionalStorage.fbc, bool [concrete]
 // CHECK:STDOUT:   %struct_type.value.has_value.35f: type = struct_type {.value: %MaybeUnformed.d16, .has_value: bool} [concrete]
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn.730: <specific function> = specific_function %Optional.HasValue.ab3, @Optional.HasValue(%OptionalStorage.facet.50c) [concrete]
 // CHECK:STDOUT:   %Optional.Get.specific_fn.f34: <specific function> = specific_function %Optional.Get.4ea, @Optional.Get(%OptionalStorage.facet.50c) [concrete]
@@ -2677,12 +2729,18 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Core.import_ref.e9c: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get.type (%T.as_type.as.OptionalStorage.impl.Get.type.a12) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get (constants.%T.as_type.as.OptionalStorage.impl.Get.d32)]
 // CHECK:STDOUT:   %Core.import_ref.0b2 = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.460 = impl_witness_table (%Core.import_ref.0c6, %Core.import_ref.dc3, %Core.import_ref.c53, %Core.import_ref.ed4, %Core.import_ref.e9c, %Core.import_ref.0b2), @T.as_type.as.OptionalStorage.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e97: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a85]
+// CHECK:STDOUT:   %Core.import_ref.c86: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a94]
 // CHECK:STDOUT:   %Core.import_ref.eef: %facet_type.f48 = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%facet_value (constants.%facet_value.f93)]
 // CHECK:STDOUT:   %Core.import_ref.fcc: %Destroy.type = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%Destroy.facet (constants.%Destroy.facet.9cd)]
 // CHECK:STDOUT:   %Core.import_ref.fd1: @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor.type (%T.as_type.as.Iterate.impl.NewCursor.type.953) = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor (constants.%T.as_type.as.Iterate.impl.NewCursor.544)]
 // CHECK:STDOUT:   %Core.import_ref.273: @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.Next.type (%T.as_type.as.Iterate.impl.Next.type.b36) = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.Next (constants.%T.as_type.as.Iterate.impl.Next.d6b)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table.121 = impl_witness_table (%Core.import_ref.eef, %Core.import_ref.fcc, %Core.import_ref.fd1, %Core.import_ref.273), @T.as_type.as.Iterate.impl [concrete]
 // CHECK:STDOUT:   %OverloadValueType.decl: type = class_decl @OverloadValueType [concrete = constants.%OverloadValueType] {} {}
+// CHECK:STDOUT:   %Core.import_ref.b0d = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a94: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = field_decl has_value, element1, %Core.import_ref.b0d in [concrete] {}
+// CHECK:STDOUT:   %Core.import_ref.bb4 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a85: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = field_decl value, element0, %Core.import_ref.bb4 in [concrete] {}
 // CHECK:STDOUT:   %Range.decl: type = class_decl @Range [concrete = constants.%Range] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2937,6 +2995,14 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc27_37.5(%self.param: ref %DefaultOptionalStorage.fbc) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %has_value.ref: %DefaultOptionalStorage.elem.02d = name_ref has_value, imports.%Core.import_ref.c86 [concrete = imports.%field_decl.a94]
+// CHECK:STDOUT:   %.loc27_37.1: ref bool = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc27_37.1: <bound method> = bound_method %.loc27_37.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc27_37.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc27_37.1(%.loc27_37.1)
+// CHECK:STDOUT:   %value.ref: %DefaultOptionalStorage.elem.dbb = name_ref value, imports.%Core.import_ref.e97 [concrete = imports.%field_decl.a85]
+// CHECK:STDOUT:   %.loc27_37.2: ref %MaybeUnformed.d16 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc27_37.2: <bound method> = bound_method %.loc27_37.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc27_37.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc27_37.2(%.loc27_37.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3091,7 +3157,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.type.e9e: type = fn_type @Optional.HasValue, @Optional(%T.220) [symbolic]
 // CHECK:STDOUT:   %Optional.HasValue.6cd: %Optional.HasValue.type.e9e = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.283: %facet_type.f48 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.74b: type = facet_access_type %T.283 [symbolic]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness.28a: <witness> = lookup_impl_witness %T.283, @Destroy [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.16e: %Destroy.type = facet_value %T.as_type.74b, (%Destroy.lookup_impl_witness.28a) [symbolic]
+// CHECK:STDOUT:   %MaybeUnformed.a4b: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.16e) [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.d50: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%T.283) [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.e4c: type = unbound_element_type %DefaultOptionalStorage.d50, bool [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.915: type = unbound_element_type %DefaultOptionalStorage.d50, %MaybeUnformed.a4b [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.type.a12: type = fn_type @T.as_type.as.OptionalStorage.impl.Get, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.d32: %T.as_type.as.OptionalStorage.impl.Get.type.a12 = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Has.type.e5a: type = fn_type @T.as_type.as.OptionalStorage.impl.Has, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
@@ -3175,6 +3247,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.facet.d87: %Destroy.type = facet_value %f64.dc1, (%custom_witness.f8f19d.2) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.8ff: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.d87) [concrete]
 // CHECK:STDOUT:   %.cc0: type = maybe_unformed_type %f64.dc1 [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.b21: type = unbound_element_type %DefaultOptionalStorage.3e2, %MaybeUnformed.8ff [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.645: type = unbound_element_type %DefaultOptionalStorage.3e2, bool [concrete]
 // CHECK:STDOUT:   %struct_type.value.has_value.58e: type = struct_type {.value: %MaybeUnformed.8ff, .has_value: bool} [concrete]
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn.9fc: <specific function> = specific_function %Optional.HasValue.776, @Optional.HasValue(%OptionalStorage.facet.405) [concrete]
 // CHECK:STDOUT:   %Optional.Get.specific_fn.e69: <specific function> = specific_function %Optional.Get.cb6, @Optional.Get(%OptionalStorage.facet.405) [concrete]
@@ -3308,6 +3382,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Core.import_ref.e9c: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get.type (%T.as_type.as.OptionalStorage.impl.Get.type.a12) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get (constants.%T.as_type.as.OptionalStorage.impl.Get.d32)]
 // CHECK:STDOUT:   %Core.import_ref.0b2 = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.460 = impl_witness_table (%Core.import_ref.0c6, %Core.import_ref.dc3, %Core.import_ref.c530, %Core.import_ref.ed4, %Core.import_ref.e9c, %Core.import_ref.0b2), @T.as_type.as.OptionalStorage.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e978: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a85]
+// CHECK:STDOUT:   %Core.import_ref.c86: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a94]
 // CHECK:STDOUT:   %Core.import_ref.eef: %facet_type.f48 = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%facet_value (constants.%facet_value.f93)]
 // CHECK:STDOUT:   %Core.import_ref.fcc: %Destroy.type = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%Destroy.facet (constants.%Destroy.facet.9cd)]
 // CHECK:STDOUT:   %Core.import_ref.fd1a: @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor.type (%T.as_type.as.Iterate.impl.NewCursor.type.953) = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor (constants.%T.as_type.as.Iterate.impl.NewCursor.544)]
@@ -3317,6 +3393,10 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Copy.impl_witness_table.8dd = impl_witness_table (%Core.import_ref.e69), @Float.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.cb3: @Float.as.AddAssignWith.impl.%Float.as.AddAssignWith.impl.Op.type (%Float.as.AddAssignWith.impl.Op.type.fdd) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Float.as.AddAssignWith.impl.%Float.as.AddAssignWith.impl.Op (constants.%Float.as.AddAssignWith.impl.Op.430)]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb3), @Float.as.AddAssignWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.b0d = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a94: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = field_decl has_value, element1, %Core.import_ref.b0d in [concrete] {}
+// CHECK:STDOUT:   %Core.import_ref.bb4 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a85: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = field_decl value, element0, %Core.import_ref.bb4 in [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
@@ -3570,6 +3650,14 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc24_19.5(%self.param: ref %DefaultOptionalStorage.3e2) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %has_value.ref: %DefaultOptionalStorage.elem.645 = name_ref has_value, imports.%Core.import_ref.c86 [concrete = imports.%field_decl.a94]
+// CHECK:STDOUT:   %.loc24_19.1: ref bool = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc24_19.1: <bound method> = bound_method %.loc24_19.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc24_19.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc24_19.1(%.loc24_19.1)
+// CHECK:STDOUT:   %value.ref: %DefaultOptionalStorage.elem.b21 = name_ref value, imports.%Core.import_ref.e978 [concrete = imports.%field_decl.a85]
+// CHECK:STDOUT:   %.loc24_19.2: ref %MaybeUnformed.8ff = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc24_19.2: <bound method> = bound_method %.loc24_19.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc24_19.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc24_19.2(%.loc24_19.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3724,7 +3812,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.type.e9e: type = fn_type @Optional.HasValue, @Optional(%T.220) [symbolic]
 // CHECK:STDOUT:   %Optional.HasValue.6cd: %Optional.HasValue.type.e9e = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.283: %facet_type.f48 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.74b: type = facet_access_type %T.283 [symbolic]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness.28a: <witness> = lookup_impl_witness %T.283, @Destroy [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.16e: %Destroy.type = facet_value %T.as_type.74b, (%Destroy.lookup_impl_witness.28a) [symbolic]
+// CHECK:STDOUT:   %MaybeUnformed.a4b: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.16e) [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.d50: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%T.283) [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.e4c: type = unbound_element_type %DefaultOptionalStorage.d50, bool [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.915: type = unbound_element_type %DefaultOptionalStorage.d50, %MaybeUnformed.a4b [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.type.a12: type = fn_type @T.as_type.as.OptionalStorage.impl.Get, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.d32: %T.as_type.as.OptionalStorage.impl.Get.type.a12 = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Has.type.e5a: type = fn_type @T.as_type.as.OptionalStorage.impl.Has, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
@@ -3808,6 +3902,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.facet.d87: %Destroy.type = facet_value %f64.dc1, (%custom_witness.f8f19d.2) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.8ff: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.d87) [concrete]
 // CHECK:STDOUT:   %.cc0: type = maybe_unformed_type %f64.dc1 [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.b21: type = unbound_element_type %DefaultOptionalStorage.3e2, %MaybeUnformed.8ff [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.645: type = unbound_element_type %DefaultOptionalStorage.3e2, bool [concrete]
 // CHECK:STDOUT:   %struct_type.value.has_value.58e: type = struct_type {.value: %MaybeUnformed.8ff, .has_value: bool} [concrete]
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn.9fc: <specific function> = specific_function %Optional.HasValue.776, @Optional.HasValue(%OptionalStorage.facet.405) [concrete]
 // CHECK:STDOUT:   %Optional.Get.specific_fn.e69: <specific function> = specific_function %Optional.Get.cb6, @Optional.Get(%OptionalStorage.facet.405) [concrete]
@@ -3941,6 +4037,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Core.import_ref.e9c: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get.type (%T.as_type.as.OptionalStorage.impl.Get.type.a12) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get (constants.%T.as_type.as.OptionalStorage.impl.Get.d32)]
 // CHECK:STDOUT:   %Core.import_ref.0b2 = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.460 = impl_witness_table (%Core.import_ref.0c6, %Core.import_ref.dc3, %Core.import_ref.c530, %Core.import_ref.ed4, %Core.import_ref.e9c, %Core.import_ref.0b2), @T.as_type.as.OptionalStorage.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e978: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a85]
+// CHECK:STDOUT:   %Core.import_ref.c86: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a94]
 // CHECK:STDOUT:   %Core.import_ref.eef: %facet_type.f48 = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%facet_value (constants.%facet_value.f93)]
 // CHECK:STDOUT:   %Core.import_ref.fcc: %Destroy.type = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%Destroy.facet (constants.%Destroy.facet.9cd)]
 // CHECK:STDOUT:   %Core.import_ref.fd1a: @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor.type (%T.as_type.as.Iterate.impl.NewCursor.type.953) = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor (constants.%T.as_type.as.Iterate.impl.NewCursor.544)]
@@ -3950,6 +4048,10 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Copy.impl_witness_table.8dd = impl_witness_table (%Core.import_ref.e69), @Float.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.cb3: @Float.as.AddAssignWith.impl.%Float.as.AddAssignWith.impl.Op.type (%Float.as.AddAssignWith.impl.Op.type.fdd) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Float.as.AddAssignWith.impl.%Float.as.AddAssignWith.impl.Op (constants.%Float.as.AddAssignWith.impl.Op.430)]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.cb3), @Float.as.AddAssignWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.b0d = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a94: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = field_decl has_value, element1, %Core.import_ref.b0d in [concrete] {}
+// CHECK:STDOUT:   %Core.import_ref.bb4 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a85: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = field_decl value, element0, %Core.import_ref.bb4 in [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
@@ -4203,6 +4305,14 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc26_19.5(%self.param: ref %DefaultOptionalStorage.3e2) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %has_value.ref: %DefaultOptionalStorage.elem.645 = name_ref has_value, imports.%Core.import_ref.c86 [concrete = imports.%field_decl.a94]
+// CHECK:STDOUT:   %.loc26_19.1: ref bool = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc26_19.1: <bound method> = bound_method %.loc26_19.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc26_19.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc26_19.1(%.loc26_19.1)
+// CHECK:STDOUT:   %value.ref: %DefaultOptionalStorage.elem.b21 = name_ref value, imports.%Core.import_ref.e978 [concrete = imports.%field_decl.a85]
+// CHECK:STDOUT:   %.loc26_19.2: ref %MaybeUnformed.8ff = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc26_19.2: <bound method> = bound_method %.loc26_19.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc26_19.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc26_19.2(%.loc26_19.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4359,7 +4469,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.type.e9e: type = fn_type @Optional.HasValue, @Optional(%T.220) [symbolic]
 // CHECK:STDOUT:   %Optional.HasValue.6cd: %Optional.HasValue.type.e9e = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.283: %facet_type.f48 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.74b: type = facet_access_type %T.283 [symbolic]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness.28a: <witness> = lookup_impl_witness %T.283, @Destroy [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.16e: %Destroy.type = facet_value %T.as_type.74b, (%Destroy.lookup_impl_witness.28a) [symbolic]
+// CHECK:STDOUT:   %MaybeUnformed.a4b: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.16e) [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.d50: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%T.283) [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.e4c: type = unbound_element_type %DefaultOptionalStorage.d50, bool [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.915: type = unbound_element_type %DefaultOptionalStorage.d50, %MaybeUnformed.a4b [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.type.a12: type = fn_type @T.as_type.as.OptionalStorage.impl.Get, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.d32: %T.as_type.as.OptionalStorage.impl.Get.type.a12 = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Has.type.e5a: type = fn_type @T.as_type.as.OptionalStorage.impl.Has, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
@@ -4446,6 +4562,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.facet.c1d: %Destroy.type = facet_value %ValueType, (%custom_witness.226) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.e45: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.c1d) [concrete]
 // CHECK:STDOUT:   %.be1: type = maybe_unformed_type %ValueType [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.457: type = unbound_element_type %DefaultOptionalStorage.53f, %MaybeUnformed.e45 [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.6ad: type = unbound_element_type %DefaultOptionalStorage.53f, bool [concrete]
 // CHECK:STDOUT:   %struct_type.value.has_value.619: type = struct_type {.value: %MaybeUnformed.e45, .has_value: bool} [concrete]
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn.524: <specific function> = specific_function %Optional.HasValue.ba9d, @Optional.HasValue(%OptionalStorage.facet.b3c) [concrete]
 // CHECK:STDOUT:   %Optional.Get.specific_fn.f41: <specific function> = specific_function %Optional.Get.da9, @Optional.Get(%OptionalStorage.facet.b3c) [concrete]
@@ -4581,6 +4699,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Core.import_ref.e9c: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get.type (%T.as_type.as.OptionalStorage.impl.Get.type.a12) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get (constants.%T.as_type.as.OptionalStorage.impl.Get.d32)]
 // CHECK:STDOUT:   %Core.import_ref.0b2 = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.460 = impl_witness_table (%Core.import_ref.0c6, %Core.import_ref.dc3, %Core.import_ref.c53, %Core.import_ref.ed4, %Core.import_ref.e9c, %Core.import_ref.0b2), @T.as_type.as.OptionalStorage.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e97: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a85]
+// CHECK:STDOUT:   %Core.import_ref.c86: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a94]
 // CHECK:STDOUT:   %Core.import_ref.eef: %facet_type.f48 = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%facet_value (constants.%facet_value.f93)]
 // CHECK:STDOUT:   %Core.import_ref.fcc: %Destroy.type = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%Destroy.facet (constants.%Destroy.facet.9cd)]
 // CHECK:STDOUT:   %Core.import_ref.fd1: @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor.type (%T.as_type.as.Iterate.impl.NewCursor.type.953) = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor (constants.%T.as_type.as.Iterate.impl.NewCursor.544)]
@@ -4597,6 +4717,10 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.b0d = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a94: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = field_decl has_value, element1, %Core.import_ref.b0d in [concrete] {}
+// CHECK:STDOUT:   %Core.import_ref.bb4 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a85: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = field_decl value, element0, %Core.import_ref.bb4 in [concrete] {}
 // CHECK:STDOUT:   %ConstRange.decl: type = class_decl @ConstRange [concrete = constants.%ConstRange] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4858,6 +4982,14 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc31_37.5(%self.param: ref %DefaultOptionalStorage.53f) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %has_value.ref: %DefaultOptionalStorage.elem.6ad = name_ref has_value, imports.%Core.import_ref.c86 [concrete = imports.%field_decl.a94]
+// CHECK:STDOUT:   %.loc31_37.1: ref bool = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc31_37.1: <bound method> = bound_method %.loc31_37.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc31_37.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc31_37.1(%.loc31_37.1)
+// CHECK:STDOUT:   %value.ref: %DefaultOptionalStorage.elem.457 = name_ref value, imports.%Core.import_ref.e97 [concrete = imports.%field_decl.a85]
+// CHECK:STDOUT:   %.loc31_37.2: ref %MaybeUnformed.e45 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc31_37.2: <bound method> = bound_method %.loc31_37.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc31_37.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc31_37.2(%.loc31_37.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -5019,7 +5151,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.type.e9e: type = fn_type @Optional.HasValue, @Optional(%T.220) [symbolic]
 // CHECK:STDOUT:   %Optional.HasValue.6cd: %Optional.HasValue.type.e9e = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.283: %facet_type.f48 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.74b: type = facet_access_type %T.283 [symbolic]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness.28a: <witness> = lookup_impl_witness %T.283, @Destroy [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.16e: %Destroy.type = facet_value %T.as_type.74b, (%Destroy.lookup_impl_witness.28a) [symbolic]
+// CHECK:STDOUT:   %MaybeUnformed.a4b: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.16e) [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.d50: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%T.283) [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.e4c: type = unbound_element_type %DefaultOptionalStorage.d50, bool [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.915: type = unbound_element_type %DefaultOptionalStorage.d50, %MaybeUnformed.a4b [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.type.a12: type = fn_type @T.as_type.as.OptionalStorage.impl.Get, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.d32: %T.as_type.as.OptionalStorage.impl.Get.type.a12 = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Has.type.e5a: type = fn_type @T.as_type.as.OptionalStorage.impl.Has, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
@@ -5077,6 +5215,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.facet.6cb: %Destroy.type = facet_value %ValueType, (%custom_witness.3ec) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.8ca: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.6cb) [concrete]
 // CHECK:STDOUT:   %.dd1: type = maybe_unformed_type %ValueType [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.cea: type = unbound_element_type %DefaultOptionalStorage.6f8, %MaybeUnformed.8ca [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.64d: type = unbound_element_type %DefaultOptionalStorage.6f8, bool [concrete]
 // CHECK:STDOUT:   %struct_type.value.has_value.786: type = struct_type {.value: %MaybeUnformed.8ca, .has_value: bool} [concrete]
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn: <specific function> = specific_function %Optional.HasValue.c86, @Optional.HasValue(%OptionalStorage.facet.864) [concrete]
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.d4a, @Optional.Get(%OptionalStorage.facet.864) [concrete]
@@ -5150,6 +5290,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Core.import_ref.e9c: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get.type (%T.as_type.as.OptionalStorage.impl.Get.type.a12) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get (constants.%T.as_type.as.OptionalStorage.impl.Get.d32)]
 // CHECK:STDOUT:   %Core.import_ref.0b2 = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.460 = impl_witness_table (%Core.import_ref.0c6, %Core.import_ref.daf, %Core.import_ref.bd4, %Core.import_ref.ed4, %Core.import_ref.e9c, %Core.import_ref.0b2), @T.as_type.as.OptionalStorage.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e97: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a85]
+// CHECK:STDOUT:   %Core.import_ref.c86: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a94]
 // CHECK:STDOUT:   %DiffMutableADL: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .ValueType = %ValueType.decl
 // CHECK:STDOUT:     .MutableRange = %MutableRange.decl
@@ -5161,6 +5303,10 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.b0d = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a94: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = field_decl has_value, element1, %Core.import_ref.b0d in [concrete] {}
+// CHECK:STDOUT:   %Core.import_ref.bb4 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a85: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = field_decl value, element0, %Core.import_ref.bb4 in [concrete] {}
 // CHECK:STDOUT:   %MutableRange.decl: type = class_decl @MutableRange [concrete = constants.%MutableRange] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -5422,6 +5568,14 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc31_44.5(%self.param: ref %DefaultOptionalStorage.6f8) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %has_value.ref: %DefaultOptionalStorage.elem.64d = name_ref has_value, imports.%Core.import_ref.c86 [concrete = imports.%field_decl.a94]
+// CHECK:STDOUT:   %.loc31_44.1: ref bool = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc31_44.1: <bound method> = bound_method %.loc31_44.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc31_44.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc31_44.1(%.loc31_44.1)
+// CHECK:STDOUT:   %value.ref: %DefaultOptionalStorage.elem.cea = name_ref value, imports.%Core.import_ref.e97 [concrete = imports.%field_decl.a85]
+// CHECK:STDOUT:   %.loc31_44.2: ref %MaybeUnformed.8ca = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc31_44.2: <bound method> = bound_method %.loc31_44.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc31_44.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc31_44.2(%.loc31_44.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -5502,7 +5656,13 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.type.e9e: type = fn_type @Optional.HasValue, @Optional(%T.220) [symbolic]
 // CHECK:STDOUT:   %Optional.HasValue.6cd: %Optional.HasValue.type.e9e = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.283: %facet_type.f48 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.74b: type = facet_access_type %T.283 [symbolic]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness.28a: <witness> = lookup_impl_witness %T.283, @Destroy [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.16e: %Destroy.type = facet_value %T.as_type.74b, (%Destroy.lookup_impl_witness.28a) [symbolic]
+// CHECK:STDOUT:   %MaybeUnformed.a4b: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.16e) [symbolic]
 // CHECK:STDOUT:   %DefaultOptionalStorage.d50: type = class_type @DefaultOptionalStorage, @DefaultOptionalStorage(%T.283) [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.e4c: type = unbound_element_type %DefaultOptionalStorage.d50, bool [symbolic]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.915: type = unbound_element_type %DefaultOptionalStorage.d50, %MaybeUnformed.a4b [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.type.a12: type = fn_type @T.as_type.as.OptionalStorage.impl.Get, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Get.d32: %T.as_type.as.OptionalStorage.impl.Get.type.a12 = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.OptionalStorage.impl.Has.type.e5a: type = fn_type @T.as_type.as.OptionalStorage.impl.Has, @T.as_type.as.OptionalStorage.impl(%T.283) [symbolic]
@@ -5589,6 +5749,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.facet.745: %Destroy.type = facet_value %ValueType, (%custom_witness.dc3) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.0af: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.745) [concrete]
 // CHECK:STDOUT:   %.8f3: type = maybe_unformed_type %ValueType [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.147: type = unbound_element_type %DefaultOptionalStorage.58e, %MaybeUnformed.0af [concrete]
+// CHECK:STDOUT:   %DefaultOptionalStorage.elem.6ce: type = unbound_element_type %DefaultOptionalStorage.58e, bool [concrete]
 // CHECK:STDOUT:   %struct_type.value.has_value.ac3: type = struct_type {.value: %MaybeUnformed.0af, .has_value: bool} [concrete]
 // CHECK:STDOUT:   %Optional.HasValue.specific_fn.e2e: <specific function> = specific_function %Optional.HasValue.f75, @Optional.HasValue(%OptionalStorage.facet.e68) [concrete]
 // CHECK:STDOUT:   %Optional.Get.specific_fn.296: <specific function> = specific_function %Optional.Get.483, @Optional.Get(%OptionalStorage.facet.e68) [concrete]
@@ -5716,6 +5878,8 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Core.import_ref.e9c: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get.type (%T.as_type.as.OptionalStorage.impl.Get.type.a12) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get (constants.%T.as_type.as.OptionalStorage.impl.Get.d32)]
 // CHECK:STDOUT:   %Core.import_ref.0b2 = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.460 = impl_witness_table (%Core.import_ref.0c6, %Core.import_ref.dc3, %Core.import_ref.c53, %Core.import_ref.ed4, %Core.import_ref.e9c, %Core.import_ref.0b2), @T.as_type.as.OptionalStorage.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e97: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a85]
+// CHECK:STDOUT:   %Core.import_ref.c86: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.a94]
 // CHECK:STDOUT:   %Core.import_ref.eef: %facet_type.f48 = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%facet_value (constants.%facet_value.f93)]
 // CHECK:STDOUT:   %Core.import_ref.fcc: %Destroy.type = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%Destroy.facet (constants.%Destroy.facet.9cd)]
 // CHECK:STDOUT:   %Core.import_ref.fd1: @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor.type (%T.as_type.as.Iterate.impl.NewCursor.type.953) = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.Iterate.impl.%T.as_type.as.Iterate.impl.NewCursor (constants.%T.as_type.as.Iterate.impl.NewCursor.544)]
@@ -5732,6 +5896,10 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.b0d = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a94: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.e4c) = field_decl has_value, element1, %Core.import_ref.b0d in [concrete] {}
+// CHECK:STDOUT:   %Core.import_ref.bb4 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.a85: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.915) = field_decl value, element0, %Core.import_ref.bb4 in [concrete] {}
 // CHECK:STDOUT:   %MutableAndConstRange.decl: type = class_decl @MutableAndConstRange [concrete = constants.%MutableAndConstRange] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -5993,6 +6161,14 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc38_41.5(%self.param: ref %DefaultOptionalStorage.58e) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %has_value.ref: %DefaultOptionalStorage.elem.6ce = name_ref has_value, imports.%Core.import_ref.c86 [concrete = imports.%field_decl.a94]
+// CHECK:STDOUT:   %.loc38_41.1: ref bool = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc38_41.1: <bound method> = bound_method %.loc38_41.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc38_41.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc38_41.1(%.loc38_41.1)
+// CHECK:STDOUT:   %value.ref: %DefaultOptionalStorage.elem.147 = name_ref value, imports.%Core.import_ref.e97 [concrete = imports.%field_decl.a85]
+// CHECK:STDOUT:   %.loc38_41.2: ref %MaybeUnformed.0af = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc38_41.2: <bound method> = bound_method %.loc38_41.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc38_41.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc38_41.2(%.loc38_41.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

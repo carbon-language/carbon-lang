@@ -389,13 +389,17 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
 }
 
 // Calls `self.<field>.(Destroy.SelfDestruct)` for a field in a `StructType`.
-static auto DestroyStructField(Context& context, SemIR::LocId loc_id,
-                               SemIR::InstId callee_self_param_id,
-                               SemIR::StructTypeField struct_field) -> void {
-  auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
-                                       struct_field.name_id);
-  auto self_destruct_call = BuildSelfDestructCall(context, member_id);
-  DiscardExpr(context, self_destruct_call);
+static auto DestroyStructFields(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId callee_self_param_id,
+    llvm::ArrayRef<SemIR::StructTypeField> struct_fields) -> void {
+  // TODO: add check that `struct_fields` isn't empty.
+  for (auto i = static_cast<std::int64_t>(struct_fields.size()) - 1; i >= 0;
+       --i) {
+    auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
+                                         struct_fields[i].name_id);
+    auto self_destruct_call = BuildSelfDestructCall(context, member_id);
+    DiscardExpr(context, self_destruct_call);
+  }
 }
 
 // Returns the body for `SubobjectDestroy.Op`.
@@ -446,28 +450,16 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
             llvm::SaveAndRestore(context.access_context(),
                                  SemIR::NameScopeId::AllowHighestAccessLevel);
 
+        // TODO: inline assignment when `struct_fields` is guaranteed to have at
+        // least one non-trivial and destructible member.
         auto struct_fields = class_info.GetStructTypeFields(
             context.sem_ir(), class_type.specific_id);
-        // TODO: add check for empty structs.
-        for (auto i = static_cast<std::int64_t>(struct_fields.size()) - 1;
-             i >= 0; --i) {
-          auto field_defined_in_self_type =
-              SemIR::LookupClassFieldByStructField(
-                  context.sem_ir(),
-                  context.name_scopes().Get(class_info.scope_id),
-                  struct_fields[i])
-                  .has_value();
-          if (field_defined_in_self_type) {
-            DestroyStructField(context, loc_id, callee_self_param_id,
-                               struct_fields[i]);
-          }
+        if (!struct_fields.empty() &&
+            struct_fields[0].name_id == SemIR::NameId::Vptr) {
+          struct_fields = struct_fields.drop_front();
         }
-        // TODO: Call `base.(Destroy.SelfDestruct)()`.
-        //
-        // This will be added in a separate change (to trunk) so that it's
-        // visibly clear the base component is being destroyed correctly. The
-        // TODO doesn't generate a diagnostic because it will be too disruptive
-        // over a short period of time.
+        DestroyStructFields(context, loc_id, callee_self_param_id,
+                            struct_fields);
         return;
       }
       case CARBON_KIND(SemIR::ConstType const_type): {
@@ -486,14 +478,9 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         return;
       }
       case CARBON_KIND(SemIR::StructType struct_type): {
-        auto struct_fields =
-            context.struct_type_fields().Get(struct_type.fields_id);
-        // TODO: add check for empty structs.
-        for (auto i = static_cast<std::int64_t>(struct_fields.size()) - 1;
-             i >= 0; --i) {
-          DestroyStructField(context, loc_id, callee_self_param_id,
-                             struct_fields[i]);
-        }
+        DestroyStructFields(
+            context, loc_id, callee_self_param_id,
+            context.struct_type_fields().Get(struct_type.fields_id));
         return;
       }
       case CARBON_KIND(SemIR::TupleType tuple_type): {

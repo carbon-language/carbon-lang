@@ -132,6 +132,8 @@ fn DoThing() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.b25525d21a9bd472:core.Destroy.Core"(ptr %self) #2 !dbg !76 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc22.base = getelementptr inbounds nuw { [16 x i8] }, ptr %self, i32 0, i32 0, !dbg !78
+// CHECK:STDOUT:   call void @"_CSelfDestruct.352b8f386f44a614:core.Destroy.Core"(ptr %.loc22.base), !dbg !78
 // CHECK:STDOUT:   ret void, !dbg !78
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

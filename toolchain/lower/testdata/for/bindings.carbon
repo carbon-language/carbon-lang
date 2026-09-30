@@ -156,6 +156,10 @@ fn For() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.b61f4dca88958e98:core.Destroy.Core"(ptr %self) #0 !dbg !75 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc29_33.1.has_value = getelementptr inbounds nuw <{ { i32, i32 }, i1 }>, ptr %self, i32 0, i32 1, !dbg !77
+// CHECK:STDOUT:   call void @"_CSelfDestruct.48e0adf639fe7af4:core.Destroy.Core"(ptr %.loc29_33.1.has_value), !dbg !77
+// CHECK:STDOUT:   %.loc29_33.2.value = getelementptr inbounds nuw <{ { i32, i32 }, i1 }>, ptr %self, i32 0, i32 0, !dbg !77
+// CHECK:STDOUT:   call void @"_CSelfDestruct.a69fcb7116d040b0:core.Destroy.Core"(ptr %.loc29_33.2.value), !dbg !77
 // CHECK:STDOUT:   ret void, !dbg !77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

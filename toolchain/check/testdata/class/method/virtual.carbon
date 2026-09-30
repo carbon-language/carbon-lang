@@ -939,6 +939,10 @@ class T2(G2: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc15_3.5(%self.param: ref %Derived) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %base.ref: %Derived.elem = name_ref base, @Derived.%.loc8 [concrete = @Derived.%.loc8]
+// CHECK:STDOUT:   %.loc15: ref %Base = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc15, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc15)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
