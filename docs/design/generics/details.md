@@ -516,7 +516,12 @@ class Player {
 ### Avoiding name collisions
 
 > **TODO:** This has changed. Now you can always extend, but conflicting names
-> may only be found by qualified name lookup.
+> may only be found by qualified name lookup. See proposals
+> [#5337: Interface extension and `final impl` update](https://github.com/carbon-language/carbon-lang/pull/5337)
+> and
+> [#6395: Type completeness in extend](https://github.com/carbon-language/carbon-lang/pull/6395),
+> along with leads issue
+> [#2745: Name conflicts beyond inheritance](https://github.com/carbon-language/carbon-lang/issues/2745).
 
 To avoid name collisions, you can't extend implementations of two interfaces
 that have a name in common:
@@ -924,6 +929,11 @@ A facet with an unidentified or partially identified facet type may be converted
 _to_ other facet types. While its set of requirements are not fully determined,
 the requirements that are known at that time may be used.
 
+> References:
+>
+> -   Proposal
+>     [#6902: Identification of a named constraint during definition](https://github.com/carbon-language/carbon-lang/pull/6902)
+
 ## Named constraints
 
 If the interfaces discussed above are the building blocks for facet types,
@@ -1111,6 +1121,11 @@ class ImplementsS {
   Z { ... }
 }
 ```
+
+> References:
+>
+> -   Proposal
+>     [#6902: Identification of a named constraint during definition](https://github.com/carbon-language/carbon-lang/pull/6902)
 
 ### Rewrites and same-type constraints in a named constraint
 
@@ -1427,6 +1442,11 @@ fn DoHashAndEquals[T: Hashable](x: T) {
 
 **Note:** The design for this feature is continued in
 [a later section](#interface-requiring-other-interfaces-revisited).
+
+> References:
+>
+> -   Proposal
+>     [#6902: Identification of a named constraint during definition](https://github.com/carbon-language/carbon-lang/pull/6902)
 
 ### Interface extension
 
@@ -5553,10 +5573,10 @@ fn (Type as Interface).F() {}
 Similarly for parameterized `impl`s:
 
 ```carbon
-impl forall [T:! type] T as Interface(T) {
+impl forall [T: type] T as Interface(T) {
   fn F();
 }
-fn (forall [T:! type] T as Interface(T)).F() {}
+fn (forall [T: type] T as Interface(T)).F() {}
 ```
 
 And for class-scope `impl` members:

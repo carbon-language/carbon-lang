@@ -27,10 +27,7 @@ characters, such as `fn` or `Foo` or `Int`, optionally preceded by `r#`.
 
 The exact lexical form of words has not yet been settled. However, Carbon will
 follow lexical conventions for identifiers based on
-[Unicode Annex #31](https://unicode.org/reports/tr31/). TODO: Update this once
-the precise rules are decided; see the
-[Unicode source files](/proposals/p000142-unicode-source-files.md#characters-in-identifiers-and-whitespace)
-proposal.
+[Unicode Annex #31](https://unicode.org/reports/tr31/).
 
 Carbon source files, including comments and string literals, are required to be
 in Unicode Normalization Form C (NFC).
