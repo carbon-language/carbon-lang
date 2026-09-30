@@ -26,6 +26,7 @@ interface I {
 // CHECK:STDOUT: --- todo_define_not_default.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self.37e: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%Self.37e) [symbolic]
@@ -48,8 +49,8 @@ interface I {
 // CHECK:STDOUT:   %I.WithSelf.G: %I.WithSelf.G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.WithSelf.%I.WithSelf.G.decl [concrete]
 // CHECK:STDOUT:   %assoc2: %I.assoc_type = assoc_entity element2, @I.WithSelf.%T [concrete]
-// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.693: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.693 = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.e55: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %assoc3: %I.assoc_type = assoc_entity element3, @I.WithSelf.%N [concrete]
 // CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
@@ -124,7 +125,7 @@ interface I {
 // CHECK:STDOUT:     %assoc2: %I.assoc_type = assoc_entity element2, @I.WithSelf.%T [concrete = constants.%assoc2]
 // CHECK:STDOUT:     %i32.loc22_18: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc22_23: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc22_26: %tuple.type.24b = tuple_literal (%i32.loc22_18, %i32.loc22_23) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc22_26: %tuple.type.693 = tuple_literal (%i32.loc22_18, %i32.loc22_23) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc22_27: type = converted %.loc22_26, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [concrete] {

@@ -29,6 +29,7 @@ fn F(unused n: C) {}
 // CHECK:STDOUT: --- fail_incomplete_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %n.param_patt: %pattern_type = value_param_pattern [concrete]

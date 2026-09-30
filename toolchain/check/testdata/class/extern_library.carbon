@@ -23,6 +23,7 @@ extern library "foo" class C;
 // CHECK:STDOUT: --- fail_todo.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

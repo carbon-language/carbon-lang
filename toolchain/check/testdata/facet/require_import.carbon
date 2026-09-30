@@ -53,16 +53,16 @@ fn F(generic B: Y) {
 // CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %X.type: type = facet_type <@X> [concrete]
 // CHECK:STDOUT:   %Self.f45: %X.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type.190: type = facet_access_type %Self.f45 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Z.type.924: type = facet_type <@Z, @Z(%T)> [symbolic]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Self.d5d: %Z.type.924 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Z.assoc_type.496: type = assoc_entity_type @Z, @Z(%T) [symbolic]
 // CHECK:STDOUT:   %Z.WithSelf.F.type.bc1: type = fn_type @Z.WithSelf.F, @Z.WithSelf(%T, %Self.d5d) [symbolic]
@@ -70,8 +70,8 @@ fn F(generic B: Y) {
 // CHECK:STDOUT:   %Z.type.ecd906.1: type = facet_type <@Z, @Z(%Self.as_type.190)> [symbolic]
 // CHECK:STDOUT:   %Self.c0a: %Z.type.ecd906.1 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.55f146.1: <witness> = require_complete_type %Z.type.ecd906.1 [symbolic]
-// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type %X.type [concrete]
-// CHECK:STDOUT:   %A.patt: %pattern_type.9a5 = symbolic_binding_pattern A, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a587c.2: type = pattern_type %X.type [concrete]
+// CHECK:STDOUT:   %A.patt: %pattern_type.9a587c.2 = symbolic_binding_pattern A, 0 [symbolic]
 // CHECK:STDOUT:   %A: %X.type = symbolic_binding A, 0 [symbolic]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
 // CHECK:STDOUT:   %Self.95b: %Y.type = symbolic_binding Self, 0 [symbolic]
@@ -134,16 +134,16 @@ fn F(generic B: Y) {
 // CHECK:STDOUT:   %default.import.loc2_17.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %A.patt.loc4_15.1: %pattern_type.9a5 = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc4_15.2 (constants.%A.patt)]
+// CHECK:STDOUT:     %A.patt.loc4_15.1: %pattern_type.9a587c.2 = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc4_15.2 (constants.%A.patt)]
 // CHECK:STDOUT:     %B.patt.loc4_36.1: %pattern_type.cfb = symbolic_binding_pattern B, 1 [symbolic = %B.patt.loc4_36.2 (constants.%B.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_17: type = splice_block %X.ref [concrete = constants.%X.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc4_15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc4_15: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %X.ref: type = name_ref X, imports.%Main.X [concrete = constants.%X.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %A.loc4_15.2: %X.type = symbolic_binding A, 0 [symbolic = %A.loc4_15.1 (constants.%A)]
 // CHECK:STDOUT:     %.loc4_38: type = splice_block %Y.ref [concrete = constants.%Y.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc4_36: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc4_36: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Y.ref: type = name_ref Y, imports.%Main.Y [concrete = constants.%Y.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %B.loc4_36.2: %Y.type = symbolic_binding B, 1 [symbolic = %B.loc4_36.1 (constants.%B)]
@@ -151,7 +151,7 @@ fn F(generic B: Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Z(imports.%Main.import_ref.b3bc94.3: type) [from "a.carbon"] {
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -209,7 +209,7 @@ fn F(generic B: Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%A.loc4_15.2: %X.type, %B.loc4_36.2: %Y.type) {
-// CHECK:STDOUT:   %A.patt.loc4_15.2: %pattern_type.9a5 = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc4_15.2 (constants.%A.patt)]
+// CHECK:STDOUT:   %A.patt.loc4_15.2: %pattern_type.9a587c.2 = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc4_15.2 (constants.%A.patt)]
 // CHECK:STDOUT:   %A.loc4_15.1: %X.type = symbolic_binding A, 0 [symbolic = %A.loc4_15.1 (constants.%A)]
 // CHECK:STDOUT:   %B.patt.loc4_36.2: %pattern_type.cfb = symbolic_binding_pattern B, 1 [symbolic = %B.patt.loc4_36.2 (constants.%B.patt)]
 // CHECK:STDOUT:   %B.loc4_36.1: %Y.type = symbolic_binding B, 1 [symbolic = %B.loc4_36.1 (constants.%B)]

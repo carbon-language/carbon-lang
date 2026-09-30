@@ -40,6 +40,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: --- base_method_shadow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %self.param_patt.8fb: %pattern_type.9ef = ref_param_pattern [concrete]

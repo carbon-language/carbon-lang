@@ -41,13 +41,13 @@ load(
     "filegroup_with_stage",
     "gen_cc_toolchain_paths_with_stage",
 )
+load("//bazel/cc_toolchains:make_include_copts.bzl", "make_include_copts")
 load("//bazel/manifest:defs.bzl", "manifest")
 load(
     "//toolchain/base:runtimes_build_info.bzl",
     "generate_runtimes_build_vars",
 )
 load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_prelude", "carbon_runtimes_config")
-load("bazel/make_include_copts.bzl", "make_include_copts")
 load(
     "install_filegroups.bzl",
     "filtered_toolchain_files",
@@ -323,7 +323,6 @@ toolchain_files(
         "bazel/carbon_clang_variables.bzl",
         "bazel/carbon_detected_variables.tpl.bzl",
         "bazel/carbon_toolchain.bzl",
-        "bazel/make_include_copts.bzl",
     ],
 )
 

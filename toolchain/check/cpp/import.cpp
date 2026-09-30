@@ -362,28 +362,13 @@ auto ImportCppConstantFromFile(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::ConstantId;
   }
 
-  auto const_inst_id = file.constant_values().GetConstantInstId(inst_id);
-  CARBON_KIND_SWITCH(file.insts().Get(const_inst_id)) {
-    case CARBON_KIND(SemIR::ClassType class_type): {
-      const auto& class_info = file.classes().Get(class_type.class_id);
-      CARBON_CHECK(class_info.scope_id.has_value());
-      return ImportCppDeclFromFile(
-          context, loc_id, file,
-          file.name_scopes().Get(class_info.scope_id).clang_decl_context_id());
-    }
-
-    case CARBON_KIND(SemIR::Namespace namespace_decl): {
-      return ImportCppDeclFromFile(context, loc_id, file,
-                                   file.name_scopes()
-                                       .Get(namespace_decl.name_scope_id)
-                                       .clang_decl_context_id());
-    }
-
-    default: {
-      context.TODO(loc_id, "indirect import of unsupported C++ declaration");
-      return SemIR::ErrorInst::ConstantId;
-    }
+  if (const auto* clang_decl = file.clang_decls().Lookup(inst_id)) {
+    auto clang_decl_id = file.clang_decls().LookupId(clang_decl->key);
+    return ImportCppDeclFromFile(context, loc_id, file, clang_decl_id);
   }
+
+  context.TODO(loc_id, "indirect import of unsupported C++ declaration");
+  return SemIR::ErrorInst::ConstantId;
 }
 
 // Returns the Clang `DeclContext` for the given name scope. Return the
@@ -1338,7 +1323,7 @@ static auto MapTagType(Context& context, const clang::TagType& type)
       .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
 }
 
-static auto MapFunctionPointerType(Context& context, SemIR::LocId loc_id,
+static auto MapFunctionPointerType(Context& context, SemIR::LocId /*loc_id*/,
                                    clang::QualType type) -> TypeExpr {
   CARBON_CHECK(type->isFunctionPointerType());
 
@@ -1346,14 +1331,10 @@ static auto MapFunctionPointerType(Context& context, SemIR::LocId loc_id,
       type.getCanonicalType().getTypePtr());
   CARBON_CHECK(clang_type_id.has_value());
 
-  auto inst_id = AddInst<SemIR::CppFunctionPointerType>(
-      context, loc_id,
-      {.type_id = SemIR::TypeType::TypeId, .clang_type_id = clang_type_id});
-  auto pointer_type_expr = ExprAsType(context, loc_id, inst_id);
-
   // TODO: wrap the pointer type in `Optional` unless it was marked
   // non-nullable.
-  return pointer_type_expr;
+  return TypeExpr::ForUnsugared(
+      context, GetCppFunctionPointerType(context, clang_type_id));
 }
 
 // Maps a C++ type that is not a wrapper type such as a pointer to a Carbon
@@ -1585,9 +1566,6 @@ static auto MakeParamPattern(
 
   auto param_info = MapParameterType(context, loc_id, type, passing_mode);
   auto [type_inst_id, type_id] = param_info.type;
-  // Type expression of the binding pattern - a single-entry/single-exit
-  // region that allows control flow in the type expression e.g. fn F(x: if C
-  // then i32 else i64).
   SemIR::ExprRegionId type_expr_region_id =
       ConsumeExprRegionForPattern(context, type_inst_id);
 
@@ -1614,9 +1592,9 @@ static auto MakeParamPattern(
 static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
                                      const CalleeFunctionInfo& function_info)
     -> SemIR::InstBlockId {
-  // The `self` parameter of a method (proposal #7016) is the
-  // first entry in the explicit parameter list. Build it (if any) first, then
-  // the remaining explicit parameters.
+  // The `self` parameter of a method is the first entry in the explicit
+  // parameter list. Build it (if any) first, then the remaining explicit
+  // parameters.
   llvm::SmallVector<SemIR::InstId> param_ids;
   llvm::SmallVector<SemIR::InstId> param_type_ids;
   param_ids.reserve(function_info.num_carbon_params());
@@ -1993,7 +1971,6 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .call_param_patterns_id =
                   function_params_insts->call_param_patterns_id,
               .call_params_id = function_params_insts->call_params_id,
-              .call_param_default_values_id = SemIR::InstBlockId::None,
               .call_param_ranges = function_params_insts->param_ranges,
               .return_type_inst_id = function_params_insts->return_type_inst_id,
               .return_form_inst_id = function_params_insts->return_form_inst_id,
@@ -2012,37 +1989,38 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 // Given a C++ callee and its imported Carbon function (as produced by
 // `ImportFunction`), this builds a simple-ABI thunk that invokes the callee,
 // and defines the imported function as calling it.
-static auto InsertThunk(Context& context, SemIR::LocId loc_id,
-                        const CalleeFunctionInfo& callee_info,
-                        SemIR::Function& function) -> void {
-  if (clang::FunctionDecl* thunk_clang_decl =
-          BuildCppThunk(context, callee_info)) {
-    SemIR::ClangDeclSignature thunk_signature;
-    thunk_signature.kind = SemIR::ClangDeclSignature::Normal;
-    thunk_signature.num_params =
-        static_cast<int32_t>(thunk_clang_decl->getNumParams());
-    thunk_signature.passing_modes.assign(
-        thunk_signature.num_params,
-        SemIR::ClangDeclSignature::PassingMode::ByValue);
-    SemIR::ClangDeclSignatureId thunk_signature_id =
-        context.clang_decl_signatures().Add(std::move(thunk_signature));
-
-    CalleeFunctionInfo thunk_callee_info(context, thunk_clang_decl,
-                                         thunk_signature_id);
-    if (auto thunk_decl_id =
-            ImportFunction(context, loc_id, thunk_callee_info)) {
-      context.clang_decls().Add({.key = SemIR::ClangDeclKey::ForFunctionDecl(
-                                     thunk_clang_decl, thunk_signature_id),
-                                 .inst_id = *thunk_decl_id,
-                                 .is_imported = true});
-      auto thunk_function_id = context.insts()
-                                   .GetAs<SemIR::FunctionDecl>(*thunk_decl_id)
-                                   .function_id;
-      auto& thunk_function = context.functions().Get(thunk_function_id);
-      thunk_function.SetCppThunk(function.first_owning_decl_id);
-      function.SetHasCppThunk(*thunk_decl_id);
-    }
+static auto DefineAsThunkCall(Context& context, SemIR::LocId loc_id,
+                              const CalleeFunctionInfo& callee_info,
+                              SemIR::Function& function) -> void {
+  clang::FunctionDecl* thunk_clang_decl = BuildCppThunk(context, callee_info);
+  if (thunk_clang_decl == nullptr) {
+    return;
   }
+  SemIR::ClangDeclSignature thunk_signature;
+  thunk_signature.kind = SemIR::ClangDeclSignature::Normal;
+  thunk_signature.num_params =
+      static_cast<int32_t>(thunk_clang_decl->getNumParams());
+  thunk_signature.passing_modes.assign(
+      thunk_signature.num_params,
+      SemIR::ClangDeclSignature::PassingMode::ByValue);
+  SemIR::ClangDeclSignatureId thunk_signature_id =
+      context.clang_decl_signatures().Add(std::move(thunk_signature));
+
+  CalleeFunctionInfo thunk_callee_info(context, thunk_clang_decl,
+                                       thunk_signature_id);
+  auto thunk_decl_id = ImportFunction(context, loc_id, thunk_callee_info);
+  if (thunk_decl_id == std::nullopt) {
+    return;
+  }
+  context.clang_decls().Add({.key = SemIR::ClangDeclKey::ForFunctionDecl(
+                                 thunk_clang_decl, thunk_signature_id),
+                             .inst_id = *thunk_decl_id,
+                             .is_imported = true});
+  auto thunk_function_id =
+      context.insts().GetAs<SemIR::FunctionDecl>(*thunk_decl_id).function_id;
+  auto& thunk_function = context.functions().Get(thunk_function_id);
+  thunk_function.SetCppThunk(function.first_owning_decl_id);
+  function.SetHasCppThunk(*thunk_decl_id);
 }
 
 // Imports a C++ function, returning a corresponding Carbon function.
@@ -2096,7 +2074,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
                             "in thunk for C++ function used here");
           builder.Note(loc_id, InCppThunk);
         });
-    InsertThunk(context, loc_id, callee_info, imported_function);
+    DefineAsThunkCall(context, loc_id, callee_info, imported_function);
   } else {
     // Inform Clang that the function has been referenced. This will trigger
     // instantiation if needed.
@@ -2122,14 +2100,16 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
 // Imports a C++ function pointer type, and prepares to import its `__invoke`
 // function. The function itself must be imported separately with
-// `ImportFunctionPointerInvoke`.
-static auto ImportFunctionPointer(Context& context, SemIR::LocId loc_id,
+// `ImportFunctionPointerInvoke` when it's called, because that requires the
+// types in the signature to be complete.
+static auto ImportFunctionPointer(Context& context,
                                   const clang::Type* pointer_type)
     -> SemIR::InstId {
   CARBON_CHECK(pointer_type->isFunctionPointerType());
   // Allocate an ID for the function pointer type and return it.
-  pointer_type =
-      clang::QualType(pointer_type, 0).getCanonicalType().getTypePtr();
+  pointer_type = clang::QualType(pointer_type, /*Quals=*/0)
+                     .getCanonicalType()
+                     .getTypePtr();
   auto clang_type_id =
       context.clang_function_pointer_types().Lookup(pointer_type);
   if (!clang_type_id.has_value()) {
@@ -2138,9 +2118,8 @@ static auto ImportFunctionPointer(Context& context, SemIR::LocId loc_id,
          .decl_id = SemIR::InstId::None,
          .function_id = SemIR::FunctionId::None});
   }
-  return AddInst<SemIR::CppFunctionPointerType>(
-      context, loc_id,
-      {.type_id = SemIR::TypeType::TypeId, .clang_type_id = clang_type_id});
+  return context.types().GetTypeInstId(
+      GetCppFunctionPointerType(context, clang_type_id));
 }
 
 auto ImportFunctionPointerInvoke(
@@ -2169,8 +2148,8 @@ auto ImportFunctionPointerInvoke(
     result.function_id = context.insts()
                              .GetAs<SemIR::FunctionDecl>(*function_decl_id)
                              .function_id;
-    InsertThunk(context, loc_id, callee_info,
-                context.functions().Get(result.function_id));
+    DefineAsThunkCall(context, loc_id, callee_info,
+                      context.functions().Get(result.function_id));
   }
   context.clang_function_pointer_types().Update(clang_type_id, result);
   return result;
@@ -2440,7 +2419,7 @@ static auto ImportAfterDependencies(Context& context, SemIR::LocId loc_id,
     }
     case CARBON_KIND(const clang::Type* type): {
       if (type->isFunctionPointerType()) {
-        return ImportFunctionPointer(context, loc_id, type);
+        return ImportFunctionPointer(context, type);
       }
 
       context.TODO(loc_id,

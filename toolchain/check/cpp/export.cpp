@@ -293,6 +293,16 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
   return record_decl;
 }
 
+auto ExportAndCompleteClassToCpp(Context& context, SemIR::ClassType class_type)
+    -> clang::TagDecl* {
+  auto* tag_decl = ExportClassToCpp(context, class_type);
+  if (tag_decl && context.cpp_context() &&
+      context.ast_context().getExternalSource()) {
+    context.ast_context().getExternalSource()->CompleteType(tag_decl);
+  }
+  return tag_decl;
+}
+
 // Export the bindings in a generic as a `clang::TemplateParameterList`.
 static auto ExportGenericBindings(Context& context, SemIR::LocId loc_id,
                                   SemIR::GenericId generic_id,
@@ -322,8 +332,7 @@ static auto ExportGenericBindings(Context& context, SemIR::LocId loc_id,
     CARBON_CHECK(param_ident, "non-identifier param name {0}",
                  entity_name.name_id);
 
-    if (symbolic_binding.type_id != SemIR::TypeType::TypeId &&
-        !context.types().Is<SemIR::FacetType>(symbolic_binding.type_id)) {
+    if (!context.types().Is<SemIR::FacetType>(symbolic_binding.type_id)) {
       context.TODO(loc_id, "binding maps to a non-type template parameter");
       return nullptr;
     }
@@ -1245,9 +1254,24 @@ static auto BuildCppToCarbonThunkBody(Context& context,
     stmts.push_back(call.get());
 
     if (has_return_value) {
-      auto* return_stmt = clang::ReturnStmt::Create(
-          sema.getASTContext(), clang_loc, return_storage_expr.get(),
-          return_storage_var_decl);
+      // Return `return_storage` by value. The variable is an NRVO candidate,
+      // so CodeGen constructs it directly in the return slot and ignores the
+      // returned expression, but the AST should still model a by-value return
+      // (a prvalue) rather than returning an lvalue referring to the local.
+      clang::QualType return_type = return_storage_var_decl->getType();
+      clang::Expr* return_val_expr = sema.BuildDeclRefExpr(
+          return_storage_var_decl, return_type, clang::VK_LValue, clang_loc);
+      // TODO: Lvalue-to-rvalue conversion isn't valid for class types. Those
+      // would need a (elided) copy/move construction, which may not exist.
+      if (!return_type->getAsCXXRecordDecl() && !return_type->isNullPtrType()) {
+        return_val_expr = clang::ImplicitCastExpr::Create(
+            sema.getASTContext(), return_type, clang::CK_LValueToRValue,
+            return_val_expr, /*BasePath=*/nullptr, clang::VK_PRValue,
+            clang::FPOptionsOverride());
+      }
+      auto* return_stmt =
+          clang::ReturnStmt::Create(sema.getASTContext(), clang_loc,
+                                    return_val_expr, return_storage_var_decl);
       stmts.push_back(return_stmt);
     }
   }

@@ -30,6 +30,7 @@ fn G(x: X) {
 // CHECK:STDOUT: --- fail_multiple_bindings.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %self.param_patt: %pattern_type = value_param_pattern [concrete]

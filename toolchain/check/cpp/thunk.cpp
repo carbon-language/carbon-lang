@@ -555,7 +555,7 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
           cast<clang::CXXMethodDecl>(callee_info.decl)
               ->getFunctionObjectParameterReferenceType();
       auto* object_param_ref = BuildThunkParamRef(
-          sema, thunk_function_decl, 0,
+          sema, thunk_function_decl, /*thunk_index=*/0,
           callee_info.signature->self_passing_mode, object_param_type);
       constexpr bool IsArrow = false;
       auto object =

@@ -22,6 +22,7 @@ fn Foo.Baz() {
 // CHECK:STDOUT: --- fail_unresolved_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Baz.type: type = fn_type @Baz [concrete]
 // CHECK:STDOUT:   %Baz: %Baz.type = struct_value () [concrete]
 // CHECK:STDOUT: }

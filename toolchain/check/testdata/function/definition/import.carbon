@@ -117,6 +117,7 @@ fn D() {}
 // CHECK:STDOUT: --- fns.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -142,8 +143,8 @@ fn D() {}
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
-// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
-// CHECK:STDOUT:   %tuple.19c: %tuple.type.85c = tuple_value (%i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.135: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple.e3d: %tuple.type.135 = tuple_value (%i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.a8a: type = tuple_type (%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.e71: type = pattern_type %tuple.type.a8a [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type.e71 = value_param_pattern [concrete]
@@ -209,7 +210,7 @@ fn D() {}
 // CHECK:STDOUT:     %c.param: %tuple.type.a8a = value_param call_param0
 // CHECK:STDOUT:     %.loc6_14.1: type = splice_block %.loc6_14.3 [concrete = constants.%tuple.type.a8a] {
 // CHECK:STDOUT:       %i32.loc6_10: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc6_14.2: %tuple.type.85c = tuple_literal (%i32.loc6_10) [concrete = constants.%tuple.19c]
+// CHECK:STDOUT:       %.loc6_14.2: %tuple.type.135 = tuple_literal (%i32.loc6_10) [concrete = constants.%tuple.e3d]
 // CHECK:STDOUT:       %.loc6_14.3: type = converted %.loc6_14.2, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.a8a = wrapper_binding c, %c.param
@@ -256,6 +257,7 @@ fn D() {}
 // CHECK:STDOUT: --- extern.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -281,6 +283,7 @@ fn D() {}
 // CHECK:STDOUT: --- basics.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
@@ -427,6 +430,7 @@ fn D() {}
 // CHECK:STDOUT: --- fail_def_ownership.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type.9f4a6d.1: type = fn_type @A.1 [concrete]
 // CHECK:STDOUT:   %A.921eb9.1: %A.type.9f4a6d.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %A.type.9f4a6d.2: type = fn_type @A.loc14 [concrete]
@@ -486,6 +490,7 @@ fn D() {}
 // CHECK:STDOUT: --- fail_redecl_then_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -516,6 +521,7 @@ fn D() {}
 // CHECK:STDOUT: --- fail_mix_extern_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [concrete]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [concrete]
 // CHECK:STDOUT: }

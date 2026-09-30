@@ -81,7 +81,6 @@
 [
   "abstract"
   ; "adapt"
-  "addr"
   "alias"
   "and"
   "api"
@@ -131,6 +130,7 @@
   "template"
   "then"
   "type"
+  ; "typeof"
   "var"
   "virtual"
   "where"

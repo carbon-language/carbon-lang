@@ -28,6 +28,7 @@ interface I {
 // CHECK:STDOUT: --- fail_todo_assoc_const_default.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self.37e: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
@@ -36,8 +37,8 @@ interface I {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.693: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.693 = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.e55: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.WithSelf.%N [concrete]
 // CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
@@ -90,7 +91,7 @@ interface I {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%T [concrete = constants.%assoc0.2ce]
 // CHECK:STDOUT:     %i32.loc20_26: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %i32.loc20_31: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc20_34: %tuple.type.24b = tuple_literal (%i32.loc20_26, %i32.loc20_31) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc20_34: %tuple.type.693 = tuple_literal (%i32.loc20_26, %i32.loc20_31) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc20_35: type = converted %.loc20_34, constants.%tuple.type.e55 [concrete = constants.%tuple.type.e55]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [concrete] {

@@ -184,6 +184,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- import_global.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %global_foo.cpp_overload_set.type: type = cpp_overload_set_type @global_foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %global_foo.cpp_overload_set.value: %global_foo.cpp_overload_set.type = cpp_overload_set_value @global_foo.cpp_overload_set [concrete]
@@ -211,6 +212,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- import_special_name_call_escaped.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %base.cpp_overload_set.type: type = cpp_overload_set_type @base.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %base.cpp_overload_set.value: %base.cpp_overload_set.type = cpp_overload_set_value @base.cpp_overload_set [concrete]
@@ -238,6 +240,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- import_overloaded.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %overloaded_foo.cpp_overload_set.type: type = cpp_overload_set_type @overloaded_foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %overloaded_foo.cpp_overload_set.value: %overloaded_foo.cpp_overload_set.type = cpp_overload_set_value @overloaded_foo.cpp_overload_set [concrete]
@@ -265,6 +268,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- fail_todo_import_variadic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %variadic_foo.cpp_overload_set.type: type = cpp_overload_set_type @variadic_foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %variadic_foo.cpp_overload_set.value: %variadic_foo.cpp_overload_set.type = cpp_overload_set_value @variadic_foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
@@ -289,6 +293,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- todo_fail_import_static.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %static_foo.cpp_overload_set.type: type = cpp_overload_set_type @static_foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %static_foo.cpp_overload_set.value: %static_foo.cpp_overload_set.type = cpp_overload_set_value @static_foo.cpp_overload_set [concrete]
@@ -316,6 +321,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- import_template_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %template_foo.cpp_overload_set.type: type = cpp_overload_set_type @template_foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %template_foo.cpp_overload_set.value: %template_foo.cpp_overload_set.type = cpp_overload_set_value @template_foo.cpp_overload_set [concrete]

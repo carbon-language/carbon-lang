@@ -4,12 +4,14 @@
 
 #include "toolchain/language_server/context.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <utility>
 
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Host.h"
 #include "toolchain/base/clang_invocation.h"
@@ -77,11 +79,25 @@ class DiagnosticConsumer : public Diagnostics::Consumer {
  private:
   // Returns the LSP range for a diagnostic. Note that Carbon uses 1-based
   // numbers while LSP uses 0-based.
+  //
+  // A location may have no line number (for example, a diagnostic about the
+  // file as a whole) or no column number. LSP has no way to express either, and
+  // clients reject negative positions, so point at the start of the file or
+  // line instead.
   auto GetRange(const Diagnostics::Loc& loc) -> clang::clangd::Range {
-    return {.start = {.line = loc.line_number - 1,
-                      .character = loc.column_number - 1},
-            .end = {.line = loc.line_number - 1,
-                    .character = loc.column_number + loc.length - 1}};
+    if (loc.line_number <= 0) {
+      return {.start = {.line = 0, .character = 0},
+              .end = {.line = 0, .character = 0}};
+    }
+    int line = loc.line_number - 1;
+    if (loc.column_number <= 0) {
+      return {.start = {.line = line, .character = 0},
+              .end = {.line = line, .character = 0}};
+    }
+    int start_character = loc.column_number - 1;
+    return {.start = {.line = line, .character = start_character},
+            .end = {.line = line,
+                    .character = start_character + std::max(loc.length, 0)}};
   }
 
   // Converts a diagnostic level to an LSP severity.
@@ -216,16 +232,40 @@ auto Context::File::sem_ir_index() const -> const SemIRIndex* {
   return &*sem_ir_index_;
 }
 
+auto Context::File::sem_ir_text() const -> const SemIRText* {
+  if (!is_test_file_) {
+    return nullptr;
+  }
+  if (!sem_ir_text_) {
+    sem_ir_text_.emplace(text_);
+  }
+  return sem_ir_text_->empty() ? nullptr : &*sem_ir_text_;
+}
+
 auto Context::File::SetText(Context& context, std::optional<int64_t> version,
                             llvm::StringRef text) -> void {
   // Clear state dependent on the source text.
   compile_driver_.reset();
   sem_ir_index_.reset();
+  sem_ir_text_.reset();
 
   text_ = text.str();
+  is_test_file_ = language_id_ == "carbon-testdata";
 
   // A consumer to gather diagnostics for the file.
   DiagnosticConsumer consumer(&context, uri_, version);
+
+  if (is_test_file_) {
+    // A test file isn't a Carbon source file: it holds any number of input
+    // files, plus the output expected from compiling them. Compiling it as one
+    // source file would report errors on almost every line, so don't. Publish
+    // the empty diagnostic list anyway, to clear anything left over from
+    // before the file became a test file.
+    // TODO: Compile each of the file's splits separately, so that the Carbon
+    // source in a test file gets the same support as any other Carbon source.
+    context.PublishDiagnostics(consumer.params());
+    return;
+  }
 
   // TODO: Make the processing asynchronous, to better handle rapid text
   // updates.

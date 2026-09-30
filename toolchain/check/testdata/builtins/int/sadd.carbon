@@ -164,6 +164,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT: --- i32.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [concrete]

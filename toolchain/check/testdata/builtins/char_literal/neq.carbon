@@ -25,6 +25,7 @@ let b: bool = Neq('a', 'a');
 // CHECK:STDOUT: --- neq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %Neq.type: type = fn_type @Neq [concrete]
 // CHECK:STDOUT:   %Neq: %Neq.type = struct_value () [concrete]

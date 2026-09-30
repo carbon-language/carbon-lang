@@ -75,6 +75,7 @@ let c: CharLiteral = AddCharInt('a', Negate(98));
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.8c6: type = pattern_type Core.CharLiteral [concrete]
 // CHECK:STDOUT:   %AddCharInt.type: type = fn_type @AddCharInt [concrete]
 // CHECK:STDOUT:   %AddCharInt: %AddCharInt.type = struct_value () [concrete]

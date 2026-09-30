@@ -1387,6 +1387,7 @@ fn G(generic T: N) {
 // CHECK:STDOUT: --- rewrite_provided_by_facet_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

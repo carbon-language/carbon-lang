@@ -81,6 +81,7 @@ interface I {
 // CHECK:STDOUT: --- fail_abstract.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract.type: type = facet_type <@Abstract> [concrete]
 // CHECK:STDOUT:   %Self: %Abstract.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
@@ -108,6 +109,7 @@ interface I {
 // CHECK:STDOUT: --- fail_default.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -123,6 +125,7 @@ interface I {
 // CHECK:STDOUT: --- fail_virtual.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Virtual.type: type = facet_type <@Virtual> [concrete]
 // CHECK:STDOUT:   %Self: %Virtual.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
@@ -150,6 +153,7 @@ interface I {
 // CHECK:STDOUT: --- fail_protected.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Protected.type: type = facet_type <@Protected> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -165,6 +169,7 @@ interface I {
 // CHECK:STDOUT: --- fail_private_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
@@ -234,6 +239,7 @@ interface I {
 // CHECK:STDOUT: --- fail_protected_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]

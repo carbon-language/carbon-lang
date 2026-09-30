@@ -67,6 +67,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT: --- if_statement.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
@@ -135,6 +136,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT: --- if_expression_in_eval_fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]

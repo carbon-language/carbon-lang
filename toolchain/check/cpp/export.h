@@ -36,6 +36,11 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
     -> clang::TagDecl*;
 
+// Exports a dynamic Carbon class with a foreign (C++) vtable into C++ as a
+// class, and completes its definition.
+auto ExportAndCompleteClassToCpp(Context& context, SemIR::ClassType class_type)
+    -> clang::TagDecl*;
+
 // Exports a generic Carbon class into C++ as a templated class.
 //
 // If the generic class has already been exported, returns the existing

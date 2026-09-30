@@ -275,7 +275,6 @@ class Formatter {
   auto FormatArg(CharId c) -> void { out() << c; }
   auto FormatArg(EntityNameId id) -> void;
   auto FormatArg(DeclaredFacetTypeId id) -> void;
-  auto FormatArg(DefaultValueId id) -> void;
   auto FormatArg(FieldId id) -> void;
   auto FormatArg(IntKind k) -> void { k.Print(out()); }
   auto FormatArg(FloatKind k) -> void { k.Print(out()); }

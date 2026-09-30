@@ -44,6 +44,7 @@ fn Call() {
 // CHECK:STDOUT: --- fail_call_too_few_args.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F1.cpp_overload_set.type: type = cpp_overload_set_type @F1.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %F1.cpp_overload_set.value: %F1.cpp_overload_set.type = cpp_overload_set_value @F1.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %F2.cpp_overload_set.type: type = cpp_overload_set_type @F2.cpp_overload_set [concrete]

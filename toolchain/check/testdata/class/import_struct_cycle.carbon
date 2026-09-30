@@ -38,6 +38,7 @@ fn Run() {
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Cycle [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %ptr} [concrete]
@@ -121,6 +122,7 @@ fn Run() {
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [concrete]
