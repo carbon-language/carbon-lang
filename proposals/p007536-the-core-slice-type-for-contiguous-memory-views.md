@@ -19,6 +19,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [C++](#c)
     -   [Rust](#rust)
     -   [Go](#go)
+    -   [Swift](#swift)
+    -   [Safe C++](#safe-c)
 -   [Proposal](#proposal)
 -   [Details](#details)
     -   [Representation](#representation)
@@ -106,6 +108,23 @@ Go uses slices `[]T` as a primary data structure. Go slices are headers containi
 a pointer to an underlying array, a length, and a capacity. Slices in Go can
 be grown (which may reallocate), whereas Carbon's `Slice` is a view and cannot
 be grown.
+
+### Swift
+
+Swift has long provided `UnsafeBufferPointer<T>`, a pointer and count that is
+only bounds-checked in debug builds and carries no lifetime information.
+[SE-0447](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0447-span-access-shared-contiguous-storage.md)
+(Swift 6.2) added `Span<T>`, a safe, non-owning view of contiguous initialized
+memory. It is also represented as a pointer and a count, but is bounds-checked
+on every access, and is a non-escapable type, so it cannot outlive the
+container it borrows from.
+
+### Safe C++
+
+The [Safe C++ proposal](https://safecpp.org/draft.html#tuples-arrays-and-slices)
+follows Rust: `[T; N]` is an array, and `[T; dyn]` is a dynamically sized slice
+type that is used through a borrow, which is represented as a pointer and a
+length.
 
 ## Proposal
 
