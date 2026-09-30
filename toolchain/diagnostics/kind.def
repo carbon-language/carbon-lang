@@ -225,6 +225,7 @@ CARBON_DIAGNOSTIC_KIND(InCppMacroExpansion)
 CARBON_DIAGNOSTIC_KIND(ResolvingSpecificHere)
 CARBON_DIAGNOSTIC_KIND(InCallToEvalFn)
 CARBON_DIAGNOSTIC_KIND(InCppThunk)
+CARBON_DIAGNOSTIC_KIND(InCppFunctionPointerThunk)
 
 // Package/import checking diagnostics.
 CARBON_DIAGNOSTIC_KIND(CppInteropFuzzing)

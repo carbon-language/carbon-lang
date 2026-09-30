@@ -12,15 +12,16 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/Mangle.h"
 #include "common/check.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallVector.h"
+#include "common/error.h"
 #include "toolchain/base/block_value_store_impl.h"
-#include "toolchain/base/kind_switch.h"
+#include "toolchain/base/canonical_value_store_impl.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_store_impl.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/dominance.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -81,7 +82,8 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       custom_layouts_(allocator_, check_ir_id, 1),
       expr_regions_(check_ir_id),
       clang_source_locs_(check_ir_id),
-      bundles_(allocator_, check_ir_id) {
+      bundles_(allocator_, check_ir_id),
+      clang_function_pointer_types_(check_ir_id) {
   // `type`, `form`, and the error type are both complete & concrete types.
   // TODO: This duplicates the code in `check/type_completion.cpp`. Consider
   // requiring these types to be complete from Check initialization instead,
@@ -158,8 +160,8 @@ auto File::Verify() const -> ErrorOr<Success> {
     }
   }
 
-  // TODO: Check that an instruction only references other instructions that are
-  // either global or that dominate it.
+  CARBON_RETURN_IF_ERROR(VerifyDominance(*this));
+
   return Success();
 }
 
@@ -279,4 +281,7 @@ template class BlockValueStore<SemIR::CustomLayoutId, SemIR::ObjectSize,
                                Tag<SemIR::CheckIRId>>;
 template class BlockValueStore<SemIR::RawBundleId, SemIR::AnyRawId,
                                Tag<SemIR::CheckIRId>>;
+template class CanonicalValueStore<SemIR::ClangFunctionPointerTypeId,
+                                   const clang::Type*, Tag<SemIR::CheckIRId>,
+                                   SemIR::ClangFunctionPointerTypeInfo>;
 }  // namespace Carbon

@@ -32,7 +32,7 @@ cc_library(
     srcs = ["sem_ir_index.cpp"],
     hdrs = ["sem_ir_index.h"],
     deps = [
-        "//common:check",
+        "//toolchain/base:grouped_value_store",
         "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",

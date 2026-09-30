@@ -1254,9 +1254,24 @@ static auto BuildCppToCarbonThunkBody(Context& context,
     stmts.push_back(call.get());
 
     if (has_return_value) {
-      auto* return_stmt = clang::ReturnStmt::Create(
-          sema.getASTContext(), clang_loc, return_storage_expr.get(),
-          return_storage_var_decl);
+      // Return `return_storage` by value. The variable is an NRVO candidate,
+      // so CodeGen constructs it directly in the return slot and ignores the
+      // returned expression, but the AST should still model a by-value return
+      // (a prvalue) rather than returning an lvalue referring to the local.
+      clang::QualType return_type = return_storage_var_decl->getType();
+      clang::Expr* return_val_expr = sema.BuildDeclRefExpr(
+          return_storage_var_decl, return_type, clang::VK_LValue, clang_loc);
+      // TODO: Lvalue-to-rvalue conversion isn't valid for class types. Those
+      // would need a (elided) copy/move construction, which may not exist.
+      if (!return_type->getAsCXXRecordDecl() && !return_type->isNullPtrType()) {
+        return_val_expr = clang::ImplicitCastExpr::Create(
+            sema.getASTContext(), return_type, clang::CK_LValueToRValue,
+            return_val_expr, /*BasePath=*/nullptr, clang::VK_PRValue,
+            clang::FPOptionsOverride());
+      }
+      auto* return_stmt =
+          clang::ReturnStmt::Create(sema.getASTContext(), clang_loc,
+                                    return_val_expr, return_storage_var_decl);
       stmts.push_back(return_stmt);
     }
   }

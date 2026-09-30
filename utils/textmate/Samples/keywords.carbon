@@ -6,7 +6,7 @@
 
 >>= <=> <<= ->? &= ^= := :? == => != >= >> <= <> << <- -= -> -- %= |= += ++ /=
 *= ~= & @ ^ : = ! > < - % . | + ? / * ~ \
-and as impls in like not or where
+and as impls in like not or typeof where
 
 // --- special-keywords
 
