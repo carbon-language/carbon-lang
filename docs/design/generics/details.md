@@ -88,6 +88,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
         -   [Type structure of an impl declaration](#type-structure-of-an-impl-declaration)
         -   [Orphan rule](#orphan-rule)
+            -   [Re-entering a nested scope in an `impl` declaration](#re-entering-a-nested-scope-in-an-impl-declaration)
         -   [Overlap rule](#overlap-rule)
         -   [Prioritization rule](#prioritization-rule)
         -   [Acyclic rule](#acyclic-rule)
@@ -4796,6 +4797,42 @@ declarations with a particular type structure.
 > -   [Disallowing the anchor name to be in a nested scope](/proposals/p007140-orphan-rule-for-scopes.md#disallowing-the-anchor-name-to-be-in-a-nested-scope)
 > -   [Anchoring to a definition](/proposals/p007140-orphan-rule-for-scopes.md#anchoring-to-a-definition)
 
+##### Re-entering a nested scope in an `impl` declaration
+
+It is possible to [re-enter a nested scope](#declaring-implementations) by
+writing a qualified path for the entire `Type as Interface` expression, such as
+`impl C.(D as Z)`. This functions like writing `impl D as Z` within the nested
+scope `C`, or in other words, by performing name lookups from the scope of `C`.
+
+By re-entering the nested scope `C`, it becomes the scope containing the `impl`
+declaration when applying the orphan rule.
+
+For example, this is equivalent to writing `impl D as Z` inside the class `C`,
+which is allowed by the orphan rule.
+
+```carbon
+class C {
+  class D {}
+}
+impl C.(D as Z);
+```
+
+Whereas it is not allowed to write `impl C as Z` inside the scope of `D`, so it
+is also not allowed to write `impl C.D.(C as Z)`.
+
+```carbon
+class C {
+  class D {}
+}
+// ERROR: Neither `C` nor `Z` is defined by or has its owning declaration
+// within the scope `C.D`.
+impl C.D.(C as Z);
+```
+
+> References:
+>
+> -   ["Re-entering a nested scope in an `impl` declaration" in proposal #7140](/proposals/p007140-orphan-rule-for-scopes.md#re-entering-a-nested-scope-in-an-impl-declaration)
+
 #### Overlap rule
 
 Given a specific concrete type, say `Foo(bool, i32)`, and an interface, say
@@ -7061,3 +7098,4 @@ and
 -   [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
 -   [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
 -   [#5366: The name of an `impl` in `class` scope](https://github.com/carbon-language/carbon-lang/pull/5366)
+-   [#7140: Orphan rule for scopes](https://github.com/carbon-language/carbon-lang/pull/7140)
