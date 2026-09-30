@@ -15,6 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Abstract](#abstract)
 -   [Problem](#problem)
 -   [Background](#background)
+    -   [Carbon](#carbon)
     -   [C++](#c)
     -   [Rust](#rust)
     -   [Go](#go)
@@ -69,6 +70,22 @@ and idiomatic solution from the start.
 
 ## Background
 
+### Carbon
+
+[p004682](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md)
+introduced `Core.Array(T, N)` (spelled `array(T, N)`), an owning, direct-storage
+buffer of a compile-time number of elements. `Core.Slice(T)` is the non-owning
+counterpart: it refers to a contiguous sequence of elements stored elsewhere,
+such as in an array, and its size is known only at runtime.
+
+Carbon's `str` type (`Core.Str`, per leads issue
+[#5969](https://github.com/carbon-language/carbon-lang/issues/5969)) is a
+similar non-owning view, specialized for strings: it refers to a sequence of
+`char` code units, and is represented as a pointer and a size. See
+[p006177](/proposals/p006177-c-interop-mapping-std-string-view-to-core-str.md)
+and [p006710](/proposals/p006710-char-redesign.md). `Core.Slice(T)` provides the
+same kind of view for elements of any type `T`.
+
 ### C++
 
 C++20 `std::span<T>` is a non-owning view over a contiguous sequence of objects.
@@ -94,7 +111,7 @@ be grown.
 
 We propose to introduce the `Core.Slice(T)` type in the `Core` prelude, alongside
 a `slice` keyword that maps to `Core.Slice` (such that `slice(T)` evaluates to
-`Core.Slice(T)`, similar to `str` mapping to `Core.String`).
+`Core.Slice(T)`, similar to `str` mapping to `Core.Str`).
 
 This follows the [All APIs are library APIs principle](/docs/project/principles/library_apis_only.md)
 by defining the underlying type in the standard library while providing a
