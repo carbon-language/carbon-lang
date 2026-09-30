@@ -69,6 +69,18 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.2891f36f5aa8bde4:core.Destroy.Core"(ptr %self) #0 !dbg !54 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc22_3.1.array.index = getelementptr inbounds [6 x double], ptr %self, i32 0, i64 5, !dbg !56
+// CHECK:STDOUT:   call void @"_CSelfDestruct.dc14d4dd21801791:core.Destroy.Core"(ptr %.loc22_3.1.array.index), !dbg !56
+// CHECK:STDOUT:   %.loc22_3.2.array.index = getelementptr inbounds [6 x double], ptr %self, i32 0, i64 4, !dbg !56
+// CHECK:STDOUT:   call void @"_CSelfDestruct.dc14d4dd21801791:core.Destroy.Core"(ptr %.loc22_3.2.array.index), !dbg !56
+// CHECK:STDOUT:   %.loc22_3.3.array.index = getelementptr inbounds [6 x double], ptr %self, i32 0, i64 3, !dbg !56
+// CHECK:STDOUT:   call void @"_CSelfDestruct.dc14d4dd21801791:core.Destroy.Core"(ptr %.loc22_3.3.array.index), !dbg !56
+// CHECK:STDOUT:   %.loc22_3.4.array.index = getelementptr inbounds [6 x double], ptr %self, i32 0, i64 2, !dbg !56
+// CHECK:STDOUT:   call void @"_CSelfDestruct.dc14d4dd21801791:core.Destroy.Core"(ptr %.loc22_3.4.array.index), !dbg !56
+// CHECK:STDOUT:   %.loc22_3.5.array.index = getelementptr inbounds [6 x double], ptr %self, i32 0, i64 1, !dbg !56
+// CHECK:STDOUT:   call void @"_CSelfDestruct.dc14d4dd21801791:core.Destroy.Core"(ptr %.loc22_3.5.array.index), !dbg !56
+// CHECK:STDOUT:   %.loc22_3.6.array.index = getelementptr inbounds [6 x double], ptr %self, i32 0, i64 0, !dbg !56
+// CHECK:STDOUT:   call void @"_CSelfDestruct.dc14d4dd21801791:core.Destroy.Core"(ptr %.loc22_3.6.array.index), !dbg !56
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -88,6 +100,14 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.88cc3346b7991af5:core.Destroy.Core"(ptr %self) #0 !dbg !66 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc16_3.1.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 3, !dbg !68
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc16_3.1.array.index), !dbg !68
+// CHECK:STDOUT:   %.loc16_3.2.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 2, !dbg !68
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc16_3.2.array.index), !dbg !68
+// CHECK:STDOUT:   %.loc16_3.3.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 1, !dbg !68
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc16_3.3.array.index), !dbg !68
+// CHECK:STDOUT:   %.loc16_3.4.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 0, !dbg !68
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc16_3.4.array.index), !dbg !68
 // CHECK:STDOUT:   ret void, !dbg !68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

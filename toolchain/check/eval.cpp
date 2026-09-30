@@ -2888,10 +2888,24 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
 static auto GetReturnStorageParamIndexRange(EvalContext& eval_context,
                                             const SemIR::Callee& callee)
     -> std::pair<int, int> {
-  if (const auto* callee_function =
-          std::get_if<SemIR::CalleeFunction>(&callee)) {
-    const auto& function =
-        eval_context.functions().Get(callee_function->function_id);
+  auto function_id = SemIR::FunctionId::None;
+  CARBON_KIND_SWITCH(callee) {
+    case CARBON_KIND(SemIR::CalleeFunction callee_function): {
+      function_id = callee_function.function_id;
+      break;
+    }
+    case CARBON_KIND(SemIR::CalleeCppFunctionPointer callee_function_ptr): {
+      function_id = eval_context.context()
+                        .clang_function_pointer_types()
+                        .Get(callee_function_ptr.function_type_id)
+                        .function_id;
+      break;
+    }
+    default:
+      break;
+  }
+  if (function_id.has_value()) {
+    const auto& function = eval_context.functions().Get(function_id);
     return {function.call_param_ranges.return_begin().index,
             function.call_param_ranges.return_end().index};
   }
@@ -3188,6 +3202,20 @@ auto TryEvalTypedInst<SemIR::Call>(EvalContext& eval_context,
                                    SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
   return MakeConstantForCall(eval_context, inst_id, inst.As<SemIR::Call>());
+}
+
+// `typeof` evaluates to the type of its operand. The operand is in a separate
+// region that is not evaluated, so we look at the type of the region's result
+// directly rather than evaluating any operands; this specialization avoids us
+// needing a way to map a `ExprRegionId` to an evaluated version in a specific.
+template <>
+auto TryEvalTypedInst<SemIR::TypeOf>(EvalContext& eval_context,
+                                     SemIR::InstId /*inst_id*/,
+                                     SemIR::Inst inst) -> SemIR::ConstantId {
+  auto region = eval_context.sem_ir().expr_regions().Get(
+      inst.As<SemIR::TypeOf>().operand_region_id);
+  return eval_context.types().GetConstantId(
+      eval_context.GetTypeOfInst(region.result_id));
 }
 
 // ImportRefLoaded can have a constant value, but it's owned and maintained by

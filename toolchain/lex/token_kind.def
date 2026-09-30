@@ -227,6 +227,7 @@ CARBON_KEYWORD_TOKEN(Template,            "template")
 CARBON_KEYWORD_TOKEN(Then,                "then")
 CARBON_KEYWORD_TOKEN(True,                "true")
 CARBON_KEYWORD_TOKEN(Type,                "type")
+CARBON_KEYWORD_TOKEN(TypeOf,              "typeof")
 // Underscore is tokenized as a keyword because it's part of identifiers.
 CARBON_KEYWORD_TOKEN(Underscore,          "_")
 CARBON_KEYWORD_TOKEN(Unsafe,              "unsafe")

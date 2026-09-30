@@ -275,6 +275,12 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
             return inner_type.withConst();
           }};
     }
+    case CARBON_KIND(SemIR::CppFunctionPointerType fn_type): {
+      return clang::QualType(context.clang_function_pointer_types()
+                                 .Get(fn_type.clang_type_id)
+                                 .clang_type,
+                             /*Quals=*/0);
+    }
     case SemIR::FloatLiteralType::Kind: {
       return context.ast_context().DoubleTy;
     }

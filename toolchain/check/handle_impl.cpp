@@ -250,11 +250,18 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // This requires that the facet type is identified, and returns the single
   // interface from the identified facet type. It returns None if an error was
   // diagnosed.
-  auto specific_interface = CheckConstraintIsInterface(
+  auto identified_id = CheckConstraintIsInterface(
       context, node_id, self_type_inst_id, full_constraint_type_inst_id);
-  if (!specific_interface.interface_id.has_value()) {
+  if (!identified_id.has_value()) {
     full_constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }
+
+  auto specific_interface =
+      full_constraint_type_inst_id != SemIR::ErrorInst::InstId
+          ? context.identified_facet_types()
+                .Get(identified_id)
+                .impl_as_target_interface()
+          : SemIR::SpecificInterface::None;
 
   // Store an instruction in the decl's eval block that contains the target
   // interface's specific, whose constant value will be updated when specifics
@@ -268,7 +275,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // we introduced a new instruction with a SpecificId operand instead of
   // reusing ImplSelfWitness for this.
   auto interface_inst_id =
-      specific_interface.interface_id.has_value()
+      full_constraint_type_inst_id != SemIR::ErrorInst::InstId
           ? AddInst<SemIR::ImplSelfWitness>(
                 context, node_id,
                 {.type_id =
@@ -407,7 +414,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
           // also must be part of the generic eval block by coming before
           // FinishGenericDecl().
           impl.witness_id = AddImplWitnessForDeclaration(
-              context, node_id, impl, full_constraint_type_inst_id,
+              context, node_id, SemIR::LocId(full_constraint_type_inst_id),
+              impl, identified_id,
               context.generics().GetSelfSpecific(impl.generic_id));
           impl.witness_block_id = context.inst_block_stack().Pop();
 
