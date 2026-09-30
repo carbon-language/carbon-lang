@@ -267,123 +267,129 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
     -> DestroyFormat {
   auto inst_id = context.constant_values().GetInstId(
       GetCanonicalFacet(context, query_self_const_id));
+  while (inst_id.has_value()) {
+    if (IsBuiltinWithTrivialDestruction(context, inst_id)) {
+      return DestroyFormat::Trivial;
+    }
 
-  if (IsBuiltinWithTrivialDestruction(context, inst_id)) {
-    return DestroyFormat::Trivial;
-  }
-
-  auto inst = context.insts().Get(inst_id);
-  if (context.types().IsConstrainedFacetType(inst.type_id())) {
-    // The value's type is a symbolic constrained facet. We don't provide a
-    // custom witness for constrained facets. The witness must be found in the
-    // constraints by impl lookup.
-    CARBON_CHECK(query_self_const_id.is_symbolic());
-    return DestroyFormat::NoDestroy;
-  }
-
-  // Incomplete types can not be destroyed.
-  auto type_id = context.types().GetTypeIdForTypeInstId(inst_id);
-  if (!TryToCompleteType(context, type_id, loc_id)) {
-    return DestroyFormat::NoDestroy;
-  }
-
-  CARBON_KIND_SWITCH(inst) {
-    case SemIR::ImplWitnessAccess::Kind:
-    case SemIR::SymbolicBinding::Kind: {
-      // A symbolic facet of type `type`. Such symbolic values can't be
-      // destroyed.
+    auto inst = context.insts().Get(inst_id);
+    if (context.types().IsConstrainedFacetType(inst.type_id())) {
+      // The value's type is a symbolic constrained facet. We don't provide a
+      // custom witness for constrained facets. The witness must be found in the
+      // constraints by impl lookup.
+      CARBON_CHECK(query_self_const_id.is_symbolic());
       return DestroyFormat::NoDestroy;
     }
 
-    case CARBON_KIND(SemIR::ArrayType array_type): {
-      // A zero element array is always trivially destructible.
-      if (auto int_bound =
-              context.sem_ir().GetZExtIntValue(array_type.bound_id);
-          !int_bound || *int_bound == 0) {
-        return DestroyFormat::Trivial;
+    // Incomplete types can not be destroyed.
+    auto type_id = context.types().GetTypeIdForTypeInstId(inst_id);
+    if (!TryToCompleteType(context, type_id, loc_id)) {
+      return DestroyFormat::NoDestroy;
+    }
+
+    CARBON_KIND_SWITCH(inst) {
+      // A dependent type constructor calls that cannot be resolved under the
+      // generic context.
+      case SemIR::Call::Kind:
+      // Symbolic facets of type `type`. Such symbolic values can't be
+      // destroyed.
+      case SemIR::ImplWitnessAccess::Kind:
+      case SemIR::SymbolicBinding::Kind: {
+        return DestroyFormat::NoDestroy;
       }
 
-      // Verify the element can be destroyed.
-      return HasWitnessForOneField(context, loc_id,
-                                   array_type.element_type_inst_id,
-                                   query_specific_interface);
-    }
+      case CARBON_KIND(SemIR::ArrayType array_type): {
+        // A zero element array is always trivially destructible.
+        if (auto int_bound =
+                context.sem_ir().GetZExtIntValue(array_type.bound_id);
+            !int_bound || *int_bound == 0) {
+          return DestroyFormat::Trivial;
+        }
 
-    case SemIR::Call::Kind:
-      // Dependent type constructor calls that cannot be resolved under the
-      // generic context.
-      return DestroyFormat::NoDestroy;
+        // Verify the element can be destroyed.
+        return HasWitnessForOneField(context, loc_id,
+                                     array_type.element_type_inst_id,
+                                     query_specific_interface);
+      }
 
-    case CARBON_KIND(SemIR::ClassType class_type): {
-      return CanDestroyClass(context, loc_id, class_type,
-                             context.types().GetCompleteTypeInfo(type_id),
-                             query_specific_interface,
-                             /*is_partial=*/false);
-    }
+      case CARBON_KIND(SemIR::ClassType class_type): {
+        return CanDestroyClass(context, loc_id, class_type,
+                               context.types().GetCompleteTypeInfo(type_id),
+                               query_specific_interface,
+                               /*is_partial=*/false);
+      }
+
 
     case CARBON_KIND(SemIR::ConstType const_type): {
       return HasWitnessForOneField(context, loc_id, const_type.inner_id,
                                    query_specific_interface);
     }
-
-    case CARBON_KIND(SemIR::MaybeUnformedType maybe_unformed_type): {
-      return HasWitnessForOneField(context, loc_id,
-                                   maybe_unformed_type.inner_id,
-                                   query_specific_interface);
-    }
-
-    case CARBON_KIND(SemIR::PartialType partial_type): {
-      // In contrast with something like `const`, need to treat the inner
-      // class differently based on the `partial` modifier.
-      auto class_type =
-          context.insts().GetAs<SemIR::ClassType>(partial_type.inner_id);
-      return CanDestroyClass(context, loc_id, class_type,
-                             context.types().GetCompleteTypeInfo(type_id),
-                             query_specific_interface,
-                             /*is_partial=*/true);
-    }
-
-    case CARBON_KIND(SemIR::StructType struct_type): {
-      auto fields = context.struct_type_fields().Get(struct_type.fields_id);
-      if (fields.empty()) {
-        return DestroyFormat::Trivial;
+        continue;
       }
-      auto query_facet_type_const_id =
-          PrepareForHasWitness(context, loc_id, query_specific_interface);
-      bool has_witness = true;
-      for (const auto& field : fields) {
-        if (!HasWitnessForRepeatedField(context, loc_id, field.type_inst_id,
-                                        query_facet_type_const_id)) {
-          has_witness = false;
-          break;
+
+      case CARBON_KIND(SemIR::MaybeUnformedType maybe_unformed_type): {
+        return HasWitnessForOneField(context, loc_id,
+                                     maybe_unformed_type.inner_id,
+                                     query_specific_interface);
+      }
+
+      case CARBON_KIND(SemIR::PartialType partial_type): {
+        // In contrast with something like `const`, need to treat the inner
+        // class differently based on the `partial` modifier.
+        auto class_type =
+            context.insts().GetAs<SemIR::ClassType>(partial_type.inner_id);
+        return CanDestroyClass(context, loc_id, class_type,
+                               context.types().GetCompleteTypeInfo(type_id),
+                               query_specific_interface,
+                               /*is_partial=*/true);
+      }
+
+      case CARBON_KIND(SemIR::StructType struct_type): {
+        auto fields = context.struct_type_fields().Get(struct_type.fields_id);
+        if (fields.empty()) {
+          return DestroyFormat::Trivial;
         }
-      }
-      CleanupAfterHasWitness(context);
-      return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
-    }
-
-    case CARBON_KIND(SemIR::TupleType tuple_type): {
-      auto block = context.inst_blocks().Get(tuple_type.type_elements_id);
-      if (block.empty()) {
-        return DestroyFormat::Trivial;
-      }
-      auto query_facet_type_const_id =
-          PrepareForHasWitness(context, loc_id, query_specific_interface);
-      bool has_witness = true;
-      for (const auto& element_id : block) {
-        if (!HasWitnessForRepeatedField(context, loc_id, element_id,
-                                        query_facet_type_const_id)) {
-          has_witness = false;
-          break;
+        auto query_facet_type_const_id =
+            PrepareForHasWitness(context, loc_id, query_specific_interface);
+        bool has_witness = true;
+        for (const auto& field : fields) {
+          if (!HasWitnessForRepeatedField(context, loc_id, field.type_inst_id,
+                                          query_facet_type_const_id)) {
+            has_witness = false;
+            break;
+          }
         }
+        CleanupAfterHasWitness(context);
+        return has_witness ? DestroyFormat::NonTrivial
+                           : DestroyFormat::NoDestroy;
       }
-      CleanupAfterHasWitness(context);
-      return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
-    }
 
-    default:
-      CARBON_FATAL("Unexpected type for CanDestroyType: {0}", inst.kind());
+      case CARBON_KIND(SemIR::TupleType tuple_type): {
+        auto block = context.inst_blocks().Get(tuple_type.type_elements_id);
+        if (block.empty()) {
+          return DestroyFormat::Trivial;
+        }
+        auto query_facet_type_const_id =
+            PrepareForHasWitness(context, loc_id, query_specific_interface);
+        bool has_witness = true;
+        for (const auto& element_id : block) {
+          if (!HasWitnessForRepeatedField(context, loc_id, element_id,
+                                          query_facet_type_const_id)) {
+            has_witness = false;
+            break;
+          }
+        }
+        CleanupAfterHasWitness(context);
+        return has_witness ? DestroyFormat::NonTrivial
+                           : DestroyFormat::NoDestroy;
+      }
+
+      default:
+        CARBON_FATAL("Unexpected type for CanDestroyType: {0}", inst.kind());
+    }
   }
+
+  CARBON_FATAL("Couldn't produce a type to evalute");
 }
 
 // Calls `self.<field>.(Destroy.SelfDestruct)` for a field in a `StructType`.
