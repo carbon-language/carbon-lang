@@ -2780,11 +2780,11 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_23.5 => constants.%B.MakeB
 // CHECK:STDOUT:   %.loc13_30.3 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc13_30.4 => constants.%B
-// CHECK:STDOUT:   %.loc13_30.5 => invalid
+// CHECK:STDOUT:   %.loc13_30.5 => <not constant>
 // CHECK:STDOUT:   %struct_type.field => constants.%struct_type.field.8fb
-// CHECK:STDOUT:   %struct => invalid
+// CHECK:STDOUT:   %struct => <not constant>
 // CHECK:STDOUT:   %.loc13_32.2 => constants.%tuple
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.3
-// CHECK:STDOUT:   %.loc13_32.3 => invalid
+// CHECK:STDOUT:   %.loc13_32.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
