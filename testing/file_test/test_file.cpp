@@ -893,8 +893,10 @@ static auto ProcessFileContent(llvm::StringRef filename,
   return Success();
 }
 
-auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
-    -> ErrorOr<TestFile> {
+// Implementation of `ProcessTestFile`, without special handling for
+// NOAUTOUPDATE files during autoupdate.
+static auto ProcessTestFileImpl(llvm::StringRef test_name,
+                                bool running_autoupdate) -> ErrorOr<TestFile> {
   TestFile test_file;
 
   // Store the original content, to avoid a read when autoupdating.
@@ -919,12 +921,6 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
 
   if (!found_autoupdate) {
     return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting";
-  }
-
-  // Autoupdate won't modify a NOAUTOUPDATE file, so process it as normal. This
-  // builds the expectations, which lets us report mismatches to the user.
-  if (running_autoupdate && !test_file.autoupdate_line_number) {
-    return ProcessTestFile(test_name, /*running_autoupdate=*/false);
   }
 
   // Validate AUTOUPDATE-SPLIT use, and remove it from test files if present.
@@ -980,6 +976,18 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
   test_file.extra_args.append(main_extra_args);
 
   return std::move(test_file);
+}
+
+auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
+    -> ErrorOr<TestFile> {
+  auto result = ProcessTestFileImpl(test_name, running_autoupdate);
+
+  // Autoupdate won't modify a NOAUTOUPDATE file, so process it as normal. This
+  // builds the expectations, which lets us report mismatches to the user.
+  if (running_autoupdate && result.ok() && !result->autoupdate_line_number) {
+    return ProcessTestFileImpl(test_name, /*running_autoupdate=*/false);
+  }
+  return result;
 }
 
 }  // namespace Carbon::Testing
