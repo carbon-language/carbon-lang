@@ -1349,6 +1349,8 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.836 = facet_value %X, (%ImplicitAs.impl_witness) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.bb3: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Y, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %Z: type = class_type @Z [concrete]
+// CHECK:STDOUT:   %Z.elem.d23: type = unbound_element_type %Z, %X [concrete]
+// CHECK:STDOUT:   %Z.elem.5d0: type = unbound_element_type %Z, %Y [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.297: type = struct_type {.a: %X, .b: %Y} [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.095: type = struct_type {.a: %Y, .b: %Y} [concrete]
 // CHECK:STDOUT:   %tuple.type.2f4: type = tuple_type (%struct_type.a.b.095, %Y) [concrete]
@@ -1944,6 +1946,14 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc9_3.9(%self.param: ref %Z) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %b.ref: %Z.elem.5d0 = name_ref b, @Z.%field_decl.loc21 [concrete = @Z.%field_decl.loc21]
+// CHECK:STDOUT:   %.loc9_3.1: ref %Y = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc9_3.1: <bound method> = bound_method %.loc9_3.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc9_3.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc9_3.1(%.loc9_3.1)
+// CHECK:STDOUT:   %a.ref: %Z.elem.d23 = name_ref a, @Z.%field_decl.loc20 [concrete = @Z.%field_decl.loc20]
+// CHECK:STDOUT:   %.loc9_3.2: ref %X = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc9_3.2: <bound method> = bound_method %.loc9_3.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc9_3.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc9_3.2(%.loc9_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2708,6 +2718,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc22_14.4(%self.param: ref %A.d32110.1) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %field.ref: %A.elem.483 = name_ref field, @A.%field_decl [concrete = @A.%field_decl]
+// CHECK:STDOUT:   %.loc22: ref %B = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc22, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc22)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

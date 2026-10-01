@@ -92,6 +92,8 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.d32110776493a13a:core.Destroy.Core"(ptr %self) #0 !dbg !51 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc22.field = getelementptr inbounds nuw { {} }, ptr %self, i32 0, i32 0, !dbg !53
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8c4b83ecd900f1ea:core.Destroy.Core"(ptr %.loc22.field), !dbg !53
 // CHECK:STDOUT:   ret void, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

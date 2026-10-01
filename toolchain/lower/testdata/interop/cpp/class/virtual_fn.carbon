@@ -242,6 +242,8 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.28387b086eba9957:core.Destroy.Core"(ptr %self) #8 !dbg !53 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc12.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !55
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f2cd4feee22137a3:core.Destroy.Core"(ptr %.loc12.base), !dbg !55
 // CHECK:STDOUT:   ret void, !dbg !55
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -278,6 +280,8 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.294df737cd074d60:core.Destroy.Core"(ptr %self) #8 !dbg !74 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc17.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !76
+// CHECK:STDOUT:   call void @"_CSelfDestruct.f2cd4feee22137a3:core.Destroy.Core"(ptr %.loc17.base), !dbg !76
 // CHECK:STDOUT:   ret void, !dbg !76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

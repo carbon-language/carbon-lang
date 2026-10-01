@@ -120,7 +120,9 @@ auto GetHighestAllowedAccess(Context& context,
 
     // Check if private access is allowed.
     while (access_context_scope_id.has_value()) {
-      if (class_info.scope_id == access_context_scope_id) {
+      if (class_info.scope_id == access_context_scope_id ||
+          access_context_scope_id ==
+              SemIR::NameScopeId::AllowHighestAccessLevel) {
         return SemIR::AccessKind::Private;
       }
 
