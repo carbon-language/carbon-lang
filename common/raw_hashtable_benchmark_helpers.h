@@ -265,8 +265,7 @@ struct CarbonHashDI<llvm::StringRef> {
 //
 // - On x86-64, LLVM aligns loop heads to 16 bytes, giving 16 layouts.
 // - On AArch64, LLVM doesn't align loop heads for generic or Apple CPUs, so
-//   they land at any 4-byte instruction boundary, giving 64 layouts. A 16-byte
-//   step would leave each loop at whatever offset modulo 16 its build gives it.
+//   they land at any 4-byte instruction boundary, giving 64 layouts.
 //
 // The default range is 256 bytes because on Zen 5, a loop's performance was
 // measured to depend only on its address modulo 256. On Apple M1, some loops
