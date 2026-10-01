@@ -225,6 +225,7 @@ CARBON_DIAGNOSTIC_KIND(InCppMacroExpansion)
 CARBON_DIAGNOSTIC_KIND(ResolvingSpecificHere)
 CARBON_DIAGNOSTIC_KIND(InCallToEvalFn)
 CARBON_DIAGNOSTIC_KIND(InCppThunk)
+CARBON_DIAGNOSTIC_KIND(InCppFunctionPointerThunk)
 
 // Package/import checking diagnostics.
 CARBON_DIAGNOSTIC_KIND(CppInteropFuzzing)
@@ -569,6 +570,8 @@ CARBON_DIAGNOSTIC_KIND(QualifiedExprInIncompleteFacetTypeScope)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprUnsupported)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprNameNotFound)
 CARBON_DIAGNOSTIC_KIND(UseOfNonExprAsValue)
+CARBON_DIAGNOSTIC_KIND(ExportedFunctionPtrTypeMismatch)
+CARBON_DIAGNOSTIC_KIND(ExportedFromFunction)
 
 // Modifier checking.
 CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedOnDeclaration)

@@ -62,6 +62,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [`return`](#return)
             -   [`returned var`](#returned-var)
         -   [`match`](#match)
+    -   [Lambdas](#lambdas)
 -   [User-defined types](#user-defined-types)
     -   [Classes](#classes)
         -   [Assignment](#assignment)
@@ -121,7 +122,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Error handling](#error-handling)
     -   [Execution abstractions](#execution-abstractions)
         -   [Abstract machine and execution model](#abstract-machine-and-execution-model)
-        -   [Lambdas](#lambdas)
         -   [Co-routines](#co-routines)
         -   [Concurrency](#concurrency)
 
@@ -1277,8 +1277,8 @@ fn Add(a: i64, b: i64) -> i64 {
 ```
 
 The names of the parameters are in scope until the end of the definition or
-declaration. The parameter names in a forward declaration may be omitted using
-`_`, but must match the definition if they are specified.
+declaration. Parameters may be marked with the `unused` keyword in the
+definition or given the name `_` if they are unused.
 
 > References:
 >
@@ -1287,10 +1287,13 @@ declaration. The parameter names in a forward declaration may be omitted using
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 > -   Proposal
 >     [#438: Add statement syntax for function declarations](https://github.com/carbon-language/carbon-lang/pull/438)
+> -   Proposal
+>     [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
 > -   Question-for-leads issue
 >     [#476: Optional argument names (unused arguments)](https://github.com/carbon-language/carbon-lang/issues/476)
 > -   Question-for-leads issue
 >     [#1132: How do we match forward declarations with their definitions?](https://github.com/carbon-language/carbon-lang/issues/1132)
+> -   ["`_` parameter names and `unused` modifier" in proposal #3763](/proposals/p003763-matching-redeclarations.md#_-parameter-names-and-unused-modifier)
 
 ### Parameters
 
@@ -1653,6 +1656,30 @@ fn Foo() -> f32 {
 >     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
 > -   Proposal
 >     [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
+
+### Lambdas
+
+Lambdas are anonymous function expressions, and have a unified syntax with other
+function definitions, with two possible forms:
+
+-   `fn` [_implicit-parameters_] [_tuple-pattern_] `=>` _expression_
+-   `fn` [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `{`
+    _statements_ `}`
+
+Lambdas share many of the same features as named functions, but some features
+such as positional parameters and captures will more commonly be used with
+lambdas. For example:
+
+```carbon
+// A lambda that takes two positional parameters being used as a comparator
+Sort(ref my_list, fn => $0.val < $1.val);
+
+// Captures `self` from outer scope
+let lambda: auto = fn [self] { self.F(); };
+```
+
+> References: [Functions](functions.md),
+> [Proposal #3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
 
 ## User-defined types
 
@@ -3846,14 +3873,6 @@ the critical underpinnings of such abstractions.
 #### Abstract machine and execution model
 
 > **TODO:**
-
-#### Lambdas
-
-> **TODO:** References need to be evolved. Needs a detailed design and a high
-> level summary provided inline.
-
-> References: [Functions](functions.md),
-> [Proposal #3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
 
 #### Co-routines
 

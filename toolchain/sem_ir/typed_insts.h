@@ -639,6 +639,23 @@ struct ConvertToValueAction {
   TypeInstId target_type_inst_id;
 };
 
+// A C++ function pointer to a Carbon function.
+struct CppAddrOfFunction {
+  static constexpr auto Kind =
+      InstKind::CppAddrOfFunction.Define<Parse::NodeId>(
+          {.ir_name = "cpp_addr_of_fn",
+           .expr_category = ExprCategory::Value,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+
+  // The inst that refers to the Carbon function.
+  InstId function_ref_id;
+
+  // The Carbon function.
+  FunctionId function_id;
+};
+
 // The type of an overloaded C++ function.
 struct CppOverloadSetType {
   static constexpr auto Kind =
@@ -650,6 +667,19 @@ struct CppOverloadSetType {
   TypeId type_id;
   CppOverloadSetId overload_set_id;
   SpecificId specific_id;
+};
+
+// The type of a C++ function pointer.
+struct CppFunctionPointerType {
+  static constexpr auto Kind =
+      InstKind::CppFunctionPointerType.Define<Parse::NodeId>(
+          {.ir_name = "cpp_fn_ptr_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  // Always TypeType.
+  TypeId type_id;
+  ClangFunctionPointerTypeId clang_type_id;
 };
 
 // An unresolved C++ overload set value.
@@ -944,7 +974,7 @@ struct FunctionDecl {
   static constexpr auto Kind =
       InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
           {.ir_name = "fn_decl",
-           .expr_category = ExprCategory::NotExpr,
+           .expr_category = ExprCategory::Value,
            .is_lowered = false});
 
   TypeId type_id;
@@ -2311,6 +2341,22 @@ struct TypeLiteral {
   TypeId type_id;
   // The type value that the type literal evaluates to.
   TypeInstId value_id;
+};
+
+// A `typeof(expr)` expression. The operand is held in a separate expression
+// region, which is never evaluated at runtime; only its type is used. The
+// constant value of this instruction is the type of the operand.
+struct TypeOf {
+  static constexpr auto Kind = InstKind::TypeOf.Define<Parse::TypeOfExprId>(
+      {.ir_name = "type_of",
+       .expr_category = ExprCategory::Value,
+       .is_type = InstIsType::Always});
+
+  // Always the builtin type TypeType.
+  TypeId type_id;
+  // The region that computes the operand expression. The operand is the
+  // region's `result_id`.
+  ExprRegionId operand_region_id;
 };
 
 // Returns the type of the instruction produced by an action. For example, given

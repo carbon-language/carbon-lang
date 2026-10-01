@@ -16,6 +16,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/core_identifier.h"
+#include "toolchain/check/cpp/export.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/impl_lookup.h"
@@ -499,6 +500,25 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
                                    {.type_id = target.type_id,
                                     .inits_id = sem_ir.inst_blocks().Add(inits),
                                     .dest_id = return_slot_arg_id});
+}
+
+// Performs a conversion from a function to a C++ function pointer type.
+static auto ConvertFunctionToCppPointer(Context& context, SemIR::LocId loc_id,
+                                        SemIR::FunctionType src_type,
+                                        SemIR::CppFunctionPointerType dest_type,
+                                        SemIR::InstId value_id,
+                                        ConversionTarget target)
+    -> SemIR::InstId {
+  if (!ExportFunctionToCppPointerConversion(context, value_id, src_type,
+                                            dest_type, target.diagnose)) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  return AddInst<SemIR::CppAddrOfFunction>(
+      context, loc_id,
+      {.type_id = target.type_id,
+       .function_ref_id = value_id,
+       .function_id = src_type.function_id});
 }
 
 // Performs a conversion from a tuple to a tuple type. This function only
@@ -1630,6 +1650,17 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     }
   }
 
+  // Function types can convert to C++ function pointer types.
+  if (auto fn_ptr_type =
+          context.types().TryGetAs<SemIR::CppFunctionPointerType>(
+              target.type_id)) {
+    if (auto src_fn_type =
+            context.types().TryGetAs<SemIR::FunctionType>(value_type_id)) {
+      return ConvertFunctionToCppPointer(context, loc_id, *src_fn_type,
+                                         *fn_ptr_type, value_id, target);
+    }
+  }
+
   // Split the qualifiers off the target type.
   // TODO: Most conversions should probably be looking at the unqualified target
   // type.
@@ -2543,14 +2574,6 @@ auto InitializeExisting(Context& context, SemIR::LocId loc_id,
     storage_id = SemIR::InstId::None;
   }
 
-  // TODO: This is only an approximation of a dominance check. Add a general
-  // end-of-phase dominance check and remove the check here and the one in
-  // `MergeReplacing`.
-  CARBON_CHECK(!storage_id.has_value() ||
-                   value_id == SemIR::ErrorInst::InstId ||
-                   context.insts().GetRawIndex(storage_id) <=
-                       context.insts().GetRawIndex(value_id),
-               "Storage might not dominate initializer");
   PendingBlock target_block(&context);
   return Convert(context, loc_id, value_id,
                  {.kind = ConversionTarget::Initializing,

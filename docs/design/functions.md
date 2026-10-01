@@ -262,7 +262,7 @@ This syntax was inspired by Swift's
 
 ```carbon
 // A lambda that takes two positional parameters being used as a comparator
-Sort(my_list, fn => $0.val < $1.val);
+Sort(ref my_list, fn => $0.val < $1.val);
 // In Swift: { $0.val < $1.val }
 ```
 
