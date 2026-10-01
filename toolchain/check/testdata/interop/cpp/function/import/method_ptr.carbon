@@ -79,7 +79,7 @@ fn F(c: Cpp.C) {
   // CHECK:STDERR:   c.(Cpp.GetMethodPtr())(42);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_call_method_ptr.carbon:[[@LINE+14]]:3: error: semantics TODO: `invoking a C++ member function pointer` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_call_method_ptr.carbon:[[@LINE+14]]:3: error: semantics TODO: `invoking a C++ member function pointer is unsupported` [SemanticsTodo]
   // CHECK:STDERR:   c.(Cpp.GetMethodPtr())(42);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -101,15 +101,15 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "method_ptr.h";
 
-fn F(i: i32);
+fn F(ref c: Cpp.C);
 
 fn G() {
   // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE+7]]:39: error: can't convert exported function pointer to `void (C::*)(void) const` [ExportedFunctionPtrTypeMismatch]
   // CHECK:STDERR:   var unused ptr: Cpp.MethodPtrType = F;
   // CHECK:STDERR:                                       ^
-  // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE-6]]:1: note: function exported with pointer type `void (*)(int)` [ExportedFromFunction]
-  // CHECK:STDERR: fn F(i: i32);
-  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE-6]]:1: note: function exported with pointer type `void (*)(class C &)` [ExportedFromFunction]
+  // CHECK:STDERR: fn F(ref c: Cpp.C);
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = F;
 }

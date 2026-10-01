@@ -207,6 +207,19 @@ fn F() {
   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
 }
 
+// --- static_member_ptr.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp library "simple_callback.h";
+
+class C {
+  fn MyCallback(arg: f32) -> i32;
+}
+
+fn F() {
+  var unused fn_ptr: Cpp.CallbackType = C.MyCallback;
+}
+
 // CHECK:STDOUT: --- relay_fn_ptr.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
