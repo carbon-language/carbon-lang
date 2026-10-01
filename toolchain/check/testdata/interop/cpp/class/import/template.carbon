@@ -692,9 +692,9 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_36.5 => constants.%A.A.cpp_overload_set.value
 // CHECK:STDOUT:   %.loc10_39.4 => constants.%inst.splice_block.426619.4
 // CHECK:STDOUT:   %.loc10_39.5 => constants.%A
-// CHECK:STDOUT:   %.loc10_39.6 => <nonconstant>
+// CHECK:STDOUT:   %.loc10_39.6 => <not constant>
 // CHECK:STDOUT:   %.loc10_39.7 => constants.%inst.splice_block.426619.5
-// CHECK:STDOUT:   %.loc10_39.8 => <nonconstant>
+// CHECK:STDOUT:   %.loc10_39.8 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_cpp_template_constructor.carbon
@@ -948,15 +948,15 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_36.5 => constants.%A.A.cpp_overload_set.value
 // CHECK:STDOUT:   %.loc10_39.3 => constants.%inst.splice_block.426619.4
 // CHECK:STDOUT:   %.loc10_39.4 => constants.%A
-// CHECK:STDOUT:   %.loc10_39.5 => <nonconstant>
+// CHECK:STDOUT:   %.loc10_39.5 => <not constant>
 // CHECK:STDOUT:   %.loc10_3.6 => constants.%tuple
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.5
-// CHECK:STDOUT:   %.loc10_3.7 => <nonconstant>
+// CHECK:STDOUT:   %.loc10_3.7 => <not constant>
 // CHECK:STDOUT:   %.loc10_3.8 => constants.%inst.splice_block.426619.6
 // CHECK:STDOUT:   %.loc10_3.9 => <bound method>
-// CHECK:STDOUT:   %.loc10_3.10 => <nonconstant>
+// CHECK:STDOUT:   %.loc10_3.10 => <not constant>
 // CHECK:STDOUT:   %.loc10_3.11 => constants.%inst.call
 // CHECK:STDOUT:   %.loc10_3.12 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc10_3.13 => <nonconstant>
+// CHECK:STDOUT:   %.loc10_3.13 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
