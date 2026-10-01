@@ -199,14 +199,11 @@ auto ConfigSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       driver_env.installation->digest_path().native());
   if (!read_result) {
     CARBON_DIAGNOSTIC(ConfigFailedToReadDigest, Error,
-                      "unable to read the installation's digest file: {0}",
-                      std::string);
-    driver_env.emitter.Emit(
-        ConfigFailedToReadDigest,
-        llvm::formatv("{0}: {1}",
-                      driver_env.installation->digest_path().native(),
-                      read_result.getError().message())
-            .str());
+                      "unable to read the installation's digest file: {0}: {1}",
+                      std::string, std::string);
+    driver_env.emitter.Emit(ConfigFailedToReadDigest,
+                            driver_env.installation->digest_path().native(),
+                            read_result.getError().message());
 
     // Remember that we encountered an error but continue to give a minimally
     // useful `config` output.
