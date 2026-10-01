@@ -363,7 +363,13 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   CARBON_CHECK(&context.sem_ir() == &context.specific_sem_ir() &&
                    context.specific_id() == inst.specific_id,
                "Runtime specific_inst refers to a different specific");
-  context.SetLocal(inst_id, context.GetValue(inst.inst_id));
+
+  // When lowering templates, the specific may contain instructions that
+  // neither emit a value during lowering nor have a constant value, so set
+  // require_value=false.
+  if (auto value = context.GetValue(inst.inst_id, /*require_value=*/false)) {
+    context.SetLocal(inst_id, value);
+  }
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
