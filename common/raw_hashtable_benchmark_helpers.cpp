@@ -6,11 +6,28 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdlib>
 #include <forward_list>
 #include <utility>
 #include <vector>
 
 namespace Carbon::RawHashtable {
+
+auto GetBenchLayout() -> int {
+  static const int layout = [] {
+    if (const char* env = std::getenv("CARBON_BENCH_LAYOUT")) {
+      int env_layout;
+      CARBON_CHECK(!llvm::StringRef(env).getAsInteger(10, env_layout) &&
+                       0 <= env_layout && env_layout < NumBenchLayouts,
+                   "`CARBON_BENCH_LAYOUT` must be an integer in [0, {0}).",
+                   NumBenchLayouts);
+      return env_layout;
+    }
+    absl::BitGen gen;
+    return absl::Uniform<int>(gen, 0, NumBenchLayouts);
+  }();
+  return layout;
+}
 
 // A local shuffle implementation built on Abseil to improve performance in
 // debug builds.

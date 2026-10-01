@@ -21,6 +21,7 @@ using RawHashtable::GetKeysAndMissKeys;
 using RawHashtable::HitArgs;
 using RawHashtable::LowZeroBitInt;
 using RawHashtable::ReportTableMetrics;
+using RawHashtable::RunLoopInRandomLayout;
 using RawHashtable::SizeArgs;
 using RawHashtable::ValueToBool;
 
@@ -246,21 +247,23 @@ static void BM_MapContainsHit(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size;) {
-      // We block optimizing `i` as that has proven both more effective at
-      // blocking the loop from being optimized away and avoiding disruption of
-      // the generated code that we're benchmarking.
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size;) {
+        // We block optimizing `i` as that has proven both more effective at
+        // blocking the loop from being optimized away and avoiding disruption
+        // of the generated code that we're benchmarking.
+        benchmark::DoNotOptimize(i);
 
-      bool result = m.BenchContains(lookup_keys[i]);
-      CARBON_DCHECK(result);
-      // We use the lookup success to step through keys, establishing a
-      // dependency between each lookup. This doesn't fully allow us to measure
-      // latency rather than throughput, as noted above.
-      i += static_cast<ssize_t>(result);
+        bool result = m.BenchContains(lookup_keys[i]);
+        CARBON_DCHECK(result);
+        // We use the lookup success to step through keys, establishing a
+        // dependency between each lookup. This doesn't fully allow us to
+        // measure latency rather than throughput, as noted above.
+        i += static_cast<ssize_t>(result);
+      }
     }
-  }
+  });
 
   ReportMetrics(m, state);
 }
@@ -281,15 +284,17 @@ static void BM_MapContainsMiss(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size;) {
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size;) {
+        benchmark::DoNotOptimize(i);
 
-      bool result = m.BenchContains(lookup_keys[i]);
-      CARBON_DCHECK(!result);
-      i += static_cast<ssize_t>(!result);
+        bool result = m.BenchContains(lookup_keys[i]);
+        CARBON_DCHECK(!result);
+        i += static_cast<ssize_t>(!result);
+      }
     }
-  }
+  });
 
   ReportMetrics(m, state);
 }
@@ -335,15 +340,17 @@ static void BM_MapLookupHit(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size;) {
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size;) {
+        benchmark::DoNotOptimize(i);
 
-      bool result = m.BenchLookup(lookup_keys[i]);
-      CARBON_DCHECK(result);
-      i += static_cast<ssize_t>(result);
+        bool result = m.BenchLookup(lookup_keys[i]);
+        CARBON_DCHECK(result);
+        i += static_cast<ssize_t>(result);
+      }
     }
-  }
+  });
 
   ReportMetrics(m, state);
 }
@@ -391,14 +398,16 @@ static void BM_MapUpdateHit(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size; ++i) {
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size; ++i) {
+        benchmark::DoNotOptimize(i);
 
-      bool inserted = m.BenchUpdate(lookup_keys[i], MakeValue2<VT>());
-      CARBON_DCHECK(!inserted);
+        bool inserted = m.BenchUpdate(lookup_keys[i], MakeValue2<VT>());
+        CARBON_DCHECK(!inserted);
+      }
     }
-  }
+  });
 
   ReportMetrics(m, state);
 }
@@ -433,17 +442,19 @@ static void BM_MapEraseUpdateHit(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size; ++i) {
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size; ++i) {
+        benchmark::DoNotOptimize(i);
 
-      m.BenchErase(lookup_keys[i]);
-      benchmark::ClobberMemory();
+        m.BenchErase(lookup_keys[i]);
+        benchmark::ClobberMemory();
 
-      bool inserted = m.BenchUpdate(lookup_keys[i], MakeValue2<VT>());
-      CARBON_DCHECK(inserted);
+        bool inserted = m.BenchUpdate(lookup_keys[i], MakeValue2<VT>());
+        CARBON_DCHECK(inserted);
+      }
     }
-  }
+  });
 }
 MAP_BENCHMARK_ONE_OP(BM_MapEraseUpdateHit, HitArgs);
 
@@ -491,22 +502,24 @@ static void BM_MapInsertSeq(benchmark::State& state) {
   // there's no difference in cache usage by covering all the different lookup
   // keys.
   ssize_t i = 0;
-  for (auto _ : state) {
-    benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    for (auto _ : state) {
+      benchmark::DoNotOptimize(i);
 
-    MapWrapperT m;
-    for (auto k : keys) {
-      bool inserted = m.BenchInsert(k, MakeValue<VT>());
-      CARBON_DCHECK(inserted, "Must be a successful insert!");
+      MapWrapperT m;
+      for (auto k : keys) {
+        bool inserted = m.BenchInsert(k, MakeValue<VT>());
+        CARBON_DCHECK(inserted, "Must be a successful insert!");
+      }
+
+      // Now insert a final random repeated key.
+      bool inserted = m.BenchInsert(lookup_keys[i], MakeValue2<VT>());
+      CARBON_DCHECK(!inserted, "Must already be in the map!");
+
+      // Rotate through the shuffled keys.
+      i = (i + static_cast<ssize_t>(!inserted)) & (LookupKeysSize - 1);
     }
-
-    // Now insert a final random repeated key.
-    bool inserted = m.BenchInsert(lookup_keys[i], MakeValue2<VT>());
-    CARBON_DCHECK(!inserted, "Must already be in the map!");
-
-    // Rotate through the shuffled keys.
-    i = (i + static_cast<ssize_t>(!inserted)) & (LookupKeysSize - 1);
-  }
+  });
 
   // It can be easier in some cases to think of this as a key-throughput rate of
   // insertion rather than the latency of inserting N keys, so construct the
@@ -555,15 +568,17 @@ static void BM_MapIterate(benchmark::State& state) {
     CARBON_DCHECK(inserted, "Must be a successful insert!");
   }
 
-  while (state.KeepRunningBatch(keys.size())) {
-    ssize_t sum = 0;
-    m.BenchIterate([&sum](const KT& k, const VT& v) {
-      // Consume both the key and the value so that neither the traversal nor
-      // the loads out of the entries can be optimized away.
-      sum += ValueToBool(k) + ValueToBool(v);
-    });
-    benchmark::DoNotOptimize(sum);
-  }
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(keys.size())) {
+      ssize_t sum = 0;
+      m.BenchIterate([&sum](const KT& k, const VT& v) {
+        // Consume both the key and the value so that neither the traversal nor
+        // the loads out of the entries can be optimized away.
+        sum += ValueToBool(k) + ValueToBool(v);
+      });
+      benchmark::DoNotOptimize(sum);
+    }
+  });
 
   // The time is already per-entry, so an iteration-invariant rate of one gives
   // the throughput of entries visited.
