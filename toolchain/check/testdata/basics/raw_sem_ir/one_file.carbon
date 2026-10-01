@@ -355,7 +355,7 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     name_scope7800000C: {inst: inst7800012C, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:     name_scope7800000D: {inst: inst7800018B, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name78000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1}, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name78000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:     entity_name78000001: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst78000014}
 // CHECK:STDOUT:     entity_name78000002: {name: name2, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst7800001D}
 // CHECK:STDOUT:     entity_name78000003: {name: name3, parent_scope: name_scope78000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
@@ -611,7 +611,7 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:         alignment:       1
 // CHECK:STDOUT:   declared_facet_types:
 // CHECK:STDOUT:     'declared_facet_type(Empty)': {}
-// CHECK:STDOUT:     declared_facet_type78000001: {extends interface: interface78000000}
+// CHECK:STDOUT:     declared_facet_type78000001: {extends interface: [interface78000000]}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst(TypeType)':  {kind: FacetType, arg0: declared_facet_type(Empty), type: type(TypeType)}
 // CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}

@@ -34,7 +34,7 @@ fn F(generic Form: Core.Form) ->? Form;
 // CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Core): inst70000011, name0: inst70000031}}
 // CHECK:STDOUT:     name_scope70000001: {inst: inst70000011, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst70000015}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name70000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1}, form: inst<none>, type: inst<none>}
+// CHECK:STDOUT:     entity_name70000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, is_frozen_period_self: 1, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:     entity_name70000001: {name: name1, parent_scope: name_scope70000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:     entity_name70000002: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst70000016}
 // CHECK:STDOUT:   functions:
