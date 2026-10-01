@@ -413,7 +413,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %.loc6_16.2 => constants.%inst.specific_inst
-// CHECK:STDOUT:   %.loc6_16.3 => invalid
+// CHECK:STDOUT:   %.loc6_16.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
@@ -426,7 +426,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.cdf
 // CHECK:STDOUT:   %.loc6_16.2 => constants.%inst.splice_block
-// CHECK:STDOUT:   %.loc6_16.3 => invalid
+// CHECK:STDOUT:   %.loc6_16.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- initialize_dependent_target_from_literal.carbon
@@ -616,10 +616,10 @@ fn F() {
 // CHECK:STDOUT:   %.loc6_3.7 => constants.%int_0.3c0
 // CHECK:STDOUT:   %.loc6_3.8 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc6_3.9 => <bound method>
-// CHECK:STDOUT:   %.loc6_3.10 => invalid
+// CHECK:STDOUT:   %.loc6_3.10 => <not constant>
 // CHECK:STDOUT:   %.loc6_3.11 => constants.%inst.call
 // CHECK:STDOUT:   %.loc6_3.12 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc6_3.13 => invalid
+// CHECK:STDOUT:   %.loc6_3.13 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- initialize_primitive.carbon
@@ -780,7 +780,7 @@ fn F() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %.loc6_3.2 => constants.%tuple.242
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block
-// CHECK:STDOUT:   %.loc6_3.3 => invalid
+// CHECK:STDOUT:   %.loc6_3.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- initialize_from_tuple.carbon
@@ -1237,18 +1237,18 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_3.9 => constants.%tuple.1ed7a0.1
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.tuple_init
 // CHECK:STDOUT:   %tuple.elem1 => constants.%inst.splice_block.426619.1
-// CHECK:STDOUT:   %.loc9_3.10 => invalid
+// CHECK:STDOUT:   %.loc9_3.10 => <not constant>
 // CHECK:STDOUT:   %tuple.elem2 => constants.%inst.tuple_access.426619.1
-// CHECK:STDOUT:   %.loc9_3.11 => invalid
+// CHECK:STDOUT:   %.loc9_3.11 => <not constant>
 // CHECK:STDOUT:   %tuple.elem3 => constants.%inst.tuple_access.426619.2
-// CHECK:STDOUT:   %.loc9_3.12 => invalid
-// CHECK:STDOUT:   %.loc9_3.13 => invalid
+// CHECK:STDOUT:   %.loc9_3.12 => <not constant>
+// CHECK:STDOUT:   %.loc9_3.13 => <not constant>
 // CHECK:STDOUT:   %.loc9_3.14 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc9_3.15 => <bound method>
-// CHECK:STDOUT:   %.loc9_3.16 => invalid
+// CHECK:STDOUT:   %.loc9_3.16 => <not constant>
 // CHECK:STDOUT:   %.loc9_3.17 => constants.%inst.call.426619.1
 // CHECK:STDOUT:   %.loc9_3.18 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc9_3.19 => invalid
+// CHECK:STDOUT:   %.loc9_3.19 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%array_type) {
@@ -1263,18 +1263,18 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_3.9 => constants.%tuple.1ed7a0.2
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.array_init
 // CHECK:STDOUT:   %tuple.elem1 => constants.%inst.splice_block.426619.3
-// CHECK:STDOUT:   %.loc9_3.10 => invalid
+// CHECK:STDOUT:   %.loc9_3.10 => <not constant>
 // CHECK:STDOUT:   %tuple.elem2 => constants.%inst.splice_block.426619.4
-// CHECK:STDOUT:   %.loc9_3.11 => invalid
+// CHECK:STDOUT:   %.loc9_3.11 => <not constant>
 // CHECK:STDOUT:   %tuple.elem3 => constants.%inst.splice_block.426619.5
-// CHECK:STDOUT:   %.loc9_3.12 => invalid
-// CHECK:STDOUT:   %.loc9_3.13 => invalid
+// CHECK:STDOUT:   %.loc9_3.12 => <not constant>
+// CHECK:STDOUT:   %.loc9_3.13 => <not constant>
 // CHECK:STDOUT:   %.loc9_3.14 => constants.%inst.splice_block.426619.6
 // CHECK:STDOUT:   %.loc9_3.15 => <bound method>
-// CHECK:STDOUT:   %.loc9_3.16 => invalid
+// CHECK:STDOUT:   %.loc9_3.16 => <not constant>
 // CHECK:STDOUT:   %.loc9_3.17 => constants.%inst.call.426619.2
 // CHECK:STDOUT:   %.loc9_3.18 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc9_3.19 => invalid
+// CHECK:STDOUT:   %.loc9_3.19 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Y) {
@@ -1289,18 +1289,18 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_3.9 => constants.%tuple.1ed7a0.3
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.7
 // CHECK:STDOUT:   %tuple.elem1 => constants.%inst.temporary_storage.426619.1
-// CHECK:STDOUT:   %.loc9_3.10 => invalid
+// CHECK:STDOUT:   %.loc9_3.10 => <not constant>
 // CHECK:STDOUT:   %tuple.elem2 => constants.%inst.temporary_storage.426619.2
-// CHECK:STDOUT:   %.loc9_3.11 => invalid
+// CHECK:STDOUT:   %.loc9_3.11 => <not constant>
 // CHECK:STDOUT:   %tuple.elem3 => constants.%inst.temporary_storage.426619.3
-// CHECK:STDOUT:   %.loc9_3.12 => invalid
-// CHECK:STDOUT:   %.loc9_3.13 => invalid
+// CHECK:STDOUT:   %.loc9_3.12 => <not constant>
+// CHECK:STDOUT:   %.loc9_3.13 => <not constant>
 // CHECK:STDOUT:   %.loc9_3.14 => constants.%inst.splice_block.426619.8
 // CHECK:STDOUT:   %.loc9_3.15 => <bound method>
-// CHECK:STDOUT:   %.loc9_3.16 => invalid
+// CHECK:STDOUT:   %.loc9_3.16 => <not constant>
 // CHECK:STDOUT:   %.loc9_3.17 => constants.%inst.call.426619.3
 // CHECK:STDOUT:   %.loc9_3.18 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc9_3.19 => invalid
+// CHECK:STDOUT:   %.loc9_3.19 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- initialize_from_nested_literal.carbon
@@ -1995,18 +1995,18 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_3.9 => constants.%tuple.1ed7a0.1
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.1
 // CHECK:STDOUT:   %tuple.elem1 => constants.%inst.splice_block.426619.2
-// CHECK:STDOUT:   %.loc9_3.10 => invalid
+// CHECK:STDOUT:   %.loc9_3.10 => <not constant>
 // CHECK:STDOUT:   %tuple.elem2 => constants.%inst.struct_access
-// CHECK:STDOUT:   %.loc9_3.11 => invalid
+// CHECK:STDOUT:   %.loc9_3.11 => <not constant>
 // CHECK:STDOUT:   %tuple.elem3 => constants.%inst.tuple_access
-// CHECK:STDOUT:   %.loc9_3.12 => invalid
-// CHECK:STDOUT:   %.loc9_3.13 => invalid
+// CHECK:STDOUT:   %.loc9_3.12 => <not constant>
+// CHECK:STDOUT:   %.loc9_3.13 => <not constant>
 // CHECK:STDOUT:   %.loc9_3.14 => constants.%inst.splice_block.426619.3
 // CHECK:STDOUT:   %.loc9_3.15 => <bound method>
-// CHECK:STDOUT:   %.loc9_3.16 => invalid
+// CHECK:STDOUT:   %.loc9_3.16 => <not constant>
 // CHECK:STDOUT:   %.loc9_3.17 => constants.%inst.call.426619.1
 // CHECK:STDOUT:   %.loc9_3.18 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc9_3.19 => invalid
+// CHECK:STDOUT:   %.loc9_3.19 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%tuple.type.2f4) {
@@ -2021,18 +2021,18 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_3.9 => constants.%tuple.1ed7a0.2
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.4
 // CHECK:STDOUT:   %tuple.elem1 => constants.%inst.temporary_storage.426619.1
-// CHECK:STDOUT:   %.loc9_3.10 => invalid
+// CHECK:STDOUT:   %.loc9_3.10 => <not constant>
 // CHECK:STDOUT:   %tuple.elem2 => constants.%inst.temporary_storage.426619.2
-// CHECK:STDOUT:   %.loc9_3.11 => invalid
+// CHECK:STDOUT:   %.loc9_3.11 => <not constant>
 // CHECK:STDOUT:   %tuple.elem3 => constants.%inst.temporary_storage.426619.3
-// CHECK:STDOUT:   %.loc9_3.12 => invalid
-// CHECK:STDOUT:   %.loc9_3.13 => invalid
+// CHECK:STDOUT:   %.loc9_3.12 => <not constant>
+// CHECK:STDOUT:   %.loc9_3.13 => <not constant>
 // CHECK:STDOUT:   %.loc9_3.14 => constants.%inst.splice_block.426619.5
 // CHECK:STDOUT:   %.loc9_3.15 => <bound method>
-// CHECK:STDOUT:   %.loc9_3.16 => invalid
+// CHECK:STDOUT:   %.loc9_3.16 => <not constant>
 // CHECK:STDOUT:   %.loc9_3.17 => constants.%inst.call.426619.2
 // CHECK:STDOUT:   %.loc9_3.18 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc9_3.19 => invalid
+// CHECK:STDOUT:   %.loc9_3.19 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%tuple.type.bb4) {
@@ -2047,18 +2047,18 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_3.9 => constants.%tuple.1ed7a0.3
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.6
 // CHECK:STDOUT:   %tuple.elem1 => constants.%inst.splice_block.426619.7
-// CHECK:STDOUT:   %.loc9_3.10 => invalid
+// CHECK:STDOUT:   %.loc9_3.10 => <not constant>
 // CHECK:STDOUT:   %tuple.elem2 => constants.%inst.temporary_storage.426619.4
-// CHECK:STDOUT:   %.loc9_3.11 => invalid
+// CHECK:STDOUT:   %.loc9_3.11 => <not constant>
 // CHECK:STDOUT:   %tuple.elem3 => constants.%inst.temporary_storage.426619.5
-// CHECK:STDOUT:   %.loc9_3.12 => invalid
-// CHECK:STDOUT:   %.loc9_3.13 => invalid
+// CHECK:STDOUT:   %.loc9_3.12 => <not constant>
+// CHECK:STDOUT:   %.loc9_3.13 => <not constant>
 // CHECK:STDOUT:   %.loc9_3.14 => constants.%inst.splice_block.426619.8
 // CHECK:STDOUT:   %.loc9_3.15 => <bound method>
-// CHECK:STDOUT:   %.loc9_3.16 => invalid
+// CHECK:STDOUT:   %.loc9_3.16 => <not constant>
 // CHECK:STDOUT:   %.loc9_3.17 => constants.%inst.call.426619.3
 // CHECK:STDOUT:   %.loc9_3.18 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc9_3.19 => invalid
+// CHECK:STDOUT:   %.loc9_3.19 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- as.carbon
@@ -2213,9 +2213,9 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %.loc6_12.2 => constants.%inst.specific_inst
-// CHECK:STDOUT:   %.loc6_12.3 => invalid
+// CHECK:STDOUT:   %.loc6_12.3 => <not constant>
 // CHECK:STDOUT:   %.loc6_18.2 => constants.%inst.splice_block.426619.1
-// CHECK:STDOUT:   %.loc6_18.3 => invalid
+// CHECK:STDOUT:   %.loc6_18.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AsI32(constants.%C) {
@@ -2228,9 +2228,9 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.cdf
 // CHECK:STDOUT:   %.loc6_12.2 => constants.%inst.splice_block.426619.2
-// CHECK:STDOUT:   %.loc6_12.3 => invalid
+// CHECK:STDOUT:   %.loc6_12.3 => <not constant>
 // CHECK:STDOUT:   %.loc6_18.2 => constants.%inst.splice_block.426619.3
-// CHECK:STDOUT:   %.loc6_18.3 => invalid
+// CHECK:STDOUT:   %.loc6_18.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- as_type.carbon
@@ -2377,9 +2377,9 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc6 => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %_.patt.loc6_8.2 => constants.%_.patt.bed
 // CHECK:STDOUT:   %.loc6_16.3 => constants.%inst.specific_inst
-// CHECK:STDOUT:   %.loc6_16.4 => invalid
+// CHECK:STDOUT:   %.loc6_16.4 => <not constant>
 // CHECK:STDOUT:   %.loc6_16.5 => constants.%inst.splice_block.426619.1
-// CHECK:STDOUT:   %.loc6_16.6 => invalid
+// CHECK:STDOUT:   %.loc6_16.6 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AsType(constants.%C, constants.%i32) {
@@ -2397,9 +2397,9 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc6 => constants.%pattern_type.6b6
 // CHECK:STDOUT:   %_.patt.loc6_8.2 => constants.%_.patt.bed
 // CHECK:STDOUT:   %.loc6_16.3 => constants.%inst.splice_block.426619.2
-// CHECK:STDOUT:   %.loc6_16.4 => invalid
+// CHECK:STDOUT:   %.loc6_16.4 => <not constant>
 // CHECK:STDOUT:   %.loc6_16.5 => constants.%inst.splice_block.426619.3
-// CHECK:STDOUT:   %.loc6_16.6 => invalid
+// CHECK:STDOUT:   %.loc6_16.6 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- splice_inst_storage_arg.carbon
@@ -2780,11 +2780,11 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_23.5 => constants.%B.MakeB
 // CHECK:STDOUT:   %.loc13_30.3 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc13_30.4 => constants.%B
-// CHECK:STDOUT:   %.loc13_30.5 => invalid
+// CHECK:STDOUT:   %.loc13_30.5 => <not constant>
 // CHECK:STDOUT:   %struct_type.field => constants.%struct_type.field.8fb
-// CHECK:STDOUT:   %struct => invalid
+// CHECK:STDOUT:   %struct => <not constant>
 // CHECK:STDOUT:   %.loc13_32.2 => constants.%tuple
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.3
-// CHECK:STDOUT:   %.loc13_32.3 => invalid
+// CHECK:STDOUT:   %.loc13_32.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
