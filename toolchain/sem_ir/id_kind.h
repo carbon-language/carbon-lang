@@ -71,6 +71,7 @@ using IdKind = TypeEnum<
     NameScopeId,
     NamedConstraintId,
     ObserveId,
+    PackExpandedRegionId,
     RawBundleId,
     RequireImplsId,
     SpecificId,

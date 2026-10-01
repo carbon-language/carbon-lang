@@ -644,6 +644,8 @@ inline constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
   X(CppOperator)                                                 \
   /* The name of the default package `Main`. */                  \
   X(MainPackage)                                                 \
+  /* The name of the variadic index of a pack expansion. */      \
+  X(PackIndex)                                                   \
   /* The name of `package`. */                                   \
   X(PackageKeyword)                                              \
   /* The name of `.Self`. */                                     \
@@ -1076,6 +1078,13 @@ struct ObserveBlockId : public IdBase<ObserveBlockId> {
 };
 
 inline constexpr ObserveBlockId ObserveBlockId::Empty = ObserveBlockId(0);
+
+// The ID of a `PackExpandedRegion`.
+struct PackExpandedRegionId : public IdBase<PackExpandedRegionId> {
+  static constexpr llvm::StringLiteral Label = "pack_expanded_region";
+
+  using IdBase::IdBase;
+};
 
 // The ID of a bundle of arguments with an unspecified type.
 struct RawBundleId : public IdBase<RawBundleId> {

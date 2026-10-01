@@ -418,6 +418,7 @@ class NodeStack {
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::MatchFirstDefinitionStart:
       case Parse::NodeKind::ObserveIntroducer:
+      case Parse::NodeKind::PackExpansionStart:
       case Parse::NodeKind::RequireIntroducer:
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:

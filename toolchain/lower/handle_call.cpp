@@ -705,9 +705,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // Map to the callee in the specific. This might be in a different file than
   // the one we're currently lowering.
   if (context.specific_id().has_value()) {
-    auto [const_file, const_id] = GetConstantValueInSpecific(
-        context.specific_sem_ir(), context.specific_id(), context.sem_ir(),
-        callee.inst_id);
+    auto [const_file, const_id] = context.GetConstantValue(callee.inst_id);
     callee.file = const_file;
     callee.inst_id = const_file->constant_values().GetInstIdIfValid(const_id);
     CARBON_CHECK(callee.inst_id.has_value(),

@@ -7,6 +7,7 @@
 
 #include "common/array_stack.h"
 #include "common/map.h"
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -37,11 +38,30 @@ class GenericRegionStack {
     constants_in_generic_stack_.reserve(4);
   }
 
+  // Information about the pack expansion whose body is a generic region.
+  struct PackExpansionInfo {
+    // Sentinel values for `arity`.
+    static constexpr int32_t UnknownArity = -1;
+    static constexpr int32_t ErrorArity = -2;
+
+    // The variadic index binding. None if this region is not the body of a
+    // pack expansion.
+    SemIR::InstId index_id = SemIR::InstId::None;
+    // The arity of the pack expansion, if known.
+    int32_t arity = UnknownArity;
+    // The operand of the `expand` expression that determined the arity, if
+    // any.
+    SemIR::InstId arity_source_id = SemIR::InstId::None;
+  };
+
   struct PendingGeneric {
     // The generic ID. May not have a value if no ID has been assigned yet.
     SemIR::GenericId generic_id;
     // The region of the generic that is being processed.
     SemIR::GenericInstIndex::Region region;
+    // If this region is the body of a pack expansion, information about that
+    // pack expansion.
+    PackExpansionInfo pack_expansion = {};
   };
 
   // Pushes a region that might be declaring or defining a generic.
@@ -78,6 +98,35 @@ class GenericRegionStack {
   auto PeekPendingGeneric() const -> PendingGeneric {
     CARBON_CHECK(!Empty());
     return pending_generic_ids_.back();
+  }
+
+  // Marks the current generic region as being the body of a pack expansion
+  // with the given variadic index binding.
+  auto SetPackExpansionIndex(SemIR::InstId index_id) -> void {
+    CARBON_CHECK(!Empty());
+    pending_generic_ids_.back().pack_expansion = {.index_id = index_id};
+  }
+
+  // Returns the pack expansion information for the current generic region.
+  // Returns null if there is no current generic region or it is not the body
+  // of a pack expansion.
+  // TODO: Consider looking through enclosing regions for the innermost pack
+  // expansion.
+  auto PeekPackExpansion() -> PackExpansionInfo* {
+    if (Empty() ||
+        !pending_generic_ids_.back().pack_expansion.index_id.has_value()) {
+      return nullptr;
+    }
+    return &pending_generic_ids_.back().pack_expansion;
+  }
+
+  // Returns whether any enclosing generic region is the body of a pack
+  // expansion.
+  auto IsInPackExpansion() const -> bool {
+    return llvm::any_of(pending_generic_ids_,
+                        [](const PendingGeneric& pending) {
+                          return pending.pack_expansion.index_id.has_value();
+                        });
   }
 
   // Returns the list of dependent instructions in the current generic region.

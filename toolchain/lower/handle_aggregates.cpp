@@ -104,6 +104,20 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                                    "tuple.elem"));
 }
 
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::TupleIndex inst) -> void {
+  // The index is symbolic in the generic, but is known in the specific that
+  // we're lowering.
+  auto [index_ir, index_const_id] = context.GetConstantValue(inst.index_id);
+  auto index_value =
+      index_ir->constant_values().GetInstAs<SemIR::IntValue>(index_const_id);
+  auto index = index_ir->ints().Get(index_value.int_id).getZExtValue();
+  context.AddIntToCurrentFingerprint(index);
+  context.SetLocal(inst_id, GetAggregateElement(context, inst.tuple_id,
+                                                SemIR::ElementIndex(index),
+                                                inst_id, "tuple.elem"));
+}
+
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                 SemIR::TupleLiteral /*inst*/) -> void {
   // A TupleLiteral should always be converted to a TupleInit or TupleValue if

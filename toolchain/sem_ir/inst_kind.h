@@ -447,6 +447,7 @@ class InstKind::Definition : public InstKind {
     return is_type() != InstIsType::Never &&
            (constant_kind() == InstConstantKind::Indirect ||
             constant_kind() == InstConstantKind::SymbolicOnly ||
+            constant_kind() == InstConstantKind::TemplateOnly ||
             constant_kind() == InstConstantKind::SymbolicOrReference);
   }
 

@@ -487,6 +487,10 @@ static auto CheckConcreteValue(EvalContext& eval_context, SemIR::InstId inst_id)
   return value_inst_id;
 }
 
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::SpecificId specific_id, Phase* phase)
+    -> SemIR::SpecificId;
+
 // Find the instruction that the given instruction instantiates to, and return
 // that.
 static auto GetConstantValue(EvalContext& eval_context,
@@ -513,6 +517,27 @@ static auto GetConstantValue(EvalContext& eval_context,
         return inst_value_id->inst_id;
       }
     }
+  }
+
+  // If this instruction refers to a non-constant instruction in a specific,
+  // such as a pack expansion's entry branch, substitute into the specific.
+  if (auto specific_inst =
+          eval_context.insts().TryGetAs<SemIR::SpecificInst>(inst_id)) {
+    Phase specific_phase = Phase::Concrete;
+    auto specific_id = GetConstantValue(
+        eval_context, specific_inst->specific_id, &specific_phase);
+    *phase = LatestPhase(*phase, specific_phase);
+    if (specific_id == specific_inst->specific_id) {
+      return inst_id;
+    }
+    auto& context = eval_context.context();
+    auto loc_id = eval_context.GetDiagnosticLoc(SemIR::InstId(inst_id));
+    ResolveSpecificDecl(context, loc_id, specific_id);
+    if (specific_phase == Phase::Concrete) {
+      ResolveSpecificDefinition(context, loc_id, specific_id);
+    }
+    specific_inst->specific_id = specific_id;
+    return SemIR::MetaInstId(AddInstInNoBlock(context, loc_id, *specific_inst));
   }
 
   // Otherwise, this is a normal instruction.
@@ -3065,7 +3090,8 @@ static auto ConvertEvalResultToConstantId(Context& context,
                      result.new_inst().kind() != orig_inst_kind,
                  "TemplateOnly instruction `{0}` has a concrete value",
                  orig_inst_kind);
-    if (is_template_only && new_phase < Phase::TemplateSymbolic) {
+    if (is_template_only && new_phase < Phase::TemplateSymbolic &&
+        result.new_inst().kind() == orig_inst_kind) {
       new_phase = Phase::TemplateSymbolic;
     }
     return MakeConstantResult(context, result.new_inst(), new_phase);
@@ -3276,6 +3302,95 @@ auto TryEvalTypedInst<SemIR::Temporary>(EvalContext& eval_context,
   }
 
   return MakeConstantResult(eval_context.context(), temporary, phase);
+}
+
+// Pack expansions are evaluated by forming a specific of the pack expanded
+// region's generic for each value of the variadic index. The other arguments
+// of those specifics are the values of the enclosing generic's bindings in the
+// current eval context, which may be symbolic.
+template <>
+auto TryEvalTypedInst<SemIR::PackExpansion>(EvalContext& eval_context,
+                                            SemIR::InstId inst_id,
+                                            SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto expansion = inst.As<SemIR::PackExpansion>();
+  if (!expansion.inst_id.has_value()) {
+    // This is a placeholder that hasn't been filled in yet.
+    return SemIR::ConstantId::NotConstant;
+  }
+
+  Phase phase = Phase::Concrete;
+  if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &expansion,
+                                    &phase)) {
+    return SemIR::ConstantId::NotConstant;
+  }
+  if (phase == Phase::UnknownDueToError) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  // Find the enclosing arguments. These are the values of all but the last of
+  // the region's bindings, which is the variadic index.
+  auto& context = eval_context.context();
+  const auto& region = context.pack_expanded_regions().Get(expansion.region_id);
+  auto bindings = context.inst_blocks().Get(
+      context.generics().Get(region.generic_id).bindings_id);
+  CARBON_CHECK(!bindings.empty(), "Missing variadic index binding");
+  llvm::SmallVector<SemIR::InstId> specific_args;
+  specific_args.reserve(bindings.size());
+  for (auto binding_id : bindings.drop_back()) {
+    auto arg_id = GetConstantValue(eval_context, binding_id, &phase);
+    if (!arg_id.has_value()) {
+      return SemIR::ConstantId::NotConstant;
+    }
+    specific_args.push_back(arg_id);
+  }
+  if (phase == Phase::UnknownDueToError) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+  specific_args.push_back(SemIR::InstId::None);
+
+  // Form the specific for each index, and produce a tuple of the corresponding
+  // instances of `inst_id`.
+  // TODO: This creates new `SpecificInst` instructions each time the pack
+  // expansion is evaluated. Consider caching them.
+  auto loc_id = eval_context.GetDiagnosticLoc(inst_id);
+  auto tuple_type = context.types().GetAs<SemIR::TupleType>(expansion.type_id);
+  auto arity = context.inst_blocks().Get(tuple_type.type_elements_id).size();
+  auto int_literal_type_id =
+      GetSingletonType(context, SemIR::IntLiteralType::TypeInstId);
+  auto inst_type_id = GetSingletonType(context, SemIR::InstType::TypeInstId);
+  llvm::SmallVector<SemIR::InstId> elements;
+  elements.reserve(arity);
+  for (auto index : llvm::seq(arity)) {
+    auto index_const_id = MakeConstantResult(
+        context,
+        SemIR::IntValue{
+            .type_id = int_literal_type_id,
+            .int_id = context.ints().Add(static_cast<int64_t>(index))},
+        Phase::Concrete);
+    specific_args.back() = context.constant_values().GetInstId(index_const_id);
+    auto specific_id =
+        MakeSpecific(context, loc_id, region.generic_id, specific_args);
+    if (phase == Phase::Concrete) {
+      ResolveSpecificDefinition(context, loc_id, specific_id);
+    }
+    auto specific_inst_id =
+        AddInstInNoBlock(context, loc_id,
+                         SemIR::SpecificInst{.type_id = SemIR::TypeId::None,
+                                             .inst_id = expansion.inst_id,
+                                             .specific_id = specific_id});
+    auto element_const_id = MakeConstantResult(
+        context,
+        SemIR::InstValue{.type_id = inst_type_id, .inst_id = specific_inst_id},
+        phase);
+    elements.push_back(context.constant_values().GetInstId(element_const_id));
+  }
+  return MakeConstantResult(
+      context,
+      SemIR::TupleValue{
+          .type_id = expansion.type_id,
+          .elements_id = context.inst_blocks().AddCanonical(elements)},
+      phase);
 }
 
 static auto AddRequirementBase(Context& context,

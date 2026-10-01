@@ -57,13 +57,14 @@ static auto AddGenericConstantInstToEvalBlock(
     Context& context, SemIR::InstId const_inst_id,
     SemIR::InstId generic_inst_id, SemIR::ConstantDependence dependence)
     -> SemIR::ConstantId {
-  auto [generic_id, region] = GetOrCreatePendingGeneric(context);
+  auto pending_generic = GetOrCreatePendingGeneric(context);
   auto index = SemIR::GenericInstIndex(
-      region, context.generic_region_stack().PeekEvalBlock().size());
+      pending_generic.region,
+      context.generic_region_stack().PeekEvalBlock().size());
   context.generic_region_stack().AddInstToEvalBlock(generic_inst_id);
   return context.constant_values().AddSymbolicConstant(
       {.inst_id = const_inst_id,
-       .generic_id = generic_id,
+       .generic_id = pending_generic.generic_id,
        .index = index,
        .dependence = dependence});
 }
@@ -303,12 +304,13 @@ static auto AddTemplateActionToEvalBlock(Context& context,
 
   // Add the action to the eval block and point its constant value back to its
   // index within the block.
-  auto [generic_id, region] = GetOrCreatePendingGeneric(context);
+  auto pending_generic = GetOrCreatePendingGeneric(context);
   auto& symbolic_constant = context.constant_values().GetSymbolicConstant(
       context.constant_values().GetAttached(inst_id));
-  symbolic_constant.generic_id = generic_id;
+  symbolic_constant.generic_id = pending_generic.generic_id;
   symbolic_constant.index = SemIR::GenericInstIndex(
-      region, context.generic_region_stack().PeekEvalBlock().size());
+      pending_generic.region,
+      context.generic_region_stack().PeekEvalBlock().size());
   context.generic_region_stack().AddInstToEvalBlock(inst_id);
 }
 

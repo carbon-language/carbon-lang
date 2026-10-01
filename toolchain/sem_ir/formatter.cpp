@@ -932,6 +932,11 @@ auto Formatter::FormatInst(InstId inst_id) -> void {
   auto inst = sem_ir_->insts().GetWithAttachedType(inst_id);
   CARBON_KIND_SWITCH(inst) {
     case CARBON_KIND(Branch branch): {
+      // Branches are usually unnamed, but the entry branch of a pack expansion
+      // is named so that `specific_inst`s can refer to it.
+      if (!in_terminator_sequence_) {
+        FormatInstLhs(inst_id, inst);
+      }
       out() << Branch::Kind.ir_name() << " ";
       FormatLabel(branch.target_id);
       out() << "\n";
@@ -969,7 +974,7 @@ auto Formatter::FormatInst(InstId inst_id) -> void {
                 pending_constant_value_) == inst_id;
       }
 
-      FormatInstRhs(inst);
+      FormatInstRhs(inst_id, inst);
       // This usually prints the constant, but when `FormatInstRhs` prints it
       // first (or for `ImportRefUnloaded`), this does nothing.
       FormatPendingConstantValue(AddSpace::Before);
@@ -1051,7 +1056,9 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
 auto Formatter::FormatNameAndForm(InstId inst_id, Inst inst) -> void {
   FormatName(inst_id);
 
-  if (inst.kind().has_type()) {
+  // Some instructions, such as `specific_inst` referring to an untyped
+  // instruction, have a typed kind but no type.
+  if (inst.kind().has_type() && inst.type_id().has_value()) {
     out() << ": ";
     switch (GetExprCategory(*sem_ir_, inst_id)) {
       case ExprCategory::NotExpr:
@@ -1093,7 +1100,7 @@ auto Formatter::FormatInstArgAndKind(IdAndKind arg_and_kind) -> void {
   });
 }
 
-auto Formatter::FormatInstRhs(Inst inst) -> void {
+auto Formatter::FormatInstRhs(InstId inst_id, Inst inst) -> void {
   CARBON_KIND_SWITCH(inst) {
     case CARBON_KIND_ANY(AnyAggregateInit, init): {
       FormatArgs(init.elements_id);
@@ -1267,6 +1274,11 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
+    case CARBON_KIND(PackExpansion decl): {
+      FormatPackExpansionRhs(inst_id, decl);
+      return;
+    }
+
     case CARBON_KIND(RequireImplsDecl decl): {
       FormatArgs(decl.require_impls_id);
       llvm::SaveAndRestore scope(
@@ -1293,6 +1305,13 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     case CARBON_KIND(SpliceBlock splice): {
       FormatArgs(splice.result_id);
       FormatTrailingBlock(splice.block_id);
+      return;
+    }
+
+    case CARBON_KIND(SpliceBranches splice): {
+      FormatArgs(splice.insts_id);
+      out() << ", ";
+      FormatLabel(splice.exit_id);
       return;
     }
 
@@ -1382,6 +1401,50 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
     FormatArg(inst_id);
   }
   out() << ')';
+}
+
+auto Formatter::FormatPackExpansionRhs(InstId inst_id, PackExpansion inst)
+    -> void {
+  out() << " ";
+  if (!inst.region_id.has_value()) {
+    // This can happen if we format a placeholder.
+    out() << "<none>";
+    return;
+  }
+  FormatArg(inst.region_id);
+
+  const auto& region = sem_ir_->pack_expanded_regions().Get(inst.region_id);
+  if (inst_id != region.expansion_id) {
+    // This is a copy of the declaration, such as a symbolic constant or an
+    // instruction in an eval block. Only print the body at the declaration.
+    out() << ", ";
+    FormatArg(inst.inst_id);
+    return;
+  }
+
+  llvm::SaveAndRestore region_scope(scope_,
+                                    inst_namer_.GetScopeFor(inst.region_id));
+
+  // Format the generic inline, followed by the body blocks.
+  const auto& generic = sem_ir_->generics().Get(region.generic_id);
+  FormatParamList(generic.bindings_id);
+  out() << ", ";
+  FormatArg(inst.inst_id);
+  out() << ' ';
+  OpenBrace();
+  FormatCodeBlock(generic.decl_block_id);
+  if (generic.definition_block_id.has_value()) {
+    IndentLabel();
+    out() << "!definition:\n";
+    FormatCodeBlock(generic.definition_block_id);
+  }
+  for (auto block_id : region.body_block_ids) {
+    IndentLabel();
+    FormatLabel(block_id);
+    out() << ":\n";
+    FormatCodeBlock(block_id);
+  }
+  CloseBrace();
 }
 
 auto Formatter::FormatImportCppDeclRhs() -> void {

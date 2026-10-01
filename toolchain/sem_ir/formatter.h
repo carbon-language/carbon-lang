@@ -216,13 +216,17 @@ class Formatter {
 
   // Formats arguments to an instruction. This will typically look like "
   // <arg0>, <arg1>".
-  auto FormatInstRhs(Inst inst) -> void;
+  auto FormatInstRhs(InstId inst_id, Inst inst) -> void;
 
   // Formats the default case for `FormatInstRhs`.
   auto FormatInstRhsDefault(Inst inst) -> void;
 
   // Formats arguments as " <callee>(<args>) -> <return>".
   auto FormatCallRhs(Call inst) -> void;
+
+  // Formats a pack expansion. For the declaration itself, this includes its
+  // generic and body blocks.
+  auto FormatPackExpansionRhs(InstId inst_id, PackExpansion inst) -> void;
 
   // Standard formatting for a declaration instruction's arguments.
   template <typename IdT>

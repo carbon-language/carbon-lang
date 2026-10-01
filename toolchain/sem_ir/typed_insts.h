@@ -355,6 +355,20 @@ struct BranchIf {
   InstId cond_id;
 };
 
+// Control flow at the end of the body of a pack expansion. Continues with the
+// next value of the variadic index, or leaves the pack expansion if the
+// current index is the last one. See `SpliceBranches`.
+struct BranchNextIndex {
+  static constexpr auto Kind =
+      InstKind::BranchNextIndex.Define<Parse::PackExpansionStatementId>(
+          {.ir_name = "br_next_index",
+           .constant_kind = InstConstantKind::Never,
+           .terminator_kind = TerminatorKind::Terminator});
+
+  // TODO: Add an optional value to contribute to the result of the enclosing
+  // `SpliceBranches` for this index, for use in expression pack expansions.
+};
+
 // Control flow to branch to the target block, passing an argument for
 // `BlockArg` to read.
 struct BranchWithArg {
@@ -486,7 +500,7 @@ struct ClassDecl {
   DeclInstBlockId decl_block_id;
 };
 
-// Access to a member of a class, such as `base.index`. This provides a
+// Access to a member of a class, such as `base.index`. This provides as
 // reference for either reading or writing.
 struct ClassElementAccess {
   // TODO: Make Parse::NodeId more specific.
@@ -1601,6 +1615,38 @@ struct OutParamPattern {
   NameId pretty_name_id;
 };
 
+// A pack expansion, such as a `...` statement, which produces a specific
+// version of an instruction within a pack expanded region for each value of the
+// variadic index. The pack expanded region describes a generic whose final
+// binding is the variadic index.
+//
+// The type of this instruction is a tuple of `<instruction>` types, with one
+// element for each value of the variadic index. The constant value of this
+// instruction is a tuple of `InstValue`s, each of which is a `SpecificInst`
+// that refers to `inst_id` in the region's specific for the corresponding
+// index. The arguments of those specifics other than the index are taken from
+// the enclosing specific in which this is evaluated, and may be symbolic.
+//
+// When `inst_id` is the region's entry branch, the result is expected to be
+// used as the operand of a `SpliceBranches` instruction.
+//
+// TODO: Add further `PackExpansion`s for the same region whose `inst_id` is a
+// value computed within the body, to extract per-index results from the code
+// spliced in by `SpliceBranches`. An (`InstId`, `SpecificId`) pair identifies
+// the same instruction in both.
+struct PackExpansion {
+  static constexpr auto Kind = InstKind::PackExpansion.Define<Parse::NodeId>(
+      {.ir_name = "pack_expansion",
+       .constant_kind = InstConstantKind::SymbolicOnly,
+       .is_lowered = false});
+
+  TypeId type_id;
+  PackExpandedRegionId region_id;
+  // The instruction within the region's generic to produce a specific version
+  // of for each index.
+  AbsoluteInstId inst_id;
+};
+
 // Indicates `partial` on a type, such as `partial MyClass`.
 struct PartialType {
   static constexpr auto Kind =
@@ -2084,6 +2130,27 @@ struct SpliceBlock {
   InstId result_id;
 };
 
+// Control flow that executes a sequence of spliced branches in turn, and then
+// branches to `exit_id`.
+//
+// `insts_id` computes a tuple of `InstValue`s, each of which is a branch
+// instruction, typically wrapped in a `SpecificInst`. Control flow branches
+// to the target of the first branch. The code reached by that branch ends
+// with a `BranchNextIndex`, which continues with the next branch in the
+// sequence, or with `exit_id` after the last one.
+struct SpliceBranches {
+  static constexpr auto Kind =
+      InstKind::SpliceBranches.Define<Parse::PackExpansionStatementId>(
+          {.ir_name = "splice_br",
+           .constant_kind = InstConstantKind::Never,
+           .terminator_kind = TerminatorKind::Terminator});
+
+  // TODO: Add a way to collect a value from each branch, for use in expression
+  // pack expansions.
+  InstId insts_id;
+  LabelId exit_id;
+};
+
 // Splices an instruction computed by an action into the location where this
 // appears.
 struct SpliceInst {
@@ -2252,6 +2319,29 @@ struct TupleAccess {
   TypeId type_id;
   InstId tuple_id;
   ElementIndex index;
+};
+
+// Access to a tuple member with a symbolic index. When the index is known,
+// this evaluates to the corresponding `TupleAccess`, or to the element itself
+// if the tuple is a constant value.
+//
+// This can also be applied to a tuple type, in which case it produces the
+// corresponding element type. This is used to form the type of a
+// `TupleIndex` on a tuple value.
+//
+// TODO: For now, a `TupleIndex` with a symbolic index is treated as having a
+// template-dependent value, even if the index is only checked-dependent. The
+// type should eventually remain checked-symbolic in that case.
+struct TupleIndex {
+  static constexpr auto Kind = InstKind::TupleIndex.Define<Parse::NodeId>(
+      {.ir_name = "tuple_index",
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
+       .is_type = InstIsType::Maybe,
+       .constant_kind = InstConstantKind::TemplateOnly});
+
+  TypeId type_id;
+  InstId tuple_id;
+  InstId index_id;
 };
 
 // Initializes the destination tuple with the given elements.

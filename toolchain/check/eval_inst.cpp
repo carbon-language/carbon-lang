@@ -829,6 +829,38 @@ auto EvalConstantInst(Context& context, SemIR::TupleAccess inst)
   return PerformAggregateAccess(context, inst);
 }
 
+auto EvalConstantInst(Context& context, SemIR::TupleIndex inst)
+    -> ConstantEvalResult {
+  auto index_value = context.insts().TryGetAs<SemIR::IntValue>(inst.index_id);
+  if (!index_value) {
+    // The index is still symbolic. This will be treated as a template
+    // constant.
+    return ConstantEvalResult::NewSamePhase(inst);
+  }
+
+  // The index is checked against the tuple arity when the `TupleIndex` is
+  // formed, so it's known to be in range here.
+  const auto& index_int = context.ints().Get(index_value->int_id);
+  CARBON_CHECK(index_int.isNonNegative() && index_int.getActiveBits() < 32,
+               "Tuple index out of range");
+  auto index = index_int.getZExtValue();
+
+  // Indexing into a tuple type produces the corresponding element type.
+  if (auto tuple_type =
+          context.insts().TryGetAs<SemIR::TupleType>(inst.tuple_id)) {
+    auto elements = context.inst_blocks().Get(tuple_type->type_elements_id);
+    CARBON_CHECK(index < elements.size(), "Tuple index out of range");
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(elements[index]));
+  }
+
+  // Otherwise, this is equivalent to a `TupleAccess`.
+  return PerformAggregateAccess(
+      context, SemIR::TupleAccess{.type_id = inst.type_id,
+                                  .tuple_id = inst.tuple_id,
+                                  .index = SemIR::ElementIndex(index)});
+}
+
 auto EvalConstantInst(Context& /*context*/, SemIR::TupleInit inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(SemIR::TupleValue{
