@@ -393,7 +393,6 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
 static auto DestroyStructFields(
     Context& context, SemIR::LocId loc_id, SemIR::InstId callee_self_param_id,
     llvm::ArrayRef<SemIR::StructTypeField> struct_fields) -> void {
-  // TODO: add check that `struct_fields` isn't empty.
   for (auto i = static_cast<std::int64_t>(struct_fields.size()) - 1; i >= 0;
        --i) {
     auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
