@@ -300,7 +300,15 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
         return init.dest_id;
       }
       case CARBON_KIND(SpliceInst inst): {
-        return inst.inst_id;
+        if (!allow_transitive) {
+          return InstId::None;
+        }
+        auto const_id =
+            GetConstantValueInSpecific(sem_ir, specific_id, inst.inst_id);
+        init_id = sem_ir.constant_values()
+                      .GetInstAs<SemIR::InstValue>(const_id)
+                      .inst_id;
+        continue;
       }
       case CARBON_KIND(Call call): {
         auto callee_function =

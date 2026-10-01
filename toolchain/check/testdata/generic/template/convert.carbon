@@ -2501,16 +2501,18 @@ fn F() {
 // CHECK:STDOUT:     %MakeB.ref: %B.MakeB.type = name_ref MakeB, @B.%B.MakeB.decl [concrete = %B.MakeB]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.4a1: init %B = splice_block %B.MakeB.call {
-// CHECK:STDOUT:       %.2a6: ref %B = temporary_storage
-// CHECK:STDOUT:       %B.MakeB.call: init %B to %.2a6 = call %B.MakeB()
+// CHECK:STDOUT:     %.4f4: init %B = splice_block %B.MakeB.call {
+// CHECK:STDOUT:       %.cbc: ref %B = splice_block %.927 {
+// CHECK:STDOUT:         %.a33: ref %A.d32110.1 = specific_inst @A.MakeA.%return.param, @A.MakeA(%B)
+// CHECK:STDOUT:         %.927: ref %B = class_element_access %.a33, element0
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %B.MakeB.call: init %B to %.cbc = call %B.MakeB()
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.splice_block.426619.3: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.369: init %A.d32110.1 = splice_block %.7ff {
+// CHECK:STDOUT:     %.f90: init %A.d32110.1 = splice_block %.7ff {
 // CHECK:STDOUT:       %.afa: %struct_type.field.8fb = specific_inst @A.MakeA.%.loc13_31, @A.MakeA(%B)
 // CHECK:STDOUT:       %.00c: init %B = specific_inst @A.MakeA.%.loc13_30.2, @A.MakeA(%B)
-// CHECK:STDOUT:       %.a33: ref %A.d32110.1 = specific_inst @A.MakeA.%return.param, @A.MakeA(%B)
 // CHECK:STDOUT:       %.7ff: init %A.d32110.1 to %.a33 = class_init (%.00c)
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
