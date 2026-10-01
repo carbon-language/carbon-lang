@@ -62,6 +62,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [`return`](#return)
             -   [`returned var`](#returned-var)
         -   [`match`](#match)
+    -   [Lambdas](#lambdas)
 -   [User-defined types](#user-defined-types)
     -   [Classes](#classes)
         -   [Assignment](#assignment)
@@ -121,7 +122,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Error handling](#error-handling)
     -   [Execution abstractions](#execution-abstractions)
         -   [Abstract machine and execution model](#abstract-machine-and-execution-model)
-        -   [Lambdas](#lambdas)
         -   [Co-routines](#co-routines)
         -   [Concurrency](#concurrency)
 
@@ -1656,6 +1656,30 @@ fn Foo() -> f32 {
 >     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
 > -   Proposal
 >     [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
+
+### Lambdas
+
+Lambdas are anonymous function expressions, and have a unified syntax with other
+function definitions, with two possible forms:
+
+-   `fn` [_implicit-parameters_] [_tuple-pattern_] `=>` _expression_
+-   `fn` [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `{`
+    _statements_ `}`
+
+Lambdas share many of the same features as named functions, but some features
+such as positional parameters and captures will more commonly be used with
+lambdas. For example:
+
+```carbon
+// A lambda that takes two positional parameters being used as a comparator
+Sort(ref my_list, fn => $0.val < $1.val);
+
+// Captures `self` from outer scope
+let lambda: auto = fn [self] { self.F(); };
+```
+
+> References: [Functions](functions.md),
+> [Proposal #3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
 
 ## User-defined types
 
@@ -3849,14 +3873,6 @@ the critical underpinnings of such abstractions.
 #### Abstract machine and execution model
 
 > **TODO:**
-
-#### Lambdas
-
-> **TODO:** References need to be evolved. Needs a detailed design and a high
-> level summary provided inline.
-
-> References: [Functions](functions.md),
-> [Proposal #3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
 
 #### Co-routines
 

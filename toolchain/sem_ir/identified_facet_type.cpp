@@ -44,7 +44,7 @@ static auto RequiredLess(const IdentifiedFacetType::RequiredImpl& lhs,
 IdentifiedFacetType::IdentifiedFacetType(
     IdentifiedFacetTypeKey key, bool partially_identified,
     llvm::ArrayRef<RequiredImpl> extends,
-    llvm::ArrayRef<RequiredImpl> self_impls)
+    llvm::ArrayRef<RequiredImpl> self_impls, llvm::ArrayRef<Rewrite> rewrites)
     : key_(key) {
   required_impls_.reserve(extends.size() + self_impls.size());
   llvm::append_range(required_impls_, extends);
@@ -70,6 +70,8 @@ IdentifiedFacetType::IdentifiedFacetType(
     // same constituents but a more complete set of required interfaces.
     key_.num_require_impls = required_impls_.size();
   }
+
+  rewrites_.assign(rewrites);
 }
 
 auto AddCanonicalWitnessesBlock(File& sem_ir,

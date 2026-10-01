@@ -88,6 +88,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
         -   [Type structure of an impl declaration](#type-structure-of-an-impl-declaration)
         -   [Orphan rule](#orphan-rule)
+            -   [Re-entering a nested scope in an `impl` declaration](#re-entering-a-nested-scope-in-an-impl-declaration)
         -   [Overlap rule](#overlap-rule)
         -   [Prioritization rule](#prioritization-rule)
         -   [Acyclic rule](#acyclic-rule)
@@ -516,7 +517,12 @@ class Player {
 ### Avoiding name collisions
 
 > **TODO:** This has changed. Now you can always extend, but conflicting names
-> may only be found by qualified name lookup.
+> may only be found by qualified name lookup. See proposals
+> [#5337: Interface extension and `final impl` update](https://github.com/carbon-language/carbon-lang/pull/5337)
+> and
+> [#6395: Type completeness in extend](https://github.com/carbon-language/carbon-lang/pull/6395),
+> along with leads issue
+> [#2745: Name conflicts beyond inheritance](https://github.com/carbon-language/carbon-lang/issues/2745).
 
 To avoid name collisions, you can't extend implementations of two interfaces
 that have a name in common:
@@ -924,6 +930,11 @@ A facet with an unidentified or partially identified facet type may be converted
 _to_ other facet types. While its set of requirements are not fully determined,
 the requirements that are known at that time may be used.
 
+> References:
+>
+> -   Proposal
+>     [#6902: Identification of a named constraint during definition](https://github.com/carbon-language/carbon-lang/pull/6902)
+
 ## Named constraints
 
 If the interfaces discussed above are the building blocks for facet types,
@@ -1111,6 +1122,11 @@ class ImplementsS {
   Z { ... }
 }
 ```
+
+> References:
+>
+> -   Proposal
+>     [#6902: Identification of a named constraint during definition](https://github.com/carbon-language/carbon-lang/pull/6902)
 
 ### Rewrites and same-type constraints in a named constraint
 
@@ -1427,6 +1443,11 @@ fn DoHashAndEquals[T: Hashable](x: T) {
 
 **Note:** The design for this feature is continued in
 [a later section](#interface-requiring-other-interfaces-revisited).
+
+> References:
+>
+> -   Proposal
+>     [#6902: Identification of a named constraint during definition](https://github.com/carbon-language/carbon-lang/pull/6902)
 
 ### Interface extension
 
@@ -2298,6 +2319,57 @@ var y: MySerializableType = Deserialize(MySerializableType, "4");
 
 This is instead of declaring an associated constant using `let` with a function
 type.
+
+An associated function of an interface `I` is callable, and in a call to it, the
+`Self` parameter is treated as a generic parameter that can be deduced. Since
+the interface itself requires `Self` to implement `I`, that will be validated as
+part of determining whether the deduced `Self` type valid meets its requirements
+(which may involve
+[`impl` lookup](/docs/design/expressions/member_access.md#impl-lookup)). Lastly,
+the corresponding function from the `impl` is called. Note that this is allowed
+for any associated function for which `Self` can be deduced, not just for
+associated methods.
+
+```carbon
+interface Interface {
+  fn Method(self);
+}
+
+class Class {
+  extend impl as Interface { fn Method(unused self) {} }
+}
+
+fn Fn(value: Class) {
+  // Calling by way of facet member access:
+  (Class as Interface).Method(value);
+  // Calling the associated method directly deduces `Self = Class`:
+  Interface.Method(value);
+}
+```
+
+Here is an example from
+[leads issue #7606](https://github.com/carbon-language/carbon-lang/issues/7606)
+where `Self` is deduced and used for
+[`impl` lookup](/docs/design/expressions/member_access.md#impl-lookup) when
+calling a non-method associated function:
+
+```carbon
+interface Printable {
+  // Print one `Self` object.
+  fn Print(self);
+  // Print a sequence of `Self` objects.
+  fn PrintSlice(s: slice(Self));
+}
+impl Widget as Printable { ... }
+fn PrintWidgets(s: slice(Widget)) {
+  // OK, deduces `Self` is `Widget`. Equivalent to
+  // `(Widget as Printable).PrintSlice(s)`.
+  Printable.PrintSlice(s);
+}
+```
+
+Note that `Self` is in deducible position, but not directly the type of any
+argument.
 
 > **TODO:** Document rules on where associated function implementations can be
 > declared, as adopted in
@@ -4796,6 +4868,42 @@ declarations with a particular type structure.
 > -   [Disallowing the anchor name to be in a nested scope](/proposals/p007140-orphan-rule-for-scopes.md#disallowing-the-anchor-name-to-be-in-a-nested-scope)
 > -   [Anchoring to a definition](/proposals/p007140-orphan-rule-for-scopes.md#anchoring-to-a-definition)
 
+##### Re-entering a nested scope in an `impl` declaration
+
+It is possible to [re-enter a nested scope](#declaring-implementations) by
+writing a qualified path for the entire `Type as Interface` expression, such as
+`impl C.(D as Z)`. This functions like writing `impl D as Z` within the nested
+scope `C`, or in other words, by performing name lookups from the scope of `C`.
+
+By re-entering the nested scope `C`, it becomes the scope containing the `impl`
+declaration when applying the orphan rule.
+
+For example, this is equivalent to writing `impl D as Z` inside the class `C`,
+which is allowed by the orphan rule.
+
+```carbon
+class C {
+  class D {}
+}
+impl C.(D as Z);
+```
+
+Whereas it is not allowed to write `impl C as Z` inside the scope of `D`, so it
+is also not allowed to write `impl C.D.(C as Z)`.
+
+```carbon
+class C {
+  class D {}
+}
+// ERROR: Neither `C` nor `Z` is defined by or has its owning declaration
+// within the scope `C.D`.
+impl C.D.(C as Z);
+```
+
+> References:
+>
+> -   ["Re-entering a nested scope in an `impl` declaration" in proposal #7140](/proposals/p007140-orphan-rule-for-scopes.md#re-entering-a-nested-scope-in-an-impl-declaration)
+
 #### Overlap rule
 
 Given a specific concrete type, say `Foo(bool, i32)`, and an interface, say
@@ -5553,10 +5661,10 @@ fn (Type as Interface).F() {}
 Similarly for parameterized `impl`s:
 
 ```carbon
-impl forall [T:! type] T as Interface(T) {
+impl forall [T: type] T as Interface(T) {
   fn F();
 }
-fn (forall [T:! type] T as Interface(T)).F() {}
+fn (forall [T: type] T as Interface(T)).F() {}
 ```
 
 And for class-scope `impl` members:
@@ -7061,3 +7169,6 @@ and
 -   [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
 -   [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
 -   [#5366: The name of an `impl` in `class` scope](https://github.com/carbon-language/carbon-lang/pull/5366)
+-   [#7140: Orphan rule for scopes](https://github.com/carbon-language/carbon-lang/pull/7140)
+-   [Issue #7606: Should associated function names be callable?](https://github.com/carbon-language/carbon-lang/issues/7606)
+-   [#7697: Updates to member access](https://github.com/carbon-language/carbon-lang/pull/7697)

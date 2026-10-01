@@ -9,6 +9,7 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/function/import/function_ptr.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/function/import/function_ptr.carbon
+// CHECK:STDERR: error: calling function with incomplete return type 'C' [CppInteropParseError]
 
 // --- simple_callback.h
 
@@ -29,7 +30,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_convert_fn_ptr.carbon
+// --- convert_fn_ptr.carbon
 library "[[@TEST_NAME]]";
 
 import Cpp library "simple_callback.h";
@@ -38,15 +39,11 @@ fn MyCallback(arg: f32) -> i32;
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_convert_fn_ptr.carbon:[[@LINE+4]]:41: error: expression cannot be used as a value [UseOfNonExprAsValue]
-  // CHECK:STDERR:   var unused fn_ptr: Cpp.CallbackType = MyCallback;
-  // CHECK:STDERR:                                         ^~~~~~~~~~
-  // CHECK:STDERR:
   var unused fn_ptr: Cpp.CallbackType = MyCallback;
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_pass_fn_ptr.carbon
+// --- pass_fn_ptr.carbon
 library "[[@TEST_NAME]]";
 
 import Cpp library "simple_callback.h";
@@ -55,10 +52,6 @@ fn MyCallback(arg: f32) -> i32;
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_pass_fn_ptr.carbon:[[@LINE+4]]:20: error: call argument of type `<type of MyCallback>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.TakeCallback(MyCallback);
-  // CHECK:STDERR:                    ^~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.TakeCallback(MyCallback);
   //@dump-sem-ir-end
 }
@@ -95,7 +88,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_convert_complex_fn_ptr.carbon
+// --- convert_complex_fn_ptr.carbon
 library "[[@TEST_NAME]]";
 
 import Cpp library "complex_callback.h";
@@ -104,15 +97,11 @@ fn MyCallback(arg: Cpp.C) -> Cpp.C;
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_convert_complex_fn_ptr.carbon:[[@LINE+4]]:41: error: expression cannot be used as a value [UseOfNonExprAsValue]
-  // CHECK:STDERR:   var unused fn_ptr: Cpp.CallbackType = MyCallback;
-  // CHECK:STDERR:                                         ^~~~~~~~~~
-  // CHECK:STDERR:
   var unused fn_ptr: Cpp.CallbackType = MyCallback;
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_pass_complex_fn_ptr.carbon
+// --- pass_complex_fn_ptr.carbon
 library "[[@TEST_NAME]]";
 
 import Cpp library "complex_callback.h";
@@ -121,11 +110,6 @@ fn MyCallback(arg: Cpp.C) -> Cpp.C;
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_pass_complex_fn_ptr.carbon:[[@LINE+5]]:27: error: call argument of type `<type of MyCallback>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.TakeComplexCallback(MyCallback);
-  // CHECK:STDERR:                           ^~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: error: calling function with incomplete return type 'C' [CppInteropParseError]
   Cpp.TakeComplexCallback(MyCallback);
   //@dump-sem-ir-end
 }
@@ -170,9 +154,6 @@ library "[[@TEST_NAME]]";
 import Cpp library "forward_decl.h";
 
 fn F() {
-  // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+16]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.ReturnCallback()();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+13]]:3: note: in thunk for C++ function pointer type used here [InCppFunctionPointerThunk]
   // CHECK:STDERR:   Cpp.ReturnCallback()();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
@@ -180,13 +161,50 @@ fn F() {
   // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+9]]:3: error: function returns incomplete type `Cpp.C` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   Cpp.ReturnCallback()();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE-13]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./forward_decl.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR:       ^
   // CHECK:STDERR: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR:
   Cpp.ReturnCallback()();
+}
+
+// --- fail_convert_generic_arg.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''c++
+using MyCallbackType = void(*)(int);
+''';
+
+fn MyCallback(generic arg: i32);
+
+fn F() {
+  // CHECK:STDERR: fail_convert_generic_arg.carbon:[[@LINE+4]]:43: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
+  // CHECK:STDERR:   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
+  // CHECK:STDERR:                                           ^~~~~~~~~~
+  // CHECK:STDERR:
+  var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
+}
+
+// --- fail_convert_type_mismatch.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''c++
+using MyCallbackType = void(*)(int);
+''';
+
+fn MyCallback(arg: i32) -> i32;
+
+fn F() {
+  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE+7]]:43: error: can't convert exported function type to `void (int)` [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR:   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
+  // CHECK:STDERR:                                           ^~~~~~~~~~
+  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE-6]]:1: note: function exported with type `int (int)` [ExportedFromFunction]
+  // CHECK:STDERR: fn MyCallback(arg: i32) -> i32;
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
 }
 
 // CHECK:STDOUT: --- relay_fn_ptr.carbon
@@ -238,24 +256,36 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_convert_fn_ptr.carbon
+// CHECK:STDOUT: --- convert_fn_ptr.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %f32.c73: type = class_type @Float, @Float(%int_32) [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %MyCallback.type: type = fn_type @MyCallback [concrete]
 // CHECK:STDOUT:   %MyCallback: %MyCallback.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.659: type = cpp_fn_ptr_type clang_function_pointer_type41000000 [concrete]
 // CHECK:STDOUT:   %pattern_type.4b7: type = pattern_type %.659 [concrete]
 // CHECK:STDOUT:   %fn_ptr.patt: %pattern_type.4b7 = ref_binding_pattern fn_ptr [concrete]
 // CHECK:STDOUT:   %fn_ptr.var_patt: %pattern_type.4b7 = var_pattern %fn_ptr.patt [concrete]
+// CHECK:STDOUT:   %.fc9: %.659 = cpp_addr_of_fn %MyCallback, @MyCallback [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.7f5: type = fn_type @Copy.WithSelf.Op.2 [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.416: %Copy.WithSelf.Op.type.7f5 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.bab: <witness> = custom_witness (%Copy.WithSelf.Op.416), @Copy [concrete]
+// CHECK:STDOUT:   %Copy.facet.8df: %Copy.type = facet_value %.659, (%custom_witness.bab) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.adb: type = fn_type @Copy.WithSelf.Op.1, @Copy.WithSelf(%Copy.facet.8df) [concrete]
+// CHECK:STDOUT:   %.e6b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.adb, %Copy.facet.8df [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.bound: <bound method> = bound_method %.fc9, %Copy.WithSelf.Op.416 [concrete]
 // CHECK:STDOUT:   %self.param_patt.952: %pattern_type.4b7 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.a35: %pattern_type.4b7 = wrapper_binding_pattern self, %self.param_patt.952 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc13 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc9 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01: %Destroy.WithSelf.SubobjectDestroy.type.dfc = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc13 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc9 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc13 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc9 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -267,14 +297,14 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc13 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc9 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.4b7 = ref_param_pattern [concrete = constants.%self.param_patt.952]
 // CHECK:STDOUT:     %self.patt: %pattern_type.4b7 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a35]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %.659 = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %.659 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc13 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc9 [concrete = constants.%Destroy.WithSelf.Op.403] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.4b7 = ref_param_pattern [concrete = constants.%self.param_patt.952]
 // CHECK:STDOUT:     %self.patt: %pattern_type.4b7 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a35]
 // CHECK:STDOUT:   } {
@@ -287,8 +317,14 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %fn_ptr.var: ref %.659 = var_storage %fn_ptr.var_patt
 // CHECK:STDOUT:   %MyCallback.ref: %MyCallback.type = name_ref MyCallback, file.%MyCallback.decl [concrete = constants.%MyCallback]
-// CHECK:STDOUT:   assign %fn_ptr.var, <error>
-// CHECK:STDOUT:   %.loc13: type = splice_block %CallbackType.ref [concrete = constants.%.659] {
+// CHECK:STDOUT:   %.loc9_3.1: %.659 = cpp_addr_of_fn %MyCallback.ref, @MyCallback [concrete = constants.%.fc9]
+// CHECK:STDOUT:   %.loc9_3.2: %.659 = converted %MyCallback.ref, %.loc9_3.1 [concrete = constants.%.fc9]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %impl.elem0: %.e6b = impl_witness_access constants.%custom_witness.bab, element0 [concrete = constants.%Copy.WithSelf.Op.416]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc9_3.2, %impl.elem0 [concrete = constants.%Copy.WithSelf.Op.bound]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.call: init %.659 = call %bound_method(%.loc9_3.2) [concrete = constants.%.fc9]
+// CHECK:STDOUT:   assign %fn_ptr.var, %Copy.WithSelf.Op.call
+// CHECK:STDOUT:   %.loc9_25: type = splice_block %CallbackType.ref [concrete = constants.%.659] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %CallbackType.ref: type = name_ref CallbackType, constants.%.659 [concrete = constants.%.659]
 // CHECK:STDOUT:   }
@@ -302,25 +338,39 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc13(%self.param: ref %.659) = "no_op";
+// CHECK:STDOUT: fn @MyCallback__carbon_thunk(%_.param.loc9_41.1: ref %f32.c73, %_.param.loc9_41.2: ref %i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc9: %f32.c73 = acquire_value %_.param.loc9_41.1
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   assign %_.param.loc9_41.2, %MyCallback.call
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc13(%self.param: ref %.659) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc9(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc13(%self.param: ref %.659) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc9(%self.param: ref %.659) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc9(%self.param: ref %.659) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl(%self.param)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_pass_fn_ptr.carbon
+// CHECK:STDOUT: --- pass_fn_ptr.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MyCallback.type: type = fn_type @MyCallback [concrete]
 // CHECK:STDOUT:   %MyCallback: %MyCallback.type = struct_value () [concrete]
 // CHECK:STDOUT:   %TakeCallback.cpp_overload_set.type: type = cpp_overload_set_type @TakeCallback.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %TakeCallback.cpp_overload_set.value: %TakeCallback.cpp_overload_set.type = cpp_overload_set_value @TakeCallback.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %.659: type = cpp_fn_ptr_type clang_function_pointer_type61000000 [concrete]
+// CHECK:STDOUT:   %TakeCallback.type: type = fn_type @TakeCallback [concrete]
+// CHECK:STDOUT:   %TakeCallback: %TakeCallback.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.fc9: %.659 = cpp_addr_of_fn %MyCallback, @MyCallback [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -329,6 +379,11 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TakeCallback.cpp_overload_set.value: %TakeCallback.cpp_overload_set.type = cpp_overload_set_value @TakeCallback.cpp_overload_set [concrete = constants.%TakeCallback.cpp_overload_set.value]
+// CHECK:STDOUT:   %TakeCallback.decl: %TakeCallback.type = fn_decl @TakeCallback [concrete = constants.%TakeCallback] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -336,6 +391,9 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakeCallback.ref: %TakeCallback.cpp_overload_set.type = name_ref TakeCallback, imports.%TakeCallback.cpp_overload_set.value [concrete = constants.%TakeCallback.cpp_overload_set.value]
 // CHECK:STDOUT:   %MyCallback.ref: %MyCallback.type = name_ref MyCallback, file.%MyCallback.decl [concrete = constants.%MyCallback]
+// CHECK:STDOUT:   %.loc9_20.1: %.659 = cpp_addr_of_fn %MyCallback.ref, @MyCallback [concrete = constants.%.fc9]
+// CHECK:STDOUT:   %.loc9_20.2: %.659 = converted %MyCallback.ref, %.loc9_20.1 [concrete = constants.%.fc9]
+// CHECK:STDOUT:   %TakeCallback.call: init %empty_tuple.type = call imports.%TakeCallback.decl(%.loc9_20.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -569,7 +627,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_convert_complex_fn_ptr.carbon
+// CHECK:STDOUT: --- convert_complex_fn_ptr.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -581,13 +639,22 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.4b7: type = pattern_type %.659 [concrete]
 // CHECK:STDOUT:   %fn_ptr.patt: %pattern_type.4b7 = ref_binding_pattern fn_ptr [concrete]
 // CHECK:STDOUT:   %fn_ptr.var_patt: %pattern_type.4b7 = var_pattern %fn_ptr.patt [concrete]
+// CHECK:STDOUT:   %.fc9: %.659 = cpp_addr_of_fn %MyCallback, @MyCallback [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.7f5: type = fn_type @Copy.WithSelf.Op.2 [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.416: %Copy.WithSelf.Op.type.7f5 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.bab: <witness> = custom_witness (%Copy.WithSelf.Op.416), @Copy [concrete]
+// CHECK:STDOUT:   %Copy.facet.8df: %Copy.type = facet_value %.659, (%custom_witness.bab) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.adb: type = fn_type @Copy.WithSelf.Op.1, @Copy.WithSelf(%Copy.facet.8df) [concrete]
+// CHECK:STDOUT:   %.e6b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.adb, %Copy.facet.8df [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.bound: <bound method> = bound_method %.fc9, %Copy.WithSelf.Op.416 [concrete]
 // CHECK:STDOUT:   %self.param_patt.952: %pattern_type.4b7 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.a35: %pattern_type.4b7 = wrapper_binding_pattern self, %self.param_patt.952 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc13 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc9 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01: %Destroy.WithSelf.SubobjectDestroy.type.dfc = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc13 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc9 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc13 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc9 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -601,14 +668,14 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc13 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc9 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.4b7 = ref_param_pattern [concrete = constants.%self.param_patt.952]
 // CHECK:STDOUT:     %self.patt: %pattern_type.4b7 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a35]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %.659 = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %.659 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc13 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc9 [concrete = constants.%Destroy.WithSelf.Op.403] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.4b7 = ref_param_pattern [concrete = constants.%self.param_patt.952]
 // CHECK:STDOUT:     %self.patt: %pattern_type.4b7 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a35]
 // CHECK:STDOUT:   } {
@@ -621,8 +688,14 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %fn_ptr.var: ref %.659 = var_storage %fn_ptr.var_patt
 // CHECK:STDOUT:   %MyCallback.ref: %MyCallback.type = name_ref MyCallback, file.%MyCallback.decl [concrete = constants.%MyCallback]
-// CHECK:STDOUT:   assign %fn_ptr.var, <error>
-// CHECK:STDOUT:   %.loc13: type = splice_block %CallbackType.ref [concrete = constants.%.659] {
+// CHECK:STDOUT:   %.loc9_3.1: %.659 = cpp_addr_of_fn %MyCallback.ref, @MyCallback [concrete = constants.%.fc9]
+// CHECK:STDOUT:   %.loc9_3.2: %.659 = converted %MyCallback.ref, %.loc9_3.1 [concrete = constants.%.fc9]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %impl.elem0: %.e6b = impl_witness_access constants.%custom_witness.bab, element0 [concrete = constants.%Copy.WithSelf.Op.416]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc9_3.2, %impl.elem0 [concrete = constants.%Copy.WithSelf.Op.bound]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.call: init %.659 = call %bound_method(%.loc9_3.2) [concrete = constants.%.fc9]
+// CHECK:STDOUT:   assign %fn_ptr.var, %Copy.WithSelf.Op.call
+// CHECK:STDOUT:   %.loc9_25: type = splice_block %CallbackType.ref [concrete = constants.%.659] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %CallbackType.ref: type = name_ref CallbackType, constants.%.659 [concrete = constants.%.659]
 // CHECK:STDOUT:   }
@@ -636,26 +709,41 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc13(%self.param: ref %.659) = "no_op";
+// CHECK:STDOUT: fn @MyCallback__carbon_thunk(%_.param.loc9_41.1: ref %C, %_.param.loc9_41.2: ref %C) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %.loc9_41.1: ref %C = splice_block %_.param.loc9_41.2 {}
+// CHECK:STDOUT:   %.loc9_41.2: %C = acquire_value %_.param.loc9_41.1
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   assign %_.param.loc9_41.2, %MyCallback.call
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc13(%self.param: ref %.659) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc9(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc13(%self.param: ref %.659) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc9(%self.param: ref %.659) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc9(%self.param: ref %.659) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl(%self.param)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_pass_complex_fn_ptr.carbon
+// CHECK:STDOUT: --- pass_complex_fn_ptr.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %MyCallback.type: type = fn_type @MyCallback [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MyCallback: %MyCallback.type = struct_value () [concrete]
 // CHECK:STDOUT:   %TakeComplexCallback.cpp_overload_set.type: type = cpp_overload_set_type @TakeComplexCallback.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %TakeComplexCallback.cpp_overload_set.value: %TakeComplexCallback.cpp_overload_set.type = cpp_overload_set_value @TakeComplexCallback.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %.659: type = cpp_fn_ptr_type clang_function_pointer_type69000000 [concrete]
+// CHECK:STDOUT:   %TakeComplexCallback.type: type = fn_type @TakeComplexCallback [concrete]
+// CHECK:STDOUT:   %TakeComplexCallback: %TakeComplexCallback.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.fc9: %.659 = cpp_addr_of_fn %MyCallback, @MyCallback [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -666,6 +754,11 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %TakeComplexCallback.cpp_overload_set.value: %TakeComplexCallback.cpp_overload_set.type = cpp_overload_set_value @TakeComplexCallback.cpp_overload_set [concrete = constants.%TakeComplexCallback.cpp_overload_set.value]
+// CHECK:STDOUT:   %TakeComplexCallback.decl: %TakeComplexCallback.type = fn_decl @TakeComplexCallback [concrete = constants.%TakeComplexCallback] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -673,6 +766,9 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakeComplexCallback.ref: %TakeComplexCallback.cpp_overload_set.type = name_ref TakeComplexCallback, imports.%TakeComplexCallback.cpp_overload_set.value [concrete = constants.%TakeComplexCallback.cpp_overload_set.value]
 // CHECK:STDOUT:   %MyCallback.ref: %MyCallback.type = name_ref MyCallback, file.%MyCallback.decl [concrete = constants.%MyCallback]
+// CHECK:STDOUT:   %.loc9_27.1: %.659 = cpp_addr_of_fn %MyCallback.ref, @MyCallback [concrete = constants.%.fc9]
+// CHECK:STDOUT:   %.loc9_27.2: %.659 = converted %MyCallback.ref, %.loc9_27.1 [concrete = constants.%.fc9]
+// CHECK:STDOUT:   %TakeComplexCallback.call: init %empty_tuple.type = call imports.%TakeComplexCallback.decl(%.loc9_27.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

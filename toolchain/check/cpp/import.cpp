@@ -1992,13 +1992,6 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 static auto DefineAsThunkCall(Context& context, SemIR::LocId loc_id,
                               const CalleeFunctionInfo& callee_info,
                               SemIR::Function& function) -> void {
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppThunk, Note,
-                          "in thunk for C++ function used here");
-        builder.Note(loc_id, InCppThunk);
-      });
-
   clang::FunctionDecl* thunk_clang_decl = BuildCppThunk(context, callee_info);
   if (thunk_clang_decl == nullptr) {
     return;
@@ -2075,6 +2068,12 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
       context.insts().GetAs<SemIR::FunctionDecl>(*function_decl_id).function_id;
   SemIR::Function& imported_function = context.functions().Get(function_id);
   if (IsCppThunkRequired(context, callee_info)) {
+    Diagnostics::AnnotationScope annotate_diagnostics(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(InCppThunk, Note,
+                            "in thunk for C++ function used here");
+          builder.Note(loc_id, InCppThunk);
+        });
     DefineAsThunkCall(context, loc_id, callee_info, imported_function);
   } else {
     // Inform Clang that the function has been referenced. This will trigger

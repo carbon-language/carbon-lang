@@ -83,7 +83,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     function50000003: {name: name3, parent_scope: name_scope50000001, call_param_patterns_id: inst_block50000010, call_params_id: inst_block50000011, cpp_thunk_decl: inst50000047}
 // CHECK:STDOUT:     function50000004: {name: name6, parent_scope: name_scope50000001, call_param_patterns_id: inst_block50000016, call_params_id: inst_block50000017, cpp_thunk_callee: inst5000003D}
 // CHECK:STDOUT:   classes:
-// CHECK:STDOUT:     class50000000:   {name: name2, parent_scope: name_scope50000001, self_type_id: type(inst50000014), inheritance_kind: Base, is_dynamic: 0, scope_id: name_scope50000002, body_block_id: inst_block5000000D, adapt_id: inst<none>, base_id: inst<none>, complete_type_witness_id: inst50000027, vtable_decl_id: inst<none>}}
+// CHECK:STDOUT:     class50000000:   {name: name2, parent_scope: name_scope50000001, self_type_id: type(inst50000014), inheritance_kind: Base, is_dynamic: 0, scope_id: name_scope50000002, body_block_id: inst_block5000000D, adapt_id: inst<none>, base_id: inst<none>, complete_type_witness_id: inst50000027, vtable_decl_id: inst<none>}
 // CHECK:STDOUT:   interfaces:      {}
 // CHECK:STDOUT:   associated_constants: {}
 // CHECK:STDOUT:   impls:           {}
