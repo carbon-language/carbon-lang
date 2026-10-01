@@ -1,10 +1,18 @@
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/int_literal.carbon
 
 // --- min_prelude/parts/destroy.carbon
 
 package Core library "prelude/parts/destroy";
+
+import library "prelude/parts/int_literal";
+
+interface DestroyFormat {
+  let value: IntLiteral;
+}
 
 // TODO: uncomment when `require impls` adds a witness table entry.
 // interface SubobjectDestroy {

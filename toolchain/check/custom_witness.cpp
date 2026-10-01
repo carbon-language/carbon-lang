@@ -16,6 +16,7 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/operator.h"
@@ -143,34 +144,31 @@ static auto GetFacetTypeForQuerySpecificInterface(
   return const_id;
 }
 
-// Starts a block for lookup-related instructions, and returns the `FacetType`
-// for lookups in `HasWitnessForRepeatedField`.
-static auto PrepareForHasWitness(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::SpecificInterface query_specific_interface) -> SemIR::ConstantId {
-  context.inst_block_stack().Push();
-  StartGenericDecl(context);
-
-  return GetFacetTypeForQuerySpecificInterface(context, loc_id,
-                                               query_specific_interface);
-}
-
+namespace {
 // Cleans up state `PrepareForHasWitness`.
-static auto CleanupAfterHasWitness(Context& context) -> void {
-  DiscardGenericDecl(context);
-  context.inst_block_stack().PopAndDiscard();
-}
+struct WitnessContext {
+  Context& context;
+  SemIR::ConstantId query_facet_type_const_id;
 
-// Returns true if `type_inst_id` has a witness for the query interface, which
-// comes from `PrepareForHasWitness`.
-static auto HasWitnessForRepeatedField(
-    Context& context, SemIR::LocId loc_id, SemIR::InstId type_inst_id,
-    SemIR::ConstantId query_facet_type_const_id) -> bool {
-  auto type_const_id = context.constant_values().Get(type_inst_id);
-  auto block_or_err = LookupImplWitness(context, loc_id, type_const_id,
-                                        query_facet_type_const_id);
-  return block_or_err.has_value();
-}
+  // Starts a block for lookup-related instructions, and returns the `FacetType`
+  // for lookups in `HasWitnessForRepeatedField`.
+  static auto PrepareForHasWitness(
+      Context& context, SemIR::LocId loc_id,
+      SemIR::SpecificInterface query_specific_interface) -> WitnessContext {
+    context.inst_block_stack().Push();
+    StartGenericDecl(context);
+
+    return {.context = context,
+            .query_facet_type_const_id = GetFacetTypeForQuerySpecificInterface(
+                context, loc_id, query_specific_interface)};
+  }
+
+  ~WitnessContext() {
+    DiscardGenericDecl(context);
+    context.inst_block_stack().PopAndDiscard();
+  }
+};
+}  // namespace
 
 // The format for `Destroy.Op`.
 enum class DestroyFormat {
@@ -179,48 +177,100 @@ enum class DestroyFormat {
   NonTrivial,
 };
 
-// Returns true if the type is known to have trivial destruction.
-static auto IsBuiltinWithTrivialDestruction(Context& context,
-                                            SemIR::InstId inst_id) -> bool {
-  CARBON_KIND_SWITCH(context.insts().Get(inst_id)) {
-    case SemIR::BoolType::Kind:
-    case SemIR::CppFunctionPointerType::Kind:
-    case SemIR::FacetType::Kind:
-    case SemIR::FloatType::Kind:
-    case SemIR::FormType::Kind:
-    case SemIR::IntLiteralType::Kind:
-    case SemIR::IntType::Kind:
-    case SemIR::PointerType::Kind:
-      // Trivially destructible.
-      return true;
-    default:
-      return false;
-  }
-}
+// Returns the destroy format for the query interface, which comes from
+// `PrepareForHasWitness`.
+static auto GetDestroyFormat(Context& context, SemIR::LocId loc_id,
+                             SemIR::InstId type_inst_id,
+                             SemIR::ConstantId query_facet_type_const_id)
+    -> DestroyFormat {
+  auto type_const_id = context.constant_values().Get(type_inst_id);
+  auto block_or_err = LookupImplWitness(context, loc_id, type_const_id,
+                                        query_facet_type_const_id);
 
-// Similar to `HasWitnessForRepeatedField`, but for cases where there's only one
-// field, this can handle the call to `PrepareForHasWitness`.
-static auto HasWitnessForOneField(
-    Context& context, SemIR::LocId loc_id, SemIR::InstId field_inst_id,
-    SemIR::SpecificInterface query_specific_interface) -> DestroyFormat {
-  if (IsBuiltinWithTrivialDestruction(context, field_inst_id)) {
+  if (!block_or_err.has_value()) {
+    return DestroyFormat::NoDestroy;
+  }
+
+  auto inst_block_ids = context.inst_blocks().Get(block_or_err.inst_block_id());
+  if (inst_block_ids.size() != 1) {
+    context.TODO(loc_id,
+                 "interface `DestroyFormat` must have exactly one member");
     return DestroyFormat::Trivial;
   }
 
-  auto query_facet_type_const_id =
-      PrepareForHasWitness(context, loc_id, query_specific_interface);
-  auto has_witness = HasWitnessForRepeatedField(context, loc_id, field_inst_id,
-                                                query_facet_type_const_id);
-  CleanupAfterHasWitness(context);
-  return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
+  if (inst_block_ids[0] == SemIR::ErrorInst::InstId) {
+    return DestroyFormat::NoDestroy;
+  }
+
+  auto custom_witness =
+      context.insts().GetAs<SemIR::CustomWitness>(inst_block_ids[0]);
+  auto assoc_entities = context.inst_blocks().Get(custom_witness.elements_id);
+  if (assoc_entities.size() != 1) {
+    context.TODO(loc_id,
+                 "interface `DestroyFormat` must have exactly one field");
+    return DestroyFormat::Trivial;
+  }
+
+  auto raw_destroy_format =
+      context.ints()
+          .Get(context.insts().GetAs<SemIR::IntValue>(assoc_entities[0]).int_id)
+          .getSExtValue();
+  CARBON_CHECK(0 < raw_destroy_format && raw_destroy_format < 3,
+               "`DestroyFormat.value` must be 0, 1, or 2; got {}",
+               raw_destroy_format);
+  return static_cast<DestroyFormat>(raw_destroy_format);
+}
+
+// Similar to `LookupOrBuildDestroyFormatWitness`, but for cases where
+// there's only one inst, this can handle the call to `PrepareForHasWitness`.
+static auto GetDestroyFormatWitnessForOneInst(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId field_inst_id,
+    SemIR::SpecificInterface query_specific_interface) -> DestroyFormat {
+  auto witness_context = WitnessContext::PrepareForHasWitness(
+      context, loc_id, query_specific_interface);
+  auto destroy_format =
+      GetDestroyFormat(context, loc_id, field_inst_id,
+                       witness_context.query_facet_type_const_id);
+  return destroy_format;
+}
+
+// Returns whether a type has trivial destruction, non-trivial destruction, or
+// cannot be destroyed.
+template <class T, class F>
+static auto GetSubobjectsDestroyFormat(
+    Context& context, SemIR::LocId loc_id, llvm::ArrayRef<T> fields,
+    SemIR::ConstantId query_facet_type_const_id, F get_subobject_id)
+    -> DestroyFormat {
+  auto destroy_format = DestroyFormat::Trivial;
+  for (const auto& subobject : fields) {
+    SemIR::InstId subobject_id = get_subobject_id(subobject);
+    auto subobject_destroy_format = GetDestroyFormat(
+        context, loc_id, subobject_id, query_facet_type_const_id);
+    switch (subobject_destroy_format) {
+      case DestroyFormat::Trivial:
+        continue;
+      case DestroyFormat::NonTrivial:
+        destroy_format = DestroyFormat::NonTrivial;
+        continue;
+      case DestroyFormat::NoDestroy:
+        return DestroyFormat::NoDestroy;
+    }
+  }
+
+  return destroy_format;
+}
+
+static auto GetTypeInstId(SemIR::StructTypeField field) -> SemIR::TypeInstId {
+  return field.type_inst_id;
 }
 
 // Returns true if `class_type` should impl `Destroy`.
-static auto CanDestroyClass(Context& context, SemIR::LocId loc_id,
-                            SemIR::ClassType class_type,
-                            const SemIR::CompleteTypeInfo& complete_info,
-                            SemIR::SpecificInterface query_specific_interface,
-                            bool is_partial) -> DestroyFormat {
+static auto GetClassDestroyFormat(
+    Context& context, SemIR::LocId loc_id, SemIR::ClassType class_type,
+    const SemIR::CompleteTypeInfo& complete_info,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface, bool is_partial)
+    -> DestroyFormat {
   // Abstract classes can't be destroyed.
   if (!is_partial && complete_info.IsAbstract()) {
     return DestroyFormat::NoDestroy;
@@ -240,159 +290,144 @@ static auto CanDestroyClass(Context& context, SemIR::LocId loc_id,
         class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
   }
 
-  auto has_witness = HasWitnessForOneField(
+  auto destroy_format = GetDestroyFormatWitnessForOneInst(
       context, loc_id, context.types().GetTypeInstId(object_repr_id),
       query_specific_interface);
-  if (has_witness == DestroyFormat::NoDestroy) {
+  if (destroy_format == DestroyFormat::NoDestroy) {
     return DestroyFormat::NoDestroy;
   }
 
-  if (class_info.GetStructTypeFields(context.sem_ir(), class_type.specific_id)
-          .empty()) {
-    return DestroyFormat::Trivial;
+  auto destroy_id =
+      GetCoreInterfaceId(context, loc_id, CoreIdentifier::Destroy);
+  auto destroy_witness_id =
+      LookupImplWitness(context, loc_id, query_self_const_id,
+                        GetInterfaceType(context, destroy_id,
+                                         query_specific_interface.specific_id)
+                            .AsConstantId());
+  if (destroy_witness_id.has_error_value() || !destroy_witness_id.has_value()) {
+    return DestroyFormat::NoDestroy;
   }
 
-  // TODO: check that a class' base has trivial destruction.
-  // TODO: check that a class' subobjects have trivial destruction.
+  auto destroy_witness =
+      context.inst_blocks().Get(destroy_witness_id.inst_block_id());
+  CARBON_CHECK(destroy_witness.size() == 1, "TODO: add TODO block");
+  if (context.insts().Is<SemIR::ImplWitness>(destroy_witness[0])) {
+    return DestroyFormat::NonTrivial;
+  }
 
-  return DestroyFormat::NonTrivial;
+  auto witness_prep = WitnessContext::PrepareForHasWitness(
+      context, loc_id, query_specific_interface);
+  return GetSubobjectsDestroyFormat(
+      context, loc_id,
+      class_info.GetStructTypeFields(context.sem_ir(), class_type.specific_id),
+      witness_prep.query_facet_type_const_id, GetTypeInstId);
 }
 
-// Returns true if the `Self` should impl `Destroy`. This will recurse into impl
-// lookup of `Destroy` for members, similar to `where .Self.members each impls
-// Destroy`.
-static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
-                           SemIR::ConstantId query_self_const_id,
-                           SemIR::SpecificInterface query_specific_interface)
+// Returns whether `Self` has trivial destruction, non-trivial destruction, or
+// should not impl `Destroy`.
+static auto GetDestroyFormat(Context& context, SemIR::LocId loc_id,
+                             SemIR::ConstantId query_self_const_id,
+                             SemIR::SpecificInterface query_specific_interface)
     -> DestroyFormat {
   auto inst_id = context.constant_values().GetInstId(
       GetCanonicalFacet(context, query_self_const_id));
-  while (inst_id.has_value()) {
-    if (IsBuiltinWithTrivialDestruction(context, inst_id)) {
-      return DestroyFormat::Trivial;
-    }
 
-    auto inst = context.insts().Get(inst_id);
-    if (context.types().IsConstrainedFacetType(inst.type_id())) {
-      // The value's type is a symbolic constrained facet. We don't provide a
-      // custom witness for constrained facets. The witness must be found in the
-      // constraints by impl lookup.
-      CARBON_CHECK(query_self_const_id.is_symbolic());
-      return DestroyFormat::NoDestroy;
-    }
+  auto inst = context.insts().Get(inst_id);
 
-    // Incomplete types can not be destroyed.
-    auto type_id = context.types().GetTypeIdForTypeInstId(inst_id);
-    if (!TryToCompleteType(context, type_id, loc_id)) {
-      return DestroyFormat::NoDestroy;
-    }
-
-    CARBON_KIND_SWITCH(inst) {
-      // A dependent type constructor calls that cannot be resolved under the
-      // generic context.
-      case SemIR::Call::Kind:
-      // Symbolic facets of type `type`. Such symbolic values can't be
-      // destroyed.
-      case SemIR::ImplWitnessAccess::Kind:
-      case SemIR::SymbolicBinding::Kind: {
-        return DestroyFormat::NoDestroy;
-      }
-
-      case CARBON_KIND(SemIR::ArrayType array_type): {
-        // A zero element array is always trivially destructible.
-        if (auto int_bound =
-                context.sem_ir().GetZExtIntValue(array_type.bound_id);
-            !int_bound || *int_bound == 0) {
-          return DestroyFormat::Trivial;
-        }
-
-        // Verify the element can be destroyed.
-        return HasWitnessForOneField(context, loc_id,
-                                     array_type.element_type_inst_id,
-                                     query_specific_interface);
-      }
-
-      case CARBON_KIND(SemIR::ClassType class_type): {
-        return CanDestroyClass(context, loc_id, class_type,
-                               context.types().GetCompleteTypeInfo(type_id),
-                               query_specific_interface,
-                               /*is_partial=*/false);
-      }
-
-      case CARBON_KIND(SemIR::ConstType const_type): {
-        inst_id = GetCanonicalFacet(context, const_type.inner_id);
-        inst = context.insts().Get(inst_id);
-        if (context.types().IsConstrainedFacetType(inst.type_id())) {
-          return HasWitnessForOneField(context, loc_id, inst_id,
-                                       query_specific_interface);
-        }
-
-        continue;
-      }
-
-      case CARBON_KIND(SemIR::MaybeUnformedType maybe_unformed_type): {
-        return HasWitnessForOneField(context, loc_id,
-                                     maybe_unformed_type.inner_id,
-                                     query_specific_interface);
-      }
-
-      case CARBON_KIND(SemIR::PartialType partial_type): {
-        // In contrast with something like `const`, need to treat the inner
-        // class differently based on the `partial` modifier.
-        auto class_type =
-            context.insts().GetAs<SemIR::ClassType>(partial_type.inner_id);
-        return CanDestroyClass(context, loc_id, class_type,
-                               context.types().GetCompleteTypeInfo(type_id),
-                               query_specific_interface,
-                               /*is_partial=*/true);
-      }
-
-      case CARBON_KIND(SemIR::StructType struct_type): {
-        auto fields = context.struct_type_fields().Get(struct_type.fields_id);
-        if (fields.empty()) {
-          return DestroyFormat::Trivial;
-        }
-        auto query_facet_type_const_id =
-            PrepareForHasWitness(context, loc_id, query_specific_interface);
-        bool has_witness = true;
-        for (const auto& field : fields) {
-          if (!HasWitnessForRepeatedField(context, loc_id, field.type_inst_id,
-                                          query_facet_type_const_id)) {
-            has_witness = false;
-            break;
-          }
-        }
-        CleanupAfterHasWitness(context);
-        return has_witness ? DestroyFormat::NonTrivial
-                           : DestroyFormat::NoDestroy;
-      }
-
-      case CARBON_KIND(SemIR::TupleType tuple_type): {
-        auto block = context.inst_blocks().Get(tuple_type.type_elements_id);
-        if (block.empty()) {
-          return DestroyFormat::Trivial;
-        }
-        auto query_facet_type_const_id =
-            PrepareForHasWitness(context, loc_id, query_specific_interface);
-        bool has_witness = true;
-        for (const auto& element_id : block) {
-          if (!HasWitnessForRepeatedField(context, loc_id, element_id,
-                                          query_facet_type_const_id)) {
-            has_witness = false;
-            break;
-          }
-        }
-        CleanupAfterHasWitness(context);
-        return has_witness ? DestroyFormat::NonTrivial
-                           : DestroyFormat::NoDestroy;
-      }
-
-      default:
-        CARBON_FATAL("Unexpected type for CanDestroyType: {0}", inst.kind());
-    }
+  if (context.types().IsConstrainedFacetType(inst.type_id())) {
+    // The value's type is a symbolic constrained facet. We don't provide a
+    // custom witness for constrained facets. The witness must be found in the
+    // constraints by impl lookup.
+    CARBON_CHECK(query_self_const_id.is_symbolic());
+    return DestroyFormat::NoDestroy;
   }
 
-  CARBON_FATAL("Couldn't produce a type to evalute");
+  // Incomplete types cannot be destroyed because we don't know anything about
+  // them.
+  auto type_id = context.types().GetTypeIdForTypeInstId(inst_id);
+  if (!TryToCompleteType(context, type_id, loc_id)) {
+    return DestroyFormat::NoDestroy;
+  }
+
+  CARBON_KIND_SWITCH(inst) {
+    case CARBON_KIND(SemIR::ArrayType array_type): {
+      // A zero-element array is always trivially destructible.
+      if (auto int_bound =
+              context.sem_ir().GetZExtIntValue(array_type.bound_id);
+          !int_bound || *int_bound == 0) {
+        return DestroyFormat::Trivial;
+      }
+
+      return GetDestroyFormatWitnessForOneInst(context, loc_id,
+                                               array_type.element_type_inst_id,
+                                               query_specific_interface);
+    }
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      return GetClassDestroyFormat(context, loc_id, class_type,
+                                   context.types().GetCompleteTypeInfo(type_id),
+                                   query_self_const_id,
+                                   query_specific_interface,
+                                   /*is_partial=*/false);
+    }
+    case CARBON_KIND(SemIR::ConstType const_type): {
+      return GetDestroyFormatWitnessForOneInst(
+          context, loc_id, const_type.inner_id, query_specific_interface);
+    }
+    case CARBON_KIND(SemIR::MaybeUnformedType maybe_unformed_type): {
+      return GetDestroyFormatWitnessForOneInst(context, loc_id,
+                                               maybe_unformed_type.inner_id,
+                                               query_specific_interface);
+    }
+    case CARBON_KIND(SemIR::PartialType partial_type): {
+      // In contrast with something like `const`, need to treat the inner
+      // class differently based on the `partial` modifier.
+      auto class_type =
+          context.insts().GetAs<SemIR::ClassType>(partial_type.inner_id);
+      return GetClassDestroyFormat(context, loc_id, class_type,
+                                   context.types().GetCompleteTypeInfo(type_id),
+                                   query_self_const_id,
+                                   query_specific_interface,
+                                   /*is_partial=*/true);
+    }
+    case CARBON_KIND(SemIR::StructType struct_type): {
+      auto witness_prep = WitnessContext::PrepareForHasWitness(
+          context, loc_id, query_specific_interface);
+      return GetSubobjectsDestroyFormat(
+          context, loc_id,
+          context.struct_type_fields().Get(struct_type.fields_id),
+          witness_prep.query_facet_type_const_id, GetTypeInstId);
+    }
+    case CARBON_KIND(SemIR::TupleType tuple_type): {
+      auto witness_prep = WitnessContext::PrepareForHasWitness(
+          context, loc_id, query_specific_interface);
+      return GetSubobjectsDestroyFormat(
+          context, loc_id,
+          context.inst_blocks().Get(tuple_type.type_elements_id),
+          witness_prep.query_facet_type_const_id, [](auto x) { return x; });
+    }
+      // Built-in types are known to have trivial destruction.
+    case SemIR::BoolType::Kind:
+    case SemIR::CppFunctionPointerType::Kind:
+    case SemIR::FacetType::Kind:
+    case SemIR::FloatType::Kind:
+    case SemIR::FormType::Kind:
+    case SemIR::IntLiteralType::Kind:
+    case SemIR::IntType::Kind:
+    case SemIR::PointerType::Kind:
+      return DestroyFormat::Trivial;
+
+    // A dependent type constructor calls that cannot be resolved under the
+    // generic context.
+    case SemIR::Call::Kind:
+    // Symbolic facets of type `type`. Such symbolic values can't be
+    // destroyed.
+    case SemIR::ImplWitnessAccess::Kind:
+    case SemIR::SymbolicBinding::Kind:
+      return DestroyFormat::NoDestroy;
+    default: {
+      CARBON_FATAL("Unexpected type for `GetDestroyFormat`: {}", inst.kind());
+    }
+  }
 }
 
 // Calls `self.<field>.(Destroy.SelfDestruct)` for a field in a `StructType`.
@@ -778,7 +813,8 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
         // TODO: remove once we have a test-case for all associated constants.
         // Special-case the ones we want to support in this if-statement, until
         // we're able to account for everything.
-        if (decl.type_id != SemIR::TypeType::TypeId) {
+        if (decl.type_id != SemIR::TypeType::TypeId &&
+            !context.types().Is<SemIR::IntLiteralType>(decl.type_id)) {
           context.TODO(loc_id,
                        "Associated constant of type other than `TypeType` in "
                        "synthesized impl");
@@ -787,6 +823,8 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
 
         auto type_id = context.insts().Get(value_id).type_id();
         CARBON_CHECK(type_id == SemIR::TypeType::TypeId ||
+                     type_id == context.types().GetTypeIdForTypeInstId(
+                                    SemIR::IntLiteralType::TypeInstId) ||
                      type_id == SemIR::ErrorInst::TypeId);
         auto impl_witness_associated_constant =
             AddInst<SemIR::ImplWitnessAssociatedConstant>(
@@ -890,6 +928,29 @@ static auto BuildCarbonDestroyWitness(
                              query_specific_interface, subobject_destroy_op_id);
 }
 
+static auto TryBuildDestroyFormatWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface, bool build_witness)
+    -> std::optional<SemIR::InstId> {
+  if (!build_witness || query_self_const_id.is_symbolic()) {
+    return SemIR::InstId::None;
+  }
+
+  auto format = GetDestroyFormat(context, loc_id, query_self_const_id,
+                                 query_specific_interface);
+  auto type_id = GetSingletonType(context, SemIR::IntLiteralType::TypeInstId);
+  auto int_id = context.ints().Add(static_cast<std::int64_t>(format));
+  auto int_value = SemIR::IntValue{
+      .type_id = type_id,
+      .int_id = int_id,
+  };
+  auto format_id = EvalOrAddInst(context, loc_id, int_value);
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface,
+                            {context.constant_values().GetInstId(format_id)});
+}
+
 // Returns the custom witness to use for destruction of the given type. See
 // `LookupCustomWitness`.
 static auto LookupDestroyWitness(
@@ -897,9 +958,14 @@ static auto LookupDestroyWitness(
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterface query_specific_interface, bool build_witness)
     -> std::optional<SemIR::InstId> {
-  auto format = CanDestroyType(context, loc_id, query_self_const_id,
-                               query_specific_interface);
-  if (format == DestroyFormat::NoDestroy) {
+  auto destroy_id =
+      GetCoreInterfaceId(context, loc_id, CoreIdentifier::DestroyFormat);
+  auto format_witness_id =
+      LookupImplWitness(context, loc_id, query_self_const_id,
+                        GetInterfaceType(context, destroy_id,
+                                         query_specific_interface.specific_id)
+                            .AsConstantId());
+  if (format_witness_id.has_error_value() || !format_witness_id.has_value()) {
     return std::nullopt;
   }
 
@@ -908,6 +974,14 @@ static auto LookupDestroyWitness(
     return SemIR::InstId::None;
   }
 
+  auto format_witness = context.insts().GetAs<SemIR::CustomWitness>(
+      context.inst_blocks().Get(format_witness_id.inst_block_id()).front());
+  auto format_assoc_constant_ids =
+      context.inst_blocks().Get(format_witness.elements_id);
+  auto format_value =
+      context.insts().GetAs<SemIR::IntValue>(format_assoc_constant_ids[0]);
+  auto format = static_cast<DestroyFormat>(
+      context.ints().Get(format_value.int_id).getSExtValue());
   return BuildCarbonDestroyWitness(context, loc_id, query_self_const_id,
                                    query_specific_interface, format);
 }
@@ -1099,6 +1173,10 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::Destroy:
       return LookupDestroyWitness(context, loc_id, query_self_const_id,
                                   query_specific_interface, build_witness);
+    case SemIR::CoreInterface::DestroyFormat:
+      return TryBuildDestroyFormatWitness(context, loc_id, query_self_const_id,
+                                          query_specific_interface,
+                                          build_witness);
     case SemIR::CoreInterface::FloatFitsIn:
       return MakeFloatFitsInWitness(context, loc_id, query_self_const_id,
                                     query_specific_interface, build_witness);

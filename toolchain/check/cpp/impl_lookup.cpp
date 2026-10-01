@@ -630,6 +630,7 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     // *FitsIn are implemented only by Carbon primitive types.
     case SemIR::CoreInterface::IntFitsIn:
     case SemIR::CoreInterface::FloatFitsIn:
+    case SemIR::CoreInterface::DestroyFormat:
       return SemIR::InstId::None;
 
     case SemIR::CoreInterface::Unknown:

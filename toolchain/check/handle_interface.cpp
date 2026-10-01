@@ -349,6 +349,7 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId node_id)
       case SemIR::CoreInterface::CppUnsafeDeref:
       case SemIR::CoreInterface::Dec:
       case SemIR::CoreInterface::Default:
+      case SemIR::CoreInterface::DestroyFormat:
       case SemIR::CoreInterface::FloatFitsIn:
       case SemIR::CoreInterface::DivAssignWith:
       case SemIR::CoreInterface::DivWith:
