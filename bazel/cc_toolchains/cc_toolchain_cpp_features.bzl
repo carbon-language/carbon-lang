@@ -321,8 +321,13 @@ def libcxx_feature(llvm_bindir = None, clang_bindir = None):
                     "-unwindlib=libunwind",
                 ])],
                 with_features = [
-                    # libc++ is only used on non-Windows platforms.
-                    with_feature_set(not_features = ["windows_target"]),
+                    # libc++ is only used on non-Windows platforms, and macOS
+                    # doesn't support a custom unwinding library (or need one)
+                    # even when using libc++.
+                    with_feature_set(not_features = [
+                        "macos_target",
+                        "windows_target",
+                    ]),
                 ],
             ),
             flag_set(

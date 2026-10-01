@@ -1638,15 +1638,6 @@ auto Formatter::FormatArg(DeclaredFacetTypeId id) -> void {
   out() << ">";
 }
 
-auto Formatter::FormatArg(DefaultValueId id) -> void {
-  const auto& default_value = sem_ir_->default_values().Get(id);
-  if (default_value.is_unspecified) {
-    out() << "<unspecified>";
-  } else {
-    FormatArg(default_value.value_id);
-  }
-}
-
 auto Formatter::FormatArg(FieldId id) -> void {
   const auto& field = sem_ir_->fields().Get(id);
   FormatName(field.name_id);
@@ -1728,6 +1719,10 @@ auto Formatter::FormatArg(StringLiteralValueId id) -> void {
 }
 
 auto Formatter::FormatArg(ClangDeclId id) -> void { out() << id; }
+
+auto Formatter::FormatArg(ClangFunctionPointerTypeId id) -> void {
+  out() << id;
+}
 
 auto Formatter::FormatReturnSlotArg(InstId dest_id) -> void {
   if (dest_id.has_value()) {

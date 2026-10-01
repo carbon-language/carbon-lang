@@ -97,7 +97,7 @@ auto Formatter::Run() -> bool {
                                        Lex::TokenKind::OpenSquareBracket}) &&
                    (prev_token_kind_.IsOneOf(
                         {Lex::TokenKind::Identifier, Lex::TokenKind::Array,
-                         Lex::TokenKind::CloseParen,
+                         Lex::TokenKind::TypeOf, Lex::TokenKind::CloseParen,
                          Lex::TokenKind::CloseSquareBracket}) ||
                     prev_token_kind_.is_sized_type_literal())) {
           PrepareForPackedContent(token_start_line);

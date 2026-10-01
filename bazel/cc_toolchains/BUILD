@@ -66,6 +66,9 @@ filegroup(
         "cc_toolchain_sanitizer_features.bzl",
         "cc_toolchain_tools.bzl",
 
+        # A utility that the installed toolchain also needs.
+        "make_include_copts.bzl",
+
         # TODO: Remove this once we can remove the use of it from Carbon
         # toolchain rules.
         "cc_toolchain_carbon_project_features.bzl",

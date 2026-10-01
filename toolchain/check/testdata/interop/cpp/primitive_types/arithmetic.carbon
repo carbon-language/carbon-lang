@@ -549,10 +549,16 @@ fn F() {
 // CHECK:STDOUT:   %x.patt: %pattern_type.668 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   %unsigned_int.foo.cpp_overload_set.type: type = cpp_overload_set_type @unsigned_int.foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %unsigned_int.foo.cpp_overload_set.value: %unsigned_int.foo.cpp_overload_set.type = cpp_overload_set_value @unsigned_int.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %self.param_patt.9be: %pattern_type.990 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.330: %pattern_type.990 = wrapper_binding_pattern self, %self.param_patt.9be [concrete]
 // CHECK:STDOUT:   %unsigned_int.foo.type: type = fn_type @unsigned_int.foo [concrete]
 // CHECK:STDOUT:   %unsigned_int.foo: %unsigned_int.foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor.type: type = fn_type @unsigned_int.cpp_destructor [concrete]
 // CHECK:STDOUT:   %unsigned_int.cpp_destructor: %unsigned_int.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -568,6 +574,21 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %unsigned_int.cpp_destructor.decl: %unsigned_int.cpp_destructor.type = fn_decl @unsigned_int.cpp_destructor [concrete = constants.%unsigned_int.cpp_destructor] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generated {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc12 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.990 = ref_param_pattern [concrete = constants.%self.param_patt.9be]
+// CHECK:STDOUT:     %self.patt: %pattern_type.990 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.330]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %unsigned_int = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %unsigned_int = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -602,8 +623,17 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.668 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %unsigned_int.cpp_destructor.bound: <bound method> = bound_method %unsigned_int.var, constants.%unsigned_int.cpp_destructor
-// CHECK:STDOUT:   %unsigned_int.cpp_destructor.call: init %empty_tuple.type = call %unsigned_int.cpp_destructor.bound(%unsigned_int.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %unsigned_int.var, constants.%Destroy.WithSelf.SelfDestruct.db3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%unsigned_int.var)
 // CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc12(%self.param: ref %unsigned_int) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc12(%self.param: ref %unsigned_int) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
+// CHECK:STDOUT:   %unsigned_int.cpp_destructor.call: init %empty_tuple.type = call imports.%unsigned_int.cpp_destructor.decl(%self.param)
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

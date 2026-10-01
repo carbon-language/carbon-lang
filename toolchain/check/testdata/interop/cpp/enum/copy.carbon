@@ -50,8 +50,14 @@ fn F() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.bound.996: <bound method> = bound_method %int_0, %Copy.WithSelf.Op.416 [concrete]
 // CHECK:STDOUT:   %int_1: %Enum = int_value 1 [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.bound.1a9: <bound method> = bound_method %int_1, %Copy.WithSelf.Op.416 [concrete]
+// CHECK:STDOUT:   %self.param_patt.95d: %pattern_type.926 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.228: %pattern_type.926 = wrapper_binding_pattern self, %self.param_patt.95d [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc8 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01: %Destroy.WithSelf.SubobjectDestroy.type.dfc = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc8 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -62,6 +68,23 @@ fn F() {
 // CHECK:STDOUT:   %Enum.decl: type = class_decl @Enum [concrete = constants.%Enum] {} {}
 // CHECK:STDOUT:   %int_0: %Enum = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %int_1: %Enum = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generated {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc8 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.926 = ref_param_pattern [concrete = constants.%self.param_patt.95d]
+// CHECK:STDOUT:     %self.patt: %pattern_type.926 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.228]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %Enum = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Enum = wrapper_binding self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc8 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.926 = ref_param_pattern [concrete = constants.%self.param_patt.95d]
+// CHECK:STDOUT:     %self.patt: %pattern_type.926 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.228]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %Enum = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Enum = wrapper_binding self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -96,10 +119,19 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %b.ref, %impl.elem0.loc10 [concrete = constants.%Copy.WithSelf.Op.bound.1a9]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.call.loc10: init %Enum = call %bound_method.loc10(%b.ref) [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %a.ref.loc10, %Copy.WithSelf.Op.call.loc10
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.bound: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.Op.403
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call %Destroy.WithSelf.Op.bound(%a.var)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.SelfDestruct.db3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc8(%self.param: ref %Enum) = "no_op";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc8(%self.param: ref %Enum) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc8(%self.param: ref %Enum) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl(%self.param)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -2888,10 +2888,24 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
 static auto GetReturnStorageParamIndexRange(EvalContext& eval_context,
                                             const SemIR::Callee& callee)
     -> std::pair<int, int> {
-  if (const auto* callee_function =
-          std::get_if<SemIR::CalleeFunction>(&callee)) {
-    const auto& function =
-        eval_context.functions().Get(callee_function->function_id);
+  auto function_id = SemIR::FunctionId::None;
+  CARBON_KIND_SWITCH(callee) {
+    case CARBON_KIND(SemIR::CalleeFunction callee_function): {
+      function_id = callee_function.function_id;
+      break;
+    }
+    case CARBON_KIND(SemIR::CalleeCppFunctionPointer callee_function_ptr): {
+      function_id = eval_context.context()
+                        .clang_function_pointer_types()
+                        .Get(callee_function_ptr.function_type_id)
+                        .function_id;
+      break;
+    }
+    default:
+      break;
+  }
+  if (function_id.has_value()) {
+    const auto& function = eval_context.functions().Get(function_id);
     return {function.call_param_ranges.return_begin().index,
             function.call_param_ranges.return_end().index};
   }
@@ -3121,10 +3135,34 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
         // The result is an instruction.
         return MakeConstantResult(
             eval_context.context(),
-            SemIR::InstValue{
-                .type_id = GetSingletonType(eval_context.context(),
-                                            SemIR::InstType::TypeInstId),
-                .inst_id = result_inst_id},
+            SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
+                             .inst_id = result_inst_id},
+            Phase::Concrete);
+      }
+      // Couldn't perform the action because it's still dependent.
+      return MakeConstantResult(eval_context.context(), inst,
+                                Phase::TemplateSymbolic);
+    } else if constexpr (ConstantKind ==
+                         SemIR::InstConstantKind::MultiInstAction) {
+      auto result_inst_ids = PerformDelayedAction(
+          eval_context.context(), eval_context.specific_id(),
+          SemIR::LocId(inst_id), inst.As<InstT>());
+      if (!result_inst_ids.empty()) {
+        // The result is a tuple of instruction values.
+        for (auto& result_inst_id : result_inst_ids) {
+          result_inst_id =
+              eval_context.constant_values().GetInstId(MakeConstantResult(
+                  eval_context.context(),
+                  SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
+                                   .inst_id = result_inst_id},
+                  Phase::Concrete));
+        }
+        return MakeConstantResult(
+            eval_context.context(),
+            SemIR::TupleValue{
+                .type_id = inst.type_id(),
+                .elements_id =
+                    eval_context.inst_blocks().AddCanonical(result_inst_ids)},
             Phase::Concrete);
       }
       // Couldn't perform the action because it's still dependent.
@@ -3164,6 +3202,20 @@ auto TryEvalTypedInst<SemIR::Call>(EvalContext& eval_context,
                                    SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
   return MakeConstantForCall(eval_context, inst_id, inst.As<SemIR::Call>());
+}
+
+// `typeof` evaluates to the type of its operand. The operand is in a separate
+// region that is not evaluated, so we look at the type of the region's result
+// directly rather than evaluating any operands; this specialization avoids us
+// needing a way to map a `ExprRegionId` to an evaluated version in a specific.
+template <>
+auto TryEvalTypedInst<SemIR::TypeOf>(EvalContext& eval_context,
+                                     SemIR::InstId /*inst_id*/,
+                                     SemIR::Inst inst) -> SemIR::ConstantId {
+  auto region = eval_context.sem_ir().expr_regions().Get(
+      inst.As<SemIR::TypeOf>().operand_region_id);
+  return eval_context.types().GetConstantId(
+      eval_context.GetTypeOfInst(region.result_id));
 }
 
 // ImportRefLoaded can have a constant value, but it's owned and maintained by

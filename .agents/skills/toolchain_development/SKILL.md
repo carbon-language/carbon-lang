@@ -35,6 +35,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     ([SKILL.md](../builtins/SKILL.md)) for guidelines on registering, mapping,
     constant evaluating, and lowering compiler builtin primitives (e.g.
     `"int.convert_float"`).
+-   **Language server**: Refer to the **Language server** skill
+    ([SKILL.md](../language_server/SKILL.md)) before working on
+    `toolchain/language_server/` or `utils/vscode/`. Neither follows the
+    patterns described here.
 -   **Phases**: Lex -> Parse -> Check -> Lower.
 -   **Definitions**: Many kinds (tokens, parse nodes, SemIR instructions) are
     defined in `.def` files and expanded by way of macros.

@@ -72,6 +72,10 @@ struct ConversionTarget {
   // depends on. This block will be spliced or merged before any reference to
   // `storage_id`, and may be discarded if `storage_id` is not accessed.
   PendingBlock* storage_access_block = nullptr;
+  // For an initializer during template instantiation, the replacements for
+  // already-spliced storage arguments are written here, for use in the action
+  // result.
+  llvm::MutableArrayRef<SemIR::InstId> template_storage_args = {};
   // Whether failure of conversion is an error and is diagnosed to the user.
   // When looking for a possible conversion but with graceful fallback,
   // `diagnose` should be false. If `diagnose` is false, an `ErrorInst` may be
@@ -148,13 +152,9 @@ struct InitializeResult {
 // be inserted before any use of the storage by the initializer, and will be
 // inserted even if the initializer does not actually use the storage. It must
 // be valid to reference `storage_id` after splicing in `storage_access_block`,
-// so `storage_id` must either dominate the initializer (but see the TODO below)
-// or be one of the instructions in `storage_access_block`. If `storage_id` is
-// known to always dominate the initializer, `InitializeExisting` should be used
-// instead.
-//
-// TODO: We don't have an implementation of a proper dominance check, so we
-// fake one up by comparing the order in which the insts were created.
+// so `storage_id` must either dominate the initializer or be one of the
+// instructions in `storage_access_block`. If `storage_id` is known to always
+// dominate the initializer, `InitializeExisting` should be used instead.
 //
 // This function does not guarantee to perform an in-place initialization, so
 // the caller is responsible for passing the returned `inst_id` to an inst that

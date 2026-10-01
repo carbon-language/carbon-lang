@@ -40,6 +40,31 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
     auto untyped_inst = ir->insts().Get(inst_id);
     auto category_from_kind = untyped_inst.kind().expr_category();
 
+    auto handle_function_return =
+        [&](SemIR::FunctionId function_id,
+            SemIR::SpecificId resolved_specific_id) -> ExprCategory {
+      const auto& function = ir->functions().Get(function_id);
+      auto return_form_id =
+          function.GetDeclaredReturnForm(*ir, resolved_specific_id);
+      if (!return_form_id.has_value()) {
+        // Treat as equivalent to `-> ()`.
+        return ExprCategory::ReprInitializing;
+      }
+      auto return_form = ir->insts().Get(return_form_id);
+      CARBON_KIND_SWITCH(return_form) {
+        case CARBON_KIND(InitForm _):
+          return ExprCategory::ReprInitializing;
+        case CARBON_KIND(RefForm _):
+          return ExprCategory::DurableRef;
+        case CARBON_KIND(ValueForm _):
+          return ExprCategory::Value;
+        case CARBON_KIND(ErrorInst _):
+          return ExprCategory::Error;
+        default:
+          CARBON_FATAL("Unexpected form inst kind: {0}", return_form);
+      }
+    };
+
     // Handle any special cases that use
     // ComputedExprCategory::DependsOnOperands.
     auto handle_special_case =
@@ -69,27 +94,8 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
             return ExprCategory::Error;
           }
           case CARBON_KIND(SemIR::CalleeFunction callee_function): {
-            const auto& function =
-                ir->functions().Get(callee_function.function_id);
-            auto return_form_id = function.GetDeclaredReturnForm(
-                *ir, callee_function.resolved_specific_id);
-            if (!return_form_id.has_value()) {
-              // Treat as equivalent to `-> ()`.
-              return ExprCategory::ReprInitializing;
-            }
-            auto return_form = ir->insts().Get(return_form_id);
-            CARBON_KIND_SWITCH(return_form) {
-              case CARBON_KIND(InitForm _):
-                return ExprCategory::ReprInitializing;
-              case CARBON_KIND(RefForm _):
-                return ExprCategory::DurableRef;
-              case CARBON_KIND(ValueForm _):
-                return ExprCategory::Value;
-              case CARBON_KIND(ErrorInst _):
-                return ExprCategory::Error;
-              default:
-                CARBON_FATAL("Unexpected inst kind: {0}", return_form);
-            }
+            return handle_function_return(callee_function.function_id,
+                                          callee_function.resolved_specific_id);
           }
           case CARBON_KIND(SemIR::CalleeNonFunction _): {
             return ExprCategory::NotExpr;
@@ -97,6 +103,13 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
           case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
             // TODO: support `ref` returns from C++.
             return ExprCategory::ReprInitializing;
+          }
+          case CARBON_KIND(SemIR::CalleeCppFunctionPointer function_ptr): {
+            return handle_function_return(
+                ir->clang_function_pointer_types()
+                    .Get(function_ptr.function_type_id)
+                    .function_id,
+                SemIR::SpecificId::None);
           }
         }
       } else if constexpr (std::same_as<TypedInstT, SpecificInst>) {
@@ -130,7 +143,10 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
             return action_category->category;
           }
         } else {
-          CARBON_FATAL("Inst doesn't have action category: {0}", action);
+          // TODO: Do we need a way to specify a non-dependent category here?
+          // Perhaps for the first element of a MultiInstAction we should use
+          // the ActionExprCategory on the inst.
+          return ExprCategory::Dependent;
         }
       } else if constexpr (std::same_as<TypedInstT, WrapperBinding>) {
         if (!inst.value_id.has_value()) {
@@ -282,6 +298,17 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
       }
       case CARBON_KIND(MarkInPlaceInit init): {
         return init.dest_id;
+      }
+      case CARBON_KIND(SpliceInst inst): {
+        if (!allow_transitive) {
+          return InstId::None;
+        }
+        auto const_id =
+            GetConstantValueInSpecific(sem_ir, specific_id, inst.inst_id);
+        init_id = sem_ir.constant_values()
+                      .GetInstAs<SemIR::InstValue>(const_id)
+                      .inst_id;
+        continue;
       }
       case CARBON_KIND(Call call): {
         auto callee_function =

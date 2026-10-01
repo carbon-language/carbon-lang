@@ -81,7 +81,6 @@ class FullPatternStack {
     bind_name_stack_.PushArray();
     var_pattern_stack_.PushArray();
     next_var_index_stack_.push_back(-1);
-    unspecified_default_values_stack_.PushArray();
   }
 
   // Marks the start of a new full-pattern for a name binding declaration.
@@ -90,7 +89,6 @@ class FullPatternStack {
     bind_name_stack_.PushArray();
     var_pattern_stack_.PushArray();
     next_var_index_stack_.push_back(-1);
-    unspecified_default_values_stack_.PushArray();
   }
 
   // Marks the start of a new full-pattern for a class `var` declaration.
@@ -99,7 +97,6 @@ class FullPatternStack {
     bind_name_stack_.PushArray();
     var_pattern_stack_.PushArray();
     next_var_index_stack_.push_back(-1);
-    unspecified_default_values_stack_.PushArray();
   }
 
   // Marks the start of the current parameterized entity's implicit parameter
@@ -150,7 +147,6 @@ class FullPatternStack {
                                   var_pattern_stack_.PeekArray().size(),
                  "`GetLocalVarStorage` not called for all var patterns");
     var_pattern_stack_.PopArray();
-    unspecified_default_values_stack_.PopArray();
   }
 
   // Records that `name_id` was introduced by the current full-pattern.
@@ -205,17 +201,6 @@ class FullPatternStack {
                  kind_stack_.size());
   }
 
-  // Adds an unspecified pattern default value to the array at the top of the
-  // full pattern stack. We track these for possible later use in diagnostics.
-  auto AddUnspecifiedDefaultValue(SemIR::InstId inst_id) -> void {
-    unspecified_default_values_stack_.AppendToTop(inst_id);
-  }
-
-  // Returns the unspecified default values array at the top of the stack.
-  auto GetUnspecifiedDefaultValues() -> llvm::ArrayRef<SemIR::InstId> {
-    return unspecified_default_values_stack_.PeekArray();
-  }
-
  private:
   LexicalLookup* lookup_;
 
@@ -247,10 +232,6 @@ class FullPatternStack {
   // the corresponding frame of `var_pattern_stack_`, or -1 if the contents
   // of that frame are not ready for consumption.
   llvm::SmallVector<int> next_var_index_stack_;
-
-  // For each full pattern we maintain a list of the InstIds of any
-  // unspecified default values, for use in diagnostics.
-  ArrayStack<SemIR::InstId> unspecified_default_values_stack_;
 };
 
 }  // namespace Carbon::Check

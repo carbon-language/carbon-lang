@@ -639,6 +639,23 @@ struct ConvertToValueAction {
   TypeInstId target_type_inst_id;
 };
 
+// A C++ function pointer to a Carbon function.
+struct CppAddrOfFunction {
+  static constexpr auto Kind =
+      InstKind::CppAddrOfFunction.Define<Parse::NodeId>(
+          {.ir_name = "cpp_addr_of_fn",
+           .expr_category = ExprCategory::Value,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+
+  // The inst that refers to the Carbon function.
+  InstId function_ref_id;
+
+  // The Carbon function.
+  FunctionId function_id;
+};
+
 // The type of an overloaded C++ function.
 struct CppOverloadSetType {
   static constexpr auto Kind =
@@ -650,6 +667,19 @@ struct CppOverloadSetType {
   TypeId type_id;
   CppOverloadSetId overload_set_id;
   SpecificId specific_id;
+};
+
+// The type of a C++ function pointer.
+struct CppFunctionPointerType {
+  static constexpr auto Kind =
+      InstKind::CppFunctionPointerType.Define<Parse::NodeId>(
+          {.ir_name = "cpp_fn_ptr_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  // Always TypeType.
+  TypeId type_id;
+  ClangFunctionPointerTypeId clang_type_id;
 };
 
 // An unresolved C++ overload set value.
@@ -723,12 +753,12 @@ struct DefaultValuePattern {
       InstKind::DefaultValuePattern.Define<Parse::DefaultValuePatternId>(
           {.ir_name = "default_value_pattern",
            .expr_category = ExprCategory::Pattern,
-           .constant_kind = InstConstantKind::Always,
+           .constant_kind = InstConstantKind::WheneverPossible,
            .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
-  DefaultValueId default_value_id;
+  InstId value_id;
 };
 
 // The `*` dereference operator, as in `*pointer`.
@@ -944,7 +974,7 @@ struct FunctionDecl {
   static constexpr auto Kind =
       InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
           {.ir_name = "fn_decl",
-           .expr_category = ExprCategory::NotExpr,
+           .expr_category = ExprCategory::Value,
            .is_lowered = false});
 
   TypeId type_id;
@@ -1254,6 +1284,33 @@ struct InitForm {
   TypeId type_id;
   // The type component of the form.
   TypeInstId type_component_inst_id;
+};
+
+// An action that performs initialization of a given target.
+struct InitializeAction {
+  static constexpr auto Kind = InstKind::InitializeAction.Define<Parse::NodeId>(
+      {.ir_name = "initialize_action",
+       .expr_category = ActionExprCategory(ExprCategory::Dependent),
+       .constant_kind = InstConstantKind::MultiInstAction,
+       .action_needs_specific_id = true,
+       .is_lowered = false});
+
+  struct Target {
+    // The target type for the initialization.
+    TypeInstId target_type_inst_id;
+    // The storage for the initialization.
+    MetaInstId storage_id;
+    // Whether this is required to be an in-place initialization.
+    BoolValue in_place;
+  };
+
+  // A tuple of InstTypes: one for the finished initialization expression, then
+  // one for each of the storage arguments in the source expression.
+  TypeId type_id;
+  // The source initializing expression.
+  MetaInstId init_id;
+  // Information about the target of the initialization.
+  BundleId<Target> target_id;
 };
 
 // Consumes the repr-initializing expression `src_id` and forms an in-place
@@ -2286,6 +2343,22 @@ struct TypeLiteral {
   TypeInstId value_id;
 };
 
+// A `typeof(expr)` expression. The operand is held in a separate expression
+// region, which is never evaluated at runtime; only its type is used. The
+// constant value of this instruction is the type of the operand.
+struct TypeOf {
+  static constexpr auto Kind = InstKind::TypeOf.Define<Parse::TypeOfExprId>(
+      {.ir_name = "type_of",
+       .expr_category = ExprCategory::Value,
+       .is_type = InstIsType::Always});
+
+  // Always the builtin type TypeType.
+  TypeId type_id;
+  // The region that computes the operand expression. The operand is the
+  // region's `result_id`.
+  ExprRegionId operand_region_id;
+};
+
 // Returns the type of the instruction produced by an action. For example, given
 //
 //   %inst: <instruction> = some_action
@@ -2347,21 +2420,6 @@ struct UninitializedValue {
           {.ir_name = "uninitialized_value",
            .constant_kind = InstConstantKind::Always});
 
-  TypeId type_id;
-};
-
-using UnspecifiedValueType =
-    SingletonTypeInst<InstKind::UnspecifiedValueType, "<unspecified_value>">;
-
-// A placeholder value for default values in function definitions.
-struct UnspecifiedValue {
-  static constexpr auto Kind =
-      InstKind::UnspecifiedValue.Define<Parse::DefaultValueUnspecifiedId>(
-          {.ir_name = "unspecified_value",
-           .constant_kind = InstConstantKind::Always,
-           .is_lowered = false});
-  // Always the type of the builtin `UnspecifiedValueType` singleton
-  // instruction.
   TypeId type_id;
 };
 

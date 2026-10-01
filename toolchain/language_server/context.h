@@ -19,6 +19,7 @@
 #include "toolchain/driver/compile_driver.h"
 #include "toolchain/driver/compile_options.h"
 #include "toolchain/language_server/sem_ir_index.h"
+#include "toolchain/language_server/sem_ir_text.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
@@ -31,9 +32,12 @@ class Context {
   // Cached information for an open file.
   class File {
    public:
-    explicit File(clang::clangd::URIForFile uri)
+    // `language_id` is the client's `TextDocumentItem::languageId`, which may
+    // be empty for a file we were never told about in `didOpen`.
+    explicit File(clang::clangd::URIForFile uri, llvm::StringRef language_id)
         : uri_(std::move(uri)),
           filename_(uri_.file().str()),
+          language_id_(language_id.str()),
           options_(&codegen_options_) {}
 
     // Changes the file's text, updating dependent state.
@@ -44,6 +48,13 @@ class Context {
     auto filename() const -> llvm::StringRef { return filename_; }
     auto text() const -> llvm::StringRef { return text_; }
 
+    // Returns whether this is a toolchain test file rather than a Carbon
+    // source file. Test files aren't compiled: their text is a script for the
+    // test runner, holding any number of input files plus the output expected
+    // from compiling them, so compiling it as a single source file would
+    // produce nothing but noise.
+    auto is_test_file() const -> bool { return is_test_file_; }
+
     auto tree_and_subtrees() const -> const Parse::TreeAndSubtrees& {
       return unit().parse_tree_and_subtrees();
     }
@@ -53,8 +64,11 @@ class Context {
     }
 
     // Returns the checked IR, or null if checking didn't get far enough to
-    // produce one.
+    // produce one, including because this is a test file and wasn't compiled.
     auto sem_ir() const -> const SemIR::File* {
+      if (!compile_driver_) {
+        return nullptr;
+      }
       const auto& compilation_unit = unit();
       return compilation_unit.has_sem_ir() ? &compilation_unit.sem_ir()
                                            : nullptr;
@@ -70,6 +84,11 @@ class Context {
     // users actually notice.
     auto sem_ir_index() const -> const SemIRIndex*;
 
+    // Returns an index of the formatted SemIR in this file's expected output,
+    // building it on first use as `sem_ir_index` does. Returns null unless
+    // this is a test file that has some.
+    auto sem_ir_text() const -> const SemIRText*;
+
    private:
     auto unit() const -> const CompilationUnit& {
       CARBON_CHECK(compile_driver_);
@@ -80,15 +99,21 @@ class Context {
     clang::clangd::URIForFile uri_;
     std::string filename_;
 
+    // The language the client says this file is written in, which is how we
+    // recognize a test file when the client knows it's looking at one.
+    std::string language_id_;
+
     // Current file content, and derived values.
     std::string text_;
+    bool is_test_file_ = false;
 
     CodegenOptions codegen_options_;
     CompileOptions options_;
     std::unique_ptr<CompileDriver> compile_driver_;
 
-    // Built on demand by `sem_ir_index()`, and discarded by `SetText`.
+    // Built on demand by their accessors, and discarded by `SetText`.
     mutable std::optional<SemIRIndex> sem_ir_index_;
+    mutable std::optional<SemIRText> sem_ir_text_;
   };
 
   // `vlog_stream` is optional; other parameters are required.
