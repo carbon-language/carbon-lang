@@ -367,7 +367,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // When lowering templates, the specific may contain instructions that
   // neither emit a value during lowering nor have a constant value, so set
   // require_value=false.
-  if (auto value = context.GetValue(inst.inst_id, /*require_value=*/false)) {
+  if (auto* value = context.GetValue(inst.inst_id, /*require_value=*/false)) {
     context.SetLocal(inst_id, value);
   }
 }
