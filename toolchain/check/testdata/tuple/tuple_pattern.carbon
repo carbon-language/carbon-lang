@@ -72,7 +72,7 @@ let (x: {}, y: {}) = ({}, {});
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_in_class_var.carbon:[[@LINE+4]]:7: error: found tuple pattern in class decl [FieldWithTuplePattern]
+  // CHECK:STDERR: fail_in_class_var.carbon:[[@LINE+4]]:7: error: found tuple pattern in class member var declaration [FieldWithTuplePattern]
   // CHECK:STDERR:   var (x: {}, y: {});
   // CHECK:STDERR:       ^~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -84,7 +84,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_in_class_let.carbon:[[@LINE+4]]:7: error: found tuple pattern in class decl [FieldWithTuplePattern]
+  // CHECK:STDERR: fail_in_class_let.carbon:[[@LINE+4]]:7: error: found tuple pattern in class member let declaration [FieldWithTuplePattern]
   // CHECK:STDERR:   let (x: {}, y: {}) = ({}, {});
   // CHECK:STDERR:       ^~~~~~~~~~~~~~
   // CHECK:STDERR:

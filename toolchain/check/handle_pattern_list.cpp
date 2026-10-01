@@ -11,6 +11,7 @@
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
 
@@ -105,9 +106,12 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   }
 
   if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
-    CARBON_DIAGNOSTIC(FieldWithTuplePattern, Error,
-                      "found tuple pattern in class decl");
-    context.emitter().Emit(node_id, FieldWithTuplePattern);
+    bool is_var = context.full_pattern_stack().IsCurrentKindClassScopeVarDecl();
+    CARBON_DIAGNOSTIC(
+        FieldWithTuplePattern, Error,
+        "found tuple pattern in class member {0:var|let} declaration",
+        Diagnostics::BoolAsSelect);
+    context.emitter().Emit(node_id, FieldWithTuplePattern, is_var);
 
     return false;
   }
