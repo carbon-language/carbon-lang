@@ -8,10 +8,12 @@
 #include <benchmark/benchmark.h>
 #include <sys/types.h>
 
+#include <array>
 #include <boost/unordered/unordered_flat_map.hpp>
 #include <compare>
 #include <limits>
 #include <map>
+#include <utility>
 #include <vector>
 
 #include "absl/base/no_destructor.h"
@@ -253,6 +255,83 @@ struct CarbonHashDI<llvm::StringRef> {
     return lhs == rhs;
   }
 };
+
+// The layouts that timed loops are run in are aligned to `BenchLayoutPadRange`
+// bytes and pad the start of their code by multiples of `BenchLayoutPadStep`
+// bytes within that range. See `RunLoopInRandomLayout`.
+//
+// The default step is the granularity that loop heads land at, so that the
+// layouts place a loop at every position within the range:
+//
+// - On x86-64, LLVM aligns loop heads to 16 bytes, giving 16 layouts.
+// - On AArch64, LLVM doesn't align loop heads for generic or Apple CPUs, so
+//   they land at any 4-byte instruction boundary, giving 64 layouts.
+//
+// The default range is 256 bytes because on Zen 5, a loop's performance was
+// measured to depend only on its address modulo 256. On Apple M1, some loops
+// also have slow positions that depend on higher address bits, which this
+// range doesn't reach.
+//
+// These can be overridden with build flags to experiment with other layouts.
+#ifndef CARBON_BENCH_LAYOUT_PAD_STEP
+#if defined(__aarch64__)
+#define CARBON_BENCH_LAYOUT_PAD_STEP 4
+#else
+#define CARBON_BENCH_LAYOUT_PAD_STEP 16
+#endif
+#endif
+#ifndef CARBON_BENCH_LAYOUT_PAD_RANGE
+#define CARBON_BENCH_LAYOUT_PAD_RANGE 256
+#endif
+inline constexpr int BenchLayoutPadStep = CARBON_BENCH_LAYOUT_PAD_STEP;
+inline constexpr int BenchLayoutPadRange = CARBON_BENCH_LAYOUT_PAD_RANGE;
+static_assert(BenchLayoutPadStep > 0 &&
+                  BenchLayoutPadRange % BenchLayoutPadStep == 0,
+              "The pad step must evenly divide the pad range.");
+inline constexpr int NumBenchLayouts = BenchLayoutPadRange / BenchLayoutPadStep;
+
+// Returns the layout this process runs timed loops in. It is chosen at random
+// once per process, or taken from the `CARBON_BENCH_LAYOUT` environment
+// variable when that is set.
+auto GetBenchLayout() -> int;
+
+// Runs `loop` from one of `NumBenchLayouts` copies, each a separate function
+// aligned to `BenchLayoutPadRange` bytes whose code starts after `Pad` bytes of
+// padding.
+template <int Pad, typename LoopT>
+[[gnu::noinline, gnu::aligned(BenchLayoutPadRange)]] auto RunLoopInLayout(
+    LoopT& loop) -> void {
+  // The `asm` statement is present even when `Pad` is zero, because it affects
+  // how the compiler schedules and allocates registers for the code around it.
+  // That keeps every copy's code the same apart from the padding.
+#if defined(__x86_64__)
+  // `.nops` rejects a size of zero.
+  __asm__ volatile(".if %c0\n .nops %c0\n .endif" : : "i"(Pad));
+#elif defined(__aarch64__)
+  static_assert(Pad % 4 == 0, "AArch64 instructions are 4 bytes.");
+  __asm__ volatile(".rept %c0\n nop\n .endr" : : "i"(Pad / 4));
+#endif
+  [[clang::always_inline]] loop();
+}
+
+// Runs a benchmark's timed `loop` in the layout from `GetBenchLayout`, and
+// records that layout in the `Layout` counter.
+//
+// Where a loop's code lands can change its performance substantially, and
+// small unrelated code changes move it. Each process runs one of
+// `NumBenchLayouts` layouts, so running a benchmark many times samples its
+// performance across layouts, and the counter allows grouping those runs by
+// layout.
+template <typename LoopT>
+auto RunLoopInRandomLayout(benchmark::State& state, LoopT loop) -> void {
+  static constexpr auto Layouts =
+      []<int... Is>(std::integer_sequence<int, Is...>) {
+        return std::array{&RunLoopInLayout<Is * BenchLayoutPadStep, LoopT>...};
+      }(std::make_integer_sequence<int, NumBenchLayouts>());
+  int layout = GetBenchLayout();
+  Layouts[layout](loop);
+  state.counters["Layout"] = layout;
+}
 
 template <typename TableT>
 auto ReportTableMetrics(const TableT& table, benchmark::State& state) -> void {
