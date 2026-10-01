@@ -97,6 +97,12 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::CppAddrOfFunction inst) -> void {
+  context.SetLocal(
+      inst_id, context.specific_file_context().GetFunction(inst.function_id));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ExportDecl inst) -> void {
   if (IsNamespace(context, inst_id)) {
     return;
