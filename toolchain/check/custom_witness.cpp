@@ -451,16 +451,13 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
             llvm::SaveAndRestore(context.access_context(),
                                  SemIR::NameScopeId::AllowHighestAccessLevel);
 
-        // TODO: inline assignment when `struct_fields` is guaranteed to have at
-        // least one non-trivial and destructible member.
-        auto struct_fields = class_info.GetStructTypeFields(
-            context.sem_ir(), class_type.specific_id);
-        if (!struct_fields.empty() &&
-            struct_fields[0].name_id == SemIR::NameId::Vptr) {
-          struct_fields = struct_fields.drop_front();
-        }
-        DestroyStructFields(context, loc_id, callee_self_param_id,
-                            struct_fields);
+        DestroyStructFields(
+            context, loc_id, callee_self_param_id,
+            class_info
+                .GetStructTypeFields(context.sem_ir(), class_type.specific_id)
+                .drop_while([](SemIR::StructTypeField struct_field) {
+                  return struct_field.name_id == SemIR::NameId::Vptr;
+                }));
         return;
       }
       case CARBON_KIND(SemIR::ConstType const_type): {
