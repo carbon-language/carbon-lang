@@ -2679,6 +2679,10 @@ auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
   CARBON_CHECK(
       (self_id.has_value() ? 1 : 0) + arg_refs.size() <=
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id).size());
+  // A return argument can only be matched against a return parameter.
+  CARBON_CHECK(
+      !return_arg_id.has_value() || callee.call_param_ranges.return_size() > 0,
+      "Return argument provided for a callee with no return parameter");
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, callee.return_pattern_id,
