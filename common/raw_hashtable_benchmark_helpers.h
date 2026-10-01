@@ -272,6 +272,8 @@ struct CarbonHashDI<llvm::StringRef> {
 // measured to depend only on its address modulo 256. On Apple M1, some loops
 // also have slow positions that depend on higher address bits, which this
 // range doesn't reach.
+//
+// These can be overridden with build flags to experiment with other layouts.
 #ifndef CARBON_BENCH_LAYOUT_PAD_STEP
 #if defined(__aarch64__)
 #define CARBON_BENCH_LAYOUT_PAD_STEP 4
