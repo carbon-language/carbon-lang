@@ -376,10 +376,10 @@ fn H() {
 // CHECK:STDOUT:   %.loc11_3.7 => constants.%C.val
 // CHECK:STDOUT:   %.loc11_3.8 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc11_3.9 => <bound method>
-// CHECK:STDOUT:   %.loc11_3.10 => invalid
+// CHECK:STDOUT:   %.loc11_3.10 => <nonconstant>
 // CHECK:STDOUT:   %.loc11_3.11 => constants.%inst.call
 // CHECK:STDOUT:   %.loc11_3.12 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc11_3.13 => invalid
+// CHECK:STDOUT:   %.loc11_3.13 => <nonconstant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_in_place_discarded.carbon

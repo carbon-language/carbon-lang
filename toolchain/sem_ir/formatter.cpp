@@ -645,7 +645,11 @@ auto Formatter::FormatSpecificRegion(const Generic& generic,
     }
     out() << " => ";
     if (specific_inst_id) {
-      FormatName(*specific_inst_id);
+      if (specific_inst_id->has_value()) {
+        FormatName(*specific_inst_id);
+      } else {
+        out() << "<nonconstant>";
+      }
     } else {
       out() << "<missing>";
     }

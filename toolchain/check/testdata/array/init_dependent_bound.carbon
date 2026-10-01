@@ -430,9 +430,9 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %arr.var_patt.loc11_3.2 => constants.%arr.var_patt.c63
 // CHECK:STDOUT:   %.loc11_3.5 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc11_3.6 => <bound method>
-// CHECK:STDOUT:   %.loc11_3.7 => invalid
+// CHECK:STDOUT:   %.loc11_3.7 => <nonconstant>
 // CHECK:STDOUT:   %.loc11_3.8 => constants.%inst.call
 // CHECK:STDOUT:   %.loc11_3.9 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc11_3.10 => invalid
+// CHECK:STDOUT:   %.loc11_3.10 => <nonconstant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

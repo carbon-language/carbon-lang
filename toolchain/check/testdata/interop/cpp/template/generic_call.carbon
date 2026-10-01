@@ -323,15 +323,15 @@ fn G() {
 // CHECK:STDOUT:   %.loc8_25.9 => constants.%T.as_type.as.DefaultOrUnformed.impl.Op.83d
 // CHECK:STDOUT:   %.loc8_25.10 => constants.%inst.splice_block.426619.4
 // CHECK:STDOUT:   %.loc8_25.11 => constants.%S
-// CHECK:STDOUT:   %.loc8_25.12 => invalid
+// CHECK:STDOUT:   %.loc8_25.12 => <nonconstant>
 // CHECK:STDOUT:   %.loc8_3.6 => constants.%tuple
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.5
-// CHECK:STDOUT:   %.loc8_3.7 => invalid
+// CHECK:STDOUT:   %.loc8_3.7 => <nonconstant>
 // CHECK:STDOUT:   %.loc8_3.8 => constants.%inst.splice_block.426619.6
 // CHECK:STDOUT:   %.loc8_3.9 => <bound method>
-// CHECK:STDOUT:   %.loc8_3.10 => invalid
+// CHECK:STDOUT:   %.loc8_3.10 => <nonconstant>
 // CHECK:STDOUT:   %.loc8_3.11 => constants.%inst.call
 // CHECK:STDOUT:   %.loc8_3.12 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc8_3.13 => invalid
+// CHECK:STDOUT:   %.loc8_3.13 => <nonconstant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

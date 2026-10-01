@@ -247,12 +247,12 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %require_complete.loc5_32 => constants.%complete_type.2ab
 // CHECK:STDOUT:   %.loc6_10.7 => constants.%inst.splice_block.426619.1
 // CHECK:STDOUT:   %.loc6_10.8 => <bound method>
-// CHECK:STDOUT:   %.loc6_10.9 => invalid
+// CHECK:STDOUT:   %.loc6_10.9 => <nonconstant>
 // CHECK:STDOUT:   %.loc6_10.10 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc6_10.11 => constants.%ptr.843
-// CHECK:STDOUT:   %.loc6_10.12 => invalid
+// CHECK:STDOUT:   %.loc6_10.12 => <nonconstant>
 // CHECK:STDOUT:   %.loc6_12.2 => constants.%inst.splice_block.426619.3
-// CHECK:STDOUT:   %.loc6_12.3 => invalid
+// CHECK:STDOUT:   %.loc6_12.3 => <nonconstant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- mixed.carbon
