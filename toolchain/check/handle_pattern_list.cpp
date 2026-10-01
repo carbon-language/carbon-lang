@@ -11,6 +11,7 @@
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
 
@@ -40,15 +41,6 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
 auto HandleParseNode(Context& context, Parse::StructPatternStartId node_id)
     -> bool {
   EndEmptyExprRegionForPattern(context);
-
-  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
-    CARBON_DIAGNOSTIC(FieldWithStructPattern, Error,
-                      "found struct pattern in class decl");
-    context.emitter().Emit(node_id, FieldWithStructPattern);
-
-    return false;
-  }
-
   context.node_stack().Push(node_id);
   context.struct_type_fields_stack().PushArray();
   context.param_and_arg_refs_stack().Push();
@@ -160,6 +152,17 @@ auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
     EndExprRegionForPattern(context, context.node_stack());
   }
 
+  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
+    bool is_var = context.full_pattern_stack().IsCurrentKindClassScopeVarDecl();
+    CARBON_DIAGNOSTIC(
+        FieldWithStructPattern, Error,
+        "found struct pattern in class member {0:var|let} declaration",
+        Diagnostics::BoolAsSelect);
+    context.emitter().Emit(node_id, FieldWithStructPattern, is_var);
+
+    return false;
+  }
+
   if (context.node_stack().PeekIs(Parse::NodeKind::UnderscoreName)) {
     return context.TODO(node_id, "Struct pattern underscore field");
   }
@@ -231,18 +234,26 @@ auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
 auto HandleParseNode(Context& context,
                      Parse::StructPatternDesignatedFieldId node_id) -> bool {
   EndExprRegionForPattern(context, context.node_stack());
-  auto pattern_id = context.node_stack().PopPattern();
 
+  auto pattern_id = context.node_stack().PopPattern();
+  auto pattern_type_id = context.insts().Get(pattern_id).type_id();
   auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
 
-  auto type_id = ExtractScrutineeType(
-      context.sem_ir(), context.insts().Get(pattern_id).type_id());
-  auto type_inst = context.types().GetTypeInstId(type_id);
+  if (auto pattern_type = context.sem_ir().types().TryGetAs<SemIR::PatternType>(
+          pattern_type_id)) {
+    auto type_id = ExtractScrutineeType(context.sem_ir(), pattern_type_id);
 
-  context.struct_type_fields_stack().AppendToTop(
-      {.name_id = name_id, .type_inst_id = type_inst});
+    auto type_inst = context.types().GetTypeInstId(type_id);
 
-  context.node_stack().Push(node_id, pattern_id);
+    context.struct_type_fields_stack().AppendToTop(
+        {.name_id = name_id, .type_inst_id = type_inst});
+
+    context.node_stack().Push(node_id, pattern_id);
+  } else {
+    context.struct_type_fields_stack().AppendToTop(
+        {.name_id = name_id, .type_inst_id = SemIR::ErrorInst::TypeInstId});
+    context.node_stack().Push(node_id, pattern_id);
+  }
 
   // Start a new pending `ExprRegion`, to maintain the invariant that one is
   // pending at the end of handling for a pattern.

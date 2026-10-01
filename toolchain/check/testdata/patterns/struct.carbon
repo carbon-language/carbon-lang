@@ -204,9 +204,9 @@ library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
 class C{
-    // CHECK:STDERR: fail_in_class_var.carbon:[[@LINE+4]]:9: error: found struct pattern in class decl [FieldWithStructPattern]
+    // CHECK:STDERR: fail_in_class_var.carbon:[[@LINE+4]]:9: error: found struct pattern in class member var declaration [FieldWithStructPattern]
     // CHECK:STDERR:     var {.a = x: ()};
-    // CHECK:STDERR:         ^
+    // CHECK:STDERR:         ^~~~~~~~~~~~
     // CHECK:STDERR:
     var {.a = x: ()};
 }
@@ -217,9 +217,9 @@ class C{
 library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
 class C{
-    // CHECK:STDERR: fail_in_class_let.carbon:[[@LINE+4]]:9: error: found struct pattern in class decl [FieldWithStructPattern]
+    // CHECK:STDERR: fail_in_class_let.carbon:[[@LINE+4]]:9: error: found struct pattern in class member let declaration [FieldWithStructPattern]
     // CHECK:STDERR:     let {.a = x: ()} = {.a = ()};
-    // CHECK:STDERR:         ^
+    // CHECK:STDERR:         ^~~~~~~~~~~~
     // CHECK:STDERR:
     let {.a = x: ()} = {.a = ()};
 }
@@ -866,6 +866,7 @@ class C{
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .x = <unexpected>.inst{{[0-9A-F]+}}.loc10_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_in_class_let.carbon
@@ -880,5 +881,6 @@ class C{
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .x = <unexpected>.inst{{[0-9A-F]+}}.loc9_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
