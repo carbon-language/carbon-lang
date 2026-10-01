@@ -17,7 +17,8 @@ syn keyword carbonBooleanType bool
 syn match carbonIntType 'i\d\+'
 syn match carbonUnsignedIntType 'u\d\+'
 syn match carbonFloatType 'f\d\+'
-syn keyword carbonStringType String
+syn keyword carbonStringType str
+syn keyword carbonBuiltinType array auto char type
 syn keyword carbonBoolean true false
 syn match carbonNumber '\<[0-9][_0-9]*\(\.[_0-9]\+\(e[-+]\?[1-9][0-9]*\)\?\)\?\>'
 syn match carbonHexLiteral '\<0x[_0-9A-F]\+\(\.[_0-9A-F]\+\(p[+-]\?[1-9][0-9]*\)\?\)\?\>'
@@ -33,11 +34,16 @@ syn keyword carbonConstantDeclaration let nextgroup=carbonIdentifier skipwhite
 syn keyword carbonFunctionDeclaration fn
 syn keyword carbonClassDeclaration class  nextgroup=carbonNominalType skipwhite
 syn keyword carbonClassDeclarationMod base abstract final
-syn keyword carbonClassMethodDeclaration fn destructor
+syn keyword carbonClassMethodDeclaration fn destroy
 syn keyword carbonClassMethodDeclarationMod private virtual abstract protected impl
 syn keyword carbonAliasDeclaration alias nextgroup=carbonNominalType skipwhite
 syn keyword carbonInterfaceDeclaration interface nextgroup=carbonNominalType skipwhite
+syn keyword carbonConstraintDeclaration constraint nextgroup=carbonNominalType skipwhite
 syn keyword carbonChoiceDeclaration choice nextgroup=carbonNominalType skipwhite
+syn keyword carbonOtherDeclaration adapt match_first observe require
+syn keyword carbonDeclarationMod const eval export extend extern generic
+syn keyword carbonDeclarationMod musteval override partial ref runtime unsafe
+syn keyword carbonDeclarationMod unused val
 syn keyword carbonPackageDeclaration package nextgroup=carbonIdentifier skipwhite
 syn keyword carbonLibraryDeclaration library nextgroup=carbonStringLiteral skipwhite
 
@@ -49,18 +55,18 @@ syn keyword carbonControlFlowStatement break continue return
 
 " carbon operators
 syn keyword carbonLogicalOperator and or not
+syn keyword carbonKeywordOperator impls like where
 
 " handle any other keywords
-syn keyword carbonKeywordExtends extends nextgroup=carbonNominalType skipwhite
-syn keyword carbonKeywordSelf Self
+syn keyword carbonKeywordSpecialName Self self _
 syn keyword carbonKeywordAs as
 syn keyword carbonKeywordTemplate template
 syn keyword carbonKeywordStatic static
 syn keyword carbonKeywordTypeOf typeof
-syn keyword carbonKeywordExternal external
 syn keyword carbonKeywordForAll forall
-syn keyword carbonKeywordAPI api
-syn keyword carbonKeywordImport import nextgroup=carbonIdentifier skipwhite
+syn keyword carbonKeywordOther each expand form friend
+syn keyword carbonKeywordPackageRoot Core Cpp
+syn keyword carbonKeywordImport import inline nextgroup=carbonIdentifier skipwhite
 
 hi def link carbonIdentifier Identifier
 hi def link carbonNominalType Type
@@ -72,6 +78,7 @@ hi def link carbonIntType carbonType
 hi def link carbonUnsignedIntType carbonType
 hi def link carbonFloatType carbonType
 hi def link carbonStringType carbonType
+hi def link carbonBuiltinType carbonType
 hi def link carbonType Type
 hi def link carbonBoolean Boolean
 hi def link carbonHexLiteral carbonNumber
@@ -91,19 +98,21 @@ hi def link carbonClassMethodDeclaration carbonDeclaration
 hi def link carbonClassMethodDeclarationMod carbonDeclaration
 hi def link carbonAliasDeclaration carbonDeclaration
 hi def link carbonInterfaceDeclaration carbonDeclaration
+hi def link carbonConstraintDeclaration carbonDeclaration
 hi def link carbonChoiceDeclaration carbonDeclaration
+hi def link carbonOtherDeclaration carbonDeclaration
+hi def link carbonDeclarationMod carbonDeclaration
 hi def link carbonPackageDeclaration Include
 hi def link carbonLibraryDeclaration Include
 hi def link carbonDeclaration Structure
-hi def link carbonKeywordExtends carbonKeyword
-hi def link carbonKeywordSelf carbonKeyword
+hi def link carbonKeywordSpecialName carbonKeyword
 hi def link carbonKeywordAs carbonKeyword
 hi def link carbonKeywordTemplate carbonKeyword
 hi def link carbonKeywordStatic carbonKeyword
 hi def link carbonKeywordTypeOf carbonKeyword
-hi def link carbonKeywordExternal carbonKeyword
 hi def link carbonKeywordForAll carbonKeyword
-hi def link carbonKeywordAPI Structure
+hi def link carbonKeywordOther carbonKeyword
+hi def link carbonKeywordPackageRoot carbonKeyword
 hi def link carbonKeywordImport Include
 hi def link carbonKeyword Keyword
 hi def link carbonConditional Conditional
@@ -111,6 +120,7 @@ hi def link carbonLoop Repeat
 hi def link carbonSwitch Repeat
 hi def link carbonControlFlowStatement Statement
 hi def link carbonLogicalOperator carbonOperator
+hi def link carbonKeywordOperator carbonOperator
 hi def link carbonOperator Operator
 
 let b:current_syntax = "carbon"

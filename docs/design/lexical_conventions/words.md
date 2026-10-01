@@ -36,8 +36,10 @@ in Unicode Normalization Form C (NFC).
 
 <!--
 Keep in sync:
-- utils/textmate/Syntaxes/carbom.tmLanguage.json
+- utils/highlightjs/highlightjs_carbon_lang.js
 - utils/tree_sitter/queries/highlights.scm
+- utils/vim/syntax/carbon.vim
+- utils/vscode/carbon.tmLanguage.json
 -->
 
 The following words are interpreted as keywords:
@@ -46,21 +48,29 @@ The following words are interpreted as keywords:
 -   `adapt`
 -   `alias`
 -   `and`
+-   `array`
 -   `as`
 -   `auto`
 -   `base`
+-   `bool`
 -   `break`
 -   `Core`
 -   `case`
+-   `char`
 -   `choice`
 -   `class`
+-   `const`
 -   `constraint`
 -   `continue`
 -   `default`
 -   `destroy`
+-   `each`
 -   `else`
+-   `expand`
 -   `export`
 -   `extend`
+-   `extern`
+-   `false`
 -   `final`
 -   `fn`
 -   `for`
@@ -93,14 +103,19 @@ The following words are interpreted as keywords:
 -   `runtime`
 -   `Self`
 -   `self`
+-   `static`
 -   `template`
 -   `then`
+-   `true`
 -   `type`
 -   `typeof`
+-   `unused`
+-   `val`
 -   `var`
 -   `virtual`
 -   `where`
 -   `while`
+-   `_`
 
 ### Type literals
 

@@ -262,8 +262,8 @@
     "declarations": {
       "patterns": [
         {
-          "comment": "Function declarations, including lambdas with a name.",
-          "match": "\\b(fn)\\s+((?:r#)?[A-Za-z_][A-Za-z0-9_]*)",
+          "comment": "Function declarations, including lambdas with a name. `destroy` is a keyword naming a destructor, not a name.",
+          "match": "\\b(fn)\\s+(?!destroy\\b)((?:r#)?[A-Za-z_][A-Za-z0-9_]*)",
           "captures": {
             "1": { "name": "storage.type.carbon" },
             "2": { "name": "entity.name.function.carbon" }
@@ -347,7 +347,7 @@
         },
         {
           "name": "keyword.other.carbon",
-          "match": "\\b(forall|form|friend)\\b"
+          "match": "\\b(destroy|each|expand|forall|form|friend)\\b"
         },
         {
           "comment": "`.base` names the base class subobject.",

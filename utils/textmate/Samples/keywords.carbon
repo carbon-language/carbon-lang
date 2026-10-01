@@ -35,7 +35,9 @@ impl package
 
 // --- misc-keywords
 
-forall form friend
+destroy each expand forall form friend
+fn destroy
+...expand
 .base
 
 // --- self-keywords
