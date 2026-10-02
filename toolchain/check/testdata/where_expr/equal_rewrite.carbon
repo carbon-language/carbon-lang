@@ -388,22 +388,22 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %E.lookup_impl_witness.8bd: <witness> = lookup_impl_witness %.Self, @E [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.554: type = impl_witness_access %E.lookup_impl_witness.8bd, element0 [symbolic_self]
 // CHECK:STDOUT:   %E_where.type: type = facet_type <@E where %impl.elem0.554 = %i32> [concrete]
-// CHECK:STDOUT:   %pattern_type.b73: type = pattern_type %E_where.type [concrete]
-// CHECK:STDOUT:   %G.patt: %pattern_type.b73 = symbolic_binding_pattern G, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.a1c: type = pattern_type %E_where.type [concrete]
+// CHECK:STDOUT:   %G.patt: %pattern_type.a1c = symbolic_binding_pattern G, 0 [symbolic]
 // CHECK:STDOUT:   %G: %E_where.type = symbolic_binding G, 0 [symbolic]
 // CHECK:STDOUT:   %OneRewrite.type: type = fn_type @OneRewrite [concrete]
 // CHECK:STDOUT:   %OneRewrite: %OneRewrite.type = struct_value () [concrete]
-// CHECK:STDOUT:   %H.patt: %pattern_type.b73 = symbolic_binding_pattern H, 0 [symbolic]
+// CHECK:STDOUT:   %H.patt: %pattern_type.a1c = symbolic_binding_pattern H, 0 [symbolic]
 // CHECK:STDOUT:   %H: %E_where.type = symbolic_binding H, 0 [symbolic]
 // CHECK:STDOUT:   %RepeatedRewrite.type: type = fn_type @RepeatedRewrite [concrete]
 // CHECK:STDOUT:   %RepeatedRewrite: %RepeatedRewrite.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I: %E_where.type = symbolic_binding I, 0 [symbolic]
-// CHECK:STDOUT:   %OneRewrite.specific_fn.ba0394.2: <specific function> = specific_function %OneRewrite, @OneRewrite(%I) [symbolic]
+// CHECK:STDOUT:   %OneRewrite.specific_fn.d2296b.2: <specific function> = specific_function %OneRewrite, @OneRewrite(%I) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %OneRewrite.decl: %OneRewrite.type = fn_decl @OneRewrite [concrete = constants.%OneRewrite] {
-// CHECK:STDOUT:     %G.patt.loc9_31.1: %pattern_type.b73 = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc9_31.2 (constants.%G.patt)]
+// CHECK:STDOUT:     %G.patt.loc9_31.1: %pattern_type.a1c = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc9_31.2 (constants.%G.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_35.1: type = splice_block %.loc9_35.2 [concrete = constants.%E_where.type] {
 // CHECK:STDOUT:       %.Self.frozen.loc9_31: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
@@ -427,7 +427,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %G.loc9_31.2: %E_where.type = symbolic_binding G, 0 [symbolic = %G.loc9_31.1 (constants.%G)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RepeatedRewrite.decl: %RepeatedRewrite.type = fn_decl @RepeatedRewrite [concrete = constants.%RepeatedRewrite] {
-// CHECK:STDOUT:     %H.patt.loc11_29.1: %pattern_type.b73 = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc11_29.2 (constants.%H.patt)]
+// CHECK:STDOUT:     %H.patt.loc11_29.1: %pattern_type.a1c = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc11_29.2 (constants.%H.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_33.1: type = splice_block %.loc11_33.2 [concrete = constants.%E_where.type] {
 // CHECK:STDOUT:       %.Self.frozen.loc11_29: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
@@ -465,7 +465,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @OneRewrite(%G.loc9_31.2: %E_where.type) {
-// CHECK:STDOUT:   %G.patt.loc9_31.2: %pattern_type.b73 = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc9_31.2 (constants.%G.patt)]
+// CHECK:STDOUT:   %G.patt.loc9_31.2: %pattern_type.a1c = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc9_31.2 (constants.%G.patt)]
 // CHECK:STDOUT:   %G.loc9_31.1: %E_where.type = symbolic_binding G, 0 [symbolic = %G.loc9_31.1 (constants.%G)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -477,7 +477,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RepeatedRewrite(%H.loc11_29.2: %E_where.type) {
-// CHECK:STDOUT:   %H.patt.loc11_29.2: %pattern_type.b73 = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc11_29.2 (constants.%H.patt)]
+// CHECK:STDOUT:   %H.patt.loc11_29.2: %pattern_type.a1c = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc11_29.2 (constants.%H.patt)]
 // CHECK:STDOUT:   %H.loc11_29.1: %E_where.type = symbolic_binding H, 0 [symbolic = %H.loc11_29.1 (constants.%H)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -511,7 +511,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %H.loc11_29.1 => constants.%I
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %OneRewrite.specific_fn.loc13_3.2 => constants.%OneRewrite.specific_fn.ba0394.2
+// CHECK:STDOUT:   %OneRewrite.specific_fn.loc13_3.2 => constants.%OneRewrite.specific_fn.d2296b.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%I) {

@@ -91,7 +91,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %MyInt.9fc: type = class_type @MyInt, @MyInt(%int_64) [concrete]
+// CHECK:STDOUT:   %MyInt.f39: type = class_type @MyInt, @MyInt(%int_64) [concrete]
 // CHECK:STDOUT:   %Double.type: type = fn_type @Double [concrete]
 // CHECK:STDOUT:   %Double: %Double.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double, @Double(%int_64) [concrete]
@@ -101,12 +101,12 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Main.Double: %Double.type = import_ref Main//generic_impl, Double, loaded [concrete = constants.%Double]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallImportedDouble(%n.param: %MyInt.9fc) -> out %return.param: %MyInt.9fc {
+// CHECK:STDOUT: fn @CallImportedDouble(%n.param: %MyInt.f39) -> out %return.param: %MyInt.f39 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Double.ref: %Double.type = name_ref Double, imports.%Main.Double [concrete = constants.%Double]
-// CHECK:STDOUT:   %n.ref: %MyInt.9fc = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: %MyInt.f39 = name_ref n, %n
 // CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double.ref, @Double(constants.%int_64) [concrete = constants.%Double.specific_fn]
-// CHECK:STDOUT:   %Double.call: init %MyInt.9fc = call %Double.specific_fn(%n.ref)
+// CHECK:STDOUT:   %Double.call: init %MyInt.f39 = call %Double.specific_fn(%n.ref)
 // CHECK:STDOUT:   return %Double.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -128,14 +128,14 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %FromLiteral.type: type = fn_type @FromLiteral [concrete]
 // CHECK:STDOUT:   %FromLiteral: %FromLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_64.f82: %i32.builtin = int_value 64 [concrete]
-// CHECK:STDOUT:   %Make.specific_fn.bb3: <specific function> = specific_function %Make, @Make(%int_64.f82) [concrete]
+// CHECK:STDOUT:   %Make.specific_fn.c43: <specific function> = specific_function %Make, @Make(%int_64.f82) [concrete]
 // CHECK:STDOUT:   %n.patt.914: %pattern_type.e13 = ref_binding_pattern n [concrete]
 // CHECK:STDOUT:   %n.var_patt: %pattern_type.e13 = var_pattern %n.patt.914 [concrete]
 // CHECK:STDOUT:   %MakeFromClass.type: type = fn_type @MakeFromClass [concrete]
 // CHECK:STDOUT:   %MakeFromClass: %MakeFromClass.type = struct_value () [concrete]
 // CHECK:STDOUT:   %OtherInt: type = class_type @OtherInt [concrete]
 // CHECK:STDOUT:   %int_64.420: %OtherInt = int_value 64 [concrete]
-// CHECK:STDOUT:   %MakeFromClass.specific_fn.3a7: <specific function> = specific_function %MakeFromClass, @MakeFromClass(%int_64.420) [concrete]
+// CHECK:STDOUT:   %MakeFromClass.specific_fn.804: <specific function> = specific_function %MakeFromClass, @MakeFromClass(%int_64.420) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -183,7 +183,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %FromLiteral.call.loc7: init %i32.builtin = call %FromLiteral.ref.loc7(%int_64.loc7) [concrete = constants.%int_64.f82]
 // CHECK:STDOUT:   %.loc7_38.1: %i32.builtin = value_of_initializer %FromLiteral.call.loc7 [concrete = constants.%int_64.f82]
 // CHECK:STDOUT:   %.loc7_38.2: %i32.builtin = converted %FromLiteral.call.loc7, %.loc7_38.1 [concrete = constants.%int_64.f82]
-// CHECK:STDOUT:   %Make.specific_fn: <specific function> = specific_function %Make.ref, @Make(constants.%int_64.f82) [concrete = constants.%Make.specific_fn.bb3]
+// CHECK:STDOUT:   %Make.specific_fn: <specific function> = specific_function %Make.ref, @Make(constants.%int_64.f82) [concrete = constants.%Make.specific_fn.c43]
 // CHECK:STDOUT:   %Make.call: init %i64.builtin = call %Make.specific_fn()
 // CHECK:STDOUT:   assign file.%m.var, %Make.call
 // CHECK:STDOUT:   %MakeFromClass.ref: %MakeFromClass.type = name_ref MakeFromClass, imports.%Main.MakeFromClass [concrete = constants.%MakeFromClass]
@@ -195,7 +195,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %.loc8_48.2: init %OtherInt = converted %FromLiteral.call.loc8, %.loc8_48.1 [concrete = constants.%int_64.420]
 // CHECK:STDOUT:   %.loc8_59.1: %OtherInt = value_of_initializer %.loc8_48.2 [concrete = constants.%int_64.420]
 // CHECK:STDOUT:   %.loc8_59.2: %OtherInt = converted %.loc8_48.2, %.loc8_59.1 [concrete = constants.%int_64.420]
-// CHECK:STDOUT:   %MakeFromClass.specific_fn: <specific function> = specific_function %MakeFromClass.ref, @MakeFromClass(constants.%int_64.420) [concrete = constants.%MakeFromClass.specific_fn.3a7]
+// CHECK:STDOUT:   %MakeFromClass.specific_fn: <specific function> = specific_function %MakeFromClass.ref, @MakeFromClass(constants.%int_64.420) [concrete = constants.%MakeFromClass.specific_fn.804]
 // CHECK:STDOUT:   %MakeFromClass.call: init %i64.builtin = call %MakeFromClass.specific_fn()
 // CHECK:STDOUT:   assign file.%n.var, %MakeFromClass.call
 // CHECK:STDOUT:   <elided>

@@ -49,8 +49,8 @@ interface I(template T: type, N: T.I1) {
 // CHECK:STDOUT:   %N.patt.52ad3a.2: %pattern_type.fcb8f3.2 = symbolic_binding_pattern N, 1 [template]
 // CHECK:STDOUT:   %I.type.335: type = generic_interface_type @I [concrete]
 // CHECK:STDOUT:   %I.generic: %I.type.335 = struct_value () [concrete]
-// CHECK:STDOUT:   %I.type.32e: type = facet_type <@I, @I(%T, %N)> [template]
-// CHECK:STDOUT:   %Self: %I.type.32e = symbolic_binding Self, 2 [template]
+// CHECK:STDOUT:   %I.type.87d: type = facet_type <@I, @I(%T, %N)> [template]
+// CHECK:STDOUT:   %Self: %I.type.87d = symbolic_binding Self, 2 [template]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%T, %N) [template]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I1 [template]
 // CHECK:STDOUT: }
@@ -89,11 +89,11 @@ interface I(template T: type, N: T.I1) {
 // CHECK:STDOUT:   %N.loc16_32.1: @I.%.loc16_35.5 (%.5372ba.1) = symbolic_binding N, 1 [template = %N.loc16_32.1 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc16_23.1, %N.loc16_32.1)> [template = %I.type (constants.%I.type.32e)]
-// CHECK:STDOUT:   %Self.loc16_40.2: @I.%I.type (%I.type.32e) = symbolic_binding Self, 2 [template = %Self.loc16_40.2 (constants.%Self)]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc16_23.1, %N.loc16_32.1)> [template = %I.type (constants.%I.type.87d)]
+// CHECK:STDOUT:   %Self.loc16_40.2: @I.%I.type (%I.type.87d) = symbolic_binding Self, 2 [template = %Self.loc16_40.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc16_40.1: @I.%I.type (%I.type.32e) = symbolic_binding Self, 2 [template = %Self.loc16_40.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc16_40.1: @I.%I.type (%I.type.87d) = symbolic_binding Self, 2 [template = %Self.loc16_40.2 (constants.%Self)]
 // CHECK:STDOUT:     %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
