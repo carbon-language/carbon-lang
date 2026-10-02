@@ -4,9 +4,6 @@
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 //
-// ^ARGS: -v compile %s
-// ^EXTRA-ARGS: --dump-sem-ir-ranges=only
-//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/patterns/struct.carbon
@@ -93,20 +90,44 @@ let {a: (), b: ()} = F();
 
 library "[[@TEST_NAME]]";
 
-var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+var s: {.a: (), .b: ()} = {.a = (), .b = ()};
 
 //@dump-sem-ir-begin
-let {.a = x: i32, .b = y: i32} = s;
+let {.a = x: (), .b = y: ()} = s;
 //@dump-sem-ir-end
 
 // --- ref_expr_shorthand.carbon
 
 library "[[@TEST_NAME]]";
 
-var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+var s: {.a: (), .b: ()} = {.a = (), .b = ()};
 
 //@dump-sem-ir-begin
-let {a: i32, b: i32} = s;
+let {a: (), b: ()} = s;
+//@dump-sem-ir-end
+
+// --- unordered.carbon
+
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-begin
+let {.a = b: (), .c = d: ()} = {.c = (), .a = ()};
+//@dump-sem-ir-end
+
+// --- unordered_shorthand.carbon
+
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-begin
+let {a: (), b: ()} = {.b = (), .a = ()};
+//@dump-sem-ir-end
+
+// --- unordered_mixed_syntax.carbon
+
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-begin
+let {a: (), .b = c: ()} = {.b = (), .a = ()};
 //@dump-sem-ir-end
 
 // --- fail_todo_underscore.carbon
@@ -631,38 +652,46 @@ class C{
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %struct_type.a.b.b4c: type = struct_type {.a: %i32, .b: %i32} [concrete]
-// CHECK:STDOUT:   %pattern_type.20e3: type = pattern_type %struct_type.a.b.b4c [concrete]
-// CHECK:STDOUT:   %.9f1: ref %i32 = struct_access file.%s.var, element0 [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %.e6f: ref %i32 = struct_access file.%s.var, element1 [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = value_binding_pattern x [concrete]
-// CHECK:STDOUT:   %y.patt: %pattern_type.6b6 = value_binding_pattern y [concrete]
-// CHECK:STDOUT:   %.6c2: %pattern_type.20e3 = struct_pattern (%x.patt, %y.patt) [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %empty_tuple.type, .b: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %pattern_type.d8f: type = pattern_type %struct_type.a.b [concrete]
+// CHECK:STDOUT:   %.974: ref %empty_tuple.type = struct_access file.%s.var, element0 [concrete]
+// CHECK:STDOUT:   %.e60: ref %empty_tuple.type = struct_access file.%s.var, element1 [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete]
+// CHECK:STDOUT:   %y.patt: %pattern_type.cb1 = value_binding_pattern y [concrete]
+// CHECK:STDOUT:   %.9fc: %pattern_type.d8f = struct_pattern (%x.patt, %y.patt) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc7_34.1: ref %i32 = struct_access @__global_init.%s.ref, element0 [concrete = constants.%.9f1]
-// CHECK:STDOUT:   %.loc7_34.2: ref %i32 = struct_access @__global_init.%s.ref, element1 [concrete = constants.%.e6f]
-// CHECK:STDOUT:   %.loc7_34.3: %i32 = acquire_value %.loc7_34.1
-// CHECK:STDOUT:   %i32.loc7_14: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %.loc7_34.3
-// CHECK:STDOUT:   %.loc7_34.4: %i32 = acquire_value %.loc7_34.2
-// CHECK:STDOUT:   %i32.loc7_27: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %y: %i32 = wrapper_binding y, %.loc7_34.4
+// CHECK:STDOUT:   %.loc7_32.1: ref %empty_tuple.type = struct_access @__global_init.%s.ref, element0 [concrete = constants.%.974]
+// CHECK:STDOUT:   %.loc7_32.2: ref %empty_tuple.type = struct_access @__global_init.%s.ref, element1 [concrete = constants.%.e60]
+// CHECK:STDOUT:   %empty_tuple.loc7_32.1: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_32.3: %empty_tuple.type = converted %.loc7_32.1, %empty_tuple.loc7_32.1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_15.1: type = splice_block %.loc7_15.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc7_15.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc7_15.3: type = converted %.loc7_15.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x: %empty_tuple.type = wrapper_binding x, %.loc7_32.3
+// CHECK:STDOUT:   %empty_tuple.loc7_32.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_32.4: %empty_tuple.type = converted %.loc7_32.2, %empty_tuple.loc7_32.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_27.1: type = splice_block %.loc7_27.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc7_27.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc7_27.3: type = converted %.loc7_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %y: %empty_tuple.type = wrapper_binding y, %.loc7_32.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %y.patt: %pattern_type.6b6 = value_binding_pattern y [concrete = constants.%y.patt]
-// CHECK:STDOUT:     %.loc7_30: %pattern_type.20e3 = struct_pattern (%x.patt, %y.patt) [concrete = constants.%.6c2]
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = value_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %.loc7_28: %pattern_type.d8f = struct_pattern (%x.patt, %y.patt) [concrete = constants.%.9fc]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %s.ref: ref %struct_type.a.b.b4c = name_ref s, file.%s [concrete = file.%s.var]
+// CHECK:STDOUT:   %s.ref: ref %struct_type.a.b = name_ref s, file.%s [concrete = file.%s.var]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -670,38 +699,190 @@ class C{
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %struct_type.a.b.b4c: type = struct_type {.a: %i32, .b: %i32} [concrete]
-// CHECK:STDOUT:   %pattern_type.20e3: type = pattern_type %struct_type.a.b.b4c [concrete]
-// CHECK:STDOUT:   %.9f1: ref %i32 = struct_access file.%s.var, element0 [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %.e6f: ref %i32 = struct_access file.%s.var, element1 [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.6b6 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:   %b.patt: %pattern_type.6b6 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:   %.0f5: %pattern_type.20e3 = struct_pattern (%a.patt, %b.patt) [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %empty_tuple.type, .b: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %pattern_type.d8f: type = pattern_type %struct_type.a.b [concrete]
+// CHECK:STDOUT:   %.974: ref %empty_tuple.type = struct_access file.%s.var, element0 [concrete]
+// CHECK:STDOUT:   %.e60: ref %empty_tuple.type = struct_access file.%s.var, element1 [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.cb1 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   %.c90: %pattern_type.d8f = struct_pattern (%a.patt, %b.patt) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc7_24.1: ref %i32 = struct_access @__global_init.%s.ref, element0 [concrete = constants.%.9f1]
-// CHECK:STDOUT:   %.loc7_24.2: ref %i32 = struct_access @__global_init.%s.ref, element1 [concrete = constants.%.e6f]
-// CHECK:STDOUT:   %.loc7_24.3: %i32 = acquire_value %.loc7_24.1
-// CHECK:STDOUT:   %i32.loc7_9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc7_24.3
-// CHECK:STDOUT:   %.loc7_24.4: %i32 = acquire_value %.loc7_24.2
-// CHECK:STDOUT:   %i32.loc7_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %b: %i32 = wrapper_binding b, %.loc7_24.4
+// CHECK:STDOUT:   %.loc7_22.1: ref %empty_tuple.type = struct_access @__global_init.%s.ref, element0 [concrete = constants.%.974]
+// CHECK:STDOUT:   %.loc7_22.2: ref %empty_tuple.type = struct_access @__global_init.%s.ref, element1 [concrete = constants.%.e60]
+// CHECK:STDOUT:   %empty_tuple.loc7_22.1: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_22.3: %empty_tuple.type = converted %.loc7_22.1, %empty_tuple.loc7_22.1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_10.1: type = splice_block %.loc7_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc7_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc7_10.3: type = converted %.loc7_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc7_22.3
+// CHECK:STDOUT:   %empty_tuple.loc7_22.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_22.4: %empty_tuple.type = converted %.loc7_22.2, %empty_tuple.loc7_22.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_17.1: type = splice_block %.loc7_17.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc7_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc7_17.3: type = converted %.loc7_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: %empty_tuple.type = wrapper_binding b, %.loc7_22.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = value_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = value_binding_pattern b [concrete = constants.%b.patt]
-// CHECK:STDOUT:     %.loc7_20: %pattern_type.20e3 = struct_pattern (%a.patt, %b.patt) [concrete = constants.%.0f5]
+// CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = value_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %.loc7_18: %pattern_type.d8f = struct_pattern (%a.patt, %b.patt) [concrete = constants.%.c90]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %s.ref: ref %struct_type.a.b.b4c = name_ref s, file.%s [concrete = file.%s.var]
+// CHECK:STDOUT:   %s.ref: ref %struct_type.a.b = name_ref s, file.%s [concrete = file.%s.var]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- unordered.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   %d.patt: %pattern_type.cb1 = value_binding_pattern d [concrete]
+// CHECK:STDOUT:   %struct_type.a.c: type = struct_type {.a: %empty_tuple.type, .c: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %pattern_type.f10: type = pattern_type %struct_type.a.c [concrete]
+// CHECK:STDOUT:   %.ab2: %pattern_type.f10 = struct_pattern (%b.patt, %d.patt) [concrete]
+// CHECK:STDOUT:   %struct_type.c.a: type = struct_type {.c: %empty_tuple.type, .a: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.c.a = struct_value (%empty_tuple, %empty_tuple) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %.loc5_49.1: %empty_tuple.type = struct_access @__global_init.%.loc5_49, element1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_49.2: %empty_tuple.type = struct_access @__global_init.%.loc5_49, element0 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc5_49.1: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_49.3: %empty_tuple.type = converted %.loc5_49.1, %empty_tuple.loc5_49.1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_15.1: type = splice_block %.loc5_15.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc5_15.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_15.3: type = converted %.loc5_15.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: %empty_tuple.type = wrapper_binding b, %.loc5_49.3
+// CHECK:STDOUT:   %empty_tuple.loc5_49.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_49.4: %empty_tuple.type = converted %.loc5_49.2, %empty_tuple.loc5_49.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_27.1: type = splice_block %.loc5_27.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc5_27.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_27.3: type = converted %.loc5_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %d: %empty_tuple.type = wrapper_binding d, %.loc5_49.4
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %d.patt: %pattern_type.cb1 = value_binding_pattern d [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %.loc5_28: %pattern_type.f10 = struct_pattern (%b.patt, %d.patt) [concrete = constants.%.ab2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5_39: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_48: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_49: %struct_type.c.a = struct_literal (%.loc5_39, %.loc5_48) [concrete = constants.%struct]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- unordered_shorthand.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.cb1 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %empty_tuple.type, .b: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %pattern_type.d8f: type = pattern_type %struct_type.a.b [concrete]
+// CHECK:STDOUT:   %.c90: %pattern_type.d8f = struct_pattern (%a.patt, %b.patt) [concrete]
+// CHECK:STDOUT:   %struct_type.b.a: type = struct_type {.b: %empty_tuple.type, .a: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.b.a = struct_value (%empty_tuple, %empty_tuple) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %.loc5_39.1: %empty_tuple.type = struct_access @__global_init.%.loc5_39, element1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_39.2: %empty_tuple.type = struct_access @__global_init.%.loc5_39, element0 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc5_39.1: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_39.3: %empty_tuple.type = converted %.loc5_39.1, %empty_tuple.loc5_39.1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_10.1: type = splice_block %.loc5_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc5_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_10.3: type = converted %.loc5_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc5_39.3
+// CHECK:STDOUT:   %empty_tuple.loc5_39.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_39.4: %empty_tuple.type = converted %.loc5_39.2, %empty_tuple.loc5_39.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_17.1: type = splice_block %.loc5_17.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc5_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_17.3: type = converted %.loc5_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: %empty_tuple.type = wrapper_binding b, %.loc5_39.4
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = value_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %.loc5_18: %pattern_type.d8f = struct_pattern (%a.patt, %b.patt) [concrete = constants.%.c90]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5_29: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_38: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_39: %struct_type.b.a = struct_literal (%.loc5_29, %.loc5_38) [concrete = constants.%struct]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- unordered_mixed_syntax.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.cb1 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.cb1 = value_binding_pattern c [concrete]
+// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %empty_tuple.type, .b: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %pattern_type.d8f: type = pattern_type %struct_type.a.b [concrete]
+// CHECK:STDOUT:   %.68d: %pattern_type.d8f = struct_pattern (%a.patt, %c.patt) [concrete]
+// CHECK:STDOUT:   %struct_type.b.a: type = struct_type {.b: %empty_tuple.type, .a: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.b.a = struct_value (%empty_tuple, %empty_tuple) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %.loc5_44.1: %empty_tuple.type = struct_access @__global_init.%.loc5_44, element1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_44.2: %empty_tuple.type = struct_access @__global_init.%.loc5_44, element0 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc5_44.1: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_44.3: %empty_tuple.type = converted %.loc5_44.1, %empty_tuple.loc5_44.1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_10.1: type = splice_block %.loc5_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc5_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_10.3: type = converted %.loc5_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc5_44.3
+// CHECK:STDOUT:   %empty_tuple.loc5_44.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_44.4: %empty_tuple.type = converted %.loc5_44.2, %empty_tuple.loc5_44.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_22.1: type = splice_block %.loc5_22.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc5_22.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_22.3: type = converted %.loc5_22.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c: %empty_tuple.type = wrapper_binding c, %.loc5_44.4
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = value_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.cb1 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %.loc5_23: %pattern_type.d8f = struct_pattern (%a.patt, %c.patt) [concrete = constants.%.68d]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5_34: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_43: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_44: %struct_type.b.a = struct_literal (%.loc5_34, %.loc5_43) [concrete = constants.%struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
