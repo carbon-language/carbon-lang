@@ -1380,7 +1380,7 @@ static auto BuildCppToCarbonThunkBody(Context& context,
 // disambiguate the names of specialized function thunks.
 static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
                                      const FunctionInfo& target,
-                                     std::string_view extra_name = "")
+                                     std::string_view extra_name = "", size_t elided_default_values)
     -> FunctionInfo {
   // Create the thunk's name.
   llvm::SmallString<64> thunk_name =
@@ -1441,16 +1441,12 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
 
 static auto ExportNonGenericFunctionDeclToCpp(Context& context,
                                               SemIR::LocId loc_id,
-                                              const FunctionInfo& target)
+                                              const FunctionInfo& target,
+                                              size_t elided_default_values)
     -> clang::FunctionDecl* {
-  size_t max_arity = target.function.default_value_arity;
-  llvm::SmallVector<clang::FunctionDecl*> overload_decls;
-  overload_decls.reserve(max_arity + 1);
-  for (size_t i = 0; i <= max_arity; ++i) {
-    overload_decls.push_back(BuildCppToCarbonThunkDecl(
-        context, loc_id, target, target.GetCppName(context), i));
-  }
-  return overload_decls.back();
+  return BuildCppToCarbonThunkDecl(context, loc_id, target,
+                                   target.GetCppName(context),
+                                   elided_default_values);
 }
 
 auto ExportVirtualFunctionDeclToCpp(Context& context, SemIR::LocId loc_id,
@@ -1460,22 +1456,23 @@ auto ExportVirtualFunctionDeclToCpp(Context& context, SemIR::LocId loc_id,
   FunctionInfo target(context, function_id,
                       context.functions().Get(function_id), parent,
                       /*export_as_constructor=*/false);
-  return cast_or_null<clang::CXXMethodDecl>(
-      ExportNonGenericFunctionDeclToCpp(context, loc_id, target));
+  return cast_or_null<clang::CXXMethodDecl>(ExportNonGenericFunctionDeclToCpp(
+      context, loc_id, target, /*elided_default_values=*/0));
 }
 
 static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
                                   const FunctionInfo& target,
                                   clang::FunctionDecl* thunk_function_decl,
-                                  std::string_view extra_name) -> void {
+                                  std::string_view extra_name,
+                                  size_t elided_default_values) -> void {
   // Create a Carbon thunk that calls the callee. The thunk's parameters
   // are all references so that the ABI is compatible with C++ callers.
-  auto carbon_thunk_target =
-      BuildCarbonToCarbonThunk(context, loc_id, target, extra_name);
+  auto carbon_thunk_target = BuildCarbonToCarbonThunk(
+      context, loc_id, target, extra_name, elided_default_values);
 
   // Create a `clang::FunctionDecl` that can be used to call the Carbon thunk.
   auto* carbon_function_decl = BuildCppFunctionDeclForNonGenericCarbonFn(
-      context, loc_id, carbon_thunk_target);
+      context, loc_id, carbon_thunk_target, elided_default_values);
   if (!carbon_function_decl) {
     return;
   }
