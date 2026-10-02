@@ -101,6 +101,9 @@ fn G() {
 // CHECK:STDOUT:   %int_456.010: Core.IntLiteral = int_value 456 [concrete]
 // CHECK:STDOUT:   %require_complete.906: <witness> = require_complete_type %.939 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (<instruction>) [concrete]
+// CHECK:STDOUT:   %inst.splice_block.426619.1: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.8e7: <instruction> = splice_block @F.%.loc9_4.2 [template = @F.%.loc9_4.6 (%.fa5)] {}
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.6a7: %.939 = splice_inst @F.%tuple.elem0 [template]
 // CHECK:STDOUT:   %.cba: %.939 = splice_inst @F.%.loc9_4.7 [template]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
@@ -117,7 +120,7 @@ fn G() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %t.param_patt.df1: %pattern_type.98b = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %t.patt.e50: %pattern_type.98b = wrapper_binding_pattern t, %t.param_patt.df1 [concrete]
-// CHECK:STDOUT:   %inst.splice_block.426619.1: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.d44: ref %i32 = splice_block %.3d2 {
 // CHECK:STDOUT:       %.b6d: ref %C = specific_inst @F.%t.ref, @F(%C)
 // CHECK:STDOUT:       %x.ref: %C.elem = name_ref x, @C.%field_decl [concrete = @C.%field_decl]
@@ -127,7 +130,7 @@ fn G() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.efc: <bound method> = bound_method %int_456.010, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
 // CHECK:STDOUT:   %bound_method.c5c: <bound method> = bound_method %int_456.010, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_456.8dd: %i32 = int_value 456 [concrete]
-// CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:   %inst.splice_block.426619.3: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.339: init %i32 = splice_block %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = %int_456.8dd] {
 // CHECK:STDOUT:       %impl.elem0.0e6: %.b7a = impl_witness_access %ImplicitAs.impl_witness.a2a, element0 [concrete = %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:       %bound_method.6bb: <bound method> = bound_method %int_456.010, %impl.elem0.0e6 [concrete = %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.efc]
@@ -136,8 +139,8 @@ fn G() {
 // CHECK:STDOUT:       %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.4506(%int_456.010) [concrete = %int_456.8dd]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%inst.splice_block.426619.2) [concrete]
-// CHECK:STDOUT:   %inst.splice_block.426619.3: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%inst.splice_block.426619.3) [concrete]
+// CHECK:STDOUT:   %inst.splice_block.426619.4: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.30b: ref %i32 = splice_block %.d44 {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -177,7 +180,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc9_4.5: type = type_of_inst %.loc9_4.4 [template = %.loc9_4.5 (constants.%.939)]
 // CHECK:STDOUT:   %.loc9_4.6: @F.%.loc9_4.5 (%.939) = splice_inst %.loc9_4.4 [template = %.loc9_4.6 (constants.%.fa5)]
 // CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type %.loc9_4.5 [template = %require_complete.loc9 (constants.%require_complete.906)]
-// CHECK:STDOUT:   %.loc9_7.2: %tuple.type = initialize_action %int_456, %.loc9_4.5, %.loc9_4.2, false [template]
+// CHECK:STDOUT:   %.loc9_7.2: %tuple.type = initialize_action %int_456, %.loc9_4.5, %.loc9_4.2, constants.%inst.splice_block.426619.1, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc9_7.2, element0 [template]
 // CHECK:STDOUT:   %.loc9_7.3: @F.%.loc9_4.5 (%.939) = splice_inst %tuple.elem0 [template = %.loc9_7.3 (constants.%.6a7)]
 // CHECK:STDOUT:   %.loc9_4.7: <instruction> = convert_to_category_action %.loc9_4.2, element9 [template]
@@ -213,14 +216,14 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc8 => constants.%complete_type.0c6
-// CHECK:STDOUT:   %.loc9_4.4 => constants.%inst.splice_block.426619.1
+// CHECK:STDOUT:   %.loc9_4.4 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc9_4.5 => constants.%i32
 // CHECK:STDOUT:   %.loc9_4.6 => <not constant>
 // CHECK:STDOUT:   %require_complete.loc9 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %.loc9_7.2 => constants.%tuple
-// CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.2
+// CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.3
 // CHECK:STDOUT:   %.loc9_7.3 => constants.%int_456.8dd
-// CHECK:STDOUT:   %.loc9_4.7 => constants.%inst.splice_block.426619.3
+// CHECK:STDOUT:   %.loc9_4.7 => constants.%inst.splice_block.426619.4
 // CHECK:STDOUT:   %.loc9_4.8 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

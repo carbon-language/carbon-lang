@@ -1300,6 +1300,9 @@ struct InitializeAction {
     TypeInstId target_type_inst_id;
     // The storage for the initialization.
     MetaInstId storage_id;
+    // Block of pending instructions that `storage_id` depends on. This is
+    // always an `InstValue` that references a `SpliceBlock`.
+    MetaInstId storage_access_block_id;
     // Whether this is required to be an in-place initialization.
     BoolValue in_place;
   };

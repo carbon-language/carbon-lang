@@ -32,7 +32,7 @@ fn Class(template T: type).F(n: T.U) -> T.U {
   return n;
 }
 
-// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `<splice of <cannot stringify inst780000D8: {kind: ConvertToValueAction, arg0: inst780000D5, arg1: inst(TypeType), type: type(inst(InstType))}>>` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `<splice of <cannot stringify inst780000DA: {kind: ConvertToValueAction, arg0: inst780000D7, arg1: inst(TypeType), type: type(inst(InstType))}>>` [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR: fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_basic.carbon:[[@LINE-18]]:3: note: previously declared with return type `T` [FunctionRedeclReturnTypePrevious]
@@ -101,6 +101,9 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %require_complete.cb0614.1: <witness> = require_complete_type %.5372ba.1 [template]
 // CHECK:STDOUT:   %require_complete.cb0614.2: <witness> = require_complete_type %.5372ba.2 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (<instruction>) [concrete]
+// CHECK:STDOUT:   %inst.splice_block.426619.1: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.8488d6.1: ref <instruction> = splice_block @Class.F.loc18.%return.param {}
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.5d6323.1: %.5372ba.2 = splice_inst @Class.F.loc18.%tuple.elem0 [template]
 // CHECK:STDOUT:   %.eff391.4: type = type_of_inst @Class.G.loc29.%.loc29_40.1 [template]
 // CHECK:STDOUT:   %.b66113.4: %.eff391.4 = splice_inst @Class.G.loc29.%.loc29_40.1 [template]
@@ -115,6 +118,9 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %require_complete.cb0614.3: <witness> = require_complete_type %.5372ba.4 [template]
 // CHECK:STDOUT:   %.237: type = type_of_inst @Class.G.loc29.%.loc30_14.3 [template]
 // CHECK:STDOUT:   %.f96: %.237 = splice_inst @Class.G.loc29.%.loc30_14.3 [template]
+// CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.8488d6.2: ref <instruction> = splice_block @Class.G.loc29.%return.param {}
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.5d6323.2: %.5372ba.4 = splice_inst @Class.G.loc29.%tuple.elem0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -293,7 +299,7 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc18_31: <witness> = require_complete_type %.loc18_34.5 [template = %require_complete.loc18_31 (constants.%require_complete.cb0614.1)]
 // CHECK:STDOUT:   %require_complete.loc18_38: <witness> = require_complete_type %.loc18_42.5 [template = %require_complete.loc18_38 (constants.%require_complete.cb0614.2)]
-// CHECK:STDOUT:   %.loc19_11.2: %tuple.type = initialize_action %n.ref, %.loc18_42.5, %return.param, false [template]
+// CHECK:STDOUT:   %.loc19_11.2: %tuple.type = initialize_action %n.ref, %.loc18_42.5, %return.param, constants.%inst.splice_block.426619.1, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc19_11.2, element0 [template]
 // CHECK:STDOUT:   %.loc19_11.3: @Class.F.loc18.%.loc18_42.5 (%.5372ba.2) = splice_inst %tuple.elem0 [template = %.loc19_11.3 (constants.%.5d6323.1)]
 // CHECK:STDOUT:
@@ -327,7 +333,7 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %.loc30_14.3: <instruction> = access_member_action %self.ref, n [template]
 // CHECK:STDOUT:   %.loc30_14.4: type = type_of_inst %.loc30_14.3 [template = %.loc30_14.4 (constants.%.237)]
 // CHECK:STDOUT:   %.loc30_14.5: @Class.G.loc29.%.loc30_14.4 (%.237) = splice_inst %.loc30_14.3 [template = %.loc30_14.5 (constants.%.f96)]
-// CHECK:STDOUT:   %.loc30_16.2: %tuple.type = initialize_action %.loc30_14.2, %.loc29_40.5, %return.param, false [template]
+// CHECK:STDOUT:   %.loc30_16.2: %tuple.type = initialize_action %.loc30_14.2, %.loc29_40.5, %return.param, constants.%inst.splice_block.426619.2, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc30_16.2, element0 [template]
 // CHECK:STDOUT:   %.loc30_16.3: @Class.G.loc29.%.loc29_40.5 (%.5372ba.4) = splice_inst %tuple.elem0 [template = %.loc30_16.3 (constants.%.5d6323.2)]
 // CHECK:STDOUT:
