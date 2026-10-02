@@ -254,13 +254,8 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
     case SemIR::RecognizedTypeInfo::Array: {
       auto args = context.inst_blocks().Get(type_info.args_id);
       if (args.size() == 2) {
-        auto elem_arg_id = args[0];
-        if (auto facet =
-                context.insts().TryGetAs<SemIR::FacetValue>(elem_arg_id)) {
-          elem_arg_id = facet->type_inst_id;
-        }
         return TryMapArrayType(context, args[1],
-                               context.types().GetAsTypeInstId(elem_arg_id));
+                               context.types().GetAsTypeInstId(args[0]));
       }
       break;
     }

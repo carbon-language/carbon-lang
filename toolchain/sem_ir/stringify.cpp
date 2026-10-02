@@ -1158,7 +1158,7 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
   auto decl = sem_ir.insts().Get(generic.decl_id);
   CARBON_KIND_SWITCH(decl) {
     case CARBON_KIND(ClassDecl class_decl): {
-      // Print `Core.Int(N)` as `iN`.
+      // Print `Core.Int(N)` as `iN` and `Core.Array(T, N)` as `array(T, N)`.
       // TODO: This duplicates work done in StringifyInst for ClassType.
       const auto& class_info = sem_ir.classes().Get(class_decl.class_id);
       if (auto type_info = RecognizedTypeInfo::ForType(

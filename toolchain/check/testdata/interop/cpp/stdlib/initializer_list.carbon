@@ -69,11 +69,11 @@ fn F() {
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral, Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%int_1.5b8, %int_2.ecc, %int_3.1ba) [concrete]
-// CHECK:STDOUT:   %array_type: type = array_type %int_3.1ba, %i32 [concrete]
+// CHECK:STDOUT:   %Array.b3a: type = class_type @Array, @Array(%i32, %int_3.1ba) [concrete]
 // CHECK:STDOUT:   %.0ee: Core.Form = init_form %initializer_list [concrete]
-// CHECK:STDOUT:   %pattern_type.771: type = pattern_type %array_type [concrete]
-// CHECK:STDOUT:   %_.param_patt: %pattern_type.771 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %_.patt.03c: %pattern_type.771 = wrapper_binding_pattern _, %_.param_patt [concrete]
+// CHECK:STDOUT:   %pattern_type.7a1: type = pattern_type %Array.b3a [concrete]
+// CHECK:STDOUT:   %_.param_patt: %pattern_type.7a1 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %_.patt.c43: %pattern_type.7a1 = wrapper_binding_pattern _, %_.param_patt [concrete]
 // CHECK:STDOUT:   %return.param_patt.199: %pattern_type.7fc = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.07e: %pattern_type.7fc = return_slot_pattern %return.param_patt.199, %initializer_list [concrete]
 // CHECK:STDOUT:   %initializer_list.initializer_list.type.0fbcd7.1: type = fn_type @initializer_list.initializer_list.loc8 [concrete]
@@ -100,8 +100,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.485: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
 // CHECK:STDOUT:   %bound_method.763: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.410: %i32 = int_value 3 [concrete]
-// CHECK:STDOUT:   %array: %array_type = tuple_value (%int_1.0c6, %int_2.295, %int_3.410) [concrete]
-// CHECK:STDOUT:   %.981: ref %array_type = temporary invalid, %array [concrete]
+// CHECK:STDOUT:   %array: %Array.b3a = tuple_value (%int_1.0c6, %int_2.295, %int_3.410) [concrete]
+// CHECK:STDOUT:   %.293: ref %Array.b3a = temporary invalid, %array [concrete]
 // CHECK:STDOUT:   %Consume.cpp_overload_set.type: type = cpp_overload_set_type @Consume.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Consume.cpp_overload_set.value: %Consume.cpp_overload_set.type = cpp_overload_set_value @Consume.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.fac: type = ptr_type %initializer_list [concrete]
@@ -125,15 +125,15 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.3: type = fn_type @Destroy.WithSelf.SelfDestruct.loc10_23.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.3: %Destroy.WithSelf.SelfDestruct.type.fbceb5.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.c42: %pattern_type.771 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.3bc: %pattern_type.771 = wrapper_binding_pattern self, %self.param_patt.c42 [concrete]
+// CHECK:STDOUT:   %self.param_patt.717: %pattern_type.7a1 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.cb9: %pattern_type.7a1 = wrapper_binding_pattern self, %self.param_patt.717 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc10_23.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.4: type = fn_type @Destroy.WithSelf.Op.loc10_23.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.4: %Destroy.WithSelf.Op.type.ef016f.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.4: type = fn_type @Destroy.WithSelf.SelfDestruct.loc10_23.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.4: %Destroy.WithSelf.SelfDestruct.type.fbceb5.4 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.981, %Destroy.WithSelf.SelfDestruct.db3fdb.4 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.293, %Destroy.WithSelf.SelfDestruct.db3fdb.4 [concrete]
 // CHECK:STDOUT:   %InitListConstructor: type = class_type @InitListConstructor [concrete]
 // CHECK:STDOUT:   %pattern_type.ed6: type = pattern_type %InitListConstructor [concrete]
 // CHECK:STDOUT:   %_.patt.100: %pattern_type.ed6 = value_binding_pattern _ [concrete]
@@ -193,24 +193,24 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.f8e97d.1: %initializer_list.initializer_list.type.0fbcd7.1 = fn_decl @initializer_list.initializer_list.loc8 [concrete = constants.%initializer_list.initializer_list.0db5f6.1] {
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.771 = value_param_pattern [concrete = constants.%_.param_patt]
-// CHECK:STDOUT:     %_.patt: %pattern_type.771 = wrapper_binding_pattern _, %_.param_patt [concrete = constants.%_.patt.03c]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.7a1 = value_param_pattern [concrete = constants.%_.param_patt]
+// CHECK:STDOUT:     %_.patt: %pattern_type.7a1 = wrapper_binding_pattern _, %_.param_patt [concrete = constants.%_.patt.c43]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7fc = out_param_pattern [concrete = constants.%return.param_patt.199]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7fc = return_slot_pattern %return.param_patt, imports.%initializer_list.decl [concrete = constants.%return.patt.07e]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %_.param: %array_type = value_param call_param0
-// CHECK:STDOUT:     %_: %array_type = wrapper_binding _, %_.param
+// CHECK:STDOUT:     %_.param: %Array.b3a = value_param call_param0
+// CHECK:STDOUT:     %_: %Array.b3a = wrapper_binding _, %_.param
 // CHECK:STDOUT:     %return.param: ref %initializer_list = out_param call_param1
 // CHECK:STDOUT:     %return: ref %initializer_list = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.f8e97d.2: %initializer_list.initializer_list.type.0fbcd7.2 = fn_decl @initializer_list.initializer_list.loc10 [concrete = constants.%initializer_list.initializer_list.0db5f6.2] {
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.771 = value_param_pattern [concrete = constants.%_.param_patt]
-// CHECK:STDOUT:     %_.patt: %pattern_type.771 = wrapper_binding_pattern _, %_.param_patt [concrete = constants.%_.patt.03c]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.7a1 = value_param_pattern [concrete = constants.%_.param_patt]
+// CHECK:STDOUT:     %_.patt: %pattern_type.7a1 = wrapper_binding_pattern _, %_.param_patt [concrete = constants.%_.patt.c43]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7fc = out_param_pattern [concrete = constants.%return.param_patt.199]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7fc = return_slot_pattern %return.param_patt, imports.%initializer_list.decl [concrete = constants.%return.patt.07e]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %_.param: %array_type = value_param call_param0
-// CHECK:STDOUT:     %_: %array_type = wrapper_binding _, %_.param
+// CHECK:STDOUT:     %_.param: %Array.b3a = value_param call_param0
+// CHECK:STDOUT:     %_: %Array.b3a = wrapper_binding _, %_.param
 // CHECK:STDOUT:     %return.param: ref %initializer_list = out_param call_param1
 // CHECK:STDOUT:     %return: ref %initializer_list = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -236,27 +236,27 @@ fn F() {
 // CHECK:STDOUT:     %self: ref %i32 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc10_23.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.3] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.771 = ref_param_pattern [concrete = constants.%self.param_patt.c42]
-// CHECK:STDOUT:     %self.patt: %pattern_type.771 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.3bc]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7a1 = ref_param_pattern [concrete = constants.%self.param_patt.717]
+// CHECK:STDOUT:     %self.patt: %pattern_type.7a1 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.cb9]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.b3a = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.b3a = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.4: %Destroy.WithSelf.Op.type.ef016f.4 = fn_decl @Destroy.WithSelf.Op.loc10_23.3 [concrete = constants.%Destroy.WithSelf.Op.403171.4] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.771 = ref_param_pattern [concrete = constants.%self.param_patt.c42]
-// CHECK:STDOUT:     %self.patt: %pattern_type.771 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.3bc]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7a1 = ref_param_pattern [concrete = constants.%self.param_patt.717]
+// CHECK:STDOUT:     %self.patt: %pattern_type.7a1 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.cb9]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.b3a = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.b3a = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %initializer_list.initializer_list.decl.f8e97d.3: %initializer_list.initializer_list.type.0fbcd7.3 = fn_decl @initializer_list.initializer_list.loc12 [concrete = constants.%initializer_list.initializer_list.0db5f6.3] {
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.771 = value_param_pattern [concrete = constants.%_.param_patt]
-// CHECK:STDOUT:     %_.patt: %pattern_type.771 = wrapper_binding_pattern _, %_.param_patt [concrete = constants.%_.patt.03c]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.7a1 = value_param_pattern [concrete = constants.%_.param_patt]
+// CHECK:STDOUT:     %_.patt: %pattern_type.7a1 = wrapper_binding_pattern _, %_.param_patt [concrete = constants.%_.patt.c43]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7fc = out_param_pattern [concrete = constants.%return.param_patt.199]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7fc = return_slot_pattern %return.param_patt, imports.%initializer_list.decl [concrete = constants.%return.patt.07e]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %_.param: %array_type = value_param call_param0
-// CHECK:STDOUT:     %_: %array_type = wrapper_binding _, %_.param
+// CHECK:STDOUT:     %_.param: %Array.b3a = value_param call_param0
+// CHECK:STDOUT:     %_: %Array.b3a = wrapper_binding _, %_.param
 // CHECK:STDOUT:     %return.param: ref %initializer_list = out_param call_param1
 // CHECK:STDOUT:     %return: ref %initializer_list = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -281,7 +281,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_50.1: %tuple.type = tuple_literal (%int_1.loc8_43, %int_2.loc8_46, %int_3.loc8_49) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %int_3.loc8_50: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %array_type.loc8: type = array_type %int_3.loc8_50, %i32.2 [concrete = constants.%array_type]
+// CHECK:STDOUT:   %Array.loc8: type = class_type @Array, @Array(constants.%i32, constants.%int_3.1ba) [concrete = constants.%Array.b3a]
 // CHECK:STDOUT:   %.loc8_50.2: Core.Form = init_form imports.%initializer_list.decl [concrete = constants.%.0ee]
 // CHECK:STDOUT:   %.loc8_50.3: ref %initializer_list = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_50.1: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
@@ -290,7 +290,7 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc8_50.2: <bound method> = bound_method %int_1.loc8_43, %specific_fn.loc8_50.1 [concrete = constants.%bound_method.953]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8_50.1: init %i32 = call %bound_method.loc8_50.2(%int_1.loc8_43) [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %.loc8_50.4: init %i32 = converted %int_1.loc8_43, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8_50.1 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc8_50.5: ref %array_type = temporary_storage
+// CHECK:STDOUT:   %.loc8_50.5: ref %Array.b3a = temporary_storage
 // CHECK:STDOUT:   %int_0.loc8: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc8_50.6: ref %i32 = array_index %.loc8_50.5, %int_0.loc8
 // CHECK:STDOUT:   %.loc8_50.7: init %i32 to %.loc8_50.6 = in_place_init %.loc8_50.4 [concrete = constants.%int_1.0c6]
@@ -312,10 +312,10 @@ fn F() {
 // CHECK:STDOUT:   %int_2.loc8_50: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc8_50.12: ref %i32 = array_index %.loc8_50.5, %int_2.loc8_50
 // CHECK:STDOUT:   %.loc8_50.13: init %i32 to %.loc8_50.12 = in_place_init %.loc8_50.11 [concrete = constants.%int_3.410]
-// CHECK:STDOUT:   %.loc8_50.14: init %array_type to %.loc8_50.5 = array_init (%.loc8_50.7, %.loc8_50.10, %.loc8_50.13) [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc8_50.15: init %array_type = converted %.loc8_50.1, %.loc8_50.14 [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc8_50.16: ref %array_type = temporary %.loc8_50.5, %.loc8_50.15 [concrete = constants.%.981]
-// CHECK:STDOUT:   %.loc8_50.17: %array_type = acquire_value %.loc8_50.16 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc8_50.14: init %Array.b3a to %.loc8_50.5 = array_init (%.loc8_50.7, %.loc8_50.10, %.loc8_50.13) [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc8_50.15: init %Array.b3a = converted %.loc8_50.1, %.loc8_50.14 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc8_50.16: ref %Array.b3a = temporary %.loc8_50.5, %.loc8_50.15 [concrete = constants.%.293]
+// CHECK:STDOUT:   %.loc8_50.17: %Array.b3a = acquire_value %.loc8_50.16 [concrete = constants.%array]
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.loc8: init %initializer_list to %.loc8_50.3 = call generated.%initializer_list.initializer_list.decl.f8e97d.1(%.loc8_50.17)
 // CHECK:STDOUT:   %.loc8_50.18: init %initializer_list = converted %.loc8_50.1, %initializer_list.initializer_list.call.loc8
 // CHECK:STDOUT:   %.loc8_50.19: ref %initializer_list = temporary %.loc8_50.3, %.loc8_50.18
@@ -333,7 +333,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_23.1: %tuple.type = tuple_literal (%int_1.loc10_16, %int_2.loc10_19, %int_3.loc10_22) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %int_3.loc10_23: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %array_type.loc10: type = array_type %int_3.loc10_23, %i32.4 [concrete = constants.%array_type]
+// CHECK:STDOUT:   %Array.loc10: type = class_type @Array, @Array(constants.%i32, constants.%int_3.1ba) [concrete = constants.%Array.b3a]
 // CHECK:STDOUT:   %.loc10_23.2: Core.Form = init_form imports.%initializer_list.decl [concrete = constants.%.0ee]
 // CHECK:STDOUT:   %.loc10_23.3: ref %initializer_list = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc10_23.1: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
@@ -342,7 +342,7 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc10_23.2: <bound method> = bound_method %int_1.loc10_16, %specific_fn.loc10_23.1 [concrete = constants.%bound_method.953]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_23.1: init %i32 = call %bound_method.loc10_23.2(%int_1.loc10_16) [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %.loc10_23.4: init %i32 = converted %int_1.loc10_16, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_23.1 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc10_23.5: ref %array_type = temporary_storage
+// CHECK:STDOUT:   %.loc10_23.5: ref %Array.b3a = temporary_storage
 // CHECK:STDOUT:   %int_0.loc10: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc10_23.6: ref %i32 = array_index %.loc10_23.5, %int_0.loc10
 // CHECK:STDOUT:   %.loc10_23.7: init %i32 to %.loc10_23.6 = in_place_init %.loc10_23.4 [concrete = constants.%int_1.0c6]
@@ -364,10 +364,10 @@ fn F() {
 // CHECK:STDOUT:   %int_2.loc10_23: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc10_23.12: ref %i32 = array_index %.loc10_23.5, %int_2.loc10_23
 // CHECK:STDOUT:   %.loc10_23.13: init %i32 to %.loc10_23.12 = in_place_init %.loc10_23.11 [concrete = constants.%int_3.410]
-// CHECK:STDOUT:   %.loc10_23.14: init %array_type to %.loc10_23.5 = array_init (%.loc10_23.7, %.loc10_23.10, %.loc10_23.13) [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc10_23.15: init %array_type = converted %.loc10_23.1, %.loc10_23.14 [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc10_23.16: ref %array_type = temporary %.loc10_23.5, %.loc10_23.15 [concrete = constants.%.981]
-// CHECK:STDOUT:   %.loc10_23.17: %array_type = acquire_value %.loc10_23.16 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc10_23.14: init %Array.b3a to %.loc10_23.5 = array_init (%.loc10_23.7, %.loc10_23.10, %.loc10_23.13) [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc10_23.15: init %Array.b3a = converted %.loc10_23.1, %.loc10_23.14 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc10_23.16: ref %Array.b3a = temporary %.loc10_23.5, %.loc10_23.15 [concrete = constants.%.293]
+// CHECK:STDOUT:   %.loc10_23.17: %Array.b3a = acquire_value %.loc10_23.16 [concrete = constants.%array]
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.loc10: init %initializer_list to %.loc10_23.3 = call generated.%initializer_list.initializer_list.decl.f8e97d.2(%.loc10_23.17)
 // CHECK:STDOUT:   %.loc10_23.18: init %initializer_list = converted %.loc10_23.1, %initializer_list.initializer_list.call.loc10
 // CHECK:STDOUT:   %.loc10_23.19: ref %initializer_list = temporary %.loc10_23.3, %.loc10_23.18
@@ -377,7 +377,7 @@ fn F() {
 // CHECK:STDOUT:   %Consume__carbon_thunk.call: init %empty_tuple.type = call imports.%Consume__carbon_thunk.decl(%addr.loc10)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc10: <bound method> = bound_method %.loc10_23.19, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc10_23.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc10(%.loc10_23.19)
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc10_23.2: init %empty_tuple.type = call constants.%Destroy.WithSelf.SelfDestruct.bound(constants.%.981)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc10_23.2: init %empty_tuple.type = call constants.%Destroy.WithSelf.SelfDestruct.bound(constants.%.293)
 // CHECK:STDOUT:   %int_1.loc12_37: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc12_40: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %int_3.loc12_43: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -385,7 +385,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_44.2: ref %InitListConstructor = temporary_storage
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %int_3.loc12_44: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %array_type.loc12: type = array_type %int_3.loc12_44, %i32.6 [concrete = constants.%array_type]
+// CHECK:STDOUT:   %Array.loc12: type = class_type @Array, @Array(constants.%i32, constants.%int_3.1ba) [concrete = constants.%Array.b3a]
 // CHECK:STDOUT:   %.loc12_44.3: Core.Form = init_form imports.%initializer_list.decl [concrete = constants.%.0ee]
 // CHECK:STDOUT:   %.loc12_44.4: ref %initializer_list = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc12_44.1: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
@@ -394,7 +394,7 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc12_44.2: <bound method> = bound_method %int_1.loc12_37, %specific_fn.loc12_44.1 [concrete = constants.%bound_method.953]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_44.1: init %i32 = call %bound_method.loc12_44.2(%int_1.loc12_37) [concrete = constants.%int_1.0c6]
 // CHECK:STDOUT:   %.loc12_44.5: init %i32 = converted %int_1.loc12_37, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_44.1 [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc12_44.6: ref %array_type = temporary_storage
+// CHECK:STDOUT:   %.loc12_44.6: ref %Array.b3a = temporary_storage
 // CHECK:STDOUT:   %int_0.loc12: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc12_44.7: ref %i32 = array_index %.loc12_44.6, %int_0.loc12
 // CHECK:STDOUT:   %.loc12_44.8: init %i32 to %.loc12_44.7 = in_place_init %.loc12_44.5 [concrete = constants.%int_1.0c6]
@@ -416,10 +416,10 @@ fn F() {
 // CHECK:STDOUT:   %int_2.loc12_44: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc12_44.13: ref %i32 = array_index %.loc12_44.6, %int_2.loc12_44
 // CHECK:STDOUT:   %.loc12_44.14: init %i32 to %.loc12_44.13 = in_place_init %.loc12_44.12 [concrete = constants.%int_3.410]
-// CHECK:STDOUT:   %.loc12_44.15: init %array_type to %.loc12_44.6 = array_init (%.loc12_44.8, %.loc12_44.11, %.loc12_44.14) [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc12_44.16: init %array_type = converted %.loc12_44.1, %.loc12_44.15 [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc12_44.17: ref %array_type = temporary %.loc12_44.6, %.loc12_44.16 [concrete = constants.%.981]
-// CHECK:STDOUT:   %.loc12_44.18: %array_type = acquire_value %.loc12_44.17 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc12_44.15: init %Array.b3a to %.loc12_44.6 = array_init (%.loc12_44.8, %.loc12_44.11, %.loc12_44.14) [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc12_44.16: init %Array.b3a = converted %.loc12_44.1, %.loc12_44.15 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc12_44.17: ref %Array.b3a = temporary %.loc12_44.6, %.loc12_44.16 [concrete = constants.%.293]
+// CHECK:STDOUT:   %.loc12_44.18: %Array.b3a = acquire_value %.loc12_44.17 [concrete = constants.%array]
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.loc12: init %initializer_list to %.loc12_44.4 = call generated.%initializer_list.initializer_list.decl.f8e97d.3(%.loc12_44.18)
 // CHECK:STDOUT:   %.loc12_44.19: init %initializer_list = converted %.loc12_44.1, %initializer_list.initializer_list.call.loc12
 // CHECK:STDOUT:   %.loc12_44.20: ref %initializer_list = temporary %.loc12_44.4, %.loc12_44.19
@@ -444,16 +444,16 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc12_44.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc12_44.1(%.loc12_44.25)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc12_44.2: <bound method> = bound_method %.loc12_44.20, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc12_44.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc12_44.2(%.loc12_44.20)
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc12_44.3: init %empty_tuple.type = call constants.%Destroy.WithSelf.SelfDestruct.bound(constants.%.981)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc12_44.3: init %empty_tuple.type = call constants.%Destroy.WithSelf.SelfDestruct.bound(constants.%.293)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc8: <bound method> = bound_method %.loc8_50.19, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc8_50.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc8(%.loc8_50.19)
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc8_50.2: init %empty_tuple.type = call constants.%Destroy.WithSelf.SelfDestruct.bound(constants.%.981)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc8_50.2: init %empty_tuple.type = call constants.%Destroy.WithSelf.SelfDestruct.bound(constants.%.293)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @initializer_list.initializer_list.loc8(%_.param: %array_type) -> out %return.param: %initializer_list = "cpp.std.initializer_list.make";
+// CHECK:STDOUT: fn @initializer_list.initializer_list.loc8(%_.param: %Array.b3a) -> out %return.param: %initializer_list = "cpp.std.initializer_list.make";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @initializer_list.initializer_list.loc10(%_.param: %array_type) -> out %return.param: %initializer_list = "cpp.std.initializer_list.make";
+// CHECK:STDOUT: fn @initializer_list.initializer_list.loc10(%_.param: %Array.b3a) -> out %return.param: %initializer_list = "cpp.std.initializer_list.make";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_23.1(%self.param: ref %initializer_list) = "no_op";
 // CHECK:STDOUT:
@@ -475,7 +475,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_23.2(%self.param: ref %array_type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_23.2(%self.param: ref %Array.b3a) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc10_23.1: ref %i32 = array_index %self.param, %int_2
@@ -492,16 +492,16 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_23.3(%self.param: ref %array_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_23.3(%self.param: ref %Array.b3a) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc10_23.3(%self.param: ref %array_type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc10_23.3(%self.param: ref %Array.b3a) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.4(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.3(%self.param)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @initializer_list.initializer_list.loc12(%_.param: %array_type) -> out %return.param: %initializer_list = "cpp.std.initializer_list.make";
+// CHECK:STDOUT: fn @initializer_list.initializer_list.loc12(%_.param: %Array.b3a) -> out %return.param: %initializer_list = "cpp.std.initializer_list.make";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc12(%self.param: ref %InitListConstructor) = "no_op";
 // CHECK:STDOUT:

@@ -2,12 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
-#include "toolchain/check/name_lookup.h"
+#include "toolchain/check/literal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/parse/node_kind.h"
 
@@ -76,11 +75,9 @@ auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
 
   // `array(T, N)` is `Core.Array(T, N)`. The call is attributed to the
   // `array(T, N)` expression, so that the resulting type has a location.
-  auto fn_inst_id = LookupNameInCore(
-      context, SemIR::LocId(node_id).AsDesugared(), CoreIdentifier::Array);
-  auto type_inst_id = PerformCall(context, node_id, fn_inst_id,
-                                  {element_type.inst_id, bound_inst_id});
-  context.node_stack().Push(node_id, type_inst_id);
+  auto type_expr =
+      MakeArrayType(context, node_id, element_type.inst_id, bound_inst_id);
+  context.node_stack().Push(node_id, type_expr.inst_id);
   return true;
 }
 

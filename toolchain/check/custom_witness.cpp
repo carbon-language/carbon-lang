@@ -453,7 +453,9 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         return;
       }
       case CARBON_KIND(SemIR::ClassType class_type): {
-        auto class_info = context.classes().Get(class_type.class_id);
+        // An adapter for a primitive array type, such as `Core.Array`, is
+        // destroyed by destroying its elements in place.
+        const auto& class_info = context.classes().Get(class_type.class_id);
         if (auto adapted_type_id = class_info.GetAdaptedType(
                 context.sem_ir(), class_type.specific_id);
             adapted_type_id.has_value() &&

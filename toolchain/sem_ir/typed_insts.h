@@ -151,8 +151,7 @@ struct AliasBinding {
 };
 
 // An array indexing operation, such as `array[index]`. The type of `array_id`
-// may be an array type or a type that transitively adapts one, such as
-// `Core.Array`.
+// is an array type or a type that transitively adapts one.
 struct ArrayIndex {
   // Parse node is usually Parse::IndexExprId.
   static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(

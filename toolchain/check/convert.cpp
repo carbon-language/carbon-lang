@@ -1642,19 +1642,19 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
   }
 
   // A tuple (T1, T2, ..., Tn) converts to array(T, n) if each Ti converts to T.
+  // This applies both to `Core.Array(T, n)`, which is the type named by
+  // `array(T, n)`, and to the primitive array type that it adapts.
   if (auto src_tuple_type =
           sem_ir.types().TryGetAs<SemIR::TupleType>(value_type_id)) {
-    if (auto target_array_type = target_type_inst.TryAs<SemIR::ArrayType>()) {
+    auto array_type_id =
+        TryGetPrimitiveArrayTypeForCoreArray(context, loc_id, target.type_id);
+    if (!array_type_id.has_value()) {
+      array_type_id = target.type_id;
+    }
+    if (auto target_array_type =
+            sem_ir.types().TryGetAs<SemIR::ArrayType>(array_type_id)) {
       return ConvertTupleToArray(context, *src_tuple_type, *target_array_type,
                                  value_id, target);
-    }
-    if (auto array_type_id = TryGetPrimitiveArrayTypeForCoreArray(
-            context, loc_id, target.type_id);
-        array_type_id.has_value()) {
-      return ConvertTupleToArray(
-          context, *src_tuple_type,
-          sem_ir.types().GetAs<SemIR::ArrayType>(array_type_id), value_id,
-          target);
     }
   }
 

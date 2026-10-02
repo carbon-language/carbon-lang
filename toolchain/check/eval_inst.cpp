@@ -64,10 +64,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       context.insts().GetCanonicalLocId(orig_inst.bound_id).has_value()
           ? orig_inst.bound_id
           : inst_id;
-  if (!ValidateArrayType(context, SemIR::LocId(error_loc), inst)) {
-    return ConstantEvalResult::Error;
-  }
-  return ConstantEvalResult::NewSamePhase(inst);
+  return ValidateArrayType(context, SemIR::LocId(error_loc), inst)
+             ? ConstantEvalResult::NewSamePhase(inst)
+             : ConstantEvalResult::Error;
 }
 
 auto EvalConstantInst(Context& context, SemIR::AsCompatible inst)

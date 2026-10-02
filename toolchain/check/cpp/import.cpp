@@ -1456,10 +1456,8 @@ static auto MapArrayType(Context& context, SemIR::LocId loc_id,
                         .int_id = context.ints().AddUnsigned(
                             constant_array_type->getSize())});
     auto bound_inst_id = context.constant_values().GetInstId(bound_const_id);
-    auto fn_inst_id = LookupNameInCore(context, loc_id, CoreIdentifier::Array);
-    auto call_id = PerformCall(context, loc_id, fn_inst_id,
-                               {element_type_expr.inst_id, bound_inst_id});
-    return ExprAsType(context, loc_id, call_id);
+    return MakeArrayType(context, loc_id, element_type_expr.inst_id,
+                         bound_inst_id);
   }
 
   return TypeExpr::None;

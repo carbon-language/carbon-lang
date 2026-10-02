@@ -1292,6 +1292,22 @@ static auto PerformCharLiteralSubChar(Context& context, SemIR::InstId lhs_id,
                        llvm::APInt(32, result, /*isSigned=*/true));
 }
 
+// Forms a constant array type as an evaluation result. Requires that
+// `element_type_id` and `bound_id` are constant.
+static auto MakeArrayTypeResult(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId element_type_id,
+                                SemIR::InstId bound_id, Phase phase)
+    -> SemIR::ConstantId {
+  auto result = SemIR::ArrayType{
+      .type_id = SemIR::TypeType::TypeId,
+      .bound_id = bound_id,
+      .element_type_inst_id = context.types().GetAsTypeInstId(element_type_id)};
+  if (!ValidateArrayType(context, loc_id, result)) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return MakeConstantResult(context, result, phase);
+}
+
 // Forms a constant int type as an evaluation result. Requires that width_id is
 // constant.
 static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
@@ -2659,14 +2675,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     case SemIR::BuiltinFunctionKind::ArrayMakeType: {
-      auto result = SemIR::ArrayType{
-          .type_id = SemIR::TypeType::TypeId,
-          .bound_id = arg_ids[1],
-          .element_type_inst_id = context.types().GetAsTypeInstId(arg_ids[0])};
-      if (!ValidateArrayType(context, loc_id, result)) {
-        return SemIR::ErrorInst::ConstantId;
-      }
-      return MakeConstantResult(context, result, phase);
+      return MakeArrayTypeResult(context, loc_id, arg_ids[0], arg_ids[1],
+                                 phase);
     }
 
     case SemIR::BuiltinFunctionKind::FormMakeType: {
