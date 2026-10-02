@@ -1325,7 +1325,8 @@ static auto MapTagType(Context& context, const clang::TagType& type)
 
 static auto MapFunctionPointerType(Context& context, SemIR::LocId /*loc_id*/,
                                    clang::QualType type) -> TypeExpr {
-  CARBON_CHECK(type->isFunctionPointerType());
+  CARBON_CHECK(type->isFunctionPointerType() ||
+               type->isMemberFunctionPointerType());
 
   auto clang_type_id = context.clang_function_pointer_types().Lookup(
       type.getCanonicalType().getTypePtr());
@@ -1350,7 +1351,7 @@ static auto MapNonWrapperType(Context& context, SemIR::LocId loc_id,
     return MapTagType(context, *tag_type);
   }
 
-  if (type->isFunctionPointerType()) {
+  if (type->isFunctionPointerType() || type->isMemberFunctionPointerType()) {
     return MapFunctionPointerType(context, loc_id, type);
   }
 
@@ -2105,7 +2106,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 static auto ImportFunctionPointer(Context& context,
                                   const clang::Type* pointer_type)
     -> SemIR::InstId {
-  CARBON_CHECK(pointer_type->isFunctionPointerType());
+  CARBON_CHECK(pointer_type->isFunctionPointerType() ||
+               pointer_type->isMemberFunctionPointerType());
   // Allocate an ID for the function pointer type and return it.
   pointer_type = clang::QualType(pointer_type, /*Quals=*/0)
                      .getCanonicalType()
@@ -2129,6 +2131,10 @@ auto ImportFunctionPointerInvoke(
   const auto& info = context.clang_function_pointer_types().Get(clang_type_id);
   if (info.decl_id.has_value()) {
     return info;
+  }
+  if (info.clang_type->isMemberFunctionPointerType()) {
+    context.TODO(loc_id,
+                 "invoking a C++ member function pointer is unsupported");
   }
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
@@ -2183,7 +2189,7 @@ static auto PushDecl(Context& context, SemIR::ClangDeclKey decl,
 static auto PushType(Context& context, clang::QualType type,
                      ImportWorklist& worklist) -> void {
   while (true) {
-    if (type->isFunctionPointerType()) {
+    if (type->isFunctionPointerType() || type->isMemberFunctionPointerType()) {
       const clang::Type* type_ptr = type.getCanonicalType().getTypePtr();
       if (!IsImported(context, type_ptr)) {
         worklist.push_back({.key = type_ptr, .added_dependencies = false});
@@ -2418,7 +2424,8 @@ static auto ImportAfterDependencies(Context& context, SemIR::LocId loc_id,
       return SemIR::ErrorInst::InstId;
     }
     case CARBON_KIND(const clang::Type* type): {
-      if (type->isFunctionPointerType()) {
+      if (type->isFunctionPointerType() ||
+          type->isMemberFunctionPointerType()) {
         return ImportFunctionPointer(context, type);
       }
 

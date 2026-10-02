@@ -699,6 +699,10 @@ fn Test2(c: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.680f7fa3ef86df7a:core.Destroy.Core"(ptr %self) #0 !dbg !255 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc9_3.1.b = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 1, !dbg !257
+// CHECK:STDOUT:   call void @"_CSelfDestruct.12212b84320f2fd6:core.Destroy.Core"(ptr %.loc9_3.1.b), !dbg !257
+// CHECK:STDOUT:   %.loc9_3.2.a = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 0, !dbg !257
+// CHECK:STDOUT:   call void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %.loc9_3.2.a), !dbg !257
 // CHECK:STDOUT:   ret void, !dbg !257
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -467,9 +467,9 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %.loc6_3.7 => constants.%array
 // CHECK:STDOUT:   %.loc6_3.8 => constants.%inst.splice_block.426619.4
 // CHECK:STDOUT:   %.loc6_3.9 => <bound method>
-// CHECK:STDOUT:   %.loc6_3.10 => invalid
+// CHECK:STDOUT:   %.loc6_3.10 => <not constant>
 // CHECK:STDOUT:   %.loc6_3.11 => constants.%inst.call
 // CHECK:STDOUT:   %.loc6_3.12 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc6_3.13 => invalid
+// CHECK:STDOUT:   %.loc6_3.13 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

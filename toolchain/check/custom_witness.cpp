@@ -5,8 +5,10 @@
 #include "toolchain/check/custom_witness.h"
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
+#include "toolchain/check/class.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
@@ -401,13 +403,16 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
 }
 
 // Calls `self.<field>.(Destroy.SelfDestruct)` for a field in a `StructType`.
-static auto DestroyStructField(Context& context, SemIR::LocId loc_id,
-                               SemIR::InstId callee_self_param_id,
-                               SemIR::StructTypeField struct_field) -> void {
-  auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
-                                       struct_field.name_id);
-  auto self_destruct_call = BuildSelfDestructCall(context, member_id);
-  DiscardExpr(context, self_destruct_call);
+static auto DestroyStructFields(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId callee_self_param_id,
+    llvm::ArrayRef<SemIR::StructTypeField> struct_fields) -> void {
+  for (auto i = static_cast<std::int64_t>(struct_fields.size()) - 1; i >= 0;
+       --i) {
+    auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
+                                         struct_fields[i].name_id);
+    auto self_destruct_call = BuildSelfDestructCall(context, member_id);
+    DiscardExpr(context, self_destruct_call);
+  }
 }
 
 // Returns the body for `SubobjectDestroy.Op`.
@@ -434,9 +439,8 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         // calls to `Destroy.SelfDestruct` loop over the array that calls the
         // method in its body.
         //
-        // We probably need to use `StartLoopHeader`, `BranchAndStartLoopBody`,
-        // and `FinishLoopBody`, which are currently private functions in
-        // `/toolchain/check/handle_loop_statement.cpp`.
+        // Add an `impl` for `Core.Destroy` on `Core.Array` containing a loop,
+        // and make primitive array destruction a no-op.
         while (--size >= 0) {
           auto int_id = context.ints().Add(size);
           auto index_id = AddInst(
@@ -455,6 +459,8 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
       case CARBON_KIND(SemIR::ClassType class_type): {
         // An adapter for a primitive array type, such as `Core.Array`, is
         // destroyed by destroying its elements in place.
+        // TODO: Handle destruction of adapters generally by destroying the
+        // adapted type.
         const auto& class_info = context.classes().Get(class_type.class_id);
         if (auto adapted_type_id = class_info.GetAdaptedType(
                 context.sem_ir(), class_type.specific_id);
@@ -463,7 +469,17 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
           self_type_id = adapted_type_id;
           break;
         }
-        // TODO: implement destruction for class types.
+        auto access_context =
+            llvm::SaveAndRestore(context.access_context(),
+                                 SemIR::NameScopeId::AllowHighestAccessLevel);
+
+        DestroyStructFields(
+            context, loc_id, callee_self_param_id,
+            class_info
+                .GetStructTypeFields(context.sem_ir(), class_type.specific_id)
+                .drop_while([](SemIR::StructTypeField struct_field) {
+                  return struct_field.name_id == SemIR::NameId::Vptr;
+                }));
         return;
       }
       case CARBON_KIND(SemIR::ConstType const_type): {
@@ -482,13 +498,9 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         return;
       }
       case CARBON_KIND(SemIR::StructType struct_type): {
-        auto struct_fields =
-            context.struct_type_fields().Get(struct_type.fields_id);
-        for (auto i = static_cast<std::int64_t>(struct_fields.size()) - 1;
-             i >= 0; --i) {
-          DestroyStructField(context, loc_id, callee_self_param_id,
-                             struct_fields[i]);
-        }
+        DestroyStructFields(
+            context, loc_id, callee_self_param_id,
+            context.struct_type_fields().Get(struct_type.fields_id));
         return;
       }
       case CARBON_KIND(SemIR::TupleType tuple_type): {

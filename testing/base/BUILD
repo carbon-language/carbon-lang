@@ -46,6 +46,12 @@ cc_library(
 )
 
 cc_library(
+    name = "benchmark_helpers",
+    testonly = 1,
+    hdrs = ["benchmark_helpers.h"],
+)
+
+cc_library(
     name = "capture_std_streams",
     testonly = 1,
     srcs = ["capture_std_streams.cpp"],

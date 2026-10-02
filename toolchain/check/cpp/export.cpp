@@ -24,6 +24,7 @@
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/mangler.h"
 #include "toolchain/sem_ir/pattern.h"
@@ -160,11 +161,20 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 
     // Complete the type here to avoid hitting a clang assert later when
     // adding methods.
-    if (auto* record_decl = llvm::dyn_cast<clang::RecordDecl>(decl_context)) {
+    if (auto* record_decl =
+            llvm::dyn_cast<clang::CXXRecordDecl>(decl_context)) {
       context.ast_context().getExternalSource()->CompleteType(record_decl);
     }
   }
 
+  if (auto* record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(decl_context)) {
+    // We can't use a class as a name scope until it's complete, so we need to
+    // ensure it's complete here.
+    context.clang_sema().RequireCompleteType(
+        GetCppLocation(context, loc_id),
+        context.ast_context().getCanonicalTagType(record_decl),
+        clang::diag::err_incomplete_member_access);
+  }
   return decl_context;
 }
 
@@ -1595,27 +1605,39 @@ auto ExportFunctionToCppPointerConversion(
   CARBON_CHECK(!src_clang_decl->isTemplateDecl(),
                "can't form a pointer to a template");
 
-  const auto* exported_fn_type =
-      src_clang_decl->getFunctionType()
-          ->getAsCanonical<clang::FunctionProtoType>();
+  clang::QualType src_fn_type(src_clang_decl->getFunctionType(), /*Quals=*/0);
+  clang::QualType src_ptr_type;
+  if (const auto* src_method_decl =
+          llvm::dyn_cast<clang::CXXMethodDecl>(src_clang_decl);
+      src_method_decl != nullptr && src_method_decl->isInstance()) {
+    src_ptr_type = context.ast_context().getMemberPointerType(
+        src_fn_type, std::nullopt, src_method_decl->getParent());
+  } else {
+    src_ptr_type = context.ast_context().getPointerType(src_fn_type);
+  }
+
+  // TODO: consider directly diagnosing things like function pointer/method
+  // pointer mismatch, or parent type mismatch, rather than deferring them to
+  // the general pointer type mismatch diagnostic below.
+
   auto dest_function_ptr_type_info =
       context.clang_function_pointer_types().Get(dest_type.clang_type_id);
-  const auto* dest_fn_type =
-      dest_function_ptr_type_info.clang_type->getPointeeType()
-          ->getAsCanonical<clang::FunctionProtoType>();
+  clang::QualType dest_ptr_type(dest_function_ptr_type_info.clang_type,
+                                /*Quals=*/0);
 
-  if (exported_fn_type != dest_fn_type) {
+  if (src_ptr_type.getCanonicalType() != dest_ptr_type.getCanonicalType()) {
     if (diagnose) {
       auto function = context.functions().Get(src_type.function_id);
-      CARBON_DIAGNOSTIC(ExportedFunctionPtrTypeMismatch, Error,
-                        "can't convert exported function type to `{0}`",
-                        CppType);
+      CARBON_DIAGNOSTIC(
+          ExportedFunctionPtrTypeMismatch, Error,
+          "can't convert exported {0:member |}function pointer to `{1}`",
+          Diagnostics::BoolAsSelect, CppType);
       CARBON_DIAGNOSTIC(ExportedFromFunction, Note,
-                        "function exported with type `{0}`", CppType);
+                        "function exported with pointer type `{0}`", CppType);
       context.emitter()
-          .Build(src_id, ExportedFunctionPtrTypeMismatch, dest_fn_type)
-          .Note(function.first_decl_id(), ExportedFromFunction,
-                exported_fn_type)
+          .Build(src_id, ExportedFunctionPtrTypeMismatch,
+                 src_ptr_type->isMemberFunctionPointerType(), dest_ptr_type)
+          .Note(function.first_decl_id(), ExportedFromFunction, src_ptr_type)
           .Emit();
     }
     return false;

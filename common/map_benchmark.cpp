@@ -11,6 +11,7 @@
 #include "common/map.h"
 #include "common/raw_hashtable_benchmark_helpers.h"
 #include "llvm/ADT/DenseMap.h"
+#include "testing/base/benchmark_helpers.h"
 
 namespace Carbon {
 namespace {
@@ -253,7 +254,7 @@ static void BM_MapContainsHit(benchmark::State& state) {
         // We block optimizing `i` as that has proven both more effective at
         // blocking the loop from being optimized away and avoiding disruption
         // of the generated code that we're benchmarking.
-        benchmark::DoNotOptimize(i);
+        Testing::DoNotOptimize(i);
 
         bool result = m.BenchContains(lookup_keys[i]);
         CARBON_DCHECK(result);
@@ -287,7 +288,7 @@ static void BM_MapContainsMiss(benchmark::State& state) {
   RunLoopInRandomLayout(state, [&] {
     while (state.KeepRunningBatch(lookup_keys_size)) {
       for (ssize_t i = 0; i < lookup_keys_size;) {
-        benchmark::DoNotOptimize(i);
+        Testing::DoNotOptimize(i);
 
         bool result = m.BenchContains(lookup_keys[i]);
         CARBON_DCHECK(!result);
@@ -343,7 +344,7 @@ static void BM_MapLookupHit(benchmark::State& state) {
   RunLoopInRandomLayout(state, [&] {
     while (state.KeepRunningBatch(lookup_keys_size)) {
       for (ssize_t i = 0; i < lookup_keys_size;) {
-        benchmark::DoNotOptimize(i);
+        Testing::DoNotOptimize(i);
 
         bool result = m.BenchLookup(lookup_keys[i]);
         CARBON_DCHECK(result);
@@ -401,7 +402,7 @@ static void BM_MapUpdateHit(benchmark::State& state) {
   RunLoopInRandomLayout(state, [&] {
     while (state.KeepRunningBatch(lookup_keys_size)) {
       for (ssize_t i = 0; i < lookup_keys_size; ++i) {
-        benchmark::DoNotOptimize(i);
+        Testing::DoNotOptimize(i);
 
         bool inserted = m.BenchUpdate(lookup_keys[i], MakeValue2<VT>());
         CARBON_DCHECK(!inserted);
@@ -445,7 +446,7 @@ static void BM_MapEraseUpdateHit(benchmark::State& state) {
   RunLoopInRandomLayout(state, [&] {
     while (state.KeepRunningBatch(lookup_keys_size)) {
       for (ssize_t i = 0; i < lookup_keys_size; ++i) {
-        benchmark::DoNotOptimize(i);
+        Testing::DoNotOptimize(i);
 
         m.BenchErase(lookup_keys[i]);
         benchmark::ClobberMemory();
@@ -504,7 +505,7 @@ static void BM_MapInsertSeq(benchmark::State& state) {
   ssize_t i = 0;
   RunLoopInRandomLayout(state, [&] {
     for (auto _ : state) {
-      benchmark::DoNotOptimize(i);
+      Testing::DoNotOptimize(i);
 
       MapWrapperT m;
       for (auto k : keys) {
@@ -576,7 +577,7 @@ static void BM_MapIterate(benchmark::State& state) {
         // the loads out of the entries can be optimized away.
         sum += ValueToBool(k) + ValueToBool(v);
       });
-      benchmark::DoNotOptimize(sum);
+      Testing::DoNotOptimize(sum);
     }
   });
 

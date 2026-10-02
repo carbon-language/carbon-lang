@@ -671,7 +671,7 @@ struct CppOverloadSetType {
   SpecificId specific_id;
 };
 
-// The type of a C++ function pointer.
+// The type of a C++ function pointer or member function pointer.
 struct CppFunctionPointerType {
   static constexpr auto Kind =
       InstKind::CppFunctionPointerType.Define<Parse::NodeId>(
