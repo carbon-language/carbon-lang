@@ -501,7 +501,8 @@ class Context {
   // - The associated entries witness table, while parsing an interface.
   InstBlockStack args_type_info_stack_;
 
-  // The stack of StructTypeFields for in-progress StructTypeLiterals.
+  // The stack of StructTypeFields for in-progress StructTypeLiterals,
+  // StructLiteral values, and StructPatterns.
   ArrayStack<SemIR::StructTypeField> struct_type_fields_stack_;
 
   // The stack of FieldDecls for in-progress Class definitions.

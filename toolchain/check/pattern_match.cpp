@@ -844,13 +844,13 @@ auto MatchContext::DoPreWork(State state, SemIR::StructPattern struct_pattern,
 
   auto scrutinee = context_.insts().GetWithLocId(scrutinee_id);
 
-  auto pattern_type_id = GetScrutineeTypeInSpecific(context_, entry.pattern_id,
-                                                    specific_id_stack_.back());
+  auto expected_type_id = GetScrutineeTypeInSpecific(context_, entry.pattern_id,
+                                                     specific_id_stack_.back());
 
-  auto pattern_type_inst = context_.types().GetTypeInstId(pattern_type_id);
+  auto expected_type_inst = context_.types().GetTypeInstId(expected_type_id);
 
   auto pattern_struct_type_inst =
-      context_.insts().TryGetAs<SemIR::StructType>(pattern_type_inst);
+      context_.insts().TryGetAs<SemIR::StructType>(expected_type_inst);
 
   auto pattern_struct_fields =
       context_.struct_type_fields().Get(pattern_struct_type_inst->fields_id);
@@ -932,7 +932,7 @@ auto MatchContext::DoPreWork(State state, SemIR::StructPattern struct_pattern,
 
   // value_scrutinee
   auto converted_scrut_id = ConvertToValueOrRefOfType(
-      context_, SemIR::LocId(entry.pattern_id), scrutinee_id, pattern_type_id);
+      context_, SemIR::LocId(entry.pattern_id), scrutinee_id, expected_type_id);
 
   if (auto scrutinee_value =
           context_.insts().TryGetAs<SemIR::StructValue>(converted_scrut_id)) {
@@ -949,7 +949,7 @@ auto MatchContext::DoPreWork(State state, SemIR::StructPattern struct_pattern,
   }
 
   if (auto scrutinee_type =
-          context_.types().TryGetAs<SemIR::StructType>(pattern_type_id)) {
+          context_.types().TryGetAs<SemIR::StructType>(expected_type_id)) {
     auto scrutinee_struct_fields =
         context_.struct_type_fields().Get(scrutinee_type->fields_id);
 
