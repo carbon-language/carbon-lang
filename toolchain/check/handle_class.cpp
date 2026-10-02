@@ -510,7 +510,8 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
   context.vtable_stack().Pop();
 
   auto& class_info = context.classes().Get(class_id);
-  class_info.friend_scopes.GrowForInsertCount(context.friend_scopes_stack().PeekArray().size());
+  class_info.friend_scopes.GrowForInsertCount(
+      context.friend_scopes_stack().PeekArray().size());
   for (auto friend_scope_id : context.friend_scopes_stack().PeekArray()) {
     class_info.friend_scopes.Insert(friend_scope_id);
   }
