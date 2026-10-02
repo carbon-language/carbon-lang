@@ -175,8 +175,9 @@ using AnyClassDeclId =
                 // class, so they are a form of class decls. This avoids
                 // duplicating all of SemIR::ClassDecl.
                 ChoiceDefinitionStartId>;
-using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
-                                      BuiltinFunctionDefinitionStartId>;
+using AnyFunctionDeclId =
+    NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
+                BuiltinFunctionDefinitionStartId, LambdaDefinitionStartId>;
 using AnyFunctionDefinitionId =
     NodeIdOneOf<FunctionDefinitionId, FunctionTerseDefinitionId,
                 BuiltinFunctionDefinitionId>;

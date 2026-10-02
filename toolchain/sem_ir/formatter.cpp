@@ -171,6 +171,7 @@ static auto IsDefinitionStart(Parse::NodeKind node_kind) -> bool {
     case Parse::NodeKind::FunctionDefinitionStart:
     case Parse::NodeKind::ImplDefinitionStart:
     case Parse::NodeKind::InterfaceDefinitionStart:
+    case Parse::NodeKind::LambdaDefinitionStart:
     case Parse::NodeKind::NamedConstraintDefinitionStart:
       return true;
     default:
