@@ -133,6 +133,9 @@ auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::LambdaId node_id) -> bool {
+  if (context.node_stack().PeekIs(Parse::NodeCategory::Expr)) {
+    return context.TODO(node_id, "terse lambda body");
+  }
   auto function_id =
       context.node_stack().Pop<Parse::NodeKind::LambdaDefinitionStart>();
   CheckFunctionReturnOnFinish(context, node_id, function_id);
@@ -141,11 +144,6 @@ auto HandleParseNode(Context& context, Parse::LambdaId node_id) -> bool {
   context.node_stack().Push(
       node_id, context.functions().Get(function_id).first_owning_decl_id);
   return true;
-}
-
-auto HandleParseNode(Context& context, Parse::TerseBodyArrowId node_id)
-    -> bool {
-  return context.TODO(node_id, "HandleTerseBodyArrow");
 }
 
 }  // namespace Carbon::Check

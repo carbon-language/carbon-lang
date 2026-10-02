@@ -546,7 +546,6 @@ class NodeStack {
       case Parse::NodeKind::StructLiteralComma:
       case Parse::NodeKind::StructFieldDesignator:
       case Parse::NodeKind::StructTypeLiteralComma:
-      case Parse::NodeKind::TerseBodyArrow:
       case Parse::NodeKind::TupleLiteralComma:
       case Parse::NodeKind::TypeOfExprKeyword:
       case Parse::NodeKind::TypeOfExprOpenParen:

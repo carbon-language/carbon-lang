@@ -627,7 +627,6 @@ struct FunctionTerseDefinition {
        .bracketed_by = FunctionDefinitionStart::Kind});
 
   FunctionDefinitionStartId signature;
-  TerseBodyArrowId arrow;
   AnyExprId body;
   Lex::SemiTokenIndex token;
 };
@@ -776,9 +775,6 @@ struct VariablePattern {
 using CodeBlockStart =
     LeafNode<NodeKind::CodeBlockStart, Lex::OpenCurlyBraceTokenIndex>;
 
-using TerseBodyArrow =
-    LeafNode<NodeKind::TerseBodyArrow, Lex::EqualGreaterTokenIndex>;
-
 // A code block: `{ statement; statement; ... }`.
 struct CodeBlock {
   static constexpr auto Kind =
@@ -809,7 +805,6 @@ struct Lambda {
                                .bracketed_by = LambdaDefinitionStart::Kind});
 
   LambdaDefinitionStartId signature;
-  std::optional<TerseBodyArrowId> arrow;
   std::optional<AnyExprId> terse_body;
   llvm::SmallVector<AnyStatementId> body;
   // Use a generic token index because the token might be `}` or `fn`.
