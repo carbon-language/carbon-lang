@@ -603,6 +603,10 @@ auto ExportAllFieldsToCpp(Context& context,
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
                       SemIR::FieldDecl field_decl,
                       SemIR::SpecificId specific_id) -> clang::FieldDecl* {
+  if (field_decl.type_id == SemIR::ErrorInst::TypeId) {
+    return nullptr;
+  }
+
   // Get the `SemIR::Class` that contains the `field_decl`.
   auto unbound_element_type =
       context.types().GetAs<SemIR::UnboundElementType>(field_decl.type_id);
