@@ -256,9 +256,9 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_terse_body.carbon:[[@LINE+4]]:16: error: semantics TODO: `HandleTerseBodyArrow` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_terse_body.carbon:[[@LINE+4]]:4: error: semantics TODO: `terse lambda body` [SemanticsTodo]
   // CHECK:STDERR:   (fn (x: i32) => x);
-  // CHECK:STDERR:                ^~
+  // CHECK:STDERR:    ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (fn (x: i32) => x);
 }
