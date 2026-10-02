@@ -89,7 +89,7 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CDriver.Main(ptr %x, ptr %y) #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CCheckEqWith.Main.5d19350ce19a6fbd(ptr %x, ptr %y), !dbg !21
+// CHECK:STDOUT:   call void @_CCheckEqWith.Main.7152d97258755740(ptr %x, ptr %y), !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -146,7 +146,7 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CEqual:thunk:EqWith.c41e21bae407dec8.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !24 {
+// CHECK:STDOUT: define weak_odr i1 @"_CEqual:thunk:EqWith.5fc20a8665baac18.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !28
@@ -156,7 +156,7 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CNotEqual:thunk:EqWith.c41e21bae407dec8.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !30 {
+// CHECK:STDOUT: define weak_odr i1 @"_CNotEqual:thunk:EqWith.5fc20a8665baac18.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !34
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !34
@@ -166,10 +166,10 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CCheckEqWith.Main.5d19350ce19a6fbd(ptr %x, ptr %y) #0 !dbg !36 {
+// CHECK:STDOUT: define linkonce_odr void @_CCheckEqWith.Main.7152d97258755740(ptr %x, ptr %y) #0 !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.c41e21bae407dec8.Core:Cpp"(ptr %x, ptr %y), !dbg !41
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.call = call i1 @"_CNotEqual:thunk:EqWith.c41e21bae407dec8.Core:Cpp"(ptr %x, ptr %y), !dbg !43
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.5fc20a8665baac18.Core:Cpp"(ptr %x, ptr %y), !dbg !41
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.call = call i1 @"_CNotEqual:thunk:EqWith.5fc20a8665baac18.Core:Cpp"(ptr %x, ptr %y), !dbg !43
 // CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -247,17 +247,17 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: !21 = !DILocation(line: 24, column: 3, scope: !14)
 // CHECK:STDOUT: !22 = !DILocation(line: 23, column: 1, scope: !14)
 // CHECK:STDOUT: !23 = !{!15, !16}
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Equal", linkageName: "_CEqual:thunk:EqWith.c41e21bae407dec8.Core:Cpp", scope: null, file: !4, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !29)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Equal", linkageName: "_CEqual:thunk:EqWith.5fc20a8665baac18.Core:Cpp", scope: null, file: !4, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !29)
 // CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !24, type: !7)
 // CHECK:STDOUT: !26 = !DILocalVariable(arg: 2, scope: !24, type: !7)
 // CHECK:STDOUT: !28 = !DILocation(line: 8, column: 15, scope: !24)
 // CHECK:STDOUT: !29 = !{!25, !26}
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "NotEqual", linkageName: "_CNotEqual:thunk:EqWith.c41e21bae407dec8.Core:Cpp", scope: null, file: !4, line: 12, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !35)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "NotEqual", linkageName: "_CNotEqual:thunk:EqWith.5fc20a8665baac18.Core:Cpp", scope: null, file: !4, line: 12, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !35)
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !30, type: !7)
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 2, scope: !30, type: !7)
 // CHECK:STDOUT: !34 = !DILocation(line: 12, column: 15, scope: !30)
 // CHECK:STDOUT: !35 = !{!31, !32}
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "CheckEqWith", linkageName: "_CCheckEqWith.Main.5d19350ce19a6fbd", scope: null, file: !4, line: 18, type: !9, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !46)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "CheckEqWith", linkageName: "_CCheckEqWith.Main.7152d97258755740", scope: null, file: !4, line: 18, type: !9, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !46)
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !36, type: !7)
 // CHECK:STDOUT: !38 = !DILocalVariable(arg: 2, scope: !36, type: !7)
 // CHECK:STDOUT: !41 = !DILocation(line: 19, column: 3, scope: !36)
@@ -303,7 +303,7 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CDriver.Main(ptr %x, ptr %y) #0 !dbg !68 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CCheckOrderedWith.Main.f3d1df67aae0c1db(ptr %x, ptr %y), !dbg !75
+// CHECK:STDOUT:   call void @_CCheckOrderedWith.Main.b948edeb3216062b(ptr %x, ptr %y), !dbg !75
 // CHECK:STDOUT:   ret void, !dbg !76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -412,7 +412,7 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CLess:thunk:OrderedWith.f150fc1157a5293b.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !78 {
+// CHECK:STDOUT: define weak_odr i1 @"_CLess:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !78 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !82
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !82
@@ -422,7 +422,7 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CLessOrEquivalent:thunk:OrderedWith.f150fc1157a5293b.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !84 {
+// CHECK:STDOUT: define weak_odr i1 @"_CLessOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !84 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !88
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !88
@@ -432,7 +432,7 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CGreater:thunk:OrderedWith.f150fc1157a5293b.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !90 {
+// CHECK:STDOUT: define weak_odr i1 @"_CGreater:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !90 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !94
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !94
@@ -442,7 +442,7 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.f150fc1157a5293b.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !96 {
+// CHECK:STDOUT: define weak_odr i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !96 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !100
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !100
@@ -452,12 +452,12 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CCheckOrderedWith.Main.f3d1df67aae0c1db(ptr %x, ptr %y) #0 !dbg !102 {
+// CHECK:STDOUT: define linkonce_odr void @_CCheckOrderedWith.Main.b948edeb3216062b(ptr %x, ptr %y) #0 !dbg !102 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.call = call i1 @"_CLess:thunk:OrderedWith.f150fc1157a5293b.Core:Cpp"(ptr %x, ptr %y), !dbg !107
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.call = call i1 @"_CGreater:thunk:OrderedWith.f150fc1157a5293b.Core:Cpp"(ptr %x, ptr %y), !dbg !109
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.call = call i1 @"_CLessOrEquivalent:thunk:OrderedWith.f150fc1157a5293b.Core:Cpp"(ptr %x, ptr %y), !dbg !111
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.call = call i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.f150fc1157a5293b.Core:Cpp"(ptr %x, ptr %y), !dbg !113
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.call = call i1 @"_CLess:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !107
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.call = call i1 @"_CGreater:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !109
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.call = call i1 @"_CLessOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !111
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.call = call i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !113
 // CHECK:STDOUT:   ret void, !dbg !115
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -593,27 +593,27 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: !75 = !DILocation(line: 34, column: 3, scope: !68)
 // CHECK:STDOUT: !76 = !DILocation(line: 33, column: 1, scope: !68)
 // CHECK:STDOUT: !77 = !{!69, !70}
-// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "Less", linkageName: "_CLess:thunk:OrderedWith.f150fc1157a5293b.Core:Cpp", scope: null, file: !66, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !83)
+// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "Less", linkageName: "_CLess:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !66, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !83)
 // CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !78, type: !7)
 // CHECK:STDOUT: !80 = !DILocalVariable(arg: 2, scope: !78, type: !7)
 // CHECK:STDOUT: !82 = !DILocation(line: 8, column: 15, scope: !78)
 // CHECK:STDOUT: !83 = !{!79, !80}
-// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "LessOrEquivalent", linkageName: "_CLessOrEquivalent:thunk:OrderedWith.f150fc1157a5293b.Core:Cpp", scope: null, file: !66, line: 16, type: !13, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !89)
+// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "LessOrEquivalent", linkageName: "_CLessOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !66, line: 16, type: !13, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !89)
 // CHECK:STDOUT: !85 = !DILocalVariable(arg: 1, scope: !84, type: !7)
 // CHECK:STDOUT: !86 = !DILocalVariable(arg: 2, scope: !84, type: !7)
 // CHECK:STDOUT: !88 = !DILocation(line: 16, column: 15, scope: !84)
 // CHECK:STDOUT: !89 = !{!85, !86}
-// CHECK:STDOUT: !90 = distinct !DISubprogram(name: "Greater", linkageName: "_CGreater:thunk:OrderedWith.f150fc1157a5293b.Core:Cpp", scope: null, file: !66, line: 12, type: !13, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !95)
+// CHECK:STDOUT: !90 = distinct !DISubprogram(name: "Greater", linkageName: "_CGreater:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !66, line: 12, type: !13, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !95)
 // CHECK:STDOUT: !91 = !DILocalVariable(arg: 1, scope: !90, type: !7)
 // CHECK:STDOUT: !92 = !DILocalVariable(arg: 2, scope: !90, type: !7)
 // CHECK:STDOUT: !94 = !DILocation(line: 12, column: 15, scope: !90)
 // CHECK:STDOUT: !95 = !{!91, !92}
-// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "GreaterOrEquivalent", linkageName: "_CGreaterOrEquivalent:thunk:OrderedWith.f150fc1157a5293b.Core:Cpp", scope: null, file: !66, line: 20, type: !13, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !101)
+// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "GreaterOrEquivalent", linkageName: "_CGreaterOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !66, line: 20, type: !13, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !101)
 // CHECK:STDOUT: !97 = !DILocalVariable(arg: 1, scope: !96, type: !7)
 // CHECK:STDOUT: !98 = !DILocalVariable(arg: 2, scope: !96, type: !7)
 // CHECK:STDOUT: !100 = !DILocation(line: 20, column: 15, scope: !96)
 // CHECK:STDOUT: !101 = !{!97, !98}
-// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "CheckOrderedWith", linkageName: "_CCheckOrderedWith.Main.f3d1df67aae0c1db", scope: null, file: !66, line: 26, type: !9, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !116)
+// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "CheckOrderedWith", linkageName: "_CCheckOrderedWith.Main.b948edeb3216062b", scope: null, file: !66, line: 26, type: !9, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !116)
 // CHECK:STDOUT: !103 = !DILocalVariable(arg: 1, scope: !102, type: !7)
 // CHECK:STDOUT: !104 = !DILocalVariable(arg: 2, scope: !102, type: !7)
 // CHECK:STDOUT: !107 = !DILocation(line: 27, column: 3, scope: !102)
