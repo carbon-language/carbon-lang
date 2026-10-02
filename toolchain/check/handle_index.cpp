@@ -46,10 +46,19 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
   auto index_inst_id = context.node_stack().PopExpr();
   auto operand_inst_id = context.node_stack().PopExpr();
   operand_inst_id = ConvertToValueOrRefExpr(context, operand_inst_id);
-  auto operand_inst = context.insts().Get(operand_inst_id);
-  auto operand_type_id = operand_inst.type_id();
+  auto operand_type_id = context.insts().Get(operand_inst_id).type_id();
 
-  CARBON_KIND_SWITCH(context.types().GetAsInst(operand_type_id)) {
+  // `Core.Array(T, N)` is indexed as the primitive array type it adapts.
+  // `ArrayIndex` accepts an operand whose type adapts an array type directly.
+  // TODO: Model this as an `IndexWith` / `IndirectIndexWith` impl in the
+  // prelude once that can produce a durable reference.
+  auto array_type_id =
+      TryGetPrimitiveArrayTypeForCoreArray(context, node_id, operand_type_id);
+  if (!array_type_id.has_value()) {
+    array_type_id = operand_type_id;
+  }
+
+  CARBON_KIND_SWITCH(context.types().GetAsInst(array_type_id)) {
     case CARBON_KIND(SemIR::ArrayType array_type): {
       auto cast_index_id = ConvertToValueOfType(
           context, SemIR::LocId(index_inst_id), index_inst_id,

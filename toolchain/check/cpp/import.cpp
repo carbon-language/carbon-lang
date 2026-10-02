@@ -1443,8 +1443,9 @@ static auto MapReferenceType(Context& context, clang::QualType type,
   return TypeExpr::ForUnsugared(context, pointer_type_id);
 }
 
-// Maps a C++ array type to a Carbon array type.
-static auto MapArrayType(Context& context, const clang::ArrayType* array_type,
+// Maps a C++ array type to a Carbon array type, `Core.Array(T, N)`.
+static auto MapArrayType(Context& context, SemIR::LocId loc_id,
+                         const clang::ArrayType* array_type,
                          TypeExpr element_type_expr) -> TypeExpr {
   if (const auto* constant_array_type =
           llvm::dyn_cast<clang::ConstantArrayType>(array_type)) {
@@ -1455,9 +1456,10 @@ static auto MapArrayType(Context& context, const clang::ArrayType* array_type,
                         .int_id = context.ints().AddUnsigned(
                             constant_array_type->getSize())});
     auto bound_inst_id = context.constant_values().GetInstId(bound_const_id);
-    auto array_type_id =
-        GetArrayType(context, bound_inst_id, element_type_expr.inst_id);
-    return TypeExpr::ForUnsugared(context, array_type_id);
+    auto fn_inst_id = LookupNameInCore(context, loc_id, CoreIdentifier::Array);
+    auto call_id = PerformCall(context, loc_id, fn_inst_id,
+                               {element_type_expr.inst_id, bound_inst_id});
+    return ExprAsType(context, loc_id, call_id);
   }
 
   return TypeExpr::None;
@@ -1501,7 +1503,7 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
     } else if (wrapper->isReferenceType()) {
       mapped = MapReferenceType(context, wrapper, mapped);
     } else if (const auto* array_type = wrapper->getAsArrayTypeUnsafe()) {
-      mapped = MapArrayType(context, array_type, mapped);
+      mapped = MapArrayType(context, loc_id, array_type, mapped);
     } else {
       CARBON_FATAL("Unexpected wrapper type {0}", wrapper.getAsString());
     }

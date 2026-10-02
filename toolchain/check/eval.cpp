@@ -1096,8 +1096,12 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   // regardless of whether the array itself is constant.
   const auto& index_val = eval_context.ints().Get(index->int_id);
   auto aggregate_type_id = eval_context.GetTypeOfInst(inst.array_id);
-  if (auto array_type =
-          eval_context.types().TryGetAs<SemIR::ArrayType>(aggregate_type_id)) {
+  // The array operand may have a type that adapts an array type, such as
+  // `Core.Array`.
+  if (auto array_type = eval_context.types().TryGetAs<SemIR::ArrayType>(
+          eval_context.types()
+              .GetTransitiveUnqualifiedAdaptedType(aggregate_type_id)
+              .first)) {
     if (auto bound = eval_context.insts().TryGetAs<SemIR::IntValue>(
             array_type->bound_id)) {
       // This awkward call to `getZExtValue` is a workaround for APInt not
@@ -2652,6 +2656,17 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
               .type_id = SemIR::TypeType::TypeId,
               .inner_id = context.types().GetAsTypeInstId(arg_ids[0])},
           phase);
+    }
+
+    case SemIR::BuiltinFunctionKind::ArrayMakeType: {
+      auto result = SemIR::ArrayType{
+          .type_id = SemIR::TypeType::TypeId,
+          .bound_id = arg_ids[1],
+          .element_type_inst_id = context.types().GetAsTypeInstId(arg_ids[0])};
+      if (!ValidateArrayType(context, loc_id, result)) {
+        return SemIR::ErrorInst::ConstantId;
+      }
+      return MakeConstantResult(context, result, phase);
     }
 
     case SemIR::BuiltinFunctionKind::FormMakeType: {

@@ -386,11 +386,13 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %x.param_patt.e85: %pattern_type.60a = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %x.patt.6af: %pattern_type.60a = wrapper_binding_pattern x, %x.param_patt.e85 [symbolic]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete]
-// CHECK:STDOUT:   %array_type.4e4: type = array_type %int_4, %Self.as_type.8ab [symbolic]
-// CHECK:STDOUT:   %.f45: Core.Form = init_form %array_type.4e4 [symbolic]
-// CHECK:STDOUT:   %pattern_type.2ab: type = pattern_type %array_type.4e4 [symbolic]
-// CHECK:STDOUT:   %return.param_patt.439: %pattern_type.2ab = out_param_pattern [symbolic]
-// CHECK:STDOUT:   %return.patt.869: %pattern_type.2ab = return_slot_pattern %return.param_patt.439, %array_type.4e4 [symbolic]
+// CHECK:STDOUT:   %Array.type: type = generic_class_type @Array [concrete]
+// CHECK:STDOUT:   %Array.generic: %Array.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Array.afb: type = class_type @Array, @Array(%Self.as_type.8ab, %int_4) [symbolic]
+// CHECK:STDOUT:   %.4ee: Core.Form = init_form %Array.afb [symbolic]
+// CHECK:STDOUT:   %pattern_type.659: type = pattern_type %Array.afb [symbolic]
+// CHECK:STDOUT:   %return.param_patt.feb: %pattern_type.659 = out_param_pattern [symbolic]
+// CHECK:STDOUT:   %return.patt.3b9: %pattern_type.659 = return_slot_pattern %return.param_patt.feb, %Array.afb [symbolic]
 // CHECK:STDOUT:   %SelfNested.WithSelf.F.type.702: type = fn_type @SelfNested.WithSelf.F, @SelfNested.WithSelf(%Self.e81) [symbolic]
 // CHECK:STDOUT:   %SelfNested.WithSelf.F.eec: %SelfNested.WithSelf.F.type.702 = struct_value () [symbolic]
 // CHECK:STDOUT:   %SelfNested.assoc_type: type = assoc_entity_type @SelfNested [concrete]
@@ -405,11 +407,11 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %pattern_type.a68: type = pattern_type %tuple.type.e57 [concrete]
 // CHECK:STDOUT:   %x.param_patt.140: %pattern_type.a68 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %x.patt.870: %pattern_type.a68 = wrapper_binding_pattern x, %x.param_patt.140 [concrete]
-// CHECK:STDOUT:   %array_type.291: type = array_type %int_4, %SelfNestedBadParam [concrete]
-// CHECK:STDOUT:   %.cc2: Core.Form = init_form %array_type.291 [concrete]
-// CHECK:STDOUT:   %pattern_type.3a0: type = pattern_type %array_type.291 [concrete]
-// CHECK:STDOUT:   %return.param_patt.489: %pattern_type.3a0 = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.98a: %pattern_type.3a0 = return_slot_pattern %return.param_patt.489, %array_type.291 [concrete]
+// CHECK:STDOUT:   %Array.ae2: type = class_type @Array, @Array(%SelfNestedBadParam, %int_4) [concrete]
+// CHECK:STDOUT:   %.556: Core.Form = init_form %Array.ae2 [concrete]
+// CHECK:STDOUT:   %pattern_type.a39: type = pattern_type %Array.ae2 [concrete]
+// CHECK:STDOUT:   %return.param_patt.744: %pattern_type.a39 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.074: %pattern_type.a39 = return_slot_pattern %return.param_patt.744, %Array.ae2 [concrete]
 // CHECK:STDOUT:   %SelfNestedBadParam.as.SelfNested.impl.F.type.4325e7.1: type = fn_type @SelfNestedBadParam.as.SelfNested.impl.F.loc196_87.1 [concrete]
 // CHECK:STDOUT:   %SelfNestedBadParam.as.SelfNested.impl.F.5fd896.1: %SelfNestedBadParam.as.SelfNested.impl.F.type.4325e7.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %SelfNested.facet.d0d: %SelfNested.type = facet_value %SelfNestedBadParam, (%SelfNested.impl_witness.09d) [concrete]
@@ -441,11 +443,11 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %SelfNested.facet.e71: %SelfNested.type = facet_value %SelfNestedBadReturnType, (%SelfNested.impl_witness.849) [concrete]
 // CHECK:STDOUT:   %SelfNested.WithSelf.F.type.20c: type = fn_type @SelfNested.WithSelf.F, @SelfNested.WithSelf(%SelfNested.facet.e71) [concrete]
 // CHECK:STDOUT:   %SelfNested.WithSelf.F.bab: %SelfNested.WithSelf.F.type.20c = struct_value () [concrete]
-// CHECK:STDOUT:   %array_type.a08: type = array_type %int_4, %SelfNestedBadReturnType [concrete]
-// CHECK:STDOUT:   %.442: Core.Form = init_form %array_type.a08 [concrete]
-// CHECK:STDOUT:   %pattern_type.f0d: type = pattern_type %array_type.a08 [concrete]
-// CHECK:STDOUT:   %return.param_patt.039: %pattern_type.f0d = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.3c4: %pattern_type.f0d = return_slot_pattern %return.param_patt.039, %array_type.a08 [concrete]
+// CHECK:STDOUT:   %Array.bd1: type = class_type @Array, @Array(%SelfNestedBadReturnType, %int_4) [concrete]
+// CHECK:STDOUT:   %.916: Core.Form = init_form %Array.bd1 [concrete]
+// CHECK:STDOUT:   %pattern_type.4db: type = pattern_type %Array.bd1 [concrete]
+// CHECK:STDOUT:   %return.param_patt.46a: %pattern_type.4db = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.57e: %pattern_type.4db = return_slot_pattern %return.param_patt.46a, %Array.bd1 [concrete]
 // CHECK:STDOUT:   %SelfNestedBadReturnType.as.SelfNested.impl.F.type.1cbabe.2: type = fn_type @SelfNestedBadReturnType.as.SelfNested.impl.F.loc212_112.2 [concrete]
 // CHECK:STDOUT:   %SelfNestedBadReturnType.as.SelfNested.impl.F.5a7d54.2: %SelfNestedBadReturnType.as.SelfNested.impl.F.type.1cbabe.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -455,6 +457,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     .Bool = %Core.Bool
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Array = %Core.Array
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -464,6 +467,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %Core.import_ref.cb2: @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.type (%ImplicitAs.WithSelf.Convert.type.97e) = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert (constants.%ImplicitAs.WithSelf.Convert.945)]
 // CHECK:STDOUT:   %Core.import_ref.f9d = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Array: %Array.type = import_ref Core//prelude/parts/int, Array, loaded [concrete = constants.%Array.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -563,15 +567,15 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %SelfNested.WithSelf.F.decl: @SelfNested.WithSelf.%SelfNested.WithSelf.F.type (%SelfNested.WithSelf.F.type.702) = fn_decl @SelfNested.WithSelf.F [symbolic = @SelfNested.WithSelf.%SelfNested.WithSelf.F (constants.%SelfNested.WithSelf.F.eec)] {
 // CHECK:STDOUT:     %x.param_patt.loc184_9.1: @SelfNested.WithSelf.F.%pattern_type.loc184_9 (%pattern_type.60a) = value_param_pattern [symbolic = %x.param_patt.loc184_9.2 (constants.%x.param_patt.e85)]
 // CHECK:STDOUT:     %x.patt.loc184_9.1: @SelfNested.WithSelf.F.%pattern_type.loc184_9 (%pattern_type.60a) = wrapper_binding_pattern x, %x.param_patt.loc184_9.1 [symbolic = %x.patt.loc184_9.2 (constants.%x.patt.6af)]
-// CHECK:STDOUT:     %return.param_patt.loc184_57.1: @SelfNested.WithSelf.F.%pattern_type.loc184_57 (%pattern_type.2ab) = out_param_pattern [symbolic = %return.param_patt.loc184_57.2 (constants.%return.param_patt.439)]
-// CHECK:STDOUT:     %return.patt.loc184_41.1: @SelfNested.WithSelf.F.%pattern_type.loc184_57 (%pattern_type.2ab) = return_slot_pattern %return.param_patt.loc184_57.1, %array_type.loc184_57.2 [symbolic = %return.patt.loc184_41.2 (constants.%return.patt.869)]
+// CHECK:STDOUT:     %return.param_patt.loc184_57.1: @SelfNested.WithSelf.F.%pattern_type.loc184_57 (%pattern_type.659) = out_param_pattern [symbolic = %return.param_patt.loc184_57.2 (constants.%return.param_patt.feb)]
+// CHECK:STDOUT:     %return.patt.loc184_41.1: @SelfNested.WithSelf.F.%pattern_type.loc184_57 (%pattern_type.659) = return_slot_pattern %return.param_patt.loc184_57.1, %Array.loc184_57.2 [symbolic = %return.patt.loc184_41.2 (constants.%return.patt.3b9)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc184_50: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.e81)]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
 // CHECK:STDOUT:     %Self.as_type.loc184_50: type = facet_access_type %Self.ref.loc184_50 [symbolic = %Self.as_type.loc184_16.1 (constants.%Self.as_type.8ab)]
 // CHECK:STDOUT:     %.loc184_50: type = converted %Self.ref.loc184_50, %Self.as_type.loc184_50 [symbolic = %Self.as_type.loc184_16.1 (constants.%Self.as_type.8ab)]
-// CHECK:STDOUT:     %array_type.loc184_57.2: type = array_type %int_4, %.loc184_50 [symbolic = %array_type.loc184_57.1 (constants.%array_type.4e4)]
-// CHECK:STDOUT:     %.loc184_57.2: Core.Form = init_form %array_type.loc184_57.2 [symbolic = %.loc184_57.1 (constants.%.f45)]
+// CHECK:STDOUT:     %Array.loc184_57.2: type = class_type @Array, @Array(constants.%Self.as_type.8ab, constants.%int_4) [symbolic = %Array.loc184_57.1 (constants.%Array.afb)]
+// CHECK:STDOUT:     %.loc184_57.2: Core.Form = init_form %Array.loc184_57.2 [symbolic = %.loc184_57.1 (constants.%.4ee)]
 // CHECK:STDOUT:     %x.param: @SelfNested.WithSelf.F.%tuple.type (%tuple.type.c49) = value_param call_param0
 // CHECK:STDOUT:     %.loc184_38.1: type = splice_block %.loc184_38.3 [symbolic = %tuple.type (constants.%tuple.type.c49)] {
 // CHECK:STDOUT:       %Self.ref.loc184_12: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.e81)]
@@ -587,8 +591,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:       %.loc184_38.3: type = converted %.loc184_38.2, constants.%tuple.type.c49 [symbolic = %tuple.type (constants.%tuple.type.c49)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @SelfNested.WithSelf.F.%tuple.type (%tuple.type.c49) = wrapper_binding x, %x.param
-// CHECK:STDOUT:     %return.param: ref @SelfNested.WithSelf.F.%array_type.loc184_57.1 (%array_type.4e4) = out_param call_param1
-// CHECK:STDOUT:     %return: ref @SelfNested.WithSelf.F.%array_type.loc184_57.1 (%array_type.4e4) = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref @SelfNested.WithSelf.F.%Array.loc184_57.1 (%Array.afb) = out_param call_param1
+// CHECK:STDOUT:     %return: ref @SelfNested.WithSelf.F.%Array.loc184_57.1 (%Array.afb) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %SelfNested.assoc_type = assoc_entity element0, %SelfNested.WithSelf.F.decl [concrete = constants.%assoc0.219]
 // CHECK:STDOUT:
@@ -938,13 +942,13 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %SelfNestedBadParam.as.SelfNested.impl.F.decl.loc196_87.1: %SelfNestedBadParam.as.SelfNested.impl.F.type.4325e7.1 = fn_decl @SelfNestedBadParam.as.SelfNested.impl.F.loc196_87.1 [concrete = constants.%SelfNestedBadParam.as.SelfNested.impl.F.5fd896.1] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.a68 = value_param_pattern [concrete = constants.%x.param_patt.140]
 // CHECK:STDOUT:     %x.patt: %pattern_type.a68 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.870]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.3a0 = out_param_pattern [concrete = constants.%return.param_patt.489]
-// CHECK:STDOUT:     %return.patt: %pattern_type.3a0 = return_slot_pattern %return.param_patt, %array_type [concrete = constants.%return.patt.98a]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a39 = out_param_pattern [concrete = constants.%return.param_patt.744]
+// CHECK:STDOUT:     %return.patt: %pattern_type.a39 = return_slot_pattern %return.param_patt, %Array [concrete = constants.%return.patt.074]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SelfNestedBadParam.ref.loc196_65: type = name_ref SelfNestedBadParam, file.%SelfNestedBadParam.decl [concrete = constants.%SelfNestedBadParam]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
-// CHECK:STDOUT:     %array_type: type = array_type %int_4, %SelfNestedBadParam.ref.loc196_65 [concrete = constants.%array_type.291]
-// CHECK:STDOUT:     %.loc196_86: Core.Form = init_form %array_type [concrete = constants.%.cc2]
+// CHECK:STDOUT:     %Array: type = class_type @Array, @Array(constants.%SelfNestedBadParam, constants.%int_4) [concrete = constants.%Array.ae2]
+// CHECK:STDOUT:     %.loc196_86: Core.Form = init_form %Array [concrete = constants.%.556]
 // CHECK:STDOUT:     %x.param: %tuple.type.e57 = value_param call_param0
 // CHECK:STDOUT:     %.loc196_53.1: type = splice_block %.loc196_53.3 [concrete = constants.%tuple.type.e57] {
 // CHECK:STDOUT:       %SelfNestedBadParam.ref.loc196_14: type = name_ref SelfNestedBadParam, file.%SelfNestedBadParam.decl [concrete = constants.%SelfNestedBadParam]
@@ -956,20 +960,20 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:       %.loc196_53.3: type = converted %.loc196_53.2, constants.%tuple.type.e57 [concrete = constants.%tuple.type.e57]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %tuple.type.e57 = wrapper_binding x, %x.param
-// CHECK:STDOUT:     %return.param: ref %array_type.291 = out_param call_param1
-// CHECK:STDOUT:     %return: ref %array_type.291 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %Array.ae2 = out_param call_param1
+// CHECK:STDOUT:     %return: ref %Array.ae2 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc184_57.1: type = specific_constant @SelfNested.WithSelf.F.%array_type.loc184_57.2, @SelfNested.WithSelf.F(constants.%SelfNested.facet.d0d) [concrete = constants.%array_type.291]
-// CHECK:STDOUT:   %.loc184_57.2: Core.Form = specific_constant @SelfNested.WithSelf.F.%.loc184_57.2, @SelfNested.WithSelf.F(constants.%SelfNested.facet.d0d) [concrete = constants.%.cc2]
+// CHECK:STDOUT:   %.loc184_57.1: type = specific_constant @SelfNested.WithSelf.F.%Array.loc184_57.2, @SelfNested.WithSelf.F(constants.%SelfNested.facet.d0d) [concrete = constants.%Array.ae2]
+// CHECK:STDOUT:   %.loc184_57.2: Core.Form = specific_constant @SelfNested.WithSelf.F.%.loc184_57.2, @SelfNested.WithSelf.F(constants.%SelfNested.facet.d0d) [concrete = constants.%.556]
 // CHECK:STDOUT:   %SelfNestedBadParam.as.SelfNested.impl.F.decl.loc196_87.2: %SelfNestedBadParam.as.SelfNested.impl.F.type.4325e7.2 = fn_decl @SelfNestedBadParam.as.SelfNested.impl.F.loc196_87.2 [concrete = constants.%SelfNestedBadParam.as.SelfNested.impl.F.5fd896.2] {
 // CHECK:STDOUT:     %.1: %pattern_type.94f = specific_constant constants.%x.param_patt.7b9, @SelfNested.WithSelf.F(constants.%SelfNested.facet.d0d) [concrete = constants.%x.param_patt.7b9]
 // CHECK:STDOUT:     %x.patt: %pattern_type.94f = wrapper_binding_pattern x, %.1 [concrete = constants.%x.patt.961]
-// CHECK:STDOUT:     %.2: %pattern_type.3a0 = specific_constant constants.%return.patt.98a, @SelfNested.WithSelf.F(constants.%SelfNested.facet.d0d) [concrete = constants.%return.patt.98a]
+// CHECK:STDOUT:     %.2: %pattern_type.a39 = specific_constant constants.%return.patt.074, @SelfNested.WithSelf.F(constants.%SelfNested.facet.d0d) [concrete = constants.%return.patt.074]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %tuple.type.9ab = value_param call_param0
 // CHECK:STDOUT:     %x: %tuple.type.9ab = wrapper_binding x, %x.param
-// CHECK:STDOUT:     %return.param: ref %array_type.291 = out_param call_param1
-// CHECK:STDOUT:     %return: ref %array_type.291 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %Array.ae2 = out_param call_param1
+// CHECK:STDOUT:     %return: ref %Array.ae2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %SelfNested.impl_witness_table = impl_witness_table (%SelfNestedBadParam.as.SelfNested.impl.F.decl.loc196_87.2), @SelfNestedBadParam.as.SelfNested.impl [concrete]
 // CHECK:STDOUT:   %SelfNested.impl_witness: <witness> = impl_witness %SelfNested.impl_witness_table [concrete = constants.%SelfNested.impl_witness.09d]
@@ -985,13 +989,13 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %SelfNestedBadReturnType.as.SelfNested.impl.F.decl.loc212_112.1: %SelfNestedBadReturnType.as.SelfNested.impl.F.type.1cbabe.1 = fn_decl @SelfNestedBadReturnType.as.SelfNested.impl.F.loc212_112.1 [concrete = constants.%SelfNestedBadReturnType.as.SelfNested.impl.F.5a7d54.1] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.5c2 = value_param_pattern [concrete = constants.%x.param_patt.7be]
 // CHECK:STDOUT:     %x.patt: %pattern_type.5c2 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.608]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.3a0 = out_param_pattern [concrete = constants.%return.param_patt.489]
-// CHECK:STDOUT:     %return.patt: %pattern_type.3a0 = return_slot_pattern %return.param_patt, %array_type [concrete = constants.%return.patt.98a]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a39 = out_param_pattern [concrete = constants.%return.param_patt.744]
+// CHECK:STDOUT:     %return.patt: %pattern_type.a39 = return_slot_pattern %return.param_patt, %Array [concrete = constants.%return.patt.074]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SelfNestedBadParam.ref: type = name_ref SelfNestedBadParam, file.%SelfNestedBadParam.decl [concrete = constants.%SelfNestedBadParam]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
-// CHECK:STDOUT:     %array_type: type = array_type %int_4, %SelfNestedBadParam.ref [concrete = constants.%array_type.291]
-// CHECK:STDOUT:     %.loc212_111: Core.Form = init_form %array_type [concrete = constants.%.cc2]
+// CHECK:STDOUT:     %Array: type = class_type @Array, @Array(constants.%SelfNestedBadParam, constants.%int_4) [concrete = constants.%Array.ae2]
+// CHECK:STDOUT:     %.loc212_111: Core.Form = init_form %Array [concrete = constants.%.556]
 // CHECK:STDOUT:     %x.param: %tuple.type.829 = value_param call_param0
 // CHECK:STDOUT:     %.loc212_78.1: type = splice_block %.loc212_78.3 [concrete = constants.%tuple.type.829] {
 // CHECK:STDOUT:       %SelfNestedBadReturnType.ref.loc212_14: type = name_ref SelfNestedBadReturnType, file.%SelfNestedBadReturnType.decl [concrete = constants.%SelfNestedBadReturnType]
@@ -1003,20 +1007,20 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:       %.loc212_78.3: type = converted %.loc212_78.2, constants.%tuple.type.829 [concrete = constants.%tuple.type.829]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %tuple.type.829 = wrapper_binding x, %x.param
-// CHECK:STDOUT:     %return.param: ref %array_type.291 = out_param call_param1
-// CHECK:STDOUT:     %return: ref %array_type.291 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %Array.ae2 = out_param call_param1
+// CHECK:STDOUT:     %return: ref %Array.ae2 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc184_57.1: type = specific_constant @SelfNested.WithSelf.F.%array_type.loc184_57.2, @SelfNested.WithSelf.F(constants.%SelfNested.facet.e71) [concrete = constants.%array_type.a08]
-// CHECK:STDOUT:   %.loc184_57.2: Core.Form = specific_constant @SelfNested.WithSelf.F.%.loc184_57.2, @SelfNested.WithSelf.F(constants.%SelfNested.facet.e71) [concrete = constants.%.442]
+// CHECK:STDOUT:   %.loc184_57.1: type = specific_constant @SelfNested.WithSelf.F.%Array.loc184_57.2, @SelfNested.WithSelf.F(constants.%SelfNested.facet.e71) [concrete = constants.%Array.bd1]
+// CHECK:STDOUT:   %.loc184_57.2: Core.Form = specific_constant @SelfNested.WithSelf.F.%.loc184_57.2, @SelfNested.WithSelf.F(constants.%SelfNested.facet.e71) [concrete = constants.%.916]
 // CHECK:STDOUT:   %SelfNestedBadReturnType.as.SelfNested.impl.F.decl.loc212_112.2: %SelfNestedBadReturnType.as.SelfNested.impl.F.type.1cbabe.2 = fn_decl @SelfNestedBadReturnType.as.SelfNested.impl.F.loc212_112.2 [concrete = constants.%SelfNestedBadReturnType.as.SelfNested.impl.F.5a7d54.2] {
 // CHECK:STDOUT:     %.1: %pattern_type.5c2 = specific_constant constants.%x.param_patt.7be, @SelfNested.WithSelf.F(constants.%SelfNested.facet.e71) [concrete = constants.%x.param_patt.7be]
 // CHECK:STDOUT:     %x.patt: %pattern_type.5c2 = wrapper_binding_pattern x, %.1 [concrete = constants.%x.patt.608]
-// CHECK:STDOUT:     %.2: %pattern_type.f0d = specific_constant constants.%return.patt.3c4, @SelfNested.WithSelf.F(constants.%SelfNested.facet.e71) [concrete = constants.%return.patt.3c4]
+// CHECK:STDOUT:     %.2: %pattern_type.4db = specific_constant constants.%return.patt.57e, @SelfNested.WithSelf.F(constants.%SelfNested.facet.e71) [concrete = constants.%return.patt.57e]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %tuple.type.829 = value_param call_param0
 // CHECK:STDOUT:     %x: %tuple.type.829 = wrapper_binding x, %x.param
-// CHECK:STDOUT:     %return.param: ref %array_type.a08 = out_param call_param1
-// CHECK:STDOUT:     %return: ref %array_type.a08 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %Array.bd1 = out_param call_param1
+// CHECK:STDOUT:     %return: ref %Array.bd1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %SelfNested.impl_witness_table = impl_witness_table (%SelfNestedBadReturnType.as.SelfNested.impl.F.decl.loc212_112.2), @SelfNestedBadReturnType.as.SelfNested.impl [concrete]
 // CHECK:STDOUT:   %SelfNested.impl_witness: <witness> = impl_witness %SelfNested.impl_witness_table [concrete = constants.%SelfNested.impl_witness.849]
@@ -1321,21 +1325,21 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %pattern_type.loc184_9: type = pattern_type %tuple.type [symbolic = %pattern_type.loc184_9 (constants.%pattern_type.60a)]
 // CHECK:STDOUT:   %x.param_patt.loc184_9.2: @SelfNested.WithSelf.F.%pattern_type.loc184_9 (%pattern_type.60a) = value_param_pattern [symbolic = %x.param_patt.loc184_9.2 (constants.%x.param_patt.e85)]
 // CHECK:STDOUT:   %x.patt.loc184_9.2: @SelfNested.WithSelf.F.%pattern_type.loc184_9 (%pattern_type.60a) = wrapper_binding_pattern x, %x.param_patt.loc184_9.2 [symbolic = %x.patt.loc184_9.2 (constants.%x.patt.6af)]
-// CHECK:STDOUT:   %array_type.loc184_57.1: type = array_type constants.%int_4, %Self.as_type.loc184_16.1 [symbolic = %array_type.loc184_57.1 (constants.%array_type.4e4)]
-// CHECK:STDOUT:   %.loc184_57.1: Core.Form = init_form %array_type.loc184_57.1 [symbolic = %.loc184_57.1 (constants.%.f45)]
-// CHECK:STDOUT:   %pattern_type.loc184_57: type = pattern_type %array_type.loc184_57.1 [symbolic = %pattern_type.loc184_57 (constants.%pattern_type.2ab)]
-// CHECK:STDOUT:   %return.param_patt.loc184_57.2: @SelfNested.WithSelf.F.%pattern_type.loc184_57 (%pattern_type.2ab) = out_param_pattern [symbolic = %return.param_patt.loc184_57.2 (constants.%return.param_patt.439)]
-// CHECK:STDOUT:   %return.patt.loc184_41.2: @SelfNested.WithSelf.F.%pattern_type.loc184_57 (%pattern_type.2ab) = return_slot_pattern %return.param_patt.loc184_57.2, %array_type.loc184_57.1 [symbolic = %return.patt.loc184_41.2 (constants.%return.patt.869)]
+// CHECK:STDOUT:   %Array.loc184_57.1: type = class_type @Array, @Array(%Self.as_type.loc184_16.1, constants.%int_4) [symbolic = %Array.loc184_57.1 (constants.%Array.afb)]
+// CHECK:STDOUT:   %.loc184_57.1: Core.Form = init_form %Array.loc184_57.1 [symbolic = %.loc184_57.1 (constants.%.4ee)]
+// CHECK:STDOUT:   %pattern_type.loc184_57: type = pattern_type %Array.loc184_57.1 [symbolic = %pattern_type.loc184_57 (constants.%pattern_type.659)]
+// CHECK:STDOUT:   %return.param_patt.loc184_57.2: @SelfNested.WithSelf.F.%pattern_type.loc184_57 (%pattern_type.659) = out_param_pattern [symbolic = %return.param_patt.loc184_57.2 (constants.%return.param_patt.feb)]
+// CHECK:STDOUT:   %return.patt.loc184_41.2: @SelfNested.WithSelf.F.%pattern_type.loc184_57 (%pattern_type.659) = return_slot_pattern %return.param_patt.loc184_57.2, %Array.loc184_57.1 [symbolic = %return.patt.loc184_41.2 (constants.%return.patt.3b9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @SelfNested.WithSelf.F.%tuple.type (%tuple.type.c49)) -> out %return.param: @SelfNested.WithSelf.F.%array_type.loc184_57.1 (%array_type.4e4);
+// CHECK:STDOUT:   fn(%x.param: @SelfNested.WithSelf.F.%tuple.type (%tuple.type.c49)) -> out %return.param: @SelfNested.WithSelf.F.%Array.loc184_57.1 (%Array.afb);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SelfNestedBadParam.as.SelfNested.impl.F.loc196_87.1(%x.param: %tuple.type.e57) -> out %return.param: %array_type.291;
+// CHECK:STDOUT: fn @SelfNestedBadParam.as.SelfNested.impl.F.loc196_87.1(%x.param: %tuple.type.e57) -> out %return.param: %Array.ae2;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SelfNestedBadParam.as.SelfNested.impl.F.loc196_87.2(%x.param: %tuple.type.9ab) -> out %return.param: %array_type.291 [thunk @SelfNestedBadParam.as.SelfNested.impl.%SelfNestedBadParam.as.SelfNested.impl.F.decl.loc196_87.1 for @SelfNested.WithSelf.%SelfNested.WithSelf.F.decl, @SelfNested.WithSelf.F(constants.%SelfNested.facet.d0d)] {
+// CHECK:STDOUT: fn @SelfNestedBadParam.as.SelfNested.impl.F.loc196_87.2(%x.param: %tuple.type.9ab) -> out %return.param: %Array.ae2 [thunk @SelfNestedBadParam.as.SelfNested.impl.%SelfNestedBadParam.as.SelfNested.impl.F.decl.loc196_87.1 for @SelfNested.WithSelf.%SelfNested.WithSelf.F.decl, @SelfNested.WithSelf.F(constants.%SelfNested.facet.d0d)] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %SelfNestedBadParam.as.SelfNested.impl.F.type.4325e7.1 = name_ref F, @SelfNestedBadParam.as.SelfNested.impl.%SelfNestedBadParam.as.SelfNested.impl.F.decl.loc196_87.1 [concrete = constants.%SelfNestedBadParam.as.SelfNested.impl.F.5fd896.1]
-// CHECK:STDOUT:   %.3: ref %array_type.291 = splice_block %return.param {}
+// CHECK:STDOUT:   %.3: ref %Array.ae2 = splice_block %return.param {}
 // CHECK:STDOUT:   %tuple.elem0: %ptr.52e = tuple_access %x.param, element0
 // CHECK:STDOUT:   %tuple.elem1: %struct_type.x.y.da2 = tuple_access %x.param, element1
 // CHECK:STDOUT:   %.4: %SelfNestedBadParam = struct_access %tuple.elem1, element0
@@ -1343,18 +1347,18 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.5: %ImplicitAs.assoc_type.e23 = specific_constant imports.%Core.import_ref.484, @ImplicitAs.WithSelf(constants.%i32, constants.%Self.294) [concrete = constants.%assoc0.368]
 // CHECK:STDOUT:   %Convert.ref: %ImplicitAs.assoc_type.e23 = name_ref Convert, %.5 [concrete = constants.%assoc0.368]
 // CHECK:STDOUT:   %.6: %i32 = converted %.4, <error> [concrete = <error>]
-// CHECK:STDOUT:   %SelfNestedBadParam.as.SelfNested.impl.F.call: init %array_type.291 to %.3 = call %F.ref(<error>)
+// CHECK:STDOUT:   %SelfNestedBadParam.as.SelfNested.impl.F.call: init %Array.ae2 to %.3 = call %F.ref(<error>)
 // CHECK:STDOUT:   return %SelfNestedBadParam.as.SelfNested.impl.F.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SelfNestedBadReturnType.as.SelfNested.impl.F.loc212_112.1(%x.param: %tuple.type.829) -> out %return.param: %array_type.291;
+// CHECK:STDOUT: fn @SelfNestedBadReturnType.as.SelfNested.impl.F.loc212_112.1(%x.param: %tuple.type.829) -> out %return.param: %Array.ae2;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SelfNestedBadReturnType.as.SelfNested.impl.F.loc212_112.2(%x.param: %tuple.type.829) -> out %return.param: %array_type.a08 [thunk @SelfNestedBadReturnType.as.SelfNested.impl.%SelfNestedBadReturnType.as.SelfNested.impl.F.decl.loc212_112.1 for @SelfNested.WithSelf.%SelfNested.WithSelf.F.decl, @SelfNested.WithSelf.F(constants.%SelfNested.facet.e71)] {
+// CHECK:STDOUT: fn @SelfNestedBadReturnType.as.SelfNested.impl.F.loc212_112.2(%x.param: %tuple.type.829) -> out %return.param: %Array.bd1 [thunk @SelfNestedBadReturnType.as.SelfNested.impl.%SelfNestedBadReturnType.as.SelfNested.impl.F.decl.loc212_112.1 for @SelfNested.WithSelf.%SelfNested.WithSelf.F.decl, @SelfNested.WithSelf.F(constants.%SelfNested.facet.e71)] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %SelfNestedBadReturnType.as.SelfNested.impl.F.type.1cbabe.1 = name_ref F, @SelfNestedBadReturnType.as.SelfNested.impl.%SelfNestedBadReturnType.as.SelfNested.impl.F.decl.loc212_112.1 [concrete = constants.%SelfNestedBadReturnType.as.SelfNested.impl.F.5a7d54.1]
-// CHECK:STDOUT:   %.loc212_112.1: ref %array_type.291 = temporary_storage
-// CHECK:STDOUT:   %SelfNestedBadReturnType.as.SelfNested.impl.F.call: init %array_type.291 to %.loc212_112.1 = call %F.ref(%x.param)
-// CHECK:STDOUT:   %.loc212_112.2: %array_type.a08 = converted %SelfNestedBadReturnType.as.SelfNested.impl.F.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc212_112.1: ref %Array.ae2 = temporary_storage
+// CHECK:STDOUT:   %SelfNestedBadReturnType.as.SelfNested.impl.F.call: init %Array.ae2 to %.loc212_112.1 = call %F.ref(%x.param)
+// CHECK:STDOUT:   %.loc212_112.2: %Array.bd1 = converted %SelfNestedBadReturnType.as.SelfNested.impl.F.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1488,11 +1492,11 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %pattern_type.loc184_9 => constants.%pattern_type.60a
 // CHECK:STDOUT:   %x.param_patt.loc184_9.2 => constants.%x.param_patt.e85
 // CHECK:STDOUT:   %x.patt.loc184_9.2 => constants.%x.patt.6af
-// CHECK:STDOUT:   %array_type.loc184_57.1 => constants.%array_type.4e4
-// CHECK:STDOUT:   %.loc184_57.1 => constants.%.f45
-// CHECK:STDOUT:   %pattern_type.loc184_57 => constants.%pattern_type.2ab
-// CHECK:STDOUT:   %return.param_patt.loc184_57.2 => constants.%return.param_patt.439
-// CHECK:STDOUT:   %return.patt.loc184_41.2 => constants.%return.patt.869
+// CHECK:STDOUT:   %Array.loc184_57.1 => constants.%Array.afb
+// CHECK:STDOUT:   %.loc184_57.1 => constants.%.4ee
+// CHECK:STDOUT:   %pattern_type.loc184_57 => constants.%pattern_type.659
+// CHECK:STDOUT:   %return.param_patt.loc184_57.2 => constants.%return.param_patt.feb
+// CHECK:STDOUT:   %return.patt.loc184_41.2 => constants.%return.patt.3b9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SelfNested.WithSelf(constants.%SelfNested.facet.d0d) {
@@ -1512,11 +1516,11 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %pattern_type.loc184_9 => constants.%pattern_type.94f
 // CHECK:STDOUT:   %x.param_patt.loc184_9.2 => constants.%x.param_patt.7b9
 // CHECK:STDOUT:   %x.patt.loc184_9.2 => constants.%x.patt.961
-// CHECK:STDOUT:   %array_type.loc184_57.1 => constants.%array_type.291
-// CHECK:STDOUT:   %.loc184_57.1 => constants.%.cc2
-// CHECK:STDOUT:   %pattern_type.loc184_57 => constants.%pattern_type.3a0
-// CHECK:STDOUT:   %return.param_patt.loc184_57.2 => constants.%return.param_patt.489
-// CHECK:STDOUT:   %return.patt.loc184_41.2 => constants.%return.patt.98a
+// CHECK:STDOUT:   %Array.loc184_57.1 => constants.%Array.ae2
+// CHECK:STDOUT:   %.loc184_57.1 => constants.%.556
+// CHECK:STDOUT:   %pattern_type.loc184_57 => constants.%pattern_type.a39
+// CHECK:STDOUT:   %return.param_patt.loc184_57.2 => constants.%return.param_patt.744
+// CHECK:STDOUT:   %return.patt.loc184_41.2 => constants.%return.patt.074
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SelfNested.WithSelf(constants.%SelfNested.facet.e71) {
@@ -1536,10 +1540,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %pattern_type.loc184_9 => constants.%pattern_type.5c2
 // CHECK:STDOUT:   %x.param_patt.loc184_9.2 => constants.%x.param_patt.7be
 // CHECK:STDOUT:   %x.patt.loc184_9.2 => constants.%x.patt.608
-// CHECK:STDOUT:   %array_type.loc184_57.1 => constants.%array_type.a08
-// CHECK:STDOUT:   %.loc184_57.1 => constants.%.442
-// CHECK:STDOUT:   %pattern_type.loc184_57 => constants.%pattern_type.f0d
-// CHECK:STDOUT:   %return.param_patt.loc184_57.2 => constants.%return.param_patt.039
-// CHECK:STDOUT:   %return.patt.loc184_41.2 => constants.%return.patt.3c4
+// CHECK:STDOUT:   %Array.loc184_57.1 => constants.%Array.bd1
+// CHECK:STDOUT:   %.loc184_57.1 => constants.%.916
+// CHECK:STDOUT:   %pattern_type.loc184_57 => constants.%pattern_type.4db
+// CHECK:STDOUT:   %return.param_patt.loc184_57.2 => constants.%return.param_patt.46a
+// CHECK:STDOUT:   %return.patt.loc184_41.2 => constants.%return.patt.57e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

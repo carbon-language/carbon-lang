@@ -51,3 +51,12 @@ final impl forall [N: IntLiteral]
     Int(N) as Negate where .Result = Self {
   fn Op(self) -> Self = "int.snegate";
 }
+
+// Arrays.
+
+private fn MakeArray(element_type: type, bound: IntLiteral) -> type =
+    "array.make_type";
+
+class Array(T: type, N: IntLiteral) {
+  adapt MakeArray(T, N);
+}

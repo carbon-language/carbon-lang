@@ -65,17 +65,13 @@ eval fn F(x: i32) -> i32 { return x; }
 
 var a: array(i32, F(3)) = (1, 2, 3);
 
-// --- fail_todo_dependent_call.carbon
+// --- dependent_call.carbon
 
 library "[[@TEST_NAME]]";
 
 eval fn F(x: i32) -> i32 { return x; }
 
 fn G(generic N: i32) {
-  // CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE+4]]:36: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
-  // CHECK:STDERR:   var unused a: array(i32, F(N)) = (0, 1, 2);
-  // CHECK:STDERR:                                    ^~~~~~~~~
-  // CHECK:STDERR:
   var unused a: array(i32, F(N)) = (0, 1, 2);
 }
 

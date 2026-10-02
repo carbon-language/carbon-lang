@@ -138,6 +138,31 @@ static auto VerifyIntegerTypeWidth(Context& context, clang::QualType type,
   return clang::QualType();
 }
 
+// Maps a Carbon array type with the given bound and element type to a C++
+// array type.
+static auto TryMapArrayType(Context& context, SemIR::InstId bound_id,
+                            SemIR::TypeInstId element_type_inst_id)
+    -> TryMapTypeResult {
+  auto bound_const_id = context.constant_values().Get(bound_id);
+  if (!bound_const_id.is_constant()) {
+    return clang::QualType();
+  }
+  auto bound_val_inst =
+      context.constant_values().TryGetInstAs<SemIR::IntValue>(bound_const_id);
+  if (!bound_val_inst) {
+    return clang::QualType();
+  }
+  return WrappedType{
+      .inner_type_id =
+          context.types().GetTypeIdForTypeInstId(element_type_inst_id),
+      .wrap_fn = [int_id = bound_val_inst->int_id](Context& context,
+                                                   clang::QualType inner_type) {
+        return context.ast_context().getConstantArrayType(
+            inner_type, context.ints().Get(int_id), /*SizeExpr=*/nullptr,
+            clang::ArraySizeModifier::Normal, /*IndexTypeQuals=*/0);
+      }};
+}
+
 // Maps a Carbon class type to a C++ type. Returns a null `QualType` if the
 // type is not supported.
 static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
@@ -226,6 +251,19 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
     case SemIR::RecognizedTypeInfo::Str: {
       return LookupCppType(context, {"std", "string_view"});
     }
+    case SemIR::RecognizedTypeInfo::Array: {
+      auto args = context.inst_blocks().Get(type_info.args_id);
+      if (args.size() == 2) {
+        auto elem_arg_id = args[0];
+        if (auto facet =
+                context.insts().TryGetAs<SemIR::FacetValue>(elem_arg_id)) {
+          elem_arg_id = facet->type_inst_id;
+        }
+        return TryMapArrayType(context, args[1],
+                               context.types().GetAsTypeInstId(elem_arg_id));
+      }
+      break;
+    }
   }
 
   // Otherwise, find the existing C++ declaration or create a new one.
@@ -310,25 +348,8 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
           }};
     }
     case CARBON_KIND(SemIR::ArrayType array_type): {
-      auto bound_const_id = context.constant_values().Get(array_type.bound_id);
-      if (!bound_const_id.is_constant()) {
-        return clang::QualType();
-      }
-      auto bound_val_inst =
-          context.constant_values().TryGetInstAs<SemIR::IntValue>(
-              bound_const_id);
-      if (!bound_val_inst) {
-        return clang::QualType();
-      }
-      return WrappedType{
-          .inner_type_id = context.types().GetTypeIdForTypeInstId(
-              array_type.element_type_inst_id),
-          .wrap_fn = [int_id = bound_val_inst->int_id](
-                         Context& context, clang::QualType inner_type) {
-            return context.ast_context().getConstantArrayType(
-                inner_type, context.ints().Get(int_id), /*SizeExpr=*/nullptr,
-                clang::ArraySizeModifier::Normal, /*IndexTypeQuals=*/0);
-          }};
+      return TryMapArrayType(context, array_type.bound_id,
+                             array_type.element_type_inst_id);
     }
     case SemIR::SymbolicBinding::Kind: {
       auto type_inst_id = context.types().GetTypeInstId(type_id);

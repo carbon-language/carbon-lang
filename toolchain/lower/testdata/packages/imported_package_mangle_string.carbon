@@ -46,13 +46,13 @@ fn G() {
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,A,<package root>,!invalid,!invalid}}:I.A"() #0 !dbg !22 {
+// CHECK:STDOUT: define void @"_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"() #0 !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,A,!invalid,!invalid}}:I.A"() #0 !dbg !24 {
+// CHECK:STDOUT: define void @"_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"() #0 !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
@@ -68,9 +68,9 @@ fn G() {
 // CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !20 = !{null}
 // CHECK:STDOUT: !21 = !DISubroutineType(types: !20)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "F", linkageName: "_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,A,<package root>,!invalid,!invalid}}:I.A", scope: null, file: !18, line: 10, type: !21, spFlags: DISPFlagDefinition, unit: !19)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A", scope: null, file: !18, line: 10, type: !21, spFlags: DISPFlagDefinition, unit: !19)
 // CHECK:STDOUT: !23 = !DILocation(line: 10, column: 3, scope: !22)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "F", linkageName: "_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,A,!invalid,!invalid}}:I.A", scope: null, file: !18, line: 17, type: !21, spFlags: DISPFlagDefinition, unit: !19)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A", scope: null, file: !18, line: 17, type: !21, spFlags: DISPFlagDefinition, unit: !19)
 // CHECK:STDOUT: !25 = !DILocation(line: 17, column: 3, scope: !24)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -80,14 +80,14 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.B() #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,A,<package root>,!invalid,!invalid}}:I.A"(), !dbg !29
-// CHECK:STDOUT:   call void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,A,!invalid,!invalid}}:I.A"(), !dbg !30
+// CHECK:STDOUT:   call void @"_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"(), !dbg !29
+// CHECK:STDOUT:   call void @"_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"(), !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,A,<package root>,!invalid,!invalid}}:I.A"()
+// CHECK:STDOUT: declare void @"_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,A,!invalid,!invalid}}:I.A"()
+// CHECK:STDOUT: declare void @"_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"()
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:

@@ -216,6 +216,22 @@ static auto HasWitnessForOneField(
   return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
 }
 
+// Returns true if `array_type` should impl `Destroy`.
+static auto CanDestroyArray(Context& context, SemIR::LocId loc_id,
+                            SemIR::ArrayType array_type,
+                            SemIR::SpecificInterface query_specific_interface)
+    -> DestroyFormat {
+  // A zero element array is always trivially destructible.
+  if (auto int_bound = context.sem_ir().GetZExtIntValue(array_type.bound_id);
+      !int_bound || *int_bound == 0) {
+    return DestroyFormat::Trivial;
+  }
+
+  // Verify the element can be destroyed.
+  return HasWitnessForOneField(context, loc_id, array_type.element_type_inst_id,
+                               query_specific_interface);
+}
+
 // Returns true if `class_type` should impl `Destroy`.
 static auto CanDestroyClass(Context& context, SemIR::LocId loc_id,
                             SemIR::ClassType class_type,
@@ -236,7 +252,13 @@ static auto CanDestroyClass(Context& context, SemIR::LocId loc_id,
 
   auto object_repr_id =
       class_info.GetAdaptedType(context.sem_ir(), class_type.specific_id);
-  if (!object_repr_id.has_value()) {
+  if (object_repr_id.has_value()) {
+    if (auto array_type =
+            context.types().TryGetAs<SemIR::ArrayType>(object_repr_id)) {
+      return CanDestroyArray(context, loc_id, *array_type,
+                             query_specific_interface);
+    }
+  } else {
     object_repr_id =
         class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
   }
@@ -297,17 +319,8 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
     }
 
     case CARBON_KIND(SemIR::ArrayType array_type): {
-      // A zero element array is always trivially destructible.
-      if (auto int_bound =
-              context.sem_ir().GetZExtIntValue(array_type.bound_id);
-          !int_bound || *int_bound == 0) {
-        return DestroyFormat::Trivial;
-      }
-
-      // Verify the element can be destroyed.
-      return HasWitnessForOneField(context, loc_id,
-                                   array_type.element_type_inst_id,
-                                   query_specific_interface);
+      return CanDestroyArray(context, loc_id, array_type,
+                             query_specific_interface);
     }
 
     case SemIR::Call::Kind:
@@ -440,8 +453,15 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
         return;
       }
       case CARBON_KIND(SemIR::ClassType class_type): {
+        auto class_info = context.classes().Get(class_type.class_id);
+        if (auto adapted_type_id = class_info.GetAdaptedType(
+                context.sem_ir(), class_type.specific_id);
+            adapted_type_id.has_value() &&
+            context.types().Is<SemIR::ArrayType>(adapted_type_id)) {
+          self_type_id = adapted_type_id;
+          break;
+        }
         // TODO: implement destruction for class types.
-        (void)class_type;
         return;
       }
       case CARBON_KIND(SemIR::ConstType const_type): {
