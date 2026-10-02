@@ -78,6 +78,24 @@ fn MyF() {
   //@dump-sem-ir-end
 }
 
+// --- fail_import_special_name_call_escaped_no_match.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "special_name.h";
+
+fn MyF() {
+  // CHECK:STDERR: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE+8]]:15: error: no matching function for call to 'base' [CppInteropParseError]
+  // CHECK:STDERR:    15 |   Cpp.r#base(1);
+  // CHECK:STDERR:       |               ^
+  // CHECK:STDERR: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./special_name.h:2:6: note: candidate function not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:     2 | auto base() -> void;
+  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR:
+  Cpp.r#base(1);
+}
+
 // ============================================================================
 // Overloaded
 // ============================================================================
