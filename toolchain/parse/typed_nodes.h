@@ -792,18 +792,27 @@ struct CodeBlock {
 using LambdaIntroducer =
     LeafNode<NodeKind::LambdaIntroducer, Lex::FnTokenIndex>;
 
-struct Lambda {
-  static constexpr auto Kind = NodeKind::Lambda.Define(
-      {.category = NodeCategory::Expr, .bracketed_by = LambdaIntroducer::Kind});
+struct LambdaDefinitionStart {
+  static constexpr auto Kind = NodeKind::LambdaDefinitionStart.Define(
+      {.bracketed_by = LambdaIntroducer::Kind});
 
   LambdaIntroducerId introducer;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<ExplicitParamListId> explicit_params;
-  std::optional<ReturnTypeId> return_type;
+  std::optional<AnyReturnDeclId> return_type;
+  Lex::TokenIndex token;
+};
+
+struct Lambda {
+  static constexpr auto Kind =
+      NodeKind::Lambda.Define({.category = NodeCategory::Expr,
+                               .bracketed_by = LambdaDefinitionStart::Kind});
+
+  LambdaDefinitionStartId signature;
   std::optional<TerseBodyArrowId> arrow;
-  NodeId body;
-  // Use a generic token index because the token might be `}` or part of an
-  // expression.
+  std::optional<AnyExprId> terse_body;
+  llvm::SmallVector<AnyStatementId> body;
+  // Use a generic token index because the token might be `}` or `fn`.
   Lex::TokenIndex token;
 };
 
