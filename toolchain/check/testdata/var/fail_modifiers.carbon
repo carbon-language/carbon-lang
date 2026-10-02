@@ -10,36 +10,22 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
-// CHECK:STDERR: protected var b: () = ();
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-9: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
 // CHECK:STDERR:
 protected var b: () = ();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `protected` not allowed on declaration with `private` [ModifierNotAllowedWith]
-// CHECK:STDERR: private protected var c: () = ();
-// CHECK:STDERR:         ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `private` previously appeared here [ModifierPrevious]
-// CHECK:STDERR: private protected var c: () = ();
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:9-17: error: `protected` not allowed on declaration with `private` [ModifierNotAllowedWith]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-7: note: `private` previously appeared here [ModifierPrevious]
 // CHECK:STDERR:
 private protected var c: () = ();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:11: error: `protected` repeated on declaration [ModifierRepeated]
-// CHECK:STDERR: protected protected var d: () = ();
-// CHECK:STDERR:           ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:1: note: `protected` previously appeared here [ModifierPrevious]
-// CHECK:STDERR: protected protected var d: () = ();
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+5]]:11-19: error: `protected` repeated on declaration [ModifierRepeated]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1-9: note: `protected` previously appeared here [ModifierPrevious]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
-// CHECK:STDERR: protected protected var d: () = ();
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-9: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
 // CHECK:STDERR:
 protected protected var d: () = ();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `abstract` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: abstract var e: () = ();
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-8: error: `abstract` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR:
 abstract var e: () = ();

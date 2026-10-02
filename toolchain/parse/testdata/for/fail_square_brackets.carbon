@@ -9,25 +9,15 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/for/fail_square_brackets.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+20]]:7: error: expected `(` after `for` [ExpectedParenAfter]
-  // CHECK:STDERR:   for [] {
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+10]]:7: error: expected `(` after `for` [ExpectedParenAfter]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+16]]:7: error: expected pattern [ExpectedPattern]
-  // CHECK:STDERR:   for [] {
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+8]]:7: error: expected pattern [ExpectedPattern]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+12]]:7: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   for [] {
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+6]]:7: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+8]]:7: error: expected braced code block [ExpectedCodeBlock]
-  // CHECK:STDERR:   for [] {
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+4]]:7: error: expected braced code block [ExpectedCodeBlock]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+4]]:7: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   for [] {
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+2]]:7: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
   for [] {
   }

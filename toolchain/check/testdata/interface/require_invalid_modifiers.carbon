@@ -16,9 +16,7 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_abstract_require.carbon:[[@LINE+4]]:3: error: `abstract` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   abstract require impls Y;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_abstract_require.carbon:[[@LINE+2]]:3-10: error: `abstract` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   abstract require impls Y;
 }
@@ -29,9 +27,7 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_base_require.carbon:[[@LINE+4]]:3: error: `base` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   base require impls Y;
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_base_require.carbon:[[@LINE+2]]:3-6: error: `base` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   base require impls Y;
 }
@@ -42,9 +38,7 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_default_require.carbon:[[@LINE+4]]:3: error: `default` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   default require impls Y;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_default_require.carbon:[[@LINE+2]]:3-9: error: `default` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   default require impls Y;
 }
@@ -55,9 +49,7 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_extern_require.carbon:[[@LINE+4]]:3: error: `extern` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   extern require impls Y;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_extern_require.carbon:[[@LINE+2]]:3-8: error: `extern` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   extern require impls Y;
 }
@@ -68,9 +60,7 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_final_require.carbon:[[@LINE+4]]:3: error: `final` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   final require impls Y;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_final_require.carbon:[[@LINE+2]]:3-7: error: `final` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   final require impls Y;
 }
@@ -81,9 +71,7 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_impl_require.carbon:[[@LINE+4]]:3: error: `impl` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   impl require impls Y;
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_impl_require.carbon:[[@LINE+2]]:3-6: error: `impl` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   impl require impls Y;
 }
@@ -94,9 +82,7 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_override_require.carbon:[[@LINE+4]]:3: error: `override` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   override require impls Y;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_override_require.carbon:[[@LINE+2]]:3-10: error: `override` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   override require impls Y;
 }
@@ -107,13 +93,9 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_returned_require.carbon:[[@LINE+8]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:   returned require impls Y;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_returned_require.carbon:[[@LINE+4]]:3-10: error: unrecognized declaration introducer [UnrecognizedDecl]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_returned_require.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   returned require impls Y;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_returned_require.carbon:[[@LINE+2]]:3-10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:
   returned require impls Y;
 }
@@ -124,9 +106,7 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_private_require.carbon:[[@LINE+4]]:3: error: `private` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   private require impls Y;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_private_require.carbon:[[@LINE+2]]:3-9: error: `private` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   private require impls Y;
 }
@@ -137,9 +117,7 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_protected_require.carbon:[[@LINE+4]]:3: error: `protected` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   protected require impls Y;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_protected_require.carbon:[[@LINE+2]]:3-11: error: `protected` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   protected require impls Y;
 }
@@ -150,9 +128,7 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_override_virtual.carbon:[[@LINE+4]]:3: error: `virtual` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   virtual require impls Y;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_override_virtual.carbon:[[@LINE+2]]:3-9: error: `virtual` not allowed on `require` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   virtual require impls Y;
 }

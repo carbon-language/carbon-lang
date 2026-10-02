@@ -1606,12 +1606,12 @@ auto ExportFunctionToCppPointerConversion(
       CARBON_DIAGNOSTIC(ExportedFunctionPtrTypeMismatch, Error,
                         "can't convert exported function type to `{0}`",
                         CppType);
-      CARBON_DIAGNOSTIC(ExportedFromFunction, Note,
-                        "function exported with type `{0}`", CppType);
+      CARBON_DIAGNOSTIC_LABEL(ExportedFromFunction, Info,
+                              "function exported with type `{0}`", CppType);
       context.emitter()
           .Build(src_id, ExportedFunctionPtrTypeMismatch, dest_fn_type)
-          .Note(function.first_decl_id(), ExportedFromFunction,
-                exported_fn_type)
+          .Attach(function.first_decl_id(), ExportedFromFunction,
+                  exported_fn_type)
           .Emit();
     }
     return false;

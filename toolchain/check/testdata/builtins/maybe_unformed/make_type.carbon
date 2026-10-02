@@ -41,15 +41,11 @@ let u: type = Make(t);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "maybe_unformed.make_type" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NoParam() -> type = "maybe_unformed.make_type";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-22: error: invalid signature for builtin function "maybe_unformed.make_type" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn NoParam() -> type = "maybe_unformed.make_type";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "maybe_unformed.make_type" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-44: error: invalid signature for builtin function "maybe_unformed.make_type" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 

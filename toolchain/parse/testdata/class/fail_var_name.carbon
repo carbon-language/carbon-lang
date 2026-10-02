@@ -9,55 +9,39 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/class/fail_var_name.carbon
 
 class C {
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:6: error: expected pattern [ExpectedPattern]
-  // CHECK:STDERR:   var;
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:6: error: expected pattern [ExpectedPattern]
   // CHECK:STDERR:
   var;
 
   var name;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:7: error: expected pattern [ExpectedPattern]
-  // CHECK:STDERR:   var :;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:7: error: expected pattern [ExpectedPattern]
   // CHECK:STDERR:
   var :;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:7: error: expected pattern [ExpectedPattern]
-  // CHECK:STDERR:   var : C;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:7: error: expected pattern [ExpectedPattern]
   // CHECK:STDERR:
   var : C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   var name:;
-  // CHECK:STDERR:            ^
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:12: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
   var name:;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   var name C;
-  // CHECK:STDERR:            ^
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:12: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   var name C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   var name: C C;
-  // CHECK:STDERR:               ^
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   var name: C C;
 
   var self: C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   var name name: C;
-  // CHECK:STDERR:            ^~~~
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:12-15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   var name name: C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:22: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
-  // CHECK:STDERR:   var generic name: C;
-  // CHECK:STDERR:                      ^
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:22: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
   // CHECK:STDERR:
   var generic name: C;
 }

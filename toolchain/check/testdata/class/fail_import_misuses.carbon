@@ -25,23 +25,15 @@ library "[[@TEST_NAME]]";
 
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:1: error: redeclaration of `class Empty` is redundant [RedeclRedundant]
-// CHECK:STDERR: class Empty {
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: class Empty {
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:1-13: error: redeclaration of `class Empty` is redundant [RedeclRedundant]
+// CHECK:STDERR: imported from: fail_b.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: a.carbon:4:1-13: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 class Empty {
 }
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:8: error: binding pattern has incomplete type `Incomplete` in name binding declaration [IncompleteTypeInBindingDecl]
-// CHECK:STDERR: var a: Incomplete;
-// CHECK:STDERR:        ^~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-16]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:7:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class Incomplete;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:8-17: error: binding pattern has incomplete type `Incomplete` in name binding declaration [IncompleteTypeInBindingDecl]
+// CHECK:STDERR: imported from: fail_b.carbon:[[@LINE-10]]:1 [InImport]
+// CHECK:STDERR: a.carbon:7:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:
 var a: Incomplete;

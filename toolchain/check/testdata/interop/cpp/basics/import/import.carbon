@@ -30,11 +30,9 @@ alias MyStructAlias = Cpp.MyStruct;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_import_struct_api.carbon:[[@LINE+6]]:1: in import [InImport]
-// CHECK:STDERR: struct_api.carbon:4:10: in file included here [InCppInclude]
+// CHECK:STDERR: imported from: fail_todo_import_struct_api.carbon:[[@LINE+4]]:1 [InImport]
+// CHECK:STDERR: included from: struct_api.carbon:4:10 [InCppInclude]
 // CHECK:STDERR: ./struct.h:2:8: error: semantics TODO: `indirect import of C++ declaration with no direct Cpp import` [SemanticsTodo]
-// CHECK:STDERR: struct MyStruct { void Foo(); };
-// CHECK:STDERR:        ^
 // CHECK:STDERR:
 import library "struct_api";
 

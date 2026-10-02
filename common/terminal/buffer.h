@@ -287,6 +287,12 @@ class Buffer {
   //
   // A cell's style is whatever was drawn there last, so crossing lines of
   // different styles do depend on order.
+  //
+  // TODO: Every line is drawn with one stroke, and a line meeting another
+  // joins it. Diagnostic rendering needs a heavier stroke, to mark the source
+  // a message is about, and a line that passes another without connecting, to
+  // reach a label past the marks between them. Add a weight to these calls
+  // and a crossing form of `DrawVerticalLine`.
   auto DrawHorizontalLine(int x, int y, int length, const Style& style,
                           LineEnd start = LineEnd::Center,
                           LineEnd end = LineEnd::Center) -> DrawEnd;
@@ -391,6 +397,10 @@ class Buffer {
   // with such text, since which breaks a reflow may discard -- every newline,
   // or only those a previous wrapping introduced -- is a question about where
   // that text came from.
+  //
+  // TODO: A break can fall inside a piece of code the text quotes, splitting a
+  // type written with spaces in it across two rows. Take a quote character and
+  // keep what a pair of them encloses in one word, as a URL already is.
   auto DrawWrappedText(int x, int y, int margin, int max_width,
                        llvm::StringRef text, const Style& style) -> DrawEnd;
 

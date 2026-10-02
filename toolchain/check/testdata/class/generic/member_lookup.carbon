@@ -53,25 +53,19 @@ class Derived(T: type) {
 }
 
 fn AccessMissingBase[T: type](x: Base(T)) -> T {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Base(T)` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR:   return x.nonesuch;
-  // CHECK:STDERR:          ^~~~~~~~~~
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+2]]:10-19: error: member name `nonesuch` not found in `Base(T)` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:
   return x.nonesuch;
 }
 
 fn AccessMissingDerived[T: type](x: Derived(T)) -> T {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Derived(T)` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR:   return x.nonesuch;
-  // CHECK:STDERR:          ^~~~~~~~~~
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+2]]:10-19: error: member name `nonesuch` not found in `Derived(T)` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:
   return x.nonesuch;
 }
 
 fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+4]]:10: error: member name `nonesuch` not found in `Derived(i32)` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR:   return x.nonesuch;
-  // CHECK:STDERR:          ^~~~~~~~~~
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+2]]:10-19: error: member name `nonesuch` not found in `Derived(i32)` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:
   return x.nonesuch;
 }

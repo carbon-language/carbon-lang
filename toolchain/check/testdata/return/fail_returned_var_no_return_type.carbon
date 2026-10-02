@@ -17,12 +17,8 @@
 library "[[@TEST_NAME]]";
 
 fn Procedure() {
-  // CHECK:STDERR: fail_procedure_with_returned_var.carbon:[[@LINE+7]]:3: error: cannot declare a `returned var` in this function [ReturnedVarWithNoReturnType]
-  // CHECK:STDERR:   returned var unused v: () = ();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_procedure_with_returned_var.carbon:[[@LINE-4]]:1: note: there was no return type provided [ReturnTypeOmittedNote]
-  // CHECK:STDERR: fn Procedure() {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_procedure_with_returned_var.carbon:[[@LINE+3]]:3-10: error: cannot declare a `returned var` in this function [ReturnedVarWithNoReturnType]
+  // CHECK:STDERR: fail_procedure_with_returned_var.carbon:[[@LINE-2]]:1-16: note: there was no return type provided [ReturnTypeOmittedNote]
   // CHECK:STDERR:
   returned var unused v: () = ();
   return;
@@ -33,17 +29,11 @@ fn Procedure() {
 library "[[@TEST_NAME]]";
 
 fn ForgotReturnType() {
-  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+7]]:3: error: cannot declare a `returned var` in this function [ReturnedVarWithNoReturnType]
-  // CHECK:STDERR:   returned var unused v: () = ();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE-4]]:1: note: there was no return type provided [ReturnTypeOmittedNote]
-  // CHECK:STDERR: fn ForgotReturnType() {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+3]]:3-10: error: cannot declare a `returned var` in this function [ReturnedVarWithNoReturnType]
+  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE-2]]:1-23: note: there was no return type provided [ReturnTypeOmittedNote]
   // CHECK:STDERR:
   returned var unused v: () = ();
-  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+4]]:3: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
-  // CHECK:STDERR:   return var;
-  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+2]]:3-13: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
   // CHECK:STDERR:
   return var;
 }
@@ -62,11 +52,11 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %self.param_patt.65a: %pattern_type.cb1 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.df1: %pattern_type.cb1 = wrapper_binding_pattern self, %self.param_patt.65a [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01: %Destroy.WithSelf.SubobjectDestroy.type.dfc = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,14 +70,14 @@ fn ForgotReturnType() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc12 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc8 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = ref_param_pattern [concrete = constants.%self.param_patt.65a]
 // CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.df1]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %empty_tuple.type = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %empty_tuple.type = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc12 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc8 [concrete = constants.%Destroy.WithSelf.Op.403] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = ref_param_pattern [concrete = constants.%self.param_patt.65a]
 // CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.df1]
 // CHECK:STDOUT:   } {
@@ -108,13 +98,13 @@ fn ForgotReturnType() {
 // CHECK:STDOUT: fn @Procedure() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var_storage %v.var_patt
-// CHECK:STDOUT:   %.loc12_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_32.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_12: init %empty_tuple.type = converted %.loc12_32.1, %.loc12_32.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %v.var, %.loc12_12
-// CHECK:STDOUT:   %.loc12_27.1: type = splice_block %.loc12_27.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc12_27.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc12_27.3: type = converted %.loc12_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc8_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_32.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_12: init %empty_tuple.type = converted %.loc8_32.1, %.loc8_32.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %v.var, %.loc8_12
+// CHECK:STDOUT:   %.loc8_27.1: type = splice_block %.loc8_27.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_27.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_27.3: type = converted %.loc8_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %empty_tuple.type = wrapper_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -126,11 +116,11 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc12(%self.param: ref %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc8(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc12(%self.param: ref %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc8(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc12(%self.param: ref %empty_tuple.type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc8(%self.param: ref %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl(%self.param)
@@ -151,11 +141,11 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %self.param_patt.65a: %pattern_type.cb1 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.df1: %pattern_type.cb1 = wrapper_binding_pattern self, %self.param_patt.65a [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01: %Destroy.WithSelf.SubobjectDestroy.type.dfc = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,14 +159,14 @@ fn ForgotReturnType() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc12 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc8 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = ref_param_pattern [concrete = constants.%self.param_patt.65a]
 // CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.df1]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %empty_tuple.type = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %empty_tuple.type = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc12 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc8 [concrete = constants.%Destroy.WithSelf.Op.403] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = ref_param_pattern [concrete = constants.%self.param_patt.65a]
 // CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.df1]
 // CHECK:STDOUT:   } {
@@ -197,13 +187,13 @@ fn ForgotReturnType() {
 // CHECK:STDOUT: fn @ForgotReturnType() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var_storage %v.var_patt
-// CHECK:STDOUT:   %.loc12_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_32.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_12: init %empty_tuple.type = converted %.loc12_32.1, %.loc12_32.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %v.var, %.loc12_12
-// CHECK:STDOUT:   %.loc12_27.1: type = splice_block %.loc12_27.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc12_27.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc12_27.3: type = converted %.loc12_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc8_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_32.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_12: init %empty_tuple.type = converted %.loc8_32.1, %.loc8_32.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %v.var, %.loc8_12
+// CHECK:STDOUT:   %.loc8_27.1: type = splice_block %.loc8_27.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_27.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_27.3: type = converted %.loc8_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %empty_tuple.type = wrapper_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -215,11 +205,11 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc12(%self.param: ref %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc8(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc12(%self.param: ref %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc8(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc12(%self.param: ref %empty_tuple.type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc8(%self.param: ref %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl(%self.param)

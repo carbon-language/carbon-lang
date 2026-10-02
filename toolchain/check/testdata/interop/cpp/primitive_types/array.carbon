@@ -63,9 +63,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:1: error: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:1-8: error: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:
 class C;
 
@@ -73,12 +71,8 @@ fn F() -> array(C, 5)*;
 
 inline Cpp '''
 void G() {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:33: error: subscript of pointer to incomplete type 'Carbon::C' [CppInteropParseError]
-  // CHECK:STDERR:    22 |   Carbon::C *p = &(*Carbon::F())[0];
-  // CHECK:STDERR:       |                   ~~~~~~~~~~~~~~^
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-9]]:8: note: forward declaration of 'Carbon::C' [CppInteropParseNote]
-  // CHECK:STDERR:     9 | class C;
-  // CHECK:STDERR:       |        ^
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+3]]:33: error: subscript of pointer to incomplete type 'Carbon::C' [CppInteropParseError]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-7]]:8: note: forward declaration of 'Carbon::C' [CppInteropParseNote]
   // CHECK:STDERR:
   Carbon::C *p = &(*Carbon::F())[0];
 }

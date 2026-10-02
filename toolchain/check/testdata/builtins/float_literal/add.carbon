@@ -42,9 +42,7 @@ library "[[@TEST_NAME]]";
 fn Add(a: Core.FloatLiteral, b: Core.FloatLiteral) -> Core.FloatLiteral = "float.add";
 
 fn F(){
-     // CHECK:STDERR: fail_too_large.carbon:[[@LINE+4]]:6: error: binary calculation `16*2^1023999999996 + 1*10^-19` would exceed the maximum supported integer width of 8388608 [CompileTimeFloatLiteralBinaryOperationOutOfRange]
-     // CHECK:STDERR:      Add(0x1.0p1024000000000, 0.0000000000000000001);
-     // CHECK:STDERR:      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     // CHECK:STDERR: fail_too_large.carbon:[[@LINE+2]]:6-52: error: binary calculation `16*2^1023999999996 + 1*10^-19` would exceed the maximum supported integer width of 8388608 [CompileTimeFloatLiteralBinaryOperationOutOfRange]
      // CHECK:STDERR:
      Add(0x1.0p1024000000000, 0.0000000000000000001);
 }

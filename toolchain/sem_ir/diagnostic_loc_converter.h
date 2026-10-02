@@ -15,6 +15,15 @@
 
 namespace Carbon::SemIR {
 
+// Returns the Carbon diagnostic location for a Clang source range: where it
+// starts, the line holding it, and how far across that line it reaches. A range
+// with no end, which is how a bare Clang location arrives, marks one column.
+//
+// This is shared with the C++ interop diagnostic consumer, which reports
+// Clang's own diagnostics and needs them to land in the same places these do.
+auto ConvertClangRangeToLoc(const clang::SourceManager& src_mgr,
+                            clang::CharSourceRange range) -> Diagnostics::Loc;
+
 // Converter from compact location information into a diagnostic location
 // describing a filename, line location, and potentially a sequence of imports.
 // Such diagnostics locations are used to render user-facing diagnostics and

@@ -10,15 +10,11 @@
 
 fn f() -> i32 {
   match (true) {
-    // CHECK:STDERR: fail_missing_guard_parens_only_parse_errors.carbon:[[@LINE+4]]:33: error: expected `)` [ExpectedMatchCaseGuardCloseParen]
-    // CHECK:STDERR:     case x: bool if (x == false => { return 1; }
-    // CHECK:STDERR:                                 ^~
+    // CHECK:STDERR: fail_missing_guard_parens_only_parse_errors.carbon:[[@LINE+2]]:33-34: error: expected `)` [ExpectedMatchCaseGuardCloseParen]
     // CHECK:STDERR:
     case x: bool if (x == false => { return 1; }
     case y: bool if (not y) => { return 2; }
-    // CHECK:STDERR: fail_missing_guard_parens_only_parse_errors.carbon:[[@LINE+4]]:21: error: expected `(` after `if` [ExpectedMatchCaseGuardOpenParen]
-    // CHECK:STDERR:     case z: bool if true or false) => { return 3; }
-    // CHECK:STDERR:                     ^~~~
+    // CHECK:STDERR: fail_missing_guard_parens_only_parse_errors.carbon:[[@LINE+2]]:21-24: error: expected `(` after `if` [ExpectedMatchCaseGuardOpenParen]
     // CHECK:STDERR:
     case z: bool if true or false) => { return 3; }
   }

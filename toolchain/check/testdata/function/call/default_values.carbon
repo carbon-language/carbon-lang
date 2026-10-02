@@ -18,19 +18,11 @@ fn F(unused x: C = {}, unused y: C = {}, unused z: C = {}) {}
 fn H(unused x: C = {}, (unused y: C = {}, unused z: C = {}) = ({}, {})) {}
 
 fn G() {
-  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE+14]]:3: error: 4 arguments passed to function expecting 3 arguments [CallArgCountMismatch]
-  // CHECK:STDERR:   F({}, {}, {}, {});
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE-7]]:1: note: calling function declared here [InCallToEntity]
-  // CHECK:STDERR: fn F(unused x: C = {}, unused y: C = {}, unused z: C = {}) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE+6]]:3-19: error: 4 arguments passed to function expecting 3 arguments [CallArgCountMismatch]
+  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE-5]]:1-60: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE-10]]:24: error: tuple pattern expects 2 elements, but tuple literal has 3 [TuplePatternSizeDoesntMatchLiteral]
-  // CHECK:STDERR: fn H(unused x: C = {}, (unused y: C = {}, unused z: C = {}) = ({}, {})) {}
-  // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE-13]]:24: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn H(unused x: C = {}, (unused y: C = {}, unused z: C = {}) = ({}, {})) {}
-  // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE-6]]:24-59: error: tuple pattern expects 2 elements, but tuple literal has 3 [TuplePatternSizeDoesntMatchLiteral]
+  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE-7]]:24-70: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   F({}, {}, {}, {});
   H({}, ({}, {}, {}));
@@ -43,12 +35,8 @@ class C {}
 fn F(unused x: C, unused y: C = {}) {}
 
 fn G() {
-  // CHECK:STDERR: fail_caller_too_few_arguments.carbon:[[@LINE+7]]:3: error: 0 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
-  // CHECK:STDERR:   F();
-  // CHECK:STDERR:   ^~~
-  // CHECK:STDERR: fail_caller_too_few_arguments.carbon:[[@LINE-6]]:1: note: calling function declared here [InCallToEntity]
-  // CHECK:STDERR: fn F(unused x: C, unused y: C = {}) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_caller_too_few_arguments.carbon:[[@LINE+3]]:3-5: error: 0 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
+  // CHECK:STDERR: fail_caller_too_few_arguments.carbon:[[@LINE-4]]:1-37: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR:
   F();
 }

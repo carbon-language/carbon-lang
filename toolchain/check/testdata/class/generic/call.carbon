@@ -29,12 +29,8 @@ library "[[@TEST_NAME]]";
 
 class Class(T: type, N: i32) {}
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+7]]:8: error: 1 argument passed to generic class expecting 2 arguments [CallArgCountMismatch]
-// CHECK:STDERR: var a: Class(i32*);
-// CHECK:STDERR:        ^~~~~~~~~~~
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE-5]]:1: note: calling generic class declared here [InCallToEntity]
-// CHECK:STDERR: class Class(T: type, N: i32) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE+3]]:8-18: error: 1 argument passed to generic class expecting 2 arguments [CallArgCountMismatch]
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE-3]]:1-30: note: calling generic class declared here [InCallToEntity]
 // CHECK:STDERR:
 var a: Class(i32*);
 
@@ -44,12 +40,8 @@ library "[[@TEST_NAME]]";
 
 class Class(T: type, N: i32) {}
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+7]]:8: error: 3 arguments passed to generic class expecting 2 arguments [CallArgCountMismatch]
-// CHECK:STDERR: var a: Class(i32*, 1, 2);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE-5]]:1: note: calling generic class declared here [InCallToEntity]
-// CHECK:STDERR: class Class(T: type, N: i32) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE+3]]:8-24: error: 3 arguments passed to generic class expecting 2 arguments [CallArgCountMismatch]
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE-3]]:1-30: note: calling generic class declared here [InCallToEntity]
 // CHECK:STDERR:
 var a: Class(i32*, 1, 2);
 
@@ -59,15 +51,9 @@ library "[[@TEST_NAME]]";
 
 class Class(T: type, N: i32) {}
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+10]]:8: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: var a: Class(5, i32*);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+7]]:8: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var a: Class(5, i32*);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-// CHECK:STDERR: class Class(T: type, N: i32) {}
-// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:8-21: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:8-21: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-4]]:13-19: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR:
 var a: Class(5, i32*);
 
@@ -565,7 +551,7 @@ class Outer(T: type) {
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
-// CHECK:STDOUT:     %.loc16: type = converted %int_5, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc10: type = converted %int_5, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

@@ -24,15 +24,11 @@ fn Call(ref a: f64, b: f64) {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.div_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NotRef(a: f64, b: f64) = "float.div_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-27: error: invalid signature for builtin function "float.div_assign" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn NotRef(a: f64, b: f64) = "float.div_assign";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.div_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedTypes(ref a: f64, b: f32) = "float.div_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-35: error: invalid signature for builtin function "float.div_assign" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn MixedTypes(ref a: f64, b: f32) = "float.div_assign";
 
@@ -41,8 +37,6 @@ fn MixedTypes(ref a: f64, b: f32) = "float.div_assign";
 library "[[@TEST_NAME]]";
 
 fn Literal() -> type = "float_literal.make_type";
-// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.div_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn LiteralRuntime(ref a: Literal(), b: Literal()) = "float.div_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_literal.carbon:[[@LINE+2]]:1-51: error: invalid signature for builtin function "float.div_assign" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn LiteralRuntime(ref a: Literal(), b: Literal()) = "float.div_assign";

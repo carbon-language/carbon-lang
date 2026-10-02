@@ -17,12 +17,8 @@
 
 class C;
 
-// CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+7]]:13: error: parameter has incomplete type `C` in function definition [IncompleteTypeInFunctionParam]
-// CHECK:STDERR: fn F(unused n: C) {}
-// CHECK:STDERR:             ^~~~
-// CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+3]]:13-16: error: parameter has incomplete type `C` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-3]]:1-8: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:
 fn F(unused n: C) {}
 

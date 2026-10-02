@@ -17,9 +17,7 @@ class Z {
 }
 
 fn Run() {
-  // CHECK:STDERR: fail_init_missing_base.carbon:[[@LINE+4]]:14: error: missing value for field `base` in struct initialization [StructInitMissingFieldInLiteral]
-  // CHECK:STDERR:   var _: Z = {};
-  // CHECK:STDERR:              ^~
+  // CHECK:STDERR: fail_init_missing_base.carbon:[[@LINE+2]]:14-15: error: missing value for field `base` in struct initialization [StructInitMissingFieldInLiteral]
   // CHECK:STDERR:
   var _: Z = {};
 }

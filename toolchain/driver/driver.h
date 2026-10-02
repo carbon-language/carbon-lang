@@ -6,6 +6,8 @@
 #define CARBON_TOOLCHAIN_DRIVER_DRIVER_H_
 
 #include "common/command_line.h"
+#include "common/filesystem.h"
+#include "common/terminal/capabilities.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/driver/driver_env.h"
@@ -22,16 +24,22 @@ class Driver {
  public:
   // Constructs a driver with the provided environment. `input_stream` is
   // optional; other parameters are required.
+  //
+  // `error_file` is the file `error_stream` writes to, when there is one.
+  // Diagnostic rendering is detected from it, and stays plain when it is
+  // invalid, which is what an in-memory stream gets.
   explicit Driver(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                   const InstallPaths* installation, FILE* input_stream,
                   llvm::raw_pwrite_stream* output_stream,
-                  llvm::raw_pwrite_stream* error_stream, bool fuzzing = false,
-                  bool enable_leaking = false)
+                  llvm::raw_pwrite_stream* error_stream,
+                  Filesystem::WriteFileRef error_file = {},
+                  bool fuzzing = false, bool enable_leaking = false)
       : fs_(std::move(fs)),
         installation_(installation),
         input_stream_(input_stream),
         output_stream_(output_stream),
         error_stream_(error_stream),
+        error_file_(error_file),
         fuzzing_(fuzzing),
         enable_leaking_(enable_leaking) {}
 
@@ -52,6 +60,10 @@ class Driver {
   auto set_mem_usage(MemUsage* mem_usage) -> void { mem_usage_ = mem_usage; }
 
  private:
+  // Returns what to render diagnostics for, honoring `preferences`.
+  auto ErrorCapabilities(Terminal::Preferences preferences) const
+      -> Terminal::Capabilities;
+
   // We store the initial values in the `DriverEnv` that will be used for each
   // subcommand invocation here. These are used as the _starting_ values of the
   // environment, but individual `RunCommand` invocations may customize the
@@ -63,6 +75,7 @@ class Driver {
   FILE* input_stream_;
   llvm::raw_pwrite_stream* output_stream_;
   llvm::raw_pwrite_stream* error_stream_;
+  Filesystem::WriteFileRef error_file_;
   bool fuzzing_;
   bool enable_leaking_;
   MemUsage* mem_usage_ = nullptr;

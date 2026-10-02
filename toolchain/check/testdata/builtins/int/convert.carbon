@@ -76,12 +76,8 @@ import library "int_ops";
 
 fn F() {
   // Ensure our testing machinery works.
-  // CHECK:STDERR: fail_self_test.carbon:[[@LINE+7]]:3: error: cannot convert expression of type `Expect(0)` to `Expect(1)` with `as` [ConversionFailure]
-  // CHECK:STDERR:   Test(Int32ToInt32(0)) as Expect(1 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_self_test.carbon:[[@LINE+4]]:3: note: type `Expect(0)` does not implement interface `Core.As(Expect(1))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   Test(Int32ToInt32(0)) as Expect(1 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_self_test.carbon:[[@LINE+3]]:3-43: error: cannot convert expression of type `Expect(0)` to `Expect(1)` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_self_test.carbon:[[@LINE+2]]:3-43: note: type `Expect(0)` does not implement interface `Core.As(Expect(1))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   Test(Int32ToInt32(0)) as Expect(1 as i32);
 }
@@ -245,13 +241,9 @@ import library "int_ops";
 
 let not_constant: Core.IntLiteral = 0;
 
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+8]]:33: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
-// CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE-7]]:1: in import [InImport]
-// CHECK:STDERR: int_ops.carbon:16:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn IntLiteralToInt16(a: Core.IntLiteral) -> i16 = "int.convert";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:33-63: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: imported from: fail_not_constant.carbon:[[@LINE-5]]:1 [InImport]
+// CHECK:STDERR: int_ops.carbon:16:1-49: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 

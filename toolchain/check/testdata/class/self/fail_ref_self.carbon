@@ -19,12 +19,8 @@ class Class {
 fn Make() -> Class;
 
 fn F(c: Class, p: Class*) {
-  // CHECK:STDERR: fail_ref_self.carbon:[[@LINE+7]]:3: error: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR:   c.F();
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_ref_self.carbon:[[@LINE-9]]:8: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn F(ref self);
-  // CHECK:STDERR:        ^~~~~~~~
+  // CHECK:STDERR: fail_ref_self.carbon:[[@LINE+3]]:3: error: value expression passed to reference parameter [ValueForRefParam]
+  // CHECK:STDERR: fail_ref_self.carbon:[[@LINE-7]]:8-15: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   c.F();
 
@@ -65,15 +61,15 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %self.param_patt.52f: %pattern_type.a96 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.4b1: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt.52f [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc35_8.1 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc31_8.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc35_8.1 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc31_8.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc35_8.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc31_8.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc35_8.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc31_8.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc35_8.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc31_8.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -87,28 +83,28 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc35_8.1 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.1] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc31_8.1 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.a96 = ref_param_pattern [concrete = constants.%self.param_patt.52f]
 // CHECK:STDOUT:     %self.patt: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.4b1]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %empty_struct_type = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %empty_struct_type = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc35_8.1 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc31_8.1 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.a96 = ref_param_pattern [concrete = constants.%self.param_patt.52f]
 // CHECK:STDOUT:     %self.patt: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.4b1]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %empty_struct_type = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %empty_struct_type = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc35_8.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc31_8.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f15 = ref_param_pattern [concrete = constants.%self.param_patt.b2b]
 // CHECK:STDOUT:     %self.patt: %pattern_type.f15 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.f19]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %Class = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %Class = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc35_8.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc31_8.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f15 = ref_param_pattern [concrete = constants.%self.param_patt.b2b]
 // CHECK:STDOUT:     %self.patt: %pattern_type.f15 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.f19]
 // CHECK:STDOUT:   } {
@@ -177,42 +173,42 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT: fn @F(%c.param: %Class, %p.param: %ptr.7ee) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc29: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
-// CHECK:STDOUT:   %Class.F.bound.loc29: <bound method> = bound_method %c.ref, %F.ref.loc29
-// CHECK:STDOUT:   %Class.F.call.loc29: init %empty_tuple.type = call %Class.F.bound.loc29(<error>)
+// CHECK:STDOUT:   %F.ref.loc25: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
+// CHECK:STDOUT:   %Class.F.bound.loc25: <bound method> = bound_method %c.ref, %F.ref.loc25
+// CHECK:STDOUT:   %Class.F.call.loc25: init %empty_tuple.type = call %Class.F.bound.loc25(<error>)
 // CHECK:STDOUT:   %p.ref: %ptr.7ee = name_ref p, %p
-// CHECK:STDOUT:   %.loc32: ref %Class = deref %p.ref
-// CHECK:STDOUT:   %F.ref.loc32: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
-// CHECK:STDOUT:   %Class.F.bound.loc32: <bound method> = bound_method %.loc32, %F.ref.loc32
-// CHECK:STDOUT:   %Class.F.call.loc32: init %empty_tuple.type = call %Class.F.bound.loc32(%.loc32)
+// CHECK:STDOUT:   %.loc28: ref %Class = deref %p.ref
+// CHECK:STDOUT:   %F.ref.loc28: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
+// CHECK:STDOUT:   %Class.F.bound.loc28: <bound method> = bound_method %.loc28, %F.ref.loc28
+// CHECK:STDOUT:   %Class.F.call.loc28: init %empty_tuple.type = call %Class.F.bound.loc28(%.loc28)
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc35_8.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %Make.call: init %Class to %.loc35_8.1 = call %Make.ref()
-// CHECK:STDOUT:   %.loc35_8.2: ref %Class = temporary %.loc35_8.1, %Make.call
-// CHECK:STDOUT:   %F.ref.loc35: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
-// CHECK:STDOUT:   %Class.F.bound.loc35: <bound method> = bound_method %.loc35_8.2, %F.ref.loc35
-// CHECK:STDOUT:   %Class.F.call.loc35: init %empty_tuple.type = call %Class.F.bound.loc35(%.loc35_8.2)
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc35_8.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc35_8.2)
+// CHECK:STDOUT:   %.loc31_8.1: ref %Class = temporary_storage
+// CHECK:STDOUT:   %Make.call: init %Class to %.loc31_8.1 = call %Make.ref()
+// CHECK:STDOUT:   %.loc31_8.2: ref %Class = temporary %.loc31_8.1, %Make.call
+// CHECK:STDOUT:   %F.ref.loc31: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
+// CHECK:STDOUT:   %Class.F.bound.loc31: <bound method> = bound_method %.loc31_8.2, %F.ref.loc31
+// CHECK:STDOUT:   %Class.F.call.loc31: init %empty_tuple.type = call %Class.F.bound.loc31(%.loc31_8.2)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc31_8.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc31_8.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc35_8.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc31_8.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc35_8.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc31_8.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc35_8.1(%self.param: ref %empty_struct_type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc31_8.1(%self.param: ref %empty_struct_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.1(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.1(%self.param)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc35_8.2(%self.param: ref %Class) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc31_8.2(%self.param: ref %Class) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc35_8.2(%self.param: ref %Class) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc31_8.2(%self.param: ref %Class) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc35_8.2(%self.param: ref %Class) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc31_8.2(%self.param: ref %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.2(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.2(%self.param)

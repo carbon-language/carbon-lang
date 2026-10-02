@@ -40,14 +40,25 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
 
   llvm::raw_null_ostream null_ostream;
   Driver driver(fs, install_paths, /*input_stream=*/nullptr, &null_ostream,
-                &null_ostream, /*fuzzing=*/true);
+                &null_ostream, /*error_file=*/{}, /*fuzzing=*/true);
+
+  // Force Unicode and color output. The output stream isn't a terminal, so
+  // diagnostics would otherwise render as plain ASCII without color, and the
+  // fuzzer would never reach the renderer's handling of UTF-8 and double-width
+  // characters.
+  static constexpr llvm::StringLiteral RenderArgs[] = {
+      "--terminal-unicode=always", "--color=always"};
 
   // TODO: Get checking to a point where it can handle invalid parse trees
   // without crashing.
-  if (!driver.RunCommand({"compile", "--phase=parse", TestFileName}).success) {
+  if (!driver
+           .RunCommand({RenderArgs[0], RenderArgs[1], "compile",
+                        "--phase=parse", TestFileName})
+           .success) {
     return 0;
   }
-  driver.RunCommand({"compile", "--phase=check", TestFileName});
+  driver.RunCommand(
+      {RenderArgs[0], RenderArgs[1], "compile", "--phase=check", TestFileName});
   return 0;
 }
 

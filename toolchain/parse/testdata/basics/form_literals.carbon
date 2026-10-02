@@ -21,55 +21,33 @@ fn VarReturn() ->? form(ref i32);
 // --- fail_invalid_form_literal.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:7: error: expected `(` after `form` [ExpectedParenAfter]
-  // CHECK:STDERR:   form;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:7: error: expected `(` after `form` [ExpectedParenAfter]
   // CHECK:STDERR:
   form;
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+8]]:8: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
-  // CHECK:STDERR:   form();
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   form();
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:8: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
   form();
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
-  // CHECK:STDERR:   form(i32);
-  // CHECK:STDERR:        ^~~
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:8-10: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
   // CHECK:STDERR:
   form(i32);
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+8]]:8: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
-  // CHECK:STDERR:   form(whole lot of nonsense);
-  // CHECK:STDERR:        ^~~~~
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8-12: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:14: error: unexpected tokens before `)` [ExpectedCloseSymbol]
-  // CHECK:STDERR:   form(whole lot of nonsense);
-  // CHECK:STDERR:              ^~~
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:14-16: error: unexpected tokens before `)` [ExpectedCloseSymbol]
   // CHECK:STDERR:
   form(whole lot of nonsense);
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:18: error: unexpected tokens before `)` [ExpectedCloseSymbol]
-  // CHECK:STDERR:   form(var whole lot of nonsense);
-  // CHECK:STDERR:                  ^~~
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:18-20: error: unexpected tokens before `)` [ExpectedCloseSymbol]
   // CHECK:STDERR:
   form(var whole lot of nonsense);
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+8]]:8: error: expected `(` after `form` [ExpectedParenAfter]
-  // CHECK:STDERR:   form whole lot of nonsense;
-  // CHECK:STDERR:        ^~~~~
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8-12: error: expected `(` after `form` [ExpectedParenAfter]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8: error: expected `;` after expression statement [ExpectedExprSemi]
-  // CHECK:STDERR:   form whole lot of nonsense;
-  // CHECK:STDERR:        ^~~~~
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:8-12: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   form whole lot of nonsense;
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+8]]:8: error: expected `(` after `form` [ExpectedParenAfter]
-  // CHECK:STDERR:   form var whole lot of nonsense;
-  // CHECK:STDERR:        ^~~
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8-10: error: expected `(` after `form` [ExpectedParenAfter]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8: error: expected `;` after expression statement [ExpectedExprSemi]
-  // CHECK:STDERR:   form var whole lot of nonsense;
-  // CHECK:STDERR:        ^~~
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:8-10: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   form var whole lot of nonsense;
 }

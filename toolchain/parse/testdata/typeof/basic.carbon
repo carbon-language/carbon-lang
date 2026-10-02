@@ -20,61 +20,41 @@ fn F() {
 
 // --- fail_no_paren.carbon
 
-// CHECK:STDERR: fail_no_paren.carbon:[[@LINE+4]]:15: error: expected `(` after `typeof` [ExpectedParenAfter]
-// CHECK:STDERR: var x: typeof y;
-// CHECK:STDERR:               ^
+// CHECK:STDERR: fail_no_paren.carbon:[[@LINE+2]]:15: error: expected `(` after `typeof` [ExpectedParenAfter]
 // CHECK:STDERR:
 var x: typeof y;
 
 // --- fail_no_expr.carbon
 
-// CHECK:STDERR: fail_no_expr.carbon:[[@LINE+4]]:15: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: var x: typeof();
-// CHECK:STDERR:               ^
+// CHECK:STDERR: fail_no_expr.carbon:[[@LINE+2]]:15: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 var x: typeof();
 
 // --- fail_no_close_paren.carbon
 
-// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+4]]:17: error: unexpected tokens before `)` [ExpectedCloseSymbol]
-// CHECK:STDERR: var x: typeof(y z);
-// CHECK:STDERR:                 ^
+// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+2]]:17: error: unexpected tokens before `)` [ExpectedCloseSymbol]
 // CHECK:STDERR:
 var x: typeof(y z);
 
 // --- fail_no_close_paren_before_eof_at_eof.carbon
 
-// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+11]]:14: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: var x: typeof(
-// CHECK:STDERR:              ^
-// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+8]]:15: note: possibly missing `)` here [PossiblyMissingBracketHere]
-// CHECK:STDERR: var x: typeof(
-// CHECK:STDERR:               ^
+// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+5]]:14: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+4]]:15: note: possibly missing `)` here [PossiblyMissingBracketHere]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+4]]:15: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: var x: typeof(
-// CHECK:STDERR:               ^
+// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+2]]:15: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 var x: typeof(
-// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+4]]:1: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR:
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+2]]:1: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 
 // --- fail_no_close_paren_after_expr_at_eof.carbon
 
-// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+7]]:14: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: var x: typeof(y
-// CHECK:STDERR:              ^
-// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+4]]:16: note: possibly missing `)` here [PossiblyMissingBracketHere]
-// CHECK:STDERR: var x: typeof(y
-// CHECK:STDERR:                ^
+// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+3]]:14: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+2]]:16: note: possibly missing `)` here [PossiblyMissingBracketHere]
 // CHECK:STDERR:
 var x: typeof(y
 
-// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+106]]:26: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR: // CHECK:STDOUT:   (root)
-// CHECK:STDERR:                          ^
+// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+104]]:26: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   ╭─FileStart ''

@@ -8,9 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_period_string_equals.carbon
 
-// CHECK:STDERR: fail_period_string_equals.carbon:[[@LINE+4]]:10: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
-// CHECK:STDERR: var x: {."hello" = 0, .y = 4} = {};
-// CHECK:STDERR:          ^~~~~~~
+// CHECK:STDERR: fail_period_string_equals.carbon:[[@LINE+2]]:10-16: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
 // CHECK:STDERR:
 var x: {."hello" = 0, .y = 4} = {};
 

@@ -133,15 +133,9 @@ fn F(a: A) {
   // a copy to perform initialization. It's not clear whether that is the right
   // behavior.
 
-  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+10]]:3: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
-  // CHECK:STDERR:   var unused a_init: A = (a as ({}, Noncopyable)) as A;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+7]]:3: note: type `Noncopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   var unused a_init: A = (a as ({}, Noncopyable)) as A;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+4]]:26: note: in copy of `A` [InCopy]
-  // CHECK:STDERR:   var unused a_init: A = (a as ({}, Noncopyable)) as A;
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+4]]:3-22: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+3]]:3-22: note: type `Noncopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+2]]:26-54: note: in copy of `A` [InCopy]
   // CHECK:STDERR:
   var unused a_init: A = (a as ({}, Noncopyable)) as A;
 }
@@ -161,12 +155,8 @@ class B {
 // We do not try to implicitly convert from the first operand of `as` to the
 // adapted type of the second operand.
 
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+7]]:12: error: cannot convert expression of type `{.x: ()}` to `B` with `as` [ConversionFailure]
-// CHECK:STDERR: var b: B = {.x = ()} as B;
-// CHECK:STDERR:            ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+4]]:12: note: type `{.x: ()}` does not implement interface `Core.As(B)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var b: B = {.x = ()} as B;
-// CHECK:STDERR:            ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12-25: error: cannot convert expression of type `{.x: ()}` to `B` with `as` [ConversionFailure]
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+2]]:12-25: note: type `{.x: ()}` does not implement interface `Core.As(B)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 var b: B = {.x = ()} as B;
 

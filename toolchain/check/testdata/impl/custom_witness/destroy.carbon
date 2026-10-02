@@ -71,9 +71,7 @@ class C(T: type);
 
 fn F() {
   // This looks for a Destroy witness for an incomplete class type.
-  // CHECK:STDERR: fail_destroy_incomplete_class.carbon:[[@LINE+4]]:3: error: cannot convert type `C({})` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   C({}) as Core.Destroy;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_destroy_incomplete_class.carbon:[[@LINE+2]]:3-23: error: cannot convert type `C({})` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:
   C({}) as Core.Destroy;
 }

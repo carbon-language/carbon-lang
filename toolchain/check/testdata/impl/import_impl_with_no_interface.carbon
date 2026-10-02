@@ -13,9 +13,7 @@
 // --- fail_lib.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_lib.carbon:[[@LINE+4]]:18: error: name `Undeclared` not found [NameNotFound]
-// CHECK:STDERR: impl {.i: ()} as Undeclared {
-// CHECK:STDERR:                  ^~~~~~~~~~
+// CHECK:STDERR: fail_lib.carbon:[[@LINE+2]]:18-27: error: name `Undeclared` not found [NameNotFound]
 // CHECK:STDERR:
 impl {.i: ()} as Undeclared {
   fn F() {}

@@ -118,7 +118,9 @@ auto Context::GetLocForDI(SemIR::AbsoluteNodeRef abs_node_id) -> LocForDI {
     const SemIR::File* file = abs_node_id.file();
     // TODO: Consider asking our cpp_code_generator to map the location to a
     // debug location, in order to use Clang's rules for (eg) macro handling.
-    auto loc = file->clang_source_locs().Get(abs_node_id.clang_source_loc_id());
+    auto loc = file->clang_source_locs()
+                   .Get(abs_node_id.clang_source_loc_id())
+                   .getBegin();
     auto presumed_loc = file->cpp_file()->source_manager().getPresumedLoc(loc);
     return {
         .filename = presumed_loc.getFilename(),

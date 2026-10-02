@@ -56,7 +56,7 @@ class VectorConsumer : public Consumer {
   }
 
  private:
-  llvm::SmallVector<Diagnostic> diagnostics_;
+  llvm::SmallVector<Diagnostic, 0> diagnostics_;
 };
 
 TEST(SortedEmitterTest, SortErrors) {

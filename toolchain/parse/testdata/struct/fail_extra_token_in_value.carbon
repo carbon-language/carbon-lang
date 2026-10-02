@@ -8,9 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_extra_token_in_value.carbon
 
-// CHECK:STDERR: fail_extra_token_in_value.carbon:[[@LINE+4]]:28: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
-// CHECK:STDERR: var x: {.a: i32} = {.a = 0 banana};
-// CHECK:STDERR:                            ^~~~~~
+// CHECK:STDERR: fail_extra_token_in_value.carbon:[[@LINE+2]]:28-33: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
 // CHECK:STDERR:
 var x: {.a: i32} = {.a = 0 banana};
 

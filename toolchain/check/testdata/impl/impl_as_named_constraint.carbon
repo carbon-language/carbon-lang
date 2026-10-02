@@ -15,9 +15,7 @@ library "[[@TEST_NAME]]";
 
 constraint A {}
 
-// CHECK:STDERR: fail_empty_constraint.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as A {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_empty_constraint.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as A {}
 
@@ -31,9 +29,7 @@ constraint B {
   extend require impls A2;
 }
 
-// CHECK:STDERR: fail_too_many_interfaces_in_constraint.carbon:[[@LINE+4]]:1: error: impl as 2 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as B {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_many_interfaces_in_constraint.carbon:[[@LINE+2]]:1-14: error: impl as 2 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as B {}
 
@@ -55,9 +51,7 @@ constraint B {
   require impls A;
 }
 
-// CHECK:STDERR: fail_one_impls_interface_in_constraint.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as B {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_one_impls_interface_in_constraint.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as B {}
 
@@ -86,9 +80,7 @@ constraint C {
   require impls B;
 }
 
-// CHECK:STDERR: fail_nested_constraints_not_extend_outer.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as C {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_constraints_not_extend_outer.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as C {}
 
@@ -104,9 +96,7 @@ constraint C {
   extend require impls B;
 }
 
-// CHECK:STDERR: fail_nested_constraints_not_extend_inner.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as C {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_constraints_not_extend_inner.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as C {}
 
@@ -122,9 +112,7 @@ constraint C {
   require impls B;
 }
 
-// CHECK:STDERR: fail_nested_constraints_not_extend_both.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as C {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_constraints_not_extend_both.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as C {}
 
@@ -140,12 +128,8 @@ constraint B(X: type, Y: type) {
 // This should impl () as A({}).
 impl () as B((), {}) {}
 
-// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-// CHECK:STDERR: impl () as A({}) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE-5]]:1: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
-// CHECK:STDERR: impl () as B((), {}) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE+3]]:1-18: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE-3]]:1-22: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
 // CHECK:STDERR:
 impl () as A({}) {}
 
@@ -158,9 +142,7 @@ interface A(T: type) {}
 // the constraint.
 //@dump-sem-ir-begin
 //
-// CHECK:STDERR: fail_error_self_in_require.carbon:[[@LINE+4]]:17: error: name `Undefined` not found [NameNotFound]
-// CHECK:STDERR: constraint B(X: Undefined) {
-// CHECK:STDERR:                 ^~~~~~~~~
+// CHECK:STDERR: fail_error_self_in_require.carbon:[[@LINE+2]]:17-25: error: name `Undefined` not found [NameNotFound]
 // CHECK:STDERR:
 constraint B(X: Undefined) {
   extend require impls A(X);
@@ -279,9 +261,7 @@ constraint Y {
 }
 
 // Y does not have any extend require on `Self`.
-// CHECK:STDERR: fail_no_require_self.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as Y {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_no_require_self.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as Y {}
 

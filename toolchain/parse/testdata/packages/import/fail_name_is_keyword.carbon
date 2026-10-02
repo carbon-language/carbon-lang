@@ -8,9 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/import/fail_name_is_keyword.carbon
 
-// CHECK:STDERR: fail_name_is_keyword.carbon:[[@LINE+4]]:8: error: expected identifier or `library` after `import` [ExpectedIdentifierAfterImport]
-// CHECK:STDERR: import fn;
-// CHECK:STDERR:        ^~
+// CHECK:STDERR: fail_name_is_keyword.carbon:[[@LINE+2]]:8-9: error: expected identifier or `library` after `import` [ExpectedIdentifierAfterImport]
 // CHECK:STDERR:
 import fn;
 

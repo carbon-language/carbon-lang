@@ -14,9 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_argc.carbon:[[@LINE+4]]:1: error: invalid parameters for `Main.Run` function; expected `()` or `(argc: i32, argv: Core.Optional(char*)*)` [InvalidMainRunParameters]
-// CHECK:STDERR: fn Run(unused n: i64) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_argc.carbon:[[@LINE+2]]:1-23: error: invalid parameters for `Main.Run` function; expected `()` or `(argc: i32, argv: Core.Optional(char*)*)` [InvalidMainRunParameters]
 // CHECK:STDERR:
 fn Run(unused n: i64) {}
 
@@ -24,9 +22,7 @@ fn Run(unused n: i64) {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_argv.carbon:[[@LINE+4]]:1: error: invalid parameters for `Main.Run` function; expected `()` or `(argc: i32, argv: Core.Optional(char*)*)` [InvalidMainRunParameters]
-// CHECK:STDERR: fn Run(unused n: i32, unused p: i32) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_argv.carbon:[[@LINE+2]]:1-38: error: invalid parameters for `Main.Run` function; expected `()` or `(argc: i32, argv: Core.Optional(char*)*)` [InvalidMainRunParameters]
 // CHECK:STDERR:
 fn Run(unused n: i32, unused p: i32) {}
 
@@ -34,8 +30,6 @@ fn Run(unused n: i32, unused p: i32) {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_many_params.carbon:[[@LINE+4]]:1: error: invalid parameters for `Main.Run` function; expected `()` or `(argc: i32, argv: Core.Optional(char*)*)` [InvalidMainRunParameters]
-// CHECK:STDERR: fn Run(unused n: i32, unused p: i32*, unused q: i32*) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_many_params.carbon:[[@LINE+2]]:1-55: error: invalid parameters for `Main.Run` function; expected `()` or `(argc: i32, argv: Core.Optional(char*)*)` [InvalidMainRunParameters]
 // CHECK:STDERR:
 fn Run(unused n: i32, unused p: i32*, unused q: i32*) {}

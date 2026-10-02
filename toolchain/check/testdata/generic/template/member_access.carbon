@@ -47,12 +47,8 @@ class D {
 }
 
 fn Test(d: D) {
-  // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE+7]]:3: error: unable to monomorphize specific `F(D)` [ResolvingSpecificHere]
-  // CHECK:STDERR:   F(d);
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE-12]]:16: note: member name `n` not found in `D` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let n: i32 = x.n;
-  // CHECK:STDERR:                ^~~
+  // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE+3]]:3: error: unable to monomorphize specific `F(D)` [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE-10]]:16-18: note: member name `n` not found in `D` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   F(d);
 }
@@ -72,15 +68,9 @@ class E {
 }
 
 fn Test(e: E) {
-  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE+10]]:3: error: unable to monomorphize specific `F(E)` [ResolvingSpecificHere]
-  // CHECK:STDERR:   F(e);
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE-13]]:16: note: cannot implicitly convert expression of type `F` to `i32` [ConversionFailure]
-  // CHECK:STDERR:   let n: i32 = x.n;
-  // CHECK:STDERR:                ^~~
-  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE-16]]:16: note: type `F` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   let n: i32 = x.n;
-  // CHECK:STDERR:                ^~~
+  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE+4]]:3: error: unable to monomorphize specific `F(E)` [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE-11]]:16-18: note: cannot implicitly convert expression of type `F` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE-12]]:16-18: note: type `F` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   F(e);
 }

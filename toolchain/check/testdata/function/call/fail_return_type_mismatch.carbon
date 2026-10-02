@@ -15,12 +15,8 @@
 fn Foo() -> f64 { return 1.0; }
 
 fn Run() {
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `f64` to `i32` [ConversionFailure]
-  // CHECK:STDERR:   var unused x: i32 = Foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+4]]:3: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   var unused x: i32 = Foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `f64` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+2]]:3-19: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var unused x: i32 = Foo();
 }
@@ -69,11 +65,11 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %self.param_patt.705: %pattern_type.6b6 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.70d: %pattern_type.6b6 = wrapper_binding_pattern self, %self.param_patt.705 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc25 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc21 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01: %Destroy.WithSelf.SubobjectDestroy.type.dfc = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc25 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc21 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc25 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc21 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -95,14 +91,14 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc25 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc21 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete = constants.%self.param_patt.705]
 // CHECK:STDOUT:     %self.patt: %pattern_type.6b6 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.70d]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %i32 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc25 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc21 [concrete = constants.%Destroy.WithSelf.Op.403] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete = constants.%self.param_patt.705]
 // CHECK:STDOUT:     %self.patt: %pattern_type.6b6 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.70d]
 // CHECK:STDOUT:   } {
@@ -147,7 +143,7 @@ fn Run() {
 // CHECK:STDOUT:   %x.var: ref %i32 = var_storage %x.var_patt
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [concrete = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init %f64.dc1 = call %Foo.ref()
-// CHECK:STDOUT:   %.loc25: %i32 = converted %Foo.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21: %i32 = converted %Foo.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %x: ref %i32 = wrapper_binding x, %x.var
@@ -160,11 +156,11 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc25(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc21(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc25(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc21(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc25(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc21(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl(%self.param)

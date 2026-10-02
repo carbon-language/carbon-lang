@@ -8,15 +8,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/choice/fail_invalid_braces.carbon
 
-// CHECK:STDERR: fail_invalid_braces.carbon:[[@LINE+4]]:22: error: choice definition expected [ExpectedChoiceDefinition]
-// CHECK:STDERR: choice InvalidBraces |
-// CHECK:STDERR:                      ^
+// CHECK:STDERR: fail_invalid_braces.carbon:[[@LINE+2]]:22: error: choice definition expected [ExpectedChoiceDefinition]
 // CHECK:STDERR:
 choice InvalidBraces |
   Some
-// CHECK:STDERR: fail_invalid_braces.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: |
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_invalid_braces.carbon:[[@LINE+2]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
 // CHECK:STDERR:
 |
 

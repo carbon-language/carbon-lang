@@ -39,13 +39,9 @@ library "[[@TEST_NAME]]";
 import library "a";
 
 class C {}
-// CHECK:STDERR: fail_import_not_identified.carbon:[[@LINE+8]]:1: error: facet type `A` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
-// CHECK:STDERR: impl C as A;
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR: fail_import_not_identified.carbon:[[@LINE-6]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:3:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
-// CHECK:STDERR: constraint A;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_import_not_identified.carbon:[[@LINE+4]]:1-12: error: facet type `A` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
+// CHECK:STDERR: imported from: fail_import_not_identified.carbon:[[@LINE-4]]:1 [InImport]
+// CHECK:STDERR: a.carbon:3:1-13: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
 // CHECK:STDERR:
 impl C as A;
 

@@ -54,17 +54,13 @@ package FailNoImpl;
 class D {};
 
 fn TestEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.EqWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a == b;
-  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.EqWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a == b;
 }
 
 fn TestNotEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.EqWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a != b;
-  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.EqWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a != b;
 }
@@ -82,17 +78,13 @@ impl C as Core.EqWith(C) {
 }
 
 fn TestRhsBad(a: C, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.EqWith(D)` in type `C` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a == b;
-  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.EqWith(D)` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a == b;
 }
 
 fn TestLhsBad(a: D, b: C) -> bool {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.EqWith(C)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a != b;
-  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.EqWith(C)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return a != b;
 }

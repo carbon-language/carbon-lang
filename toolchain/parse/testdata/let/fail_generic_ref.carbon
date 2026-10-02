@@ -8,9 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/let/fail_generic_ref.carbon
 
-// CHECK:STDERR: fail_generic_ref.carbon:[[@LINE+4]]:13: error: `ref` is only allowed on a runtime binding [ExpectedRuntimeBindingPatternAfterRef]
-// CHECK:STDERR: let generic ref X: i32 = 0;
-// CHECK:STDERR:             ^~~
+// CHECK:STDERR: fail_generic_ref.carbon:[[@LINE+2]]:13-15: error: `ref` is only allowed on a runtime binding [ExpectedRuntimeBindingPatternAfterRef]
 // CHECK:STDERR:
 let generic ref X: i32 = 0;
 

@@ -37,9 +37,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "global.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_global_use_different_name.carbon:[[@LINE+4]]:3: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.bar();
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_import_global_use_different_name.carbon:[[@LINE+2]]:3-9: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   Cpp.bar();
 }
@@ -59,9 +57,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_special_name_call_unescaped.carbon:[[@LINE+4]]:3: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.base();
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_import_special_name_call_unescaped.carbon:[[@LINE+2]]:3-10: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   Cpp.base();
 }
@@ -76,6 +72,21 @@ fn MyF() {
   //@dump-sem-ir-begin
   Cpp.r#base();
   //@dump-sem-ir-end
+}
+
+// --- fail_import_special_name_call_escaped_no_match.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "special_name.h";
+
+fn MyF() {
+  // CHECK:STDERR: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE+5]]:3-12: error: no matching function for call to 'r#base' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: ./special_name.h:2:6: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./special_name.h:2:10-11: note: requires 0 arguments, but 1 was provided [CppInteropParseNoteReason]
+  // CHECK:STDERR:
+  Cpp.r#base(1);
 }
 
 // ============================================================================
@@ -115,9 +126,7 @@ import Cpp library "variadic.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.variadic_foo(8);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+2]]:3-21: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
   // CHECK:STDERR:
   Cpp.variadic_foo(8);
   //@dump-sem-ir-end
@@ -130,9 +139,7 @@ fn F() {
 // --- static.h
 
 // TODO: Promote this warning to an error by default.
-// CHECK:STDERR: ./static.h:[[@LINE+3]]:13: warning: function 'static_foo' has internal linkage but is not defined [CppInteropParseWarning]
-// CHECK:STDERR:     6 | static auto static_foo() -> void;
-// CHECK:STDERR:       |             ^
+// CHECK:STDERR: ./static.h:[[@LINE+1]]:13: warning: function 'static_foo' has internal linkage but is not defined [CppInteropParseWarning]
 static auto static_foo() -> void;
 
 // --- todo_fail_import_static.carbon
@@ -143,9 +150,7 @@ import Cpp library "static.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: todo_fail_import_static.carbon:[[@LINE+4]]:18: note: used here [CppInteropParseNote]
-  // CHECK:STDERR:    12 |   Cpp.static_foo();
-  // CHECK:STDERR:       |                  ^
+  // CHECK:STDERR: todo_fail_import_static.carbon:[[@LINE+2]]:18: note: used here [CppInteropParseNote]
   // CHECK:STDERR:
   Cpp.static_foo();
   //@dump-sem-ir-end

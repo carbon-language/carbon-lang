@@ -23,7 +23,7 @@ class Consumer {
   // However, SortingConsumer needs a longer lifetime, until all
   // diagnostics have been produced. As a consequence, it needs to either copy
   // or move the Diagnostic, and right now we're moving due to the overhead of
-  // notes.
+  // labels.
   //
   // At present, there is no persistent storage of diagnostics because IDEs
   // would be fine with diagnostics being printed immediately and discarded,
@@ -36,32 +36,8 @@ class Consumer {
   virtual auto Flush() -> void {}
 };
 
-// A diagnostic consumer that prints to a stream.
-class StreamConsumer : public Consumer {
- public:
-  explicit StreamConsumer(llvm::raw_ostream* stream) : stream_(stream) {}
-
-  auto HandleDiagnostic(Diagnostic diagnostic) -> void override;
-  auto Flush() -> void override { stream_->flush(); }
-
-  auto set_stream(llvm::raw_ostream* stream) -> void { stream_ = stream; }
-  auto set_include_diagnostic_kind(bool value) -> void {
-    include_diagnostic_kind_ = value;
-  }
-
- private:
-  auto Print(const Message& message, llvm::StringRef prefix) -> void;
-
-  llvm::raw_ostream* stream_;
-
-  // Whether to include the diagnostic kind when printing.
-  bool include_diagnostic_kind_ = false;
-
-  // Whethere we've printed a diagnostic. Used for printing separators.
-  bool printed_diagnostic_ = false;
-};
-
-// Returns a diagnostic consumer instance that prints to stderr.
+// Returns a diagnostic consumer instance that prints to stderr. Defined
+// alongside `StreamConsumer` in `stream_consumer.h`, which it renders through.
 auto ConsoleConsumer() -> Consumer&;
 
 // Diagnostic consumer adaptor that tracks whether any errors have been

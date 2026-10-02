@@ -76,13 +76,9 @@ var c: C = {.x = ()};
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_export_in_impl.impl.carbon:[[@LINE+8]]:1: error: `export` is only allowed in API files [ExportFromImpl]
-// CHECK:STDERR: export import library "base";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fail_export_in_impl.impl.carbon:[[@LINE+4]]:1-6: error: `export` is only allowed in API files [ExportFromImpl]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_export_in_impl.impl.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: export import library "base";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_export_in_impl.impl.carbon:[[@LINE+2]]:1-29: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
 export import library "base";
 
@@ -152,9 +148,7 @@ library "[[@TEST_NAME]]";
 
 import library "non_export";
 
-// CHECK:STDERR: fail_use_non_export.carbon:[[@LINE+4]]:15: error: name `C` not found [NameNotFound]
-// CHECK:STDERR: alias Local = C;
-// CHECK:STDERR:               ^
+// CHECK:STDERR: fail_use_non_export.carbon:[[@LINE+2]]:15: error: name `C` not found [NameNotFound]
 // CHECK:STDERR:
 alias Local = C;
 
@@ -179,14 +173,10 @@ var indirect_c: C = {.x = ()};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_export_poisoned.carbon:[[@LINE+4]]:11: error: name `Poison` not found [NameNotFound]
-// CHECK:STDERR: fn F() -> Poison;
-// CHECK:STDERR:           ^~~~~~
+// CHECK:STDERR: fail_export_poisoned.carbon:[[@LINE+2]]:11-16: error: name `Poison` not found [NameNotFound]
 // CHECK:STDERR:
 fn F() -> Poison;
-// CHECK:STDERR: fail_export_poisoned.carbon:[[@LINE+4]]:1: error: name `Poison` not found [NameNotFound]
-// CHECK:STDERR: export Poison;
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_export_poisoned.carbon:[[@LINE+2]]:1-14: error: name `Poison` not found [NameNotFound]
 // CHECK:STDERR:
 export Poison;
 
