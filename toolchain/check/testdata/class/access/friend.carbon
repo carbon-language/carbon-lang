@@ -82,6 +82,41 @@ fn Friend.F(c: C) -> i32 {
   return c.i;
 }
 
+// --- friend_complete_class.carbon
+library "[[@TEST_NAME]]";
+
+class C;
+
+class Friend {
+  fn F(c: C) -> i32;
+}
+
+class C {
+  private var i: i32;
+  friend Friend;
+}
+
+fn Friend.F(c: C) -> i32 {
+  return c.i;
+}
+
+// --- friend_complete_class_fn.carbon
+library "[[@TEST_NAME]]";
+
+class Friend {
+  fn F() -> i32;
+}
+
+class C {
+  private var i: i32;
+  private fn Make() -> C { return {.i = 0}; }
+  friend Friend;
+}
+
+fn Friend.F() -> i32 {
+  return C.Make().i;
+}
+
 // --- friend_parameterized_class.carbon
 library "[[@TEST_NAME]]";
 
@@ -139,4 +174,16 @@ interface I {
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
   friend C;
+}
+
+// --- fail_friend_not_constant.carbon
+library "[[@TEST_NAME]]";
+
+class C {
+  var v: i32;
+  // CHECK:STDERR: fail_friend_not_constant.carbon:[[@LINE+4]]:10: error: friend declaration names entity that is not a name scope [FriendNotNameScope]
+  // CHECK:STDERR:   friend v;
+  // CHECK:STDERR:          ^
+  // CHECK:STDERR:
+  friend v;
 }

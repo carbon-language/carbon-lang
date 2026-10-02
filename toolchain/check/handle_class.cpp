@@ -468,13 +468,7 @@ auto HandleParseNode(Context& context, Parse::FriendDeclId node_id) -> bool {
   }
 
   auto scope_const_id = context.constant_values().Get(scope_inst_id);
-  if (!scope_const_id.is_constant()) {
-    CARBON_DIAGNOSTIC(FriendIsNonConstant, Error,
-                      "friend declaration does not name a constant");
-    context.emitter().Emit(scope_node_id, FriendIsNonConstant);
-    return false;
-  }
-  context.friend_scopes_stack().AppendToTop(scope_const_id);
+  CARBON_CHECK(scope_const_id.is_constant());
   auto scope_constant = context.constant_values().GetInst(scope_const_id);
   CARBON_KIND_SWITCH(scope_constant) {
     case SemIR::StructValue::Kind: {
@@ -496,6 +490,7 @@ auto HandleParseNode(Context& context, Parse::FriendDeclId node_id) -> bool {
       return false;
     }
   }
+  context.friend_scopes_stack().AppendToTop(scope_const_id);
   return true;
 }
 
@@ -515,6 +510,7 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
   context.vtable_stack().Pop();
 
   auto& class_info = context.classes().Get(class_id);
+  class_info.friend_scopes.GrowForInsertCount(context.friend_scopes_stack().PeekArray().size());
   for (auto friend_scope_id : context.friend_scopes_stack().PeekArray()) {
     class_info.friend_scopes.Insert(friend_scope_id);
   }
