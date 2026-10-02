@@ -9,6 +9,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/pattern.h"
+#include "toolchain/check/struct.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -174,37 +175,9 @@ auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
   }
 
   auto fields = context.struct_type_fields_stack().PeekArray();
-  auto field_count = fields.size();
 
-  // diagnose duplicate field names
-  // TODO: this code is shared with struct value/literal handling, could the
-  // relevant functions be made easily available here?
-  llvm::SmallVector<Parse::NodeId> field_name_nodes;
-  field_name_nodes.reserve(field_count);
-  for ([[maybe_unused]] auto i : llvm::seq(field_count)) {
-    auto [name_node, _] =
-        context.node_stack().PopWithNodeId<Parse::NodeCategory::MemberName>();
-    field_name_nodes.push_back(name_node);
-  }
-
-  bool has_error = false;
-  Map<SemIR::NameId, Parse::NodeId> names;
-  for (auto [field_name_node, field] :
-       llvm::zip_equal(field_name_nodes, fields)) {
-    auto result = names.Insert(field.name_id, field_name_node);
-    if (!result.is_inserted()) {
-      CARBON_DIAGNOSTIC(StructPatternNameDuplicate, Error,
-                        "duplicated field name `{0}` in struct pattern",
-                        SemIR::NameId);
-      CARBON_DIAGNOSTIC(StructPatternNamePrevious, Note,
-                        "field with the same name here");
-      context.emitter()
-          .Build(result.value(), StructPatternNameDuplicate, field.name_id)
-          .Note(field_name_node, StructPatternNamePrevious)
-          .Emit();
-      has_error = true;
-    }
-  }
+  llvm::SmallVector<Parse::NodeId> field_name_nodes =
+      PopStructFieldNameNodes(context, fields.size());
 
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::StructPatternStart);
@@ -212,7 +185,8 @@ auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructPatternStart>();
 
-  if (has_error) {
+  if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
+                             StructKind::StructPattern)) {
     context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
   } else {
     auto type_id = GetPatternType(

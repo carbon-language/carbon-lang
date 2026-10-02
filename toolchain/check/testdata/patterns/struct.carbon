@@ -172,10 +172,10 @@ let {.a = x: ()} = {.a = (), .b = ()};
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_duplicate_field_name.carbon:[[@LINE+7]]:19: error: duplicated field name `a` in struct pattern [StructPatternNameDuplicate]
+// CHECK:STDERR: fail_duplicate_field_name.carbon:[[@LINE+7]]:19: error: duplicated field name `a` in struct pattern [StructNameDuplicate]
 // CHECK:STDERR: let {.a = b: (), .a = c: ()} = {.a = ()};
 // CHECK:STDERR:                   ^
-// CHECK:STDERR: fail_duplicate_field_name.carbon:[[@LINE+4]]:7: note: field with the same name here [StructPatternNamePrevious]
+// CHECK:STDERR: fail_duplicate_field_name.carbon:[[@LINE+4]]:7: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR: let {.a = b: (), .a = c: ()} = {.a = ()};
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
@@ -194,10 +194,10 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: let {a: (), a: ()} = {.a = ()};
 // CHECK:STDERR:      ^~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_duplicate_field_name_shorthand.carbon:[[@LINE+7]]:13: error: duplicated field name `a` in struct pattern [StructPatternNameDuplicate]
+// CHECK:STDERR: fail_duplicate_field_name_shorthand.carbon:[[@LINE+7]]:13: error: duplicated field name `a` in struct pattern [StructNameDuplicate]
 // CHECK:STDERR: let {a: (), a: ()} = {.a = ()};
 // CHECK:STDERR:             ^
-// CHECK:STDERR: fail_duplicate_field_name_shorthand.carbon:[[@LINE+4]]:6: note: field with the same name here [StructPatternNamePrevious]
+// CHECK:STDERR: fail_duplicate_field_name_shorthand.carbon:[[@LINE+4]]:6: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR: let {a: (), a: ()} = {.a = ()};
 // CHECK:STDERR:      ^
 // CHECK:STDERR:
@@ -209,10 +209,10 @@ let {a: (), a: ()} = {.a = ()};
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_duplicate_field_name_mixed_syntax.carbon:[[@LINE+7]]:18: error: duplicated field name `a` in struct pattern [StructPatternNameDuplicate]
+// CHECK:STDERR: fail_duplicate_field_name_mixed_syntax.carbon:[[@LINE+7]]:18: error: duplicated field name `a` in struct pattern [StructNameDuplicate]
 // CHECK:STDERR: let {.a = b: (), a: ()} = {.a = ()};
 // CHECK:STDERR:                  ^
-// CHECK:STDERR: fail_duplicate_field_name_mixed_syntax.carbon:[[@LINE+4]]:7: note: field with the same name here [StructPatternNamePrevious]
+// CHECK:STDERR: fail_duplicate_field_name_mixed_syntax.carbon:[[@LINE+4]]:7: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR: let {.a = b: (), a: ()} = {.a = ()};
 // CHECK:STDERR:       ^
 // CHECK:STDERR:
