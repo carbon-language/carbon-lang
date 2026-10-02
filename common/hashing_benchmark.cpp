@@ -13,6 +13,7 @@
 #include "absl/random/random.h"
 #include "common/hashing.h"
 #include "llvm/ADT/Hashing.h"
+#include "testing/base/benchmark_helpers.h"
 
 namespace Carbon {
 namespace {
@@ -145,7 +146,7 @@ struct RandStrings {
       s = rand_sizes<MaxSize>[i];
     } else {
       // Prevent `s` from being constant folded when we directly use `MaxSize`.
-      benchmark::DoNotOptimize(s);
+      Testing::DoNotOptimize(s);
     }
     bytes += s;
     return llvm::StringRef(
@@ -205,7 +206,7 @@ auto BM_LatencyHash(benchmark::State& state) -> void {
   // sizes.
   while (state.KeepRunningBatch(NumSizes)) {
     for (ssize_t i = 0; i < NumSizes; ++i) {
-      benchmark::DoNotOptimize(x = h(v.Get(i, x)));
+      Testing::DoNotOptimize(x = h(v.Get(i, x)));
     }
   }
   state.SetBytesProcessed(v.bytes);

@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "testing/base/benchmark_helpers.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/benchmarking/source_gen.h"
 #include "toolchain/diagnostics/emitter.h"
@@ -229,7 +230,7 @@ static auto RunBenchmark(benchmark::State& state,
     -> void {
   for (auto _ : state) {
     auto corrections = FixMismatchedBrackets(tokens);
-    benchmark::DoNotOptimize(corrections);
+    Testing::DoNotOptimize(corrections);
   }
   state.SetComplexityN(tokens.size());
   state.counters["tokens_per_second"] = benchmark::Counter(
@@ -580,7 +581,7 @@ static auto BM_LexApiFileDenseDecls(benchmark::State& state) -> void {
       // We block optimizing `i` as that has proven both more effective at
       // blocking the loop from being optimized away and avoiding disruption of
       // the generated code that we're benchmarking.
-      benchmark::DoNotOptimize(i);
+      Testing::DoNotOptimize(i);
 
       TokenizedBuffer buffer = helpers[i]->Lex();
 
