@@ -161,7 +161,8 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 
     // Complete the type here to avoid hitting a clang assert later when
     // adding methods.
-    if (auto* record_decl = llvm::dyn_cast<clang::RecordDecl>(decl_context)) {
+    if (auto* record_decl =
+            llvm::dyn_cast<clang::CXXRecordDecl>(decl_context)) {
       context.ast_context().getExternalSource()->CompleteType(record_decl);
     }
   }
