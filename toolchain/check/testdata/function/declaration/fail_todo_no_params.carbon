@@ -57,9 +57,9 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn A => 0;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:6: error: semantics TODO: `HandleTerseBodyArrow` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:1: error: semantics TODO: `HandleFunctionTerseDefinition` [SemanticsTodo]
 // CHECK:STDERR: fn A => 0;
-// CHECK:STDERR:      ^~
+// CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR:
 fn A => 0;
 
