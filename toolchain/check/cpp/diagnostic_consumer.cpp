@@ -50,39 +50,32 @@ class ClangLocDiagnosticEmitter
   const clang::SourceManager* source_manager_;
 };
 
-// Returns the label saying what Clang suggests be done to a range.
+// Attaches a label saying what Clang suggests be done to a range. Clang words
+// these as an edit to make, so they read as an instruction rather than as a
+// description of the code.
 //
 // TODO: Carry fix-its as data -- span, replacement, confidence -- in a form
 // Carbon's own diagnostics can share, rather than wording the edit into a
 // label here, and render both as a unified diff following GCC's example
 // rather than Clang's. See future work in
 // /toolchain/docs/diagnostics_rendering.md.
-static auto GetFixItLabel(const CppDiagnosticListener::FixIt& fix_it)
-    -> const Diagnostics::LabelBase<std::string>& {
+template <typename BuilderT, typename LocT>
+static auto AttachFixIt(BuilderT& builder, LocT loc,
+                        const CppDiagnosticListener::FixIt& fix_it) -> void {
   if (fix_it.text.empty()) {
-    CARBON_DIAGNOSTIC_LABEL(CppInteropFixItRemoval, Info, "{0}", std::string);
-    return CppInteropFixItRemoval;
+    CARBON_DIAGNOSTIC_LABEL(CppInteropFixItRemoval, Info, "remove this");
+    builder.Attach(loc, CppInteropFixItRemoval);
+    return;
   }
   if (fix_it.range.getBegin() == fix_it.range.getEnd()) {
-    CARBON_DIAGNOSTIC_LABEL(CppInteropFixItInsertion, Info, "{0}", std::string);
-    return CppInteropFixItInsertion;
+    CARBON_DIAGNOSTIC_LABEL(CppInteropFixItInsertion, Info, "insert `{0}` here",
+                            std::string);
+    builder.Attach(loc, CppInteropFixItInsertion, fix_it.text);
+    return;
   }
-
-  CARBON_DIAGNOSTIC_LABEL(CppInteropFixItReplacement, Info, "{0}", std::string);
-  return CppInteropFixItReplacement;
-}
-
-// Returns what a fix-it label says. Clang words these as an edit to make, so
-// they read as an instruction rather than as a description of the code.
-static auto GetFixItText(const CppDiagnosticListener::FixIt& fix_it)
-    -> std::string {
-  if (fix_it.text.empty()) {
-    return "remove this";
-  }
-  if (fix_it.range.getBegin() == fix_it.range.getEnd()) {
-    return "insert `" + fix_it.text + "` here";
-  }
-  return "replace with `" + fix_it.text + "`";
+  CARBON_DIAGNOSTIC_LABEL(CppInteropFixItReplacement, Info,
+                          "replace with `{0}`", std::string);
+  builder.Attach(loc, CppInteropFixItReplacement, fix_it.text);
 }
 
 // Returns the diagnostic to use for a given Clang diagnostic level.
@@ -126,6 +119,7 @@ static auto Contains(const clang::SourceManager& source_manager,
   if (range.isInvalid()) {
     return false;
   }
+  CARBON_CHECK(range.isCharRange(), "Widen a token range before comparing.");
   auto [file_id, offset] = source_manager.getDecomposedSpellingLoc(loc);
   auto [begin_file_id, begin] =
       source_manager.getDecomposedSpellingLoc(range.getBegin());
@@ -249,8 +243,7 @@ static auto AttachMarks(BuilderT& builder,
                                       : Diagnostics::LabelCategory::Primary);
   }
   for (const CppDiagnosticListener::FixIt& fix_it : info.fix_its) {
-    builder.Attach(to_loc(fix_it.range), GetFixItLabel(fix_it),
-                   GetFixItText(fix_it));
+    AttachFixIt(builder, to_loc(fix_it.range), fix_it);
   }
 }
 
@@ -418,12 +411,12 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     const clang::SourceManager* source_manager =
         info.hasSourceManager() ? &info.getSourceManager() : nullptr;
 
-    // Clang's ranges reach to the start of their last token rather than past
-    // it, so they are widened here. Everything downstream then measures a range
-    // by subtracting its ends, and an empty one is an insertion point rather
-    // than a range that happens to name one token.
+    // Clang's token ranges reach to the start of their last token rather than
+    // past it, so they are widened here. Everything downstream then measures a
+    // range by subtracting its ends, and an empty one is an insertion point
+    // rather than a range that happens to name one token.
     auto as_char_range = [&](clang::CharSourceRange range) {
-      if (!source_manager || range.isCharRange()) {
+      if (!source_manager) {
         return range;
       }
       return clang::Lexer::getAsCharRange(range, *source_manager,
@@ -438,6 +431,8 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
       // A hint copying code from elsewhere carries it in `InsertFromRange`,
       // which nothing here reads; presented as the removal its empty
       // `CodeToInsert` looks like, it would instruct the opposite edit.
+      // TODO: Map such a hint to an insertion of the text `InsertFromRange`
+      // names.
       if (hint.isNull() || hint.InsertFromRange.isValid()) {
         continue;
       }
@@ -462,6 +457,10 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     // rather than beside it -- the `~~~~` of a `^~~~~` -- so such a range is
     // what the message is about rather than something else it points at. The
     // rest stay marks of their own.
+    //
+    // TODO: Also mark where the caret is within the range, as Clang's
+    // `~~~^~~~` does. That needs the renderer to be able to mark a point
+    // inside a range it underlines.
     if (source_manager && begin.isValid()) {
       auto* found = llvm::find_if(ranges, [&](clang::CharSourceRange range) {
         return Contains(*source_manager, range, begin);

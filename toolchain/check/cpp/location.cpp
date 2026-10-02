@@ -6,6 +6,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/SourceManager.h"
+#include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/sem_ir/absolute_node_ref.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -90,30 +91,37 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
   return start_loc.getLocWithOffset(offset);
 }
 
-auto GetCppRange(Context& context, SemIR::LocId loc_id) -> clang::SourceRange {
+auto GetCppRange(Context& context, SemIR::LocId loc_id)
+    -> clang::CharSourceRange {
   if (!context.sem_ir().cpp_file()) {
-    return clang::SourceRange();
+    return clang::CharSourceRange();
   }
 
   llvm::SmallVector<SemIR::AbsoluteNodeRef> absolute_node_refs =
       SemIR::GetAbsoluteNodeRef(&context.sem_ir(), loc_id);
   const auto& final_node = absolute_node_refs.back();
-
-  // Only the file being checked has its subtrees to hand, since a `Context`
-  // holds the one `TreeAndSubtrees`. Anything else falls back to the token.
-  if (final_node.is_cpp() || !final_node.node_id().has_value() ||
-      final_node.check_ir_id() != context.sem_ir().check_ir_id()) {
+  if (final_node.is_cpp()) {
     auto loc = GetCppLocation(context, loc_id);
-    return clang::SourceRange(loc, loc);
+    return clang::CharSourceRange::getTokenRange(loc, loc);
+  }
+  if (!final_node.node_id().has_value()) {
+    return clang::CharSourceRange();
   }
 
   auto [ir, start_loc] = GetFileInfo(context, final_node.check_ir_id());
   const auto& tokens = ir->parse_tree().tokens();
-  auto token_range = context.parse_tree_and_subtrees().GetSubtreeTokenRange(
-      final_node.node_id());
-  return clang::SourceRange(
+  auto token = ir->parse_tree().node_token(final_node.node_id());
+  // Only the file being checked has its subtrees available, since a `Context`
+  // holds the one `TreeAndSubtrees`.
+  Lex::InclusiveTokenRange token_range = {.begin = token, .end = token};
+  if (final_node.check_ir_id() == context.sem_ir().check_ir_id()) {
+    token_range = context.parse_tree_and_subtrees().GetSubtreeTokenRange(
+        final_node.node_id());
+  }
+  return clang::CharSourceRange::getCharRange(
       start_loc.getLocWithOffset(tokens.GetByteOffset(token_range.begin)),
-      start_loc.getLocWithOffset(tokens.GetByteOffset(token_range.end)));
+      start_loc.getLocWithOffset(tokens.GetByteOffset(token_range.end) +
+                                 tokens.GetTokenText(token_range.end).size()));
 }
 
 auto AddImportIRInst(SemIR::File& file, clang::CharSourceRange clang_range)

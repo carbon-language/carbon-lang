@@ -42,11 +42,10 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   Driver driver(fs, install_paths, /*input_stream=*/nullptr, &null_ostream,
                 &null_ostream, /*error_file=*/{}, /*fuzzing=*/true);
 
-  // Rendering is asked for what an error file cannot detect on its own. Left to
-  // detect, a null stream is not a terminal, so a diagnostic renders as plain
-  // ASCII with no color and no width -- and the UTF-8 decoding, the
-  // double-width accounting and every windowing path go unreached, which is the
-  // arithmetic in the renderer most worth pointing arbitrary bytes at.
+  // Force Unicode and color output. The output stream isn't a terminal, so
+  // diagnostics would otherwise render as plain ASCII without color, and the
+  // fuzzer would never reach the renderer's handling of UTF-8 and double-width
+  // characters.
   static constexpr llvm::StringLiteral RenderArgs[] = {
       "--terminal-unicode=always", "--color=always"};
 

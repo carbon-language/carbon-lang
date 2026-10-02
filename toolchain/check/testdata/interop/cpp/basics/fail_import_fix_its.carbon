@@ -13,6 +13,10 @@
 
 // Covers the three shapes a Clang fix-it comes in, each of which becomes a
 // label saying what to do rather than the inline rendering Clang would draw.
+//
+// TODO: Remove the `extra ';'` warning on `<carbon Cpp imports>` that every
+// file here gets. It comes from the `;` that `InitializeCppDomain` puts in the
+// main file, not from any code here, and only shows because of `-Wextra-semi`.
 
 // --- replacement.h
 

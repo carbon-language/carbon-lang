@@ -17,9 +17,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 The Carbon compiler features a highly-engineered, context-aware diagnostics
 framework designed to deliver precise, readable, and highly targetable
 diagnostic output (errors, warnings, and the labels that explain them). This
-document establishes strict
-rules for declaring, formatting, emitting, testing, and styling compiler
-diagnostics.
+document establishes strict rules for declaring, formatting, emitting, testing,
+and styling compiler diagnostics.
 
 ---
 
@@ -171,13 +170,13 @@ context.emitter()
     .Emit();
 ```
 
-Labels are declared with `CARBON_DIAGNOSTIC_LABEL` where they are attached,
-and are not registered in `kind.def`; `check_diagnostics.py` checks that each
-one is attached and covered. A label is either `Primary` -- the range
-the message itself is about -- or `Info`, for somewhere else the reader must
-look; those two are the only categories, because anything not read against the
-code it names is not a label. `Attach(loc)` with no label marks a range
-wordlessly, which is what to use when a label would only restate the message.
+Labels are declared with `CARBON_DIAGNOSTIC_LABEL` where they are attached, and
+are not registered in `kind.def`; `check_diagnostics.py` checks that each one is
+attached and covered. A label is either `Primary` -- the range the message
+itself is about -- or `Info`, for somewhere else the reader must look; those two
+are the only categories, because anything not read against the code it names is
+not a label. `Attach(loc)` with no label marks a range wordlessly, which is what
+to use when a label would only restate the message.
 
 Every diagnostic should attach at least one label; a message with nothing
 attached has nothing to show. See

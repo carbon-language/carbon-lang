@@ -88,10 +88,11 @@ enum class LabelCategory : int8_t {
           ::Carbon::Diagnostics::LabelCategory::CategoryValue, #LabelName, \
           Format)
 
-// Provides a definition of a context: the operation a problem happened inside.
-// For example:
-//   CARBON_DIAGNOSTIC_CONTEXT(InCallToFunctionParam,
-//                             "initializing parameter {0}", int);
+// Provides a definition of a context: a sentence stating a problem in terms of
+// the operation it happened inside. For example:
+//   CARBON_DIAGNOSTIC_CONTEXT(IncompleteTypeInFunctionReturnType,
+//                             "function returns incomplete type {0}",
+//                             SemIR::TypeId);
 //
 // A context is not a label. It is a sentence in its own right, the way a
 // message is, so where a diagnostic has one it leads and the message is read
@@ -208,11 +209,10 @@ struct LocationInfo {
 // makes sense against a piece of code is a `Label` attached to the diagnostic
 // instead.
 struct Message {
-  // Helper for calling `format_fn`. A message always has text; the empty result
-  // for one that doesn't is so that rendering a `Diagnostic` nothing filled in
-  // is never the reason a compiler dies while reporting a problem.
+  // Helper for calling `format_fn`.
   auto Format() const -> std::string {
-    return format_fn ? format_fn(format, format_args) : std::string();
+    CARBON_CHECK(format_fn, "A message always has a `format_fn`.");
+    return format_fn(format, format_args);
   }
 
   // The diagnostic's kind.
@@ -283,7 +283,8 @@ struct Label {
   FormatFn format_fn;
 };
 
-// The operation a problem happened inside; see `CARBON_DIAGNOSTIC_CONTEXT`.
+// A problem stated in terms of the operation it happened inside; see
+// `CARBON_DIAGNOSTIC_CONTEXT`.
 //
 // This is not a label: its text stands alone as a sentence rather than being
 // read against the source it names, which is what lets it lead a diagnostic in
@@ -291,7 +292,8 @@ struct Label {
 struct Context {
   // Returns the context's text.
   auto Format() const -> std::string {
-    return format_fn ? format_fn(format, format_args) : std::string();
+    CARBON_CHECK(format_fn, "A context always has a `format_fn`.");
+    return format_fn(format, format_args);
   }
 
   // Where the operation was entered.

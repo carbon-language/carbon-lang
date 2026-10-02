@@ -332,6 +332,9 @@ namespace {
 // other in the one place both are in scope. Columns stay `int`, which is what
 // `Terminal::Buffer` addresses its grid with, so what this marks is the count
 // that is not a coordinate.
+//
+// TODO: Move this out of this file, and use it for the byte counts elsewhere
+// that are called columns, starting with `Loc::column_number`.
 class Bytes {
  public:
   Bytes() = default;
@@ -603,6 +606,9 @@ static auto IsContinuation(char byte) -> bool {
 
 // Returns `line` with tabs expanded and unrenderable bytes escaped, along with
 // where the span of `span_bytes` bytes at `column` lands in the result.
+//
+// TODO: Highlight the source's syntax. `PreparedSource` holds plain text, so
+// this needs it to hold styled runs.
 static auto PrepareSource(Metrics metrics, llvm::StringRef line,
                           Bytes span_byte, Bytes span_bytes) -> PreparedSource {
   Charset charset = metrics.charset();
@@ -678,6 +684,9 @@ static auto PrepareSource(Metrics metrics, llvm::StringRef line,
       result.text.append(width, ' ');
       cursor += width;
     } else {
+      // TODO: Draw an escaped byte in a style of its own, such as a background
+      // color, so that it can't be mistaken for the same characters written in
+      // the source. This needs the styled runs that syntax highlighting does.
       auto value = static_cast<unsigned char>(line[at.count()]);
       result.text += '<';
       result.text += llvm::hexdigit(value >> 4);
@@ -778,7 +787,7 @@ static auto LineFromFile(const PreparedPart& part, int number)
     return llvm::StringRef();
   }
   size_t offset = line - file.begin();
-  for ([[maybe_unused]] int step : llvm::seq(part.line_number, number)) {
+  for (auto _ : llvm::seq(part.line_number, number)) {
     size_t newline = file.find('\n', offset);
     if (newline == llvm::StringRef::npos) {
       return llvm::StringRef();
@@ -1099,26 +1108,98 @@ static auto PlaceLabels(Metrics metrics, llvm::ArrayRef<PreparedPart*> labels,
   }
 }
 
-// Returns the rows a diagnostic's frame holds, in the order they are drawn.
+// Returns the spans on `line` that draw an underline: all of them, except
+// `message_part` once `message_host` has taken its place.
+//
+// Everything marking the line goes on the one row below it, so that the marks
+// read as marking that line rather than as a stack of rows each of which has to
+// be traced back up to it. Ranges that overlap are drawn widest first, so the
+// narrowest mark covering a column is the one that shows: a range containing
+// another says less about the columns they share than the range inside it does,
+// and a mark that is part of the problem says more than one that only explains
+// it.
+//
+// Ranges shouldn't overlap in the first place -- one covering another means two
+// parts of the diagnostic marking the same code -- but they are attached by
+// layers that never see each other, so this repairs what it is given rather
+// than checking a rule nothing is in a position to enforce.
+static auto SpansWidestFirst(llvm::ArrayRef<PreparedPart*> line,
+                             const PreparedPart* message_part,
+                             const PreparedPart* message_host)
+    -> llvm::SmallVector<PreparedPart*> {
+  llvm::SmallVector<PreparedPart*> spans;
+  for (PreparedPart* member : line) {
+    if (member != message_part || !message_host) {
+      spans.push_back(member);
+    }
+  }
+  llvm::stable_sort(
+      spans, [](const PreparedPart* lhs, const PreparedPart* rhs) {
+        if (lhs->source.span_length != rhs->source.span_length) {
+          return lhs->source.span_length > rhs->source.span_length;
+        }
+        return lhs->role < rhs->role;
+      });
+  return spans;
+}
+
+// Returns the parts whose words hang off `spans`, in the order of `spans`.
+static auto LabelsHangingFrom(llvm::ArrayRef<PreparedPart*> spans,
+                              PreparedPart* message_part,
+                              const PreparedPart* message_host)
+    -> llvm::SmallVector<PreparedPart*> {
+  llvm::SmallVector<PreparedPart*> labels;
+  for (PreparedPart* span : spans) {
+    if (!span->label.empty()) {
+      labels.push_back(span);
+    }
+    // A range standing in for the part's location hangs the part's own words
+    // from its underline alongside whatever it has to say itself.
+    if (span == message_host && !message_part->label.empty()) {
+      labels.push_back(message_part);
+    }
+  }
+  return labels;
+}
+
+namespace {
+
+// Lays out the rows a diagnostic's frame holds, in the order they are drawn.
 //
 // `source_columns` bounds every source row: the lines shown between two spans
 // as well as the spans' own, which are windowed here so that spans sharing a
 // row share one view of their line. `buffer` is the one the rows will be drawn
 // into, and is only measured against here: how far text wraps is its answer to
 // give.
-static auto LayOutRows(const Buffer& buffer,
-                       llvm::MutableArrayRef<PreparedPart> parts, int headline,
-                       Theme problem_theme, Theme explanation_theme,
-                       int source_columns, int content_x, int columns)
-    -> llvm::SmallVector<Row> {
-  Metrics metrics = buffer.metrics();
-  llvm::SmallVector<Row> rows;
-  // What the headline is drawn in, which is what the margin mark and the line
-  // number beside it take, so that they read as part of the same sentence.
-  const PreparedPart* headline_part = &parts[headline];
-  llvm::SmallVector<bool> drawn(parts.size(), false);
-  // Location information waiting for the anchor it describes.
-  llvm::SmallVector<const PreparedPart*> context;
+class RowLayout {
+ public:
+  RowLayout(const Buffer& buffer, llvm::MutableArrayRef<PreparedPart> parts,
+            int headline, Theme problem_theme, Theme explanation_theme,
+            int source_columns, int content_x, int columns);
+
+  // Returns the rows, in the order they are drawn.
+  auto LayOut() && -> llvm::SmallVector<Row>;
+
+ private:
+  // Adds the rows for `parts_[index]`: its own text, the anchor naming its
+  // location, and the snippet below that, which also shows the spans of the
+  // parts `TakeGroup` gathers with it.
+  auto AddBlock(size_t index) -> void;
+
+  // Returns the spans shown under the anchor of `parts_[index]`: its own and
+  // every later span in the same file, shown as one view of it in source order
+  // with the lines between them elided. Each is marked as drawn.
+  auto TakeGroup(size_t index) -> llvm::SmallVector<PreparedPart*>;
+
+  // Adds the rows showing `group`'s source below its anchor, one line of
+  // source at a time.
+  auto AddSnippet(llvm::ArrayRef<PreparedPart*> group,
+                  PreparedPart* message_part, PreparedPart* message_host)
+      -> void;
+
+  // Adds the lines of source between `previous`'s line and line `next`, or an
+  // elision standing in for them.
+  auto AddLinesBetween(const PreparedPart& previous, int next) -> void;
 
   // Adds the rows drawing the spans that fall on one source line: the line
   // itself, the underlines beneath it, and the labels hanging off those.
@@ -1126,113 +1207,11 @@ static auto LayOutRows(const Buffer& buffer,
   // `message_part` is the range standing in for the part's own location, and
   // `message_host` the attached range that has taken its place, in which case
   // the part underlines nothing of its own and its words hang from the host.
-  auto add_line = [&](llvm::ArrayRef<PreparedPart*> line,
-                      PreparedPart* message_part, PreparedPart* message_host) {
-    // Spans sharing the row are windowed around the first of them: they share
-    // the one source row that shows their line, so windowing each around its
-    // own span would land their underlines in different views of it. Spans
-    // drawn on different rows never share a window, wherever in the file they
-    // are.
-    int focus = line.front()->source.span_start;
-    for (PreparedPart* member : line) {
-      WindowSource(metrics, member->source, source_columns, focus);
-    }
+  auto AddLine(llvm::ArrayRef<PreparedPart*> line, PreparedPart* message_part,
+               PreparedPart* message_host) -> void;
 
-    // Everything marking the line goes on the one row below it, so that the
-    // marks read as marking that line rather than as a stack of rows each of
-    // which has to be traced back up to it. Ranges that overlap are drawn
-    // widest first, so the narrowest mark covering a column is the one that
-    // shows: a range containing another says less about the columns they share
-    // than the range inside it does, and a mark that is part of the problem
-    // says more than one that only explains it.
-    //
-    // Ranges shouldn't overlap in the first place -- one covering another means
-    // two parts of the diagnostic marking the same code -- but they are
-    // attached by layers that never see each other, so this repairs what it is
-    // given rather than checking a rule nothing is in a position to enforce.
-    llvm::SmallVector<PreparedPart*> spans;
-    for (PreparedPart* member : line) {
-      if (member != message_part || !message_host) {
-        spans.push_back(member);
-      }
-    }
-    llvm::stable_sort(
-        spans, [](const PreparedPart* lhs, const PreparedPart* rhs) {
-          if (lhs->source.span_length != rhs->source.span_length) {
-            return lhs->source.span_length > rhs->source.span_length;
-          }
-          return lhs->role < rhs->role;
-        });
-
-    RotateMarkStyles(spans, problem_theme, explanation_theme);
-    // The part's connector and bar follow the range hosting its words, so
-    // the rotation's choice for the host is copied after it is made.
-    if (message_host && llvm::is_contained(spans, message_host)) {
-      message_part->mark_style = message_host->mark_style;
-    }
-
-    // The mark in the margin picks out the lines the problem is on, which is
-    // every line holding a range that is part of it.
-    bool marks_problem = llvm::any_of(spans, [](const PreparedPart* span) {
-      return span->role == Part::Problem;
-    });
-    rows.push_back({.kind = Row::Kind::Source,
-                    .part = line.front(),
-                    .points_here = marks_problem ? headline_part : nullptr,
-                    .line_number = line.front()->line_number,
-                    .text = line.front()->source.text});
-
-    llvm::SmallVector<PreparedPart*> labels;
-    for (PreparedPart* span : spans) {
-      if (!span->label.empty()) {
-        labels.push_back(span);
-      }
-      // A range standing in for the part's location hangs the part's own
-      // words from its underline alongside whatever it has to say itself.
-      if (span == message_host && !message_part->label.empty()) {
-        labels.push_back(message_part);
-      }
-    }
-
-    // The ranges a connector will hang from, which is what decides whether a
-    // range can afford to give up half a column at an end.
-    llvm::SmallPtrSet<const PreparedPart*, 4> carries_label;
-    for (PreparedPart* label : labels) {
-      carries_label.insert(label == message_part && message_host ? message_host
-                                                                 : label);
-    }
-
-    SeparateTouchingEnds(spans, carries_label);
-    PlaceLabels(metrics, labels, message_part, message_host, spans, content_x,
-                columns);
-
-    // Right to left, so that each label's connector reaches across the ones
-    // already hanging rather than descending through them.
-    llvm::stable_sort(labels,
-                      [](const PreparedPart* lhs, const PreparedPart* rhs) {
-                        return lhs->source.anchor > rhs->source.anchor;
-                      });
-
-    rows.push_back(
-        {.kind = Row::Kind::Annotation, .spans = {spans.begin(), spans.end()}});
-
-    for (PreparedPart* label : labels) {
-      // A single unbreakable word can be wider than what is left to the right
-      // of where the label hangs, and hanging it there would push it out of the
-      // frame. Wrapping never breaks a word, so the widest one is the least
-      // width the label can be drawn in. Below that the label is out-dented to
-      // the column the source starts in, where the whole width is available,
-      // and the line reaching back to the connector is what says which range it
-      // belongs to.
-      bool routed = content_x + label->source.anchor + LabelIndentWidth +
-                        buffer.MeasureWrapWidth(label->label) >
-                    columns;
-      rows.push_back(
-          {.kind = routed ? Row::Kind::RoutedLabel : Row::Kind::Label,
-           .part = label,
-           .text = label->label});
-    }
-  };
+  // Adds a row for each of `labels`, below the underlines they hang off.
+  auto AddLabelRows(llvm::ArrayRef<PreparedPart*> labels) -> void;
 
   // Adds `part`'s own text on a row of its own, which the drawing wraps into
   // the column after the level word.
@@ -1241,183 +1220,321 @@ static auto LayOutRows(const Buffer& buffer,
   // attached to a location that reaches source, with one genuinely about a
   // file as a whole anchored at the file's start or end and drawn in a form of
   // its own. That restructuring starts with the emitting diagnostics.
-  auto add_message_rows = [&](const PreparedPart& part) {
-    rows.push_back({.kind = Row::Kind::Message,
-                    .part = &part,
-                    .text = MessageRowText(part)});
-  };
+  auto AddMessageRows(const PreparedPart& part) -> void;
 
-  // Whether the last row drawn was part of a snippet, and so wants closing off
-  // before the next one starts.
-  auto in_snippet = [&] {
-    if (rows.empty()) {
-      return false;
-    }
-    switch (rows.back().kind) {
-      case Row::Kind::Source:
-      case Row::Kind::Annotation:
-      case Row::Kind::Label:
-      case Row::Kind::RoutedLabel:
-      case Row::Kind::Elision:
-      case Row::Kind::Gap:
-        return true;
-      case Row::Kind::Message:
-      case Row::Kind::Anchor:
-      case Row::Kind::Separator:
-      case Row::Kind::Context:
-        return false;
-    }
-  };
+  // Returns whether the last row added was part of a snippet, and so wants
+  // closing off before the next one starts.
+  auto InSnippet() const -> bool;
+
+  const Buffer* buffer_;
+  Metrics metrics_;
+  llvm::MutableArrayRef<PreparedPart> parts_;
+  int headline_;
+  Theme problem_theme_;
+  Theme explanation_theme_;
+  int source_columns_;
+  int content_x_;
+  int columns_;
 
   // Whether a part has to open a block of its own rather than being merged
   // into an earlier one: it has something to say on a row of its own, or there
   // is location information above it that needs its anchor to lead into.
-  llvm::SmallVector<bool> opens_block(parts.size(), false);
+  llvm::SmallVector<bool> opens_block_;
+
+  // Whether each part's rows have been added.
+  llvm::SmallVector<bool> drawn_;
+
+  // Location information waiting for the anchor it describes.
+  llvm::SmallVector<const PreparedPart*> context_;
+
+  llvm::SmallVector<Row> rows_;
+};
+
+}  // namespace
+
+RowLayout::RowLayout(const Buffer& buffer,
+                     llvm::MutableArrayRef<PreparedPart> parts, int headline,
+                     Theme problem_theme, Theme explanation_theme,
+                     int source_columns, int content_x, int columns)
+    : buffer_(&buffer),
+      metrics_(buffer.metrics()),
+      parts_(parts),
+      headline_(headline),
+      problem_theme_(problem_theme),
+      explanation_theme_(explanation_theme),
+      source_columns_(source_columns),
+      content_x_(content_x),
+      columns_(columns),
+      opens_block_(parts.size(), false),
+      drawn_(parts.size(), false) {
   bool context_pending = false;
   for (auto [index, part] : llvm::enumerate(parts)) {
     if (part.role == Part::LocationInfo) {
       context_pending = true;
       continue;
     }
-    opens_block[index] =
+    opens_block_[index] =
         context_pending ||
         (static_cast<int>(index) != headline && !part.text.empty());
     context_pending = false;
   }
+}
 
-  for (auto [index, part] : llvm::enumerate(parts)) {
-    if (drawn[index]) {
-      continue;
+auto RowLayout::LayOut() && -> llvm::SmallVector<Row> {
+  for (size_t index : llvm::seq(parts_.size())) {
+    if (!drawn_[index]) {
+      AddBlock(index);
     }
-    drawn[index] = true;
+  }
+  for (const PreparedPart* reached_from : context_) {
+    AddMessageRows(*reached_from);
+  }
+  return std::move(rows_);
+}
 
-    // Location information says how the location after it was reached, so it
-    // waits and is then drawn above that location's anchor.
-    if (part.role == Part::LocationInfo) {
-      context.push_back(&part);
-      continue;
-    }
+auto RowLayout::AddBlock(size_t index) -> void {
+  drawn_[index] = true;
+  PreparedPart& part = parts_[index];
+  bool is_headline = static_cast<int>(index) == headline_;
 
-    if (in_snippet()) {
-      rows.push_back({.kind = Row::Kind::Separator});
-    }
+  // Location information says how the location after it was reached, so it
+  // waits and is then drawn above that location's anchor.
+  if (part.role == Part::LocationInfo) {
+    context_.push_back(&part);
+    return;
+  }
 
-    if (static_cast<int>(index) != headline && !part.text.empty()) {
-      add_message_rows(part);
-    }
-    // An anchor is drawn where a snippet follows it, so a part with no source
-    // to show gets none: its words go on a row of their own, and an anchor
-    // above them would lead nowhere. The headline is the exception -- its
-    // location is the diagnostic's, worth saying even when it names only a
-    // file, as for a diagnostic about a file rather than about code in one.
-    bool anchored = !part.location.empty() &&
-                    (part.has_source || static_cast<int>(index) == headline);
-    // Without an anchor below them there is nothing for the steps to lead into,
-    // so they say where they are on rows of their own instead.
-    for (const PreparedPart* reached_from : context) {
-      if (anchored) {
-        rows.push_back({.kind = Row::Kind::Context, .part = reached_from});
-      } else {
-        add_message_rows(*reached_from);
-      }
-    }
-    context.clear();
+  if (InSnippet()) {
+    rows_.push_back({.kind = Row::Kind::Separator});
+  }
 
-    // The spans shown under one anchor: every later span in the same file,
-    // shown as one view of it in source order with the lines between them
-    // elided.
-    llvm::SmallVector<PreparedPart*> group;
-    if (part.has_source) {
-      group.push_back(&part);
-      for (size_t other : llvm::seq(index + 1, parts.size())) {
-        if (!drawn[other] && !opens_block[other] && parts[other].has_source &&
-            parts[other].file == part.file) {
-          drawn[other] = true;
-          group.push_back(&parts[other]);
-        }
-      }
-      llvm::stable_sort(group,
-                        [](const PreparedPart* lhs, const PreparedPart* rhs) {
-                          return lhs->line_number < rhs->line_number;
-                        });
-    }
-
+  if (!is_headline && !part.text.empty()) {
+    AddMessageRows(part);
+  }
+  // An anchor is drawn where a snippet follows it, so a part with no source
+  // to show gets none: its words go on a row of their own, and an anchor
+  // above them would lead nowhere. The headline is the exception -- its
+  // location is the diagnostic's, worth saying even when it names only a
+  // file, as for a diagnostic about a file rather than about code in one.
+  bool anchored = !part.location.empty() && (part.has_source || is_headline);
+  // Without an anchor below them there is nothing for the steps to lead into,
+  // so they say where they are on rows of their own instead.
+  for (const PreparedPart* reached_from : context_) {
     if (anchored) {
-      rows.push_back({.kind = Row::Kind::Anchor, .part = &part});
-    }
-
-    // The spans shown under one anchor are the ones drawn alongside each other
-    // here, so the group is what a range has to be in to stand in for the
-    // part's location: a range under an anchor of its own is read against
-    // the code below that one instead.
-    PreparedPart* message_part = nullptr;
-    for (PreparedPart* member : group) {
-      if (member->from_message_loc) {
-        message_part = member;
-        break;
-      }
-    }
-    PreparedPart* message_host =
-        message_part ? FindMessageHost(group, *message_part) : nullptr;
-    if (message_host) {
-      // The part marks nothing of its own once something else has taken its
-      // place, so the line it named is not part of the snippet either -- unless
-      // an attached range is on it too. Leaving it in shows a line of source
-      // with nothing marking it, which reads as a line the reader is meant to
-      // find something in.
-      llvm::erase(group, message_part);
-    }
-
-    // A snippet always starts a row below its anchor, so that the code doesn't
-    // read as running on from the file name. Where the file goes on above the
-    // first line shown, that row says so instead.
-    if (!group.empty()) {
-      int first_line = group.front()->line_number;
-      rows.push_back(
-          {.kind = first_line > 1 ? Row::Kind::Elision : Row::Kind::Gap});
-    }
-
-    // Spans on one line are drawn together, against the one row that shows it.
-    const PreparedPart* previous = nullptr;
-    for (size_t begin = 0; begin < group.size();) {
-      size_t end = begin + 1;
-      while (end < group.size() &&
-             group[end]->line_number == group[begin]->line_number) {
-        ++end;
-      }
-      if (previous) {
-        int gap = group[begin]->line_number - previous->line_number - 1;
-        if (gap > MaxShownGap) {
-          rows.push_back({.kind = Row::Kind::Elision});
-        } else if (gap > 0) {
-          for (int number : llvm::seq(previous->line_number + 1,
-                                      group[begin]->line_number)) {
-            llvm::StringRef line = LineFromFile(*previous, number);
-            if (line.data() == nullptr) {
-              // Without the file there is no way to show what was skipped, and
-              // a blank row would claim the line is empty.
-              rows.push_back({.kind = Row::Kind::Elision});
-              continue;
-            }
-            PreparedSource shown =
-                PrepareSource(metrics, line, Bytes(1), Bytes(1));
-            WindowSource(metrics, shown, source_columns, /*focus=*/0);
-            rows.push_back({.kind = Row::Kind::Source,
-                            .line_number = number,
-                            .text = std::move(shown.text)});
-          }
-        }
-      }
-      add_line(llvm::ArrayRef(group).slice(begin, end - begin), message_part,
-               message_host);
-      previous = group[end - 1];
-      begin = end;
+      rows_.push_back({.kind = Row::Kind::Context, .part = reached_from});
+    } else {
+      AddMessageRows(*reached_from);
     }
   }
-  for (const PreparedPart* reached_from : context) {
-    add_message_rows(*reached_from);
+  context_.clear();
+
+  llvm::SmallVector<PreparedPart*> group = TakeGroup(index);
+  if (anchored) {
+    rows_.push_back({.kind = Row::Kind::Anchor, .part = &part});
   }
-  return rows;
+
+  // The spans shown under one anchor are the ones drawn alongside each other
+  // here, so the group is what a range has to be in to stand in for the
+  // part's location: a range under an anchor of its own is read against
+  // the code below that one instead.
+  PreparedPart* message_part = nullptr;
+  for (PreparedPart* member : group) {
+    if (member->from_message_loc) {
+      message_part = member;
+      break;
+    }
+  }
+  PreparedPart* message_host =
+      message_part ? FindMessageHost(group, *message_part) : nullptr;
+  if (message_host) {
+    // The part marks nothing of its own once something else has taken its
+    // place, so the line it named is not part of the snippet either -- unless
+    // an attached range is on it too. Leaving it in shows a line of source
+    // with nothing marking it, which reads as a line the reader is meant to
+    // find something in.
+    llvm::erase(group, message_part);
+  }
+
+  AddSnippet(group, message_part, message_host);
+}
+
+auto RowLayout::TakeGroup(size_t index) -> llvm::SmallVector<PreparedPart*> {
+  const PreparedPart& part = parts_[index];
+  llvm::SmallVector<PreparedPart*> group;
+  if (!part.has_source) {
+    return group;
+  }
+  group.push_back(&parts_[index]);
+  for (size_t other : llvm::seq(index + 1, parts_.size())) {
+    if (!drawn_[other] && !opens_block_[other] && parts_[other].has_source &&
+        parts_[other].file == part.file) {
+      drawn_[other] = true;
+      group.push_back(&parts_[other]);
+    }
+  }
+  llvm::stable_sort(group,
+                    [](const PreparedPart* lhs, const PreparedPart* rhs) {
+                      return lhs->line_number < rhs->line_number;
+                    });
+  return group;
+}
+
+auto RowLayout::AddSnippet(llvm::ArrayRef<PreparedPart*> group,
+                           PreparedPart* message_part,
+                           PreparedPart* message_host) -> void {
+  if (group.empty()) {
+    return;
+  }
+
+  // A snippet always starts a row below its anchor, so that the code doesn't
+  // read as running on from the file name. Where the file goes on above the
+  // first line shown, that row says so instead.
+  int first_line = group.front()->line_number;
+  rows_.push_back(
+      {.kind = first_line > 1 ? Row::Kind::Elision : Row::Kind::Gap});
+
+  // Spans on one line are drawn together, against the one row that shows it.
+  const PreparedPart* previous = nullptr;
+  for (size_t begin = 0; begin < group.size();) {
+    size_t end = begin + 1;
+    while (end < group.size() &&
+           group[end]->line_number == group[begin]->line_number) {
+      ++end;
+    }
+    if (previous) {
+      AddLinesBetween(*previous, group[begin]->line_number);
+    }
+    AddLine(group.slice(begin, end - begin), message_part, message_host);
+    previous = group[end - 1];
+    begin = end;
+  }
+}
+
+auto RowLayout::AddLinesBetween(const PreparedPart& previous, int next)
+    -> void {
+  if (next - previous.line_number - 1 > MaxShownGap) {
+    rows_.push_back({.kind = Row::Kind::Elision});
+    return;
+  }
+  for (int number : llvm::seq(previous.line_number + 1, next)) {
+    llvm::StringRef line = LineFromFile(previous, number);
+    if (line.data() == nullptr) {
+      // Without the file there is no way to show what was skipped, and a blank
+      // row would claim the line is empty.
+      rows_.push_back({.kind = Row::Kind::Elision});
+      continue;
+    }
+    PreparedSource shown = PrepareSource(metrics_, line, Bytes(1), Bytes(1));
+    WindowSource(metrics_, shown, source_columns_, /*focus=*/0);
+    rows_.push_back({.kind = Row::Kind::Source,
+                     .line_number = number,
+                     .text = std::move(shown.text)});
+  }
+}
+
+auto RowLayout::AddLine(llvm::ArrayRef<PreparedPart*> line,
+                        PreparedPart* message_part, PreparedPart* message_host)
+    -> void {
+  // Spans sharing the row are windowed around the first of them: they share
+  // the one source row that shows their line, so windowing each around its
+  // own span would land their underlines in different views of it. Spans
+  // drawn on different rows never share a window, wherever in the file they
+  // are.
+  int focus = line.front()->source.span_start;
+  for (PreparedPart* member : line) {
+    WindowSource(metrics_, member->source, source_columns_, focus);
+  }
+
+  llvm::SmallVector<PreparedPart*> spans =
+      SpansWidestFirst(line, message_part, message_host);
+  RotateMarkStyles(spans, problem_theme_, explanation_theme_);
+  // The part's connector and bar follow the range hosting its words, so
+  // the rotation's choice for the host is copied after it is made.
+  if (message_host && llvm::is_contained(spans, message_host)) {
+    message_part->mark_style = message_host->mark_style;
+  }
+
+  // The mark in the margin picks out the lines the problem is on, which is
+  // every line holding a range that is part of it. It is drawn in what the
+  // headline is drawn in, so that it reads as part of the same sentence.
+  bool marks_problem = llvm::any_of(spans, [](const PreparedPart* span) {
+    return span->role == Part::Problem;
+  });
+  rows_.push_back({.kind = Row::Kind::Source,
+                   .part = line.front(),
+                   .points_here = marks_problem ? &parts_[headline_] : nullptr,
+                   .line_number = line.front()->line_number,
+                   .text = line.front()->source.text});
+
+  llvm::SmallVector<PreparedPart*> labels =
+      LabelsHangingFrom(spans, message_part, message_host);
+
+  // The ranges a connector will hang from, which is what decides whether a
+  // range can afford to give up half a column at an end.
+  llvm::SmallPtrSet<const PreparedPart*, 4> carries_label;
+  for (PreparedPart* label : labels) {
+    carries_label.insert(label == message_part && message_host ? message_host
+                                                               : label);
+  }
+
+  SeparateTouchingEnds(spans, carries_label);
+  PlaceLabels(metrics_, labels, message_part, message_host, spans, content_x_,
+              columns_);
+
+  // Right to left, so that each label's connector reaches across the ones
+  // already hanging rather than descending through them.
+  llvm::stable_sort(labels,
+                    [](const PreparedPart* lhs, const PreparedPart* rhs) {
+                      return lhs->source.anchor > rhs->source.anchor;
+                    });
+
+  rows_.push_back(
+      {.kind = Row::Kind::Annotation, .spans = {spans.begin(), spans.end()}});
+  AddLabelRows(labels);
+}
+
+auto RowLayout::AddLabelRows(llvm::ArrayRef<PreparedPart*> labels) -> void {
+  for (PreparedPart* label : labels) {
+    // A single unbreakable word can be wider than what is left to the right
+    // of where the label hangs, and hanging it there would push it out of the
+    // frame. Wrapping never breaks a word, so the widest one is the least
+    // width the label can be drawn in. Below that the label is out-dented to
+    // the column the source starts in, where the whole width is available,
+    // and the line reaching back to the connector is what says which range it
+    // belongs to.
+    bool routed = content_x_ + label->source.anchor + LabelIndentWidth +
+                      buffer_->MeasureWrapWidth(label->label) >
+                  columns_;
+    rows_.push_back({.kind = routed ? Row::Kind::RoutedLabel : Row::Kind::Label,
+                     .part = label,
+                     .text = label->label});
+  }
+}
+
+auto RowLayout::AddMessageRows(const PreparedPart& part) -> void {
+  rows_.push_back({.kind = Row::Kind::Message,
+                   .part = &part,
+                   .text = MessageRowText(part)});
+}
+
+auto RowLayout::InSnippet() const -> bool {
+  if (rows_.empty()) {
+    return false;
+  }
+  switch (rows_.back().kind) {
+    case Row::Kind::Source:
+    case Row::Kind::Annotation:
+    case Row::Kind::Label:
+    case Row::Kind::RoutedLabel:
+    case Row::Kind::Elision:
+    case Row::Kind::Gap:
+      return true;
+    case Row::Kind::Message:
+    case Row::Kind::Anchor:
+    case Row::Kind::Separator:
+    case Row::Kind::Context:
+      return false;
+  }
 }
 
 // Draws the line running from an underline at `annotation_y` down to `meet_y`,
@@ -1672,8 +1789,9 @@ auto Renderer::RenderFramed(Terminal::OutputBufferRef out,
   Buffer buffer(layout_capabilities);
 
   llvm::SmallVector<Row> rows =
-      LayOutRows(buffer, parts, headline, problem_theme, explanation_theme,
-                 source_columns, content_x, columns);
+      RowLayout(buffer, parts, headline, problem_theme, explanation_theme,
+                source_columns, content_x, columns)
+          .LayOut();
 
   Glyphs glyphs = Glyphs::For(capabilities_.charset);
 

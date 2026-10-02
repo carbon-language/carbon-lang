@@ -24,9 +24,6 @@ cc_library(
     ],
 )
 
-# Drawing diagnostics, kept apart from `:emitter` so that naming a `Consumer`
-# doesn't pull the terminal library -- and through it `<filesystem>` -- into
-# every layer that emits a diagnostic.
 cc_library(
     name = "renderer",
     srcs = [

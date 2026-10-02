@@ -47,10 +47,10 @@ from typing import Dict, List, NamedTuple, Set, override
 IGNORED = set(["TestDiagnostic"])
 
 # The declarations that name something other than a diagnostic kind. A label
-# marks a range of source; a context names the operation a problem happened
-# inside; location info is a step in the path a location was reached by. None
-# of them is registered, and each carries a name that output and testdata can
-# match on, so all three are checked here.
+# marks a range of source; a context states a problem in terms of the operation
+# it happened inside; location info is a step in the path a location was reached
+# by. None of them is registered, and each carries a name that output and
+# testdata can match on, so all three are checked here.
 LABEL_DECL_RE = (
     r"CARBON_DIAGNOSTIC_(?:LABEL|SOFT_CONTEXT|CONTEXT|LOCATION_INFO)"
     r"\(\s*(\w+),"
@@ -76,17 +76,17 @@ UNCOVERED_LABELS = {
 
 
 def strip_noise(content: str) -> str:
-    """Returns `content` with comments and macro definitions blanked out.
+    """Returns `content` with comments and macro definitions deleted.
 
-    The macros are documented by example, and an example is not a
-    declaration; they also name their own parameters, and
-    `CARBON_DIAGNOSTIC_LABEL(LabelName, ...)` is not a label called
-    `LabelName`. Blanking rather than deleting keeps offsets intact so that
-    line numbers stay right.
+    The purpose of this is to remove text that superficially appears to be a
+    use of a macro, but is actually either defining or documenting it, so that
+    we can more easily match real macro uses with a simple regex.
+
+    Retains newlines so that line numbers stay correct.
     """
-    # String literals are matched first and kept, so a `//` inside one -- a
-    # URL in a diagnostic's message -- is not taken for a comment that hides
-    # the rest of its line.
+    # String literals are matched at the same time and kept, so a `//` inside
+    # one -- a URL in a diagnostic's message -- is not taken for a comment that
+    # hides the rest of its line.
     content = re.sub(
         r'"(?:[^"\\\n]|\\.)*"|//[^\n]*',
         lambda m: m.group(0) if m.group(0).startswith('"') else "",

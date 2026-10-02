@@ -291,7 +291,7 @@ auto PerformCppOverloadResolution(
   // message names the callee, and the arguments it was given are described by
   // the notes hanging off each candidate. This is where Clang points such a
   // diagnostic too.
-  clang::SourceRange callee_range =
+  clang::CharSourceRange callee_range =
       GetCppRange(context, SemIR::LocId(callee_expr_id));
   clang::SourceLocation loc = callee_range.getBegin();
 
@@ -353,9 +353,21 @@ auto PerformCppOverloadResolution(
       return SemIR::ErrorInst::InstId;
     }
     case clang::OverloadingResult::OR_Deleted: {
-      sema.DiagnoseUseOfDeletedFunction(
-          loc, callee_range, GetCppName(context, overload_set.name_id),
-          candidate_set, best_viable_fn->Function, arg_exprs);
+      // This is what `Sema::DiagnoseUseOfDeletedFunction` emits. That takes the
+      // callee's range as a `SourceRange`, whose end Clang would find by lexing
+      // the last Carbon token as C++.
+      clang::StringLiteral* deleted_message =
+          best_viable_fn->Function->getDeletedMessage();
+      candidate_set.NoteCandidates(
+          clang::PartialDiagnosticAt(
+              loc, sema.PDiag(clang::diag::err_ovl_deleted_call)
+                       << /*IsMember=*/false
+                       << GetCppName(context, overload_set.name_id)
+                       << (deleted_message != nullptr)
+                       << (deleted_message ? deleted_message->getString()
+                                           : llvm::StringRef())
+                       << callee_range),
+          sema, clang::OCD_AllCandidates, arg_exprs);
       return SemIR::ErrorInst::InstId;
     }
   }

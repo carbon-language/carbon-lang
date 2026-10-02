@@ -129,7 +129,7 @@ static auto LineOnly(int line_number) -> Loc {
 // Returns a location in `File`.
 static auto At(int line_number, int column, int length) -> Loc {
   llvm::StringRef rest = File;
-  for ([[maybe_unused]] int skipped : llvm::seq(1, line_number)) {
+  for (auto _ : llvm::seq(1, line_number)) {
     rest = rest.split('\n').second;
   }
   return {.filename = "foo.carbon",
@@ -1486,7 +1486,7 @@ TEST(RendererTest, LineShownBetweenTwoSpansIsWindowedToo) {
   std::string file = "short\n" + std::string(200, 'x') + "\nalso short\n";
   auto at = [&](int line_number) {
     llvm::StringRef rest = file;
-    for ([[maybe_unused]] int _ : llvm::seq(1, line_number)) {
+    for (auto _ : llvm::seq(1, line_number)) {
       rest = rest.split('\n').second;
     }
     return Loc{.filename = "foo.carbon",
@@ -1522,7 +1522,7 @@ TEST(RendererTest, WindowingKeepsWideCharactersWhole) {
   // Each `界` is two columns, so a window that cut one in half would put every
   // column after it in the wrong place.
   std::string line;
-  for ([[maybe_unused]] int _ : llvm::seq(40)) {
+  for (auto _ : llvm::seq(40)) {
     line += "界";
   }
   line.replace(60, 3, "x");

@@ -185,9 +185,10 @@ a rendering of its own.
 
 ### Context
 
-A context names the operation a problem happened inside. It is not a label: its
-text is a sentence in its own right, so where a diagnostic has one it leads and
-the message is read against the code like anything else explaining it.
+A context states a problem in terms of the operation it happened inside. It is
+not a label: its text is a sentence in its own right, so where a diagnostic has
+one it leads and the message is read against the code like anything else
+explaining it.
 
 A context is declared with `CARBON_DIAGNOSTIC_CONTEXT` and registered in a
 scope, so that every diagnostic produced inside it says what larger operation
@@ -207,10 +208,15 @@ Diagnostics::ContextScope diagnostic_context(
 This is useful when delegating to another part of Check that may produce many
 different kinds of diagnostic. `CARBON_DIAGNOSTIC_SOFT_CONTEXT` declares a
 fallback: it is dropped when the diagnostic already has a context, which is
-assumed to describe the failure better.
+assumed to describe the failure better. `ResolvingSpecificHere` is one: a
+failure while monomorphizing a specific says `unable to monomorphize specific`
+only when no enclosing scope has said what operation needed the specific.
 
 An `AnnotationScope` works the same way for labels, attaching one to every
-diagnostic emitted inside it.
+diagnostic emitted inside it. The two kinds of scope are independent: however
+they nest, a diagnostic gets the label of every `AnnotationScope` it is emitted
+inside and the context of every `ContextScope`, less a soft one dropped as
+above.
 
 ## Diagnostic registry
 

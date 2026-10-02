@@ -18,11 +18,13 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
 // Carbon diagnostic marked with it would underline, which is everything the
 // node spans rather than the one token it names.
 //
-// This is a token range, as Clang's are: it reaches to the start of its last
-// token, and is widened where it is read. A location whose subtree is not
-// reachable -- one in an imported file, or one that is already C++ -- gives the
-// token `GetCppLocation` names, which is what it marked before.
-auto GetCppRange(Context& context, SemIR::LocId loc_id) -> clang::SourceRange;
+// In Carbon source this is a character range, since Clang finds the end of a
+// token range by lexing the token there as C++. Only the file being checked has
+// its subtrees available, so a location in an imported file gives the range of
+// the one token `GetCppLocation` names. A location that is already in C++ gives
+// a token range at that token, which Clang can measure.
+auto GetCppRange(Context& context, SemIR::LocId loc_id)
+    -> clang::CharSourceRange;
 
 // Adds an `ImportIRInst` referring to the given source range and returns a
 // corresponding `ImportIRInstId` that can be used to construct a `LocId`. The
@@ -30,14 +32,8 @@ auto GetCppRange(Context& context, SemIR::LocId loc_id) -> clang::SourceRange;
 auto AddImportIRInst(SemIR::File& file, clang::CharSourceRange clang_range)
     -> SemIR::ImportIRInstId;
 
-// The same for a Clang location, which marks the column it names.
-//
-// A Clang location is the start of a token, and marking the whole token would
-// say more, but measuring one needs the `SourceManager` and `LangOptions` that
-// lexed it and neither is reachable from here. `CppDiagnosticListener` has both
-// and does widen the locations it reports.
-// TODO: Take what is needed to widen this too, so that a location from the
-// importer and one from a Clang diagnostic mark the same thing.
+// The same for a Clang location, which is a point and marks the one column it
+// names.
 auto AddImportIRInst(SemIR::File& file, clang::SourceLocation clang_source_loc)
     -> SemIR::ImportIRInstId;
 
