@@ -23,6 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Typechecking](#typechecking)
     -   [Tuples, packs, segments, and shapes](#tuples-packs-segments-and-shapes)
     -   [Iterative typechecking of pack expansions](#iterative-typechecking-of-pack-expansions)
+        -   [Type versus execution semantics](#type-versus-execution-semantics)
     -   [Typechecking patterns](#typechecking-patterns)
     -   [Typechecking pattern matches](#typechecking-pattern-matches)
 -   [Appendix: Type system formalism](#appendix-type-system-formalism)
@@ -490,6 +491,41 @@ expansion itself is relatively straightforward:
     operand's type pack become segments of the type of the enclosing tuple.
 
 > **TODO:** Discuss typechecking `...expand`.
+
+#### Type versus execution semantics
+
+Within a pack expansion, there's a subtle discrepancy between the type of an
+expression and its execution semantics. As discussed in the previous section, an
+expression within a pack expansion has a pack type rather than a scalar type, as
+if it were evaluated once and produced a pack value. However, as discussed
+[earlier](#expressions-and-statements), the execution of a pack expansion is
+modeled as a procedural loop that successively evaluates the expansion body for
+each element of the input pack, and expressions have scalar values within each
+iteration. In effect, the type system treats pack expansions as if they were
+SIMD code, with expressions operating on "vectors" of data in parallel, even
+though they actually execute iteratively on a series of scalar values.
+
+As a result, it can be misleading to use the type system as a guide to the
+execution semantics, because the two models disagree in some corner cases.
+For example, consider:
+
+```carbon
+fn F(i: i32) -> i64;
+
+fn G(... (each c: bool, each x: i32)) {
+  ...if each c then F(each x) else 0 as i64;
+}
+```
+
+In that code, `F(each x)` has type `«i64; ‖each x‖»`, in other words, a pack
+with the same arity as `each x`, whose elements are all `i64`. That may give the
+impression that the expression `F(each x)` evaluates to a pack of `i64` values
+with arity `‖each x‖`, and so `F` is called `‖each x‖` times, but that's not the
+case. In fact, `F(each x)` is evaluated once for each `true` value in `each c`,
+and each evaluation produces a scalar `i64` value. The results of those
+evaluations are never actually assembled into a pack, and in fact they
+_couldn't_ be, because the arity of such a pack isn't known until run time, and
+typically wouldn't match the arity of the enclosing pack expansion.
 
 ### Typechecking patterns
 
