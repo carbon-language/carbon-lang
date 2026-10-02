@@ -123,6 +123,8 @@ static constexpr auto DeclIntroducers = [] {
   set(Lex::TokenKind::Export, NodeKind::ExportIntroducer,
       StateKind::ExportName);
   // TODO: Treat `extend` as a declaration introducer.
+  set(Lex::TokenKind::Friend, NodeKind::FriendIntroducer,
+      StateKind::FriendDecl);
   set(Lex::TokenKind::Fn, NodeKind::FunctionIntroducer,
       StateKind::FunctionIntroducer);
   set(Lex::TokenKind::Impl, NodeKind::ImplIntroducer,

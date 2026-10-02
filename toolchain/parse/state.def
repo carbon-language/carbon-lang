@@ -378,6 +378,10 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~
 //   1. FunctionIntroducer
 //
+// friend ...
+// ^~~~~~
+//   1. FriendDecl
+//
 // impl ...
 // ^~~~
 //   1. ImplAfterIntroducer
@@ -752,6 +756,15 @@ CARBON_PARSE_STATE(WhereFinish)
 //      ^~~~~
 //   (state done)
 CARBON_PARSE_STATE(ExprStatementFinish)
+
+// Handles a `friend` declaration.
+//
+// friend <identifier> ;
+//        ^~~~~~~~~~~~~~
+// friend ??? ;
+//        ^~~~~
+//   (state done)
+CARBON_PARSE_STATE(FriendDecl)
 
 // Handles a function's introducer.
 //
