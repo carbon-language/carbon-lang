@@ -5,6 +5,7 @@
 load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:make_include_copts.bzl", "make_include_copts")
+load("//bazel/tree_sitter_rules:defs.bzl", "tree_sitter_parser")
 
 package(default_visibility = ["//bazel/check_deps:__pkg__"])
 
@@ -32,15 +33,9 @@ test_suite(
 )
 
 # Call tree-sitter to generate parser files.
-genrule(
+tree_sitter_parser(
     name = "parser_files",
-    srcs = ["grammar.js"],
-    outs = [
-        "parser.c",
-        "tree_sitter/parser.h",
-    ],
-    cmd = "tree-sitter generate $(location grammar.js) -o $(RULEDIR)",
-    tags = ["manual"],
+    src = "grammar.js",
 )
 
 cc_library(
