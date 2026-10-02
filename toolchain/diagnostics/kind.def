@@ -470,6 +470,7 @@ CARBON_DIAGNOSTIC_KIND(QualifiedNameInNonScope)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprUnsupported)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprNameNotFound)
 CARBON_DIAGNOSTIC_KIND(UseOfNonExprAsValue)
+CARBON_DIAGNOSTIC_KIND(ExportedFunctionPtrTypeMismatch)
 
 // Modifier checking.
 CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedOnDeclaration)
@@ -516,10 +517,8 @@ CARBON_DIAGNOSTIC_KIND(GenericMissingExplicitParameters)
 
 // Pattern matching diagnostics.
 CARBON_DIAGNOSTIC_KIND(RequiredPatternDefaultValueMissing)
-CARBON_DIAGNOSTIC_KIND(PatternDefaultValueDiffers)
 CARBON_DIAGNOSTIC_KIND(PatternDefaultValueNotConstant)
 CARBON_DIAGNOSTIC_KIND(PatternDefaultValueNotInParameterList)
-CARBON_DIAGNOSTIC_KIND(PatternDefaultValueNotSpecified)
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
 
 // Unused diagnostics.

@@ -94,7 +94,7 @@ struct ClassFields {
         << ", body_block_id: " << body_block_id << ", adapt_id: " << adapt_id
         << ", base_id: " << base_id
         << ", complete_type_witness_id: " << complete_type_witness_id
-        << ", vtable_decl_id: " << vtable_decl_id << "}";
+        << ", vtable_decl_id: " << vtable_decl_id;
   }
 };
 

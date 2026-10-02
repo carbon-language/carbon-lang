@@ -27,10 +27,10 @@ class C {
 // CHECK:STDOUT: --- fail_extend_impl_forall.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %GenericInterface.type.26e: type = generic_interface_type @GenericInterface [concrete]
 // CHECK:STDOUT:   %GenericInterface.generic: %GenericInterface.type.26e = struct_value () [concrete]
@@ -59,10 +59,10 @@ class C {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericInterface.decl: %GenericInterface.type.26e = interface_decl @GenericInterface [concrete = constants.%GenericInterface.generic] {
-// CHECK:STDOUT:     %T.patt.loc15_29.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_29.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc15_29.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_29.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_31.1: type = splice_block %.loc15_31.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc15_31.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc15_29.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_29.1 (constants.%T)]
@@ -71,7 +71,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @GenericInterface(%T.loc15_29.2: type) {
-// CHECK:STDOUT:   %T.patt.loc15_29.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_29.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc15_29.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_29.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc15_29.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_29.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -105,7 +105,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.GenericInterface.impl(%T.loc22_24.2: type) {
-// CHECK:STDOUT:   %T.patt.loc22_24.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc22_24.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc22_24.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc22_24.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc22_24.1: type = symbolic_binding T, 0 [symbolic = %T.loc22_24.1 (constants.%T)]
 // CHECK:STDOUT:   %GenericInterface.type.loc22_53.1: type = facet_type <@GenericInterface, @GenericInterface(%T.loc22_24.1)> [symbolic = %GenericInterface.type.loc22_53.1 (constants.%GenericInterface.type.4e1)]
 // CHECK:STDOUT:   %.loc22_55: <witness> = impl_self_witness constants.%C, @GenericInterface, @GenericInterface(%T.loc22_24.1) [symbolic = %.loc22_55 (constants.%.9b3)]
@@ -137,14 +137,14 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @C.as.GenericInterface.impl [concrete] {
-// CHECK:STDOUT:     %T.patt.loc22_24.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc22_24.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc22_24.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc22_24.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type.26e = name_ref GenericInterface, file.%GenericInterface.decl [concrete = constants.%GenericInterface.generic]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc22_24.2 [symbolic = %T.loc22_24.1 (constants.%T)]
 // CHECK:STDOUT:     %GenericInterface.type.loc22_53.2: type = facet_type <@GenericInterface, @GenericInterface(constants.%T)> [symbolic = %GenericInterface.type.loc22_53.1 (constants.%GenericInterface.type.4e1)]
 // CHECK:STDOUT:     %.loc22_26.1: type = splice_block %.loc22_26.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc22_26.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc22_24.2: type = symbolic_binding T, 0 [symbolic = %T.loc22_24.1 (constants.%T)]

@@ -42,6 +42,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT: --- fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NS.type: type = fn_type @NS [concrete]
 // CHECK:STDOUT:   %NS: %NS.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -70,6 +71,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT: --- namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -101,6 +103,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Bar.type: type = fn_type @Bar [concrete]
 // CHECK:STDOUT:   %Bar: %Bar.type = struct_value () [concrete]
 // CHECK:STDOUT: }

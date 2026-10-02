@@ -209,7 +209,7 @@ fn G() {
   F(C);
 }
 
-// --- fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon
+// --- impl_as_constraint_containing_rewrite_for_concrete_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -221,20 +221,14 @@ constraint N {
 }
 
 class C;
-// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE+3]]:1-13: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE-9]]:7-14: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:
 impl C as N {}
 
 fn F(generic _: I where .I1 = .Self) {}
 fn G() {
-  // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE+3]]:3-6: error: cannot convert type `C` into type implementing `I where .(I.I1) = .Self` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE-3]]:14-35: note: initializing generic parameter `_` declared here [InitializingGenericParam]
-  // CHECK:STDERR:
   F(C);
 }
 
-// --- fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon
+// --- impl_as_constraint_containing_rewrite_for_generic_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface I(T: type) {
@@ -246,16 +240,10 @@ constraint N {
 }
 
 class C;
-// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE+3]]:1-13: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE-9]]:7-14: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:
 impl C as N {}
 
 fn F(generic _: I(.Self) where .I1 = .Self) {}
 fn G() {
-  // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE+3]]:3-6: error: cannot convert type `C` into type implementing `I(.Self) where .(I(.Self).I1) = .Self` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE-3]]:1-45: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR:
   F(C);
 }
 
@@ -301,6 +289,7 @@ impl forall [T: type] T as GivesI where .X = () {}
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %B.type: type = generic_named_constaint_type @B [concrete]
 // CHECK:STDOUT:   %empty_struct: %B.type = struct_value () [concrete]
 // CHECK:STDOUT: }

@@ -598,16 +598,9 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
     out() << "]";
   }
 
-  if (!fn.body_block_ids.empty() ||
-      fn.call_param_default_values_id != SemIR::InstBlockId::Empty) {
+  if (!fn.body_block_ids.empty()) {
     out() << ' ';
     OpenBrace();
-
-    if (fn.call_param_default_values_id != SemIR::InstBlockId::Empty) {
-      IndentLabel();
-      out() << "!default_values:\n";
-      FormatCodeBlock(fn.call_param_default_values_id);
-    }
 
     for (auto block_id : fn.body_block_ids) {
       IndentLabel();
@@ -652,7 +645,11 @@ auto Formatter::FormatSpecificRegion(const Generic& generic,
     }
     out() << " => ";
     if (specific_inst_id) {
-      FormatName(*specific_inst_id);
+      if (specific_inst_id->has_value()) {
+        FormatName(*specific_inst_id);
+      } else {
+        out() << "<not constant>";
+      }
     } else {
       out() << "<missing>";
     }
@@ -1645,10 +1642,6 @@ auto Formatter::FormatArg(DeclaredFacetTypeId id) -> void {
   out() << ">";
 }
 
-auto Formatter::FormatArg(DefaultValueId id) -> void {
-  out() << "index: " << id.index;
-}
-
 auto Formatter::FormatArg(FieldId id) -> void {
   const auto& field = sem_ir_->fields().Get(id);
   FormatName(field.name_id);
@@ -1730,6 +1723,10 @@ auto Formatter::FormatArg(StringLiteralValueId id) -> void {
 }
 
 auto Formatter::FormatArg(ClangDeclId id) -> void { out() << id; }
+
+auto Formatter::FormatArg(ClangFunctionPointerTypeId id) -> void {
+  out() << id;
+}
 
 auto Formatter::FormatReturnSlotArg(InstId dest_id) -> void {
   if (dest_id.has_value()) {

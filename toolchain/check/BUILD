@@ -354,6 +354,7 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:stringify",
         "//toolchain/sem_ir:typed_insts",
+        "@llvm-project//clang:ast",
         "@llvm-project//llvm:Support",
     ],
 )

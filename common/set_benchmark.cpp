@@ -10,6 +10,7 @@
 #include "common/raw_hashtable_benchmark_helpers.h"
 #include "common/set.h"
 #include "llvm/ADT/DenseSet.h"
+#include "testing/base/benchmark_helpers.h"
 
 namespace Carbon {
 namespace {
@@ -19,6 +20,7 @@ using RawHashtable::GetKeysAndHitKeys;
 using RawHashtable::GetKeysAndMissKeys;
 using RawHashtable::HitArgs;
 using RawHashtable::ReportTableMetrics;
+using RawHashtable::RunLoopInRandomLayout;
 using RawHashtable::SizeArgs;
 using RawHashtable::ValueToBool;
 
@@ -197,21 +199,23 @@ static void BM_SetContainsHitPtr(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size;) {
-      // We block optimizing `i` as that has proven both more effective at
-      // blocking the loop from being optimized away and avoiding disruption of
-      // the generated code that we're benchmarking.
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size;) {
+        // We block optimizing `i` as that has proven both more effective at
+        // blocking the loop from being optimized away and avoiding disruption
+        // of the generated code that we're benchmarking.
+        Testing::DoNotOptimize(i);
 
-      bool result = s.BenchContains(lookup_keys[i]);
-      CARBON_DCHECK(result);
-      // We use the lookup success to step through keys, establishing a
-      // dependency between each lookup. This doesn't fully allow us to measure
-      // latency rather than throughput, as noted above.
-      i += static_cast<ssize_t>(result);
+        bool result = s.BenchContains(lookup_keys[i]);
+        CARBON_DCHECK(result);
+        // We use the lookup success to step through keys, establishing a
+        // dependency between each lookup. This doesn't fully allow us to
+        // measure latency rather than throughput, as noted above.
+        i += static_cast<ssize_t>(result);
+      }
     }
-  }
+  });
 }
 MAP_BENCHMARK_ONE_OP(BM_SetContainsHitPtr, HitArgs);
 
@@ -228,15 +232,17 @@ static void BM_SetContainsMissPtr(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size;) {
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size;) {
+        Testing::DoNotOptimize(i);
 
-      bool result = s.BenchContains(lookup_keys[i]);
-      CARBON_DCHECK(!result);
-      i += static_cast<ssize_t>(!result);
+        bool result = s.BenchContains(lookup_keys[i]);
+        CARBON_DCHECK(!result);
+        i += static_cast<ssize_t>(!result);
+      }
     }
-  }
+  });
 }
 MAP_BENCHMARK_ONE_OP(BM_SetContainsMissPtr, SizeArgs);
 
@@ -264,15 +270,17 @@ static void BM_SetLookupHitPtr(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size;) {
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size;) {
+        Testing::DoNotOptimize(i);
 
-      bool result = s.BenchLookup(lookup_keys[i]);
-      CARBON_DCHECK(result);
-      i += static_cast<ssize_t>(result);
+        bool result = s.BenchLookup(lookup_keys[i]);
+        CARBON_DCHECK(result);
+        i += static_cast<ssize_t>(result);
+      }
     }
-  }
+  });
 }
 MAP_BENCHMARK_ONE_OP(BM_SetLookupHitPtr, HitArgs);
 
@@ -304,18 +312,20 @@ static void BM_SetEraseInsertHitPtr(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size;) {
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size;) {
+        Testing::DoNotOptimize(i);
 
-      s.BenchErase(lookup_keys[i]);
-      benchmark::ClobberMemory();
+        s.BenchErase(lookup_keys[i]);
+        benchmark::ClobberMemory();
 
-      bool inserted = s.BenchInsert(lookup_keys[i]);
-      CARBON_DCHECK(inserted);
-      i += static_cast<ssize_t>(inserted);
+        bool inserted = s.BenchInsert(lookup_keys[i]);
+        CARBON_DCHECK(inserted);
+        i += static_cast<ssize_t>(inserted);
+      }
     }
-  }
+  });
 }
 MAP_BENCHMARK_ONE_OP(BM_SetEraseInsertHitPtr, HitArgs);
 
@@ -362,22 +372,24 @@ static void BM_SetInsertSeq(benchmark::State& state) {
   // Now build a large shuffled set of keys (with duplicates) we'll use at the
   // end.
   ssize_t i = 0;
-  for (auto _ : state) {
-    benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    for (auto _ : state) {
+      Testing::DoNotOptimize(i);
 
-    SetWrapperT s;
-    for (auto k : keys) {
-      bool inserted = s.BenchInsert(k);
-      CARBON_DCHECK(inserted, "Must be a successful insert!");
+      SetWrapperT s;
+      for (auto k : keys) {
+        bool inserted = s.BenchInsert(k);
+        CARBON_DCHECK(inserted, "Must be a successful insert!");
+      }
+
+      // Now insert a final random repeated key.
+      bool inserted = s.BenchInsert(lookup_keys[i]);
+      CARBON_DCHECK(!inserted, "Must already be in the map!");
+
+      // Rotate through the shuffled keys.
+      i = (i + static_cast<ssize_t>(!inserted)) & (LookupKeysSize - 1);
     }
-
-    // Now insert a final random repeated key.
-    bool inserted = s.BenchInsert(lookup_keys[i]);
-    CARBON_DCHECK(!inserted, "Must already be in the map!");
-
-    // Rotate through the shuffled keys.
-    i = (i + static_cast<ssize_t>(!inserted)) & (LookupKeysSize - 1);
-  }
+  });
 
   // It can be easier in some cases to think of this as a key-throughput rate of
   // insertion rather than the latency of inserting N keys, so construct the
@@ -425,15 +437,17 @@ static void BM_SetIterate(benchmark::State& state) {
     CARBON_DCHECK(inserted, "Must be a successful insert!");
   }
 
-  while (state.KeepRunningBatch(keys.size())) {
-    ssize_t sum = 0;
-    s.BenchIterate([&sum](const KT& k) {
-      // Consume the key so that neither the traversal nor the loads out of the
-      // entries can be optimized away.
-      sum += ValueToBool(k);
-    });
-    benchmark::DoNotOptimize(sum);
-  }
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(keys.size())) {
+      ssize_t sum = 0;
+      s.BenchIterate([&sum](const KT& k) {
+        // Consume the key so that neither the traversal nor the loads out of
+        // the entries can be optimized away.
+        sum += ValueToBool(k);
+      });
+      Testing::DoNotOptimize(sum);
+    }
+  });
 
   // The time is already per-key, so an iteration-invariant rate of one gives
   // the throughput of keys visited.

@@ -42,6 +42,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: --- bit_xor.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %BitXorWith.type.5f3: type = facet_type <@BitXorWith, @BitXorWith(%C)> [concrete]

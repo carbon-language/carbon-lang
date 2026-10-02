@@ -339,14 +339,20 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         auto prev_default_value_pattern =
             prev_param_pattern.As<SemIR::DefaultValuePattern>();
 
+        // The new pattern default value must match the previously declared
+        // default value.
+        auto new_constant_id =
+            context.constant_values().Get(new_default_value_pattern.value_id);
+        auto prev_constant_id =
+            context.constant_values().Get(prev_default_value_pattern.value_id);
+        if (new_constant_id != prev_constant_id) {
+          emit_general_diagnostic();
+          return false;
+        }
+
         pattern_stack.push_back(
             {.prev_id = prev_default_value_pattern.subpattern_id,
              .new_id = new_default_value_pattern.subpattern_id});
-
-        // The node kind comparison should catch this on the mismatched patterns
-        // prior to this, so the indices should never mismatch.
-        CARBON_CHECK(prev_default_value_pattern.default_value_id.index ==
-                     new_default_value_pattern.default_value_id.index);
         break;
       }
       default: {
@@ -523,14 +529,6 @@ static auto CheckRedeclParamSyntax(Context& context,
           new_node_kind == Parse::NodeKind::SelfTypeNameExpr &&
           context.parse_tree().node_kind(new_iter[1]) ==
               Parse::NodeKind::ImplTypeAs) {
-        ++new_iter;
-        continue;
-      }
-      // We don't require default values to be repeated on re-declaration,
-      // so skip over any comparisons to unspecified default values.
-      if (prev_node_kind == Parse::NodeKind::DefaultValueUnspecified ||
-          new_node_kind == Parse::NodeKind::DefaultValueUnspecified) {
-        ++prev_iter;
         ++new_iter;
         continue;
       }

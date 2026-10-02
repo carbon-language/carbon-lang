@@ -52,10 +52,11 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT: --- adapt.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.805: Core.Form = init_form type [concrete]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %return.param_patt.70e: %pattern_type.98f = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.3ae: %pattern_type.98f = return_slot_pattern %return.param_patt.70e, type [concrete]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.576: Core.Form = init_form type [concrete]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %return.param_patt.90b: %pattern_type.9a5 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.718: %pattern_type.9a5 = return_slot_pattern %return.param_patt.90b, type [concrete]
 // CHECK:STDOUT:   %MakeIntLiteral.type: type = fn_type @MakeIntLiteral [concrete]
 // CHECK:STDOUT:   %MakeIntLiteral: %MakeIntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %MyIntLiteral: type = class_type @MyIntLiteral [concrete]
@@ -106,11 +107,11 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     .v = %v
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeIntLiteral.decl: %MakeIntLiteral.type = fn_decl @MakeIntLiteral [concrete = constants.%MakeIntLiteral] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete = constants.%return.param_patt.70e]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc4_24.1 [concrete = constants.%return.patt.3ae]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9a5 = out_param_pattern [concrete = constants.%return.param_patt.90b]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9a5 = return_slot_pattern %return.param_patt, %.loc4_24.1 [concrete = constants.%return.patt.718]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_24.1: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.loc4_24.2: Core.Form = init_form %.loc4_24.1 [concrete = constants.%.805]
+// CHECK:STDOUT:     %.loc4_24.2: Core.Form = init_form %.loc4_24.1 [concrete = constants.%.576]
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -123,11 +124,11 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
 // CHECK:STDOUT:     %N.param_patt: %pattern_type.129 = value_param_pattern [concrete = constants.%N.param_patt]
 // CHECK:STDOUT:     %N.patt: %pattern_type.129 = wrapper_binding_pattern N, %N.param_patt [concrete = constants.%N.patt]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete = constants.%return.param_patt.70e]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc11_28.1 [concrete = constants.%return.patt.3ae]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9a5 = out_param_pattern [concrete = constants.%return.param_patt.90b]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9a5 = return_slot_pattern %return.param_patt, %.loc11_28.1 [concrete = constants.%return.patt.718]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_28.1: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.loc11_28.2: Core.Form = init_form %.loc11_28.1 [concrete = constants.%.805]
+// CHECK:STDOUT:     %.loc11_28.2: Core.Form = init_form %.loc11_28.1 [concrete = constants.%.576]
 // CHECK:STDOUT:     %N.param: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
 // CHECK:STDOUT:     %N: %MyIntLiteral = wrapper_binding N, %N.param
@@ -260,6 +261,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT: --- fail_bad_adapt.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %MyIntLiteral: type = class_type @MyIntLiteral [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -267,10 +269,10 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   %pattern_type.129: type = pattern_type %MyIntLiteral [concrete]
 // CHECK:STDOUT:   %N.param_patt: %pattern_type.129 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %N.patt: %pattern_type.129 = wrapper_binding_pattern N, %N.param_patt [concrete]
-// CHECK:STDOUT:   %.805: Core.Form = init_form type [concrete]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %return.param_patt: %pattern_type.98f = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, type [concrete]
+// CHECK:STDOUT:   %.576: Core.Form = init_form type [concrete]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type.9a5 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type.9a5 = return_slot_pattern %return.param_patt, type [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -284,11 +286,11 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
 // CHECK:STDOUT:     %N.param_patt: %pattern_type.129 = value_param_pattern [concrete = constants.%N.param_patt]
 // CHECK:STDOUT:     %N.patt: %pattern_type.129 = wrapper_binding_pattern N, %N.param_patt [concrete = constants.%N.patt]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern %return.param_patt, %.loc10_28.1 [concrete = constants.%return.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9a5 = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9a5 = return_slot_pattern %return.param_patt, %.loc10_28.1 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_28.1: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.loc10_28.2: Core.Form = init_form %.loc10_28.1 [concrete = constants.%.805]
+// CHECK:STDOUT:     %.loc10_28.2: Core.Form = init_form %.loc10_28.1 [concrete = constants.%.576]
 // CHECK:STDOUT:     %N.param: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
 // CHECK:STDOUT:     %N: %MyIntLiteral = wrapper_binding N, %N.param

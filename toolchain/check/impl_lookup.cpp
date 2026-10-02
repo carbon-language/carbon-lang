@@ -143,6 +143,22 @@ static auto FindAssociatedImportIRs(
           push_args(specific_id);
           break;
         }
+        case CARBON_KIND(SemIR::ClangFunctionPointerTypeId _): {
+          // C++ function pointer types aren't actually members of the `Cpp`
+          // package, because they don't have declarations in C++, or even names
+          // as such. However, they need to be associated with `ImportIRId::Cpp`
+          // in order for impl lookup to find their implementations of core
+          // interfaces like `Copy`.
+          //
+          // TODO: we can probably avoid this special case (and many others) by
+          // mapping C++ function pointers to instances of a parameterized
+          // prelude type, which can implement interfaces like `Copy` using
+          // builtins. However, that prelude type will need to take the
+          // parameter and return types as generic parameters, so we can't do
+          // that until we support variadics.
+          result.push_back(SemIR::ImportIRId::Cpp);
+          break;
+        }
         default: {
           break;
         }
@@ -272,7 +288,7 @@ static auto TryGetSpecificWitnessIdForImpl(
   // to the facet value here, and if the query was a FacetAccessType we did the
   // same there so they still match.
   auto deduced_self_const_id =
-      GetCanonicalFacetOrTypeValue(context, noncanonical_deduced_self_const_id);
+      GetCanonicalFacet(context, noncanonical_deduced_self_const_id);
   if (query_self_const_id != deduced_self_const_id) {
     return SemIR::ConstantId::None;
   }
@@ -433,8 +449,7 @@ static auto CollectFacetWitnessSources(
     // constraints.
     const auto& impls = context.where_stack().back().impls;
     for (auto [self_const_id, facet_type_const_id] : impls) {
-      auto canon_self_const_id =
-          GetCanonicalFacetOrTypeValue(context, self_const_id);
+      auto canon_self_const_id = GetCanonicalFacet(context, self_const_id);
       // TypeType (and ErrorInst) is never stored in the impls stack, so we
       // always have a FacetType in `facet_type_const_id`.
       auto identified_id = TryToIdentifyFacetType(
@@ -474,6 +489,9 @@ static auto VerifyQueryFacetTypeConstraints(
     SemIR::ConstantId query_facet_type_const_id,
     llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls,
     llvm::ArrayRef<SemIR::InstId> witness_inst_ids) -> bool {
+  // TODO: Get the rewrites and equality constraints from the
+  // IdentifiedFacetType so that we also find and verify requirements from named
+  // constraints.
   const auto& declared_facet_type = context.declared_facet_types().Get(
       context.constant_values()
           .GetInstAs<SemIR::FacetType>(query_facet_type_const_id)
@@ -985,8 +1003,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
         context.insts()
             .Get(context.constant_values().GetInstId(query_self_const_id))
             .type_id();
-    CARBON_CHECK((context.types().IsOneOf<SemIR::TypeType, SemIR::FacetType>(
-        query_self_type_id)));
+    CARBON_CHECK(context.types().Is<SemIR::FacetType>(query_self_type_id));
     // The query facet type value is indeed a facet type.
     CARBON_CHECK(context.constant_values().InstIs<SemIR::FacetType>(
         query_facet_type_const_id));
@@ -1124,8 +1141,8 @@ auto GetCanonicalQuerySelfForLookupImplWitness(Context& context,
   // LookupImplWitness instruction, avoiding multiple constant values for
   // `<facet value>` and `<facet value> as type`, which always have the same
   // lookup result.
-  return GetCanonicalFacetOrTypeValue(
-      context, context.constant_values().Get(self_inst_id));
+  return GetCanonicalFacet(context,
+                           context.constant_values().Get(self_inst_id));
 }
 
 // Record the query which found a final impl witness. It's illegal to
@@ -1173,7 +1190,7 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
       context.specific_interfaces().Get(eval_query.query_specific_interface_id);
 
   // Ensure specifics don't substitute in weird things for the query self.
-  CARBON_CHECK(context.types().IsFacetType(
+  CARBON_CHECK(context.types().Is<SemIR::FacetType>(
       context.insts().Get(eval_query.query_self_inst_id).type_id()));
   SemIR::ConstantId query_self_const_id =
       context.constant_values().Get(eval_query.query_self_inst_id);

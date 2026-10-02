@@ -47,9 +47,9 @@ var x: Class = {};
 // CHECK:STDOUT: --- fail_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %A.patt: %pattern_type = value_binding_pattern A [concrete]
 // CHECK:STDOUT:   %B.patt: %pattern_type = value_binding_pattern B [concrete]
@@ -67,7 +67,7 @@ var x: Class = {};
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %Class.ref.loc7: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc7_18.1: type = splice_block %.loc7_18.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.frozen.loc7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.Self.frozen.loc7: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.loc7_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A: type = wrapper_binding A, %Class.ref.loc7
@@ -76,7 +76,7 @@ var x: Class = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref.loc11: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc11_19.1: type = splice_block %.loc11_19.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.frozen.loc11: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.Self.frozen.loc11: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.loc11_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B: type = wrapper_binding B, %Class.ref.loc11
@@ -96,6 +96,7 @@ var x: Class = {};
 // CHECK:STDOUT: --- fail_var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

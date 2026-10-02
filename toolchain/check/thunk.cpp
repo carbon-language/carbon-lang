@@ -249,7 +249,6 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
           {
               .call_param_patterns_id = match_results.call_param_patterns_id,
               .call_params_id = match_results.call_params_id,
-              .call_param_default_values_id = SemIR::InstBlockId::Empty,
               .call_param_ranges = match_results.param_ranges,
               .return_type_inst_id = return_type_inst_id,
               .return_form_inst_id = return_form_inst_id,
@@ -556,9 +555,7 @@ auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
   auto self_inst_id = params[0];
 
   // Build the function body. This calls the `Destroy` operator on `self`.
-  auto destroy_inst_id = BuildUnaryOperator(
-      context, loc_id, {.interface_name = CoreIdentifier::Destroy},
-      self_inst_id);
+  auto destroy_inst_id = BuildSelfDestructCall(context, self_inst_id);
   DiscardExpr(context, destroy_inst_id);
   BuildReturnWithNoExpr(context, loc_id);
 

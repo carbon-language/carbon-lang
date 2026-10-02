@@ -55,7 +55,7 @@ interface J {}
 // CHECK:STDERR:
 impl forall [T: type] T as I where .X impls J and .X = () {}
 
-// --- fail_todo_rewrite_in_named_constraint.carbon
+// --- rewrite_in_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface I { let X: type; }
@@ -68,9 +68,6 @@ constraint GivesI {
 impl () as J {}
 
 // The rewrite from `extend` is inherited and should satisfy that `.X impls J`.
-// CHECK:STDERR: fail_todo_rewrite_in_named_constraint.carbon:[[@LINE+3]]:1-52: error: associated constant X not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: fail_todo_rewrite_in_named_constraint.carbon:[[@LINE-11]]:19-25: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:
 impl forall [T: type] T as GivesI where .X impls J {}
 
 // --- fail_rewrite_in_named_constraint_missing_impl.carbon
@@ -84,8 +81,7 @@ constraint GivesI {
 }
 
 // .X does not impl J.
-// CHECK:STDERR: fail_rewrite_in_named_constraint_missing_impl.carbon:[[@LINE+3]]:1-52: error: associated constant X not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: fail_rewrite_in_named_constraint_missing_impl.carbon:[[@LINE-9]]:19-25: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR: fail_rewrite_in_named_constraint_missing_impl.carbon:[[@LINE+2]]:1-52: error: constraint `GivesI where .(I.X) impls J` being implemented requires that `()` implements `J` [IdentifiedRequireImplsNotImplemented]
 // CHECK:STDERR:
 impl forall [T: type] T as GivesI where .X impls J {}
 
@@ -103,9 +99,6 @@ constraint GivesI {
 impl () as J {}
 
 // The rewrite from `extend` is inherited and should satisfy that `.X impls J`.
-// CHECK:STDERR: fail_todo_rewrite_and_impls_in_named_constraint.carbon:[[@LINE+5]]:1-35: error: associated constant X not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: fail_todo_rewrite_and_impls_in_named_constraint.carbon:[[@LINE-12]]:19-25: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:
 // CHECK:STDERR: fail_todo_rewrite_and_impls_in_named_constraint.carbon:[[@LINE+2]]:1-35: error: constraint `GivesI` being implemented requires that `T.(I.X)` implements `J` [IdentifiedRequireImplsNotImplemented]
 // CHECK:STDERR:
 impl forall [T: type] T as GivesI {}
@@ -122,9 +115,6 @@ constraint GivesI {
 }
 
 // .X does not impl J.
-// CHECK:STDERR: fail_rewrite_and_impls_in_named_constraint_missing_impl.carbon:[[@LINE+5]]:1-35: error: associated constant X not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: fail_rewrite_and_impls_in_named_constraint_missing_impl.carbon:[[@LINE-10]]:19-25: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:
 // CHECK:STDERR: fail_rewrite_and_impls_in_named_constraint_missing_impl.carbon:[[@LINE+2]]:1-35: error: constraint `GivesI` being implemented requires that `T.(I.X)` implements `J` [IdentifiedRequireImplsNotImplemented]
 // CHECK:STDERR:
 impl forall [T: type] T as GivesI {}

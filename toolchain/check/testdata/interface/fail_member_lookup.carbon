@@ -41,6 +41,7 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT: --- fail_member_lookup.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
 // CHECK:STDOUT:   %Self.3ce: %Interface.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Interface.WithSelf.F.type: type = fn_type @Interface.WithSelf.F, @Interface.WithSelf(%Self.3ce) [symbolic]
@@ -55,8 +56,7 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Different.type: type = facet_type <@Different> [concrete]
 // CHECK:STDOUT:   %Self.8ba: %Different.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.776: type = pattern_type %Different.type [concrete]
 // CHECK:STDOUT:   %U.patt: %pattern_type.776 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: %Different.type = symbolic_binding U, 0 [symbolic]
@@ -97,7 +97,7 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:     %U.as_type.loc24_32.2: type = facet_access_type %U.ref [symbolic = %U.as_type.loc24_32.1 (constants.%U.as_type)]
 // CHECK:STDOUT:     %.loc24: type = splice_block %Different.ref [concrete = constants.%Different.type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Different.ref: type = name_ref Different, file.%Different.decl [concrete = constants.%Different.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc24_15.2: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc24_15.1 (constants.%U)]

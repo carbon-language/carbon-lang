@@ -73,6 +73,7 @@ fn F() {
 // CHECK:STDOUT: --- int_greater_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %GreaterEq.type: type = fn_type @GreaterEq [concrete]

@@ -94,6 +94,28 @@ cc_library(
 )
 
 cc_library(
+    name = "grouped_value_store",
+    hdrs = ["grouped_value_store.h"],
+    deps = [
+        ":id_tag",
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "grouped_value_store_test",
+    size = "small",
+    srcs = ["grouped_value_store_test.cpp"],
+    deps = [
+        ":grouped_value_store",
+        ":index_base",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "id_tag",
     hdrs = ["id_tag.h"],
     deps = [

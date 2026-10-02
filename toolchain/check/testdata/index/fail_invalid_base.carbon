@@ -19,7 +19,7 @@ namespace N;
 var a: i32 = N[0];
 
 fn F();
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+2]]:14: error: expression cannot be used as a value [UseOfNonExprAsValue]
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+2]]:14-17: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `<type of F>` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR:
 var b: i32 = F[1];
 
@@ -34,6 +34,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT: --- fail_invalid_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -47,13 +48,13 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %b.patt: %pattern_type.6b6 = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:   %b.var_patt: %pattern_type.6b6 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %IndexWith.type.df6: type = generic_interface_type @IndexWith [concrete]
+// CHECK:STDOUT:   %IndexWith.generic: %IndexWith.type.df6 = struct_value () [concrete]
 // CHECK:STDOUT:   %c.patt: %pattern_type.6b6 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:   %c.var_patt: %pattern_type.6b6 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.cfd: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.cfd = struct_value (%int_1, %int_2) [concrete]
-// CHECK:STDOUT:   %IndexWith.type.df6: type = generic_interface_type @IndexWith [concrete]
-// CHECK:STDOUT:   %IndexWith.generic: %IndexWith.type.df6 = struct_value () [concrete]
 // CHECK:STDOUT:   %d.patt: %pattern_type.6b6 = ref_binding_pattern d [concrete]
 // CHECK:STDOUT:   %d.var_patt: %pattern_type.6b6 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.b4c: type = struct_type {.a: %i32, .b: %i32} [concrete]

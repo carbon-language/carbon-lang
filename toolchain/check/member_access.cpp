@@ -79,7 +79,12 @@ static auto GetSelfIfInstanceMethod(const SemIR::File& sem_ir,
       // `instance.(Class.StaticMethod)()` like we do in pure Carbon code.
       return overload.self_id;
     }
-
+    case CARBON_KIND(SemIR::CalleeCppFunctionPointer _): {
+      // We model a function pointer callee as a method, but it can't be
+      // accessed via instance binding, so for this purpose it's not an instance
+      // method.
+      return std::nullopt;
+    }
     case CARBON_KIND(SemIR::CalleeError _): {
       return std::nullopt;
     }
@@ -115,7 +120,9 @@ auto GetHighestAllowedAccess(Context& context,
 
     // Check if private access is allowed.
     while (access_context_scope_id.has_value()) {
-      if (class_info.scope_id == access_context_scope_id) {
+      if (class_info.scope_id == access_context_scope_id ||
+          access_context_scope_id ==
+              SemIR::NameScopeId::AllowHighestAccessLevel) {
         return SemIR::AccessKind::Private;
       }
 
@@ -148,22 +155,21 @@ static auto ScopeNeedsImplLookup(Context& context,
   SemIR::InstId inst_id =
       context.constant_values().GetInstId(name_scope_const_id);
   CARBON_CHECK(inst_id.has_value());
-  SemIR::Inst inst = context.insts().Get(inst_id);
 
-  if (inst.Is<SemIR::FacetType>()) {
-    // Don't perform impl lookup if an associated entity is named as a member of
-    // a facet type.
-    return false;
-  }
-  if (inst.Is<SemIR::Namespace>()) {
+  if (context.insts().Is<SemIR::Namespace>(inst_id)) {
     // Don't perform impl lookup if an associated entity is named as a namespace
     // member.
     // TODO: This case is not yet listed in the design.
     return false;
   }
+
+  auto type_id = context.types().GetTypeIdForTypeInstId(inst_id);
+  // Don't perform impl lookup if an associated entity is named as a member of
+  // a constrained facet type.
+  //
   // Any other kind of scope is assumed to be a type that implements the
   // interface containing the associated entity, and impl lookup is performed.
-  return true;
+  return !context.types().IsConstrainedFacetType(type_id);
 }
 
 static auto PerformImplWitnessAccessAndSubstitute(
@@ -490,9 +496,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId base_id, SemIR::NameId name_id,
                                 bool required) -> SemIR::InstId {
   // Unwrap the facet value in `base_id` if possible.
-  if (auto facet_value = TryGetCanonicalFacetValue(context, base_id);
-      facet_value.has_value()) {
-    base_id = facet_value;
+  if (auto facet = TryGetCanonicalFacet(context, base_id); facet.has_value()) {
+    base_id = facet;
   }
 
   // If the base is a name scope, such as a class or namespace, perform lookup
@@ -515,7 +520,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
     // `base_id` (as part the class case above), as the `base_id` facet should
     // have member names that directly name members of the `impl`.
     auto base_type_id = context.insts().Get(base_id).type_id();
-    if (context.types().Is<SemIR::FacetType>(base_type_id)) {
+    if (context.types().IsConstrainedFacetType(base_type_id)) {
       // Name lookup into a facet requires the facet type to be complete, so
       // that any names available through the facet type are known for the
       // facet.
@@ -589,15 +594,15 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   auto lookup_const_id =
       context.types().GetConstantId(unqualified_base_type_id);
 
-  // TODO: If the type is a facet, we look through it into the facet's type (a
-  // FacetType) for names. According to the design, we shouldn't need to do
-  // this, as the facet should have member names that directly name members of
-  // the `impl`.
-  auto base_type_as_facet = GetCanonicalFacetOrTypeValue(
-      context, context.types().GetTypeInstId(base_type_id));
+  // TODO: If the type is a constrained facet, we look through it into the
+  // facet's type (a FacetType) for names. According to the design, we shouldn't
+  // need to do this, as the facet should have member names that directly name
+  // members of the `impl`.
+  auto base_type_as_facet =
+      GetCanonicalFacet(context, context.types().GetTypeInstId(base_type_id));
   auto base_type_facet_type_id =
       context.insts().Get(base_type_as_facet).type_id();
-  if (context.types().Is<SemIR::FacetType>(base_type_facet_type_id)) {
+  if (context.types().IsConstrainedFacetType(base_type_facet_type_id)) {
     lookup_const_id = context.types().GetConstantId(base_type_facet_type_id);
   }
 
@@ -606,11 +611,12 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   if (AppendLookupScopesForConstant(
           context, loc_id, lookup_const_id,
           // The `self_type_const_id` should be the type of `base_id` even if
-          // it's a facet.
+          // it's a constrained facet.
           //
           // TODO: This can be replaced with `lookup_const_id` once we stop
-          // having to look through the facet at its type for the scope.
-          context.types().GetConstantId(base_type_id), /*extended_scope=*/false,
+          // having to look through the constrained facet at its type for the
+          // scope.
+          base_type_id.AsConstantId(), /*extended_scope=*/false,
           &lookup_scopes)) {
     auto member_id = LookupMemberNameInScope(
         context, loc_id, base_id, name_id, lookup_const_id, lookup_scopes,

@@ -72,6 +72,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT: --- extern_c_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_c_fn.cpp_overload_set.type: type = cpp_overload_set_type @foo_c_fn.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_c_fn.cpp_overload_set.value: %foo_c_fn.cpp_overload_set.type = cpp_overload_set_value @foo_c_fn.cpp_overload_set [concrete]
@@ -99,6 +100,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT: --- extern_c_function_with_cpp_overload_set.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo_c_overloaded.cpp_overload_set.type: type = cpp_overload_set_type @foo_c_overloaded.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_c_overloaded.cpp_overload_set.value: %foo_c_overloaded.cpp_overload_set.type = cpp_overload_set_value @foo_c_overloaded.cpp_overload_set [concrete]
@@ -163,6 +165,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT: --- extern_c_variable.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -210,6 +213,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT: --- extern_c_with_special_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ptr.ca1: type = ptr_type %X [concrete]

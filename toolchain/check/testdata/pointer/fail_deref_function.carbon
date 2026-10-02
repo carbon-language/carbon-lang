@@ -13,10 +13,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_function.carbon
 
 fn A() {
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+2]]:4: error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+2]]:3: error: cannot dereference operand of non-pointer type `<type of A>` [DerefOfNonPointer]
   // CHECK:STDERR:
   *A;
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+2]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+2]]:4-5: error: cannot apply `->` operator to non-pointer type `<type of A>` [ArrowOperatorOfNonPointer]
   // CHECK:STDERR:
   A->foo;
 }
@@ -24,6 +24,7 @@ fn A() {
 // CHECK:STDOUT: --- fail_deref_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -47,9 +48,9 @@ fn A() {
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc18: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc18: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc18: ref <error> = deref %A.ref.loc18 [concrete = <error>]
 // CHECK:STDOUT:   %A.ref.loc21: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc21: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21: ref <error> = deref %A.ref.loc21 [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

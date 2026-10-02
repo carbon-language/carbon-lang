@@ -67,6 +67,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT: --- no_op.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NoOp: %NoOp.type = struct_value () [concrete]
@@ -83,6 +84,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT: --- explicit_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
@@ -99,6 +101,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT: --- ignore_args.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
@@ -118,6 +121,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT: --- assign.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NoOp: %NoOp.type = struct_value () [concrete]

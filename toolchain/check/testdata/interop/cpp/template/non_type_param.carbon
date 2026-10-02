@@ -170,6 +170,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- valid.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %TwoNonType: type = class_type @TwoNonType [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.2aa: type = pattern_type %TwoNonType [concrete]
@@ -200,6 +201,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- dependent.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DependentNonType.type: type = cpp_type_template_type DependentNonType [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DependentNonType.template: %DependentNonType.type = struct_value () [concrete]

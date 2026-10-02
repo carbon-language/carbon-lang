@@ -65,6 +65,7 @@ auto DoThing() -> int {
 // CHECK:STDOUT: --- dynamic_base_from_cpp.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %FurtherBase.further_base_func.type: type = fn_type @FurtherBase.further_base_func [concrete]
 // CHECK:STDOUT:   %FurtherBase.further_base_func: %FurtherBase.further_base_func.type = struct_value () [concrete]

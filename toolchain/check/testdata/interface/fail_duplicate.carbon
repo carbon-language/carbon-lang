@@ -62,6 +62,7 @@ interface Class { }
 // CHECK:STDOUT: --- fail_redefine_without_dependents.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Interface.type.283524.1: type = facet_type <@Interface.loc4> [concrete]
 // CHECK:STDOUT:   %Self.3ce02d.1: %Interface.type.283524.1 = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Interface.type.283524.2: type = facet_type <@Interface.loc9> [concrete]
@@ -120,6 +121,7 @@ interface Class { }
 // CHECK:STDOUT: --- fail_redefine_with_dependents.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Interface.type.283524.1: type = facet_type <@Interface.loc4> [concrete]
 // CHECK:STDOUT:   %Self.3ce02d.1: %Interface.type.283524.1 = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Interface.type.283524.2: type = facet_type <@Interface.loc9> [concrete]
@@ -205,6 +207,7 @@ interface Class { }
 // CHECK:STDOUT: --- fail_name_conflict_with_fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Function.type.b68: type = fn_type @Function.loc4 [concrete]
 // CHECK:STDOUT:   %Function: %Function.type.b68 = struct_value () [concrete]
 // CHECK:STDOUT:   %Function.type.186: type = facet_type <@Function.loc9> [concrete]
@@ -225,6 +228,7 @@ interface Class { }
 // CHECK:STDOUT: --- fail_name_conflict_with_class.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class.loc2 [concrete]
 // CHECK:STDOUT:   %Class.type: type = facet_type <@Class.loc7> [concrete]
 // CHECK:STDOUT:   %Self: %Class.type = symbolic_binding Self, 0 [symbolic]

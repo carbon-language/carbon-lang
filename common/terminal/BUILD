@@ -180,6 +180,7 @@ cc_binary(
         ":capabilities",
         ":color",
         ":style",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "@abseil-cpp//absl/random",
         "@google_benchmark//:benchmark",

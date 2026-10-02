@@ -180,11 +180,6 @@ auto DeclaredFacetType::TryAsSingleExtend() const
   return std::nullopt;
 }
 
-auto DeclaredFacetType::HasNoConstraints() const -> bool {
-  return extend_constraints.empty() && extend_named_constraints.empty() &&
-         IsExtendedOnly();
-}
-
 auto DeclaredFacetType::IsExtendedOnly() const -> bool {
   return self_impls_constraints.empty() &&
          self_impls_named_constraints.empty() &&
@@ -209,10 +204,10 @@ auto DeclaredFacetType::Canonicalize() -> void {
 
 auto DeclaredFacetType::Print(llvm::raw_ostream& out) const -> void {
   out << "{";
-  llvm::ListSeparator outer_sep("; ");
+  llvm::ListSeparator outer_sep;
 
   if (!extend_constraints.empty()) {
-    out << outer_sep << "extends interface: ";
+    out << outer_sep << "extends interface: [";
     llvm::ListSeparator sep;
     for (auto req : extend_constraints) {
       out << sep << req.interface_id;
@@ -220,10 +215,11 @@ auto DeclaredFacetType::Print(llvm::raw_ostream& out) const -> void {
         out << "(" << req.specific_id << ")";
       }
     }
+    out << "]";
   }
 
   if (!self_impls_constraints.empty()) {
-    out << outer_sep << "self impls interface: ";
+    out << outer_sep << "self impls interface: [";
     llvm::ListSeparator sep;
     for (auto req : self_impls_constraints) {
       out << sep << req.interface_id;
@@ -231,10 +227,11 @@ auto DeclaredFacetType::Print(llvm::raw_ostream& out) const -> void {
         out << "(" << req.specific_id << ")";
       }
     }
+    out << "]";
   }
 
   if (!extend_named_constraints.empty()) {
-    out << outer_sep << "extends named constraint: ";
+    out << outer_sep << "extends named constraint: [";
     llvm::ListSeparator sep;
     for (auto extend : extend_named_constraints) {
       out << sep << extend.named_constraint_id;
@@ -242,10 +239,11 @@ auto DeclaredFacetType::Print(llvm::raw_ostream& out) const -> void {
         out << "(" << extend.specific_id << ")";
       }
     }
+    out << "]";
   }
 
   if (!self_impls_named_constraints.empty()) {
-    out << outer_sep << "self impls named constraint: ";
+    out << outer_sep << "self impls named constraint: [";
     llvm::ListSeparator sep;
     for (auto self_impls : self_impls_named_constraints) {
       out << sep << self_impls.named_constraint_id;
@@ -253,10 +251,11 @@ auto DeclaredFacetType::Print(llvm::raw_ostream& out) const -> void {
         out << "(" << self_impls.specific_id << ")";
       }
     }
+    out << "]";
   }
 
   if (!type_impls_interfaces.empty()) {
-    out << outer_sep << "type impls interface: ";
+    out << outer_sep << "type impls interface: [";
     llvm::ListSeparator sep;
     for (const auto& type_impls : type_impls_interfaces) {
       out << sep << type_impls.self_type;
@@ -265,10 +264,11 @@ auto DeclaredFacetType::Print(llvm::raw_ostream& out) const -> void {
         out << "(" << type_impls.specific_interface.specific_id << ")";
       }
     }
+    out << "]";
   }
 
   if (!type_impls_named_constraints.empty()) {
-    out << outer_sep << "type impls interface: ";
+    out << outer_sep << "type impls interface: [";
     llvm::ListSeparator sep;
     for (const auto& type_impls : type_impls_named_constraints) {
       out << sep << type_impls.self_type;
@@ -278,18 +278,20 @@ auto DeclaredFacetType::Print(llvm::raw_ostream& out) const -> void {
         out << "(" << type_impls.specific_named_constraint.specific_id << ")";
       }
     }
+    out << "]";
   }
 
   if (!rewrite_constraints.empty()) {
-    out << outer_sep << "rewrites: ";
+    out << outer_sep << "rewrites: {";
     llvm::ListSeparator sep;
     for (auto req : rewrite_constraints) {
-      out << sep << req.lhs_id << "=" << req.rhs_id;
+      out << sep << req.lhs_id << ": " << req.rhs_id;
     }
+    out << "}";
   }
 
   if (other_requirements) {
-    out << outer_sep << "+ TODO requirements";
+    out << outer_sep << "TODO requirements: true";
   }
 
   out << "}";

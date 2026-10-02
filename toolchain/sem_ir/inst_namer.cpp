@@ -264,7 +264,9 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
   if (IsSingletonInstId(inst_id)) {
     return sem_ir_->insts().Get(inst_id).kind().ir_name().str();
   }
-
+  if (inst_id == TypeType::TypeInstId) {
+    return "type";
+  }
   if (inst_id == SemIR::Namespace::PackageInstId) {
     return "package";
   }
@@ -1131,27 +1133,6 @@ auto InstNamer::NamingContext::NameInst() -> void {
           }
           return;
         }
-        if (declared_facet_type.HasNoConstraints()) {
-          if (auto class_ty =
-                  sem_ir().insts().TryGetAs<ClassType>(inst.type_inst_id)) {
-            AddEntityNameAndMaybePush(class_ty->class_id, ".type.facet");
-            return;
-          }
-          if (auto tuple_ty = sem_ir().insts().TryGetAs<SemIR::TupleType>(
-                  inst.type_inst_id)) {
-            if (tuple_ty->type_elements_id == InstBlockId::Empty) {
-              AddInstName("empty_tuple.type.facet");
-            } else {
-              AddInstName("tuple.type.facet");
-            }
-            return;
-          }
-          if (auto struct_ty = sem_ir().insts().TryGetAs<SemIR::StructType>(
-                  inst.type_inst_id)) {
-            AddStructTypeInstName(*struct_ty, "", ".type.facet");
-            return;
-          }
-        }
       }
       AddInstName("facet_value");
       return;
@@ -1447,32 +1428,38 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(StructValue inst): {
-      if (auto fn_ty = sem_ir().types().TryGetAs<FunctionType>(inst.type_id)) {
-        AddEntityNameAndMaybePush(fn_ty->function_id);
-      } else if (auto class_ty =
-                     sem_ir().types().TryGetAs<ClassType>(inst.type_id)) {
-        AddEntityNameAndMaybePush(class_ty->class_id, ".val");
-      } else if (auto generic_class_ty =
-                     sem_ir().types().TryGetAs<GenericClassType>(
-                         inst.type_id)) {
-        AddEntityNameAndMaybePush(generic_class_ty->class_id, ".generic");
-      } else if (auto generic_interface_ty =
-                     sem_ir().types().TryGetAs<GenericInterfaceType>(
-                         inst.type_id)) {
-        AddInstNameId(sem_ir()
-                          .interfaces()
-                          .Get(generic_interface_ty->interface_id)
-                          .name_id,
-                      ".generic");
-      } else if (auto template_name_ty =
-                     sem_ir().types().TryGetAs<CppTemplateNameType>(
-                         inst.type_id)) {
-        AddInstEntityNameId(template_name_ty->name_id, ".template");
-      } else {
-        if (sem_ir().inst_blocks().Get(inst.elements_id).empty()) {
-          AddInstName("empty_struct");
-        } else {
-          AddInstName("struct");
+      CARBON_KIND_SWITCH(sem_ir().types().GetAsInst(inst.type_id)) {
+        case CARBON_KIND(FunctionType fn_ty): {
+          AddEntityNameAndMaybePush(fn_ty.function_id);
+          break;
+        }
+        case CARBON_KIND(ClassType class_ty): {
+          AddEntityNameAndMaybePush(class_ty.class_id, ".val");
+          break;
+        }
+        case CARBON_KIND(GenericClassType generic_class_ty): {
+          AddEntityNameAndMaybePush(generic_class_ty.class_id, ".generic");
+          break;
+        }
+        case CARBON_KIND(GenericInterfaceType generic_interface_ty): {
+          AddInstNameId(sem_ir()
+                            .interfaces()
+                            .Get(generic_interface_ty.interface_id)
+                            .name_id,
+                        ".generic");
+          break;
+        }
+        case CARBON_KIND(CppTemplateNameType template_name_ty): {
+          AddInstEntityNameId(template_name_ty.name_id, ".template");
+          break;
+        }
+        default: {
+          if (sem_ir().inst_blocks().Get(inst.elements_id).empty()) {
+            AddInstName("empty_struct");
+          } else {
+            AddInstName("struct");
+          }
+          break;
         }
       }
       return;
@@ -1516,6 +1503,14 @@ auto InstNamer::NamingContext::NameInst() -> void {
             }
           }
         }
+      }
+      AddInstName("");
+      return;
+    }
+    case CARBON_KIND(TypeOf inst): {
+      for (auto block_id :
+           sem_ir().expr_regions().Get(inst.operand_region_id).block_ids) {
+        PushBlockId(scope_id_, block_id);
       }
       AddInstName("");
       return;

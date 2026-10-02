@@ -19,10 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 The exact lexical form of Carbon whitespace has not yet been settled. However,
 Carbon will follow lexical conventions for whitespace based on
-[Unicode Annex #31](https://unicode.org/reports/tr31/). TODO: Update this once
-the precise rules are decided; see the
-[Unicode source files](/proposals/p000142-unicode-source-files.md#characters-in-identifiers-and-whitespace)
-proposal.
+[Unicode Annex #31](https://unicode.org/reports/tr31/).
 
 Unicode Annex #31 suggests selecting whitespace characters based on the
 characters with Unicode property `Pattern_White_Space`, which is currently these

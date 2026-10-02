@@ -51,6 +51,9 @@ struct FunctionFields {
     // A function that was imported from C++, for which we generated a
     // `CppThunk`. `special_function_kind_data` is the `InstId` of that thunk.
     HasCppThunk,
+    // A thunk that calls a C++ function pointer. `special_function_kind_data`
+    // is unused.
+    CppFunctionPointerThunk,
   };
 
   // Kinds of virtual modifiers that can apply to functions.
@@ -81,9 +84,6 @@ struct FunctionFields {
   // to call_param_patterns_id. This is not populated on imported functions,
   // because it is relevant only for a function definition.
   InstBlockId call_params_id;
-
-  // Instructions representing the default values for parameters.
-  InstBlockId call_param_default_values_id;
 
   // The index ranges within the `Call` parameters that correspond to the
   // implicit parameters, explicit parameters, and return.
@@ -234,9 +234,6 @@ struct Function : public EntityWithParamsBase,
     if (call_params_id.has_value()) {
       out << ", call_params_id: " << call_params_id;
     }
-    if (call_param_default_values_id != SemIR::InstBlockId::Empty) {
-      out << ", call_param_default_values_id: " << call_param_default_values_id;
-    }
     if (return_type_inst_id.has_value()) {
       out << ", return_type_inst_id: " << return_type_inst_id;
     }
@@ -374,11 +371,17 @@ struct Function : public EntityWithParamsBase,
     special_function_kind_data = AnyRawId(thunk_id.index);
   }
 
-  // Sets that this function is a C++ thunk.
+  // Sets that this function is a thunk for a C++ function.
   auto SetCppThunk(InstId decl_id) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::CppThunk;
     special_function_kind_data = AnyRawId(decl_id.index);
+  }
+
+  // Sets that this function is a thunk for a C++ function pointer.
+  auto SetCppFunctionPointerThunk() -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::CppFunctionPointerThunk;
   }
 
   // Sets that this function is a C++ function that should be called using a C++
@@ -413,11 +416,15 @@ struct CalleeFunction {
   SpecificId enclosing_specific_id;
   // The specific for the callee itself, in a resolved call.
   SpecificId resolved_specific_id;
-  // The bound `Self` type or facet value. `None` if not a bound interface
-  // member.
+  // The bound `Self` facet. `None` if not a bound interface member.
   InstId self_type_id;
-  // The bound `self` parameter. `None` if not a method.
+  // The bound `self` argument. `None` if not a method.
   InstId self_id;
+};
+
+// Information about a callee that's a C++ function pointer.
+struct CalleeCppFunctionPointer {
+  ClangFunctionPointerTypeId function_type_id;
 };
 
 // Information about a callee that may be a generic type, or could be an
@@ -425,8 +432,8 @@ struct CalleeFunction {
 struct CalleeNonFunction {};
 
 // A variant combining the callee forms.
-using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
-                            CalleeNonFunction>;
+using Callee = std::variant<CalleeCppFunctionPointer, CalleeCppOverloadSet,
+                            CalleeError, CalleeFunction, CalleeNonFunction>;
 
 // Given a callee expression in a function call, attempt to convert the callee
 // to a `BoundMethod`, minimally unwrapping it while doing so.

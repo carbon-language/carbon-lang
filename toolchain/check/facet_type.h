@@ -58,19 +58,6 @@ auto ResolveFacetTypeRewriteConstraints(
     llvm::SmallVector<SemIR::DeclaredFacetType::RewriteConstraint>& rewrites)
     -> bool;
 
-// Get a FacetType instruction for an empty FacetType. This is the facet
-// equivalent to TypeType.
-//
-// TODO: We vaguely plan to replace TypeType with this FacetType in the future,
-// though that's a big change.
-auto GetEmptyFacetType(Context& context) -> SemIR::TypeId;
-
-// Make a facet value for a type value, which has an empty FacetType as its
-// type. Returns a constant value, whose instruction payload is a FacetValue.
-auto GetConstantFacetValueForType(Context& context,
-                                  SemIR::TypeInstId type_inst_id)
-    -> SemIR::ConstantId;
-
 // Make a facet value for a type value, which has a FacetType containing the
 // `specific_interface` as its type. Returns a constant value, whose instruction
 // payload is a FacetValue.

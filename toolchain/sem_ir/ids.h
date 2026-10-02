@@ -116,14 +116,6 @@ class AbsoluteInstId : public InstId {
   using InstId::InstId;
 };
 
-// An id representing the index of the default value constant instruction in
-// a default values instruction block.
-class DefaultValueId : public IdBase<DefaultValueId> {
- public:
-  static constexpr llvm::StringLiteral Label = "default_value_id";
-  using IdBase::IdBase;
-};
-
 // An ID of an instruction that is used as the destination of an initializing
 // expression. This should only be used as the type of a field within a typed
 // instruction class.
@@ -323,7 +315,6 @@ struct CheckIRId : public IdBase<CheckIRId> {
   static constexpr llvm::StringLiteral Label = "check_ir";
 
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a `Class`.
@@ -373,8 +364,16 @@ struct DeclaredFacetTypeId : public IdBase<DeclaredFacetTypeId> {
   static constexpr llvm::StringLiteral Label = "declared_facet_type";
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
+  // The canonical empty DeclaredFacetType, which is found in the `TypeType`
+  // instruction. Always the 0 index.
+  static const DeclaredFacetTypeId Empty;
+
   using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
+
+inline constexpr DeclaredFacetTypeId DeclaredFacetTypeId::Empty =
+    DeclaredFacetTypeId(0);
 
 // The ID of an resolved facet type value.
 struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
@@ -510,6 +509,13 @@ struct ClangDeclSignatureId : public IdBase<ClangDeclSignatureId> {
   using IdBase::IdBase;
 };
 
+// The ID of a `ClangFunctionPointerTypeInfo`.
+struct ClangFunctionPointerTypeId : public IdBase<ClangFunctionPointerTypeId> {
+  static constexpr llvm::StringLiteral Label = "clang_function_pointer_type";
+
+  using IdBase::IdBase;
+};
+
 // A boolean value.
 struct BoolValue : public IdBase<BoolValue> {
   // Not used by `Print`, but for `IdKind`.
@@ -522,7 +528,7 @@ struct BoolValue : public IdBase<BoolValue> {
   static constexpr auto From(bool b) -> BoolValue { return b ? True : False; }
 
   // Returns the `bool` corresponding to this `BoolValue`.
-  constexpr auto ToBool() -> bool {
+  constexpr auto ToBool() const -> bool {
     CARBON_CHECK(*this == False || *this == True, "Invalid bool value {0}",
                  index);
     return *this != False;
@@ -717,6 +723,16 @@ inline constexpr int NameId::NonIndexValueCount =
     1 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_COUNT);
 #undef CARBON_SPECIAL_NAME_ID_FOR_COUNT
 
+// An X-macro for special name scopes. Uses should look like:
+//
+//   #define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_XYZ(Name) ...
+//   CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_XYZ)
+//   #undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_XYZ
+#define CARBON_SPECIAL_NAME_SCOPE_ID(X)                                \
+  /* A scope used by the toolchain to indicate it has access to all */ \
+  /* of a class' members. */                                           \
+  X(AllowHighestAccessLevel)
+
 // The ID of a `NameScope`.
 struct NameScopeId : public IdBase<NameScopeId> {
   static constexpr llvm::StringLiteral Label = "name_scope";
@@ -724,10 +740,34 @@ struct NameScopeId : public IdBase<NameScopeId> {
   // The package (or file) name scope, guaranteed to be the first added.
   static const NameScopeId Package;
 
+  // An enum of special name scopes.
+  enum class SpecialNameScopeId : uint8_t {
+#define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_ENUM(Name) Name,
+    CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_ENUM)
+#undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_ENUM
+  };
+
+  // For each SpecialNameScopeId, provide a matching `NameScopeId` instance for
+  // convenience.
+#define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DECL(Name) \
+  static const NameScopeId Name;
+  CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DECL)
+#undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DECL
+
   using IdBase::IdBase;
 };
 
 inline constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
+
+// Define the special `static const NameScopeId` values.
+#define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DEF(Name) \
+  inline constexpr NameScopeId NameScopeId::Name = \
+      NameScopeId(NoneIndex - 1 -                  \
+                  static_cast<int>(NameScopeId::SpecialNameScopeId::Name));
+CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DEF)
+#undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DEF
+
+#undef CARBON_SPECIAL_NAME_SCOPE_ID
 
 // The ID of an `InstId` block.
 struct InstBlockId : public IdBase<InstBlockId> {

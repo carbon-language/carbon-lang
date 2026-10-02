@@ -203,6 +203,7 @@ import library "extern_api";
 // CHECK:STDOUT: --- api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -217,8 +218,8 @@ import library "extern_api";
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
-// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.85c = tuple_value (%i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.135: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.135 = tuple_value (%i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.a8a: type = tuple_type (%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.e71: type = pattern_type %tuple.type.a8a [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type.e71 = value_param_pattern [concrete]
@@ -282,7 +283,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.param: %tuple.type.a8a = value_param call_param0
 // CHECK:STDOUT:     %.loc6_14.1: type = splice_block %.loc6_14.3 [concrete = constants.%tuple.type.a8a] {
 // CHECK:STDOUT:       %i32.loc6_10: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc6_14.2: %tuple.type.85c = tuple_literal (%i32.loc6_10) [concrete = constants.%tuple]
+// CHECK:STDOUT:       %.loc6_14.2: %tuple.type.135 = tuple_literal (%i32.loc6_10) [concrete = constants.%tuple]
 // CHECK:STDOUT:       %.loc6_14.3: type = converted %.loc6_14.2, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.a8a = wrapper_binding c, %c.param
@@ -309,6 +310,7 @@ import library "extern_api";
 // CHECK:STDOUT: --- extern_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -323,8 +325,8 @@ import library "extern_api";
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
-// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.85c = tuple_value (%i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.135: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.135 = tuple_value (%i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.a8a: type = tuple_type (%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.e71: type = pattern_type %tuple.type.a8a [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type.e71 = value_param_pattern [concrete]
@@ -388,7 +390,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.param: %tuple.type.a8a = value_param call_param0
 // CHECK:STDOUT:     %.loc6_49.1: type = splice_block %.loc6_49.3 [concrete = constants.%tuple.type.a8a] {
 // CHECK:STDOUT:       %i32.loc6_45: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc6_49.2: %tuple.type.85c = tuple_literal (%i32.loc6_45) [concrete = constants.%tuple]
+// CHECK:STDOUT:       %.loc6_49.2: %tuple.type.135 = tuple_literal (%i32.loc6_45) [concrete = constants.%tuple]
 // CHECK:STDOUT:       %.loc6_49.3: type = converted %.loc6_49.2, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.a8a = wrapper_binding c, %c.param
@@ -415,6 +417,7 @@ import library "extern_api";
 // CHECK:STDOUT: --- basics.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
@@ -608,6 +611,7 @@ import library "extern_api";
 // CHECK:STDOUT: --- fail_redecl_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -619,8 +623,8 @@ import library "extern_api";
 // CHECK:STDOUT:   %.795f: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
-// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
-// CHECK:STDOUT:   %tuple.19c: %tuple.type.85c = tuple_value (%i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.135: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple.e3d: %tuple.type.135 = tuple_value (%i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.a8a: type = tuple_type (%i32) [concrete]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [concrete]
 // CHECK:STDOUT:   %.510: Core.Form = init_form %struct_type.c [concrete]
@@ -715,7 +719,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.param: %tuple.type.a8a = value_param call_param0
 // CHECK:STDOUT:     %.loc20_21.1: type = splice_block %.loc20_21.3 [concrete = constants.%tuple.type.a8a] {
 // CHECK:STDOUT:       %i32.loc20_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc20_21.2: %tuple.type.85c = tuple_literal (%i32.loc20_17) [concrete = constants.%tuple.19c]
+// CHECK:STDOUT:       %.loc20_21.2: %tuple.type.135 = tuple_literal (%i32.loc20_17) [concrete = constants.%tuple.e3d]
 // CHECK:STDOUT:       %.loc20_21.3: type = converted %.loc20_21.2, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.a8a = wrapper_binding c, %c.param
@@ -826,6 +830,7 @@ import library "extern_api";
 // CHECK:STDOUT: --- redecl_extern_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
@@ -847,8 +852,8 @@ import library "extern_api";
 // CHECK:STDOUT:   %D: %D.type = struct_value () [concrete]
 // CHECK:STDOUT:   %E.type: type = fn_type @E [concrete]
 // CHECK:STDOUT:   %E: %E.type = struct_value () [concrete]
-// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
-// CHECK:STDOUT:   %tuple.19c: %tuple.type.85c = tuple_value (%i32) [concrete]
+// CHECK:STDOUT:   %tuple.type.135: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple.e3d: %tuple.type.135 = tuple_value (%i32) [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.cb1 = ref_binding_pattern a [concrete]
@@ -933,7 +938,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.param: %tuple.type.a8a = value_param call_param0
 // CHECK:STDOUT:     %.loc8_21.1: type = splice_block %.loc8_21.3 [concrete = constants.%tuple.type.a8a] {
 // CHECK:STDOUT:       %i32.loc8_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc8_21.2: %tuple.type.85c = tuple_literal (%i32.loc8_17) [concrete = constants.%tuple.19c]
+// CHECK:STDOUT:       %.loc8_21.2: %tuple.type.135 = tuple_literal (%i32.loc8_17) [concrete = constants.%tuple.e3d]
 // CHECK:STDOUT:       %.loc8_21.3: type = converted %.loc8_21.2, constants.%tuple.type.a8a [concrete = constants.%tuple.type.a8a]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.a8a = wrapper_binding c, %c.param
@@ -1044,6 +1049,7 @@ import library "extern_api";
 // CHECK:STDOUT: --- fail_merge.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
@@ -1237,6 +1243,7 @@ import library "extern_api";
 // CHECK:STDOUT: --- fail_merge_reverse.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
