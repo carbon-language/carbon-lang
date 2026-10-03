@@ -11,7 +11,6 @@
 #include <vector>
 
 #include "testing/base/file_helpers.h"
-#include "utils/tree_sitter/tree_sitter/parser.h"
 
 extern "C" {
 auto tree_sitter_carbon() -> TSLanguage*;
@@ -101,14 +100,19 @@ auto ShouldParseSplit(const Split& split, bool fail_tests) -> bool {
 
 // Finds the first node in the tree that is an error or is missing.
 auto FindFirstError(TSNode node) -> TSNode {
-  if (ts_node_is_error(node) || ts_node_is_missing(node)) {
-    return node;
-  }
-  uint32_t count = ts_node_child_count(node);
-  for (uint32_t i = 0; i < count; ++i) {
-    TSNode child = ts_node_child(node, i);
-    if (ts_node_has_error(child)) {
-      return FindFirstError(child);
+  while (!ts_node_is_error(node) && !ts_node_is_missing(node)) {
+    uint32_t count = ts_node_child_count(node);
+    bool found_child = false;
+    for (uint32_t i = 0; i < count; ++i) {
+      TSNode child = ts_node_child(node, i);
+      if (ts_node_has_error(child)) {
+        node = child;
+        found_child = true;
+        break;
+      }
+    }
+    if (!found_child) {
+      break;
     }
   }
   return node;
@@ -170,7 +174,7 @@ auto main(int argc, char** argv) -> int {
       if (!split.name.empty()) {
         name += " (";
         name += split.name;
-        name += ")";
+        name += ')';
       }
 
       auto* tree = ts_parser_parse_string(parser, nullptr, split.content.data(),
