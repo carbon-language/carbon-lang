@@ -39,6 +39,15 @@
 // CHECK:STDOUT:       "typeDefinitionProvider": true
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }Content-Length: 124{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "error": {
+// CHECK:STDOUT:     "code": -32602,
+// CHECK:STDOUT:     "message": "Unknown textDocument `/test.carbon`"
+// CHECK:STDOUT:   },
+// CHECK:STDOUT:   "id": 2,
+// CHECK:STDOUT:   "jsonrpc": "2.0"
 // CHECK:STDOUT: }Content-Length: 51{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
