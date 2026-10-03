@@ -98,6 +98,28 @@ auto PopReturnSpecifier(Context& context) -> ReturnSpecifierInfo {
           .form = context.PopReturnForm()};
 }
 
+auto AdjustReturnSpecifierForTerseDefinition(
+    Context& context, Parse::NodeId start_node_id,
+    ReturnSpecifierInfo& return_specifier) -> void {
+  if (return_specifier.has_return_specifier()) {
+    CARBON_DIAGNOSTIC(ReturnTypeInTerseFunction, Error,
+                      "cannot specify a return {0:type|form} with `=>`",
+                      Diagnostics::BoolAsSelect);
+    context.emitter().Emit(
+        return_specifier.node_id, ReturnTypeInTerseFunction,
+        context.parse_tree().node_kind(return_specifier.node_id) ==
+            Parse::NodeKind::ReturnType);
+    return;
+  }
+
+  // The return type is deduced from the body, as if `-> auto` were specified.
+  // TODO: We always use an initializing form; should we use `->? auto`
+  // semantics instead?
+  return_specifier = {
+      .node_id = start_node_id,
+      .deduced_return_kind = SemIR::Function::DeducedReturnKind::Init};
+}
+
 auto IsValidBuiltinDeclaration(Context& context,
                                const SemIR::Function& function,
                                SemIR::BuiltinFunctionKind builtin_kind)
@@ -793,6 +815,15 @@ auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
       AddReturnInstWithCleanups(context, node_id);
     }
   }
+}
+
+auto CheckFunctionTerseBody(Context& context, Parse::NodeId node_id,
+                            SemIR::FunctionId function_id,
+                            SemIR::InstId body_expr_id) -> void {
+  // A terse body `=> expr` is equivalent to `{ return expr; }`. The return type
+  // is deduced from the `return`, just like for `-> auto`.
+  BuildReturnWithExpr(context, SemIR::LocId(body_expr_id), body_expr_id);
+  CheckFunctionReturnOnFinish(context, node_id, function_id);
 }
 
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)

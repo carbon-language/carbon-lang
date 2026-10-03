@@ -55,6 +55,14 @@ struct ReturnSpecifierInfo {
 // from the node stack, if it has one.
 auto PopReturnSpecifier(Context& context) -> ReturnSpecifierInfo;
 
+// Adjusts the popped return specifier of a terse `=> expr` function definition
+// or function expression starting at `start_node_id`. A return specifier is
+// diagnosed, because it can't be combined with `=>`. Otherwise, the return type
+// is deduced from the body, as if `-> auto` were specified.
+auto AdjustReturnSpecifierForTerseDefinition(
+    Context& context, Parse::NodeId start_node_id,
+    ReturnSpecifierInfo& return_specifier) -> void;
+
 // Sets the return type of a function whose return type is deduced, once that
 // type is known. `type_id` is the deduced type, or the error type if deduction
 // failed, and `loc_id` is the location it was deduced from.
@@ -178,6 +186,12 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
 // statements first.
 auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
                                  SemIR::FunctionId function_id) -> void;
+
+// Checks the body of a terse `=> expr` function or lambda definition, which
+// behaves like `{ return expr; }`, deducing the return type if necessary.
+auto CheckFunctionTerseBody(Context& context, Parse::NodeId node_id,
+                            SemIR::FunctionId function_id,
+                            SemIR::InstId body_expr_id) -> void;
 
 // Finishes definitions started by `StartFunctionDefinition`.
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
